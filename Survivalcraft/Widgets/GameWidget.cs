@@ -141,7 +141,8 @@ public class GameWidget : CanvasWidget
             MessagePanel = new MessagePanelWidget(
                 playerData,
                 MessageHistoryOverlay,
-                hasMultiplayerMessaging);
+                hasMultiplayerMessaging
+            );
         }
 
         _cameras.Add(new FppCamera(this));
@@ -205,8 +206,11 @@ public class GameWidget : CanvasWidget
         {
             if (_informationOverlaysContainer != null)
             {
-                var horizontalMargin = MathUtils.Lerp(12f, 12f + player.ComponentGui.TouchControlsHorizontalInset,
-                    player.ComponentGui.TouchControlsVisibilityFactor);
+                var horizontalMargin = MathUtils.Lerp(
+                    12f,
+                    12f + player.ComponentGui.TouchControlsHorizontalInset,
+                    player.ComponentGui.TouchControlsVisibilityFactor
+                );
                 if (_informationOverlaysContainer.Margin.X != horizontalMargin)
                 {
                     _informationOverlaysContainer.Margin = new Vector2(horizontalMargin, 8f);
@@ -216,14 +220,16 @@ public class GameWidget : CanvasWidget
             _informationOverlaysSpacer?.IsVisible = PlayerInformationOverlay?.IsVisible == true &&
                                                     MessageHistoryOverlay?.IsVisible == true;
 
-            if (player.ComponentSleep.IsSleeping && _informationOverlaysContainer != null &&
+            if (player.ComponentSleep.IsSleeping &&
+                _informationOverlaysContainer != null &&
                 _controlsWidget.Children.Contains(_informationOverlaysContainer))
             {
                 _controlsWidget.Children.Remove(_informationOverlaysContainer);
                 GuiWidget.Children.Add(_informationOverlaysContainer);
             }
 
-            if (!player.ComponentSleep.IsSleeping && _informationOverlaysContainer != null &&
+            if (!player.ComponentSleep.IsSleeping &&
+                _informationOverlaysContainer != null &&
                 GuiWidget.Children.Contains(_informationOverlaysContainer))
             {
                 GuiWidget.Children.Remove(_informationOverlaysContainer);
@@ -243,8 +249,12 @@ public class GameWidget : CanvasWidget
 
         var modalPanel = PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
         var isGameInputCaptured = PlayerData.ComponentPlayer?.ComponentGui.IsGameInputCaptured == true;
-        if (Window.IsActive && PlayerData.IsReadyForPlaying && player?.ComponentHealth.Health > 0f &&
-            !isGameInputCaptured && modalPanel == null && !DialogsManager.HasDialogs(player.GuiWidget))
+        if (Window.IsActive &&
+            PlayerData.IsReadyForPlaying &&
+            player?.ComponentHealth.Health > 0f &&
+            !isGameInputCaptured &&
+            modalPanel == null &&
+            !DialogsManager.HasDialogs(player.GuiWidget))
         {
             if (Input.IsKeyDownOnce(Key.M))
             {
@@ -270,7 +280,8 @@ public class GameWidget : CanvasWidget
             {
                 OpenMessagePanel(
                     focusInput: MessageHistoryOverlay != null,
-                    commandInput: MessageHistoryOverlay == null);
+                    commandInput: MessageHistoryOverlay == null
+                );
             }
 
             Input.Clear();
@@ -455,7 +466,8 @@ public class GameWidget : CanvasWidget
             message.Content,
             color,
             blinking,
-            playNotificationSound: blinking);
+            playNotificationSound: blinking
+        );
     }
 
     private bool IsCameraAllowed(Camera camera)

@@ -64,8 +64,12 @@ public class TerritoryBlock : CubeBlock
         {
             var displayName = GetDisplayName(subsystemTerrain, Terrain.MakeBlockValue(BlockIndex));
             player.ComponentGui.DisplaySmallMessage(
-                string.Format(LanguageManager.Get(nameof(TerritoryBlock), 1), _requiredPlayerLevel, displayName,
-                    userLevel),
+                string.Format(
+                    LanguageManager.Get(nameof(TerritoryBlock), 1),
+                    _requiredPlayerLevel,
+                    displayName,
+                    userLevel
+                ),
                 Color.Red,
                 false,
                 true
@@ -107,21 +111,33 @@ public class TerritoryBlock : CubeBlock
         return 12f;
     }
 
-    public override BlockPlacementData GetPlacementValue(SubsystemTerrain subsystemTerrain,
-        ComponentMiner componentMiner, int value, TerrainRaycastResult raycastResult)
+    public override BlockPlacementData GetPlacementValue(
+        SubsystemTerrain subsystemTerrain,
+        ComponentMiner componentMiner,
+        int value,
+        TerrainRaycastResult raycastResult
+    )
     {
         return new BlockPlacementData { Value = value, CellFace = raycastResult.CellFace };
     }
 
-    public override void GetDropValues(SubsystemTerrain subsystemTerrain, int oldValue, int newValue, int toolLevel,
-        List<BlockDropValue> dropValues, out bool showDebris)
+    public override void GetDropValues(
+        SubsystemTerrain subsystemTerrain,
+        int oldValue,
+        int newValue,
+        int toolLevel,
+        List<BlockDropValue> dropValues,
+        out bool showDebris
+    )
     {
         showDebris = DestructionDebrisScale > 0f;
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex),
+                Count = 1
+            }
+        );
     }
 
     public override bool IsMovableByPiston(int value, int pistonFace, int y, out bool isEnd)

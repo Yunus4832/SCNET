@@ -20,9 +20,8 @@ public sealed class GameAnnouncementRepository(ContentServerDbContext context)
 public sealed class GameReleaseRepository(ContentServerDbContext context)
     : RepositoryBase<GameRelease, GameReleaseId, ContentServerDbContext>(context);
 
-public sealed class AdministratorRepository(
-    ContentServerDbContext context
-) : RepositoryBase<Administrator, AdministratorId, ContentServerDbContext>(context)
+public sealed class AdministratorRepository(ContentServerDbContext context)
+    : RepositoryBase<Administrator, AdministratorId, ContentServerDbContext>(context)
 {
     private readonly ContentServerDbContext _context = context;
 
@@ -38,9 +37,8 @@ public sealed class AdministratorRepository(
         _context.Administrators.Include(x => x.Keys).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 }
 
-public sealed class PublisherRepository(
-    ContentServerDbContext context
-) : RepositoryBase<Publisher, PublisherId, ContentServerDbContext>(context)
+public sealed class PublisherRepository(ContentServerDbContext context)
+    : RepositoryBase<Publisher, PublisherId, ContentServerDbContext>(context)
 {
     private readonly ContentServerDbContext _context = context;
 
@@ -56,9 +54,8 @@ public sealed class PublisherRepository(
     }
 }
 
-public sealed class ContentRepository(
-    ContentServerDbContext context
-) : RepositoryBase<ContentItem, ContentId, ContentServerDbContext>(context)
+public sealed class ContentRepository(ContentServerDbContext context)
+    : RepositoryBase<ContentItem, ContentId, ContentServerDbContext>(context)
 {
     private readonly ContentServerDbContext _context = context;
 
@@ -70,7 +67,8 @@ public sealed class ContentRepository(
     {
         return _context.Contents.Include(item => item.Versions).FirstOrDefaultAsync(
             item => item.PublisherId == publisherId && item.NormalizedIdentifier == normalizedIdentifier,
-            cancellationToken);
+            cancellationToken
+        );
     }
 
     public Task<ContentItem?> FindAsync(ContentId id, CancellationToken cancellationToken)
@@ -89,37 +87,36 @@ public sealed class ContentRepository(
         return _context.Contents.Include(item => item.Versions)
             .FirstOrDefaultAsync(item => item.Versions.Any(version => version.Id == versionId), cancellationToken);
     }
-
 }
 
-public sealed class ReviewRecordRepository(
-    ContentServerDbContext context
-) : RepositoryBase<ReviewRecord, ReviewRecordId, ContentServerDbContext>(context);
+public sealed class ReviewRecordRepository(ContentServerDbContext context)
+    : RepositoryBase<ReviewRecord, ReviewRecordId, ContentServerDbContext>(context);
 
-public sealed class ServerSourceRegistrationRepository(
-    ContentServerDbContext context
-) : RepositoryBase<ServerSourceRegistration, ServerSourceRegistrationId, ContentServerDbContext>(context)
+public sealed class ServerSourceRegistrationRepository(ContentServerDbContext context)
+    : RepositoryBase<ServerSourceRegistration, ServerSourceRegistrationId, ContentServerDbContext>(context)
 {
     private readonly ContentServerDbContext _context = context;
 
-    public Task<ServerSourceRegistration?> FindAsync(ServerSourceRegistrationId id,
-        CancellationToken cancellationToken)
+    public Task<ServerSourceRegistration?> FindAsync(
+        ServerSourceRegistrationId id,
+        CancellationToken cancellationToken
+    )
     {
         return _context.ServerSources.FirstOrDefaultAsync(source => source.Id == id, cancellationToken);
     }
 
     public Task<bool> HasPendingOrActiveUrlAsync(string apiUrl, CancellationToken cancellationToken)
     {
-        return _context.ServerSources.AnyAsync(source => source.ApiUrl == apiUrl &&
-                                                        source.Status != ServerSourceRegistrationStatus.Rejected,
-            cancellationToken);
+        return _context.ServerSources.AnyAsync(
+            source => source.ApiUrl == apiUrl &&
+                      source.Status != ServerSourceRegistrationStatus.Rejected,
+            cancellationToken
+        );
     }
-
 }
 
-public sealed class DirectoryServerRepository(
-    ContentServerDbContext context
-) : RepositoryBase<DirectoryServer, DirectoryServerId, ContentServerDbContext>(context)
+public sealed class DirectoryServerRepository(ContentServerDbContext context)
+    : RepositoryBase<DirectoryServer, DirectoryServerId, ContentServerDbContext>(context)
 {
     private readonly ContentServerDbContext _context = context;
 
@@ -127,34 +124,50 @@ public sealed class DirectoryServerRepository(
         _context.DirectoryServers.FirstOrDefaultAsync(server => server.Id == id, cancellationToken);
 
     public Task<bool> HasPendingOrApprovedAddressAsync(string address, CancellationToken cancellationToken) =>
-        _context.DirectoryServers.AnyAsync(server => server.Address == address &&
-            server.ReviewStatus != DirectoryServerReviewStatus.Rejected, cancellationToken);
+        _context.DirectoryServers.AnyAsync(
+            server => server.Address == address &&
+                      server.ReviewStatus != DirectoryServerReviewStatus.Rejected,
+            cancellationToken
+        );
 
-    public Task<bool> HasPendingOrApprovedAddressAsync(string address, DirectoryServerId excludedId,
-        CancellationToken cancellationToken) =>
-        _context.DirectoryServers.AnyAsync(server => server.Id != excludedId && server.Address == address &&
-            server.ReviewStatus != DirectoryServerReviewStatus.Rejected, cancellationToken);
-
+    public Task<bool> HasPendingOrApprovedAddressAsync(
+        string address,
+        DirectoryServerId excludedId,
+        CancellationToken cancellationToken
+    ) =>
+        _context.DirectoryServers.AnyAsync(
+            server => server.Id != excludedId &&
+                      server.Address == address &&
+                      server.ReviewStatus != DirectoryServerReviewStatus.Rejected,
+            cancellationToken
+        );
 }
 
-public sealed class RendezvousServiceRegistrationRepository(
-    ContentServerDbContext context
-) : RepositoryBase<RendezvousServiceRegistration, RendezvousServiceRegistrationId, ContentServerDbContext>(context)
+public sealed class RendezvousServiceRegistrationRepository(ContentServerDbContext context)
+    : RepositoryBase<RendezvousServiceRegistration, RendezvousServiceRegistrationId, ContentServerDbContext>(context)
 {
     private readonly ContentServerDbContext _context = context;
 
-    public Task<RendezvousServiceRegistration?> FindAsync(RendezvousServiceRegistrationId id,
-        CancellationToken cancellationToken)
+    public Task<RendezvousServiceRegistration?> FindAsync(
+        RendezvousServiceRegistrationId id,
+        CancellationToken cancellationToken
+    )
     {
         return _context.RendezvousServices.FirstOrDefaultAsync(source => source.Id == id, cancellationToken);
     }
 
-    public Task<bool> HasPendingOrActiveUrlAsync(string controlUrl, CancellationToken cancellationToken,
-        RendezvousServiceRegistrationId? excludedId = null)
+    public Task<bool> HasPendingOrActiveUrlAsync(
+        string controlUrl,
+        CancellationToken cancellationToken,
+        RendezvousServiceRegistrationId? excludedId = null
+    )
     {
-        return _context.RendezvousServices.AnyAsync(source => source.Id != excludedId && source.ControlUrl == controlUrl &&
-                                                        source.Status != RendezvousServiceRegistrationStatus.Rejected,
-            cancellationToken);
+        return _context.RendezvousServices.AnyAsync(
+            source =>
+                source.Id != excludedId &&
+                source.ControlUrl == controlUrl &&
+                source.Status != RendezvousServiceRegistrationStatus.Rejected,
+            cancellationToken
+        );
     }
-
 }

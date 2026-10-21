@@ -21,7 +21,8 @@ public sealed class CommandPrincipal
         CommandPrincipalKind kind,
         PlayerData? player = null,
         IEnumerable<ResourceId>? permissions = null,
-        IEnumerable<ResourceId>? delegablePermissions = null)
+        IEnumerable<ResourceId>? delegablePermissions = null
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         Name = name;
@@ -47,11 +48,17 @@ public sealed class CommandPrincipal
         string name,
         PlayerData? player = null,
         IEnumerable<ResourceId>? permissions = null,
-        IEnumerable<ResourceId>? delegablePermissions = null)
+        IEnumerable<ResourceId>? delegablePermissions = null
+    )
     {
         var delegable = delegablePermissions?.ToArray() ?? [];
-        return new CommandPrincipal(name, CommandPrincipalKind.Player, player,
-            (permissions ?? []).Concat(delegable), delegable);
+        return new CommandPrincipal(
+            name,
+            CommandPrincipalKind.Player,
+            player,
+            (permissions ?? []).Concat(delegable),
+            delegable
+        );
     }
 
     public static CommandPrincipal FromPlayer(PlayerData player)
@@ -63,7 +70,8 @@ public sealed class CommandPrincipal
             player.CommandPermissions.Grants.Select(grant => grant.Permission),
             player.CommandPermissions.Grants
                 .Where(grant => grant.CanDelegate)
-                .Select(grant => grant.Permission));
+                .Select(grant => grant.Permission)
+        );
     }
 
     public static CommandPrincipal LocalOperator { get; } =

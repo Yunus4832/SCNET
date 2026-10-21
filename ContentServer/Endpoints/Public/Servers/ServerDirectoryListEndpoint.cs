@@ -35,15 +35,32 @@ public sealed class ServerDirectoryListEndpoint(IMediator mediator, IOptions<Con
             return;
         }
 
-        var items = await mediator.Send(new ListDirectoryServersQuery(PublicOnly: true, Offset: offset,
-            Limit: limit + 1), cancellationToken);
+        var items = await mediator.Send(
+            new ListDirectoryServersQuery(
+                PublicOnly: true,
+                Offset: offset,
+                Limit: limit + 1
+            ),
+            cancellationToken
+        );
         var hasMore = items.Count > limit;
-        var servers = items.Take(limit).Select(item => new ServerSourceEntry(item.Id.ToString(), item.Name,
-            item.Address, item.Description, JsonSerializer.Deserialize<string[]>(item.TagsJson) ?? [])).ToArray();
-        var page = new ServerSourcePage(ServerSourceProtocol.CurrentVersion,
-            new ServerSourceDescriptor(options.Value.BuiltInServerDirectoryId,
-                options.Value.BuiltInServerDirectoryName), servers,
-            hasMore ? EncodeCursor(offset + limit) : null);
+        var servers = items.Take(limit).Select(item => new ServerSourceEntry(
+                item.Id.ToString(),
+                item.Name,
+                item.Address,
+                item.Description,
+                JsonSerializer.Deserialize<string[]>(item.TagsJson) ?? []
+            )
+        ).ToArray();
+        var page = new ServerSourcePage(
+            ServerSourceProtocol.CurrentVersion,
+            new ServerSourceDescriptor(
+                options.Value.BuiltInServerDirectoryId,
+                options.Value.BuiltInServerDirectoryName
+            ),
+            servers,
+            hasMore ? EncodeCursor(offset + limit) : null
+        );
         await Send.ResponseAsync(page, cancellation: cancellationToken);
     }
 

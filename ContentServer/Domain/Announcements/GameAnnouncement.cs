@@ -4,9 +4,11 @@ namespace ContentServer.Domain.Announcements;
 
 public enum AnnouncementStatus
 {
-    Draft,
-    Published,
-    Withdrawn
+    Draft = 0,
+
+    Published = 1,
+
+    Withdrawn = 2
 }
 
 public partial record GameAnnouncementId : IGuidStronglyTypedId;
@@ -82,8 +84,10 @@ public sealed class GameAnnouncement : Entity<GameAnnouncementId>, IAggregateRoo
 
     private static void Validate(string title, string body)
     {
-        if (string.IsNullOrWhiteSpace(title) || title.Length > 120 ||
-            string.IsNullOrWhiteSpace(body) || body.Length > 10000)
+        if (string.IsNullOrWhiteSpace(title) ||
+            title.Length > 120 ||
+            string.IsNullOrWhiteSpace(body) ||
+            body.Length > 10000)
         {
             throw new ArgumentException("Invalid announcement title or body.");
         }

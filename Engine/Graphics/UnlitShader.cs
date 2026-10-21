@@ -75,35 +75,17 @@ public class UnlitShader : Shader
         Color = Vector4.One;
     }
 
-    public Texture2D Texture
-    {
-        set => TextureParameter.SetValue(value);
-    }
+    public Texture2D Texture { set => TextureParameter.SetValue(value); }
 
-    public SamplerState SamplerState
-    {
-        set => SamplerStateParameter.SetValue(value);
-    }
+    public SamplerState SamplerState { set => SamplerStateParameter.SetValue(value); }
 
-    public Vector4 Color
-    {
-        set => ColorParameter.SetValue(value);
-    }
+    public Vector4 Color { set => ColorParameter.SetValue(value); }
 
-    public Vector4 AdditiveColor
-    {
-        set => _additiveColorParameter.SetValue(value);
-    }
+    public Vector4 AdditiveColor { set => _additiveColorParameter.SetValue(value); }
 
-    public float AlphaThreshold
-    {
-        set => AlphaThresholdParameter.SetValue(value);
-    }
+    public float AlphaThreshold { set => AlphaThresholdParameter.SetValue(value); }
 
-    public float Time
-    {
-        set => _time?.SetValue(value);
-    }
+    public float Time { set => _time?.SetValue(value); }
 
     public override void PrepareForDrawingOverride()
     {
@@ -111,8 +93,12 @@ public class UnlitShader : Shader
         WorldViewProjectionMatrixParameter.SetValue(Transforms.WorldViewProjection, 1);
     }
 
-    private static ShaderMacro[] PrepareShaderMacros(bool useVertexColor, bool useTexture, bool useAdditiveColor,
-        bool useAlphaThreshold)
+    private static ShaderMacro[] PrepareShaderMacros(
+        bool useVertexColor,
+        bool useTexture,
+        bool useAdditiveColor,
+        bool useAlphaThreshold
+    )
     {
         var list = new List<ShaderMacro>();
         if (useVertexColor)
@@ -145,8 +131,9 @@ public class UnlitShader : Shader
     private static string GetUnlitVshString()
     {
         return new StreamReader(
-                typeof(Shader).GetTypeInfo().Assembly.GetManifestResourceStream("Engine.Resources.Unlit.vsh")
-                ?? throw new InvalidOperationException("Engine.Resources.Unlit.vsh not found"))
+                typeof(Shader).GetTypeInfo().Assembly.GetManifestResourceStream("Engine.Resources.Unlit.vsh") ??
+                throw new InvalidOperationException("Engine.Resources.Unlit.vsh not found")
+            )
             .ReadToEnd();
     }
 
@@ -159,7 +146,8 @@ public class UnlitShader : Shader
         return new StreamReader(
                 typeof(Shader).GetTypeInfo().Assembly
                     .GetManifestResourceStream("Engine.Resources.Unlit.psh") ??
-                throw new InvalidOperationException("Engine.Resources.Unlit.psh not found "))
+                throw new InvalidOperationException("Engine.Resources.Unlit.psh not found ")
+            )
             .ReadToEnd();
     }
 }

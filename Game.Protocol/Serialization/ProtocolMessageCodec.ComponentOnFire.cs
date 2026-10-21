@@ -34,9 +34,21 @@ public static partial class ProtocolMessageCodec
         return type switch
         {
             ComponentOnFirePackage.EventType.ComponentOnFire => new ComponentOnFirePackage
-            { Type = type, EntityId = reader.ReadInt32(), AttackerEntityId = reader.ReadInt32(), Duration = reader.ReadSingle() },
-            ComponentOnFirePackage.EventType.BlockOnFireAdd => new ComponentOnFirePackage(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32(), reader.ReadSingle()),
-            ComponentOnFirePackage.EventType.BlockOnFireRemove => new ComponentOnFirePackage(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()),
+            {
+                Type = type, EntityId = reader.ReadInt32(), AttackerEntityId = reader.ReadInt32(),
+                Duration = reader.ReadSingle()
+            },
+            ComponentOnFirePackage.EventType.BlockOnFireAdd => new ComponentOnFirePackage(
+                reader.ReadInt32(),
+                reader.ReadInt32(),
+                reader.ReadInt32(),
+                reader.ReadSingle()
+            ),
+            ComponentOnFirePackage.EventType.BlockOnFireRemove => new ComponentOnFirePackage(
+                reader.ReadInt32(),
+                reader.ReadInt32(),
+                reader.ReadInt32()
+            ),
             _ => throw new InvalidDataException("Unknown fire message mode.")
         };
     }

@@ -20,17 +20,9 @@ public class Settings
 
     public string HttpCommandAccessToken { get; set; } = string.Empty;
 
-    public float SoundsVolume
-    {
-        get;
-        set => field = MathUtils.Saturate(value);
-    } = 0.5f;
+    public float SoundsVolume { get; set => field = MathUtils.Saturate(value); } = 0.5f;
 
-    public float MusicVolume
-    {
-        get;
-        set => field = MathUtils.Saturate(value);
-    } = 0.5f;
+    public float MusicVolume { get; set => field = MathUtils.Saturate(value); } = 0.5f;
 
     public int VisibilityRange { get; set; } = 128;
 
@@ -97,11 +89,7 @@ public class Settings
 
     public bool HudSafeAreaCustomPaddingEnabled { get; set; }
 
-    public float HudSafeAreaPadding
-    {
-        get;
-        set => field = MathUtils.Clamp(value, 0f, 80f);
-    } = 32f;
+    public float HudSafeAreaPadding { get; set => field = MathUtils.Clamp(value, 0f, 80f); } = 32f;
 
     public bool FlipVerticalAxis { get; set; }
 
@@ -184,11 +172,11 @@ public class Settings
         NetworkTerrainPolicy.DefaultServerChunkBytesSendPerSecond;
 
     public bool AutoGarbageCollect { get; set; } = true;
-
 }
 
 public enum PlayerListFilter
 {
-    All,
-    SameTeam
+    All = 0,
+
+    SameTeam = 1
 }

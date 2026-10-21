@@ -11,14 +11,26 @@ public class FurBlock : Block
         var model = ContentManager.Get<Model>("Models/Fur");
         var furMesh = model.FindMesh("Fur")!;
         var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            furMesh.ParentBone
-            ?? throw new InvalidOperationException("Required FurMesh.ParentBone is null")
+            furMesh.ParentBone ?? throw new InvalidOperationException("Required FurMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(furMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(furMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f), false, true, false, false,
-            new Color(128, 128, 160));
+        StandaloneBlockMesh.AppendModelMeshPart(
+            furMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            furMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            true,
+            false,
+            false,
+            new Color(128, 128, 160)
+        );
         base.Initialize();
     }
 

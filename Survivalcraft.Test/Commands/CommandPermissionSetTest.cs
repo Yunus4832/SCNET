@@ -57,35 +57,47 @@ public class CommandPermissionSetTest
         registry.Register(
             _owner,
             standard,
-            new CommandPermissionDefinition(CommandDomain.World));
+            new CommandPermissionDefinition(CommandDomain.World)
+        );
         registry.Register(
             _owner,
             managed,
             new CommandPermissionDefinition(
                 CommandDomain.Server,
-                PermissionGrantPolicy.OperatorManaged));
+                PermissionGrantPolicy.OperatorManaged
+            )
+        );
         registry.Register(
             _owner,
             operatorOnly,
             new CommandPermissionDefinition(
                 CommandDomain.Server,
-                PermissionGrantPolicy.NonGrantable));
+                PermissionGrantPolicy.NonGrantable
+            )
+        );
         var delegator = CommandPrincipal.CreatePlayer(
             "Delegator",
             permissions: [standard],
-            delegablePermissions: [standard]);
+            delegablePermissions: [standard]
+        );
 
         Assert.True(registry.CanGrant(standard, delegator, null));
         Assert.False(registry.CanGrant(managed, delegator, null));
         Assert.False(registry.CanGrant(operatorOnly, delegator, null));
-        Assert.True(registry.CanGrant(
-            managed,
-            CommandPrincipal.LocalOperator,
-            null));
-        Assert.False(registry.CanGrant(
-            operatorOnly,
-            CommandPrincipal.LocalOperator,
-            null));
+        Assert.True(
+            registry.CanGrant(
+                managed,
+                CommandPrincipal.LocalOperator,
+                null
+            )
+        );
+        Assert.False(
+            registry.CanGrant(
+                operatorOnly,
+                CommandPrincipal.LocalOperator,
+                null
+            )
+        );
     }
 
     [Fact]
@@ -98,16 +110,22 @@ public class CommandPermissionSetTest
             permission,
             new CommandPermissionDefinition(
                 CommandDomain.Server,
-                PermissionGrantPolicy.NonGrantable));
+                PermissionGrantPolicy.NonGrantable
+            )
+        );
         var player = CommandPrincipal.CreatePlayer(
             "Player",
-            permissions: [permission]);
+            permissions: [permission]
+        );
 
         Assert.False(registry.HasEffectivePermission(permission, player, null));
-        Assert.True(registry.HasEffectivePermission(
-            permission,
-            CommandPrincipal.LocalOperator,
-            null));
+        Assert.True(
+            registry.HasEffectivePermission(
+                permission,
+                CommandPrincipal.LocalOperator,
+                null
+            )
+        );
     }
 
     [Fact]
@@ -121,30 +139,41 @@ public class CommandPermissionSetTest
             managerPermission,
             new CommandPermissionDefinition(
                 CommandDomain.Server,
-                managesStandardPermissions: true));
+                managesStandardPermissions: true
+            )
+        );
         registry.Register(
             _owner,
             target,
-            new CommandPermissionDefinition(CommandDomain.World));
+            new CommandPermissionDefinition(CommandDomain.World)
+        );
         var useOnlyManager = CommandPrincipal.CreatePlayer(
             "Manager",
-            permissions: [managerPermission]);
+            permissions: [managerPermission]
+        );
         var delegatingManager = CommandPrincipal.CreatePlayer(
             "DelegatingManager",
             permissions: [managerPermission],
-            delegablePermissions: [managerPermission]);
+            delegablePermissions: [managerPermission]
+        );
 
         Assert.True(registry.CanGrant(target, useOnlyManager, null));
-        Assert.False(registry.CanGrant(
-            target,
-            useOnlyManager,
-            null,
-            canDelegate: true));
-        Assert.True(registry.CanGrant(
-            target,
-            delegatingManager,
-            null,
-            canDelegate: true));
+        Assert.False(
+            registry.CanGrant(
+                target,
+                useOnlyManager,
+                null,
+                canDelegate: true
+            )
+        );
+        Assert.True(
+            registry.CanGrant(
+                target,
+                delegatingManager,
+                null,
+                canDelegate: true
+            )
+        );
     }
 
     private static ResourceId Permission(string path) => new(_owner, path);

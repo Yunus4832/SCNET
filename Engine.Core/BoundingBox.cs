@@ -39,8 +39,12 @@ public struct BoundingBox : IEquatable<BoundingBox>
     {
         _min = new Vector3(x1, y1, z1);
         _max = new Vector3(x2, y2, z2);
-        if (float.IsNaN(_min.X) || float.IsNaN(_min.Y) || float.IsNaN(_min.Z) || float.IsNaN(_max.X) ||
-            float.IsNaN(_max.Y) || float.IsNaN(_max.Z))
+        if (float.IsNaN(_min.X) ||
+            float.IsNaN(_min.Y) ||
+            float.IsNaN(_min.Z) ||
+            float.IsNaN(_max.X) ||
+            float.IsNaN(_max.Y) ||
+            float.IsNaN(_max.Z))
         {
             throw new Exception("NaN");
         }
@@ -50,8 +54,12 @@ public struct BoundingBox : IEquatable<BoundingBox>
     {
         _min = min;
         _max = max;
-        if (float.IsNaN(_min.X) || float.IsNaN(_min.Y) || float.IsNaN(_min.Z) || float.IsNaN(_max.X) ||
-            float.IsNaN(_max.Y) || float.IsNaN(_max.Z))
+        if (float.IsNaN(_min.X) ||
+            float.IsNaN(_min.Y) ||
+            float.IsNaN(_min.Z) ||
+            float.IsNaN(_max.X) ||
+            float.IsNaN(_max.Y) ||
+            float.IsNaN(_max.Z))
         {
             throw new Exception("NaN");
         }
@@ -61,8 +69,12 @@ public struct BoundingBox : IEquatable<BoundingBox>
     {
         _min = new Vector3(float.MaxValue);
         _max = new Vector3(float.MinValue);
-        if (float.IsNaN(_min.X) || float.IsNaN(_min.Y) || float.IsNaN(_min.Z) || float.IsNaN(_max.X) ||
-            float.IsNaN(_max.Y) || float.IsNaN(_max.Z))
+        if (float.IsNaN(_min.X) ||
+            float.IsNaN(_min.Y) ||
+            float.IsNaN(_min.Z) ||
+            float.IsNaN(_max.X) ||
+            float.IsNaN(_max.Y) ||
+            float.IsNaN(_max.Z))
         {
             throw new Exception("NaN");
         }
@@ -158,9 +170,12 @@ public struct BoundingBox : IEquatable<BoundingBox>
 
     public bool Intersection(BoundingSphere sphere)
     {
-        if (sphere.Center.X - Min.X > sphere.Radius && sphere.Center.Y - Min.Y > sphere.Radius &&
-            sphere.Center.Z - Min.Z > sphere.Radius && Max.X - sphere.Center.X > sphere.Radius &&
-            Max.Y - sphere.Center.Y > sphere.Radius && Max.Z - sphere.Center.Z > sphere.Radius)
+        if (sphere.Center.X - Min.X > sphere.Radius &&
+            sphere.Center.Y - Min.Y > sphere.Radius &&
+            sphere.Center.Z - Min.Z > sphere.Radius &&
+            Max.X - sphere.Center.X > sphere.Radius &&
+            Max.Y - sphere.Center.Y > sphere.Radius &&
+            Max.Z - sphere.Center.Z > sphere.Radius)
         {
             return true;
         }

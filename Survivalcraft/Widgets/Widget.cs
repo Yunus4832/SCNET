@@ -218,10 +218,7 @@ public class Widget : IDisposable
 
     public bool IsOverdrawRequired { get; set; }
 
-    public XElement Style
-    {
-        set => LoadContents(null, value);
-    }
+    public XElement Style { set => LoadContents(null, value); }
 
     public ContainerWidget? ParentWidget { get; set; }
 
@@ -268,27 +265,32 @@ public class Widget : IDisposable
                     if (array.Length != 2)
                     {
                         throw new InvalidOperationException(
-                            $"Attached property reference must have form \"TypeName.PropertyName\", property \"{attribute.Name.LocalName}\" in widget of type \"{GetType().FullName}\".");
+                            $"Attached property reference must have form \"TypeName.PropertyName\", property \"{attribute.Name.LocalName}\" in widget of type \"{GetType().FullName}\"."
+                        );
                     }
 
-                    var type = FindTypeFromXmlName(array[0],
+                    var type = FindTypeFromXmlName(
+                        array[0],
                         attribute.Name.NamespaceName != string.Empty
                             ? attribute.Name.NamespaceName
-                            : node.Name.NamespaceName);
+                            : node.Name.NamespaceName
+                    );
                     var setterName = "Set" + array[1];
                     var methodInfo = type.GetRuntimeMethods()
                         .FirstOrDefault(mi => mi.Name == setterName && mi.IsPublic && mi.IsStatic);
                     if (!(methodInfo != null))
                     {
                         throw new InvalidOperationException(
-                            $"Attached property public static setter method \"{setterName}\" not found, property \"{attribute.Name.LocalName}\" in widget of type \"{GetType().FullName}\".");
+                            $"Attached property public static setter method \"{setterName}\" not found, property \"{attribute.Name.LocalName}\" in widget of type \"{GetType().FullName}\"."
+                        );
                     }
 
                     var parameters = methodInfo.GetParameters();
                     if (parameters.Length != 2 || !(parameters[0].ParameterType == typeof(Widget)))
                     {
                         throw new InvalidOperationException(
-                            $"Attached property setter method must take 2 parameters and first one must be of type Widget, property \"{attribute.Name.LocalName}\" in widget of type \"{GetType().FullName}\".");
+                            $"Attached property setter method must take 2 parameters and first one must be of type Widget, property \"{attribute.Name.LocalName}\" in widget of type \"{GetType().FullName}\"."
+                        );
                     }
 
                     var obj = HumanReadableConverter.ConvertFromString(parameters[1].ParameterType, attribute.Value);
@@ -300,7 +302,8 @@ public class Widget : IDisposable
                     if (!(propertyInfo != null))
                     {
                         throw new InvalidOperationException(
-                            $"Property \"{attribute.Name.LocalName}\" not found in widget of type \"{GetType().FullName}\".");
+                            $"Property \"{attribute.Name.LocalName}\" not found in widget of type \"{GetType().FullName}\"."
+                        );
                     }
 
                     if (attribute.Value.StartsWith('{') && attribute.Value.EndsWith('}'))
@@ -334,7 +337,8 @@ public class Widget : IDisposable
         if (this is not ContainerWidget containerWidget)
         {
             throw new Exception(
-                $"Type \"{node.Name.LocalName}\" is not a ContainerWidget, but it contains child widgets.");
+                $"Type \"{node.Name.LocalName}\" is not a ContainerWidget, but it contains child widgets."
+            );
         }
 
         foreach (var item in node.Elements())
@@ -602,8 +606,12 @@ public class Widget : IDisposable
         var num5 = MathUtils.Min(0f, num, num2, x);
         var num6 = MathUtils.Max(0f, num, num2, x);
         var num7 = MathUtils.Min(0f, num3, num4, x2);
-        return new BoundingRectangle(y2: MathUtils.Max(0f, num3, num4, x2) + _globalTransform.M42,
-            x1: num5 + _globalTransform.M41, y1: num7 + _globalTransform.M42, x2: num6 + _globalTransform.M41);
+        return new BoundingRectangle(
+            y2: MathUtils.Max(0f, num3, num4, x2) + _globalTransform.M42,
+            x1: num5 + _globalTransform.M41,
+            y1: num7 + _globalTransform.M42,
+            x2: num6 + _globalTransform.M41
+        );
     }
 
     public static Type FindTypeFromXmlName(string name, string namespaceName)
@@ -617,7 +625,8 @@ public class Widget : IDisposable
             }
 
             throw new InvalidOperationException(
-                "Unknown uri scheme when loading widget. Scheme must be runtime-namespace.");
+                "Unknown uri scheme when loading widget. Scheme must be runtime-namespace."
+            );
         }
 
         throw new InvalidOperationException("Namespace must be specified when creating types in XML.");
@@ -707,8 +716,14 @@ public class Widget : IDisposable
                 return;
             }
 
-            var flag = widget.GlobalBounds.Intersection(new BoundingRectangle(scissorRectangle.Left,
-                scissorRectangle.Top, scissorRectangle.Right, scissorRectangle.Bottom));
+            var flag = widget.GlobalBounds.Intersection(
+                new BoundingRectangle(
+                    scissorRectangle.Left,
+                    scissorRectangle.Top,
+                    scissorRectangle.Right,
+                    scissorRectangle.Bottom
+                )
+            );
             Rectangle? scissorRectangle2 = null;
             if (widget.ClampToBounds && flag)
             {
@@ -717,8 +732,10 @@ public class Widget : IDisposable
                 var num2 = (int)MathUtils.Floor(widget.GlobalBounds.Min.Y - 0.5f);
                 var num3 = (int)MathUtils.Ceiling(widget.GlobalBounds.Max.X - 0.5f);
                 var num4 = (int)MathUtils.Ceiling(widget.GlobalBounds.Max.Y - 0.5f);
-                scissorRectangle = Rectangle.Intersection(new Rectangle(num, num2, num3 - num, num4 - num2),
-                    scissorRectangle2.Value);
+                scissorRectangle = Rectangle.Intersection(
+                    new Rectangle(num, num2, num3 - num, num4 - num2),
+                    scissorRectangle2.Value
+                );
                 var drawItemFromCache = GetDrawItemFromCache();
                 drawItemFromCache.ScissorRectangle = scissorRectangle;
                 _drawItems.Add(drawItemFromCache);

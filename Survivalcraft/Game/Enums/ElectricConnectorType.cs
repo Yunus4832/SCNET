@@ -2,8 +2,11 @@ namespace Game;
 
 public enum ElectricConnectorType
 {
-    Input,
-    Output,
-    InputOutput,
-    None,
+    Input = 0,
+
+    Output = 1,
+
+    InputOutput = 2,
+
+    None = 3,
 }

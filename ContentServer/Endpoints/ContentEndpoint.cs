@@ -23,8 +23,8 @@ public abstract class ContentEndpoint : EndpointWithoutRequest
     {
         try
         {
-            return await HttpContext.Request.ReadFromJsonAsync<T>(cancellationToken)
-                   ?? throw new KnownException("invalid_request", StatusCodes.Status400BadRequest);
+            return await HttpContext.Request.ReadFromJsonAsync<T>(cancellationToken) ??
+                   throw new KnownException("invalid_request", StatusCodes.Status400BadRequest);
         }
         catch (JsonException)
         {

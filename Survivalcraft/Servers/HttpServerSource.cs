@@ -18,16 +18,17 @@ public sealed class HttpServerSource(
         var snapshot = await client.GetAllAsync(new Uri(installedSource.ApiUrl), cancellationToken)
             .ConfigureAwait(false);
         return snapshot.Servers.Select((entry, order) => new ServerItem
-        {
-            SourceId = Id,
-            EntryId = entry.Id,
-            SourceKind = Kind,
-            SourceName = snapshot.Source.Name,
-            Address = entry.Address,
-            DisplayName = entry.Name,
-            Description = entry.Description ?? string.Empty,
-            Tags = entry.Tags,
-            Order = order
-        }).ToArray();
+            {
+                SourceId = Id,
+                EntryId = entry.Id,
+                SourceKind = Kind,
+                SourceName = snapshot.Source.Name,
+                Address = entry.Address,
+                DisplayName = entry.Name,
+                Description = entry.Description ?? string.Empty,
+                Tags = entry.Tags,
+                Order = order
+            }
+        ).ToArray();
     }
 }

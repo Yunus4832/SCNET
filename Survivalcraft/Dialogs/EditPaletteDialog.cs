@@ -59,38 +59,50 @@ public class EditPaletteDialog : Dialog
                     }
                 }
             };
-            obj.Children.Add(_labels[i] = new LinkWidget
-            {
-                Size = new Vector2(300f, -1f),
-                VerticalAlignment = WidgetAlignment.Center,
-                Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
-            });
-            obj.Children.Add(new CanvasWidget
-            {
-                Size = new Vector2(10f, 0f)
-            });
-            obj.Children.Add(_rectangles[i] = new BevelledButtonWidget
-            {
-                Size = new Vector2(1f / 0f, 60f),
-                BevelSize = 1f,
-                AmbientLight = 1f,
-                DirectionalLight = 0.4f,
-                VerticalAlignment = WidgetAlignment.Center
-            });
-            obj.Children.Add(new CanvasWidget
-            {
-                Size = new Vector2(10f, 0f)
-            });
-            obj.Children.Add(_resetButtons[i] = new BevelledButtonWidget
-            {
-                Size = new Vector2(160f, 60f),
-                VerticalAlignment = WidgetAlignment.Center,
-                Text = LanguageManager.GetContentWidgets(_typeName, "Reset")
-            });
-            obj.Children.Add(new CanvasWidget
-            {
-                Size = new Vector2(10f, 0f)
-            });
+            obj.Children.Add(
+                _labels[i] = new LinkWidget
+                {
+                    Size = new Vector2(300f, -1f),
+                    VerticalAlignment = WidgetAlignment.Center,
+                    Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
+                }
+            );
+            obj.Children.Add(
+                new CanvasWidget
+                {
+                    Size = new Vector2(10f, 0f)
+                }
+            );
+            obj.Children.Add(
+                _rectangles[i] = new BevelledButtonWidget
+                {
+                    Size = new Vector2(1f / 0f, 60f),
+                    BevelSize = 1f,
+                    AmbientLight = 1f,
+                    DirectionalLight = 0.4f,
+                    VerticalAlignment = WidgetAlignment.Center
+                }
+            );
+            obj.Children.Add(
+                new CanvasWidget
+                {
+                    Size = new Vector2(10f, 0f)
+                }
+            );
+            obj.Children.Add(
+                _resetButtons[i] = new BevelledButtonWidget
+                {
+                    Size = new Vector2(160f, 60f),
+                    VerticalAlignment = WidgetAlignment.Center,
+                    Text = LanguageManager.GetContentWidgets(_typeName, "Reset")
+                }
+            );
+            obj.Children.Add(
+                new CanvasWidget
+                {
+                    Size = new Vector2(10f, 0f)
+                }
+            );
             var widget = obj;
             _listPanel.Children.Add(widget);
         }
@@ -121,7 +133,7 @@ public class EditPaletteDialog : Dialog
                         LanguageManager.GetContentWidgets(_typeName, "EditColorName"),
                         _labels[k].Text,
                         16,
-                        delegate (string s)
+                        delegate(string s)
                         {
                             if (WorldPalette.VerifyColorName(s))
                             {
@@ -138,7 +150,8 @@ public class EditPaletteDialog : Dialog
                                     )
                                 );
                             }
-                        })
+                        }
+                    )
                 );
             }
 
@@ -146,13 +159,16 @@ public class EditPaletteDialog : Dialog
             {
                 DialogsManager.ShowDialog(
                     this,
-                    new EditColorDialog(_tmpPalette.Colors[k], delegate (Color? color)
-                    {
-                        if (color.HasValue)
+                    new EditColorDialog(
+                        _tmpPalette.Colors[k],
+                        delegate(Color? color)
                         {
-                            _tmpPalette.Colors[i] = color.Value;
+                            if (color.HasValue)
+                            {
+                                _tmpPalette.Colors[i] = color.Value;
+                            }
                         }
-                    })
+                    )
                 );
             }
 

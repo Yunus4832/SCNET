@@ -4,8 +4,9 @@ public class DispenserBlock : CubeBlock, IElectricElementBlock
 {
     public enum Mode
     {
-        Dispense,
-        Shoot
+        Dispense = 0,
+
+        Shoot = 1
     }
 
     public ElectricElement CreateElectricElement(

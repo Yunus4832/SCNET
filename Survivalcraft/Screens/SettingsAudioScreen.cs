@@ -5,6 +5,7 @@ namespace Game.Screens;
 public class SettingsAudioScreen : Screen
 {
     private readonly SliderWidget _musicVolumeSlider;
+
     private readonly SliderWidget _soundsVolumeSlider;
 
     public SettingsAudioScreen()

@@ -21,12 +21,26 @@ public class FurnaceBlock : Block
             BlockMeshesByData[i] = new BlockMesh();
             var identity = Matrix.Identity;
             identity *= Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-            BlockMeshesByData[i].AppendModelMeshPart(furnaceMesh.MeshParts[0],
-                boneAbsoluteTransform * identity, false, false, false, false, Color.White);
+            BlockMeshesByData[i].AppendModelMeshPart(
+                furnaceMesh.MeshParts[0],
+                boneAbsoluteTransform * identity,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(furnaceMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            furnaceMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 
@@ -70,8 +84,14 @@ public class FurnaceBlock : Block
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMesh, color, size, ref matrix,
-            environmentData);
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneBlockMesh,
+            color,
+            size,
+            ref matrix,
+            environmentData
+        );
     }
 
     public override BlockPlacementData GetPlacementValue(
@@ -107,8 +127,7 @@ public class FurnaceBlock : Block
 
         BlockPlacementData result = default;
         // Lit furnaces are placed as their unlit counterpart.
-        result.Value = Terrain.MakeBlockValue(
-            Catalog.GetBlock(ResourceId.Parse("game:furnace")).BlockIndex, 0, data);
+        result.Value = Terrain.MakeBlockValue(Catalog.GetBlock(ResourceId.Parse("game:furnace")).BlockIndex, 0, data);
         result.CellFace = raycastResult.CellFace;
         return result;
     }

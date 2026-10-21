@@ -28,11 +28,7 @@ public class TextBoxWidget : Widget
 
     public bool MoveNextFlag;
 
-    public Vector2 Size
-    {
-        get => _size ?? Vector2.Zero;
-        set => _size = value;
-    }
+    public Vector2 Size { get => _size ?? Vector2.Zero; set => _size = value; }
 
     public string Text
     {
@@ -178,7 +174,8 @@ public class TextBoxWidget : Widget
                 _compositionCaretPosition = composition.CaretPosition;
                 _focusStartTime = Time.RealTime;
             },
-            initialRectangle: initialRectangle);
+            initialRectangle: initialRectangle
+        );
     }
 
     private void EndTextInput()
@@ -408,8 +405,11 @@ public class TextBoxWidget : Widget
         }
 
         var displayText = GetDisplayText();
-        DesiredSize = Font.MeasureText(displayText.Length == 0 ? " " : displayText, new Vector2(FontScale),
-            FontSpacing);
+        DesiredSize = Font.MeasureText(
+            displayText.Length == 0 ? " " : displayText,
+            new Vector2(FontScale),
+            FontSpacing
+        );
 
         DesiredSize += new Vector2(1f * FontScale * Font.Scale, 0f);
     }
@@ -425,8 +425,15 @@ public class TextBoxWidget : Widget
             var fontBatch2D =
                 dc.PrimitivesRenderer2D.FontBatch(Font, 1, DepthStencilState.None, null, null, samplerState);
             var count = fontBatch2D.TriangleVertices.Count;
-            fontBatch2D.QueueText(displayText, position, 0f, color, TextAnchor.VerticalCenter, new Vector2(FontScale),
-                FontSpacing);
+            fontBatch2D.QueueText(
+                displayText,
+                position,
+                0f,
+                color,
+                TextAnchor.VerticalCenter,
+                new Vector2(FontScale),
+                FontSpacing
+            );
             fontBatch2D.TransformTriangles(GlobalTransform, count);
 
             DrawCompositionUnderline(dc, color, displayText);
@@ -460,8 +467,12 @@ public class TextBoxWidget : Widget
 
         var flatBatch2D = dc.PrimitivesRenderer2D.FlatBatch(1, DepthStencilState.None);
         var count2 = flatBatch2D.TriangleVertices.Count;
-        flatBatch2D.QueueQuad(v - new Vector2(0f, Font.GlyphHeight / 2f * FontScale * Font.Scale),
-            v + new Vector2(1f, Font.GlyphHeight / 2f * FontScale * Font.Scale), 0f, color);
+        flatBatch2D.QueueQuad(
+            v - new Vector2(0f, Font.GlyphHeight / 2f * FontScale * Font.Scale),
+            v + new Vector2(1f, Font.GlyphHeight / 2f * FontScale * Font.Scale),
+            0f,
+            color
+        );
         flatBatch2D.TransformTriangles(GlobalTransform, count2);
     }
 
@@ -526,12 +537,14 @@ public class TextBoxWidget : Widget
             displayText,
             CaretPosition,
             new Vector2(FontScale),
-            FontSpacing);
+            FontSpacing
+        );
         var end = Font.CalculateCharacterPosition(
             displayText,
             CaretPosition + _compositionText.Length,
             new Vector2(FontScale),
-            FontSpacing);
+            FontSpacing
+        );
         var y = ActualSize.Y / 2f + Font.GlyphHeight * FontScale * Font.Scale / 2f;
         var flatBatch = dc.PrimitivesRenderer2D.FlatBatch(1, DepthStencilState.None);
         var count = flatBatch.LineVertices.Count;
@@ -539,7 +552,8 @@ public class TextBoxWidget : Widget
             new Vector2(start - _scroll, y),
             new Vector2(end - _scroll, y),
             0f,
-            color);
+            color
+        );
         flatBatch.TransformLines(GlobalTransform, count);
     }
 
@@ -559,25 +573,29 @@ public class TextBoxWidget : Widget
                    displayText,
                    displayCaretPosition,
                    FontScale,
-                   FontSpacing) ??
+                   FontSpacing
+               ) ??
                Font.CalculateCharacterPosition(
                    displayText,
                    displayCaretPosition,
                    new Vector2(FontScale),
-                   FontSpacing);
+                   FontSpacing
+               );
     }
 
     private TextInputRectangle CreateTextInputRectangle(float caretX)
     {
         var localPosition = new Vector2(
             caretX - _scroll,
-            ActualSize.Y / 2f + Font.GlyphHeight * FontScale * Font.Scale / 2f);
+            ActualSize.Y / 2f + Font.GlyphHeight * FontScale * Font.Scale / 2f
+        );
         var screenPosition = WidgetToScreen(localPosition);
         var windowScale = MathUtils.Max(Window.Scale, 0.0001f);
         return new TextInputRectangle(
             (int)MathF.Round(screenPosition.X / windowScale),
             (int)MathF.Round(screenPosition.Y / windowScale),
             1,
-            Math.Max(1, (int)MathF.Round(Font.GlyphHeight * FontScale * Font.Scale / windowScale)));
+            Math.Max(1, (int)MathF.Round(Font.GlyphHeight * FontScale * Font.Scale / windowScale))
+        );
     }
 }

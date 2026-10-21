@@ -73,7 +73,8 @@ public class CrossbowWidget : CanvasWidget
                     !arrowType.HasValue ? LanguageManager.Get(_typeName, 1) : LanguageManager.Get(_typeName, 2);
             }
 
-            if ((draw < 15 || !arrowType.HasValue) && Input.Tap.HasValue &&
+            if ((draw < 15 || !arrowType.HasValue) &&
+                Input.Tap.HasValue &&
                 HitTestGlobal(Input.Tap.Value) == _inventorySlotWidget)
             {
                 if (Input.Press.HasValue)
@@ -95,8 +96,10 @@ public class CrossbowWidget : CanvasWidget
 
             if (Input.Press.HasValue)
             {
-                var num3 = PositionToDraw(_inventorySlotWidget.ScreenToWidget(Input.Press.Value).Y -
-                                          _dragStartOffset.Value);
+                var num3 = PositionToDraw(
+                    _inventorySlotWidget.ScreenToWidget(Input.Press.Value).Y -
+                    _dragStartOffset.Value
+                );
                 SetDraw(num3);
                 if (draw <= 9 && num3 > 9)
                 {
@@ -110,8 +113,13 @@ public class CrossbowWidget : CanvasWidget
                 {
                     if (CommonLib.WorkType == WorkType.Client)
                     {
-                        NetworkSender.SendToServer(new BlockEditPackage(_inventory.Id, _slotIndex,
-                            BlockEditPackage.EventType.CrossbowPull));
+                        NetworkSender.SendToServer(
+                            new BlockEditPackage(
+                                _inventory.Id,
+                                _slotIndex,
+                                BlockEditPackage.EventType.CrossbowPull
+                            )
+                        );
                     }
 
                     AudioManager.PlaySound("Audio/UI/ItemMoved", 1f, 0f, 0f);
@@ -119,8 +127,12 @@ public class CrossbowWidget : CanvasWidget
                 }
 
                 SetDraw(0);
-                AudioManager.PlaySound("Audio/CrossbowBoing", MathUtils.Saturate((draw - 3) / 10f),
-                    _random.Float(-0.1f, 0.1f), 0f);
+                AudioManager.PlaySound(
+                    "Audio/CrossbowBoing",
+                    MathUtils.Saturate((draw - 3) / 10f),
+                    _random.Float(-0.1f, 0.1f),
+                    0f
+                );
             }
         }
         else

@@ -16,7 +16,8 @@ namespace ContentServer.Endpoints.Admin.Administrators;
 [AllowAnonymous]
 public sealed class AdministratorApplicationSelfEndpoint(
     IMediator mediator,
-    ApiKeyAuthenticationContext authenticationContext) : ContentEndpoint
+    ApiKeyAuthenticationContext authenticationContext
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -28,16 +29,29 @@ public sealed class AdministratorApplicationSelfEndpoint(
     {
         var id = authenticationContext.RequireAdministratorId();
         var page = await mediator.Send(
-            new ListAdministratorsQuery(new PageRequest { PageIndex = 1, PageSize = 1, CountTotal = false },
-                AdministratorId: id), ct);
+            new ListAdministratorsQuery(
+                new PageRequest { PageIndex = 1, PageSize = 1, CountTotal = false },
+                AdministratorId: id
+            ),
+            ct
+        );
         var item = page.Items.FirstOrDefault(x => x.AdministratorId == id) ??
                    throw new KnownException("administrator_not_found", 404);
         return ToResponse(item).AsResponseData();
     }
 
-    internal static AdministratorResponse ToResponse(AdministratorDto x) => new(x.AdministratorId.ToString(), x.Name,
-        x.Contact, x.Description, x.Status.ToString().ToLowerInvariant(), x.IsSuperAdministrator, x.HasActiveKey,
-        x.ReviewMessage, x.CreatedAt, x.ReviewedAt);
+    internal static AdministratorResponse ToResponse(AdministratorDto x) => new(
+        x.AdministratorId.ToString(),
+        x.Name,
+        x.Contact,
+        x.Description,
+        x.Status.ToString().ToLowerInvariant(),
+        x.IsSuperAdministrator,
+        x.HasActiveKey,
+        x.ReviewMessage,
+        x.CreatedAt,
+        x.ReviewedAt
+    );
 }
 
 public sealed record AdministratorResponse(
@@ -50,6 +64,7 @@ public sealed record AdministratorResponse(
     bool HasActiveKey,
     string? ReviewMessage,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? ReviewedAt);
+    DateTimeOffset? ReviewedAt
+);
 
 public sealed record AdministratorApplicationResponse(string AdministratorId, string Status, string ApiKey);

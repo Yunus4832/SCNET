@@ -8,10 +8,13 @@ public struct EntityReference
 {
     public enum ReferenceType
     {
-        Null,
-        Local,
-        ByEntityId,
-        ByEntityName
+        Null = 0,
+
+        Local = 1,
+
+        ByEntityId = 2,
+
+        ByEntityName = 3
     }
 
     private ReferenceType _referenceType;

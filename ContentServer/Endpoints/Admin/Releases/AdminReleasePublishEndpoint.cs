@@ -26,8 +26,10 @@ public sealed class AdminReleasePublishEndpoint(IMediator mediator) : ContentEnd
                 throw new KnownException("game_release_not_found", StatusCodes.Status404NotFound);
             }
 
-            await Send.ResponseAsync(new ResponseData(true, "success", StatusCodes.Status200OK),
-                cancellation: cancellationToken);
+            await Send.ResponseAsync(
+                new ResponseData(true, "success", StatusCodes.Status200OK),
+                cancellation: cancellationToken
+            );
         }
         catch (InvalidOperationException)
         {

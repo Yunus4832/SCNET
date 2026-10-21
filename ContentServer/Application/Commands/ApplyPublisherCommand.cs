@@ -15,15 +15,16 @@ public sealed record ApplyPublisherCommand(
 public sealed record PublisherApplicationDto(
     PublisherId PublisherId,
     PublisherStatus Status,
-    string ApiKey);
+    string ApiKey
+);
 
-public sealed class ApplyPublisherCommandHandler(
-    PublisherRepository repository
-) : ICommandHandler<ApplyPublisherCommand, PublisherApplicationDto>
+public sealed class ApplyPublisherCommandHandler(PublisherRepository repository)
+    : ICommandHandler<ApplyPublisherCommand, PublisherApplicationDto>
 {
     public async Task<PublisherApplicationDto> Handle(
         ApplyPublisherCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var key = ApiKeyUtility.GeneratePublisherKey();
         var publisher = Publisher.Apply(

@@ -87,8 +87,11 @@ public sealed class MovingBlockPackageTest
         Assert.Equal(set.CurrentVelocity, clone.Velocity);
         Assert.Equal(set.Speed, clone.Speed);
         Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
-        Assert.Equal(type == MovingBlockPackage.EventType.Update
-            ? PackageTransportPolicy.StateStream
-            : PackageTransportPolicy.ReliableEvent, PackageTransportPolicy.Get(clone));
+        Assert.Equal(
+            type == MovingBlockPackage.EventType.Update
+                ? PackageTransportPolicy.StateStream
+                : PackageTransportPolicy.ReliableEvent,
+            PackageTransportPolicy.Get(clone)
+        );
     }
 }

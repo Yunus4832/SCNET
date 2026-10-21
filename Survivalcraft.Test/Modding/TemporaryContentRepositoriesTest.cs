@@ -24,21 +24,29 @@ public sealed class TemporaryContentRepositoriesTest
     {
         var tooMany = Enumerable.Range(0, TemporaryContentRepositories.MaximumCount + 1)
             .Select(index => new ContentRepository
-            {
-                Name = index.ToString(),
-                BaseUrl = $"https://{index}.example",
-                Priority = index
-            });
+                {
+                    Name = index.ToString(),
+                    BaseUrl = $"https://{index}.example",
+                    Priority = index
+                }
+            );
         Assert.Throws<InvalidDataException>(() => TemporaryContentRepositories.Validate(tooMany));
 
         var repository = new ContentRepository { Name = "A", BaseUrl = "https://a.example" };
         Assert.Throws<InvalidDataException>(() =>
-            TemporaryContentRepositories.Validate([repository, repository with { Id = Guid.NewGuid() }]));
-        Assert.Throws<InvalidDataException>(() => TemporaryContentRepositories.Validate([
-            repository with { BaseUrl = "file:///tmp/content" }
-        ]));
-        Assert.Throws<InvalidDataException>(() => TemporaryContentRepositories.Validate([
-            repository with { Priority = TemporaryContentRepositories.MaximumPriority + 1 }
-        ]));
+            TemporaryContentRepositories.Validate([repository, repository with { Id = Guid.NewGuid() }])
+        );
+        Assert.Throws<InvalidDataException>(() => TemporaryContentRepositories.Validate(
+                [
+                    repository with { BaseUrl = "file:///tmp/content" }
+                ]
+            )
+        );
+        Assert.Throws<InvalidDataException>(() => TemporaryContentRepositories.Validate(
+                [
+                    repository with { Priority = TemporaryContentRepositories.MaximumPriority + 1 }
+                ]
+            )
+        );
     }
 }

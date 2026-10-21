@@ -14,9 +14,17 @@ public class EmptyBucketBlock : BucketBlock
             bucketMesh.ParentBone ??
             throw new InvalidOperationException("Required BucketMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(bucketMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
-            Matrix.CreateTranslation(0f, -0.3f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            bucketMesh.MeshParts[0],
+            boneAbsoluteTransform *
+            Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
+            Matrix.CreateTranslation(0f, -0.3f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 

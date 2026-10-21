@@ -45,10 +45,14 @@ public static class DebugOverlayManager
         }
 
         var font = LabelWidget.BitmapFont;
-        var scale = new Vector2(MathUtils.Round(MathUtils.Clamp(ScreensManager.RootWidget.GlobalScale, 1f, 4f)) *
-                                12f / (font.GlyphHeight * font.Scale));
+        var scale = new Vector2(
+            MathUtils.Round(MathUtils.Clamp(ScreensManager.RootWidget.GlobalScale, 1f, 4f)) *
+            12f /
+            (font.GlyphHeight * font.Scale)
+        );
         var margin = 4f * scale.X;
-        var maximumPanelWidth = MathUtils.Min(MeasurePanel(new string('W', 42), scale).X, Display.Viewport.Width * 0.45f);
+        var maximumPanelWidth =
+            MathUtils.Min(MeasurePanel(new string('W', 42), scale).X, Display.Viewport.Width * 0.45f);
         var contentWidth = MathUtils.Max(1f, maximumPanelWidth - 10f * scale.X);
         var contextText = WrapPanelText(_contextText, contentWidth, scale.X);
         var worldText = WrapPanelText(_worldText, contentWidth, scale.X);
@@ -57,19 +61,30 @@ public static class DebugOverlayManager
         var minimumPanelWidth = MathUtils.Min(MeasurePanel(new string('W', 36), scale).X, maximumPanelWidth);
         var panelWidth = MathUtils.Max(minimumPanelWidth, MathUtils.Max(contextSize.X, worldSize.X));
         var stackedHeight = contextSize.Y + worldSize.Y + (worldSize.Y > 0f ? 3f : 2f) * margin;
-        var fit = MathUtils.Min(1f, MathUtils.Min((Display.Viewport.Width - 2f * margin) / panelWidth,
-            Display.Viewport.Height / stackedHeight));
+        var fit = MathUtils.Min(
+            1f,
+            MathUtils.Min(
+                (Display.Viewport.Width - 2f * margin) / panelWidth,
+                Display.Viewport.Height / stackedHeight
+            )
+        );
         var sideBySide = false;
         if (worldSize.Y > 0f && fit < 1f)
         {
-            var sideFit = MathUtils.Min(1f, MathUtils.Min((Display.Viewport.Width - 3f * margin) / (2f * panelWidth),
-                (Display.Viewport.Height - 2f * margin) / MathUtils.Max(contextSize.Y, worldSize.Y)));
+            var sideFit = MathUtils.Min(
+                1f,
+                MathUtils.Min(
+                    (Display.Viewport.Width - 3f * margin) / (2f * panelWidth),
+                    (Display.Viewport.Height - 2f * margin) / MathUtils.Max(contextSize.Y, worldSize.Y)
+                )
+            );
             if (sideFit > fit)
             {
                 sideBySide = true;
                 fit = sideFit;
             }
         }
+
         fit = MathUtils.Max(0.01f, fit);
         scale *= fit;
         margin *= fit;
@@ -124,9 +139,11 @@ public static class DebugOverlayManager
         lines.Add(string.Empty);
         lines.Add("PERFORMANCE");
         var frameTime = PerformanceManager.AverageFrameTime;
-        lines.Add(frameTime > 0f
-            ? $"FPS         {1f / frameTime:0.0} ({frameTime * 1000f:0.0} ms)"
-            : "FPS         --");
+        lines.Add(
+            frameTime > 0f
+                ? $"FPS         {1f / frameTime:0.0} ({frameTime * 1000f:0.0} ms)"
+                : "FPS         --"
+        );
         lines.Add($"CPU         {PerformanceManager.CpuUtilization * 100f:0}%");
         lines.Add($"Managed     {PerformanceManager.TotalMemoryUsed / 1024f / 1024f:0} MB");
         lines.Add($"GPU         {PerformanceManager.TotalGpuMemoryUsed / 1024f / 1024f:0} MB");
@@ -138,8 +155,12 @@ public static class DebugOverlayManager
         if (CommonLib.WorkType == WorkType.Client && node.Server?.Peer is { } peer)
         {
             lines.Add($"Path        {GetPathText(peer.PathKind)}");
-            lines.Add($"IP          {(peer.TransportEndpoint.AddressFamily == AddressFamily.InterNetworkV6 ? "IPv6" : "IPv4")}");
-            lines.Add($"{(peer.PathKind == NetworkPathKind.Relay ? "Relay peer" : "Server peer"),-12}{peer.TransportEndpoint}");
+            lines.Add(
+                $"IP          {(peer.TransportEndpoint.AddressFamily == AddressFamily.InterNetworkV6 ? "IPv6" : "IPv4")}"
+            );
+            lines.Add(
+                $"{(peer.PathKind == NetworkPathKind.Relay ? "Relay peer" : "Server peer"),-12}{peer.TransportEndpoint}"
+            );
             var signalingAddress = node.RemoteTarget switch
             {
                 InvitationCodeNetworkTarget target => target.ControlAddress,
@@ -150,13 +171,15 @@ public static class DebugOverlayManager
             {
                 lines.Add($"Signaling   {signalingAddress.AbsoluteUri}");
             }
+
             lines.Add($"Ping        {peer.RoundTripMilliseconds} ms");
             lines.Add($"Packet Loss {peer.PacketLossPercent:0.##}%");
             lines.Add($"Pending ACK {peer.PendingReliableBytes / 1024f:0.##} KB");
         }
         else if (CommonLib.WorkType == WorkType.Server)
         {
-            var connections = node.Peers.Select(client => client.Peer).Where(peer => peer?.IsConnected == true).ToArray();
+            var connections = node.Peers.Select(client => client.Peer).Where(peer => peer?.IsConnected == true)
+                .ToArray();
             lines.Add($"Listen UDP  {node.LocalPort?.ToString() ?? "--"}");
             lines.Add($"Clients     {connections.Length}");
             lines.Add($"Direct      {connections.Count(peer => peer!.PathKind == NetworkPathKind.Direct)}");
@@ -168,11 +191,11 @@ public static class DebugOverlayManager
             {
                 lines.Add($"Signaling   {room.ControlUrl}");
             }
+
             if (!string.IsNullOrEmpty(room.LastError))
             {
                 lines.Add($"P2P error   {room.LastError}");
             }
-
         }
 
         return string.Join('\n', lines);
@@ -202,12 +225,14 @@ public static class DebugOverlayManager
                     prefix = string.Empty;
                     available = width;
                 }
+
                 var count = LabelWidget.BitmapFont.FitText(available, line, offset, line.Length - offset, scale, 0f);
                 count = MathUtils.Min(line.Length - offset, MathUtils.Max(1, count));
                 lines.Add(prefix + line.Substring(offset, count));
                 offset += count;
             } while (offset < line.Length);
         }
+
         return string.Join('\n', lines);
     }
 
@@ -236,7 +261,8 @@ public static class DebugOverlayManager
         var humidity = terrain.GetSeasonalHumidity(cell.X, cell.Z);
         var timeOfDay = subsystemTimeOfDay.TimeOfDay;
 
-        return string.Join('\n',
+        return string.Join(
+            '\n',
             "PLAYER",
             $"Name        {player.PlayerData.Name}",
             $"Position    {position.X:0.00}, {position.Y:0.00}, {position.Z:0.00}",
@@ -250,7 +276,8 @@ public static class DebugOverlayManager
             $"Season      {subsystemSeasons.Season} ({subsystemSeasons.TimeOfSeason:P0})",
             $"Temperature {temperature}",
             $"Humidity    {humidity}",
-            $"Light       {terrain.GetCellLight(cell.X, cell.Y, cell.Z)}");
+            $"Light       {terrain.GetCellLight(cell.X, cell.Y, cell.Z)}"
+        );
     }
 
     private static ComponentPlayer? GetMainPlayer()
@@ -269,8 +296,14 @@ public static class DebugOverlayManager
         var padding = new Vector2(5f) * scale;
         _primitivesRenderer.FlatBatch(0, DepthStencilState.None, null, BlendState.AlphaBlend)
             .QueueQuad(position, position + size, 0f, new Color(0, 0, 0, 110));
-        _primitivesRenderer.FontBatch(LabelWidget.BitmapFont, 1, DepthStencilState.None, null, BlendState.AlphaBlend,
-                SamplerState.LinearClamp)
+        _primitivesRenderer.FontBatch(
+                LabelWidget.BitmapFont,
+                1,
+                DepthStencilState.None,
+                null,
+                BlendState.AlphaBlend,
+                SamplerState.LinearClamp
+            )
             .QueueText(text, position + padding, 0f, Color.White, TextAnchor.Left, scale, Vector2.Zero);
     }
 }

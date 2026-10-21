@@ -22,8 +22,17 @@ public class StreamingSoundTest : IDisposable
     public StreamingSoundTest()
     {
         // 设置测试音乐文件路径
-        _musicFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Content",
-            "Assets", "Music", "AloneForever.ogg");
+        _musicFilePath = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "..",
+            "Content",
+            "Assets",
+            "Music",
+            "AloneForever.ogg"
+        );
         _musicFilePath = Path.GetFullPath(_musicFilePath);
 
         // 确保音频系统已初始化
@@ -36,7 +45,8 @@ public class StreamingSoundTest : IDisposable
         if (!Mixer.IsAudioInitialized)
         {
             throw new InvalidOperationException(
-                "Audio system initialization failed. Tests cannot run without audio device.");
+                "Audio system initialization failed. Tests cannot run without audio device."
+            );
         }
     }
 

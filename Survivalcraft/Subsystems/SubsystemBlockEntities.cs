@@ -73,6 +73,7 @@ public class SubsystemBlockEntities : Subsystem
     internal bool RemoveBlockEntity(ComponentBlockEntity block)
     {
         return BlockEntities.TryGetValue(block.Coordinates, out var registered) &&
-               ReferenceEquals(registered, block) && BlockEntities.Remove(block.Coordinates);
+               ReferenceEquals(registered, block) &&
+               BlockEntities.Remove(block.Coordinates);
     }
 }

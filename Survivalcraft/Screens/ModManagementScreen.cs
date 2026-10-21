@@ -12,22 +12,35 @@ public sealed class ModManagementScreen : Screen
 
     private enum ModAction
     {
-        Import,
-        Export,
-        Details,
-        Global,
-        World,
-        DeleteCache,
-        Refresh
+        Import = 0,
+
+        Export = 1,
+
+        Details = 2,
+
+        Global = 3,
+
+        World = 4,
+
+        DeleteCache = 5,
+
+        Refresh = 6
     }
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly LabelWidget _emptyLabel;
+
     private readonly ListPanelWidget _modsList;
+
     private readonly LabelWidget _pickerUnavailableLabel;
+
     private bool _busy;
+
     private ModProfile _globalProfile = new();
+
     private int _operationGeneration;
+
     private BusyDialog? _operationDialog;
 
     public ModManagementScreen()
@@ -42,18 +55,20 @@ public sealed class ModManagementScreen : Screen
         _actionPanel.ItemColorProvider = item => item is ModAction.DeleteCache ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
-        [
-            ModAction.Import,
-            ModAction.Export,
-            ModAction.Global,
-            ModAction.World
-        ]);
+            [
+                ModAction.Import,
+                ModAction.Export,
+                ModAction.Global,
+                ModAction.World
+            ]
+        );
         _actionPanel.SetSecondaryItems(
-        [
-            ModAction.Details,
-            ModAction.Refresh,
-            ModAction.DeleteCache
-        ]);
+            [
+                ModAction.Details,
+                ModAction.Refresh,
+                ModAction.DeleteCache
+            ]
+        );
         _modsList.ItemWidgetFactory = CreateModItemWidget;
     }
 
@@ -154,11 +169,17 @@ public sealed class ModManagementScreen : Screen
         var selected = _modsList.SelectedItem as ManagedModItem;
         return action switch
         {
-            ModAction.Global => LanguageManager.Get(_typeName,
-                selected?.IsGlobal == true ? "RemoveGlobal" :
-                selected is not null && _globalProfile.Packages.Any(package =>
-                    string.Equals(package.ModId, selected.ModId, StringComparison.OrdinalIgnoreCase))
-                    ? "ReplaceGlobal" : "AddGlobal"),
+            ModAction.Global => LanguageManager.Get(
+                _typeName,
+                selected?.IsGlobal == true
+                    ? "RemoveGlobal"
+                    : selected is not null &&
+                      _globalProfile.Packages.Any(package =>
+                          string.Equals(package.ModId, selected.ModId, StringComparison.OrdinalIgnoreCase)
+                      )
+                        ? "ReplaceGlobal"
+                        : "AddGlobal"
+            ),
             ModAction.DeleteCache => LanguageManager.Get(_typeName, "DeleteCacheShort"),
             ModAction.Refresh => LanguageManager.Get(_typeName, "RefreshLocal"),
             _ => LanguageManager.Get(_typeName, action.ToString())
@@ -190,8 +211,12 @@ public sealed class ModManagementScreen : Screen
             .ToArray();
         var repository = CreateRepository();
         var selected = _modsList.SelectedItem as ManagedModItem;
-        var items = ModManagementCatalog.Build(repository.ListAll(), _globalProfile, worldProfiles,
-            CurrentModRuntime.Value?.EffectiveProfile);
+        var items = ModManagementCatalog.Build(
+            repository.ListAll(),
+            _globalProfile,
+            worldProfiles,
+            CurrentModRuntime.Value?.EffectiveProfile
+        );
         _modsList.ClearItems();
         foreach (var item in items)
         {
@@ -207,20 +232,27 @@ public sealed class ModManagementScreen : Screen
 
     private void ConfirmDeleteCache(ManagedModItem item)
     {
-        var message = string.Format(LanguageManager.Get(_typeName, "DeleteCacheQuestion"),
-            item.ModId, item.Version);
-        DialogsManager.ShowDialog(null, new MessageDialog(
-            LanguageManager.Get(_typeName, "DeleteCacheTitle"),
-            message,
-            LanguageManager.Yes,
-            LanguageManager.No,
-            button =>
-            {
-                if (button == MessageDialogButton.Button1)
+        var message = string.Format(
+            LanguageManager.Get(_typeName, "DeleteCacheQuestion"),
+            item.ModId,
+            item.Version
+        );
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                LanguageManager.Get(_typeName, "DeleteCacheTitle"),
+                message,
+                LanguageManager.Yes,
+                LanguageManager.No,
+                button =>
                 {
-                    DeleteCache(item);
+                    if (button == MessageDialogButton.Button1)
+                    {
+                        DeleteCache(item);
+                    }
                 }
-            }));
+            )
+        );
     }
 
     private void DeleteCache(ManagedModItem item)
@@ -253,8 +285,13 @@ public sealed class ModManagementScreen : Screen
         _busy = true;
         try
         {
-            var files = await FilePicker.PickFilesAsync(new FilePickerRequest([ContentPackageReader.FileExtension],
-                AllowMultiple: true, Title: LanguageManager.Get(_typeName, "SelectPackages")));
+            var files = await FilePicker.PickFilesAsync(
+                new FilePickerRequest(
+                    [ContentPackageReader.FileExtension],
+                    AllowMultiple: true,
+                    Title: LanguageManager.Get(_typeName, "SelectPackages")
+                )
+            );
             if (files.Count == 0)
             {
                 return;
@@ -268,12 +305,13 @@ public sealed class ModManagementScreen : Screen
             var busyDialog = new BusyDialog(LanguageManager.Get(_typeName, "Importing"), string.Empty);
             _operationDialog = busyDialog;
             Dispatcher.Dispatch(() =>
-            {
-                if (IsCurrentOperation(generation))
                 {
-                    DialogsManager.ShowDialog(null, busyDialog);
+                    if (IsCurrentOperation(generation))
+                    {
+                        DialogsManager.ShowDialog(null, busyDialog);
+                    }
                 }
-            });
+            );
             var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
             var imported = 0;
             try
@@ -288,35 +326,38 @@ public sealed class ModManagementScreen : Screen
             finally
             {
                 Dispatcher.Dispatch(() =>
-                {
-                    if (ReferenceEquals(_operationDialog, busyDialog))
                     {
-                        DialogsManager.HideDialog(busyDialog);
-                        _operationDialog = null;
+                        if (ReferenceEquals(_operationDialog, busyDialog))
+                        {
+                            DialogsManager.HideDialog(busyDialog);
+                            _operationDialog = null;
+                        }
                     }
-                });
+                );
             }
 
             Dispatcher.Dispatch(() =>
-            {
-                if (!IsCurrentOperation(generation))
                 {
-                    return;
-                }
+                    if (!IsCurrentOperation(generation))
+                    {
+                        return;
+                    }
 
-                RefreshState();
-                DialogsManager.Alert(string.Format(LanguageManager.Get(_typeName, "ImportComplete"), imported));
-            });
+                    RefreshState();
+                    DialogsManager.Alert(string.Format(LanguageManager.Get(_typeName, "ImportComplete"), imported));
+                }
+            );
         }
         catch (Exception exception)
         {
             Dispatcher.Dispatch(() =>
-            {
-                if (IsCurrentOperation(generation))
                 {
-                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ImportModFailed"), exception.Message);
+                    if (IsCurrentOperation(generation))
+                    {
+                        DialogsManager.Alert(LanguageManager.Get(_typeName, "ImportModFailed"), exception.Message);
+                    }
                 }
-            });
+            );
         }
         finally
         {
@@ -338,9 +379,13 @@ public sealed class ModManagementScreen : Screen
         _busy = true;
         try
         {
-            var target = await FilePicker.PickSaveTargetAsync(new FileSaveRequest(
-                $"{item.ModId}-{item.Version}{ContentPackageReader.FileExtension}",
-                "application/vnd.scnet.content-package", LanguageManager.Get(_typeName, "ExportTitle")));
+            var target = await FilePicker.PickSaveTargetAsync(
+                new FileSaveRequest(
+                    $"{item.ModId}-{item.Version}{ContentPackageReader.FileExtension}",
+                    "application/vnd.scnet.content-package",
+                    LanguageManager.Get(_typeName, "ExportTitle")
+                )
+            );
             if (target is null)
             {
                 return;
@@ -354,22 +399,24 @@ public sealed class ModManagementScreen : Screen
             await using var destination = await target.OpenWriteAsync(CancellationToken.None);
             CreateRepository().ExportPackage(item.LocalEntry, destination);
             Dispatcher.Dispatch(() =>
-            {
-                if (IsCurrentOperation(generation))
                 {
-                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name);
+                    if (IsCurrentOperation(generation))
+                    {
+                        DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name);
+                    }
                 }
-            });
+            );
         }
         catch (Exception exception)
         {
             Dispatcher.Dispatch(() =>
-            {
-                if (IsCurrentOperation(generation))
                 {
-                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportModFailed"), exception.Message);
+                    if (IsCurrentOperation(generation))
+                    {
+                        DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportModFailed"), exception.Message);
+                    }
                 }
-            });
+            );
         }
         finally
         {
@@ -387,35 +434,40 @@ public sealed class ModManagementScreen : Screen
         {
             DialogsManager.Alert(
                 LanguageManager.Get(_typeName, "NoWorldTitle"),
-                LanguageManager.Get(_typeName, "NoWorldMessage"));
+                LanguageManager.Get(_typeName, "NoWorldMessage")
+            );
             return;
         }
 
-        DialogsManager.ShowDialog(null, new ModWorldSelectionDialog(
-            $"{item.ModId}@{item.Version}",
-            WorldsManager.WorldInfos,
-            world => ModProfileManager.LoadWorldProfile(world.DirectoryName) is { } profile &&
-                     ModManagementCatalog.ContainsExact(profile, item),
-            selections =>
-            {
-                foreach (var selection in selections)
+        DialogsManager.ShowDialog(
+            null,
+            new ModWorldSelectionDialog(
+                $"{item.ModId}@{item.Version}",
+                WorldsManager.WorldInfos,
+                world => ModProfileManager.LoadWorldProfile(world.DirectoryName) is { } profile &&
+                         ModManagementCatalog.ContainsExact(profile, item),
+                selections =>
                 {
-                    var profile = ModProfileManager.LoadWorldProfile(selection.World.DirectoryName) ??
-                                  new ModProfile();
-                    if (selection.IsChecked)
+                    foreach (var selection in selections)
                     {
-                        AddPackage(profile, item);
-                    }
-                    else if (ModManagementCatalog.ContainsExact(profile, item))
-                    {
-                        RemovePackage(profile, item.ModId);
+                        var profile = ModProfileManager.LoadWorldProfile(selection.World.DirectoryName) ??
+                                      new ModProfile();
+                        if (selection.IsChecked)
+                        {
+                            AddPackage(profile, item);
+                        }
+                        else if (ModManagementCatalog.ContainsExact(profile, item))
+                        {
+                            RemovePackage(profile, item.ModId);
+                        }
+
+                        ModProfileManager.SaveWorldProfile(selection.World.DirectoryName, profile);
                     }
 
-                    ModProfileManager.SaveWorldProfile(selection.World.DirectoryName, profile);
+                    RefreshState();
                 }
-
-                RefreshState();
-            }));
+            )
+        );
     }
 
     private static void AddPackage(ModProfile profile, ManagedModItem item)
@@ -427,7 +479,8 @@ public sealed class ModManagementScreen : Screen
     private static void RemovePackage(ModProfile profile, string modId)
     {
         profile.Packages.RemoveAll(package =>
-            string.Equals(package.ModId, modId, StringComparison.OrdinalIgnoreCase));
+            string.Equals(package.ModId, modId, StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     private static LocalModRepository CreateRepository()
@@ -467,8 +520,11 @@ public sealed class ModManagementScreen : Screen
             status.Add(LanguageManager.Get(_typeName, "StatusRuntime"));
         }
 
-        var widget = (ContainerWidget)LoadWidget(null,
-            ContentManager.Get<XElement>("Widgets/ModManagementItem"), null);
+        var widget = (ContainerWidget)LoadWidget(
+            null,
+            ContentManager.Get<XElement>("Widgets/ModManagementItem"),
+            null
+        );
         widget.Children.Find<LabelWidget>("ModManagementItem.Name")!.Text = mod.LocalEntry?.Name ?? mod.ModId;
         widget.Children.Find<LabelWidget>("ModManagementItem.Summary")!.Text = mod.LocalEntry?.Summary ?? string.Empty;
         widget.Children.Find<LabelWidget>("ModManagementItem.Id")!.Text = mod.ModId;

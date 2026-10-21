@@ -7,9 +7,8 @@ using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
-public abstract class SubsystemEditableItemBehavior<T>(
-    int contents
-) : SubsystemBlockBehavior where T : IEditableItemData, new()
+public abstract class SubsystemEditableItemBehavior<T>(int contents)
+    : SubsystemBlockBehavior where T : IEditableItemData, new()
 {
     private readonly Dictionary<Point3, T> _blocksData = new();
 
@@ -22,7 +21,8 @@ public abstract class SubsystemEditableItemBehavior<T>(
     private void SendChunkState(Client client, Point2 chunk)
     {
         foreach (var entry in _blocksData.Where(entry =>
-                     entry.Key.X >> 4 == chunk.X && entry.Key.Z >> 4 == chunk.Y))
+                     entry.Key.X >> 4 == chunk.X && entry.Key.Z >> 4 == chunk.Y
+                 ))
         {
             NetworkSender.SendTo(client, CreateBlockStatePackage(entry.Key, entry.Value));
         }
@@ -56,7 +56,8 @@ public abstract class SubsystemEditableItemBehavior<T>(
     public void ClearChunkState(Point2 chunk)
     {
         foreach (var point in _blocksData.Keys.Where(point =>
-                     point.X >> 4 == chunk.X && point.Z >> 4 == chunk.Y).ToArray())
+                     point.X >> 4 == chunk.X && point.Z >> 4 == chunk.Y
+                 ).ToArray())
         {
             _blocksData.Remove(point);
         }
@@ -75,8 +76,14 @@ public abstract class SubsystemEditableItemBehavior<T>(
         return num;
     }
 
-    public override void OnBlockPlaced(ComponentMiner miner, int x, int y, int z, ref BlockPlacementData placementData,
-        int value)
+    public override void OnBlockPlaced(
+        ComponentMiner miner,
+        int x,
+        int y,
+        int z,
+        ref BlockPlacementData placementData,
+        int value
+    )
     {
         var id = Terrain.ExtractData(value);
         var itemData = GetItemData(id);
@@ -86,8 +93,14 @@ public abstract class SubsystemEditableItemBehavior<T>(
         }
     }
 
-    public override void OnItemHarvested(int x, int y, int z, int blockValue, ref BlockDropValue dropValue,
-        ref int newBlockValue)
+    public override void OnItemHarvested(
+        int x,
+        int y,
+        int z,
+        int blockValue,
+        ref BlockDropValue dropValue,
+        ref int newBlockValue
+    )
     {
         var blockData = GetBlockData(new Point3(x, y, z));
         if (blockData != null)
@@ -99,12 +112,18 @@ public abstract class SubsystemEditableItemBehavior<T>(
             {
                 if (blockData is MemoryBankData memory)
                 {
-                    CommonLib.Net.QueuePackage(EditableBlockPackageBuilder.Capture(num, memory), PackageAudience.Global);
+                    CommonLib.Net.QueuePackage(
+                        EditableBlockPackageBuilder.Capture(num, memory),
+                        PackageAudience.Global
+                    );
                 }
 
                 if (blockData is TruthTableData truthTableData)
                 {
-                    CommonLib.Net.QueuePackage(EditableBlockPackageBuilder.Capture(num, truthTableData), PackageAudience.Global);
+                    CommonLib.Net.QueuePackage(
+                        EditableBlockPackageBuilder.Capture(num, truthTableData),
+                        PackageAudience.Global
+                    );
                 }
             }
         }
@@ -148,8 +167,10 @@ public abstract class SubsystemEditableItemBehavior<T>(
         {
             foreach (var blocksDatum in _blocksData)
             {
-                valuesDictionary2.SetValue(HumanReadableConverter.ConvertToString(blocksDatum.Key),
-                    blocksDatum.Value.SaveString());
+                valuesDictionary2.SetValue(
+                    HumanReadableConverter.ConvertToString(blocksDatum.Key),
+                    blocksDatum.Value.SaveString()
+                );
             }
         }
 
@@ -157,8 +178,10 @@ public abstract class SubsystemEditableItemBehavior<T>(
         valuesDictionary.SetValue("Items", valuesDictionary3);
         foreach (var itemsDatum in ItemsData)
         {
-            valuesDictionary3.SetValue(HumanReadableConverter.ConvertToString(itemsDatum.Key),
-                itemsDatum.Value.SaveString());
+            valuesDictionary3.SetValue(
+                HumanReadableConverter.ConvertToString(itemsDatum.Key),
+                itemsDatum.Value.SaveString()
+            );
         }
     }
 

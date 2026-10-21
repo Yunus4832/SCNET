@@ -7,6 +7,7 @@ namespace Game.Subsystems;
 public class SubsystemSaddleBlockBehavior : SubsystemBlockBehavior
 {
     private readonly Random _random = new();
+
     private SubsystemAudio _subsystemAudio = null!;
 
     public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:saddle")];

@@ -8,7 +8,8 @@ internal static class GroupCommandHandlers
 {
     public static CommandResult CreateTeam(
         CommandContext context,
-        CreateTeamCommand command)
+        CreateTeamCommand command
+    )
     {
         if (!TryGetActor(context, out var actor, out var players, out var failure) ||
             !TryStart(players, actor, out failure))
@@ -28,7 +29,8 @@ internal static class GroupCommandHandlers
 
     public static CommandResult RequestJoin(
         CommandContext context,
-        RequestJoinTeamCommand command)
+        RequestJoinTeamCommand command
+    )
     {
         if (!TryGetActor(context, out var actor, out var players, out var failure) ||
             !TryStart(players, actor, out failure))
@@ -41,7 +43,8 @@ internal static class GroupCommandHandlers
             command.TeamId,
             out var operation,
             out var responder,
-            out var message);
+            out var message
+        );
         if (!created)
         {
             return LocalizedFail("team.join_request_failed", message);
@@ -53,7 +56,8 @@ internal static class GroupCommandHandlers
 
     public static CommandResult InvitePlayer(
         CommandContext context,
-        InvitePlayerToTeamCommand command)
+        InvitePlayerToTeamCommand command
+    )
     {
         if (!TryGetActor(context, out var actor, out var players, out var failure) ||
             !TryStart(players, actor, out failure))
@@ -66,7 +70,8 @@ internal static class GroupCommandHandlers
             return CommandResult.LocalizedFail(
                 "team.invalid_membership",
                 "TeamRequired_Message",
-                "你当前不在有效的队伍中。");
+                "你当前不在有效的队伍中。"
+            );
         }
 
         var created = players.TryCreateInvitation(
@@ -75,7 +80,8 @@ internal static class GroupCommandHandlers
             command.PlayerId,
             out var operation,
             out var responder,
-            out var message);
+            out var message
+        );
         if (!created)
         {
             return LocalizedFail("team.invitation_failed", message);
@@ -87,7 +93,8 @@ internal static class GroupCommandHandlers
 
     public static CommandResult Respond(
         CommandContext context,
-        RespondTeamRequestCommand command)
+        RespondTeamRequestCommand command
+    )
     {
         if (!TryGetActor(context, out var actor, out var players, out var failure))
         {
@@ -99,7 +106,8 @@ internal static class GroupCommandHandlers
             command.OperationId,
             command.Accepted,
             out var operation,
-            out var message);
+            out var message
+        );
         if (operation is not null)
         {
             NotifyInitiator(
@@ -108,7 +116,8 @@ internal static class GroupCommandHandlers
                 operation,
                 command.Accepted,
                 changed,
-                message);
+                message
+            );
         }
 
         if (!changed)
@@ -123,12 +132,14 @@ internal static class GroupCommandHandlers
 
         return LocalizedOk(
             command.Accepted ? "team.request_accepted" : "team.request_rejected",
-            message);
+            message
+        );
     }
 
     public static CommandResult LeaveTeam(
         CommandContext context,
-        LeaveTeamCommand command)
+        LeaveTeamCommand command
+    )
     {
         if (!TryGetActor(context, out var actor, out var players, out var failure) ||
             !TryStart(players, actor, out failure))
@@ -150,7 +161,8 @@ internal static class GroupCommandHandlers
         CommandContext context,
         out PlayerData actor,
         out SubsystemPlayers players,
-        out CommandResult failure)
+        out CommandResult failure
+    )
     {
         if (context.Project is null ||
             context.Principal.Player is not { } player)
@@ -160,7 +172,8 @@ internal static class GroupCommandHandlers
             failure = CommandResult.LocalizedFail(
                 "team.player_required",
                 "TeamOnlinePlayerRequired_Message",
-                "组队操作需要在线玩家。");
+                "组队操作需要在线玩家。"
+            );
             return false;
         }
 
@@ -171,7 +184,8 @@ internal static class GroupCommandHandlers
             failure = CommandResult.LocalizedFail(
                 "team.player_not_loaded",
                 "PlayerNotLoaded_Message",
-                "玩家尚未加载到当前世界。");
+                "玩家尚未加载到当前世界。"
+            );
             return false;
         }
 
@@ -182,7 +196,8 @@ internal static class GroupCommandHandlers
     private static bool TryStart(
         SubsystemPlayers players,
         PlayerData actor,
-        out CommandResult failure)
+        out CommandResult failure
+    )
     {
         if (players.TryStartGroupOperation(actor, out var error))
         {
@@ -196,7 +211,8 @@ internal static class GroupCommandHandlers
 
     private static void SendPrompt(
         SubsystemPlayers.PendingGroupOperation operation,
-        PlayerData responder)
+        PlayerData responder
+    )
     {
         var package = GroupPackageBuilder.CreatePrompt(operation);
         if (responder.IsMainPlayer)
@@ -215,7 +231,8 @@ internal static class GroupCommandHandlers
         SubsystemPlayers.PendingGroupOperation operation,
         bool accepted,
         bool changed,
-        SubsystemPlayers.GroupOperationMessage message)
+        SubsystemPlayers.GroupOperationMessage message
+    )
     {
         var initiator = players.FindPlayerData(player => player.PlayerGUID == operation.Initiator);
         if (initiator is null || initiator == responder)
@@ -229,13 +246,15 @@ internal static class GroupCommandHandlers
                 : CommandResult.LocalizedOk(
                     "team.request_rejected",
                     "TeamRequestDeclined_Message",
-                    "对方拒绝了队伍请求。")
+                    "对方拒绝了队伍请求。"
+                )
             : accepted
                 ? CommandResult.LocalizedFail(
                     "team.response_failed",
                     "TeamRequestFailed_Message",
                     "队伍请求处理失败：{0}",
-                    FormatFallback(message))
+                    FormatFallback(message)
+                )
                 : LocalizedFail("team.response_failed", message);
         if (initiator.IsMainPlayer)
         {
@@ -246,7 +265,8 @@ internal static class GroupCommandHandlers
         {
             var resultPackage = CommandPackage.CreateResult(
                 CommandResponseBuilder.Capture(result),
-                operation.OperationId.ToString("N"));
+                operation.OperationId.ToString("N")
+            );
             CommonLib.Net.QueuePackage(resultPackage, PackageAudience.To(initiator.Client));
         }
     }
@@ -261,45 +281,51 @@ internal static class GroupCommandHandlers
 
     private static CommandResult LocalizedOk(
         string code,
-        SubsystemPlayers.GroupOperationMessage message)
+        SubsystemPlayers.GroupOperationMessage message
+    )
     {
         return CommandResult.LocalizedOk(
             code,
             message.Key,
             message.Fallback,
-            message.Arguments.ToArray());
+            message.Arguments.ToArray()
+        );
     }
 
     private static CommandResult LocalizedPending(
         string code,
-        SubsystemPlayers.GroupOperationMessage message)
+        SubsystemPlayers.GroupOperationMessage message
+    )
     {
         return CommandResult.LocalizedPending(
             code,
             message.Key,
             message.Fallback,
-            message.Arguments.ToArray());
+            message.Arguments.ToArray()
+        );
     }
 
     private static CommandResult LocalizedFail(
         string code,
-        SubsystemPlayers.GroupOperationMessage message)
+        SubsystemPlayers.GroupOperationMessage message
+    )
     {
         return CommandResult.LocalizedFail(
             code,
             message.Key,
             message.Fallback,
-            message.Arguments.ToArray());
+            message.Arguments.ToArray()
+        );
     }
 
-    private static string FormatFallback(
-        SubsystemPlayers.GroupOperationMessage message)
+    private static string FormatFallback(SubsystemPlayers.GroupOperationMessage message)
     {
         return message.Arguments.Count == 0
             ? message.Fallback
             : string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
                 message.Fallback,
-                message.Arguments.ToArray());
+                message.Arguments.ToArray()
+            );
     }
 }

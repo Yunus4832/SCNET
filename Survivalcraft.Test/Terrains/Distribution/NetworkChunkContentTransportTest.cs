@@ -16,7 +16,8 @@ public sealed class NetworkChunkContentTransportTest
             allocation.Coords,
             2,
             new int[AuthorityChunkSnapshot.CellCount],
-            new long[AuthorityChunkSnapshot.ShaftCount]);
+            new long[AuthorityChunkSnapshot.ShaftCount]
+        );
         var encoded = NetworkChunkCodec.Encode(snapshot);
 
         foreach (var fragment in EncodedTerrainChunkFragmenter.Split(encoded, allocation))

@@ -26,19 +26,43 @@ public sealed class AdminServerSourceListEndpoint(IMediator mediator, IOptions<C
     }
 
     private async Task<ResponseData<ServerSourceManagementResponse[]>> List(
-        ServerSourceRegistrationStatus? status, CancellationToken cancellationToken)
+        ServerSourceRegistrationStatus? status,
+        CancellationToken cancellationToken
+    )
     {
         var sources = await mediator.Send(new ListServerSourcesQuery(status), cancellationToken);
-        var responses = sources.Select(source => new ServerSourceManagementResponse(source.Id.ToString(),
-            source.PublisherId.ToString(), source.PublisherName, source.Name, source.ApiUrl, source.Description,
-            source.Status.ToString().ToLowerInvariant(), source.ReviewMessage, source.CreatedAt, source.ReviewedAt,
-            false)).ToList();
+        var responses = sources.Select(source => new ServerSourceManagementResponse(
+                source.Id.ToString(),
+                source.PublisherId.ToString(),
+                source.PublisherName,
+                source.Name,
+                source.ApiUrl,
+                source.Description,
+                source.Status.ToString().ToLowerInvariant(),
+                source.ReviewMessage,
+                source.CreatedAt,
+                source.ReviewedAt,
+                false
+            )
+        ).ToList();
         if (status is null && options.Value.BuiltInServerDirectoryEnabled)
         {
-            responses.Insert(0, new ServerSourceManagementResponse("builtin", null, null,
-                options.Value.BuiltInServerDirectoryName,
-                EndpointMappings.GetBuiltInDirectoryUrl(options.Value, HttpContext.Request),
-                options.Value.BuiltInServerDirectoryDescription, "active", null, null, null, true));
+            responses.Insert(
+                0,
+                new ServerSourceManagementResponse(
+                    "builtin",
+                    null,
+                    null,
+                    options.Value.BuiltInServerDirectoryName,
+                    EndpointMappings.GetBuiltInDirectoryUrl(options.Value, HttpContext.Request),
+                    options.Value.BuiltInServerDirectoryDescription,
+                    "active",
+                    null,
+                    null,
+                    null,
+                    true
+                )
+            );
         }
 
         return responses.ToArray().AsResponseData();

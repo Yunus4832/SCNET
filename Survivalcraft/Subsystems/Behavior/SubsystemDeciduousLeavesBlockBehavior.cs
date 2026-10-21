@@ -41,14 +41,26 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
             {
                 if (_subsystemGameWidgets.CalculateDistanceFromNearestView(new Vector3(leafParticle.Position)) < 32f)
                 {
-                    var cellValue = _subsystemTerrain.Terrain.GetCellValue(leafParticle.Position.X,
-                        leafParticle.Position.Y, leafParticle.Position.Z);
+                    var cellValue = _subsystemTerrain.Terrain.GetCellValue(
+                        leafParticle.Position.X,
+                        leafParticle.Position.Y,
+                        leafParticle.Position.Z
+                    );
                     var num = Terrain.ExtractContents(cellValue);
-                    if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is DeciduousLeavesBlock deciduousLeavesBlock &&
+                    if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is DeciduousLeavesBlock
+                            deciduousLeavesBlock &&
                         deciduousLeavesBlock.GetLeafDropProbability(cellValue) > 0f)
                     {
-                        _subsystemParticles.AddParticleSystem(new LeavesParticleSystem(_subsystemTerrain,
-                            leafParticle.Position, _random.Int(1, 2), true, false, cellValue));
+                        _subsystemParticles.AddParticleSystem(
+                            new LeavesParticleSystem(
+                                _subsystemTerrain,
+                                leafParticle.Position,
+                                _random.Int(1, 2),
+                                true,
+                                false,
+                                cellValue
+                            )
+                        );
                     }
                 }
             }
@@ -73,8 +85,13 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
                 if (SubsystemFallenLeavesBlockBehavior.CanSupportFallenLeaves(cellValue) &&
                     SubsystemFallenLeavesBlockBehavior.CanBeReplacedByFallenLeaves(num.Value))
                 {
-                    _subsystemCellChangeQueue.QueueCellChange(p.X, p.Y + 1, p.Z, Terrain.MakeBlockValue(261),
-                        applyImmediately);
+                    _subsystemCellChangeQueue.QueueCellChange(
+                        p.X,
+                        p.Y + 1,
+                        p.Z,
+                        Terrain.MakeBlockValue(261),
+                        applyImmediately
+                    );
                     break;
                 }
 
@@ -117,7 +134,8 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
     {
         var num = 0.03f * MathUtils.Hash((uint)(x + y * 59 + z * 3319)) / 4.2949673E+09f;
         var timeOfYear = IntervalUtils.Normalize(_subsystemGameInfo.WorldSettings.TimeOfYear + num);
-        var obj = (DeciduousLeavesBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)];
+        var obj = (DeciduousLeavesBlock)CurrentModRuntime.Value!.RequireWorldCatalog()
+            .Blocks[Terrain.ExtractContents(value)];
         var num2 = Terrain.ExtractData(value);
         var num3 = obj.SetTimeOfYear(num2, timeOfYear);
         if (num3 == num2)
@@ -136,16 +154,19 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
 
     private void QueueLeafParticles(int value, int x, int y, int z)
     {
-        var deciduousLeavesBlock = (DeciduousLeavesBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)];
+        var deciduousLeavesBlock =
+            (DeciduousLeavesBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)];
         if (_leafParticles.Count < 30000 &&
             _random.Bool(deciduousLeavesBlock.GetLeafDropProbability(value) / 60f * 60f) &&
             _subsystemGameWidgets.CalculateDistanceFromNearestView(new Vector3(x, y, z)) < 128f)
         {
-            _leafParticles.Add(new LeafParticles
-            {
-                Position = new Point3(x, y, z),
-                Time = _subsystemTime.GameTime + _random.Float(0f, 60f)
-            });
+            _leafParticles.Add(
+                new LeafParticles
+                {
+                    Position = new Point3(x, y, z),
+                    Time = _subsystemTime.GameTime + _random.Float(0f, 60f)
+                }
+            );
         }
     }
 

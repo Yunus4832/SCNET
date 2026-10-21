@@ -15,8 +15,11 @@ public sealed class LocalServerSourceTest
         directory.AddMyServer("Mine", "example.com");
         directory.AddFavorite("Mine", "example.com");
         using var httpClient = new HttpClient();
-        var catalog = new ServerSourceCatalog(directory, new ServerSourceProtocolClient(httpClient),
-            new ServerDiscoveryService());
+        var catalog = new ServerSourceCatalog(
+            directory,
+            new ServerSourceProtocolClient(httpClient),
+            new ServerDiscoveryService()
+        );
 
         var sources = catalog.GetEnabledSources();
         var local = Assert.Single(sources, source => source.Kind == ServerSourceKind.Local);

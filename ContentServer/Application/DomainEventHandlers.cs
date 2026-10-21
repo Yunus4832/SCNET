@@ -19,13 +19,20 @@ public sealed class AdministratorStatusChangedHandler(IMediator mediator)
     : IDomainEventHandler<AdministratorStatusChangedDomainEvent>
 {
     public Task Handle(AdministratorStatusChangedDomainEvent e, CancellationToken ct) => mediator.Send(
-        new CreateReviewRecordCommand(e.ReviewerId, "Administrator", e.Administrator.Id.ToString(), e.Status.ToString(),
-            e.Message, e.OccurredAt), ct);
+        new CreateReviewRecordCommand(
+            e.ReviewerId,
+            "Administrator",
+            e.Administrator.Id.ToString(),
+            e.Status.ToString(),
+            e.Message,
+            e.OccurredAt
+        ),
+        ct
+    );
 }
 
-public sealed class PublisherAppliedHandler(
-    ILogger<PublisherAppliedHandler> logger
-) : IDomainEventHandler<PublisherAppliedDomainEvent>
+public sealed class PublisherAppliedHandler(ILogger<PublisherAppliedHandler> logger)
+    : IDomainEventHandler<PublisherAppliedDomainEvent>
 {
     public Task Handle(PublisherAppliedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
@@ -60,9 +67,8 @@ public sealed class PublisherStatusChangedHandler(
     }
 }
 
-public sealed class PublisherKeysRevokedHandler(
-    IMediator mediator
-) : IDomainEventHandler<PublisherKeysRevokedDomainEvent>
+public sealed class PublisherKeysRevokedHandler(IMediator mediator)
+    : IDomainEventHandler<PublisherKeysRevokedDomainEvent>
 {
     public async Task Handle(PublisherKeysRevokedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
@@ -80,9 +86,8 @@ public sealed class PublisherKeysRevokedHandler(
     }
 }
 
-public sealed class ContentVersionSubmittedHandler(
-    ILogger<ContentVersionSubmittedHandler> logger
-) : IDomainEventHandler<ContentVersionSubmittedDomainEvent>
+public sealed class ContentVersionSubmittedHandler(ILogger<ContentVersionSubmittedHandler> logger)
+    : IDomainEventHandler<ContentVersionSubmittedDomainEvent>
 {
     public Task Handle(ContentVersionSubmittedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
@@ -91,9 +96,8 @@ public sealed class ContentVersionSubmittedHandler(
     }
 }
 
-public sealed class ContentVersionReviewedHandler(
-    IMediator mediator
-) : IDomainEventHandler<ContentVersionReviewedDomainEvent>
+public sealed class ContentVersionReviewedHandler(IMediator mediator)
+    : IDomainEventHandler<ContentVersionReviewedDomainEvent>
 {
     public async Task Handle(ContentVersionReviewedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
@@ -111,9 +115,8 @@ public sealed class ContentVersionReviewedHandler(
     }
 }
 
-public sealed class ContentStatusChangedHandler(
-    IMediator mediator
-) : IDomainEventHandler<ContentStatusChangedDomainEvent>
+public sealed class ContentStatusChangedHandler(IMediator mediator)
+    : IDomainEventHandler<ContentStatusChangedDomainEvent>
 {
     public async Task Handle(ContentStatusChangedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
@@ -147,10 +150,19 @@ public sealed class ContentDeletedHandler(
             throw new InvalidOperationException("Deleted content versions are not queryable in the deletion event.");
         }
 
-        await mediator.Send(new DeleteUnreferencedPackagesCommand(
-            deletedVersions.Select(version => version.PackageHash).Distinct().ToArray()), cancellationToken);
-        await mediator.Send(new DeleteContentReviewsCommand(domainEvent.Content.Id.ToString(),
-            deletedVersions.Select(version => version.Id.ToString()).ToArray()), cancellationToken);
+        await mediator.Send(
+            new DeleteUnreferencedPackagesCommand(
+                deletedVersions.Select(version => version.PackageHash).Distinct().ToArray()
+            ),
+            cancellationToken
+        );
+        await mediator.Send(
+            new DeleteContentReviewsCommand(
+                domainEvent.Content.Id.ToString(),
+                deletedVersions.Select(version => version.Id.ToString()).ToArray()
+            ),
+            cancellationToken
+        );
     }
 }
 
@@ -159,9 +171,17 @@ public sealed class ServerSourceReviewedHandler(IMediator mediator)
 {
     public Task Handle(ServerSourceReviewedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
-        return mediator.Send(new CreateReviewRecordCommand(domainEvent.AdministratorId, "ServerSource",
-            domainEvent.Source.Id.ToString(), domainEvent.Status.ToString(), domainEvent.Message,
-            domainEvent.OccurredAt), cancellationToken);
+        return mediator.Send(
+            new CreateReviewRecordCommand(
+                domainEvent.AdministratorId,
+                "ServerSource",
+                domainEvent.Source.Id.ToString(),
+                domainEvent.Status.ToString(),
+                domainEvent.Message,
+                domainEvent.OccurredAt
+            ),
+            cancellationToken
+        );
     }
 }
 
@@ -169,19 +189,36 @@ public sealed class DirectoryServerReviewedHandler(IMediator mediator)
     : IDomainEventHandler<DirectoryServerReviewedDomainEvent>
 {
     public Task Handle(DirectoryServerReviewedDomainEvent domainEvent, CancellationToken cancellationToken) =>
-        mediator.Send(new CreateReviewRecordCommand(domainEvent.AdministratorId, "DirectoryServer",
-            domainEvent.Server.Id.ToString(), domainEvent.Status.ToString(), domainEvent.Message,
-            domainEvent.OccurredAt), cancellationToken);
+        mediator.Send(
+            new CreateReviewRecordCommand(
+                domainEvent.AdministratorId,
+                "DirectoryServer",
+                domainEvent.Server.Id.ToString(),
+                domainEvent.Status.ToString(),
+                domainEvent.Message,
+                domainEvent.OccurredAt
+            ),
+            cancellationToken
+        );
 }
 
 public sealed class DirectoryServerSuspensionChangedHandler(IMediator mediator)
     : IDomainEventHandler<DirectoryServerSuspensionChangedDomainEvent>
 {
-    public Task Handle(DirectoryServerSuspensionChangedDomainEvent domainEvent,
-        CancellationToken cancellationToken) => mediator.Send(new CreateReviewRecordCommand(
-        domainEvent.AdministratorId, "DirectoryServer", domainEvent.Server.Id.ToString(),
-        domainEvent.Suspended ? "Suspended" : "Restored", domainEvent.Reason, domainEvent.OccurredAt),
-        cancellationToken);
+    public Task Handle(
+        DirectoryServerSuspensionChangedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    ) => mediator.Send(
+        new CreateReviewRecordCommand(
+            domainEvent.AdministratorId,
+            "DirectoryServer",
+            domainEvent.Server.Id.ToString(),
+            domainEvent.Suspended ? "Suspended" : "Restored",
+            domainEvent.Reason,
+            domainEvent.OccurredAt
+        ),
+        cancellationToken
+    );
 }
 
 public sealed class RendezvousServiceReviewedHandler(IMediator mediator)
@@ -189,8 +226,16 @@ public sealed class RendezvousServiceReviewedHandler(IMediator mediator)
 {
     public Task Handle(RendezvousServiceReviewedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
-        return mediator.Send(new CreateReviewRecordCommand(domainEvent.AdministratorId, "RendezvousService",
-            domainEvent.Source.Id.ToString(), domainEvent.Status.ToString(), domainEvent.Message,
-            domainEvent.OccurredAt), cancellationToken);
+        return mediator.Send(
+            new CreateReviewRecordCommand(
+                domainEvent.AdministratorId,
+                "RendezvousService",
+                domainEvent.Source.Id.ToString(),
+                domainEvent.Status.ToString(),
+                domainEvent.Message,
+                domainEvent.OccurredAt
+            ),
+            cancellationToken
+        );
     }
 }

@@ -11,8 +11,13 @@ public sealed class CandidateProbeTest
     {
         var observed = new IPEndPoint(IPAddress.Parse("203.0.113.1"), 4000);
         var local = new IPEndPoint(IPAddress.Parse("240e:1234::2"), 4000);
-        var candidate = new SignalMessage("candidate", Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-            Challenge: new string('A', 64));
+        var candidate = new SignalMessage(
+            "candidate",
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Challenge: new string('A', 64)
+        );
         var probe = new CandidateProbe(candidate, [observed, local]);
         var acknowledgement = candidate with { Operation = "punch-ack" };
         Assert.True(probe.Matches(acknowledgement, observed));

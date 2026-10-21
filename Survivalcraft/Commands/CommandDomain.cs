@@ -2,7 +2,9 @@ namespace Game.Commands;
 
 public enum CommandDomain
 {
-    Application,
-    World,
-    Server
+    Application = 0,
+
+    World = 1,
+
+    Server = 2
 }

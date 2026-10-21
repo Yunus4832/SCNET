@@ -38,15 +38,20 @@ public static class TextureAtlasManager
 
         try
         {
-            value = new Subtexture((ContentManager.Get(typeof(Texture2D), name) as Texture2D)!, Vector2.Zero,
-                Vector2.One);
+            value = new Subtexture(
+                (ContentManager.Get(typeof(Texture2D), name) as Texture2D)!,
+                Vector2.Zero,
+                Vector2.One
+            );
             _subtextures.Add(name, value);
             return value;
         }
         catch (Exception innerException)
         {
-            throw new InvalidOperationException($"Required subtexture {name} not found in TextureAtlasManager.",
-                innerException);
+            throw new InvalidOperationException(
+                $"Required subtexture {name} not found in TextureAtlasManager.",
+                innerException
+            );
         }
     }
 
@@ -78,8 +83,10 @@ public static class TextureAtlasManager
             var num4 = int.Parse(array2[3], CultureInfo.InvariantCulture);
             var num5 = int.Parse(array2[4], CultureInfo.InvariantCulture);
             var topLeft = new Vector2(num2 / (float)texture.Width, num3 / (float)texture.Height);
-            var bottomRight = new Vector2((num2 + num4) / (float)texture.Width,
-                (num3 + num5) / (float)texture.Height);
+            var bottomRight = new Vector2(
+                (num2 + num4) / (float)texture.Width,
+                (num3 + num5) / (float)texture.Height
+            );
             var value = new Subtexture(texture, topLeft, bottomRight);
             _subtextures.Add(key, value);
             num++;

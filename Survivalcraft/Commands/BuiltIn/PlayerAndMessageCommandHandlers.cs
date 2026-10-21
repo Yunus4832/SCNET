@@ -9,7 +9,8 @@ internal static class PlayerAndMessageCommandHandlers
 
     public static CommandResult UpdateOwnPlayerProfile(
         CommandContext context,
-        UpdateOwnPlayerProfileCommand command)
+        UpdateOwnPlayerProfileCommand command
+    )
     {
         if (!TryGetActor(context, out var actor, out var players, out var failure))
         {
@@ -21,19 +22,22 @@ internal static class PlayerAndMessageCommandHandlers
             players,
             command.Name,
             command.SkinName,
-            command.PlayerClass);
+            command.PlayerClass
+        );
     }
 
     public static CommandResult UpdatePlayerProfile(
         CommandContext context,
-        UpdatePlayerProfileCommand command)
+        UpdatePlayerProfileCommand command
+    )
     {
         if (context.Project is null)
         {
             return CommandResult.LocalizedFail(
                 "player.project_required",
                 "NoWorld_Message",
-                "当前没有已加载的世界。");
+                "当前没有已加载的世界。"
+            );
         }
 
         var players = context.Project.FindSubsystem<SubsystemPlayers>(true)!;
@@ -43,7 +47,8 @@ internal static class PlayerAndMessageCommandHandlers
             return CommandResult.LocalizedFail(
                 "player.not_found",
                 "PlayerTargetMissing_Message",
-                "目标玩家不存在。");
+                "目标玩家不存在。"
+            );
         }
 
         return ApplyProfile(
@@ -51,7 +56,8 @@ internal static class PlayerAndMessageCommandHandlers
             players,
             command.Name,
             command.SkinName,
-            command.PlayerClass);
+            command.PlayerClass
+        );
     }
 
     private static CommandResult ApplyProfile(
@@ -59,7 +65,8 @@ internal static class PlayerAndMessageCommandHandlers
         SubsystemPlayers players,
         string requestedName,
         string skinName,
-        PlayerClass playerClass)
+        PlayerClass playerClass
+    )
     {
         string name;
         try
@@ -72,7 +79,8 @@ internal static class PlayerAndMessageCommandHandlers
                 actor,
                 "player.profile.invalid_name",
                 "PlayerNameInvalid_Message",
-                "玩家名称不包含有效字符。");
+                "玩家名称不包含有效字符。"
+            );
         }
 
         if (!PlayerData.VerifyName(name))
@@ -81,17 +89,20 @@ internal static class PlayerAndMessageCommandHandlers
                 actor,
                 "player.profile.invalid_name",
                 "PlayerNameEmpty_Message",
-                "玩家名称不能为空。");
+                "玩家名称不能为空。"
+            );
         }
 
         if (players.PlayersData.Any(player => player != actor &&
-                                              string.Equals(player.Name, name, StringComparison.Ordinal)))
+                                              string.Equals(player.Name, name, StringComparison.Ordinal)
+            ))
         {
             return RejectProfile(
                 actor,
                 "player.profile.duplicate_name",
                 "PlayerNameUsed_Message",
-                "该玩家名称已被使用。");
+                "该玩家名称已被使用。"
+            );
         }
 
         if (!Enum.IsDefined(playerClass) ||
@@ -101,32 +112,38 @@ internal static class PlayerAndMessageCommandHandlers
                 actor,
                 "player.profile.invalid_appearance",
                 "PlayerSkinInvalid_Message",
-                "玩家外观数据无效。");
+                "玩家外观数据无效。"
+            );
         }
 
         actor.Name = name;
         actor.CharacterSkinName = skinName;
         actor.PlayerClass = playerClass;
         CommonLib.Net.QueuePackage(
-            PlayerPackageBuilder.Capture(actor, PlayerDataPackage.DataType.Modify), PackageAudience.Global);
+            PlayerPackageBuilder.Capture(actor, PlayerDataPackage.DataType.Modify),
+            PackageAudience.Global
+        );
         CommonLib.Net.QueuePackage(PlayerPackageBuilder.Capture(players), PackageAudience.Global);
         return CommandResult.LocalizedOk(
             "player.profile.updated",
             "PlayerProfileUpdated_Message",
-            "玩家资料已更新。");
+            "玩家资料已更新。"
+        );
     }
 
     private static CommandResult RejectProfile(
         PlayerData player,
         string code,
         string messageKey,
-        string message)
+        string message
+    )
     {
         if (player.Client is not null)
         {
             var snapshot = PlayerPackageBuilder.Capture(
                 player,
-                PlayerDataPackage.DataType.Modify);
+                PlayerDataPackage.DataType.Modify
+            );
             CommonLib.Net.QueuePackage(snapshot, PackageAudience.To(player.Client));
         }
 
@@ -135,7 +152,8 @@ internal static class PlayerAndMessageCommandHandlers
 
     public static CommandResult SendChatMessage(
         CommandContext context,
-        SendChatMessageCommand command)
+        SendChatMessageCommand command
+    )
     {
         if (!TryGetActor(context, out var actor, out var players, out var failure))
         {
@@ -147,7 +165,8 @@ internal static class PlayerAndMessageCommandHandlers
             return CommandResult.LocalizedFail(
                 "chat.invalid_channel",
                 "ChatChannelInvalid_Message",
-                "消息频道无效。");
+                "消息频道无效。"
+            );
         }
 
         var text = command.Content.Trim();
@@ -156,7 +175,8 @@ internal static class PlayerAndMessageCommandHandlers
             return CommandResult.LocalizedFail(
                 "chat.invalid_length",
                 "ChatContentInvalid_Message",
-                "消息不能为空且不能超过 512 个字符。");
+                "消息不能为空且不能超过 512 个字符。"
+            );
         }
 
         if (text.StartsWith('/'))
@@ -164,7 +184,8 @@ internal static class PlayerAndMessageCommandHandlers
             return CommandResult.LocalizedFail(
                 "chat.command_required",
                 "ChatCommandRequired_Message",
-                "指令必须通过指令系统执行。");
+                "指令必须通过指令系统执行。"
+            );
         }
 
         IReadOnlyCollection<byte>? recipients = null;
@@ -176,7 +197,8 @@ internal static class PlayerAndMessageCommandHandlers
                 return CommandResult.LocalizedFail(
                     "chat.team_required",
                     "TeamRequired_Message",
-                    "你当前不在有效的队伍中。");
+                    "你当前不在有效的队伍中。"
+                );
             }
 
             recipients = group.Members
@@ -190,8 +212,7 @@ internal static class PlayerAndMessageCommandHandlers
         var messages = context.Project!
             .FindSubsystem<SubsystemGameWidgets>(true)!
             .Messages;
-        var message = messages.Normalize(
-            GameMessage.Chat(command.Channel, actor.Name, text));
+        var message = messages.Normalize(GameMessage.Chat(command.Channel, actor.Name, text));
         var shouldDisplayOnServer =
             RunMode.Value is RunModeType.HeadlessServer ||
             recipients is null ||
@@ -209,7 +230,8 @@ internal static class PlayerAndMessageCommandHandlers
         CommandContext context,
         out PlayerData actor,
         out SubsystemPlayers players,
-        out CommandResult failure)
+        out CommandResult failure
+    )
     {
         if (context.Project is null ||
             context.Principal.Player is not { } player)
@@ -219,7 +241,8 @@ internal static class PlayerAndMessageCommandHandlers
             failure = CommandResult.LocalizedFail(
                 "player.required",
                 "OnlinePlayerRequired_Message",
-                "该操作需要在线玩家。");
+                "该操作需要在线玩家。"
+            );
             return false;
         }
 
@@ -230,7 +253,8 @@ internal static class PlayerAndMessageCommandHandlers
             failure = CommandResult.LocalizedFail(
                 "player.not_loaded",
                 "PlayerNotLoaded_Message",
-                "玩家尚未加载到当前世界。");
+                "玩家尚未加载到当前世界。"
+            );
             return false;
         }
 

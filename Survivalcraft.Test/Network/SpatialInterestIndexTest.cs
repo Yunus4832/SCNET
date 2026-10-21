@@ -17,8 +17,12 @@ public sealed class SpatialInterestIndexTest
         var second = CreateClient();
         index.SetLocation(first, Vector2.Zero, 16);
         index.SetLocation(second, new Vector2(1024, 0), 16);
-        var candidates = index.GetPointCandidates([(1, Vector2.Zero), (1, Vector2.Zero),
-            (2, new Vector2(1024, 0)), (3, new Vector2(512, 0))]);
+        var candidates = index.GetPointCandidates(
+            [
+                (1, Vector2.Zero), (1, Vector2.Zero),
+                (2, new Vector2(1024, 0)), (3, new Vector2(512, 0))
+            ]
+        );
 
         Assert.Equal(2, candidates.Count);
         Assert.Equal([1], candidates[first]);
@@ -121,7 +125,8 @@ public sealed class SpatialInterestIndexTest
         var index = new SpatialInterestIndex();
         var locations = Enumerable.Range(0, 100).Select(_ =>
             (Client: CreateClient(), Center: new Vector2(random.Next(-1024, 1025), random.Next(-1024, 1025)),
-                Distance: (float)random.Next(0, 129))).ToArray();
+                Distance: (float)random.Next(0, 129))
+        ).ToArray();
         foreach (var location in locations)
         {
             index.SetLocation(location.Client, location.Center, location.Distance);
@@ -133,22 +138,34 @@ public sealed class SpatialInterestIndexTest
             var chunk = new Point2((int)MathF.Floor(point.X / 16), (int)MathF.Floor(point.Y / 16));
             var radius = random.Next(0, 257);
             var pointExpected = locations.Where(location => Vector2.DistanceSquared(point, location.Center) <=
-                location.Distance * location.Distance).Select(location => location.Client);
+                                                            location.Distance * location.Distance
+                )
+                .Select(location => location.Client);
             var radiusExpected = locations.Where(location => Vector2.DistanceSquared(point, location.Center) <=
-                radius * radius).Select(location => location.Client);
+                                                             radius * radius
+            ).Select(location => location.Client);
             var chunkExpected = locations.Where(location =>
-            {
-                var nearest = new Vector2(Math.Clamp(location.Center.X, chunk.X * 16f, chunk.X * 16f + 16),
-                    Math.Clamp(location.Center.Y, chunk.Y * 16f, chunk.Y * 16f + 16));
-                return Vector2.DistanceSquared(nearest, location.Center) <= location.Distance * location.Distance;
-            }).Select(location => location.Client);
+                {
+                    var nearest = new Vector2(
+                        Math.Clamp(location.Center.X, chunk.X * 16f, chunk.X * 16f + 16),
+                        Math.Clamp(location.Center.Y, chunk.Y * 16f, chunk.Y * 16f + 16)
+                    );
+                    return Vector2.DistanceSquared(nearest, location.Center) <= location.Distance * location.Distance;
+                }
+            ).Select(location => location.Client);
 
-            Assert.True(new HashSet<Client>(pointExpected, ReferenceEqualityComparer.Instance)
-                .SetEquals(index.GetObservers(point)));
-            Assert.True(new HashSet<Client>(radiusExpected, ReferenceEqualityComparer.Instance)
-                .SetEquals(index.GetObserversWithin(point, radius)));
-            Assert.True(new HashSet<Client>(chunkExpected, ReferenceEqualityComparer.Instance)
-                .SetEquals(index.GetChunkObservers(chunk)));
+            Assert.True(
+                new HashSet<Client>(pointExpected, ReferenceEqualityComparer.Instance)
+                    .SetEquals(index.GetObservers(point))
+            );
+            Assert.True(
+                new HashSet<Client>(radiusExpected, ReferenceEqualityComparer.Instance)
+                    .SetEquals(index.GetObserversWithin(point, radius))
+            );
+            Assert.True(
+                new HashSet<Client>(chunkExpected, ReferenceEqualityComparer.Instance)
+                    .SetEquals(index.GetChunkObservers(chunk))
+            );
         }
     }
 }

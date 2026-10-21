@@ -59,11 +59,7 @@ public class ComponentInput : Component, IUpdateable
 
     public UpdateOrder UpdateOrder => UpdateOrder.Input;
 
-    internal ComponentPlayer? ComponentPlayer
-    {
-        get => _componentPlayer;
-        set => _componentPlayer = value!;
-    }
+    internal ComponentPlayer? ComponentPlayer { get => _componentPlayer; set => _componentPlayer = value!; }
 
     public void Update(float dt)
     {
@@ -98,7 +94,8 @@ public class ComponentInput : Component, IUpdateable
         {
             _playerInput = default;
         }
-        else if (_componentPlayer.ComponentHealth.Health <= 0f || _componentPlayer.ComponentSleep.SleepFactor > 0f ||
+        else if (_componentPlayer.ComponentHealth.Health <= 0f ||
+                 _componentPlayer.ComponentSleep.SleepFactor > 0f ||
                  !_componentPlayer.GameWidget.ActiveCamera.IsEntityControlEnabled)
         {
             _playerInput = new PlayerInput
@@ -216,6 +213,7 @@ public class ComponentInput : Component, IUpdateable
             {
                 _playerInput.ScrollInventory -= num;
             }
+
             _playerInput.Dig = input.IsMouseButtonDown(MouseButton.Left)
                 ? new Ray3(viewPosition, viewDirection)
                 : _playerInput.Dig;
@@ -321,8 +319,10 @@ public class ComponentInput : Component, IUpdateable
                 input.GetPadStickPosition(GamePadStick.Right, SettingsManager.Current.GamepadDeadZone);
             var padTriggerPosition = input.GetPadTriggerPosition(GamePadTrigger.Left);
             var padTriggerPosition2 = input.GetPadTriggerPosition(GamePadTrigger.Right);
-            isGamepadInputActive = padStickPosition != Vector2.Zero || padStickPosition2 != Vector2.Zero ||
-                                   padTriggerPosition > 0f || padTriggerPosition2 > 0f ||
+            isGamepadInputActive = padStickPosition != Vector2.Zero ||
+                                   padStickPosition2 != Vector2.Zero ||
+                                   padTriggerPosition > 0f ||
+                                   padTriggerPosition2 > 0f ||
                                    _gamePadButtons.Any(input.IsPadButtonDown);
             zero += new Vector3(2f * padStickPosition.X, 0f, 2f * padStickPosition.Y);
             zero += Vector3.UnitY * (input.IsPadButtonDown(GamePadButton.A) ? 1 : 0);
@@ -402,11 +402,15 @@ public class ComponentInput : Component, IUpdateable
             var viewPosition = activeCamera.ViewPosition;
             var viewDirection = activeCamera.ViewDirection;
             var direction =
-                Vector3.Normalize(activeCamera.ScreenToWorld(new Vector3(value.Position, 1f), Matrix.Identity) -
-                                  viewPosition);
+                Vector3.Normalize(
+                    activeCamera.ScreenToWorld(new Vector3(value.Position, 1f), Matrix.Identity) -
+                    viewPosition
+                );
             var direction2 =
-                Vector3.Normalize(activeCamera.ScreenToWorld(new Vector3(value.Position + v, 1f), Matrix.Identity) -
-                                  viewPosition);
+                Vector3.Normalize(
+                    activeCamera.ScreenToWorld(new Vector3(value.Position + v, 1f), Matrix.Identity) -
+                    viewPosition
+                );
             if (value.InputType == TouchInputType.Tap)
             {
                 if (SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch)
@@ -435,7 +439,10 @@ public class ComponentInput : Component, IUpdateable
                     SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch)
                 {
                     var v2 = Vector2.TransformNormal(value.Move, _componentGui.ViewWidget.InvertedGlobalTransform);
-                    var vector = num2 / num3 * new Vector2(0.0006f, -0.0006f) * v2 *
+                    var vector = num2 /
+                                 num3 *
+                                 new Vector2(0.0006f, -0.0006f) *
+                                 v2 *
                                  MathUtils.Pow(v2.LengthSquared(), 0.125f);
                     _playerInput.Look += vector;
                 }
@@ -466,12 +473,17 @@ public class ComponentInput : Component, IUpdateable
             else if (value2.InputType is TouchInputType.Move or TouchInputType.Hold)
             {
                 var v3 = Vector2.TransformNormal(value2.Move, _componentGui.ViewWidget.InvertedGlobalTransform);
-                var vector2 = num / num3 * new Vector2(0.003f, -0.003f) * v3 *
+                var vector2 = num /
+                              num3 *
+                              new Vector2(0.003f, -0.003f) *
+                              v3 *
                               MathUtils.Pow(v3.LengthSquared(), 0.175f);
                 _playerInput.SneakMove.X += vector2.X;
                 _playerInput.SneakMove.Z += vector2.Y;
-                var vector3 = Vector2.TransformNormal(value2.TotalMoveLimited,
-                    _componentGui.ViewWidget.InvertedGlobalTransform);
+                var vector3 = Vector2.TransformNormal(
+                    value2.TotalMoveLimited,
+                    _componentGui.ViewWidget.InvertedGlobalTransform
+                );
                 _playerInput.Move.X += ProcessInputValue(vector3.X * viewWidget.GlobalScale, 0.2f * radius, radius);
                 _playerInput.Move.Z +=
                     ProcessInputValue((0f - vector3.Y) * viewWidget.GlobalScale, 0.2f * radius, radius);
@@ -501,7 +513,10 @@ public class ComponentInput : Component, IUpdateable
         else if (value3.InputType == TouchInputType.Move)
         {
             var v4 = Vector2.TransformNormal(value3.Move, _componentGui.ViewWidget.InvertedGlobalTransform);
-            var vector4 = num2 / num3 * new Vector2(0.0006f, -0.0006f) * v4 *
+            var vector4 = num2 /
+                          num3 *
+                          new Vector2(0.0006f, -0.0006f) *
+                          v4 *
                           MathUtils.Pow(v4.LengthSquared(), 0.125f);
             _playerInput.Look += vector4;
         }

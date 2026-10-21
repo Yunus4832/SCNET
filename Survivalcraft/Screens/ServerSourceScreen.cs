@@ -9,19 +9,27 @@ public sealed class ServerSourceScreen : Screen
 {
     private enum CatalogAction
     {
-        Install
+        Install = 0
     }
 
     private sealed record RepositoryFilterOption(Guid? RepositoryId, string Name);
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly SelectionDrawerWidget _repositoryDrawer;
+
     private readonly TextBoxWidget _searchTextBox;
+
     private readonly LabelWidget _searchPlaceholder;
+
     private readonly ListPanelWidget _sourceList;
+
     private readonly LabelWidget _statusLabel;
+
     private IReadOnlyList<RegisteredServerSource> _sources = [];
+
     private CancellationTokenSource? _loadCancellation;
+
     private bool _busy;
 
     public ServerSourceScreen()
@@ -43,7 +51,8 @@ public sealed class ServerSourceScreen : Screen
         _repositoryDrawer.ItemTextProvider = item => ((RepositoryFilterOption)item).Name;
         _repositoryDrawer.SelectionChanged += () => ApplySearch();
         _actionPanel.ItemTextProvider = _ => Text("Install");
-        _actionPanel.ItemEnabledProvider = _ => !_busy && _sourceList.SelectedItem is RegisteredServerSource source &&
+        _actionPanel.ItemEnabledProvider = _ => !_busy &&
+                                                _sourceList.SelectedItem is RegisteredServerSource source &&
                                                 !IsInstalled(source);
         _actionPanel.ItemClicked += _ => Install();
         _actionPanel.SetPrimaryItems([CatalogAction.Install]);
@@ -101,13 +110,17 @@ public sealed class ServerSourceScreen : Screen
         _sourceList.ClearItems();
         _statusLabel.Text = Text("Loading");
         var catalog = new ContentServerSourceCatalog(ContentServerClientPool.Shared);
-        Task.Run(() => catalog.QueryAsync(ContentRepositoryManager.Current.Snapshot(), cancellation.Token),
-                cancellation.Token)
+        Task.Run(
+                () => catalog.QueryAsync(ContentRepositoryManager.Current.Snapshot(), cancellation.Token),
+                cancellation.Token
+            )
             .ContinueWith(task => Dispatcher.Dispatch(() => CompleteLoad(cancellation, task)), cancellation.Token);
     }
 
-    private void CompleteLoad(CancellationTokenSource cancellation,
-        Task<IReadOnlyList<RegisteredServerSource>> task)
+    private void CompleteLoad(
+        CancellationTokenSource cancellation,
+        Task<IReadOnlyList<RegisteredServerSource>> task
+    )
     {
         if (!ReferenceEquals(_loadCancellation, cancellation))
         {
@@ -144,12 +157,14 @@ public sealed class ServerSourceScreen : Screen
 
         try
         {
-            ServerDirectoryManager.Current.InstallSource(new InstalledServerSource
-            {
-                RegistrationId = $"{source.RepositoryId:N}:{source.RegistrationId}",
-                Name = source.Name,
-                ApiUrl = source.ApiUrl
-            });
+            ServerDirectoryManager.Current.InstallSource(
+                new InstalledServerSource
+                {
+                    RegistrationId = $"{source.RepositoryId:N}:{source.RegistrationId}",
+                    Name = source.Name,
+                    ApiUrl = source.ApiUrl
+                }
+            );
             ApplySearch(source);
             _actionPanel.Refresh();
         }
@@ -164,7 +179,8 @@ public sealed class ServerSourceScreen : Screen
     {
         var normalizedUrl = new Uri(source.ApiUrl).AbsoluteUri;
         return ServerDirectoryManager.Current.Snapshot().InstalledSources.Any(installedSource =>
-            installedSource.ApiUrl == normalizedUrl);
+            installedSource.ApiUrl == normalizedUrl
+        );
     }
 
     private void ApplySearch(RegisteredServerSource? selected = null)
@@ -205,10 +221,12 @@ public sealed class ServerSourceScreen : Screen
     {
         var selectedId = (_repositoryDrawer.SelectedItem as RepositoryFilterOption)?.RepositoryId;
         var options = new[] { new RepositoryFilterOption(null, Text("AllRepositories")) }
-            .Concat(ContentRepositoryManager.Current.Snapshot()
-                .Where(repository => repository.IsEnabled)
-                .OrderBy(repository => repository.Priority)
-                .Select(repository => new RepositoryFilterOption(repository.Id, repository.Name))).ToArray();
+            .Concat(
+                ContentRepositoryManager.Current.Snapshot()
+                    .Where(repository => repository.IsEnabled)
+                    .OrderBy(repository => repository.Priority)
+                    .Select(repository => new RepositoryFilterOption(repository.Id, repository.Name))
+            ).ToArray();
         _repositoryDrawer.SetItems(options);
         _repositoryDrawer.SelectedItem = options.FirstOrDefault(option => option.RepositoryId == selectedId) ??
                                          options[0];

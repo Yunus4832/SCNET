@@ -30,15 +30,43 @@ public class BowBlock : Block
             throw new InvalidOperationException("Required  StringTensedMesh.ParentBone is null")
         );
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(bowRelaxedMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
-        blockMesh.AppendModelMeshPart(stringRelaxedMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        blockMesh.AppendModelMeshPart(
+            bowRelaxedMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        blockMesh.AppendModelMeshPart(
+            stringRelaxedMesh.MeshParts[0],
+            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         var blockMesh2 = new BlockMesh();
-        blockMesh2.AppendModelMeshPart(bowTensedMesh.MeshParts[0],
-            boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
-        blockMesh2.AppendModelMeshPart(stringTensedMesh.MeshParts[0],
-            boneAbsoluteTransform4 * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        blockMesh2.AppendModelMeshPart(
+            bowTensedMesh.MeshParts[0],
+            boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        blockMesh2.AppendModelMeshPart(
+            stringTensedMesh.MeshParts[0],
+            boneAbsoluteTransform4 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         for (var i = 0; i < 16; i++)
         {
             var factor = i / 15f;
@@ -50,24 +78,43 @@ public class BowBlock : Block
         base.Initialize();
     }
 
-    public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value,
-        int x, int y, int z)
+    public override void GenerateTerrainVertices(
+        BlockGeometryGenerator generator,
+        TerrainGeometry geometry,
+        int value,
+        int x,
+        int y,
+        int z
+    )
     {
     }
 
-    public override void DrawBlock(PrimitivesRenderer3D primitivesRenderer, int value, Color color, float size,
-        ref Matrix matrix, DrawBlockEnvironmentData environmentData)
+    public override void DrawBlock(
+        PrimitivesRenderer3D primitivesRenderer,
+        int value,
+        Color color,
+        float size,
+        ref Matrix matrix,
+        DrawBlockEnvironmentData environmentData
+    )
     {
         var data = Terrain.ExtractData(value);
         var draw = GetDraw(data);
         var arrowType = GetArrowType(data);
-        BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMeshes[draw], color, 2f * size, ref matrix,
-            environmentData);
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneBlockMeshes[draw],
+            color,
+            2f * size,
+            ref matrix,
+            environmentData
+        );
         if (arrowType.HasValue)
         {
             var num = MathUtils.Lerp(0.14f, 0.68f, draw / 15f);
             var matrix2 = Matrix.CreateRotationX(-(float)Math.PI / 2f) *
-                          Matrix.CreateTranslation(0f, 0.4f * size, (-1f + 2f * num) * size) * matrix;
+                          Matrix.CreateTranslation(0f, 0.4f * size, (-1f + 2f * num) * size) *
+                          matrix;
             var value2 = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, arrowType.Value));
             Catalog.Blocks[192].DrawBlock(primitivesRenderer, value2, color, size, ref matrix2, environmentData);
         }

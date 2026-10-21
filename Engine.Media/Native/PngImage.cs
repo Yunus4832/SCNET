@@ -7,12 +7,20 @@ namespace Engine.Media.Native;
 internal unsafe struct PngImage
 {
     public nint Opaque;
+
     public uint Version;
+
     public uint Width;
+
     public uint Height;
+
     public uint Format;
+
     public uint Flags;
+
     public uint ColormapEntries;
+
     public uint WarningOrError;
+
     public fixed byte Message[64];
 }

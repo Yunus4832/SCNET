@@ -12,10 +12,12 @@ public sealed class ContentRendezvousCatalogTest
     {
         var good = new ContentRepository { Name = "Good", BaseUrl = "https://good.example/" };
         var failed = new ContentRepository { Name = "Failed", BaseUrl = "https://failed.example/" };
-        var disabled = new ContentRepository { Name = "Disabled", BaseUrl = "https://disabled.example/", IsEnabled = false };
+        var disabled = new ContentRepository
+            { Name = "Disabled", BaseUrl = "https://disabled.example/", IsEnabled = false };
         var factory = new CatalogFactory();
         using var pool = new ContentServerClientPool(factory);
-        var result = await new ContentRendezvousCatalog(pool).QueryAsync([good, failed, disabled], CancellationToken.None);
+        var result =
+            await new ContentRendezvousCatalog(pool).QueryAsync([good, failed, disabled], CancellationToken.None);
         var service = Assert.Single(result.Services);
         Assert.Equal(good.Id, service.RepositoryId);
         Assert.Equal("Good", service.RepositoryName);
@@ -33,7 +35,11 @@ public sealed class ContentRendezvousCatalogTest
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => new ContentRendezvousCatalog(pool)
-            .QueryAsync([new ContentRepository { Name = "Good", BaseUrl = "https://good.example/" }], cancellation.Token));
+            .QueryAsync(
+                [new ContentRepository { Name = "Good", BaseUrl = "https://good.example/" }],
+                cancellation.Token
+            )
+        );
         Assert.Empty(factory.Created);
     }
 
@@ -50,26 +56,42 @@ public sealed class ContentRendezvousCatalogTest
 
     private sealed class CatalogHandler : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             if (request.RequestUri!.Host == "failed.example")
             {
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
             }
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = JsonContent.Create(new
+
+            return Task.FromResult(
+                new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    success = true,
-                    data = new
-                    {
-                        items = new[] { new ContentServerRendezvousService("registered-service", "Signal", "https://signal.example/", null) },
-                        total = 1,
-                        pageIndex = 1,
-                        pageSize = 100
-                    }
-                })
-            });
+                    Content = JsonContent.Create(
+                        new
+                        {
+                            success = true,
+                            data = new
+                            {
+                                items = new[]
+                                {
+                                    new ContentServerRendezvousService(
+                                        "registered-service",
+                                        "Signal",
+                                        "https://signal.example/",
+                                        null
+                                    )
+                                },
+                                total = 1,
+                                pageIndex = 1,
+                                pageSize = 100
+                            }
+                        }
+                    )
+                }
+            );
         }
     }
 }

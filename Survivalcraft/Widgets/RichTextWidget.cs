@@ -7,7 +7,8 @@ internal sealed record RichTextLayoutFragment(
     Vector2 Position,
     Vector2 Size,
     MessageTextStyle Style,
-    Color? Color);
+    Color? Color
+);
 
 public class RichTextWidget : Widget
 {
@@ -19,17 +20,9 @@ public class RichTextWidget : Widget
 
     private float _layoutHeight;
 
-    public MessageContent Content
-    {
-        get => _content;
-        set => _content = value ?? MessageContent.Plain(string.Empty);
-    }
+    public MessageContent Content { get => _content; set => _content = value ?? MessageContent.Plain(string.Empty); }
 
-    public BitmapFont Font
-    {
-        get => _font ??= ContentManager.Get<BitmapFont>("Fonts/Pericles");
-        set => _font = value;
-    }
+    public BitmapFont Font { get => _font ??= ContentManager.Get<BitmapFont>("Fonts/Pericles"); set => _font = value; }
 
     public Color NormalTextColor { get; set; } = Color.White;
 
@@ -61,7 +54,8 @@ public class RichTextWidget : Widget
             DepthStencilState.None,
             null,
             null,
-            samplerState);
+            samplerState
+        );
         var count = fontBatch.TriangleVertices.Count;
         var scale = new Vector2(MathUtils.Max(ContentScale, 0.1f));
         foreach (var run in _layoutRuns)
@@ -76,7 +70,8 @@ public class RichTextWidget : Widget
                     new Color(0, 0, 0, (int)color.A),
                     TextAnchor.Left,
                     scale,
-                    FontSpacing);
+                    FontSpacing
+                );
             }
 
             fontBatch.QueueText(
@@ -86,7 +81,8 @@ public class RichTextWidget : Widget
                 color,
                 TextAnchor.Left,
                 scale,
-                FontSpacing);
+                FontSpacing
+            );
         }
 
         fontBatch.TransformTriangles(GlobalTransform, count);
@@ -96,11 +92,13 @@ public class RichTextWidget : Widget
     {
         var availableWidth = MathUtils.Max(
             Size.X >= 0f ? MathUtils.Min(parentAvailableSize.X, Size.X) : parentAvailableSize.X,
-            0f);
+            0f
+        );
         BuildLayout(availableWidth);
         DesiredSize = new Vector2(
             availableWidth,
-            Size.Y >= 0f ? Size.Y : _layoutHeight);
+            Size.Y >= 0f ? Size.Y : _layoutHeight
+        );
         IsDrawRequired = _layoutRuns.Count > 0;
     }
 
@@ -190,7 +188,8 @@ public class RichTextWidget : Widget
         MessageSegment segment,
         float availableWidth,
         float lineHeight,
-        ref Vector2 position)
+        ref Vector2 position
+    )
     {
         var text = segment.Text;
         var index = 0;
@@ -229,7 +228,8 @@ public class RichTextWidget : Widget
                 remainingWidth,
                 text,
                 index,
-                remainingLength);
+                remainingLength
+            );
             if (count == 0)
             {
                 if (position.X > 0f)
@@ -244,12 +244,15 @@ public class RichTextWidget : Widget
             count = FindPreferredBreak(text, index, count, remainingLength);
             var fragment = text.Substring(index, count);
             var size = MeasureText(fragment);
-            _layoutRuns.Add(new RichTextLayoutFragment(
-                fragment,
-                position,
-                new Vector2(size.X, lineHeight),
-                segment.Style,
-                segment.Color));
+            _layoutRuns.Add(
+                new RichTextLayoutFragment(
+                    fragment,
+                    position,
+                    new Vector2(size.X, lineHeight),
+                    segment.Style,
+                    segment.Color
+                )
+            );
             position.X += size.X;
             index += count;
 
@@ -266,7 +269,8 @@ public class RichTextWidget : Widget
         string text,
         int start,
         int fittedCount,
-        int remainingLength)
+        int remainingLength
+    )
     {
         if (fittedCount >= remainingLength)
         {
@@ -291,13 +295,15 @@ public class RichTextWidget : Widget
             start,
             length,
             MathUtils.Max(ContentScale, 0.1f),
-            FontSpacing.X);
+            FontSpacing.X
+        );
 
     protected virtual Vector2 MeasureText(string text) =>
         Font.MeasureText(
             text,
             new Vector2(MathUtils.Max(ContentScale, 0.1f)),
-            FontSpacing);
+            FontSpacing
+        );
 
     protected virtual float CalculateLineHeight() =>
         (Font.GlyphHeight + Font.Spacing.Y + FontSpacing.Y) *

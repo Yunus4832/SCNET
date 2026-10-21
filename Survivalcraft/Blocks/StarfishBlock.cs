@@ -54,13 +54,23 @@ public class StarfishBlock : BottomSuckerBlock
                     zero.X = i == 4 ? -(float)Math.PI / 2f : (float)Math.PI / 2f;
                 }
 
-                var m = Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateRotationZ(0.3f + 2f * j) *
-                        Matrix.CreateTranslation(Offsets[j].X, Offsets[j].Y, -0.49f) * Matrix.CreateRotationX(zero.X) *
-                        Matrix.CreateRotationY(zero.Y) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                var m = Matrix.CreateRotationX((float)Math.PI / 2f) *
+                        Matrix.CreateRotationZ(0.3f + 2f * j) *
+                        Matrix.CreateTranslation(Offsets[j].X, Offsets[j].Y, -0.49f) *
+                        Matrix.CreateRotationX(zero.X) *
+                        Matrix.CreateRotationY(zero.Y) *
+                        Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 var num2 = 4 * i + j;
                 BlockMeshes[num2] = new BlockMesh();
-                BlockMeshes[num2].AppendModelMeshPart(starfishMesh.MeshParts[0], boneAbsoluteTransform * m,
-                    false, false, false, false, Color.White);
+                BlockMeshes[num2].AppendModelMeshPart(
+                    starfishMesh.MeshParts[0],
+                    boneAbsoluteTransform * m,
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
                 BlockMeshes[num2]
                     .TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
                 CollisionBoxes[num2] = [BlockMeshes[num2].CalculateBoundingBox()];
@@ -68,10 +78,24 @@ public class StarfishBlock : BottomSuckerBlock
         }
 
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(starfishMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f), false, false, false, false, Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(bottomMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.1f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            starfishMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            bottomMesh.MeshParts[0],
+            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.1f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
         base.Initialize();
     }
@@ -97,8 +121,16 @@ public class StarfishBlock : BottomSuckerBlock
         var face = GetFace(data);
         var subvariant = GetSubvariant(data);
         var color = Colors[subvariant];
-        generator.GenerateMeshVertices(this, x, y, z, BlockMeshes[4 * face + subvariant], color, null,
-            geometry.SubsetOpaque);
+        generator.GenerateMeshVertices(
+            this,
+            x,
+            y,
+            z,
+            BlockMeshes[4 * face + subvariant],
+            color,
+            null,
+            geometry.SubsetOpaque
+        );
         base.GenerateTerrainVertices(generator, geometry, value, x, y, z);
     }
 

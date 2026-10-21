@@ -23,7 +23,11 @@ public sealed class RoomDirectoryTest
         Assert.Single(registry.ListRooms(100, null).Rooms);
         clock.Advance(TimeSpan.FromSeconds(61));
         Assert.Empty(registry.ListRooms(100, null).Rooms);
-        registry.UpdateRoom(registration.SessionId, registration.HostCredential, new RoomPublication("Changed", "", true));
+        registry.UpdateRoom(
+            registration.SessionId,
+            registration.HostCredential,
+            new RoomPublication("Changed", "", true)
+        );
         clock.Advance(TimeSpan.FromSeconds(30));
         Assert.False(registry.IsActive(registration.SessionId, Guid.Empty));
     }
@@ -39,22 +43,34 @@ public sealed class RoomDirectoryTest
         Assert.Single(registry.ListRooms(100, null).Rooms);
         Assert.Single(registry.ListRooms(100, null).Rooms);
         registry.Join(registration.JoinCode, Guid.NewGuid());
-        registry.UpdateRoom(registration.SessionId, registration.HostCredential, new RoomPublication("Room", "", false));
+        registry.UpdateRoom(
+            registration.SessionId,
+            registration.HostCredential,
+            new RoomPublication("Room", "", false)
+        );
         Assert.Empty(registry.ListRooms(100, null).Rooms);
-        Assert.Throws<InvalidOperationException>(() => registry.UpdateRoom(registration.SessionId, "wrong", new RoomPublication("Room", "", true)));
+        Assert.Throws<InvalidOperationException>(() =>
+            registry.UpdateRoom(registration.SessionId, "wrong", new RoomPublication("Room", "", true))
+        );
     }
 
     [Fact]
     public void PagingExcludesNewRegistrationsAndClosedRoomsAndRejectsRestartedCursor()
     {
         var registry = new InvitationRegistry(TimeProvider.System, TimeSpan.FromMinutes(5), 10);
+
         SessionRegistration Publish()
         {
             var registration = registry.Create(1);
             Confirm(registry, registration);
-            registry.UpdateRoom(registration.SessionId, registration.HostCredential, new RoomPublication("Room", "", true));
+            registry.UpdateRoom(
+                registration.SessionId,
+                registration.HostCredential,
+                new RoomPublication("Room", "", true)
+            );
             return registration;
         }
+
         var first = Publish();
         var second = Publish();
         var page = registry.ListRooms(1, null);
@@ -76,6 +92,7 @@ public sealed class RoomDirectoryTest
         var challenge = endpoints.Challenge(registration.SessionId, Guid.Empty, ticket.Token, address);
         Assert.True(endpoints.Confirm(registration.SessionId, Guid.Empty, ticket.Token, challenge, address));
     }
+
     private sealed class ManualClock : TimeProvider
     {
         private DateTimeOffset _now = DateTimeOffset.UnixEpoch;
@@ -84,5 +101,4 @@ public sealed class RoomDirectoryTest
 
         public void Advance(TimeSpan duration) => _now += duration;
     }
-
 }

@@ -43,8 +43,16 @@ public class TerritoryAccessTest
     {
         var requests = new TerritoryAccessRequests();
         var owner = Guid.NewGuid();
-        Assert.True(requests.TryAdd(owner, Guid.NewGuid(), "Player",
-            10, out var request, out _));
+        Assert.True(
+            requests.TryAdd(
+                owner,
+                Guid.NewGuid(),
+                "Player",
+                10,
+                out var request,
+                out _
+            )
+        );
         Assert.False(requests.TryResolve(request!.Id, Guid.NewGuid(), TerritoryPermission.Dig, 11, out _));
         Assert.False(requests.TryResolve(request.Id, owner, (TerritoryPermission)128, 11, out _));
         Assert.True(requests.TryResolve(request.Id, owner, TerritoryPermission.All, 11, out var resolved));
@@ -74,6 +82,7 @@ public class TerritoryAccessTest
         {
             Assert.True(requests.TryAdd(owner, Guid.NewGuid(), "Player", 0, out _, out _));
         }
+
         Assert.False(requests.TryAdd(owner, Guid.NewGuid(), "Player", 0, out _, out var error));
         Assert.Equal("QueueFull", error);
     }
@@ -106,7 +115,11 @@ public class TerritoryAccessTest
     {
         var territory = new Territory(Guid.NewGuid(), new Point3(0, 64, 0));
         Assert.Throws<InvalidDataException>(() => territory.SetGrant(Guid.Empty, "Player", TerritoryPermission.Enter));
-        Assert.Throws<InvalidDataException>(() => territory.SetGrant(territory.Owner, "Owner", TerritoryPermission.All));
-        Assert.Throws<InvalidDataException>(() => territory.SetGrant(Guid.NewGuid(), "Player", (TerritoryPermission)16));
+        Assert.Throws<InvalidDataException>(() =>
+            territory.SetGrant(territory.Owner, "Owner", TerritoryPermission.All)
+        );
+        Assert.Throws<InvalidDataException>(() =>
+            territory.SetGrant(Guid.NewGuid(), "Player", (TerritoryPermission)16)
+        );
     }
 }

@@ -44,8 +44,13 @@ public abstract class BaseFontBatch : BaseBatch
         FlushWithDeviceState(Font, SamplerState, matrix, color, clearAfterFlush);
     }
 
-    public void FlushWithDeviceState(BitmapFont font, SamplerState samplerState, Matrix matrix, Vector4 color,
-        bool clearAfterFlush = true)
+    public void FlushWithDeviceState(
+        BitmapFont font,
+        SamplerState samplerState,
+        Matrix matrix,
+        Vector4 color,
+        bool clearAfterFlush = true
+    )
     {
         if (font.Texture is null)
         {
@@ -69,9 +74,17 @@ public abstract class BaseFontBatch : BaseBatch
             while (num2 > 0)
             {
                 var num3 = MathUtils.Min(num2, 196605);
-                Display.DrawUserIndexed(PrimitiveType.TriangleList, shader,
-                    VertexPositionColorTexture.VertexDeclaration, TriangleVertices.Array, 0, TriangleVertices.Count,
-                    TriangleIndices.Array, num, num3);
+                Display.DrawUserIndexed(
+                    PrimitiveType.TriangleList,
+                    shader,
+                    VertexPositionColorTexture.VertexDeclaration,
+                    TriangleVertices.Array,
+                    0,
+                    TriangleVertices.Count,
+                    TriangleIndices.Array,
+                    num,
+                    num3
+                );
                 num += num3;
                 num2 -= num3;
             }
@@ -92,9 +105,17 @@ public abstract class BaseFontBatch : BaseBatch
             while (num2 > 0)
             {
                 var num3 = Math.Min(num2, 196605);
-                Display.DrawUserIndexed(PrimitiveType.TriangleList, shader,
-                    VertexPositionColorTexture.VertexDeclaration, TriangleVertices.Array, 0, TriangleVertices.Count,
-                    TriangleIndices.Array, num, num3);
+                Display.DrawUserIndexed(
+                    PrimitiveType.TriangleList,
+                    shader,
+                    VertexPositionColorTexture.VertexDeclaration,
+                    TriangleVertices.Array,
+                    0,
+                    TriangleVertices.Count,
+                    TriangleIndices.Array,
+                    num,
+                    num3
+                );
                 num += num3;
                 num2 -= num3;
             }
@@ -134,8 +155,14 @@ public abstract class BaseFontBatch : BaseBatch
         }
     }
 
-    public Vector2 CalculateTextOffset(string text, int start, int count, TextAnchor anchor, Vector2 scale,
-        Vector2 spacing)
+    public Vector2 CalculateTextOffset(
+        string text,
+        int start,
+        int count,
+        TextAnchor anchor,
+        Vector2 scale,
+        Vector2 spacing
+    )
     {
         var zero = Vector2.Zero;
         if (anchor == 0)

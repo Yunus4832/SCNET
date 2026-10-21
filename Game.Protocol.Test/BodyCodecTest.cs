@@ -19,10 +19,12 @@ public sealed class BodyCodecTest
                 Position = new Vector3(i, 80, i),
                 Velocity = new Vector3(1, 0, 2),
                 Rotation = Quaternion.Identity,
-                ChangeFlag = SubsystemBodyPackage.ChangeFlag.PositionChange | SubsystemBodyPackage.ChangeFlag.VelocityChange |
-                    SubsystemBodyPackage.ChangeFlag.RotationChange
+                ChangeFlag = SubsystemBodyPackage.ChangeFlag.PositionChange |
+                             SubsystemBodyPackage.ChangeFlag.VelocityChange |
+                             SubsystemBodyPackage.ChangeFlag.RotationChange
             };
         }
+
         var message = new SubsystemBodyPackage { StateTick = 42, BodyList = items };
         using var writer = new ProtocolWriter();
         writer.Write((byte)0x88);
@@ -44,7 +46,7 @@ public sealed class BodyCodecTest
     public void ActionsRoundTripWithoutRuntimeComponents(SubsystemBodyPackage.EventType type)
     {
         var message = new SubsystemBodyPackage
-        { PackageEventType = type, CreatureId = 5, TargetCreatureId = 6, Impulse = Vector3.One };
+            { PackageEventType = type, CreatureId = 5, TargetCreatureId = 6, Impulse = Vector3.One };
         using var writer = new ProtocolWriter();
         ProtocolMessageCodec.Write(message, writer);
         using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
@@ -53,7 +55,10 @@ public sealed class BodyCodecTest
         Assert.Equal(message.CreatureId, restored.CreatureId);
         Assert.Equal(message.Impulse, restored.Impulse);
         if (type == SubsystemBodyPackage.EventType.HandleAxisCollision)
-        { Assert.Equal(message.TargetCreatureId, restored.TargetCreatureId); }
+        {
+            Assert.Equal(message.TargetCreatureId, restored.TargetCreatureId);
+        }
+
         Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
     }
 

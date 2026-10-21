@@ -13,13 +13,15 @@ public sealed record AutomationTarget(
     bool Enabled,
     IReadOnlyList<string> Actions,
     AutomationInventorySlot? Slot = null,
-    string? HitTargetType = null);
+    string? HitTargetType = null
+);
 
 public sealed record AutomationUiSnapshot(
     string Screen,
     bool Transitioning,
     IReadOnlyList<string> Dialogs,
-    IReadOnlyList<AutomationTarget> Targets);
+    IReadOnlyList<AutomationTarget> Targets
+);
 
 public static class AutomationUiContext
 {
@@ -32,7 +34,8 @@ public static class AutomationUiContext
             ScreensManager.GetCurrentScreenName(),
             ScreensManager.IsAnimating,
             dialogs.Select(dialog => dialog.GetType().Name).ToArray(),
-            targets);
+            targets
+        );
     }
 
     public static bool TryFindTarget(string selector, out AutomationTarget target)
@@ -54,7 +57,8 @@ public static class AutomationUiContext
 
     private static IEnumerable<AutomationTarget> Enumerate(Widget widget, string path)
     {
-        if (IsAutomationTarget(widget) && widget is { IsVisibleGlobal: true, IsEnabledGlobal: true } &&
+        if (IsAutomationTarget(widget) &&
+            widget is { IsVisibleGlobal: true, IsEnabledGlobal: true } &&
             widget.GlobalBounds.Max.X > widget.GlobalBounds.Min.X &&
             widget.GlobalBounds.Max.Y > widget.GlobalBounds.Min.Y)
         {
@@ -66,16 +70,32 @@ public static class AutomationUiContext
                 _ => widget.Title
             };
             var slot = widget is InventorySlotWidget { InventoryId: { } inventoryId } inventorySlot
-                ? new AutomationInventorySlot(inventoryId, inventorySlot.SlotIndex, inventorySlot.SlotValue, inventorySlot.SlotCount)
+                ? new AutomationInventorySlot(
+                    inventoryId,
+                    inventorySlot.SlotIndex,
+                    inventorySlot.SlotValue,
+                    inventorySlot.SlotCount
+                )
                 : null;
             if (slot is { Value: not 0 })
             {
-                text = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(slot.Value)].GetDisplayName(null, slot.Value);
+                text = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(slot.Value)]
+                    .GetDisplayName(null, slot.Value);
             }
 
-            yield return new AutomationTarget(path, widget.GetType().Name, text,
-                bounds.Min.X, bounds.Min.Y, bounds.Max.X - bounds.Min.X, bounds.Max.Y - bounds.Min.Y, true,
-                GetActions(widget), slot, widget.HitTestGlobal((bounds.Min + bounds.Max) / 2f)?.GetType().Name);
+            yield return new AutomationTarget(
+                path,
+                widget.GetType().Name,
+                text,
+                bounds.Min.X,
+                bounds.Min.Y,
+                bounds.Max.X - bounds.Min.X,
+                bounds.Max.Y - bounds.Min.Y,
+                true,
+                GetActions(widget),
+                slot,
+                widget.HitTestGlobal((bounds.Min + bounds.Max) / 2f)?.GetType().Name
+            );
         }
 
         if (widget is ListPanelWidget { IsSelectionEnabled: true, IsVisibleGlobal: true, IsEnabledGlobal: true } list)
@@ -86,20 +106,36 @@ public static class AutomationUiContext
                 {
                     continue;
                 }
+
                 var bounds = row.GlobalBounds;
                 var center = (bounds.Min + bounds.Max) / 2f;
-                if (bounds.Max.X <= bounds.Min.X || bounds.Max.Y <= bounds.Min.Y ||
-                    center.X < list.GlobalBounds.Min.X || center.X > list.GlobalBounds.Max.X ||
-                    center.Y < list.GlobalBounds.Min.Y || center.Y > list.GlobalBounds.Max.Y)
+                if (bounds.Max.X <= bounds.Min.X ||
+                    bounds.Max.Y <= bounds.Min.Y ||
+                    center.X < list.GlobalBounds.Min.X ||
+                    center.X > list.GlobalBounds.Max.X ||
+                    center.Y < list.GlobalBounds.Min.Y ||
+                    center.Y > list.GlobalBounds.Max.Y)
                 {
                     continue;
                 }
-                var text = row is LabelWidget label ? label.Text : row is ContainerWidget panel
-                    ? string.Join(" | ", panel.Children.OfType<LabelWidget>().Select(item => item.Text))
-                    : row.Title;
-                yield return new AutomationTarget($"{path}/Item[{index}]", row.GetType().Name, text,
-                    bounds.Min.X, bounds.Min.Y, bounds.Max.X - bounds.Min.X, bounds.Max.Y - bounds.Min.Y,
-                    true, ["tap"], HitTargetType: list.GetType().Name);
+
+                var text = row is LabelWidget label
+                    ? label.Text
+                    : row is ContainerWidget panel
+                        ? string.Join(" | ", panel.Children.OfType<LabelWidget>().Select(item => item.Text))
+                        : row.Title;
+                yield return new AutomationTarget(
+                    $"{path}/Item[{index}]",
+                    row.GetType().Name,
+                    text,
+                    bounds.Min.X,
+                    bounds.Min.Y,
+                    bounds.Max.X - bounds.Min.X,
+                    bounds.Max.Y - bounds.Min.Y,
+                    true,
+                    ["tap"],
+                    HitTargetType: list.GetType().Name
+                );
             }
         }
 

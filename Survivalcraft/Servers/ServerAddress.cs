@@ -9,9 +9,11 @@ public static class ServerAddress
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
 
         if (!Uri.TryCreate($"tcp://{address.Trim()}", UriKind.Absolute, out var uri) ||
-            string.IsNullOrWhiteSpace(uri.Host) || !string.IsNullOrEmpty(uri.UserInfo) ||
+            string.IsNullOrWhiteSpace(uri.Host) ||
+            !string.IsNullOrEmpty(uri.UserInfo) ||
             !string.Equals(uri.AbsolutePath, "/", StringComparison.Ordinal) ||
-            !string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
+            !string.IsNullOrEmpty(uri.Query) ||
+            !string.IsNullOrEmpty(uri.Fragment))
         {
             throw new ArgumentException("Server address is invalid.", nameof(address));
         }

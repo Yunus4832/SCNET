@@ -46,8 +46,10 @@ public abstract class BaseDelayGateElectricElement(
                 if (_voltagesHistory.Count < 300)
                 {
                     _voltagesHistory[SubsystemElectricity.CircuitStep + DelaySteps] = num;
-                    SubsystemElectricity.QueueElectricElementForSimulation(this,
-                        SubsystemElectricity.CircuitStep + DelaySteps);
+                    SubsystemElectricity.QueueElectricElementForSimulation(
+                        this,
+                        SubsystemElectricity.CircuitStep + DelaySteps
+                    );
                 }
             }
         }

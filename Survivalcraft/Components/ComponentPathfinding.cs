@@ -141,9 +141,15 @@ public class ComponentPathfinding : Component, IUpdateable
                 }
                 else if (_destinationChanged)
                 {
-                    _componentPilot.SetDestination(Destination, Speed, Range, IgnoreHeightDifference,
+                    _componentPilot.SetDestination(
+                        Destination,
+                        Speed,
+                        Range,
+                        IgnoreHeightDifference,
                         RaycastDestination,
-                        Speed >= 1f, DoNotAvoidBody);
+                        Speed >= 1f,
+                        DoNotAvoidBody
+                    );
                     _destinationChanged = false;
                 }
                 else if (!_componentPilot.Destination.HasValue)
@@ -192,8 +198,15 @@ public class ComponentPathfinding : Component, IUpdateable
                     var componentMiner = Entity.FindComponent<ComponentMiner>();
                     var ignoreDoors = componentMiner is { AutoInteractRate: > 0f } &&
                                       _random.Bool(0.5f);
-                    _subsystemPathfinding.QueuePathSearch(start, end, 1f, _componentCreature.ComponentBody.BoxSize,
-                        ignoreDoors, MaxPathfindingPositions, _pathfindingResult);
+                    _subsystemPathfinding.QueuePathSearch(
+                        start,
+                        end,
+                        1f,
+                        _componentCreature.ComponentBody.BoxSize,
+                        ignoreDoors,
+                        MaxPathfindingPositions,
+                        _pathfindingResult
+                    );
                 }
                 else if (UseRandomMovements)
                 {
@@ -240,8 +253,15 @@ public class ComponentPathfinding : Component, IUpdateable
                     if (_pathfindingResult.Path.Count > 0)
                     {
                         var value = _pathfindingResult.Path.Array[_pathfindingResult.Path.Count - 1];
-                        _componentPilot.SetDestination(value, MathUtils.Min(Speed, 0.75f), 0.75f, false, false,
-                            Speed >= 1f, DoNotAvoidBody);
+                        _componentPilot.SetDestination(
+                            value,
+                            MathUtils.Min(Speed, 0.75f),
+                            0.75f,
+                            false,
+                            false,
+                            Speed >= 1f,
+                            DoNotAvoidBody
+                        );
                         _pathfindingResult.Path.RemoveAt(_pathfindingResult.Path.Count - 1);
                     }
                     else
@@ -271,9 +291,14 @@ public class ComponentPathfinding : Component, IUpdateable
             {
                 _componentPilot.SetDestination(
                     _componentCreature.ComponentBody.Position +
-                    new Vector3(5f * _random.Float(-1f, 1f), 0f, 5f * _random.Float(-1f, 1f)), 1f, 1f, true, false,
+                    new Vector3(5f * _random.Float(-1f, 1f), 0f, 5f * _random.Float(-1f, 1f)),
+                    1f,
+                    1f,
+                    true,
                     false,
-                    DoNotAvoidBody);
+                    false,
+                    DoNotAvoidBody
+                );
                 _randomMoveCount++;
             },
             delegate

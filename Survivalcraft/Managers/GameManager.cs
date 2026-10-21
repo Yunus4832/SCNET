@@ -31,7 +31,8 @@ public static class GameManager
             if (worldInfo.ProjectFormatVersion != WorldVersions.ProjectFormatVersion)
             {
                 throw new InvalidOperationException(
-                    $"Unsupported project format version \"{worldInfo.ProjectFormatVersion}\". Expected \"{WorldVersions.ProjectFormatVersion}\".");
+                    $"Unsupported project format version \"{worldInfo.ProjectFormatVersion}\". Expected \"{WorldVersions.ProjectFormatVersion}\"."
+                );
             }
 
             var xmlFile = Storage.CombinePaths(worldInfo.DirectoryName, "Project.xml");
@@ -63,6 +64,7 @@ public static class GameManager
             {
                 SaveProjectMetadata(worldInfo.DirectoryName, projectNode);
             }
+
             var projectData = new ProjectData(DatabaseManager.GameDatabase, projectNode, valuesDictionary, true);
             Project = new Project(DatabaseManager.GameDatabase, projectData);
             _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
@@ -79,16 +81,20 @@ public static class GameManager
                 subsystemGameInfo.ApplyGameModeOverride(gameModeOverride);
                 worldInfo.WorldSettings.GameMode = gameModeOverride;
                 Log.Information(
-                    $"Applied session game mode override: {persistedGameMode} -> {gameModeOverride} (world save remains {persistedGameMode}).");
+                    $"Applied session game mode override: {persistedGameMode} -> {gameModeOverride} (world save remains {persistedGameMode})."
+                );
             }
 
             SetupNetworkHandlers(Project);
             WorldInfo = worldInfo;
             Log.Information(
                 "Loaded world, GameMode={0}, StartingPosition={1}, WorldName={2}, VisibilityRange={3}, Resolution={4}",
-                worldInfo.WorldSettings.GameMode, worldInfo.WorldSettings.StartingPositionMode,
-                worldInfo.WorldSettings.Name, SettingsManager.Current.VisibilityRange.ToString(),
-                SettingsManager.Current.ResolutionMode.ToString());
+                worldInfo.WorldSettings.GameMode,
+                worldInfo.WorldSettings.StartingPositionMode,
+                worldInfo.WorldSettings.Name,
+                SettingsManager.Current.VisibilityRange.ToString(),
+                SettingsManager.Current.ResolutionMode.ToString()
+            );
             GC.Collect();
         }
         catch
@@ -98,8 +104,11 @@ public static class GameManager
         }
     }
 
-    public static void LoadProject(byte[] messagePackData, ContainerWidget gamesWidget,
-        BlockIndexMapping mapping)
+    public static void LoadProject(
+        byte[] messagePackData,
+        ContainerWidget gamesWidget,
+        BlockIndexMapping mapping
+    )
     {
         DisposeProject();
         try
@@ -152,61 +161,65 @@ public static class GameManager
         _saveCompleted.Reset();
         var subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         Exception? e;
-        Task.Run(delegate
-        {
-            try
+        Task.Run(
+            delegate
             {
-                if (string.IsNullOrEmpty(subsystemGameInfo.DirectoryName))
+                try
                 {
-                    return;
-                }
-
-                var projectNode = new XElement("Project");
-                XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);
-                projectData.Save(projectNode);
-                projectNode.Add(blockMapping.ToXml());
-                Storage.CreateDirectory(subsystemGameInfo.DirectoryName);
-                var projectPath = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.xml");
-                var temporaryPath = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.xml.tmp");
-                using (var stream = Storage.OpenFile(temporaryPath, OpenFileMode.Create))
-                {
-                    XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
-                }
-
-                if (!WorldsManager.TestProjectFile(temporaryPath))
-                {
-                    throw new InvalidOperationException("Generated project file is invalid.");
-                }
-
-                Storage.MoveFile(temporaryPath, projectPath);
-            }
-            catch (Exception ex)
-            {
-                e = ex;
-                if (showErrorDialog)
-                {
-                    Dispatcher.Dispatch(delegate
+                    if (string.IsNullOrEmpty(subsystemGameInfo.DirectoryName))
                     {
-                        Log.Error(e);
-                        if (CommonLib.WorkType != WorkType.Client)
-                        {
-                            DialogsManager.ShowDialog(
-                                null,
-                                new MessageDialog(
-                                    "保存存档失败",
-                                    "Project.xml 未被新的存档文件替换。\n" + e.Message,
-                                    LanguageManager.Ok
-                                )
-                            );
-                        }
-                    });
+                        return;
+                    }
+
+                    var projectNode = new XElement("Project");
+                    XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);
+                    projectData.Save(projectNode);
+                    projectNode.Add(blockMapping.ToXml());
+                    Storage.CreateDirectory(subsystemGameInfo.DirectoryName);
+                    var projectPath = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.xml");
+                    var temporaryPath = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.xml.tmp");
+                    using (var stream = Storage.OpenFile(temporaryPath, OpenFileMode.Create))
+                    {
+                        XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
+                    }
+
+                    if (!WorldsManager.TestProjectFile(temporaryPath))
+                    {
+                        throw new InvalidOperationException("Generated project file is invalid.");
+                    }
+
+                    Storage.MoveFile(temporaryPath, projectPath);
+                }
+                catch (Exception ex)
+                {
+                    e = ex;
+                    if (showErrorDialog)
+                    {
+                        Dispatcher.Dispatch(
+                            delegate
+                            {
+                                Log.Error(e);
+                                if (CommonLib.WorkType != WorkType.Client)
+                                {
+                                    DialogsManager.ShowDialog(
+                                        null,
+                                        new MessageDialog(
+                                            "保存存档失败",
+                                            "Project.xml 未被新的存档文件替换。\n" + e.Message,
+                                            LanguageManager.Ok
+                                        )
+                                    );
+                                }
+                            }
+                        );
+                    }
+                }
+                finally
+                {
+                    _saveCompleted.Set();
                 }
             }
-            finally
-            {
-                _saveCompleted.Set();
-            }
-        });
+        );
 
         if (waitForCompletion)
         {
@@ -292,7 +305,8 @@ public static class GameManager
         project.EntityRemoved += (_, arg) => { entityMaps.Remove(arg.Entity.EntityId); };
         project.EntityAdded += (_, arg) =>
         {
-            if (!EntityPackageBuilder.ShouldSend(arg.Entity) || IsInterestManagedBody(arg.Entity) ||
+            if (!EntityPackageBuilder.ShouldSend(arg.Entity) ||
+                IsInterestManagedBody(arg.Entity) ||
                 arg.Entity.FindComponent<ComponentBlockEntity>() is not null)
             {
                 return;
@@ -305,8 +319,12 @@ public static class GameManager
             if (arg.Entity.FindComponent<ComponentBlockEntity>() is not null)
             {
                 var interest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
-                net.QueuePackage(new EntityPackage(arg.Entity.EntityId), PackageAudience.To(
-                    interest.Entities.GetObservers(EntityInterestGroup.BlockEntities, arg.Entity.EntityId).ToArray()));
+                net.QueuePackage(
+                    new EntityPackage(arg.Entity.EntityId),
+                    PackageAudience.To(
+                        interest.Entities.GetObservers(EntityInterestGroup.BlockEntities, arg.Entity.EntityId).ToArray()
+                    )
+                );
                 interest.Entities.RemoveEntity(EntityInterestGroup.BlockEntities, arg.Entity.EntityId);
                 return;
             }
@@ -325,8 +343,10 @@ public static class GameManager
     private static void SetupClientNetworkHandlers(Project project, NetNode net)
     {
         net.CurrentConnectionPhase = ConnectionPhase.BootstrapApplied;
-        net.QueuePackage(new ConnectionPhaseAckPackage(net.ConnectionEpoch, ConnectionPhase.BootstrapApplied),
-            PackageAudience.To(net.Server!));
+        net.QueuePackage(
+            new ConnectionPhaseAckPackage(net.ConnectionEpoch, ConnectionPhase.BootstrapApplied),
+            PackageAudience.To(net.Server!)
+        );
         net.OnClientStateChanged += c =>
         {
             c.SetProject(project);
@@ -386,7 +406,8 @@ public static class GameManager
         client.SetProject(project);
         net.QueuePackage(
             new ClientPackage(client.ID, client.State),
-            PackageAudience.Except(client));
+            PackageAudience.Except(client)
+        );
         switch (client.State)
         {
             case ClientState.NotConnected:
@@ -450,7 +471,8 @@ public static class GameManager
         {
             using var s = Storage.OpenFile(
                 BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName),
-                OpenFileMode.Read);
+                OpenFileMode.Read
+            );
             textureData = StreamUtils.ReadBytes(s);
         }
 
@@ -464,9 +486,16 @@ public static class GameManager
 
         client.ConnectionPhase = ConnectionPhase.BootstrapSent;
         net.QueuePackage(
-            WorldSnapshotBuilder.Bootstrap(project, client.ConnectionEpoch, net.Clients.Values, textureData, data,
-                CurrentModRuntime.Value!.RequireWorldCatalog().Registry.Mapping),
-            PackageAudience.To(client));
+            WorldSnapshotBuilder.Bootstrap(
+                project,
+                client.ConnectionEpoch,
+                net.Clients.Values,
+                textureData,
+                data,
+                CurrentModRuntime.Value!.RequireWorldCatalog().Registry.Mapping
+            ),
+            PackageAudience.To(client)
+        );
     }
 
     private static void SendInitialWorldSnapshot(Project project, NetNode net, Client client)
@@ -480,9 +509,15 @@ public static class GameManager
         subsystemNetworkInterest.SeedInitialSnapshot(client, sendList);
         client.ConnectionPhase = ConnectionPhase.WorldSnapshotSent;
         net.QueuePackage(
-            WorldSnapshotBuilder.Initial(client.ConnectionEpoch, project, net.Clients.Values,
-                subsystemPlayers.PlayersData, sendList),
-            PackageAudience.To(client));
+            WorldSnapshotBuilder.Initial(
+                client.ConnectionEpoch,
+                project,
+                net.Clients.Values,
+                subsystemPlayers.PlayersData,
+                sendList
+            ),
+            PackageAudience.To(client)
+        );
     }
 
     private static void CompleteClientJoin(Project project, Client client)

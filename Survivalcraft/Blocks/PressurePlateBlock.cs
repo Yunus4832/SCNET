@@ -40,11 +40,20 @@ public class PressurePlateBlock : MountedElectricElementBlock
                     ? j != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
                         : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                    : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                      Matrix.CreateRotationY(j * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                    : Matrix.CreateRotationX((float)Math.PI / 2f) *
+                      Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                      Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
+                      Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 BlockMeshesByData[num2] = new BlockMesh();
-                BlockMeshesByData[num2].AppendModelMeshPart(pressurePlateMesh.MeshParts[0],
-                    boneAbsoluteTransform * matrix, false, false, false, false, Color.White);
+                BlockMeshesByData[num2].AppendModelMeshPart(
+                    pressurePlateMesh.MeshParts[0],
+                    boneAbsoluteTransform * matrix,
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
                 BlockMeshesByData[num2]
                     .TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
                 BlockMeshesByData[num2].GenerateSidesData();
@@ -59,17 +68,31 @@ public class PressurePlateBlock : MountedElectricElementBlock
                 CollisionBoxesByData[num2] =
                 [
                     new BoundingBox(
-                        new Vector3(MathUtils.Min(vector.X, vector2.X), MathUtils.Min(vector.Y, vector2.Y),
-                            MathUtils.Min(vector.Z, vector2.Z)),
-                        new Vector3(MathUtils.Max(vector.X, vector2.X), MathUtils.Max(vector.Y, vector2.Y),
-                            MathUtils.Max(vector.Z, vector2.Z)))
+                        new Vector3(
+                            MathUtils.Min(vector.X, vector2.X),
+                            MathUtils.Min(vector.Y, vector2.Y),
+                            MathUtils.Min(vector.Z, vector2.Z)
+                        ),
+                        new Vector3(
+                            MathUtils.Max(vector.X, vector2.X),
+                            MathUtils.Max(vector.Y, vector2.Y),
+                            MathUtils.Max(vector.Z, vector2.Z)
+                        )
+                    )
                 ];
             }
 
             var identity = Matrix.Identity;
             StandaloneBlockMeshesByMaterial[i] = new BlockMesh();
-            StandaloneBlockMeshesByMaterial[i].AppendModelMeshPart(pressurePlateMesh.MeshParts[0],
-                boneAbsoluteTransform * identity, false, false, false, false, Color.White);
+            StandaloneBlockMeshesByMaterial[i].AppendModelMeshPart(
+                pressurePlateMesh.MeshParts[0],
+                boneAbsoluteTransform * identity,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             StandaloneBlockMeshesByMaterial[i]
                 .TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
         }
@@ -95,8 +118,14 @@ public class PressurePlateBlock : MountedElectricElementBlock
     )
     {
         var material = GetMaterial(Terrain.ExtractData(value));
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, Color.White,
-            TextureSlotsByMaterial[material]);
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            Color.White,
+            TextureSlotsByMaterial[material]
+        );
     }
 
     public override BlockPlacementData GetPlacementValue(
@@ -124,11 +153,13 @@ public class PressurePlateBlock : MountedElectricElementBlock
     )
     {
         var material = GetMaterial(Terrain.ExtractData(oldValue));
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, SetMaterial(0, material)),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, SetMaterial(0, material)),
+                Count = 1
+            }
+        );
         showDebris = true;
     }
 
@@ -158,10 +189,26 @@ public class PressurePlateBlock : MountedElectricElementBlock
             return;
         }
 
-        generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null,
-            geometry.SubsetOpaque);
-        generator.GenerateWireVertices(value, x, y, z, GetFace(value), 0.8125f, Vector2.Zero,
-            geometry.SubsetOpaque);
+        generator.GenerateMeshVertices(
+            this,
+            x,
+            y,
+            z,
+            BlockMeshesByData[num],
+            Color.White,
+            null,
+            geometry.SubsetOpaque
+        );
+        generator.GenerateWireVertices(
+            value,
+            x,
+            y,
+            z,
+            GetFace(value),
+            0.8125f,
+            Vector2.Zero,
+            geometry.SubsetOpaque
+        );
     }
 
     public override void DrawBlock(

@@ -6,60 +6,92 @@ internal sealed class WindowsFilePicker : IFilePicker
 {
     private readonly SemaphoreSlim _requestLock = new(1, 1);
 
-    public async Task<IReadOnlyList<PickedFile>> PickFilesAsync(FilePickerRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<PickedFile>> PickFilesAsync(
+        FilePickerRequest request,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(request);
-        var paths = await RunDialogAsync(() =>
-        {
-            using var dialog = new OpenFileDialog();
-            dialog.Title = request.Title ?? string.Empty;
-            dialog.Filter = BuildFilter(request.Extensions);
-            dialog.Multiselect = request.AllowMultiple;
-            dialog.CheckFileExists = true;
-            dialog.CheckPathExists = true;
-            dialog.RestoreDirectory = true;
-            using var cancellation = cancellationToken.Register(dialog.Dispose);
-            var result = dialog.ShowDialog();
-            cancellationToken.ThrowIfCancellationRequested();
-            return result == DialogResult.OK ? dialog.FileNames : [];
-        }, cancellationToken).ConfigureAwait(false);
+        var paths = await RunDialogAsync(
+            () =>
+            {
+                using var dialog = new OpenFileDialog();
+                dialog.Title = request.Title ?? string.Empty;
+                dialog.Filter = BuildFilter(request.Extensions);
+                dialog.Multiselect = request.AllowMultiple;
+                dialog.CheckFileExists = true;
+                dialog.CheckPathExists = true;
+                dialog.RestoreDirectory = true;
+                using var cancellation = cancellationToken.Register(dialog.Dispose);
+                var result = dialog.ShowDialog();
+                cancellationToken.ThrowIfCancellationRequested();
+                return result == DialogResult.OK ? dialog.FileNames : [];
+            },
+            cancellationToken
+        ).ConfigureAwait(false);
 
-        return paths.Select(path => new PickedFile(Path.GetFileName(path), null,
-            _ => Task.FromResult<Stream>(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
-                64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan)))).ToArray();
+        return paths.Select(path => new PickedFile(
+                Path.GetFileName(path),
+                null,
+                _ => Task.FromResult<Stream>(
+                    new FileStream(
+                        path,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.Read,
+                        64 * 1024,
+                        FileOptions.Asynchronous | FileOptions.SequentialScan
+                    )
+                )
+            )
+        ).ToArray();
     }
 
-    public async Task<PickedSaveTarget?> PickSaveTargetAsync(FileSaveRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<PickedSaveTarget?> PickSaveTargetAsync(
+        FileSaveRequest request,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(request);
-        var path = await RunDialogAsync(() =>
-        {
-            using var dialog = new SaveFileDialog
+        var path = await RunDialogAsync(
+            () =>
             {
-                Title = request.Title ?? string.Empty,
-                FileName = request.SuggestedFileName,
-                Filter = BuildSaveFilter(request.SuggestedFileName),
-                AddExtension = true,
-                CheckPathExists = true,
-                OverwritePrompt = true,
-                RestoreDirectory = true
-            };
-            using var cancellation = cancellationToken.Register(dialog.Dispose);
-            var result = dialog.ShowDialog();
-            cancellationToken.ThrowIfCancellationRequested();
-            return result == DialogResult.OK ? dialog.FileName : null;
-        }, cancellationToken).ConfigureAwait(false);
+                using var dialog = new SaveFileDialog
+                {
+                    Title = request.Title ?? string.Empty,
+                    FileName = request.SuggestedFileName,
+                    Filter = BuildSaveFilter(request.SuggestedFileName),
+                    AddExtension = true,
+                    CheckPathExists = true,
+                    OverwritePrompt = true,
+                    RestoreDirectory = true
+                };
+                using var cancellation = cancellationToken.Register(dialog.Dispose);
+                var result = dialog.ShowDialog();
+                cancellationToken.ThrowIfCancellationRequested();
+                return result == DialogResult.OK ? dialog.FileName : null;
+            },
+            cancellationToken
+        ).ConfigureAwait(false);
 
         if (path is null)
         {
             return null;
         }
 
-        return new PickedSaveTarget(Path.GetFileName(path),
-            _ => Task.FromResult<Stream>(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None,
-                64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan)));
+        return new PickedSaveTarget(
+            Path.GetFileName(path),
+            _ => Task.FromResult<Stream>(
+                new FileStream(
+                    path,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None,
+                    64 * 1024,
+                    FileOptions.Asynchronous | FileOptions.SequentialScan
+                )
+            )
+        );
     }
 
     private async Task<T> RunDialogAsync<T>(Func<T> operation, CancellationToken cancellationToken)
@@ -80,21 +112,22 @@ internal sealed class WindowsFilePicker : IFilePicker
         cancellationToken.ThrowIfCancellationRequested();
         var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
-        {
-            try
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                completion.TrySetResult(operation());
+                try
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    completion.TrySetResult(operation());
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    completion.TrySetCanceled(cancellationToken);
+                }
+                catch (Exception exception)
+                {
+                    completion.TrySetException(exception);
+                }
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                completion.TrySetCanceled(cancellationToken);
-            }
-            catch (Exception exception)
-            {
-                completion.TrySetException(exception);
-            }
-        })
+        )
         {
             IsBackground = true,
             Name = "SCNET Windows File Picker"

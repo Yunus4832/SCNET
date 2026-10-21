@@ -4,25 +4,30 @@ using Game.Terrains.Distribution;
 
 namespace Game.Network.Chunks;
 
-
 public static class NetworkChunkCodec
 {
     private enum CellEncoding : byte
     {
-        Raw,
-        Rle
+        Raw = 0,
+
+        Rle = 1
     }
 
     private enum PayloadCompression : byte
     {
-        None,
-        Deflate
+        None = 0,
+
+        Deflate = 1
     }
 
     private const byte _version = 1;
+
     private const int _cellCount = 16 * 16 * 256;
+
     private const int _shaftCount = 16 * 16;
+
     private const int _rawBodySize = _shaftCount + _cellCount * sizeof(int);
+
     private const int _maxPayloadSize = 2 * 1024 * 1024;
 
     public static EncodedTerrainChunk Encode(TerrainChunk chunk)
@@ -42,14 +47,16 @@ public static class NetworkChunkCodec
             snapshot.Coords,
             snapshot.ContentVersion,
             snapshot.Cells.Span,
-            snapshot.Shafts.Span);
+            snapshot.Shafts.Span
+        );
     }
 
     private static EncodedTerrainChunk Encode(
         Point2 coords,
         long contentVersion,
         ReadOnlySpan<int> cells,
-        ReadOnlySpan<long> shafts)
+        ReadOnlySpan<long> shafts
+    )
     {
         using var rleStream = new MemoryStream(_rawBodySize / 4);
         using (var writer = new BinaryWriter(rleStream, System.Text.Encoding.UTF8, true))
@@ -159,14 +166,16 @@ public static class NetworkChunkCodec
     public static ClientChunkSnapshot DecodeSnapshot(
         ChunkAllocationId allocation,
         long contentVersion,
-        byte[] payload)
+        byte[] payload
+    )
     {
         var chunk = Decode(allocation.Coords, payload);
         return new ClientChunkSnapshot(
             allocation,
             contentVersion,
             chunk.Cells,
-            chunk.Shafts);
+            chunk.Shafts
+        );
     }
 
     private static void WriteClimate(BinaryWriter writer, ReadOnlySpan<long> shafts)

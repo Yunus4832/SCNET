@@ -14,8 +14,9 @@ public class PlayerScreen : Screen
 {
     public enum Mode
     {
-        Initial,
-        Edit
+        Initial = 0,
+
+        Edit = 1
     }
 
     private const string _typeName = nameof(PlayerScreen);
@@ -135,9 +136,10 @@ public class PlayerScreen : Screen
             GameManager.UpdateProject();
         }
 
-        if (Time.RealTime - EnterTime > 120 && CommonLib.WorkType == WorkType.Client &&
+        if (Time.RealTime - EnterTime > 120 &&
+            CommonLib.WorkType == WorkType.Client &&
             CommonLib.Net.IsTransportRunning)
-        //客户端卡在新增玩家界面两分钟自动中断连接
+            //客户端卡在新增玩家界面两分钟自动中断连接
         {
             CommonLib.Net.Stop("客户端主动关闭连接");
         }
@@ -192,11 +194,13 @@ public class PlayerScreen : Screen
             CharacterSkinsManager.UpdateCharacterSkinsList();
             var items = CharacterSkinsManager.ReadOnlyCharacterSkinsNames.Where(n =>
                 CharacterSkinsManager.GetPlayerClass(n) == _playerData.PlayerClass ||
-                !CharacterSkinsManager.GetPlayerClass(n).HasValue);
+                !CharacterSkinsManager.GetPlayerClass(n).HasValue
+            );
             var dialog = new ListSelectionDialog(
                 LanguageManager.Get(_typeName, 1),
-                items, 64f,
-                delegate (object item)
+                items,
+                64f,
+                delegate(object item)
                 {
                     var node = ContentManager.Get<XElement>("Widgets/CharacterSkinItem");
                     var obj = (ContainerWidget)LoadWidget(this, node, null);
@@ -210,7 +214,7 @@ public class PlayerScreen : Screen
                     playerModelWidget.CharacterSkinTexture = texture;
                     return obj;
                 },
-                delegate (object item)
+                delegate(object item)
                 {
                     _playerData.CharacterSkinName = (string)item;
                     if (_playerData.IsDefaultName)
@@ -226,21 +230,24 @@ public class PlayerScreen : Screen
         {
             if (CommonLib.WorkType == WorkType.Server)
             {
-                DialogsManager.Confirm("你确定要踢出这个玩家吗", btn =>
-                {
-                    var client = CommonLib.Net.GetClientByGUID(_playerData.PlayerGUID);
-                    if (btn == MessageDialogButton.Button1)
+                DialogsManager.Confirm(
+                    "你确定要踢出这个玩家吗",
+                    btn =>
                     {
-                        if (client is not null)
+                        var client = CommonLib.Net.GetClientByGUID(_playerData.PlayerGUID);
+                        if (btn == MessageDialogButton.Button1)
                         {
-                            CommonLib.Net.RemoveClient(client);
+                            if (client is not null)
+                            {
+                                CommonLib.Net.RemoveClient(client);
+                            }
+                        }
+                        else
+                        {
+                            DialogsManager.HideAllDialogs();
                         }
                     }
-                    else
-                    {
-                        DialogsManager.HideAllDialogs();
-                    }
-                });
+                );
             }
             else if (CommonLib.WorkType == WorkType.Client)
             {
@@ -248,16 +255,19 @@ public class PlayerScreen : Screen
             }
             else
             {
-                DialogsManager.Confirm(LanguageManager.Get(_typeName, 3), btn =>
-                {
-                    if (btn != MessageDialogButton.Button1)
+                DialogsManager.Confirm(
+                    LanguageManager.Get(_typeName, 3),
+                    btn =>
                     {
-                        return;
-                    }
+                        if (btn != MessageDialogButton.Button1)
+                        {
+                            return;
+                        }
 
-                    _playerData.SubsystemPlayers.RemovePlayerData(_playerData);
-                    ScreensManager.SwitchScreen("Players", _playerData.SubsystemPlayers);
-                });
+                        _playerData.SubsystemPlayers.RemovePlayerData(_playerData);
+                        ScreensManager.SwitchScreen("Players", _playerData.SubsystemPlayers);
+                    }
+                );
             }
         }
 
@@ -267,7 +277,12 @@ public class PlayerScreen : Screen
             {
                 if (CommonLib.WorkType == WorkType.Client)
                 {
-                    NetworkSender.SendToServer(PlayerPackageBuilder.Capture(_playerData, PlayerDataPackage.DataType.Create));
+                    NetworkSender.SendToServer(
+                        PlayerPackageBuilder.Capture(
+                            _playerData,
+                            PlayerDataPackage.DataType.Create
+                        )
+                    );
                     DialogsManager.ShowDialog(this, _fetchingPlayerDialog);
                 }
                 else
@@ -304,7 +319,9 @@ public class PlayerScreen : Screen
                             _playerData.PlayerGUID,
                             _playerData.Name,
                             _playerData.CharacterSkinName,
-                            _playerData.PlayerClass));
+                            _playerData.PlayerClass
+                        )
+                    );
                 }
                 else
                 {
@@ -313,7 +330,9 @@ public class PlayerScreen : Screen
                         new UpdateOwnPlayerProfileCommand(
                             _playerData.Name,
                             _playerData.CharacterSkinName,
-                            _playerData.PlayerClass));
+                            _playerData.PlayerClass
+                        )
+                    );
                 }
             }
         }

@@ -175,7 +175,8 @@ public static class SessionInfoManager
             SessionTarget.ServerBrowser => SwitchTo("NetPlay"),
             SessionTarget.World => RestoreWorldSession(
                 sessionInfo,
-                createIfMissing: context.Request.HasExplicitSession),
+                createIfMissing: context.Request.HasExplicitSession
+            ),
             SessionTarget.RemoteServer => RestoreRemoteClientSession(sessionInfo),
             _ => false
         };
@@ -184,7 +185,8 @@ public static class SessionInfoManager
     public static SessionInfo ResolveStartupSession(
         RunningSetting settings,
         StartupRequest request,
-        string activeSessionId)
+        string activeSessionId
+    )
     {
         var sessionId = NormalizeSessionId(activeSessionId);
         if (!TryLoadExisting(sessionId, out var sessionInfo))
@@ -212,7 +214,8 @@ public static class SessionInfoManager
 
         var worldInfo = worlds.FirstOrDefault(w =>
             string.Equals(w.DirectoryName, worldArg, StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(w.WorldSettings.Name, worldArg, StringComparison.OrdinalIgnoreCase));
+            string.Equals(w.WorldSettings.Name, worldArg, StringComparison.OrdinalIgnoreCase)
+        );
         if (worldInfo == null)
         {
             var worldPath = Storage.CombinePaths(GamePaths.Worlds, worldArg);
@@ -249,7 +252,8 @@ public static class SessionInfoManager
             {
                 Log.Warning(
                     $"World \"{worldInfo.WorldSettings.Name}\" is not marked as a server world. " +
-                    "HeadlessServer will enable RunServer automatically.");
+                    "HeadlessServer will enable RunServer automatically."
+                );
                 worldInfo.WorldSettings.RunServer = true;
                 WorldsManager.ChangeWorld(worldInfo.DirectoryName, worldInfo.WorldSettings);
             }
@@ -359,7 +363,8 @@ public static class SessionInfoManager
             if (!createIfMissing)
             {
                 Log.Warning(
-                    $"Cannot restore session \"{sessionInfo.SessionId}\": world \"{sessionInfo.World}\" not found.");
+                    $"Cannot restore session \"{sessionInfo.SessionId}\": world \"{sessionInfo.World}\" not found."
+                );
                 return false;
             }
 
@@ -369,7 +374,8 @@ public static class SessionInfoManager
                 sessionInfo.GameMode,
                 sessionInfo.TerrainGenerationMode,
                 sessionInfo.TerrainLevel,
-                runServer: StartupManager.Current.Request.ForceWorldRunServer);
+                runServer: StartupManager.Current.Request.ForceWorldRunServer
+            );
         }
         else
         {
@@ -379,7 +385,8 @@ public static class SessionInfoManager
                 !worldInfo.WorldSettings.RunServer)
             {
                 Log.Information(
-                    $"Enabling RunServer for world \"{worldInfo.WorldSettings.Name}\" because --host was specified.");
+                    $"Enabling RunServer for world \"{worldInfo.WorldSettings.Name}\" because --host was specified."
+                );
                 worldInfo.WorldSettings.RunServer = true;
                 WorldsManager.ChangeWorld(worldInfo.DirectoryName, worldInfo.WorldSettings);
             }
@@ -422,8 +429,9 @@ public static class SessionInfoManager
         var normalizedWorld = NormalizeWorld(worldName);
         worldInfo = WorldsManager.WorldInfos.FirstOrDefault(w =>
                         string.Equals(w.DirectoryName, normalizedWorld, StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(w.WorldSettings.Name, normalizedWorld, StringComparison.OrdinalIgnoreCase))
-                    ?? null;
+                        string.Equals(w.WorldSettings.Name, normalizedWorld, StringComparison.OrdinalIgnoreCase)
+                    ) ??
+                    null;
         if (worldInfo is not null)
         {
             return true;
@@ -520,7 +528,9 @@ public static class SessionInfoManager
             string.Equals(
                 NormalizeSessionId(element.Attribute(nameof(SessionInfo.SessionId))?.Value),
                 sessionId,
-                StringComparison.Ordinal));
+                StringComparison.Ordinal
+            )
+        );
     }
 
     private static XElement? FindSessionElementByName(XElement root, string sessionName)
@@ -540,23 +550,28 @@ public static class SessionInfoManager
             string.Equals(
                 NormalizeSessionName(element.Attribute(nameof(SessionInfo.Name))?.Value),
                 sessionName,
-                StringComparison.Ordinal));
+                StringComparison.Ordinal
+            )
+        );
     }
 
     private static XElement CreateSessionElement(SessionInfo sessionInfo)
     {
-        var element = new XElement("SessionInfo",
+        var element = new XElement(
+            "SessionInfo",
             new XAttribute(nameof(SessionInfo.SessionId), sessionInfo.SessionId),
             new XAttribute(nameof(SessionInfo.Name), sessionInfo.Name),
             new XAttribute(nameof(SessionInfo.Target), sessionInfo.Target),
             new XAttribute(nameof(SessionInfo.World), sessionInfo.World),
             new XAttribute(nameof(SessionInfo.Seed), sessionInfo.Seed),
             new XAttribute(nameof(SessionInfo.ServerPort), sessionInfo.ServerPort),
-            new XAttribute(nameof(SessionInfo.BroadcastPort), sessionInfo.BroadcastPort));
+            new XAttribute(nameof(SessionInfo.BroadcastPort), sessionInfo.BroadcastPort)
+        );
         if (sessionInfo.RemoteTarget is not null)
         {
             element.Add(CreateRemoteTargetElement(sessionInfo.RemoteTarget));
         }
+
         if (sessionInfo.GameMode is { } gameMode)
         {
             element.Add(new XAttribute(nameof(SessionInfo.GameMode), gameMode));
@@ -615,16 +630,22 @@ public static class SessionInfoManager
 
         if (!string.IsNullOrWhiteSpace(sessionInfo.AutoJoinPlayerName))
         {
-            element.Add(new XAttribute(
-                nameof(SessionInfo.AutoJoinPlayerName),
-                sessionInfo.AutoJoinPlayerName));
+            element.Add(
+                new XAttribute(
+                    nameof(SessionInfo.AutoJoinPlayerName),
+                    sessionInfo.AutoJoinPlayerName
+                )
+            );
         }
 
         if (!string.IsNullOrWhiteSpace(sessionInfo.HttpCommandAccessToken))
         {
-            element.Add(new XAttribute(
-                nameof(SessionInfo.HttpCommandAccessToken),
-                sessionInfo.HttpCommandAccessToken));
+            element.Add(
+                new XAttribute(
+                    nameof(SessionInfo.HttpCommandAccessToken),
+                    sessionInfo.HttpCommandAccessToken
+                )
+            );
         }
 
         return element;
@@ -637,8 +658,7 @@ public static class SessionInfoManager
         sessionInfo.Target = ParseTarget(element.Attribute(nameof(SessionInfo.Target))?.Value);
         sessionInfo.World = NormalizeWorld(element.Attribute(nameof(SessionInfo.World))?.Value);
         sessionInfo.Seed = element.Attribute(nameof(SessionInfo.Seed))?.Value ?? string.Empty;
-        sessionInfo.GameMode = ParseGameMode(
-            element.Attribute(nameof(SessionInfo.GameMode))?.Value);
+        sessionInfo.GameMode = ParseGameMode(element.Attribute(nameof(SessionInfo.GameMode))?.Value);
         sessionInfo.TerrainGenerationMode = element.Attribute(nameof(SessionInfo.TerrainGenerationMode)) is { } terrain
             ? Enum.Parse<TerrainGenerationMode>(terrain.Value, true)
             : null;
@@ -658,11 +678,12 @@ public static class SessionInfoManager
         sessionInfo.ServerPort = ParseServerPort(element.Attribute(nameof(SessionInfo.ServerPort))?.Value);
         sessionInfo.BroadcastPort = ParseServerPort(element.Attribute(nameof(SessionInfo.BroadcastPort))?.Value);
         sessionInfo.HttpCommandEnabled = ParseOptionalBoolean(
-            element.Attribute(nameof(SessionInfo.HttpCommandEnabled))?.Value);
-        sessionInfo.HttpCommandPort = ParseOptionalPort(
-            element.Attribute(nameof(SessionInfo.HttpCommandPort))?.Value);
+            element.Attribute(nameof(SessionInfo.HttpCommandEnabled))?.Value
+        );
+        sessionInfo.HttpCommandPort = ParseOptionalPort(element.Attribute(nameof(SessionInfo.HttpCommandPort))?.Value);
         sessionInfo.AutoJoinPlayerName = NormalizeOptionalText(
-            element.Attribute(nameof(SessionInfo.AutoJoinPlayerName))?.Value);
+            element.Attribute(nameof(SessionInfo.AutoJoinPlayerName))?.Value
+        );
         sessionInfo.HttpCommandAccessToken =
             element.Attribute(nameof(SessionInfo.HttpCommandAccessToken))?.Value;
     }
@@ -683,7 +704,8 @@ public static class SessionInfoManager
     private static SessionInfo CreateSessionForStartup(
         RunningSetting settings,
         StartupRequest request,
-        string sessionId)
+        string sessionId
+    )
     {
         var explicitNamedSession = request.HasExplicitSession &&
                                    !string.IsNullOrWhiteSpace(request.SessionName);
@@ -786,7 +808,8 @@ public static class SessionInfoManager
         GameMode? gameMode,
         TerrainGenerationMode? terrainGenerationMode,
         int? terrainLevel,
-        bool runServer)
+        bool runServer
+    )
     {
         var worldSettings = new WorldSettings
         {
@@ -836,7 +859,9 @@ public static class SessionInfoManager
     {
         if (sessionInfo.TerrainGenerationMode != null || sessionInfo.TerrainLevel != null)
         {
-            Log.Warning("World already exists; ignoring terrain creation options without changing saved terrain settings.");
+            Log.Warning(
+                "World already exists; ignoring terrain creation options without changing saved terrain settings."
+            );
         }
     }
 
@@ -898,27 +923,47 @@ public static class SessionInfoManager
 
     private static XElement CreateRemoteTargetElement(NetworkTarget target) => target switch
     {
-        AddressNetworkTarget address => new XElement("RemoteTarget", new XAttribute("Kind", "Address"),
-            new XAttribute("Host", address.Host), new XAttribute("Port", address.Port)),
-        InvitationCodeNetworkTarget code => new XElement("RemoteTarget", new XAttribute("Kind", "InvitationCode"),
-            new XAttribute("ControlAddress", code.ControlAddress), new XAttribute("Code", code.JoinCode),
-            new XAttribute("RelayPolicy", code.RelayPolicy)),
-        InvitationSessionNetworkTarget session => new XElement("RemoteTarget", new XAttribute("Kind", "InvitationSession"),
-            new XAttribute("ControlAddress", session.ControlAddress), new XAttribute("SessionId", session.SessionId),
-            new XAttribute("RelayPolicy", session.RelayPolicy)),
+        AddressNetworkTarget address => new XElement(
+            "RemoteTarget",
+            new XAttribute("Kind", "Address"),
+            new XAttribute("Host", address.Host),
+            new XAttribute("Port", address.Port)
+        ),
+        InvitationCodeNetworkTarget code => new XElement(
+            "RemoteTarget",
+            new XAttribute("Kind", "InvitationCode"),
+            new XAttribute("ControlAddress", code.ControlAddress),
+            new XAttribute("Code", code.JoinCode),
+            new XAttribute("RelayPolicy", code.RelayPolicy)
+        ),
+        InvitationSessionNetworkTarget session => new XElement(
+            "RemoteTarget",
+            new XAttribute("Kind", "InvitationSession"),
+            new XAttribute("ControlAddress", session.ControlAddress),
+            new XAttribute("SessionId", session.SessionId),
+            new XAttribute("RelayPolicy", session.RelayPolicy)
+        ),
         _ => throw new InvalidOperationException("Unknown remote target.")
     };
 
     private static NetworkTarget ReadRemoteTarget(XElement element)
     {
-        string Required(string name) => element.Attribute(name)?.Value ?? throw new FormatException($"Missing remote target {name}.");
+        string Required(string name) => element.Attribute(name)?.Value ??
+                                        throw new FormatException($"Missing remote target {name}.");
+
         return Required("Kind") switch
         {
             "Address" => new AddressNetworkTarget(Required("Host"), int.Parse(Required("Port"))),
-            "InvitationCode" => new InvitationCodeNetworkTarget(new Uri(Required("ControlAddress")), Required("Code"),
-                Enum.Parse<RelayPolicy>(Required("RelayPolicy"))),
-            "InvitationSession" => new InvitationSessionNetworkTarget(new Uri(Required("ControlAddress")), Guid.Parse(Required("SessionId")),
-                Enum.Parse<RelayPolicy>(Required("RelayPolicy"))),
+            "InvitationCode" => new InvitationCodeNetworkTarget(
+                new Uri(Required("ControlAddress")),
+                Required("Code"),
+                Enum.Parse<RelayPolicy>(Required("RelayPolicy"))
+            ),
+            "InvitationSession" => new InvitationSessionNetworkTarget(
+                new Uri(Required("ControlAddress")),
+                Guid.Parse(Required("SessionId")),
+                Enum.Parse<RelayPolicy>(Required("RelayPolicy"))
+            ),
             _ => throw new FormatException("Unknown remote target kind.")
         };
     }
@@ -948,7 +993,8 @@ public static class SessionInfoManager
 
     private static void ConsumePendingSessionIfNeeded(
         StartupContext context,
-        SessionInfo sessionInfo)
+        SessionInfo sessionInfo
+    )
     {
         if (context.Request.HasExplicitSession ||
             string.IsNullOrWhiteSpace(context.Settings.PendingSessionId))

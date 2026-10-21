@@ -5,16 +5,25 @@ namespace Game.Widgets;
 public sealed class InlineSelectionWidget : CanvasWidget
 {
     private const float _listPadding = 4f;
+
     private const float _separatorThickness = 2f;
 
     private readonly BevelledRectangleWidget _background;
+
     private readonly CanvasWidget _header;
+
     private readonly ClickableWidget _headerClickable;
+
     private readonly LabelWidget _headerLabel;
+
     private readonly List<object> _items = [];
+
     private readonly ListPanelWidget _list;
+
     private readonly CanvasWidget _listViewport;
+
     private readonly RectangleWidget _separator;
+
     private readonly CanvasWidget _surface;
 
     private Func<object, string> _itemTextProvider = item => item.ToString() ?? string.Empty;
@@ -103,11 +112,7 @@ public sealed class InlineSelectionWidget : CanvasWidget
         set => _headerLabel.HorizontalAlignment = value;
     }
 
-    public Vector2 HeaderContentMargin
-    {
-        get => _headerLabel.Margin;
-        set => _headerLabel.Margin = value;
-    }
+    public Vector2 HeaderContentMargin { get => _headerLabel.Margin; set => _headerLabel.Margin = value; }
 
     public float FontScale
     {
@@ -154,17 +159,9 @@ public sealed class InlineSelectionWidget : CanvasWidget
 
     public ReadOnlyList<object> Items => new(_items);
 
-    public int? SelectedIndex
-    {
-        get => _list.SelectedIndex;
-        set => _list.SelectedIndex = value;
-    }
+    public int? SelectedIndex { get => _list.SelectedIndex; set => _list.SelectedIndex = value; }
 
-    public object? SelectedItem
-    {
-        get => _list.SelectedItem;
-        set => _list.SelectedItem = value;
-    }
+    public object? SelectedItem { get => _list.SelectedItem; set => _list.SelectedItem = value; }
 
     public bool IsOpen { get; private set; }
 
@@ -178,23 +175,11 @@ public sealed class InlineSelectionWidget : CanvasWidget
         }
     }
 
-    public Color CenterColor
-    {
-        get => _background.CenterColor;
-        set => _background.CenterColor = value;
-    }
+    public Color CenterColor { get => _background.CenterColor; set => _background.CenterColor = value; }
 
-    public Color BevelColor
-    {
-        get => _background.BevelColor;
-        set => _background.BevelColor = value;
-    }
+    public Color BevelColor { get => _background.BevelColor; set => _background.BevelColor = value; }
 
-    public Color SelectionColor
-    {
-        get => _list.SelectionColor;
-        set => _list.SelectionColor = value;
-    }
+    public Color SelectionColor { get => _list.SelectionColor; set => _list.SelectionColor = value; }
 
     public void SetItems(IEnumerable<object> items)
     {
@@ -336,7 +321,8 @@ public sealed class InlineSelectionWidget : CanvasWidget
         _header.Size = headerSize;
         _listViewport.Size = new Vector2(
             Math.Max(headerSize.X - 2f * _listPadding, 0f),
-            Math.Max(listHeight - 2f * _listPadding, 0f));
+            Math.Max(listHeight - 2f * _listPadding, 0f)
+        );
         _listViewport.IsVisible = IsOpen;
         _separator.Size = new Vector2(headerSize.X, _separatorThickness);
         _separator.IsVisible = IsOpen;

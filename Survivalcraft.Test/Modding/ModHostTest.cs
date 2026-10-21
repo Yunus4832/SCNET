@@ -26,7 +26,8 @@ public class ModHostTest
                 "stop:example.addon",
                 "stop:example.core"
             ],
-            calls);
+            calls
+        );
     }
 
     [Fact]
@@ -35,7 +36,8 @@ public class ModHostTest
         var host = new ModHost();
         var descriptor = new ModDescriptor(
             new ModManifest("example.content", "Content", "1.0.0"),
-            () => new RegisteringMod());
+            () => new RegisteringMod()
+        );
 
         host.LoadAndStart([descriptor]);
         var registry = host.Extensions.GetRegistry<object>("blocks");
@@ -56,7 +58,8 @@ public class ModHostTest
         var host = new ModHost();
         var descriptor = new ModDescriptor(
             new ModManifest("example.commands", "Commands", "1.0.0"),
-            () => new CommandMod());
+            () => new CommandMod()
+        );
 
         host.LoadAndStart([descriptor]);
 
@@ -68,19 +71,26 @@ public class ModHostTest
         Assert.Equal("example.commands:hello", definition!.Id.ToString());
         var customAdapterId = new ResourceId(
             new ModId("example.commands"),
-            "custom/hello");
+            "custom/hello"
+        );
         Assert.True(host.Commands.Adapters.IsFrozen);
-        Assert.True(host.Commands.Adapters.TryGet<CommandMod.CustomBinding>(
-            customAdapterId,
-            out var customBinding));
+        Assert.True(
+            host.Commands.Adapters.TryGet<CommandMod.CustomBinding>(
+                customAdapterId,
+                out var customBinding
+            )
+        );
         Assert.Equal("custom", customBinding!.Value);
 
         host.StopAll();
 
         Assert.False(textAdapter.TryFind("hello", out _));
-        Assert.False(host.Commands.Adapters.TryGet<CommandMod.CustomBinding>(
-            customAdapterId,
-            out _));
+        Assert.False(
+            host.Commands.Adapters.TryGet<CommandMod.CustomBinding>(
+                customAdapterId,
+                out _
+            )
+        );
     }
 
     [Fact]
@@ -91,7 +101,8 @@ public class ModHostTest
         var first = Descriptor("example.first", calls);
         var failing = new ModDescriptor(
             new ModManifest("example.second", "Second", "1.0.0", [new ModDependency("example.first")]),
-            () => new FailingMod(calls));
+            () => new FailingMod(calls)
+        );
 
         Assert.Throws<InvalidOperationException>(() => host.LoadAndStart([failing, first]));
 
@@ -107,7 +118,8 @@ public class ModHostTest
         var host = new ModHost();
         var descriptor = new ModDescriptor(
             new ModManifest("example.hooks", "Hooks", "1.0.0"),
-            () => new HookMod(calls));
+            () => new HookMod(calls)
+        );
 
         host.LoadAndStart([descriptor]);
         var context = new CreatureInjuringContext(new Game.Components.ComponentHealth(), 4f, null, false, "test");
@@ -120,7 +132,8 @@ public class ModHostTest
         host.StopAll();
         calls.Clear();
         host.Gameplay.Invoke(
-            new CreatureInjuringContext(new Game.Components.ComponentHealth(), 4f, null, false, "test"));
+            new CreatureInjuringContext(new Game.Components.ComponentHealth(), 4f, null, false, "test")
+        );
         Assert.Empty(calls);
     }
 
@@ -131,7 +144,8 @@ public class ModHostTest
         var host = new ModHost();
         var descriptor = new ModDescriptor(
             new ModManifest("example.terrain", "Terrain", "1.0.0"),
-            () => new TerrainHookMod(calls));
+            () => new TerrainHookMod(calls)
+        );
 
         host.LoadAndStart([descriptor]);
         var context = new TerrainChunkGeneratedContext(null!, new Game.Terrains.TerrainChunk(null!, 0, 0));
@@ -152,7 +166,8 @@ public class ModHostTest
         var host = new ModHost();
         var descriptor = new ModDescriptor(
             new ModManifest("example.blocks", "Blocks", "1.0.0"),
-            () => new BlockBehaviorHookMod(calls));
+            () => new BlockBehaviorHookMod(calls)
+        );
 
         host.LoadAndStart([descriptor]);
         var context = new BlockEditContext(1, 2, 3, 4, new Game.Components.ComponentPlayer());
@@ -173,13 +188,15 @@ public class ModHostTest
         var host = new ModHost();
         var descriptor = new ModDescriptor(
             new ModManifest("example.players", "Players", "1.0.0"),
-            () => new PlayerLifecycleHookMod(calls));
+            () => new PlayerLifecycleHookMod(calls)
+        );
 
         host.LoadAndStart([descriptor]);
         var context = new PlayerRespawnRequestedContext(
             null!,
             new Game.Components.ComponentPlayer(),
-            PlayerRespawnRequestKind.StandardRespawn);
+            PlayerRespawnRequestKind.StandardRespawn
+        );
 
         host.Gameplay.Invoke(context);
 
@@ -188,10 +205,13 @@ public class ModHostTest
 
         host.StopAll();
         calls.Clear();
-        host.Gameplay.Invoke(new PlayerRespawnRequestedContext(
-            null!,
-            new Game.Components.ComponentPlayer(),
-            PlayerRespawnRequestKind.StandardRespawn));
+        host.Gameplay.Invoke(
+            new PlayerRespawnRequestedContext(
+                null!,
+                new Game.Components.ComponentPlayer(),
+                PlayerRespawnRequestKind.StandardRespawn
+            )
+        );
         Assert.Empty(calls);
     }
 
@@ -202,24 +222,36 @@ public class ModHostTest
         var host = new ModHost();
         var descriptor = new ModDescriptor(
             new ModManifest("example.actions", "Actions", "1.0.0"),
-            () => new ContextActionHookMod(calls));
+            () => new ContextActionHookMod(calls)
+        );
 
         host.LoadAndStart([descriptor]);
-        var action = host.ContextActions.Resolve(new PlayerContextActionQueryContext(
-            new Game.Components.ComponentPlayer(),
-            null!));
+        var action = host.ContextActions.Resolve(
+            new PlayerContextActionQueryContext(
+                new Game.Components.ComponentPlayer(),
+                null!
+            )
+        );
 
         Assert.NotNull(action);
         Assert.Equal("救援", action!.Label);
-        action.Execute(new PlayerContextActionExecutionContext(
-            new Game.Components.ComponentPlayer(),
-            null!));
+        action.Execute(
+            new PlayerContextActionExecutionContext(
+                new Game.Components.ComponentPlayer(),
+                null!
+            )
+        );
         Assert.Equal(["query:high", "execute:high"], calls);
 
         host.StopAll();
-        Assert.Null(host.ContextActions.Resolve(new PlayerContextActionQueryContext(
-            new Game.Components.ComponentPlayer(),
-            null!)));
+        Assert.Null(
+            host.ContextActions.Resolve(
+                new PlayerContextActionQueryContext(
+                    new Game.Components.ComponentPlayer(),
+                    null!
+                )
+            )
+        );
     }
 
     [Fact]
@@ -229,14 +261,16 @@ public class ModHostTest
         var host = new ModHost();
         var descriptor = new ModDescriptor(
             new ModManifest("example.ai", "Ai", "1.0.0"),
-            () => new CreatureTargetHookMod(calls));
+            () => new CreatureTargetHookMod(calls)
+        );
 
         host.LoadAndStart([descriptor]);
         var context = new CreatureTargetScoringContext(
             new Game.Components.ComponentCreature(),
             new Game.Components.ComponentCreature(),
             CreatureTargetingKind.Chase,
-            10f);
+            10f
+        );
 
         host.Gameplay.Invoke(context);
 
@@ -245,11 +279,14 @@ public class ModHostTest
 
         host.StopAll();
         calls.Clear();
-        host.Gameplay.Invoke(new CreatureTargetScoringContext(
-            new Game.Components.ComponentCreature(),
-            new Game.Components.ComponentCreature(),
-            CreatureTargetingKind.Chase,
-            10f));
+        host.Gameplay.Invoke(
+            new CreatureTargetScoringContext(
+                new Game.Components.ComponentCreature(),
+                new Game.Components.ComponentCreature(),
+                CreatureTargetingKind.Chase,
+                10f
+            )
+        );
         Assert.Empty(calls);
     }
 
@@ -260,25 +297,33 @@ public class ModHostTest
         var host = new ModHost();
         var descriptor = new ModDescriptor(
             new ModManifest("example.net", "Net", "1.0.0"),
-            () => new ModNetworkHookMod(calls));
+            () => new ModNetworkHookMod(calls)
+        );
 
         host.LoadAndStart([descriptor]);
         using var writer = new ProtocolWriter();
         var payload = writer.Data();
-        host.Network.Dispatch(new ModEnvelopePackage("example.net", "downed.sync", payload), new PackageReceiveContext(null, true, null));
+        host.Network.Dispatch(
+            new ModEnvelopePackage("example.net", "downed.sync", payload),
+            new PackageReceiveContext(null, true, null)
+        );
 
         Assert.Equal(["high", "normal"], calls);
 
         host.StopAll();
         calls.Clear();
-        host.Network.Dispatch(new ModEnvelopePackage("example.net", "downed.sync", payload), new PackageReceiveContext(null, true, null));
+        host.Network.Dispatch(
+            new ModEnvelopePackage("example.net", "downed.sync", payload),
+            new PackageReceiveContext(null, true, null)
+        );
         Assert.Empty(calls);
     }
 
     private static ModDescriptor Descriptor(
         string id,
         List<string> calls,
-        params ModDependency[] dependencies)
+        params ModDependency[] dependencies
+    )
     {
         var manifest = new ModManifest(id, id, "1.0.0", dependencies);
         return new ModDescriptor(manifest, () => new RecordingMod(manifest, calls));
@@ -327,7 +372,9 @@ public class ModHostTest
                 new ResourceId(context.Manifest.ModId, "hello"),
                 new CommandDefinition<HelloCommand>(
                     (_, _) => CommandResult.Ok("Hello"),
-                    CommandDomain.World));
+                    CommandDomain.World
+                )
+            );
             context.Commands.Adapters.Register(
                 new ResourceId(context.Manifest.ModId, "text/hello"),
                 new TextCommand(
@@ -337,11 +384,15 @@ public class ModHostTest
                         new CommandRoute(
                             [],
                             typeof(HelloCommand),
-                            _ => new HelloCommand())
-                    ]));
+                            _ => new HelloCommand()
+                        )
+                    ]
+                )
+            );
             context.Commands.Adapters.Register(
                 new ResourceId(context.Manifest.ModId, "custom/hello"),
-                new CustomBinding("custom"));
+                new CustomBinding("custom")
+            );
         }
 
         public void Start(IModContext context)
@@ -362,15 +413,19 @@ public class ModHostTest
         public void Configure(IModContext context)
         {
             context.Gameplay.OnCreatureInjuring(injury =>
-            {
-                calls.Add("normal");
-                injury.Amount *= 0.5f;
-            });
-            context.Gameplay.OnCreatureInjuring(injury =>
-            {
-                calls.Add("high");
-                injury.Amount *= 0.5f;
-            }, 100);
+                {
+                    calls.Add("normal");
+                    injury.Amount *= 0.5f;
+                }
+            );
+            context.Gameplay.OnCreatureInjuring(
+                injury =>
+                {
+                    calls.Add("high");
+                    injury.Amount *= 0.5f;
+                },
+                100
+            );
         }
 
         public void Start(IModContext context)
@@ -421,10 +476,11 @@ public class ModHostTest
         public void Configure(IModContext context)
         {
             context.Gameplay.OnPlayerRespawnRequested(respawn =>
-            {
-                calls.Add("normal");
-                respawn.Cancel = true;
-            });
+                {
+                    calls.Add("normal");
+                    respawn.Cancel = true;
+                }
+            );
             context.Gameplay.OnPlayerRespawnRequested(respawn => { calls.Add("high"); }, 100);
         }
 
@@ -442,15 +498,19 @@ public class ModHostTest
         public void Configure(IModContext context)
         {
             context.ContextActions.ProvideNearbyAction(query =>
-            {
-                calls.Add("query:normal");
-                return new PlayerContextAction("较低优先级", _ => calls.Add("execute:normal"));
-            });
-            context.ContextActions.ProvideNearbyAction(query =>
-            {
-                calls.Add("query:high");
-                return new PlayerContextAction("救援", _ => calls.Add("execute:high"));
-            }, 100);
+                {
+                    calls.Add("query:normal");
+                    return new PlayerContextAction("较低优先级", _ => calls.Add("execute:normal"));
+                }
+            );
+            context.ContextActions.ProvideNearbyAction(
+                query =>
+                {
+                    calls.Add("query:high");
+                    return new PlayerContextAction("救援", _ => calls.Add("execute:high"));
+                },
+                100
+            );
         }
 
         public void Start(IModContext context)
@@ -467,15 +527,19 @@ public class ModHostTest
         public void Configure(IModContext context)
         {
             context.Gameplay.OnCreatureTargetScoring(target =>
-            {
-                calls.Add("normal");
-                target.Score = 0f;
-            });
-            context.Gameplay.OnCreatureTargetScoring(target =>
-            {
-                calls.Add("high");
-                target.Score *= 0.5f;
-            }, 100);
+                {
+                    calls.Add("normal");
+                    target.Score = 0f;
+                }
+            );
+            context.Gameplay.OnCreatureTargetScoring(
+                target =>
+                {
+                    calls.Add("high");
+                    target.Score *= 0.5f;
+                },
+                100
+            );
         }
 
         public void Start(IModContext context)

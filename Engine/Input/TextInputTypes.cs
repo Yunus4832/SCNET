@@ -4,16 +4,21 @@ namespace Engine.Input;
 public enum TextInputModifiers
 {
     None = 0,
+
     Shift = 1,
+
     Control = 2,
+
     Alt = 4,
+
     CapsLock = 8
 }
 
 public readonly record struct TextComposition(
     string Text,
     int CaretPosition,
-    int SelectionLength = 0)
+    int SelectionLength = 0
+)
 {
     public static TextComposition Empty { get; } = new(string.Empty, 0);
 }
@@ -24,4 +29,5 @@ public readonly record struct TextInputKeyEvent(
     Key Key,
     int ScanCode,
     bool IsRelease,
-    TextInputModifiers Modifiers);
+    TextInputModifiers Modifiers
+);

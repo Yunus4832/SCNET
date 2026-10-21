@@ -93,8 +93,16 @@ public class ComponentFlyAroundBehavior : ComponentBehavior, IUpdateable
                     var vector = Vector2.CreateFromAngle(_angle);
                     var value = position + new Vector3(vector.X, 0f, vector.Y) * 10f;
                     value.Y = EstimateHeight(new Vector2(value.X, value.Z), 8) + _random.Float(3f, 5f);
-                    _componentPathfinding.SetDestination(value, _random.Float(0.6f, 1.05f), 6f, 0, false, true, false,
-                        null);
+                    _componentPathfinding.SetDestination(
+                        value,
+                        _random.Float(0.6f, 1.05f),
+                        6f,
+                        0,
+                        false,
+                        true,
+                        false,
+                        null
+                    );
                     if (_random.Float(0f, 1f) < 0.15f)
                     {
                         _componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
@@ -104,7 +112,8 @@ public class ComponentFlyAroundBehavior : ComponentBehavior, IUpdateable
                 {
                     stateMachine.TransitionTo("Stuck");
                 }
-            }, Actions.Empty
+            },
+            Actions.Empty
         );
     }
 

@@ -6,8 +6,13 @@ internal static class ContentAssetStore
 {
     private sealed record Metadata(string AssetKey, string DisplayName);
 
-    public static string Install(string directory, string extension, string displayName, Stream source,
-        Action<Stream> validate)
+    public static string Install(
+        string directory,
+        string extension,
+        string displayName,
+        Stream source,
+        Action<Stream> validate
+    )
     {
         Storage.CreateDirectory(directory);
         var assetKey = Guid.NewGuid().ToString("N");
@@ -47,8 +52,14 @@ internal static class ContentAssetStore
         }
     }
 
-    public static string Replace(string directory, string extension, string assetKey, string displayName,
-        Stream source, Action<Stream> validate)
+    public static string Replace(
+        string directory,
+        string extension,
+        string assetKey,
+        string displayName,
+        Stream source,
+        Action<Stream> validate
+    )
     {
         if (!Guid.TryParseExact(assetKey, "N", out _))
         {
@@ -115,10 +126,12 @@ internal static class ContentAssetStore
 
     public static string GetDisplayName(string directory, string assetKey, string extension)
     {
-        using var input = Storage.OpenFile(Storage.CombinePaths(directory, assetKey + extension + ".json"),
-            OpenFileMode.Read);
-        return JsonSerializer.Deserialize<Metadata>(input)?.DisplayName
-               ?? throw new InvalidOperationException($"Asset metadata for '{assetKey}' is invalid.");
+        using var input = Storage.OpenFile(
+            Storage.CombinePaths(directory, assetKey + extension + ".json"),
+            OpenFileMode.Read
+        );
+        return JsonSerializer.Deserialize<Metadata>(input)?.DisplayName ??
+               throw new InvalidOperationException($"Asset metadata for '{assetKey}' is invalid.");
     }
 
     public static void Delete(string directory, string assetKey, string extension)

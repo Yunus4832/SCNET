@@ -52,10 +52,24 @@ public class BatteryBlock : Block, IElectricElementBlock
             batteryMesh.ParentBone ??
             throw new InvalidOperationException("Required BatteryMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(batteryMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
-        BlockMesh.AppendModelMeshPart(batteryMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            batteryMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        BlockMesh.AppendModelMeshPart(
+            batteryMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         CollisionBoxes[0] = BlockMesh.CalculateBoundingBox();
     }
 
@@ -75,11 +89,13 @@ public class BatteryBlock : Block, IElectricElementBlock
         }
 
         var data = Terrain.ExtractData(oldValue);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Count = 1
+            }
+        );
     }
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)

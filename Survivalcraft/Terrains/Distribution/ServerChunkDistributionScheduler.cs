@@ -9,7 +9,8 @@ namespace Game.Terrains.Distribution;
 /// </summary>
 public sealed class ServerChunkDistributionScheduler(
     IChunkContentAuthority authority,
-    int maximumOutstandingEncodes)
+    int maximumOutstandingEncodes
+)
     : IDisposable
 {
     private readonly IChunkContentAuthority
@@ -84,7 +85,8 @@ public sealed class ServerChunkDistributionScheduler(
         }
 
         var allowed = requests.Where(request =>
-            NetworkTerrainPolicy.IsChunkRelevant(request.Allocation.Coords, center, contentDistance));
+            NetworkTerrainPolicy.IsChunkRelevant(request.Allocation.Coords, center, contentDistance)
+        );
         if (_pending.TryGetValue(client, out var queue))
         {
             return queue.EnqueueRange(allowed);
@@ -114,7 +116,8 @@ public sealed class ServerChunkDistributionScheduler(
         }
 
         foreach (var coords in missing.Keys.Where(coords =>
-                     !NetworkTerrainPolicy.IsChunkRelevant(coords, center, contentDistance)).ToArray())
+                     !NetworkTerrainPolicy.IsChunkRelevant(coords, center, contentDistance)
+                 ).ToArray())
         {
             missing.Remove(coords);
             removed++;
@@ -125,7 +128,8 @@ public sealed class ServerChunkDistributionScheduler(
 
     public int EnqueueMissing(
         Client client,
-        IEnumerable<TerrainChunkFragmentRequest> requests)
+        IEnumerable<TerrainChunkFragmentRequest> requests
+    )
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(requests);
@@ -196,7 +200,8 @@ public sealed class ServerChunkDistributionScheduler(
             var requests = item.Value.TakePrioritized(
                     center,
                     GetPredictedCenter(item.Key, center),
-                    SettingsManager.Current.ServerChunkCountSendPer)
+                    SettingsManager.Current.ServerChunkCountSendPer
+                )
                 .ToArray();
             var cachedCount = 0;
             var cachedBytes = 0;
@@ -214,8 +219,10 @@ public sealed class ServerChunkDistributionScheduler(
                         }
 
                         var transmissionBytes = encoded.Payload.Length;
-                        var byteBudget = Math.Max(1,
-                            SettingsManager.Current.ServerChunkBytesSendPerSecond);
+                        var byteBudget = Math.Max(
+                            1,
+                            SettingsManager.Current.ServerChunkBytesSendPerSecond
+                        );
                         if (cachedCount > 0 && cachedBytes + transmissionBytes > byteBudget)
                         {
                             break;
@@ -223,11 +230,13 @@ public sealed class ServerChunkDistributionScheduler(
 
                         foreach (var fragment in EncodedTerrainChunkFragmenter.Split(
                                      encoded,
-                                     request.Allocation))
+                                     request.Allocation
+                                 ))
                         {
                             CommonLib.Net.QueuePackage(
                                 new SubsystemTerrainPackage(fragment),
-                                PackageAudience.To(item.Key));
+                                PackageAudience.To(item.Key)
+                            );
                         }
 
                         toRemove.Add(coords);
@@ -306,7 +315,8 @@ public sealed class ServerChunkDistributionScheduler(
         Vector2 center,
         bool sendWindow,
         ref int sentCount,
-        ref int sentBytes)
+        ref int sentBytes
+    )
     {
         if (!_missing.TryGetValue(client, out var requests) || requests.Count == 0)
         {
@@ -371,7 +381,8 @@ public sealed class ServerChunkDistributionScheduler(
             {
                 CommonLib.Net.QueuePackage(
                     new SubsystemTerrainPackage(fragment),
-                    PackageAudience.To(client));
+                    PackageAudience.To(client)
+                );
             }
 
             Interlocked.Add(ref _fragmentsRetransmitted, fragments.Length);
@@ -385,7 +396,8 @@ public sealed class ServerChunkDistributionScheduler(
     internal static bool TrySelectMissingFragments(
         EncodedTerrainChunk encoded,
         TerrainChunkFragmentRequest request,
-        out EncodedTerrainChunkFragment[] selected)
+        out EncodedTerrainChunkFragment[] selected
+    )
     {
         ArgumentNullException.ThrowIfNull(encoded);
         var fragments = EncodedTerrainChunkFragmenter.Split(encoded, request.Allocation).ToArray();
@@ -408,11 +420,13 @@ public sealed class ServerChunkDistributionScheduler(
     private static float FragmentPriority(
         TerrainChunkFragmentRequest request,
         Vector2 center,
-        Vector2 predictedCenter)
+        Vector2 predictedCenter
+    )
     {
         var chunkCenter = new Vector2(
             (request.Allocation.Coords.X + 0.5f) * 16f,
-            (request.Allocation.Coords.Y + 0.5f) * 16f);
+            (request.Allocation.Coords.Y + 0.5f) * 16f
+        );
         return Vector2.DistanceSquared(predictedCenter, chunkCenter) * 0.7f +
                Vector2.DistanceSquared(center, chunkCenter) * 0.3f;
     }

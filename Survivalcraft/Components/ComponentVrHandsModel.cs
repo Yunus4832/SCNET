@@ -45,7 +45,8 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
-        if (!(_componentPlayer.ComponentHealth.Health > 0f) || !camera.GameWidget.IsEntityFirstPersonTarget(Entity) ||
+        if (!(_componentPlayer.ComponentHealth.Health > 0f) ||
+            !camera.GameWidget.IsEntityFirstPersonTarget(Entity) ||
             !_componentPlayer.ComponentInput.IsControlledByVr)
         {
             return;
@@ -86,7 +87,8 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
         }
 
         var m = VrManager.HmdMatrixInverted *
-                Matrix.CreateWorld(camera.ViewPosition, camera.ViewDirection, camera.ViewUp) * camera.ViewMatrix;
+                Matrix.CreateWorld(camera.ViewPosition, camera.ViewDirection, camera.ViewUp) *
+                camera.ViewMatrix;
         var controllerMatrix = VrManager.GetControllerMatrix(VrController.Right);
         if (activeBlockValue == 0)
         {
@@ -134,16 +136,25 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
             var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num4];
             var vector = block.InHandRotation * ((float)Math.PI / 180f) + _itemRotation;
             var matrix = Matrix.CreateFromYawPitchRoll(vector.Y, vector.X, vector.Z) *
-                         Matrix.CreateTranslation(block.InHandOffset) * identity *
-                         Matrix.CreateTranslation(_itemOffset) * controllerMatrix * m;
+                         Matrix.CreateTranslation(block.InHandOffset) *
+                         identity *
+                         Matrix.CreateTranslation(_itemOffset) *
+                         controllerMatrix *
+                         m;
             _drawBlockEnvironmentData.SubsystemTerrain = _subsystemTerrain = null!;
             _drawBlockEnvironmentData.InWorldMatrix = matrix;
             _drawBlockEnvironmentData.Light = _itemLight;
             _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetHumidity(x, z);
             _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetTemperature(x, z) +
                                                     SubsystemWeather.GetTemperatureAdjustmentAtHeight(num);
-            block.DrawBlock(_primitivesRenderer, activeBlockValue, Color.White, block.InHandScale, ref matrix,
-                _drawBlockEnvironmentData);
+            block.DrawBlock(
+                _primitivesRenderer,
+                activeBlockValue,
+                Color.White,
+                block.InHandScale,
+                ref matrix,
+                _drawBlockEnvironmentData
+            );
         }
 
         _primitivesRenderer.Flush(camera.ProjectionMatrix);

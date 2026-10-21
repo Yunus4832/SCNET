@@ -53,15 +53,27 @@ public class SubsystemGlow : Subsystem, IDrawable
             }
 
             var v = (0f - (0.01f + 0.02f * num)) / num2 * vector;
-            var color = Color.LerpNotSaturated(key.Color, _subsystemSky.ViewFogColor,
-                _subsystemSky.CalculateFog(camera.ViewPosition, key.Position));
+            var color = Color.LerpNotSaturated(
+                key.Color,
+                _subsystemSky.ViewFogColor,
+                _subsystemSky.CalculateFog(camera.ViewPosition, key.Position)
+            );
             var p = key.Position + num3 * (-key.Right - key.Up) + v;
             var p2 = key.Position + num3 * (key.Right - key.Up) + v;
             var p3 = key.Position + num3 * (key.Right + key.Up) + v;
             var p4 = key.Position + num3 * (-key.Right + key.Up) + v;
 
-            _batchesByType[(int)key.Type].QueueQuad(p, p2, p3, p4, new Vector2(0f, 0f),
-                new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f), color);
+            _batchesByType[(int)key.Type].QueueQuad(
+                p,
+                p2,
+                p3,
+                p4,
+                new Vector2(0f, 0f),
+                new Vector2(1f, 0f),
+                new Vector2(1f, 1f),
+                new Vector2(0f, 1f),
+                color
+            );
         }
 
         _primitivesRenderer.Flush(camera.ViewProjectionMatrix);
@@ -87,17 +99,41 @@ public class SubsystemGlow : Subsystem, IDrawable
             return;
         }
 
-        _batchesByType[0] = _primitivesRenderer.TexturedBatch(ContentManager.Get<Texture2D>("Textures/RoundGlow"),
-            false, 0, DepthStencilState.DepthRead, RasterizerState.CullCounterClockwiseScissor, BlendState.AlphaBlend,
-            SamplerState.LinearClamp);
-        _batchesByType[1] = _primitivesRenderer.TexturedBatch(ContentManager.Get<Texture2D>("Textures/SquareGlow"),
-            false, 0, DepthStencilState.DepthRead, RasterizerState.CullCounterClockwiseScissor, BlendState.AlphaBlend,
-            SamplerState.LinearClamp);
+        _batchesByType[0] = _primitivesRenderer.TexturedBatch(
+            ContentManager.Get<Texture2D>("Textures/RoundGlow"),
+            false,
+            0,
+            DepthStencilState.DepthRead,
+            RasterizerState.CullCounterClockwiseScissor,
+            BlendState.AlphaBlend,
+            SamplerState.LinearClamp
+        );
+        _batchesByType[1] = _primitivesRenderer.TexturedBatch(
+            ContentManager.Get<Texture2D>("Textures/SquareGlow"),
+            false,
+            0,
+            DepthStencilState.DepthRead,
+            RasterizerState.CullCounterClockwiseScissor,
+            BlendState.AlphaBlend,
+            SamplerState.LinearClamp
+        );
         _batchesByType[2] = _primitivesRenderer.TexturedBatch(
-            ContentManager.Get<Texture2D>("Textures/HorizontalRectGlow"), false, 0, DepthStencilState.DepthRead,
-            RasterizerState.CullCounterClockwiseScissor, BlendState.AlphaBlend, SamplerState.LinearClamp);
+            ContentManager.Get<Texture2D>("Textures/HorizontalRectGlow"),
+            false,
+            0,
+            DepthStencilState.DepthRead,
+            RasterizerState.CullCounterClockwiseScissor,
+            BlendState.AlphaBlend,
+            SamplerState.LinearClamp
+        );
         _batchesByType[3] = _primitivesRenderer.TexturedBatch(
-            ContentManager.Get<Texture2D>("Textures/VerticalRectGlow"), false, 0, DepthStencilState.DepthRead,
-            RasterizerState.CullCounterClockwiseScissor, BlendState.AlphaBlend, SamplerState.LinearClamp);
+            ContentManager.Get<Texture2D>("Textures/VerticalRectGlow"),
+            false,
+            0,
+            DepthStencilState.DepthRead,
+            RasterizerState.CullCounterClockwiseScissor,
+            BlendState.AlphaBlend,
+            SamplerState.LinearClamp
+        );
     }
 }

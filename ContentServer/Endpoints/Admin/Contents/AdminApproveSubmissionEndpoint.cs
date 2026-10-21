@@ -17,7 +17,8 @@ namespace ContentServer.Endpoints.Admin.Contents;
 [AllowAnonymous]
 public sealed class AdminApproveSubmissionEndpoint(
     IMediator mediator,
-    ApiKeyAuthenticationContext authenticationContext) : ContentEndpoint
+    ApiKeyAuthenticationContext authenticationContext
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {

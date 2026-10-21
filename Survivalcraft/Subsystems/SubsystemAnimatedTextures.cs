@@ -74,13 +74,20 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
         var dt2 = (float)MathUtils.Min(_subsystemTime.GameTime - _lastAnimateGameTime, 1.0);
         _lastAnimateGameTime = _subsystemTime.GameTime;
         var blocksTexture = _subsystemBlocksTexture.BlocksTexture;
-        if (_animatedBlocksTexture == null || _animatedBlocksTexture.Width != blocksTexture.Width ||
-            _animatedBlocksTexture.Height != blocksTexture.Height || _animatedBlocksTexture.MipLevelsCount > 1 !=
+        if (_animatedBlocksTexture == null ||
+            _animatedBlocksTexture.Width != blocksTexture.Width ||
+            _animatedBlocksTexture.Height != blocksTexture.Height ||
+            _animatedBlocksTexture.MipLevelsCount > 1 !=
             SettingsManager.Current.TerrainMipmapsEnabled)
         {
             Utilities.Dispose(ref _animatedBlocksTexture);
-            _animatedBlocksTexture = new RenderTarget2D(blocksTexture.Width, blocksTexture.Height,
-                !SettingsManager.Current.TerrainMipmapsEnabled ? 1 : 4, ColorFormat.Rgba8888, DepthFormat.None);
+            _animatedBlocksTexture = new RenderTarget2D(
+                blocksTexture.Width,
+                blocksTexture.Height,
+                !SettingsManager.Current.TerrainMipmapsEnabled ? 1 : 4,
+                ColorFormat.Rgba8888,
+                DepthFormat.None
+            );
             AnimatedBlocksTexture.Tag = blocksTexture.Tag;
         }
 
@@ -91,10 +98,22 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
         {
             Display.Clear(new Vector4(Color.Transparent));
             _primitivesRenderer
-                .TexturedBatch(blocksTexture, false, -1, DepthStencilState.None, RasterizerState.CullNone,
-                    BlendState.Opaque, SamplerState.PointClamp).QueueQuad(new Vector2(0f, 0f),
-                    new Vector2(_animatedBlocksTexture.Width, _animatedBlocksTexture.Height), 0f, Vector2.Zero,
-                    Vector2.One, Color.White);
+                .TexturedBatch(
+                    blocksTexture,
+                    false,
+                    -1,
+                    DepthStencilState.None,
+                    RasterizerState.CullNone,
+                    BlendState.Opaque,
+                    SamplerState.PointClamp
+                ).QueueQuad(
+                    new Vector2(0f, 0f),
+                    new Vector2(_animatedBlocksTexture.Width, _animatedBlocksTexture.Height),
+                    0f,
+                    Vector2.Zero,
+                    Vector2.One,
+                    Color.White
+                );
             AnimateWaterBlocksTexture(_animatedBlocksTexture.Width);
             AnimateMagmaBlocksTexture(_animatedBlocksTexture.Width);
             _primitivesRenderer.Flush();
@@ -143,8 +162,15 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
 
     private void AnimateWaterBlocksTexture(int textureWidth)
     {
-        var batch = _primitivesRenderer.TexturedBatch(_subsystemBlocksTexture.BlocksTexture, false, 0,
-            DepthStencilState.None, null, BlendState.AlphaBlend, SamplerState.PointClamp);
+        var batch = _primitivesRenderer.TexturedBatch(
+            _subsystemBlocksTexture.BlocksTexture,
+            false,
+            0,
+            DepthStencilState.None,
+            null,
+            BlendState.AlphaBlend,
+            SamplerState.PointClamp
+        );
         var num = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[18].TextureSlot % 16;
         var num2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[18].TextureSlot / 16;
         var num3 = 1.0 * _subsystemTime.GameTime;
@@ -171,7 +197,9 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
         var num7 = MathUtils.Floor((float)MathUtils.Remainder(1.75 * _subsystemTime.GameTime, 1.0) * 16f) / 16f;
         var num8 = 0f - num7 + 1f;
         var num9 = MathUtils.Floor(
-            (float)MathUtils.Remainder(1.75f / MathUtils.Sqrt(2f) * _subsystemTime.GameTime, 1.0) * 16f) / 16f;
+                       (float)MathUtils.Remainder(1.75f / MathUtils.Sqrt(2f) * _subsystemTime.GameTime, 1.0) * 16f
+                   ) /
+                   16f;
         var num10 = 0f - num9 + 1f;
         var tc = new Vector2(0f, 0f);
         var tc2 = new Vector2(1f, 1f);
@@ -213,8 +241,15 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
 
     public void AnimateMagmaBlocksTexture(int textureWidth)
     {
-        var batch = _primitivesRenderer.TexturedBatch(_subsystemBlocksTexture.BlocksTexture, false, 0,
-            DepthStencilState.None, null, BlendState.AlphaBlend, SamplerState.PointClamp);
+        var batch = _primitivesRenderer.TexturedBatch(
+            _subsystemBlocksTexture.BlocksTexture,
+            false,
+            0,
+            DepthStencilState.None,
+            null,
+            BlendState.AlphaBlend,
+            SamplerState.PointClamp
+        );
         var num = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[92].TextureSlot % 16;
         var num2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[92].TextureSlot / 16;
         var num3 = 0.5 * _subsystemTime.GameTime;
@@ -239,10 +274,14 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
         var color = _magmaOrder ? new Color(b, b, b, b) : new Color(b2, b2, b2, b2);
         var color2 = _magmaOrder ? new Color(b2, b2, b2, b2) : new Color(b, b, b, b);
         var num7 = MathUtils.Floor(
-            (float)MathUtils.Remainder(0.40000000596046448 * _subsystemTime.GameTime, 1.0) * 16f) / 16f;
+                       (float)MathUtils.Remainder(0.40000000596046448 * _subsystemTime.GameTime, 1.0) * 16f
+                   ) /
+                   16f;
         var num8 = 0f - num7 + 1f;
         var num9 = MathUtils.Floor(
-            (float)MathUtils.Remainder(0.4f / MathUtils.Sqrt(2f) * _subsystemTime.GameTime, 1.0) * 16f) / 16f;
+                       (float)MathUtils.Remainder(0.4f / MathUtils.Sqrt(2f) * _subsystemTime.GameTime, 1.0) * 16f
+                   ) /
+                   16f;
         var num10 = 0f - num9 + 1f;
         var tc = new Vector2(0f, 0f);
         var tc2 = new Vector2(1f, 1f);

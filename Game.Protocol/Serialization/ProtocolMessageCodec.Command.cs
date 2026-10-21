@@ -9,7 +9,9 @@ namespace Game.Protocol.Serialization;
 public static partial class ProtocolMessageCodec
 {
     private const int _maximumPermissionCount = 256;
+
     private const int _maximumMessageArgumentCount = 32;
+
     private static void WriteCommandPackage(CommandPackage message, ProtocolWriter writer)
     {
         writer.WriteEnum(message.Mode);
@@ -22,6 +24,7 @@ public static partial class ProtocolMessageCodec
             case CommandPackage.CommandPackageMode.Suggestions:
                 writer.Write(message.Input);
                 if (message.Suggestions.Count > 64) { throw new ArgumentException("Too many command suggestions."); }
+
                 writer.Write((byte)message.Suggestions.Count);
                 foreach (var suggestion in message.Suggestions)
                 {
@@ -38,13 +41,16 @@ public static partial class ProtocolMessageCodec
                 writer.Write(message.CommandId.Namespace.Value);
                 writer.Write(message.CommandId.Path);
                 var maximumPayloadLength = ProtocolLimits.MaximumCommandPayloadLength;
-                if (message.Payload.Length > maximumPayloadLength) { throw new ArgumentException("Command payload is too long."); }
+                if (message.Payload.Length > maximumPayloadLength)
+                {
+                    throw new ArgumentException("Command payload is too long.");
+                }
+
                 writer.WriteBuff(message.Payload);
                 break;
             case CommandPackage.CommandPackageMode.Result:
                 var result = message.Result ??
-                             throw new InvalidOperationException(
-                                 "Command result package has no result.");
+                             throw new InvalidOperationException("Command result package has no result.");
                 writer.Write(result.Success);
                 writer.Write(result.Code);
                 writer.Write(result.Message);
@@ -55,8 +61,7 @@ public static partial class ProtocolMessageCodec
                 var arguments = result.MessageArguments ?? [];
                 if (arguments.Count > _maximumMessageArgumentCount)
                 {
-                    throw new InvalidOperationException(
-                        "Command result contains too many localization arguments.");
+                    throw new InvalidOperationException("Command result contains too many localization arguments.");
                 }
 
                 writer.Write((byte)arguments.Count);
@@ -69,7 +74,11 @@ public static partial class ProtocolMessageCodec
                 break;
             case CommandPackage.CommandPackageMode.PermissionSnapshot:
                 writer.Write(message.PlayerGuid);
-                if (message.PermissionGrants.Count > _maximumPermissionCount) { throw new ArgumentException("Too many command permissions."); }
+                if (message.PermissionGrants.Count > _maximumPermissionCount)
+                {
+                    throw new ArgumentException("Too many command permissions.");
+                }
+
                 writer.Write((ushort)message.PermissionGrants.Count);
                 foreach (var grant in message.PermissionGrants)
                 {
@@ -116,7 +125,9 @@ public static partial class ProtocolMessageCodec
                     var section = reader.ReadString();
                     var key = reader.ReadString();
                     var fallback = reader.ReadString();
-                    var description = section.Length == 0 ? LocalizedText.Literal(fallback) : new LocalizedText(section, key, fallback);
+                    var description = section.Length == 0
+                        ? LocalizedText.Literal(fallback)
+                        : new LocalizedText(section, key, fallback);
                     suggestions[index] = new CommandSuggestion(value, fallback, isArgument, description);
                 }
 
@@ -125,13 +136,13 @@ public static partial class ProtocolMessageCodec
             case CommandPackage.CommandPackageMode.Request:
                 CommandId = new ResourceId(
                     new ModId(reader.ReadString()),
-                    reader.ReadString());
+                    reader.ReadString()
+                );
                 var payloadLength = reader.ReadInt32();
                 var maximumPayloadLength = ProtocolLimits.MaximumCommandPayloadLength;
                 if (payloadLength < 0 || payloadLength > maximumPayloadLength)
                 {
-                    throw new InvalidDataException(
-                        $"Command payload length is invalid: {payloadLength}.");
+                    throw new InvalidDataException($"Command payload length is invalid: {payloadLength}.");
                 }
 
                 Payload = reader.ReadBytes(payloadLength);
@@ -152,8 +163,7 @@ public static partial class ProtocolMessageCodec
                 var argumentCount = reader.ReadByte();
                 if (argumentCount > _maximumMessageArgumentCount)
                 {
-                    throw new InvalidDataException(
-                        "Command result contains too many localization arguments.");
+                    throw new InvalidDataException("Command result contains too many localization arguments.");
                 }
 
                 var messageArguments = new string[argumentCount];
@@ -173,7 +183,8 @@ public static partial class ProtocolMessageCodec
                     MessageArguments: messageArguments,
                     Data: data,
                     Presentation: presentation,
-                    CloseInputOnSuccess: closeInputOnSuccess);
+                    CloseInputOnSuccess: closeInputOnSuccess
+                );
                 break;
             case CommandPackage.CommandPackageMode.PermissionSnapshot:
                 PlayerGuid = reader.ReadGuid();
@@ -189,15 +200,22 @@ public static partial class ProtocolMessageCodec
                     grants[index] = new CommandPermissionGrant(
                         new ResourceId(
                             new ModId(reader.ReadString()),
-                            reader.ReadString()),
-                        reader.ReadBoolean());
+                            reader.ReadString()
+                        ),
+                        reader.ReadBoolean()
+                    );
                 }
 
                 PermissionGrants = grants;
                 break;
         }
+
         if (!Enum.IsDefined(Mode)) { throw new InvalidDataException("Unknown command message mode."); }
+
         return new CommandPackage(Mode, CorrelationId)
-        { Input = Input, CommandId = CommandId, Payload = Payload, PlayerGuid = PlayerGuid, Result = Result, PermissionGrants = PermissionGrants, Suggestions = Suggestions };
+        {
+            Input = Input, CommandId = CommandId, Payload = Payload, PlayerGuid = PlayerGuid, Result = Result,
+            PermissionGrants = PermissionGrants, Suggestions = Suggestions
+        };
     }
 }

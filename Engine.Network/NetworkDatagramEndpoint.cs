@@ -6,6 +6,7 @@ namespace Engine.Network;
 public sealed class NetworkDatagramEndpoint
 {
     private readonly NetworkHost _host;
+
     internal IPEndPoint Endpoint { get; }
 
     internal NetworkDatagramEndpoint(NetworkHost host, IPEndPoint endpoint, bool isBroadcast = false)

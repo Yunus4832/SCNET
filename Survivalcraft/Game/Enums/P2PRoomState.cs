@@ -2,9 +2,13 @@ namespace Game;
 
 public enum P2PRoomState
 {
-    Disabled,
-    Registering,
-    Active,
-    RetryWaiting,
-    Stopping
+    Disabled = 0,
+
+    Registering = 1,
+
+    Active = 2,
+
+    RetryWaiting = 3,
+
+    Stopping = 4
 }

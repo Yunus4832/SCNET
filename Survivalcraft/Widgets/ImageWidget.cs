@@ -48,8 +48,12 @@ public class ImageWidget : CanvasWidget
         var startT = texturedBatch2D.TriangleVertices.Count;
         texturedBatch2D.QueueQuad(Vector2.Zero + Padding, Size, 1f, StartPoint, EndPoint, ColorTransForm);
         texturedBatch2D.TransformTriangles(
-            Matrix.CreateTranslation(-Size.X / 2f, -Size.Y / 2f, 0f) * Matrix.CreateRotationZ(RotateAngle) *
-            Matrix.CreateTranslation(Size.X / 2f, Size.Y / 2f, 0f) * GlobalTransform, startT);
+            Matrix.CreateTranslation(-Size.X / 2f, -Size.Y / 2f, 0f) *
+            Matrix.CreateRotationZ(RotateAngle) *
+            Matrix.CreateTranslation(Size.X / 2f, Size.Y / 2f, 0f) *
+            GlobalTransform,
+            startT
+        );
         if (!Background.HasValue)
         {
             return;

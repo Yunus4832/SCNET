@@ -30,7 +30,9 @@ public static class SignalCodec
     public static bool TryDecode(ReadOnlySpan<byte> payload, out SignalMessage? message)
     {
         message = null;
-        if (payload.Length is <= 5 or > MaxDatagramBytes || !payload[..4].SequenceEqual(Magic) || payload[4] != CurrentVersion)
+        if (payload.Length is <= 5 or > MaxDatagramBytes ||
+            !payload[..4].SequenceEqual(Magic) ||
+            payload[4] != CurrentVersion)
         {
             return false;
         }
@@ -38,9 +40,12 @@ public static class SignalCodec
         try
         {
             message = JsonSerializer.Deserialize<SignalMessage>(payload[5..]);
-            return message is { RequestId: var id } && id != Guid.Empty &&
-                   !string.IsNullOrEmpty(message.Operation) && message.Operation.Length <= 32 &&
-                   message.Ticket is not null && message.Ticket.Length <= 64 &&
+            return message is { RequestId: var id } &&
+                   id != Guid.Empty &&
+                   !string.IsNullOrEmpty(message.Operation) &&
+                   message.Operation.Length <= 32 &&
+                   message.Ticket is not null &&
+                   message.Ticket.Length <= 64 &&
                    message.Challenge is null or { Length: <= 64 } &&
                    message.Endpoint is null or { Length: <= 128 } &&
                    LocalCandidateEndpoints.TryParse(message.LocalEndpoints, null, out _);

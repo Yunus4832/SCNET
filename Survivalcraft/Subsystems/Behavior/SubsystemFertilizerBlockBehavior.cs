@@ -37,14 +37,33 @@ public class SubsystemFertilizerBlockBehavior : SubsystemBlockBehavior
             }
         }
 
-        _subsystemAudio.PlayRandomSound("Audio/Impacts/Dirt", 0.5f, 0f,
-            new Vector3(terrainRaycastResult.Value.CellFace.X, terrainRaycastResult.Value.CellFace.Y,
-                terrainRaycastResult.Value.CellFace.Z), 3f, true);
-        var position = new Vector3(terrainRaycastResult.Value.CellFace.X + 0.5f,
-            terrainRaycastResult.Value.CellFace.Y + 1.5f, terrainRaycastResult.Value.CellFace.Z + 0.5f);
-        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(componentMiner.ActiveBlockValue)];
-        _subsystemParticles.AddParticleSystem(block.CreateDebrisParticleSystem(_subsystemTerrain, position,
-            componentMiner.ActiveBlockValue, 1.25f));
+        _subsystemAudio.PlayRandomSound(
+            "Audio/Impacts/Dirt",
+            0.5f,
+            0f,
+            new Vector3(
+                terrainRaycastResult.Value.CellFace.X,
+                terrainRaycastResult.Value.CellFace.Y,
+                terrainRaycastResult.Value.CellFace.Z
+            ),
+            3f,
+            true
+        );
+        var position = new Vector3(
+            terrainRaycastResult.Value.CellFace.X + 0.5f,
+            terrainRaycastResult.Value.CellFace.Y + 1.5f,
+            terrainRaycastResult.Value.CellFace.Z + 0.5f
+        );
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog()
+            .Blocks[Terrain.ExtractContents(componentMiner.ActiveBlockValue)];
+        _subsystemParticles.AddParticleSystem(
+            block.CreateDebrisParticleSystem(
+                _subsystemTerrain,
+                position,
+                componentMiner.ActiveBlockValue,
+                1.25f
+            )
+        );
         componentMiner.RemoveActiveTool(1);
         return true;
     }

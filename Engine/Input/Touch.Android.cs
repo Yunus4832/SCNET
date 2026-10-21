@@ -11,7 +11,9 @@ public static partial class Touch
     public struct TouchInfo(int pointerId, Vector2 position, int actionMasked)
     {
         public readonly int PointerId = pointerId;
+
         public Vector2 Position = position;
+
         public readonly int ActionMasked = actionMasked;
     }
 
@@ -27,8 +29,11 @@ public static partial class Touch
             case MotionEventActions.Down:
             case MotionEventActions.Pointer1Down:
                 CachedTouchEvents.Enqueue(
-                    new TouchInfo(e.GetPointerId(e.ActionIndex),
-                        new Vector2(e.GetX(e.ActionIndex), e.GetY(e.ActionIndex)), 1)
+                    new TouchInfo(
+                        e.GetPointerId(e.ActionIndex),
+                        new Vector2(e.GetX(e.ActionIndex), e.GetY(e.ActionIndex)),
+                        1
+                    )
                 );
                 break;
             case MotionEventActions.Move:
@@ -43,8 +48,11 @@ public static partial class Touch
             case MotionEventActions.Cancel:
             case MotionEventActions.Outside:
                 CachedTouchEvents.Enqueue(
-                    new TouchInfo(e.GetPointerId(e.ActionIndex),
-                        new Vector2(e.GetX(e.ActionIndex), e.GetY(e.ActionIndex)), 3)
+                    new TouchInfo(
+                        e.GetPointerId(e.ActionIndex),
+                        new Vector2(e.GetX(e.ActionIndex), e.GetY(e.ActionIndex)),
+                        3
+                    )
                 );
                 break;
         }

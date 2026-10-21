@@ -16,9 +16,11 @@ public partial class PlayerData : IDisposable
 {
     public enum SpawnMode
     {
-        InitialIntro,
-        InitialNoIntro,
-        Respawn
+        InitialIntro = 0,
+
+        InitialNoIntro = 1,
+
+        Respawn = 2
     }
 
     public const string TypeName = nameof(PlayerData);
@@ -285,13 +287,15 @@ public partial class PlayerData : IDisposable
                             : string.Format(LanguageManager.Get(TypeName, 14), Name, MathUtils.Floor(Level)),
                         // 死亡物品提示只在真正死亡重生时显示；进入世界/客户端连接
                         // 时虽然带着存档出生点，但并不是重生。
-                        _respawnAfterDeath ? LanguageManager.Get(TypeName, 3) : string.Empty);
+                        _respawnAfterDeath ? LanguageManager.Get(TypeName, 3) : string.Empty
+                    );
                 }
                 else
                 {
                     ShowSpawnDialog(
                         string.Format(LanguageManager.Get(TypeName, 4), Name, MathUtils.Floor(Level)),
-                        string.Empty);
+                        string.Empty
+                    );
                 }
 
                 //说明，客户端非主玩家不执行updateLocation
@@ -299,8 +303,12 @@ public partial class PlayerData : IDisposable
                 {
                     var initialVisibility =
                         MathUtils.Max(32f, MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f));
-                    _subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, initialVisibility,
-                        64f);
+                    _subsystemTerrain.TerrainUpdater.SetUpdateLocation(
+                        PlayerIndex,
+                        SpawnPosition.XZ,
+                        initialVisibility,
+                        64f
+                    );
                 }
 
                 _terrainWaitStartTime = Time.FrameStartTime;
@@ -349,8 +357,12 @@ public partial class PlayerData : IDisposable
                 //说明，客户端非主玩家不执行UpdateLocation
                 if (!(CommonLib.WorkType == WorkType.Client && !IsMainPlayer))
                 {
-                    _subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center,
-                        MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f), 0f);
+                    _subsystemTerrain.TerrainUpdater.SetUpdateLocation(
+                        PlayerIndex,
+                        center,
+                        MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f),
+                        0f
+                    );
                 }
             },
             delegate
@@ -360,8 +372,11 @@ public partial class PlayerData : IDisposable
                     return;
                 }
 
-                var updateProgress = _subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex,
-                    MathUtils.Min(SettingsManager.Current.VisibilityRange, 32f), 0f);
+                var updateProgress = _subsystemTerrain.TerrainUpdater.GetUpdateProgress(
+                    PlayerIndex,
+                    MathUtils.Min(SettingsManager.Current.VisibilityRange, 32f),
+                    0f
+                );
                 UpdateSpawnProgress(0.5f + 0.5f * updateProgress);
                 if ((!(updateProgress >= 1f) || !(Time.FrameStartTime - _terrainWaitStartTime > 2.0)) &&
                     !(Time.FrameStartTime - _terrainWaitStartTime >= 15.0))
@@ -411,9 +426,11 @@ public partial class PlayerData : IDisposable
                 HideSpawnDialog();
                 if (RunMode.Value is RunModeType.Gui && _gameWidgetInitialized)
                 {
-                    _subsystemTerrain.TerrainRenderer.CompleteInitialChunkFadeIn(GameWidget.GameWidgetIndex,
+                    _subsystemTerrain.TerrainRenderer.CompleteInitialChunkFadeIn(
+                        GameWidget.GameWidgetIndex,
                         ComponentPlayer!.ComponentBody.Position.XZ,
-                        MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f));
+                        MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f)
+                    );
                 }
 
                 InitializeSpawnMarks();
@@ -507,15 +524,20 @@ public partial class PlayerData : IDisposable
                     ReadyToRestart = false;
                     _stateMachine.TransitionTo("PrepareSpawn");
                 }
-                else if ((IsMainPlayer && Time.RealTime - _playerDeathTime!.Value > 1.5 &&
+                else if ((IsMainPlayer &&
+                          Time.RealTime - _playerDeathTime!.Value > 1.5 &&
                           !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) &&
                           ComponentPlayer.GameWidget.Input.Any) ||
                          ReadyToRestart)
                 {
                     if (CommonLib.WorkType == WorkType.Client && IsMainPlayer)
                     {
-                        NetworkSender.SendToServer(PlayerPackageBuilder.Capture(this,
-                            ComponentPlayerPackage.PlayerAction.Restart));
+                        NetworkSender.SendToServer(
+                            PlayerPackageBuilder.Capture(
+                                this,
+                                ComponentPlayerPackage.PlayerAction.Restart
+                            )
+                        );
                     }
 
                     IsDead = true;
@@ -641,7 +663,8 @@ public partial class PlayerData : IDisposable
         var random = new Random();
         CharacterSkinsManager.UpdateCharacterSkinsList();
         var array = CharacterSkinsManager.ReadOnlyCharacterSkinsNames.Where(n =>
-            CharacterSkinsManager.IsBuiltIn(n) && CharacterSkinsManager.GetPlayerClass(n) == _playerClass).ToArray();
+            CharacterSkinsManager.IsBuiltIn(n) && CharacterSkinsManager.GetPlayerClass(n) == _playerClass
+        ).ToArray();
         var second = SubsystemPlayers.PlayersData.Select(pd => pd.CharacterSkinName).ToArray();
         var array2 = array.Except(second).ToArray();
         CharacterSkinName = array2.Length != 0
@@ -700,8 +723,7 @@ public partial class PlayerData : IDisposable
         InputDevice = valuesDictionary.GetValue("InputDevice", InputDevice);
         GroupKey = valuesDictionary.GetValue("GroupKey", GroupKey);
         ServerManager = valuesDictionary.GetValue("ServerManager", ServerManager);
-        CommandPermissions.Load(
-            valuesDictionary.GetValue("CommandPermissions", new ValuesDictionary()));
+        CommandPermissions.Load(valuesDictionary.GetValue("CommandPermissions", new ValuesDictionary()));
         _stateMachine.TransitionTo("FirstUpdate");
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
@@ -771,7 +793,8 @@ public partial class PlayerData : IDisposable
             FirstSpawnTime = SubsystemGameInfo.TotalElapsedGameTime;
         }
 
-        if (CommonLib.WorkType != WorkType.Client || !IsMainPlayer ||
+        if (CommonLib.WorkType != WorkType.Client ||
+            !IsMainPlayer ||
             _stateMachine.CurrentState != "PrepareSpawn")
         {
             CurrentModRuntime.Value?.Gameplay.Invoke(new PlayerSpawnedContext(this, componentPlayer, _spawnMode));
@@ -885,8 +908,13 @@ public partial class PlayerData : IDisposable
         for (var k = -1; k <= 1; k++)
         {
             var end = vector2 + new Vector3(30f * vector.X, 5f * k, 30f * vector.Y);
-            var terrainRaycastResult = _subsystemTerrain.Raycast(vector2, end, false, true,
-                (value, _) => Terrain.ExtractContents(value) != 0);
+            var terrainRaycastResult = _subsystemTerrain.Raycast(
+                vector2,
+                end,
+                false,
+                true,
+                (value, _) => Terrain.ExtractContents(value) != 0
+            );
             if (!terrainRaycastResult.HasValue)
             {
                 continue;
@@ -911,9 +939,12 @@ public partial class PlayerData : IDisposable
             num -= 100f;
         }
 
-        var obj = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y - 1, z)];
-        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y, z)];
-        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y + 1, z)];
+        var obj = CurrentModRuntime.Value!.RequireWorldCatalog()
+            .Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y - 1, z)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog()
+            .Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y, z)];
+        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog()
+            .Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y + 1, z)];
         if (obj.Transparent)
         {
             num -= 10f;
@@ -936,7 +967,8 @@ public partial class PlayerData : IDisposable
 
         foreach (var playersDatum in SubsystemPlayers.PlayersData)
         {
-            if (playersDatum != this && Vector3.DistanceSquared(playersDatum.SpawnPosition, new Vector3(x, y, z)) <
+            if (playersDatum != this &&
+                Vector3.DistanceSquared(playersDatum.SpawnPosition, new Vector3(x, y, z)) <
                 MathUtils.Sqr(2))
             {
                 num -= 1f;
@@ -1245,19 +1277,24 @@ public partial class PlayerData : IDisposable
                 {
                     ComponentPlayer.ComponentGui.DisplayLargeMessage(
                         LanguageManager.Get(TypeName, 6),
-                        string.Format(LanguageManager.Get(TypeName, 7), message,
-                            LanguageManager.Get("GameMode", SubsystemGameInfo.WorldSettings.GameMode.ToString())),
+                        string.Format(
+                            LanguageManager.Get(TypeName, 7),
+                            message,
+                            LanguageManager.Get("GameMode", SubsystemGameInfo.WorldSettings.GameMode.ToString())
+                        ),
                         30f,
-                        1.5f);
+                        1.5f
+                    );
                 }
                 else if (SubsystemGameInfo.WorldSettings is
-                { GameMode: GameMode.Adventure, IsAdventureRespawnAllowed: false })
+                         { GameMode: GameMode.Adventure, IsAdventureRespawnAllowed: false })
                 {
                     ComponentPlayer.ComponentGui.DisplayLargeMessage(
                         LanguageManager.Get(TypeName, 6),
                         string.Format(LanguageManager.Get(TypeName, 8), message),
                         30f,
-                        1.5f);
+                        1.5f
+                    );
                 }
                 else
                 {
@@ -1265,19 +1302,23 @@ public partial class PlayerData : IDisposable
                         LanguageManager.Get(TypeName, 6),
                         string.Format(LanguageManager.Get(TypeName, 9), message),
                         30f,
-                        1.5f);
+                        1.5f
+                    );
                 }
             }
 
             if (CommonLib.WorkType == WorkType.Server)
             {
-                SubsystemGameWidgets.Messages.Publish(GameMessage.System(
-                    [
-                        new MessageSegment($"{Name} "),
-                        new MessageSegment(causeOfDeath, MessageTextStyle.Error)
-                    ],
-                    GameMessageTone.Warning,
-                    GameMessagePresentation.Default | GameMessagePresentation.Toast));
+                SubsystemGameWidgets.Messages.Publish(
+                    GameMessage.System(
+                        [
+                            new MessageSegment($"{Name} "),
+                            new MessageSegment(causeOfDeath, MessageTextStyle.Error)
+                        ],
+                        GameMessageTone.Warning,
+                        GameMessagePresentation.Default | GameMessagePresentation.Toast
+                    )
+                );
             }
         }
 

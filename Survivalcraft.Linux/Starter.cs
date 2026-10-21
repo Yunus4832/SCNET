@@ -16,12 +16,18 @@ namespace Survivalcraft.Linux;
 public class Starter
 {
     private const string _appId = "Survivalcraft";
+
     private const string _serverAppId = "SurvivalcraftServer";
 
     public static void Main(string[] args)
     {
-        if (DesktopUpdateCoordinator.HandleStartup(args, AppContext.BaseDirectory, "linux-x64",
-                DesktopUpdateFiles.Replace, DesktopUpdateFiles.Notify))
+        if (DesktopUpdateCoordinator.HandleStartup(
+                args,
+                AppContext.BaseDirectory,
+                "linux-x64",
+                DesktopUpdateFiles.Replace,
+                DesktopUpdateFiles.Notify
+            ))
         {
             return;
         }
@@ -41,8 +47,11 @@ public class Starter
         }
         else
         {
-            PlatformManager.RegisterUpdateSupport(Path.Combine(Path.GetTempPath(), "scnet-updates"),
-                ".zip", "ConfirmDesktopInstall");
+            PlatformManager.RegisterUpdateSupport(
+                Path.Combine(Path.GetTempPath(), "scnet-updates"),
+                ".zip",
+                "ConfirmDesktopInstall"
+            );
             RunMode.Value = RunModeType.Gui;
             PlatformManager.RegisterTextInput(new SdlTextInputBackend());
             PlatformManager.RegisterClipboard(new SdlClipboardBackend());
@@ -82,7 +91,10 @@ public class Starter
         catch (Exception exception)
         {
             Console.Error.WriteLine($"Could not start desktop update: {exception}");
-            DesktopUpdateFiles.Notify($"{LanguageManager.GetContentWidgets("GameInformationManager", "DesktopInstallFailed")}\n{GameExitManager.UpdateDownloadUrl}\n{exception.Message}", true);
+            DesktopUpdateFiles.Notify(
+                $"{LanguageManager.GetContentWidgets("GameInformationManager", "DesktopInstallFailed")}\n{GameExitManager.UpdateDownloadUrl}\n{exception.Message}",
+                true
+            );
             return;
         }
 
@@ -121,11 +133,11 @@ public class Starter
 
     private static void InstallDesktopEntries()
     {
-        var exePath = Environment.ProcessPath
-                      ?? throw new InvalidOperationException("Cannot determine executable path.");
+        var exePath = Environment.ProcessPath ??
+                      throw new InvalidOperationException("Cannot determine executable path.");
 
-        var exeDir = Path.GetDirectoryName(exePath)
-                     ?? throw new InvalidOperationException("Cannot determine executable directory.");
+        var exeDir = Path.GetDirectoryName(exePath) ??
+                     throw new InvalidOperationException("Cannot determine executable directory.");
 
         var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
@@ -160,7 +172,8 @@ public class Starter
             exeDir,
             "--server",
             true,
-            true);
+            true
+        );
     }
 
     private static void RunHeadlessServer(StartupContext startup)
@@ -177,7 +190,8 @@ public class Starter
         string workingDirectory,
         string argument,
         bool terminal,
-        bool noDisplay)
+        bool noDisplay
+    )
     {
         var desktopFilePath = Path.Combine(desktopDir, $"{desktopId}.desktop");
         var escapedExecutablePath = executablePath.Replace("\\", "\\\\").Replace("\"", "\\\"");
@@ -218,19 +232,29 @@ public class Starter
 
     private static bool TryLaunchDesktopInstance(RunModeType runMode, string instanceId, string name)
     {
-        var executablePath = Environment.ProcessPath
-                             ?? throw new InvalidOperationException("Cannot determine executable path.");
-        var executableDirectory = Path.GetDirectoryName(executablePath)
-                                  ?? throw new InvalidOperationException("Cannot determine executable directory.");
+        var executablePath = Environment.ProcessPath ??
+                             throw new InvalidOperationException("Cannot determine executable path.");
+        var executableDirectory = Path.GetDirectoryName(executablePath) ??
+                                  throw new InvalidOperationException("Cannot determine executable directory.");
         var desktopDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".local", "share", "applications");
+            ".local",
+            "share",
+            "applications"
+        );
         Directory.CreateDirectory(desktopDirectory);
         var desktopId = $"SurvivalcraftInstance{Environment.ProcessId}{Guid.NewGuid():N}";
         var modeArgument = runMode is RunModeType.HeadlessServer ? "--server" : "--gui";
-        WriteDesktopEntry(desktopDirectory, desktopId, name, executablePath,
-            executableDirectory, $"{modeArgument} {StarterInstanceManager.InstanceArgument} {instanceId}",
-            runMode is RunModeType.HeadlessServer, true);
+        WriteDesktopEntry(
+            desktopDirectory,
+            desktopId,
+            name,
+            executablePath,
+            executableDirectory,
+            $"{modeArgument} {StarterInstanceManager.InstanceArgument} {instanceId}",
+            runMode is RunModeType.HeadlessServer,
+            true
+        );
         if (TryLaunchDesktopEntry("gtk-launch", [desktopId]))
         {
             return true;

@@ -47,7 +47,8 @@ public class ComponentStubbornSteedBehavior : ComponentBehavior, IUpdateable
         }
 
         if (_subsystemGameInfo.TotalElapsedGameTime < _stubbornEndTime &&
-            _componentEatPickableBehavior.Satiation <= 0f && _componentMount.Rider != null)
+            _componentEatPickableBehavior.Satiation <= 0f &&
+            _componentMount.Rider != null)
         {
             _importanceLevel = 210f;
         }
@@ -74,7 +75,8 @@ public class ComponentStubbornSteedBehavior : ComponentBehavior, IUpdateable
             Actions.Empty,
             delegate
             {
-                if (_subsystemTime.PeriodicGameTimeEvent(1.0, _periodicEventOffset) && _componentMount.Rider != null &&
+                if (_subsystemTime.PeriodicGameTimeEvent(1.0, _periodicEventOffset) &&
+                    _componentMount.Rider != null &&
                     _random.Float(0f, 1f) < _stubbornProbability &&
                     (!_isSaddled || _componentEatPickableBehavior.Satiation <= 0f))
                 {

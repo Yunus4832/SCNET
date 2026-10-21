@@ -2,6 +2,7 @@ namespace Game;
 
 public enum EnvironmentBehaviorMode
 {
-    Living,
-    Static
+    Living = 0,
+
+    Static = 1
 }

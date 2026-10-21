@@ -147,9 +147,11 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
                 var vector = block.GetFirstPersonRotation(_value) * ((float)Math.PI / 180f) + _itemRotation;
                 var position3 = block.GetFirstPersonOffset(_value) + _itemOffset;
                 position3 += _itemOffset;
-                var matrix = Matrix.CreateFromYawPitchRoll(vector.Y, vector.X, vector.Z) * identity *
+                var matrix = Matrix.CreateFromYawPitchRoll(vector.Y, vector.X, vector.Z) *
+                             identity *
                              Matrix.CreateTranslation(position3) *
-                             Matrix.CreateFromYawPitchRoll(_lagAngles.X, _lagAngles.Y, 0f) * m;
+                             Matrix.CreateFromYawPitchRoll(_lagAngles.X, _lagAngles.Y, 0f) *
+                             m;
                 _drawBlockEnvironmentData.DrawBlockMode = DrawBlockMode.FirstPerson;
                 _drawBlockEnvironmentData.SubsystemTerrain = _subsystemTerrain;
                 _drawBlockEnvironmentData.InWorldMatrix = matrix;
@@ -157,8 +159,14 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
                 _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
                 _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
                                                         SubsystemWeather.GetTemperatureAdjustmentAtHeight(num5);
-                block.DrawBlock(_primitivesRenderer, _value, Color.White, block.GetFirstPersonScale(_value),
-                    ref matrix, _drawBlockEnvironmentData);
+                block.DrawBlock(
+                    _primitivesRenderer,
+                    _value,
+                    Color.White,
+                    block.GetFirstPersonScale(_value),
+                    ref matrix,
+                    _drawBlockEnvironmentData
+                );
                 _primitivesRenderer.Flush(camera.ViewProjectionMatrix);
             }
             else
@@ -174,9 +182,13 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
                 }
 
                 var position4 = new Vector3(0.25f, -0.3f, -0.05f);
-                var matrix2 = Matrix.CreateScale(0.01f) * Matrix.CreateRotationX(0.8f) *
-                              Matrix.CreateRotationY(0.4f) * identity * Matrix.CreateTranslation(position4) *
-                              Matrix.CreateFromYawPitchRoll(_lagAngles.X, _lagAngles.Y, 0f) * m *
+                var matrix2 = Matrix.CreateScale(0.01f) *
+                              Matrix.CreateRotationX(0.8f) *
+                              Matrix.CreateRotationY(0.4f) *
+                              identity *
+                              Matrix.CreateTranslation(position4) *
+                              Matrix.CreateFromYawPitchRoll(_lagAngles.X, _lagAngles.Y, 0f) *
+                              m *
                               camera.ViewMatrix;
                 Display.DepthStencilState = DepthStencilState.Default;
                 Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;

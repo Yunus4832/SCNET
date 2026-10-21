@@ -5,8 +5,11 @@ namespace NetworkProbe;
 internal sealed class ProbeParentCancellation : IAsyncDisposable
 {
     internal const string environmentKey = "SCNET_PROBE_PARENT_PIPE";
+
     private readonly CancellationTokenSource _stop = new();
+
     private readonly NamedPipeClientStream? _pipe;
+
     private readonly Task _watch;
 
     public ProbeParentCancellation(CancellationTokenSource operation)
@@ -17,6 +20,7 @@ internal sealed class ProbeParentCancellation : IAsyncDisposable
             _watch = Task.CompletedTask;
             return;
         }
+
         _pipe = new NamedPipeClientStream(".", name, PipeDirection.In, PipeOptions.Asynchronous);
         _watch = WatchAsync(operation);
     }

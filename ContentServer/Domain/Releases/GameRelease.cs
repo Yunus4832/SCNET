@@ -4,7 +4,7 @@ using NetCorePal.Extensions.Domain;
 
 namespace ContentServer.Domain.Releases;
 
-public enum GameReleaseStatus { Draft, Published, Withdrawn }
+public enum GameReleaseStatus { Draft = 0, Published = 1, Withdrawn = 2 }
 
 public partial record GameReleaseId : IGuidStronglyTypedId;
 
@@ -12,19 +12,32 @@ public sealed class GameRelease : Entity<GameReleaseId>, IAggregateRoot
 {
     private readonly List<GameReleaseArtifact> _artifacts = [];
 
-    private GameRelease() { }
+    private GameRelease()
+    {
+    }
 
     public Deleted Deleted { get; private set; } = new();
+
     public string Version { get; private set; } = string.Empty;
+
     public string Description { get; private set; } = string.Empty;
+
     public IReadOnlyCollection<GameReleaseArtifact> Artifacts => _artifacts;
+
     public GameReleaseStatus Status { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
+
     public DateTimeOffset UpdatedAt { get; private set; }
+
     public DateTimeOffset? PublishedAt { get; private set; }
 
-    public static GameRelease Create(string version, string description,
-        IEnumerable<GameReleaseArtifactData> artifacts, DateTimeOffset now)
+    public static GameRelease Create(
+        string version,
+        string description,
+        IEnumerable<GameReleaseArtifactData> artifacts,
+        DateTimeOffset now
+    )
     {
         Validate(version, description, artifacts, out var values);
         var release = new GameRelease
@@ -39,13 +52,18 @@ public sealed class GameRelease : Entity<GameReleaseId>, IAggregateRoot
         return release;
     }
 
-    public void Edit(string version, string description, IEnumerable<GameReleaseArtifactData> artifacts,
-        DateTimeOffset now)
+    public void Edit(
+        string version,
+        string description,
+        IEnumerable<GameReleaseArtifactData> artifacts,
+        DateTimeOffset now
+    )
     {
         if (Status != GameReleaseStatus.Draft)
         {
             throw new InvalidOperationException("Only draft releases can be edited.");
         }
+
         Validate(version, description, artifacts, out var values);
         Version = version.Trim();
         Description = description.Trim();
@@ -64,6 +82,7 @@ public sealed class GameRelease : Entity<GameReleaseId>, IAggregateRoot
         {
             throw new InvalidOperationException("Only draft releases can be published.");
         }
+
         Status = GameReleaseStatus.Published;
         PublishedAt = now;
         UpdatedAt = now;
@@ -75,19 +94,27 @@ public sealed class GameRelease : Entity<GameReleaseId>, IAggregateRoot
         {
             throw new InvalidOperationException("Only published releases can be withdrawn.");
         }
+
         Status = GameReleaseStatus.Withdrawn;
         UpdatedAt = now;
     }
 
-    private static void Validate(string version, string description, IEnumerable<GameReleaseArtifactData> artifacts,
-        out GameReleaseArtifactData[] values)
+    private static void Validate(
+        string version,
+        string description,
+        IEnumerable<GameReleaseArtifactData> artifacts,
+        out GameReleaseArtifactData[] values
+    )
     {
         values = artifacts.ToArray();
-        if (!SemanticVersion.TryParse(version, out _) || description.Length > 10000 ||
-            values.Length == 0 || values.Select(item => item.Platform).Distinct().Count() != values.Length)
+        if (!SemanticVersion.TryParse(version, out _) ||
+            description.Length > 10000 ||
+            values.Length == 0 ||
+            values.Select(item => item.Platform).Distinct().Count() != values.Length)
         {
             throw new ArgumentException("Invalid game release.");
         }
+
         foreach (var artifact in values)
         {
             GameReleaseArtifact.Validate(artifact);

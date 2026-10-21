@@ -2,7 +2,9 @@ namespace Game.Commands;
 
 public enum PermissionGrantPolicy
 {
-    Standard,
-    OperatorManaged,
-    NonGrantable
+    Standard = 0,
+
+    OperatorManaged = 1,
+
+    NonGrantable = 2
 }

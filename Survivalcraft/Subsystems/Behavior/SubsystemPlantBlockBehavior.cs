@@ -15,7 +15,13 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
     private SubsystemTime _subsystemTime = null!;
 
     public override ResourceId[] HandledBlocks =>
-    [ResourceId.Parse("game:tall_grass"), ResourceId.Parse("game:red_flower"), ResourceId.Parse("game:purple_flower"), ResourceId.Parse("game:white_flower"), ResourceId.Parse("game:dry_bush"), ResourceId.Parse("game:large_dry_bush"), ResourceId.Parse("game:pumpkin"), ResourceId.Parse("game:rotten_pumpkin"), ResourceId.Parse("game:jack_o_lantern"), ResourceId.Parse("game:rye"), ResourceId.Parse("game:cotton")];
+    [
+        ResourceId.Parse("game:tall_grass"), ResourceId.Parse("game:red_flower"),
+        ResourceId.Parse("game:purple_flower"), ResourceId.Parse("game:white_flower"),
+        ResourceId.Parse("game:dry_bush"), ResourceId.Parse("game:large_dry_bush"), ResourceId.Parse("game:pumpkin"),
+        ResourceId.Parse("game:rotten_pumpkin"), ResourceId.Parse("game:jack_o_lantern"), ResourceId.Parse("game:rye"),
+        ResourceId.Parse("game:cotton")
+    ];
 
     public override void OnBlockGenerated(int value, int x, int y, int z, bool isLoaded)
     {
@@ -38,15 +44,15 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
 
                 break;
             case 132:
+            {
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
+                if (block.IsFaceTransparent(SubsystemTerrain, 4, cellValue) && !(block is FenceBlock))
                 {
-                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
-                    if (block.IsFaceTransparent(SubsystemTerrain, 4, cellValue) && !(block is FenceBlock))
-                    {
-                        SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                    }
-
-                    break;
+                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
                 }
+
+                break;
+            }
             default:
                 if (num2 != 8 && num2 != 2 && num2 != 7 && num2 != 168)
                 {

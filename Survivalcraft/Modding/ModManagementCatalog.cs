@@ -9,7 +9,8 @@ public sealed record ManagedModItem(
     LocalModPackageEntry? LocalEntry,
     bool IsGlobal,
     bool IsWorld,
-    bool IsRuntime)
+    bool IsRuntime
+)
 {
     public bool IsMissing => LocalEntry is null;
 
@@ -26,8 +27,12 @@ public sealed record ManagedModItem(
 
 public static class ModManagementCatalog
 {
-    public static IReadOnlyList<ManagedModItem> Build(IEnumerable<LocalModPackageEntry> cached,
-        ModProfile globalProfile, IEnumerable<ModProfile> worldProfiles, ModProfile? runtimeProfile)
+    public static IReadOnlyList<ManagedModItem> Build(
+        IEnumerable<LocalModPackageEntry> cached,
+        ModProfile globalProfile,
+        IEnumerable<ModProfile> worldProfiles,
+        ModProfile? runtimeProfile
+    )
     {
         ArgumentNullException.ThrowIfNull(cached);
         ArgumentNullException.ThrowIfNull(globalProfile);
@@ -36,8 +41,15 @@ public static class ModManagementCatalog
         foreach (var entry in cached)
         {
             var identity = PackageIdentity.Create(entry.ModId, entry.Version, entry.PackageHash);
-            items[identity] = new ManagedModItem(entry.ModId, entry.Version, entry.PackageHash,
-                entry, false, false, false);
+            items[identity] = new ManagedModItem(
+                entry.ModId,
+                entry.Version,
+                entry.PackageHash,
+                entry,
+                false,
+                false,
+                false
+            );
         }
 
         AddProfile(items, globalProfile, ProfileScope.Global);
@@ -65,20 +77,34 @@ public static class ModManagementCatalog
         return profile.Packages.Any(requirement =>
             string.Equals(requirement.ModId, item.ModId, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(requirement.Version, item.Version, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(requirement.PackageHash, item.PackageHash, StringComparison.Ordinal));
+            string.Equals(requirement.PackageHash, item.PackageHash, StringComparison.Ordinal)
+        );
     }
 
-    private static void AddProfile(Dictionary<PackageIdentity, ManagedModItem> items, ModProfile profile,
-        ProfileScope scope)
+    private static void AddProfile(
+        Dictionary<PackageIdentity, ManagedModItem> items,
+        ModProfile profile,
+        ProfileScope scope
+    )
     {
         foreach (var requirement in profile.Packages)
         {
-            var identity = PackageIdentity.Create(requirement.ModId, requirement.Version,
-                requirement.PackageHash);
+            var identity = PackageIdentity.Create(
+                requirement.ModId,
+                requirement.Version,
+                requirement.PackageHash
+            );
             if (!items.TryGetValue(identity, out var item))
             {
-                item = new ManagedModItem(requirement.ModId, requirement.Version, requirement.PackageHash,
-                    null, false, false, false);
+                item = new ManagedModItem(
+                    requirement.ModId,
+                    requirement.Version,
+                    requirement.PackageHash,
+                    null,
+                    false,
+                    false,
+                    false
+                );
             }
 
             items[identity] = scope switch
@@ -93,9 +119,11 @@ public static class ModManagementCatalog
 
     private enum ProfileScope
     {
-        Global,
-        World,
-        Runtime
+        Global = 0,
+
+        World = 1,
+
+        Runtime = 2
     }
 
     private sealed record PackageIdentity(string ModId, string Version, string PackageHash)

@@ -159,8 +159,10 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
 
     public static Vector2 CatmullRom(Vector2 v1, Vector2 v2, Vector2 v3, Vector2 v4, float f)
     {
-        return new Vector2(MathUtils.CatmullRom(v1.X, v2.X, v3.X, v4.X, f),
-            MathUtils.CatmullRom(v1.Y, v2.Y, v3.Y, v4.Y, f));
+        return new Vector2(
+            MathUtils.CatmullRom(v1.X, v2.X, v3.X, v4.X, f),
+            MathUtils.CatmullRom(v1.Y, v2.Y, v3.Y, v4.Y, f)
+        );
     }
 
     public static Vector2 Normalize(Vector2 v)
@@ -221,8 +223,10 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
         var num6 = q.X * num2;
         var num7 = q.Y * num2;
         var num8 = q.Z * num3;
-        return new Vector2(v.X * (1f - num7 - num8) + v.Y * (num6 - num4),
-            v.X * (num6 + num4) + v.Y * (1f - num5 - num8));
+        return new Vector2(
+            v.X * (1f - num7 - num8) + v.Y * (num6 - num4),
+            v.X * (num6 + num4) + v.Y * (1f - num5 - num8)
+        );
     }
 
     public static void Transform(ref Vector2 v, ref Quaternion q, out Vector2 result)
@@ -235,12 +239,20 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
         var num6 = q.X * num2;
         var num7 = q.Y * num2;
         var num8 = q.Z * num3;
-        result = new Vector2(v.X * (1f - num7 - num8) + v.Y * (num6 - num4),
-            v.X * (num6 + num4) + v.Y * (1f - num5 - num8));
+        result = new Vector2(
+            v.X * (1f - num7 - num8) + v.Y * (num6 - num4),
+            v.X * (num6 + num4) + v.Y * (1f - num5 - num8)
+        );
     }
 
-    public static void Transform(Vector2[] sourceArray, int sourceIndex, ref Matrix m, Vector2[] destinationArray,
-        int destinationIndex, int count)
+    public static void Transform(
+        Vector2[] sourceArray,
+        int sourceIndex,
+        ref Matrix m,
+        Vector2[] destinationArray,
+        int destinationIndex,
+        int count
+    )
     {
         if (Vector128.IsHardwareAccelerated)
         {
@@ -258,8 +270,10 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
         for (var i = 0; i < count; i++)
         {
             var vector = sourceArray[sourceIndex + i];
-            destinationArray[destinationIndex + i] = new Vector2(vector.X * m.M11 + vector.Y * m.M21 + m.M41,
-                vector.X * m.M12 + vector.Y * m.M22 + m.M42);
+            destinationArray[destinationIndex + i] = new Vector2(
+                vector.X * m.M11 + vector.Y * m.M21 + m.M41,
+                vector.X * m.M12 + vector.Y * m.M22 + m.M42
+            );
         }
     }
 
@@ -273,8 +287,14 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
         result = new Vector2(v.X * m.M11 + v.Y * m.M21, v.X * m.M12 + v.Y * m.M22);
     }
 
-    public static void TransformNormal(Vector2[] sourceArray, int sourceIndex, ref Matrix m, Vector2[] destinationArray,
-        int destinationIndex, int count)
+    public static void TransformNormal(
+        Vector2[] sourceArray,
+        int sourceIndex,
+        ref Matrix m,
+        Vector2[] destinationArray,
+        int destinationIndex,
+        int count
+    )
     {
         if (Vector128.IsHardwareAccelerated)
         {
@@ -292,13 +312,19 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
         for (var i = 0; i < count; i++)
         {
             var vector = sourceArray[sourceIndex + i];
-            destinationArray[destinationIndex + i] = new Vector2(vector.X * m.M11 + vector.Y * m.M21,
-                vector.X * m.M12 + vector.Y * m.M22);
+            destinationArray[destinationIndex + i] = new Vector2(
+                vector.X * m.M11 + vector.Y * m.M21,
+                vector.X * m.M12 + vector.Y * m.M22
+            );
         }
     }
 
-    private static void CreateTransformRows(ref Matrix matrix, out Vector128<float> row1,
-        out Vector128<float> row2, out Vector128<float> row4)
+    private static void CreateTransformRows(
+        ref Matrix matrix,
+        out Vector128<float> row1,
+        out Vector128<float> row2,
+        out Vector128<float> row4
+    )
     {
         row1 = Vector128.Create(matrix.M11, matrix.M12, matrix.M13, matrix.M14);
         row2 = Vector128.Create(matrix.M21, matrix.M22, matrix.M23, matrix.M24);

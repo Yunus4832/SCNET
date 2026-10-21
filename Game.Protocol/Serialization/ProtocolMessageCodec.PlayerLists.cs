@@ -7,6 +7,7 @@ public static partial class ProtocolMessageCodec
     private static void WritePlayerListPackage(PlayerListPackage message, ProtocolWriter writer)
     {
         if (message.Players.Count > ushort.MaxValue) { throw new ArgumentException("Too many players."); }
+
         writer.Write((ushort)message.Players.Count);
         foreach (var player in message.Players)
         {
@@ -21,13 +22,18 @@ public static partial class ProtocolMessageCodec
         var count = reader.ReadUInt16();
         EnsureRemaining(reader, count * 19);
         var players = new PlayerListEntry[count];
-        for (var i = 0; i < count; i++) { players[i] = new PlayerListEntry(reader.ReadGuid(), reader.ReadString(), reader.ReadBoolean()); }
+        for (var i = 0; i < count; i++)
+        {
+            players[i] = new PlayerListEntry(reader.ReadGuid(), reader.ReadString(), reader.ReadBoolean());
+        }
+
         return new PlayerListPackage { Players = players };
     }
 
     private static void WriteOnlinePlayerStatePackage(OnlinePlayerStatePackage message, ProtocolWriter writer)
     {
         if (message.Players.Count > ushort.MaxValue) { throw new ArgumentException("Too many players."); }
+
         writer.Write((ushort)message.Players.Count);
         foreach (var player in message.Players)
         {
@@ -43,7 +49,16 @@ public static partial class ProtocolMessageCodec
         var count = reader.ReadUInt16();
         EnsureRemaining(reader, count * 34);
         var players = new OnlinePlayerState[count];
-        for (var i = 0; i < count; i++) { players[i] = new OnlinePlayerState(reader.ReadGuid(), reader.ReadVector3(), reader.ReadSingle(), reader.ReadBoolean()); }
+        for (var i = 0; i < count; i++)
+        {
+            players[i] = new OnlinePlayerState(
+                reader.ReadGuid(),
+                reader.ReadVector3(),
+                reader.ReadSingle(),
+                reader.ReadBoolean()
+            );
+        }
+
         return new OnlinePlayerStatePackage { Players = players };
     }
 }

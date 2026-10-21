@@ -11,7 +11,6 @@ public sealed class PlayerSnapshotSizeTest
         // A prepared identity byte is sufficient; serialization does not need a game world.
         var package = new PlayerStatePackage
         {
-
             PackageChangeFlag = (ComponentPlayerPackage.ChangFlag)byte.MaxValue
         };
         using var writer = new ProtocolWriter();

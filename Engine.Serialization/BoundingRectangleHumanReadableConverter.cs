@@ -8,8 +8,13 @@ internal class BoundingRectangleHumanReadableConverter : IHumanReadableConverter
     public string ConvertToString(object value)
     {
         var boundingRectangle = (BoundingRectangle)value;
-        return HumanReadableConverter.ValuesListToString(',', boundingRectangle.Min.X, boundingRectangle.Min.Y,
-            boundingRectangle.Max.X, boundingRectangle.Max.Y);
+        return HumanReadableConverter.ValuesListToString(
+            ',',
+            boundingRectangle.Min.X,
+            boundingRectangle.Min.Y,
+            boundingRectangle.Max.X,
+            boundingRectangle.Max.Y
+        );
     }
 
     public object ConvertFromString(Type type, string data)

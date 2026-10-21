@@ -2,8 +2,11 @@ namespace Engine.Graphics;
 
 public enum PrimitiveType
 {
-    LineList,
-    LineStrip,
-    TriangleList,
-    TriangleStrip
+    LineList = 0,
+
+    LineStrip = 1,
+
+    TriangleList = 2,
+
+    TriangleStrip = 3
 }

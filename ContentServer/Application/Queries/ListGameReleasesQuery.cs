@@ -15,8 +15,10 @@ public sealed record ListGameReleasesQuery(bool PublicOnly, string? Platform = n
 public sealed class ListGameReleasesQueryHandler(ContentServerDbContext db)
     : IQueryHandler<ListGameReleasesQuery, IReadOnlyList<GameRelease>>
 {
-    public async Task<IReadOnlyList<GameRelease>> Handle(ListGameReleasesQuery request,
-        CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<GameRelease>> Handle(
+        ListGameReleasesQuery request,
+        CancellationToken cancellationToken
+    )
     {
         IQueryable<GameRelease> query = db.GameReleases.AsNoTracking().Include(item => item.Artifacts);
         if (request.PublicOnly)

@@ -39,7 +39,9 @@ public static partial class ProtocolMessageCodec
         for (var i = 0; i < count; i++)
         {
             if (!data.TryAdd(reader.ReadBlockPoint(), reader.ReadSingle()))
-            { throw new InvalidDataException("Duplicate electricity cell."); }
+            {
+                throw new InvalidDataException("Duplicate electricity cell.");
+            }
         }
 
         var removedCount = reader.ReadInt32();
@@ -52,6 +54,10 @@ public static partial class ProtocolMessageCodec
         {
             removed.Add(reader.ReadBlockPoint());
         }
-        return new SubsystemElectricityPackage(new ElectricitySnapshot { StartStep = step, IsBaseline = baseline, SaveData = data, Removed = removed.ToArray() });
+
+        return new SubsystemElectricityPackage(
+            new ElectricitySnapshot
+                { StartStep = step, IsBaseline = baseline, SaveData = data, Removed = removed.ToArray() }
+        );
     }
 }

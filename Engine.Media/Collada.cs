@@ -14,11 +14,14 @@ public static class Collada
         var position = stream.Position;
         try
         {
-            var xmlReader = XmlReader.Create(stream, new XmlReaderSettings
-            {
-                IgnoreComments = true,
-                IgnoreWhitespace = true
-            });
+            var xmlReader = XmlReader.Create(
+                stream,
+                new XmlReaderSettings
+                {
+                    IgnoreComments = true,
+                    IgnoreWhitespace = true
+                }
+            );
             while (xmlReader.Read())
             {
                 if (xmlReader.NodeType == XmlNodeType.Element)
@@ -66,15 +69,23 @@ public static class Collada
 
         foreach (var buffer in modelData.Buffers)
         {
-            IndexVertices(buffer.VertexDeclaration.VertexStride, buffer.Vertices, out buffer.Vertices,
-                out buffer.Indices);
+            IndexVertices(
+                buffer.VertexDeclaration.VertexStride,
+                buffer.Vertices,
+                out buffer.Vertices,
+                out buffer.Indices
+            );
         }
 
         return modelData;
     }
 
-    private static ModelBoneData LoadNode(ModelData data, ModelBoneData? parentBoneData, ColladaNode node,
-        Matrix transform)
+    private static ModelBoneData LoadNode(
+        ModelData data,
+        ModelBoneData? parentBoneData,
+        ColladaNode node,
+        Matrix transform
+    )
     {
         var modelBoneData = new ModelBoneData();
         data.Bones.Add(modelBoneData);
@@ -196,7 +207,8 @@ public static class Collada
                             break;
                         default:
                             throw new NotSupportedException(
-                                "Collada polygons with less than 3 or more than 4 vertices are not supported.");
+                                "Collada polygons with less than 3 or more than 4 vertices are not supported."
+                            );
                     }
                 }
             }
@@ -279,8 +291,12 @@ public static class Collada
                         var stride4 = value.Source.Accessor.Stride;
                         var num16 = polygons.P[list[m] * polygons.Inputs.Count + value.Offset];
                         binaryWriter.BaseStream.Position = m * vertexStride + key.Offset;
-                        var color = new Color(array4[offset4 + stride4 * num16], array4[offset4 + stride4 * num16 + 1],
-                            array4[offset4 + stride4 * num16 + 2], array4[offset4 + stride4 * num16 + 3]);
+                        var color = new Color(
+                            array4[offset4 + stride4 * num16],
+                            array4[offset4 + stride4 * num16 + 1],
+                            array4[offset4 + stride4 * num16 + 2],
+                            array4[offset4 + stride4 * num16 + 3]
+                        );
                         binaryWriter.Write(color.PackedValue);
                     }
                 }
@@ -299,8 +315,12 @@ public static class Collada
         return array2;
     }
 
-    private static void IndexVertices(int vertexStride, byte[] vertices, out byte[] resultVertices,
-        out byte[] resultIndices)
+    private static void IndexVertices(
+        int vertexStride,
+        byte[] vertices,
+        out byte[] resultVertices,
+        out byte[] resultIndices
+    )
     {
         var num = vertices.Length / vertexStride;
         var dictionary = new Dictionary<Vertex, ushort>();
@@ -422,7 +442,8 @@ public static class Collada
                 LibraryVisualScenes.Add(new ColladaLibraryVisualScenes(this, item2));
             }
 
-            Scene = new ColladaScene(this,
+            Scene = new ColladaScene(
+                this,
                 node.Element(Namespace + "scene") ?? throw new InvalidOperationException("scene element not found")
             );
         }
@@ -514,6 +535,7 @@ public static class Collada
         public readonly List<ColladaGeometry> Geometries = new();
 
         public readonly List<ColladaNode> Nodes = new();
+
         public readonly Matrix Transform = Matrix.Identity;
 
         public ColladaNode(ColladaRoot collada, XElement node)
@@ -524,28 +546,49 @@ public static class Collada
                 if (item.Name == ColladaRoot.Namespace + "matrix")
                 {
                     var array = (from s in item.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                                 select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
-                    Transform = Matrix.Transpose(new Matrix(array[0], array[1], array[2], array[3], array[4], array[5],
-                        array[6], array[7], array[8], array[9], array[10], array[11], array[12], array[13], array[14],
-                        array[15])) * Transform;
+                        select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                    Transform = Matrix.Transpose(
+                                    new Matrix(
+                                        array[0],
+                                        array[1],
+                                        array[2],
+                                        array[3],
+                                        array[4],
+                                        array[5],
+                                        array[6],
+                                        array[7],
+                                        array[8],
+                                        array[9],
+                                        array[10],
+                                        array[11],
+                                        array[12],
+                                        array[13],
+                                        array[14],
+                                        array[15]
+                                    )
+                                ) *
+                                Transform;
                 }
                 else if (item.Name == ColladaRoot.Namespace + "translate")
                 {
                     var array2 = (from s in item.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                                  select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                        select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
                     Transform = Matrix.CreateTranslation(array2[0], array2[1], array2[2]) * Transform;
                 }
                 else if (item.Name == ColladaRoot.Namespace + "rotate")
                 {
                     var array3 = (from s in item.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                                  select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
-                    Transform = Matrix.CreateFromAxisAngle(new Vector3(array3[0], array3[1], array3[2]),
-                        MathUtils.DegToRad(array3[3])) * Transform;
+                        select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                    Transform = Matrix.CreateFromAxisAngle(
+                                    new Vector3(array3[0], array3[1], array3[2]),
+                                    MathUtils.DegToRad(array3[3])
+                                ) *
+                                Transform;
                 }
                 else if (item.Name == ColladaRoot.Namespace + "scale")
                 {
                     var array4 = (from s in item.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                                  select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                        select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
                     Transform = Matrix.CreateScale(array4[0], array4[1], array4[2]) * Transform;
                 }
             }
@@ -580,6 +623,7 @@ public static class Collada
     private class ColladaMesh
     {
         public readonly List<ColladaPolygons> Polygons = [];
+
         public readonly List<ColladaSource> Sources = [];
 
         public ColladaVertices Vertices;
@@ -606,6 +650,7 @@ public static class Collada
     private class ColladaSource : ColladaNameId
     {
         public readonly ColladaAccessor Accessor;
+
         public ColladaFloatArray FloatArray;
 
         public ColladaSource(ColladaRoot collada, XElement node)
@@ -630,13 +675,14 @@ public static class Collada
             : base(collada, node)
         {
             Array = (from s in node.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                     select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
         }
     }
 
     private class ColladaAccessor
     {
         public readonly int Offset;
+
         public readonly ColladaFloatArray Source;
 
         public readonly int Stride = 1;
@@ -694,14 +740,18 @@ public static class Collada
 
             foreach (var item2 in node.Elements(ColladaRoot.Namespace + "vcount"))
             {
-                VCount.AddRange(from s in item2.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                                select int.Parse(s, CultureInfo.InvariantCulture));
+                VCount.AddRange(
+                    from s in item2.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
+                    select int.Parse(s, CultureInfo.InvariantCulture)
+                );
             }
 
             foreach (var item3 in node.Elements(ColladaRoot.Namespace + "p"))
             {
-                P.AddRange(from s in item3.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                           select int.Parse(s, CultureInfo.InvariantCulture));
+                P.AddRange(
+                    from s in item3.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
+                    select int.Parse(s, CultureInfo.InvariantCulture)
+                );
             }
         }
     }

@@ -15,67 +15,79 @@ public sealed class ComponentFluPackageHandler : PackageHandlerBase<ComponentFlu
         switch (package.PackageEventType)
         {
             case ComponentFluPackage.EventType.SyncStat:
-                project.FindEntityById(package.EntityId, entity =>
-                {
-                    var flu = entity.FindComponent<ComponentFlu>();
-                    if (flu == null)
+                project.FindEntityById(
+                    package.EntityId,
+                    entity =>
                     {
-                        return;
-                    }
+                        var flu = entity.FindComponent<ComponentFlu>();
+                        if (flu == null)
+                        {
+                            return;
+                        }
 
-                    flu.FluOnset = package.FluOnset;
-                    flu.SneezeDuration = package.SneezeDuration;
-                    flu.CoughDuration = package.CoughDuration;
-                    flu.FluDuration = package.FluDuration;
-                });
+                        flu.FluOnset = package.FluOnset;
+                        flu.SneezeDuration = package.SneezeDuration;
+                        flu.CoughDuration = package.CoughDuration;
+                        flu.FluDuration = package.FluDuration;
+                    }
+                );
                 break;
             case ComponentFluPackage.EventType.FluEffect:
-                project.FindEntityById(package.EntityId, entity =>
-                {
-                    var flu = entity.FindComponent<ComponentFlu>();
-                    if (flu == null)
+                project.FindEntityById(
+                    package.EntityId,
+                    entity =>
                     {
-                        return;
-                    }
+                        var flu = entity.FindComponent<ComponentFlu>();
+                        if (flu == null)
+                        {
+                            return;
+                        }
 
-                    flu.FluOnset = package.FluOnset;
-                    flu.SneezeDuration = package.SneezeDuration;
-                    flu.CoughDuration = package.CoughDuration;
-                    flu.FluDuration = package.FluDuration;
-                    flu.FluEffect();
-                });
+                        flu.FluOnset = package.FluOnset;
+                        flu.SneezeDuration = package.SneezeDuration;
+                        flu.CoughDuration = package.CoughDuration;
+                        flu.FluDuration = package.FluDuration;
+                        flu.FluEffect();
+                    }
+                );
                 break;
             case ComponentFluPackage.EventType.StartFlu:
-                project.FindEntityById(package.EntityId, entity =>
-                {
-                    var flu = entity.FindComponent<ComponentFlu>();
-                    if (flu == null)
+                project.FindEntityById(
+                    package.EntityId,
+                    entity =>
                     {
-                        return;
-                    }
+                        var flu = entity.FindComponent<ComponentFlu>();
+                        if (flu == null)
+                        {
+                            return;
+                        }
 
-                    flu.FluOnset = package.FluOnset;
-                    flu.SneezeDuration = package.SneezeDuration;
-                    flu.CoughDuration = package.CoughDuration;
-                    flu.FluDuration = package.FluDuration;
-                    flu.StartFlu();
-                });
+                        flu.FluOnset = package.FluOnset;
+                        flu.SneezeDuration = package.SneezeDuration;
+                        flu.CoughDuration = package.CoughDuration;
+                        flu.FluDuration = package.FluDuration;
+                        flu.StartFlu();
+                    }
+                );
                 break;
             case ComponentFluPackage.EventType.Sneeze:
-                project.FindEntityById(package.EntityId, entity =>
-                {
-                    var flu = entity.FindComponent<ComponentFlu>();
-                    if (flu == null)
+                project.FindEntityById(
+                    package.EntityId,
+                    entity =>
                     {
-                        return;
-                    }
+                        var flu = entity.FindComponent<ComponentFlu>();
+                        if (flu == null)
+                        {
+                            return;
+                        }
 
-                    flu.FluOnset = package.FluOnset;
-                    flu.SneezeDuration = package.SneezeDuration;
-                    flu.CoughDuration = package.CoughDuration;
-                    flu.FluDuration = package.FluDuration;
-                    flu.Sneeze();
-                });
+                        flu.FluOnset = package.FluOnset;
+                        flu.SneezeDuration = package.SneezeDuration;
+                        flu.CoughDuration = package.CoughDuration;
+                        flu.FluDuration = package.FluDuration;
+                        flu.Sneeze();
+                    }
+                );
                 break;
         }
     }

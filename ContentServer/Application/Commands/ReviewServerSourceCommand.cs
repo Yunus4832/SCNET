@@ -6,22 +6,30 @@ using NetCorePal.Extensions.Primitives;
 
 namespace ContentServer.Application.Commands;
 
-public sealed record ReviewServerSourceCommand(ServerSourceRegistrationId Id, AdministratorId AdministratorId,
-    bool Approved, string? Message)
+public sealed record ReviewServerSourceCommand(
+    ServerSourceRegistrationId Id,
+    AdministratorId AdministratorId,
+    bool Approved,
+    string? Message
+)
     : ICommand<ReviewServerSourceResult>;
 
 public enum ReviewServerSourceResult
 {
-    Completed,
-    NotFound,
-    InvalidState
+    Completed = 0,
+
+    NotFound = 1,
+
+    InvalidState = 2
 }
 
 public sealed class ReviewServerSourceCommandHandler(ServerSourceRegistrationRepository repository)
     : ICommandHandler<ReviewServerSourceCommand, ReviewServerSourceResult>
 {
-    public async Task<ReviewServerSourceResult> Handle(ReviewServerSourceCommand command,
-        CancellationToken cancellationToken)
+    public async Task<ReviewServerSourceResult> Handle(
+        ReviewServerSourceCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var source = await repository.FindAsync(command.Id, cancellationToken);
         if (source is null)

@@ -21,7 +21,8 @@ public class WireDomainElectricElement(
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
                 num |= (int)MathUtils.Round(
-                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) * 15f);
+                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) * 15f
+                );
             }
         }
 
@@ -43,8 +44,11 @@ public class WireDomainElectricElement(
         if (wire.WireExistsOnFace(cellValue, cellFace.Face))
         {
             var point = CellFace.FaceToPoint3(cellFace.Face);
-            var cellValue2 = SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X - point.X,
-                cellFace.Y - point.Y, cellFace.Z - point.Z);
+            var cellValue2 = SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(
+                cellFace.X - point.X,
+                cellFace.Y - point.Y,
+                cellFace.Z - point.Z
+            );
             var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue2)];
             if (!block.Collidable || block.Transparent)
             {
@@ -59,8 +63,15 @@ public class WireDomainElectricElement(
         else if (num2 != wireFacesBitmask)
         {
             var newValue = wire.SetWireFacesBitmask(cellValue, num2);
-            SubsystemElectricity.SubsystemTerrain.DestroyCell(0, cellFace.X, cellFace.Y, cellFace.Z, newValue, false,
-                false);
+            SubsystemElectricity.SubsystemTerrain.DestroyCell(
+                0,
+                cellFace.X,
+                cellFace.Y,
+                cellFace.Z,
+                newValue,
+                false,
+                false
+            );
         }
     }
 }

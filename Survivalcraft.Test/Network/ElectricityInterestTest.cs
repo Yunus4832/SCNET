@@ -21,8 +21,11 @@ public sealed class ElectricityInterestTest
             [farPoint] = 1f
         };
 
-        var snapshots = SubsystemElectricity.BuildNetworkVoltages([near, far, empty], voltages,
-            chunk => chunk == new Point2(-1, -2) ? [near] : [far]);
+        var snapshots = SubsystemElectricity.BuildNetworkVoltages(
+            [near, far, empty],
+            voltages,
+            chunk => chunk == new Point2(-1, -2) ? [near] : [far]
+        );
 
         Assert.Equal(3, snapshots.Count);
         Assert.Equal(0.5f, Assert.Single(snapshots[near]).Value);
@@ -40,8 +43,11 @@ public sealed class ElectricityInterestTest
         var disconnected = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
         var point = new Point3(1, 2, 3);
 
-        var snapshots = SubsystemElectricity.BuildNetworkVoltages([playing],
-            new Dictionary<Point3, float> { [point] = 1f }, _ => [disconnected]);
+        var snapshots = SubsystemElectricity.BuildNetworkVoltages(
+            [playing],
+            new Dictionary<Point3, float> { [point] = 1f },
+            _ => [disconnected]
+        );
 
         Assert.Single(snapshots);
         Assert.Empty(snapshots[playing]);

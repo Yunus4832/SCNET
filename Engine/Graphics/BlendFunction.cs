@@ -2,7 +2,9 @@ namespace Engine.Graphics;
 
 public enum BlendFunction
 {
-    Add,
-    Subtract,
-    ReverseSubtract
+    Add = 0,
+
+    Subtract = 1,
+
+    ReverseSubtract = 2
 }

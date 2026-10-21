@@ -20,7 +20,8 @@ public sealed class AuthoritativeChunkGenerationPipelineTest
             generator,
             _ => false,
             _ => false,
-            _ => generated++);
+            _ => generated++
+        );
 
         for (var i = 0; i < 5; i++)
         {
@@ -42,7 +43,8 @@ public sealed class AuthoritativeChunkGenerationPipelineTest
         var pipeline = new AuthoritativeChunkGenerationPipeline(
             generator,
             _ => true,
-            _ => throw new Xunit.Sdk.XunitException("Load must not run after pending-save restore."));
+            _ => throw new Xunit.Sdk.XunitException("Load must not run after pending-save restore.")
+        );
 
         Assert.True(pipeline.TryAdvance(chunk));
 
@@ -54,7 +56,9 @@ public sealed class AuthoritativeChunkGenerationPipelineTest
     private sealed class FakeGenerator : ITerrainContentsGenerator
     {
         public int PassCount { get; private set; }
+
         public int OceanLevel => 64;
+
         public Vector3 FindCoarseSpawnPosition() => Vector3.Zero;
         public float CalculateOceanShoreDistance(float x, float z) => 0;
         public float CalculateHeight(float x, float z) => 0;

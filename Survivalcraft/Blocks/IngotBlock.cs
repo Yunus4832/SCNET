@@ -16,8 +16,15 @@ public abstract class IngotBlock(string meshName) : Block
             modelMesh.ParentBone ??
             throw new InvalidOperationException("Required ModelMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(modelMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            modelMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 
@@ -41,7 +48,13 @@ public abstract class IngotBlock(string meshName) : Block
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMesh, color, 2f * size, ref matrix,
-            environmentData);
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneBlockMesh,
+            color,
+            2f * size,
+            ref matrix,
+            environmentData
+        );
     }
 }

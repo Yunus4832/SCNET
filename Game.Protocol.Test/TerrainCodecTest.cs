@@ -9,8 +9,23 @@ public sealed class TerrainCodecTest
 {
     public static TheoryData<string, SubsystemTerrainPackage> CapturedMessages => new()
     {
-        { "terrain-request", new SubsystemTerrainPackage([new ChunkContentRequest(new ChunkAllocationId(new Point2(-2, 3), 17), 32)]) },
-        { "terrain-fragment", new SubsystemTerrainPackage(new EncodedTerrainChunkFragment(new ChunkAllocationId(new Point2(-2, 3), 17), 32, 4096, 1, 11, Enumerable.Range(0, 400).Select(i => (byte)i).ToArray())) },
+        {
+            "terrain-request",
+            new SubsystemTerrainPackage([new ChunkContentRequest(new ChunkAllocationId(new Point2(-2, 3), 17), 32)])
+        },
+        {
+            "terrain-fragment",
+            new SubsystemTerrainPackage(
+                new EncodedTerrainChunkFragment(
+                    new ChunkAllocationId(new Point2(-2, 3), 17),
+                    32,
+                    4096,
+                    1,
+                    11,
+                    Enumerable.Range(0, 400).Select(i => (byte)i).ToArray()
+                )
+            )
+        },
         { "terrain-delta", new SubsystemTerrainPackage(new TerrainCellDelta(new Point3(1, 80, -2), 0, 32, 33)) }
     };
 
@@ -36,6 +51,7 @@ public sealed class TerrainCodecTest
             Assert.Equal(message.ChunkFragment.Allocation, restored.ChunkFragment.Allocation);
             Assert.Equal(message.ChunkFragment.ContentVersion, restored.ChunkFragment.ContentVersion);
         }
+
         Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
     }
 
@@ -49,7 +65,9 @@ public sealed class TerrainCodecTest
         writer.Write((byte)SubsystemTerrainPackage.DataType.RequestSyncChunks);
         writer.Write(count);
         using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read((byte)PackageType.SubsystemTerrain, reader));
+        Assert.Throws<InvalidDataException>(() =>
+            ProtocolMessageCodec.Read((byte)PackageType.SubsystemTerrain, reader)
+        );
     }
 
     [Fact]

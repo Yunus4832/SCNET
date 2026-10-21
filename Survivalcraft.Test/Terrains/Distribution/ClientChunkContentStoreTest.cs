@@ -38,7 +38,8 @@ public sealed class ClientChunkContentStoreTest
     private static ClientChunkSnapshot CreateSnapshot(
         ChunkAllocationId allocation,
         long version,
-        int firstCell)
+        int firstCell
+    )
     {
         var cells = new int[AuthorityChunkSnapshot.CellCount];
         cells[0] = firstCell;
@@ -46,6 +47,7 @@ public sealed class ClientChunkContentStoreTest
             allocation,
             version,
             cells,
-            new long[AuthorityChunkSnapshot.ShaftCount]);
+            new long[AuthorityChunkSnapshot.ShaftCount]
+        );
     }
 }

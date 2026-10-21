@@ -9,8 +9,14 @@ public sealed class WorldPayloadCodecTest
     [Theory]
     [InlineData(false, "")]
     [InlineData(true, "")]
-    [InlineData(false, "<ExtensionData><Values Name=\"example.mod\"><Value Name=\"enabled\" Type=\"bool\" Value=\"True\" /></Values></ExtensionData>")]
-    [InlineData(true, "<ExtensionData><Values Name=\"example.mod\"><Value Name=\"enabled\" Type=\"bool\" Value=\"True\" /></Values></ExtensionData>")]
+    [InlineData(
+        false,
+        "<ExtensionData><Values Name=\"example.mod\"><Value Name=\"enabled\" Type=\"bool\" Value=\"True\" /></Values></ExtensionData>"
+    )]
+    [InlineData(
+        true,
+        "<ExtensionData><Values Name=\"example.mod\"><Value Name=\"enabled\" Type=\"bool\" Value=\"True\" /></Values></ExtensionData>"
+    )]
     public void RoundTripPreservesOptionalRegistryAndExtensionData(bool includeRegistry, string extension)
     {
         var registry = includeRegistry
@@ -18,8 +24,11 @@ public sealed class WorldPayloadCodecTest
             : string.Empty;
         var project = Encoding.UTF8.GetBytes(
             "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\">" +
-            "<Subsystems /><Entities />" + registry +
-            extension + "</Project>");
+            "<Subsystems /><Entities />" +
+            registry +
+            extension +
+            "</Project>"
+        );
         using var package = Write(project);
 
         Assert.Equal(ContentPackageType.World, ContentPackageReader.Inspect(package).Manifest.Type);
@@ -43,32 +52,50 @@ public sealed class WorldPayloadCodecTest
     {
         var project = Encoding.UTF8.GetBytes(
             "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\">" +
-            children + "</Project>");
+            children +
+            "</Project>"
+        );
 
         Assert.Throws<ContentPackageException>(() =>
-        {
-            using var package = Write(project);
-        });
+            {
+                using var package = Write(project);
+            }
+        );
     }
 
     private static MemoryStream Write(byte[] project)
     {
-        var manifest = new ContentPackageManifest(ContentPackageManifest.CurrentFormatVersion,
-            ContentPackageType.World, "7e96a4f3-fae8-4727-9fcb-9d35c2fc08b6", "World", "Summary", "Description",
-            "1.0.0", new ContentPackagePayload("scnet.world-v1", "payload/world/Project.xml", "application/xml"),
-            JsonSerializer.SerializeToElement(new
-            {
-                projectFormat = "scnet-project-xml-v1",
-                regionsDirectory = "payload/world/Regions"
-            }));
+        var manifest = new ContentPackageManifest(
+            ContentPackageManifest.CurrentFormatVersion,
+            ContentPackageType.World,
+            "7e96a4f3-fae8-4727-9fcb-9d35c2fc08b6",
+            "World",
+            "Summary",
+            "Description",
+            "1.0.0",
+            new ContentPackagePayload("scnet.world-v1", "payload/world/Project.xml", "application/xml"),
+            JsonSerializer.SerializeToElement(
+                new
+                {
+                    projectFormat = "scnet-project-xml-v1",
+                    regionsDirectory = "payload/world/Regions"
+                }
+            )
+        );
         var output = new MemoryStream();
         try
         {
-            ContentPackageWriter.Write(output, manifest,
-            [
-                new ContentPackageWriteEntry("payload/world/Project.xml", project.Length,
-                    () => new MemoryStream(project, writable: false))
-            ]);
+            ContentPackageWriter.Write(
+                output,
+                manifest,
+                [
+                    new ContentPackageWriteEntry(
+                        "payload/world/Project.xml",
+                        project.Length,
+                        () => new MemoryStream(project, writable: false)
+                    )
+                ]
+            );
             output.Position = 0;
             return output;
         }

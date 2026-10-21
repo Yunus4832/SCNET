@@ -6,6 +6,7 @@ namespace Game.Terrains.Distribution;
 /// </summary>
 public enum TerrainContentRole
 {
-    Authority,
-    Replica
+    Authority = 0,
+
+    Replica = 1
 }

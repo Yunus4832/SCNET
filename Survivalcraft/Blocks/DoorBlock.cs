@@ -86,8 +86,15 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
             identity *= Matrix.CreateTranslation(0f, 0f, 0.5f - PivotDistance) *
                         Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
                         Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-            BlockMeshesByData[i].AppendModelMeshPart(doorMesh.MeshParts[0],
-                boneAbsoluteTransform * identity, false, !rightHanded, false, false, Color.White);
+            BlockMeshesByData[i].AppendModelMeshPart(
+                doorMesh.MeshParts[0],
+                boneAbsoluteTransform * identity,
+                false,
+                !rightHanded,
+                false,
+                false,
+                Color.White
+            );
             var boundingBox = BlockMeshesByData[i].CalculateBoundingBox();
             // 提取 Max 分量
             var max = boundingBox.Max;
@@ -102,19 +109,40 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
             CollisionBoxesByData[i] = [boundingBox];
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(doorMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -1f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            doorMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -1f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 
-    public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value,
-        int x, int y, int z)
+    public override void GenerateTerrainVertices(
+        BlockGeometryGenerator generator,
+        TerrainGeometry geometry,
+        int value,
+        int x,
+        int y,
+        int z
+    )
     {
         var num = Terrain.ExtractData(value);
         if (IsBottomPart(generator.Terrain, x, y, z) && num < BlockMeshesByData.Length)
         {
-            generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null,
-                geometry.SubsetAlphaTest);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshesByData[num],
+                Color.White,
+                null,
+                geometry.SubsetAlphaTest
+            );
         }
 
         var centerOffset = GetRightHanded(num) ? new Vector2(-0.45f, 0f) : new Vector2(0.45f, 0f);
@@ -180,8 +208,12 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
         var projectionXNegative = Vector3.Dot(forward, -Vector3.UnitX); // 面朝向量在 -X 方向的投影
 
         // 计算最大投影长度以确定门最终的朝向
-        var maxProjection = MathUtils.Max(projectionZPositive, projectionXPositive, projectionZNegative,
-            projectionXNegative);
+        var maxProjection = MathUtils.Max(
+            projectionZPositive,
+            projectionXPositive,
+            projectionZNegative,
+            projectionXNegative
+        );
 
         // 门的朝向，0-前 1-右 2-后 3-左
         //          2-back

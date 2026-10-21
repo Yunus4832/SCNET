@@ -7,10 +7,15 @@ namespace ServerLoadTool;
 public sealed class ServerHttpProbe : IDisposable
 {
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(5) };
+
     private Task<JsonElement>? _pending;
+
     private readonly string _endpoint;
+
     private bool _discovered;
+
     public string? Error { get; private set; }
+
     public JsonElement? Latest { get; private set; }
 
     public ServerHttpProbe(int port)
@@ -18,7 +23,9 @@ public sealed class ServerHttpProbe : IDisposable
         var token = Environment.GetEnvironmentVariable("SCNET_LOAD_TOKEN");
         if (string.IsNullOrWhiteSpace(token))
         {
-            throw new ArgumentException("--server-http-port requires SCNET_LOAD_TOKEN in the environment; it is not recorded.");
+            throw new ArgumentException(
+                "--server-http-port requires SCNET_LOAD_TOKEN in the environment; it is not recorded."
+            );
         }
 
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -60,7 +67,11 @@ public sealed class ServerHttpProbe : IDisposable
             _discovered = true;
         }
 
-        using var content = new StringContent("""{"identity":"game:diagnostics/network/get","arguments":{}}""", Encoding.UTF8, "application/json");
+        using var content = new StringContent(
+            """{"identity":"game:diagnostics/network/get","arguments":{}}""",
+            Encoding.UTF8,
+            "application/json"
+        );
         using var response = await _http.PostAsync(_endpoint, content);
         response.EnsureSuccessStatusCode();
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());

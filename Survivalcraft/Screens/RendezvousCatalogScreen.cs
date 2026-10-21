@@ -11,21 +11,31 @@ public sealed class RendezvousCatalogScreen : Screen
 {
     private enum CatalogAction
     {
-        Install
+        Install = 0
     }
 
     private sealed record RepositoryFilterOption(Guid? RepositoryId, string Name);
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly SelectionDrawerWidget _repositoryDrawer;
+
     private readonly TextBoxWidget _searchTextBox;
+
     private readonly LabelWidget _searchPlaceholder;
+
     private readonly ListPanelWidget _sourceList;
+
     private readonly LabelWidget _statusLabel;
+
     private IReadOnlyList<RegisteredRendezvousService> _sources = [];
+
     private CancellationTokenSource? _loadCancellation;
+
     private bool _busy;
+
     private IReadOnlySet<Guid> _unavailableRepositories = new HashSet<Guid>();
+
     private CancellableBusyDialog? _busyDialog;
 
     public RendezvousCatalogScreen()
@@ -47,8 +57,10 @@ public sealed class RendezvousCatalogScreen : Screen
         _repositoryDrawer.ItemTextProvider = item => ((RepositoryFilterOption)item).Name;
         _repositoryDrawer.SelectionChanged += () => ApplySearch();
         _actionPanel.ItemTextProvider = _ => Text("Install");
-        _actionPanel.ItemEnabledProvider = _ => !_busy && _sourceList.SelectedItem is RegisteredRendezvousService source &&
-                                                !IsInstalled(source);
+        _actionPanel.ItemEnabledProvider = _ =>
+            !_busy &&
+            _sourceList.SelectedItem is RegisteredRendezvousService source &&
+            !IsInstalled(source);
         _actionPanel.ItemClicked += _ => Install();
         _actionPanel.SetPrimaryItems([CatalogAction.Install]);
     }
@@ -72,6 +84,7 @@ public sealed class RendezvousCatalogScreen : Screen
             DialogsManager.HideDialog(_busyDialog);
             _busyDialog = null;
         }
+
         _sources = [];
         _repositoryDrawer.Close();
         _sourceList.SelectedItem = null;
@@ -109,13 +122,17 @@ public sealed class RendezvousCatalogScreen : Screen
         _sourceList.ClearItems();
         _statusLabel.Text = Text("Loading");
         var catalog = new ContentRendezvousCatalog(ContentServerClientPool.Shared);
-        Task.Run(() => catalog.QueryAsync(ContentRepositoryManager.Current.Snapshot(), cancellation.Token),
-                cancellation.Token)
+        Task.Run(
+                () => catalog.QueryAsync(ContentRepositoryManager.Current.Snapshot(), cancellation.Token),
+                cancellation.Token
+            )
             .ContinueWith(task => Dispatcher.Dispatch(() => CompleteLoad(cancellation, task)));
     }
 
-    private void CompleteLoad(CancellationTokenSource cancellation,
-        Task<RendezvousCatalogResult> task)
+    private void CompleteLoad(
+        CancellationTokenSource cancellation,
+        Task<RendezvousCatalogResult> task
+    )
     {
         if (!ReferenceEquals(_loadCancellation, cancellation))
         {
@@ -140,7 +157,8 @@ public sealed class RendezvousCatalogScreen : Screen
         }
 
         _unavailableRepositories = task.Result.UnavailableRepositories;
-        _sources = task.Result.Services.OrderBy(source => source.RepositoryName).ThenBy(source => source.Name).ToArray();
+        _sources = task.Result.Services.OrderBy(source => source.RepositoryName).ThenBy(source => source.Name)
+            .ToArray();
         RefreshRepositoryFilter();
         ApplySearch();
     }
@@ -161,53 +179,61 @@ public sealed class RendezvousCatalogScreen : Screen
         DialogsManager.ShowDialog(null, dialog);
         Task.Run(() => RendezvousServiceProbe.TestAsync(source.ControlUrl, cancellation.Token), cancellation.Token)
             .ContinueWith(task => Dispatcher.Dispatch(() =>
-            {
-                if (!ReferenceEquals(_loadCancellation, cancellation))
-                {
-                    _ = task.Exception;
-                    dialog.CancelRequested -= cancellation.Cancel;
-                    cancellation.Dispose();
-                    return;
-                }
-                _loadCancellation = null;
-                _busyDialog = null;
-                _busy = false;
-                DialogsManager.HideDialog(dialog);
-                dialog.CancelRequested -= cancellation.Cancel;
-                cancellation.Dispose();
-                if (task.IsCanceled)
-                {
-                    return;
-                }
-                try
-                {
-                    if (!task.IsCompletedSuccessfully)
                     {
-                        throw task.Exception!.GetBaseException();
+                        if (!ReferenceEquals(_loadCancellation, cancellation))
+                        {
+                            _ = task.Exception;
+                            dialog.CancelRequested -= cancellation.Cancel;
+                            cancellation.Dispose();
+                            return;
+                        }
+
+                        _loadCancellation = null;
+                        _busyDialog = null;
+                        _busy = false;
+                        DialogsManager.HideDialog(dialog);
+                        dialog.CancelRequested -= cancellation.Cancel;
+                        cancellation.Dispose();
+                        if (task.IsCanceled)
+                        {
+                            return;
+                        }
+
+                        try
+                        {
+                            if (!task.IsCompletedSuccessfully)
+                            {
+                                throw task.Exception!.GetBaseException();
+                            }
+
+                            RendezvousManager.Current.Add(
+                                new InstalledRendezvousService
+                                {
+                                    RegistrationId = $"{source.RepositoryId:N}:{source.RegistrationId}",
+                                    Name = source.Name,
+                                    ControlUrl = source.ControlUrl,
+                                    Order = RendezvousManager.Current.Snapshot().Count
+                                }
+                            );
+                            ApplySearch(source);
+                            _actionPanel.Refresh();
+                        }
+                        catch (Exception exception)
+                        {
+                            Log.Warning($"Signaling service installation failed: {exception.Message}");
+                            DialogsManager.Alert(Text("LoadFailed"));
+                        }
                     }
-                    RendezvousManager.Current.Add(new InstalledRendezvousService
-                    {
-                        RegistrationId = $"{source.RepositoryId:N}:{source.RegistrationId}",
-                        Name = source.Name,
-                        ControlUrl = source.ControlUrl,
-                        Order = RendezvousManager.Current.Snapshot().Count
-                    });
-                    ApplySearch(source);
-                    _actionPanel.Refresh();
-                }
-                catch (Exception exception)
-                {
-                    Log.Warning($"Signaling service installation failed: {exception.Message}");
-                    DialogsManager.Alert(Text("LoadFailed"));
-                }
-            }));
+                )
+            );
     }
 
     private static bool IsInstalled(RegisteredRendezvousService source)
     {
         var normalizedUrl = RendezvousAddress.Normalize(new Uri(source.ControlUrl)).AbsoluteUri;
         return RendezvousManager.Current.Snapshot().Any(installedSource =>
-            installedSource.ControlUrl == normalizedUrl);
+            installedSource.ControlUrl == normalizedUrl
+        );
     }
 
     private void ApplySearch(RegisteredRendezvousService? selected = null)
@@ -227,8 +253,12 @@ public sealed class RendezvousCatalogScreen : Screen
         _sourceList.SelectedItem = selectedSource is null
             ? null
             : visibleSources.FirstOrDefault(source => source == selectedSource);
-        var unavailable = repositoryId is { } id ? _unavailableRepositories.Contains(id) : _unavailableRepositories.Count > 0;
-        _statusLabel.Text = !_busy && visibleSources.Length == 0 ? Text(unavailable ? "LoadFailed" : "Empty") : string.Empty;
+        var unavailable = repositoryId is { } id
+            ? _unavailableRepositories.Contains(id)
+            : _unavailableRepositories.Count > 0;
+        _statusLabel.Text = !_busy && visibleSources.Length == 0
+            ? Text(unavailable ? "LoadFailed" : "Empty")
+            : string.Empty;
         _actionPanel.Refresh();
     }
 
@@ -249,10 +279,12 @@ public sealed class RendezvousCatalogScreen : Screen
     {
         var selectedId = (_repositoryDrawer.SelectedItem as RepositoryFilterOption)?.RepositoryId;
         var options = new[] { new RepositoryFilterOption(null, Text("AllRepositories")) }
-            .Concat(ContentRepositoryManager.Current.Snapshot()
-                .Where(repository => repository.IsEnabled)
-                .OrderBy(repository => repository.Priority)
-                .Select(repository => new RepositoryFilterOption(repository.Id, repository.Name))).ToArray();
+            .Concat(
+                ContentRepositoryManager.Current.Snapshot()
+                    .Where(repository => repository.IsEnabled)
+                    .OrderBy(repository => repository.Priority)
+                    .Select(repository => new RepositoryFilterOption(repository.Id, repository.Name))
+            ).ToArray();
         _repositoryDrawer.SetItems(options);
         _repositoryDrawer.SelectedItem = options.FirstOrDefault(option => option.RepositoryId == selectedId) ??
                                          options[0];

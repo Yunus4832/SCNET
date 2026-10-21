@@ -30,9 +30,12 @@ public static partial class ProtocolMessageCodec
         var type = reader.ReadEnum<BlockEditPackage.EventType>();
         return type switch
         {
-            BlockEditPackage.EventType.OpenInventoryByID => new BlockEditPackage { Type = type, InventoryId = reader.ReadInt32() },
-            BlockEditPackage.EventType.OpenInventoryByPoint or BlockEditPackage.EventType.EditSign => new BlockEditPackage(reader.ReadPoint3(), type),
-            BlockEditPackage.EventType.CrossbowPull => new BlockEditPackage { Type = type, InventoryId = reader.ReadInt32(), SlotIndex = reader.ReadInt32() },
+            BlockEditPackage.EventType.OpenInventoryByID => new BlockEditPackage
+                { Type = type, InventoryId = reader.ReadInt32() },
+            BlockEditPackage.EventType.OpenInventoryByPoint or BlockEditPackage.EventType.EditSign =>
+                new BlockEditPackage(reader.ReadPoint3(), type),
+            BlockEditPackage.EventType.CrossbowPull => new BlockEditPackage
+                { Type = type, InventoryId = reader.ReadInt32(), SlotIndex = reader.ReadInt32() },
             _ => throw new InvalidDataException("Unknown block edit mode.")
         };
     }

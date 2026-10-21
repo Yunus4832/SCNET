@@ -82,32 +82,50 @@ public class SoundGeneratorElectricElement : RotateableElectricElement
 
                 if (connectorDirection.Value is ElectricConnectorDirection.In or ElectricConnectorDirection.Bottom)
                 {
-                    num4 = (int)MathUtils.Round(15f *
-                                                connection.NeighborElectricElement.GetOutputVoltage(connection
-                                                    .NeighborConnectorFace));
+                    num4 = (int)MathUtils.Round(
+                        15f *
+                        connection.NeighborElectricElement.GetOutputVoltage(
+                            connection
+                                .NeighborConnectorFace
+                        )
+                    );
                 }
                 else if (connectorDirection.Value == ElectricConnectorDirection.Left)
                 {
-                    num = (int)MathUtils.Round(15f *
-                                               connection.NeighborElectricElement.GetOutputVoltage(connection
-                                                   .NeighborConnectorFace));
+                    num = (int)MathUtils.Round(
+                        15f *
+                        connection.NeighborElectricElement.GetOutputVoltage(
+                            connection
+                                .NeighborConnectorFace
+                        )
+                    );
                 }
                 else if (connectorDirection.Value == ElectricConnectorDirection.Right)
                 {
-                    num3 = (int)MathUtils.Round(15f *
-                                                connection.NeighborElectricElement.GetOutputVoltage(connection
-                                                    .NeighborConnectorFace));
+                    num3 = (int)MathUtils.Round(
+                        15f *
+                        connection.NeighborElectricElement.GetOutputVoltage(
+                            connection
+                                .NeighborConnectorFace
+                        )
+                    );
                 }
                 else if (connectorDirection.Value == ElectricConnectorDirection.Top)
                 {
-                    num2 = (int)MathUtils.Round(15f *
-                                                connection.NeighborElectricElement.GetOutputVoltage(connection
-                                                    .NeighborConnectorFace));
+                    num2 = (int)MathUtils.Round(
+                        15f *
+                        connection.NeighborElectricElement.GetOutputVoltage(
+                            connection
+                                .NeighborConnectorFace
+                        )
+                    );
                 }
             }
         }
 
-        if (_lastToneInput == 0 && num4 != 0 && num != 15 &&
+        if (_lastToneInput == 0 &&
+            num4 != 0 &&
+            num != 15 &&
             SubsystemElectricity.SubsystemTime.GameTime >= _playAllowedTime)
         {
             _playAllowedTime = SubsystemElectricity.SubsystemTime.GameTime + 0.079999998211860657;

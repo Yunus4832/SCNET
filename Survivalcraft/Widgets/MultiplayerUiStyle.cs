@@ -25,7 +25,8 @@ internal static class MultiplayerUiStyle
     public static void SetButtonText(
         BevelledButtonWidget button,
         string text,
-        float minimumScale = 0.62f)
+        float minimumScale = 0.62f
+    )
     {
         ArgumentNullException.ThrowIfNull(button);
         button.Text = text;
@@ -38,13 +39,15 @@ internal static class MultiplayerUiStyle
         var measuredWidth = button.Font.MeasureText(
             text,
             Vector2.One,
-            Vector2.Zero).X;
+            Vector2.Zero
+        ).X;
         var availableWidth = MathUtils.Max(button.Size.X - 18f, 1f);
         if (measuredWidth > availableWidth)
         {
             button.FontScale = MathUtils.Max(
                 minimumScale,
-                availableWidth / measuredWidth);
+                availableWidth / measuredWidth
+            );
         }
     }
 

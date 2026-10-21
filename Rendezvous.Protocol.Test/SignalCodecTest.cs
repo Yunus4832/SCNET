@@ -5,8 +5,14 @@ public sealed class SignalCodecTest
     [Fact]
     public void ControlRoundTripsWithIdentityAndChallenge()
     {
-        var message = new SignalMessage("confirm", Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-            new string('A', 64), Challenge: new string('B', 32));
+        var message = new SignalMessage(
+            "confirm",
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            new string('A', 64),
+            Challenge: new string('B', 32)
+        );
         Assert.True(SignalCodec.TryDecode(SignalCodec.Encode(message), out var decoded));
         Assert.Equal(message, decoded);
     }
@@ -29,7 +35,9 @@ public sealed class SignalCodecTest
     public void OversizedAndMissingIdentityAreRejected()
     {
         Assert.Throws<ArgumentException>(() => SignalCodec.Encode(
-            new SignalMessage("register", Guid.NewGuid(), Ticket: new string('A', 2000))));
+                new SignalMessage("register", Guid.NewGuid(), Ticket: new string('A', 2000))
+            )
+        );
         Assert.False(SignalCodec.TryDecode(new byte[SignalCodec.MaxDatagramBytes + 1], out _));
         Assert.False(SignalCodec.TryDecode(SignalCodec.Encode(new SignalMessage("register", Guid.Empty)), out _));
     }

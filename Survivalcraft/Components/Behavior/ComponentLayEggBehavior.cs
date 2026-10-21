@@ -96,8 +96,16 @@ public class ComponentLayEggBehavior : ComponentBehavior, IUpdateable
                 var value3 = position2 + new Vector3(num * _random.Float(-1f, 1f), 0f, num * _random.Float(-1f, 1f));
                 value3.Y = _subsystemTerrain.Terrain.GetTopHeight(Terrain.ToCell(value3.X), Terrain.ToCell(value3.Z)) +
                            1;
-                _componentPathfinding.SetDestination(value3, _random.Float(0.4f, 0.6f), 0.5f, 0, false, true, false,
-                    null);
+                _componentPathfinding.SetDestination(
+                    value3,
+                    _random.Float(0.4f, 0.6f),
+                    0.5f,
+                    0,
+                    false,
+                    true,
+                    false,
+                    null
+                );
             },
             delegate
             {
@@ -130,8 +138,10 @@ public class ComponentLayEggBehavior : ComponentBehavior, IUpdateable
                     if (_componentCreature.ComponentBody.StandingOnValue.HasValue)
                     {
                         _componentCreature.ComponentLocomotion.LookOrder =
-                            new Vector2(0f,
-                                0.25f * (float)MathUtils.Sin(20.0 * _subsystemTime.GameTime) + _layTime / 3f) -
+                            new Vector2(
+                                0f,
+                                0.25f * (float)MathUtils.Sin(20.0 * _subsystemTime.GameTime) + _layTime / 3f
+                            ) -
                             _componentCreature.ComponentLocomotion.LookAngles;
                         if (!(_layTime >= 3f))
                         {
@@ -145,16 +155,30 @@ public class ComponentLayEggBehavior : ComponentBehavior, IUpdateable
                         }
 
                         _importanceLevel = 0f;
-                        var value = Terrain.MakeBlockValue(118, 0,
-                            EggBlock.SetIsLaid(EggBlock.SetEggType(0, _eggType.EggTypeIndex), true));
+                        var value = Terrain.MakeBlockValue(
+                            118,
+                            0,
+                            EggBlock.SetIsLaid(EggBlock.SetEggType(0, _eggType.EggTypeIndex), true)
+                        );
                         var matrix = _componentCreature.ComponentBody.Matrix;
-                        var position = 0.5f * (_componentCreature.ComponentBody.BoundingBox.Min +
-                                               _componentCreature.ComponentBody.BoundingBox.Max);
-                        var value2 = 3f * Vector3.Normalize(-matrix.Forward + 0.1f * matrix.Up +
-                                                            0.2f * _random.Float(-1f, 1f) * matrix.Right);
+                        var position = 0.5f *
+                                       (_componentCreature.ComponentBody.BoundingBox.Min +
+                                        _componentCreature.ComponentBody.BoundingBox.Max);
+                        var value2 = 3f *
+                                     Vector3.Normalize(
+                                         -matrix.Forward +
+                                         0.1f * matrix.Up +
+                                         0.2f * _random.Float(-1f, 1f) * matrix.Right
+                                     );
                         _subsystemPickables.AddPickable(value, 1, position, value2, null);
-                        _subsystemAudio.PlaySound("Audio/EggLaid", 1f, _random.Float(-0.1f, 0.1f), position, 2f,
-                            true);
+                        _subsystemAudio.PlaySound(
+                            "Audio/EggLaid",
+                            1f,
+                            _random.Float(-0.1f, 0.1f),
+                            position,
+                            2f,
+                            true
+                        );
                     }
                     else if (_layTime >= 3f)
                     {

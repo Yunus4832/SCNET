@@ -18,8 +18,10 @@ public sealed class AdminReleaseListEndpoint(IMediator mediator) : ContentEndpoi
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
         var items = await mediator.Send(new ListGameReleasesQuery(false), cancellationToken);
-        await Send.ResponseAsync(items.Select(GameReleaseResponse.From).ToArray().AsResponseData(),
-            cancellation: cancellationToken);
+        await Send.ResponseAsync(
+            items.Select(GameReleaseResponse.From).ToArray().AsResponseData(),
+            cancellation: cancellationToken
+        );
     }
 }
 
@@ -30,18 +32,28 @@ public sealed record GameReleaseResponse(
     IReadOnlyList<GameReleaseArtifactResponse> Artifacts,
     string Status,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? PublishedAt)
+    DateTimeOffset? PublishedAt
+)
 {
-    public static GameReleaseResponse From(GameRelease item) => new(item.Id.ToString(), item.Version,
-        item.Description, item.Artifacts.Select(GameReleaseArtifactResponse.From).ToArray(),
-        item.Status.ToString().ToLowerInvariant(), item.CreatedAt, item.PublishedAt);
+    public static GameReleaseResponse From(GameRelease item) => new(
+        item.Id.ToString(),
+        item.Version,
+        item.Description,
+        item.Artifacts.Select(GameReleaseArtifactResponse.From).ToArray(),
+        item.Status.ToString().ToLowerInvariant(),
+        item.CreatedAt,
+        item.PublishedAt
+    );
 }
 
 public sealed record GameReleaseArtifactResponse(
     string Platform,
     string DownloadUrl,
-    string Sha256)
+    string Sha256
+)
 {
-    public static GameReleaseArtifactResponse From(GameReleaseArtifact item) =>
-        new(item.Platform, item.DownloadUrl, item.Sha256);
+    public static GameReleaseArtifactResponse From(GameReleaseArtifact item)
+    {
+        return new(item.Platform, item.DownloadUrl, item.Sha256);
+    }
 }

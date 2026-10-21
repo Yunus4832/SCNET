@@ -10,14 +10,16 @@ namespace ContentServer.Application.Queries;
 
 public sealed record GetPublisherSubmissionQuery(
     PublisherId PublisherId,
-    ContentVersionId VersionId) : IQuery<ContentVersionDto?>;
+    ContentVersionId VersionId
+) : IQuery<ContentVersionDto?>;
 
 public sealed class GetPublisherSubmissionQueryHandler(ContentServerDbContext db)
     : IQueryHandler<GetPublisherSubmissionQuery, ContentVersionDto?>
 {
     public async Task<ContentVersionDto?> Handle(
         GetPublisherSubmissionQuery query,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var version = await db.ContentVersions.AsNoTracking()
             .SingleOrDefaultAsync(item => item.Id == query.VersionId, cancellationToken);
@@ -28,7 +30,8 @@ public sealed class GetPublisherSubmissionQueryHandler(ContentServerDbContext db
 
         var content = await db.Contents.AsNoTracking().SingleOrDefaultAsync(
             item => item.Id == version.ContentId && item.PublisherId == query.PublisherId,
-            cancellationToken);
+            cancellationToken
+        );
         if (content is null)
         {
             return null;

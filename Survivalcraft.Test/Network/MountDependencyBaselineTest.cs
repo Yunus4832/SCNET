@@ -21,13 +21,18 @@ public sealed class MountDependencyBaselineTest
     [InlineData(true, false)]
     [InlineData(false, true)]
     [InlineData(true, true)]
-    public void MissingMountedDependenciesAreQueuedOnceWithoutReplacingObservedEntities(bool riderObserved,
-        bool mountObserved)
+    public void MissingMountedDependenciesAreQueuedOnceWithoutReplacingObservedEntities(
+        bool riderObserved,
+        bool mountObserved
+    )
     {
         using var project = new CaptureProject();
         var interest = new SubsystemNetworkInterest();
         typeof(Subsystem).GetProperty(nameof(Subsystem.Project))!.SetValue(interest, project);
-        typeof(Subsystem).GetField("_initialized", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(interest, true);
+        typeof(Subsystem).GetField("_initialized", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
+            interest,
+            true
+        );
         var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
         var mount = CreateBody(project, 10);
         var rider = CreateBody(project, 11);
@@ -74,8 +79,10 @@ public sealed class MountDependencyBaselineTest
                 Assert.NotEmpty(baseline.EntityData);
                 Assert.True(outbound.Audience.Includes(client));
                 var mountEvent = new ComponentMountPackage { Type = ComponentMountPackage.EventType.Mount };
-                Assert.Equal(PackageTransportPolicy.Get(mountEvent).Channel,
-                    PackageTransportPolicy.Get(baseline).Channel);
+                Assert.Equal(
+                    PackageTransportPolicy.Get(mountEvent).Channel,
+                    PackageTransportPolicy.Get(baseline).Channel
+                );
             }
 
             Assert.Same(client, Assert.Single(interest.Entities.GetObservers(EntityInterestGroup.Creatures, 10)));
@@ -91,7 +98,10 @@ public sealed class MountDependencyBaselineTest
     {
         var entity = (Entity)RuntimeHelpers.GetUninitializedObject(typeof(Entity));
         entity.EntityId = id;
-        typeof(Entity).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(entity, project);
+        typeof(Entity).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
+            entity,
+            project
+        );
         var body = new ComponentBody();
         typeof(Component).GetProperty(nameof(Component.Entity))!.SetValue(body, entity);
         typeof(Entity).GetField("_components", BindingFlags.Instance | BindingFlags.NonPublic)!
@@ -109,5 +119,4 @@ public sealed class MountDependencyBaselineTest
             return new EntityDataList();
         }
     }
-
 }

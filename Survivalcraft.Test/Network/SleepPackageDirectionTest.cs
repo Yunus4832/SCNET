@@ -9,8 +9,11 @@ public sealed class SleepPackageDirectionTest
     [InlineData(ComponentSleepPackage.EventType.WakeupRequest, true, false)]
     [InlineData(ComponentSleepPackage.EventType.Sleep, false, true)]
     [InlineData(ComponentSleepPackage.EventType.WakeUp, false, true)]
-    public void RequestsAndAuthoritativeStatesHaveDistinctDirections(ComponentSleepPackage.EventType type,
-        bool server, bool client)
+    public void RequestsAndAuthoritativeStatesHaveDistinctDirections(
+        ComponentSleepPackage.EventType type,
+        bool server,
+        bool client
+    )
     {
         Assert.Equal(server, ComponentSleepPackageHandler.AcceptsDirection(type, true));
         Assert.Equal(client, ComponentSleepPackageHandler.AcceptsDirection(type, false));

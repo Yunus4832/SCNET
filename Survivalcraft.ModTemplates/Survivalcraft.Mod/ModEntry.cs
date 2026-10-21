@@ -10,7 +10,8 @@ public sealed class ModEntry : IMod
         context.Extensions.Register(
             "examples",
             new ResourceId(context.Manifest.ModId, "example"),
-            "Hello from Survivalcraft.ModTemplate");
+            "Hello from Survivalcraft.ModTemplate"
+        );
     }
 
     public void Start(IModContext context)

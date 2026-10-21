@@ -70,7 +70,8 @@ public class SubsystemTime : Subsystem
 
         // A client's entity set is AOI-filtered, not the authoritative online player set.
         if (CommonLib.WorkType != WorkType.Client &&
-            num2 + num3 == _subsystemPlayers.ComponentPlayers.Count && num2 >= 1)
+            num2 + num3 == _subsystemPlayers.ComponentPlayers.Count &&
+            num2 >= 1)
         {
             FixedTimeStep = 0.05f;
             _subsystemUpdate.UpdatesPerFrame = 20;
@@ -103,11 +104,13 @@ public class SubsystemTime : Subsystem
 
     public void QueueGameTimeDelayedExecution(double gameTime, Action action)
     {
-        _delayedExecutionsRequests.Add(new DelayedExecutionRequest
-        {
-            GameTime = gameTime,
-            Action = action
-        });
+        _delayedExecutionsRequests.Add(
+            new DelayedExecutionRequest
+            {
+                GameTime = gameTime,
+                Action = action
+            }
+        );
     }
 
     public bool PeriodicGameTimeEvent(double period, double offset)

@@ -26,6 +26,7 @@ public sealed class ProjectilePackageHandler : PackageHandlerBase<ProjectilePack
             subsystem.PlayReplicatedEffect(package.Effect, package.Value, package.Position);
             return;
         }
+
         if (package.Type == ProjectilePackage.EventType.Update)
         {
             if (subsystem.FindProjectile(package.NetworkId) is { } projectile)
@@ -35,6 +36,7 @@ public sealed class ProjectilePackageHandler : PackageHandlerBase<ProjectilePack
 
             return;
         }
+
         if (package.Type == ProjectilePackage.EventType.Remove)
         {
             subsystem.RemoveProjectileNet(package.NetworkId);

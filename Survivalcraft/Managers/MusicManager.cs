@@ -7,8 +7,9 @@ public static class MusicManager
 {
     public enum Mix
     {
-        None,
-        Menu
+        None = 0,
+
+        Menu = 1
     }
 
     private const float _fadeSpeed = 0.33f;
@@ -123,7 +124,8 @@ public static class MusicManager
                 var streamingSource = ContentManager.Get<StreamingSource>(name).Duplicate();
                 streamingSource.Position = (long)(MathUtils.Saturate(startPercentage) *
                                                   (streamingSource.BytesCount / streamingSource.ChannelsCount / 2)) /
-                    16 * 16;
+                                           16 *
+                                           16;
                 _sound = new StreamingSound(streamingSource, volume, 1f, 0f, false, false, 1f);
                 _sound.Play();
             }

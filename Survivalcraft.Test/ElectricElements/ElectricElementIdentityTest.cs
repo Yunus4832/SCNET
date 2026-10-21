@@ -49,23 +49,27 @@ public class ElectricElementIdentityTest
 
     private static Dictionary<ElectricElement, bool> GetScheduledElements(
         SubsystemElectricity subsystem,
-        int circuitStep)
+        int circuitStep
+    )
     {
         var field = typeof(SubsystemElectricity).GetField(
             "_futureSimulateLists",
-            BindingFlags.Instance | BindingFlags.NonPublic);
+            BindingFlags.Instance | BindingFlags.NonPublic
+        );
         var lists = Assert.IsType<Dictionary<int, Dictionary<ElectricElement, bool>>>(field?.GetValue(subsystem));
         return lists[circuitStep];
     }
 
     private class TestElectricElement(
         SubsystemElectricity subsystemElectricity,
-        IEnumerable<CellFace> cellFaces)
+        IEnumerable<CellFace> cellFaces
+    )
         : ElectricElement(subsystemElectricity, cellFaces);
 
     private sealed class ValueEqualElectricElement(
         SubsystemElectricity subsystemElectricity,
-        CellFace cellFace)
+        CellFace cellFace
+    )
         : TestElectricElement(subsystemElectricity, [cellFace])
     {
         public int HashCodeCallCount { get; private set; }

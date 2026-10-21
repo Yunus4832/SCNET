@@ -7,6 +7,7 @@ namespace Game.Dialogs;
 public class KeyboardHelpDialog : Dialog
 {
     private readonly ButtonWidget _helpButton;
+
     private readonly ButtonWidget _okButton;
 
     public KeyboardHelpDialog()

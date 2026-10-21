@@ -18,7 +18,11 @@ namespace ContentServer.Endpoints.Publisher.ServerSources;
 
 [HttpPost("/api/v1/publisher/server-sources")]
 [AllowAnonymous]
-public sealed class PublisherSubmitServerSourceEndpoint(IMediator mediator, ApiKeyAuthenticationContext authenticationContext, IServerSourceInspectionService serverSourceInspection) : ContentEndpoint
+public sealed class PublisherSubmitServerSourceEndpoint(
+    IMediator mediator,
+    ApiKeyAuthenticationContext authenticationContext,
+    IServerSourceInspectionService serverSourceInspection
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -29,7 +33,8 @@ public sealed class PublisherSubmitServerSourceEndpoint(IMediator mediator, ApiK
 
     private async Task<ResponseData<ServerSourceRegistrationResponse>> SubmitServerSource(
         SubmitServerSourceRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var publisher = await RequirePublisherAsync(cancellationToken);
         if (publisher.Status != PublisherStatus.Active)
@@ -37,7 +42,8 @@ public sealed class PublisherSubmitServerSourceEndpoint(IMediator mediator, ApiK
             throw new KnownException("publisher_not_active", StatusCodes.Status403Forbidden);
         }
 
-        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 100 ||
+        if (string.IsNullOrWhiteSpace(request.Name) ||
+            request.Name.Length > 100 ||
             request.Description?.Length > 1000 ||
             !EndpointMappings.TryParsePublicHttpUrl(request.ApiUrl, out var apiUrl))
         {
@@ -49,7 +55,7 @@ public sealed class PublisherSubmitServerSourceEndpoint(IMediator mediator, ApiK
             await serverSourceInspection.InspectAsync(apiUrl, cancellationToken);
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or
-                                          ServerSource.Protocol.ServerSourceProtocolException)
+                                              ServerSource.Protocol.ServerSourceProtocolException)
         {
             throw new KnownException("server_source_unavailable_or_invalid", StatusCodes.Status422UnprocessableEntity);
         }
@@ -57,8 +63,15 @@ public sealed class PublisherSubmitServerSourceEndpoint(IMediator mediator, ApiK
         SubmitServerSourceResult result;
         try
         {
-            result = await mediator.Send(new SubmitServerSourceCommand(publisher.PublisherId, request.Name, apiUrl,
-                request.Description), cancellationToken);
+            result = await mediator.Send(
+                new SubmitServerSourceCommand(
+                    publisher.PublisherId,
+                    request.Name,
+                    apiUrl,
+                    request.Description
+                ),
+                cancellationToken
+            );
         }
         catch (InvalidOperationException)
         {
@@ -66,19 +79,30 @@ public sealed class PublisherSubmitServerSourceEndpoint(IMediator mediator, ApiK
         }
 
         HttpContext.Response.StatusCode = StatusCodes.Status201Created;
-        return new ServerSourceRegistrationResponse(result.Id.ToString(), publisher.PublisherId.ToString(),
-            publisher.DisplayName, request.Name.Trim(), apiUrl.AbsoluteUri, Normalize(request.Description),
-            result.Status.ToString().ToLowerInvariant(), null, result.CreatedAt, null)
+        return new ServerSourceRegistrationResponse(
+                result.Id.ToString(),
+                publisher.PublisherId.ToString(),
+                publisher.DisplayName,
+                request.Name.Trim(),
+                apiUrl.AbsoluteUri,
+                Normalize(request.Description),
+                result.Status.ToString().ToLowerInvariant(),
+                null,
+                result.CreatedAt,
+                null
+            )
             .AsResponseData(code: StatusCodes.Status201Created);
     }
 
     private async Task<PublisherDto> RequirePublisherAsync(CancellationToken cancellationToken)
     {
         return await mediator.Send(
-            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
-            cancellationToken
-        ) ?? throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
+                   new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                   cancellationToken
+               ) ??
+               throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
     }
+
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 

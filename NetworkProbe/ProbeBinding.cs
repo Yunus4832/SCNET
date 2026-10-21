@@ -24,11 +24,14 @@ internal sealed record ProbeBinding(IPAddress IPv4Address, IPAddress IPv6Address
                 positional.Add(argument);
                 continue;
             }
+
             if (argument is not "--bind-ipv4" and not "--bind-ipv6" and not "--local-port" and not "--output" ||
-                !seen.Add(argument) || ++index >= arguments.Length)
+                !seen.Add(argument) ||
+                ++index >= arguments.Length)
             {
                 throw new ArgumentException($"Unknown, repeated or incomplete option: {argument}");
             }
+
             var value = arguments[index];
             switch (argument)
             {
@@ -49,19 +52,26 @@ internal sealed record ProbeBinding(IPAddress IPv4Address, IPAddress IPv6Address
                     break;
             }
         }
+
         arguments = positional.ToArray();
         if (port != 0 && arguments.FirstOrDefault()?.StartsWith("scenario", StringComparison.Ordinal) == true)
         {
-            throw new ArgumentException("Scenario children require independent ephemeral ports; use host/client modes to select fixed local ports.");
+            throw new ArgumentException(
+                "Scenario children require independent ephemeral ports; use host/client modes to select fixed local ports."
+            );
         }
+
         return new ProbeBinding(ipv4, ipv6, port);
     }
 
-    public NetworkHost CreateHost() => new(Port, new NetworkHostOptions
-    {
-        LocalIPv4Address = IPv4Address,
-        LocalIPv6Address = IPv6Address
-    });
+    public NetworkHost CreateHost() => new(
+        Port,
+        new NetworkHostOptions
+        {
+            LocalIPv4Address = IPv4Address,
+            LocalIPv6Address = IPv6Address
+        }
+    );
 
     private static IPAddress ParseAddress(string value, AddressFamily family)
     {
@@ -69,6 +79,7 @@ internal sealed record ProbeBinding(IPAddress IPv4Address, IPAddress IPv6Address
         {
             throw new ArgumentException($"Invalid {family} binding address: {value}");
         }
+
         return address;
     }
 }

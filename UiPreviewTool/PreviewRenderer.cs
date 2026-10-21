@@ -20,6 +20,7 @@ internal static class PreviewRenderer
         GameModRuntime? runtime = null;
         var completed = false;
         var scenarioDisposed = false;
+
         void DisposeScenario()
         {
             if (!scenarioDisposed)
@@ -28,11 +29,17 @@ internal static class PreviewRenderer
                 (scenario as IDisposable)?.Dispose();
             }
         }
+
         var errors = 0;
         var warnings = 0;
-        var manifest = new XElement("UiPreview", new XAttribute("Version", Program.Version),
-            new XAttribute("Width", options.Width), new XAttribute("Height", options.Height),
-            new XAttribute("Scale", options.Scale), new XAttribute("Source", options.XmlPath ?? options.FactoryType!));
+        var manifest = new XElement(
+            "UiPreview",
+            new XAttribute("Version", Program.Version),
+            new XAttribute("Width", options.Width),
+            new XAttribute("Height", options.Height),
+            new XAttribute("Scale", options.Scale),
+            new XAttribute("Source", options.XmlPath ?? options.FactoryType!)
+        );
         Window.UnhandledException += info =>
         {
             failure = info.Exception;
@@ -66,6 +73,7 @@ internal static class PreviewRenderer
                 Window.Close();
                 return;
             }
+
             completed = true;
             try
             {
@@ -96,11 +104,18 @@ internal static class PreviewRenderer
                     {
                         Capture(root, options, Path.Combine(options.OutputDirectory, imageName));
                     }
+
                     report.Save(Path.Combine(options.OutputDirectory, reportName));
-                    manifest.Add(new XElement("Scene", new XAttribute("Culture", culture),
-                        new XAttribute("Errors", sceneErrors), new XAttribute("Warnings", sceneWarnings),
-                        new XAttribute("Image", sceneErrors == 0 ? imageName : string.Empty),
-                        new XAttribute("Layout", reportName)));
+                    manifest.Add(
+                        new XElement(
+                            "Scene",
+                            new XAttribute("Culture", culture),
+                            new XAttribute("Errors", sceneErrors),
+                            new XAttribute("Warnings", sceneWarnings),
+                            new XAttribute("Image", sceneErrors == 0 ? imageName : string.Empty),
+                            new XAttribute("Layout", reportName)
+                        )
+                    );
                     Console.WriteLine($"{culture}: errors={sceneErrors}, warnings={sceneWarnings}; {reportName}");
                 }
             }
@@ -144,22 +159,32 @@ internal static class PreviewRenderer
             {
                 manifest.Add(new XElement("Failure", failure.ToString()));
             }
+
             manifest.Save(Path.Combine(options.OutputDirectory, "preview.xml"));
         }
+
         if (failure != null)
         {
             throw new InvalidOperationException("UI preview failed; see preview.xml.", failure);
         }
+
         if (!completed)
         {
             throw new InvalidOperationException("Window closed before previews were rendered.");
         }
+
         return errors > 0 || options.Strict && warnings > 0 ? 3 : 0;
     }
 
     private static void Capture(Widget root, PreviewOptions options, string path)
     {
-        using var target = new RenderTarget2D(options.Width, options.Height, 1, ColorFormat.Rgba8888, DepthFormat.Depth24Stencil8);
+        using var target = new RenderTarget2D(
+            options.Width,
+            options.Height,
+            1,
+            ColorFormat.Rgba8888,
+            DepthFormat.Depth24Stencil8
+        );
         var previous = Display.RenderTarget;
         try
         {

@@ -10,7 +10,8 @@ internal static class WorldControlCommandHandlers
 {
     public static bool IsCreativePlayer(
         CommandPrincipal principal,
-        Project? project)
+        Project? project
+    )
     {
         return principal.Player is not null &&
                project?.FindSubsystem<SubsystemGameInfo>(true)?
@@ -19,7 +20,8 @@ internal static class WorldControlCommandHandlers
 
     public static CommandResult SetPrecipitation(
         CommandContext context,
-        SetPrecipitationCommand command)
+        SetPrecipitationCommand command
+    )
     {
         if (!TryGetWeather(context, out var weather, out var failure))
         {
@@ -43,12 +45,14 @@ internal static class WorldControlCommandHandlers
             command.Enabled
                 ? "WeatherRainEnabled_Message"
                 : "WeatherRainDisabled_Message",
-            command.Enabled ? "已开启降水。" : "已停止降水。");
+            command.Enabled ? "已开启降水。" : "已停止降水。"
+        );
     }
 
     public static CommandResult SetFog(
         CommandContext context,
-        SetFogCommand command)
+        SetFogCommand command
+    )
     {
         if (!TryGetWeather(context, out var weather, out var failure))
         {
@@ -72,12 +76,14 @@ internal static class WorldControlCommandHandlers
             command.Enabled
                 ? "WeatherFogEnabled_Message"
                 : "WeatherFogDisabled_Message",
-            command.Enabled ? "已开启雾气。" : "已关闭雾气。");
+            command.Enabled ? "已开启雾气。" : "已关闭雾气。"
+        );
     }
 
     public static CommandResult TriggerLightning(
         CommandContext context,
-        TriggerLightningCommand command)
+        TriggerLightningCommand command
+    )
     {
         if (!TryGetWeather(context, out var weather, out var failure))
         {
@@ -91,49 +97,57 @@ internal static class WorldControlCommandHandlers
             return CommandResult.LocalizedFail(
                 "world.weather.invalid_lightning_target",
                 "LightningInvalid_Message",
-                "闪电目标无效。");
+                "闪电目标无效。"
+            );
         }
 
         weather.ManualLightingStrike(
             command.Position,
-            Vector3.Normalize(command.Direction));
+            Vector3.Normalize(command.Direction)
+        );
         return CommandResult.LocalizedPublicToast(
             "world.weather.lightning_triggered",
             "LightningTriggered_Message",
-            "已触发闪电。");
+            "已触发闪电。"
+        );
     }
 
     public static CommandResult TriggerPlayerLightning(
         CommandContext context,
-        TriggerPlayerLightningCommand command)
+        TriggerPlayerLightningCommand command
+    )
     {
         if (context.Principal.Player?.ComponentPlayer is not { } player)
         {
             return CommandResult.LocalizedFail(
                 "world.weather.player_required",
                 "LightningPlayerRequired_Message",
-                "该闪电操作需要在线玩家。");
+                "该闪电操作需要在线玩家。"
+            );
         }
 
-        var matrix = Matrix.CreateFromQuaternion(
-            player.ComponentCreatureModel.EyeRotation);
+        var matrix = Matrix.CreateFromQuaternion(player.ComponentCreatureModel.EyeRotation);
         return TriggerLightning(
             context,
             new TriggerLightningCommand(
                 player.ComponentCreatureModel.EyePosition,
-                matrix.Forward));
+                matrix.Forward
+            )
+        );
     }
 
     public static CommandResult SetSeason(
         CommandContext context,
-        SetSeasonCommand command)
+        SetSeasonCommand command
+    )
     {
         if (context.Project is null)
         {
             return CommandResult.LocalizedFail(
                 "command.no_world",
                 "NoWorld_Message",
-                "当前没有加载世界。");
+                "当前没有加载世界。"
+            );
         }
 
         if (!Enum.IsDefined(command.Season) ||
@@ -143,7 +157,8 @@ internal static class WorldControlCommandHandlers
             return CommandResult.LocalizedFail(
                 "world.season.invalid",
                 "SeasonInvalid_Message",
-                "季节或季节进度无效。");
+                "季节或季节进度无效。"
+            );
         }
 
         var start = command.Season switch
@@ -166,7 +181,8 @@ internal static class WorldControlCommandHandlers
             "world.season.changed",
             "SeasonChanged_Message",
             "已将当前季节调整为 {0}，环境将逐步更新。",
-            ResolveSeasonName(command.Season));
+            ResolveSeasonName(command.Season)
+        );
     }
 
     private static string ResolveSeasonName(Season season)
@@ -185,7 +201,8 @@ internal static class WorldControlCommandHandlers
     private static bool TryGetWeather(
         CommandContext context,
         out SubsystemWeather weather,
-        out CommandResult failure)
+        out CommandResult failure
+    )
     {
         if (context.Project is null)
         {
@@ -193,7 +210,8 @@ internal static class WorldControlCommandHandlers
             failure = CommandResult.LocalizedFail(
                 "command.no_world",
                 "NoWorld_Message",
-                "当前没有加载世界。");
+                "当前没有加载世界。"
+            );
             return false;
         }
 
@@ -206,8 +224,7 @@ internal static class WorldControlCommandHandlers
     {
         if (CommonLib.WorkType is WorkType.Server)
         {
-            CommonLib.Net.QueuePackage(
-                WorldSnapshotBuilder.Capture(weather), PackageAudience.Global);
+            CommonLib.Net.QueuePackage(WorldSnapshotBuilder.Capture(weather), PackageAudience.Global);
         }
     }
 

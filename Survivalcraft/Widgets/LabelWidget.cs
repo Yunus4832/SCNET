@@ -246,14 +246,16 @@ public class LabelWidget : Widget
         var num = 0f;
         if ((TextAnchor & TextAnchor.VerticalCenter) != 0)
         {
-            var num2 = Font.GlyphHeight * FontScale * Font.Scale + (_lines.Count - 1) *
-                ((Font.GlyphHeight + Font.Spacing.Y) * FontScale * Font.Scale + FontSpacing.Y);
+            var num2 = Font.GlyphHeight * FontScale * Font.Scale +
+                       (_lines.Count - 1) *
+                       ((Font.GlyphHeight + Font.Spacing.Y) * FontScale * Font.Scale + FontSpacing.Y);
             num = (ActualSize.Y - num2) / 2f;
         }
         else if ((TextAnchor & TextAnchor.Bottom) != 0)
         {
-            var num3 = Font.GlyphHeight * FontScale * Font.Scale + (_lines.Count - 1) *
-                ((Font.GlyphHeight + Font.Spacing.Y) * FontScale * Font.Scale + FontSpacing.Y);
+            var num3 = Font.GlyphHeight * FontScale * Font.Scale +
+                       (_lines.Count - 1) *
+                       ((Font.GlyphHeight + Font.Spacing.Y) * FontScale * Font.Scale + FontSpacing.Y);
             num = ActualSize.Y - num3;
         }
 
@@ -292,13 +294,28 @@ public class LabelWidget : Widget
             {
                 if (DropShadow)
                 {
-                    fontBatch2D.QueueText(line, vector + Margin + 1f * new Vector2(FontScale), 0f,
-                        new Color((byte)0, (byte)0, (byte)0, color.A), anchor, new Vector2(FontScale), FontSpacing,
-                        angle);
+                    fontBatch2D.QueueText(
+                        line,
+                        vector + Margin + 1f * new Vector2(FontScale),
+                        0f,
+                        new Color((byte)0, (byte)0, (byte)0, color.A),
+                        anchor,
+                        new Vector2(FontScale),
+                        FontSpacing,
+                        angle
+                    );
                 }
 
-                fontBatch2D.QueueText(line, vector + Margin, 0f, color, anchor, new Vector2(FontScale), FontSpacing,
-                    angle);
+                fontBatch2D.QueueText(
+                    line,
+                    vector + Margin,
+                    0f,
+                    color,
+                    anchor,
+                    new Vector2(FontScale),
+                    FontSpacing,
+                    angle
+                );
             }
 
             num += num4;
@@ -313,14 +330,18 @@ public class LabelWidget : Widget
         if (TextOrientation == TextOrientation.Horizontal)
         {
             UpdateLines(parentAvailableSize.X, parentAvailableSize.Y);
-            DesiredSize = new Vector2(Size.X < 0f ? _linesSize.X : Size.X,
-                Size.Y < 0f ? _linesSize.Y : Size.Y);
+            DesiredSize = new Vector2(
+                Size.X < 0f ? _linesSize.X : Size.X,
+                Size.Y < 0f ? _linesSize.Y : Size.Y
+            );
         }
         else if (TextOrientation == TextOrientation.VerticalLeft)
         {
             UpdateLines(parentAvailableSize.Y, parentAvailableSize.X);
-            DesiredSize = new Vector2(Size.X < 0f ? _linesSize.Y : Size.X,
-                Size.Y < 0f ? _linesSize.X : Size.Y);
+            DesiredSize = new Vector2(
+                Size.X < 0f ? _linesSize.Y : Size.X,
+                Size.Y < 0f ? _linesSize.X : Size.Y
+            );
         }
     }
 
@@ -331,7 +352,8 @@ public class LabelWidget : Widget
 
     public void UpdateLines(float availableWidth, float availableHeight)
     {
-        if (_linesAvailableHeight.HasValue && _linesAvailableHeight.Value.CloseTo(availableHeight) &&
+        if (_linesAvailableHeight.HasValue &&
+            _linesAvailableHeight.Value.CloseTo(availableHeight) &&
             _linesAvailableWidth.HasValue)
         {
             var num = MathUtils.Min(_linesSize.X, _linesAvailableWidth.Value) - 0.1f;
@@ -365,8 +387,14 @@ public class LabelWidget : Widget
                     int num4;
                     if (Ellipsis && _lines.Count + 1 >= num3)
                     {
-                        num4 = Font.FitText(MathUtils.Max(availableWidth - x, 0f), text2, 0, text2.Length, FontScale,
-                            FontSpacing.X);
+                        num4 = Font.FitText(
+                            MathUtils.Max(availableWidth - x, 0f),
+                            text2,
+                            0,
+                            text2.Length,
+                            FontScale,
+                            FontSpacing.X
+                        );
                         flag = true;
                     }
                     else
@@ -378,7 +406,8 @@ public class LabelWidget : Widget
                         {
                             var num5 = num4;
                             var num6 = num5 - 2;
-                            while (num6 >= 0 && !char.IsWhiteSpace(text2[num6]) &&
+                            while (num6 >= 0 &&
+                                   !char.IsWhiteSpace(text2[num6]) &&
                                    !char.IsPunctuation(text2[num6]))
                             {
                                 num6--;
@@ -428,8 +457,14 @@ public class LabelWidget : Widget
             foreach (var item in array)
             {
                 var text4 = item.TrimEnd();
-                var num7 = Font.FitText(MathUtils.Max(availableWidth - x, 0f), text4, 0, text4.Length, FontScale,
-                    FontSpacing.X);
+                var num7 = Font.FitText(
+                    MathUtils.Max(availableWidth - x, 0f),
+                    text4,
+                    0,
+                    text4.Length,
+                    FontScale,
+                    FontSpacing.X
+                );
                 if (num7 < text4.Length)
                 {
                     _lines.Add(text4[..num7].TrimEnd() + text);

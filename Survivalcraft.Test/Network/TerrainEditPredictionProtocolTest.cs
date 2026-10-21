@@ -13,7 +13,6 @@ public sealed class TerrainEditPredictionProtocolTest
     {
         var package = new PlayerInteractionPackage
         {
-
             InteractEvent = action,
             PlacementRequestId = 42,
             PlacementCell = new Point3(-17, 64, 15),

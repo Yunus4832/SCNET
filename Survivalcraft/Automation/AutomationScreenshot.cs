@@ -6,7 +6,8 @@ namespace Game.Automation;
 public sealed record AutomationScreenshotResult(
     string Path,
     int Width,
-    int Height);
+    int Height
+);
 
 public static class AutomationScreenshot
 {
@@ -19,8 +20,7 @@ public static class AutomationScreenshot
             throw new InvalidOperationException("Display viewport is not initialized.");
         }
 
-        using var target = new RenderTarget2D(
-            width, height, 1, ColorFormat.Rgba8888, DepthFormat.Depth24Stencil8);
+        using var target = new RenderTarget2D(width, height, 1, ColorFormat.Rgba8888, DepthFormat.Depth24Stencil8);
         var previousTarget = Display.RenderTarget;
         try
         {

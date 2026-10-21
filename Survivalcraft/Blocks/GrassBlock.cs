@@ -23,10 +23,11 @@ public class GrassBlock : CubeBlock
         DrawBlockEnvironmentData environmentData
     )
     {
-        var topColor = color * BlockColorsMap.GrassColorsMap.Lookup(
-            environmentData.Temperature,
-            environmentData.Humidity
-        );
+        var topColor = color *
+                       BlockColorsMap.GrassColorsMap.Lookup(
+                           environmentData.Temperature,
+                           environmentData.Humidity
+                       );
         Catalog.DrawCubeBlock(
             primitivesRenderer,
             value,
@@ -51,8 +52,24 @@ public class GrassBlock : CubeBlock
         var topColor2 = BlockColorsMap.GrassColorsMap.Lookup(generator.Terrain, x + 1, y, z);
         var topColor3 = BlockColorsMap.GrassColorsMap.Lookup(generator.Terrain, x + 1, y, z + 1);
         var topColor4 = BlockColorsMap.GrassColorsMap.Lookup(generator.Terrain, x, y, z + 1);
-        generator.GenerateCubeVertices(this, value, x, y, z, 1f, 1f, 1f, 1f, Color.White, topColor, topColor2,
-            topColor3, topColor4, -1, geometry.OpaqueSubsetsByFace);
+        generator.GenerateCubeVertices(
+            this,
+            value,
+            x,
+            y,
+            z,
+            1f,
+            1f,
+            1f,
+            1f,
+            Color.White,
+            topColor,
+            topColor2,
+            topColor3,
+            topColor4,
+            -1,
+            geometry.OpaqueSubsetsByFace
+        );
     }
 
     public override BlockDebrisParticleSystem CreateDebrisParticleSystem(

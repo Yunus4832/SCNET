@@ -7,9 +7,11 @@ public class PlayerListWidget : CanvasWidget
 {
     public enum ListKind
     {
-        Players,
-        SameTeamPlayers,
-        BlackList
+        Players = 0,
+
+        SameTeamPlayers = 1,
+
+        BlackList = 2
     }
 
     /// <summary>
@@ -57,7 +59,8 @@ public class PlayerListWidget : CanvasWidget
         PlayerData main,
         ListKind kind,
         bool isReadOnly = false,
-        Vector2? size = null)
+        Vector2? size = null
+    )
     {
         Size = size ?? new Vector2(220f, 120f);
 
@@ -188,8 +191,8 @@ public class PlayerListWidget : CanvasWidget
         return from entry in _mainPlayer.SubsystemPlayers.PlayerList.Values
                 .OrderByDescending(player => player.IsOnline)
                 .ThenBy(player => player.Name, StringComparer.OrdinalIgnoreCase)
-               let activePlayer = _mainPlayer.SubsystemPlayers.PlayersData
-                   .Find(player => player.PlayerGUID == entry.PlayerGuid)
-               select ((PlayerListEntry Entry, object Item))(entry, activePlayer is not null ? activePlayer : entry);
+            let activePlayer = _mainPlayer.SubsystemPlayers.PlayersData
+                .Find(player => player.PlayerGUID == entry.PlayerGuid)
+            select ((PlayerListEntry Entry, object Item))(entry, activePlayer is not null ? activePlayer : entry);
     }
 }

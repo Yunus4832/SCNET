@@ -33,14 +33,21 @@ public static partial class ProtocolMessageCodec
     {
         var type = reader.ReadEnum<ComponentBehaviorPackage.EventType>();
         if (!Enum.IsDefined(type)) { throw new InvalidDataException("Unknown behavior message mode."); }
+
         var entity = reader.ReadInt32();
         return type switch
         {
             ComponentBehaviorPackage.EventType.CreatureSound => new ComponentBehaviorPackage
-            { PackageEventType = type, EntityId = entity, Type = reader.ReadByte(), RowLeft = reader.ReadBoolean() },
+            {
+                PackageEventType = type, EntityId = entity, Type = reader.ReadByte(), RowLeft = reader.ReadBoolean()
+            },
             ComponentBehaviorPackage.EventType.HumanRow => new ComponentBehaviorPackage
-            { PackageEventType = type, EntityId = entity, RowLeft = reader.ReadBoolean(), RowRight = reader.ReadBoolean() },
-            _ => new ComponentBehaviorPackage { PackageEventType = type, EntityId = entity, RowLeft = reader.ReadBoolean() }
+            {
+                PackageEventType = type, EntityId = entity, RowLeft = reader.ReadBoolean(),
+                RowRight = reader.ReadBoolean()
+            },
+            _ => new ComponentBehaviorPackage
+                { PackageEventType = type, EntityId = entity, RowLeft = reader.ReadBoolean() }
         };
     }
 }

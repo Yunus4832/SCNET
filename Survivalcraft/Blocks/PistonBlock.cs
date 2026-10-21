@@ -58,13 +58,22 @@ public class PistonBlock : Block, IElectricElementBlock
                           Matrix.CreateRotationY(j * (float)Math.PI / 2f + (float)Math.PI) *
                           Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)
                         : j != 4
-                            ? Matrix.CreateTranslation(0f, -0.5f, 0f) * Matrix.CreateRotationX(-(float)Math.PI / 2f) *
+                            ? Matrix.CreateTranslation(0f, -0.5f, 0f) *
+                              Matrix.CreateRotationX(-(float)Math.PI / 2f) *
                               Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)
-                            : Matrix.CreateTranslation(0f, -0.5f, 0f) * Matrix.CreateRotationX((float)Math.PI / 2f) *
+                            : Matrix.CreateTranslation(0f, -0.5f, 0f) *
+                              Matrix.CreateRotationX((float)Math.PI / 2f) *
                               Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                     BlockMeshesByData[num] = new BlockMesh();
-                    BlockMeshesByData[num].AppendModelMeshPart(modelMesh.MeshParts[0],
-                        boneAbsoluteTransform * m, false, false, false, false, Color.White);
+                    BlockMeshesByData[num].AppendModelMeshPart(
+                        modelMesh.MeshParts[0],
+                        boneAbsoluteTransform * m,
+                        false,
+                        false,
+                        false,
+                        false,
+                        Color.White
+                    );
                     if (i == 0)
                     {
                         switch (pistonMode)
@@ -88,9 +97,15 @@ public class PistonBlock : Block, IElectricElementBlock
                     throw new InvalidOperationException("Required PistonRetractedMesh.ParentBone is null")
                 );
             StandaloneBlockMeshes[(int)pistonMode] = new BlockMesh();
-            StandaloneBlockMeshes[(int)pistonMode].AppendModelMeshPart(model.FindMesh("PistonRetracted")!.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false,
-                Color.White);
+            StandaloneBlockMeshes[(int)pistonMode].AppendModelMeshPart(
+                model.FindMesh("PistonRetracted")!.MeshParts[0],
+                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             switch (pistonMode)
             {
                 case PistonMode.Pulling:
@@ -139,8 +154,17 @@ public class PistonBlock : Block, IElectricElementBlock
         var num = Terrain.ExtractData(value) & 0x3F;
         if (num < BlockMeshesByData.Length && BlockMeshesByData[num] != null)
         {
-            generator.GenerateShadedMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null, [],
-                geometry.SubsetOpaque);
+            generator.GenerateShadedMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshesByData[num],
+                Color.White,
+                null,
+                [],
+                geometry.SubsetOpaque
+            );
         }
     }
 
@@ -224,11 +248,13 @@ public class PistonBlock : Block, IElectricElementBlock
     )
     {
         var data = Terrain.ExtractData(oldValue);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, SetFace(SetIsExtended(data, false), 0)),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, SetFace(SetIsExtended(data, false), 0)),
+                Count = 1
+            }
+        );
         showDebris = true;
     }
 

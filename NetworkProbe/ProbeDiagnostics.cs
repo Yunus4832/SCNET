@@ -15,11 +15,15 @@ internal sealed class ProbeDiagnostics : EventListener
 
     protected override void OnEventWritten(EventWrittenEventArgs eventData)
     {
-        Console.Error.WriteLine(JsonSerializer.Serialize(new
-        {
-            Event = eventData.EventName,
-            Timestamp = DateTimeOffset.UtcNow,
-            Values = eventData.Payload
-        }));
+        Console.Error.WriteLine(
+            JsonSerializer.Serialize(
+                new
+                {
+                    Event = eventData.EventName,
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Values = eventData.Payload
+                }
+            )
+        );
     }
 }

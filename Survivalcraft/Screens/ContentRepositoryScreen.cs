@@ -8,22 +8,35 @@ public sealed class ContentRepositoryScreen : Screen
 {
     private enum RepositoryAction
     {
-        AddOrEdit,
-        Delete,
-        Toggle,
-        MoveUp,
-        MoveDown,
-        Test,
-        SelectInformationSource
+        AddOrEdit = 0,
+
+        Delete = 1,
+
+        Toggle = 2,
+
+        MoveUp = 3,
+
+        MoveDown = 4,
+
+        Test = 5,
+
+        SelectInformationSource = 6
     }
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly LabelWidget _statusLabel;
+
     private readonly ListPanelWidget _repositoryList;
+
     private bool _busy;
+
     private object[] _returnParameters = [];
+
     private string _returnScreenName = "Content";
+
     private BusyDialog? _testDialog;
+
     private CancellationTokenSource? _testCancellation;
 
     public ContentRepositoryScreen()
@@ -38,18 +51,20 @@ public sealed class ContentRepositoryScreen : Screen
         _actionPanel.ItemColorProvider = item => item is RepositoryAction.Delete ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
-        [
-            RepositoryAction.AddOrEdit,
-            RepositoryAction.SelectInformationSource,
-            RepositoryAction.MoveUp,
-            RepositoryAction.MoveDown
-        ]);
+            [
+                RepositoryAction.AddOrEdit,
+                RepositoryAction.SelectInformationSource,
+                RepositoryAction.MoveUp,
+                RepositoryAction.MoveDown
+            ]
+        );
         _actionPanel.SetSecondaryItems(
-        [
-            RepositoryAction.Toggle,
-            RepositoryAction.Test,
-            RepositoryAction.Delete
-        ]);
+            [
+                RepositoryAction.Toggle,
+                RepositoryAction.Test,
+                RepositoryAction.Delete
+            ]
+        );
     }
 
     public override void Enter(object[] parameters)
@@ -88,8 +103,11 @@ public sealed class ContentRepositoryScreen : Screen
     private static Widget CreateRepositoryWidget(object item)
     {
         var repository = (ContentRepository)item;
-        var widget = (ContainerWidget)LoadWidget(null,
-            ContentManager.Get<XElement>("Widgets/ContentRepositoryItem"), null);
+        var widget = (ContainerWidget)LoadWidget(
+            null,
+            ContentManager.Get<XElement>("Widgets/ContentRepositoryItem"),
+            null
+        );
         widget.Children.Find<LabelWidget>("ContentRepositoryItem.Name")!.Text = repository.Name;
         widget.Children.Find<LabelWidget>("ContentRepositoryItem.Address")!.Text = repository.BaseUrl;
         widget.Children.Find<LabelWidget>("ContentRepositoryItem.State")!.Text = repository.IsEnabled
@@ -117,14 +135,18 @@ public sealed class ContentRepositoryScreen : Screen
 
     private void ShowEditor(ContentRepository? repository)
     {
-        DialogsManager.ShowDialog(null, new ContentRepositoryDialog(
-            repository is null ? Text("AddTitle") : Text("EditTitle"),
-            Text("NameLabel"),
-            Text("AddressLabel"),
-            repository is null ? Text("Add") : Text("Save"),
-            repository?.Name ?? string.Empty,
-            repository?.BaseUrl ?? string.Empty,
-            (name, address) => SaveEditor(repository, name, address)));
+        DialogsManager.ShowDialog(
+            null,
+            new ContentRepositoryDialog(
+                repository is null ? Text("AddTitle") : Text("EditTitle"),
+                Text("NameLabel"),
+                Text("AddressLabel"),
+                repository is null ? Text("Add") : Text("Save"),
+                repository?.Name ?? string.Empty,
+                repository?.BaseUrl ?? string.Empty,
+                (name, address) => SaveEditor(repository, name, address)
+            )
+        );
     }
 
     private bool SaveEditor(ContentRepository? repository, string name, string address)
@@ -138,10 +160,11 @@ public sealed class ContentRepositoryScreen : Screen
         try
         {
             var current = ContentRepositoryManager.Current.Snapshot();
-            var candidate = (repository ?? new ContentRepository
-            {
-                Priority = current.Count
-            }) with
+            var candidate = (repository ??
+                             new ContentRepository
+                             {
+                                 Priority = current.Count
+                             }) with
             {
                 Name = name,
                 BaseUrl = address
@@ -180,13 +203,16 @@ public sealed class ContentRepositoryScreen : Screen
 
     private void ConfirmDelete(ContentRepository repository)
     {
-        DialogsManager.Confirm(string.Format(Text("ConfirmDelete"), repository.Name), button =>
-        {
-            if (button == MessageDialogButton.Button1)
+        DialogsManager.Confirm(
+            string.Format(Text("ConfirmDelete"), repository.Name),
+            button =>
             {
-                Execute(() => ContentRepositoryManager.Current.Delete(repository.Id));
+                if (button == MessageDialogButton.Button1)
+                {
+                    Execute(() => ContentRepositoryManager.Current.Delete(repository.Id));
+                }
             }
-        });
+        );
     }
 
     private void Move(IReadOnlyList<ContentRepository> repositories, int sourceIndex, int targetIndex)
@@ -214,7 +240,8 @@ public sealed class ContentRepositoryScreen : Screen
             RepositoryAction.AddOrEdit => true,
             RepositoryAction.Delete or RepositoryAction.Toggle => selected is not null,
             RepositoryAction.SelectInformationSource => selected is { IsEnabled: true } &&
-                                                        selected.Id != ContentRepositoryManager.Current
+                                                        selected.Id !=
+                                                        ContentRepositoryManager.Current
                                                             .GameInformationSource?.Id,
             RepositoryAction.MoveUp => selectedIndex > 0,
             RepositoryAction.MoveDown => selectedIndex >= 0 && selectedIndex < repositories.Count - 1,
@@ -244,10 +271,15 @@ public sealed class ContentRepositoryScreen : Screen
                 ConfirmDelete(selected);
                 break;
             case RepositoryAction.Toggle when selected is not null:
-                Execute(() => ContentRepositoryManager.Current.Edit(selected with
-                {
-                    IsEnabled = !selected.IsEnabled
-                }), selected.Id);
+                Execute(
+                    () => ContentRepositoryManager.Current.Edit(
+                        selected with
+                        {
+                            IsEnabled = !selected.IsEnabled
+                        }
+                    ),
+                    selected.Id
+                );
                 break;
             case RepositoryAction.SelectInformationSource when selected is not null:
                 Execute(() => ContentRepositoryManager.Current.SelectGameInformationSource(selected.Id), selected.Id);
@@ -290,57 +322,76 @@ public sealed class ContentRepositoryScreen : Screen
         var busyDialog = new BusyDialog(Text("Testing"), repository.Name);
         _testDialog = busyDialog;
         DialogsManager.ShowDialog(null, busyDialog);
-        ContentServerClientPool.Shared.Update(Guid.Empty,
-            ContentRepositoryManager.Current.Snapshot());
-        Task.Run(async () =>
-            {
-                using var lease = ContentServerClientPool.Shared.Acquire(Guid.Empty, repository.Id);
-                return await lease.Client.CheckHealthAsync(cancellation.Token).ConfigureAwait(false);
-            }, cancellation.Token)
-            .ContinueWith(task => Dispatcher.Dispatch(() =>
-            {
-                var userCancelled = cancellation.IsCancellationRequested;
-                cancellation.Dispose();
-                if (!ReferenceEquals(_testCancellation, cancellation))
+        ContentServerClientPool.Shared.Update(
+            Guid.Empty,
+            ContentRepositoryManager.Current.Snapshot()
+        );
+        Task.Run(
+                async () =>
                 {
-                    return;
-                }
-
-                _testCancellation = null;
-                _testDialog = null;
-                _busy = false;
-                DialogsManager.HideDialog(busyDialog);
-                if (userCancelled)
-                {
-                    return;
-                }
-
-                if (task.IsCompletedSuccessfully)
-                {
-                    DialogsManager.Alert(string.Format(Text("TestSucceeded"),
-                        task.Result.Name, task.Result.Version));
-                }
-                else if (task.IsCanceled)
-                {
-                    Log.Warning($"Content repository test timed out for '{repository.Name}' ({repository.BaseUrl}).");
-                    ShowError(Text("TestFailed"));
-                }
-                else
-                {
-                    var exception = task.Exception?.GetBaseException();
-                    if (exception is HttpRequestException or InvalidDataException or System.Text.Json.JsonException)
+                    using var lease = ContentServerClientPool.Shared.Acquire(Guid.Empty, repository.Id);
+                    return await lease.Client.CheckHealthAsync(cancellation.Token).ConfigureAwait(false);
+                },
+                cancellation.Token
+            )
+            .ContinueWith(
+                task => Dispatcher.Dispatch(() =>
                     {
-                        Log.Warning($"Content repository test failed for '{repository.Name}' " +
-                                    $"({repository.BaseUrl}): {exception.Message}");
-                    }
-                    else
-                    {
-                        Log.Error($"Unexpected content repository test failure: {exception}");
-                    }
+                        var userCancelled = cancellation.IsCancellationRequested;
+                        cancellation.Dispose();
+                        if (!ReferenceEquals(_testCancellation, cancellation))
+                        {
+                            return;
+                        }
 
-                    ShowError(Text("TestFailed"));
-                }
-            }), cancellation.Token);
+                        _testCancellation = null;
+                        _testDialog = null;
+                        _busy = false;
+                        DialogsManager.HideDialog(busyDialog);
+                        if (userCancelled)
+                        {
+                            return;
+                        }
+
+                        if (task.IsCompletedSuccessfully)
+                        {
+                            DialogsManager.Alert(
+                                string.Format(
+                                    Text("TestSucceeded"),
+                                    task.Result.Name,
+                                    task.Result.Version
+                                )
+                            );
+                        }
+                        else if (task.IsCanceled)
+                        {
+                            Log.Warning(
+                                $"Content repository test timed out for '{repository.Name}' ({repository.BaseUrl})."
+                            );
+                            ShowError(Text("TestFailed"));
+                        }
+                        else
+                        {
+                            var exception = task.Exception?.GetBaseException();
+                            if (exception is HttpRequestException or InvalidDataException
+                                or System.Text.Json.JsonException)
+                            {
+                                Log.Warning(
+                                    $"Content repository test failed for '{repository.Name}' " +
+                                    $"({repository.BaseUrl}): {exception.Message}"
+                                );
+                            }
+                            else
+                            {
+                                Log.Error($"Unexpected content repository test failure: {exception}");
+                            }
+
+                            ShowError(Text("TestFailed"));
+                        }
+                    }
+                ),
+                cancellation.Token
+            );
     }
 
     private void Execute(Action action, Guid? selectedId = null)

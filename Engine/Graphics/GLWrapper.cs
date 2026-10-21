@@ -390,8 +390,12 @@ internal static class GLWrapper
             return;
         }
 
-        GL.BlendFuncSeparate(blendFuncSourceColor, blendFuncDestinationColor, blendFuncSourceAlpha,
-            blendFuncDestinationAlpha);
+        GL.BlendFuncSeparate(
+            blendFuncSourceColor,
+            blendFuncDestinationColor,
+            blendFuncSourceAlpha,
+            blendFuncDestinationAlpha
+        );
         _blendFuncSourceColor = blendFuncSourceColor;
         _blendFuncSourceAlpha = blendFuncSourceAlpha;
         _blendFuncDestinationColor = blendFuncDestinationColor;
@@ -615,8 +619,12 @@ internal static class GLWrapper
             scissorRectangle.Top = Display.BackbufferSize.Y - scissorRectangle.Top - scissorRectangle.Height;
         }
 
-        GL.Scissor(scissorRectangle.Left, scissorRectangle.Top, (uint)scissorRectangle.Width,
-            (uint)scissorRectangle.Height);
+        GL.Scissor(
+            scissorRectangle.Left,
+            scissorRectangle.Top,
+            (uint)scissorRectangle.Width,
+            (uint)scissorRectangle.Height
+        );
         _scissorRectangle = scissorRectangle;
     }
 
@@ -722,7 +730,8 @@ internal static class GLWrapper
         var colorDestinationBlend = (BlendingFactor)TranslateBlend(state.ColorDestinationBlend);
         var alphaSourceBlend = (BlendingFactor)TranslateBlend(state.AlphaSourceBlend);
         var alphaDestinationBlend = (BlendingFactor)TranslateBlend(state.AlphaDestinationBlend);
-        if (colorBlendFunc == alphaBlendFunc && colorSourceBlend == alphaSourceBlend &&
+        if (colorBlendFunc == alphaBlendFunc &&
+            colorSourceBlend == alphaSourceBlend &&
             colorDestinationBlend == alphaDestinationBlend)
         {
             BlendEquation(colorBlendFunc);
@@ -766,7 +775,9 @@ internal static class GLWrapper
         }
 
         UseProgram((uint)shader.Program);
-        if (shader != _lastShader || vertexOffset != _lastVertexOffset || arrayBuffer != _lastArrayBuffer ||
+        if (shader != _lastShader ||
+            vertexOffset != _lastVertexOffset ||
+            arrayBuffer != _lastArrayBuffer ||
             vertexDeclaration != _lastVertexDeclaration)
         {
             var vertexAttribData = shader.GetVertexAttribData(vertexDeclaration);
@@ -828,8 +839,12 @@ internal static class GLWrapper
                         shaderParameter.isChanged = false;
                         break;
                     case ShaderParameterType.Matrix:
-                        GL.UniformMatrix4(shaderParameter.location, (uint)shaderParameter.Count, false,
-                            shaderParameter.value);
+                        GL.UniformMatrix4(
+                            shaderParameter.location,
+                            (uint)shaderParameter.Count,
+                            false,
+                            shaderParameter.value
+                        );
                         shaderParameter.isChanged = false;
                         break;
                     default:
@@ -929,7 +944,8 @@ internal static class GLWrapper
         }
 
         throw new InvalidOperationException(
-            $"Associated SamplerState is not set for texture \"{shaderParameter.Name}\".");
+            $"Associated SamplerState is not set for texture \"{shaderParameter.Name}\"."
+        );
     }
 
     public static void Clear(RenderTarget2D? renderTarget, Vector4? color, float? depth, int? stencil)

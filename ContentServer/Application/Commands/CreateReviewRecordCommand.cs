@@ -12,19 +12,24 @@ public sealed record CreateReviewRecordCommand(
     string TargetId,
     string Decision,
     string? Message,
-    DateTimeOffset OccurredAt) : ICommand;
+    DateTimeOffset OccurredAt
+) : ICommand;
 
 public sealed class CreateReviewRecordCommandHandler(ReviewRecordRepository repository)
     : ICommandHandler<CreateReviewRecordCommand>
 {
     public Task Handle(CreateReviewRecordCommand command, CancellationToken cancellationToken)
     {
-        return repository.AddAsync(ReviewRecord.Create(
-            command.AdministratorId,
-            command.TargetType,
-            command.TargetId,
-            command.Decision,
-            command.Message,
-            command.OccurredAt), cancellationToken);
+        return repository.AddAsync(
+            ReviewRecord.Create(
+                command.AdministratorId,
+                command.TargetType,
+                command.TargetId,
+                command.Decision,
+                command.Message,
+                command.OccurredAt
+            ),
+            cancellationToken
+        );
     }
 }

@@ -46,14 +46,17 @@ public class FenceGateElectricElement : ElectricElement
 
             var cellFace = CellFaces[0];
             var data = Terrain.ExtractData(
-                SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z));
+                SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z)
+            );
             SubsystemElectricity.Project.FindSubsystem<SubsystemFenceGateBlockBehavior>(true)!
                 .OpenCloseGate(cellFace.X, cellFace.Y, cellFace.Z, !FenceGateBlock.GetOpen(data));
         }
         else
         {
-            SubsystemElectricity.QueueElectricElementForSimulation(this,
-                SubsystemElectricity.CircuitStep + 10 - num);
+            SubsystemElectricity.QueueElectricElementForSimulation(
+                this,
+                SubsystemElectricity.CircuitStep + 10 - num
+            );
         }
 
         return false;

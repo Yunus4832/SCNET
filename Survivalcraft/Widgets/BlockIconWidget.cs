@@ -35,27 +35,14 @@ public class BlockIconWidget : Widget
             }
 
             field = value;
-
         }
     }
 
-    public int Contents
-    {
-        get => Terrain.ExtractContents(Value);
-        set => Value = Terrain.ReplaceContents(Value, value);
-    }
+    public int Contents { get => Terrain.ExtractContents(Value); set => Value = Terrain.ReplaceContents(Value, value); }
 
-    public int Light
-    {
-        get => Terrain.ExtractLight(Value);
-        set => Value = Terrain.ReplaceLight(Value, value);
-    }
+    public int Light { get => Terrain.ExtractLight(Value); set => Value = Terrain.ReplaceLight(Value, value); }
 
-    public int Data
-    {
-        get => Terrain.ExtractData(Value);
-        set => Value = Terrain.ReplaceData(Value, value);
-    }
+    public int Data { get => Terrain.ExtractData(Value); set => Value = Terrain.ReplaceData(Value, value); }
 
     public float Scale { get; set; }
 
@@ -75,8 +62,11 @@ public class BlockIconWidget : Widget
     public override void Draw(DrawContext dc)
     {
         var obj = Catalog.Blocks[Contents];
-        _viewMatrix = Matrix.CreateLookAt(obj.GetIconViewOffset(Value, DrawBlockEnvironmentData),
-            Vector3.Zero, Vector3.UnitY);
+        _viewMatrix = Matrix.CreateLookAt(
+            obj.GetIconViewOffset(Value, DrawBlockEnvironmentData),
+            Vector3.Zero,
+            Vector3.UnitY
+        );
         _ = DrawBlockEnvironmentData.SubsystemTerrain != null
             ? DrawBlockEnvironmentData.SubsystemTerrain.SubsystemAnimatedTextures.AnimatedBlocksTexture
             : BlocksTexturesManager.DefaultBlocksTexture;
@@ -92,10 +82,18 @@ public class BlockIconWidget : Widget
         var iconViewScale = Catalog.Blocks[Contents].GetIconViewScale(Value, DrawBlockEnvironmentData);
         var matrix = CustomViewMatrix.HasValue
             ? Matrix.Identity
-            : Matrix.CreateTranslation(Catalog.Blocks[Contents]
-                .GetIconBlockOffset(Value, DrawBlockEnvironmentData));
-        obj.DrawBlock(dc.PrimitivesRenderer3D, Value, GlobalColorTransform, iconViewScale, ref matrix,
-            DrawBlockEnvironmentData);
+            : Matrix.CreateTranslation(
+                Catalog.Blocks[Contents]
+                    .GetIconBlockOffset(Value, DrawBlockEnvironmentData)
+            );
+        obj.DrawBlock(
+            dc.PrimitivesRenderer3D,
+            Value,
+            GlobalColorTransform,
+            iconViewScale,
+            ref matrix,
+            DrawBlockEnvironmentData
+        );
     }
 
     protected override void MeasureOverride(Vector2 parentAvailableSize)

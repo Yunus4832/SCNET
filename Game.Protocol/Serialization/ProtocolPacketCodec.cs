@@ -4,11 +4,19 @@ namespace Game.Protocol.Serialization;
 
 public static class ProtocolPacketCodec
 {
-    public static byte[] Encode(IEnumerable<IProtocolMessage> messages, CompressionPolicy compression = CompressionPolicy.Adaptive)
+    public static byte[] Encode(
+        IEnumerable<IProtocolMessage> messages,
+        CompressionPolicy compression = CompressionPolicy.Adaptive
+    )
     {
         using var writer = new ProtocolWriter();
         foreach (var message in messages)
-        { writer.Write((byte)0x88); writer.Write(message.ID); ProtocolMessageCodec.Write(message, writer); }
+        {
+            writer.Write((byte)0x88);
+            writer.Write(message.ID);
+            ProtocolMessageCodec.Write(message, writer);
+        }
+
         return WrapFrame(writer.Data(compression));
     }
 
@@ -22,9 +30,17 @@ public static class ProtocolPacketCodec
 
     public static ProtocolReader CreateReader(ReadOnlyMemory<byte> packet)
     {
-        if (packet.Length < sizeof(int)) { throw new InvalidDataException("Protocol packet is missing its length prefix."); }
+        if (packet.Length < sizeof(int))
+        {
+            throw new InvalidDataException("Protocol packet is missing its length prefix.");
+        }
+
         var length = BinaryPrimitives.ReadInt32LittleEndian(packet.Span);
-        if (length < 0 || length != packet.Length - sizeof(int)) { throw new InvalidDataException("Protocol packet length does not match its payload."); }
+        if (length < 0 || length != packet.Length - sizeof(int))
+        {
+            throw new InvalidDataException("Protocol packet length does not match its payload.");
+        }
+
         return new ProtocolReader(packet.Span[sizeof(int)..].ToArray());
     }
 
@@ -35,8 +51,10 @@ public static class ProtocolPacketCodec
         while (reader.BaseStream.Position < reader.BaseStream.Length)
         {
             if (reader.ReadByte() != 0x88) { throw new InvalidDataException("Invalid protocol message marker."); }
+
             messages.Add(ProtocolMessageCodec.Read(reader.ReadByte(), reader));
         }
+
         return messages;
     }
 }

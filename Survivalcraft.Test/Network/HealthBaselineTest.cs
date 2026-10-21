@@ -19,8 +19,11 @@ public sealed class HealthBaselineTest
     [Theory]
     [InlineData(0.35f, -1.0, "")]
     [InlineData(0f, 123.5, "Test death")]
-    public void EntityBaselineRestoresHealthAirAndDeathWithoutSendingEvent(float health, double deathTime,
-        string cause)
+    public void EntityBaselineRestoresHealthAirAndDeathWithoutSendingEvent(
+        float health,
+        double deathTime,
+        string cause
+    )
     {
         var entity = (Entity)RuntimeHelpers.GetUninitializedObject(typeof(Entity));
         typeof(Entity).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
@@ -62,9 +65,13 @@ public sealed class HealthBaselineTest
     {
         public HealthProject()
         {
-            subsystems.AddRange([new SubsystemTime(), new SubsystemTimeOfDay(), new SubsystemTerrain(),
-                new SubsystemParticles(), new SubsystemGameInfo { WorldSettings = new WorldSettings() },
-                new SubsystemPickables()]);
+            subsystems.AddRange(
+                [
+                    new SubsystemTime(), new SubsystemTimeOfDay(), new SubsystemTerrain(),
+                    new SubsystemParticles(), new SubsystemGameInfo { WorldSettings = new WorldSettings() },
+                    new SubsystemPickables()
+                ]
+            );
         }
     }
 }

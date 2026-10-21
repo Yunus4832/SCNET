@@ -52,8 +52,20 @@ public static class BevelledShapeRenderer
             var num = MathUtils.Abs(bevelSize);
             var directionToLight = Vector2.Normalize(bevelSize > 0f ? new Vector2(-1f, -2f) : -new Vector2(-1f, -2f));
             _tmpPathPoints.Count = 0;
-            GeneratePathPoints(_tmpPositions, 0f, 0f, 0f, num, bevelColor, bevelColor, bevelColor, bevelColor, 0f,
-                float.PositiveInfinity, _tmpPathPoints);
+            GeneratePathPoints(
+                _tmpPositions,
+                0f,
+                0f,
+                0f,
+                num,
+                bevelColor,
+                bevelColor,
+                bevelColor,
+                bevelColor,
+                0f,
+                float.PositiveInfinity,
+                _tmpPathPoints
+            );
             LightPoints(_tmpPathPoints, true, flatShading, directionToLight, directional, ambient);
             PathRenderer.QueuePath(batch, _tmpPathPoints, _tmpNormals, [], true, flatShading);
             _tmpPositions2.Count = 0;
@@ -82,13 +94,37 @@ public static class BevelledShapeRenderer
 
             _tmpPathPoints.Count = 0;
             var outerRadiusR = num + antialiasSize;
-            GeneratePathPoints(_tmpPositions, 0f, num, 0f, outerRadiusR, bevelColor, bevelColor, Color.Transparent,
-                Color.Transparent, 0f, float.PositiveInfinity, _tmpPathPoints);
+            GeneratePathPoints(
+                _tmpPositions,
+                0f,
+                num,
+                0f,
+                outerRadiusR,
+                bevelColor,
+                bevelColor,
+                Color.Transparent,
+                Color.Transparent,
+                0f,
+                float.PositiveInfinity,
+                _tmpPathPoints
+            );
             LightPoints(_tmpPathPoints, true, flatShading, directionToLight, directional, ambient);
             PathRenderer.QueuePath(batch, _tmpPathPoints, _tmpNormals, [], true, flatShading);
             _tmpPathPoints.Count = 0;
-            GeneratePathPoints(_tmpPositions, 0f, 0f, antialiasSize, 0f, bevelColor, bevelColor, Color.Transparent,
-                Color.Transparent, 0f, float.PositiveInfinity, _tmpPathPoints);
+            GeneratePathPoints(
+                _tmpPositions,
+                0f,
+                0f,
+                antialiasSize,
+                0f,
+                bevelColor,
+                bevelColor,
+                Color.Transparent,
+                Color.Transparent,
+                0f,
+                float.PositiveInfinity,
+                _tmpPathPoints
+            );
             LightPoints(_tmpPathPoints, true, flatShading, directionToLight, directional, ambient);
             PathRenderer.QueuePath(batch, _tmpPathPoints, _tmpNormals, [], true, flatShading);
         }
@@ -113,8 +149,20 @@ public static class BevelledShapeRenderer
             }
 
             _tmpPathPoints.Count = 0;
-            GeneratePathPoints(_tmpPositions, 0f, 0f, antialiasSize, 0f, centerColor, centerColor, Color.Transparent,
-                Color.Transparent, 0f, float.PositiveInfinity, _tmpPathPoints);
+            GeneratePathPoints(
+                _tmpPositions,
+                0f,
+                0f,
+                antialiasSize,
+                0f,
+                centerColor,
+                centerColor,
+                Color.Transparent,
+                Color.Transparent,
+                0f,
+                float.PositiveInfinity,
+                _tmpPathPoints
+            );
             PathRenderer.QueuePath(batch, _tmpPathPoints, _tmpNormals, [], true, flatShading);
         }
     }
@@ -135,8 +183,20 @@ public static class BevelledShapeRenderer
         _tmpNormals.Count = 0;
         PathRenderer.GeneratePathNormals(_tmpPositions, [], true, _tmpNormals);
         _tmpPathPoints.Count = 0;
-        GeneratePathPoints(_tmpPositions, 0f, 0f, shadowSize, 0f, shadowColor, Color.Transparent, Color.Transparent,
-            Color.Transparent, 0f, float.PositiveInfinity, _tmpPathPoints);
+        GeneratePathPoints(
+            _tmpPositions,
+            0f,
+            0f,
+            shadowSize,
+            0f,
+            shadowColor,
+            Color.Transparent,
+            Color.Transparent,
+            Color.Transparent,
+            0f,
+            float.PositiveInfinity,
+            _tmpPathPoints
+        );
         PathRenderer.QueuePath(batch, _tmpPathPoints, _tmpNormals, [], true, true);
         _tmpIndices.Count = 0;
         Triangulate(_tmpPositions, _tmpIndices);
@@ -168,8 +228,18 @@ public static class BevelledShapeRenderer
     )
     {
         _tmpBatch.Clear();
-        QueueShape(_tmpBatch, points, pixelsPerUnit, antialiasSize, bevelSize, flatShading, centerColor, bevelColor,
-            directional, ambient);
+        QueueShape(
+            _tmpBatch,
+            points,
+            pixelsPerUnit,
+            antialiasSize,
+            bevelSize,
+            flatShading,
+            centerColor,
+            bevelColor,
+            directional,
+            ambient
+        );
         var vector = new Vector2 { X = 1f, Y = 1f } /
                      (textureScale * new Vector2(batch.Texture.Width, batch.Texture.Height));
         var count = batch.TriangleVertices.Count;
@@ -209,30 +279,38 @@ public static class BevelledShapeRenderer
     )
     {
         _tmpQuadPoints.Count = 0;
-        _tmpQuadPoints.Add(new Point
-        {
-            Position = new Vector2(p1.X, p1.Y),
-            RoundingRadius = roundingRadius,
-            RoundingCount = roundingCount
-        });
-        _tmpQuadPoints.Add(new Point
-        {
-            Position = new Vector2(p2.X, p1.Y),
-            RoundingRadius = roundingRadius,
-            RoundingCount = roundingCount
-        });
-        _tmpQuadPoints.Add(new Point
-        {
-            Position = new Vector2(p2.X, p2.Y),
-            RoundingRadius = roundingRadius,
-            RoundingCount = roundingCount
-        });
-        _tmpQuadPoints.Add(new Point
-        {
-            Position = new Vector2(p1.X, p2.Y),
-            RoundingRadius = roundingRadius,
-            RoundingCount = roundingCount
-        });
+        _tmpQuadPoints.Add(
+            new Point
+            {
+                Position = new Vector2(p1.X, p1.Y),
+                RoundingRadius = roundingRadius,
+                RoundingCount = roundingCount
+            }
+        );
+        _tmpQuadPoints.Add(
+            new Point
+            {
+                Position = new Vector2(p2.X, p1.Y),
+                RoundingRadius = roundingRadius,
+                RoundingCount = roundingCount
+            }
+        );
+        _tmpQuadPoints.Add(
+            new Point
+            {
+                Position = new Vector2(p2.X, p2.Y),
+                RoundingRadius = roundingRadius,
+                RoundingCount = roundingCount
+            }
+        );
+        _tmpQuadPoints.Add(
+            new Point
+            {
+                Position = new Vector2(p1.X, p2.Y),
+                RoundingRadius = roundingRadius,
+                RoundingCount = roundingCount
+            }
+        );
         QueueShape(
             batch,
             _tmpQuadPoints,
@@ -266,30 +344,38 @@ public static class BevelledShapeRenderer
     )
     {
         _tmpQuadPoints.Count = 0;
-        _tmpQuadPoints.Add(new Point
-        {
-            Position = new Vector2(p1.X, p1.Y),
-            RoundingRadius = roundingRadius,
-            RoundingCount = roundingCount
-        });
-        _tmpQuadPoints.Add(new Point
-        {
-            Position = new Vector2(p2.X, p1.Y),
-            RoundingRadius = roundingRadius,
-            RoundingCount = roundingCount
-        });
-        _tmpQuadPoints.Add(new Point
-        {
-            Position = new Vector2(p2.X, p2.Y),
-            RoundingRadius = roundingRadius,
-            RoundingCount = roundingCount
-        });
-        _tmpQuadPoints.Add(new Point
-        {
-            Position = new Vector2(p1.X, p2.Y),
-            RoundingRadius = roundingRadius,
-            RoundingCount = roundingCount
-        });
+        _tmpQuadPoints.Add(
+            new Point
+            {
+                Position = new Vector2(p1.X, p1.Y),
+                RoundingRadius = roundingRadius,
+                RoundingCount = roundingCount
+            }
+        );
+        _tmpQuadPoints.Add(
+            new Point
+            {
+                Position = new Vector2(p2.X, p1.Y),
+                RoundingRadius = roundingRadius,
+                RoundingCount = roundingCount
+            }
+        );
+        _tmpQuadPoints.Add(
+            new Point
+            {
+                Position = new Vector2(p2.X, p2.Y),
+                RoundingRadius = roundingRadius,
+                RoundingCount = roundingCount
+            }
+        );
+        _tmpQuadPoints.Add(
+            new Point
+            {
+                Position = new Vector2(p1.X, p2.Y),
+                RoundingRadius = roundingRadius,
+                RoundingCount = roundingCount
+            }
+        );
         QueueShape(
             batch,
             _tmpQuadPoints,
@@ -444,20 +530,22 @@ public static class BevelledShapeRenderer
     {
         foreach (var position in positions)
         {
-            result.Add(new PathRenderer.Point
-            {
-                Position = position,
-                InnerRadiusL = innerRadiusL,
-                InnerRadiusR = innerRadiusR,
-                OuterRadiusL = outerRadiusL,
-                OuterRadiusR = outerRadiusR,
-                InnerColorL = innerColorL,
-                InnerColorR = innerColorR,
-                OuterColorL = outerColorL,
-                OuterColorR = outerColorR,
-                LengthScale = lengthScale,
-                MiterLimit = miterLimit
-            });
+            result.Add(
+                new PathRenderer.Point
+                {
+                    Position = position,
+                    InnerRadiusL = innerRadiusL,
+                    InnerRadiusR = innerRadiusR,
+                    OuterRadiusL = outerRadiusL,
+                    OuterRadiusR = outerRadiusR,
+                    InnerColorL = innerColorL,
+                    InnerColorR = innerColorR,
+                    OuterColorL = outerColorL,
+                    OuterColorR = outerColorR,
+                    LengthScale = lengthScale,
+                    MiterLimit = miterLimit
+                }
+            );
         }
     }
 

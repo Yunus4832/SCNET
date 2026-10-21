@@ -7,10 +7,13 @@ namespace ContentServer.Domain.RendezvousServices;
 
 public enum RendezvousServiceRegistrationStatus
 {
-    Pending,
-    Active,
-    Rejected,
-    Disabled
+    Pending = 0,
+
+    Active = 1,
+
+    Rejected = 2,
+
+    Disabled = 3
 }
 
 public partial record RendezvousServiceRegistrationId : IGuidStronglyTypedId;
@@ -41,9 +44,13 @@ public sealed class RendezvousServiceRegistration : Entity<RendezvousServiceRegi
 
     public DateTimeOffset? ReviewedAt { get; private set; }
 
-    public static RendezvousServiceRegistration Submit(PublisherId publisherId, string name, Uri controlUrl,
+    public static RendezvousServiceRegistration Submit(
+        PublisherId publisherId,
+        string name,
+        Uri controlUrl,
         string? description,
-        DateTimeOffset now)
+        DateTimeOffset now
+    )
     {
         ArgumentNullException.ThrowIfNull(publisherId);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -90,6 +97,7 @@ public sealed class RendezvousServiceRegistration : Entity<RendezvousServiceRegi
         {
             throw new ArgumentException("Rendezvous service registration fields exceed their limits.");
         }
+
         Name = name.Trim();
         ControlUrl = controlUrl.AbsoluteUri;
         Description = Normalize(description);
@@ -106,6 +114,7 @@ public sealed class RendezvousServiceRegistration : Entity<RendezvousServiceRegi
         {
             return false;
         }
+
         Status = RendezvousServiceRegistrationStatus.Disabled;
         UpdatedAt = now;
         AddDomainEvent(new RendezvousServiceChangedDomainEvent(this, "disabled", now));
@@ -118,6 +127,7 @@ public sealed class RendezvousServiceRegistration : Entity<RendezvousServiceRegi
         {
             return;
         }
+
         Deleted = new Deleted(true);
         UpdatedAt = now;
         AddDomainEvent(new RendezvousServiceChangedDomainEvent(this, "deleted", now));
@@ -129,9 +139,16 @@ public sealed class RendezvousServiceRegistration : Entity<RendezvousServiceRegi
     }
 }
 
-public sealed record RendezvousServiceReviewedDomainEvent(RendezvousServiceRegistration Source,
-    AdministratorId AdministratorId, RendezvousServiceRegistrationStatus Status, string? Message,
-    DateTimeOffset OccurredAt) : IDomainEvent;
+public sealed record RendezvousServiceReviewedDomainEvent(
+    RendezvousServiceRegistration Source,
+    AdministratorId AdministratorId,
+    RendezvousServiceRegistrationStatus Status,
+    string? Message,
+    DateTimeOffset OccurredAt
+) : IDomainEvent;
 
-public sealed record RendezvousServiceChangedDomainEvent(RendezvousServiceRegistration Service, string Action,
-    DateTimeOffset OccurredAt) : IDomainEvent;
+public sealed record RendezvousServiceChangedDomainEvent(
+    RendezvousServiceRegistration Service,
+    string Action,
+    DateTimeOffset OccurredAt
+) : IDomainEvent;

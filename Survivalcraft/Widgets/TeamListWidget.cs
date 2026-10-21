@@ -6,7 +6,8 @@ public sealed class TeamListWidget : CanvasWidget
         string GroupKey,
         string Name,
         int MemberCount,
-        bool IsCurrent);
+        bool IsCurrent
+    );
 
     public readonly ListPanelWidget Teams = new()
     {
@@ -42,11 +43,14 @@ public sealed class TeamListWidget : CanvasWidget
         foreach (var pair in _playerData.SubsystemPlayers.ServerGroups
                      .OrderBy(pair => pair.Value.Name, StringComparer.OrdinalIgnoreCase))
         {
-            Teams.AddItem(new TeamItem(
-                pair.Key,
-                pair.Value.Name,
-                pair.Value.Members.Count,
-                pair.Key == _playerData.GroupKey));
+            Teams.AddItem(
+                new TeamItem(
+                    pair.Key,
+                    pair.Value.Name,
+                    pair.Value.Members.Count,
+                    pair.Key == _playerData.GroupKey
+                )
+            );
         }
 
         if (selectedGroupKey is null)
@@ -95,7 +99,8 @@ public sealed class TeamListWidget : CanvasWidget
                 : Color.White;
             _summary.Text = string.Format(
                 MultiplayerUiStyle.Text("TeamMemberCount"),
-                _team.MemberCount);
+                _team.MemberCount
+            );
         }
     }
 }

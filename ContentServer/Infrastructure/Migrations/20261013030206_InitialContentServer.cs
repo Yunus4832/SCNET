@@ -31,7 +31,8 @@ public partial class InitialContentServer : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_Administrators", x => x.Id);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "Contents",
@@ -53,7 +54,8 @@ public partial class InitialContentServer : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_Contents", x => x.Id);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "GameAnnouncements",
@@ -71,7 +73,8 @@ public partial class InitialContentServer : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_GameAnnouncements", x => x.Id);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "GameReleases",
@@ -89,7 +92,8 @@ public partial class InitialContentServer : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_GameReleases", x => x.Id);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "PackageBlobs",
@@ -107,7 +111,8 @@ public partial class InitialContentServer : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_PackageBlobs", x => x.Id);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "Publishers",
@@ -127,7 +132,8 @@ public partial class InitialContentServer : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_Publishers", x => x.Id);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "ReviewRecords",
@@ -145,7 +151,8 @@ public partial class InitialContentServer : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_ReviewRecords", x => x.Id);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "AdministratorKeys",
@@ -168,8 +175,10 @@ public partial class InitialContentServer : Migration
                     column: x => x.AdministratorId,
                     principalTable: "Administrators",
                     principalColumn: "Id",
-                    onDelete: ReferentialAction.Cascade);
-            });
+                    onDelete: ReferentialAction.Cascade
+                );
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "GameReleaseArtifacts",
@@ -190,8 +199,10 @@ public partial class InitialContentServer : Migration
                     column: x => x.GameReleaseId,
                     principalTable: "GameReleases",
                     principalColumn: "Id",
-                    onDelete: ReferentialAction.Cascade);
-            });
+                    onDelete: ReferentialAction.Cascade
+                );
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "ContentVersions",
@@ -226,14 +237,17 @@ public partial class InitialContentServer : Migration
                     column: x => x.ContentId,
                     principalTable: "Contents",
                     principalColumn: "Id",
-                    onDelete: ReferentialAction.Cascade);
+                    onDelete: ReferentialAction.Cascade
+                );
                 table.ForeignKey(
                     name: "FK_ContentVersions_PackageBlobs_PackageBlobId",
                     column: x => x.PackageBlobId,
                     principalTable: "PackageBlobs",
                     principalColumn: "Id",
-                    onDelete: ReferentialAction.Restrict);
-            });
+                    onDelete: ReferentialAction.Restrict
+                );
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "DirectoryServers",
@@ -263,8 +277,10 @@ public partial class InitialContentServer : Migration
                     column: x => x.PublisherId,
                     principalTable: "Publishers",
                     principalColumn: "Id",
-                    onDelete: ReferentialAction.Restrict);
-            });
+                    onDelete: ReferentialAction.Restrict
+                );
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "PublisherKeys",
@@ -287,8 +303,10 @@ public partial class InitialContentServer : Migration
                     column: x => x.PublisherId,
                     principalTable: "Publishers",
                     principalColumn: "Id",
-                    onDelete: ReferentialAction.Cascade);
-            });
+                    onDelete: ReferentialAction.Cascade
+                );
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "RendezvousServices",
@@ -314,8 +332,10 @@ public partial class InitialContentServer : Migration
                     column: x => x.PublisherId,
                     principalTable: "Publishers",
                     principalColumn: "Id",
-                    onDelete: ReferentialAction.Restrict);
-            });
+                    onDelete: ReferentialAction.Restrict
+                );
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "ServerSources",
@@ -341,179 +361,190 @@ public partial class InitialContentServer : Migration
                     column: x => x.PublisherId,
                     principalTable: "Publishers",
                     principalColumn: "Id",
-                    onDelete: ReferentialAction.Restrict);
-            });
+                    onDelete: ReferentialAction.Restrict
+                );
+            }
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_AdministratorKeys_AdministratorId",
             table: "AdministratorKeys",
-            column: "AdministratorId");
+            column: "AdministratorId"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_AdministratorKeys_KeyHash",
             table: "AdministratorKeys",
             column: "KeyHash",
-            unique: true);
+            unique: true
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_Contents_NormalizedIdentifier",
             table: "Contents",
             column: "NormalizedIdentifier",
             unique: true,
-            filter: "\"Deleted\" = 0");
+            filter: "\"Deleted\" = 0"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_ContentVersions_ContentId_Version",
             table: "ContentVersions",
             columns: new[] { "ContentId", "Version" },
-            unique: true);
+            unique: true
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_ContentVersions_PackageBlobId",
             table: "ContentVersions",
-            column: "PackageBlobId");
+            column: "PackageBlobId"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_DirectoryServers_Address",
             table: "DirectoryServers",
-            column: "Address");
+            column: "Address"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_DirectoryServers_PublisherId",
             table: "DirectoryServers",
-            column: "PublisherId");
+            column: "PublisherId"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_DirectoryServers_ReviewStatus",
             table: "DirectoryServers",
-            column: "ReviewStatus");
+            column: "ReviewStatus"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_GameAnnouncements_Status_PublishedAt",
             table: "GameAnnouncements",
-            columns: new[] { "Status", "PublishedAt" });
+            columns: new[] { "Status", "PublishedAt" }
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_GameReleaseArtifacts_GameReleaseId_Platform",
             table: "GameReleaseArtifacts",
             columns: new[] { "GameReleaseId", "Platform" },
             unique: true,
-            filter: "\"Deleted\" = 0");
+            filter: "\"Deleted\" = 0"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_GameReleaseArtifacts_Platform",
             table: "GameReleaseArtifacts",
-            column: "Platform");
+            column: "Platform"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_GameReleases_Status",
             table: "GameReleases",
-            column: "Status");
+            column: "Status"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_GameReleases_Version",
             table: "GameReleases",
             column: "Version",
             unique: true,
-            filter: "\"Deleted\" = 0");
+            filter: "\"Deleted\" = 0"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_PackageBlobs_Hash",
             table: "PackageBlobs",
             column: "Hash",
             unique: true,
-            filter: "\"Deleted\" = 0");
+            filter: "\"Deleted\" = 0"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_PublisherKeys_KeyHash",
             table: "PublisherKeys",
             column: "KeyHash",
-            unique: true);
+            unique: true
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_PublisherKeys_PublisherId",
             table: "PublisherKeys",
-            column: "PublisherId");
+            column: "PublisherId"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_Publishers_Status",
             table: "Publishers",
-            column: "Status");
+            column: "Status"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_RendezvousServices_ControlUrl",
             table: "RendezvousServices",
-            column: "ControlUrl");
+            column: "ControlUrl"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_RendezvousServices_PublisherId",
             table: "RendezvousServices",
-            column: "PublisherId");
+            column: "PublisherId"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_RendezvousServices_Status",
             table: "RendezvousServices",
-            column: "Status");
+            column: "Status"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_ServerSources_ApiUrl",
             table: "ServerSources",
-            column: "ApiUrl");
+            column: "ApiUrl"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_ServerSources_PublisherId",
             table: "ServerSources",
-            column: "PublisherId");
+            column: "PublisherId"
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_ServerSources_Status",
             table: "ServerSources",
-            column: "Status");
+            column: "Status"
+        );
     }
 
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropTable(
-            name: "AdministratorKeys");
+        migrationBuilder.DropTable(name: "AdministratorKeys");
 
-        migrationBuilder.DropTable(
-            name: "ContentVersions");
+        migrationBuilder.DropTable(name: "ContentVersions");
 
-        migrationBuilder.DropTable(
-            name: "DirectoryServers");
+        migrationBuilder.DropTable(name: "DirectoryServers");
 
-        migrationBuilder.DropTable(
-            name: "GameAnnouncements");
+        migrationBuilder.DropTable(name: "GameAnnouncements");
 
-        migrationBuilder.DropTable(
-            name: "GameReleaseArtifacts");
+        migrationBuilder.DropTable(name: "GameReleaseArtifacts");
 
-        migrationBuilder.DropTable(
-            name: "PublisherKeys");
+        migrationBuilder.DropTable(name: "PublisherKeys");
 
-        migrationBuilder.DropTable(
-            name: "RendezvousServices");
+        migrationBuilder.DropTable(name: "RendezvousServices");
 
-        migrationBuilder.DropTable(
-            name: "ReviewRecords");
+        migrationBuilder.DropTable(name: "ReviewRecords");
 
-        migrationBuilder.DropTable(
-            name: "ServerSources");
+        migrationBuilder.DropTable(name: "ServerSources");
 
-        migrationBuilder.DropTable(
-            name: "Administrators");
+        migrationBuilder.DropTable(name: "Administrators");
 
-        migrationBuilder.DropTable(
-            name: "Contents");
+        migrationBuilder.DropTable(name: "Contents");
 
-        migrationBuilder.DropTable(
-            name: "PackageBlobs");
+        migrationBuilder.DropTable(name: "PackageBlobs");
 
-        migrationBuilder.DropTable(
-            name: "GameReleases");
+        migrationBuilder.DropTable(name: "GameReleases");
 
-        migrationBuilder.DropTable(
-            name: "Publishers");
+        migrationBuilder.DropTable(name: "Publishers");
     }
 }

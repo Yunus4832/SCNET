@@ -2,6 +2,7 @@ namespace Engine.Graphics;
 
 public enum TextureAddressMode
 {
-    Clamp,
-    Wrap
+    Clamp = 0,
+
+    Wrap = 1
 }

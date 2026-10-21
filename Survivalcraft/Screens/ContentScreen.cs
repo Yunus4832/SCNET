@@ -19,7 +19,9 @@ public class ContentScreen : Screen
     private readonly ButtonWidget _serverSourcesButton;
 
     private readonly ButtonWidget _manageServerSourcesButton;
+
     private readonly ButtonWidget _rendezvousCatalogButton;
+
     private readonly ButtonWidget _manageRendezvousButton;
 
     public ContentScreen()
@@ -78,10 +80,12 @@ public class ContentScreen : Screen
         {
             ScreensManager.SwitchScreen("RendezvousCatalog");
         }
+
         if (_manageRendezvousButton.IsClicked)
         {
             ScreensManager.SwitchScreen("ManageRendezvous");
         }
+
         if (_manageButton.IsClicked)
         {
             OpenManageSelectDialog();

@@ -19,9 +19,15 @@ public class CommandDispatcherTest
     public void DispatcherCarriesRegisteredPanelBehavior(bool success, CommandResultState state)
     {
         var registry = new CommandRegistry();
-        registry.Register(_owner, Id("scale"), new CommandDefinition<ScaleCommand>(
-            (_, _) => new CommandResult(success, "test", "test", State: state),
-            CommandDomain.World, panelBehavior: CommandPanelBehavior.CloseOnSuccess));
+        registry.Register(
+            _owner,
+            Id("scale"),
+            new CommandDefinition<ScaleCommand>(
+                (_, _) => new CommandResult(success, "test", "test", State: state),
+                CommandDomain.World,
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+            )
+        );
         registry.Freeze();
         var result = new CommandDispatcher(registry).Execute(new ScaleCommand(1), Context());
         Assert.Equal(CommandPanelBehavior.CloseOnSuccess, result.PanelBehavior);
@@ -42,9 +48,12 @@ public class CommandDispatcherTest
         ];
         foreach (var command in registry.Definitions)
         {
-            Assert.Equal(closeCommands.Contains(command.Definition.CommandType)
-                ? CommandPanelBehavior.CloseOnSuccess
-                : CommandPanelBehavior.ReturnToMessage, command.Definition.PanelBehavior);
+            Assert.Equal(
+                closeCommands.Contains(command.Definition.CommandType)
+                    ? CommandPanelBehavior.CloseOnSuccess
+                    : CommandPanelBehavior.ReturnToMessage,
+                command.Definition.PanelBehavior
+            );
         }
     }
 
@@ -57,12 +66,15 @@ public class CommandDispatcherTest
             Id("scale"),
             new CommandDefinition<ScaleCommand>(
                 (_, command) => CommandResult.Ok(command.Value.ToString("0.0")),
-                CommandDomain.World));
+                CommandDomain.World
+            )
+        );
         registry.Freeze();
 
         var result = new CommandDispatcher(registry).Execute(
             new ScaleCommand(2.5),
-            Context());
+            Context()
+        );
 
         Assert.True(result.Success);
         Assert.Equal("2.5", result.Message);
@@ -80,21 +92,29 @@ public class CommandDispatcherTest
                 (_, command) => CommandResult.Ok(command.Value.ToString("0.0")),
                 CommandDomain.World,
                 write: static (writer, command) => writer.Write(command.Value),
-                read: static reader => new ScaleCommand(reader.ReadDouble())));
+                read: static reader => new ScaleCommand(reader.ReadDouble())
+            )
+        );
         registry.Freeze();
 
-        Assert.True(registry.TryEncode(
-            new ScaleCommand(2.5),
-            out var encodedId,
-            out var payload,
-            out var encodeError));
+        Assert.True(
+            registry.TryEncode(
+                new ScaleCommand(2.5),
+                out var encodedId,
+                out var payload,
+                out var encodeError
+            )
+        );
         Assert.Equal(string.Empty, encodeError);
         Assert.Equal(identity, encodedId);
-        Assert.True(registry.TryDecode(
-            encodedId,
-            payload,
-            out var decoded,
-            out var decodeError));
+        Assert.True(
+            registry.TryDecode(
+                encodedId,
+                payload,
+                out var decoded,
+                out var decodeError
+            )
+        );
         Assert.Equal(string.Empty, decodeError);
         Assert.Equal(new ScaleCommand(2.5), decoded);
     }
@@ -105,7 +125,8 @@ public class CommandDispatcherTest
         var registry = RegistryWith(
             new CommandDefinition<EchoCommand>(
                 (_, command) => CommandResult.Ok(command.Text),
-                CommandDomain.World),
+                CommandDomain.World
+            ),
             new TextCommand(
                 "echo",
                 Text("Echo text"),
@@ -113,12 +134,16 @@ public class CommandDispatcherTest
                     new CommandRoute(
                         [new CommandArgument("text")],
                         typeof(EchoCommand),
-                        arguments => new EchoCommand(arguments.Get<string>("text")))
-                ]));
+                        arguments => new EchoCommand(arguments.Get<string>("text"))
+                    )
+                ]
+            )
+        );
 
         var result = new TextCommandAdapter(registry).Execute(
             "/echo \"hello world\"",
-            Context());
+            Context()
+        );
 
         Assert.True(result.Success);
         Assert.Equal("hello world", result.Message);
@@ -135,7 +160,9 @@ public class CommandDispatcherTest
             new CommandDefinition<SetTimeCommand>(
                 (_, command) => CommandResult.Ok(command.Value),
                 CommandDomain.World,
-                requiredPermission: permission));
+                requiredPermission: permission
+            )
+        );
 
         Assert.Throws<InvalidOperationException>(missing.Freeze);
 
@@ -143,14 +170,17 @@ public class CommandDispatcherTest
         wrongDomain.Permissions.Register(
             _owner,
             permission,
-            new CommandPermissionDefinition(CommandDomain.Server));
+            new CommandPermissionDefinition(CommandDomain.Server)
+        );
         wrongDomain.Register(
             _owner,
             Id("time/set"),
             new CommandDefinition<SetTimeCommand>(
                 (_, command) => CommandResult.Ok(command.Value),
                 CommandDomain.World,
-                requiredPermission: permission));
+                requiredPermission: permission
+            )
+        );
 
         Assert.Throws<InvalidOperationException>(wrongDomain.Freeze);
     }
@@ -163,20 +193,25 @@ public class CommandDispatcherTest
         registry.Permissions.Register(
             _owner,
             permission,
-            new CommandPermissionDefinition(CommandDomain.World));
+            new CommandPermissionDefinition(CommandDomain.World)
+        );
         registry.Register(
             _owner,
             Id("time/get"),
             new CommandDefinition<GetTimeCommand>(
                 (_, _) => CommandResult.Ok("get"),
-                CommandDomain.World));
+                CommandDomain.World
+            )
+        );
         registry.Register(
             _owner,
             Id("time/set"),
             new CommandDefinition<SetTimeCommand>(
                 (_, command) => CommandResult.Ok(command.Value),
                 CommandDomain.World,
-                requiredPermission: permission));
+                requiredPermission: permission
+            )
+        );
         registry.Adapters.Register(
             _owner,
             Id("text/time"),
@@ -187,18 +222,22 @@ public class CommandDispatcherTest
                     new CommandRoute(
                         [new CommandLiteral("get")],
                         typeof(GetTimeCommand),
-                        _ => new GetTimeCommand()),
+                        _ => new GetTimeCommand()
+                    ),
                     new CommandRoute(
                         [
                             new CommandLiteral("set"),
                             new CommandArgument(
                                 "value",
-                                Choices: ["day", "night"])
+                                Choices: ["day", "night"]
+                            )
                         ],
                         typeof(SetTimeCommand),
-                        arguments => new SetTimeCommand(
-                            arguments.Get<string>("value")))
-                ]));
+                        arguments => new SetTimeCommand(arguments.Get<string>("value"))
+                    )
+                ]
+            )
+        );
         registry.Freeze();
         var adapter = new TextCommandAdapter(registry);
         var player = Player("Player");
@@ -206,16 +245,22 @@ public class CommandDispatcherTest
 
         Assert.Equal(
             ["get"],
-            adapter.Suggest("/time ", player).Select(item => item.Value));
+            adapter.Suggest("/time ", player).Select(item => item.Value)
+        );
         Assert.Equal(
             ["get", "set"],
-            adapter.Suggest("/time ", administrator).Select(item => item.Value));
+            adapter.Suggest("/time ", administrator).Select(item => item.Value)
+        );
         Assert.Equal(
             "command.forbidden",
-            adapter.Execute("/time set day", Context(player)).Code);
-        Assert.True(adapter.Execute(
-            "/time set day",
-            Context(administrator)).Success);
+            adapter.Execute("/time set day", Context(player)).Code
+        );
+        Assert.True(
+            adapter.Execute(
+                "/time set day",
+                Context(administrator)
+            ).Success
+        );
     }
 
     [Fact]
@@ -224,7 +269,8 @@ public class CommandDispatcherTest
         var registry = RegistryWith(
             new CommandDefinition<ChooseCommand>(
                 (_, command) => CommandResult.Ok(command.Player),
-                CommandDomain.World),
+                CommandDomain.World
+            ),
             new TextCommand(
                 "choose",
                 Text("Choose player"),
@@ -237,25 +283,33 @@ public class CommandDispatcherTest
                                 [
                                     new CommandArgumentSuggestion(
                                         "Alice Smith",
-                                        Text("First player")),
+                                        Text("First player")
+                                    ),
                                     new CommandArgumentSuggestion(
                                         "Bob",
-                                        Text("Second player"))
-                                ])
+                                        Text("Second player")
+                                    )
+                                ]
+                            )
                         ],
                         typeof(ChooseCommand),
-                        arguments => new ChooseCommand(
-                            arguments.Get<string>("player")))
-                ]));
+                        arguments => new ChooseCommand(arguments.Get<string>("player"))
+                    )
+                ]
+            )
+        );
 
-        var suggestion = Assert.Single(new TextCommandAdapter(registry)
-            .Suggest("/choose A", Player("Player")));
+        var suggestion = Assert.Single(
+            new TextCommandAdapter(registry)
+                .Suggest("/choose A", Player("Player"))
+        );
 
         Assert.Equal("Alice Smith", suggestion.Value);
         Assert.Equal("First player", suggestion.Description);
         Assert.Equal(
             "\"Alice Smith\"",
-            CommandLineTokenizer.FormatToken(suggestion.Value));
+            CommandLineTokenizer.FormatToken(suggestion.Value)
+        );
     }
 
     [Fact]
@@ -270,25 +324,38 @@ public class CommandDispatcherTest
                 CommandDomain.World,
                 PermissionGrantPolicy.NonGrantable,
                 implicitGrant: static (principal, _) =>
-                    principal.Name == "CreativePlayer"));
+                    principal.Name == "CreativePlayer"
+            )
+        );
         registry.Register(
             _owner,
             Id("creative/action"),
             new CommandDefinition<CreativeActionCommand>(
                 (_, _) => CommandResult.Ok("done"),
                 CommandDomain.World,
-                requiredPermission: permission));
+                requiredPermission: permission
+            )
+        );
         registry.Freeze();
 
-        Assert.True(registry.CanInvoke(
-            typeof(CreativeActionCommand),
-            Player("CreativePlayer")));
-        Assert.False(registry.CanInvoke(
-            typeof(CreativeActionCommand),
-            Player("SurvivalPlayer")));
-        Assert.True(registry.CanInvoke(
-            typeof(CreativeActionCommand),
-            CommandPrincipal.LocalOperator));
+        Assert.True(
+            registry.CanInvoke(
+                typeof(CreativeActionCommand),
+                Player("CreativePlayer")
+            )
+        );
+        Assert.False(
+            registry.CanInvoke(
+                typeof(CreativeActionCommand),
+                Player("SurvivalPlayer")
+            )
+        );
+        Assert.True(
+            registry.CanInvoke(
+                typeof(CreativeActionCommand),
+                CommandPrincipal.LocalOperator
+            )
+        );
     }
 
     [Fact]
@@ -296,14 +363,17 @@ public class CommandDispatcherTest
     {
         var application = new CommandDefinition<GetLanguageCommand>(
             (_, _) => CommandResult.Ok("language"),
-            CommandDomain.Application);
+            CommandDomain.Application
+        );
         var world = new CommandDefinition<GetTimeCommand>(
             (_, _) => CommandResult.Ok("time"),
-            CommandDomain.World);
+            CommandDomain.World
+        );
         var server = new CommandDefinition<StopCommand>(
             (_, _) => CommandResult.Ok("stop"),
             CommandDomain.Server,
-            hostRequirement: CommandHostRequirement.HeadlessServer);
+            hostRequirement: CommandHostRequirement.HeadlessServer
+        );
 
         Assert.True(application.CanInvoke(CommandPrincipal.LocalOperator, null));
         Assert.False(application.CanInvoke(Player("Player"), null));
@@ -321,13 +391,17 @@ public class CommandDispatcherTest
             Id("application/action"),
             new CommandDefinition<ApplicationActionCommand>(
                 (_, _) => CommandResult.Ok("application"),
-                CommandDomain.Application));
+                CommandDomain.Application
+            )
+        );
         registry.Register(
             _owner,
             Id("world/action"),
             new CommandDefinition<WorldActionCommand>(
                 (_, _) => CommandResult.Ok("world"),
-                CommandDomain.World));
+                CommandDomain.World
+            )
+        );
         registry.Adapters.Register(
             _owner,
             Id("text/action"),
@@ -338,24 +412,37 @@ public class CommandDispatcherTest
                     new CommandRoute(
                         [new CommandLiteral("application")],
                         typeof(ApplicationActionCommand),
-                        _ => new ApplicationActionCommand()),
+                        _ => new ApplicationActionCommand()
+                    ),
                     new CommandRoute(
                         [new CommandLiteral("world")],
                         typeof(WorldActionCommand),
-                        _ => new WorldActionCommand())
-                ]));
+                        _ => new WorldActionCommand()
+                    )
+                ]
+            )
+        );
         registry.Freeze();
         var adapter = new TextCommandAdapter(registry);
 
-        Assert.True(adapter.SupportsDomain(
-            "/action application",
-            CommandDomain.Application));
-        Assert.False(adapter.SupportsDomain(
-            "/action world",
-            CommandDomain.Application));
-        Assert.True(adapter.SupportsDomain(
-            "/action world",
-            CommandDomain.World));
+        Assert.True(
+            adapter.SupportsDomain(
+                "/action application",
+                CommandDomain.Application
+            )
+        );
+        Assert.False(
+            adapter.SupportsDomain(
+                "/action world",
+                CommandDomain.Application
+            )
+        );
+        Assert.True(
+            adapter.SupportsDomain(
+                "/action world",
+                CommandDomain.World
+            )
+        );
     }
 
     [Fact]
@@ -367,12 +454,15 @@ public class CommandDispatcherTest
             Id("fail"),
             new CommandDefinition<FailCommand>(
                 (_, _) => throw new InvalidOperationException("secret detail"),
-                CommandDomain.World));
+                CommandDomain.World
+            )
+        );
         registry.Freeze();
 
         var result = new CommandDispatcher(registry).Execute(
             new FailCommand(),
-            Context());
+            Context()
+        );
 
         Assert.False(result.Success);
         Assert.Equal("command.failed", result.Code);
@@ -396,19 +486,24 @@ public class CommandDispatcherTest
         AssertDomain<TeleportSelfCommand>(registry, CommandDomain.World);
         AssertDomain<TeleportPlayerCommand>(registry, CommandDomain.World);
         Assert.True(registry.TryGetDefinition<TeleportPlayerCommand>(out var teleport));
-        Assert.True(registry.Permissions.TryGet(teleport!.Definition.RequiredPermission!.Value, out var teleportPermission));
+        Assert.True(
+            registry.Permissions.TryGet(
+                teleport!.Definition.RequiredPermission!.Value,
+                out var teleportPermission
+            )
+        );
         Assert.Equal(PermissionGrantPolicy.Standard, teleportPermission!.Definition.GrantPolicy);
         AssertDomain<CreateTeamCommand>(registry, CommandDomain.World);
         AssertDomain<StopServerCommand>(registry, CommandDomain.Server);
         AssertDomain<GrantPlayerPermissionCommand>(registry, CommandDomain.Server);
 
         Assert.True(registry.TryGetDefinition<StopServerCommand>(out var stop));
-        var stopPermission = Assert.IsType<ResourceId>(
-            stop!.Definition.RequiredPermission);
+        var stopPermission = Assert.IsType<ResourceId>(stop!.Definition.RequiredPermission);
         Assert.True(registry.Permissions.TryGet(stopPermission, out var registered));
         Assert.Equal(
             PermissionGrantPolicy.NonGrantable,
-            registered!.Definition.GrantPolicy);
+            registered!.Definition.GrantPolicy
+        );
     }
 
     [Fact]
@@ -425,18 +520,26 @@ public class CommandDispatcherTest
                 ["en-US", "zh-CN"],
                 adapter.Suggest(
                         "/language ",
-                        CommandPrincipal.LocalOperator)
-                    .Select(item => item.Value));
+                        CommandPrincipal.LocalOperator
+                    )
+                    .Select(item => item.Value)
+            );
             Assert.Empty(adapter.Suggest("/language", Player("Player")));
-            Assert.Empty(adapter.Suggest(
-                "/time",
-                CommandPrincipal.LocalOperator,
-                domain: CommandDomain.Application));
-            Assert.Contains(adapter.Suggest("/time", CommandPrincipal.LocalOperator),
-                item => item.Value == "time");
+            Assert.Empty(
+                adapter.Suggest(
+                    "/time",
+                    CommandPrincipal.LocalOperator,
+                    domain: CommandDomain.Application
+                )
+            );
+            Assert.Contains(
+                adapter.Suggest("/time", CommandPrincipal.LocalOperator),
+                item => item.Value == "time"
+            );
             Assert.Contains(
                 adapter.Suggest("/", Player("Player")),
-                item => item.Value == "time");
+                item => item.Value == "time"
+            );
         }
         finally
         {
@@ -456,51 +559,69 @@ public class CommandDispatcherTest
                 new ResourceId(owner, "world.season.set"),
                 new ResourceId(owner, "world.weather.precipitation.set"),
                 new ResourceId(owner, "world.weather.fog.set")
-            ]);
+            ]
+        );
         var adapter = new TextCommandAdapter(BuiltInRegistry());
 
         var timeSuggestions = adapter.Suggest("/time set ", player);
         Assert.Equal(
             ["day", "night", "sunrise", "sunset"],
-            timeSuggestions.Select(item => item.Value));
+            timeSuggestions.Select(item => item.Value)
+        );
         Assert.Equal(
             timeSuggestions.Count,
-            timeSuggestions.Select(item => item.Description).Distinct().Count());
+            timeSuggestions.Select(item => item.Description).Distinct().Count()
+        );
 
         var seasonSuggestions = adapter.Suggest("/season set ", player);
         Assert.Equal(
             ["autumn", "spring", "summer", "winter"],
-            seasonSuggestions.Select(item => item.Value));
+            seasonSuggestions.Select(item => item.Value)
+        );
         Assert.Equal(
             seasonSuggestions.Count,
-            seasonSuggestions.Select(item => item.Description).Distinct().Count());
+            seasonSuggestions.Select(item => item.Description).Distinct().Count()
+        );
         var seasonProgressSuggestions =
             adapter.Suggest("/season set winter ", player);
         Assert.Equal(
             ["end", "middle", "start"],
-            seasonProgressSuggestions.Select(item => item.Value));
+            seasonProgressSuggestions.Select(item => item.Value)
+        );
         Assert.Equal(
             seasonProgressSuggestions.Count,
             seasonProgressSuggestions
                 .Select(item => item.Description)
                 .Distinct()
-                .Count());
-        Assert.True(adapter.CanExecute(
-            "/season set winter middle ",
-            player));
-        Assert.False(adapter.CanExecute(
-            "/season set winter 0.5 ",
-            player));
+                .Count()
+        );
+        Assert.True(
+            adapter.CanExecute(
+                "/season set winter middle ",
+                player
+            )
+        );
+        Assert.False(
+            adapter.CanExecute(
+                "/season set winter 0.5 ",
+                player
+            )
+        );
         var weatherSuggestions = adapter.Suggest("/weather rain ", player);
         Assert.Equal(
             ["disable", "enable"],
-            weatherSuggestions.Select(item => item.Value));
+            weatherSuggestions.Select(item => item.Value)
+        );
         Assert.Equal(
             weatherSuggestions.Count,
-            weatherSuggestions.Select(item => item.Description).Distinct().Count());
-        Assert.False(adapter.CanExecute(
-            "/weather rain true ",
-            player));
+            weatherSuggestions.Select(item => item.Description).Distinct().Count()
+        );
+        Assert.False(
+            adapter.CanExecute(
+                "/weather rain true ",
+                player
+            )
+        );
     }
 
     [Fact]
@@ -519,7 +640,8 @@ public class CommandDispatcherTest
             new TriggerPlayerLightningCommand(),
             new TriggerLightningCommand(
                 new Vector3(1f, 2f, 3f),
-                new Vector3(0f, 0f, 1f)),
+                new Vector3(0f, 0f, 1f)
+            ),
             new SetSeasonCommand(Season.Winter, 0.5f),
             new CreateTeamCommand("Builders"),
             new RequestJoinTeamCommand(Guid.NewGuid()),
@@ -530,17 +652,23 @@ public class CommandDispatcherTest
 
         foreach (var command in commands)
         {
-            Assert.True(registry.TryEncode(
-                command,
-                out var id,
-                out var payload,
-                out var encodeError));
+            Assert.True(
+                registry.TryEncode(
+                    command,
+                    out var id,
+                    out var payload,
+                    out var encodeError
+                )
+            );
             Assert.Equal(string.Empty, encodeError);
-            Assert.True(registry.TryDecode(
-                id,
-                payload,
-                out var decoded,
-                out var decodeError));
+            Assert.True(
+                registry.TryDecode(
+                    id,
+                    payload,
+                    out var decoded,
+                    out var decodeError
+                )
+            );
             Assert.Equal(string.Empty, decodeError);
             Assert.Equal(command, decoded);
         }
@@ -555,25 +683,33 @@ public class CommandDispatcherTest
             new UpdateOwnPlayerProfileCommand(
                 "Player",
                 "$Male1",
-                PlayerClass.Male),
+                PlayerClass.Male
+            ),
             new SendChatMessageCommand(
                 GameMessageChannel.Team,
-                "hello")
+                "hello"
+            )
         ];
 
         foreach (var command in commands)
         {
-            Assert.True(registry.TryEncode(
-                command,
-                out var id,
-                out var payload,
-                out var encodeError));
+            Assert.True(
+                registry.TryEncode(
+                    command,
+                    out var id,
+                    out var payload,
+                    out var encodeError
+                )
+            );
             Assert.Equal(string.Empty, encodeError);
-            Assert.True(registry.TryDecode(
-                id,
-                payload,
-                out var decoded,
-                out var decodeError));
+            Assert.True(
+                registry.TryDecode(
+                    id,
+                    payload,
+                    out var decoded,
+                    out var decodeError
+                )
+            );
             Assert.Equal(string.Empty, decodeError);
             Assert.Equal(command, decoded);
         }
@@ -584,43 +720,54 @@ public class CommandDispatcherTest
     {
         var publicResult = CommandResult.PublicOk(
             "changed",
-            "world.changed");
+            "world.changed"
+        );
         var toastResult = CommandResult.LocalizedPublicToast(
             "world.weather.changed",
             "WeatherChanged_Message",
-            "changed");
+            "changed"
+        );
         var historyResult = CommandResult.LocalizedHistoryOk(
             "command.help",
             "HelpHeading_Message",
-            "help");
+            "help"
+        );
         var silentResult = CommandResult.SilentOk("chat.sent");
 
         Assert.Equal(
             CommandResultAudience.AllPlayers,
-            publicResult.Audience);
+            publicResult.Audience
+        );
         Assert.False(publicResult.Sensitive);
         Assert.Equal(
             CommandResultPresentation.Default,
-            publicResult.Presentation);
+            publicResult.Presentation
+        );
         Assert.Equal(
             CommandResultAudience.AllPlayers,
-            toastResult.Audience);
+            toastResult.Audience
+        );
         Assert.Equal(
             CommandResultPresentation.Toast,
-            toastResult.Presentation);
+            toastResult.Presentation
+        );
         Assert.Equal(
             CommandResultPresentation.History,
-            historyResult.Presentation);
+            historyResult.Presentation
+        );
         Assert.Equal(
             GameMessagePresentation.History,
-            CommandResultPublisher.ToGameMessagePresentation(historyResult.Presentation));
+            CommandResultPublisher.ToGameMessagePresentation(historyResult.Presentation)
+        );
         Assert.Equal(
             GameMessagePresentation.Default,
-            CommandResultPublisher.ToGameMessagePresentation(publicResult.Presentation));
+            CommandResultPublisher.ToGameMessagePresentation(publicResult.Presentation)
+        );
         Assert.Equal(string.Empty, silentResult.Message);
         Assert.Equal(
             CommandResultPresentation.Silent,
-            silentResult.Presentation);
+            silentResult.Presentation
+        );
     }
 
     [Fact]
@@ -632,28 +779,35 @@ public class CommandDispatcherTest
         registry.Permissions.Register(
             _owner,
             permission,
-            new CommandPermissionDefinition(CommandDomain.World));
+            new CommandPermissionDefinition(CommandDomain.World)
+        );
         registry.Register(
             _owner,
             identity,
             new CommandDefinition<ScaleCommand>(
                 (_, command) => CommandResult.Ok(command.Value.ToString("0.0")),
                 CommandDomain.World,
-                requiredPermission: permission));
+                requiredPermission: permission
+            )
+        );
         registry.Adapters.Register(
             _owner,
             identity,
-            HttpCommandBinding.Create<ScaleCommand>(arguments => new ScaleCommand(arguments.Get<double>("value"))));
+            HttpCommandBinding.Create<ScaleCommand>(arguments => new ScaleCommand(arguments.Get<double>("value")))
+        );
         registry.Freeze();
         var adapter = new HttpCommandAdapter(registry);
 
         var result = adapter.Execute(
             new HttpCommandRequest(
                 identity,
-                new JsonObject { ["value"] = 2.5 }),
+                new JsonObject { ["value"] = 2.5 }
+            ),
             Context(
                 Player("Http", [permission]),
-                CommandInvocationChannel.HttpApi));
+                CommandInvocationChannel.HttpApi
+            )
+        );
 
         Assert.True(result.Success);
         Assert.Equal("2.5", result.Message);
@@ -663,8 +817,11 @@ public class CommandDispatcherTest
             adapter.Execute(
                 new HttpCommandRequest(
                     identity,
-                    new JsonObject { ["value"] = 2.5 }),
-                Context(channel: CommandInvocationChannel.HttpApi)).Code);
+                    new JsonObject { ["value"] = 2.5 }
+                ),
+                Context(channel: CommandInvocationChannel.HttpApi)
+            ).Code
+        );
     }
 
     [Fact]
@@ -676,16 +833,19 @@ public class CommandDispatcherTest
             _owner,
             identity,
             new CommandDefinition<ScaleCommand>(
-                (_, command) => CommandResult.Ok(
-                    command.Value.ToString("0.0")),
-                CommandDomain.World));
+                (_, command) => CommandResult.Ok(command.Value.ToString("0.0")),
+                CommandDomain.World
+            )
+        );
         registry.Freeze();
 
         var result = new HttpCommandAdapter(registry).Execute(
             new HttpCommandRequest(
                 identity,
-                new JsonObject { ["value"] = 2.5 }),
-            Context(channel: CommandInvocationChannel.HttpApi));
+                new JsonObject { ["value"] = 2.5 }
+            ),
+            Context(channel: CommandInvocationChannel.HttpApi)
+        );
 
         Assert.Equal("command.http_not_exposed", result.Code);
     }
@@ -697,11 +857,10 @@ public class CommandDispatcherTest
         registry.Adapters.Register(
             _owner,
             Id("missing"),
-            HttpCommandBinding.Create<ScaleCommand>(arguments => new ScaleCommand(
-                arguments.Get<double>("value"))));
+            HttpCommandBinding.Create<ScaleCommand>(arguments => new ScaleCommand(arguments.Get<double>("value")))
+        );
 
-        var exception = Assert.Throws<InvalidOperationException>(
-            registry.Freeze);
+        var exception = Assert.Throws<InvalidOperationException>(registry.Freeze);
 
         Assert.Contains("same identity", exception.Message);
     }
@@ -712,7 +871,8 @@ public class CommandDispatcherTest
         var registry = RegistryWith(
             new CommandDefinition<EchoCommand>(
                 (_, command) => CommandResult.Ok(command.Text),
-                CommandDomain.World),
+                CommandDomain.World
+            ),
             new TextCommand(
                 "echo",
                 Text("Echo"),
@@ -720,19 +880,28 @@ public class CommandDispatcherTest
                     new CommandRoute(
                         [new CommandArgument("text")],
                         typeof(EchoCommand),
-                        arguments => new EchoCommand(
-                            arguments.Get<string>("text")))
-                ]));
+                        arguments => new EchoCommand(arguments.Get<string>("text"))
+                    )
+                ]
+            )
+        );
         var adapter = new TextCommandAdapter(registry);
 
-        Assert.True(adapter.Execute(
-            "/echo player",
-            Context(Player("Player"), CommandInvocationChannel.Text)).Success);
-        Assert.True(adapter.Execute(
-            "/echo console",
-            Context(
-                CommandPrincipal.LocalOperator,
-                CommandInvocationChannel.Console)).Success);
+        Assert.True(
+            adapter.Execute(
+                "/echo player",
+                Context(Player("Player"), CommandInvocationChannel.Text)
+            ).Success
+        );
+        Assert.True(
+            adapter.Execute(
+                "/echo console",
+                Context(
+                    CommandPrincipal.LocalOperator,
+                    CommandInvocationChannel.Console
+                )
+            ).Success
+        );
     }
 
     [Fact]
@@ -741,12 +910,14 @@ public class CommandDispatcherTest
         var identity = Id("scale");
         var envelope = HttpCommandProtocol.CreateEnvelope(
             identity,
-            new JsonObject { ["value"] = 2.5 });
+            new JsonObject { ["value"] = 2.5 }
+        );
 
         var parsed = HttpCommandProtocol.TryParseEnvelope(
             envelope,
             out var request,
-            out var error);
+            out var error
+        );
 
         Assert.True(parsed);
         Assert.Equal(string.Empty, error);
@@ -768,7 +939,8 @@ public class CommandDispatcherTest
             var registry = RegistryWith(
                 new CommandDefinition<EchoCommand>(
                     (_, command) => CommandResult.Ok(command.Text),
-                    CommandDomain.World),
+                    CommandDomain.World
+                ),
                 new TextCommand(
                     "echo",
                     new LocalizedText(section, "Description", "Fallback"),
@@ -776,23 +948,33 @@ public class CommandDispatcherTest
                         new CommandRoute(
                             [new CommandArgument("text")],
                             typeof(EchoCommand),
-                            arguments => new EchoCommand(
-                                arguments.Get<string>("text")))
-                    ]));
+                            arguments => new EchoCommand(arguments.Get<string>("text"))
+                        )
+                    ]
+                )
+            );
             var adapter = new TextCommandAdapter(registry);
 
             Assert.Equal(
                 "Initial",
-                Assert.Single(adapter.Suggest(
-                    "/e",
-                    Player("Player"))).Description);
+                Assert.Single(
+                    adapter.Suggest(
+                        "/e",
+                        Player("Player")
+                    )
+                ).Description
+            );
             LanguageManager.KeyWords[section] =
                 JsonNode.Parse("""{"Description":"Changed"}""");
             Assert.Equal(
                 "Changed",
-                Assert.Single(adapter.Suggest(
-                    "/e",
-                    Player("Player"))).Description);
+                Assert.Single(
+                    adapter.Suggest(
+                        "/e",
+                        Player("Player")
+                    )
+                ).Description
+            );
         }
         finally
         {
@@ -809,7 +991,8 @@ public class CommandDispatcherTest
 
     private static CommandRegistry RegistryWith<TCommand>(
         CommandDefinition<TCommand> definition,
-        TextCommand text)
+        TextCommand text
+    )
         where TCommand : IGameCommand
     {
         var registry = new CommandRegistry();
@@ -833,7 +1016,10 @@ public class CommandDispatcherTest
     [InlineData("/tp player \"Player One\" public spawn")]
     public void TeleportTextRoutesReachTheWorldHandler(string text)
     {
-        var principal = Player("Authorized player", BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id));
+        var principal = Player(
+            "Authorized player",
+            BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id)
+        );
         var result = new TextCommandAdapter(BuiltInRegistry()).Execute(text, Context(principal));
         Assert.Equal("teleport.no_world", result.Code);
     }
@@ -855,7 +1041,10 @@ public class CommandDispatcherTest
     [InlineData("/tp Codex 1 64 -2")]
     public void TeleportRejectsIncompleteAndImplicitRoutes(string text)
     {
-        var principal = Player("Authorized player", BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id));
+        var principal = Player(
+            "Authorized player",
+            BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id)
+        );
         Assert.Equal("command.usage", new TextCommandAdapter(BuiltInRegistry()).Execute(text, Context(principal)).Code);
     }
 
@@ -895,18 +1084,27 @@ public class CommandDispatcherTest
         var adapter = new TextCommandAdapter(BuiltInRegistry());
         Assert.True(adapter.TryFind(name, out var entry));
         var bare = Assert.Single(entry!.Command.Routes, route => route.Segments.Count == 0);
-        var explicitRoute = Assert.Single(entry.Command.Routes, route =>
-            route.Segments.Count == (name == "mark" ? 2 : 3) &&
-            route.Segments[name == "mark" ? 0 : 1] is CommandLiteral { Value: "private" });
+        var explicitRoute = Assert.Single(
+            entry.Command.Routes,
+            route =>
+                route.Segments.Count == (name == "mark" ? 2 : 3) &&
+                route.Segments[name == "mark" ? 0 : 1] is CommandLiteral { Value: "private" }
+        );
         var command = bare.CreateCommand(new CommandArguments(new Dictionary<string, object>()));
-        var explicitCommand = explicitRoute.CreateCommand(new CommandArguments(new Dictionary<string, object>
-        {
-            ["name"] = "previous"
-        }));
+        var explicitCommand = explicitRoute.CreateCommand(
+            new CommandArguments(
+                new Dictionary<string, object>
+                {
+                    ["name"] = "previous"
+                }
+            )
+        );
         Assert.Equal(explicitRoute.CommandType, bare.CommandType);
         Assert.Equal(explicitCommand, command);
-        Assert.Equal(name == "mark" ? new MarkPrivatePositionCommand("previous") :
-            new TeleportMarkCommand("previous", false), command);
+        Assert.Equal(
+            name == "mark" ? new MarkPrivatePositionCommand("previous") : new TeleportMarkCommand("previous", false),
+            command
+        );
     }
 
     [Fact]
@@ -917,8 +1115,13 @@ public class CommandDispatcherTest
         Assert.True(registry.TryGetDefinition<MarkPublicPositionCommand>(out var shared));
         Assert.True(personal!.Definition.IsPotentiallyAuthorized(registry.Permissions, Player("Player"), null));
         Assert.False(shared!.Definition.IsPotentiallyAuthorized(registry.Permissions, Player("Player"), null));
-        Assert.True(shared.Definition.IsPotentiallyAuthorized(registry.Permissions,
-            Player("Admin", [new ResourceId(new ModId("game"), "world.mark.manage")]), null));
+        Assert.True(
+            shared.Definition.IsPotentiallyAuthorized(
+                registry.Permissions,
+                Player("Admin", [new ResourceId(new ModId("game"), "world.mark.manage")]),
+                null
+            )
+        );
         Assert.False(personal.Definition.CanInvoke(CommandPrincipal.LocalOperator, null));
         IGameCommand[] commands =
         [
@@ -936,15 +1139,28 @@ public class CommandDispatcherTest
             Assert.Equal(command, decoded);
         }
 
-        var principal = Player("Authorized player", BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id));
+        var principal = Player(
+            "Authorized player",
+            BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id)
+        );
         var adapter = new TextCommandAdapter(registry);
         Assert.Equal("teleport.no_world", adapter.Execute("/mark private \"My home\"", Context(principal)).Code);
         Assert.Equal("teleport.no_world", adapter.Execute("/mark public home", Context(principal)).Code);
         Assert.True(registry.TryGetDefinition<TeleportPlayerMarkCommand>(out var playerMark));
-        Assert.False(playerMark!.Definition.IsPotentiallyAuthorized(registry.Permissions,
-            Player("SelfOnly", [new ResourceId(new ModId("game"), "player.teleport.self")]), null));
-        Assert.True(playerMark.Definition.IsPotentiallyAuthorized(registry.Permissions,
-            Player("Other", [new ResourceId(new ModId("game"), "player.teleport.others")]), null));
+        Assert.False(
+            playerMark!.Definition.IsPotentiallyAuthorized(
+                registry.Permissions,
+                Player("SelfOnly", [new ResourceId(new ModId("game"), "player.teleport.self")]),
+                null
+            )
+        );
+        Assert.True(
+            playerMark.Definition.IsPotentiallyAuthorized(
+                registry.Permissions,
+                Player("Other", [new ResourceId(new ModId("game"), "player.teleport.others")]),
+                null
+            )
+        );
     }
 
     private static CommandRegistry BuiltInRegistry()
@@ -958,7 +1174,8 @@ public class CommandDispatcherTest
 
     private static void AssertDomain<TCommand>(
         CommandRegistry registry,
-        CommandDomain expected)
+        CommandDomain expected
+    )
         where TCommand : IGameCommand
     {
         Assert.True(registry.TryGetDefinition<TCommand>(out var registered));
@@ -967,24 +1184,28 @@ public class CommandDispatcherTest
 
     private static CommandContext Context(
         CommandPrincipal? principal = null,
-        CommandInvocationChannel channel = CommandInvocationChannel.Internal)
+        CommandInvocationChannel channel = CommandInvocationChannel.Internal
+    )
     {
         return new CommandContext(
             channel,
             principal ?? Player("Player"),
             null,
-            "test");
+            "test"
+        );
     }
 
     private static CommandPrincipal Player(
         string name,
         IEnumerable<ResourceId>? permissions = null,
-        IEnumerable<ResourceId>? delegablePermissions = null)
+        IEnumerable<ResourceId>? delegablePermissions = null
+    )
     {
         return CommandPrincipal.CreatePlayer(
             name,
             permissions: permissions,
-            delegablePermissions: delegablePermissions);
+            delegablePermissions: delegablePermissions
+        );
     }
 
     private static ResourceId Id(string path) => new(_owner, path);

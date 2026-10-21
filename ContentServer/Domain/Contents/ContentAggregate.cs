@@ -8,15 +8,18 @@ namespace ContentServer.Domain.Contents;
 
 public enum ContentStatus
 {
-    Active,
-    Disabled
+    Active = 0,
+
+    Disabled = 1
 }
 
 public enum ContentVersionStatus
 {
-    Pending,
-    Published,
-    Rejected
+    Pending = 0,
+
+    Published = 1,
+
+    Rejected = 2
 }
 
 public partial record ContentId : IGuidStronglyTypedId;
@@ -86,10 +89,23 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
         string packageHash,
         string blobHash,
         string? metadata,
-        DateTimeOffset now)
+        DateTimeOffset now
+    )
     {
-        var item = ContentVersion.Create(PublisherId, Type, Identifier, Name, version, summary, description, packageBlobId,
-            packageHash, blobHash, NormalizeOptionalText(metadata), now);
+        var item = ContentVersion.Create(
+            PublisherId,
+            Type,
+            Identifier,
+            Name,
+            version,
+            summary,
+            description,
+            packageBlobId,
+            packageHash,
+            blobHash,
+            NormalizeOptionalText(metadata),
+            now
+        );
         Versions.Add(item);
         AddDomainEvent(new ContentVersionSubmittedDomainEvent(this, item));
         return item;
@@ -112,7 +128,8 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
     )
     {
         var version = Versions.FirstOrDefault(item => item.Id == versionId);
-        if (version is null || version.Status != ContentVersionStatus.Pending ||
+        if (version is null ||
+            version.Status != ContentVersionStatus.Pending ||
             status is not (ContentVersionStatus.Published or ContentVersionStatus.Rejected))
         {
             return false;
@@ -120,7 +137,8 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
 
         var normalizedMessage = NormalizeOptionalText(message);
         version.Review(status, normalizedMessage, now);
-        AddDomainEvent(new ContentVersionReviewedDomainEvent(
+        AddDomainEvent(
+            new ContentVersionReviewedDomainEvent(
                 this,
                 version,
                 administratorId,
@@ -265,7 +283,6 @@ public class ContentVersion : Entity<ContentVersionId>
         Deleted = new Deleted(true);
         UpdatedAt = now;
     }
-
 }
 
 public sealed record ContentVersionSubmittedDomainEvent(

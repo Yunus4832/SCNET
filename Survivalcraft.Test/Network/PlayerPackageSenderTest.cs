@@ -13,8 +13,10 @@ public sealed class PlayerPackageSenderTest
     [InlineData(ComponentPlayerPackage.PlayerAction.Restart, true)]
     [InlineData(ComponentPlayerPackage.PlayerAction.Drop, true)]
     [InlineData(ComponentPlayerPackage.PlayerAction.DragDrop, true)]
-    public void RequestsAndAuthoritativeResultsHaveDistinctDirections(ComponentPlayerPackage.PlayerAction action,
-        bool server)
+    public void RequestsAndAuthoritativeResultsHaveDistinctDirections(
+        ComponentPlayerPackage.PlayerAction action,
+        bool server
+    )
     {
         Assert.Equal(server, ComponentPlayerPackageHandler.AcceptsDirection(action, true));
         Assert.Equal(!server, ComponentPlayerPackageHandler.AcceptsDirection(action, false));

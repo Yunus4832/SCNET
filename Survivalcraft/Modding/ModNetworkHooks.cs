@@ -11,20 +11,25 @@ public interface IModNetwork
         string messageType,
         Action<ProtocolWriter> writePayload,
         PackageAudience audience,
-        ClientState minNeedState = ClientState.Connected);
+        ClientState minNeedState = ClientState.Connected
+    );
 
     void Send(
         string messageType,
         byte[] payload,
         PackageAudience audience,
-        ClientState minNeedState = ClientState.Connected);
+        ClientState minNeedState = ClientState.Connected
+    );
 }
 
 public sealed class ModNetworkHooks
 {
     private readonly List<Registration> _registrations = [];
+
     private readonly Dictionary<ModId, Dictionary<string, Registration[]>> _routes = [];
+
     private bool _isFrozen;
+
     private long _sequence;
 
     public IReadOnlyList<ModNetworkRegistrationInfo> Registrations => _registrations
@@ -62,7 +67,8 @@ public sealed class ModNetworkHooks
                     reader,
                     receiveContext.Sender,
                     receiveContext.Node,
-                    receiveContext.IsServer);
+                    receiveContext.IsServer
+                );
                 handler.Handler(context);
             }
             catch (Exception exception)
@@ -91,7 +97,8 @@ public sealed class ModNetworkHooks
         string messageType,
         Action<ProtocolWriter> writePayload,
         PackageAudience audience,
-        ClientState minNeedState)
+        ClientState minNeedState
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(messageType);
         ArgumentNullException.ThrowIfNull(writePayload);
@@ -106,7 +113,8 @@ public sealed class ModNetworkHooks
         string messageType,
         byte[] payload,
         PackageAudience audience,
-        ClientState minNeedState)
+        ClientState minNeedState
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(messageType);
         ArgumentNullException.ThrowIfNull(payload);
@@ -127,7 +135,8 @@ public sealed class ModNetworkHooks
         ModId owner,
         string messageType,
         Action<ModNetworkMessageContext> handler,
-        int priority)
+        int priority
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(messageType);
         ArgumentNullException.ThrowIfNull(handler);
@@ -153,8 +162,10 @@ public sealed class ModNetworkHooks
         foreach (var group in _registrations.GroupBy(registration => registration.Owner))
         {
             var messageRoutes = new Dictionary<string, Registration[]>(StringComparer.Ordinal);
-            foreach (var messageGroup in group.GroupBy(registration => registration.MessageType,
-                         StringComparer.Ordinal))
+            foreach (var messageGroup in group.GroupBy(
+                         registration => registration.MessageType,
+                         StringComparer.Ordinal
+                     ))
             {
                 messageRoutes[messageGroup.Key] = messageGroup
                     .OrderByDescending(registration => registration.Priority)
@@ -175,14 +186,16 @@ public sealed class ModNetworkHooks
             string messageType,
             Action<ProtocolWriter> writePayload,
             PackageAudience audience,
-            ClientState minNeedState = ClientState.Connected) =>
+            ClientState minNeedState = ClientState.Connected
+        ) =>
             hooks.Send(owner, messageType, writePayload, audience, minNeedState);
 
         public void Send(
             string messageType,
             byte[] payload,
             PackageAudience audience,
-            ClientState minNeedState = ClientState.Connected) =>
+            ClientState minNeedState = ClientState.Connected
+        ) =>
             hooks.Send(owner, messageType, payload, audience, minNeedState);
     }
 
@@ -192,7 +205,8 @@ public sealed class ModNetworkHooks
         string messageType,
         Action<ModNetworkMessageContext> handler,
         int priority,
-        long sequence) : IDisposable
+        long sequence
+    ) : IDisposable
     {
         private ModNetworkHooks? _hooks = hooks;
 
@@ -219,7 +233,8 @@ public sealed class ModNetworkMessageContext(
     ProtocolReader reader,
     Client? from,
     NetNode? netNode,
-    bool isServer)
+    bool isServer
+)
 {
     public ModId Owner { get; } = owner;
 
@@ -235,7 +250,8 @@ public sealed class ModNetworkMessageContext(
 
     public void Reply(
         Action<ProtocolWriter> writePayload,
-        ClientState minNeedState = ClientState.Connected)
+        ClientState minNeedState = ClientState.Connected
+    )
     {
         if (From == null)
         {
@@ -249,7 +265,8 @@ public sealed class ModNetworkMessageContext(
         string targetMessageType,
         Action<ProtocolWriter> writePayload,
         PackageAudience audience,
-        ClientState minNeedState = ClientState.Connected)
+        ClientState minNeedState = ClientState.Connected
+    )
     {
         hooks.Send(Owner, targetMessageType, writePayload, audience, minNeedState);
     }

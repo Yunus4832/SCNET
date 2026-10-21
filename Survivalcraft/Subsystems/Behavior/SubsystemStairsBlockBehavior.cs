@@ -95,8 +95,10 @@ public class SubsystemStairsBlockBehavior : SubsystemBlockBehavior
                 return;
             }
 
-            var data3 = StairsBlock.SetRotation(StairsBlock.SetCornerType(data, StairsBlock.CornerType.OneQuarter),
-                num2);
+            var data3 = StairsBlock.SetRotation(
+                StairsBlock.SetCornerType(data, StairsBlock.CornerType.OneQuarter),
+                num2
+            );
             var value3 = Terrain.ReplaceData(value, data3);
             SubsystemTerrain.ChangeCellNet(x, y, z, value3, updateModificationCounter);
 
@@ -203,8 +205,10 @@ public class SubsystemStairsBlockBehavior : SubsystemBlockBehavior
             return;
         }
 
-        var data5 = StairsBlock.SetRotation(StairsBlock.SetCornerType(data, StairsBlock.CornerType.ThreeQuarters),
-            num3);
+        var data5 = StairsBlock.SetRotation(
+            StairsBlock.SetCornerType(data, StairsBlock.CornerType.ThreeQuarters),
+            num3
+        );
         var value4 = Terrain.ReplaceData(value, data5);
         SubsystemTerrain.ChangeCellNet(x, y, z, value4, updateModificationCounter);
     }

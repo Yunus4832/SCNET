@@ -67,8 +67,14 @@ public class PaintParticleSystem : ParticleSystem<PaintParticleSystem.Particle>
             {
                 var position = particle.Position;
                 var vector = position + particle.Velocity * dt;
-                var terrainRaycastResult = _subsystemTerrain.Raycast(position, vector, false, true,
-                    (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable);
+                var terrainRaycastResult = _subsystemTerrain.Raycast(
+                    position,
+                    vector,
+                    false,
+                    true,
+                    (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
+                        .Collidable
+                );
                 if (terrainRaycastResult.HasValue)
                 {
                     particle.Velocity = Vector3.Zero;

@@ -31,9 +31,11 @@ public class NetNode
 
     public enum Stage
     {
-        NotConnected,
-        Bootstrapping,
-        Connected
+        NotConnected = 0,
+
+        Bootstrapping = 1,
+
+        Connected = 2
     }
 
     private const byte _verifyByte = 0x88;
@@ -47,25 +49,40 @@ public class NetNode
     public P2PRoomSettings P2PConfiguration => _p2p.Configuration;
 
     public P2PRoomStatus GetP2PStatus() => new(
-        _p2p.State, _p2p.DesiredEnabled, IsServer && _host is not null,
+        _p2p.State,
+        _p2p.DesiredEnabled,
+        IsServer && _host is not null,
         IsServer && GameManager.Project is not null,
-        _p2p.Configuration.ServiceName, _p2p.Configuration.ControlUrl,
-        _p2p.Configuration.Name, _p2p.Configuration.Description, _p2p.Configuration.IsPublic,
-        _p2p.Capacity, _p2p.Registration?.SessionId, _p2p.Registration?.JoinCode,
-        _p2p.LastError, _p2p.NextRetryAt);
+        _p2p.Configuration.ServiceName,
+        _p2p.Configuration.ControlUrl,
+        _p2p.Configuration.Name,
+        _p2p.Configuration.Description,
+        _p2p.Configuration.IsPublic,
+        _p2p.Capacity,
+        _p2p.Registration?.SessionId,
+        _p2p.Registration?.JoinCode,
+        _p2p.LastError,
+        _p2p.NextRetryAt
+    );
 
     public void StartP2P(P2PRoomSettings configuration) => _p2p.Start(configuration);
 
     public void StopP2P() => _p2p.Stop();
 
     private NetworkHost? _host;
+
     private CancellationTokenSource? _connectingCancellation;
+
     private Task<NetworkConnection>? _connecting;
+
     private ConnectionPreparation? _preparedPath;
+
     private Task? _pathClosing;
 
     public NetworkTarget? RemoteTarget { get; private set; }
+
     private readonly Dictionary<Guid, Client> _transportClients = new();
+
     private readonly List<(Client Client, Task Completion)> _deliveryReceipts = [];
 
     public bool IsTransportRunning => _host is not null;
@@ -127,7 +144,11 @@ public class NetNode
 
     public int ClientCount => Peers.Count() + 1;
 
-    private Client? ResolveSender(NetworkConnection? peer = null, NetworkConnectionRequest? request = null, IPEndPoint? endpoint = null)
+    private Client? ResolveSender(
+        NetworkConnection? peer = null,
+        NetworkConnectionRequest? request = null,
+        IPEndPoint? endpoint = null
+    )
     {
         if (peer is not null)
         {
@@ -136,8 +157,10 @@ public class NetNode
                 client = new Client(peer);
                 _transportClients.Add(peer.Id, client);
             }
+
             return client;
         }
+
         return request is not null ? new Client(request) : endpoint is not null ? new Client(endpoint) : null;
     }
 
@@ -462,15 +485,22 @@ public class NetNode
         {
             Log.Information($"Too Many Request And Reject Current Request:{request.TransportEndpoint}");
             Log.Information($"Current Pending Client:{PendingClient}");
-            SendWriterFromPackage(new ConnectionRejectPackage($"当前服务器连接请求太多，请稍候再试，等待客户端回应数{AgreeOnPendingPeer.Count}"),
-                request, true);
+            SendWriterFromPackage(
+                new ConnectionRejectPackage($"当前服务器连接请求太多，请稍候再试，等待客户端回应数{AgreeOnPendingPeer.Count}"),
+                request,
+                true
+            );
         }
         else
         {
             try
             {
                 var requestPackage =
-                    PackageManager.DecodePackage<ConnectionRequestPackage>(this, request.Handshake, ResolveSender(request: request));
+                    PackageManager.DecodePackage<ConnectionRequestPackage>(
+                        this,
+                        request.Handshake,
+                        ResolveSender(request: request)
+                    );
                 PackageDispatcher.Handle(requestPackage.Package, requestPackage.Context);
             }
             catch (Exception e)
@@ -505,11 +535,14 @@ public class NetNode
 
     private NetworkHost CreateHost(int port)
     {
-        var host = new NetworkHost(port, new NetworkHostOptions
-        {
-            ReuseAddress = true,
-            DisconnectTimeout = TimeSpan.FromMilliseconds(CommonLib.DisconnectTimeout)
-        });
+        var host = new NetworkHost(
+            port,
+            new NetworkHostOptions
+            {
+                ReuseAddress = true,
+                DisconnectTimeout = TimeSpan.FromMilliseconds(CommonLib.DisconnectTimeout)
+            }
+        );
         AttachHostEvents(host);
         return host;
     }
@@ -535,6 +568,7 @@ public class NetNode
         {
             throw new InvalidOperationException("已经开启服务器");
         }
+
         try
         {
             _isStopping = false;
@@ -542,12 +576,16 @@ public class NetNode
             _host = CreateHost(port);
             if (broadcastPort.HasValue)
             {
-                _broadcastHost = new NetworkHost(broadcastPort.Value, new NetworkHostOptions
-                {
-                    ReceiveBroadcasts = true
-                });
+                _broadcastHost = new NetworkHost(
+                    broadcastPort.Value,
+                    new NetworkHostOptions
+                    {
+                        ReceiveBroadcasts = true
+                    }
+                );
                 _broadcastHost.DatagramReceived += HandleBroadcastDatagram;
             }
+
             Log.Information($"开启服务器成功，端口 {_host.LocalPort}");
             Window.Frame += Update;
             Window.Closed += StopImmediate;
@@ -571,6 +609,7 @@ public class NetNode
         {
             throw new InvalidOperationException("连接已启动");
         }
+
         var transport = prepared.Consume();
         try
         {
@@ -583,9 +622,12 @@ public class NetNode
             AttachHostEvents(_host);
             _connectingCancellation = new CancellationTokenSource();
             TokenId = Guid.NewGuid();
-            var request = new ConnectionRequestPackage(TokenId, VersionsManager.ProtocolVersion,
+            var request = new ConnectionRequestPackage(
+                TokenId,
+                VersionsManager.ProtocolVersion,
                 SettingsManager.Current.MultiplayerClientId,
-                CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash);
+                CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash
+            );
             CurrentStage = Stage.Bootstrapping;
             CommonLib.WorkType = WorkType.Client;
             _connecting = _preparedPath.ConnectAsync(CreateUnconnectedPayload(request), _connectingCancellation.Token);
@@ -685,13 +727,16 @@ public class NetNode
                 {
                     // Closing cancels any unfinished attempt; the normal update path reports failures.
                 }
+
                 _connecting = null;
             }
+
             if (_preparedPath is not null)
             {
                 _pathClosing = _preparedPath.DisposeAsync().AsTask();
                 _preparedPath = null;
             }
+
             if (_pathClosing is not null)
             {
                 try
@@ -702,8 +747,10 @@ public class NetNode
                 {
                     Log.Warning($"Could not release connection preparation: {e.Message}");
                 }
+
                 _pathClosing = null;
             }
+
             RemoteTarget = null;
             _connectingCancellation?.Dispose();
             _connectingCancellation = null;
@@ -711,6 +758,7 @@ public class NetNode
             {
                 _ = receipt.Completion.Exception;
             }
+
             _deliveryReceipts.Clear();
             _transportClients.Clear();
         }
@@ -783,7 +831,11 @@ public class NetNode
         SendWriterFromPackages([package], null, null, endPoint, isSend);
     }
 
-    public void SendWriterFromPackage(IProtocolMessage package, NetworkConnection? netPeer, bool useDeliveryEvent = false)
+    public void SendWriterFromPackage(
+        IProtocolMessage package,
+        NetworkConnection? netPeer,
+        bool useDeliveryEvent = false
+    )
     {
         SendWriterFromPackages([package], netPeer, null, null, useDeliveryEvent);
     }
@@ -842,7 +894,11 @@ public class NetNode
             }
             else
             {
-                var receipt = netPeer.SendWithReceipt(w.Data.AsSpan(0, w.Length), transport.ChannelNumber, transport.Delivery);
+                var receipt = netPeer.SendWithReceipt(
+                    w.Data.AsSpan(0, w.Length),
+                    transport.ChannelNumber,
+                    transport.Delivery
+                );
                 _deliveryReceipts.Add((ResolveSender(peer: netPeer)!, receipt.Completion));
             }
 
@@ -910,8 +966,11 @@ public class NetNode
     private void UpdateTransport()
     {
         _p2p.Update();
-        if (_p2p.AutomaticPending && _p2p.State is P2PRoomState.Disabled &&
-            IsServer && GameManager.Project is { } project && CurrentModRuntime.Value is not null)
+        if (_p2p.AutomaticPending &&
+            _p2p.State is P2PRoomState.Disabled &&
+            IsServer &&
+            GameManager.Project is { } project &&
+            CurrentModRuntime.Value is not null)
         {
             _p2p.ConsumeAutomaticRequest();
             var result = CommandExecutor.ExecuteSystem(new StartP2PCommand(), project);
@@ -920,12 +979,14 @@ public class NetNode
                 Log.Warning($"Could not automatically start P2P room: {CommandText.Resolve(result)}");
             }
         }
+
         _host?.DispatchEvents();
         _broadcastHost?.DispatchEvents();
         if (_host?.Failure is { } failure)
         {
             Stop(failure.Message);
         }
+
         if (_connecting is { IsCompleted: true } connecting)
         {
             _connecting = null;
@@ -942,19 +1003,24 @@ public class NetNode
                 Stop(e.Message);
             }
         }
+
         if (_connecting is null && _preparedPath is not null)
         {
             _pathClosing = _preparedPath.DisposeAsync().AsTask();
             _preparedPath = null;
         }
+
         if (_pathClosing is { IsCompleted: true } closed)
         {
             _pathClosing = null;
             if (closed.IsFaulted)
             {
-                Log.Warning($"Could not release connection preparation: {closed.Exception!.GetBaseException().Message}");
+                Log.Warning(
+                    $"Could not release connection preparation: {closed.Exception!.GetBaseException().Message}"
+                );
             }
         }
+
         for (var index = _deliveryReceipts.Count - 1; index >= 0; index--)
         {
             var receipt = _deliveryReceipts[index];
@@ -962,6 +1028,7 @@ public class NetNode
             {
                 continue;
             }
+
             _deliveryReceipts.RemoveAt(index);
             if (receipt.Completion.IsCompletedSuccessfully)
             {
@@ -982,6 +1049,7 @@ public class NetNode
         {
             return writer.CopyData();
         }
+
         return NetDataWriter.FromString("连接已关闭").CopyData();
     }
 
@@ -1003,6 +1071,7 @@ public class NetNode
                 }
             }
         }
+
         return LanguageManager.GetContentWidgets("NetPlayScreen", $"Disconnect_{information.Reason}");
     }
 
@@ -1027,8 +1096,12 @@ public class NetNode
             var outboundPackage = packages[i];
             packages[i] = outboundPackage with
             {
-                Fanout = outboundPackage.Fanout ?? new NetworkMessageFanout(SendStatistics,
-                    outboundPackage.Package.GetType(), PackageTransportPolicy.Get(outboundPackage.Package).Channel)
+                Fanout = outboundPackage.Fanout ??
+                         new NetworkMessageFanout(
+                             SendStatistics,
+                             outboundPackage.Package.GetType(),
+                             PackageTransportPolicy.Get(outboundPackage.Package).Channel
+                         )
             };
         }
 
@@ -1078,8 +1151,10 @@ public class NetNode
         }
     }
 
-    private List<OutboundPackage> DequeueFlushablePackages(double now,
-        HashSet<NetworkChannel> flushedChannels)
+    private List<OutboundPackage> DequeueFlushablePackages(
+        double now,
+        HashSet<NetworkChannel> flushedChannels
+    )
     {
         var packages = new List<OutboundPackage>();
         for (var i = _pendingPackages.Count - 1; i >= 0; i--)
@@ -1114,7 +1189,8 @@ public class NetNode
         Client client,
         List<OutboundPackage> packages,
         bool checkClientState,
-        HashSet<OutboundPackage> deferredSnapshots)
+        HashSet<OutboundPackage> deferredSnapshots
+    )
     {
         if (client.Peer is not { IsConnected: true })
         {
@@ -1145,8 +1221,11 @@ public class NetNode
                 channelPackages.Add(outboundPackage);
             }
 
-            SendStatistics.RecordRouting(packages.Count, channelPackages.Count,
-                Stopwatch.GetTimestamp() - routingStarted);
+            SendStatistics.RecordRouting(
+                packages.Count,
+                channelPackages.Count,
+                Stopwatch.GetTimestamp() - routingStarted
+            );
 
             if (channelPackages.Count == 0 || transport == null)
             {
@@ -1174,7 +1253,8 @@ public class NetNode
     private List<OutboundPackage> SendPackageBatches(
         Client client,
         List<OutboundPackage> packages,
-        PackageTransport transport)
+        PackageTransport transport
+    )
     {
         var peer = client.Peer!;
         if (packages.Any(outboundPackage => IsTerrainChunkPackage(outboundPackage.Package)))
@@ -1208,7 +1288,11 @@ public class NetNode
                     {
                         var measurements = new List<(Type PackageType, int PayloadBytes)>();
                         var chunkWriter = CreatePackageWriter([chunk], transport, out _, measurements);
-                        peer.Send(chunkWriter.Data.AsSpan(0, chunkWriter.Length), transport.ChannelNumber, transport.Delivery);
+                        peer.Send(
+                            chunkWriter.Data.AsSpan(0, chunkWriter.Length),
+                            transport.ChannelNumber,
+                            transport.Delivery
+                        );
                         SendStatistics.Record(transport.Channel, chunkWriter.Length, measurements);
                     }
 
@@ -1230,8 +1314,12 @@ public class NetNode
         }
 
         var remainingMeasurements = new List<(Type PackageType, int PayloadBytes)>();
-        var writer = CreatePackageWriter(remainingPackages.Select(item => item.Package), transport, out var packetSize,
-            remainingMeasurements);
+        var writer = CreatePackageWriter(
+            remainingPackages.Select(item => item.Package),
+            transport,
+            out var packetSize,
+            remainingMeasurements
+        );
         if (packetSize <= maxPacketSize || CanFragment(transport.Delivery))
         {
             peer.Send(writer.Data.AsSpan(0, writer.Length), transport.ChannelNumber, transport.Delivery);
@@ -1240,6 +1328,7 @@ public class NetNode
             {
                 outboundPackage.Fanout!.DeliveredTo(client);
             }
+
             return [];
         }
 
@@ -1273,7 +1362,8 @@ public class NetNode
         Client client,
         List<OutboundPackage> packages,
         PackageTransport transport,
-        int maxPacketSize)
+        int maxPacketSize
+    )
     {
         var peer = client.Peer!;
         var deferredPackages = new List<OutboundPackage>();
@@ -1307,13 +1397,15 @@ public class NetNode
         {
             outboundPackage.Fanout!.DeliveredTo(client);
         }
+
         return deferredPackages;
     }
 
     internal List<SubsystemBodyPackage> SplitOversizedBodyPackage(
         SubsystemBodyPackage bodyPackage,
         PackageTransport transport,
-        int maxPacketSize)
+        int maxPacketSize
+    )
     {
         var chunks = new List<SubsystemBodyPackage>();
         var items = new List<SubsystemBodyPackage.BodyItem>();
@@ -1323,12 +1415,16 @@ public class NetNode
             items.Add(item);
             CreatePackageWriter([candidate], transport, out var chunkSize);
             if (chunkSize <= maxPacketSize) { continue; }
+
             items.RemoveAt(items.Count - 1);
             if (items.Count > 0) { chunks.Add(bodyPackage with { BodyList = items.ToArray() }); }
+
             items.Clear();
             items.Add(item);
         }
+
         if (items.Count > 0) { chunks.Add(bodyPackage with { BodyList = items.ToArray() }); }
+
         return chunks;
     }
 
@@ -1336,7 +1432,8 @@ public class NetNode
         Client client,
         List<OutboundPackage> packages,
         PackageTransport transport,
-        int maxPacketSize)
+        int maxPacketSize
+    )
     {
         if (packages.Count == 0)
         {
@@ -1345,12 +1442,18 @@ public class NetNode
 
         var measurements = new List<(Type PackageType, int PayloadBytes)>();
         var peer = client.Peer!;
-        var writer = CreatePackageWriter(packages.Select(item => item.Package), transport, out var packetSize, measurements);
+        var writer = CreatePackageWriter(
+            packages.Select(item => item.Package),
+            transport,
+            out var packetSize,
+            measurements
+        );
         if (packetSize > maxPacketSize)
         {
             Log.Error(
                 $"Dropping oversized {transport.Delivery} package batch " +
-                $"({packetSize}/{maxPacketSize} bytes): {string.Join(", ", packages.Select(p => p.Package.GetType().Name))}");
+                $"({packetSize}/{maxPacketSize} bytes): {string.Join(", ", packages.Select(p => p.Package.GetType().Name))}"
+            );
             return;
         }
 
@@ -1366,7 +1469,8 @@ public class NetNode
         IEnumerable<IProtocolMessage> packages,
         PackageTransport transport,
         out int packetSize,
-        List<(Type PackageType, int PayloadBytes)>? measurements = null)
+        List<(Type PackageType, int PayloadBytes)>? measurements = null
+    )
     {
         var packageList = packages as IReadOnlyCollection<IProtocolMessage> ?? packages.ToArray();
         var serializationStarted = Stopwatch.GetTimestamp();
@@ -1384,17 +1488,23 @@ public class NetNode
         var netWriter = CommonLib.GetWriter(
             writer,
             out var compressedSize,
-            GetCompressionPolicy(packageList, transport));
+            GetCompressionPolicy(packageList, transport)
+        );
         packetSize = compressedSize + sizeof(int);
-        SendStatistics.RecordEncoding(packageList.Count, writer.BaseStream.Length, netWriter.Length,
+        SendStatistics.RecordEncoding(
+            packageList.Count,
+            writer.BaseStream.Length,
+            netWriter.Length,
             serializationFinished - serializationStarted,
-            Stopwatch.GetTimestamp() - serializationFinished);
+            Stopwatch.GetTimestamp() - serializationFinished
+        );
         return netWriter;
     }
 
     private static CompressionPolicy GetCompressionPolicy(
         IEnumerable<IProtocolMessage> packages,
-        PackageTransport transport)
+        PackageTransport transport
+    )
     {
         if (transport.Mode != TransportMode.Reliable)
         {
@@ -1429,13 +1539,17 @@ public class NetNode
 
         Log.Warning(
             $"Deferred {_deferredSnapshotPackages} snapshot package(s) due to MTU budget. " +
-            $"Last: {package.GetType().Name} ({packetSize}/{maxPacketSize} bytes).");
+            $"Last: {package.GetType().Name} ({packetSize}/{maxPacketSize} bytes)."
+        );
         _deferredSnapshotPackages = 0;
         _lastSnapshotDropLogTime = now;
     }
 
-    private static bool CanSendPackageToClient(OutboundPackage outboundPackage, Client client,
-        bool checkClientState)
+    private static bool CanSendPackageToClient(
+        OutboundPackage outboundPackage,
+        Client client,
+        bool checkClientState
+    )
     {
         if (!outboundPackage.Audience.Includes(client))
         {

@@ -30,6 +30,7 @@ public static partial class ProtocolMessageCodec
                 {
                     throw new InvalidDataException("Unknown client connection state.");
                 }
+
                 return new ClientPackage(id, state);
             case ClientPackage.EventType.SyncList:
                 var count = reader.ReadByte();
@@ -43,6 +44,7 @@ public static partial class ProtocolMessageCodec
                         throw new InvalidDataException("Duplicate client ID.");
                     }
                 }
+
                 return new ClientPackage(clients);
             default:
                 throw new InvalidDataException("Unknown client message mode.");
@@ -66,19 +68,23 @@ public static partial class ProtocolMessageCodec
                 {
                     throw new ArgumentException("Unknown client state.");
                 }
+
                 writer.Write(client.ID);
                 writer.WriteEnum(client.State);
                 break;
             case ClientPackage.EventType.SyncList:
-                if (message.List.Count > byte.MaxValue || message.List.Select(item => item.ID).Distinct().Count() != message.List.Count)
+                if (message.List.Count > byte.MaxValue ||
+                    message.List.Select(item => item.ID).Distinct().Count() != message.List.Count)
                 {
                     throw new ArgumentException("Invalid client identity list.");
                 }
+
                 writer.Write((byte)message.List.Count);
                 foreach (var item in message.List)
                 {
                     WriteClientIdentity(item, writer);
                 }
+
                 break;
             default:
                 throw new ArgumentException("Unknown client message mode.");

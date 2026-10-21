@@ -62,7 +62,10 @@ public class PositionMarkStoreTest
         using var project = new Project();
         var players = new SubsystemPlayers();
         typeof(Subsystem).GetProperty(nameof(Subsystem.Project))!.SetValue(players, project);
-        typeof(Subsystem).GetField("_initialized", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(players, true);
+        typeof(Subsystem).GetField("_initialized", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
+            players,
+            true
+        );
         var guid = Guid.NewGuid();
         players.PublicMarks.Set("shared", new Vector3(1f));
         players.GetPrivateMarks(guid).Set("personal", new Vector3(2f));

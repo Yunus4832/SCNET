@@ -4,17 +4,23 @@ public static class Png
 {
     public enum Format
     {
-        RGBA8,
-        RGB8,
-        L8,
-        LA8,
-        Indexed
+        RGBA8 = 0,
+
+        RGB8 = 1,
+
+        L8 = 2,
+
+        LA8 = 3,
+
+        Indexed = 4
     }
 
     public struct PngInfo
     {
         public int Width;
+
         public int Height;
+
         public Format Format;
     }
 
@@ -27,11 +33,13 @@ public static class Png
         {
             throw new ArgumentException("PNG metadata inspection requires a seekable stream.", nameof(stream));
         }
+
         var info = ImageCodec.Identify(stream);
         if (info.Format != ImageFormat.Png)
         {
             throw new FormatException("Image format is not PNG.");
         }
+
         var position = stream.Position;
         Span<byte> header = stackalloc byte[26];
         try
@@ -42,6 +50,7 @@ public static class Png
         {
             stream.Position = position;
         }
+
         return new PngInfo
         {
             Width = info.Width,
@@ -66,6 +75,7 @@ public static class Png
         {
             throw new NotSupportedException("PNG encoding supports RGB8 and RGBA8 pixels.");
         }
+
         ImageCodec.Encode(image.Buffer, stream, ImageFormat.Png, format == Format.RGBA8);
     }
 }

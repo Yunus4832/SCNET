@@ -29,26 +29,30 @@ public sealed class ModProfileManagerTest : IDisposable
     [Fact]
     public void LoadEffectiveProfilePrefersSessionProfile()
     {
-        SaveGlobalProfile("""
-                          <ModProfile Id="global">
-                            <Packages>
-                              <Package ModId="global.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
-                            </Packages>
-                          </ModProfile>
-                          """);
-        ModProfileManager.SaveSessionProfile(new ModProfile
-        {
-            Id = "session-a",
-            Packages =
-            [
-                new ModPackageRequirement
-                {
-                    ModId = "session.mod",
-                    Version = "2.0.0",
-                    PackageHash = _packageHash
-                }
-            ]
-        });
+        SaveGlobalProfile(
+            """
+            <ModProfile Id="global">
+              <Packages>
+                <Package ModId="global.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
+              </Packages>
+            </ModProfile>
+            """
+        );
+        ModProfileManager.SaveSessionProfile(
+            new ModProfile
+            {
+                Id = "session-a",
+                Packages =
+                [
+                    new ModPackageRequirement
+                    {
+                        ModId = "session.mod",
+                        Version = "2.0.0",
+                        PackageHash = _packageHash
+                    }
+                ]
+            }
+        );
 
         var profile = ModProfileManager.LoadEffectiveProfile("session-a");
 
@@ -64,34 +68,45 @@ public sealed class ModProfileManagerTest : IDisposable
     [InlineData(true)]
     public void RemoteServerSessionProfileDoesNotMergeGlobalProfile(bool invitation)
     {
-        SaveGlobalProfile("""
-                          <ModProfile Id="global">
-                            <Packages>
-                              <Package ModId="global.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
-                            </Packages>
-                          </ModProfile>
-                          """);
-        ModProfileManager.SaveSessionProfile(new ModProfile
-        {
-            Id = "remote-session",
-            Packages =
-            [
-                new ModPackageRequirement
-                {
-                    ModId = "server.mod",
-                    Version = "2.0.0",
-                    PackageHash = _packageHash
-                }
-            ]
-        });
+        SaveGlobalProfile(
+            """
+            <ModProfile Id="global">
+              <Packages>
+                <Package ModId="global.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
+              </Packages>
+            </ModProfile>
+            """
+        );
+        ModProfileManager.SaveSessionProfile(
+            new ModProfile
+            {
+                Id = "remote-session",
+                Packages =
+                [
+                    new ModPackageRequirement
+                    {
+                        ModId = "server.mod",
+                        Version = "2.0.0",
+                        PackageHash = _packageHash
+                    }
+                ]
+            }
+        );
 
-        var profile = ModProfileManager.LoadEffectiveProfile("remote-session", new SessionInfo
-        {
-            Target = SessionTarget.RemoteServer,
-            RemoteTarget = invitation
-                ? new InvitationSessionNetworkTarget(new Uri("https://signal.example/"), Guid.NewGuid(), RelayPolicy.Required)
-                : new AddressNetworkTarget("127.0.0.1", 28887)
-        });
+        var profile = ModProfileManager.LoadEffectiveProfile(
+            "remote-session",
+            new SessionInfo
+            {
+                Target = SessionTarget.RemoteServer,
+                RemoteTarget = invitation
+                    ? new InvitationSessionNetworkTarget(
+                        new Uri("https://signal.example/"),
+                        Guid.NewGuid(),
+                        RelayPolicy.Required
+                    )
+                    : new AddressNetworkTarget("127.0.0.1", 28887)
+            }
+        );
 
         Assert.Equal("remote-session", profile.Id);
         var package = Assert.Single(profile.Packages);
@@ -103,19 +118,21 @@ public sealed class ModProfileManagerTest : IDisposable
     [Fact]
     public void LoadSessionProfileReturnsModProfile()
     {
-        ModProfileManager.SaveSessionProfile(new ModProfile
-        {
-            Id = "session-b",
-            Packages =
-            [
-                new ModPackageRequirement
-                {
-                    ModId = "session.mod",
-                    Version = "2.0.0",
-                    PackageHash = _packageHash
-                }
-            ]
-        });
+        ModProfileManager.SaveSessionProfile(
+            new ModProfile
+            {
+                Id = "session-b",
+                Packages =
+                [
+                    new ModPackageRequirement
+                    {
+                        ModId = "session.mod",
+                        Version = "2.0.0",
+                        PackageHash = _packageHash
+                    }
+                ]
+            }
+        );
 
         var profile = ModProfileManager.LoadSessionProfile("session-b");
 
@@ -140,19 +157,22 @@ public sealed class ModProfileManagerTest : IDisposable
     public void SaveWorldProfileUsesWorldDirectorySidecar()
     {
         var worldDirectoryName = CreateWorldDirectory("WorldSidecar", ModProfileResolutionStrategy.WorldOnly);
-        ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
-        {
-            Id = "ignored",
-            Packages =
-            [
-                new ModPackageRequirement
-                {
-                    ModId = "world.mod",
-                    Version = "1.0.0",
-                    PackageHash = _packageHash
-                }
-            ]
-        });
+        ModProfileManager.SaveWorldProfile(
+            worldDirectoryName,
+            new ModProfile
+            {
+                Id = "ignored",
+                Packages =
+                [
+                    new ModPackageRequirement
+                    {
+                        ModId = "world.mod",
+                        Version = "1.0.0",
+                        PackageHash = _packageHash
+                    }
+                ]
+            }
+        );
 
         var path = ModProfileManager.GetWorldProfilePath(worldDirectoryName);
         using var stream = Storage.OpenFile(path, OpenFileMode.Read);
@@ -167,24 +187,30 @@ public sealed class ModProfileManagerTest : IDisposable
     {
         DeleteIfExists(ModProfileManager.GlobalProfilePath);
         var worldDirectoryName = CreateWorldDirectory("WorldOnly", ModProfileResolutionStrategy.WorldOnly);
-        ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
-        {
-            Packages =
-            [
-                new ModPackageRequirement
-                {
-                    ModId = "world.mod",
-                    Version = "2.0.0",
-                    PackageHash = _packageHash
-                }
-            ]
-        });
+        ModProfileManager.SaveWorldProfile(
+            worldDirectoryName,
+            new ModProfile
+            {
+                Packages =
+                [
+                    new ModPackageRequirement
+                    {
+                        ModId = "world.mod",
+                        Version = "2.0.0",
+                        PackageHash = _packageHash
+                    }
+                ]
+            }
+        );
 
-        var profile = ModProfileManager.LoadEffectiveProfile("missing-session", new SessionInfo
-        {
-            Target = SessionTarget.World,
-            World = "WorldOnly"
-        });
+        var profile = ModProfileManager.LoadEffectiveProfile(
+            "missing-session",
+            new SessionInfo
+            {
+                Target = SessionTarget.World,
+                World = "WorldOnly"
+            }
+        );
 
         var package = Assert.Single(profile.Packages);
         Assert.Equal("world.mod", package.ModId);
@@ -206,25 +232,32 @@ public sealed class ModProfileManagerTest : IDisposable
         var worldDirectoryName = CreateWorldDirectory(
             "VisibleWorldName",
             ModProfileResolutionStrategy.WorldOnly,
-            directoryName: "HiddenDirectoryName");
-        ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
-        {
-            Packages =
-            [
-                new ModPackageRequirement
-                {
-                    ModId = "world.mod",
-                    Version = "5.0.0",
-                    PackageHash = _packageHash
-                }
-            ]
-        });
+            directoryName: "HiddenDirectoryName"
+        );
+        ModProfileManager.SaveWorldProfile(
+            worldDirectoryName,
+            new ModProfile
+            {
+                Packages =
+                [
+                    new ModPackageRequirement
+                    {
+                        ModId = "world.mod",
+                        Version = "5.0.0",
+                        PackageHash = _packageHash
+                    }
+                ]
+            }
+        );
 
-        var profile = ModProfileManager.LoadEffectiveProfile("missing-session", new SessionInfo
-        {
-            Target = SessionTarget.World,
-            World = "VisibleWorldName"
-        });
+        var profile = ModProfileManager.LoadEffectiveProfile(
+            "missing-session",
+            new SessionInfo
+            {
+                Target = SessionTarget.World,
+                World = "VisibleWorldName"
+            }
+        );
 
         var package = Assert.Single(profile.Packages);
         Assert.Equal("world.mod", package.ModId);
@@ -234,61 +267,72 @@ public sealed class ModProfileManagerTest : IDisposable
     [Fact]
     public void LoadEffectiveProfileMergesGlobalAndWorldProfileAccordingToStrategy()
     {
-        SaveGlobalProfile("""
-                          <ModProfile Id="global">
-                            <Packages>
-                              <Package ModId="shared.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
-                              <Package ModId="global.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
-                            </Packages>
-                          </ModProfile>
-                          """);
+        SaveGlobalProfile(
+            """
+            <ModProfile Id="global">
+              <Packages>
+                <Package ModId="shared.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
+                <Package ModId="global.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
+              </Packages>
+            </ModProfile>
+            """
+        );
         var worldDirectoryName = CreateWorldDirectory("WorldMerge", ModProfileResolutionStrategy.GlobalPlusWorld);
-        ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
-        {
-            Packages =
-            [
-                new ModPackageRequirement
-                {
-                    ModId = "shared.mod",
-                    Version = "2.0.0",
-                    PackageHash = _packageHash
-                },
-                new ModPackageRequirement
-                {
-                    ModId = "world.mod",
-                    Version = "1.0.0",
-                    PackageHash = _packageHash
-                }
-            ]
-        });
+        ModProfileManager.SaveWorldProfile(
+            worldDirectoryName,
+            new ModProfile
+            {
+                Packages =
+                [
+                    new ModPackageRequirement
+                    {
+                        ModId = "shared.mod",
+                        Version = "2.0.0",
+                        PackageHash = _packageHash
+                    },
+                    new ModPackageRequirement
+                    {
+                        ModId = "world.mod",
+                        Version = "1.0.0",
+                        PackageHash = _packageHash
+                    }
+                ]
+            }
+        );
 
-        var profile = ModProfileManager.LoadEffectiveProfile("missing-session", new SessionInfo
-        {
-            Target = SessionTarget.World,
-            World = "WorldMerge"
-        });
+        var profile = ModProfileManager.LoadEffectiveProfile(
+            "missing-session",
+            new SessionInfo
+            {
+                Target = SessionTarget.World,
+                World = "WorldMerge"
+            }
+        );
 
         Assert.Equal(
             ["global.mod:1.0.0", "shared.mod:2.0.0", "world.mod:1.0.0"],
-            profile.Packages.Select(package => $"{package.ModId}:{package.Version}").OrderBy(x => x));
+            profile.Packages.Select(package => $"{package.ModId}:{package.Version}").OrderBy(x => x)
+        );
     }
 
     [Fact]
     public void SaveSessionProfileUsesDedicatedSessionRoot()
     {
-        ModProfileManager.SaveSessionProfile(new ModProfile
-        {
-            Id = "session-c",
-            Packages =
-            [
-                new ModPackageRequirement
-                {
-                    ModId = "session.mod",
-                    Version = "3.0.0",
-                    PackageHash = _packageHash
-                }
-            ]
-        });
+        ModProfileManager.SaveSessionProfile(
+            new ModProfile
+            {
+                Id = "session-c",
+                Packages =
+                [
+                    new ModPackageRequirement
+                    {
+                        ModId = "session.mod",
+                        Version = "3.0.0",
+                        PackageHash = _packageHash
+                    }
+                ]
+            }
+        );
 
         var path = Storage.CombinePaths(GamePaths.Config, "SessionProfiles", "session-c.xml");
         using var stream = Storage.OpenFile(path, OpenFileMode.Read);
@@ -301,19 +345,21 @@ public sealed class ModProfileManagerTest : IDisposable
     [Fact]
     public void SaveSessionProfileWritesPackageHash()
     {
-        ModProfileManager.SaveSessionProfile(new ModProfile
-        {
-            Id = "session-with-hash",
-            Packages =
-            [
-                new ModPackageRequirement
-                {
-                    ModId = "session.mod",
-                    Version = "3.0.0",
-                    PackageHash = _packageHash
-                }
-            ]
-        });
+        ModProfileManager.SaveSessionProfile(
+            new ModProfile
+            {
+                Id = "session-with-hash",
+                Packages =
+                [
+                    new ModPackageRequirement
+                    {
+                        ModId = "session.mod",
+                        Version = "3.0.0",
+                        PackageHash = _packageHash
+                    }
+                ]
+            }
+        );
 
         var path = Storage.CombinePaths(GamePaths.Config, "SessionProfiles", "session-with-hash.xml");
         using var stream = Storage.OpenFile(path, OpenFileMode.Read);
@@ -328,13 +374,15 @@ public sealed class ModProfileManagerTest : IDisposable
     [Fact]
     public void LoadGlobalProfileRequiresPackageHashAttribute()
     {
-        SaveGlobalProfile("""
-                          <ModProfile Id="global">
-                            <Packages>
-                              <Package ModId="legacy.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
-                            </Packages>
-                          </ModProfile>
-                          """);
+        SaveGlobalProfile(
+            """
+            <ModProfile Id="global">
+              <Packages>
+                <Package ModId="legacy.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
+              </Packages>
+            </ModProfile>
+            """
+        );
 
         var profile = ModProfileManager.LoadGlobalProfile();
 
@@ -383,7 +431,8 @@ public sealed class ModProfileManagerTest : IDisposable
     private static string CreateWorldDirectory(
         string worldName,
         ModProfileResolutionStrategy strategy,
-        string? directoryName = null)
+        string? directoryName = null
+    )
     {
         using var runtime = GameModRuntime.Start();
         runtime.InitializeDatabase();
@@ -428,7 +477,9 @@ public sealed class ModProfileManagerTest : IDisposable
     private sealed class FileBackup : IDisposable
     {
         private readonly string _path;
+
         private readonly string _backupPath;
+
         private readonly bool _hadOriginal;
 
         private FileBackup(string path, string backupPath, bool hadOriginal)
@@ -470,7 +521,9 @@ public sealed class ModProfileManagerTest : IDisposable
     private sealed class DirectoryBackup : IDisposable
     {
         private readonly string _path;
+
         private readonly string _backupPath;
+
         private readonly bool _hadOriginal;
 
         private DirectoryBackup(string path, string backupPath, bool hadOriginal)
@@ -534,7 +587,8 @@ public sealed class ModProfileManagerTest : IDisposable
         {
             CopyDirectory(
                 Storage.CombinePaths(source, directory),
-                Storage.CombinePaths(destination, directory));
+                Storage.CombinePaths(destination, directory)
+            );
         }
     }
 

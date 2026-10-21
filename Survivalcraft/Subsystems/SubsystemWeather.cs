@@ -171,8 +171,13 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                     continue;
                 }
 
-                var precipitationShaftParticleSystem = new PrecipitationShaftParticleSystem(camera.GameWidget, this,
-                    _random, point2, GetPrecipitationShaftInfo(point2.X, point2.Y).Type);
+                var precipitationShaftParticleSystem = new PrecipitationShaftParticleSystem(
+                    camera.GameWidget,
+                    this,
+                    _random,
+                    point2,
+                    GetPrecipitationShaftInfo(point2.X, point2.Y).Type
+                );
                 _subsystemParticles.AddParticleSystem(precipitationShaftParticleSystem);
                 activeShafts.Add(point2, precipitationShaftParticleSystem);
             }
@@ -185,7 +190,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
     public void Update(float dt)
     {
         if (_subsystemGameInfo.TotalElapsedGameTime > PrecipitationEndTime)
-        //客户端禁用天气生成
+            //客户端禁用天气生成
         {
             if (CommonLib.WorkType != WorkType.Client)
             {
@@ -218,9 +223,13 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
             }
         }
 
-        var num = (float)MathUtils.Max(0.0,
-            MathUtils.Min(_subsystemGameInfo.TotalElapsedGameTime - PrecipitationStartTime,
-                PrecipitationEndTime - _subsystemGameInfo.TotalElapsedGameTime));
+        var num = (float)MathUtils.Max(
+            0.0,
+            MathUtils.Min(
+                _subsystemGameInfo.TotalElapsedGameTime - PrecipitationStartTime,
+                PrecipitationEndTime - _subsystemGameInfo.TotalElapsedGameTime
+            )
+        );
         PrecipitationIntensity = _subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled
             ? MathUtils.Saturate(num * 0.04f)
             : 0f;
@@ -308,8 +317,13 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
             _targetRainSoundVolume = MathUtils.Saturate(1.5f * num4 / _rainVolumeFactor);
         }
 
-        _rainSound.Volume = MathUtils.Saturate(MathUtils.Lerp(_rainSound.Volume,
-            SettingsManager.Current.SoundsVolume * _targetRainSoundVolume, 5f * dt));
+        _rainSound.Volume = MathUtils.Saturate(
+            MathUtils.Lerp(
+                _rainSound.Volume,
+                SettingsManager.Current.SoundsVolume * _targetRainSoundVolume,
+                5f * dt
+            )
+        );
         if (_rainSound.Volume > AudioManager.MinAudibleVolume)
         {
             _rainSound.Play();
@@ -447,7 +461,8 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                 FogProgress = 0f;
 
                 Log.Information(
-                    $"雾气信息: 开始时间={FogStartTime}, 结束={FogEndTime},当前时间={_subsystemGameInfo.TotalElapsedGameTime}");
+                    $"雾气信息: 开始时间={FogStartTime}, 结束={FogEndTime},当前时间={_subsystemGameInfo.TotalElapsedGameTime}"
+                );
 
                 if (CommonLib.WorkType == WorkType.Server)
                 {
@@ -521,7 +536,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
             }
         }
 
-        _subsystemBlocksScanner.ScanningChunkCompleted += delegate (TerrainChunk chunk)
+        _subsystemBlocksScanner.ScanningChunkCompleted += delegate(TerrainChunk chunk)
         {
             if (_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode == EnvironmentBehaviorMode.Living)
             {
@@ -557,8 +572,12 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         return value;
     }
 
-    public void FreezeThawAndDepositSnow(TerrainChunk chunk, float freezeProbability, float thawProbability,
-        bool forceDepositSnow)
+    public void FreezeThawAndDepositSnow(
+        TerrainChunk chunk,
+        float freezeProbability,
+        float thawProbability,
+        bool forceDepositSnow
+    )
     {
         if (_shuffledOrder.Length == 0)
         {
@@ -585,17 +604,22 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                     continue;
                 }
 
-                if (num4 == 18 && SubsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(num5, num7) >
+                if (num4 == 18 &&
+                    SubsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(num5, num7) >
                     -35f)
                 {
                     var cellContents = terrain.GetCellContents(num5 + 1, num6, num7);
                     var cellContents2 = terrain.GetCellContents(num5 - 1, num6, num7);
                     var cellContents3 = terrain.GetCellContents(num5, num6, num7 - 1);
                     var cellContents4 = terrain.GetCellContents(num5, num6, num7 + 1);
-                    var num8 = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents] == null && cellContents != 0;
-                    var flag = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents2] == null && cellContents2 != 0;
-                    var flag2 = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents3] == null && cellContents3 != 0;
-                    var flag3 = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents4] == null && cellContents4 != 0;
+                    var num8 = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents] == null &&
+                               cellContents != 0;
+                    var flag = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents2] == null &&
+                               cellContents2 != 0;
+                    var flag2 = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents3] == null &&
+                                cellContents3 != 0;
+                    var flag3 = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents4] == null &&
+                                cellContents4 != 0;
                     if (num8 || flag || flag2 || flag3)
                     {
                         SubsystemTerrain.ChangeCell(num5, num6, num7, Terrain.MakeBlockValue(62));

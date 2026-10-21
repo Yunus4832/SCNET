@@ -6,6 +6,7 @@ namespace Game.Subsystems;
 public class SubsystemNoise : Subsystem
 {
     private readonly DynamicArray<ComponentBody> _componentBodies = new();
+
     private SubsystemBodies _subsystemBodies = null!;
 
     public void MakeNoise(Vector3 position, float loudness, float range)

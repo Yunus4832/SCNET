@@ -22,10 +22,13 @@ public sealed class BeaconElectricElement(SubsystemElectricity electricity, Cell
             if (connection.ConnectorType != ElectricConnectorType.Output &&
                 connection.NeighborConnectorType != ElectricConnectorType.Input)
             {
-                voltage = Math.Max(voltage,
-                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                voltage = Math.Max(
+                    voltage,
+                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                );
             }
         }
+
         var point = CellFaces[0].Point;
         var terrain = SubsystemElectricity.SubsystemTerrain;
         var value = terrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
@@ -35,6 +38,7 @@ public sealed class BeaconElectricElement(SubsystemElectricity electricity, Cell
         {
             terrain.ChangeCell(point.X, point.Y, point.Z, Terrain.ReplaceData(value, next));
         }
+
         return false;
     }
 
@@ -43,8 +47,12 @@ public sealed class BeaconElectricElement(SubsystemElectricity electricity, Cell
         var point = CellFaces[0].Point;
         var terrain = SubsystemElectricity.SubsystemTerrain;
         var value = terrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
-        terrain.ChangeCell(point.X, point.Y, point.Z,
-            Terrain.ReplaceData(value, BeaconBlock.CycleColor(Terrain.ExtractData(value))));
+        terrain.ChangeCell(
+            point.X,
+            point.Y,
+            point.Z,
+            Terrain.ReplaceData(value, BeaconBlock.CycleColor(Terrain.ExtractData(value)))
+        );
         SubsystemElectricity.SubsystemAudio.PlaySound("Audio/Click", 1, 0, new Vector3(point), 2, true);
         return true;
     }

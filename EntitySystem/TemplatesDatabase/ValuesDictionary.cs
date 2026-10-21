@@ -26,11 +26,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
         set;
     } = null!;
 
-    public object this[string key]
-    {
-        get => GetValue<object>(key);
-        set => SetValue(key, value);
-    }
+    public object this[string key] { get => GetValue<object>(key); set => SetValue(key, value); }
 
     public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
     {
@@ -111,9 +107,14 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
             {
                 var node3 = XmlUtils.AddElement(node, "Value");
                 XmlUtils.SetAttributeValue(node3, "Name", item.Key);
-                XmlUtils.SetAttributeValue(node3, "Type",
-                    TypeCache.GetShortTypeName(item.Value.GetType().FullName ??
-                                               throw new InvalidOperationException("Can not get type FullName")));
+                XmlUtils.SetAttributeValue(
+                    node3,
+                    "Type",
+                    TypeCache.GetShortTypeName(
+                        item.Value.GetType().FullName ??
+                        throw new InvalidOperationException("Can not get type FullName")
+                    )
+                );
                 XmlUtils.SetAttributeValue(node3, "Value", item.Value);
             }
         }
@@ -181,7 +182,8 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                     if (value == null)
                     {
                         throw new InvalidOperationException(
-                            $"Type of override \"{attributeValue}\" cannot be determined.");
+                            $"Type of override \"{attributeValue}\" cannot be determined."
+                        );
                     }
 
                     type = value.GetType();
@@ -199,7 +201,8 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 if (!(item.Name == "Values"))
                 {
                     throw new InvalidOperationException(
-                        $"Unrecognized element \"{item.Name}\" in values dictionary overrides XML.");
+                        $"Unrecognized element \"{item.Name}\" in values dictionary overrides XML."
+                    );
                 }
 
                 var attributeValue4 = XmlUtils.GetAttributeValue<string>(item, "Name");
@@ -217,8 +220,10 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
     public void ApplyOverridesUseMessagePack(byte[] messagePackData)
     {
         var dynamicModel =
-            MessagePackSerializer.Deserialize<IDictionary<object, object>>(messagePackData,
-                ContractlessStandardResolver.Options);
+            MessagePackSerializer.Deserialize<IDictionary<object, object>>(
+                messagePackData,
+                ContractlessStandardResolver.Options
+            );
         try
         {
             ApplyOverridesUseDictionary(dynamicModel);
@@ -317,8 +322,10 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 {
                     dictionary[item.Key] = new[]
                     {
-                        TypeCache.GetShortTypeName(item.Value.GetType().FullName ??
-                                                   throw new InvalidOperationException("Can not get type FullName")),
+                        TypeCache.GetShortTypeName(
+                            item.Value.GetType().FullName ??
+                            throw new InvalidOperationException("Can not get type FullName")
+                        ),
                         item.Value
                     };
                 }
@@ -326,8 +333,10 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 {
                     dictionary[item.Key] = new object[]
                     {
-                        TypeCache.GetShortTypeName(item.Value.GetType().FullName ??
-                                                   throw new InvalidOperationException("Can not  get type FullName")),
+                        TypeCache.GetShortTypeName(
+                            item.Value.GetType().FullName ??
+                            throw new InvalidOperationException("Can not  get type FullName")
+                        ),
                         HumanReadableConverter.ConvertToString(item.Value)
                     };
                 }

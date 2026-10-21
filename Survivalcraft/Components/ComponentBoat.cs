@@ -50,8 +50,10 @@ public class ComponentBoat : Component, IUpdateable
         var num2 = !num && _componentBody is { ImmersionFactor: > 0.01f, StandingOnValue: null, StandingOnBody: null };
         _turnSpeed += 2.5f * _subsystemTime.GameTimeDelta * (1f * TurnOrder - _turnSpeed);
         var rotation = _componentBody.Rotation;
-        var num3 = MathUtils.Atan2(2f * rotation.Y * rotation.W - 2f * rotation.X * rotation.Z,
-            1f - 2f * rotation.Y * rotation.Y - 2f * rotation.Z * rotation.Z);
+        var num3 = MathUtils.Atan2(
+            2f * rotation.Y * rotation.W - 2f * rotation.X * rotation.Z,
+            1f - 2f * rotation.Y * rotation.Y - 2f * rotation.Z * rotation.Z
+        );
         if (num2)
         {
             num3 -= _turnSpeed * dt;

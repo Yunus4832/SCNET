@@ -9,7 +9,8 @@ public static class ModRestartHelper
         ModProfile? requiredProfile,
         IReadOnlyList<ContentRepository> temporaryRepositories,
         CancellationToken cancellationToken,
-        Action<string>? log = null)
+        Action<string>? log = null
+    )
     {
         ArgumentNullException.ThrowIfNull(remoteSession);
         cancellationToken.ThrowIfCancellationRequested();
@@ -21,8 +22,11 @@ public static class ModRestartHelper
 
         var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, requiredProfile);
         var scopeId = Guid.NewGuid();
-        var context = ContentSourceContext.Session(scopeId, temporaryRepositories,
-            ContentRepositoryManager.Current.Snapshot());
+        var context = ContentSourceContext.Session(
+            scopeId,
+            temporaryRepositories,
+            ContentRepositoryManager.Current.Snapshot()
+        );
         bool downloadedAny;
         try
         {
@@ -32,12 +36,14 @@ public static class ModRestartHelper
                                 Storage.GetSystemPath(GamePaths.ContentPackageCache),
                                 context,
                                 log,
-                                cancellationToken);
+                                cancellationToken
+                            );
         }
         finally
         {
             ContentServerClientPool.Shared.RemoveScope(scopeId);
         }
+
         cancellationToken.ThrowIfCancellationRequested();
         if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile))
         {
@@ -47,12 +53,14 @@ public static class ModRestartHelper
         return RemoteModSessionPreparation.RestartRequired(
             remoteSession,
             sessionProfile,
-            CreateRestartReason(sessionProfile, downloadedAny));
+            CreateRestartReason(sessionProfile, downloadedAny)
+        );
     }
 
     public static RemoteModSessionPreparation PrepareWorldSession(
         WorldInfo worldInfo,
-        Action<string>? log = null)
+        Action<string>? log = null
+    )
     {
         ArgumentNullException.ThrowIfNull(worldInfo);
 
@@ -67,7 +75,8 @@ public static class ModRestartHelper
                             ModProfileResolver.EnsurePackagesAvailable(
                                 desiredProfile,
                                 Storage.GetSystemPath(GamePaths.ContentPackageCache),
-                                log);
+                                log
+                            );
         if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, desiredProfile))
         {
             return RemoteModSessionPreparation.Ready();
@@ -76,7 +85,8 @@ public static class ModRestartHelper
         return RemoteModSessionPreparation.RestartRequired(
             worldSession,
             sessionProfile,
-            CreateWorldRestartReason(desiredProfile, downloadedAny));
+            CreateWorldRestartReason(desiredProfile, downloadedAny)
+        );
     }
 
     private static string CreateRestartReason(ModProfile profile, bool downloadedAny)
@@ -116,7 +126,8 @@ public sealed class RemoteModSessionPreparation
         bool requiresRestart,
         SessionInfo? remoteSession,
         ModProfile? sessionProfile,
-        string restartReason)
+        string restartReason
+    )
     {
         RequiresRestart = requiresRestart;
         RemoteSession = remoteSession;
@@ -140,7 +151,8 @@ public sealed class RemoteModSessionPreparation
     public static RemoteModSessionPreparation RestartRequired(
         SessionInfo remoteSession,
         ModProfile sessionProfile,
-        string restartReason)
+        string restartReason
+    )
     {
         return new RemoteModSessionPreparation(true, remoteSession, sessionProfile, restartReason);
     }

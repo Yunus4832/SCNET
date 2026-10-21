@@ -19,7 +19,8 @@ namespace ContentServer.Endpoints.Publisher.Servers;
 [AllowAnonymous]
 public sealed class PublisherDisableServerEndpoint(
     IMediator mediator,
-    ApiKeyAuthenticationContext authenticationContext) : ContentEndpoint
+    ApiKeyAuthenticationContext authenticationContext
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -39,8 +40,14 @@ public sealed class PublisherDisableServerEndpoint(
             throw new KnownException("publisher_not_active", StatusCodes.Status403Forbidden);
         }
 
-        var result = await mediator.Send(new SetPublisherDirectoryServerEnabledCommand(new DirectoryServerId(id),
-            publisher.PublisherId, enabled), cancellationToken);
+        var result = await mediator.Send(
+            new SetPublisherDirectoryServerEnabledCommand(
+                new DirectoryServerId(id),
+                publisher.PublisherId,
+                enabled
+            ),
+            cancellationToken
+        );
         if (result == SetDirectoryServerStateResult.NotFound)
         {
             throw new KnownException("server_not_found", StatusCodes.Status404NotFound);
@@ -57,8 +64,9 @@ public sealed class PublisherDisableServerEndpoint(
     private async Task<PublisherDto> RequirePublisherAsync(CancellationToken cancellationToken)
     {
         return await mediator.Send(
-            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
-            cancellationToken
-        ) ?? throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
+                   new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                   cancellationToken
+               ) ??
+               throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
     }
 }

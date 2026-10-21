@@ -220,7 +220,8 @@ public class TerrainSerializer129 : IDisposable
             {
                 for (var l = 0; l < 16; l++)
                 {
-                    intBufferForShafts[shaftIndex] = (int)_terrain.GetShaftValue(k + chunk.Origin.X, l + chunk.Origin.Y);
+                    intBufferForShafts[shaftIndex] =
+                        (int)_terrain.GetShaftValue(k + chunk.Origin.X, l + chunk.Origin.Y);
                     shaftIndex++;
                 }
             }

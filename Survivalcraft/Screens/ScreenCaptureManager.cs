@@ -27,14 +27,14 @@ public static class ScreenCaptureManager
             switch (SettingsManager.Current.ScreenshotSize)
             {
                 case ScreenshotSize.ScreenSize:
-                    {
-                        num = MathUtils.Max(Window.ScreenSize.X, Window.ScreenSize.Y);
-                        height = MathUtils.Min(Window.ScreenSize.X, Window.ScreenSize.Y);
-                        var num2 = num / (float)height;
-                        num = MathUtils.Min(num, 2048);
-                        height = (int)MathUtils.Round(num / num2);
-                        break;
-                    }
+                {
+                    num = MathUtils.Max(Window.ScreenSize.X, Window.ScreenSize.Y);
+                    height = MathUtils.Min(Window.ScreenSize.X, Window.ScreenSize.Y);
+                    var num2 = num / (float)height;
+                    num = MathUtils.Min(num, 2048);
+                    height = (int)MathUtils.Round(num / num2);
+                    break;
+                }
                 case ScreenshotSize.FullHD:
                     num = 1920;
                     height = 1080;
@@ -46,8 +46,11 @@ public static class ScreenCaptureManager
             }
 
             var now = DateTime.Now;
-            Capture(num, height,
-                $"Survivalcraft {now.Year:D4}-{now.Month:D2}-{now.Day:D2} {now.Hour:D2}-{now.Minute:D2}-{now.Second:D2}.png");
+            Capture(
+                num,
+                height,
+                $"Survivalcraft {now.Year:D4}-{now.Month:D2}-{now.Day:D2} {now.Hour:D2}-{now.Minute:D2}-{now.Second:D2}.png"
+            );
             _successHandler.Invoke();
             GC.Collect();
         }
@@ -128,15 +131,20 @@ public static class ScreenCaptureManager
         }
 
         var image = new Image(renderTarget2D.Width, renderTarget2D.Height);
-        renderTarget2D.GetData(image.Pixels, 0,
-            new Rectangle(0, 0, renderTarget2D.Width, renderTarget2D.Height));
+        renderTarget2D.GetData(
+            image.Pixels,
+            0,
+            new Rectangle(0, 0, renderTarget2D.Width, renderTarget2D.Height)
+        );
         if (!Storage.DirectoryExists(_screenshotDir))
         {
             Storage.CreateDirectory(_screenshotDir);
         }
 
-        using var stream = Storage.OpenFile(Storage.CombinePaths(_screenshotDir, filename),
-            OpenFileMode.CreateOrOpen);
+        using var stream = Storage.OpenFile(
+            Storage.CombinePaths(_screenshotDir, filename),
+            OpenFileMode.CreateOrOpen
+        );
         Image.Save(image, stream, ImageFileFormat.Png, false);
     }
 }

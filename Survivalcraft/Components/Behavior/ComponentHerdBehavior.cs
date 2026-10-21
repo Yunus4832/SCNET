@@ -53,7 +53,8 @@ public class ComponentHerdBehavior : ComponentBehavior, IUpdateable
             }
 
             var componentHerdBehavior = creature.Entity.FindComponent<ComponentHerdBehavior>();
-            if (componentHerdBehavior == null || componentHerdBehavior.HerdName != HerdName ||
+            if (componentHerdBehavior == null ||
+                componentHerdBehavior.HerdName != HerdName ||
                 !componentHerdBehavior._autoNearbyCreaturesHelp)
             {
                 continue;
@@ -117,7 +118,7 @@ public class ComponentHerdBehavior : ComponentBehavior, IUpdateable
         HerdName = valuesDictionary.GetValue<string>("HerdName");
         _herdingRange = valuesDictionary.GetValue<float>("HerdingRange");
         _autoNearbyCreaturesHelp = valuesDictionary.GetValue<bool>("AutoNearbyCreaturesHelp");
-        _componentCreature.ComponentHealth.Attacked += delegate (ComponentCreature attacker)
+        _componentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
         {
             CallNearbyCreaturesHelp(attacker, 20f, 30f, false);
         };
@@ -186,8 +187,16 @@ public class ComponentHerdBehavior : ComponentBehavior, IUpdateable
                 {
                     var speed = _importanceLevel > 10f ? _random.Float(0.9f, 1f) : _random.Float(0.25f, 0.35f);
                     var maxPathfindingPositions = _importanceLevel > 200f ? 100 : 0;
-                    _componentPathfinding.SetDestination(vector.Value, speed, 7f, maxPathfindingPositions, false, true,
-                        false, null);
+                    _componentPathfinding.SetDestination(
+                        vector.Value,
+                        speed,
+                        7f,
+                        maxPathfindingPositions,
+                        false,
+                        true,
+                        false,
+                        null
+                    );
                 }
                 else
                 {
@@ -215,8 +224,10 @@ public class ComponentHerdBehavior : ComponentBehavior, IUpdateable
 
                 if (_random.Float(0f, 1f) < 1.5f * _dt)
                 {
-                    _look = new Vector2(MathUtils.DegToRad(45f) * _random.Float(-1f, 1f),
-                        MathUtils.DegToRad(10f) * _random.Float(-1f, 1f));
+                    _look = new Vector2(
+                        MathUtils.DegToRad(45f) * _random.Float(-1f, 1f),
+                        MathUtils.DegToRad(10f) * _random.Float(-1f, 1f)
+                    );
                 }
             },
             Actions.Empty

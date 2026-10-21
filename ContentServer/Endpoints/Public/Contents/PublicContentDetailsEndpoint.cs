@@ -22,17 +22,23 @@ public sealed class PublicContentDetailsEndpoint(IMediator mediator) : ContentEn
         await Send.ResponseAsync(result, HttpContext.Response.StatusCode, cancellationToken);
     }
 
-    private async Task<ResponseData<ContentVersionResponse>> Content(string contentId,
-        CancellationToken cancellationToken)
+    private async Task<ResponseData<ContentVersionResponse>> Content(
+        string contentId,
+        CancellationToken cancellationToken
+    )
     {
         var id = ParseContentId(contentId);
-        var items = await mediator.Send(new ListVersionsQuery(
-            VersionQueryScope.Public,
-            new PageRequest { PageIndex = 1, PageSize = 1, CountTotal = false },
-            ContentId: id,
-            LatestOnly: true), cancellationToken);
-        var item = items.Items.FirstOrDefault()
-                   ?? throw new KnownException("content_not_found", StatusCodes.Status404NotFound);
+        var items = await mediator.Send(
+            new ListVersionsQuery(
+                VersionQueryScope.Public,
+                new PageRequest { PageIndex = 1, PageSize = 1, CountTotal = false },
+                ContentId: id,
+                LatestOnly: true
+            ),
+            cancellationToken
+        );
+        var item = items.Items.FirstOrDefault() ??
+                   throw new KnownException("content_not_found", StatusCodes.Status404NotFound);
         return item.ToResponse().AsResponseData();
     }
 

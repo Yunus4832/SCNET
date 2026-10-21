@@ -4,7 +4,6 @@ namespace Game.Protocol.Terrain;
 
 public record struct TerrainUpdateLocation
 {
-
     /// <summary>
     ///     Location 位置中心
     /// </summary>

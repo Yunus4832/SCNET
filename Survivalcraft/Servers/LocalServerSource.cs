@@ -12,17 +12,18 @@ public sealed class LocalServerSource(ServerDirectoryManager service) : IServerS
     {
         cancellationToken.ThrowIfCancellationRequested();
         IReadOnlyList<ServerItem> items = service.Snapshot().LocalServers.Select(entry => new ServerItem
-        {
-            SourceId = Id,
-            EntryId = entry.Id.ToString("N"),
-            SourceKind = Kind,
-            SourceName = Name,
-            Address = entry.Address,
-            DisplayName = entry.Name,
-            LocalTags = entry.Tags,
-            UpdatedAt = entry.UpdatedAt,
-            Order = entry.Order
-        }).ToArray();
+            {
+                SourceId = Id,
+                EntryId = entry.Id.ToString("N"),
+                SourceKind = Kind,
+                SourceName = Name,
+                Address = entry.Address,
+                DisplayName = entry.Name,
+                LocalTags = entry.Tags,
+                UpdatedAt = entry.UpdatedAt,
+                Order = entry.Order
+            }
+        ).ToArray();
         return Task.FromResult(items);
     }
 }

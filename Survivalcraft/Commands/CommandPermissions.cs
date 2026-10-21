@@ -18,7 +18,8 @@ public sealed class CommandPermissionSet
     {
         return _grants.Any(grant =>
             grant.Permission == permission &&
-            grant.CanDelegate);
+            grant.CanDelegate
+        );
     }
 
     public bool Grant(ResourceId permission, bool canDelegate)
@@ -61,12 +62,15 @@ public sealed class CommandPermissionSet
         for (var index = 0; index < _grants.Count; index++)
         {
             var grant = _grants[index];
-            values.SetValue(index.ToString(), new ValuesDictionary
-            {
-                { "Namespace", grant.Permission.Namespace.ToString() },
-                { "Path", grant.Permission.Path },
-                { "CanDelegate", grant.CanDelegate }
-            });
+            values.SetValue(
+                index.ToString(),
+                new ValuesDictionary
+                {
+                    { "Namespace", grant.Permission.Namespace.ToString() },
+                    { "Path", grant.Permission.Path },
+                    { "CanDelegate", grant.CanDelegate }
+                }
+            );
         }
 
         return values;
@@ -88,7 +92,8 @@ public sealed class CommandPermissionSet
 
             Grant(
                 new ResourceId(new ModId(permissionNamespace), path),
-                item.GetValue("CanDelegate", false));
+                item.GetValue("CanDelegate", false)
+            );
         }
     }
 
@@ -97,7 +102,9 @@ public sealed class CommandPermissionSet
         _grants.Sort((left, right) =>
             StringComparer.Ordinal.Compare(
                 left.Permission.ToString(),
-                right.Permission.ToString()));
+                right.Permission.ToString()
+            )
+        );
     }
 }
 
@@ -106,7 +113,8 @@ public sealed class CommandPermissionDefinition(
     PermissionGrantPolicy grantPolicy = PermissionGrantPolicy.Standard,
     LocalizedText? description = null,
     bool managesStandardPermissions = false,
-    Func<CommandPrincipal, Project?, bool>? implicitGrant = null)
+    Func<CommandPrincipal, Project?, bool>? implicitGrant = null
+)
 {
     private readonly Func<CommandPrincipal, Project?, bool>? _implicitGrant =
         implicitGrant;
@@ -122,7 +130,8 @@ public sealed class CommandPermissionDefinition(
 
     internal bool IsImplicitlyGranted(
         CommandPrincipal principal,
-        Project? project)
+        Project? project
+    )
     {
         return _implicitGrant?.Invoke(principal, project) == true;
     }
@@ -130,7 +139,8 @@ public sealed class CommandPermissionDefinition(
 
 public sealed record RegisteredCommandPermission(
     ResourceId Id,
-    CommandPermissionDefinition Definition);
+    CommandPermissionDefinition Definition
+);
 
 public static class BuiltInPermissionIds
 {

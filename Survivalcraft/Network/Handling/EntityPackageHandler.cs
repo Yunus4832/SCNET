@@ -70,41 +70,51 @@ public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
                 var interest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
                 foreach (var e in package.EntityIdList)
                 {
-                    project.FindEntityById(e, entity =>
-                    {
-                        if (EntityPackageBuilder.ShouldSend(entity) &&
-                            interest.ShouldIncludeInInitialSnapshot(context.Sender, entity))
+                    project.FindEntityById(
+                        e,
+                        entity =>
                         {
-                            var body = entity.FindComponent<ComponentBody>();
-                            if (body is null)
+                            if (EntityPackageBuilder.ShouldSend(entity) &&
+                                interest.ShouldIncludeInInitialSnapshot(context.Sender, entity))
                             {
-                                el.Add(entity);
-                                if (entity.FindComponent<ComponentBlockEntity>() is not null)
+                                var body = entity.FindComponent<ComponentBody>();
+                                if (body is null)
                                 {
-                                    interest.Entities.AddObserved(context.Sender,
-                                        EntityInterestGroup.BlockEntities, entity.EntityId);
-                                }
-                                return;
-                            }
+                                    el.Add(entity);
+                                    if (entity.FindComponent<ComponentBlockEntity>() is not null)
+                                    {
+                                        interest.Entities.AddObserved(
+                                            context.Sender,
+                                            EntityInterestGroup.BlockEntities,
+                                            entity.EntityId
+                                        );
+                                    }
 
-                            foreach (var member in SubsystemNetworkInterest.GetBodyGroup(body))
-                            {
-                                el.Add(member.Entity);
-                                interest.Entities.AddObserved(
-                                    context.Sender,
-                                    EntityInterestGroup.Creatures,
-                                    member.Entity.EntityId);
+                                    return;
+                                }
+
+                                foreach (var member in SubsystemNetworkInterest.GetBodyGroup(body))
+                                {
+                                    el.Add(member.Entity);
+                                    interest.Entities.AddObserved(
+                                        context.Sender,
+                                        EntityInterestGroup.Creatures,
+                                        member.Entity.EntityId
+                                    );
+                                }
                             }
                         }
-                    });
+                    );
                 }
 
                 if (context.Sender is not null)
                 {
                     netNode.QueuePackage(
                         EntityPackageBuilder.Capture(project, el.Distinct().ToList()),
-                        PackageAudience.To(context.Sender));
+                        PackageAudience.To(context.Sender)
+                    );
                 }
+
                 break;
         }
     }

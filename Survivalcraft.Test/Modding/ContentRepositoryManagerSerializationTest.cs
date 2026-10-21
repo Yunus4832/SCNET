@@ -12,12 +12,14 @@ public sealed class ContentRepositoryManagerSerializationTest
     public void RoundTripsAllFields()
     {
         var repository = new ContentRepository
-        { Name = "A & B", BaseUrl = "https://example.com/content", Priority = 3 };
-        var document = ContentRepositoryManager.Write(new ContentRepositorySettings
-        {
-            GameInformationSourceId = repository.Id,
-            Repositories = [repository]
-        });
+            { Name = "A & B", BaseUrl = "https://example.com/content", Priority = 3 };
+        var document = ContentRepositoryManager.Write(
+            new ContentRepositorySettings
+            {
+                GameInformationSourceId = repository.Id,
+                Repositories = [repository]
+            }
+        );
 
         Assert.Equal("ContentRepositories", document.Name.LocalName);
         var settings = ContentRepositoryManager.Read(XElement.Parse(document.ToString()));
@@ -29,15 +31,20 @@ public sealed class ContentRepositoryManagerSerializationTest
     public void InvalidInputIsRejectedBeforeWriting()
     {
         var repository = new ContentRepository { Name = "A", BaseUrl = "https://example.com" };
-        Assert.Throws<ArgumentException>(() => ContentRepositoryManager.Write(new ContentRepositorySettings
-        {
-            Repositories = [repository with { Id = Guid.Empty }]
-        }));
+        Assert.Throws<ArgumentException>(() => ContentRepositoryManager.Write(
+                new ContentRepositorySettings
+                {
+                    Repositories = [repository with { Id = Guid.Empty }]
+                }
+            )
+        );
 
-        var document = ContentRepositoryManager.Write(new ContentRepositorySettings
-        {
-            Repositories = [repository]
-        });
+        var document = ContentRepositoryManager.Write(
+            new ContentRepositorySettings
+            {
+                Repositories = [repository]
+            }
+        );
         document.Element("Repository")!.Attribute("Id")!.Remove();
         Assert.Throws<FormatException>(() => ContentRepositoryManager.Read(document));
     }

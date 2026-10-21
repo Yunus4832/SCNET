@@ -1,11 +1,7 @@
 namespace WorldUpgradeTool.Core;
 
-internal sealed class WorldMaintenancePlan
+internal sealed class WorldMaintenancePlan(IEnumerable<IWorldMaintenanceStep> steps)
 {
-    public WorldMaintenancePlan(IEnumerable<IWorldMaintenanceStep> steps)
-    {
-        Steps = steps.OrderBy(s => s.Order).ThenBy(s => s.Id, StringComparer.Ordinal).ToArray();
-    }
-
-    public IReadOnlyList<IWorldMaintenanceStep> Steps { get; }
+    public IReadOnlyList<IWorldMaintenanceStep> Steps { get; } =
+        steps.OrderBy(s => s.Order).ThenBy(s => s.Id, StringComparer.Ordinal).ToArray();
 }

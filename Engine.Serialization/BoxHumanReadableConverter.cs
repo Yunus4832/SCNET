@@ -8,8 +8,15 @@ internal class BoxHumanReadableConverter : IHumanReadableConverter
     public string ConvertToString(object value)
     {
         var box = (Box)value;
-        return HumanReadableConverter.ValuesListToString(',', box.Left, box.Top, box.Near, box.Width, box.Height,
-            box.Depth);
+        return HumanReadableConverter.ValuesListToString(
+            ',',
+            box.Left,
+            box.Top,
+            box.Near,
+            box.Width,
+            box.Height,
+            box.Depth
+        );
     }
 
     public object ConvertFromString(Type type, string data)

@@ -17,7 +17,8 @@ namespace ContentServer.Endpoints.Publisher.RendezvousServices;
 [AllowAnonymous]
 public sealed class PublisherRendezvousServicesEndpoint(
     IMediator mediator,
-    ApiKeyAuthenticationContext authenticationContext) : ContentEndpoint
+    ApiKeyAuthenticationContext authenticationContext
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -26,19 +27,23 @@ public sealed class PublisherRendezvousServicesEndpoint(
     }
 
     private async Task<ResponseData<RendezvousServiceRegistrationResponse[]>> RendezvousServices(
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var publisher = await RequirePublisherAsync(cancellationToken);
-        var sources = await mediator.Send(new ListRendezvousServicesQuery(PublisherId: publisher.PublisherId),
-            cancellationToken);
+        var sources = await mediator.Send(
+            new ListRendezvousServicesQuery(PublisherId: publisher.PublisherId),
+            cancellationToken
+        );
         return sources.Select(EndpointMappings.RendezvousService).ToArray().AsResponseData();
     }
 
     private async Task<PublisherDto> RequirePublisherAsync(CancellationToken cancellationToken)
     {
         return await mediator.Send(
-            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
-            cancellationToken
-        ) ?? throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
+                   new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                   cancellationToken
+               ) ??
+               throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
     }
 }

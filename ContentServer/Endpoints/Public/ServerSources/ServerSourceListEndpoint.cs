@@ -26,13 +26,24 @@ public sealed class ServerSourceListEndpoint(IMediator mediator, IOptions<Conten
     {
         var items = await mediator.Send(new ListServerSourcesQuery(PublicOnly: true), cancellationToken);
         var sources = items.OrderBy(source => source.Name)
-            .Select(source => new ServerSourceResponse(source.Id.ToString(), source.Name, source.ApiUrl,
-                source.Description)).ToList();
+            .Select(source => new ServerSourceResponse(
+                    source.Id.ToString(),
+                    source.Name,
+                    source.ApiUrl,
+                    source.Description
+                )
+            ).ToList();
         if (options.Value.BuiltInServerDirectoryEnabled)
         {
-            sources.Insert(0, new ServerSourceResponse("builtin", options.Value.BuiltInServerDirectoryName,
-                GetBuiltInDirectoryUrl(options.Value, HttpContext.Request),
-                options.Value.BuiltInServerDirectoryDescription));
+            sources.Insert(
+                0,
+                new ServerSourceResponse(
+                    "builtin",
+                    options.Value.BuiltInServerDirectoryName,
+                    GetBuiltInDirectoryUrl(options.Value, HttpContext.Request),
+                    options.Value.BuiltInServerDirectoryDescription
+                )
+            );
         }
 
         return sources.ToArray().AsResponseData();
@@ -62,7 +73,8 @@ public sealed record ServerSourceRegistrationResponse(
     string Status,
     string? ReviewMessage,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? ReviewedAt);
+    DateTimeOffset? ReviewedAt
+);
 
 public sealed record ServerSourceManagementResponse(
     string Id,
@@ -75,4 +87,5 @@ public sealed record ServerSourceManagementResponse(
     string? ReviewMessage,
     DateTimeOffset? CreatedAt,
     DateTimeOffset? ReviewedAt,
-    bool IsBuiltIn);
+    bool IsBuiltIn
+);

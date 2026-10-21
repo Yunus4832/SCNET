@@ -4,18 +4,26 @@ public sealed record ModDescriptor(
     ModManifest Manifest,
     Func<IMod> Factory,
     IDisposable? Lifetime = null,
-    string? PackageHash = null);
+    string? PackageHash = null
+);
 
 public enum ModState
 {
-    Discovered,
-    Configuring,
-    Configured,
-    Starting,
-    Started,
-    Stopping,
-    Stopped,
-    Failed
+    Discovered = 0,
+
+    Configuring = 1,
+
+    Configured = 2,
+
+    Starting = 3,
+
+    Started = 4,
+
+    Stopping = 5,
+
+    Stopped = 6,
+
+    Failed = 7
 }
 
 public sealed class ModRuntime

@@ -46,11 +46,17 @@ public class TerritoryStoreTest
     [InlineData(true, true)]
     public void EntryAndExitAreIndependent(bool entry, bool exit)
     {
-        var territory = new Territory(Guid.NewGuid(), new Point3(7, 64, 9),
-            new TerritorySettings(Size: 4, AllowEntry: entry, AllowExit: exit));
+        var territory = new Territory(
+            Guid.NewGuid(),
+            new Point3(7, 64, 9),
+            new TerritorySettings(Size: 4, AllowEntry: entry, AllowExit: exit)
+        );
         Assert.Equal(!exit, territory.BlocksCrossing(new Vector3(7.5f, 64, 9.5f)));
-        foreach (var outside in new[] { new Vector3(2.5f, 64, 9.5f), new Vector3(12.5f, 64, 9.5f),
-                     new Vector3(7.5f, 64, 4.5f), new Vector3(7.5f, 64, 14.5f) })
+        foreach (var outside in new[]
+                 {
+                     new Vector3(2.5f, 64, 9.5f), new Vector3(12.5f, 64, 9.5f),
+                     new Vector3(7.5f, 64, 4.5f), new Vector3(7.5f, 64, 14.5f)
+                 })
         {
             Assert.Equal(!entry, territory.BlocksCrossing(outside));
         }
@@ -74,7 +80,8 @@ public class TerritoryStoreTest
         };
         for (var index = 0; index < 4; index++)
         {
-            var correction = ComponentBody.CalculateBoxBoxOverlap(ref bodies[index], ref walls[index], index < 2 ? 0 : 2);
+            var correction =
+                ComponentBody.CalculateBoxBoxOverlap(ref bodies[index], ref walls[index], index < 2 ? 0 : 2);
             var expectedPositive = (index % 2 == 0) == exiting;
             Assert.True(expectedPositive ? correction > 0 : correction < 0);
         }
@@ -95,14 +102,28 @@ public class TerritoryStoreTest
         for (var face = 0; face < edges.Length; face++)
         {
             var position = edges[face] + normals[face] * (exiting ? -0.1f : 0.1f);
-            var body = new BoundingBox(position - new Vector3(0.3f, 0, 0.3f),
-                position + new Vector3(0.3f, 1.8f, 0.3f));
+            var body = new BoundingBox(
+                position - new Vector3(0.3f, 0, 0.3f),
+                position + new Vector3(0.3f, 1.8f, 0.3f)
+            );
             var restricted = normals[face] * (exiting ? 0.1f : -0.1f);
-            Assert.Single(territory.GetBlockingBoundaryBoxes(63, 67, restricted, exiting), wall => wall.Intersection(body));
-            Assert.DoesNotContain(territory.GetBlockingBoundaryBoxes(63, 67, -restricted, exiting), wall => wall.Intersection(body));
+            Assert.Single(
+                territory.GetBlockingBoundaryBoxes(63, 67, restricted, exiting),
+                wall => wall.Intersection(body)
+            );
+            Assert.DoesNotContain(
+                territory.GetBlockingBoundaryBoxes(63, 67, -restricted, exiting),
+                wall => wall.Intersection(body)
+            );
             var tangent = face < 2 ? Vector3.UnitZ : Vector3.UnitX;
-            Assert.DoesNotContain(territory.GetBlockingBoundaryBoxes(63, 67, tangent, exiting), wall => wall.Intersection(body));
-            Assert.DoesNotContain(territory.GetBlockingBoundaryBoxes(63, 67, Vector3.UnitY, exiting), wall => wall.Intersection(body));
+            Assert.DoesNotContain(
+                territory.GetBlockingBoundaryBoxes(63, 67, tangent, exiting),
+                wall => wall.Intersection(body)
+            );
+            Assert.DoesNotContain(
+                territory.GetBlockingBoundaryBoxes(63, 67, Vector3.UnitY, exiting),
+                wall => wall.Intersection(body)
+            );
         }
     }
 
@@ -154,11 +175,17 @@ public class TerritoryStoreTest
     {
         var store = new TerritoryStore();
         var owner = Guid.NewGuid();
-        store.ApplySnapshot([new Territory(owner, new Point3(0, 64, 0), new TerritorySettings(Size: 4)),
-            new Territory(Guid.NewGuid(), new Point3(9, 200, 0), new TerritorySettings(Size: 4))]);
+        store.ApplySnapshot(
+            [
+                new Territory(owner, new Point3(0, 64, 0), new TerritorySettings(Size: 4)),
+                new Territory(Guid.NewGuid(), new Point3(9, 200, 0), new TerritorySettings(Size: 4))
+            ]
+        );
         Assert.Equal(2, store.Territories.Count);
         Assert.Throws<InvalidDataException>(() => store.ApplyUpdate(
-            new Territory(owner, new Point3(0, 64, 0), new TerritorySettings(Size: 5))));
+                new Territory(owner, new Point3(0, 64, 0), new TerritorySettings(Size: 5))
+            )
+        );
         Assert.Equal(4, store.Territories.First(item => item.Owner == owner).Settings.Size);
     }
 

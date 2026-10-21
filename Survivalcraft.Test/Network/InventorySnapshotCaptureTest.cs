@@ -8,7 +8,10 @@ public sealed class InventorySnapshotCaptureTest
     public void RepeatedSlotRequestsAreDeduplicatedAndQueuedValuesAreStable()
     {
         var inventory = new TestInventory();
-        var package = InventoryPackageBuilder.Capture(new Dictionary<Game.IInventory, List<int>> { [inventory] = [0, 0] });
+        var package = InventoryPackageBuilder.Capture(
+            new Dictionary<Game.IInventory, List<int>>
+                { [inventory] = [0, 0] }
+        );
         inventory.Change(8, 99);
         var slot = Assert.Single(Assert.Single(package.Slots).Value);
         Assert.Equal(0, slot.SlotIndex);

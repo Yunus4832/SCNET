@@ -134,27 +134,51 @@ public class ComponentFishModel : ComponentCreatureModel
                 num3 = MathUtils.DegToRad(30f) *
                        MathUtils.Clamp(
                            0.5f * MathUtils.Sin(2f * ((float)Math.PI * MathUtils.Max(num - 0.25f, 0f))) - _tailTurn.X,
-                           -1f, 1f);
+                           -1f,
+                           1f
+                       );
                 num4 = MathUtils.DegToRad(25f) *
                        MathUtils.Clamp(
-                           0.5f * MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase) - _tailTurn.Y, -1f, 1f);
+                           0.5f * MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase) - _tailTurn.Y,
+                           -1f,
+                           1f
+                       );
                 num5 = MathUtils.DegToRad(30f) *
                        MathUtils.Clamp(
-                           0.5f * MathUtils.Sin((float)Math.PI * 2f *
-                                                MathUtils.Max(MovementAnimationPhase - 0.25f, 0f)) - _tailTurn.Y, -1f,
-                           1f);
+                           0.5f *
+                           MathUtils.Sin(
+                               (float)Math.PI *
+                               2f *
+                               MathUtils.Max(MovementAnimationPhase - 0.25f, 0f)
+                           ) -
+                           _tailTurn.Y,
+                           -1f,
+                           1f
+                       );
             }
             else
             {
                 num2 = MathUtils.DegToRad(25f) *
                        MathUtils.Clamp(
                            0.5f * MathUtils.Sin((float)Math.PI * 2f * (MovementAnimationPhase + num)) - _tailTurn.X,
-                           -1f, 1f);
+                           -1f,
+                           1f
+                       );
                 num3 = MathUtils.DegToRad(30f) *
                        MathUtils.Clamp(
-                           0.5f * MathUtils.Sin(2f *
-                                                ((float)Math.PI * MathUtils.Max(MovementAnimationPhase + num - 0.25f,
-                                                    0f))) - _tailTurn.X, -1f, 1f);
+                           0.5f *
+                           MathUtils.Sin(
+                               2f *
+                               ((float)Math.PI *
+                                MathUtils.Max(
+                                    MovementAnimationPhase + num - 0.25f,
+                                    0f
+                                ))
+                           ) -
+                           _tailTurn.X,
+                           -1f,
+                           1f
+                       );
                 num4 = MathUtils.DegToRad(25f) * MathUtils.Clamp(0f - _tailTurn.Y, -1f, 1f);
                 num5 = MathUtils.DegToRad(30f) * MathUtils.Clamp(0f - _tailTurn.Y, -1f, 1f);
             }
@@ -166,8 +190,10 @@ public class ComponentFishModel : ComponentCreatureModel
             }
 
             var value = Matrix.CreateFromYawPitchRoll(vector.X, 0f, 0f) *
-                        Matrix.CreateTranslation(ComponentCreature.ComponentBody.Position +
-                                                 new Vector3(0f, 0f - _digInDepth, 0f));
+                        Matrix.CreateTranslation(
+                            ComponentCreature.ComponentBody.Position +
+                            new Vector3(0f, 0f - _digInDepth, 0f)
+                        );
             SetBoneTransform(_bodyBone.Index, value);
             var identity = Matrix.Identity;
             if (num2 != 0f)
@@ -203,9 +229,11 @@ public class ComponentFishModel : ComponentCreatureModel
             var num6 = ComponentCreature.ComponentBody.BoundingBox.Max.Y -
                        ComponentCreature.ComponentBody.BoundingBox.Min.Y;
             var position = ComponentCreature.ComponentBody.Position + 1f * num6 * DeathPhase * Vector3.UnitY;
-            SetBoneTransform(_bodyBone.Index,
+            SetBoneTransform(
+                _bodyBone.Index,
                 Matrix.CreateFromYawPitchRoll(vector.X, 0f, (float)Math.PI * DeathPhase) *
-                Matrix.CreateTranslation(position));
+                Matrix.CreateTranslation(position)
+            );
             SetBoneTransform(_tail1Bone.Index, Matrix.Identity);
             SetBoneTransform(_tail2Bone.Index, Matrix.Identity);
             if (_jawBone != null)

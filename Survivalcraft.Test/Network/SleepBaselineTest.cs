@@ -49,8 +49,12 @@ public sealed class SleepBaselineTest
     {
         public SleepProject()
         {
-            subsystems.AddRange([new SubsystemPlayers(), new SubsystemTime(), new SubsystemUpdate(),
-                new SubsystemGameInfo(), new SubsystemTimeOfDay(), new SubsystemTerrain()]);
+            subsystems.AddRange(
+                [
+                    new SubsystemPlayers(), new SubsystemTime(), new SubsystemUpdate(),
+                    new SubsystemGameInfo(), new SubsystemTimeOfDay(), new SubsystemTerrain()
+                ]
+            );
         }
     }
 }

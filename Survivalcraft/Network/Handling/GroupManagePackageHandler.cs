@@ -40,7 +40,8 @@ public sealed class GroupManagePackageHandler : PackageHandlerBase<GroupManagePa
 
     internal static void ShowPrompt(
         GroupManagePackage package,
-        PlayerData responder)
+        PlayerData responder
+    )
     {
         var subsystemPlayers = responder.SubsystemPlayers;
         var initiator = subsystemPlayers.FindPlayerData(player => player.PlayerGUID == package.FromPlayer);
@@ -54,25 +55,31 @@ public sealed class GroupManagePackageHandler : PackageHandlerBase<GroupManagePa
             ? CommandText.Get(
                 "TeamJoinPrompt_Message",
                 "{0} 申请加入你的队伍，是否同意？",
-                initiator.Name)
+                initiator.Name
+            )
             : CommandText.Get(
                 "TeamInvitationPrompt_Message",
                 "{0} 邀请你加入队伍“{1}”，是否同意？",
                 initiator.Name,
-                group.Name);
+                group.Name
+            );
         DialogsManager.Confirm(
             text,
             button => CommandGateway.Submit(
                 responder,
                 new RespondTeamRequestCommand(
                     package.OperationId,
-                    button == MessageDialogButton.Button1)),
-            responder.GameWidget.GuiWidget);
+                    button == MessageDialogButton.Button1
+                )
+            ),
+            responder.GameWidget.GuiWidget
+        );
     }
 
     private static void ApplyGroupSnapshot(
         SubsystemPlayers subsystemPlayers,
-        GroupManagePackage package)
+        GroupManagePackage package
+    )
     {
         subsystemPlayers.ServerGroups.Clear();
         foreach (var playerData in subsystemPlayers.PlayersData)

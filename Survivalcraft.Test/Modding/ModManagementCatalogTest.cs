@@ -48,8 +48,15 @@ public sealed class ModManagementCatalogTest
         var hashA = new string('a', 64);
         var hashB = new string('b', 64);
         var profile = Profile(Requirement("example.mod", "1.0.0", hashA));
-        var differentHash = new ManagedModItem("example.mod", "1.0.0", hashB, null,
-            false, false, false);
+        var differentHash = new ManagedModItem(
+            "example.mod",
+            "1.0.0",
+            hashB,
+            null,
+            false,
+            false,
+            false
+        );
 
         Assert.False(ModManagementCatalog.ContainsExact(profile, differentHash));
     }

@@ -44,24 +44,46 @@ public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Bl
             UncoloredBlockMeshes[i] = new BlockMesh();
             UncoloredBlockMeshes[i].AppendModelMeshPart(meshPart, matrix, false, false, false, false, Color.White);
             UncoloredBlockMeshes[i]
-                .TransformTextureCoordinates(Matrix.CreateTranslation(TextureSlot % 16 / 16f,
-                    TextureSlot / 16 / 16f, 0f));
+                .TransformTextureCoordinates(
+                    Matrix.CreateTranslation(
+                        TextureSlot % 16 / 16f,
+                        TextureSlot / 16 / 16f,
+                        0f
+                    )
+                );
             UncoloredBlockMeshes[i].GenerateSidesData();
             ColoredBlockMeshes[i] = new BlockMesh();
             ColoredBlockMeshes[i].AppendModelMeshPart(meshPart, matrix, false, false, false, false, Color.White);
             ColoredBlockMeshes[i].TransformTextureCoordinates(
-                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+            );
             ColoredBlockMeshes[i].GenerateSidesData();
         }
 
-        StandaloneUncoloredBlockMesh.AppendModelMeshPart(meshPart,
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        StandaloneUncoloredBlockMesh.AppendModelMeshPart(
+            meshPart,
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandaloneUncoloredBlockMesh.TransformTextureCoordinates(
-            Matrix.CreateTranslation(TextureSlot % 16 / 16f, TextureSlot / 16 / 16f, 0f));
-        StandaloneColoredBlockMesh.AppendModelMeshPart(meshPart,
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+            Matrix.CreateTranslation(TextureSlot % 16 / 16f, TextureSlot / 16 / 16f, 0f)
+        );
+        StandaloneColoredBlockMesh.AppendModelMeshPart(
+            meshPart,
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandaloneColoredBlockMesh.TransformTextureCoordinates(
-            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+        );
         CollisionBoxes[0] = [new BoundingBox(new Vector3(0f, 0f, 0f), new Vector3(1f, 0.5f, 1f))];
         CollisionBoxes[1] = [new BoundingBox(new Vector3(0f, 0.5f, 0f), new Vector3(1f, 1f, 1f))];
         base.Initialize();
@@ -91,13 +113,31 @@ public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Bl
         var color = GetColor(data);
         if (color.HasValue)
         {
-            generator.GenerateShadedMeshVertices(this, x, y, z, ColoredBlockMeshes[num],
-                SubsystemPalette.GetColor(generator, color), null, [], geometry.SubsetOpaque);
+            generator.GenerateShadedMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                ColoredBlockMeshes[num],
+                SubsystemPalette.GetColor(generator, color),
+                null,
+                [],
+                geometry.SubsetOpaque
+            );
         }
         else
         {
-            generator.GenerateShadedMeshVertices(this, x, y, z, UncoloredBlockMeshes[num], Color.White, null, [],
-                geometry.SubsetOpaque);
+            generator.GenerateShadedMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                UncoloredBlockMeshes[num],
+                Color.White,
+                null,
+                [],
+                geometry.SubsetOpaque
+            );
         }
     }
 
@@ -113,8 +153,9 @@ public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Bl
         var num2 = Terrain.ExtractContents(raycastResult.Value);
         var data2 = Terrain.ExtractData(raycastResult.Value);
         BlockPlacementData result;
-        if (num2 == num && ((GetIsTop(data2) && raycastResult.CellFace.Face == 5) ||
-                            (!GetIsTop(data2) && raycastResult.CellFace.Face == 4)))
+        if (num2 == num &&
+            ((GetIsTop(data2) && raycastResult.CellFace.Face == 5) ||
+             (!GetIsTop(data2) && raycastResult.CellFace.Face == 4)))
         {
             var value2 = Terrain.MakeBlockValue(FullBlockIndex, 0, 0);
             if (Catalog.Blocks[FullBlockIndex] is IPaintableBlock paintableBlock)
@@ -160,11 +201,13 @@ public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Bl
             var data = Terrain.ExtractData(oldValue);
             var data2 = SetColor(0, GetColor(data));
             var value = Terrain.MakeBlockValue(BlockIndex, 0, data2);
-            dropValues.Add(new BlockDropValue
-            {
-                Value = value,
-                Count = 1
-            });
+            dropValues.Add(
+                new BlockDropValue
+                {
+                    Value = value,
+                    Count = 1
+                }
+            );
             showDebris = true;
         }
         else
@@ -183,12 +226,24 @@ public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Bl
         var color = GetColor(Terrain.ExtractData(value));
         if (color.HasValue)
         {
-            return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale,
-                SubsystemPalette.GetColor(subsystemTerrain, color), ColoredTextureSlot);
+            return new BlockDebrisParticleSystem(
+                subsystemTerrain,
+                position,
+                strength,
+                DestructionDebrisScale,
+                SubsystemPalette.GetColor(subsystemTerrain, color),
+                ColoredTextureSlot
+            );
         }
 
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, Color.White,
-            GetFaceTextureSlot(0, value));
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            Color.White,
+            GetFaceTextureSlot(0, value)
+        );
     }
 
     public override void DrawBlock(
@@ -203,13 +258,25 @@ public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Bl
         var color2 = GetColor(Terrain.ExtractData(value));
         if (color2.HasValue)
         {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneColoredBlockMesh,
-                color * SubsystemPalette.GetColor(environmentData, color2), size, ref matrix, environmentData);
+            BlocksManager.DrawMeshBlock(
+                primitivesRenderer,
+                StandaloneColoredBlockMesh,
+                color * SubsystemPalette.GetColor(environmentData, color2),
+                size,
+                ref matrix,
+                environmentData
+            );
         }
         else
         {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneUncoloredBlockMesh, color, size, ref matrix,
-                environmentData);
+            BlocksManager.DrawMeshBlock(
+                primitivesRenderer,
+                StandaloneUncoloredBlockMesh,
+                color,
+                size,
+                ref matrix,
+                environmentData
+            );
         }
     }
 

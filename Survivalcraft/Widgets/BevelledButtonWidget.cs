@@ -27,23 +27,11 @@ public class BevelledButtonWidget : ButtonWidget
         LoadProperties(this, node);
     }
 
-    public float FontScale
-    {
-        get => _labelWidget.FontScale;
-        set => _labelWidget.FontScale = value;
-    }
+    public float FontScale { get => _labelWidget.FontScale; set => _labelWidget.FontScale = value; }
 
-    public override bool IsClicked
-    {
-        get => ClickableWidget.IsClicked;
-        set => ClickableWidget.IsClicked = value;
-    }
+    public override bool IsClicked { get => ClickableWidget.IsClicked; set => ClickableWidget.IsClicked = value; }
 
-    public override bool IsChecked
-    {
-        get => ClickableWidget.IsChecked;
-        set => ClickableWidget.IsChecked = value;
-    }
+    public override bool IsChecked { get => ClickableWidget.IsChecked; set => ClickableWidget.IsChecked = value; }
 
     public override bool IsAutoCheckingEnabled
     {
@@ -51,43 +39,19 @@ public class BevelledButtonWidget : ButtonWidget
         set => ClickableWidget.IsAutoCheckingEnabled = value;
     }
 
-    public override string Text
-    {
-        get => _labelWidget.Text;
-        set => _labelWidget.Text = value;
-    }
+    public override string Text { get => _labelWidget.Text; set => _labelWidget.Text = value; }
 
-    public override BitmapFont Font
-    {
-        get => _labelWidget.Font;
-        set => _labelWidget.Font = value;
-    }
+    public override BitmapFont Font { get => _labelWidget.Font; set => _labelWidget.Font = value; }
 
-    public Subtexture? Subtexture
-    {
-        get => _imageWidget.Subtexture;
-        set => _imageWidget.Subtexture = value;
-    }
+    public Subtexture? Subtexture { get => _imageWidget.Subtexture; set => _imageWidget.Subtexture = value; }
 
     public override Color Color { get; set; } = Color.White;
 
-    public Color BevelColor
-    {
-        get => _rectangleWidget.BevelColor;
-        set => _rectangleWidget.BevelColor = value;
-    }
+    public Color BevelColor { get => _rectangleWidget.BevelColor; set => _rectangleWidget.BevelColor = value; }
 
-    public Color CenterColor
-    {
-        get => _rectangleWidget.CenterColor;
-        set => _rectangleWidget.CenterColor = value;
-    }
+    public Color CenterColor { get => _rectangleWidget.CenterColor; set => _rectangleWidget.CenterColor = value; }
 
-    public float AmbientLight
-    {
-        get => _rectangleWidget.AmbientLight;
-        set => _rectangleWidget.AmbientLight = value;
-    }
+    public float AmbientLight { get => _rectangleWidget.AmbientLight; set => _rectangleWidget.AmbientLight = value; }
 
     public float DirectionalLight
     {

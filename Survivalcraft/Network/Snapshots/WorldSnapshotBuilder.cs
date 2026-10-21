@@ -7,26 +7,42 @@ namespace Game.Network.Snapshots;
 
 public static class WorldSnapshotBuilder
 {
-    public static BootstrapPackage Bootstrap(Project project, Guid epoch, IEnumerable<Client> clients, byte[]? textureData,
-        byte[] projectData, BlockIndexMapping blockMapping) => new()
-        {
-            World = CaptureWorld(project),
-            Epoch = epoch,
-            ClientList = ClientPackageBuilder.Snapshot(clients),
-            BlockMapping = blockMapping.Entries.Select(pair => new BlockIndexEntry(pair.Key, checked((ushort)pair.Value))).ToArray(),
-            TextureData = textureData ?? [],
-            ProjectData = projectData
-        };
+    public static BootstrapPackage Bootstrap(
+        Project project,
+        Guid epoch,
+        IEnumerable<Client> clients,
+        byte[]? textureData,
+        byte[] projectData,
+        BlockIndexMapping blockMapping
+    ) => new()
+    {
+        World = CaptureWorld(project),
+        Epoch = epoch,
+        ClientList = ClientPackageBuilder.Snapshot(clients),
+        BlockMapping = blockMapping.Entries.Select(pair => new BlockIndexEntry(pair.Key, checked((ushort)pair.Value)))
+            .ToArray(),
+        TextureData = textureData ?? [],
+        ProjectData = projectData
+    };
 
     private static WorldMetadata CaptureWorld(Project project)
     {
         var info = project.FindSubsystem<SubsystemGameInfo>(true)!;
-        return new WorldMetadata(info.WorldSettings.Name, info.WorldSeed, ProtocolEnum.Encode(info.WorldSettings.GameMode),
-            info.WorldSettings.MaxOnlinePlayerCount);
+        return new WorldMetadata(
+            info.WorldSettings.Name,
+            info.WorldSeed,
+            ProtocolEnum.Encode(info.WorldSettings.GameMode),
+            info.WorldSettings.MaxOnlinePlayerCount
+        );
     }
 
-    public static InitialWorldSnapshotPackage Initial(Guid epoch, Project project, IEnumerable<Client> clients,
-        IEnumerable<PlayerData> players, IEnumerable<Entity> source)
+    public static InitialWorldSnapshotPackage Initial(
+        Guid epoch,
+        Project project,
+        IEnumerable<Client> clients,
+        IEnumerable<PlayerData> players,
+        IEnumerable<Entity> source
+    )
     {
         var entities = source as IReadOnlyList<Entity> ?? source.ToArray();
         return new InitialWorldSnapshotPackage
@@ -34,15 +50,17 @@ public static class WorldSnapshotBuilder
             Epoch = epoch,
             ClientList = ClientPackageBuilder.Snapshot(clients),
             Players = players.Select(player =>
-            {
-                var values = new ValuesDictionary();
-                player.Save(values);
-                return values.ToMessagePack();
-            }).ToArray(),
+                {
+                    var values = new ValuesDictionary();
+                    player.Save(values);
+                    return values.ToMessagePack();
+                }
+            ).ToArray(),
             EntityData = EntitySnapshotSerializer.Serialize(project, entities),
             PlayerEntities = EntitySnapshotSerializer.CapturePlayerEntities(entities)
         };
     }
+
     public static SubsystemWeatherPackage Capture(SubsystemWeather weather) => new()
     {
         PrecipitationStartTime = weather.PrecipitationStartTime,

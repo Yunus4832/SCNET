@@ -42,8 +42,13 @@ public abstract class BaseTexturedBatch : BaseBatch
         FlushWithDeviceState(UseAlphaTest, Texture, SamplerState, matrix, color, clearAfterFlush);
     }
 
-    public void FlushWithCurrentState(bool useAlphaTest, Texture2D texture, SamplerState samplerState, Matrix matrix,
-        bool clearAfterFlush = true)
+    public void FlushWithCurrentState(
+        bool useAlphaTest,
+        Texture2D texture,
+        SamplerState samplerState,
+        Matrix matrix,
+        bool clearAfterFlush = true
+    )
     {
         if (useAlphaTest)
         {
@@ -71,8 +76,17 @@ public abstract class BaseTexturedBatch : BaseBatch
         while (num2 > 0)
         {
             var num3 = MathUtils.Min(num2, 196605);
-            Display.DrawUserIndexed(PrimitiveType.TriangleList, shader, VertexPositionColorTexture.VertexDeclaration,
-                TriangleVertices.Array, 0, TriangleVertices.Count, TriangleIndices.Array, num, num3);
+            Display.DrawUserIndexed(
+                PrimitiveType.TriangleList,
+                shader,
+                VertexPositionColorTexture.VertexDeclaration,
+                TriangleVertices.Array,
+                0,
+                TriangleVertices.Count,
+                TriangleIndices.Array,
+                num,
+                num3
+            );
             num += num3;
             num2 -= num3;
         }
@@ -83,8 +97,14 @@ public abstract class BaseTexturedBatch : BaseBatch
         }
     }
 
-    public void FlushWithDeviceState(bool useAlphaTest, Texture2D texture, SamplerState samplerState, Matrix matrix,
-        Vector4 color, bool clearAfterFlush = true)
+    public void FlushWithDeviceState(
+        bool useAlphaTest,
+        Texture2D texture,
+        SamplerState samplerState,
+        Matrix matrix,
+        Vector4 color,
+        bool clearAfterFlush = true
+    )
     {
         if (useAlphaTest)
         {
@@ -114,8 +134,17 @@ public abstract class BaseTexturedBatch : BaseBatch
         while (num2 > 0)
         {
             var num3 = MathUtils.Min(num2, 196605);
-            Display.DrawUserIndexed(PrimitiveType.TriangleList, shader, VertexPositionColorTexture.VertexDeclaration,
-                TriangleVertices.Array, 0, TriangleVertices.Count, TriangleIndices.Array, num, num3);
+            Display.DrawUserIndexed(
+                PrimitiveType.TriangleList,
+                shader,
+                VertexPositionColorTexture.VertexDeclaration,
+                TriangleVertices.Array,
+                0,
+                TriangleVertices.Count,
+                TriangleIndices.Array,
+                num,
+                num3
+            );
             num += num3;
             num2 -= num3;
         }

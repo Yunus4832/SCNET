@@ -21,8 +21,14 @@ public class PressurePlateElectricElement(
 
         _pressure = pressure;
         var cellFace = CellFaces[0];
-        SubsystemElectricity.SubsystemAudio.PlaySound("Audio/BlockPlaced", 1f, 0.3f,
-            new Vector3(cellFace.X, cellFace.Y, cellFace.Z), 2.5f, true);
+        SubsystemElectricity.SubsystemAudio.PlaySound(
+            "Audio/BlockPlaced",
+            1f,
+            0.3f,
+            new Vector3(cellFace.X, cellFace.Y, cellFace.Z),
+            2.5f,
+            true
+        );
         SubsystemElectricity.QueueElectricElementForSimulation(this, SubsystemElectricity.CircuitStep + 1);
     }
 
@@ -44,8 +50,14 @@ public class PressurePlateElectricElement(
             if (IsSignalHigh(_voltage))
             {
                 var cellFace = CellFaces[0];
-                SubsystemElectricity.SubsystemAudio.PlaySound("Audio/BlockPlaced", 0.6f, -0.1f,
-                    new Vector3(cellFace.X, cellFace.Y, cellFace.Z), 2.5f, true);
+                SubsystemElectricity.SubsystemAudio.PlaySound(
+                    "Audio/BlockPlaced",
+                    0.6f,
+                    -0.1f,
+                    new Vector3(cellFace.X, cellFace.Y, cellFace.Z),
+                    2.5f,
+                    true
+                );
             }
 
             _voltage = 0f;

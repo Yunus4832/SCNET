@@ -54,7 +54,10 @@ public class ComponentFlu : Component, IUpdateable
         {
             if (_componentPlayer.PlayerData.Client is { } owner)
             {
-                NetworkSender.SendTo(owner, EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.SyncStat));
+                NetworkSender.SendTo(
+                    owner,
+                    EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.SyncStat)
+                );
             }
         }
 
@@ -77,7 +80,8 @@ public class ComponentFlu : Component, IUpdateable
                 _ => 1f
             };
             FluDuration = MathUtils.Max(FluDuration - num * dt, 0f);
-            if (_componentPlayer.ComponentHealth.Health > 0f && !_componentPlayer.ComponentSleep.IsSleeping &&
+            if (_componentPlayer.ComponentHealth.Health > 0f &&
+                !_componentPlayer.ComponentSleep.IsSleeping &&
                 _subsystemTime.PeriodicGameTimeEvent(5.0, -0.0099999997764825821) &&
                 _subsystemTime.GameTime - _lastEffectTime > 13.0)
             {
@@ -86,7 +90,8 @@ public class ComponentFlu : Component, IUpdateable
                     FluEffect();
                     NetworkSender.SendToObservers(
                         Entity,
-                        EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.FluEffect));
+                        EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.FluEffect)
+                    );
                 }
             }
         }
@@ -102,21 +107,27 @@ public class ComponentFlu : Component, IUpdateable
                     if (CommonLib.WorkType != WorkType.Client)
                     {
                         StartFlu();
-                        NetworkSender.SendToObservers(Entity,
-                            EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.StartFlu));
+                        NetworkSender.SendToObservers(
+                            Entity,
+                            EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.StartFlu)
+                        );
                     }
                 }
 
                 if (_subsystemTime.GameTime - _lastMessageTime > 60.0)
                 {
                     _lastMessageTime = _subsystemTime.GameTime;
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 1), Color.White,
+                    _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        LanguageManager.Get(_typeName, 1),
+                        Color.White,
                         true,
-                        true);
+                        true
+                    );
                 }
             }
 
-            if (FluOnset > 60f && _subsystemTime.PeriodicGameTimeEvent(num2, -0.0099999997764825821) &&
+            if (FluOnset > 60f &&
+                _subsystemTime.PeriodicGameTimeEvent(num2, -0.0099999997764825821) &&
                 _random.Bool(0.75f))
             {
                 if (CommonLib.WorkType != WorkType.Client)
@@ -124,7 +135,8 @@ public class ComponentFlu : Component, IUpdateable
                     Sneeze();
                     NetworkSender.SendToObservers(
                         Entity,
-                        EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.Sneeze));
+                        EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.Sneeze)
+                    );
                 }
             }
         }
@@ -133,16 +145,23 @@ public class ComponentFlu : Component, IUpdateable
             FluOnset = 0f;
         }
 
-        if ((CoughDuration > 0f || SneezeDuration > 0f) && _componentPlayer.ComponentHealth.Health > 0f &&
+        if ((CoughDuration > 0f || SneezeDuration > 0f) &&
+            _componentPlayer.ComponentHealth.Health > 0f &&
             !_componentPlayer.ComponentSleep.IsSleeping)
         {
             CoughDuration = MathUtils.Max(CoughDuration - dt, 0f);
             SneezeDuration = MathUtils.Max(SneezeDuration - dt, 0f);
-            var num3 = MathUtils.DegToRad(MathUtils.Lerp(-35f, -65f,
-                SimplexNoise.Noise(4f * (float)MathUtils.Remainder(_subsystemTime.GameTime, 10000.0))));
+            var num3 = MathUtils.DegToRad(
+                MathUtils.Lerp(
+                    -35f,
+                    -65f,
+                    SimplexNoise.Noise(4f * (float)MathUtils.Remainder(_subsystemTime.GameTime, 10000.0))
+                )
+            );
             _componentPlayer.ComponentLocomotion.LookOrder = new Vector2(
                 _componentPlayer.ComponentLocomotion.LookOrder.X,
-                MathUtils.Clamp(num3 - _componentPlayer.ComponentLocomotion.LookAngles.Y, -3f, 3f));
+                MathUtils.Clamp(num3 - _componentPlayer.ComponentLocomotion.LookAngles.Y, -3f, 3f)
+            );
             if (_random.Bool(2f * dt) && CommonLib.WorkType != WorkType.Client)
             {
                 var vector = -1.2f * _componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector();
@@ -160,8 +179,10 @@ public class ComponentFlu : Component, IUpdateable
             _blackoutFactor = MathUtils.Max(_blackoutFactor - 0.5f * dt, 0f);
         }
 
-        _componentPlayer.ComponentScreenOverlays.BlackoutFactor = MathUtils.Max(_blackoutFactor,
-            _componentPlayer.ComponentScreenOverlays.BlackoutFactor);
+        _componentPlayer.ComponentScreenOverlays.BlackoutFactor = MathUtils.Max(
+            _blackoutFactor,
+            _componentPlayer.ComponentScreenOverlays.BlackoutFactor
+        );
     }
 
     public void StartFlu()
@@ -172,8 +193,10 @@ public class ComponentFlu : Component, IUpdateable
         }
 
         FluDuration = 900f;
-        _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 10.0,
-            delegate { _componentPlayer.ComponentVitalStats.MakeSleepy(0.2f); });
+        _subsystemTime.QueueGameTimeDelayedExecution(
+            _subsystemTime.GameTime + 10.0,
+            delegate { _componentPlayer.ComponentVitalStats.MakeSleepy(0.2f); }
+        );
     }
 
 
@@ -218,27 +241,32 @@ public class ComponentFlu : Component, IUpdateable
         var injury = MathUtils.Min(0.1f, _componentPlayer.ComponentHealth.Health - 0.175f);
         if (injury > 0f)
         {
-            _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 0.75,
+            _subsystemTime.QueueGameTimeDelayedExecution(
+                _subsystemTime.GameTime + 0.75,
                 delegate
                 {
                     _componentPlayer.ComponentHealth.Injure(injury, null, false, LanguageManager.Get(_typeName, 4));
-                });
+                }
+            );
         }
 
         if (Time.FrameStartTime - _lastMessageTime > 60.0)
         {
             _lastMessageTime = Time.FrameStartTime;
-            _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 1.5, delegate
-            {
-                _componentPlayer.ComponentGui.DisplaySmallMessage(
-                    _componentPlayer.ComponentVitalStats.Temperature < 8f
-                        ? LanguageManager.Get(_typeName, 2)
-                        : LanguageManager.Get(_typeName, 3),
-                    Color.White,
-                    true,
-                    true
-                );
-            });
+            _subsystemTime.QueueGameTimeDelayedExecution(
+                _subsystemTime.GameTime + 1.5,
+                delegate
+                {
+                    _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentPlayer.ComponentVitalStats.Temperature < 8f
+                            ? LanguageManager.Get(_typeName, 2)
+                            : LanguageManager.Get(_typeName, 3),
+                        Color.White,
+                        true,
+                        true
+                    );
+                }
+            );
         }
 
         if (CoughDuration == 0f && (_subsystemTime.GameTime - _lastCoughTime > 40.0 || _random.Bool(0.5f)))

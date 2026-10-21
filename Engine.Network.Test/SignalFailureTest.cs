@@ -17,8 +17,12 @@ public sealed class SignalFailureTest
         using var silent = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
         await using var host = new NetworkHost();
         var failure = await Assert.ThrowsAsync<RendezvousException>(() => host.RequestSignalAsync(
-            (IPEndPoint)silent.Client.LocalEndPoint!, new SignalMessage(operation, Guid.NewGuid()),
-            CancellationToken.None, TimeSpan.FromMilliseconds(100)));
+                (IPEndPoint)silent.Client.LocalEndPoint!,
+                new SignalMessage(operation, Guid.NewGuid()),
+                CancellationToken.None,
+                TimeSpan.FromMilliseconds(100)
+            )
+        );
         Assert.Equal(kind, failure.Kind);
         Assert.Equal(operation, failure.Operation);
         Assert.Equal("udp_request_timeout", failure.ErrorCode);
@@ -30,8 +34,11 @@ public sealed class SignalFailureTest
         using var silent = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
         await using var host = new NetworkHost();
         using var cancellation = new CancellationTokenSource();
-        var request = host.RequestSignalAsync((IPEndPoint)silent.Client.LocalEndPoint!,
-            new SignalMessage("register", Guid.NewGuid()), cancellation.Token);
+        var request = host.RequestSignalAsync(
+            (IPEndPoint)silent.Client.LocalEndPoint!,
+            new SignalMessage("register", Guid.NewGuid()),
+            cancellation.Token
+        );
         cancellation.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => request);
     }
@@ -60,20 +67,32 @@ public sealed class SignalFailureTest
                     cancelled = request;
                     return;
                 }
+
                 if (sendLateCandidate)
                 {
-                    beacon.SendUnconnectedMessage(SignalCodec.Encode(cancelled! with
-                    {
-                        Operation = "candidate",
-                        Endpoint = "127.0.0.1:30000",
-                        Challenge = new string('a', 64)
-                    }), source);
+                    beacon.SendUnconnectedMessage(
+                        SignalCodec.Encode(
+                            cancelled! with
+                            {
+                                Operation = "candidate",
+                                Endpoint = "127.0.0.1:30000",
+                                Challenge = new string('a', 64)
+                            }
+                        ),
+                        source
+                    );
                 }
-                beacon.SendUnconnectedMessage(SignalCodec.Encode(request with
-                {
-                    Operation = request.Operation == "confirm" ? "registered" : "challenge",
-                    Challenge = "fixture"
-                }), source);
+
+                beacon.SendUnconnectedMessage(
+                    SignalCodec.Encode(
+                        request with
+                        {
+                            Operation = request.Operation == "confirm" ? "registered" : "challenge",
+                            Challenge = "fixture"
+                        }
+                    ),
+                    source
+                );
             }
             finally
             {
@@ -86,9 +105,12 @@ public sealed class SignalFailureTest
             await PollUntilAsync(beacon, () => registering.IsCompleted);
             await registering;
             using var cancellation = new CancellationTokenSource();
-            var pending = host.RequestSignalAsync(endpoint,
-                new SignalMessage("exchange", Guid.NewGuid(), session, participant), cancellation.Token,
-                TimeSpan.FromMilliseconds(150));
+            var pending = host.RequestSignalAsync(
+                endpoint,
+                new SignalMessage("exchange", Guid.NewGuid(), session, participant),
+                cancellation.Token,
+                TimeSpan.FromMilliseconds(150)
+            );
             await PollUntilAsync(beacon, () => cancelled is not null);
             if (timeout)
             {
@@ -100,6 +122,7 @@ public sealed class SignalFailureTest
                 cancellation.Cancel();
                 await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
             }
+
             Assert.Equal(0, host.Resources.PendingSignals);
             sendLateCandidate = true;
             var nextId = Guid.NewGuid();
@@ -125,5 +148,4 @@ public sealed class SignalFailureTest
             await Task.Delay(2, deadline.Token);
         }
     }
-
 }

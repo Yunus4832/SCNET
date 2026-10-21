@@ -15,6 +15,7 @@ internal static unsafe class PngCodec
                 {
                     throw Error(ref image);
                 }
+
                 var result = new ImageBuffer(checked((int)image.Width), checked((int)image.Height));
                 image.Format = 3; // PNG_FORMAT_RGBA
                 fixed (byte* pixels = result.Bytes)
@@ -25,6 +26,7 @@ internal static unsafe class PngCodec
                         throw Error(ref image);
                     }
                 }
+
                 return result;
             }
             finally
@@ -53,8 +55,10 @@ internal static unsafe class PngCodec
                 bytes.Slice(source, 3).CopyTo(rgb.AsSpan(destination, 3));
                 destination += 3;
             }
+
             bytes = rgb;
         }
+
         fixed (byte* pixels = bytes)
         {
             try
@@ -64,6 +68,7 @@ internal static unsafe class PngCodec
                 {
                     throw Error(ref image);
                 }
+
                 var encoded = new byte[checked((int)length)];
                 fixed (byte* output = encoded)
                 {
@@ -72,6 +77,7 @@ internal static unsafe class PngCodec
                         throw Error(ref image);
                     }
                 }
+
                 return encoded;
             }
             finally

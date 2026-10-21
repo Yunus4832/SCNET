@@ -25,8 +25,10 @@ public sealed class AdminRestoreAllPublisherKeysEndpoint(IMediator mediator) : C
 
     private async Task<ResponseData> RestoreAllPublisherKeys(string publisherId, CancellationToken cancellationToken)
     {
-        var found = await mediator.Send(new RestorePublisherKeyCommand(new PublisherId(ParseId(publisherId))),
-            cancellationToken);
+        var found = await mediator.Send(
+            new RestorePublisherKeyCommand(new PublisherId(ParseId(publisherId))),
+            cancellationToken
+        );
         EnsureFound(found, "publisher_or_key_not_found");
         return Success();
     }

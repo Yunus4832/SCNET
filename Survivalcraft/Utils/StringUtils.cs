@@ -116,8 +116,13 @@ public static class StringUtils
         return CalculateNumberLength((ulong)-value, numberBase) + 1;
     }
 
-    public static void AppendNumber(this StringBuilder stringBuilder, uint value, int padding = 0,
-        char paddingCharacter = ' ', int numberBase = 10)
+    public static void AppendNumber(
+        this StringBuilder stringBuilder,
+        uint value,
+        int padding = 0,
+        char paddingCharacter = ' ',
+        int numberBase = 10
+    )
     {
         var val = CalculateNumberLength(value, numberBase);
         var repeatCount = Math.Max(padding, val);
@@ -132,8 +137,13 @@ public static class StringUtils
         } while (value != 0);
     }
 
-    public static void AppendNumber(this StringBuilder stringBuilder, int value, int padding = 0,
-        char paddingCharacter = ' ', int numberBase = 10)
+    public static void AppendNumber(
+        this StringBuilder stringBuilder,
+        int value,
+        int padding = 0,
+        char paddingCharacter = ' ',
+        int numberBase = 10
+    )
     {
         if (value >= 0)
         {
@@ -145,8 +155,13 @@ public static class StringUtils
         stringBuilder.AppendNumber((uint)-value, padding - 1, paddingCharacter, numberBase);
     }
 
-    public static void AppendNumber(this StringBuilder stringBuilder, ulong value, int padding = 0,
-        char paddingCharacter = ' ', int numberBase = 10)
+    public static void AppendNumber(
+        this StringBuilder stringBuilder,
+        ulong value,
+        int padding = 0,
+        char paddingCharacter = ' ',
+        int numberBase = 10
+    )
     {
         var val = CalculateNumberLength(value, numberBase);
         var repeatCount = Math.Max(padding, val);
@@ -161,8 +176,13 @@ public static class StringUtils
         } while (value != 0);
     }
 
-    public static void AppendNumber(this StringBuilder stringBuilder, long value, int padding = 0,
-        char paddingCharacter = ' ', int numberBase = 10)
+    public static void AppendNumber(
+        this StringBuilder stringBuilder,
+        long value,
+        int padding = 0,
+        char paddingCharacter = ' ',
+        int numberBase = 10
+    )
     {
         if (value >= 0)
         {

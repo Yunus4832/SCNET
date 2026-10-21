@@ -62,13 +62,28 @@ public class ThermometerBlock : Block, IElectricElementBlock
             fluidMesh.ParentBone ??
             throw new InvalidOperationException("Required FluidMesh.ParentBone is null")
         );
-        CaseMesh.AppendModelMeshPart(caseMesh.MeshParts[0], boneAbsoluteTransform, false, false, true,
-            false, Color.White);
-        FluidMesh.AppendModelMeshPart(fluidMesh.MeshParts[0], boneAbsoluteTransform2, false, false,
-            false, false, Color.White);
+        CaseMesh.AppendModelMeshPart(
+            caseMesh.MeshParts[0],
+            boneAbsoluteTransform,
+            false,
+            false,
+            true,
+            false,
+            Color.White
+        );
+        FluidMesh.AppendModelMeshPart(
+            fluidMesh.MeshParts[0],
+            boneAbsoluteTransform2,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         for (var i = 0; i < 4; i++)
         {
-            MatricesByData[i] = Matrix.CreateScale(1.5f) * Matrix.CreateTranslation(0.95f, 0.15f, 0.5f) *
+            MatricesByData[i] = Matrix.CreateScale(1.5f) *
+                                Matrix.CreateTranslation(0.95f, 0.15f, 0.5f) *
                                 Matrix.CreateTranslation(-0.5f, 0f, -0.5f) *
                                 Matrix.CreateRotationY((i + 1) * (float)Math.PI / 2f) *
                                 Matrix.CreateTranslation(0.5f, 0f, 0.5f);
@@ -126,8 +141,10 @@ public class ThermometerBlock : Block, IElectricElementBlock
             : 8;
         var y2 = MathUtils.Lerp(1f, 4f, num2 / 15f);
         var matrix = MatricesByData[num];
-        var value2 = Matrix.CreateTranslation(0f, 0f - FluidBottomPosition, 0f) * Matrix.CreateScale(1f, y2, 1f) *
-                     Matrix.CreateTranslation(0f, FluidBottomPosition, 0f) * matrix;
+        var value2 = Matrix.CreateTranslation(0f, 0f - FluidBottomPosition, 0f) *
+                     Matrix.CreateScale(1f, y2, 1f) *
+                     Matrix.CreateTranslation(0f, FluidBottomPosition, 0f) *
+                     matrix;
         generator.GenerateMeshVertices(this, x, y, z, CaseMesh, Color.White, matrix, geometry.SubsetOpaque);
         generator.GenerateMeshVertices(this, x, y, z, FluidMesh, Color.White, value2, geometry.SubsetOpaque);
         generator.GenerateWireVertices(value, x, y, z, num & 3, 0.2f, Vector2.Zero, geometry.SubsetOpaque);
@@ -161,8 +178,10 @@ public class ThermometerBlock : Block, IElectricElementBlock
 
         var y = MathUtils.Lerp(1f, 4f, num / 15f);
         var matrix2 = Matrix.CreateScale(3f * size) * Matrix.CreateTranslation(0f, -0.15f, 0f) * matrix;
-        var matrix3 = Matrix.CreateTranslation(0f, 0f - FluidBottomPosition, 0f) * Matrix.CreateScale(1f, y, 1f) *
-                      Matrix.CreateTranslation(0f, FluidBottomPosition, 0f) * matrix2;
+        var matrix3 = Matrix.CreateTranslation(0f, 0f - FluidBottomPosition, 0f) *
+                      Matrix.CreateScale(1f, y, 1f) *
+                      Matrix.CreateTranslation(0f, FluidBottomPosition, 0f) *
+                      matrix2;
         BlocksManager.DrawMeshBlock(primitivesRenderer, CaseMesh, color, 1f, ref matrix2, environmentData);
         BlocksManager.DrawMeshBlock(primitivesRenderer, FluidMesh, color, 1f, ref matrix3, environmentData);
     }

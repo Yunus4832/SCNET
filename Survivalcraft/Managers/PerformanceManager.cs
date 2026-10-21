@@ -95,13 +95,19 @@ public static class PerformanceManager
 
                 _longTermAverageFrameTime = (float)(_totalFrameTime / _frameCount);
                 float num = (int)MathUtils.Round(
-                    MathUtils.Round(_totalFrameTime / _frameCount / 0.004999999888241291) * 0.004999999888241291 *
-                    1000.0);
+                    MathUtils.Round(_totalFrameTime / _frameCount / 0.004999999888241291) *
+                    0.004999999888241291 *
+                    1000.0
+                );
                 float num2 =
-                    (int)MathUtils.Round(MathUtils.Round(_totalCpuFrameTime / _frameCount / 0.004999999888241291) *
-                                         0.004999999888241291 * 1000.0);
+                    (int)MathUtils.Round(
+                        MathUtils.Round(_totalCpuFrameTime / _frameCount / 0.004999999888241291) *
+                        0.004999999888241291 *
+                        1000.0
+                    );
                 Log.Information(
-                    $"PerformanceManager Measurement: frames={_frameCount}, avgFrameTime={num}ms, avgFrameCpuTime={num2}ms");
+                    $"PerformanceManager Measurement: frames={_frameCount}, avgFrameTime={num}ms, avgFrameCpuTime={num2}ms"
+                );
             },
             Actions.Empty,
             Actions.Empty
@@ -183,14 +189,26 @@ public static class PerformanceManager
                 var frameData = _frameData[num6];
                 var x = num5 * num;
                 var x2 = (num5 + 1) * num;
-                flatBatch2D.QueueQuad(new Vector2(x, num3), new Vector2(x2, num3 + frameData.CpuTime * num2), 0f,
-                    color);
-                flatBatch2D.QueueQuad(new Vector2(x, num3 + frameData.CpuTime * num2),
-                    new Vector2(x2, num3 + frameData.TotalTime * num2), 0f, color2);
+                flatBatch2D.QueueQuad(
+                    new Vector2(x, num3),
+                    new Vector2(x2, num3 + frameData.CpuTime * num2),
+                    0f,
+                    color
+                );
+                flatBatch2D.QueueQuad(
+                    new Vector2(x, num3 + frameData.CpuTime * num2),
+                    new Vector2(x2, num3 + frameData.TotalTime * num2),
+                    0f,
+                    color2
+                );
             }
 
-            flatBatch2D.QueueLine(new Vector2(0f, num3 + 0.0166666675f * num2),
-                new Vector2(viewport.Width, num3 + 0.0166666675f * num2), 0f, Color.Green);
+            flatBatch2D.QueueLine(
+                new Vector2(0f, num3 + 0.0166666675f * num2),
+                new Vector2(viewport.Width, num3 + 0.0166666675f * num2),
+                0f,
+                Color.Green
+            );
         }
         else
         {

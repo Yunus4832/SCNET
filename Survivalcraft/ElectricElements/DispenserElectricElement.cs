@@ -9,15 +9,18 @@ public class DispenserElectricElement : ElectricElement
     private readonly SubsystemBlockEntities _subsystemBlockEntities;
 
     public DispenserElectricElement(SubsystemElectricity subsystemElectricity, Point3 point)
-        : base(subsystemElectricity, new List<CellFace>
-        {
-            new(point.X, point.Y, point.Z, 0),
-            new(point.X, point.Y, point.Z, 1),
-            new(point.X, point.Y, point.Z, 2),
-            new(point.X, point.Y, point.Z, 3),
-            new(point.X, point.Y, point.Z, 4),
-            new(point.X, point.Y, point.Z, 5)
-        })
+        : base(
+            subsystemElectricity,
+            new List<CellFace>
+            {
+                new(point.X, point.Y, point.Z, 0),
+                new(point.X, point.Y, point.Z, 1),
+                new(point.X, point.Y, point.Z, 2),
+                new(point.X, point.Y, point.Z, 3),
+                new(point.X, point.Y, point.Z, 4),
+                new(point.X, point.Y, point.Z, 5)
+            }
+        )
     {
         _subsystemBlockEntities = SubsystemElectricity.Project.FindSubsystem<SubsystemBlockEntities>(true)!;
     }

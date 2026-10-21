@@ -7,7 +7,9 @@ internal static class CandidatePreparationRace
 {
     internal static async Task<ConnectionPreparation> SelectAsync(
         IReadOnlyList<Func<CancellationToken, Task<ConnectionPreparation>>> preparations,
-        Action<int> discardRegistration, CancellationToken cancellationToken)
+        Action<int> discardRegistration,
+        CancellationToken cancellationToken
+    )
     {
         using var race = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var attempts = preparations.Select(async prepare => await prepare(race.Token).ConfigureAwait(false)).ToArray();
@@ -30,14 +32,23 @@ internal static class CandidatePreparationRace
                     break;
                 }
                 catch (Exception exception) when (!cancellationToken.IsCancellationRequested &&
-                                                  exception is RendezvousException { Kind: RendezvousFailureKind.UdpUnavailable or RendezvousFailureKind.HolePunchUnavailable } or SocketException)
+                                                  exception is RendezvousException
+                                                  {
+                                                      Kind: RendezvousFailureKind.UdpUnavailable
+                                                      or RendezvousFailureKind.HolePunchUnavailable
+                                                  } or SocketException)
                 {
                     failure = exception is SocketException
-                        ? new RendezvousException("candidate", RendezvousFailureKind.UdpUnavailable,
-                            "candidate_socket_error", innerException: exception)
+                        ? new RendezvousException(
+                            "candidate",
+                            RendezvousFailureKind.UdpUnavailable,
+                            "candidate_socket_error",
+                            innerException: exception
+                        )
                         : exception;
                 }
             }
+
             if (selected is null)
             {
                 throw failure ?? new InvalidOperationException("No candidate preparation was started.");
@@ -70,6 +81,7 @@ internal static class CandidatePreparationRace
                 }
             }
         }
+
         if (cancellationToken.IsCancellationRequested)
         {
             await selected.DisposeAsync().ConfigureAwait(false);
@@ -77,8 +89,10 @@ internal static class CandidatePreparationRace
             {
                 discardRegistration(Array.IndexOf(attempts, selectedAttempt));
             }
+
             cancellationToken.ThrowIfCancellationRequested();
         }
+
         return selected;
     }
 }

@@ -6,13 +6,16 @@ namespace Game.Modding.Data;
 public sealed class GameDataCatalog
 {
     private readonly NamespacedRegistry<XmlDataRegistration> _database;
+
     private readonly NamespacedRegistry<XmlDataRegistration> _recipes;
+
     private readonly NamespacedRegistry<XmlDataRegistration> _clothing;
 
     private GameDataCatalog(
         NamespacedRegistry<XmlDataRegistration> database,
         NamespacedRegistry<XmlDataRegistration> recipes,
-        NamespacedRegistry<XmlDataRegistration> clothing)
+        NamespacedRegistry<XmlDataRegistration> clothing
+    )
     {
         _database = database;
         _recipes = recipes;
@@ -23,7 +26,8 @@ public sealed class GameDataCatalog
 
     public XElement BuildRecipes() => CompileDocument(
         _recipes,
-        static (document, patch) => ModXmlPatcher.CombineCrLogic(document, patch));
+        static (document, patch) => ModXmlPatcher.CombineCrLogic(document, patch)
+    );
 
     public XElement BuildClothing() => CompileDocument(_clothing, ApplyClothingPatch);
 
@@ -40,14 +44,16 @@ public sealed class GameDataCatalog
 
     private static XElement CompileDocument(
         NamespacedRegistry<XmlDataRegistration> registry,
-        Action<XElement, XElement> applyPatch)
+        Action<XElement, XElement> applyPatch
+    )
     {
         var entries = registry.Entries.OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal).ToArray();
         var bases = entries.Where(pair => pair.Value.Mode == XmlContributionMode.Base).ToArray();
         if (bases.Length != 1)
         {
             throw new InvalidOperationException(
-                $"Registry requires exactly one base document, but found {bases.Length}.");
+                $"Registry requires exactly one base document, but found {bases.Length}."
+            );
         }
 
         var document = new XElement(bases[0].Value.Read());
@@ -65,7 +71,8 @@ public sealed class GameDataCatalog
         if (baseCount != 1)
         {
             throw new InvalidOperationException(
-                $"Registry {registryName} requires exactly one base document, but found {baseCount}.");
+                $"Registry {registryName} requires exactly one base document, but found {baseCount}."
+            );
         }
     }
 

@@ -23,9 +23,19 @@ public sealed class AdminReleaseCreateEndpoint(IMediator mediator) : ContentEndp
         {
             ArgumentNullException.ThrowIfNull(request.Artifacts);
             var artifacts = request.Artifacts.Select(artifact => new GameReleaseArtifactData(
-                artifact.Platform, artifact.DownloadUrl, artifact.Sha256)).ToArray();
-            var id = await mediator.Send(new CreateGameReleaseCommand(request.Version, request.Description,
-                artifacts), cancellationToken);
+                    artifact.Platform,
+                    artifact.DownloadUrl,
+                    artifact.Sha256
+                )
+            ).ToArray();
+            var id = await mediator.Send(
+                new CreateGameReleaseCommand(
+                    request.Version,
+                    request.Description,
+                    artifacts
+                ),
+                cancellationToken
+            );
             await Send.ResponseAsync(new { id = id.ToString() }.AsResponseData(), cancellation: cancellationToken);
         }
         catch (ArgumentException)
@@ -37,15 +47,16 @@ public sealed class AdminReleaseCreateEndpoint(IMediator mediator) : ContentEndp
             throw new KnownException("game_release_exists", StatusCodes.Status409Conflict);
         }
     }
-
 }
 
 public sealed record SaveGameReleaseRequest(
     string Version,
     string Description,
-    IReadOnlyList<SaveGameReleaseArtifactRequest> Artifacts);
+    IReadOnlyList<SaveGameReleaseArtifactRequest> Artifacts
+);
 
 public sealed record SaveGameReleaseArtifactRequest(
     string Platform,
     string DownloadUrl,
-    string Sha256);
+    string Sha256
+);

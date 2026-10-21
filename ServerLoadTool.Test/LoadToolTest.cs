@@ -15,8 +15,16 @@ public class LoadToolTest
         var center = new Vector2(-158.5f, 51.5f);
         var chunks = LoadInterest.Chunks(center, 32);
         Assert.NotEmpty(chunks);
-        Assert.All(chunks, chunk => Assert.True(Vector2.DistanceSquared(center,
-            new Vector2(chunk.X * 16 + 8, chunk.Y * 16 + 8)) <= 32 * 32));
+        Assert.All(
+            chunks,
+            chunk => Assert.True(
+                Vector2.DistanceSquared(
+                    center,
+                    new Vector2(chunk.X * 16 + 8, chunk.Y * 16 + 8)
+                ) <=
+                32 * 32
+            )
+        );
     }
 
     [Fact]
@@ -33,10 +41,10 @@ public class LoadToolTest
     {
         var package = new PlayerStatePackage
         {
-
             Position = new Vector3(10, 65, -20),
             Velocity = Vector3.Zero,
-            PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange | ComponentPlayerPackage.ChangFlag.VelocityChange
+            PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange |
+                                ComponentPlayerPackage.ChangFlag.VelocityChange
         };
         var encoded = LoadWire.Encode(package, 7);
         var decoded = Assert.IsType<PlayerStatePackage>(Assert.Single(LoadWire.Decode(encoded)));

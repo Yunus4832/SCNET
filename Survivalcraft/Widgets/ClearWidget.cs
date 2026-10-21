@@ -28,7 +28,8 @@ public class ClearWidget : Widget
         Display.Clear(
             ClearColor
                 ? new Vector4?(new Vector4(Color))
-                : null, ClearDepth
+                : null,
+            ClearDepth
                 ? new float?(Depth)
                 : null,
             ClearStencil

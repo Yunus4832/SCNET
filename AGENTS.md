@@ -48,7 +48,14 @@ exact property names and staged before/after values; omit it when no version pro
 Treat `.editorconfig` as authoritative for C# style. Before completing any change that modifies C#,
 use the repository `scnet-code-style` Skill and run
 `.agents/skills/scnet-code-style/scripts/validate_changed_csharp.sh`. A successful build does not
-replace this changed-file style check. Keep unrelated legacy formatting out of functional changes.
+replace this changed-file style check. JetBrains is the canonical layout formatter; the gate verifies
+formatting on temporary copies with CleanupCode and uses Roslyn for syntax/naming diagnostics.
+Install the JetBrains CLI or set `SCNET_JB` as documented in `Doc/BuildAndConfig.md`.
+Do not run a conflicting Roslyn whitespace formatter as a second layout gate. Follow
+`scnet-code-style` and verify actual output. Enum members must have explicit constant values;
+preserve existing numeric values, aliases and Flags semantics when cleaning up declarations.
+The changed-file gate checks this rule with the skill-owned Roslyn checker.
+Keep unrelated legacy formatting out of functional changes.
 
 ## Build and release workflows
 

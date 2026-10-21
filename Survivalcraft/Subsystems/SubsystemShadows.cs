@@ -86,8 +86,15 @@ public class SubsystemShadows : Subsystem, IDrawable
                             var p2 = new Vector3(boundingBox.Max.X + i, num13 + num15, boundingBox.Min.Z + j);
                             var p3 = new Vector3(boundingBox.Max.X + i, num13 + num15, boundingBox.Max.Z + j);
                             var p4 = new Vector3(boundingBox.Min.X + i, num13 + num15, boundingBox.Max.Z + j);
-                            DrawShadowOverQuad(p, p2, p3, p4, shadowPosition, shadowDiameter,
-                                0.45f * block.ObjectShadowStrength * alpha * num3 * num16);
+                            DrawShadowOverQuad(
+                                p,
+                                p2,
+                                p3,
+                                p4,
+                                shadowPosition,
+                                shadowDiameter,
+                                0.45f * block.ObjectShadowStrength * alpha * num3 * num16
+                            );
                         }
 
                         break;
@@ -110,13 +117,26 @@ public class SubsystemShadows : Subsystem, IDrawable
             return;
         }
 
-        _batch = _primitivesRenderer.TexturedBatch(ContentManager.Get<Texture2D>("Textures/Shadow"), false, 0,
-            DepthStencilState.DepthRead, RasterizerState.CullCounterClockwiseScissor, BlendState.AlphaBlend,
-            SamplerState.LinearClamp);
+        _batch = _primitivesRenderer.TexturedBatch(
+            ContentManager.Get<Texture2D>("Textures/Shadow"),
+            false,
+            0,
+            DepthStencilState.DepthRead,
+            RasterizerState.CullCounterClockwiseScissor,
+            BlendState.AlphaBlend,
+            SamplerState.LinearClamp
+        );
     }
 
-    public void DrawShadowOverQuad(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4, Vector3 shadowPosition,
-        float shadowDiameter, float alpha)
+    public void DrawShadowOverQuad(
+        Vector3 p1,
+        Vector3 p2,
+        Vector3 p3,
+        Vector3 p4,
+        Vector3 shadowPosition,
+        float shadowDiameter,
+        float alpha
+    )
     {
         if (!(alpha > 0.02f))
         {
@@ -132,7 +152,9 @@ public class SubsystemShadows : Subsystem, IDrawable
 
     private static Vector2 CalculateShadowTextureCoordinate(Vector3 p, Vector3 shadowPosition, float shadowDiameter)
     {
-        return new Vector2(0.5f + (p.X - shadowPosition.X) / shadowDiameter,
-            0.5f + (p.Z - shadowPosition.Z) / shadowDiameter);
+        return new Vector2(
+            0.5f + (p.X - shadowPosition.X) / shadowDiameter,
+            0.5f + (p.Z - shadowPosition.Z) / shadowDiameter
+        );
     }
 }

@@ -16,7 +16,10 @@ namespace ContentServer.Endpoints.Admin.ServerSources;
 
 [HttpPost("/api/v1/admin/server-sources/{id:guid}/reject")]
 [AllowAnonymous]
-public sealed class AdminServerSourceRejectEndpoint(IMediator mediator, ApiKeyAuthenticationContext authenticationContext) : ContentEndpoint
+public sealed class AdminServerSourceRejectEndpoint(
+    IMediator mediator,
+    ApiKeyAuthenticationContext authenticationContext
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -34,8 +37,15 @@ public sealed class AdminServerSourceRejectEndpoint(IMediator mediator, ApiKeyAu
 
     private async Task Review(Guid id, bool approved, string? message, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new ReviewServerSourceCommand(new ServerSourceRegistrationId(id),
-            authenticationContext.RequireAdministratorId(), approved, message), cancellationToken);
+        var result = await mediator.Send(
+            new ReviewServerSourceCommand(
+                new ServerSourceRegistrationId(id),
+                authenticationContext.RequireAdministratorId(),
+                approved,
+                message
+            ),
+            cancellationToken
+        );
         if (result == ReviewServerSourceResult.NotFound)
         {
             throw new KnownException("server_source_not_found", StatusCodes.Status404NotFound);

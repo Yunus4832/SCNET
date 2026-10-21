@@ -58,7 +58,8 @@ public class SubsystemIvyBlockBehavior : SubsystemPollableBlockBehavior, IUpdate
 
     public override void OnPoll(int value, int x, int y, int z, int pollPass)
     {
-        if (_random.Float(0f, 1f) < 0.5f && !IvyBlock.IsGrowthStopCell(x, y, z) &&
+        if (_random.Float(0f, 1f) < 0.5f &&
+            !IvyBlock.IsGrowthStopCell(x, y, z) &&
             Terrain.ExtractContents(SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z)) == 0)
         {
             _toUpdate[new Point3(x, y - 1, z)] = value;

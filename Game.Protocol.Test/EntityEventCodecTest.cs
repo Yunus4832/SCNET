@@ -11,26 +11,60 @@ public sealed class EntityEventCodecTest
 {
     public static IEnumerable<object[]> Messages()
     {
-        yield return [new ComponentOnFirePackage { Type = ComponentOnFirePackage.EventType.ComponentOnFire, EntityId = 42, AttackerEntityId = 43, Duration = 5 }];
+        yield return
+        [
+            new ComponentOnFirePackage
+            {
+                Type = ComponentOnFirePackage.EventType.ComponentOnFire, EntityId = 42, AttackerEntityId = 43,
+                Duration = 5
+            }
+        ];
         yield return [new ComponentOnFirePackage(-2, 64, 3, 0.5f)];
         yield return [new ComponentOnFirePackage(-2, 64, 3)];
         foreach (var type in Enum.GetValues<ComponentBehaviorPackage.EventType>())
-        { yield return [new ComponentBehaviorPackage { EntityId = 42, PackageEventType = type, RowLeft = true, RowRight = false, Type = 3 }]; }
+        {
+            yield return
+            [
+                new ComponentBehaviorPackage
+                    { EntityId = 42, PackageEventType = type, RowLeft = true, RowRight = false, Type = 3 }
+            ];
+        }
+
         foreach (var type in Enum.GetValues<ComponentHealthPackage.EventType>())
         {
-            yield return [new ComponentHealthPackage
-            { Type = type, TargetId = 42, AttackerId = 43, Health = 0.5f, Amount = 0.25f, Cause = "test", IgnoreInvulnerability = true,
-                InjureRequestType = ComponentHealthPackage.RequestInjureType.Fall, Position = Vector3.One, Velocity = Vector3.UnitY, Color = Color.White, Text = "7" }];
+            yield return
+            [
+                new ComponentHealthPackage
+                {
+                    Type = type, TargetId = 42, AttackerId = 43, Health = 0.5f, Amount = 0.25f, Cause = "test",
+                    IgnoreInvulnerability = true,
+                    InjureRequestType = ComponentHealthPackage.RequestInjureType.Fall, Position = Vector3.One,
+                    Velocity = Vector3.UnitY, Color = Color.White, Text = "7"
+                }
+            ];
         }
+
         foreach (var type in Enum.GetValues<MovingBlockPackage.EventType>())
         {
-            yield return [new MovingBlockPackage
-            { Type = type, NetworkId = 42, StateTick = 7, AddData = [1, 2, 3, 4], Position = Vector3.One, Velocity = Vector3.UnitX, Speed = 0.5f }];
+            yield return
+            [
+                new MovingBlockPackage
+                {
+                    Type = type, NetworkId = 42, StateTick = 7, AddData = [1, 2, 3, 4], Position = Vector3.One,
+                    Velocity = Vector3.UnitX, Speed = 0.5f
+                }
+            ];
         }
+
         yield return [new ExplosionsPackage(Vector3.One, 2, 0.5f)];
-        yield return [new ExplosionsPackage
-        { Type = ExplosionsPackage.EventType.Cell, Cells = new Dictionary<Point2, IReadOnlyList<ExplosionCell>>
-            { [new Point2(-1, 2)] = new ExplosionCell[] { new(new Point3(-2, 64, 3), 0.5f) } } }];
+        yield return
+        [
+            new ExplosionsPackage
+            {
+                Type = ExplosionsPackage.EventType.Cell, Cells = new Dictionary<Point2, IReadOnlyList<ExplosionCell>>
+                    { [new Point2(-1, 2)] = new ExplosionCell[] { new(new Point3(-2, 64, 3), 0.5f) } }
+            }
+        ];
     }
 
     [Theory]

@@ -10,22 +10,24 @@ namespace ContentServer.Application.Queries;
 public sealed record GetContentVersionQuery(
     PublisherId PublisherId,
     string Identifier,
-    string Version) : IQuery<ContentVersionDto?>;
+    string Version
+) : IQuery<ContentVersionDto?>;
 
-public sealed class GetContentVersionQueryHandler(
-    ContentServerDbContext db
-) : IQueryHandler<GetContentVersionQuery, ContentVersionDto?>
+public sealed class GetContentVersionQueryHandler(ContentServerDbContext db)
+    : IQueryHandler<GetContentVersionQuery, ContentVersionDto?>
 {
     public async Task<ContentVersionDto?> Handle(
         GetContentVersionQuery query,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var normalizedIdentifier = query.Identifier.ToLowerInvariant();
         var content = await db.Contents.AsNoTracking()
             .SingleOrDefaultAsync(
                 item => item.PublisherId == query.PublisherId &&
                         item.NormalizedIdentifier == normalizedIdentifier,
-                cancellationToken);
+                cancellationToken
+            );
 
         if (content is null)
         {
@@ -36,7 +38,8 @@ public sealed class GetContentVersionQueryHandler(
             .SingleOrDefaultAsync(
                 item => item.ContentId == content.Id &&
                         item.Version == query.Version,
-                cancellationToken);
+                cancellationToken
+            );
 
         if (version is null)
         {

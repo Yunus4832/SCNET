@@ -8,7 +8,7 @@ internal static class DesktopUpdateFiles
         try
         {
             File.Copy(source, temporary, true);
-            for (var attempt = 0; ; attempt++)
+            for (var attempt = 0;; attempt++)
             {
                 try
                 {
@@ -29,8 +29,11 @@ internal static class DesktopUpdateFiles
 
     internal static void Notify(string message, bool error)
     {
-        MessageBox.Show(message, "SCNET update",
+        MessageBox.Show(
+            message,
+            "SCNET update",
             MessageBoxButtons.OK,
-            error ? MessageBoxIcon.Error : MessageBoxIcon.Information);
+            error ? MessageBoxIcon.Error : MessageBoxIcon.Information
+        );
     }
 }

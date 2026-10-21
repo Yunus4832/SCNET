@@ -2,8 +2,10 @@ namespace Game.Content;
 
 public sealed class ContentRendezvousCatalog(ContentServerClientPool pool)
 {
-    public async Task<RendezvousCatalogResult> QueryAsync(IEnumerable<ContentRepository> repositories,
-        CancellationToken cancellationToken)
+    public async Task<RendezvousCatalogResult> QueryAsync(
+        IEnumerable<ContentRepository> repositories,
+        CancellationToken cancellationToken
+    )
     {
         var configured = repositories.ToArray();
         pool.Update(Guid.Empty, configured);
@@ -16,8 +18,17 @@ public sealed class ContentRendezvousCatalog(ContentServerClientPool pool)
             {
                 using var lease = pool.Acquire(Guid.Empty, repository.Id);
                 var records = await lease.Client.ListRendezvousServicesAsync(cancellationToken).ConfigureAwait(false);
-                services.AddRange(records.Select(record => new RegisteredRendezvousService(repository.Id,
-                    repository.Name, record.Id, record.Name, record.ControlUrl, record.Description)));
+                services.AddRange(
+                    records.Select(record => new RegisteredRendezvousService(
+                            repository.Id,
+                            repository.Name,
+                            record.Id,
+                            record.Name,
+                            record.ControlUrl,
+                            record.Description
+                        )
+                    )
+                );
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -29,12 +40,21 @@ public sealed class ContentRendezvousCatalog(ContentServerClientPool pool)
                 Log.Warning($"Could not load signaling services from '{repository.Name}': {exception.Message}");
             }
         }
+
         return new RendezvousCatalogResult(services, failures);
     }
 }
 
-public sealed record RegisteredRendezvousService(Guid RepositoryId, string RepositoryName, string RegistrationId,
-    string Name, string ControlUrl, string? Description);
+public sealed record RegisteredRendezvousService(
+    Guid RepositoryId,
+    string RepositoryName,
+    string RegistrationId,
+    string Name,
+    string ControlUrl,
+    string? Description
+);
 
-public sealed record RendezvousCatalogResult(IReadOnlyList<RegisteredRendezvousService> Services,
-    IReadOnlySet<Guid> UnavailableRepositories);
+public sealed record RendezvousCatalogResult(
+    IReadOnlyList<RegisteredRendezvousService> Services,
+    IReadOnlySet<Guid> UnavailableRepositories
+);

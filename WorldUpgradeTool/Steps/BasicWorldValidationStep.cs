@@ -20,7 +20,8 @@ internal sealed class BasicWorldValidationStep : IWorldMaintenanceStep
         if (context.Inspection.ProjectVersion != WorldUpgradeManager.TargetProjectFormatVersion)
         {
             throw new InvalidOperationException(
-                $"Upgrade produced invalid project version. Expected \"{WorldUpgradeManager.TargetProjectFormatVersion}\", found \"{context.Inspection.ProjectVersion}\".");
+                $"Upgrade produced invalid project version. Expected \"{WorldUpgradeManager.TargetProjectFormatVersion}\", found \"{context.Inspection.ProjectVersion}\"."
+            );
         }
     }
 }

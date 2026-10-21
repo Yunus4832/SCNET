@@ -1,4 +1,4 @@
 interface:
   display_name: "SCNET Code Style"
-  short_description: "Keep C# style, files, and project boundaries consistent."
-  default_prompt: "Use $scnet-code-style to organize and validate the C# files changed in this task."
+  short_description: "Apply C# style with distinct Roslyn and JetBrains formatting checks."
+  default_prompt: "Use $scnet-code-style to organize and validate the C# files changed in this task, using Roslyn checks and JetBrains formatting for their respective rules."

@@ -8,19 +8,27 @@ namespace ContentServer.Application.Commands;
 
 public enum ReviewDirectoryServerResult
 {
-    Success,
-    NotFound,
-    InvalidState
+    Success = 0,
+
+    NotFound = 1,
+
+    InvalidState = 2
 }
 
-public sealed record ReviewDirectoryServerCommand(DirectoryServerId Id, AdministratorId AdministratorId,
-    bool Approved, string? Message) : ICommand<ReviewDirectoryServerResult>;
+public sealed record ReviewDirectoryServerCommand(
+    DirectoryServerId Id,
+    AdministratorId AdministratorId,
+    bool Approved,
+    string? Message
+) : ICommand<ReviewDirectoryServerResult>;
 
 public sealed class ReviewDirectoryServerCommandHandler(DirectoryServerRepository repository)
     : ICommandHandler<ReviewDirectoryServerCommand, ReviewDirectoryServerResult>
 {
-    public async Task<ReviewDirectoryServerResult> Handle(ReviewDirectoryServerCommand command,
-        CancellationToken cancellationToken)
+    public async Task<ReviewDirectoryServerResult> Handle(
+        ReviewDirectoryServerCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var server = await repository.FindAsync(command.Id, cancellationToken);
         if (server is null)

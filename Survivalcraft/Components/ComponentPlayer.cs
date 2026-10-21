@@ -116,8 +116,10 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             _lastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex)
         {
             _lastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
-            var package = new ComponentInventoryPackage(ComponentMiner.Inventory.Id,
-                ComponentMiner.Inventory.ActiveSlotIndex);
+            var package = new ComponentInventoryPackage(
+                ComponentMiner.Inventory.Id,
+                ComponentMiner.Inventory.ActiveSlotIndex
+            );
             if (CommonLib.WorkType == WorkType.Server)
             {
                 NetworkSender.SendToObservers(Entity, package);
@@ -168,8 +170,13 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                 _subsystemAudio.PlayRandomSound(
                     PlayerData.PlayerClass == PlayerClass.Male
                         ? "Audio/Creatures/MaleYellFast"
-                        : "Audio/Creatures/FemaleYellFast", 0.75f, 0f, ComponentBody.Position,
-                    2f, false);
+                        : "Audio/Creatures/FemaleYellFast",
+                    0.75f,
+                    0f,
+                    ComponentBody.Position,
+                    2f,
+                    false
+                );
                 componentSteedBehavior.SpeedOrder = 1;
                 _speedOrderBlocked = true;
             }
@@ -178,8 +185,13 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                 _subsystemAudio.PlayRandomSound(
                     PlayerData.PlayerClass == PlayerClass.Male
                         ? "Audio/Creatures/MaleYellSlow"
-                        : "Audio/Creatures/FemaleYellSlow", 0.75f, 0f, ComponentBody.Position,
-                    2f, false);
+                        : "Audio/Creatures/FemaleYellSlow",
+                    0.75f,
+                    0f,
+                    ComponentBody.Position,
+                    2f,
+                    false
+                );
                 componentSteedBehavior.SpeedOrder = -1;
                 _speedOrderBlocked = true;
             }
@@ -220,18 +232,23 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         if (_subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1f, 0.0))
         {
             if (CommonLib.WorkType != WorkType.Client)
-            //服务器广播玩家数据
+                //服务器广播玩家数据
             {
                 NetworkSender.SendToObservers(
                     Entity,
                     PlayerPackageBuilder.Capture(this, ComponentPlayerPackage.PlayerAction.BodyUpdate),
-                    PlayerData.Client);
+                    PlayerData.Client
+                );
             }
             else if (PlayerData.IsMainPlayer)
-            //客户端向服务端提交自己的数据
+                //客户端向服务端提交自己的数据
             {
-                NetworkSender.SendToServer(PlayerPackageBuilder.Capture(this,
-                    ComponentPlayerPackage.PlayerAction.BodyUpdate));
+                NetworkSender.SendToServer(
+                    PlayerPackageBuilder.Capture(
+                        this,
+                        ComponentPlayerPackage.PlayerAction.BodyUpdate
+                    )
+                );
             }
         }
 
@@ -373,7 +390,8 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         CurInteractEventItem = default;
         CurAimEventItem = default;
         var flag = false;
-        if (playerInput.Interact.HasValue && !flag &&
+        if (playerInput.Interact.HasValue &&
+            !flag &&
             _subsystemTime.GameTime - _lastActionTime > 0.33000001311302185)
         {
             CurInteractEventItem.InteractEvent = InteractionMessageKind.Use;
@@ -381,8 +399,10 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             if (!ComponentMiner.Use(CurInteractEventItem.NetInteractRay))
             {
                 var terrainRaycastResult =
-                    ComponentMiner.Raycast<TerrainRaycastResult>(playerInput.Interact.Value,
-                        RaycastMode.Interaction);
+                    ComponentMiner.Raycast<TerrainRaycastResult>(
+                        playerInput.Interact.Value,
+                        RaycastMode.Interaction
+                    );
                 if (terrainRaycastResult.HasValue)
                 {
                     CurInteractEventItem.NetPlaceRaycast = terrainRaycastResult.Value;
@@ -424,8 +444,11 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                 var vector =
                     GameWidget.ActiveCamera.WorldToScreen(value.Position + value.Direction, Matrix.Identity);
                 var size = Window.Size;
-                if (ComponentInput.IsControlledByVr || (vector.X >= size.X * 0.02f && vector.X < size.X * 0.98f &&
-                                                        vector.Y >= size.Y * 0.02f && vector.Y < size.Y * 0.98f))
+                if (ComponentInput.IsControlledByVr ||
+                    (vector.X >= size.X * 0.02f &&
+                     vector.X < size.X * 0.98f &&
+                     vector.Y >= size.Y * 0.02f &&
+                     vector.Y < size.Y * 0.98f))
                 {
                     _aim = value;
                     CurAimEventItem.AimEvent = SyncAction.Start;
@@ -439,21 +462,24 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                     }
                     else if (!_aimHintIssued && Time.PeriodicEvent(1.0, 0.0))
                     {
-                        Time.QueueTimeDelayedExecution(Time.RealTime + 3.0, delegate
-                        {
-                            if (_aimHintIssued || !_aim.HasValue || ComponentBody.IsSneaking)
+                        Time.QueueTimeDelayedExecution(
+                            Time.RealTime + 3.0,
+                            delegate
                             {
-                                return;
-                            }
+                                if (_aimHintIssued || !_aim.HasValue || ComponentBody.IsSneaking)
+                                {
+                                    return;
+                                }
 
-                            _aimHintIssued = true;
-                            ComponentGui.DisplaySmallMessage(
-                                LanguageManager.Get(_typeName, 1),
-                                Color.White,
-                                true,
-                                true
-                            );
-                        });
+                                _aimHintIssued = true;
+                                ComponentGui.DisplaySmallMessage(
+                                    LanguageManager.Get(_typeName, 1),
+                                    Color.White,
+                                    true,
+                                    true
+                                );
+                            }
+                        );
                     }
                 }
                 else if (_aim.HasValue)
@@ -481,7 +507,9 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
         flag |= _aim.HasValue;
 
-        if (playerInput.Dig.HasValue && !flag && !_isDigBlocked &&
+        if (playerInput.Dig.HasValue &&
+            !flag &&
+            !_isDigBlocked &&
             _subsystemTime.GameTime - _lastActionTime > 0.33000001311302185)
         {
             var terrainRaycastResult2 =
@@ -525,8 +553,14 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                     ComponentMiner.Hit(bodyRaycastResult.Value.ComponentBody, hitPosition, hitDirection);
                     if (CommonLib.WorkType == WorkType.Client)
                     {
-                        NetworkSender.SendToServer(PlayerPackageBuilder.Capture(this,
-                            bodyRaycastResult.Value.ComponentBody, hitPosition, hitDirection));
+                        NetworkSender.SendToServer(
+                            PlayerPackageBuilder.Capture(
+                                this,
+                                bodyRaycastResult.Value.ComponentBody,
+                                hitPosition,
+                                hitDirection
+                            )
+                        );
                     }
                 }
             }
@@ -547,8 +581,12 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             }
             else
             {
-                NetworkSender.SendToServer(PlayerPackageBuilder.Capture(this,
-                    ComponentPlayerPackage.PlayerAction.Drop));
+                NetworkSender.SendToServer(
+                    PlayerPackageBuilder.Capture(
+                        this,
+                        ComponentPlayerPackage.PlayerAction.Drop
+                    )
+                );
             }
         }
 
@@ -582,8 +620,13 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             return;
         }
 
-        var terrainRaycastResult3 = ComponentMiner.Raycast<TerrainRaycastResult>(playerInput.PickBlockType.Value,
-            RaycastMode.Digging, true, false, false);
+        var terrainRaycastResult3 = ComponentMiner.Raycast<TerrainRaycastResult>(
+            playerInput.PickBlockType.Value,
+            RaycastMode.Digging,
+            true,
+            false,
+            false
+        );
         if (!terrainRaycastResult3.HasValue)
         {
             return;
@@ -624,7 +667,8 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         for (var i = 0; i < componentCreativeInventory.VisibleSlotsCount; i++)
         {
             var slotIndex = componentCreativeInventory.GetHotbarSlotIndex(i);
-            if (slotIndex >= 0 && componentCreativeInventory.GetSlotCapacity(slotIndex, num5) > 0 &&
+            if (slotIndex >= 0 &&
+                componentCreativeInventory.GetSlotCapacity(slotIndex, num5) > 0 &&
                 componentCreativeInventory.GetSlotCount(slotIndex) > 0 &&
                 componentCreativeInventory.GetSlotValue(slotIndex) == num5)
             {
@@ -638,7 +682,8 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             for (var i = 0; i < componentCreativeInventory.VisibleSlotsCount; i++)
             {
                 var slotIndex = componentCreativeInventory.GetHotbarSlotIndex(i);
-                if (slotIndex >= 0 && componentCreativeInventory.GetSlotCapacity(slotIndex, num5) > 0 &&
+                if (slotIndex >= 0 &&
+                    componentCreativeInventory.GetSlotCapacity(slotIndex, num5) > 0 &&
                     (componentCreativeInventory.GetSlotCount(slotIndex) == 0 ||
                      componentCreativeInventory.GetSlotValue(slotIndex) == 0))
                 {
@@ -656,8 +701,12 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         componentCreativeInventory.RemoveSlotItems(num6, int.MaxValue);
         componentCreativeInventory.AddSlotItems(num6, num5, 1);
         componentCreativeInventory.ActiveSlotIndex = num6;
-        ComponentGui.DisplaySmallMessage(block2.GetDisplayName(_subsystemTerrain, value3), Color.White, false,
-            false);
+        ComponentGui.DisplaySmallMessage(
+            block2.GetDisplayName(_subsystemTerrain, value3),
+            Color.White,
+            false,
+            false
+        );
         _subsystemAudio.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f, 0f);
 
         #endregion
@@ -683,26 +732,36 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         }
 
         var chunk = _subsystemTerrain.AuthoritativeTerrain.GetChunkAtCell(cell.X, cell.Z, false);
-        NetworkSender.SendTo(client, new SubsystemTerrainPackage
-        {
-            Type = SubsystemTerrainPackage.DataType.CellEditCompleted,
-            EditRequestId = requestId,
-            EditedCell = cell,
-            EditContentVersion = chunk?.NetworkContentRevision + 1 ?? 0
-        });
+        NetworkSender.SendTo(
+            client,
+            new SubsystemTerrainPackage
+            {
+                Type = SubsystemTerrainPackage.DataType.CellEditCompleted,
+                EditRequestId = requestId,
+                EditedCell = cell,
+                EditContentVersion = chunk?.NetworkContentRevision + 1 ?? 0
+            }
+        );
     }
 
-    public void AddDigEvent(SyncAction digEvent, Ray3? digRay, TerrainRaycastResult? raycastResult,
-        int requestId, int expectedValue)
+    public void AddDigEvent(
+        SyncAction digEvent,
+        Ray3? digRay,
+        TerrainRaycastResult? raycastResult,
+        int requestId,
+        int expectedValue
+    )
     {
-        _digEvents.Add(new DigEventItem
-        {
-            DigEvent = digEvent,
-            NetDigRay = digRay,
-            NetDigRaycast = raycastResult,
-            RequestId = requestId,
-            ExpectedValue = expectedValue
-        });
+        _digEvents.Add(
+            new DigEventItem
+            {
+                DigEvent = digEvent,
+                NetDigRay = digRay,
+                NetDigRaycast = raycastResult,
+                RequestId = requestId,
+                ExpectedValue = expectedValue
+            }
+        );
     }
 
     public void AddAimEvent(SyncAction aimEvent, Ray3? aimRay)
@@ -710,18 +769,26 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         _aimEvents.Add(new AimEventItem { AimEvent = aimEvent, NetAim = aimRay });
     }
 
-    public void AddInteractEvent(InteractionMessageKind interactEvent, Ray3 digRay, TerrainRaycastResult? raycastResult,
-        int requestId, Point3 placementCell, int expectedValue)
+    public void AddInteractEvent(
+        InteractionMessageKind interactEvent,
+        Ray3 digRay,
+        TerrainRaycastResult? raycastResult,
+        int requestId,
+        Point3 placementCell,
+        int expectedValue
+    )
     {
-        _interactEvents.Add(new InteractEventItem
-        {
-            InteractEvent = interactEvent,
-            NetInteractRay = digRay,
-            NetPlaceRaycast = raycastResult,
-            RequestId = requestId,
-            PlacementCell = placementCell,
-            ExpectedValue = expectedValue
-        });
+        _interactEvents.Add(
+            new InteractEventItem
+            {
+                InteractEvent = interactEvent,
+                NetInteractRay = digRay,
+                NetPlaceRaycast = raycastResult,
+                RequestId = requestId,
+                PlacementCell = placementCell,
+                ExpectedValue = expectedValue
+            }
+        );
     }
 
     public void DoDrop()
@@ -733,15 +800,18 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         }
 
         var slotValue = inventory.GetSlotValue(inventory.ActiveSlotIndex);
-        var num3 = inventory.RemoveSlotItems(count: inventory.GetSlotCount(inventory.ActiveSlotIndex),
-            slotIndex: inventory.ActiveSlotIndex);
+        var num3 = inventory.RemoveSlotItems(
+            count: inventory.GetSlotCount(inventory.ActiveSlotIndex),
+            slotIndex: inventory.ActiveSlotIndex
+        );
         var value2 = 8f * Matrix.CreateFromQuaternion(ComponentCreatureModel.EyeRotation).Forward;
         if (slotValue == 0 || num3 == 0)
         {
             return;
         }
 
-        var position = ComponentBody.Position + new Vector3(0f, ComponentBody.BoxSize.Y * 0.66f, 0f) +
+        var position = ComponentBody.Position +
+                       new Vector3(0f, ComponentBody.BoxSize.Y * 0.66f, 0f) +
                        0.25f * ComponentBody.Matrix.Forward;
         _subsystemPickables.AddPickable(slotValue, num3, position, value2, null);
     }

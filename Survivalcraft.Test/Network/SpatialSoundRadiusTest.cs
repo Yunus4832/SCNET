@@ -15,7 +15,10 @@ public sealed class SpatialSoundRadiusTest
 
         Assert.Equal(expected, radius);
         Assert.True(float.IsFinite(radius));
-        Assert.Equal(AudioManager.UnscaledMinAudibleVolume,
-            volume * new SubsystemAudio().CalculateVolume(radius, minDistance), 5);
+        Assert.Equal(
+            AudioManager.UnscaledMinAudibleVolume,
+            volume * new SubsystemAudio().CalculateVolume(radius, minDistance),
+            5
+        );
     }
 }

@@ -67,8 +67,10 @@ public class RandomGeneratorElectricElement : RotateableElectricElement
         else
         {
             _voltage = GetRandomVoltage();
-            SubsystemElectricity.QueueElectricElementForSimulation(this,
-                SubsystemElectricity.CircuitStep + MathUtils.Max((int)(_innerRandom.Float(0.25f, 0.75f) / 0.01f), 1));
+            SubsystemElectricity.QueueElectricElementForSimulation(
+                this,
+                SubsystemElectricity.CircuitStep + MathUtils.Max((int)(_innerRandom.Float(0.25f, 0.75f) / 0.01f), 1)
+            );
         }
 
         if (_voltage.CloseTo(voltage))

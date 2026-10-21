@@ -65,7 +65,9 @@ public class SmokeTrailParticleSystem : ParticleSystem<SmokeTrailParticleSystem.
                     particle.Velocity.Y += 10f * dt;
                     particle.TextureSlot =
                         (int)MathUtils.Min(
-                            9f * particle.Time / particle.Duration * _textureSlotMultiplier + _textureSlotOffset, 8f);
+                            9f * particle.Time / particle.Duration * _textureSlotMultiplier + _textureSlotOffset,
+                            8f
+                        );
                     particle.Size = new Vector2(_size * (0.15f + 0.8f * particle.Time / particle.Duration));
                 }
                 else

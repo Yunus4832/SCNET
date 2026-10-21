@@ -58,7 +58,9 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         var z = _queuedExplosions[0].Z;
         _pressureByPoint = new SparseSpatialArray<float>(x, y, z, 0f);
         _surroundingPressureByPoint = new SparseSpatialArray<SurroundingPressurePoint>(
-            x, y, z,
+            x,
+            y,
+            z,
             new SurroundingPressurePoint
             {
                 IsIncendiary = false,
@@ -72,12 +74,19 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         while (num < _queuedExplosions.Count)
         {
             var explosionData = _queuedExplosions[num];
-            if (MathUtils.Abs(explosionData.X - x) <= 4 && MathUtils.Abs(explosionData.Y - y) <= 4 &&
+            if (MathUtils.Abs(explosionData.X - x) <= 4 &&
+                MathUtils.Abs(explosionData.Y - y) <= 4 &&
                 MathUtils.Abs(explosionData.Z - z) <= 4)
             {
                 _queuedExplosions.RemoveAt(num);
-                SimulateExplosion(explosionData.X, explosionData.Y, explosionData.Z, explosionData.Pressure,
-                    explosionData.IsIncendiary, explosionData.Miner);
+                SimulateExplosion(
+                    explosionData.X,
+                    explosionData.Y,
+                    explosionData.Z,
+                    explosionData.Pressure,
+                    explosionData.IsIncendiary,
+                    explosionData.Miner
+                );
                 flag |= !explosionData.NoExplosionSound;
             }
             else
@@ -152,16 +161,18 @@ public class SubsystemExplosions : Subsystem, IUpdateable
 
         if (pressure > 0f)
         {
-            _queuedExplosions.Add(new ExplosionData
-            {
-                X = x,
-                Y = y,
-                Z = z,
-                Pressure = pressure,
-                IsIncendiary = isIncendiary,
-                NoExplosionSound = noExplosionSound,
-                Miner = miner
-            });
+            _queuedExplosions.Add(
+                new ExplosionData
+                {
+                    X = x,
+                    Y = y,
+                    Z = z,
+                    Pressure = pressure,
+                    IsIncendiary = isIncendiary,
+                    NoExplosionSound = noExplosionSound,
+                    Miner = miner
+                }
+            );
         }
     }
 
@@ -186,7 +197,9 @@ public class SubsystemExplosions : Subsystem, IUpdateable
     }
 
     public virtual void SimulateExplosion(
-        int x, int y, int z,
+        int x,
+        int y,
+        int z,
         float pressure,
         bool isIncendiary,
         PlayerData? miner = null
@@ -267,7 +280,9 @@ public class SubsystemExplosions : Subsystem, IUpdateable
     }
 
     public virtual void TryAddPoint(
-        int x, int y, int z,
+        int x,
+        int y,
+        int z,
         int axis,
         float currentPressure,
         bool isIncendiary,
@@ -304,9 +319,12 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             }
 
             var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
-            var num4 = _pressureByPoint.Get(x - 1, y, z) + _pressureByPoint.Get(x + 1, y, z) +
-                       _pressureByPoint.Get(x, y - 1, z) + _pressureByPoint.Get(x, y + 1, z) +
-                       _pressureByPoint.Get(x, y, z - 1) + _pressureByPoint.Get(x, y, z + 1);
+            var num4 = _pressureByPoint.Get(x - 1, y, z) +
+                       _pressureByPoint.Get(x + 1, y, z) +
+                       _pressureByPoint.Get(x, y - 1, z) +
+                       _pressureByPoint.Get(x, y + 1, z) +
+                       _pressureByPoint.Get(x, y, z - 1) +
+                       _pressureByPoint.Get(x, y, z + 1);
             var num5 = MathUtils.Max(block.ExplosionResilience * num3, 1f);
             var num6 = num4 / num5;
             if (num6 > 1f)
@@ -314,7 +332,9 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                 var newValue = Terrain.MakeBlockValue(0);
                 _subsystemTerrain.DestroyCell(
                     0,
-                    x, y, z,
+                    x,
+                    y,
+                    z,
                     newValue,
                     true,
                     true,
@@ -323,25 +343,32 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                 var flag = false;
                 var probability = num6 > 5f ? 0.95f : 0.75f;
                 if (SharedRandom.Bool(probability))
-                //爆炸方块
+                    //爆炸方块
                 {
                     flag = TryNetExplodeBlock(x, y, z, cellValue);
                 }
 
                 if (!flag)
                 {
-                    CalculateImpulseAndDamage(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f), 60f, 2f * num4,
-                        out var impulse, out _);
+                    CalculateImpulseAndDamage(
+                        new Vector3(x + 0.5f, y + 0.5f, z + 0.5f),
+                        60f,
+                        2f * num4,
+                        out var impulse,
+                        out _
+                    );
                     var flag2 = false;
                     var list = new List<BlockDropValue>();
                     block.GetDropValues(_subsystemTerrain, cellValue, newValue, 0, list, out _);
                     if (list.Count == 0)
                     {
-                        list.Add(new BlockDropValue
-                        {
-                            Value = cellValue,
-                            Count = 1
-                        });
+                        list.Add(
+                            new BlockDropValue
+                            {
+                                Value = cellValue,
+                                Count = 1
+                            }
+                        );
                         flag2 = true;
                     }
 
@@ -389,9 +416,16 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                                             num10 += 10f;
                                         }
 
-                                        _subsystemProjectiles.AddTrail(projectile, Vector3.Zero,
-                                            new SmokeTrailParticleSystem(15, SharedRandom.Float(0.75f, 1.5f), num10,
-                                                isIncendiary ? new Color(255, 140, 192) : Color.White));
+                                        _subsystemProjectiles.AddTrail(
+                                            projectile,
+                                            Vector3.Zero,
+                                            new SmokeTrailParticleSystem(
+                                                15,
+                                                SharedRandom.Float(0.75f, 1.5f),
+                                                num10,
+                                                isIncendiary ? new Color(255, 140, 192) : Color.White
+                                            )
+                                        );
                                         projectile.IsIncendiary = isIncendiary;
                                     }
 
@@ -406,11 +440,16 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             }
             else
             {
-                _surroundingPressureByPoint.Set(x, y, z, new SurroundingPressurePoint
-                {
-                    Pressure = num4,
-                    IsIncendiary = isIncendiary
-                });
+                _surroundingPressureByPoint.Set(
+                    x,
+                    y,
+                    z,
+                    new SurroundingPressurePoint
+                    {
+                        Pressure = num4,
+                        IsIncendiary = isIncendiary
+                    }
+                );
                 if (block.Collidable)
                 {
                     return;
@@ -418,13 +457,15 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             }
         }
 
-        toProcess.Add(new ProcessPoint
-        {
-            X = x,
-            Y = y,
-            Z = z,
-            Axis = axis
-        });
+        toProcess.Add(
+            new ProcessPoint
+            {
+                X = x,
+                Y = y,
+                Z = z,
+                Axis = axis
+            }
+        );
         processed.Set(x, y, z, true);
     }
 
@@ -476,15 +517,21 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             {
                 foreach (var behavior in blockBehaviors)
                 {
-                    behavior.OnExplosion(cellValue, item2.Key.X, item2.Key.Y, item2.Key.Z,
-                        item2.Value.Pressure);
+                    behavior.OnExplosion(
+                        cellValue,
+                        item2.Key.X,
+                        item2.Key.Y,
+                        item2.Key.Z,
+                        item2.Value.Pressure
+                    );
                 }
             }
 
             var probability = item2.Value.IsIncendiary ? 0.5f : 0.2f;
             var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num6];
             //方块燃烧
-            if (block.FireDuration > 0f && item2.Value.Pressure / block.ExplosionResilience > 0.2f &&
+            if (block.FireDuration > 0f &&
+                item2.Value.Pressure / block.ExplosionResilience > 0.2f &&
                 SharedRandom.Bool(probability))
             {
                 var f = item2.Value.IsIncendiary ? 1f : 0.3f;
@@ -513,12 +560,21 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         foreach (var pickable in _subsystemPickables.Pickables)
         {
             var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(pickable.Value)];
-            CalculateImpulseAndDamage(pickable.Position + new Vector3(0f, 0.5f, 0f), 20f, null, out var impulse2,
-                out var damage2);
+            CalculateImpulseAndDamage(
+                pickable.Position + new Vector3(0f, 0.5f, 0f),
+                20f,
+                null,
+                out var impulse2,
+                out var damage2
+            );
             if (damage2 / block2.ExplosionResilience > 0.1f)
             {
-                TryNetExplodeBlock(Terrain.ToCell(pickable.Position.X), Terrain.ToCell(pickable.Position.Y),
-                    Terrain.ToCell(pickable.Position.Z), pickable.Value);
+                TryNetExplodeBlock(
+                    Terrain.ToCell(pickable.Position.X),
+                    Terrain.ToCell(pickable.Position.Y),
+                    Terrain.ToCell(pickable.Position.Z),
+                    pickable.Value
+                );
                 pickable.ToRemove = true;
             }
             else
@@ -526,16 +582,27 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                 var vector = (impulse2 + new Vector3(0f, 0.1f * impulse2.Length(), 0f)) * SharedRandom.Float(0.75f, 1f);
                 if (vector.Length() > 10f)
                 {
-                    var projectile = _subsystemProjectiles.AddProjectile(pickable.Value, pickable.Position,
-                        pickable.Velocity + vector, SharedRandom.Vector3(0f, 20f), null);
+                    var projectile = _subsystemProjectiles.AddProjectile(
+                        pickable.Value,
+                        pickable.Position,
+                        pickable.Velocity + vector,
+                        SharedRandom.Vector3(0f, 20f),
+                        null
+                    );
                     if (SharedRandom.Float(0f, 1f) < 0.33f)
                     {
                         if (projectile != null)
                         {
-                            _subsystemProjectiles.AddTrail(projectile, Vector3.Zero,
-                                new SmokeTrailParticleSystem(15, SharedRandom.Float(0.75f, 1.5f),
+                            _subsystemProjectiles.AddTrail(
+                                projectile,
+                                Vector3.Zero,
+                                new SmokeTrailParticleSystem(
+                                    15,
+                                    SharedRandom.Float(0.75f, 1.5f),
                                     SharedRandom.Float(1f, 6f),
-                                    Color.White));
+                                    Color.White
+                                )
+                            );
                         }
                     }
 
@@ -552,8 +619,13 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         {
             if (!_generatedProjectiles.ContainsKey(projectile2))
             {
-                CalculateImpulseAndDamage(projectile2.Position + new Vector3(0f, 0.5f, 0f), 20f, null, out var impulse3,
-                    out _);
+                CalculateImpulseAndDamage(
+                    projectile2.Position + new Vector3(0f, 0.5f, 0f),
+                    20f,
+                    null,
+                    out var impulse3,
+                    out _
+                );
                 projectile2.Velocity += (impulse3 + new Vector3(0f, 0.1f * impulse3.Length(), 0f)) *
                                         SharedRandom.Float(0.75f, 1f);
             }
@@ -576,7 +648,8 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             {
                 CommonLib.Net.QueuePackage(
                     new ExplosionsPackage(position, num2, delay),
-                    PackageAudience.To(observers));
+                    PackageAudience.To(observers)
+                );
             }
         }
     }
@@ -590,7 +663,8 @@ public class SubsystemExplosions : Subsystem, IUpdateable
 
         var interest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
         var cellsByClient = new Dictionary<Client, Dictionary<Point2, List<(Point3, float)>>>(
-            ReferenceEqualityComparer.Instance);
+            ReferenceEqualityComparer.Instance
+        );
         foreach (var (chunk, cells) in _explosionCells)
         {
             foreach (var client in interest.GetChunkObservers(chunk))
@@ -609,7 +683,8 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         {
             CommonLib.Net.QueuePackage(
                 ExplosionPackageBuilder.Capture(cells),
-                PackageAudience.To(client));
+                PackageAudience.To(client)
+            );
         }
     }
 
@@ -633,8 +708,14 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         {
             if (playExplosionSound)
             {
-                _subsystemAudio.PlaySound("Audio/ExplosionEnormous", 1f, SharedRandom.Float(-0.1f, 0.1f), position, 40f,
-                    delay);
+                _subsystemAudio.PlaySound(
+                    "Audio/ExplosionEnormous",
+                    1f,
+                    SharedRandom.Float(-0.1f, 0.1f),
+                    position,
+                    40f,
+                    delay
+                );
             }
 
             _subsystemNoise.MakeNoise(position, 1f, 100f);
@@ -643,8 +724,14 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         {
             if (playExplosionSound)
             {
-                _subsystemAudio.PlaySound("Audio/ExplosionHuge", 1f, SharedRandom.Float(-0.2f, 0.2f), position, 30f,
-                    delay);
+                _subsystemAudio.PlaySound(
+                    "Audio/ExplosionHuge",
+                    1f,
+                    SharedRandom.Float(-0.2f, 0.2f),
+                    position,
+                    30f,
+                    delay
+                );
             }
 
             _subsystemNoise.MakeNoise(position, 1f, 70f);
@@ -653,8 +740,14 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         {
             if (playExplosionSound)
             {
-                _subsystemAudio.PlaySound("Audio/ExplosionLarge", 1f, SharedRandom.Float(-0.2f, 0.2f), position, 26f,
-                    delay);
+                _subsystemAudio.PlaySound(
+                    "Audio/ExplosionLarge",
+                    1f,
+                    SharedRandom.Float(-0.2f, 0.2f),
+                    position,
+                    26f,
+                    delay
+                );
             }
 
             _subsystemNoise.MakeNoise(position, 1f, 50f);
@@ -663,8 +756,14 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         {
             if (playExplosionSound)
             {
-                _subsystemAudio.PlaySound("Audio/ExplosionMedium", 1f, SharedRandom.Float(-0.2f, 0.2f), position, 24f,
-                    delay);
+                _subsystemAudio.PlaySound(
+                    "Audio/ExplosionMedium",
+                    1f,
+                    SharedRandom.Float(-0.2f, 0.2f),
+                    position,
+                    24f,
+                    delay
+                );
             }
 
             _subsystemNoise.MakeNoise(position, 1f, 40f);
@@ -673,8 +772,14 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         {
             if (playExplosionSound)
             {
-                _subsystemAudio.PlaySound("Audio/ExplosionSmall", 1f, SharedRandom.Float(-0.2f, 0.2f), position, 22f,
-                    delay);
+                _subsystemAudio.PlaySound(
+                    "Audio/ExplosionSmall",
+                    1f,
+                    SharedRandom.Float(-0.2f, 0.2f),
+                    position,
+                    22f,
+                    delay
+                );
             }
 
             _subsystemNoise.MakeNoise(position, 1f, 35f);
@@ -683,23 +788,43 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         {
             if (playExplosionSound)
             {
-                _subsystemAudio.PlaySound("Audio/ExplosionTiny", 1f, SharedRandom.Float(-0.2f, 0.2f), position, 20f,
-                    delay);
+                _subsystemAudio.PlaySound(
+                    "Audio/ExplosionTiny",
+                    1f,
+                    SharedRandom.Float(-0.2f, 0.2f),
+                    position,
+                    20f,
+                    delay
+                );
             }
 
             _subsystemNoise.MakeNoise(position, 1f, 30f);
         }
     }
 
-    public virtual void CalculateImpulseAndDamage(ComponentBody componentBody, float? obstaclePressure,
-        out Vector3 impulse, out float damage)
+    public virtual void CalculateImpulseAndDamage(
+        ComponentBody componentBody,
+        float? obstaclePressure,
+        out Vector3 impulse,
+        out float damage
+    )
     {
-        CalculateImpulseAndDamage(0.5f * (componentBody.BoundingBox.Min + componentBody.BoundingBox.Max),
-            componentBody.Mass, obstaclePressure, out impulse, out damage);
+        CalculateImpulseAndDamage(
+            0.5f * (componentBody.BoundingBox.Min + componentBody.BoundingBox.Max),
+            componentBody.Mass,
+            obstaclePressure,
+            out impulse,
+            out damage
+        );
     }
 
-    public virtual void CalculateImpulseAndDamage(Vector3 position, float mass, float? obstaclePressure,
-        out Vector3 impulse, out float damage)
+    public virtual void CalculateImpulseAndDamage(
+        Vector3 position,
+        float mass,
+        float? obstaclePressure,
+        out Vector3 impulse,
+        out float damage
+    )
     {
         var point = Terrain.ToCell(position);
         obstaclePressure ??= _pressureByPoint.Get(point.X, point.Y, point.Z);

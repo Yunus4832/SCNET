@@ -23,7 +23,9 @@ public sealed class FurniturePackageTest
         values.SetValue("0", node);
         var package = new FurniturePackage { AddXml = CommonLib.SerializeVDict(values) };
 
-        var error = Assert.Throws<InvalidOperationException>(() => FurnitureSnapshotSerializer.ReadDesignChain(package.AddXml, null));
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            FurnitureSnapshotSerializer.ReadDesignChain(package.AddXml, null)
+        );
 
         Assert.Equal("Invalid furniture design link index.", error.Message);
     }
@@ -58,8 +60,11 @@ public sealed class FurniturePackageTest
     [InlineData(FurniturePackage.EventType.RequestAdd, true, false)]
     [InlineData(FurniturePackage.EventType.ImportFurnitureSet, true, false)]
     [InlineData(FurniturePackage.EventType.DesignChain, false, true)]
-    public void CreationRequestsAndAuthoritativeDefinitionsHaveDistinctDirections(FurniturePackage.EventType type,
-        bool server, bool client)
+    public void CreationRequestsAndAuthoritativeDefinitionsHaveDistinctDirections(
+        FurniturePackage.EventType type,
+        bool server,
+        bool client
+    )
     {
         Assert.Equal(server, FurniturePackageHandler.AcceptsDirection(type, true));
         Assert.Equal(client, FurniturePackageHandler.AcceptsDirection(type, false));

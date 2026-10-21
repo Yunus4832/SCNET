@@ -20,42 +20,51 @@ public sealed record ContentItemDto(
     string Description,
     ContentStatus Status,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt
+);
 
 public sealed record ListContentItemsQuery(
     PageRequest Page,
     string? Search = null,
     PublisherId? PublisherId = null,
-    string? Type = null)
+    string? Type = null
+)
     : IQuery<PagedData<ContentItemDto>>;
 
 public sealed class ListContentItemsQueryHandler(ContentServerDbContext db)
     : IQueryHandler<ListContentItemsQuery, PagedData<ContentItemDto>>
 {
-    public async Task<PagedData<ContentItemDto>> Handle(ListContentItemsQuery query,
-        CancellationToken cancellationToken)
+    public async Task<PagedData<ContentItemDto>> Handle(
+        ListContentItemsQuery query,
+        CancellationToken cancellationToken
+    )
     {
         var search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();
         return await db.Contents.AsNoTracking()
             .WhereIf(query.PublisherId is not null, content => content.PublisherId == query.PublisherId)
             .WhereIf(!string.IsNullOrWhiteSpace(query.Type), content => content.Type == query.Type)
-            .WhereIf(search is not null, content =>
-                content.Name.Contains(search!) ||
-                content.Identifier.Contains(search!) ||
-                content.Summary.Contains(search!) ||
-                content.Description.Contains(search!))
+            .WhereIf(
+                search is not null,
+                content =>
+                    content.Name.Contains(search!) ||
+                    content.Identifier.Contains(search!) ||
+                    content.Summary.Contains(search!) ||
+                    content.Description.Contains(search!)
+            )
             .OrderByDescending(content => content.Id)
             .Select(content => new ContentItemDto(
-                content.Id,
-                content.PublisherId,
-                content.Type,
-                content.Identifier,
-                content.Name,
-                content.Summary,
-                content.Description,
-                content.Status,
-                content.CreatedAt,
-                content.UpdatedAt))
+                    content.Id,
+                    content.PublisherId,
+                    content.Type,
+                    content.Identifier,
+                    content.Name,
+                    content.Summary,
+                    content.Description,
+                    content.Status,
+                    content.CreatedAt,
+                    content.UpdatedAt
+                )
+            )
             .ToPagedDataAsync(query.Page, cancellationToken);
     }
 }

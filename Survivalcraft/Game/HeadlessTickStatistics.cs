@@ -4,9 +4,13 @@ namespace Game;
 public sealed class HeadlessTickStatistics
 {
     public long Ticks { get; private set; }
+
     public long OverBudgetTicks { get; private set; }
+
     public double WorkMilliseconds { get; private set; }
+
     public double MaximumWorkMilliseconds { get; private set; }
+
     public double MaximumStartLatenessMilliseconds { get; private set; }
 
     public void Record(double workMilliseconds, double startLatenessMilliseconds)

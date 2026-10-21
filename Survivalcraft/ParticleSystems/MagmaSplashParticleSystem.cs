@@ -44,7 +44,8 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
             particle.Color = white;
             particle.Size = new Vector2(0.2f * num5);
             particle.TimeToLive = particle.Duration = _random.Float(0.5f, 3.5f);
-            var v = 4f * _random.Float(0.1f, 1f) *
+            var v = 4f *
+                    _random.Float(0.1f, 1f) *
                     Vector3.Normalize(new Vector3(_random.Float(-1f, 1f), 0f, _random.Float(-1f, 1f)));
             particle.Velocity = num5 * (v + new Vector3(0f, _random.Float(0f, 4f), 0f));
         }
@@ -78,8 +79,11 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
                 continue;
             }
 
-            var cellValue = _subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(particle.Position.X),
-                Terrain.ToCell(particle.Position.Y), Terrain.ToCell(particle.Position.Z));
+            var cellValue = _subsystemTerrain.Terrain.GetCellValue(
+                Terrain.ToCell(particle.Position.X),
+                Terrain.ToCell(particle.Position.Y),
+                Terrain.ToCell(particle.Position.Z)
+            );
             var num2 = Terrain.ExtractContents(cellValue);
             if (num2 == 0)
             {

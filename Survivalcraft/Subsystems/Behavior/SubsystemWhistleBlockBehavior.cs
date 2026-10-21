@@ -20,8 +20,13 @@ public class SubsystemWhistleBlockBehavior : SubsystemBlockBehavior
         _subsystemNoise.MakeNoise(componentMiner.ComponentCreature.ComponentBody, 0.5f, 30f);
         var dynamicArray = new DynamicArray<ComponentBody>();
         _subsystemBodies.FindBodiesAroundPoint(
-            new Vector2(componentMiner.ComponentCreature.ComponentBody.Position.X,
-                componentMiner.ComponentCreature.ComponentBody.Position.Z), 64f, dynamicArray);
+            new Vector2(
+                componentMiner.ComponentCreature.ComponentBody.Position.X,
+                componentMiner.ComponentCreature.ComponentBody.Position.Z
+            ),
+            64f,
+            dynamicArray
+        );
         var num = float.PositiveInfinity;
         var list = new List<ComponentBody>();
         foreach (var item in dynamicArray)

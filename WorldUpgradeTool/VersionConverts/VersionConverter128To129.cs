@@ -18,18 +18,18 @@ public class VersionConverter128To129 : VersionConverter
     {
         XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
         foreach (var item in from e in projectNode.Element("Subsystems")?.Elements()
-                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
-                             select e)
+                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
+                 select e)
         {
             foreach (var item2 in from e in item.Elements("Values")
-                                  where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
-                                  select e)
+                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
+                     select e)
             {
                 foreach (var item3 in item2.Elements("Values"))
                 {
                     foreach (var item4 in from e in item3.Elements("Value")
-                                          where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                                          select e)
+                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                             select e)
                     {
                         var num = ConvertValue(XmlUtils.GetAttributeValue<int>(item4, "Value"));
                         XmlUtils.SetAttributeValue(item4, "Value", num);
@@ -39,18 +39,18 @@ public class VersionConverter128To129 : VersionConverter
         }
 
         foreach (var item5 in from e in projectNode.Element("Subsystems")?.Elements()
-                              where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
-                              select e)
+                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
+                 select e)
         {
             foreach (var item6 in from e in item5.Elements("Values")
-                                  where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
-                                  select e)
+                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
+                     select e)
             {
                 foreach (var item7 in item6.Elements("Values"))
                 {
                     foreach (var item8 in from e in item7.Elements("Value")
-                                          where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                                          select e)
+                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                             select e)
                     {
                         var num2 = ConvertValue(XmlUtils.GetAttributeValue<int>(item8, "Value"));
                         XmlUtils.SetAttributeValue(item8, "Value", num2);
@@ -60,18 +60,18 @@ public class VersionConverter128To129 : VersionConverter
         }
 
         foreach (var item9 in from e in projectNode.Element("Subsystems")?.Elements()
-                              where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlockBehavior"
-                              select e)
+                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlockBehavior"
+                 select e)
         {
             foreach (var item10 in from e in item9.Elements("Values")
-                                   where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlocks"
-                                   select e)
+                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlocks"
+                     select e)
             {
                 foreach (var item11 in item10.Elements("Values"))
                 {
                     foreach (var item12 in from e in item11.Elements("Value")
-                                           where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                                           select e)
+                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                             select e)
                     {
                         var num3 = ConvertValue(XmlUtils.GetAttributeValue<int>(item12, "Value"));
                         XmlUtils.SetAttributeValue(item12, "Value", num3);
@@ -83,12 +83,12 @@ public class VersionConverter128To129 : VersionConverter
         foreach (var item13 in projectNode.Element("Entities")?.Elements() ?? [])
         {
             foreach (var item14 in from e in item13.Elements("Values")
-                                   where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothing"
-                                   select e)
+                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothing"
+                     select e)
             {
                 foreach (var item15 in from e in item14.Elements("Values")
-                                       where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothes"
-                                       select e)
+                         where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothes"
+                         select e)
                 {
                     foreach (var item16 in item15.Elements())
                     {
@@ -118,18 +118,18 @@ public class VersionConverter128To129 : VersionConverter
         foreach (var item17 in projectNode.Element("Entities")?.Elements() ?? [])
         {
             foreach (var item18 in from e in item17.Elements("Values")
-                                   where inventoryNames.Contains(XmlUtils.GetAttributeValue(e, "Name", string.Empty))
-                                   select e)
+                     where inventoryNames.Contains(XmlUtils.GetAttributeValue(e, "Name", string.Empty))
+                     select e)
             {
                 foreach (var item19 in from e in item18.Elements("Values")
-                                       where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Slots"
-                                       select e)
+                         where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Slots"
+                         select e)
                 {
                     foreach (var item20 in item19.Elements())
                     {
                         foreach (var item21 in from e in item20.Elements("Value")
-                                               where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Contents"
-                                               select e)
+                                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Contents"
+                                 select e)
                         {
                             var num4 = ConvertValue(XmlUtils.GetAttributeValue<int>(item21, "Value"));
                             XmlUtils.SetAttributeValue(item21, "Value", num4);

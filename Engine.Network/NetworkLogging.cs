@@ -6,7 +6,10 @@ namespace Engine.Network;
 public static class NetworkLogging
 {
     private static Action<NetworkLogLevel, string>? _write;
-    private static readonly LiteNetLog _logger = new((level, message) => Volatile.Read(ref _write)?.Invoke(level, message));
+
+    private static readonly LiteNetLog _logger = new((level, message) =>
+        Volatile.Read(ref _write)?.Invoke(level, message)
+    );
 
     public static void Configure(Action<NetworkLogLevel, string> write)
     {

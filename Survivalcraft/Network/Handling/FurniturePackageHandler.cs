@@ -15,8 +15,10 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
             return;
         }
 
-        PackageDispatcher.Handle(package,
-            new PackageReceiveContext(CommonLib.Net, CommonLib.WorkType == WorkType.Server, CommonLib.Net.Self));
+        PackageDispatcher.Handle(
+            package,
+            new PackageReceiveContext(CommonLib.Net, CommonLib.WorkType == WorkType.Server, CommonLib.Net.Self)
+        );
     }
 
     internal static bool AcceptsDirection(FurniturePackage.EventType type, bool isServer)
@@ -97,15 +99,27 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
                     }
                 }
 
-                SendImportFeedback(context, "1", [importedRoots.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)]);
+                SendImportFeedback(
+                    context,
+                    "1",
+                    [importedRoots.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)]
+                );
                 if (duplicateCount > 0)
                 {
-                    SendImportFeedback(context, "2", [duplicateCount.ToString(System.Globalization.CultureInfo.InvariantCulture)]);
+                    SendImportFeedback(
+                        context,
+                        "2",
+                        [duplicateCount.ToString(System.Globalization.CultureInfo.InvariantCulture)]
+                    );
                 }
 
                 if (skippedCount > 0)
                 {
-                    SendImportFeedback(context, "3", [skippedCount.ToString(System.Globalization.CultureInfo.InvariantCulture), "65535"]);
+                    SendImportFeedback(
+                        context,
+                        "3",
+                        [skippedCount.ToString(System.Globalization.CultureInfo.InvariantCulture), "65535"]
+                    );
                 }
 
                 if (importedRoots.Count == 0)
@@ -138,7 +152,8 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
             case FurniturePackage.EventType.AddToFurnitureSet:
                 furnitureSet = subsystemFurnitureBlockBehavior.FurnitureSets.Find(f => f.Name == package.AddXml);
                 furniture = subsystemFurnitureBlockBehavior.FurnitureDesigns.FirstOrDefault(f =>
-                    f?.Index == package.FurnitureIndex);
+                    f?.Index == package.FurnitureIndex
+                );
                 if (furniture == null || furnitureSet == null)
                 {
                     return;
@@ -173,7 +188,12 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
 
                 if (isServer)
                 {
-                    NetworkSender.SendGlobal(new FurniturePackage(package.AddXml, furnitureSet?.Name ?? package.FromName));
+                    NetworkSender.SendGlobal(
+                        new FurniturePackage(
+                            package.AddXml,
+                            furnitureSet?.Name ?? package.FromName
+                        )
+                    );
                 }
 
                 break;
@@ -216,31 +236,43 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
             case FurniturePackage.EventType.RequestAdd:
                 var interest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
                 if (package.PointDict.Count is 0 or > 4096 ||
-                    !interest.IsPositionRelevant(context.Sender!,
-                        new Vector2(package.CellFace.X, package.CellFace.Z)) ||
+                    !interest.IsPositionRelevant(
+                        context.Sender!,
+                        new Vector2(package.CellFace.X, package.CellFace.Z)
+                    ) ||
                     package.PointDict.Any(point =>
                         !interest.IsPositionRelevant(context.Sender!, new Vector2(point.Key.X, point.Key.Z)) ||
-                        subsystemTerrain!.Terrain.GetCellValue(point.Key.X, point.Key.Y, point.Key.Z) != point.Value))
+                        subsystemTerrain!.Terrain.GetCellValue(point.Key.X, point.Key.Y, point.Key.Z) != point.Value
+                    ))
                 {
                     return;
                 }
 
                 valuesDictionary = CommonLib.ReadVDict(package.AddXml);
                 furniture = new FurnitureDesign(0, subsystemTerrain, valuesDictionary);
-                subsystemPlayers.FindPlayerByClientId(context.Sender!.ID, player =>
-                {
-                    furniture = subsystemFurnitureBlockBehavior.CreateDesign(player.ComponentMiner, furniture,
-                        package.PointDict,
-                        package.CellFace, package.StartValue);
-                    // 回复添加家具包
-                    netNode.QueuePackage(FurniturePackageBuilder.Capture(
+                subsystemPlayers.FindPlayerByClientId(
+                    context.Sender!.ID,
+                    player =>
+                    {
+                        furniture = subsystemFurnitureBlockBehavior.CreateDesign(
+                            player.ComponentMiner,
                             furniture,
                             package.PointDict,
                             package.CellFace,
                             package.StartValue
-                        ), PackageAudience.Global
-                    );
-                });
+                        );
+                        // 回复添加家具包
+                        netNode.QueuePackage(
+                            FurniturePackageBuilder.Capture(
+                                furniture,
+                                package.PointDict,
+                                package.CellFace,
+                                package.StartValue
+                            ),
+                            PackageAudience.Global
+                        );
+                    }
+                );
                 break;
             case FurniturePackage.EventType.RemoveFurnitureDesigns:
                 for (var k = 0; k < subsystemFurnitureBlockBehavior.FurnitureDesigns.Length; k++)
@@ -268,8 +300,12 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
 
     private static void SendImportFeedback(PackageReceiveContext context, string key, string[] arguments)
     {
-        var message = GameMessageLocalization.System(nameof(FurnitureInventoryPanel), key, arguments,
-            presentation: GameMessagePresentation.Default);
+        var message = GameMessageLocalization.System(
+            nameof(FurnitureInventoryPanel),
+            key,
+            arguments,
+            presentation: GameMessagePresentation.Default
+        );
         if (context.Sender == context.Node!.Self)
         {
             GameManager.Project!.FindSubsystem<SubsystemGameWidgets>(true)!.Messages.DisplayLocal(message);

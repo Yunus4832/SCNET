@@ -22,8 +22,24 @@ public class FallenLeavesBlock : CubeBlock
         var color2 = GetColor(x, y, z + 1);
         var color3 = GetColor(x + 1, y, z);
         var color4 = GetColor(x + 1, y, z + 1);
-        generator.GenerateCubeVertices(this, value, x, y, z, 0.0625f, 0.0625f, 0.0625f, 0.0625f, sideColor, color,
-            color3, color4, color2, -1, geometry.AlphaTestSubsetsByFace);
+        generator.GenerateCubeVertices(
+            this,
+            value,
+            x,
+            y,
+            z,
+            0.0625f,
+            0.0625f,
+            0.0625f,
+            0.0625f,
+            sideColor,
+            color,
+            color3,
+            color4,
+            color2,
+            -1,
+            geometry.AlphaTestSubsetsByFace
+        );
     }
 
     public override void DrawBlock(

@@ -6,10 +6,13 @@ public class MessageDialog : Dialog
 {
     public enum CancelBehavior
     {
-        Dismiss,
-        InvokeButton1,
-        InvokeButton2,
-        Ignore
+        Dismiss = 0,
+
+        InvokeButton1 = 1,
+
+        InvokeButton2 = 2,
+
+        Ignore = 3
     }
 
     private readonly CanvasWidget _bodyWidget;
@@ -63,7 +66,8 @@ public class MessageDialog : Dialog
         var width = size.X >= 0f ? size.X : _defaultSize.X;
         _bodyWidget.Size = new Vector2(
             MathUtils.Max(_defaultBodySize.X + width - _defaultSize.X, 0f),
-            _defaultBodySize.Y);
+            _defaultBodySize.Y
+        );
         Size = new Vector2(width, size.Y >= 0f ? size.Y : _defaultSize.Y);
         if (!IsHeightAutoSized)
         {
@@ -89,7 +93,8 @@ public class MessageDialog : Dialog
         string.Empty,
         new Vector2(-1f),
         CancelBehavior.InvokeButton1,
-        _ => { })
+        _ => { }
+    )
     {
     }
 
@@ -106,7 +111,8 @@ public class MessageDialog : Dialog
         button2Text,
         new Vector2(-1f),
         CancelBehavior.InvokeButton2,
-        handler)
+        handler
+    )
     {
     }
 
@@ -120,7 +126,7 @@ public class MessageDialog : Dialog
         Action<MessageDialogButton, MessageDialog> selfContainedHandler
     ) : this(largeMessage, smallMessage, button1Text, button2Text, size, cancelBehavior, _ => { })
     {
-        _handler = delegate (MessageDialogButton button) { selfContainedHandler(button, this); };
+        _handler = delegate(MessageDialogButton button) { selfContainedHandler(button, this); };
     }
 
     public bool AutoHide { get; set; }
@@ -201,6 +207,7 @@ public class MessageDialog : Dialog
     {
         _bodyWidget.Size = new Vector2(
             _bodyWidget.Size.X,
-            MathUtils.Max(_defaultBodySize.Y + dialogHeight - _defaultSize.Y, 0f));
+            MathUtils.Max(_defaultBodySize.Y + dialogHeight - _defaultSize.Y, 0f)
+        );
     }
 }

@@ -22,11 +22,11 @@ public class TerritoryProtectionTest
     public void PistonUsesTheModBlocksMovabilityContractWithoutAKnownIndexCase()
     {
         using var scope = new WorldCatalogScope(
-            new ModDescriptor(new ModManifest(ModEntry.ModId, "Territory", "1.0.0"), static () => new ModEntry()));
+            new ModDescriptor(new ModManifest(ModEntry.ModId, "Territory", "1.0.0"), static () => new ModEntry())
+        );
         var index = scope.Catalog.GetBlock(TerritoryBlock.Id).BlockIndex;
         scope.Catalog.Blocks[index] = new TerritoryBlock { Collidable = true };
-        Assert.False(SubsystemPistonBlockBehavior.IsBlockMovable(
-            Terrain.MakeBlockValue(index), 0, 64, out var isEnd));
+        Assert.False(SubsystemPistonBlockBehavior.IsBlockMovable(Terrain.MakeBlockValue(index), 0, 64, out var isEnd));
         Assert.False(isEnd);
     }
 
@@ -63,8 +63,11 @@ public class TerritoryProtectionTest
     [InlineData(false, false)]
     public void NonMemberDiggingAndPlacingAreIndependent(bool digging, bool placing)
     {
-        var territory = new Territory(Guid.NewGuid(), new Point3(0, 64, 0),
-            new TerritorySettings(AllowDigging: digging, AllowPlacing: placing));
+        var territory = new Territory(
+            Guid.NewGuid(),
+            new Point3(0, 64, 0),
+            new TerritorySettings(AllowDigging: digging, AllowPlacing: placing)
+        );
         var player = Player(Guid.NewGuid());
         Assert.Equal(digging, TerritoryProtection.CanDig(territory, player));
         Assert.Equal(placing, TerritoryProtection.CanPlace(territory, player));
@@ -99,15 +102,23 @@ public class TerritoryProtectionTest
     [InlineData(TerritoryPermission.Exit, false, true, false, false)]
     [InlineData(TerritoryPermission.Dig, false, false, true, false)]
     [InlineData(TerritoryPermission.Place, false, false, false, true)]
-    public void PersonalGrantsAreIndependentAndNeverGrantOwnership(TerritoryPermission permissions,
-        bool enter, bool exit, bool dig, bool place)
+    public void PersonalGrantsAreIndependentAndNeverGrantOwnership(
+        TerritoryPermission permissions,
+        bool enter,
+        bool exit,
+        bool dig,
+        bool place
+    )
     {
         var previous = CommonLib.WorkType;
         CommonLib.WorkType = WorkType.Local;
         try
         {
-            var territory = new Territory(Guid.NewGuid(), new Point3(0, 64, 0),
-                new TerritorySettings(AllowExit: false));
+            var territory = new Territory(
+                Guid.NewGuid(),
+                new Point3(0, 64, 0),
+                new TerritorySettings(AllowExit: false)
+            );
             var player = Player(Guid.NewGuid());
             territory.SetGrant(player.PlayerGUID, "Visitor", permissions);
             Assert.Equal(enter, TerritoryProtection.CanCross(territory, player, false));
@@ -136,13 +147,19 @@ public class TerritoryProtectionTest
             Assert.True(TerritoryProtection.CanCross(territory, player, true));
             Assert.False(TerritoryProtection.CanCross(territory, player, false));
             var position = new Vector3(territory.MaxX + 0.1f, 64, 0);
-            var body = new BoundingBox(position - new Vector3(0.3f, 0, 0.3f),
-                position + new Vector3(0.3f, 1.8f, 0.3f));
+            var body = new BoundingBox(
+                position - new Vector3(0.3f, 0, 0.3f),
+                position + new Vector3(0.3f, 1.8f, 0.3f)
+            );
             Assert.Contains(territory.GetBoundaryBoxes(63, 67), wall => wall.Intersection(body));
-            Assert.DoesNotContain(territory.GetBlockingBoundaryBoxes(63, 67, Vector3.UnitX, false),
-                wall => wall.Intersection(body));
-            Assert.Single(territory.GetBlockingBoundaryBoxes(63, 67, -Vector3.UnitX, false),
-                wall => wall.Intersection(body));
+            Assert.DoesNotContain(
+                territory.GetBlockingBoundaryBoxes(63, 67, Vector3.UnitX, false),
+                wall => wall.Intersection(body)
+            );
+            Assert.Single(
+                territory.GetBlockingBoundaryBoxes(63, 67, -Vector3.UnitX, false),
+                wall => wall.Intersection(body)
+            );
         }
         finally
         {

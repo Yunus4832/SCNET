@@ -6,22 +6,30 @@ using NetCorePal.Extensions.Primitives;
 
 namespace ContentServer.Application.Commands;
 
-public sealed record ReviewRendezvousServiceCommand(RendezvousServiceRegistrationId Id, AdministratorId AdministratorId,
-    bool Approved, string? Message)
+public sealed record ReviewRendezvousServiceCommand(
+    RendezvousServiceRegistrationId Id,
+    AdministratorId AdministratorId,
+    bool Approved,
+    string? Message
+)
     : ICommand<ReviewRendezvousServiceResult>;
 
 public enum ReviewRendezvousServiceResult
 {
-    Completed,
-    NotFound,
-    InvalidState
+    Completed = 0,
+
+    NotFound = 1,
+
+    InvalidState = 2
 }
 
 public sealed class ReviewRendezvousServiceCommandHandler(RendezvousServiceRegistrationRepository repository)
     : ICommandHandler<ReviewRendezvousServiceCommand, ReviewRendezvousServiceResult>
 {
-    public async Task<ReviewRendezvousServiceResult> Handle(ReviewRendezvousServiceCommand command,
-        CancellationToken cancellationToken)
+    public async Task<ReviewRendezvousServiceResult> Handle(
+        ReviewRendezvousServiceCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var source = await repository.FindAsync(command.Id, cancellationToken);
         if (source is null)

@@ -51,7 +51,8 @@ public class ExperienceBlock : Block
             value,
             size * 0.18f,
             ref matrix,
-            Texture, Color.White,
+            Texture,
+            Color.White,
             true,
             environmentData
         );

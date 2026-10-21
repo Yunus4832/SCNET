@@ -85,12 +85,15 @@ public sealed class LocalChunkContentHostTest
         var coords = new Point2(7, 8);
         var chunk = authorityTerrain.AllocateChunk(coords.X, coords.Y);
         var attempts = 0;
-        var host = CreateHost(authorityTerrain, candidate =>
-        {
-            Assert.Same(chunk, candidate);
-            attempts++;
-            return false;
-        });
+        var host = CreateHost(
+            authorityTerrain,
+            candidate =>
+            {
+                Assert.Same(chunk, candidate);
+                attempts++;
+                return false;
+            }
+        );
         host.Request([new ChunkContentRequest(new ChunkAllocationId(coords, 1))]);
 
         Assert.False(host.Release(coords));
@@ -119,18 +122,21 @@ public sealed class LocalChunkContentHostTest
 
     private static LocalChunkContentHost CreateHost(
         Terrain terrain,
-        Func<TerrainChunk, bool>? prepareRelease = null)
+        Func<TerrainChunk, bool>? prepareRelease = null
+    )
     {
         var pipeline = new AuthoritativeChunkGenerationPipeline(
             new FakeGenerator(),
             _ => false,
-            _ => false);
+            _ => false
+        );
         return new LocalChunkContentHost(terrain, pipeline, prepareRelease);
     }
 
     private sealed class FakeGenerator : ITerrainContentsGenerator
     {
         public int OceanLevel => 64;
+
         public Vector3 FindCoarseSpawnPosition() => Vector3.Zero;
         public float CalculateOceanShoreDistance(float x, float z) => 0;
         public float CalculateHeight(float x, float z) => 0;

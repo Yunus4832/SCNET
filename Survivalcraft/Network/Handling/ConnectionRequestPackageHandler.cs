@@ -30,7 +30,8 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
                 netNode.SendWriterFromPackage(
                     new ConnectionRejectPackage("联机客户端 ID 无效"),
                     context.Sender.Request,
-                    true);
+                    true
+                );
             }
 
             return;
@@ -67,7 +68,9 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
             }
             else if (netNode.Peers.FirstOrDefault(c =>
                          !ReferenceEquals(c, context.Sender) &&
-                         (c.GUID == multiplayerClientId || c.TokenId == package.TmpToken)) != null)
+                         (c.GUID == multiplayerClientId || c.TokenId == package.TmpToken)
+                     ) !=
+                     null)
             {
                 connectionError.AppendLine("你的ID与服务器中某个在线玩家的ID相同");
             }
@@ -95,9 +98,14 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
                 netNode.SendWriterFromPackage(
                     new ConnectionRejectPackage(connectionError.ToString()),
                     context.Sender.Request,
-                    true);
-                Log.Information("Received connection request from " + context.Sender.IPPoint + ", rejected -- " +
-                                connectionError);
+                    true
+                );
+                Log.Information(
+                    "Received connection request from " +
+                    context.Sender.IPPoint +
+                    ", rejected -- " +
+                    connectionError
+                );
             }
             else
             {
@@ -111,10 +119,12 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
                 {
                     return;
                 }
+
                 var addClient = netNode.CreateClient(
                     netNode.PendingPeer,
                     package.TmpToken,
-                    multiplayerClientId);
+                    multiplayerClientId
+                );
                 var clientPackage = new ClientPackage(addClient.ID, addClient.TokenId, addClient.GUID);
                 foreach (var c in netNode.Peers)
                 {

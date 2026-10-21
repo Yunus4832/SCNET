@@ -4,7 +4,8 @@ namespace Game.Subsystems;
 
 public class SubsystemMagmaBlockBehavior() : SubsystemFluidBlockBehavior(
     CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[92]!,
-    false), IUpdateable
+    false
+), IUpdateable
 {
     private readonly Random _random = new();
 
@@ -68,8 +69,14 @@ public class SubsystemMagmaBlockBehavior() : SubsystemFluidBlockBehavior(
     {
         if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(interactValue)] is WaterBlock)
         {
-            SubsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.1f, 0.1f), new Vector3(x, y, z), 5f,
-                true);
+            SubsystemAudio.PlayRandomSound(
+                "Audio/Sizzles",
+                1f,
+                _random.Float(-0.1f, 0.1f),
+                new Vector3(x, y, z),
+                5f,
+                true
+            );
             SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
             Set(x, y, z, 67);
             return true;
@@ -93,13 +100,21 @@ public class SubsystemMagmaBlockBehavior() : SubsystemFluidBlockBehavior(
             case 61:
             case 62:
                 SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                _subsystemParticles.AddParticleSystem(new BurntDebrisParticleSystem(SubsystemTerrain,
-                    new Vector3(x + 0.5f, y + 1, z + 0.5f)));
+                _subsystemParticles.AddParticleSystem(
+                    new BurntDebrisParticleSystem(
+                        SubsystemTerrain,
+                        new Vector3(x + 0.5f, y + 1, z + 0.5f)
+                    )
+                );
                 break;
             case 8:
                 SubsystemTerrain.ChangeCell(x, y, z, 2);
-                _subsystemParticles.AddParticleSystem(new BurntDebrisParticleSystem(SubsystemTerrain,
-                    new Vector3(x + 0.5f, y + 1, z + 0.5f)));
+                _subsystemParticles.AddParticleSystem(
+                    new BurntDebrisParticleSystem(
+                        SubsystemTerrain,
+                        new Vector3(x + 0.5f, y + 1, z + 0.5f)
+                    )
+                );
                 break;
         }
     }

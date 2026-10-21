@@ -17,7 +17,8 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         Stream source,
         ContentPackageType type,
         long maximumBytes,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var path = packageStore.CreateTemporaryPath(".png-source");
         try
@@ -42,7 +43,8 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         string description,
         string version,
         long maximumBytes,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (type is not (ContentPackageType.BlocksTexture or ContentPackageType.CharacterSkin))
         {
@@ -62,26 +64,52 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
             var payload = type == ContentPackageType.BlocksTexture
                 ? new ContentPackagePayload("scnet.blocks-texture.png-v1", payloadPath, "image/png")
                 : new ContentPackagePayload("scnet.character-skin.png-v1", payloadPath, "image/png");
-            var metadata = JsonSerializer.SerializeToElement(new
+            var metadata = JsonSerializer.SerializeToElement(
+                new
+                {
+                    width = sourceInspection.Width,
+                    height = sourceInspection.Height
+                }
+            );
+            var manifest = new ContentPackageManifest(
+                ContentPackageManifest.CurrentFormatVersion,
+                type,
+                identifier,
+                name,
+                summary,
+                description,
+                version,
+                payload,
+                metadata
+            );
+            await using (var output = new FileStream(
+                             packagePath,
+                             FileMode.CreateNew,
+                             FileAccess.ReadWrite,
+                             FileShare.None,
+                             64 * 1024,
+                             FileOptions.Asynchronous | FileOptions.SequentialScan
+                         ))
             {
-                width = sourceInspection.Width,
-                height = sourceInspection.Height
-            });
-            var manifest = new ContentPackageManifest(ContentPackageManifest.CurrentFormatVersion,
-                type, identifier, name, summary, description, version, payload, metadata);
-            await using (var output = new FileStream(packagePath, FileMode.CreateNew, FileAccess.ReadWrite,
-                             FileShare.None, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
-            {
-                ContentPackageWriter.Write(output, manifest,
-                [
-                    new ContentPackageWriteEntry(payloadPath, sourceInspection.Size,
-                        () => File.OpenRead(sourcePath))
-                ]);
+                ContentPackageWriter.Write(
+                    output,
+                    manifest,
+                    [
+                        new ContentPackageWriteEntry(
+                            payloadPath,
+                            sourceInspection.Size,
+                            () => File.OpenRead(sourcePath)
+                        )
+                    ]
+                );
                 await output.FlushAsync(cancellationToken);
             }
 
-            return await packageStore.InspectTemporaryPackageAsync(packagePath,
-                $"{identifier}-{version}{ContentPackageReader.FileExtension}", cancellationToken);
+            return await packageStore.InspectTemporaryPackageAsync(
+                packagePath,
+                $"{identifier}-{version}{ContentPackageReader.FileExtension}",
+                cancellationToken
+            );
         }
         catch
         {
@@ -94,11 +122,21 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         }
     }
 
-    private static async Task CopySourceAsync(Stream source, string path, long maximumBytes,
-        CancellationToken cancellationToken)
+    private static async Task CopySourceAsync(
+        Stream source,
+        string path,
+        long maximumBytes,
+        CancellationToken cancellationToken
+    )
     {
-        await using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write,
-            FileShare.None, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        await using var output = new FileStream(
+            path,
+            FileMode.CreateNew,
+            FileAccess.Write,
+            FileShare.None,
+            64 * 1024,
+            FileOptions.Asynchronous | FileOptions.SequentialScan
+        );
         var buffer = new byte[64 * 1024];
         long total = 0;
         int read;
@@ -119,7 +157,8 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
     private static async Task<ImageSourceInspection> InspectSourceAsync(
         string path,
         ContentPackageType type,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var data = await File.ReadAllBytesAsync(path, cancellationToken);
         try
@@ -128,11 +167,13 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
             {
                 throw new ContentPackageException("Image source must be PNG.");
             }
+
             var info = ImageCodec.Identify(data);
             if (info.Format != ImageFormat.Png || info.Frames != 1)
             {
                 throw new ContentPackageException("Image source must be a single-frame PNG.");
             }
+
             ValidateDimensions(type, info.Width, info.Height);
             using var decoded = ImageCodec.Decode(data);
             cancellationToken.ThrowIfCancellationRequested();
@@ -153,8 +194,12 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
             ContentPackageType.CharacterSkin => 1024,
             _ => throw new ContentPackageException("Web image manufacturing only supports texture and skin packages.")
         };
-        if (width <= 0 || height <= 0 || (width & (width - 1)) != 0 || (height & (height - 1)) != 0 ||
-            width > maximum || height > maximum)
+        if (width <= 0 ||
+            height <= 0 ||
+            (width & (width - 1)) != 0 ||
+            (height & (height - 1)) != 0 ||
+            width > maximum ||
+            height > maximum)
         {
             throw new ContentPackageException("PNG source dimensions are invalid for the selected content type.");
         }

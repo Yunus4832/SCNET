@@ -10,8 +10,12 @@ public static class Storage
 
     public static long FreeSpace => GetRoot("data").FreeSpace;
 
-    public static void RegisterFileSystemRoot(string name, string rootPath, bool readOnly = false,
-        bool allowEscapingRoot = false)
+    public static void RegisterFileSystemRoot(
+        string name,
+        string rootPath,
+        bool readOnly = false,
+        bool allowEscapingRoot = false
+    )
     {
         RegisterRoot(name, new FileSystemStorageRoot(rootPath, readOnly, allowEscapingRoot));
     }

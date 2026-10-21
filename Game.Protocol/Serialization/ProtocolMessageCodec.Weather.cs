@@ -15,5 +15,9 @@ public static partial class ProtocolMessageCodec
     }
 
     private static SubsystemWeatherPackage ReadSubsystemWeatherPackage(ProtocolReader reader) => new()
-    { PrecipitationStartTime = reader.ReadDouble(), PrecipitationEndTime = reader.ReadDouble(), LightningIntensity = reader.ReadSingle(), FogStartTime = reader.ReadDouble(), FogRampTime = reader.ReadSingle(), FogEndTime = reader.ReadDouble() };
+    {
+        PrecipitationStartTime = reader.ReadDouble(), PrecipitationEndTime = reader.ReadDouble(),
+        LightningIntensity = reader.ReadSingle(), FogStartTime = reader.ReadDouble(), FogRampTime = reader.ReadSingle(),
+        FogEndTime = reader.ReadDouble()
+    };
 }

@@ -6,11 +6,17 @@ namespace TerritoryStoneMod;
 public static class TerritoryMessages
 {
     public const string Snapshot = "snapshot";
+
     public const string Update = "update";
+
     public const string Remove = "remove";
+
     public const string Settings = "settings";
+
     public const string AccessRequest = "access-request";
+
     public const string AccessRequestRemoved = "access-request-removed";
+
     public const string SettingsResult = "settings-result";
 
     public static bool CanChangeSettings(Client? sender, Guid owner) =>
@@ -45,6 +51,7 @@ public static class TerritoryMessages
         {
             throw new InvalidDataException("Invalid territory grant count.");
         }
+
         for (var index = 0; index < count; index++)
         {
             var player = reader.ReadGuid();
@@ -52,8 +59,10 @@ public static class TerritoryMessages
             {
                 throw new InvalidDataException("Duplicate territory grant.");
             }
+
             territory.SetGrant(player, reader.ReadString(), (TerritoryPermission)reader.ReadInt32());
         }
+
         return territory;
     }
 
@@ -67,9 +76,14 @@ public static class TerritoryMessages
         writer.Write(settings.ShowBoundary);
     }
 
-    public static TerritorySettings ReadSettings(ProtocolReader reader) => new(reader.ReadInt32(),
-        reader.ReadBoolean(), reader.ReadBoolean(), reader.ReadBoolean(), reader.ReadBoolean(),
-        reader.ReadBoolean());
+    public static TerritorySettings ReadSettings(ProtocolReader reader) => new(
+        reader.ReadInt32(),
+        reader.ReadBoolean(),
+        reader.ReadBoolean(),
+        reader.ReadBoolean(),
+        reader.ReadBoolean(),
+        reader.ReadBoolean()
+    );
 
     public static void WriteSnapshot(ProtocolWriter writer, IReadOnlyCollection<Territory> territories)
     {

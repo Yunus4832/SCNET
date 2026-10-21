@@ -401,8 +401,7 @@ public abstract class Block : IDisposable
         int attachBlockValue
     )
     {
-        return !IsCollidable(value)
-               || IsNonAttachable(value);
+        return !IsCollidable(value) || IsNonAttachable(value);
     }
 
     public virtual bool IsFluidBlocker(int value) => FluidBlocker;
@@ -669,8 +668,14 @@ public abstract class Block : IDisposable
         float strength
     )
     {
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, Color.White,
-            GetFaceTextureSlot(4, value));
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            Color.White,
+            GetFaceTextureSlot(4, value)
+        );
     }
 
     public virtual BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value) => DefaultCollisionBoxes;

@@ -45,8 +45,13 @@ public class SubsystemParticles : Subsystem, IDrawable, IUpdateable
         shader.GetParameter("u_fogColor").SetValue(new Vector3(SubsystemSky.ViewFogColor));
         shader.GetParameter("u_hazeStartDensity")
             .SetValue(new Vector2(SubsystemSky.ViewHazeStart, SubsystemSky.ViewHazeDensity));
-        shader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(SubsystemSky.ViewFogBottom,
-            SubsystemSky.ViewFogTop, SubsystemSky.ViewFogDensity));
+        shader.GetParameter("u_fogBottomTopDensity").SetValue(
+            new Vector3(
+                SubsystemSky.ViewFogBottom,
+                SubsystemSky.ViewFogTop,
+                SubsystemSky.ViewFogDensity
+            )
+        );
         shader.GetParameter("u_alphaThreshold").SetValue(0f);
         var parameter = shader.GetParameter("u_texture");
         var parameter2 = shader.GetParameter("u_samplerState");

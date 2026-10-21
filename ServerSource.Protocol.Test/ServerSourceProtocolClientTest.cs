@@ -8,7 +8,8 @@ public sealed class ServerSourceProtocolClientTest
     [Fact]
     public async Task ClientReadsAndValidatesPage()
     {
-        var handler = new StubHandler("""
+        var handler = new StubHandler(
+            """
             {
               "protocolVersion": 1,
               "source": { "id": "example", "name": "Example" },
@@ -23,7 +24,8 @@ public sealed class ServerSourceProtocolClientTest
               ],
               "nextCursor": null
             }
-            """);
+            """
+        );
         var client = new ServerSourceProtocolClient(new HttpClient(handler));
 
         var page = await client.GetPageAsync(new Uri("https://source.example/servers"), "next value", 20);
@@ -35,21 +37,26 @@ public sealed class ServerSourceProtocolClientTest
     [Fact]
     public async Task ClientRejectsInvalidResponse()
     {
-        var handler = new StubHandler("""
+        var handler = new StubHandler(
+            """
             {
               "protocolVersion": 99,
               "source": { "id": "example", "name": "Example" },
               "servers": [],
               "nextCursor": null
             }
-            """);
+            """
+        );
         var client = new ServerSourceProtocolClient(new HttpClient(handler));
 
         var exception = await Assert.ThrowsAsync<ServerSourceProtocolException>(() =>
-            client.GetPageAsync(new Uri("https://source.example/servers")));
+            client.GetPageAsync(new Uri("https://source.example/servers"))
+        );
 
-        Assert.Contains(exception.ValidationIssues,
-            issue => issue.Code == ServerSourceValidationCode.UnsupportedProtocolVersion);
+        Assert.Contains(
+            exception.ValidationIssues,
+            issue => issue.Code == ServerSourceValidationCode.UnsupportedProtocolVersion
+        );
     }
 
     [Fact]
@@ -57,11 +64,13 @@ public sealed class ServerSourceProtocolClientTest
     {
         var handler = new CallbackHandler(request => request.RequestUri?.Query.Contains("cursor=second") == true
             ? Page("server-1", null)
-            : Page("server-1", "second"));
+            : Page("server-1", "second")
+        );
         var client = new ServerSourceProtocolClient(new HttpClient(handler));
 
         await Assert.ThrowsAsync<ServerSourceProtocolException>(() =>
-            client.GetAllAsync(new Uri("https://source.example/servers")));
+            client.GetAllAsync(new Uri("https://source.example/servers"))
+        );
     }
 
     [Fact]
@@ -69,7 +78,8 @@ public sealed class ServerSourceProtocolClientTest
     {
         var handler = new CallbackHandler(request => request.RequestUri?.Query.Contains("cursor=second") == true
             ? Page("server-2", null)
-            : Page("server-1", "second"));
+            : Page("server-1", "second")
+        );
         var client = new ServerSourceProtocolClient(new HttpClient(handler));
 
         var snapshot = await client.GetAllAsync(new Uri("https://source.example/servers"));
@@ -81,47 +91,55 @@ public sealed class ServerSourceProtocolClientTest
     {
         var cursor = nextCursor is null ? "null" : $"\"{nextCursor}\"";
         return $$"""
-                   {
-                     "protocolVersion": 1,
-                     "source": { "id": "example", "name": "Example" },
-                     "servers": [
-                       {
-                         "id": "{{entryId}}",
-                         "name": "Server",
-                         "address": "example.org:28887",
-                         "description": null,
-                         "tags": []
-                       }
-                     ],
-                     "nextCursor": {{cursor}}
-                   }
-                   """;
+                 {
+                   "protocolVersion": 1,
+                   "source": { "id": "example", "name": "Example" },
+                   "servers": [
+                     {
+                       "id": "{{entryId}}",
+                       "name": "Server",
+                       "address": "example.org:28887",
+                       "description": null,
+                       "tags": []
+                     }
+                   ],
+                   "nextCursor": {{cursor}}
+                 }
+                 """;
     }
 
     private sealed class StubHandler(string responseBody) : HttpMessageHandler
     {
         public Uri? RequestUri { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-            CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             RequestUri = request.RequestUri;
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(responseBody, Encoding.UTF8, "application/json")
-            });
+            return Task.FromResult(
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(responseBody, Encoding.UTF8, "application/json")
+                }
+            );
         }
     }
 
     private sealed class CallbackHandler(Func<HttpRequestMessage, string> response) : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-            CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(response(request), Encoding.UTF8, "application/json")
-            });
+            return Task.FromResult(
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(response(request), Encoding.UTF8, "application/json")
+                }
+            );
         }
     }
 }

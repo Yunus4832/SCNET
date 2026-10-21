@@ -19,8 +19,11 @@ public sealed class NetworkHostTest
         var echoed = false;
         server.Received += (connection, message) => connection.Send(message.Payload.Span, 8);
         client.Received += (_, message) => echoed = message.Payload.Span.SequenceEqual("channel-eight"u8);
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
         var connection = await connecting;
         connection.Send("channel-eight"u8, 8);
@@ -33,17 +36,22 @@ public sealed class NetworkHostTest
     public async Task ExplicitIPv4BindingLeavesOtherLocalAddressesAvailable()
     {
         var address = IPAddress.Parse("127.0.0.2");
-        await using var server = new NetworkHost(options: new NetworkHostOptions
-        {
-            LocalIPv4Address = address,
-            LocalIPv6Address = IPAddress.IPv6Loopback
-        });
+        await using var server = new NetworkHost(
+            options: new NetworkHostOptions
+            {
+                LocalIPv4Address = address,
+                LocalIPv6Address = IPAddress.IPv6Loopback
+            }
+        );
         using var otherAddress = new UdpClient(new IPEndPoint(IPAddress.Loopback, server.LocalPort));
         await using var client = new NetworkHost();
         server.ConnectionRequested += request => request.Accept();
         server.Received += (connection, message) => connection.Send(message.Payload.Span);
-        var connecting = client.ConnectAsync(new IPEndPoint(address, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(address, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
         var connection = await connecting;
         var echoed = false;
@@ -56,14 +64,20 @@ public sealed class NetworkHostTest
     [Fact]
     public void LocalBindingRejectsAddressesFromTheWrongFamily()
     {
-        Assert.Throws<ArgumentException>(() => new NetworkHost(options: new NetworkHostOptions
-        {
-            LocalIPv4Address = IPAddress.IPv6Loopback
-        }));
-        Assert.Throws<ArgumentException>(() => new NetworkHost(options: new NetworkHostOptions
-        {
-            LocalIPv6Address = IPAddress.Loopback
-        }));
+        Assert.Throws<ArgumentException>(() => new NetworkHost(
+                options: new NetworkHostOptions
+                {
+                    LocalIPv4Address = IPAddress.IPv6Loopback
+                }
+            )
+        );
+        Assert.Throws<ArgumentException>(() => new NetworkHost(
+                options: new NetworkHostOptions
+                {
+                    LocalIPv6Address = IPAddress.Loopback
+                }
+            )
+        );
     }
 
     [Fact]
@@ -74,11 +88,20 @@ public sealed class NetworkHostTest
         NetworkConnectionRequest? pending = null;
         server.ConnectionRequested += request => pending = request;
         server.Received += (connection, message) => connection.Send(message.Payload.Span);
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => pending is not null);
-        var offer = new RelayAllocation(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), pending!.TransportEndpoint.ToString(),
-            new RelayRouteCredentials(Guid.NewGuid(), 0, new byte[32]), DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1));
+        var offer = new RelayAllocation(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            pending!.TransportEndpoint.ToString(),
+            new RelayRouteCredentials(Guid.NewGuid(), 0, new byte[32]),
+            DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1)
+        );
         Assert.Null(server.TryInstallRelay(offer));
         var accepted = pending.Accept();
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
@@ -102,8 +125,14 @@ public sealed class NetworkHostTest
         var connecting = client.ConnectAsync(endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
         var connection = await connecting;
-        var offer = new RelayAllocation(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), endpoint.ToString(),
-            new RelayRouteCredentials(Guid.NewGuid(), 1, new byte[32]), DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1));
+        var offer = new RelayAllocation(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            endpoint.ToString(),
+            new RelayRouteCredentials(Guid.NewGuid(), 1, new byte[32]),
+            DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1)
+        );
         Assert.Null(client.TryInstallRelay(offer));
         var echoed = false;
         client.Received += (_, message) => echoed = message.Payload.Span.SequenceEqual("direct-survives"u8);
@@ -129,6 +158,7 @@ public sealed class NetworkHostTest
         {
             SynchronizationContext.SetSynchronizationContext(previous);
         }
+
         await using var serverLifetime = server;
         await using var clientLifetime = client;
         server.ConnectionRequested += request => request.Accept();
@@ -136,13 +166,17 @@ public sealed class NetworkHostTest
         try
         {
             SynchronizationContext.SetSynchronizationContext(new DormantSynchronizationContext());
-            connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-                ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+            connecting = client.ConnectAsync(
+                new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+                ReadOnlyMemory<byte>.Empty,
+                CancellationToken.None
+            );
         }
         finally
         {
             SynchronizationContext.SetSynchronizationContext(previous);
         }
+
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
         var connection = await connecting;
         var receipt = connection.SendWithReceipt(new byte[64]);
@@ -162,8 +196,11 @@ public sealed class NetworkHostTest
             Assert.Null(request.Accept());
         };
         server.Connected += connection => notified = connection;
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => connecting.IsCompleted && notified is not null);
         Assert.Same(accepted, notified);
         Assert.True(accepted!.IsConnected);
@@ -172,20 +209,25 @@ public sealed class NetworkHostTest
     [Fact]
     public async Task ReliableReceiveOverflowClosesConnectionWithReasonAndBoundsQueuedPayloads()
     {
-        await using var server = new NetworkHost(options: new NetworkHostOptions
-        {
-            MaxDataNotifications = 1,
-            MaxNotificationBytes = 1024,
-            MaxControlNotifications = 16
-        });
+        await using var server = new NetworkHost(
+            options: new NetworkHostOptions
+            {
+                MaxDataNotifications = 1,
+                MaxNotificationBytes = 1024,
+                MaxControlNotifications = 16
+            }
+        );
         await using var client = new NetworkHost();
         server.ConnectionRequested += request => request.Accept();
         var received = 0;
         server.Received += (_, _) => received++;
         NetworkDisconnectInfo? closed = null;
         client.Disconnected += (_, information) => closed = information;
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
         var connection = await connecting;
         connection.Send(new byte[32]);
@@ -197,6 +239,7 @@ public sealed class NetworkHostTest
             client.DispatchEvents();
             await Task.Delay(5, deadline.Token);
         }
+
         Assert.Equal("receive-overload"u8.ToArray(), closed.Data.ToArray());
         Assert.True(server.PendingNotificationCount <= 17);
         Assert.Equal(0, received);
@@ -221,7 +264,10 @@ public sealed class NetworkHostTest
         Assert.True(offender.Start());
         try
         {
-            offender.Connect(new IPEndPoint(IPAddress.Loopback, server.LocalPort), new LiteNetLib.Utils.NetDataWriter());
+            offender.Connect(
+                new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+                new LiteNetLib.Utils.NetDataWriter()
+            );
             using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             while (!closed)
             {
@@ -230,9 +276,13 @@ public sealed class NetworkHostTest
                 offender.PollEvents();
                 await Task.Delay(5, deadline.Token);
             }
+
             Assert.Null(server.Failure);
-            var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-                ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+            var connecting = client.ConnectAsync(
+                new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+                ReadOnlyMemory<byte>.Empty,
+                CancellationToken.None
+            );
             await PumpUntilAsync(server, client, () => connecting.IsCompleted);
             var connection = await connecting;
             connection.Send(new byte[] { 2 });
@@ -248,12 +298,18 @@ public sealed class NetworkHostTest
     [Fact]
     public async Task RetainedRequestCannotBeAcceptedAfterItsDeadline()
     {
-        await using var server = new NetworkHost(options: new NetworkHostOptions { RequestTimeout = TimeSpan.FromMilliseconds(200) });
+        await using var server = new NetworkHost(
+            options: new NetworkHostOptions
+                { RequestTimeout = TimeSpan.FromMilliseconds(200) }
+        );
         await using var client = new NetworkHost();
         NetworkConnectionRequest? request = null;
         server.ConnectionRequested += incoming => request = incoming;
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => request is not null);
         await Assert.ThrowsAsync<NetworkConnectionException>(() => connecting);
         Assert.False(request!.IsPending);
@@ -264,12 +320,18 @@ public sealed class NetworkHostTest
     [Fact]
     public async Task UndispatchedHandshakeExpiresAndIsNotLaterOfferedToApplication()
     {
-        await using var server = new NetworkHost(options: new NetworkHostOptions { RequestTimeout = TimeSpan.FromMilliseconds(100) });
+        await using var server = new NetworkHost(
+            options: new NetworkHostOptions
+                { RequestTimeout = TimeSpan.FromMilliseconds(100) }
+        );
         await using var client = new NetworkHost();
         var offered = false;
         server.ConnectionRequested += _ => offered = true;
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         var failure = await Assert.ThrowsAsync<NetworkConnectionException>(() => connecting);
         Assert.Equal(NetworkDisconnectReason.Rejected, failure.Information.Reason);
         Assert.Equal("request-expired"u8.ToArray(), failure.Information.Data.ToArray());
@@ -287,8 +349,11 @@ public sealed class NetworkHostTest
         NetworkDisconnectInfo? closed = null;
         server.Received += (_, received) => message = received;
         server.Disconnected += (_, information) => closed = information;
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
         var connection = await connecting;
         connection.Send(new byte[] { 1 }, delivery: DeliveryMode.ReliableUnordered);
@@ -310,8 +375,11 @@ public sealed class NetworkHostTest
         server.ConnectionRequested += request => request.Accept();
         var received = false;
         server.Received += (_, _) => received = true;
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
         var connection = await connecting;
         var receipt = connection.SendWithReceipt(new byte[4096]);
@@ -320,8 +388,11 @@ public sealed class NetworkHostTest
         Assert.False(received);
         server.DispatchEvents();
         Assert.True(received);
-        Assert.Throws<ArgumentException>(() => connection.SendWithReceipt(new byte[] { 1 },
-            delivery: DeliveryMode.Unreliable));
+        Assert.Throws<ArgumentException>(() => connection.SendWithReceipt(
+                new byte[] { 1 },
+                delivery: DeliveryMode.Unreliable
+            )
+        );
         Assert.Throws<ArgumentOutOfRangeException>(() => connection.Send(new byte[] { 1 }, channel: 8));
     }
 
@@ -331,12 +402,21 @@ public sealed class NetworkHostTest
         await using var host = new NetworkHost();
         var clock = new ManualClock();
         var released = false;
-        var preparation = new ConnectionPreparation(host, new IPEndPoint(IPAddress.Loopback, 30000),
-            NetworkPathKind.HolePunch, clock.GetUtcNow() + TimeSpan.FromMinutes(2), () => released = true, clock);
+        var preparation = new ConnectionPreparation(
+            host,
+            new IPEndPoint(IPAddress.Loopback, 30000),
+            NetworkPathKind.HolePunch,
+            clock.GetUtcNow() + TimeSpan.FromMinutes(2),
+            () => released = true,
+            clock
+        );
         clock.Now += TimeSpan.FromMinutes(2);
         Assert.Throws<TimeoutException>(() => preparation.SendDatagram(new byte[] { 1 }));
-        await Assert.ThrowsAsync<TimeoutException>(() => preparation.ConnectAsync(ReadOnlyMemory<byte>.Empty,
-            CancellationToken.None));
+        await Assert.ThrowsAsync<TimeoutException>(() => preparation.ConnectAsync(
+                ReadOnlyMemory<byte>.Empty,
+                CancellationToken.None
+            )
+        );
         await preparation.DisposeAsync();
         Assert.True(released);
     }
@@ -359,7 +439,8 @@ public sealed class NetworkHostTest
         var connection = await connecting;
         Assert.Equal(NetworkPathKind.Direct, connection.PathKind);
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            preparation.ConnectAsync(ReadOnlyMemory<byte>.Empty, CancellationToken.None));
+            preparation.ConnectAsync(ReadOnlyMemory<byte>.Empty, CancellationToken.None)
+        );
         await preparation.DisposeAsync();
         Assert.True(connection.IsConnected);
         var received = false;
@@ -378,9 +459,13 @@ public sealed class NetworkHostTest
         await preparation.DisposeAsync();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => connecting);
         await Assert.ThrowsAsync<ObjectDisposedException>(() =>
-            preparation.ConnectAsync(ReadOnlyMemory<byte>.Empty, CancellationToken.None));
-        await using var replacement = await client.PrepareAddressAsync("127.0.0.1", server.LocalPort,
-            CancellationToken.None);
+            preparation.ConnectAsync(ReadOnlyMemory<byte>.Empty, CancellationToken.None)
+        );
+        await using var replacement = await client.PrepareAddressAsync(
+            "127.0.0.1",
+            server.LocalPort,
+            CancellationToken.None
+        );
         Assert.Equal(NetworkPathKind.Direct, replacement.PathKind);
     }
 
@@ -388,10 +473,17 @@ public sealed class NetworkHostTest
     public async Task CandidateNotIntroducedByRegisteredBeaconCannotStartProbe()
     {
         await using var host = new NetworkHost();
-        var candidate = new SignalMessage("candidate", Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-            Endpoint: "127.0.0.1:30000", Challenge: new string('A', 64));
+        var candidate = new SignalMessage(
+            "candidate",
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Endpoint: "127.0.0.1:30000",
+            Challenge: new string('A', 64)
+        );
         var failure = await Assert.ThrowsAsync<RendezvousException>(() =>
-            host.ProbeCandidateAsync(candidate, CancellationToken.None));
+            host.ProbeCandidateAsync(candidate, CancellationToken.None)
+        );
         Assert.Equal(RendezvousFailureKind.InvalidResponse, failure.Kind);
         Assert.Equal("unregistered_candidate", failure.ErrorCode);
     }
@@ -404,8 +496,11 @@ public sealed class NetworkHostTest
         server.ConnectionRequested += request => request.Accept();
         var received = new List<int>();
         server.Received += (_, payload) => received.Add(BitConverter.ToInt32(payload.Payload.Span));
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
         var connection = await connecting;
         for (var index = 0; index < 32; index++)
@@ -419,8 +514,11 @@ public sealed class NetworkHostTest
         client.Disconnected += (_, _) => disconnected = true;
         connection.Disconnect();
         await PumpUntilAsync(server, client, () => disconnected);
-        var reconnecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var reconnecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => reconnecting.IsCompleted);
         var replacement = await reconnecting;
         Assert.NotEqual(connection.Id, replacement.Id);
@@ -432,8 +530,11 @@ public sealed class NetworkHostTest
         await using var server = new NetworkHost();
         await using var client = new NetworkHost();
         server.ConnectionRequested += request => request.Reject("server-full"u8);
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
         var failure = await Assert.ThrowsAsync<NetworkConnectionException>(() => connecting);
         Assert.Equal(NetworkDisconnectReason.Rejected, failure.Information.Reason);
@@ -447,8 +548,11 @@ public sealed class NetworkHostTest
         await using var client = new NetworkHost();
         server.ConnectionRequested += request => request.Accept();
         server.Received += (connection, message) => connection.Send(message.Payload.Span);
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.IPv6Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.IPv6Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         await PumpUntilAsync(server, client, () => connecting.IsCompleted);
         var connection = await connecting;
         var echoed = false;
@@ -470,8 +574,11 @@ public sealed class NetworkHostTest
         await using var client = new NetworkHost();
         var endpoint = new IPEndPoint(IPAddress.Loopback, server.LocalPort);
         var connecting = client.ConnectAsync(endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
-        var signaling = client.RequestSignalAsync(endpoint, new SignalMessage("register", Guid.NewGuid()),
-            CancellationToken.None);
+        var signaling = client.RequestSignalAsync(
+            endpoint,
+            new SignalMessage("register", Guid.NewGuid()),
+            CancellationToken.None
+        );
         Assert.Equal(1, client.Resources.PendingConnections);
         Assert.Equal(1, client.Resources.PendingSignals);
 
@@ -482,6 +589,7 @@ public sealed class NetworkHostTest
             var exception = await Record.ExceptionAsync(() => operation.WaitAsync(TimeSpan.FromSeconds(3)));
             Assert.True(exception is IOException or OperationCanceledException, exception?.ToString());
         }
+
         Assert.True(client.Completion.IsCompletedSuccessfully);
         Assert.Equal(default, client.Resources);
     }
@@ -493,7 +601,11 @@ public sealed class NetworkHostTest
         await host.DisposeAsync();
         await host.DisposeAsync();
         await Assert.ThrowsAsync<ObjectDisposedException>(() => host.ConnectAsync(
-            new IPEndPoint(IPAddress.Loopback, 1), ReadOnlyMemory<byte>.Empty, CancellationToken.None));
+                new IPEndPoint(IPAddress.Loopback, 1),
+                ReadOnlyMemory<byte>.Empty,
+                CancellationToken.None
+            )
+        );
     }
 
     private static async Task PumpUntilAsync(NetworkHost server, NetworkHost client, Func<bool> completed)

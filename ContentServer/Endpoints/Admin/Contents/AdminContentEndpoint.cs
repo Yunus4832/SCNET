@@ -28,26 +28,27 @@ public sealed class AdminContentEndpoint(IMediator mediator) : ContentEndpoint
         string? query,
         string? type,
         PaginationRequest page,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var items = await mediator.Send(
             new ListContentItemsQuery(page.ToPageRequest(), query, Type: type),
-            cancellationToken);
+            cancellationToken
+        );
         return items.Map(item => new ContentItemResponse(
-            item.ContentId.ToString(),
-            item.PublisherId.ToString(),
-            item.Type,
-            item.Identifier,
-            item.Name,
-            item.Summary,
-            item.Description,
-            item.Status.ToString().ToLowerInvariant(),
-            item.CreatedAt,
-            item.UpdatedAt)
+                item.ContentId.ToString(),
+                item.PublisherId.ToString(),
+                item.Type,
+                item.Identifier,
+                item.Name,
+                item.Summary,
+                item.Description,
+                item.Status.ToString().ToLowerInvariant(),
+                item.CreatedAt,
+                item.UpdatedAt
+            )
         ).AsResponseData();
     }
-
-
 }
 
 public sealed record ContentItemResponse(

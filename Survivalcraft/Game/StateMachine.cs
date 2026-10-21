@@ -21,13 +21,16 @@ public class StateMachine
             throw new InvalidOperationException("State name must not be empty or null.");
         }
 
-        _states.Add(name, new State
-        {
-            Name = name,
-            Enter = enter,
-            Update = update,
-            Leave = leave
-        });
+        _states.Add(
+            name,
+            new State
+            {
+                Name = name,
+                Enter = enter,
+                Update = update,
+                Leave = leave
+            }
+        );
     }
 
     public void TransitionTo(string stateName)

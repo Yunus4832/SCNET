@@ -65,8 +65,7 @@ public static class SettingsManager
             return false;
         }
 
-        settings.HttpCommandAccessToken = Convert.ToBase64String(
-            RandomNumberGenerator.GetBytes(32));
+        settings.HttpCommandAccessToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
         Log.Information("Generated a new HTTP command access token for this instance.");
         return true;
     }
@@ -91,32 +90,37 @@ public static class SettingsManager
                                 name = XmlUtils.GetAttributeValue<string>(item, "Name");
                                 var attributeValue = XmlUtils.GetAttributeValue<string>(item, "Value");
                                 var propertyInfo = (from pi in typeof(Settings).GetRuntimeProperties()
-                                                    where pi.Name == name &&
-                                                          pi.GetMethod != null &&
-                                                          !pi.GetMethod.IsStatic && pi.GetMethod.IsPublic &&
-                                                          pi.SetMethod != null &&
-                                                          pi.SetMethod.IsPublic
-                                                    select pi).FirstOrDefault();
+                                    where pi.Name == name &&
+                                          pi.GetMethod != null &&
+                                          !pi.GetMethod.IsStatic &&
+                                          pi.GetMethod.IsPublic &&
+                                          pi.SetMethod != null &&
+                                          pi.SetMethod.IsPublic
+                                    select pi).FirstOrDefault();
                                 if ((object?)propertyInfo != null)
                                 {
-                                    var value = HumanReadableConverter.ConvertFromString(propertyInfo.PropertyType,
-                                        attributeValue);
+                                    var value = HumanReadableConverter.ConvertFromString(
+                                        propertyInfo.PropertyType,
+                                        attributeValue
+                                    );
                                     propertyInfo.SetValue(Current, value, null);
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            Log.Warning(string.Format("Setting \"{0}\" could not be loaded. Reason: {1}",
-                                new object[]
-                                {
-                                    name,
-                                    ex.Message
-                                })
+                            Log.Warning(
+                                string.Format(
+                                    "Setting \"{0}\" could not be loaded. Reason: {1}",
+                                    new object[]
+                                    {
+                                        name,
+                                        ex.Message
+                                    }
+                                )
                             );
                         }
                     }
-
                 }
 
                 Log.Information("Loaded settings.");
@@ -149,9 +153,12 @@ public static class SettingsManager
         var xElement = new XElement("Settings");
 
         foreach (var item in from pi in typeof(Settings).GetRuntimeProperties()
-                             where pi.GetMethod != null && !pi.GetMethod.IsStatic && pi.GetMethod.IsPublic &&
-                                   pi.SetMethod != null && pi.SetMethod.IsPublic
-                             select pi)
+                 where pi.GetMethod != null &&
+                       !pi.GetMethod.IsStatic &&
+                       pi.GetMethod.IsPublic &&
+                       pi.SetMethod != null &&
+                       pi.SetMethod.IsPublic
+                 select pi)
         {
             try
             {
@@ -162,11 +169,16 @@ public static class SettingsManager
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format("Setting \"{0}\" could not be saved. Reason: {1}", new object[]
-                {
-                        item.Name,
-                        ex.Message
-                }));
+                Log.Warning(
+                    string.Format(
+                        "Setting \"{0}\" could not be saved. Reason: {1}",
+                        new object[]
+                        {
+                            item.Name,
+                            ex.Message
+                        }
+                    )
+                );
             }
         }
 

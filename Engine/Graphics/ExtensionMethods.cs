@@ -61,5 +61,4 @@ public static class ExtensionMethods
             _ => throw new InvalidOperationException("Unsupported ShaderParameterType.")
         };
     }
-
 }

@@ -16,39 +16,69 @@ public sealed class OnlineContentScreen : Screen
 
     private enum CatalogAction
     {
-        Download,
-        Details,
-        PreviousPage,
-        NextPage,
-        Refresh
+        Download = 0,
+
+        Details = 1,
+
+        PreviousPage = 2,
+
+        NextPage = 3,
+
+        Refresh = 4
     }
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly ListPanelWidget _contentList;
+
     private readonly SelectionDrawerWidget _repositoryFilterDrawer;
+
     private readonly LabelWidget _searchPlaceholder;
+
     private readonly TextBoxWidget _searchTextBox;
+
     private readonly LabelWidget _statusLabel;
+
     private readonly SelectionDrawerWidget _statusFilterDrawer;
+
     private readonly SelectionDrawerWidget _typeFilterDrawer;
+
     private readonly SelectionDrawerWidget _versionDrawer;
+
     private readonly Dictionary<(ContentPackageType Type, string Identifier), CachedVersions> _versionCache = [];
+
     private readonly OnlineContentCatalogState _state = new();
+
     private bool _busy;
+
     private CancellationTokenSource? _cancellation;
+
     private bool _moveToNextPageAfterLoad;
+
     private int _pageIndex = 1;
+
     private AggregatedContentEntry? _selectedEntry;
+
     private string? _selectedHash;
+
     private OnlineContentNavigation? _versionNavigation;
+
     private bool _updatingContentList;
+
     private bool _updatingFilters;
+
     private bool _updatingVersions;
+
     private OnlineContentNavigation? _pendingNavigation;
+
     private Guid? _repositoryId;
+
     private string _returnScreenName = "Content";
+
     private string? _search;
+
     private OnlineContentStatusFilter _statusFilter;
+
     private ContentPackageType? _typeFilter;
 
     public OnlineContentScreen()
@@ -91,11 +121,12 @@ public sealed class OnlineContentScreen : Screen
         _actionPanel.ItemEnabledProvider = IsActionEnabled;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
-        [
-            CatalogAction.Download,
-            CatalogAction.PreviousPage,
-            CatalogAction.NextPage
-        ]);
+            [
+                CatalogAction.Download,
+                CatalogAction.PreviousPage,
+                CatalogAction.NextPage
+            ]
+        );
         _actionPanel.SetSecondaryItems([CatalogAction.Details, CatalogAction.Refresh]);
     }
 
@@ -153,8 +184,11 @@ public sealed class OnlineContentScreen : Screen
     {
         var content = (AggregatedContentEntry)item;
         var latest = content.Versions.FirstOrDefault();
-        var widget = (ContainerWidget)LoadWidget(null,
-            ContentManager.Get<XElement>("Widgets/OnlineContentItem"), null);
+        var widget = (ContainerWidget)LoadWidget(
+            null,
+            ContentManager.Get<XElement>("Widgets/OnlineContentItem"),
+            null
+        );
         widget.Children.Find<LabelWidget>("OnlineContentItem.Name")!.Text = content.Name;
         widget.Children.Find<LabelWidget>("OnlineContentItem.Identifier")!.Text = content.Identifier;
         var typeName = GetContentTypeName(content.Type);
@@ -210,8 +244,10 @@ public sealed class OnlineContentScreen : Screen
         var query = new ContentCatalogQuery(_typeFilter?.ToString(), _search, pageIndex);
         var service = new ContentCatalogService(ContentServerClientPool.Shared);
         Task.Run(() => service.QueryAsync(context, query, cancellation.Token), cancellation.Token)
-            .ContinueWith(task => Dispatcher.Dispatch(() => CompletePage(task, cancellation, pageIndex)),
-                cancellation.Token);
+            .ContinueWith(
+                task => Dispatcher.Dispatch(() => CompletePage(task, cancellation, pageIndex)),
+                cancellation.Token
+            );
     }
 
     private void CompletePage(Task<AggregatedContentPage> task, CancellationTokenSource cancellation, int pageIndex)
@@ -267,7 +303,8 @@ public sealed class OnlineContentScreen : Screen
         foreach (var entry in entries)
         {
             _contentList.AddItem(entry);
-            if (selected is not null && selected.Type == entry.Type &&
+            if (selected is not null &&
+                selected.Type == entry.Type &&
                 string.Equals(selected.Identifier, entry.Identifier, StringComparison.Ordinal))
             {
                 _contentList.SelectedItem = entry;
@@ -384,7 +421,9 @@ public sealed class OnlineContentScreen : Screen
 
     private void SelectContent(AggregatedContentEntry entry, OnlineContentNavigation? navigation = null)
     {
-        if (navigation is null && _selectedEntry is { } selectedEntry && selectedEntry.Type == entry.Type &&
+        if (navigation is null &&
+            _selectedEntry is { } selectedEntry &&
+            selectedEntry.Type == entry.Type &&
             string.Equals(selectedEntry.Identifier, entry.Identifier, StringComparison.Ordinal))
         {
             return;
@@ -426,8 +465,10 @@ public sealed class OnlineContentScreen : Screen
         var entry = _selectedEntry;
         var service = new ContentCatalogService(ContentServerClientPool.Shared);
         Task.Run(() => service.QueryVersionsAsync(CreateContext(), entry, cancellation.Token), cancellation.Token)
-            .ContinueWith(task => Dispatcher.Dispatch(() => CompleteVersionRefresh(task, cancellation)),
-                cancellation.Token);
+            .ContinueWith(
+                task => Dispatcher.Dispatch(() => CompleteVersionRefresh(task, cancellation)),
+                cancellation.Token
+            );
     }
 
     private void CompleteVersionRefresh(Task<AggregatedContentDetails> task, CancellationTokenSource cancellation)
@@ -482,7 +523,8 @@ public sealed class OnlineContentScreen : Screen
         var selectedVersion = versions.FirstOrDefault(version =>
             string.Equals(version.Version.PackageHash, requestedHash, StringComparison.Ordinal) &&
             (exactNavigation?.Version is null ||
-             string.Equals(version.Version.Version, exactNavigation.Version, StringComparison.Ordinal)));
+             string.Equals(version.Version.Version, exactNavigation.Version, StringComparison.Ordinal))
+        );
         _versionDrawer.SelectedItem = selectedVersion ?? versions.FirstOrDefault();
         _selectedHash = (_versionDrawer.SelectedItem as OnlineContentVersionState)?.Version.PackageHash;
         _updatingVersions = false;
@@ -526,8 +568,10 @@ public sealed class OnlineContentScreen : Screen
         var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
         var service = new ContentDownloadService(ContentServerClientPool.Shared, cache);
         var entry = _selectedEntry;
-        Task.Run(() => service.DownloadAsync(CreateContext(), entry, version, null, cancellation.Token),
-                cancellation.Token)
+        Task.Run(
+                () => service.DownloadAsync(CreateContext(), entry, version, null, cancellation.Token),
+                cancellation.Token
+            )
             .ContinueWith(task => Dispatcher.Dispatch(() => CompleteDownload(task, cancellation)), cancellation.Token);
     }
 
@@ -560,13 +604,16 @@ public sealed class OnlineContentScreen : Screen
             return;
         }
 
-        ContentPackageInstallDialogs.Show(task.Result.Entry, busy => _busy = busy,
+        ContentPackageInstallDialogs.Show(
+            task.Result.Entry,
+            busy => _busy = busy,
             () => DialogsManager.Alert(Text("Installed")),
             exception =>
             {
                 Log.Error($"Downloaded content installation failed: {exception}");
                 DialogsManager.Alert(Text("InstallFailed"));
-            });
+            }
+        );
     }
 
     private static ContentSourceContext CreateContext()
@@ -629,18 +676,22 @@ public sealed class OnlineContentScreen : Screen
     private void RefreshFilterDrawers()
     {
         _updatingFilters = true;
-        var typeOptions = new[] { new ContentTypeOption(null) }.Concat(Enum.GetValues<ContentPackageType>()
-            .Select(type => new ContentTypeOption(type))).ToArray();
+        var typeOptions = new[] { new ContentTypeOption(null) }.Concat(
+            Enum.GetValues<ContentPackageType>()
+                .Select(type => new ContentTypeOption(type))
+        ).ToArray();
         _typeFilterDrawer.SetItems(typeOptions);
         _typeFilterDrawer.SelectedItem = typeOptions.First(option => option.Type == _typeFilter);
         var repositories = ContentRepositoryManager.Current.Snapshot()
             .Where(repository => repository.IsEnabled).ToArray();
         var repositoryOptions = new[] { new RepositoryOption(null, Text("AllRepositories")) }.Concat(
             repositories.Select(repository =>
-                new RepositoryOption(repository.Id, repository.Name))).ToArray();
+                new RepositoryOption(repository.Id, repository.Name)
+            )
+        ).ToArray();
         _repositoryFilterDrawer.SetItems(repositoryOptions);
-        _repositoryFilterDrawer.SelectedItem = repositoryOptions.FirstOrDefault(option => option.Id == _repositoryId)
-                                               ?? repositoryOptions[0];
+        _repositoryFilterDrawer.SelectedItem = repositoryOptions.FirstOrDefault(option => option.Id == _repositoryId) ??
+                                               repositoryOptions[0];
         _repositoryId = ((RepositoryOption)_repositoryFilterDrawer.SelectedItem!).Id;
         var statusOptions = Enum.GetValues<OnlineContentStatusFilter>();
         _statusFilterDrawer.SetItems(statusOptions.Cast<object>());
@@ -690,7 +741,8 @@ public sealed class OnlineContentScreen : Screen
     {
         return ContentRepositoryManager.Current.Snapshot()
             .Where(repository => repository.IsEnabled &&
-                                 (_repositoryId is null || repository.Id == _repositoryId))
+                                 (_repositoryId is null || repository.Id == _repositoryId)
+            )
             .ToArray();
     }
 
@@ -699,16 +751,21 @@ public sealed class OnlineContentScreen : Screen
         var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
         cache.RebuildIndex();
         var cached = cache.List();
-        _state.SetReferences(cached.Select(entry => entry.PackageHash),
+        _state.SetReferences(
+            cached.Select(entry => entry.PackageHash),
             ToReferences(ModPackageReferenceTracker.GetReferencedRequirements()),
-            ToReferences(ModPackageReferenceTracker.GetCurrentRuntimeRequirements()));
+            ToReferences(ModPackageReferenceTracker.GetCurrentRuntimeRequirements())
+        );
     }
 
-    private static IEnumerable<OnlineContentReference> ToReferences(
-        IEnumerable<ModPackageRequirement> requirements)
+    private static IEnumerable<OnlineContentReference> ToReferences(IEnumerable<ModPackageRequirement> requirements)
     {
         return requirements.Select(requirement => new OnlineContentReference(
-            ContentPackageType.Mod, requirement.ModId, requirement.PackageHash));
+                ContentPackageType.Mod,
+                requirement.ModId,
+                requirement.PackageHash
+            )
+        );
     }
 
     private void CancelRequest()

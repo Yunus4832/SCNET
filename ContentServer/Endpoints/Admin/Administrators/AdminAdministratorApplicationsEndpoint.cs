@@ -26,8 +26,11 @@ public sealed class AdminAdministratorApplicationsEndpoint(IMediator mediator) :
     }
 
     private async Task<ResponseData<PagedData<AdministratorResponse>>> AdministratorApplications(
-        AdministratorStatus? status, string? query,
-        PaginationRequest page, CancellationToken ct)
+        AdministratorStatus? status,
+        string? query,
+        PaginationRequest page,
+        CancellationToken ct
+    )
     {
         var items = await mediator.Send(new ListAdministratorsQuery(page.ToPageRequest(), status, Search: query), ct);
         return items.Map(EndpointMappings.Administrator).AsResponseData();

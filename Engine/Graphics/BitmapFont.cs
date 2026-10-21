@@ -10,8 +10,14 @@ public class BitmapFont : IDisposable
 
     internal Image? image;
 
-    public BitmapFont(Texture2D texture, IEnumerable<Glyph> glyphs, char fallbackCode, float glyphHeight,
-        Vector2 spacing, float scale)
+    public BitmapFont(
+        Texture2D texture,
+        IEnumerable<Glyph> glyphs,
+        char fallbackCode,
+        float glyphHeight,
+        Vector2 spacing,
+        float scale
+    )
     {
         Initialize(texture, null, glyphs, fallbackCode, glyphHeight, spacing, scale);
     }
@@ -128,16 +134,16 @@ public class BitmapFont : IDisposable
 
                     break;
                 default:
+                {
+                    var glyph = GetGlyph(c);
+                    vector.X += (glyph.Width + spacing.X) * scale.X;
+                    if (vector.X > result.X)
                     {
-                        var glyph = GetGlyph(c);
-                        vector.X += (glyph.Width + spacing.X) * scale.X;
-                        if (vector.X > result.X)
-                        {
-                            result.X = vector.X;
-                        }
-
-                        break;
+                        result.X = vector.X;
                     }
+
+                    break;
+                }
                 case '\r':
                     break;
             }
@@ -185,22 +191,63 @@ public class BitmapFont : IDisposable
         return MeasureText(text, 0, characterIndex, scale, spacing).X;
     }
 
-    public static BitmapFont Load(Image image, char firstCode, char fallbackCode, Vector2 spacing, float scale,
-        Vector2 offset, int mipLevelsCount = 1, bool premultiplyAlpha = true)
+    public static BitmapFont Load(
+        Image image,
+        char firstCode,
+        char fallbackCode,
+        Vector2 spacing,
+        float scale,
+        Vector2 offset,
+        int mipLevelsCount = 1,
+        bool premultiplyAlpha = true
+    )
     {
-        return InternalLoad(image, firstCode, fallbackCode, spacing, scale, offset, mipLevelsCount, premultiplyAlpha,
-            true);
+        return InternalLoad(
+            image,
+            firstCode,
+            fallbackCode,
+            spacing,
+            scale,
+            offset,
+            mipLevelsCount,
+            premultiplyAlpha,
+            true
+        );
     }
 
-    public static BitmapFont Load(Stream stream, char firstCode, char fallbackCode, Vector2 spacing, float scale,
-        Vector2 offset, int mipLevelsCount = 1, bool premultiplyAlpha = true)
+    public static BitmapFont Load(
+        Stream stream,
+        char firstCode,
+        char fallbackCode,
+        Vector2 spacing,
+        float scale,
+        Vector2 offset,
+        int mipLevelsCount = 1,
+        bool premultiplyAlpha = true
+    )
     {
-        return Load(Image.Load(stream), firstCode, fallbackCode, spacing, scale, offset, mipLevelsCount,
-            premultiplyAlpha);
+        return Load(
+            Image.Load(stream),
+            firstCode,
+            fallbackCode,
+            spacing,
+            scale,
+            offset,
+            mipLevelsCount,
+            premultiplyAlpha
+        );
     }
 
-    public static BitmapFont Load(string fileName, char firstCode, char fallbackCode, Vector2 spacing, float scale,
-        Vector2 offset, int mipLevelsCount = 1, bool premultiplyAlpha = true)
+    public static BitmapFont Load(
+        string fileName,
+        char firstCode,
+        char fallbackCode,
+        Vector2 spacing,
+        float scale,
+        Vector2 offset,
+        int mipLevelsCount = 1,
+        bool premultiplyAlpha = true
+    )
     {
         using (var stream = Storage.OpenFile(fileName, OpenFileMode.Read))
         {
@@ -208,8 +255,17 @@ public class BitmapFont : IDisposable
         }
     }
 
-    internal static BitmapFont InternalLoad(Image image, char firstCode, char fallbackCode, Vector2 spacing,
-        float scale, Vector2 offset, int mipLevelsCount, bool premultiplyAlpha, bool createTexture)
+    internal static BitmapFont InternalLoad(
+        Image image,
+        char firstCode,
+        char fallbackCode,
+        Vector2 spacing,
+        float scale,
+        Vector2 offset,
+        int mipLevelsCount,
+        bool premultiplyAlpha,
+        bool createTexture
+    )
     {
         var list = new List<Rectangle>(FindGlyphs(image));
         var list2 = new List<Rectangle>(list.Select(r => CropGlyph(image, r)));
@@ -245,8 +301,10 @@ public class BitmapFont : IDisposable
             {
                 texCoord = new Vector2((list2[j].Left - 0.5f) / image.Width, (list2[j].Top - 0.5f) / image.Height);
                 texCoord2 = new Vector2((list2[j].Right + 0.5f) / image.Width, (list2[j].Bottom + 0.5f) / image.Height);
-                offset2 = new Vector2(list2[j].Left - list[j].Left - num - 0.5f,
-                    list2[j].Top - list[j].Top - num2 - 0.5f);
+                offset2 = new Vector2(
+                    list2[j].Left - list[j].Left - num - 0.5f,
+                    list2[j].Top - list[j].Top - num2 - 0.5f
+                );
             }
             else
             {
@@ -280,8 +338,15 @@ public class BitmapFont : IDisposable
         return bitmapFont;
     }
 
-    internal void Initialize(Texture2D? texture, Image? inputImage, IEnumerable<Glyph> glyphs, char fallbackCode,
-        float glyphHeight, Vector2 spacing, float scale)
+    internal void Initialize(
+        Texture2D? texture,
+        Image? inputImage,
+        IEnumerable<Glyph> glyphs,
+        char fallbackCode,
+        float glyphHeight,
+        Vector2 spacing,
+        float scale
+    )
     {
         Dispose();
         Texture = texture;
@@ -313,7 +378,8 @@ public class BitmapFont : IDisposable
             int num;
             for (var x = 1; x < image.Width; x = num)
             {
-                if (image.GetPixel(x, y) != Color.Magenta && image.GetPixel(x - 1, y) == Color.Magenta &&
+                if (image.GetPixel(x, y) != Color.Magenta &&
+                    image.GetPixel(x - 1, y) == Color.Magenta &&
                     image.GetPixel(x, y - 1) == Color.Magenta)
                 {
                     var i = 1;

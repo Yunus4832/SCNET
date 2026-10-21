@@ -87,11 +87,7 @@ public class ComponentMiner : Component, IUpdateable
         }
     }
 
-    public float DigProgress
-    {
-        get => !DigCellFace.HasValue ? 0f : _digProgress;
-        set => _digProgress = value;
-    }
+    public float DigProgress { get => !DigCellFace.HasValue ? 0f : _digProgress; set => _digProgress = value; }
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -115,7 +111,8 @@ public class ComponentMiner : Component, IUpdateable
             DigCellFace = null;
         }
 
-        if (!(_componentHealth.Health > 0f) || !(AutoInteractRate > 0f) ||
+        if (!(_componentHealth.Health > 0f) ||
+            !(AutoInteractRate > 0f) ||
             !_random.Bool(AutoInteractRate) ||
             !_subsystemTime.PeriodicGameTimeEvent(1.0, GetHashCode() % 100 / 100f))
         {
@@ -128,8 +125,10 @@ public class ComponentMiner : Component, IUpdateable
         for (var i = 0; i < 10; i++)
         {
             var terrainRaycastResult =
-                Raycast<TerrainRaycastResult>(new Ray3(eyePosition, forwardVector + _random.Vector3(0.75f)),
-                    RaycastMode.Interaction);
+                Raycast<TerrainRaycastResult>(
+                    new Ray3(eyePosition, forwardVector + _random.Vector3(0.75f)),
+                    RaycastMode.Interaction
+                );
             if (terrainRaycastResult is { Distance: < 1.5f } &&
                 Terrain.ExtractContents(terrainRaycastResult.Value.Value) != 57 &&
                 Interact(terrainRaycastResult.Value))
@@ -165,7 +164,9 @@ public class ComponentMiner : Component, IUpdateable
         var activeBlockValue = ActiveBlockValue;
         var num2 = Terrain.ExtractContents(activeBlockValue);
         var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
-        if (!DigCellFace.HasValue || DigCellFace.Value.X != cellFace.X || DigCellFace.Value.Y != cellFace.Y ||
+        if (!DigCellFace.HasValue ||
+            DigCellFace.Value.X != cellFace.X ||
+            DigCellFace.Value.Y != cellFace.Y ||
             DigCellFace.Value.Z != cellFace.Z)
         {
             _digStartTime = _subsystemTime.GameTime;
@@ -188,8 +189,15 @@ public class ComponentMiner : Component, IUpdateable
             if (_subsystemTime.PeriodicGameTimeEvent(5.0, _digStartTime + 1.0))
             {
                 ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                    string.Format(LanguageManager.Get(Name, 1), block2.PlayerLevelRequired,
-                        block2.GetDisplayName(_subsystemTerrain, activeBlockValue)), Color.White, true, true);
+                    string.Format(
+                        LanguageManager.Get(Name, 1),
+                        block2.PlayerLevelRequired,
+                        block2.GetDisplayName(_subsystemTerrain, activeBlockValue)
+                    ),
+                    Color.White,
+                    true,
+                    true
+                );
             }
         }
 
@@ -203,7 +211,8 @@ public class ComponentMiner : Component, IUpdateable
         }
 
         if (_subsystemGameInfo.WorldSettings.GameMode is GameMode.Survival or GameMode.Harmless &&
-            num3 >= 3f && _digProgress > 0.5f &&
+            num3 >= 3f &&
+            _digProgress > 0.5f &&
             (_lastToolHintTime == 0.0 || Time.FrameStartTime - _lastToolHintTime > 300.0))
         {
             var flag3 = num3.CloseTo(CalculateDigTime(cellValue, 0));
@@ -212,8 +221,12 @@ public class ComponentMiner : Component, IUpdateable
             {
                 if (num2 != 23 && flag3)
                 {
-                    ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(Name, "11"), Color.White,
-                        true, true);
+                    ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                        LanguageManager.Get(Name, "11"),
+                        Color.White,
+                        true,
+                        true
+                    );
                     _lastToolHintTime = Time.FrameStartTime;
                 }
             }
@@ -221,8 +234,12 @@ public class ComponentMiner : Component, IUpdateable
             {
                 var displayName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(num4)]
                     .GetDisplayName(_subsystemTerrain, num4);
-                ComponentPlayer?.ComponentGui.DisplaySmallMessage("使用:" + displayName + "更快挖掘", Color.White, true,
-                    true);
+                ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                    "使用:" + displayName + "更快挖掘",
+                    Color.White,
+                    true,
+                    true
+                );
                 _lastToolHintTime = Time.FrameStartTime;
             }
         }
@@ -242,18 +259,34 @@ public class ComponentMiner : Component, IUpdateable
 
             var digValue = block.GetDigValue(_subsystemTerrain, this, cellValue, activeBlockValue, raycastResult);
 
-            if (CommonLib.WorkType == WorkType.Client && ComponentPlayer is { PlayerData.IsMainPlayer: true } &&
+            if (CommonLib.WorkType == WorkType.Client &&
+                ComponentPlayer is { PlayerData.IsMainPlayer: true } &&
                 digValue.CellFace.Point == cellFace.Point)
             {
                 DigExpectedValue = cellValue;
                 DigRequestId = _subsystemTerrain.CellPrediction!.Begin(
-                    cellFace.Point, cellValue, digValue.Value, Time.RealTime);
+                    cellFace.Point,
+                    cellValue,
+                    digValue.Value,
+                    Time.RealTime
+                );
             }
 
-            _subsystemTerrain.DestroyCell(block2.ToolLevel, digValue.CellFace.X, digValue.CellFace.Y,
-                digValue.CellFace.Z, digValue.Value, false, false, this);
-            _subsystemSoundMaterials.PlayImpactSound(cellValue, new Vector3(cellFace.X, cellFace.Y, cellFace.Z),
-                2f);
+            _subsystemTerrain.DestroyCell(
+                block2.ToolLevel,
+                digValue.CellFace.X,
+                digValue.CellFace.Y,
+                digValue.CellFace.Z,
+                digValue.Value,
+                false,
+                false,
+                this
+            );
+            _subsystemSoundMaterials.PlayImpactSound(
+                cellValue,
+                new Vector3(cellFace.X, cellFace.Y, cellFace.Z),
+                2f
+            );
             DamageActiveTool(1);
             if (ComponentCreature.PlayerStats != null)
             {
@@ -267,14 +300,21 @@ public class ComponentMiner : Component, IUpdateable
                 return result;
             }
 
-            var particleSystem = block.CreateDebrisParticleSystem(_subsystemTerrain, raycastResult.HitPoint(0.1f),
-                cellValue, 0.65f);
+            var particleSystem = block.CreateDebrisParticleSystem(
+                _subsystemTerrain,
+                raycastResult.HitPoint(0.1f),
+                cellValue,
+                0.65f
+            );
             Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
         }
         else
         {
-            _subsystemSoundMaterials.PlayImpactSound(cellValue, new Vector3(cellFace.X, cellFace.Y, cellFace.Z),
-                1f);
+            _subsystemSoundMaterials.PlayImpactSound(
+                cellValue,
+                new Vector3(cellFace.X, cellFace.Y, cellFace.Z),
+                1f
+            );
         }
 
         return result;
@@ -337,8 +377,9 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
-        if (num3 is <= 0 or >= 256 || (!IsBlockPlacingAllowed(ComponentCreature.ComponentBody) &&
-                                       _subsystemGameInfo.WorldSettings.GameMode > GameMode.Survival))
+        if (num3 is <= 0 or >= 256 ||
+            (!IsBlockPlacingAllowed(ComponentCreature.ComponentBody) &&
+             _subsystemGameInfo.WorldSettings.GameMode > GameMode.Survival))
         {
             return false;
         }
@@ -381,8 +422,7 @@ public class ComponentMiner : Component, IUpdateable
         placementData = blockPlacedContext.PlacementData;
         value = blockPlacedContext.Value;
 
-        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(
-            Terrain.ExtractContents(placementData.Value));
+        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(placementData.Value));
         foreach (var behavior in blockBehaviors)
         {
             behavior.OnBlockPlaced(this, num2, num3, num4, ref placementData, value);
@@ -393,14 +433,23 @@ public class ComponentMiner : Component, IUpdateable
             PlacementCell = new Point3(num2, num3, num4);
             PlacementExpectedValue = _subsystemTerrain.Terrain.GetCellValue(num2, num3, num4);
             PlacementRequestId = _subsystemTerrain.CellPrediction!.Begin(
-                PlacementCell, PlacementExpectedValue, placementData.Value, Time.RealTime);
+                PlacementCell,
+                PlacementExpectedValue,
+                placementData.Value,
+                Time.RealTime
+            );
         }
 
         _subsystemTerrain.DestroyCell(0, num2, num3, num4, placementData.Value, false, false, this);
 
-        _subsystemAudio.PlaySound("Audio/BlockPlaced", 1f, 0f,
+        _subsystemAudio.PlaySound(
+            "Audio/BlockPlaced",
+            1f,
+            0f,
             new Vector3(placementData.CellFace.X, placementData.CellFace.Y, placementData.CellFace.Z),
-            5f, false);
+            5f,
+            false
+        );
         Poke(false);
         if (ComponentCreature.PlayerStats != null)
         {
@@ -425,8 +474,15 @@ public class ComponentMiner : Component, IUpdateable
         if (!CanUseTool(ActiveBlockValue))
         {
             ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                string.Format(LanguageManager.Get(Name, 1), block.PlayerLevelRequired,
-                    block.GetDisplayName(_subsystemTerrain, ActiveBlockValue)), Color.White, true, true);
+                string.Format(
+                    LanguageManager.Get(Name, 1),
+                    block.PlayerLevelRequired,
+                    block.GetDisplayName(_subsystemTerrain, ActiveBlockValue)
+                ),
+                Color.White,
+                true,
+                true
+            );
             Poke(false);
             return false;
         }
@@ -443,8 +499,11 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Interact(TerrainRaycastResult raycastResult)
     {
-        var cellValue = _subsystemTerrain.Terrain.GetCellValue(raycastResult.CellFace.X,
-            raycastResult.CellFace.Y, raycastResult.CellFace.Z);
+        var cellValue = _subsystemTerrain.Terrain.GetCellValue(
+            raycastResult.CellFace.X,
+            raycastResult.CellFace.Y,
+            raycastResult.CellFace.Z
+        );
         var interactContext = new BlockInteractContext(raycastResult, this, cellValue);
         CurrentModRuntime.Value?.BlockBehaviors.Invoke(interactContext);
         if (interactContext.Cancel)
@@ -481,8 +540,15 @@ public class ComponentMiner : Component, IUpdateable
         if (!CanUseTool(ActiveBlockValue))
         {
             ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                string.Format(LanguageManager.Get(Name, 1), block.PlayerLevelRequired,
-                    block.GetDisplayName(_subsystemTerrain, ActiveBlockValue)), Color.White, true, true);
+                string.Format(
+                    LanguageManager.Get(Name, 1),
+                    block.PlayerLevelRequired,
+                    block.GetDisplayName(_subsystemTerrain, ActiveBlockValue)
+                ),
+                Color.White,
+                true,
+                true
+            );
             Poke(false);
             return;
         }
@@ -501,8 +567,14 @@ public class ComponentMiner : Component, IUpdateable
             playerHitRate = 0.66f;
         }
 
-        _subsystemAudio.PlaySound("Audio/Swoosh", 1f, _random.Float(-0.2f, 0.2f), componentBody.Position, 3f,
-            false);
+        _subsystemAudio.PlaySound(
+            "Audio/Swoosh",
+            1f,
+            _random.Float(-0.2f, 0.2f),
+            componentBody.Position,
+            3f,
+            false
+        );
         var flag = _random.Bool(ComponentPlayer != null ? playerHitRate : creatureHitRate);
         if (ComponentPlayer != null)
         {
@@ -525,7 +597,8 @@ public class ComponentMiner : Component, IUpdateable
                     Project,
                     position,
                     24f,
-                    new ComponentHealthPackage(position, velocity, Color.White, text));
+                    new ComponentHealthPackage(position, velocity, Color.White, text)
+                );
                 var particleSystem = new HitValueParticleSystem(position, velocity, Color.White, text);
                 Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
             }
@@ -555,8 +628,15 @@ public class ComponentMiner : Component, IUpdateable
         if (!CanUseTool(ActiveBlockValue))
         {
             ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                string.Format(LanguageManager.Get(Name, 1), block.PlayerLevelRequired,
-                    block.GetDisplayName(_subsystemTerrain, ActiveBlockValue)), Color.White, true, true);
+                string.Format(
+                    LanguageManager.Get(Name, 1),
+                    block.PlayerLevelRequired,
+                    block.GetDisplayName(_subsystemTerrain, ActiveBlockValue)
+                ),
+                Color.White,
+                true,
+                true
+            );
             Poke(false);
             return true;
         }
@@ -587,7 +667,8 @@ public class ComponentMiner : Component, IUpdateable
             0.35f,
             (body, distance) =>
                 Vector3.DistanceSquared(start + distance * direction, creaturePosition) <= reach * reach &&
-                body.Entity != Entity && !body.IsChildOfBody(ComponentCreature.ComponentBody) &&
+                body.Entity != Entity &&
+                !body.IsChildOfBody(ComponentCreature.ComponentBody) &&
                 !ComponentCreature.ComponentBody.IsChildOfBody(body) &&
                 Vector3.Dot(Vector3.Normalize(body.BoundingBox.Center() - start), direction) > 0.7f
         );
@@ -597,7 +678,7 @@ public class ComponentMiner : Component, IUpdateable
             end,
             true,
             true,
-            delegate (int value, float distance)
+            delegate(int value, float distance)
             {
                 if (!(Vector3.DistanceSquared(start + distance * direction, creaturePosition) <= reach * reach))
                 {
@@ -605,7 +686,8 @@ public class ComponentMiner : Component, IUpdateable
                 }
 
                 var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)];
-                if (distance == 0f && block is CrossBlock &&
+                if (distance == 0f &&
+                    block is CrossBlock &&
                     Vector3.Dot(direction, new Vector3(startCell) + new Vector3(0.5f) - start) < 0f)
                 {
                     return false;
@@ -620,7 +702,8 @@ public class ComponentMiner : Component, IUpdateable
                 };
             },
             includePredictedBlocks: mode == RaycastMode.Digging &&
-                                    ComponentPlayer is { PlayerData.IsMainPlayer: true });
+                                    ComponentPlayer is { PlayerData.IsMainPlayer: true }
+        );
         var num = bodyRaycastResult?.Distance ?? float.PositiveInfinity;
         var num2 = movingBlocksRaycastResult?.Distance ?? float.PositiveInfinity;
         var num3 = terrainRaycastResult?.Distance ?? float.PositiveInfinity;
@@ -642,8 +725,13 @@ public class ComponentMiner : Component, IUpdateable
         return new Ray3(start, direction);
     }
 
-    public T? Raycast<T>(Ray3 ray, RaycastMode mode, bool raycastTerrain = true, bool raycastBodies = true,
-        bool raycastMovingBlocks = true) where T : struct
+    public T? Raycast<T>(
+        Ray3 ray,
+        RaycastMode mode,
+        bool raycastTerrain = true,
+        bool raycastBodies = true,
+        bool raycastMovingBlocks = true
+    ) where T : struct
     {
         var obj = Raycast(ray, mode, raycastTerrain, raycastBodies, raycastMovingBlocks);
         if (obj is not T result)
@@ -772,7 +860,8 @@ public class ComponentMiner : Component, IUpdateable
                                 target.Project,
                                 position,
                                 24f,
-                                new ComponentHealthPackage(position, velocity, Color.White, text2));
+                                new ComponentHealthPackage(position, velocity, Color.White, text2)
+                            );
                             var particleSystem = new HitValueParticleSystem(position, velocity, Color.White, text2);
                             target.Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
                         }
@@ -787,8 +876,14 @@ public class ComponentMiner : Component, IUpdateable
                 componentDamage.Damage(num3);
                 if (num3 > 0f)
                 {
-                    target.Project.FindSubsystem<SubsystemAudio>(true)!.PlayRandomSound(componentDamage.DamageSoundName,
-                        1f, _random2.Float(-0.3f, 0.3f), target.Position, 4f, false);
+                    target.Project.FindSubsystem<SubsystemAudio>(true)!.PlayRandomSound(
+                        componentDamage.DamageSoundName,
+                        1f,
+                        _random2.Float(-0.3f, 0.3f),
+                        target.Position,
+                        4f,
+                        false
+                    );
                 }
             }
         }

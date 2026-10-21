@@ -17,23 +17,11 @@ public class ClickableTextRowWidget : CanvasWidget
 
     public bool IsClicked => _clickableWidget.IsClicked;
 
-    public string Text
-    {
-        get => _labelWidget.Text;
-        set => _labelWidget.Text = value;
-    }
+    public string Text { get => _labelWidget.Text; set => _labelWidget.Text = value; }
 
-    public float FontScale
-    {
-        get => _labelWidget.FontScale;
-        set => _labelWidget.FontScale = value;
-    }
+    public float FontScale { get => _labelWidget.FontScale; set => _labelWidget.FontScale = value; }
 
-    public Color Color
-    {
-        get => _labelWidget.Color;
-        set => _labelWidget.Color = value;
-    }
+    public Color Color { get => _labelWidget.Color; set => _labelWidget.Color = value; }
 
     public WidgetAlignment TextHorizontalAlignment
     {
@@ -47,11 +35,7 @@ public class ClickableTextRowWidget : CanvasWidget
         set => _labelWidget.VerticalAlignment = value;
     }
 
-    public string? SoundName
-    {
-        get => _clickableWidget.SoundName;
-        set => _clickableWidget.SoundName = value;
-    }
+    public string? SoundName { get => _clickableWidget.SoundName; set => _clickableWidget.SoundName = value; }
 
     public ClickableTextRowWidget()
     {

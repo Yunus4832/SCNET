@@ -55,7 +55,8 @@ public class SubsystemDispenserBlockBehavior : SubsystemBlockBehavior
             IProtocolMessage package =
                 new BlockEditPackage(
                     new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z),
-                    BlockEditPackage.EventType.OpenInventoryByPoint);
+                    BlockEditPackage.EventType.OpenInventoryByPoint
+                );
             NetworkSender.SendToServer(package);
             return true;
         }
@@ -65,8 +66,11 @@ public class SubsystemDispenserBlockBehavior : SubsystemBlockBehavior
             return false;
         }
 
-        var blockEntity = _subsystemBlockEntities.GetBlockEntity(raycastResult.CellFace.X,
-            raycastResult.CellFace.Y, raycastResult.CellFace.Z);
+        var blockEntity = _subsystemBlockEntities.GetBlockEntity(
+            raycastResult.CellFace.X,
+            raycastResult.CellFace.Y,
+            raycastResult.CellFace.Z
+        );
         if (blockEntity == null)
         {
             return false;
@@ -93,8 +97,10 @@ public class SubsystemDispenserBlockBehavior : SubsystemBlockBehavior
         }
 
         var blockEntity = _subsystemBlockEntities.GetBlockEntity(cellFace.X, cellFace.Y, cellFace.Z);
-        if (blockEntity == null || !DispenserBlock.GetAcceptsDrops(
-                Terrain.ExtractData(_subsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z))))
+        if (blockEntity == null ||
+            !DispenserBlock.GetAcceptsDrops(
+                Terrain.ExtractData(_subsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z))
+            ))
         {
             return;
         }

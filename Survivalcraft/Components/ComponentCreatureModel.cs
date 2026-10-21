@@ -100,8 +100,10 @@ public class ComponentCreatureModel : ComponentModel, IUpdateable
                 var s = random.Float(-5f, 5f);
                 var s2 = random.Float(-1f, 1f);
                 var s3 = random.Float(3f, 8f);
-                _randomLookPoint = ComponentCreature.ComponentCreatureModel.EyePosition + s3 * matrix.Forward +
-                                   s2 * matrix.Up + s * matrix.Right;
+                _randomLookPoint = ComponentCreature.ComponentCreatureModel.EyePosition +
+                                   s3 * matrix.Forward +
+                                   s2 * matrix.Up +
+                                   s * matrix.Right;
             }
 
             LookAtOrder = _randomLookPoint;
@@ -148,15 +150,20 @@ public class ComponentCreatureModel : ComponentModel, IUpdateable
         Opacity = ComponentCreature.ComponentSpawn.SpawnDuration > 0f
             ? (float)MathUtils.Saturate(
                 (subsystemGameInfo.TotalElapsedGameTime - ComponentCreature.ComponentSpawn.SpawnTime) /
-                ComponentCreature.ComponentSpawn.SpawnDuration)
+                ComponentCreature.ComponentSpawn.SpawnDuration
+            )
             : 1f;
         if (ComponentCreature.ComponentSpawn.DespawnTime.HasValue)
         {
-            Opacity = MathUtils.Min(Opacity.Value,
-                (float)MathUtils.Saturate(1.0 -
-                                          (subsystemGameInfo.TotalElapsedGameTime -
-                                           ComponentCreature.ComponentSpawn.DespawnTime.Value) /
-                                          ComponentCreature.ComponentSpawn.DespawnDuration));
+            Opacity = MathUtils.Min(
+                Opacity.Value,
+                (float)MathUtils.Saturate(
+                    1.0 -
+                    (subsystemGameInfo.TotalElapsedGameTime -
+                     ComponentCreature.ComponentSpawn.DespawnTime.Value) /
+                    ComponentCreature.ComponentSpawn.DespawnDuration
+                )
+            );
         }
 
         DiffuseColor = Vector3.Lerp(Vector3.One, new Vector3(1f, 0f, 0f), _injuryColorFactor);
@@ -181,7 +188,7 @@ public class ComponentCreatureModel : ComponentModel, IUpdateable
         subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         ComponentCreature = Entity.FindComponent<ComponentCreature>(true)!;
-        ComponentCreature.ComponentHealth.Attacked += delegate (ComponentCreature attacker)
+        ComponentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
         {
             if (DeathPhase == 0f && ComponentCreature.ComponentHealth.Health == 0f)
             {
@@ -207,8 +214,11 @@ public class ComponentCreatureModel : ComponentModel, IUpdateable
 
     public virtual Quaternion CalculateEyeRotation()
     {
-        return ComponentCreature.ComponentBody.Rotation * Quaternion.CreateFromYawPitchRoll(
-            0f - ComponentCreature.ComponentLocomotion.LookAngles.X,
-            ComponentCreature.ComponentLocomotion.LookAngles.Y, 0f);
+        return ComponentCreature.ComponentBody.Rotation *
+               Quaternion.CreateFromYawPitchRoll(
+                   0f - ComponentCreature.ComponentLocomotion.LookAngles.X,
+                   ComponentCreature.ComponentLocomotion.LookAngles.Y,
+                   0f
+               );
     }
 }

@@ -38,7 +38,11 @@ public struct Viewport(int x, int y, int width, int height, float minDepth = 0f,
 
     public override int GetHashCode()
     {
-        return X.GetHashCode() + Y.GetHashCode() + Width.GetHashCode() + Height.GetHashCode() + MinDepth.GetHashCode() +
+        return X.GetHashCode() +
+               Y.GetHashCode() +
+               Width.GetHashCode() +
+               Height.GetHashCode() +
+               MinDepth.GetHashCode() +
                MaxDepth.GetHashCode();
     }
 
@@ -50,8 +54,10 @@ public struct Viewport(int x, int y, int width, int height, float minDepth = 0f,
     public Vector3 Project(Vector3 source, Matrix worldViewProjection)
     {
         var result = Vector3.Transform(source, worldViewProjection);
-        result /= source.X * worldViewProjection.M14 + source.Y * worldViewProjection.M24 +
-                  source.Z * worldViewProjection.M34 + worldViewProjection.M44;
+        result /= source.X * worldViewProjection.M14 +
+                  source.Y * worldViewProjection.M24 +
+                  source.Z * worldViewProjection.M34 +
+                  worldViewProjection.M44;
         result.X = (result.X + 1f) * 0.5f * Width + X;
         result.Y = (0f - result.Y + 1f) * 0.5f * Height + Y;
         result.Z = result.Z * (MaxDepth - MinDepth) + MinDepth;

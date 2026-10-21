@@ -9,22 +9,29 @@ namespace Survivalcraft.Android;
 internal sealed class AndroidFilePicker(AndroidActivity activity) : IFilePicker
 {
     internal const int openRequestCode = 43101;
+
     internal const int saveRequestCode = 43102;
 
     private readonly Lock _sync = new();
+
     private TaskCompletionSource<IReadOnlyList<PickedFile>>? _openCompletion;
+
     private TaskCompletionSource<PickedSaveTarget?>? _saveCompletion;
+
     private CancellationTokenRegistration _cancellationRegistration;
 
-    public Task<IReadOnlyList<PickedFile>> PickFilesAsync(FilePickerRequest request,
-        CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<PickedFile>> PickFilesAsync(
+        FilePickerRequest request,
+        CancellationToken cancellationToken = default
+    )
     {
         cancellationToken.ThrowIfCancellationRequested();
         lock (_sync)
         {
             EnsureIdle();
             _openCompletion = new TaskCompletionSource<IReadOnlyList<PickedFile>>(
-                TaskCreationOptions.RunContinuationsAsynchronously);
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
             _cancellationRegistration = cancellationToken.Register(CancelPending);
             var intent = new Intent(Intent.ActionOpenDocument);
             intent.AddCategory(Intent.CategoryOpenable);
@@ -36,15 +43,18 @@ internal sealed class AndroidFilePicker(AndroidActivity activity) : IFilePicker
         }
     }
 
-    public Task<PickedSaveTarget?> PickSaveTargetAsync(FileSaveRequest request,
-        CancellationToken cancellationToken = default)
+    public Task<PickedSaveTarget?> PickSaveTargetAsync(
+        FileSaveRequest request,
+        CancellationToken cancellationToken = default
+    )
     {
         cancellationToken.ThrowIfCancellationRequested();
         lock (_sync)
         {
             EnsureIdle();
             _saveCompletion = new TaskCompletionSource<PickedSaveTarget?>(
-                TaskCreationOptions.RunContinuationsAsynchronously);
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
             _cancellationRegistration = cancellationToken.Register(CancelPending);
             var intent = new Intent(Intent.ActionCreateDocument);
             intent.AddCategory(Intent.CategoryOpenable);
@@ -116,15 +126,22 @@ internal sealed class AndroidFilePicker(AndroidActivity activity) : IFilePicker
         }
 
         return uris.Select(uri =>
-        {
-            PersistPermission(uri, ActivityFlags.GrantReadUriPermission);
-            return new PickedFile(GetDisplayName(uri), activity.ContentResolver?.GetType(uri), cancellationToken =>
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                return Task.FromResult(activity.ContentResolver?.OpenInputStream(uri)
-                                       ?? throw new IOException("Unable to open selected document."));
-            });
-        }).ToArray();
+                PersistPermission(uri, ActivityFlags.GrantReadUriPermission);
+                return new PickedFile(
+                    GetDisplayName(uri),
+                    activity.ContentResolver?.GetType(uri),
+                    cancellationToken =>
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        return Task.FromResult(
+                            activity.ContentResolver?.OpenInputStream(uri) ??
+                            throw new IOException("Unable to open selected document.")
+                        );
+                    }
+                );
+            }
+        ).ToArray();
     }
 
     private PickedSaveTarget? ReadSaveTarget(Intent? data)
@@ -136,12 +153,17 @@ internal sealed class AndroidFilePicker(AndroidActivity activity) : IFilePicker
         }
 
         PersistPermission(uri, ActivityFlags.GrantWriteUriPermission);
-        return new PickedSaveTarget(GetDisplayName(uri), cancellationToken =>
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult(activity.ContentResolver?.OpenOutputStream(uri, "wt")
-                                   ?? throw new IOException("Unable to open selected save document."));
-        });
+        return new PickedSaveTarget(
+            GetDisplayName(uri),
+            cancellationToken =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return Task.FromResult(
+                    activity.ContentResolver?.OpenOutputStream(uri, "wt") ??
+                    throw new IOException("Unable to open selected save document.")
+                );
+            }
+        );
     }
 
     private string GetDisplayName(AndroidUri uri)

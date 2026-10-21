@@ -2,6 +2,7 @@ namespace Engine.Media;
 
 public enum ImageFormat
 {
-    Png,
-    WebP
+    Png = 0,
+
+    WebP = 1
 }

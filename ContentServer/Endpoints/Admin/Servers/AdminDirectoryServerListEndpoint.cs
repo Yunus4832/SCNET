@@ -24,7 +24,9 @@ public sealed class AdminDirectoryServerListEndpoint(IMediator mediator) : Conte
     }
 
     private async Task<ResponseData<DirectoryServerResponse[]>> List(
-        DirectoryServerReviewStatus? status, CancellationToken cancellationToken)
+        DirectoryServerReviewStatus? status,
+        CancellationToken cancellationToken
+    )
     {
         var servers = await mediator.Send(new ListDirectoryServersQuery(ReviewStatus: status), cancellationToken);
         return servers.Select(EndpointMappings.DirectoryServer).ToArray().AsResponseData();

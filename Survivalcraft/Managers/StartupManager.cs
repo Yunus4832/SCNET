@@ -5,7 +5,8 @@ public static class StartupManager
     public static StartupContext Current { get; private set; } = new(
         new RunningSetting(),
         new StartupRequest(),
-        new SessionInfo());
+        new SessionInfo()
+    );
 
     public static StartupContext Load(string[] args)
     {
@@ -15,7 +16,8 @@ public static class StartupManager
         var session = SessionInfoManager.ResolveStartupSession(
             settings,
             request,
-            activeSessionId);
+            activeSessionId
+        );
         var context = new StartupContext(settings, request, session);
         Current = context;
 
@@ -62,8 +64,7 @@ public static class StartupManager
 
             if (string.Equals(arg, "--session", StringComparison.OrdinalIgnoreCase))
             {
-                var sessionName = NormalizeSessionName(
-                    ReadOptionValue(args, ref i, "--session"));
+                var sessionName = NormalizeSessionName(ReadOptionValue(args, ref i, "--session"));
                 if (!string.IsNullOrWhiteSpace(sessionName))
                 {
                     request.SessionName = sessionName;
@@ -87,8 +88,7 @@ public static class StartupManager
 
             if (string.Equals(arg, "--game-mode", StringComparison.OrdinalIgnoreCase))
             {
-                request.GameMode = ParseGameMode(
-                    ReadOptionValue(args, ref i, "--game-mode"));
+                request.GameMode = ParseGameMode(ReadOptionValue(args, ref i, "--game-mode"));
                 continue;
             }
 
@@ -96,7 +96,8 @@ public static class StartupManager
             {
                 var value = ReadOptionValue(args, ref i, "--terrain");
                 if (!Enum.TryParse<TerrainGenerationMode>(value, true, out var terrain) ||
-                    !Enum.IsDefined(terrain) || TerrainGenerationModes.IsLegacy(terrain))
+                    !Enum.IsDefined(terrain) ||
+                    TerrainGenerationModes.IsLegacy(terrain))
                 {
                     throw new ArgumentException("--terrain requires Continent, Island, FlatContinent or FlatIsland.");
                 }
@@ -188,7 +189,8 @@ public static class StartupManager
             {
                 request.ServerPort = ParsePort(
                     ReadOptionValue(args, ref i, "--server-port"),
-                    "--server-port");
+                    "--server-port"
+                );
                 continue;
             }
 
@@ -196,7 +198,8 @@ public static class StartupManager
             {
                 request.BroadcastPort = ParsePort(
                     ReadOptionValue(args, ref i, "--broadcast-port"),
-                    "--broadcast-port");
+                    "--broadcast-port"
+                );
                 continue;
             }
 
@@ -220,8 +223,7 @@ public static class StartupManager
 
             if (string.Equals(arg, "--http-command-port", StringComparison.OrdinalIgnoreCase))
             {
-                request.HttpCommandPort = ParseHttpCommandPort(
-                    ReadOptionValue(args, ref i, "--http-command-port"));
+                request.HttpCommandPort = ParseHttpCommandPort(ReadOptionValue(args, ref i, "--http-command-port"));
                 continue;
             }
 
@@ -230,7 +232,8 @@ public static class StartupManager
                 request.HttpCommandAccessToken = ReadOptionValue(
                     args,
                     ref i,
-                    "--http-command-access-token")?.Trim();
+                    "--http-command-access-token"
+                )?.Trim();
                 continue;
             }
 
@@ -238,7 +241,8 @@ public static class StartupManager
             {
                 settings.LogLevel = ParseLogLevel(
                     ReadOptionValue(args, ref i, "--log-level"),
-                    settings.LogLevel);
+                    settings.LogLevel
+                );
                 continue;
             }
 
@@ -281,7 +285,8 @@ public static class StartupManager
     private static void ApplyWindowOverrides(
         RunningSetting settings,
         string? windowModeOverride,
-        string? windowSizeOverride)
+        string? windowSizeOverride
+    )
     {
         if (settings.RunMode is RunModeType.HeadlessServer)
         {
@@ -328,7 +333,9 @@ public static class StartupManager
 
         if (!string.IsNullOrWhiteSpace(request.World) ||
             request.Seed != null ||
-            request.GameMode != null || request.TerrainGenerationMode != null || request.TerrainLevel != null)
+            request.GameMode != null ||
+            request.TerrainGenerationMode != null ||
+            request.TerrainLevel != null)
         {
             Log.Warning("Ignoring world creation overrides because --session was not specified.");
         }
@@ -342,7 +349,8 @@ public static class StartupManager
 
     private static string ResolveActiveSessionId(
         RunningSetting settings,
-        StartupRequest request)
+        StartupRequest request
+    )
     {
         if (request.HasExplicitSession)
         {
@@ -384,7 +392,8 @@ public static class StartupManager
         {
             Log.Warning(
                 $"Ignoring --game-mode because '{value}' is invalid. " +
-                $"Expected one of: {string.Join(", ", Enum.GetNames<GameMode>())}.");
+                $"Expected one of: {string.Join(", ", Enum.GetNames<GameMode>())}."
+            );
         }
 
         return null;
@@ -414,7 +423,8 @@ public static class StartupManager
 
         Log.Error(
             $"HTTP command host is disabled because --http-command-port " +
-            $"value '{value ?? "<missing>"}' is invalid.");
+            $"value '{value ?? "<missing>"}' is invalid."
+        );
         return 0;
     }
 
@@ -431,8 +441,10 @@ public static class StartupManager
         }
 
         var separator = value.LastIndexOf(':');
-        if (separator <= 0 || separator == value.Length - 1 ||
-            !int.TryParse(value[(separator + 1)..], out port) || port is <= 0 or > 65535)
+        if (separator <= 0 ||
+            separator == value.Length - 1 ||
+            !int.TryParse(value[(separator + 1)..], out port) ||
+            port is <= 0 or > 65535)
         {
             Log.Warning($"Ignoring --connect because '{value}' is not in HOST:PORT format.");
             port = 0;

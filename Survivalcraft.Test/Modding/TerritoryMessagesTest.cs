@@ -23,8 +23,11 @@ public class TerritoryMessagesTest
     [Fact]
     public void SnapshotRoundTripReplacesStaleClientStateIncludingEmptySnapshots()
     {
-        var territory = new Territory(Guid.NewGuid(), new Point3(48, 64, -48),
-            new TerritorySettings(9, true, false, true, false, false));
+        var territory = new Territory(
+            Guid.NewGuid(),
+            new Point3(48, 64, -48),
+            new TerritorySettings(9, true, false, true, false, false)
+        );
         using var writer = new ProtocolWriter();
         TerritoryMessages.WriteSnapshot(writer, new[] { territory });
         using var reader = new ProtocolReader(writer.Data());
@@ -46,10 +49,13 @@ public class TerritoryMessagesTest
         var store = new TerritoryStore();
         var owner = Guid.NewGuid();
         Assert.True(store.TryCreate(owner, new Point3(0, 64, 0)));
-        Assert.Throws<InvalidDataException>(() => store.ApplySnapshot([
-            new Territory(Guid.NewGuid(), new Point3(128, 64, 128)),
-            new Territory(Guid.NewGuid(), new Point3(128, 65, 128))
-        ]));
+        Assert.Throws<InvalidDataException>(() => store.ApplySnapshot(
+                [
+                    new Territory(Guid.NewGuid(), new Point3(128, 64, 128)),
+                    new Territory(Guid.NewGuid(), new Point3(128, 65, 128))
+                ]
+            )
+        );
         Assert.Equal(owner, Assert.Single(store.Territories).Owner);
     }
 

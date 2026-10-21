@@ -160,8 +160,15 @@ public sealed class BlockContentCatalog : IDisposable
         var texture = environmentData.SubsystemTerrain is not null
             ? environmentData.SubsystemTerrain.SubsystemAnimatedTextures.AnimatedBlocksTexture
             : BlocksTexturesManager.DefaultBlocksTexture;
-        var texturedBatch3D = primitivesRenderer.TexturedBatch(texture, true, 0, null,
-            RasterizerState.CullCounterClockwiseScissor, BlendState.AlphaBlend, SamplerState.PointClamp);
+        var texturedBatch3D = primitivesRenderer.TexturedBatch(
+            texture,
+            true,
+            0,
+            null,
+            RasterizerState.CullCounterClockwiseScissor,
+            BlendState.AlphaBlend,
+            SamplerState.PointClamp
+        );
         var s = LightingManager.LightIntensityByLightValue[environmentData.Light];
         color = Color.MultiplyColorOnlyNotSaturated(color, s);
         topColor = Color.MultiplyColorOnlyNotSaturated(topColor, s);
@@ -196,42 +203,78 @@ public sealed class BlockContentCatalog : IDisposable
         vector4.W = MathUtils.Lerp(vector4.Y, vector4.W, height);
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(-matrix.Forward)),
-            p1: v, p2: v3, p3: v4, p4: v2, texCoord1: new Vector2(vector4.X, vector4.W),
-            texCoord2: new Vector2(vector4.X, vector4.Y), texCoord3: new Vector2(vector4.Z, vector4.Y),
-            texCoord4: new Vector2(vector4.Z, vector4.W));
+            p1: v,
+            p2: v3,
+            p3: v4,
+            p4: v2,
+            texCoord1: new Vector2(vector4.X, vector4.W),
+            texCoord2: new Vector2(vector4.X, vector4.Y),
+            texCoord3: new Vector2(vector4.Z, vector4.Y),
+            texCoord4: new Vector2(vector4.Z, vector4.W)
+        );
         vector4 = _slotTexCoords[block.GetFaceTextureSlot(2, value)];
         vector4.W = MathUtils.Lerp(vector4.Y, vector4.W, height);
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(matrix.Forward)),
-            p1: v5, p2: v6, p3: v8, p4: v7, texCoord1: new Vector2(vector4.Z, vector4.W),
-            texCoord2: new Vector2(vector4.X, vector4.W), texCoord3: new Vector2(vector4.X, vector4.Y),
-            texCoord4: new Vector2(vector4.Z, vector4.Y));
+            p1: v5,
+            p2: v6,
+            p3: v8,
+            p4: v7,
+            texCoord1: new Vector2(vector4.Z, vector4.W),
+            texCoord2: new Vector2(vector4.X, vector4.W),
+            texCoord3: new Vector2(vector4.X, vector4.Y),
+            texCoord4: new Vector2(vector4.Z, vector4.Y)
+        );
         vector4 = _slotTexCoords[block.GetFaceTextureSlot(5, value)];
         texturedBatch3D.QueueQuad(
-            color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(-matrix.Up)), p1: v,
-            p2: v2, p3: v6, p4: v5, texCoord1: new Vector2(vector4.X, vector4.Y),
-            texCoord2: new Vector2(vector4.Z, vector4.Y), texCoord3: new Vector2(vector4.Z, vector4.W),
-            texCoord4: new Vector2(vector4.X, vector4.W));
+            color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(-matrix.Up)),
+            p1: v,
+            p2: v2,
+            p3: v6,
+            p4: v5,
+            texCoord1: new Vector2(vector4.X, vector4.Y),
+            texCoord2: new Vector2(vector4.Z, vector4.Y),
+            texCoord3: new Vector2(vector4.Z, vector4.W),
+            texCoord4: new Vector2(vector4.X, vector4.W)
+        );
         vector4 = _slotTexCoords[block.GetFaceTextureSlot(4, value)];
         texturedBatch3D.QueueQuad(
-            color: Color.MultiplyColorOnlyNotSaturated(topColor, LightingManager.CalculateLighting(matrix.Up)), p1: v3,
-            p2: v7, p3: v8, p4: v4, texCoord1: new Vector2(vector4.X, vector4.W),
-            texCoord2: new Vector2(vector4.X, vector4.Y), texCoord3: new Vector2(vector4.Z, vector4.Y),
-            texCoord4: new Vector2(vector4.Z, vector4.W));
+            color: Color.MultiplyColorOnlyNotSaturated(topColor, LightingManager.CalculateLighting(matrix.Up)),
+            p1: v3,
+            p2: v7,
+            p3: v8,
+            p4: v4,
+            texCoord1: new Vector2(vector4.X, vector4.W),
+            texCoord2: new Vector2(vector4.X, vector4.Y),
+            texCoord3: new Vector2(vector4.Z, vector4.Y),
+            texCoord4: new Vector2(vector4.Z, vector4.W)
+        );
         vector4 = _slotTexCoords[block.GetFaceTextureSlot(1, value)];
         vector4.W = MathUtils.Lerp(vector4.Y, vector4.W, height);
         texturedBatch3D.QueueQuad(
-            color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(-matrix.Right)), p1: v,
-            p2: v5, p3: v7, p4: v3, texCoord1: new Vector2(vector4.Z, vector4.W),
-            texCoord2: new Vector2(vector4.X, vector4.W), texCoord3: new Vector2(vector4.X, vector4.Y),
-            texCoord4: new Vector2(vector4.Z, vector4.Y));
+            color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(-matrix.Right)),
+            p1: v,
+            p2: v5,
+            p3: v7,
+            p4: v3,
+            texCoord1: new Vector2(vector4.Z, vector4.W),
+            texCoord2: new Vector2(vector4.X, vector4.W),
+            texCoord3: new Vector2(vector4.X, vector4.Y),
+            texCoord4: new Vector2(vector4.Z, vector4.Y)
+        );
         vector4 = _slotTexCoords[block.GetFaceTextureSlot(3, value)];
         vector4.W = MathUtils.Lerp(vector4.Y, vector4.W, height);
         texturedBatch3D.QueueQuad(
-            color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(matrix.Right)), p1: v2,
-            p2: v4, p3: v8, p4: v6, texCoord1: new Vector2(vector4.X, vector4.W),
-            texCoord2: new Vector2(vector4.X, vector4.Y), texCoord3: new Vector2(vector4.Z, vector4.Y),
-            texCoord4: new Vector2(vector4.Z, vector4.W));
+            color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(matrix.Right)),
+            p1: v2,
+            p2: v4,
+            p3: v8,
+            p4: v6,
+            texCoord1: new Vector2(vector4.X, vector4.W),
+            texCoord2: new Vector2(vector4.X, vector4.Y),
+            texCoord3: new Vector2(vector4.Z, vector4.Y),
+            texCoord4: new Vector2(vector4.Z, vector4.W)
+        );
     }
 
 
@@ -271,8 +314,15 @@ public sealed class BlockContentCatalog : IDisposable
     )
     {
         environmentData ??= _defaultEnvironmentData;
-        var texturedBatch3D = primitivesRenderer.TexturedBatch(texture, true, 0, null,
-            RasterizerState.CullCounterClockwiseScissor, null, SamplerState.PointClamp);
+        var texturedBatch3D = primitivesRenderer.TexturedBatch(
+            texture,
+            true,
+            0,
+            null,
+            RasterizerState.CullCounterClockwiseScissor,
+            null,
+            SamplerState.PointClamp
+        );
         var s = LightingManager.LightIntensityByLightValue[environmentData.Light];
         color = Color.MultiplyColorOnly(color, s);
         topColor = Color.MultiplyColorOnly(topColor, s);
@@ -311,54 +361,96 @@ public sealed class BlockContentCatalog : IDisposable
         vector2.W = vector2.Y + 1f / textureSlotCount;
         vector2.Z = vector2.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
-            color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(-matrix.Forward)), p1: v3, p2: v5,
-            p3: v6, p4: v4, texCoord1: new Vector2(vector2.X, vector2.W), texCoord2: new Vector2(vector2.X, vector2.Y),
-            texCoord3: new Vector2(vector2.Z, vector2.Y), texCoord4: new Vector2(vector2.Z, vector2.W));
+            color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(-matrix.Forward)),
+            p1: v3,
+            p2: v5,
+            p3: v6,
+            p4: v4,
+            texCoord1: new Vector2(vector2.X, vector2.W),
+            texCoord2: new Vector2(vector2.X, vector2.Y),
+            texCoord3: new Vector2(vector2.Z, vector2.Y),
+            texCoord4: new Vector2(vector2.Z, vector2.W)
+        );
         textureSlot = block.GetFaceTextureSlot(2, value);
         vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
         vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
         vector2.W = vector2.Y + 1f / textureSlotCount;
         vector2.Z = vector2.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
-            color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(matrix.Forward)), p1: v7, p2: v8,
-            p3: v10, p4: v9, texCoord1: new Vector2(vector2.Z, vector2.W), texCoord2: new Vector2(vector2.X, vector2.W),
-            texCoord3: new Vector2(vector2.X, vector2.Y), texCoord4: new Vector2(vector2.Z, vector2.Y));
+            color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(matrix.Forward)),
+            p1: v7,
+            p2: v8,
+            p3: v10,
+            p4: v9,
+            texCoord1: new Vector2(vector2.Z, vector2.W),
+            texCoord2: new Vector2(vector2.X, vector2.W),
+            texCoord3: new Vector2(vector2.X, vector2.Y),
+            texCoord4: new Vector2(vector2.Z, vector2.Y)
+        );
         textureSlot = block.GetFaceTextureSlot(5, value);
         vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
         vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
         vector2.W = vector2.Y + 1f / textureSlotCount;
         vector2.Z = vector2.X + 1f / textureSlotCount;
-        texturedBatch3D.QueueQuad(color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(-matrix.Up)),
-            p1: v3, p2: v4, p3: v8, p4: v7, texCoord1: new Vector2(vector2.X, vector2.Y),
-            texCoord2: new Vector2(vector2.Z, vector2.Y), texCoord3: new Vector2(vector2.Z, vector2.W),
-            texCoord4: new Vector2(vector2.X, vector2.W));
+        texturedBatch3D.QueueQuad(
+            color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(-matrix.Up)),
+            p1: v3,
+            p2: v4,
+            p3: v8,
+            p4: v7,
+            texCoord1: new Vector2(vector2.X, vector2.Y),
+            texCoord2: new Vector2(vector2.Z, vector2.Y),
+            texCoord3: new Vector2(vector2.Z, vector2.W),
+            texCoord4: new Vector2(vector2.X, vector2.W)
+        );
         textureSlot = block.GetFaceTextureSlot(4, value);
         vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
         vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
         vector2.W = vector2.Y + 1f / textureSlotCount;
         vector2.Z = vector2.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
-            color: Color.MultiplyColorOnly(topColor, LightingManager.CalculateLighting(matrix.Up)), p1: v5, p2: v9,
-            p3: v10, p4: v6, texCoord1: new Vector2(vector2.X, vector2.W), texCoord2: new Vector2(vector2.X, vector2.Y),
-            texCoord3: new Vector2(vector2.Z, vector2.Y), texCoord4: new Vector2(vector2.Z, vector2.W));
+            color: Color.MultiplyColorOnly(topColor, LightingManager.CalculateLighting(matrix.Up)),
+            p1: v5,
+            p2: v9,
+            p3: v10,
+            p4: v6,
+            texCoord1: new Vector2(vector2.X, vector2.W),
+            texCoord2: new Vector2(vector2.X, vector2.Y),
+            texCoord3: new Vector2(vector2.Z, vector2.Y),
+            texCoord4: new Vector2(vector2.Z, vector2.W)
+        );
         textureSlot = block.GetFaceTextureSlot(1, value);
         vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
         vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
         vector2.W = vector2.Y + 1f / textureSlotCount;
         vector2.Z = vector2.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
-            color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(-matrix.Right)), p1: v3, p2: v7,
-            p3: v9, p4: v5, texCoord1: new Vector2(vector2.Z, vector2.W), texCoord2: new Vector2(vector2.X, vector2.W),
-            texCoord3: new Vector2(vector2.X, vector2.Y), texCoord4: new Vector2(vector2.Z, vector2.Y));
+            color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(-matrix.Right)),
+            p1: v3,
+            p2: v7,
+            p3: v9,
+            p4: v5,
+            texCoord1: new Vector2(vector2.Z, vector2.W),
+            texCoord2: new Vector2(vector2.X, vector2.W),
+            texCoord3: new Vector2(vector2.X, vector2.Y),
+            texCoord4: new Vector2(vector2.Z, vector2.Y)
+        );
         textureSlot = block.GetFaceTextureSlot(3, value);
         vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
         vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
         vector2.W = vector2.Y + 1f / textureSlotCount;
         vector2.Z = vector2.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
-            color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(matrix.Right)), p1: v4, p2: v6,
-            p3: v10, p4: v8, texCoord1: new Vector2(vector2.X, vector2.W), texCoord2: new Vector2(vector2.X, vector2.Y),
-            texCoord3: new Vector2(vector2.Z, vector2.Y), texCoord4: new Vector2(vector2.Z, vector2.W));
+            color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(matrix.Right)),
+            p1: v4,
+            p2: v6,
+            p3: v10,
+            p4: v8,
+            texCoord1: new Vector2(vector2.X, vector2.W),
+            texCoord2: new Vector2(vector2.X, vector2.Y),
+            texCoord3: new Vector2(vector2.Z, vector2.Y),
+            texCoord4: new Vector2(vector2.Z, vector2.W)
+        );
     }
 
     public void DrawFlatOrImageExtrusionBlock(
@@ -442,14 +534,39 @@ public sealed class BlockContentCatalog : IDisposable
             Vector3.Transform(ref v4, ref m, out v4);
         }
 
-        var texturedBatch3D = primitivesRenderer.TexturedBatch(texture, true, 0, null,
-            RasterizerState.CullCounterClockwiseScissor, BlendState.AlphaBlend, SamplerState.PointClamp);
-        texturedBatch3D.QueueQuad(v, v3, v4, v2, new Vector2(vector.X, vector.W), new Vector2(vector.X, vector.Y),
-            new Vector2(vector.Z, vector.Y), new Vector2(vector.Z, vector.W), color);
+        var texturedBatch3D = primitivesRenderer.TexturedBatch(
+            texture,
+            true,
+            0,
+            null,
+            RasterizerState.CullCounterClockwiseScissor,
+            BlendState.AlphaBlend,
+            SamplerState.PointClamp
+        );
+        texturedBatch3D.QueueQuad(
+            v,
+            v3,
+            v4,
+            v2,
+            new Vector2(vector.X, vector.W),
+            new Vector2(vector.X, vector.Y),
+            new Vector2(vector.Z, vector.Y),
+            new Vector2(vector.Z, vector.W),
+            color
+        );
         if (!environmentData.BillboardDirection.HasValue)
         {
-            texturedBatch3D.QueueQuad(v, v2, v4, v3, new Vector2(vector.X, vector.W), new Vector2(vector.Z, vector.W),
-                new Vector2(vector.Z, vector.Y), new Vector2(vector.X, vector.Y), color);
+            texturedBatch3D.QueueQuad(
+                v,
+                v2,
+                v4,
+                v3,
+                new Vector2(vector.X, vector.W),
+                new Vector2(vector.Z, vector.W),
+                new Vector2(vector.Z, vector.Y),
+                new Vector2(vector.X, vector.Y),
+                color
+            );
         }
     }
 
@@ -559,8 +676,12 @@ public sealed class BlockContentCatalog : IDisposable
 
             if (dataContentArray.Length != restDataArray.Length + 1)
             {
-                throw new InvalidOperationException(string.Format(LanguageManager.Get("BlocksManager", 2),
-                    dataContentArray.Length != 0 ? dataContentArray[0] : LanguageManager.Unknown));
+                throw new InvalidOperationException(
+                    string.Format(
+                        LanguageManager.Get("BlocksManager", 2),
+                        dataContentArray.Length != 0 ? dataContentArray[0] : LanguageManager.Unknown
+                    )
+                );
             }
 
             var typeName = dataContentArray[0];
@@ -590,8 +711,7 @@ public sealed class BlockContentCatalog : IDisposable
 
                 if (!fieldInfoDict.TryGetValue(text, out var value))
                 {
-                    throw new InvalidOperationException(
-                        string.Format(LanguageManager.Get("BlocksManager", 5), text));
+                    throw new InvalidOperationException(string.Format(LanguageManager.Get("BlocksManager", 5), text));
                 }
 
                 object? obj;

@@ -38,7 +38,8 @@ public class SubsystemBulletBlockBehavior : SubsystemBlockBehavior
             _subsystemExplosions.TryExplodeBlock(
                 cellFace.Value.X,
                 cellFace.Value.Y,
-                cellFace.Value.Z, cellValue,
+                cellFace.Value.Z,
+                cellValue,
                 player?.PlayerData
             );
         }
@@ -61,8 +62,14 @@ public class SubsystemBulletBlockBehavior : SubsystemBlockBehavior
             return result;
         }
 
-        _subsystemAudio.PlayRandomSound("Audio/Ricochets", 1f, _random.Float(-0.2f, 0.2f),
-            new Vector3(cellFace.Value.X, cellFace.Value.Y, cellFace.Value.Z), minDistance, true);
+        _subsystemAudio.PlayRandomSound(
+            "Audio/Ricochets",
+            1f,
+            _random.Float(-0.2f, 0.2f),
+            new Vector3(cellFace.Value.X, cellFace.Value.Y, cellFace.Value.Z),
+            minDistance,
+            true
+        );
         result = false;
 
         return result;

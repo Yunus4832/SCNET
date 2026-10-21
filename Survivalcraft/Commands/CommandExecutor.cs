@@ -7,7 +7,8 @@ public static class CommandExecutor
     public static CommandResult ExecutePlayer(
         string input,
         PlayerData player,
-        string? correlationId = null)
+        string? correlationId = null
+    )
     {
         ArgumentNullException.ThrowIfNull(player);
         return Execute(
@@ -15,26 +16,30 @@ public static class CommandExecutor
             CommandInvocationChannel.Text,
             CommandPrincipal.FromPlayer(player),
             player.Project,
-            correlationId);
+            correlationId
+        );
     }
 
     public static CommandResult ExecuteLocal(
         string input,
         Project? project,
-        string? correlationId = null)
+        string? correlationId = null
+    )
     {
         return Execute(
             input,
             CommandInvocationChannel.Console,
             CommandPrincipal.LocalOperator,
             project,
-            correlationId);
+            correlationId
+        );
     }
 
     public static CommandResult ExecutePlayer(
         IGameCommand command,
         PlayerData player,
-        string? correlationId = null)
+        string? correlationId = null
+    )
     {
         ArgumentNullException.ThrowIfNull(player);
         return Execute(
@@ -42,20 +47,23 @@ public static class CommandExecutor
             CommandInvocationChannel.UserInterface,
             CommandPrincipal.FromPlayer(player),
             player.Project,
-            correlationId);
+            correlationId
+        );
     }
 
     public static CommandResult ExecuteLocal(
         IGameCommand command,
         Project? project,
-        string? correlationId = null)
+        string? correlationId = null
+    )
     {
         return Execute(
             command,
             CommandInvocationChannel.UserInterface,
             CommandPrincipal.LocalOperator,
             project,
-            correlationId);
+            correlationId
+        );
     }
 
     internal static CommandResult ExecuteSystem(IGameCommand command, Project? project)
@@ -68,21 +76,24 @@ public static class CommandExecutor
         CommandInvocationChannel channel,
         CommandPrincipal principal,
         Project? project,
-        string? correlationId)
+        string? correlationId
+    )
     {
         if (CurrentModRuntime.Value is not { } runtime)
         {
             return CommandResult.LocalizedFail(
                 "command.unavailable",
                 "CommandUnavailable_Message",
-                "指令系统尚未就绪。");
+                "指令系统尚未就绪。"
+            );
         }
 
         var context = new CommandContext(
             channel,
             principal,
             project,
-            correlationId);
+            correlationId
+        );
         return new TextCommandAdapter(runtime.Commands).Execute(input, context);
     }
 
@@ -91,7 +102,8 @@ public static class CommandExecutor
         CommandInvocationChannel channel,
         CommandPrincipal principal,
         Project? project,
-        string? correlationId)
+        string? correlationId
+    )
     {
         ArgumentNullException.ThrowIfNull(command);
         if (CurrentModRuntime.Value is not { } runtime)
@@ -99,14 +111,16 @@ public static class CommandExecutor
             return CommandResult.LocalizedFail(
                 "command.unavailable",
                 "CommandUnavailable_Message",
-                "命令系统尚未就绪。");
+                "命令系统尚未就绪。"
+            );
         }
 
         var context = new CommandContext(
             channel,
             principal,
             project,
-            correlationId);
+            correlationId
+        );
         return new CommandDispatcher(runtime.Commands).Execute(command, context);
     }
 }

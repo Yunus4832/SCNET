@@ -9,8 +9,10 @@ public sealed class PositionMarks
     public IEnumerable<string> Names => _positions.Keys;
 
     public static bool IsValidName(string name) =>
-        !string.IsNullOrWhiteSpace(name) && name.Length <= 64 &&
-        name == name.Trim() && !name.Any(char.IsControl);
+        !string.IsNullOrWhiteSpace(name) &&
+        name.Length <= 64 &&
+        name == name.Trim() &&
+        !name.Any(char.IsControl);
 
     public void Set(string name, Vector3 position) => _positions[name] = position;
 

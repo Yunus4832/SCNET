@@ -50,11 +50,11 @@ public class Project : IDisposable
             ExtensionData.Load(projectData.ExtensionData);
             var dictionary = new Dictionary<string, Subsystem>();
             foreach (var item in from x in projectData.ValuesDictionary.Values
-                                 select x as ValuesDictionary
+                     select x as ValuesDictionary
                      into x
-                                 where x?.DatabaseObject != null &&
-                                       x.DatabaseObject.Type == gameDatabase.MemberSubsystemTemplateType
-                                 select x)
+                     where x?.DatabaseObject != null &&
+                           x.DatabaseObject.Type == gameDatabase.MemberSubsystemTemplateType
+                     select x)
             {
                 var value = item.GetValue<bool>("IsOptional");
                 var value2 = item.GetValue<string>("Class");
@@ -78,7 +78,8 @@ public class Project : IDisposable
                 if (obj is not Subsystem subsystem)
                 {
                     throw new InvalidOperationException(
-                        $"Type \"{value2}\" cannot be used as a subsystem because it does not inherit from Subsystem class.");
+                        $"Type \"{value2}\" cannot be used as a subsystem because it does not inherit from Subsystem class."
+                    );
                 }
 
                 subsystem.Initialize(this, item);
@@ -159,8 +160,7 @@ public class Project : IDisposable
 
         if (name is not null)
         {
-            throw new Exception(
-                $"Required subsystem {type.FullName} with name \"{name}\" does not exist in project.");
+            throw new Exception($"Required subsystem {type.FullName} with name \"{name}\" does not exist in project.");
         }
 
         throw new Exception($"Required subsystem {type.FullName} does not exist in project.");
@@ -219,8 +219,10 @@ public class Project : IDisposable
         }
         catch (Exception innerException)
         {
-            throw new Exception($"Error creating entity from template \"{valuesDictionary.DatabaseObject.Name}\".",
-                innerException);
+            throw new Exception(
+                $"Error creating entity from template \"{valuesDictionary.DatabaseObject.Name}\".",
+                innerException
+            );
         }
     }
 
@@ -345,6 +347,7 @@ public class Project : IDisposable
         {
             projectData.ExtensionData = ExtensionData.Save();
         }
+
         return projectData;
     }
 
@@ -417,7 +420,8 @@ public class Project : IDisposable
         if (depth > 100)
         {
             throw new InvalidOperationException(
-                $"Too deep dependencies recursion while loading subsystem \"{subsystem.ValuesDictionary.DatabaseObject.Name}\".");
+                $"Too deep dependencies recursion while loading subsystem \"{subsystem.ValuesDictionary.DatabaseObject.Name}\"."
+            );
         }
 
         if (loadedSubsystems.ContainsKey(subsystem))
@@ -439,7 +443,8 @@ public class Project : IDisposable
                 }
 
                 throw new InvalidOperationException(
-                    $"Dependency subsystem \"{text}\" not found when loading subsystem \"{subsystem.ValuesDictionary.DatabaseObject.Name}\".");
+                    $"Dependency subsystem \"{text}\" not found when loading subsystem \"{subsystem.ValuesDictionary.DatabaseObject.Name}\"."
+                );
             }
         }
 

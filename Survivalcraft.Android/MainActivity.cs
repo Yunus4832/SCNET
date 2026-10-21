@@ -42,21 +42,31 @@ namespace Survivalcraft.Android;
 public class MainActivity : BlackActivity
 {
     internal const int exitResultCode = 100;
+
     internal const int restartResultCode = 101;
+
     internal const int switchInstanceResultCode = 102;
+
     internal const int updateResultCode = 103;
+
     internal const string instanceIdExtra = "Survivalcraft.Android.InstanceId";
+
     internal const string commandLineExtra = "Survivalcraft.Android.CommandLine";
+
     internal const string gameArgumentsExtra = "Survivalcraft.Android.GameArguments";
 
     private const int _permissionRequestCode = 1;
+
     private const int _routeRequestCode = 2;
 
     private bool _routeStarted;
+
     private bool _waitingForStoragePermission;
 
     private StarterInstanceContext? _instance;
+
     private string? _commandLine;
+
     private string? _instanceId;
 
     protected override void OnCreate(Bundle? savedInstanceState)
@@ -70,10 +80,12 @@ public class MainActivity : BlackActivity
 
     private static StarterInstanceContext RegisterStorageRoots(string? instanceId, string? commandLine)
     {
-        var externalPath = Path.Combine(AndroidEnvironment.ExternalStorageDirectory?.AbsolutePath ?? string.Empty,
-            "scnet");
-        var assets = Application.Context.Assets
-                     ?? throw new InvalidOperationException("Android asset manager is unavailable.");
+        var externalPath = Path.Combine(
+            AndroidEnvironment.ExternalStorageDirectory?.AbsolutePath ?? string.Empty,
+            "scnet"
+        );
+        var assets = Application.Context.Assets ??
+                     throw new InvalidOperationException("Android asset manager is unavailable.");
         Storage.RegisterRoot("app", new AndroidAssetsStorageRoot(assets));
         Storage.RegisterFileSystemRoot("starter", externalPath);
         if (!CommandLineTokenizer.TryTokenize(commandLine ?? string.Empty, out var gameArguments, out var error))
@@ -109,8 +121,11 @@ public class MainActivity : BlackActivity
         InitializeAndRoute();
     }
 
-    public override void OnRequestPermissionsResult(int requestCode, string[] permissions,
-        [GeneratedEnum] Permission[] grantResults)
+    public override void OnRequestPermissionsResult(
+        int requestCode,
+        string[] permissions,
+        [GeneratedEnum] Permission[] grantResults
+    )
     {
         base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == _permissionRequestCode && grantResults.All(result => result == Permission.Granted))
@@ -157,7 +172,9 @@ public class MainActivity : BlackActivity
             global::Android.Util.Log.Error("SCNET", $"Update installation request failed: {exception}");
             var dialog = new global::Android.App.AlertDialog.Builder(this);
             dialog.SetTitle(LanguageManager.GetContentWidgets("GameInformationManager", "Install"));
-            dialog.SetMessage($"{LanguageManager.GetContentWidgets("GameInformationManager", "InstallFailed")}\n{exception.Message}");
+            dialog.SetMessage(
+                $"{LanguageManager.GetContentWidgets("GameInformationManager", "InstallFailed")}\n{exception.Message}"
+            );
             dialog.SetPositiveButton(LanguageManager.Get("Usual", "ok"), (_, _) => ExitApplication());
             dialog.SetCancelable(false);
             dialog.Show();
@@ -274,7 +291,8 @@ public class MainActivity : BlackActivity
 
         RequestPermissions(
             [Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage],
-            _permissionRequestCode);
+            _permissionRequestCode
+        );
     }
 #pragma warning restore CA1416
 }

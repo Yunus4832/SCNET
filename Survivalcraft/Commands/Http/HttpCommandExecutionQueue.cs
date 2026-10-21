@@ -12,23 +12,25 @@ public static class HttpCommandExecutionQueue
         HttpCommandRequest Command,
         CommandPrincipal Principal,
         string CorrelationId,
-        TaskCompletionSource<CommandResult> Completion);
+        TaskCompletionSource<CommandResult> Completion
+    );
 
     private static readonly ConcurrentQueue<Request> _requests = new();
 
     private sealed record DiscoveryRequest(
         CommandPrincipal Principal,
-        TaskCompletionSource<IReadOnlyList<HttpDiscoveredCommand>> Completion);
+        TaskCompletionSource<IReadOnlyList<HttpDiscoveredCommand>> Completion
+    );
 
     private static readonly ConcurrentQueue<DiscoveryRequest> _discoveryRequests = new();
 
     public static Task<CommandResult> SubmitAsync(
         HttpCommandRequest command,
         CommandPrincipal principal,
-        string correlationId)
+        string correlationId
+    )
     {
-        var completion = new TaskCompletionSource<CommandResult>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<CommandResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         _requests.Enqueue(new Request(command, principal, correlationId, completion));
         return completion.Task;
     }
@@ -36,7 +38,8 @@ public static class HttpCommandExecutionQueue
     public static Task<IReadOnlyList<HttpDiscoveredCommand>> DiscoverAsync(CommandPrincipal principal)
     {
         var completion = new TaskCompletionSource<IReadOnlyList<HttpDiscoveredCommand>>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         _discoveryRequests.Enqueue(new DiscoveryRequest(principal, completion));
         return completion.Task;
     }
@@ -50,9 +53,12 @@ public static class HttpCommandExecutionQueue
             {
                 if (CurrentModRuntime.Value is not { } runtime)
                 {
-                    request.Completion.TrySetResult(CommandResult.Fail(
-                        "command.unavailable",
-                        "Command system is not ready."));
+                    request.Completion.TrySetResult(
+                        CommandResult.Fail(
+                            "command.unavailable",
+                            "Command system is not ready."
+                        )
+                    );
                     continue;
                 }
 
@@ -60,16 +66,21 @@ public static class HttpCommandExecutionQueue
                     CommandInvocationChannel.HttpApi,
                     request.Principal,
                     GameManager.Project,
-                    request.CorrelationId);
+                    request.CorrelationId
+                );
                 request.Completion.TrySetResult(
-                    new HttpCommandAdapter(runtime.Commands).Execute(request.Command, context));
+                    new HttpCommandAdapter(runtime.Commands).Execute(request.Command, context)
+                );
             }
             catch (Exception exception)
             {
                 Log.Error($"HTTP command execution failed: {exception}");
-                request.Completion.TrySetResult(CommandResult.Fail(
-                    "command.internal_error",
-                    "Command execution failed."));
+                request.Completion.TrySetResult(
+                    CommandResult.Fail(
+                        "command.internal_error",
+                        "Command execution failed."
+                    )
+                );
             }
         }
 
@@ -79,8 +90,7 @@ public static class HttpCommandExecutionQueue
             {
                 if (CurrentModRuntime.Value is not { } runtime)
                 {
-                    request.Completion.TrySetException(new InvalidOperationException(
-                        "Command system is not ready."));
+                    request.Completion.TrySetException(new InvalidOperationException("Command system is not ready."));
                     continue;
                 }
 
@@ -101,15 +111,17 @@ public static class HttpCommandExecutionQueue
         HttpPlayerCommandAdapter.FailPending();
         while (_requests.TryDequeue(out var request))
         {
-            request.Completion.TrySetResult(CommandResult.Fail(
-                "command.unavailable",
-                "Command host is stopping."));
+            request.Completion.TrySetResult(
+                CommandResult.Fail(
+                    "command.unavailable",
+                    "Command host is stopping."
+                )
+            );
         }
 
         while (_discoveryRequests.TryDequeue(out var request))
         {
-            request.Completion.TrySetException(new InvalidOperationException(
-                "Command host is stopping."));
+            request.Completion.TrySetException(new InvalidOperationException("Command host is stopping."));
         }
     }
 }

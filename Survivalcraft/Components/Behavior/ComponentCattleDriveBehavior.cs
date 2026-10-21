@@ -101,9 +101,15 @@ public class ComponentCattleDriveBehavior : ComponentBehavior, IUpdateable, INoi
                     var v = CalculateDriveDirectionAndSpeed();
                     var speed = MathUtils.Saturate(0.2f * v.Length());
                     _componentPathfinding.SetDestination(
-                        _componentCreature.ComponentBody.Position + 15f * Vector3.Normalize(v), speed, 5f, 0, false,
+                        _componentCreature.ComponentBody.Position + 15f * Vector3.Normalize(v),
+                        speed,
+                        5f,
+                        0,
+                        false,
                         true,
-                        false, null);
+                        false,
+                        null
+                    );
                 }
 
                 FadeDriveVector();

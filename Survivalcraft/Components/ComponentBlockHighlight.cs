@@ -126,16 +126,16 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
                 num = MathUtils.Min(obj3.Distance, 2f);
                 break;
             default:
+            {
+                if (_highlightRaycastResult is not Ray3 ray3)
                 {
-                    if (_highlightRaycastResult is not Ray3 ray3)
-                    {
-                        return;
-                    }
-
-                    ray = ray3;
-                    num = 2f;
-                    break;
+                    return;
                 }
+
+                ray = ray3;
+                num = 2f;
+                break;
+            }
         }
 
         var color = Color.White * 0.5f;
@@ -155,7 +155,8 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
 
     public void DrawOutlineHighlight(Camera camera)
     {
-        if (camera.UsesMovementControls || !(_componentPlayer.ComponentHealth.Health > 0f) ||
+        if (camera.UsesMovementControls ||
+            !(_componentPlayer.ComponentHealth.Health > 0f) ||
             !_componentPlayer.ComponentGui.ControlsContainerWidget.IsVisible)
         {
             return;
@@ -167,8 +168,13 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
             var cellFaceBoundingBox = GetCellFaceBoundingBox(value.Point);
             var num = _subsystemSky.CalculateFog(camera.ViewPosition, cellFaceBoundingBox.Center());
             var color = Color.MultiplyNotSaturated(Color.Black, 1f - num);
-            DrawBoundingBoxFace(_primitivesRenderer3D.FlatBatch(0, DepthStencilState.None), value.Face,
-                cellFaceBoundingBox.Min, cellFaceBoundingBox.Max, color);
+            DrawBoundingBoxFace(
+                _primitivesRenderer3D.FlatBatch(0, DepthStencilState.None),
+                value.Face,
+                cellFaceBoundingBox.Min,
+                cellFaceBoundingBox.Max,
+                color
+            );
         }
         else
         {
@@ -181,8 +187,13 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
                 var cellFaceBoundingBox2 = GetCellFaceBoundingBox(cellFace.Point);
                 var num2 = _subsystemSky.CalculateFog(camera.ViewPosition, cellFaceBoundingBox2.Center());
                 var color2 = Color.MultiplyNotSaturated(Color.Black, 1f - num2);
-                DrawBoundingBoxFace(_primitivesRenderer3D.FlatBatch(0, DepthStencilState.None), cellFace.Face,
-                    cellFaceBoundingBox2.Min, cellFaceBoundingBox2.Max, color2);
+                DrawBoundingBoxFace(
+                    _primitivesRenderer3D.FlatBatch(0, DepthStencilState.None),
+                    cellFace.Face,
+                    cellFaceBoundingBox2.Min,
+                    cellFaceBoundingBox2.Max,
+                    color2
+                );
             }
 
             if (NearbyEditableCell.HasValue)
@@ -244,7 +255,8 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
     public BoundingBox GetCellFaceBoundingBox(Point3 point)
     {
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
-        var customCollisionBoxes = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)]
+        var customCollisionBoxes = CurrentModRuntime.Value!.RequireWorldCatalog()
+            .Blocks[Terrain.ExtractContents(cellValue)]
             .GetCustomCollisionBoxes(_subsystemTerrain, cellValue);
         var vector = new Vector3(point.X, point.Y, point.Z);
         if (customCollisionBoxes.Length == 0)
@@ -253,10 +265,14 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
         }
 
         var boundingBox = customCollisionBoxes
-            .Where(box => box != default)
-            .Aggregate<BoundingBox, BoundingBox?>(null, (current, box) => current.HasValue
-                ? BoundingBox.Union(current.Value, box)
-                : box) ?? new BoundingBox(Vector3.Zero, Vector3.One);
+                              .Where(box => box != default)
+                              .Aggregate<BoundingBox, BoundingBox?>(
+                                  null,
+                                  (current, box) => current.HasValue
+                                      ? BoundingBox.Union(current.Value, box)
+                                      : box
+                              ) ??
+                          new BoundingBox(Vector3.Zero, Vector3.One);
 
         return new BoundingBox(boundingBox.Min + vector, boundingBox.Max + vector);
     }

@@ -23,19 +23,11 @@ public class ComponentFurnitureInventory : Component, IInventory
 
     Project IInventory.Project => Project;
 
-    public int ActiveSlotIndex
-    {
-        get => -1;
-        set { }
-    }
+    public int ActiveSlotIndex { get => -1; set { } }
 
     public int SlotsCount => _slots.Count;
 
-    public int VisibleSlotsCount
-    {
-        get => SlotsCount;
-        set { }
-    }
+    public int VisibleSlotsCount { get => SlotsCount; set { } }
 
     public virtual void OnSlotChange(int slotIndex)
     {
@@ -99,8 +91,16 @@ public class ComponentFurnitureInventory : Component, IInventory
     {
     }
 
-    public virtual void ProcessSlotItems(IInventory sourceInventory, int sourceSlotIndex, int slotIndex, int value,
-        int count, int processCount, out int processedValue, out int processedCount)
+    public virtual void ProcessSlotItems(
+        IInventory sourceInventory,
+        int sourceSlotIndex,
+        int slotIndex,
+        int value,
+        int count,
+        int processCount,
+        out int processedValue,
+        out int processedCount
+    )
     {
         var slotCount = GetSlotCount(slotIndex);
         var slotValue = GetSlotValue(slotIndex);
@@ -117,9 +117,15 @@ public class ComponentFurnitureInventory : Component, IInventory
                     continue;
                 }
 
-                subsystemBlockBehavior.ProcessInventoryItem(this, slotIndex, value, count,
-                    MathUtils.Min(processInventoryItemCapacity, processCount), out processedValue,
-                    out processedCount);
+                subsystemBlockBehavior.ProcessInventoryItem(
+                    this,
+                    slotIndex,
+                    value,
+                    count,
+                    MathUtils.Min(processInventoryItemCapacity, processCount),
+                    out processedValue,
+                    out processedCount
+                );
                 return;
             }
         }
@@ -164,7 +170,7 @@ public class ComponentFurnitureInventory : Component, IInventory
             }
 
             var num = (from f in design.ListChain()
-                       select f.Index).Min();
+                select f.Index).Min();
             if (design.Index != num)
             {
                 continue;

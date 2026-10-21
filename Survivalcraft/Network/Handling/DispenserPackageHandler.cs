@@ -22,8 +22,10 @@ public sealed class DispenserPackageHandler : PackageHandlerBase<DispenserPackag
 
         var project = GameManager.Project;
         if (context.Sender is null ||
-            !project.FindSubsystem<SubsystemNetworkInterest>(true)!.IsPositionRelevant(context.Sender,
-                new Vector2(package.Point.X, package.Point.Z)))
+            !project.FindSubsystem<SubsystemNetworkInterest>(true)!.IsPositionRelevant(
+                context.Sender,
+                new Vector2(package.Point.X, package.Point.Z)
+            ))
         {
             return;
         }
@@ -33,11 +35,12 @@ public sealed class DispenserPackageHandler : PackageHandlerBase<DispenserPackag
         if (Terrain.ExtractContents(value) == BuiltInBlockRegistry.GetIndex<DispenserBlock>())
         {
             var data = Terrain.ExtractData(value);
-            data = DispenserBlock.SetMode(data,
-                (package.Flag & 1) != 0 ? DispenserBlock.Mode.Shoot : DispenserBlock.Mode.Dispense);
+            data = DispenserBlock.SetMode(
+                data,
+                (package.Flag & 1) != 0 ? DispenserBlock.Mode.Shoot : DispenserBlock.Mode.Dispense
+            );
             data = DispenserBlock.SetAcceptsDrops(data, (package.Flag & (1 << 1)) != 0);
             sut.ChangeCell(package.Point.X, package.Point.Y, package.Point.Z, Terrain.ReplaceData(value, data));
         }
-
     }
 }

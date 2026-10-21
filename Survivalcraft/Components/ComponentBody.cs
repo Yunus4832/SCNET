@@ -132,11 +132,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         }
     }
 
-    public bool IsSneaking
-    {
-        get => CrouchFactor > 0;
-        set => TargetCrouchFactor = value ? 1 : 0;
-    }
+    public bool IsSneaking { get => CrouchFactor > 0; set => TargetCrouchFactor = value ? 1 : 0; }
 
     public Vector3 StanceBoxSize => new(BoxSize.X, (CrouchFactor >= 1f ? 0.4f : 1f) * BoxSize.Y, BoxSize.Z); //参与运算的碰撞箱
 
@@ -212,8 +208,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
         {
             var stanceBoxSize = StanceBoxSize;
             var position = base.Position;
-            return new BoundingBox(position - new Vector3(stanceBoxSize.X / 2f, 0f, stanceBoxSize.Z / 2f),
-                position + new Vector3(stanceBoxSize.X / 2f, stanceBoxSize.Y, stanceBoxSize.Z / 2f));
+            return new BoundingBox(
+                position - new Vector3(stanceBoxSize.X / 2f, 0f, stanceBoxSize.Z / 2f),
+                position + new Vector3(stanceBoxSize.X / 2f, stanceBoxSize.Y, stanceBoxSize.Z / 2f)
+            );
         }
     }
 
@@ -240,8 +238,11 @@ public class ComponentBody : ComponentFrame, IUpdateable
     public Quaternion ParentBodyRotationOffset { get; set; }
 
     public bool IsTerrainReady => _subsystemTerrain.Terrain.GetChunkAtCell(
-        Terrain.ToCell(Position.X), Terrain.ToCell(Position.Z), false) is
-    { MainThreadState: > TerrainChunkState.InvalidContents4 };
+            Terrain.ToCell(Position.X),
+            Terrain.ToCell(Position.Z),
+            false
+        ) is
+        { MainThreadState: > TerrainChunkState.InvalidContents4 };
 
     public UpdateOrder UpdateOrder
     {
@@ -396,8 +397,12 @@ public class ComponentBody : ComponentFrame, IUpdateable
             _velocity.Y -= 10f * dt;
             if (ImmersionFactor > 0f)
             {
-                var num = ImmersionFactor * (1f + 0.03f *
-                    MathUtils.Sin((float)MathUtils.Remainder(2.0 * _subsystemTime.GameTime, 6.2831854820251465)));
+                var num = ImmersionFactor *
+                          (1f +
+                           0.03f *
+                           MathUtils.Sin(
+                               (float)MathUtils.Remainder(2.0 * _subsystemTime.GameTime, 6.2831854820251465)
+                           ));
                 _velocity.Y += 10f * (1f / Density * num) * dt;
             }
         }
@@ -409,14 +414,22 @@ public class ComponentBody : ComponentFrame, IUpdateable
         _velocity.Z *= 1f - num2;
         if (IsWaterDragEnabled && ImmersionFactor > 0f && ImmersionFluidBlock != null)
         {
-            var vector = _subsystemFluidBlockBehavior.CalculateFlowSpeed(Terrain.ToCell(position.X),
-                Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
+            var vector = _subsystemFluidBlockBehavior.CalculateFlowSpeed(
+                Terrain.ToCell(position.X),
+                Terrain.ToCell(position.Y),
+                Terrain.ToCell(position.Z)
+            );
             var vector2 = vector.HasValue ? new Vector3(vector.Value.X, 0f, vector.Value.Y) : Vector3.Zero;
             var num4 = 1f;
             if (ImmersionFluidBlock.FrictionFactor.UncloseTo(1f))
             {
-                num4 = SimplexNoise.Noise((float)MathUtils.Remainder(6.0 * Time.FrameStartTime + GetHashCode() % 1000,
-                    1000.0)) > 0.5f
+                num4 = SimplexNoise.Noise(
+                           (float)MathUtils.Remainder(
+                               6.0 * Time.FrameStartTime + GetHashCode() % 1000,
+                               1000.0
+                           )
+                       ) >
+                       0.5f
                     ? ImmersionFluidBlock.FrictionFactor
                     : 1f;
             }
@@ -432,21 +445,26 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 {
                     var s = MathUtils.Saturate(MathUtils.Lerp(1f, 0f, _velocity.Length()));
                     var vector3 = Vector2.Normalize(vector.Value) * s;
-                    Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitY,
-                        WaterTurnSpeed * (-1f * vector3.X + 0.71f * vector3.Y) * dt);
+                    Rotation *= Quaternion.CreateFromAxisAngle(
+                        Vector3.UnitY,
+                        WaterTurnSpeed * (-1f * vector3.X + 0.71f * vector3.Y) * dt
+                    );
                 }
 
                 if (WaterSwayAngle > 0f)
                 {
-                    Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitX,
-                        WaterSwayAngle * (float)MathUtils.Sin(200f / Mass * _subsystemTime.GameTime));
+                    Rotation *= Quaternion.CreateFromAxisAngle(
+                        Vector3.UnitX,
+                        WaterSwayAngle * (float)MathUtils.Sin(200f / Mass * _subsystemTime.GameTime)
+                    );
                 }
             }
         }
 
         if (_parentBody != null)
         {
-            var v = Vector3.Transform(ParentBodyPositionOffset, _parentBody.Rotation) + _parentBody.Position -
+            var v = Vector3.Transform(ParentBodyPositionOffset, _parentBody.Rotation) +
+                    _parentBody.Position -
                     position;
             _velocity = dt > 0f ? v / dt : Vector3.Zero;
             Rotation = ParentBodyRotationOffset * _parentBody.Rotation;
@@ -476,7 +494,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
             var vector4 = default(Vector3);
             vector4.X = _shakingStrength *
                         MathUtils.Sin((float)MathUtils.Remainder(31.0 * _subsystemTime.GameTime, Math.PI * 2.0));
-            vector4.Y = 0.4f * _shakingStrength *
+            vector4.Y = 0.4f *
+                        _shakingStrength *
                         MathUtils.Sin((float)MathUtils.Remainder(23.3 * _subsystemTime.GameTime, Math.PI * 2.0));
             vector4.Z = _shakingStrength *
                         MathUtils.Sin((float)MathUtils.Remainder(27.6 * _subsystemTime.GameTime, Math.PI * 2.0));
@@ -503,30 +522,46 @@ public class ComponentBody : ComponentFrame, IUpdateable
         switch (ImmersionFluidBlock)
         {
             case WaterBlock when ImmersionDepth > 0.3f && !_fluidEffectsPlayed:
+            {
+                _fluidEffectsPlayed = true;
+                _subsystemAudio.PlayRandomSound(
+                    "Audio/WaterFallIn",
+                    _random.Float(0.75f, 1f),
+                    _random.Float(-0.3f, 0f),
+                    position,
+                    4f,
+                    true
+                );
+                if (RunMode.Value is RunModeType.Gui)
                 {
-                    _fluidEffectsPlayed = true;
-                    _subsystemAudio.PlayRandomSound("Audio/WaterFallIn", _random.Float(0.75f, 1f), _random.Float(-0.3f, 0f),
-                        position, 4f, true);
-                    if (RunMode.Value is RunModeType.Gui)
-                    {
-                        _subsystemParticles.AddParticleSystem(new WaterSplashParticleSystem(_subsystemTerrain, position,
-                            (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f));
-                    }
-
-                    break;
+                    _subsystemParticles.AddParticleSystem(
+                        new WaterSplashParticleSystem(
+                            _subsystemTerrain,
+                            position,
+                            (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f
+                        )
+                    );
                 }
+
+                break;
+            }
             case MagmaBlock when ImmersionDepth > 0f && !_fluidEffectsPlayed:
+            {
+                _fluidEffectsPlayed = true;
+                _subsystemAudio.PlaySound("Audio/SizzleLong", 1f, 0f, position, 4f, true);
+                if (RunMode.Value is RunModeType.Gui)
                 {
-                    _fluidEffectsPlayed = true;
-                    _subsystemAudio.PlaySound("Audio/SizzleLong", 1f, 0f, position, 4f, true);
-                    if (RunMode.Value is RunModeType.Gui)
-                    {
-                        _subsystemParticles.AddParticleSystem(new MagmaSplashParticleSystem(_subsystemTerrain, position,
-                            (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f));
-                    }
-
-                    break;
+                    _subsystemParticles.AddParticleSystem(
+                        new MagmaSplashParticleSystem(
+                            _subsystemTerrain,
+                            position,
+                            (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f
+                        )
+                    );
                 }
+
+                break;
+            }
             case null:
                 _fluidEffectsPlayed = false;
                 break;
@@ -540,7 +575,14 @@ public class ComponentBody : ComponentFrame, IUpdateable
             return;
         }
 
-        NetworkSender.SendToObservers(Entity, new SubsystemBodyPackage { PackageEventType = SubsystemBodyPackage.EventType.ApplyImpulse, CreatureId = Entity.EntityId, Impulse = impulse });
+        NetworkSender.SendToObservers(
+            Entity,
+            new SubsystemBodyPackage
+            {
+                PackageEventType = SubsystemBodyPackage.EventType.ApplyImpulse, CreatureId = Entity.EntityId,
+                Impulse = impulse
+            }
+        );
         ApplyImpulseNet(impulse);
     }
 
@@ -667,7 +709,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(x, y, z);
             ImmersionDepth = MathUtils.Max(surfaceHeight.Value - position.Y, 0f);
             ImmersionFactor = MathUtils.Saturate(MathUtils.Pow(ImmersionDepth / StanceBoxSize.Y, 0.7f));
-            ImmersionFluidBlock = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[Terrain.ExtractContents(cellValue)];
+            ImmersionFluidBlock = CurrentModRuntime.Value!.RequireWorldCatalog()
+                .FluidBlocks[Terrain.ExtractContents(cellValue)];
         }
         else
         {
@@ -690,8 +733,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 continue;
             }
 
-            var box = new BoundingBox(vector2 - new Vector3(stanceBoxSize.X / 2f, 0f, stanceBoxSize.Z / 2f),
-                vector2 + new Vector3(stanceBoxSize.X / 2f, stanceBoxSize.Y, stanceBoxSize.Z / 2f));
+            var box = new BoundingBox(
+                vector2 - new Vector3(stanceBoxSize.X / 2f, 0f, stanceBoxSize.Z / 2f),
+                vector2 + new Vector3(stanceBoxSize.X / 2f, stanceBoxSize.Y, stanceBoxSize.Z / 2f)
+            );
             box.Min += new Vector3(0.01f, MaxSmoothRiseHeight + 0.01f, 0.01f);
             box.Max -= new Vector3(0.01f);
             _collisionBoxes.Clear();
@@ -753,8 +798,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
                 foreach (var item in list)
                 {
-                    box = new BoundingBox(item - new Vector3(stanceBoxSize.X / 2f, 0f, stanceBoxSize.Z / 2f),
-                        item + new Vector3(stanceBoxSize.X / 2f, stanceBoxSize.Y, stanceBoxSize.Z / 2f));
+                    box = new BoundingBox(
+                        item - new Vector3(stanceBoxSize.X / 2f, 0f, stanceBoxSize.Z / 2f),
+                        item + new Vector3(stanceBoxSize.X / 2f, stanceBoxSize.Y, stanceBoxSize.Z / 2f)
+                    );
                     box.Min += new Vector3(0.02f, MaxSmoothRiseHeight + 0.02f, 0.02f);
                     box.Max -= new Vector3(0.02f);
                     _collisionBoxes.Clear();
@@ -800,8 +847,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 continue;
             }
 
-            var box = new BoundingBox(vector2 - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f),
-                vector2 + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f));
+            var box = new BoundingBox(
+                vector2 - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f),
+                vector2 + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f)
+            );
             box.Min += new Vector3(0.01f, MaxSmoothRiseHeight + 0.01f, 0.01f);
             box.Max -= new Vector3(0.01f);
             _collisionBoxes.Clear();
@@ -867,8 +916,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
                 foreach (var item in list)
                 {
-                    box = new BoundingBox(item - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f),
-                        item + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f));
+                    box = new BoundingBox(
+                        item - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f),
+                        item + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f)
+                    );
                     box.Min += new Vector3(0.02f, MaxSmoothRiseHeight + 0.02f, 0.02f);
                     box.Max -= new Vector3(0.02f);
                     _collisionBoxes.Clear();
@@ -913,15 +964,18 @@ public class ComponentBody : ComponentFrame, IUpdateable
     public bool HandleSmoothRise(ref Vector3 move, Vector3 position, float dt)
     {
         var boxSize = StanceBoxSize;
-        var box = new BoundingBox(position - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f),
-            position + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f));
+        var box = new BoundingBox(
+            position - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f),
+            position + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f)
+        );
         box.Min += new Vector3(0.04f, 0f, 0.04f);
         box.Max -= new Vector3(0.04f, 0f, 0.04f);
         _collisionBoxes.Clear();
         FindTerrainCollisionBoxes(box, _collisionBoxes);
         _collisionBoxes.AddRange(_movingBlocksCollisionBoxes);
         var num = MathUtils.Max(CalculatePushBack(box, 1, _collisionBoxes, out var pushingCollisionBox), 0f);
-        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(pushingCollisionBox.BlockValue)].NoSmoothRise ||
+        if (CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[Terrain.ExtractContents(pushingCollisionBox.BlockValue)].NoSmoothRise ||
             !(num > 0.04f))
         {
             return false;
@@ -962,8 +1016,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 break;
         }
 
-        var boundingBox = new BoundingBox(position - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f) + v,
-            position + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f) - v);
+        var boundingBox = new BoundingBox(
+            position - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f) + v,
+            position + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f) - v
+        );
         FindTerrainCollisionBoxes(boundingBox, _collisionBoxes);
         _collisionBoxes.AddRange(_movingBlocksCollisionBoxes);
         float num;
@@ -979,16 +1035,23 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
             // 将修改后的值重新赋值回 smoothRiseBox.Min
             smoothRiseBox.Min = min;
-            num = CalculateSmoothRisePushBack(boundingBox, smoothRiseBox, axis, _collisionBoxes,
-                out pushingCollisionBox);
+            num = CalculateSmoothRisePushBack(
+                boundingBox,
+                smoothRiseBox,
+                axis,
+                _collisionBoxes,
+                out pushingCollisionBox
+            );
         }
         else
         {
             num = CalculatePushBack(boundingBox, axis, _collisionBoxes, out pushingCollisionBox);
         }
 
-        var box = new BoundingBox(position - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f) + v,
-            position + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f) - v);
+        var box = new BoundingBox(
+            position - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f) + v,
+            position + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f) - v
+        );
         //客户端num2为0
         var num2 = CalculatePushBack(box, axis, _bodiesCollisionBoxes, out var pushingCollisionBox2);
         if (MathUtils.Abs(num) > MathUtils.Abs(num2))
@@ -1006,8 +1069,13 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 foreach (var behavior in blockBehaviors)
                 {
                     var vector = (pushingCollisionBox.Box.Min + pushingCollisionBox.Box.Max) / 2f;
-                    var cellFace = CellFace.FromAxisAndDirection(Terrain.ToCell(vector.X), Terrain.ToCell(vector.Y),
-                        Terrain.ToCell(vector.Z), axis, 0f - GetVectorComponent(_velocity, axis));
+                    var cellFace = CellFace.FromAxisAndDirection(
+                        Terrain.ToCell(vector.X),
+                        Terrain.ToCell(vector.Y),
+                        Terrain.ToCell(vector.Z),
+                        axis,
+                        0f - GetVectorComponent(_velocity, axis)
+                    );
                     behavior.OnCollide(cellFace, GetVectorComponent(_velocity, axis), this);
                 }
             }
@@ -1047,13 +1115,27 @@ public class ComponentBody : ComponentFrame, IUpdateable
             switch (axis)
             {
                 case 0:
-                    InelasticCollision(_velocity.X, componentBody._velocity.X, Mass, componentBody.Mass, 0.5f,
-                        out _velocity.X, out componentBody._velocity.X);
+                    InelasticCollision(
+                        _velocity.X,
+                        componentBody._velocity.X,
+                        Mass,
+                        componentBody.Mass,
+                        0.5f,
+                        out _velocity.X,
+                        out componentBody._velocity.X
+                    );
                     position.X += num2;
                     break;
                 case 1:
-                    InelasticCollision(_velocity.Y, componentBody._velocity.Y, Mass, componentBody.Mass, 0.5f,
-                        out _velocity.Y, out componentBody._velocity.Y);
+                    InelasticCollision(
+                        _velocity.Y,
+                        componentBody._velocity.Y,
+                        Mass,
+                        componentBody.Mass,
+                        0.5f,
+                        out _velocity.Y,
+                        out componentBody._velocity.Y
+                    );
                     position.Y += num2;
                     if (move < 0f)
                     {
@@ -1064,15 +1146,29 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
                     break;
                 default:
-                    InelasticCollision(_velocity.Z, componentBody._velocity.Z, Mass, componentBody.Mass, 0.5f,
-                        out _velocity.Z, out componentBody._velocity.Z);
+                    InelasticCollision(
+                        _velocity.Z,
+                        componentBody._velocity.Z,
+                        Mass,
+                        componentBody.Mass,
+                        0.5f,
+                        out _velocity.Z,
+                        out componentBody._velocity.Z
+                    );
                     position.Z += num2;
                     break;
             }
 
             if (CommonLib.WorkType == WorkType.Client && Player is { PlayerData.IsMainPlayer: true })
             {
-                NetworkSender.SendToServer(new SubsystemBodyPackage { PackageEventType = SubsystemBodyPackage.EventType.HandleAxisCollision, CreatureId = Entity.EntityId, TargetCreatureId = componentBody.Entity.EntityId, Impulse = componentBody._velocity });
+                NetworkSender.SendToServer(
+                    new SubsystemBodyPackage
+                    {
+                        PackageEventType = SubsystemBodyPackage.EventType.HandleAxisCollision,
+                        CreatureId = Entity.EntityId,
+                        TargetCreatureId = componentBody.Entity.EntityId, Impulse = componentBody._velocity
+                    }
+                );
             }
 
             CollidedWithBody?.Invoke(componentBody);
@@ -1089,11 +1185,13 @@ public class ComponentBody : ComponentFrame, IUpdateable
             var componentBody = _componentBodies.Array[i];
             if (componentBody != this && componentBody != _parentBody && componentBody._parentBody != this)
             {
-                result.Add(new CollisionBox
-                {
-                    Box = componentBody.BoundingBox,
-                    ComponentBody = componentBody
-                });
+                result.Add(
+                    new CollisionBox
+                    {
+                        Box = componentBody.BoundingBox,
+                        ComponentBody = componentBody
+                    }
+                );
             }
         }
     }
@@ -1101,8 +1199,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
     public void FindMovingBlocksCollisionBoxes(Vector3 position, DynamicArray<CollisionBox> result)
     {
         var boxSize = StanceBoxSize;
-        var boundingBox = new BoundingBox(position - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f),
-            position + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f));
+        var boundingBox = new BoundingBox(
+            position - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f),
+            position + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f)
+        );
         boundingBox.Min -= new Vector3(1f);
         boundingBox.Max += new Vector3(1f);
         _movingBlockSets.Clear();
@@ -1123,12 +1223,14 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 var v = new Vector3(movingBlock.Offset) + movingBlockSet.Position;
                 foreach (var box in customCollisionBoxes)
                 {
-                    result.Add(new CollisionBox
-                    {
-                        Box = new BoundingBox(v + box.Min, v + box.Max),
-                        BlockValue = movingBlock.Value,
-                        BlockVelocity = movingBlockSet.CurrentVelocity
-                    });
+                    result.Add(
+                        new CollisionBox
+                        {
+                            Box = new BoundingBox(v + box.Min, v + box.Max),
+                            BlockValue = movingBlock.Value,
+                            BlockVelocity = movingBlockSet.CurrentVelocity
+                        }
+                    );
                 }
             }
         }
@@ -1141,6 +1243,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         {
             gameplay.Invoke(new TerrainCollisionBoxesContext(this, box, result));
         }
+
         var point = Terrain.ToCell(box.Min);
         var point2 = Terrain.ToCell(box.Max);
         point.Y = MathUtils.Max(point.Y, 0);
@@ -1175,12 +1278,16 @@ public class ComponentBody : ComponentFrame, IUpdateable
                             var v = new Vector3(i, num2, j);
                             foreach (var collisionBox in customCollisionBoxes)
                             {
-                                result.Add(new CollisionBox
-                                {
-                                    Box = new BoundingBox(v + collisionBox.Min,
-                                        v + collisionBox.Max),
-                                    BlockValue = cellValueFast
-                                });
+                                result.Add(
+                                    new CollisionBox
+                                    {
+                                        Box = new BoundingBox(
+                                            v + collisionBox.Min,
+                                            v + collisionBox.Max
+                                        ),
+                                        BlockValue = cellValueFast
+                                    }
+                                );
                             }
                         }
                     }
@@ -1197,7 +1304,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
         var num = Terrain.ToCell(position.X);
         var num2 = Terrain.ToCell(position.Y);
         var num3 = Terrain.ToCell(position.Z);
-        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3)].Collidable)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog()
+            .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3)].Collidable)
         {
             return;
         }
@@ -1209,15 +1317,20 @@ public class ComponentBody : ComponentFrame, IUpdateable
         {
             if (flag)
             {
-                var isCollidable = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)].Collidable;
-                var isCollidable2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)].Collidable;
-                var isCollidable3 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 - 1)].Collidable;
+                var isCollidable = CurrentModRuntime.Value!.RequireWorldCatalog()
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)].Collidable;
+                var isCollidable2 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)].Collidable;
+                var isCollidable3 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 - 1)].Collidable;
                 if ((isCollidable && !isCollidable2) || (!isCollidable && !isCollidable2) & isCollidable3)
                 {
                     item = new CollisionBox
                     {
-                        Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y),
-                            new Vector3(num + 1, num2 + 1, num3 + 1)),
+                        Box = new BoundingBox(
+                            new Vector3(num, num2, num3 + overhang.Y),
+                            new Vector3(num + 1, num2 + 1, num3 + 1)
+                        ),
                         BlockValue = 0
                     };
                     result.Add(item);
@@ -1227,8 +1340,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 {
                     item = new CollisionBox
                     {
-                        Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3),
-                            new Vector3(num + 1, num2 + 1, num3 + 1)),
+                        Box = new BoundingBox(
+                            new Vector3(num + overhang.X, num2, num3),
+                            new Vector3(num + 1, num2 + 1, num3 + 1)
+                        ),
                         BlockValue = 0
                     };
                     result.Add(item);
@@ -1238,8 +1353,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 {
                     item = new CollisionBox
                     {
-                        Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3 + overhang.Y),
-                            new Vector3(num + 1, num2 + 1, num3 + 1)),
+                        Box = new BoundingBox(
+                            new Vector3(num + overhang.X, num2, num3 + overhang.Y),
+                            new Vector3(num + 1, num2 + 1, num3 + 1)
+                        ),
                         BlockValue = 0
                     };
                     result.Add(item);
@@ -1247,15 +1364,20 @@ public class ComponentBody : ComponentFrame, IUpdateable
             }
             else
             {
-                var isCollidable4 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)].Collidable;
-                var isCollidable5 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)].Collidable;
-                var isCollidable6 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 + 1)].Collidable;
+                var isCollidable4 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)].Collidable;
+                var isCollidable5 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)].Collidable;
+                var isCollidable6 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 + 1)].Collidable;
                 if ((isCollidable4 && !isCollidable5) || (!isCollidable4 && !isCollidable5) & isCollidable6)
                 {
                     item = new CollisionBox
                     {
-                        Box = new BoundingBox(new Vector3(num, num2, num3),
-                            new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)),
+                        Box = new BoundingBox(
+                            new Vector3(num, num2, num3),
+                            new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)
+                        ),
                         BlockValue = 0
                     };
                     result.Add(item);
@@ -1265,8 +1387,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 {
                     item = new CollisionBox
                     {
-                        Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3),
-                            new Vector3(num + 1, num2 + 1, num3 + 1)),
+                        Box = new BoundingBox(
+                            new Vector3(num + overhang.X, num2, num3),
+                            new Vector3(num + 1, num2 + 1, num3 + 1)
+                        ),
                         BlockValue = 0
                     };
                     result.Add(item);
@@ -1276,8 +1400,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 {
                     item = new CollisionBox
                     {
-                        Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3),
-                            new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)),
+                        Box = new BoundingBox(
+                            new Vector3(num + overhang.X, num2, num3),
+                            new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)
+                        ),
                         BlockValue = 0
                     };
                     result.Add(item);
@@ -1286,15 +1412,20 @@ public class ComponentBody : ComponentFrame, IUpdateable
         }
         else if (flag)
         {
-            var isCollidable7 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)].Collidable;
-            var isCollidable8 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)].Collidable;
-            var isCollidable9 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 - 1)].Collidable;
+            var isCollidable7 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)].Collidable;
+            var isCollidable8 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)].Collidable;
+            var isCollidable9 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 - 1)].Collidable;
             if ((isCollidable7 && !isCollidable8) || (!isCollidable7 && !isCollidable8) & isCollidable9)
             {
                 item = new CollisionBox
                 {
-                    Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y),
-                        new Vector3(num + 1, num2 + 1, num3 + 1)),
+                    Box = new BoundingBox(
+                        new Vector3(num, num2, num3 + overhang.Y),
+                        new Vector3(num + 1, num2 + 1, num3 + 1)
+                    ),
                     BlockValue = 0
                 };
                 result.Add(item);
@@ -1304,8 +1435,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
             {
                 item = new CollisionBox
                 {
-                    Box = new BoundingBox(new Vector3(num, num2, num3),
-                        new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)),
+                    Box = new BoundingBox(
+                        new Vector3(num, num2, num3),
+                        new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)
+                    ),
                     BlockValue = 0
                 };
                 result.Add(item);
@@ -1315,8 +1448,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
             {
                 item = new CollisionBox
                 {
-                    Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y),
-                        new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)),
+                    Box = new BoundingBox(
+                        new Vector3(num, num2, num3 + overhang.Y),
+                        new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)
+                    ),
                     BlockValue = 0
                 };
                 result.Add(item);
@@ -1324,15 +1459,20 @@ public class ComponentBody : ComponentFrame, IUpdateable
         }
         else
         {
-            var isCollidable10 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)].Collidable;
-            var isCollidable11 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)].Collidable;
-            var isCollidable12 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 + 1)].Collidable;
+            var isCollidable10 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)].Collidable;
+            var isCollidable11 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)].Collidable;
+            var isCollidable12 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 + 1)].Collidable;
             if ((isCollidable10 && !isCollidable11) || (!isCollidable10 && !isCollidable11) & isCollidable12)
             {
                 item = new CollisionBox
                 {
-                    Box = new BoundingBox(new Vector3(num, num2, num3),
-                        new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)),
+                    Box = new BoundingBox(
+                        new Vector3(num, num2, num3),
+                        new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)
+                    ),
                     BlockValue = 0
                 };
                 result.Add(item);
@@ -1342,8 +1482,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
             {
                 item = new CollisionBox
                 {
-                    Box = new BoundingBox(new Vector3(num, num2, num3),
-                        new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)),
+                    Box = new BoundingBox(
+                        new Vector3(num, num2, num3),
+                        new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)
+                    ),
                     BlockValue = 0
                 };
                 result.Add(item);
@@ -1356,8 +1498,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
             item = new CollisionBox
             {
-                Box = new BoundingBox(new Vector3(num, num2, num3),
-                    new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1 - overhang.Y)),
+                Box = new BoundingBox(
+                    new Vector3(num, num2, num3),
+                    new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1 - overhang.Y)
+                ),
                 BlockValue = 0
             };
             result.Add(item);
@@ -1393,14 +1537,20 @@ public class ComponentBody : ComponentFrame, IUpdateable
         return num;
     }
 
-    public float CalculateSmoothRisePushBack(BoundingBox normalBox, BoundingBox smoothRiseBox, int axis,
-        DynamicArray<CollisionBox> collisionBoxes, out CollisionBox pushingCollisionBox)
+    public float CalculateSmoothRisePushBack(
+        BoundingBox normalBox,
+        BoundingBox smoothRiseBox,
+        int axis,
+        DynamicArray<CollisionBox> collisionBoxes,
+        out CollisionBox pushingCollisionBox
+    )
     {
         pushingCollisionBox = default;
         var num = 0f;
         for (var i = 0; i < collisionBoxes.Count; i++)
         {
-            var num2 = !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(collisionBoxes.Array[i].BlockValue)].NoSmoothRise
+            var num2 = !CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[Terrain.ExtractContents(collisionBoxes.Array[i].BlockValue)].NoSmoothRise
                 ? CalculateBoxBoxOverlap(ref smoothRiseBox, ref collisionBoxes.Array[i].Box, axis)
                 : CalculateBoxBoxOverlap(ref normalBox, ref collisionBoxes.Array[i].Box, axis);
             if (!(MathUtils.Abs(num2) > MathUtils.Abs(num)))
@@ -1417,8 +1567,12 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
     public static float CalculateBoxBoxOverlap(ref BoundingBox b1, ref BoundingBox b2, int axis)
     {
-        if (b1.Max.X <= b2.Min.X || b1.Min.X >= b2.Max.X || b1.Max.Y <= b2.Min.Y || b1.Min.Y >= b2.Max.Y ||
-            b1.Max.Z <= b2.Min.Z || b1.Min.Z >= b2.Max.Z)
+        if (b1.Max.X <= b2.Min.X ||
+            b1.Min.X >= b2.Max.X ||
+            b1.Max.Y <= b2.Min.Y ||
+            b1.Min.Y >= b2.Max.Y ||
+            b1.Max.Z <= b2.Min.Z ||
+            b1.Min.Z >= b2.Max.Z)
         {
             return 0f;
         }
@@ -1426,35 +1580,35 @@ public class ComponentBody : ComponentFrame, IUpdateable
         switch (axis)
         {
             case 0:
-                {
-                    var num13 = b1.Min.X + b1.Max.X;
-                    var num14 = b2.Min.X + b2.Max.X;
-                    var num15 = b1.Max.X - b1.Min.X;
-                    var num16 = b2.Max.X - b2.Min.X;
-                    var num17 = num14 - num13;
-                    var num18 = num15 + num16;
-                    return 0.5f * (num17 > 0f ? num17 - num18 : num17 + num18);
-                }
+            {
+                var num13 = b1.Min.X + b1.Max.X;
+                var num14 = b2.Min.X + b2.Max.X;
+                var num15 = b1.Max.X - b1.Min.X;
+                var num16 = b2.Max.X - b2.Min.X;
+                var num17 = num14 - num13;
+                var num18 = num15 + num16;
+                return 0.5f * (num17 > 0f ? num17 - num18 : num17 + num18);
+            }
             case 1:
-                {
-                    var num7 = b1.Min.Y + b1.Max.Y;
-                    var num8 = b2.Min.Y + b2.Max.Y;
-                    var num9 = b1.Max.Y - b1.Min.Y;
-                    var num10 = b2.Max.Y - b2.Min.Y;
-                    var num11 = num8 - num7;
-                    var num12 = num9 + num10;
-                    return 0.5f * (num11 > 0f ? num11 - num12 : num11 + num12);
-                }
+            {
+                var num7 = b1.Min.Y + b1.Max.Y;
+                var num8 = b2.Min.Y + b2.Max.Y;
+                var num9 = b1.Max.Y - b1.Min.Y;
+                var num10 = b2.Max.Y - b2.Min.Y;
+                var num11 = num8 - num7;
+                var num12 = num9 + num10;
+                return 0.5f * (num11 > 0f ? num11 - num12 : num11 + num12);
+            }
             default:
-                {
-                    var num = b1.Min.Z + b1.Max.Z;
-                    var num2 = b2.Min.Z + b2.Max.Z;
-                    var num3 = b1.Max.Z - b1.Min.Z;
-                    var num4 = b2.Max.Z - b2.Min.Z;
-                    var num5 = num2 - num;
-                    var num6 = num3 + num4;
-                    return 0.5f * (num5 > 0f ? num5 - num6 : num5 + num6);
-                }
+            {
+                var num = b1.Min.Z + b1.Max.Z;
+                var num2 = b2.Min.Z + b2.Max.Z;
+                var num3 = b1.Max.Z - b1.Min.Z;
+                var num4 = b2.Max.Z - b2.Min.Z;
+                var num5 = num2 - num;
+                var num6 = num3 + num4;
+                return 0.5f * (num5 > 0f ? num5 - num6 : num5 + num6);
+            }
         }
     }
 
@@ -1468,8 +1622,15 @@ public class ComponentBody : ComponentFrame, IUpdateable
         };
     }
 
-    public static void InelasticCollision(float v1, float v2, float m1, float m2, float cr, out float result1,
-        out float result2)
+    public static void InelasticCollision(
+        float v1,
+        float v2,
+        float m1,
+        float m2,
+        float cr,
+        out float result1,
+        out float result2
+    )
     {
         var num = 1f / (m1 + m2);
         result1 = (cr * m2 * (v2 - v1) + m1 * v1 + m2 * v2) * num;

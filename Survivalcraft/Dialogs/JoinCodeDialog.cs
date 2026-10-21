@@ -7,11 +7,17 @@ namespace Game.Dialogs;
 public sealed class JoinCodeDialog : Dialog
 {
     private readonly TextBoxWidget _address;
+
     private readonly TextBoxWidget _code;
+
     private readonly ButtonWidget _relay;
+
     private RelayPolicy _relayPolicy;
+
     private readonly LabelWidget _error;
+
     private readonly CanvasWidget _surface;
+
     private readonly Action<NetworkTarget> _connect;
 
     public JoinCodeDialog(RelayPolicy initialPolicy, Action<NetworkTarget> connect)
@@ -39,6 +45,7 @@ public sealed class JoinCodeDialog : Dialog
         {
             _relayPolicy = (RelayPolicy)(((int)_relayPolicy + 1) % Enum.GetValues<RelayPolicy>().Length);
         }
+
         _relay.Text = P2PRoomStatusDialog.Text($"Relay{_relayPolicy}");
         _error.IsVisible = !string.IsNullOrEmpty(_error.Text);
         _surface.Size = new Vector2(560f, _error.IsVisible ? 352f : 324f);
@@ -64,6 +71,7 @@ public sealed class JoinCodeDialog : Dialog
             _error.Text = LanguageManager.GetContentWidgets(nameof(JoinCodeDialog), "InvalidAddress");
             return;
         }
+
         InvitationCodeNetworkTarget target;
         try
         {
@@ -74,6 +82,7 @@ public sealed class JoinCodeDialog : Dialog
             _error.Text = P2PRoomStatusDialog.Text("InvalidCode");
             return;
         }
+
         DialogsManager.HideDialog(this);
         _connect(target);
     }

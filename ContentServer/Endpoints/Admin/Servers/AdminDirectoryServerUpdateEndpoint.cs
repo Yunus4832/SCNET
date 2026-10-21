@@ -25,12 +25,24 @@ public sealed class AdminDirectoryServerUpdateEndpoint(IMediator mediator) : Con
         await Send.ResponseAsync(result, HttpContext.Response.StatusCode, cancellationToken);
     }
 
-    private async Task<ResponseData> Update(Guid id, UpdateDirectoryServerRequest request,
-        CancellationToken cancellationToken)
+    private async Task<ResponseData> Update(
+        Guid id,
+        UpdateDirectoryServerRequest request,
+        CancellationToken cancellationToken
+    )
     {
         var normalized = Validate(request);
-        var result = await mediator.Send(new UpdateDirectoryServerCommand(new DirectoryServerId(id), null,
-            request.Name.Trim(), normalized.Address, normalized.Description, normalized.Tags), cancellationToken);
+        var result = await mediator.Send(
+            new UpdateDirectoryServerCommand(
+                new DirectoryServerId(id),
+                null,
+                request.Name.Trim(),
+                normalized.Address,
+                normalized.Description,
+                normalized.Tags
+            ),
+            cancellationToken
+        );
         EnsureUpdated(result);
         return new ResponseData(true, "success", StatusCodes.Status200OK);
     }
@@ -38,8 +50,10 @@ public sealed class AdminDirectoryServerUpdateEndpoint(IMediator mediator) : Con
     internal static (string Address, string? Description, string[] Tags) Validate(UpdateDirectoryServerRequest request)
     {
         var tags = request.Tags ?? [];
-        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 100 ||
-            request.Description?.Length > 1024 || tags.Length > 16 ||
+        if (string.IsNullOrWhiteSpace(request.Name) ||
+            request.Name.Length > 100 ||
+            request.Description?.Length > 1024 ||
+            tags.Length > 16 ||
             tags.Any(tag => string.IsNullOrWhiteSpace(tag) || tag.Length > 32) ||
             !EndpointMappings.IsValidAddress(request.Address))
         {

@@ -27,8 +27,15 @@ public class PanoramaWidget : Widget
         var actualSize = ActualSize;
         var texCoord = new Vector2(x2 - num2, y2 - num3);
         var texCoord2 = new Vector2(x2 + num2, y2 + num3);
-        var texturedBatch2D = dc.PrimitivesRenderer2D.TexturedBatch(Texture, false, 0, DepthStencilState.DepthWrite,
-            null, BlendState.AlphaBlend, SamplerState.LinearWrap);
+        var texturedBatch2D = dc.PrimitivesRenderer2D.TexturedBatch(
+            Texture,
+            false,
+            0,
+            DepthStencilState.DepthWrite,
+            null,
+            BlendState.AlphaBlend,
+            SamplerState.LinearWrap
+        );
         var count = texturedBatch2D.TriangleVertices.Count;
         texturedBatch2D.QueueQuad(zero, actualSize, 1f, texCoord, texCoord2, GlobalColorTransform);
         texturedBatch2D.TransformTriangles(GlobalTransform, count);
@@ -49,10 +56,15 @@ public class PanoramaWidget : Widget
                 var num6 = 0.35f *
                            MathUtils.Pow(
                                MathUtils.Saturate(
-                                   SimplexNoise.OctavedNoise(num4 + 1000f, num5, 0.7f * num, 0.5f, 1, 2f, 1f) - 0.1f), 1f) *
+                                   SimplexNoise.OctavedNoise(num4 + 1000f, num5, 0.7f * num, 0.5f, 1, 2f, 1f) - 0.1f
+                               ),
+                               1f
+                           ) *
                            num3;
-                var num7 = 0.7f * MathUtils.Pow(SimplexNoise.OctavedNoise(num4, num5, 0.5f * num, 0.5f, 1, 2f, 1f), 3f) *
-                           num3;
+                var num7 =
+                    0.7f *
+                    MathUtils.Pow(SimplexNoise.OctavedNoise(num4, num5, 0.5f * num, 0.5f, 1, 2f, 1f), 3f) *
+                    num3;
                 var corner = new Vector2(num4, num5);
                 var corner2 = new Vector2(num4 + num2, num5 + num2);
                 if (num6 > 0.01f)

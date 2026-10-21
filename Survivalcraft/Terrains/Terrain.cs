@@ -205,8 +205,9 @@ public class Terrain : IDisposable
         var allocatedChunks = AllocatedChunks;
         foreach (var chunk in allocatedChunks)
         {
-            if (ComparePoints(chunk.Coords, new Point2(chunkX, chunkZ)) >= 0 && (terrainChunk == null ||
-                    ComparePoints(chunk.Coords, terrainChunk.Coords) < 0))
+            if (ComparePoints(chunk.Coords, new Point2(chunkX, chunkZ)) >= 0 &&
+                (terrainChunk == null ||
+                 ComparePoints(chunk.Coords, terrainChunk.Coords) < 0))
             {
                 terrainChunk = chunk;
             }
@@ -638,8 +639,11 @@ public class Terrain : IDisposable
     /// <param name="bottomHeightMask">最低高度位掩码</param>
     /// <param name="bottomHeightShift">最低高度位偏移</param>
     /// <returns>最低方块高度</returns>
-    public static int ExtractBottomHeight(long value, long bottomHeightMask = _bottomHeightMask,
-        int bottomHeightShift = _bottomHeightShift)
+    public static int ExtractBottomHeight(
+        long value,
+        long bottomHeightMask = _bottomHeightMask,
+        int bottomHeightShift = _bottomHeightShift
+    )
     {
         return (int)((value & bottomHeightMask) >> bottomHeightShift);
     }
@@ -651,8 +655,11 @@ public class Terrain : IDisposable
     /// <param name="sunlightHeightMask">阳光高度位掩码</param>
     /// <param name="sunlightHeightShift">阳光高度位偏移</param>
     /// <returns>阳光能到达的最高高度</returns>
-    public static int ExtractSunlightHeight(long value, long sunlightHeightMask = _sunlightHeightMask,
-        int sunlightHeightShift = _sunlightHeightShift)
+    public static int ExtractSunlightHeight(
+        long value,
+        long sunlightHeightMask = _sunlightHeightMask,
+        int sunlightHeightShift = _sunlightHeightShift
+    )
     {
         return (int)((value & sunlightHeightMask) >> sunlightHeightShift);
     }
@@ -676,8 +683,11 @@ public class Terrain : IDisposable
     /// <param name="temperatureMask">温度位掩码</param>
     /// <param name="temperatureShift">温度位偏移</param>
     /// <returns>温度值</returns>
-    public static int ExtractTemperature(long value, long temperatureMask = _temperatureMask,
-        int temperatureShift = _temperatureShift)
+    public static int ExtractTemperature(
+        long value,
+        long temperatureMask = _temperatureMask,
+        int temperatureShift = _temperatureShift
+    )
     {
         return (int)((value & temperatureMask) >> temperatureShift);
     }

@@ -27,8 +27,10 @@ public sealed class PublisherSubmitServerEndpoint(IMediator mediator, ApiKeyAuth
         await Send.ResponseAsync(result, HttpContext.Response.StatusCode, cancellationToken);
     }
 
-    private async Task<ResponseData<DirectoryServerResponse>> SubmitServer(SubmitDirectoryServerRequest request,
-        CancellationToken cancellationToken)
+    private async Task<ResponseData<DirectoryServerResponse>> SubmitServer(
+        SubmitDirectoryServerRequest request,
+        CancellationToken cancellationToken
+    )
     {
         var publisher = await RequirePublisherAsync(cancellationToken);
         if (publisher.Status != PublisherStatus.Active)
@@ -37,8 +39,10 @@ public sealed class PublisherSubmitServerEndpoint(IMediator mediator, ApiKeyAuth
         }
 
         var tags = request.Tags ?? [];
-        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 100 ||
-            request.Description?.Length > 1024 || tags.Length > 16 ||
+        if (string.IsNullOrWhiteSpace(request.Name) ||
+            request.Name.Length > 100 ||
+            request.Description?.Length > 1024 ||
+            tags.Length > 16 ||
             tags.Any(tag => string.IsNullOrWhiteSpace(tag) || tag.Length > 32) ||
             !EndpointMappings.IsValidAddress(request.Address))
         {
@@ -48,9 +52,16 @@ public sealed class PublisherSubmitServerEndpoint(IMediator mediator, ApiKeyAuth
         DirectoryServerId id;
         try
         {
-            id = await mediator.Send(new SubmitDirectoryServerCommand(publisher.PublisherId, request.Name.Trim(),
-                    EndpointMappings.NormalizeAddress(request.Address), Normalize(request.Description), tags),
-                cancellationToken);
+            id = await mediator.Send(
+                new SubmitDirectoryServerCommand(
+                    publisher.PublisherId,
+                    request.Name.Trim(),
+                    EndpointMappings.NormalizeAddress(request.Address),
+                    Normalize(request.Description),
+                    tags
+                ),
+                cancellationToken
+            );
         }
         catch (InvalidOperationException)
         {
@@ -65,9 +76,10 @@ public sealed class PublisherSubmitServerEndpoint(IMediator mediator, ApiKeyAuth
     private async Task<PublisherDto> RequirePublisherAsync(CancellationToken cancellationToken)
     {
         return await mediator.Send(
-            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
-            cancellationToken
-        ) ?? throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
+                   new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                   cancellationToken
+               ) ??
+               throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
     }
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

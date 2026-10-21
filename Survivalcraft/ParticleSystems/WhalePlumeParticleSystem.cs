@@ -68,12 +68,22 @@ public class WhalePlumeParticleSystem : ParticleSystem<WhalePlumeParticleSystem.
             else if (_toGenerate >= 1f)
             {
                 particle.IsActive = true;
-                var v2 = 0.1f * _size * new Vector3(_random.Float(-1f, 1f), _random.Float(0f, 2f),
-                    _random.Float(-1f, 1f));
+                var v2 = 0.1f *
+                         _size *
+                         new Vector3(
+                             _random.Float(-1f, 1f),
+                             _random.Float(0f, 2f),
+                             _random.Float(-1f, 1f)
+                         );
                 particle.Position = Position + v2;
                 particle.Color = new Color(200, 220, 210);
-                particle.Velocity = 1f * _size * new Vector3(_random.Float(-1f, 1f), num2 * _random.Float(0.3f, 1f),
-                    _random.Float(-1f, 1f));
+                particle.Velocity = 1f *
+                                    _size *
+                                    new Vector3(
+                                        _random.Float(-1f, 1f),
+                                        num2 * _random.Float(0.3f, 1f),
+                                        _random.Float(-1f, 1f)
+                                    );
                 particle.Size = Vector2.Zero;
                 particle.Time = 0f;
                 particle.Duration = _random.Float(1f, 3f);

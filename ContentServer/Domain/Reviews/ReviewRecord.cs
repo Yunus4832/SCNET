@@ -32,7 +32,8 @@ public sealed class ReviewRecord : Entity<ReviewRecordId>, IAggregateRoot
         string targetId,
         string decision,
         string? message,
-        DateTimeOffset now)
+        DateTimeOffset now
+    )
     {
         return new ReviewRecord
         {

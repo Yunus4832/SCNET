@@ -44,27 +44,29 @@ public class VersionConverter126To127 : VersionConverter
             Log.Information("1.26 data found, starting migration to 1.27.");
             var dialog = new BusyDialog("Please wait", "Migrating 1.26 data to 1.27 format...");
             DialogsManager.ShowDialog(null, dialog);
-            Task.Run(delegate
-            {
-                string empty;
-                string empty2;
-                try
+            Task.Run(
+                delegate
                 {
-                    var num = MigrateFolder("app:/.config/.isolated-storage", "data:");
-                    empty = "Migration Successful";
-                    empty2 = $"{num} file(s) were migrated from 1.26 to 1.27.";
-                }
-                catch (Exception ex2)
-                {
-                    empty = "Migration Failed";
-                    empty2 = ex2.Message;
-                    Log.Error("Migration to 1.27 failed, reason: {0}", ex2.Message);
-                }
+                    string empty;
+                    string empty2;
+                    try
+                    {
+                        var num = MigrateFolder("app:/.config/.isolated-storage", "data:");
+                        empty = "Migration Successful";
+                        empty2 = $"{num} file(s) were migrated from 1.26 to 1.27.";
+                    }
+                    catch (Exception ex2)
+                    {
+                        empty = "Migration Failed";
+                        empty2 = ex2.Message;
+                        Log.Error("Migration to 1.27 failed, reason: {0}", ex2.Message);
+                    }
 
-                DialogsManager.HideDialog(dialog);
-                DialogsManager.ShowDialog(null, new MessageDialog(empty, empty2, "OK", string.Empty, delegate { }));
-                Dispatcher.Dispatch(SettingsManager.LoadSettings);
-            });
+                    DialogsManager.HideDialog(dialog);
+                    DialogsManager.ShowDialog(null, new MessageDialog(empty, empty2, "OK", string.Empty, delegate { }));
+                    Dispatcher.Dispatch(SettingsManager.LoadSettings);
+                }
+            );
         }
         catch (Exception ex)
         {
@@ -98,8 +100,10 @@ public class VersionConverter126To127 : VersionConverter
         Storage.CreateDirectory(targetFolderName);
         foreach (var item in Storage.ListDirectoryNames(sourceFolderName))
         {
-            num += MigrateFolder(Storage.CombinePaths(sourceFolderName, item),
-                Storage.CombinePaths(targetFolderName, item));
+            num += MigrateFolder(
+                Storage.CombinePaths(sourceFolderName, item),
+                Storage.CombinePaths(targetFolderName, item)
+            );
         }
 
         foreach (var item2 in Storage.ListFileNames(sourceFolderName))

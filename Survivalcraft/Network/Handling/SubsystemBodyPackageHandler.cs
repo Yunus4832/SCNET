@@ -93,28 +93,34 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
 
                 break;
             case SubsystemBodyPackage.EventType.HandleAxisCollision:
-                project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(package.CreatureId, from =>
-                {
-                    if (isServer && !OwnsCollisionSource(context.Sender, from.Player?.PlayerData.Client))
+                project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(
+                    package.CreatureId,
+                    from =>
                     {
-                        return;
-                    }
-
-                    project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(package.TargetCreatureId,
-                        target =>
+                        if (isServer && !OwnsCollisionSource(context.Sender, from.Player?.PlayerData.Client))
                         {
-                            if (isServer && !project.FindSubsystem<SubsystemNetworkInterest>(true)!
-                                    .IsPositionRelevant(context.Sender!, target.Position.XZ))
-                            {
-                                return;
-                            }
+                            return;
+                        }
 
-                            target.Velocity = package.Impulse;
-                            target.NetVelocity.SetNext(package.Impulse);
-                            from.CollidedWithBody?.Invoke(target);
-                            target.CollidedWithBody?.Invoke(from);
-                        });
-                });
+                        project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(
+                            package.TargetCreatureId,
+                            target =>
+                            {
+                                if (isServer &&
+                                    !project.FindSubsystem<SubsystemNetworkInterest>(true)!
+                                        .IsPositionRelevant(context.Sender!, target.Position.XZ))
+                                {
+                                    return;
+                                }
+
+                                target.Velocity = package.Impulse;
+                                target.NetVelocity.SetNext(package.Impulse);
+                                from.CollidedWithBody?.Invoke(target);
+                                target.CollidedWithBody?.Invoke(from);
+                            }
+                        );
+                    }
+                );
                 break;
             case SubsystemBodyPackage.EventType.ApplyImpulse:
                 project.FindSubsystem<SubsystemBodies>(true)!

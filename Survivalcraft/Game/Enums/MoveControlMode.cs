@@ -2,6 +2,7 @@ namespace Game;
 
 public enum MoveControlMode
 {
-    Pad,
-    Buttons
+    Pad = 0,
+
+    Buttons = 1
 }

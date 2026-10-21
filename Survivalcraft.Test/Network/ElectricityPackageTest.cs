@@ -15,8 +15,12 @@ public sealed class ElectricityPackageTest
         var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
         var voltages = new Dictionary<Point3, float> { [new Point3(1, 2, 3)] = 0.5f };
         var changes = tracker.Capture(client, voltages);
-        var package = new SubsystemElectricityPackage(new ElectricitySnapshot
-        { StartStep = 42, IsBaseline = changes.IsBaseline, SaveData = changes.Voltages, Removed = changes.Removed });
+        var package = new SubsystemElectricityPackage(
+            new ElectricitySnapshot
+            {
+                StartStep = 42, IsBaseline = changes.IsBaseline, SaveData = changes.Voltages, Removed = changes.Removed
+            }
+        );
         using var before = new ProtocolWriter();
         ProtocolMessageCodec.Write(package, before);
         voltages.Clear();
@@ -52,7 +56,13 @@ public sealed class ElectricityPackageTest
         Assert.Equal(16397, before.BaseStream.Length);
         Assert.Equal(13, after.BaseStream.Length);
         using var reader = new ProtocolReader(after.Data());
-        var decoded = Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader));
+        var decoded =
+            Assert.IsType<SubsystemElectricityPackage>(
+                ProtocolMessageCodec.Read(
+                    (byte)PackageType.SubsystemElectricity,
+                    reader
+                )
+            );
         Assert.Equal(15, decoded.Snapshot.StartStep);
     }
 
@@ -64,7 +74,12 @@ public sealed class ElectricityPackageTest
         var baseline = new SubsystemElectricity.NetSimulate { StartStep = 1, IsBaseline = true };
         baseline.SaveData[point] = 0.5f;
         subsystem.ReceiveNetworkSnapshot(ElectricityTestSnapshots.Capture(baseline));
-        subsystem.ReceiveNetworkSnapshot(ElectricityTestSnapshots.Capture(new SubsystemElectricity.NetSimulate { StartStep = 2 }));
+        subsystem.ReceiveNetworkSnapshot(
+            ElectricityTestSnapshots.Capture(
+                new SubsystemElectricity.NetSimulate
+                    { StartStep = 2 }
+            )
+        );
         var removal = new SubsystemElectricity.NetSimulate { StartStep = 3 };
         removal.Removed.Add(point);
         subsystem.ReceiveNetworkSnapshot(ElectricityTestSnapshots.Capture(removal));
@@ -85,7 +100,9 @@ public sealed class ElectricityPackageTest
         using var writer = new ProtocolWriter();
         ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)), writer);
         using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader));
+        var clone = Assert.IsType<SubsystemElectricityPackage>(
+            ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader)
+        );
 
         Assert.True(clone.Snapshot.IsBaseline);
         Assert.Equal(snapshot.Removed, clone.Snapshot.Removed);
@@ -104,7 +121,9 @@ public sealed class ElectricityPackageTest
         using var writer = new ProtocolWriter();
         ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)), writer);
         using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader));
+        var clone = Assert.IsType<SubsystemElectricityPackage>(
+            ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader)
+        );
 
         Assert.Equal(123, clone.Snapshot.StartStep);
         Assert.Equal(65536, clone.Snapshot.SaveData.Count);
@@ -123,7 +142,9 @@ public sealed class ElectricityPackageTest
         writer.Write(count);
         using var reader = new ProtocolReader(writer.Data());
 
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader));
+        Assert.Throws<InvalidDataException>(() =>
+            ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader)
+        );
     }
 
     [Fact]
@@ -136,8 +157,11 @@ public sealed class ElectricityPackageTest
             voltages.Add(new Point3(i * 16, 1, 0), 1f);
         }
 
-        var filtered = SubsystemElectricity.BuildNetworkVoltages([client], voltages,
-            chunk => chunk.X < 16 ? [client] : []);
+        var filtered = SubsystemElectricity.BuildNetworkVoltages(
+            [client],
+            voltages,
+            chunk => chunk.X < 16 ? [client] : []
+        );
         var global = new SubsystemElectricity.NetSimulate { StartStep = 10 };
         foreach (var (point, voltage) in voltages)
         {
@@ -147,10 +171,12 @@ public sealed class ElectricityPackageTest
         using var before = new ProtocolWriter();
         using var after = new ProtocolWriter();
         ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(global)), before);
-        ProtocolMessageCodec.Write(new SubsystemElectricityPackage(new ElectricitySnapshot { StartStep = 10, SaveData = filtered[client] }), after);
+        ProtocolMessageCodec.Write(
+            new SubsystemElectricityPackage(new ElectricitySnapshot { StartStep = 10, SaveData = filtered[client] }),
+            after
+        );
 
         Assert.Equal(16397, before.BaseStream.Length);
         Assert.Equal(269, after.BaseStream.Length);
-
     }
 }

@@ -68,6 +68,7 @@ public class FireworksTrailParticleSystem : ParticleSystem<FireworksTrailParticl
     public class Particle : Game.Particle
     {
         public float Duration;
+
         public float Time;
     }
 }

@@ -50,8 +50,11 @@ public class GameActivity : EngineActivity
         GamePlatformManager.RegisterClipboard(new SdlClipboardBackend());
         _filePicker = new AndroidFilePicker(this);
         GamePlatformManager.RegisterFilePicker(_filePicker);
-        GamePlatformManager.RegisterUpdateSupport(Path.Combine(CacheDir!.AbsolutePath, "updates"),
-            ".apk", "ConfirmInstall");
+        GamePlatformManager.RegisterUpdateSupport(
+            Path.Combine(CacheDir!.AbsolutePath, "updates"),
+            ".apk",
+            "ConfirmInstall"
+        );
         InitializeAndroidId();
         LoadAssetAssemblies();
 
@@ -97,7 +100,8 @@ public class GameActivity : EngineActivity
     private void InitializeAndroidId()
     {
         GetMachineID.AndroidID = AndroidProviderSettings.Secure
-            .GetString(ContentResolver, AndroidProviderSettings.Secure.AndroidId) ?? string.Empty;
+                                     .GetString(ContentResolver, AndroidProviderSettings.Secure.AndroidId) ??
+                                 string.Empty;
     }
 
     private void OpenLink(string link)

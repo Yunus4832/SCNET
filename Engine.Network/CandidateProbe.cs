@@ -47,7 +47,11 @@ internal sealed class CandidateProbe(SignalMessage candidate, IPEndPoint[] endpo
 
     public bool Matches(SignalMessage message, IPEndPoint source) =>
         ExpiresAt > DateTimeOffset.UtcNow &&
-        (Completion.Task.IsCompletedSuccessfully ? Completion.Task.Result.Equals(source) : endpoints.Contains(source)) &&
-        message.RequestId == Candidate.RequestId && message.SessionId == Candidate.SessionId && message.ParticipantId == Candidate.ParticipantId &&
+        (Completion.Task.IsCompletedSuccessfully
+            ? Completion.Task.Result.Equals(source)
+            : endpoints.Contains(source)) &&
+        message.RequestId == Candidate.RequestId &&
+        message.SessionId == Candidate.SessionId &&
+        message.ParticipantId == Candidate.ParticipantId &&
         message.Challenge == Candidate.Challenge;
 }

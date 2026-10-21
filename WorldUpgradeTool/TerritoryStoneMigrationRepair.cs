@@ -10,8 +10,11 @@ namespace WorldUpgradeTool;
 internal static class TerritoryStoneMigrationRepair
 {
     private const int _airBlockIndex = 0;
+
     private const int _bedrockBlockIndex = 1;
+
     private const int _territoryBlockIndex = 264;
+
     private const string _territorySubsystemName = "TerritoryBlockBehavior";
 
     private static readonly string[] _legacySubsystemNames =
@@ -47,7 +50,8 @@ internal static class TerritoryStoneMigrationRepair
         if (removedBlockCount > 0)
         {
             Console.WriteLine(
-                $"Removed {removedBlockCount} legacy territory stone block{(removedBlockCount == 1 ? string.Empty : "s")}.");
+                $"Removed {removedBlockCount} legacy territory stone block{(removedBlockCount == 1 ? string.Empty : "s")}."
+            );
         }
     }
 
@@ -63,7 +67,8 @@ internal static class TerritoryStoneMigrationRepair
         var targetNode = FindValuesNode(subsystemsNode, _territorySubsystemName);
         var legacyNodes = _legacySubsystemNames
             .SelectMany(name => subsystemsNode.Elements("Values")
-                .Where(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == name))
+                .Where(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == name)
+            )
             .ToArray();
 
         foreach (var legacyNode in legacyNodes)
@@ -95,7 +100,8 @@ internal static class TerritoryStoneMigrationRepair
                 territoryNode,
                 "ApplyToFriend",
                 "bool",
-                GetValue(territoryNode, "AllowTeamEnter", "False"));
+                GetValue(territoryNode, "AllowTeamEnter", "False")
+            );
             changed |= RemoveValueNode(territoryNode, "AllowTeamEnter");
             changed |= RemoveValueNode(territoryNode, "OwnerTeamId");
         }
@@ -114,7 +120,8 @@ internal static class TerritoryStoneMigrationRepair
 
         foreach (var legacySubsystemNode in _legacySubsystemNames
                      .SelectMany(name => subsystemsNode.Elements("Values")
-                         .Where(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == name)))
+                         .Where(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == name)
+                     ))
         {
             var territoriesNode = FindValuesNode(legacySubsystemNode, "Territoriy");
             if (territoriesNode == null)

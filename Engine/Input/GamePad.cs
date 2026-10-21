@@ -83,8 +83,12 @@ public static partial class GamePad
         deadZone is < 0f or >= 1f ? throw new ArgumentOutOfRangeException(nameof(deadZone)) :
         IsConnected(gamePadIndex) ? ApplyDeadZone(states[gamePadIndex].Triggers[(int)trigger], deadZone) : 0f;
 
-    public static bool IsTriggerDown(int gamePadIndex, GamePadTrigger trigger, float deadZone = 0f,
-        float threshold = 0.5f)
+    public static bool IsTriggerDown(
+        int gamePadIndex,
+        GamePadTrigger trigger,
+        float deadZone = 0f,
+        float threshold = 0.5f
+    )
     {
         if (deadZone is < 0f or >= 1f)
         {
@@ -100,8 +104,12 @@ public static partial class GamePad
         return value >= threshold;
     }
 
-    public static bool IsTriggerDownOnce(int gamePadIndex, GamePadTrigger trigger, float deadZone = 0f,
-        float threshold = 0.5f)
+    public static bool IsTriggerDownOnce(
+        int gamePadIndex,
+        GamePadTrigger trigger,
+        float deadZone = 0f,
+        float threshold = 0.5f
+    )
     {
         if (deadZone is < 0f or >= 1f)
         {
@@ -141,7 +149,7 @@ public static partial class GamePad
         }
 
         if (IsModifierKey(button))
-        //如果是修饰键，松开那一刻才算按下一次，避免影响组合键
+            //如果是修饰键，松开那一刻才算按下一次，避免影响组合键
         {
             return !states[gamePadIndex].Buttons[(int)button] && states[gamePadIndex].LastButtons[(int)button];
         }
@@ -157,8 +165,7 @@ public static partial class GamePad
             return false;
         }
 
-        if (states[gamePadIndex].Buttons[(int)button]
-            && !states[gamePadIndex].LastButtons[(int)button])
+        if (states[gamePadIndex].Buttons[(int)button] && !states[gamePadIndex].LastButtons[(int)button])
         {
             return true;
         }
@@ -223,8 +230,7 @@ public static partial class GamePad
     {
         for (var i = 0; i < states.Length; i++)
         {
-            if (Keyboard.BackButtonQuitsApp
-                && IsButtonDownOnce(i, GamePadButton.Back))
+            if (Keyboard.BackButtonQuitsApp && IsButtonDownOnce(i, GamePadButton.Back))
             {
                 Window.Close();
             }
@@ -240,8 +246,10 @@ public static partial class GamePad
                     }
                     else if (Time.FrameStartTime >= state.ButtonsRepeat[j])
                     {
-                        state.ButtonsRepeat[j] = Math.Max(Time.FrameStartTime,
-                            state.ButtonsRepeat[j] + ButtonNextRepeatTime);
+                        state.ButtonsRepeat[j] = Math.Max(
+                            Time.FrameStartTime,
+                            state.ButtonsRepeat[j] + ButtonNextRepeatTime
+                        );
                     }
                 }
                 else

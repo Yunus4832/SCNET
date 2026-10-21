@@ -10,21 +10,27 @@ internal class ColorHumanReadableConverter : IHumanReadableConverter
         var color = (Color)value;
         if (color.A != byte.MaxValue)
         {
-            return HumanReadableConverter.ValuesListToString(',', new int[4]
+            return HumanReadableConverter.ValuesListToString(
+                ',',
+                new int[4]
+                {
+                    color.R,
+                    color.G,
+                    color.B,
+                    color.A
+                }
+            );
+        }
+
+        return HumanReadableConverter.ValuesListToString(
+            ',',
+            new int[3]
             {
                 color.R,
                 color.G,
-                color.B,
-                color.A
-            });
-        }
-
-        return HumanReadableConverter.ValuesListToString(',', new int[3]
-        {
-            color.R,
-            color.G,
-            color.B
-        });
+                color.B
+            }
+        );
     }
 
     public object ConvertFromString(Type type, string data)

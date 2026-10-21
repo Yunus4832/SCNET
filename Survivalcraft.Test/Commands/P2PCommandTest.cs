@@ -30,8 +30,11 @@ public class P2PCommandTest
     [InlineData("http://localhost/", "", "p2p.invalid_configuration")]
     public void MissingOrInvalidConfigurationIsRejected(string address, string name, string code)
     {
-        Assert.Equal(code, P2PCommandHandlers.ValidateConfiguration(
-            new P2PRoomSettings { Name = name, ControlUrl = address }, out _)!.Code);
+        Assert.Equal(
+            code,
+            P2PCommandHandlers.ValidateConfiguration(new P2PRoomSettings { Name = name, ControlUrl = address }, out _)!
+                .Code
+        );
     }
 
     [Fact]
@@ -49,8 +52,18 @@ public class P2PCommandTest
         foreach (var command in commands)
         {
             Assert.False(registry.CanInvoke(command, CommandPrincipal.CreatePlayer("Host")));
-            Assert.False(registry.CanInvoke(command, CommandPrincipal.CreatePlayer("Claimed", permissions: [BuiltInPermissionIds.ManageStandard])));
-            Assert.True(registry.CanInvoke(command, CommandPrincipal.CreatePlayer("Authorized", permissions: [permission])));
+            Assert.False(
+                registry.CanInvoke(
+                    command,
+                    CommandPrincipal.CreatePlayer("Claimed", permissions: [BuiltInPermissionIds.ManageStandard])
+                )
+            );
+            Assert.True(
+                registry.CanInvoke(
+                    command,
+                    CommandPrincipal.CreatePlayer("Authorized", permissions: [permission])
+                )
+            );
             Assert.True(registry.CanInvoke(command, CommandPrincipal.LocalOperator));
             Assert.True(registry.CanInvoke(command, CommandPrincipal.System));
             Assert.True(registry.TryEncode(command, out var id, out var data, out _));

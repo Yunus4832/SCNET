@@ -27,7 +27,8 @@ public class ModPackageTest
               }
             }
             """,
-            includeTestAssembly: true);
+            includeTestAssembly: true
+        );
         var package = ModPackage.Read("test.scpkg", packageStream);
         var host = new ModHost();
 
@@ -60,17 +61,19 @@ public class ModPackageTest
     [Fact]
     public void PackageRejectsWrongRuntimeSide()
     {
-        using var packageStream = CreatePackage("""
-                                                {
-                                                  "id": "example.client",
-                                                  "name": "Client Mod",
-                                                  "version": "1.0.0",
-                                                  "side": "client",
-                                                  "entrypoints": {
-                                                    "client": "Survivalcraft.TestMod.TestMod, Survivalcraft.TestMod"
-                                                  }
-                                                }
-                                                """);
+        using var packageStream = CreatePackage(
+            """
+            {
+              "id": "example.client",
+              "name": "Client Mod",
+              "version": "1.0.0",
+              "side": "client",
+              "entrypoints": {
+                "client": "Survivalcraft.TestMod.TestMod, Survivalcraft.TestMod"
+              }
+            }
+            """
+        );
         var package = ModPackage.Read("client.scpkg", packageStream);
 
         var exception = Assert.Throws<ModPackageException>(() => package.CreateDescriptor(ModSide.Server));
@@ -139,7 +142,8 @@ public class ModPackageTest
                 ["data/blocks/items.csv"] = "Id;DisplayName\ngame:air;Data Air",
                 ["data/database/entities.xdb"] = "<Patch />",
                 ["data/recipes/items.cr"] = "<Recipes />"
-            });
+            }
+        );
         var package = ModPackage.Read("data.scpkg", packageStream);
         var descriptor = package.CreateDescriptor(ModSide.Server);
         var host = new ModHost();
@@ -167,14 +171,20 @@ public class ModPackageTest
             {
                 ["assets/example.assets/text/readme.txt"] = "namespaced content",
                 ["assets/example.assets/lang/zh-CN.json"] = "{\"Usual\":{\"ok\":\"OK\"}}"
-            });
+            }
+        );
         var package = ModPackage.Read("assets.scpkg", packageStream);
         var host = new ModHost();
         var gameId = new ResourceId(new ModId("game"), "lang/zh-CN.json");
         using var builtInLanguage = host.Extensions.GetRegistry<ContentRegistration>(ContentExtensions.RegistryName)
-            .Register(gameId.Namespace, gameId,
-                new ContentRegistration("lang/zh-CN.json",
-                    """{"Language":{"Name":"中文"},"Usual":{"ok":"确定"}}"""u8.ToArray()));
+            .Register(
+                gameId.Namespace,
+                gameId,
+                new ContentRegistration(
+                    "lang/zh-CN.json",
+                    """{"Language":{"Name":"中文"},"Usual":{"ok":"确定"}}"""u8.ToArray()
+                )
+            );
         host.LoadAndStart([package.CreateDescriptor(ModSide.Server)]);
         var catalog = ContentCatalog.Compile(host.Extensions);
 
@@ -196,20 +206,22 @@ public class ModPackageTest
     public void WriterRejectsAssetsOutsideModNamespace()
     {
         var exception = Assert.Throws<ContentPackageException>(() => CreatePackage(
-            """
-            {
-              "id": "example.assets",
-              "name": "Asset Mod",
-              "version": "1.0.0",
-              "entrypoints": {
-                "common": "Example.ModEntry, Example"
-              }
-            }
-            """,
-            new Dictionary<string, string>
-            {
-                ["assets/other.mod/readme.txt"] = "not owned"
-            }));
+                """
+                {
+                  "id": "example.assets",
+                  "name": "Asset Mod",
+                  "version": "1.0.0",
+                  "entrypoints": {
+                    "common": "Example.ModEntry, Example"
+                  }
+                }
+                """,
+                new Dictionary<string, string>
+                {
+                    ["assets/other.mod/readme.txt"] = "not owned"
+                }
+            )
+        );
 
         Assert.Contains("invalid", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -219,10 +231,12 @@ public class ModPackageTest
     {
         using var firstStream = CreatePackage(
             Manifest("example.hash"),
-            new Dictionary<string, string> { ["data/blocks/items.csv"] = "first" });
+            new Dictionary<string, string> { ["data/blocks/items.csv"] = "first" }
+        );
         using var secondStream = CreatePackage(
             Manifest("example.hash"),
-            new Dictionary<string, string> { ["data/blocks/items.csv"] = "second" });
+            new Dictionary<string, string> { ["data/blocks/items.csv"] = "second" }
+        );
 
         var first = ModPackage.Read("first.scpkg", firstStream);
         var second = ModPackage.Read("second.scpkg", secondStream);
@@ -239,14 +253,16 @@ public class ModPackageTest
             {
                 ["data/blocks/a.csv"] = "A",
                 ["data/blocks/b.csv"] = "B"
-            });
+            }
+        );
         using var secondStream = CreatePackage(
             Manifest("example.order"),
             new Dictionary<string, string>
             {
                 ["data/blocks/b.csv"] = "B",
                 ["data/blocks/a.csv"] = "A"
-            });
+            }
+        );
 
         var first = ModPackage.Read("first.scpkg", firstStream);
         var second = ModPackage.Read("second.scpkg", secondStream);
@@ -257,10 +273,14 @@ public class ModPackageTest
     private static MemoryStream CreatePackage(
         string manifest,
         IReadOnlyDictionary<string, string>? dataFiles = null,
-        bool includeTestAssembly = false)
+        bool includeTestAssembly = false
+    )
     {
-        return ScpkgTestPackage.Create(manifest, dataFiles,
-            includeTestAssembly ? typeof(ModPackageTest).Assembly.Location : null);
+        return ScpkgTestPackage.Create(
+            manifest,
+            dataFiles,
+            includeTestAssembly ? typeof(ModPackageTest).Assembly.Location : null
+        );
     }
 
     private static void WritePackage(string path, string manifest)
@@ -277,7 +297,8 @@ public class ModPackageTest
             new Dictionary<string, string>
             {
                 ["data/blocks/marker.csv"] = "Id;DisplayName\ngame:air;Marker"
-            });
+            }
+        );
     }
 
     private static string Manifest(string id, string? dependency = null)
@@ -304,7 +325,8 @@ public sealed class PackageEntrypointMod : IMod
         context.Extensions.Register(
             "markers",
             new ResourceId(context.Manifest.ModId, "loaded"),
-            "configured");
+            "configured"
+        );
     }
 
     public void Start(IModContext context)

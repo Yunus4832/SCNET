@@ -17,7 +17,8 @@ public class FourLedElectricElement(
     {
         var cellFace = CellFaces[0];
         var data = Terrain.ExtractData(
-            SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z));
+            SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z)
+        );
         var mountingFace = FourLedBlock.GetMountingFace(data);
         _color = LedBlock.LedColors[FourLedBlock.GetColor(data)];
         for (var i = 0; i < 4; i++)
@@ -29,7 +30,9 @@ public class FourLedElectricElement(
             var vector2 = mountingFace < 4 ? Vector3.UnitY : Vector3.UnitX;
             var vector3 = Vector3.Cross(vector, vector2);
             _glowPoints[i] = _subsystemGlow.AddGlowPoint();
-            _glowPoints[i].Position = v - 0.4375f * CellFace.FaceToVector3(mountingFace) + 0.25f * vector3 * num +
+            _glowPoints[i].Position = v -
+                                      0.4375f * CellFace.FaceToVector3(mountingFace) +
+                                      0.25f * vector3 * num +
                                       0.25f * vector2 * num2;
             _glowPoints[i].Forward = vector;
             _glowPoints[i].Up = vector2;
@@ -58,8 +61,10 @@ public class FourLedElectricElement(
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                _voltage = MathUtils.Max(_voltage,
-                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                _voltage = MathUtils.Max(
+                    _voltage,
+                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                );
             }
         }
 

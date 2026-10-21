@@ -15,8 +15,10 @@ public static class HumanReadableConverter
         }
         catch (Exception innerException)
         {
-            throw new InvalidOperationException($"Cannot convert value of type \"{type.FullName}\" to string.",
-                innerException);
+            throw new InvalidOperationException(
+                $"Cannot convert value of type \"{type.FullName}\" to string.",
+                innerException
+            );
         }
     }
 
@@ -138,7 +140,8 @@ public static class HumanReadableConverter
             if (throwIfNotFound)
             {
                 throw new InvalidOperationException(
-                    $"IHumanReadableConverter for type \"{type.FullName}\" not found in any loaded assembly.");
+                    $"IHumanReadableConverter for type \"{type.FullName}\" not found in any loaded assembly."
+                );
             }
 
             return null;

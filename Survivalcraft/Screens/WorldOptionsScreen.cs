@@ -86,6 +86,7 @@ public class WorldOptionsScreen : Screen
     private readonly SliderWidget _islandSizeNs;
 
     private readonly Widget _islandTerrainPanel;
+
     private readonly Widget _newWorldOnlyPanel;
 
     private readonly ButtonWidget _paletteButton;
@@ -148,7 +149,8 @@ public class WorldOptionsScreen : Screen
         _terrainGenerationSelection.ItemTextProvider = item => StringsManager.GetString(
             "TerrainGenerationMode",
             (TerrainGenerationMode)item,
-            "Name");
+            "Name"
+        );
         _terrainGenerationSelection.SelectionChanged += TerrainGenerationChanged;
         _flatTerrainLevelSlider = Children.Find<SliderWidget>("FlatTerrainLevel")!;
         _flatTerrainShoreRoughnessSlider = Children.Find<SliderWidget>("FlatTerrainShoreRoughness")!;
@@ -160,48 +162,95 @@ public class WorldOptionsScreen : Screen
         _descriptionLabel = Children.Find<LabelWidget>("Description")!;
         _descriptionBindings =
         [
-            CreateDescriptionBinding("TerrainGenerationLabel", () => StringsManager.GetString(
-                "TerrainGenerationMode", _worldSettings.TerrainGenerationMode, "Description")),
+            CreateDescriptionBinding(
+                "TerrainGenerationLabel",
+                () => StringsManager.GetString(
+                    "TerrainGenerationMode",
+                    _worldSettings.TerrainGenerationMode,
+                    "Description"
+                )
+            ),
             CreateDescriptionBinding("IslandSizeEWLabel", () => StringsManager.GetString("IslandSize", "Description")),
             CreateDescriptionBinding("IslandSizeNSLabel", () => StringsManager.GetString("IslandSize", "Description")),
-            CreateDescriptionBinding("FlatTerrainLevelLabel",
-                () => StringsManager.GetString("FlatTerrainLevel", "Description")),
-            CreateDescriptionBinding("FlatTerrainShoreRoughnessLabel",
-                () => StringsManager.GetString("FlatTerrainShoreRoughness", "Description")),
-            CreateDescriptionBinding("FlatTerrainBlockSettingLabel",
-                () => StringsManager.GetString("FlatTerrainBlock", "Description")),
-            CreateDescriptionBinding("MagmaOceanLabel",
-                () => StringsManager.GetString("FlatTerrainMagmaOcean", "Description")),
-            CreateDescriptionBinding("SeaLevelOffsetLabel",
-                () => StringsManager.GetString("SeaLevelOffset", "Description")),
-            CreateDescriptionBinding("TemperatureOffsetLabel",
-                () => StringsManager.GetString("TemperatureOffset", "Description")),
-            CreateDescriptionBinding("HumidityOffsetLabel",
-                () => StringsManager.GetString("HumidityOffset", "Description")),
+            CreateDescriptionBinding(
+                "FlatTerrainLevelLabel",
+                () => StringsManager.GetString("FlatTerrainLevel", "Description")
+            ),
+            CreateDescriptionBinding(
+                "FlatTerrainShoreRoughnessLabel",
+                () => StringsManager.GetString("FlatTerrainShoreRoughness", "Description")
+            ),
+            CreateDescriptionBinding(
+                "FlatTerrainBlockSettingLabel",
+                () => StringsManager.GetString("FlatTerrainBlock", "Description")
+            ),
+            CreateDescriptionBinding(
+                "MagmaOceanLabel",
+                () => StringsManager.GetString("FlatTerrainMagmaOcean", "Description")
+            ),
+            CreateDescriptionBinding(
+                "SeaLevelOffsetLabel",
+                () => StringsManager.GetString("SeaLevelOffset", "Description")
+            ),
+            CreateDescriptionBinding(
+                "TemperatureOffsetLabel",
+                () => StringsManager.GetString("TemperatureOffset", "Description")
+            ),
+            CreateDescriptionBinding(
+                "HumidityOffsetLabel",
+                () => StringsManager.GetString("HumidityOffset", "Description")
+            ),
             CreateDescriptionBinding("BiomeSizeLabel", () => StringsManager.GetString("BiomeSize", "Description")),
-            CreateDescriptionBinding("BlocksTextureSettingLabel",
-                () => StringsManager.GetString("BlocksTexture", "Description")),
+            CreateDescriptionBinding(
+                "BlocksTextureSettingLabel",
+                () => StringsManager.GetString("BlocksTexture", "Description")
+            ),
             CreateDescriptionBinding("PaletteLabel", () => StringsManager.GetString("Palette", "Description")),
-            CreateDescriptionBinding("HotbarSlotsCountLabel",
-                () => LanguageManager.GetContentWidgets(_typeName, "HotbarSlotsCountDescription")),
-            CreateDescriptionBinding("AreSeasonsChangingLabel", () => StringsManager.GetString(
-                "AreSeasonsChanging", _worldSettings.AreSeasonsChanging)),
+            CreateDescriptionBinding(
+                "HotbarSlotsCountLabel",
+                () => LanguageManager.GetContentWidgets(_typeName, "HotbarSlotsCountDescription")
+            ),
+            CreateDescriptionBinding(
+                "AreSeasonsChangingLabel",
+                () => StringsManager.GetString("AreSeasonsChanging", _worldSettings.AreSeasonsChanging)
+            ),
             CreateDescriptionBinding("YearDaysLabel", () => StringsManager.GetString("YearDays", "Description")),
             CreateDescriptionBinding("TimeOfYearLabel", () => StringsManager.GetString("TimeOfYear", "Description")),
-            CreateDescriptionBinding("EnvironmentBehaviorLabel", () => StringsManager.GetString(
-                "EnvironmentBehaviorMode", _worldSettings.EnvironmentBehaviorMode, "Description")),
-            CreateDescriptionBinding("TimeOfDayLabel", () => StringsManager.GetString(
-                "TimeOfDayMode", _worldSettings.TimeOfDayMode, "Description")),
-            CreateDescriptionBinding("WeatherEffectsLabel", () => StringsManager.GetString(
-                "WeatherMode", _worldSettings.AreWeatherEffectsEnabled)),
-            CreateDescriptionBinding("AdventureRespawnLabel", () => StringsManager.GetString(
-                "AdventureRespawnMode", _worldSettings.IsAdventureRespawnAllowed)),
-            CreateDescriptionBinding("AdventureSurvivalMechanicsLabel", () => StringsManager.GetString(
-                "AdventureSurvivalMechanics", _worldSettings.AreAdventureSurvivalMechanicsEnabled)),
-            CreateDescriptionBinding("SupernaturalCreaturesLabel", () => StringsManager.GetString(
-                "SupernaturalCreatures", _worldSettings.AreSupernaturalCreaturesEnabled)),
-            CreateDescriptionBinding("FriendlyFireLabel", () => StringsManager.GetString(
-                "FriendlyFire", _worldSettings.IsFriendlyFireEnabled))
+            CreateDescriptionBinding(
+                "EnvironmentBehaviorLabel",
+                () => StringsManager.GetString(
+                    "EnvironmentBehaviorMode",
+                    _worldSettings.EnvironmentBehaviorMode,
+                    "Description"
+                )
+            ),
+            CreateDescriptionBinding(
+                "TimeOfDayLabel",
+                () => StringsManager.GetString("TimeOfDayMode", _worldSettings.TimeOfDayMode, "Description")
+            ),
+            CreateDescriptionBinding(
+                "WeatherEffectsLabel",
+                () => StringsManager.GetString("WeatherMode", _worldSettings.AreWeatherEffectsEnabled)
+            ),
+            CreateDescriptionBinding(
+                "AdventureRespawnLabel",
+                () => StringsManager.GetString("AdventureRespawnMode", _worldSettings.IsAdventureRespawnAllowed)
+            ),
+            CreateDescriptionBinding(
+                "AdventureSurvivalMechanicsLabel",
+                () => StringsManager.GetString(
+                    "AdventureSurvivalMechanics",
+                    _worldSettings.AreAdventureSurvivalMechanicsEnabled
+                )
+            ),
+            CreateDescriptionBinding(
+                "SupernaturalCreaturesLabel",
+                () => StringsManager.GetString("SupernaturalCreatures", _worldSettings.AreSupernaturalCreaturesEnabled)
+            ),
+            CreateDescriptionBinding(
+                "FriendlyFireLabel",
+                () => StringsManager.GetString("FriendlyFire", _worldSettings.IsFriendlyFireEnabled)
+            )
         ];
         _islandSizeEw.MinValue = 0f;
         _islandSizeEw.MaxValue = _islandSizes.Length - 1;
@@ -219,7 +268,8 @@ public class WorldOptionsScreen : Screen
 
     private (ClickableTextRowWidget Label, Func<string> DescriptionProvider) CreateDescriptionBinding(
         string labelName,
-        Func<string> descriptionProvider)
+        Func<string> descriptionProvider
+    )
     {
         return (Children.Find<ClickableTextRowWidget>(labelName)!, descriptionProvider);
     }
@@ -240,7 +290,8 @@ public class WorldOptionsScreen : Screen
     {
         var modes = Enum.GetValues<TerrainGenerationMode>()
             .Where(mode => !TerrainGenerationModes.IsLegacy(mode) &&
-                           (_worldSettings.GameMode == GameMode.Creative || !TerrainGenerationModes.IsFlat(mode)))
+                           (_worldSettings.GameMode == GameMode.Creative || !TerrainGenerationModes.IsFlat(mode))
+            )
             .ToArray();
         _updatingTerrainGeneration = true;
         _terrainGenerationSelection.SetItems(modes.Cast<object>());
@@ -251,7 +302,8 @@ public class WorldOptionsScreen : Screen
 
     private void TerrainGenerationChanged()
     {
-        if (_updatingTerrainGeneration || _isExistingWorld ||
+        if (_updatingTerrainGeneration ||
+            _isExistingWorld ||
             _terrainGenerationSelection.SelectedItem is not TerrainGenerationMode mode)
         {
             return;
@@ -322,8 +374,12 @@ public class WorldOptionsScreen : Screen
         {
             _worldSettings.TerrainLevel =
                 MathUtils.Clamp(
-                    (int)_flatTerrainLevelSlider.Value / (int)_flatTerrainLevelSlider.Granularity *
-                    (int)_flatTerrainLevelSlider.Granularity, 2, 252);
+                    (int)_flatTerrainLevelSlider.Value /
+                    (int)_flatTerrainLevelSlider.Granularity *
+                    (int)_flatTerrainLevelSlider.Granularity,
+                    2,
+                    252
+                );
         }
 
         if (_flatTerrainShoreRoughnessSlider.IsSliding && !_isExistingWorld)
@@ -346,17 +402,19 @@ public class WorldOptionsScreen : Screen
                     LanguageManager.Get(_typeName, 2),
                     items,
                     72f,
-                    delegate (object index)
+                    delegate(object index)
                     {
                         var node2 = ContentManager.Get<XElement>("Widgets/SelectBlockItem");
                         var obj2 = (ContainerWidget)LoadWidget(null, node2, null);
-                        obj2.Children.Find<BlockIconWidget>("SelectBlockItem.Block")!.Catalog = CurrentModRuntime.Value!.PreviewCatalog;
+                        obj2.Children.Find<BlockIconWidget>("SelectBlockItem.Block")!.Catalog =
+                            CurrentModRuntime.Value!.PreviewCatalog;
                         obj2.Children.Find<BlockIconWidget>("SelectBlockItem.Block")!.Contents = (int)index;
-                        obj2.Children.Find<LabelWidget>("SelectBlockItem.Text")!.Text = CurrentModRuntime.Value!.PreviewCatalog.Blocks[(int)index]
+                        obj2.Children.Find<LabelWidget>("SelectBlockItem.Text")!.Text = CurrentModRuntime.Value!
+                            .PreviewCatalog.Blocks[(int)index]
                             .GetDisplayName(null, Terrain.MakeBlockValue((int)index));
                         return obj2;
                     },
-                    delegate (object index) { _worldSettings.TerrainBlockIndex = (int)index; }
+                    delegate(object index) { _worldSettings.TerrainBlockIndex = (int)index; }
                 )
             );
         }
@@ -390,8 +448,11 @@ public class WorldOptionsScreen : Screen
         if (_blocksTextureSelector.IsClicked)
         {
             BlocksTexturesManager.UpdateBlocksTexturesList();
-            var dialog = new ListSelectionDialog(LanguageManager.Get(_typeName, 3),
-                BlocksTexturesManager.ReadOnlyBlockTexturesNames, 64f, delegate (object item)
+            var dialog = new ListSelectionDialog(
+                LanguageManager.Get(_typeName, 3),
+                BlocksTexturesManager.ReadOnlyBlockTexturesNames,
+                64f,
+                delegate(object item)
                 {
                     var node = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
                     var obj = (ContainerWidget)LoadWidget(this, node, null);
@@ -403,7 +464,9 @@ public class WorldOptionsScreen : Screen
                     obj.Children.Find<RectangleWidget>("BlocksTextureItem.Icon")!.Subtexture =
                         new Subtexture(texture2, Vector2.Zero, Vector2.One);
                     return obj;
-                }, delegate (object item) { _worldSettings.BlocksTextureName = (string)item; });
+                },
+                delegate(object item) { _worldSettings.BlocksTextureName = (string)item; }
+            );
             DialogsManager.ShowDialog(null, dialog);
         }
 
@@ -501,8 +564,10 @@ public class WorldOptionsScreen : Screen
         _biomeSizeSlider.Text = _worldSettings.BiomeSize + "x";
         _hotbarSlotsCountSlider.Value = _worldSettings.CurrentHotbarSlotsCount;
         _hotbarSlotsCountSlider.Text = _worldSettings.CurrentHotbarSlotsCount.ToString();
-        _environmentBehaviorButton.Text = LanguageManager.Get("EnvironmentBehaviorMode",
-            _worldSettings.EnvironmentBehaviorMode.ToString());
+        _environmentBehaviorButton.Text = LanguageManager.Get(
+            "EnvironmentBehaviorMode",
+            _worldSettings.EnvironmentBehaviorMode.ToString()
+        );
         _areSeasonsChangingCheckBox.IsChecked = _worldSettings.AreSeasonsChanging;
         _yearDaysSlider.Value = FindNearestIndex(_yearDays, _worldSettings.YearDays);
         _yearDaysSlider.Text = $"{_worldSettings.YearDays} days";

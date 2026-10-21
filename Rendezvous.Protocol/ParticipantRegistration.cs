@@ -5,4 +5,5 @@ public sealed record ParticipantRegistration(
     Guid SessionId,
     Guid ParticipantId,
     string Credential,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt
+);

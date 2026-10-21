@@ -18,21 +18,30 @@ public static class AboutHelpTopic
     {
         var engineVersion = typeof(Texture2D).Assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion.Split('+', 2)[0];
-        return string.Join("\n\n",
+        return string.Join(
+            "\n\n",
             LanguageManager.Get("About", "Introduction"),
-            string.Join('\n',
+            string.Join(
+                '\n',
                 Line("GameVersion", VersionsManager.Version),
                 Line("BuildVersion", ShortBuildVersion(VersionsManager.BuildVersion)),
                 Line("EngineVersion", engineVersion),
-                Line("Platform", $"{PlatformManager.Platform} / {RuntimeInformation.OSDescription} / {RuntimeInformation.ProcessArchitecture}")),
-            string.Join('\n',
+                Line(
+                    "Platform",
+                    $"{PlatformManager.Platform} / {RuntimeInformation.OSDescription} / {RuntimeInformation.ProcessArchitecture}"
+                )
+            ),
+            string.Join(
+                '\n',
                 Line("GameProtocol", VersionsManager.ProtocolVersion.ToString()),
                 Line("ServerSourceProtocol", ServerSourceProtocol.CurrentVersion.ToString()),
                 Line("SignalingProtocol", SignalCodec.CurrentVersion.ToString()),
                 Line("RelayProtocol", RelayDatagramCodec.CurrentVersion.ToString()),
-                Line("PackageFormat", ContentPackageManifest.CurrentFormatVersion.ToString())),
+                Line("PackageFormat", ContentPackageManifest.CurrentFormatVersion.ToString())
+            ),
             LanguageManager.Get("About", "VersionExplanation"),
-            Line("Source", SourceUrl));
+            Line("Source", SourceUrl)
+        );
     }
 
     internal static string ShortBuildVersion(string version)

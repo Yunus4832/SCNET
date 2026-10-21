@@ -49,8 +49,10 @@ public class SubsystemSeasons : Subsystem, IUpdateable
         UpdateSeasonState();
         if (Time.PeriodicEvent(10, 0.0) && CommonLib.WorkType == WorkType.Server)
         {
-            CommonLib.Net.QueuePackage(new SubsystemSeasonPackage(_subsystemGameInfo.WorldSettings.TimeOfYear),
-                PackageAudience.Global);
+            CommonLib.Net.QueuePackage(
+                new SubsystemSeasonPackage(_subsystemGameInfo.WorldSettings.TimeOfYear),
+                PackageAudience.Global
+            );
         }
     }
 
@@ -93,8 +95,11 @@ public class SubsystemSeasons : Subsystem, IUpdateable
         }
 
         _seasonsGradient ??= (Image)ContentManager.Get<Texture2D>("Textures/SeasonsSlider").Tag!;
-        var x = (int)MathUtils.Clamp(MathUtils.Round(timeOfYear * _seasonsGradient.Width), 0f,
-            _seasonsGradient.Width - 1);
+        var x = (int)MathUtils.Clamp(
+            MathUtils.Round(timeOfYear * _seasonsGradient.Width),
+            0f,
+            _seasonsGradient.Width - 1
+        );
         return _seasonsGradient.GetPixel(x, 0);
     }
 

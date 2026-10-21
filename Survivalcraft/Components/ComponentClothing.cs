@@ -99,17 +99,9 @@ public class ComponentClothing : Component, IUpdateable, IInventory
 
     public int SlotsCount => 4;
 
-    public int VisibleSlotsCount
-    {
-        get => SlotsCount;
-        set { }
-    }
+    public int VisibleSlotsCount { get => SlotsCount; set { } }
 
-    public int ActiveSlotIndex
-    {
-        get => -1;
-        set { }
-    }
+    public int ActiveSlotIndex { get => -1; set { } }
 
     public virtual void OnSlotChange(int slotIndex)
     {
@@ -156,8 +148,16 @@ public class ComponentClothing : Component, IUpdateable, IInventory
     {
     }
 
-    public virtual void ProcessSlotItems(IInventory sourceInventory, int sourceSlotIndex, int slotIndex, int value,
-        int count, int processCount, out int processedValue, out int processedCount)
+    public virtual void ProcessSlotItems(
+        IInventory sourceInventory,
+        int sourceSlotIndex,
+        int slotIndex,
+        int value,
+        int count,
+        int processCount,
+        out int processedValue,
+        out int processedCount
+    )
     {
         processedCount = 0;
         processedValue = 0;
@@ -211,8 +211,14 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             {
                 var slotValue = GetSlotValue(i);
                 var count = RemoveSlotItems(i, 1);
-                var value = random.Float(5f, 10f) * Vector3.Normalize(new Vector3(random.Float(-1f, 1f),
-                    random.Float(1f, 2f), random.Float(-1f, 1f)));
+                var value = random.Float(5f, 10f) *
+                            Vector3.Normalize(
+                                new Vector3(
+                                    random.Float(-1f, 1f),
+                                    random.Float(1f, 2f),
+                                    random.Float(-1f, 1f)
+                                )
+                            );
                 subsystemPickables.AddPickable(slotValue, count, position, value, null);
             }
         }
@@ -275,13 +281,21 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 while (num < _clothesList.Count)
                 {
                     var value = _clothesList[num];
-                    var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
+                    var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog()
+                        .Blocks[Terrain.ExtractContents(value)]
                         .GetClothingData(Terrain.ExtractData(value));
                     if (clothingData.PlayerLevelRequired > _componentPlayer.PlayerData.Level)
                     {
                         _componentGui.DisplaySmallMessage(
-                            string.Format(LanguageManager.Get(_typeName, 1), clothingData.PlayerLevelRequired,
-                                clothingData.DisplayName), Color.White, true, true);
+                            string.Format(
+                                LanguageManager.Get(_typeName, 1),
+                                clothingData.PlayerLevelRequired,
+                                clothingData.DisplayName
+                            ),
+                            Color.White,
+                            true,
+                            true
+                        );
                         _subsystemPickables.AddPickable(value, 1, _componentBody.Position, null, null);
                         _clothesList.RemoveAt(num);
                         flag = true;
@@ -308,7 +322,8 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             ((_componentLocomotion.LastWalkOrder.HasValue &&
               _componentLocomotion.LastWalkOrder.Value != Vector2.Zero) ||
              (_componentLocomotion.LastSwimOrder.HasValue &&
-              _componentLocomotion.LastSwimOrder.Value != Vector3.Zero) || _componentLocomotion.LastJumpOrder != 0f))
+              _componentLocomotion.LastSwimOrder.Value != Vector3.Zero) ||
+             _componentLocomotion.LastJumpOrder != 0f))
         {
             if (_lastTotalElapsedGameTime.HasValue)
             {
@@ -320,7 +335,8 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                     for (var i = 0; i < _clothesList.Count; i++)
                     {
                         var value2 = _clothesList[i];
-                        var clothingData2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value2)]
+                        var clothingData2 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                            .Blocks[Terrain.ExtractContents(value2)]
                             .GetClothingData(Terrain.ExtractData(value2));
                         var num2 = _componentVitalStats.Wetness > 0f
                             ? 10f * clothingData2.Sturdiness
@@ -340,10 +356,22 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                         if (Terrain.ExtractContents(_clothesList[num4]) != 203)
                         {
                             _clothesList.RemoveAt(num4);
-                            _subsystemParticles.AddParticleSystem(new BlockDebrisParticleSystem(_subsystemTerrain,
-                                _componentBody.Position + _componentBody.StanceBoxSize / 2f, 1f, 1f, Color.White, 0));
-                            _componentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 2), Color.White, true,
-                                true);
+                            _subsystemParticles.AddParticleSystem(
+                                new BlockDebrisParticleSystem(
+                                    _subsystemTerrain,
+                                    _componentBody.Position + _componentBody.StanceBoxSize / 2f,
+                                    1f,
+                                    1f,
+                                    Color.White,
+                                    0
+                                )
+                            );
+                            _componentGui.DisplaySmallMessage(
+                                LanguageManager.Get(_typeName, 2),
+                                Color.White,
+                                true,
+                                true
+                            );
                         }
                         else
                         {
@@ -390,11 +418,11 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         SanitizeInvalidClothes();
         _clothedTexturesValid = false;
         var num = (from clothe in _clothes
-                   from item in clothe.Value
-                   select GetClothingDataSafe(item)
+            from item in clothe.Value
+            select GetClothingDataSafe(item)
             into clothingData
-                   where clothingData != null
-                   select clothingData.DensityModifier).Sum();
+            where clothingData != null
+            select clothingData.DensityModifier).Sum();
 
         var num2 = num - _densityModifierApplied;
         _densityModifierApplied += num2;
@@ -476,7 +504,8 @@ public class ComponentClothing : Component, IUpdateable, IInventory
     {
         try
         {
-            return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].GetClothingData(Terrain.ExtractData(value));
+            return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
+                .GetClothingData(Terrain.ExtractData(value));
         }
         catch (Exception ex)
         {
@@ -517,7 +546,9 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             var value = list[i];
             var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
                 .GetClothingData(Terrain.ExtractData(value));
-            var x = (num2 - CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[203].GetDamage(value)) / num2 * clothingData.Sturdiness;
+            var x = (num2 - CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[203].GetDamage(value)) /
+                    num2 *
+                    clothingData.Sturdiness;
             var num3 = MathUtils.Min(attackPower * MathUtils.Saturate(clothingData.ArmorProtection), x);
             if (!(num3 > 0f))
             {
@@ -535,8 +566,14 @@ public class ComponentClothing : Component, IUpdateable, IInventory
 
             if (!string.IsNullOrEmpty(clothingData.ImpactSoundsFolder))
             {
-                _subsystemAudio.PlayRandomSound(clothingData.ImpactSoundsFolder, 1f,
-                    _random.Float(-0.3f, 0.3f), _componentBody.Position, 4f, 0.15f);
+                _subsystemAudio.PlayRandomSound(
+                    clothingData.ImpactSoundsFolder,
+                    1f,
+                    _random.Float(-0.3f, 0.3f),
+                    _componentBody.Position,
+                    4f,
+                    0.15f
+                );
             }
         }
 
@@ -546,8 +583,16 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             if (Terrain.ExtractContents(list[num4]) != 203)
             {
                 list.RemoveAt(num4);
-                _subsystemParticles.AddParticleSystem(new BlockDebrisParticleSystem(_subsystemTerrain,
-                    _componentBody.Position + _componentBody.StanceBoxSize / 2f, 1f, 1f, Color.White, 0));
+                _subsystemParticles.AddParticleSystem(
+                    new BlockDebrisParticleSystem(
+                        _subsystemTerrain,
+                        _componentBody.Position + _componentBody.StanceBoxSize / 2f,
+                        1f,
+                        1f,
+                        Color.White,
+                        0
+                    )
+                );
                 continue;
             }
 
@@ -583,14 +628,22 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         _clothes[ClothingSlot.Legs] = [];
         _clothes[ClothingSlot.Feet] = [];
         var value = valuesDictionary.GetValue<ValuesDictionary>("Clothes");
-        SetClothes(ClothingSlot.Head,
-            HumanReadableConverter.ValuesListFromString<int>(';', value.GetValue<string>("Head")));
-        SetClothes(ClothingSlot.Torso,
-            HumanReadableConverter.ValuesListFromString<int>(';', value.GetValue<string>("Torso")));
-        SetClothes(ClothingSlot.Legs,
-            HumanReadableConverter.ValuesListFromString<int>(';', value.GetValue<string>("Legs")));
-        SetClothes(ClothingSlot.Feet,
-            HumanReadableConverter.ValuesListFromString<int>(';', value.GetValue<string>("Feet")));
+        SetClothes(
+            ClothingSlot.Head,
+            HumanReadableConverter.ValuesListFromString<int>(';', value.GetValue<string>("Head"))
+        );
+        SetClothes(
+            ClothingSlot.Torso,
+            HumanReadableConverter.ValuesListFromString<int>(';', value.GetValue<string>("Torso"))
+        );
+        SetClothes(
+            ClothingSlot.Legs,
+            HumanReadableConverter.ValuesListFromString<int>(';', value.GetValue<string>("Legs"))
+        );
+        SetClothes(
+            ClothingSlot.Feet,
+            HumanReadableConverter.ValuesListFromString<int>(';', value.GetValue<string>("Feet"))
+        );
         Id = valuesDictionary.GetValue("Id", -1);
         var subInventory = Project.FindSubsystem<SubsystemInventories>(true)!;
         Id = Id == -1 ? subInventory.ProduceInventoryId(this) : subInventory.RegisterInventory(this);
@@ -601,14 +654,22 @@ public class ComponentClothing : Component, IUpdateable, IInventory
     {
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("Clothes", valuesDictionary2);
-        valuesDictionary2.SetValue("Head",
-            HumanReadableConverter.ValuesListToString(';', _clothes[ClothingSlot.Head].ToArray()));
-        valuesDictionary2.SetValue("Torso",
-            HumanReadableConverter.ValuesListToString(';', _clothes[ClothingSlot.Torso].ToArray()));
-        valuesDictionary2.SetValue("Legs",
-            HumanReadableConverter.ValuesListToString(';', _clothes[ClothingSlot.Legs].ToArray()));
-        valuesDictionary2.SetValue("Feet",
-            HumanReadableConverter.ValuesListToString(';', _clothes[ClothingSlot.Feet].ToArray()));
+        valuesDictionary2.SetValue(
+            "Head",
+            HumanReadableConverter.ValuesListToString(';', _clothes[ClothingSlot.Head].ToArray())
+        );
+        valuesDictionary2.SetValue(
+            "Torso",
+            HumanReadableConverter.ValuesListToString(';', _clothes[ClothingSlot.Torso].ToArray())
+        );
+        valuesDictionary2.SetValue(
+            "Legs",
+            HumanReadableConverter.ValuesListToString(';', _clothes[ClothingSlot.Legs].ToArray())
+        );
+        valuesDictionary2.SetValue(
+            "Feet",
+            HumanReadableConverter.ValuesListToString(';', _clothes[ClothingSlot.Feet].ToArray())
+        );
         valuesDictionary.SetValue("Id", Id);
     }
 
@@ -652,7 +713,8 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         }
 
         var v2 = list[^1];
-        var clothingData2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(v2)].GetClothingData(Terrain.ExtractData(v2));
+        var clothingData2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(v2)]
+            .GetClothingData(Terrain.ExtractData(v2));
         return clothingData.Layer > clothingData2.Layer;
     }
 
@@ -673,15 +735,22 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 {
                     if (CommonLib.WorkType == WorkType.Client)
                     {
-                        NetworkSender.SendToServer(ClothingPackageBuilder.Capture(
-                            _componentPlayer.PlayerData.CharacterSkinName,
-                            ComponentClothingPackage.DataType.RequestSkin));
+                        NetworkSender.SendToServer(
+                            ClothingPackageBuilder.Capture(
+                                _componentPlayer.PlayerData.CharacterSkinName,
+                                ComponentClothingPackage.DataType.RequestSkin
+                            )
+                        );
                     }
                     else if (CommonLib.WorkType == WorkType.Server)
                     {
-                        CommonLib.Net.QueuePackage(ClothingPackageBuilder.Capture(
-                            _componentPlayer.PlayerData.CharacterSkinName, ComponentClothingPackage.DataType.WhoHas),
-                            PackageAudience.Global);
+                        CommonLib.Net.QueuePackage(
+                            ClothingPackageBuilder.Capture(
+                                _componentPlayer.PlayerData.CharacterSkinName,
+                                ComponentClothingPackage.DataType.WhoHas
+                            ),
+                            PackageAudience.Global
+                        );
                     }
                 }
             }
@@ -689,20 +758,32 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             _skinTexture ??= CharacterSkinsManager.LoadTexture("$Male1")!;
         }
 
-        if (_innerClothedTexture == null || _innerClothedTexture.Width != _skinTexture.Width ||
+        if (_innerClothedTexture == null ||
+            _innerClothedTexture.Width != _skinTexture.Width ||
             _innerClothedTexture.Height != _skinTexture.Height)
         {
-            _innerClothedTexture = new RenderTarget2D(_skinTexture.Width, _skinTexture.Height, 1,
-                ColorFormat.Rgba8888, DepthFormat.None);
+            _innerClothedTexture = new RenderTarget2D(
+                _skinTexture.Width,
+                _skinTexture.Height,
+                1,
+                ColorFormat.Rgba8888,
+                DepthFormat.None
+            );
             _componentHumanModel.TextureOverride = _innerClothedTexture;
             _clothedTexturesValid = false;
         }
 
-        if (_outerClothedTexture == null || _outerClothedTexture.Width != _skinTexture.Width ||
+        if (_outerClothedTexture == null ||
+            _outerClothedTexture.Width != _skinTexture.Width ||
             _outerClothedTexture.Height != _skinTexture.Height)
         {
-            _outerClothedTexture = new RenderTarget2D(_skinTexture.Width, _skinTexture.Height, 1,
-                ColorFormat.Rgba8888, DepthFormat.None);
+            _outerClothedTexture = new RenderTarget2D(
+                _skinTexture.Width,
+                _skinTexture.Height,
+                1,
+                ColorFormat.Rgba8888,
+                DepthFormat.None
+            );
             _componentOuterClothingModel.TextureOverride = _outerClothedTexture;
             _clothedTexturesValid = false;
         }
@@ -720,27 +801,52 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             Display.RenderTarget = _innerClothedTexture;
             Display.Clear(new Vector4(Color.Transparent));
             var num = 0;
-            var texturedBatch2D = _primitivesRenderer.TexturedBatch(_skinTexture, false, num++,
-                DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
-            texturedBatch2D.QueueQuad(Vector2.Zero,
-                new Vector2(_innerClothedTexture.Width, _innerClothedTexture.Height), 0f, Vector2.Zero,
-                Vector2.One, Color.White);
+            var texturedBatch2D = _primitivesRenderer.TexturedBatch(
+                _skinTexture,
+                false,
+                num++,
+                DepthStencilState.None,
+                null,
+                BlendState.NonPremultiplied,
+                SamplerState.PointClamp
+            );
+            texturedBatch2D.QueueQuad(
+                Vector2.Zero,
+                new Vector2(_innerClothedTexture.Width, _innerClothedTexture.Height),
+                0f,
+                Vector2.Zero,
+                Vector2.One,
+                Color.White
+            );
             var innerSlotsOrder = _innerSlotsOrder;
             foreach (var slot in innerSlotsOrder)
             {
                 foreach (var cloth in GetClothes(slot))
                 {
                     var data = Terrain.ExtractData(cloth);
-                    var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cloth)].GetClothingData(data);
+                    var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog()
+                        .Blocks[Terrain.ExtractContents(cloth)].GetClothingData(data);
                     var fabricColor =
                         SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data));
-                    texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData.Texture, false, num++,
-                        DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
+                    texturedBatch2D = _primitivesRenderer.TexturedBatch(
+                        clothingData.Texture,
+                        false,
+                        num++,
+                        DepthStencilState.None,
+                        null,
+                        BlendState.NonPremultiplied,
+                        SamplerState.PointClamp
+                    );
                     if (!clothingData.IsOuter)
                     {
-                        texturedBatch2D.QueueQuad(new Vector2(0f, 0f),
-                            new Vector2(_innerClothedTexture.Width, _innerClothedTexture.Height), 0f, Vector2.Zero,
-                            Vector2.One, fabricColor);
+                        texturedBatch2D.QueueQuad(
+                            new Vector2(0f, 0f),
+                            new Vector2(_innerClothedTexture.Width, _innerClothedTexture.Height),
+                            0f,
+                            Vector2.Zero,
+                            Vector2.One,
+                            fabricColor
+                        );
                     }
                 }
             }
@@ -755,16 +861,29 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 foreach (var clothe2 in GetClothes(slot2))
                 {
                     var data2 = Terrain.ExtractData(clothe2);
-                    var clothingData2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(clothe2)].GetClothingData(data2);
+                    var clothingData2 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                        .Blocks[Terrain.ExtractContents(clothe2)].GetClothingData(data2);
                     var fabricColor2 =
                         SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data2));
-                    texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData2.Texture, false, num++,
-                        DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
+                    texturedBatch2D = _primitivesRenderer.TexturedBatch(
+                        clothingData2.Texture,
+                        false,
+                        num++,
+                        DepthStencilState.None,
+                        null,
+                        BlendState.NonPremultiplied,
+                        SamplerState.PointClamp
+                    );
                     if (clothingData2.IsOuter)
                     {
-                        texturedBatch2D.QueueQuad(new Vector2(0f, 0f),
-                            new Vector2(_outerClothedTexture.Width, _outerClothedTexture.Height), 0f, Vector2.Zero,
-                            Vector2.One, fabricColor2);
+                        texturedBatch2D.QueueQuad(
+                            new Vector2(0f, 0f),
+                            new Vector2(_outerClothedTexture.Width, _outerClothedTexture.Height),
+                            0f,
+                            Vector2.Zero,
+                            Vector2.One,
+                            fabricColor2
+                        );
                     }
                 }
             }

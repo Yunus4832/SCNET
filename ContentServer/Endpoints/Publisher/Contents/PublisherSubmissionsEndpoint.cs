@@ -28,7 +28,8 @@ public sealed class PublisherSubmissionsEndpoint(IMediator mediator, ApiKeyAuthe
     private async Task<ResponseData<PagedData<ContentVersionResponse>>> Submissions(
         string? query,
         PaginationRequest page,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var publisherId = authenticationContext.RequirePublisherId();
         var items = await mediator.Send(
@@ -36,7 +37,8 @@ public sealed class PublisherSubmissionsEndpoint(IMediator mediator, ApiKeyAuthe
                 VersionQueryScope.Publisher,
                 page.ToPageRequest(),
                 Search: query,
-                PublisherId: publisherId),
+                PublisherId: publisherId
+            ),
             cancellationToken
         );
         return items.Map(item => item.ToResponse())

@@ -18,16 +18,20 @@ public class SubsystemMemoryBankBlockBehavior() : SubsystemEditableItemBehavior<
         var id = Terrain.ExtractData(value);
         var memoryBankData = GetItemData(id);
         memoryBankData = memoryBankData != null ? (MemoryBankData)memoryBankData.Copy() : new MemoryBankData();
-        var editor = new MemoryBankEditorWidget(memoryBankData, saved =>
-        {
-            if (!saved)
+        var editor = new MemoryBankEditorWidget(
+            memoryBankData,
+            saved =>
             {
-                return;
-            }
+                if (!saved)
+                {
+                    return;
+                }
 
-            var p = EditableBlockPackageBuilder.Capture(default, true, inventory.Id, slotIndex, memoryBankData);
-            EditableBlockPackageHandler.Submit(p);
-        }, () => componentPlayer.ComponentGui.ModalPanelWidget = null);
+                var p = EditableBlockPackageBuilder.Capture(default, true, inventory.Id, slotIndex, memoryBankData);
+                EditableBlockPackageHandler.Submit(p);
+            },
+            () => componentPlayer.ComponentGui.ModalPanelWidget = null
+        );
         componentPlayer.ComponentGui.ModalPanelWidget = editor;
         return true;
     }
@@ -35,18 +39,22 @@ public class SubsystemMemoryBankBlockBehavior() : SubsystemEditableItemBehavior<
     public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer componentPlayer)
     {
         var memoryBankData = GetBlockData(new Point3(x, y, z)) ?? new MemoryBankData();
-        var editor = new MemoryBankEditorWidget(memoryBankData, saved =>
-        {
-            if (!saved)
+        var editor = new MemoryBankEditorWidget(
+            memoryBankData,
+            saved =>
             {
-                return;
-            }
+                if (!saved)
+                {
+                    return;
+                }
 
-            var face = ((MemoryBankBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[186]).GetFace(value);
-            var cell = new CellFace(x, y, z, face);
-            var p = EditableBlockPackageBuilder.Capture(cell, false, 0, 0, memoryBankData);
-            EditableBlockPackageHandler.Submit(p);
-        }, () => componentPlayer.ComponentGui.ModalPanelWidget = null);
+                var face = ((MemoryBankBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[186]).GetFace(value);
+                var cell = new CellFace(x, y, z, face);
+                var p = EditableBlockPackageBuilder.Capture(cell, false, 0, 0, memoryBankData);
+                EditableBlockPackageHandler.Submit(p);
+            },
+            () => componentPlayer.ComponentGui.ModalPanelWidget = null
+        );
         componentPlayer.ComponentGui.ModalPanelWidget = editor;
         return true;
     }

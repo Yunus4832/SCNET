@@ -6,15 +6,23 @@ public class ArrowBlock : Block
 {
     public enum ArrowType
     {
-        WoodenArrow,
-        StoneArrow,
-        IronArrow,
-        DiamondArrow,
-        FireArrow,
-        IronBolt,
-        DiamondBolt,
-        ExplosiveBolt,
-        CopperArrow
+        WoodenArrow = 0,
+
+        StoneArrow = 1,
+
+        IronArrow = 2,
+
+        DiamondArrow = 3,
+
+        FireArrow = 4,
+
+        IronBolt = 5,
+
+        DiamondBolt = 6,
+
+        ExplosiveBolt = 7,
+
+        CopperArrow = 8
     }
 
     public static int[] Order = [0, 1, 8, 2, 3, 4, 5, 6, 7];
@@ -113,23 +121,56 @@ public class ArrowBlock : Block
                 throw new InvalidOperationException("Required TipNameMesh.ParentBone is null")
             );
             var blockMesh = new BlockMesh();
-            blockMesh.AppendModelMeshPart(tipNameMesh.MeshParts[0],
-                boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f), false, false, false,
-                false, Color.White);
-            blockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(TipTextureSlots[enumValue] % 16 / 16f,
-                TipTextureSlots[enumValue] / 16 / 16f, 0f));
+            blockMesh.AppendModelMeshPart(
+                tipNameMesh.MeshParts[0],
+                boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f),
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
+            blockMesh.TransformTextureCoordinates(
+                Matrix.CreateTranslation(
+                    TipTextureSlots[enumValue] % 16 / 16f,
+                    TipTextureSlots[enumValue] / 16 / 16f,
+                    0f
+                )
+            );
             var blockMesh2 = new BlockMesh();
-            blockMesh2.AppendModelMeshPart(shaftNameMesh.MeshParts[0],
-                boneAbsoluteTransform * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f), false, false, false,
-                false, Color.White);
-            blockMesh2.TransformTextureCoordinates(Matrix.CreateTranslation(ShaftTextureSlots[enumValue] % 16 / 16f,
-                ShaftTextureSlots[enumValue] / 16 / 16f, 0f));
+            blockMesh2.AppendModelMeshPart(
+                shaftNameMesh.MeshParts[0],
+                boneAbsoluteTransform * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f),
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
+            blockMesh2.TransformTextureCoordinates(
+                Matrix.CreateTranslation(
+                    ShaftTextureSlots[enumValue] % 16 / 16f,
+                    ShaftTextureSlots[enumValue] / 16 / 16f,
+                    0f
+                )
+            );
             var blockMesh3 = new BlockMesh();
-            blockMesh3.AppendModelMeshPart(stabilizerNameMesh.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f), false, false, true,
-                false, Color.White);
-            blockMesh3.TransformTextureCoordinates(Matrix.CreateTranslation(
-                StabilizerTextureSlots[enumValue] % 16 / 16f, StabilizerTextureSlots[enumValue] / 16 / 16f, 0f));
+            blockMesh3.AppendModelMeshPart(
+                stabilizerNameMesh.MeshParts[0],
+                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f),
+                false,
+                false,
+                true,
+                false,
+                Color.White
+            );
+            blockMesh3.TransformTextureCoordinates(
+                Matrix.CreateTranslation(
+                    StabilizerTextureSlots[enumValue] % 16 / 16f,
+                    StabilizerTextureSlots[enumValue] / 16 / 16f,
+                    0f
+                )
+            );
             var blockMesh4 = new BlockMesh();
             blockMesh4.AppendBlockMesh(blockMesh);
             blockMesh4.AppendBlockMesh(blockMesh2);
@@ -146,7 +187,8 @@ public class ArrowBlock : Block
         int value,
         int x,
         int y,
-        int z)
+        int z
+    )
     {
     }
 
@@ -162,9 +204,14 @@ public class ArrowBlock : Block
         var arrowType = (int)GetArrowType(Terrain.ExtractData(value));
         if (arrowType >= 0 && arrowType < StandaloneBlockMeshes.Count)
         {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMeshes[arrowType], color, 2f * size,
+            BlocksManager.DrawMeshBlock(
+                primitivesRenderer,
+                StandaloneBlockMeshes[arrowType],
+                color,
+                2f * size,
                 ref matrix,
-                environmentData);
+                environmentData
+            );
         }
     }
 

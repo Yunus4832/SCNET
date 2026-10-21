@@ -23,18 +23,31 @@ public sealed partial class ContentServerDbContext(
 ) : AppDbContextBase(options, mediator)
 {
     public DbSet<Administrator> Administrators => Set<Administrator>();
+
     public DbSet<AdministratorKey> AdministratorKeys => Set<AdministratorKey>();
+
     public DbSet<Publisher> Publishers => Set<Publisher>();
+
     public DbSet<PublisherKey> PublisherKeys => Set<PublisherKey>();
+
     public DbSet<ContentItem> Contents => Set<ContentItem>();
+
     public DbSet<ContentVersion> ContentVersions => Set<ContentVersion>();
+
     public DbSet<PackageBlob> PackageBlobs => Set<PackageBlob>();
+
     public DbSet<ReviewRecord> ReviewRecords => Set<ReviewRecord>();
+
     public DbSet<ServerSourceRegistration> ServerSources => Set<ServerSourceRegistration>();
+
     public DbSet<RendezvousServiceRegistration> RendezvousServices => Set<RendezvousServiceRegistration>();
+
     public DbSet<DirectoryServer> DirectoryServers => Set<DirectoryServer>();
+
     public DbSet<GameAnnouncement> GameAnnouncements => Set<GameAnnouncement>();
+
     public DbSet<GameRelease> GameReleases => Set<GameRelease>();
+
     public DbSet<GameReleaseArtifact> GameReleaseArtifacts => Set<GameReleaseArtifact>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

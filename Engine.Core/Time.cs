@@ -34,22 +34,26 @@ public static class Time
 
     public static void QueueTimeDelayedExecution(double time, Action action)
     {
-        _delayedExecutionsRequests.Add(new DelayedExecutionRequest
-        {
-            Time = time,
-            FramesCount = -1,
-            Action = action
-        });
+        _delayedExecutionsRequests.Add(
+            new DelayedExecutionRequest
+            {
+                Time = time,
+                FramesCount = -1,
+                Action = action
+            }
+        );
     }
 
     public static void QueueFrameIndexDelayedExecution(int framesCount, Action action)
     {
-        _delayedExecutionsRequests.Add(new DelayedExecutionRequest
-        {
-            Time = -1.0,
-            FramesCount = framesCount,
-            Action = action
-        });
+        _delayedExecutionsRequests.Add(
+            new DelayedExecutionRequest
+            {
+                Time = -1.0,
+                FramesCount = framesCount,
+                Action = action
+            }
+        );
     }
 
     public static void BeforeFrame()

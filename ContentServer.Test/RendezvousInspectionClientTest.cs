@@ -14,25 +14,36 @@ public sealed class RendezvousInspectionClientTest
     [InlineData("https://other.example/rooms")]
     public async Task RejectsMissingOrForeignDirectory(string? path)
     {
-        using var http = new HttpClient(new Handler(new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = JsonContent.Create(new RendezvousDescriptor(9521, null, path))
-        }));
+        using var http = new HttpClient(
+            new Handler(
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(new RendezvousDescriptor(9521, null, path))
+                }
+            )
+        );
         using var client = new RendezvousInspectionClient(http);
-        await Assert.ThrowsAsync<HttpRequestException>(() => client.InspectAsync(new Uri("https://signal.example/"), CancellationToken.None));
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            client.InspectAsync(new Uri("https://signal.example/"), CancellationToken.None)
+        );
     }
 
     [Fact]
     public async Task AcceptsBoundedDescriptorAndRejectsRedirectAndOversizedBody()
     {
-        using (var http = new HttpClient(new Handler(new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = JsonContent.Create(new RendezvousDescriptor(9521, null, "rooms"))
-        })))
+        using (var http = new HttpClient(
+                   new Handler(
+                       new HttpResponseMessage(HttpStatusCode.OK)
+                       {
+                           Content = JsonContent.Create(new RendezvousDescriptor(9521, null, "rooms"))
+                       }
+                   )
+               ))
         {
             using var client = new RendezvousInspectionClient(http);
             await client.InspectAsync(new Uri("https://signal.example/"), CancellationToken.None);
         }
+
         foreach (var response in new[]
                  {
                      new HttpResponseMessage(HttpStatusCode.Redirect),
@@ -41,13 +52,18 @@ public sealed class RendezvousInspectionClientTest
         {
             using var http = new HttpClient(new Handler(response));
             using var client = new RendezvousInspectionClient(http);
-            await Assert.ThrowsAsync<HttpRequestException>(() => client.InspectAsync(new Uri("https://signal.example/"), CancellationToken.None));
+            await Assert.ThrowsAsync<HttpRequestException>(() =>
+                client.InspectAsync(new Uri("https://signal.example/"), CancellationToken.None)
+            );
         }
     }
 
     private sealed class Handler(HttpResponseMessage response) : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        ) =>
             Task.FromResult(response);
     }
 }

@@ -119,8 +119,11 @@ public static class WorldsManager
     private static void WriteWorldPackage(string directoryName, ZipArchive package)
     {
         foreach (var entry in package.Entries.Where(entry => entry.FullName == "payload/world/Project.xml" ||
-                                                             entry.FullName.StartsWith("payload/world/Regions/",
-                                                                 StringComparison.Ordinal)))
+                                                             entry.FullName.StartsWith(
+                                                                 "payload/world/Regions/",
+                                                                 StringComparison.Ordinal
+                                                             )
+                 ))
         {
             var target = Storage.CombinePaths(directoryName, entry.FullName["payload/world/".Length..]);
             var parent = Storage.GetDirectoryName(target);
@@ -215,7 +218,7 @@ public static class WorldsManager
         }
 
         var baseName = NewWorldNames[_random.Int(0, NewWorldNames.Count - 1)];
-        for (var index = 2; ; index++)
+        for (var index = 2;; index++)
         {
             var name = $"{baseName} {index}";
             if (!usedNames.Contains(name))
@@ -246,7 +249,8 @@ public static class WorldsManager
             var document = XDocument.Load(input);
             var references = document.Descendants().Where(element =>
                 (string?)element.Attribute("Name") == valueName &&
-                (string?)element.Attribute("Value") == oldAssetKey).ToArray();
+                (string?)element.Attribute("Value") == oldAssetKey
+            ).ToArray();
             if (references.Length == 0)
             {
                 continue;
@@ -386,8 +390,8 @@ public static class WorldsManager
             var playersValues = playersNode == null
                 ? null
                 : (from e in playersNode.Elements()
-                   where XmlUtils.GetAttributeValue<string>(e, "Name") == "Players"
-                   select e).FirstOrDefault();
+                    where XmlUtils.GetAttributeValue<string>(e, "Name") == "Players"
+                    select e).FirstOrDefault();
             if (playersValues != null)
             {
                 foreach (var item2 in playersValues.Elements())
@@ -395,8 +399,8 @@ public static class WorldsManager
                     var playerInfo = new PlayerInfo();
                     worldInfo.PlayerInfos.Add(playerInfo);
                     var xElement2 = (from e in item2.Elements()
-                                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CharacterSkinName"
-                                     select e).FirstOrDefault();
+                        where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CharacterSkinName"
+                        select e).FirstOrDefault();
                     if (xElement2 != null)
                     {
                         playerInfo.CharacterSkinName =
@@ -409,8 +413,9 @@ public static class WorldsManager
         }
         catch (Exception e3)
         {
-            Log.Error(ExceptionManager.MakeFullErrorMessage(
-                $"Error getting data from project file \"{xmlFile}\".", e3));
+            Log.Error(
+                ExceptionManager.MakeFullErrorMessage($"Error getting data from project file \"{xmlFile}\".", e3)
+            );
             return worldInfo;
         }
     }
@@ -458,14 +463,15 @@ public static class WorldsManager
         XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);
         projectData.Save(projectNode);
         projectNode.Add(BlockIndexMapping.Empty.ToXml());
-        using (var stream = Storage.OpenFile(Storage.CombinePaths(unusedWorldDirectoryName, "Project.xml"),
-                   OpenFileMode.Create))
+        using (var stream = Storage.OpenFile(
+                   Storage.CombinePaths(unusedWorldDirectoryName, "Project.xml"),
+                   OpenFileMode.Create
+               ))
         {
             XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
         }
 
-        return GetWorldInfo(unusedWorldDirectoryName)
-               ?? throw new ArgumentException("Create world failed");
+        return GetWorldInfo(unusedWorldDirectoryName) ?? throw new ArgumentException("Create world failed");
     }
 
     public static WorldInfo CloneWorld(string sourceDirectoryName, string name)
@@ -477,8 +483,8 @@ public static class WorldsManager
             throw new InvalidOperationException($"World name \"{name}\" is invalid.");
         }
 
-        var sourceWorld = GetWorldInfo(sourceDirectoryName)
-                          ?? throw new InvalidOperationException("Source directory does not contain a world.");
+        var sourceWorld = GetWorldInfo(sourceDirectoryName) ??
+                          throw new InvalidOperationException("Source directory does not contain a world.");
         if (!Storage.FileExists(Storage.CombinePaths(sourceDirectoryName, "Project.xml")))
         {
             throw new InvalidOperationException("Source directory does not contain a valid world project.");
@@ -511,8 +517,12 @@ public static class WorldsManager
                 }
                 catch (Exception exception)
                 {
-                    Log.Error(ExceptionManager.MakeFullErrorMessage(
-                        $"Failed to clean up incomplete world clone \"{targetDirectoryName}\".", exception));
+                    Log.Error(
+                        ExceptionManager.MakeFullErrorMessage(
+                            $"Failed to clean up incomplete world clone \"{targetDirectoryName}\".",
+                            exception
+                        )
+                    );
                 }
             }
 
@@ -622,24 +632,26 @@ public static class WorldsManager
 
         foreach (var file in Storage.ListFileNames(sourceDirectoryName))
         {
-            Storage.CopyFile(Storage.CombinePaths(sourceDirectoryName, file),
-                Storage.CombinePaths(targetDirectoryName, file));
+            Storage.CopyFile(
+                Storage.CombinePaths(sourceDirectoryName, file),
+                Storage.CombinePaths(targetDirectoryName, file)
+            );
         }
     }
 
     private static XElement GetGameInfoNode(XElement projectNode)
     {
         var xElement = (from n in projectNode.Element("Subsystems")?.Elements("Values")
-                        where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "GameInfo"
-                        select n).FirstOrDefault();
+            where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "GameInfo"
+            select n).FirstOrDefault();
         return xElement ?? throw new InvalidOperationException("GameInfo node not found in project.");
     }
 
     private static XElement? GetPlayersNode(XElement projectNode)
     {
         var xElement = (from n in projectNode.Element("Subsystems")?.Elements("Values")
-                        where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "Players"
-                        select n).FirstOrDefault();
+            where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "Players"
+            select n).FirstOrDefault();
         return xElement;
     }
 
@@ -682,7 +694,8 @@ public static class WorldsManager
         if (!Storage.DirectoryExists(directoryName))
         {
             throw new InvalidOperationException(
-                $"Cannot import world into \"{directoryName}\" because this directory does not exist.");
+                $"Cannot import world into \"{directoryName}\" because this directory does not exist."
+            );
         }
 
         using var zipArchive = new ZipArchive(sourceStream, ZipArchiveMode.Read, true);
@@ -711,8 +724,10 @@ public static class WorldsManager
                     fileName = Storage.CombinePaths("Regions", fileName);
                 }
 
-                using var stream = Storage.OpenFile(Storage.CombinePaths(directoryName, fileName),
-                    OpenFileMode.Create);
+                using var stream = Storage.OpenFile(
+                    Storage.CombinePaths(directoryName, fileName),
+                    OpenFileMode.Create
+                );
                 using var entryStream = item.Open();
                 entryStream.CopyTo(stream);
             }

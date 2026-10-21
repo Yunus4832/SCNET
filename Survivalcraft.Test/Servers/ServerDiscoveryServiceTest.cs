@@ -32,17 +32,21 @@ public sealed class ServerDiscoveryServiceTest
             source.Send(NetNode.CreateUnconnectedPayload(response));
         };
         var polling = Task.Run(async () =>
-        {
-            while (!stop.IsCancellationRequested)
             {
-                server.DispatchEvents();
-                await Task.Delay(2, stop.Token);
+                while (!stop.IsCancellationRequested)
+                {
+                    server.DispatchEvents();
+                    await Task.Delay(2, stop.Token);
+                }
             }
-        });
+        );
         try
         {
-            var status = await new ServerDiscoveryService().ProbeAsync($"127.0.0.1:{server.LocalPort}",
-                TimeSpan.FromSeconds(2), CancellationToken.None);
+            var status = await new ServerDiscoveryService().ProbeAsync(
+                $"127.0.0.1:{server.LocalPort}",
+                TimeSpan.FromSeconds(2),
+                CancellationToken.None
+            );
             Assert.Equal(ServerAvailability.Available, status.Availability);
             Assert.Equal(response.ProtocolVersion, status.ProtocolVersion);
             Assert.Equal(response.ClientCount, status.PlayerCount);
@@ -58,6 +62,7 @@ public sealed class ServerDiscoveryServiceTest
             catch (OperationCanceledException)
             {
             }
+
             PackageManager.UnRegisterPackage(response);
         }
     }
@@ -67,8 +72,13 @@ public sealed class ServerDiscoveryServiceTest
     {
         await using var network = new NetworkHost();
         var attempts = 1;
-        await ServerDiscoveryService.PollAsync(network, TimeSpan.FromSeconds(5), CancellationToken.None,
-            () => attempts == 3, () => attempts++);
+        await ServerDiscoveryService.PollAsync(
+            network,
+            TimeSpan.FromSeconds(5),
+            CancellationToken.None,
+            () => attempts == 3,
+            () => attempts++
+        );
         Assert.Equal(3, attempts);
     }
 
@@ -76,16 +86,26 @@ public sealed class ServerDiscoveryServiceTest
     public async Task CompletedProbeDoesNotRetry()
     {
         await using var network = new NetworkHost();
-        await ServerDiscoveryService.PollAsync(network, TimeSpan.FromSeconds(5), CancellationToken.None,
-            () => true, () => Assert.Fail("Completed probe retried."));
+        await ServerDiscoveryService.PollAsync(
+            network,
+            TimeSpan.FromSeconds(5),
+            CancellationToken.None,
+            () => true,
+            () => Assert.Fail("Completed probe retried.")
+        );
     }
 
     [Fact]
     public async Task ShortDeadlineDoesNotRetryAfterTimeout()
     {
         await using var network = new NetworkHost();
-        await ServerDiscoveryService.PollAsync(network, TimeSpan.FromMilliseconds(20), CancellationToken.None,
-            () => false, () => Assert.Fail("Expired probe retried."));
+        await ServerDiscoveryService.PollAsync(
+            network,
+            TimeSpan.FromMilliseconds(20),
+            CancellationToken.None,
+            () => false,
+            () => Assert.Fail("Expired probe retried.")
+        );
     }
 
     [Fact]
@@ -95,7 +115,13 @@ public sealed class ServerDiscoveryServiceTest
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            ServerDiscoveryService.PollAsync(network, TimeSpan.FromSeconds(5), cancellation.Token,
-                () => false, () => Assert.Fail("Cancelled probe retried.")));
+            ServerDiscoveryService.PollAsync(
+                network,
+                TimeSpan.FromSeconds(5),
+                cancellation.Token,
+                () => false,
+                () => Assert.Fail("Cancelled probe retried.")
+            )
+        );
     }
 }

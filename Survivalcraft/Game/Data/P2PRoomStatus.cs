@@ -14,4 +14,5 @@ public sealed record P2PRoomStatus(
     Guid? SessionId,
     string? JoinCode,
     string LastError,
-    DateTimeOffset? NextRetryAt);
+    DateTimeOffset? NextRetryAt
+);

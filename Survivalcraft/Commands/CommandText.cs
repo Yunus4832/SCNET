@@ -17,6 +17,7 @@ public static class CommandText
             : Get(
                 result.MessageKey,
                 result.Message,
-                result.MessageArguments?.ToArray() ?? []);
+                result.MessageArguments?.ToArray() ?? []
+            );
     }
 }

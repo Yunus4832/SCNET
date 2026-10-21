@@ -11,8 +11,7 @@ public class CommandSuggestionsWidgetTest
     [Fact]
     public void SuggestionUsesSeparatePlainTextLabelsInsteadOfMarkup()
     {
-        var parts = CommandSuggestionsWidget.CreateTextParts(
-            new CommandSuggestion("time", "查询或设置世界时间", false));
+        var parts = CommandSuggestionsWidget.CreateTextParts(new CommandSuggestion("time", "查询或设置世界时间", false));
 
         Assert.Equal(2, parts.Count);
         Assert.Equal("time", parts[0].Text);
@@ -25,8 +24,7 @@ public class CommandSuggestionsWidgetTest
     [Fact]
     public void SuggestionWithoutDescriptionDoesNotAddEmptyLabel()
     {
-        var parts = CommandSuggestionsWidget.CreateTextParts(
-            new CommandSuggestion("list", string.Empty, false));
+        var parts = CommandSuggestionsWidget.CreateTextParts(new CommandSuggestion("list", string.Empty, false));
         var part = Assert.Single(parts);
 
         Assert.Equal("list", part.Text);

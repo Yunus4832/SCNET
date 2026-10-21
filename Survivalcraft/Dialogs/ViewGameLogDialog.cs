@@ -6,9 +6,11 @@ public class ViewGameLogDialog : Dialog
 {
     private enum LogAction
     {
-        Copy,
-        Filter,
-        Close
+        Copy = 0,
+
+        Filter = 1,
+
+        Close = 2
     }
 
     private enum FilterType
@@ -16,17 +18,17 @@ public class ViewGameLogDialog : Dialog
         /// <summary>
         ///     全部
         /// </summary>
-        All,
+        All = 0,
 
         /// <summary>
         ///     警告
         /// </summary>
-        Warning,
+        Warning = 1,
 
         /// <summary>
         ///     错误
         /// </summary>
-        Error
+        Error = 2
     }
 
     private const string _typeName = nameof(ViewGameLogDialog);
@@ -46,18 +48,19 @@ public class ViewGameLogDialog : Dialog
         _actionPanel.ItemTextProvider = GetActionText;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
-        [
-            LogAction.Filter,
-            LogAction.Copy,
-            LogAction.Close
-        ],
-        [
-            1f,
-            1f,
-            1f,
-            0f
-        ]);
-        _listPanel.ItemClicked += delegate (object item)
+            [
+                LogAction.Filter,
+                LogAction.Copy,
+                LogAction.Close
+            ],
+            [
+                1f,
+                1f,
+                1f,
+                0f
+            ]
+        );
+        _listPanel.ItemClicked += delegate(object item)
         {
             if (_listPanel.SelectedItem == item)
             {
@@ -131,7 +134,7 @@ public class ViewGameLogDialog : Dialog
 
     public void PopulateList()
     {
-        _listPanel.ItemWidgetFactory = delegate (object item)
+        _listPanel.ItemWidgetFactory = delegate(object item)
         {
             var text = item.ToString() ?? string.Empty;
             var color = Color.Gray;

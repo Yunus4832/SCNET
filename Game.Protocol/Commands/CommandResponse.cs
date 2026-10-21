@@ -13,4 +13,5 @@ public sealed record CommandResponse(
     IReadOnlyList<string>? MessageArguments = null,
     JsonNode? Data = null,
     GameMessagePresentation Presentation = GameMessagePresentation.None,
-    bool CloseInputOnSuccess = false);
+    bool CloseInputOnSuccess = false
+);

@@ -16,8 +16,15 @@ public sealed class DamageProxyIntegrationTest
             OutageDuration = TimeSpan.FromMilliseconds(700)
         };
         var noDamage = new LinkImpairmentOptions(0, 0, 0, 0);
-        var options = new DamageProxyOptions(proxyEndPoint, (IPEndPoint)server.Client.LocalEndPoint!,
-            1, outage, noDamage, null, null);
+        var options = new DamageProxyOptions(
+            proxyEndPoint,
+            (IPEndPoint)server.Client.LocalEndPoint!,
+            1,
+            outage,
+            noDamage,
+            null,
+            null
+        );
         await using var proxy = new DamageProxy(options);
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var proxyTask = proxy.RunAsync(cancellation.Token);
@@ -47,8 +54,15 @@ public sealed class DamageProxyIntegrationTest
         using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
         var proxyEndPoint = new IPEndPoint(IPAddress.Loopback, ReserveUdpPort());
         var noDamage = new LinkImpairmentOptions(0, 0, 0, 0);
-        var options = new DamageProxyOptions(proxyEndPoint, (IPEndPoint)server.Client.LocalEndPoint!,
-            1, noDamage, noDamage, null, null);
+        var options = new DamageProxyOptions(
+            proxyEndPoint,
+            (IPEndPoint)server.Client.LocalEndPoint!,
+            1,
+            noDamage,
+            noDamage,
+            null,
+            null
+        );
         await using var proxy = new DamageProxy(options);
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var proxyTask = proxy.RunAsync(cancellation.Token);
@@ -87,7 +101,8 @@ public sealed class DamageProxyIntegrationTest
             noDamage,
             noDamage,
             null,
-            null);
+            null
+        );
         await using var proxy = new DamageProxy(options);
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var proxyTask = proxy.RunAsync(cancellation.Token);
@@ -121,7 +136,8 @@ public sealed class DamageProxyIntegrationTest
             delayed,
             delayed,
             null,
-            null);
+            null
+        );
         await using var proxy = new DamageProxy(options);
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var proxyTask = proxy.RunAsync(cancellation.Token);

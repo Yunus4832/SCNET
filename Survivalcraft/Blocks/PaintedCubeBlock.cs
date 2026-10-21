@@ -85,11 +85,13 @@ public abstract class PaintedCubeBlock(int coloredTextureSlot) : CubeBlock, IPai
             showDebris = true;
             if (toolLevel >= RequiredToolLevel)
             {
-                dropValues.Add(new BlockDropValue
-                {
-                    Value = Terrain.MakeBlockValue(DropContent, 0, data),
-                    Count = (int)DropCount
-                });
+                dropValues.Add(
+                    new BlockDropValue
+                    {
+                        Value = Terrain.MakeBlockValue(DropContent, 0, data),
+                        Count = (int)DropCount
+                    }
+                );
             }
         }
         else
@@ -107,8 +109,14 @@ public abstract class PaintedCubeBlock(int coloredTextureSlot) : CubeBlock, IPai
     {
         var data = Terrain.ExtractData(value);
         var color = SubsystemPalette.GetColor(subsystemTerrain, GetColor(data));
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, color,
-            GetFaceTextureSlot(0, value));
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            color,
+            GetFaceTextureSlot(0, value)
+        );
     }
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)

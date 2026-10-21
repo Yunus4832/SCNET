@@ -18,7 +18,8 @@ public class P2PRoomControllerTest
     public async Task StopCollectsLateSuccessAndCannotResurrectRoom()
     {
         await using var host = new NetworkHost();
-        var opening = new TaskCompletionSource<NetworkRoomRegistration>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var opening =
+            new TaskCompletionSource<NetworkRoomRegistration>(TaskCreationOptions.RunContinuationsAsynchronously);
         var closed = 0;
         var registration = CreateRegistration(() => closed++);
         var controller = new P2PRoomController((_, _, _, _, _) => opening.Task);
@@ -45,11 +46,14 @@ public class P2PRoomControllerTest
         await using var host = new NetworkHost();
         var now = DateTimeOffset.UtcNow;
         var calls = 0;
-        var controller = new P2PRoomController((_, _, _, _, _) =>
-        {
-            calls++;
-            return Task.FromException<NetworkRoomRegistration>(new HttpRequestException("Offline"));
-        }, () => now);
+        var controller = new P2PRoomController(
+            (_, _, _, _, _) =>
+            {
+                calls++;
+                return Task.FromException<NetworkRoomRegistration>(new HttpRequestException("Offline"));
+            },
+            () => now
+        );
         controller.Bind(host, _configuration, 8);
         controller.Start(_configuration);
         controller.Update();
@@ -112,10 +116,12 @@ public class P2PRoomControllerTest
     public async Task OldFailureDoesNotScheduleRetryAfterStopAndNextStartWorks()
     {
         await using var host = new NetworkHost();
-        var opening = new TaskCompletionSource<NetworkRoomRegistration>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var opening =
+            new TaskCompletionSource<NetworkRoomRegistration>(TaskCreationOptions.RunContinuationsAsynchronously);
         var registration = CreateRegistration(() => { });
         var calls = 0;
-        var controller = new P2PRoomController((_, _, _, _, _) => ++calls == 1 ? opening.Task : Task.FromResult(registration));
+        var controller =
+            new P2PRoomController((_, _, _, _, _) => ++calls == 1 ? opening.Task : Task.FromResult(registration));
         controller.Bind(host, _configuration, 32);
         controller.Start(_configuration);
         controller.Stop();
@@ -140,7 +146,17 @@ public class P2PRoomControllerTest
     }
 
     private static NetworkRoomRegistration CreateRegistration(Action close) => new(
-        Guid.NewGuid(), "012345", DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5),
-        CancellationToken.None, _ => Task.FromResult(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5)),
-        _ => { close(); return Task.CompletedTask; }, (_, _) => { }, (_, _) => Task.CompletedTask);
+        Guid.NewGuid(),
+        "012345",
+        DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5),
+        CancellationToken.None,
+        _ => Task.FromResult(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5)),
+        _ =>
+        {
+            close();
+            return Task.CompletedTask;
+        },
+        (_, _) => { },
+        (_, _) => Task.CompletedTask
+    );
 }

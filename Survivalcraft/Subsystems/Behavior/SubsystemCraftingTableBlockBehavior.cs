@@ -40,7 +40,8 @@ public class SubsystemCraftingTableBlockBehavior : SubsystemBlockBehavior
             IProtocolMessage package =
                 new BlockEditPackage(
                     new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z),
-                    BlockEditPackage.EventType.OpenInventoryByPoint);
+                    BlockEditPackage.EventType.OpenInventoryByPoint
+                );
             NetworkSender.SendToServer(package);
             return true;
         }

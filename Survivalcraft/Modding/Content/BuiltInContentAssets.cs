@@ -5,6 +5,7 @@ namespace Game.Modding.Content;
 internal static class BuiltInContentAssets
 {
     private const string _assetRoot = "Content/Assets";
+
     private const string _appArchivePath = "app:Content.zip";
 
     public static IReadOnlyList<ContentRegistration> Load()
@@ -26,11 +27,13 @@ internal static class BuiltInContentAssets
         using var archive = new ZipArchive(
             stream,
             ZipArchiveMode.Read,
-            leaveOpen: false);
+            leaveOpen: false
+        );
         var assets = new List<ContentRegistration>();
         foreach (var entry in archive.Entries
                      .Where(entry => !string.IsNullOrEmpty(entry.Name) &&
-                                     entry.FullName.StartsWith("Assets/", StringComparison.Ordinal)))
+                                     entry.FullName.StartsWith("Assets/", StringComparison.Ordinal)
+                     ))
         {
             using var entryStream = entry.Open();
             using var memory = new MemoryStream((int)entry.Length);
@@ -46,11 +49,12 @@ internal static class BuiltInContentAssets
         return Directory.EnumerateFiles(assetDirectory, "*", SearchOption.AllDirectories)
             .OrderBy(path => path, StringComparer.Ordinal)
             .Select(path =>
-            {
-                var relativePath = Path.GetRelativePath(assetDirectory, path)
-                    .Replace(Path.DirectorySeparatorChar, '/');
-                return new ContentRegistration(relativePath, File.ReadAllBytes(path));
-            })
+                {
+                    var relativePath = Path.GetRelativePath(assetDirectory, path)
+                        .Replace(Path.DirectorySeparatorChar, '/');
+                    return new ContentRegistration(relativePath, File.ReadAllBytes(path));
+                }
+            )
             .ToArray();
     }
 

@@ -27,13 +27,22 @@ public class PistonHeadBlock : Block
                           Matrix.CreateRotationY(j * (float)Math.PI / 2f + (float)Math.PI) *
                           Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)
                         : j != 4
-                            ? Matrix.CreateTranslation(0f, -0.5f, 0f) * Matrix.CreateRotationX(-(float)Math.PI / 2f) *
+                            ? Matrix.CreateTranslation(0f, -0.5f, 0f) *
+                              Matrix.CreateRotationX(-(float)Math.PI / 2f) *
                               Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)
-                            : Matrix.CreateTranslation(0f, -0.5f, 0f) * Matrix.CreateRotationX((float)Math.PI / 2f) *
+                            : Matrix.CreateTranslation(0f, -0.5f, 0f) *
+                              Matrix.CreateRotationX((float)Math.PI / 2f) *
                               Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                     BlockMeshesByData[num] = new BlockMesh();
-                    BlockMeshesByData[num].AppendModelMeshPart(modelMesh.MeshParts[0],
-                        boneAbsoluteTransform * m, false, false, false, false, Color.White);
+                    BlockMeshesByData[num].AppendModelMeshPart(
+                        modelMesh.MeshParts[0],
+                        boneAbsoluteTransform * m,
+                        false,
+                        false,
+                        false,
+                        false,
+                        Color.White
+                    );
                     switch (pistonMode)
                     {
                         case PistonMode.Pulling:
@@ -78,8 +87,17 @@ public class PistonHeadBlock : Block
         var num = Terrain.ExtractData(value);
         if (num < BlockMeshesByData.Length && BlockMeshesByData[num] != null)
         {
-            generator.GenerateShadedMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null, [],
-                geometry.SubsetOpaque);
+            generator.GenerateShadedMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshesByData[num],
+                Color.White,
+                null,
+                [],
+                geometry.SubsetOpaque
+            );
         }
     }
 

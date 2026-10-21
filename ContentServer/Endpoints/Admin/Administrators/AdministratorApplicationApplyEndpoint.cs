@@ -22,19 +22,26 @@ public sealed class AdministratorApplicationApplyEndpoint(IMediator mediator) : 
         await Send.ResponseAsync(result, HttpContext.Response.StatusCode, cancellationToken);
     }
 
-    private async Task<ResponseData<AdministratorApplicationResponse>> Apply(ApplyAdministratorRequest request,
-        CancellationToken ct)
+    private async Task<ResponseData<AdministratorApplicationResponse>> Apply(
+        ApplyAdministratorRequest request,
+        CancellationToken ct
+    )
     {
         if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Contact))
         {
             throw new KnownException("invalid_application", 400);
         }
 
-        var r = await mediator.Send(new ApplyAdministratorCommand(request.Name, request.Contact, request.Description),
-            ct);
+        var r = await mediator.Send(
+            new ApplyAdministratorCommand(request.Name, request.Contact, request.Description),
+            ct
+        );
         HttpContext.Response.StatusCode = 201;
-        return new AdministratorApplicationResponse(r.AdministratorId.ToString(),
-            r.Status.ToString().ToLowerInvariant(), r.ApiKey).AsResponseData(code: 201);
+        return new AdministratorApplicationResponse(
+            r.AdministratorId.ToString(),
+            r.Status.ToString().ToLowerInvariant(),
+            r.ApiKey
+        ).AsResponseData(code: 201);
     }
 }
 

@@ -49,8 +49,10 @@ public static partial class Mouse
                 if (_lastMousePosition.HasValue)
                 {
                     MouseMovement = new Point2(
-                        _desktopMouseEventPosition.X - _lastMousePosition.Value.X,
-                        _desktopMouseEventPosition.Y - _lastMousePosition.Value.Y) * Window.Scale;
+                                        _desktopMouseEventPosition.X - _lastMousePosition.Value.X,
+                                        _desktopMouseEventPosition.Y - _lastMousePosition.Value.Y
+                                    ) *
+                                    Window.Scale;
                 }
 
                 _lastMousePosition = _desktopMouseEventPosition;

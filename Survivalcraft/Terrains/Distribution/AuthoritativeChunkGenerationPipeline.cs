@@ -10,7 +10,8 @@ public sealed class AuthoritativeChunkGenerationPipeline(
     ITerrainContentsGenerator generator,
     Func<TerrainChunk, bool> restorePendingSave,
     Func<TerrainChunk, bool> load,
-    Action<TerrainChunk>? contentGenerated = null)
+    Action<TerrainChunk>? contentGenerated = null
+)
 {
     private readonly Action<TerrainChunk> _contentGenerated = contentGenerated ?? (_ => { });
 
@@ -28,9 +29,13 @@ public sealed class AuthoritativeChunkGenerationPipeline(
             throw new ArgumentNullException(nameof(subsystemTerrain)),
             chunk => subsystemTerrain.TerrainSaveCoordinator?.TryRestorePendingSnapshot(chunk) == true,
             subsystemTerrain.TerrainSerializer.LoadChunk,
-            chunk => CurrentModRuntime.Value?.Gameplay.Invoke(new TerrainChunkGeneratedContext(
-                subsystemTerrain,
-                chunk)))
+            chunk => CurrentModRuntime.Value?.Gameplay.Invoke(
+                new TerrainChunkGeneratedContext(
+                    subsystemTerrain,
+                    chunk
+                )
+            )
+        )
     {
     }
 

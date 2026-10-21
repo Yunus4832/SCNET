@@ -38,17 +38,26 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
             return;
         }
 
-        if (_newYearCelebrationTimeRemaining <= 0f && Time.PeriodicEvent(5.0, 0.0) &&
-            _subsystemSky.SkyLightIntensity == 0f && !componentPlayer.ComponentSleep.IsSleeping)
+        if (_newYearCelebrationTimeRemaining <= 0f &&
+            Time.PeriodicEvent(5.0, 0.0) &&
+            _subsystemSky.SkyLightIntensity == 0f &&
+            !componentPlayer.ComponentSleep.IsSleeping)
         {
             var now = DateTime.Now;
-            if (now.Year > SettingsManager.Current.NewYearCelebrationLastYear && now.Month == 1 && now.Day == 1 &&
-                now.Hour == 0 && now.Minute < 59)
+            if (now.Year > SettingsManager.Current.NewYearCelebrationLastYear &&
+                now.Month == 1 &&
+                now.Day == 1 &&
+                now.Hour == 0 &&
+                now.Minute < 59)
             {
                 SettingsManager.Current.NewYearCelebrationLastYear = now.Year;
                 _newYearCelebrationTimeRemaining = 180f;
-                componentPlayer.ComponentGui.DisplayLargeMessage("Happy New Year!", "--- Enjoy the fireworks ---", 15f,
-                    3f);
+                componentPlayer.ComponentGui.DisplayLargeMessage(
+                    "Happy New Year!",
+                    "--- Enjoy the fireworks ---",
+                    15f,
+                    3f
+                );
             }
         }
 
@@ -65,8 +74,13 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
         {
             var vector = _random.Vector2(35f, 50f);
             var vector2 = componentPlayer.ComponentBody.Position + new Vector3(vector.X, 0f, vector.Y);
-            var terrainRaycastResult = _subsystemTerrain.Raycast(new Vector3(vector2.X, 120f, vector2.Z),
-                new Vector3(vector2.X, 40f, vector2.Z), false, true, null);
+            var terrainRaycastResult = _subsystemTerrain.Raycast(
+                new Vector3(vector2.X, 120f, vector2.Z),
+                new Vector3(vector2.X, 40f, vector2.Z),
+                false,
+                true,
+                null
+            );
             if (terrainRaycastResult.HasValue)
             {
                 var data = 0;
@@ -75,10 +89,18 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
                 data = FireworksBlock.SetAltitude(data, _random.Int(0, 1));
                 data = FireworksBlock.SetFlickering(data, _random.Float(0f, 1f) < 0.25f);
                 var value = Terrain.MakeBlockValue(215, 0, data);
-                var position = new Vector3(terrainRaycastResult.Value.CellFace.Point.X,
-                    terrainRaycastResult.Value.CellFace.Point.Y + 1, terrainRaycastResult.Value.CellFace.Point.Z);
-                _subsystemProjectiles.FireProjectile(value, position,
-                    new Vector3(_random.Float(-3f, 3f), 45f, _random.Float(-3f, 3f)), Vector3.Zero, null);
+                var position = new Vector3(
+                    terrainRaycastResult.Value.CellFace.Point.X,
+                    terrainRaycastResult.Value.CellFace.Point.Y + 1,
+                    terrainRaycastResult.Value.CellFace.Point.Z
+                );
+                _subsystemProjectiles.FireProjectile(
+                    value,
+                    position,
+                    new Vector3(_random.Float(-3f, 3f), 45f, _random.Float(-3f, 3f)),
+                    Vector3.Zero,
+                    null
+                );
             }
         }
     }
@@ -98,8 +120,15 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
         var flickering = FireworksBlock.GetFlickering(data) ? 0.66f : 0f;
         var particleSize = FireworksBlock.GetAltitude(data) > 0 ? 1.1f : 1f;
         var color = FireworksBlock.FireworksColors[FireworksBlock.GetColor(data)];
-        _subsystemParticles.AddParticleSystem(new FireworksParticleSystem(position, color, shape, flickering,
-            particleSize));
+        _subsystemParticles.AddParticleSystem(
+            new FireworksParticleSystem(
+                position,
+                color,
+                shape,
+                flickering,
+                particleSize
+            )
+        );
         _subsystemAudio.PlayRandomSound("Audio/FireworksPop", 1f, _random.Float(-0.4f, 0f), position, 80f, true);
         _subsystemNoise.MakeNoise(position, 1f, 60f);
     }
@@ -109,19 +138,28 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
         var data = Terrain.ExtractData(projectile.Value);
         var num = FireworksBlock.GetAltitude(data) == 0 ? 0.8f : 1.3f;
         _subsystemProjectiles.AddTrail(projectile, Vector3.Zero, new FireworksTrailParticleSystem());
-        _subsystemAudio.PlayRandomSound("Audio/FireworksWhoosh", 1f, _random.Float(-0.2f, 0.2f), projectile.Position,
-            8f, true);
+        _subsystemAudio.PlayRandomSound(
+            "Audio/FireworksWhoosh",
+            1f,
+            _random.Float(-0.2f, 0.2f),
+            projectile.Position,
+            8f,
+            true
+        );
         _subsystemNoise.MakeNoise(projectile.Position, 1f, 10f);
-        _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + num, delegate
-        {
-            if (projectile.ToRemove)
+        _subsystemTime.QueueGameTimeDelayedExecution(
+            _subsystemTime.GameTime + num,
+            delegate
             {
-                return;
-            }
+                if (projectile.ToRemove)
+                {
+                    return;
+                }
 
-            projectile.ToRemove = true;
-            ExplodeFireworks(projectile.Position, data);
-        });
+                projectile.ToRemove = true;
+                ExplodeFireworks(projectile.Position, data);
+            }
+        );
     }
 
     public override bool OnHitAsProjectile(CellFace? cellFace, ComponentBody componentBody, WorldItem worldItem)

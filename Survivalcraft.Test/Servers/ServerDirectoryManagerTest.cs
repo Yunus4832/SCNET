@@ -42,9 +42,11 @@ public sealed class ServerDirectoryManagerTest
         service.AddMyServer("Default port", "example.com");
         service.AddMyServer("Explicit port", "example.com:28887");
 
-        Assert.Collection(service.Snapshot().LocalServers,
+        Assert.Collection(
+            service.Snapshot().LocalServers,
             entry => Assert.Equal("example.com", entry.Address),
-            entry => Assert.Equal("example.com:28887", entry.Address));
+            entry => Assert.Equal("example.com:28887", entry.Address)
+        );
     }
 
     [Fact]
@@ -76,8 +78,10 @@ public sealed class ServerDirectoryManagerTest
         var entries = service.Snapshot().LocalServers;
         Assert.Equal(ServerDirectoryManager.MaximumRecentServers + 1, entries.Count);
         Assert.Equal(LocalServerTag.Favorite, entries.Single(entry => entry.Id == favorite.Id).Tags);
-        Assert.Equal(ServerDirectoryManager.MaximumRecentServers,
-            entries.Count(entry => entry.Tags.HasFlag(LocalServerTag.Recent)));
+        Assert.Equal(
+            ServerDirectoryManager.MaximumRecentServers,
+            entries.Count(entry => entry.Tags.HasFlag(LocalServerTag.Recent))
+        );
     }
 
     [Fact]
@@ -86,10 +90,13 @@ public sealed class ServerDirectoryManagerTest
         var service = new ServerDirectoryManager(new ServerDirectorySettings(), _ => { });
         service.InstallSource(new InstalledServerSource { Name = "One", ApiUrl = "https://example.com/list" });
 
-        Assert.Throws<ArgumentException>(() => service.InstallSource(new InstalledServerSource
-        {
-            Name = "Two",
-            ApiUrl = "https://example.com/list"
-        }));
+        Assert.Throws<ArgumentException>(() => service.InstallSource(
+                new InstalledServerSource
+                {
+                    Name = "Two",
+                    ApiUrl = "https://example.com/list"
+                }
+            )
+        );
     }
 }

@@ -9,17 +9,24 @@ namespace Game.Terrains.Distribution;
 public sealed class LocalChunkContentHost : IChunkContentTransport
 {
     private readonly Terrain _authorityTerrain;
+
     private readonly TerrainChunkContentAuthority _authority;
+
     private readonly AuthoritativeChunkGenerationPipeline _generation;
+
     private readonly InProcessChunkContentTransport _transport;
+
     private readonly PendingChunkRequestQueue _pending = new();
+
     private readonly Func<TerrainChunk, bool> _prepareRelease;
+
     private readonly Lock _lock = new();
 
     public LocalChunkContentHost(
         Terrain authorityTerrain,
         AuthoritativeChunkGenerationPipeline generation,
-        Func<TerrainChunk, bool>? prepareRelease = null)
+        Func<TerrainChunk, bool>? prepareRelease = null
+    )
     {
         _authorityTerrain = authorityTerrain ?? throw new ArgumentNullException(nameof(authorityTerrain));
         _generation = generation ?? throw new ArgumentNullException(nameof(generation));

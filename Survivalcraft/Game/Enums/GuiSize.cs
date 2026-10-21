@@ -2,7 +2,9 @@ namespace Game;
 
 public enum GuiSize
 {
-    Smallest,
-    Smaller,
-    Normal
+    Smallest = 0,
+
+    Smaller = 1,
+
+    Normal = 2
 }

@@ -21,8 +21,15 @@ public sealed class AutomationNavigationSteeringTest
     [Fact]
     public void PartialPathDoesNotSkipUnsearchedTerrainToDestination()
     {
-        Assert.Equal(Vector3.UnitZ, AutomationNavigationSteering.SelectTarget(Vector3.UnitZ,
-            new Vector3(0, 0, 10), 0.75f, true));
+        Assert.Equal(
+            Vector3.UnitZ,
+            AutomationNavigationSteering.SelectTarget(
+                Vector3.UnitZ,
+                new Vector3(0, 0, 10),
+                0.75f,
+                true
+            )
+        );
     }
 
     [Fact]

@@ -25,8 +25,11 @@ internal sealed class ProjectMetadataRepairStep : IWorldMaintenanceStep
         var terrainGenerationMode = GetWorldSettingValue(projectNode, "TerrainGenerationMode", "Continent");
         XmlUtils.SetAttributeValue(projectNode, "Version", WorldUpgradeManager.TargetProjectFormatVersion);
         RepairProjectMetadata(projectNode, Storage.GetFileName(context.DirectoryName));
-        SetGameInfoValue(projectNode, "TerrainGenerationMode",
-            ResolveTerrainGenerationMode(context.SourceProjectVersion, terrainGenerationMode));
+        SetGameInfoValue(
+            projectNode,
+            "TerrainGenerationMode",
+            ResolveTerrainGenerationMode(context.SourceProjectVersion, terrainGenerationMode)
+        );
         SaveProjectXml(context.DirectoryName, projectNode);
     }
 
@@ -47,8 +50,12 @@ internal sealed class ProjectMetadataRepairStep : IWorldMaintenanceStep
     private static void RepairProjectMetadata(XElement projectNode, string fallbackWorldName)
     {
         EnsureGameInfoNode(projectNode);
-        EnsureGameInfoValue(projectNode, "WorldName", "System.String",
-            string.IsNullOrWhiteSpace(fallbackWorldName) ? "RecoveredWorld" : fallbackWorldName);
+        EnsureGameInfoValue(
+            projectNode,
+            "WorldName",
+            "System.String",
+            string.IsNullOrWhiteSpace(fallbackWorldName) ? "RecoveredWorld" : fallbackWorldName
+        );
         EnsureGameInfoValue(projectNode, "WorldSeed", "System.Int32", "0");
         EnsureGameInfoValue(projectNode, "WorldSeedString", "System.String", "0");
         EnsureGameInfoValue(projectNode, "GameMode", "Game.GameMode", "Survival");

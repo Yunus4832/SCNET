@@ -33,7 +33,10 @@ public class RecipaediaRecipesScreen : Screen
         var value = (int)parameters[0];
         _craftingRecipes.Clear();
         _craftingRecipes.AddRange(
-            CurrentModRuntime.Value!.PreviewCatalog.Recipes.ReadonlyRecipes.Where(r => r.ResultValue == value && r.ResultValue != 0));
+            CurrentModRuntime.Value!.PreviewCatalog.Recipes.ReadonlyRecipes.Where(r =>
+                r.ResultValue == value && r.ResultValue != 0
+            )
+        );
         _recipeIndex = 0;
     }
 

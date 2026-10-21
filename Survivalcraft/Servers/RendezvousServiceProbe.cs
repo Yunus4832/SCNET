@@ -15,7 +15,9 @@ public static class RendezvousServiceProbe
         {
             throw new InvalidDataException("The signaling service does not support room discovery.");
         }
-        var page = await client.GetRoomsAsync(null, RendezvousLimits.MaximumRoomPageSize, cancellationToken).ConfigureAwait(false);
+
+        var page = await client.GetRoomsAsync(null, RendezvousLimits.MaximumRoomPageSize, cancellationToken)
+            .ConfigureAwait(false);
         return page.Rooms.Count;
     }
 }

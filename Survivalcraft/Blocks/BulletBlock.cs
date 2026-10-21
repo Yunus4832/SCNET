@@ -6,9 +6,11 @@ public class BulletBlock : FlatBlock
 {
     public enum BulletType
     {
-        MusketBall,
-        Buckshot,
-        BuckshotBall
+        MusketBall = 0,
+
+        Buckshot = 1,
+
+        BuckshotBall = 2
     }
 
     public static readonly string[] DisplayNames =
@@ -100,7 +102,8 @@ public class BulletBlock : FlatBlock
     public override IEnumerable<int> GetCreativeValues()
     {
         return EnumUtils.GetEnumValues(typeof(BulletType)).Select(enumValue =>
-            Terrain.MakeBlockValue(BlockIndex, 0, SetBulletType(0, (BulletType)enumValue)));
+            Terrain.MakeBlockValue(BlockIndex, 0, SetBulletType(0, (BulletType)enumValue))
+        );
     }
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)

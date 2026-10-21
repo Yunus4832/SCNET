@@ -32,8 +32,7 @@ internal sealed class AndroidAssetsStorageRoot(AssetManager assets) : IStorageRo
             throw new InvalidOperationException("Android application assets are read-only.");
         }
 
-        return assets.Open(ToAssetPath(path))
-               ?? throw new FileNotFoundException($"Asset \"{path}\" was not found.");
+        return assets.Open(ToAssetPath(path)) ?? throw new FileNotFoundException($"Asset \"{path}\" was not found.");
     }
 
     public void DeleteFile(string path) => ThrowReadOnly();

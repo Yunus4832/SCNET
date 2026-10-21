@@ -16,7 +16,8 @@ public static class FilePicker
 
     public static Task<IReadOnlyList<PickedFile>> PickFilesAsync(
         FilePickerRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(request);
         return GetImplementation().PickFilesAsync(request, cancellationToken);
@@ -24,7 +25,8 @@ public static class FilePicker
 
     public static Task<PickedSaveTarget?> PickSaveTargetAsync(
         FileSaveRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(request);
         return GetImplementation().PickSaveTargetAsync(request, cancellationToken);
@@ -32,7 +34,6 @@ public static class FilePicker
 
     private static IFilePicker GetImplementation()
     {
-        return _implementation
-               ?? throw new InvalidOperationException("No platform file picker has been registered.");
+        return _implementation ?? throw new InvalidOperationException("No platform file picker has been registered.");
     }
 }

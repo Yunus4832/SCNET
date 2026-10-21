@@ -35,9 +35,12 @@ public class RealTimeClockElectricElement : RotateableElectricElement
     {
         var day = _subsystemTimeOfDay.Day;
         var num = (int)(((MathUtils.Ceiling(day * _periodsPerDay) + 0.5) / _periodsPerDay - day) *
-            _subsystemTimeOfDay.DayDuration / SubsystemElectricity.CircuitStepDuration);
-        var circuitStep = MathUtils.Max(SubsystemElectricity.FrameStartCircuitStep + num,
-            SubsystemElectricity.CircuitStep + 1);
+                        _subsystemTimeOfDay.DayDuration /
+                        SubsystemElectricity.CircuitStepDuration);
+        var circuitStep = MathUtils.Max(
+            SubsystemElectricity.FrameStartCircuitStep + num,
+            SubsystemElectricity.CircuitStep + 1
+        );
         SubsystemElectricity.QueueElectricElementForSimulation(this, circuitStep);
         var clockValue = GetClockValue();
         if (clockValue == _lastClockValue)

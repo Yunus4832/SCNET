@@ -29,7 +29,8 @@ public sealed class InProcessChunkContentTransport(IChunkContentAuthority author
                 request.Allocation,
                 snapshot.ContentVersion,
                 snapshot.Cells.ToArray(),
-                snapshot.Shafts.ToArray());
+                snapshot.Shafts.ToArray()
+            );
         }
     }
 

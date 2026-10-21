@@ -13,15 +13,18 @@ public sealed record ContentPackageManifest(
     string Description,
     string Version,
     ContentPackagePayload Payload,
-    JsonElement Metadata)
+    JsonElement Metadata
+)
 {
     private static readonly Regex _uuidPattern = new(
         "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        RegexOptions.CultureInvariant | RegexOptions.Compiled
+    );
 
     private static readonly Regex _modIdPattern = new(
         "^[a-z0-9][a-z0-9_-]*(?:\\.[a-z0-9][a-z0-9_-]*)*$",
-        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        RegexOptions.CultureInvariant | RegexOptions.Compiled
+    );
 
     public const int CurrentFormatVersion = 1;
 
@@ -36,9 +39,14 @@ public sealed record ContentPackageManifest(
                 throw new ContentPackageException("manifest.json must contain an object.");
             }
 
-            EnsureExactProperties(root,
-                ["formatVersion", "type", "identifier", "name", "summary", "description", "version",
-                    "payload", "metadata"], "manifest");
+            EnsureExactProperties(
+                root,
+                [
+                    "formatVersion", "type", "identifier", "name", "summary", "description", "version",
+                    "payload", "metadata"
+                ],
+                "manifest"
+            );
             var formatVersion = GetRequiredInt32(root, "formatVersion", "manifest");
             if (formatVersion != CurrentFormatVersion)
             {
@@ -59,8 +67,17 @@ public sealed record ContentPackageManifest(
                 throw new ContentPackageException("manifest.metadata must be an object.");
             }
 
-            return new ContentPackageManifest(formatVersion, type, identifier, name, summary, description,
-                version, payload, metadata.Clone());
+            return new ContentPackageManifest(
+                formatVersion,
+                type,
+                identifier,
+                name,
+                summary,
+                description,
+                version,
+                payload,
+                metadata.Clone()
+            );
         }
         catch (JsonException exception)
         {
@@ -134,18 +151,28 @@ public sealed record ContentPackageManifest(
     private static void ValidateDescription(string value, string field, int maxLength)
     {
         var scalarCount = value.EnumerateRunes().Count();
-        if (value.Trim() != value || !value.IsNormalized(NormalizationForm.FormC) ||
-            scalarCount < 1 || scalarCount > maxLength ||
+        if (value.Trim() != value ||
+            !value.IsNormalized(NormalizationForm.FormC) ||
+            scalarCount < 1 ||
+            scalarCount > maxLength ||
             value.EnumerateRunes().Any(rune => Rune.IsControl(rune) &&
-                (field != "description" || rune.Value != '\n')))
+                                               (field != "description" || rune.Value != '\n')
+            ))
         {
             throw new ContentPackageException(
-                $"manifest.{field} must be trimmed, 1-{maxLength} characters and contain no invalid control characters.");
+                $"manifest.{field} must be trimmed, 1-{maxLength} characters and contain no invalid control characters."
+            );
         }
     }
 
-    private static void ValidateIdentity(ContentPackageType type, string identifier, string name,
-        string summary, string description, string version)
+    private static void ValidateIdentity(
+        ContentPackageType type,
+        string identifier,
+        string name,
+        string summary,
+        string description,
+        string version
+    )
     {
         if (identifier.Length > 120 ||
             (type == ContentPackageType.Mod ? !_modIdPattern.IsMatch(identifier) : !_uuidPattern.IsMatch(identifier)))
@@ -154,11 +181,14 @@ public sealed record ContentPackageManifest(
         }
 
         var scalarCount = name.EnumerateRunes().Count();
-        if (name.Trim() != name || !name.IsNormalized(NormalizationForm.FormC) ||
-            scalarCount is < 1 or > 120 || name.EnumerateRunes().Any(Rune.IsControl))
+        if (name.Trim() != name ||
+            !name.IsNormalized(NormalizationForm.FormC) ||
+            scalarCount is < 1 or > 120 ||
+            name.EnumerateRunes().Any(Rune.IsControl))
         {
             throw new ContentPackageException(
-                "manifest.name must be trimmed, 1-120 characters and contain no control characters.");
+                "manifest.name must be trimmed, 1-120 characters and contain no control characters."
+            );
         }
 
         ValidateDescription(summary, "summary", 160);
@@ -184,7 +214,8 @@ public sealed record ContentPackagePayload(string Format, string Entry, string M
         var result = new ContentPackagePayload(
             ContentPackageManifest.GetRequiredString(element, "format", "manifest.payload"),
             ContentPackageManifest.GetRequiredString(element, "entry", "manifest.payload"),
-            ContentPackageManifest.GetRequiredString(element, "mediaType", "manifest.payload"));
+            ContentPackageManifest.GetRequiredString(element, "mediaType", "manifest.payload")
+        );
         if (!result.Entry.StartsWith("payload/", StringComparison.Ordinal))
         {
             throw new ContentPackageException("manifest.payload.entry must be inside payload/.");

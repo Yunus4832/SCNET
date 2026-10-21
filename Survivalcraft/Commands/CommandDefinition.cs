@@ -34,7 +34,8 @@ public interface ICommandDefinition
     bool IsPotentiallyAuthorized(
         CommandPermissionRegistry permissions,
         CommandPrincipal principal,
-        Project? project);
+        Project? project
+    );
 
     CommandResult Handle(CommandContext context, IGameCommand command);
 
@@ -49,7 +50,9 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
     where TCommand : IGameCommand
 {
     private readonly Func<CommandContext, TCommand, CommandResult> _handler;
+
     private readonly Func<ProtocolReader, TCommand>? _read;
+
     private readonly Action<ProtocolWriter, TCommand>? _write;
 
     public Type CommandType => typeof(TCommand);
@@ -77,7 +80,8 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         CommandPrincipalKinds? allowedPrincipals = null,
         Action<ProtocolWriter, TCommand>? write = null,
         Func<ProtocolReader, TCommand>? read = null,
-        CommandPanelBehavior panelBehavior = CommandPanelBehavior.ReturnToMessage)
+        CommandPanelBehavior panelBehavior = CommandPanelBehavior.ReturnToMessage
+    )
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
         Domain = domain;
@@ -88,8 +92,7 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         AllowedPrincipals = allowedPrincipals ?? GetDefaultPrincipals(domain);
         if ((write is null) != (read is null))
         {
-            throw new ArgumentException(
-                "Command definitions must provide both write and read delegates.");
+            throw new ArgumentException("Command definitions must provide both write and read delegates.");
         }
 
         _write = write;
@@ -166,28 +169,30 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
                context.Registry.Permissions.HasEffectivePermission(
                    permission,
                    context.Principal,
-                   context.Project);
+                   context.Project
+               );
     }
 
     public bool IsPotentiallyAuthorized(
         CommandPermissionRegistry permissions,
         CommandPrincipal principal,
-        Project? project)
+        Project? project
+    )
     {
         return CanInvoke(principal, project) &&
                (RequiredPermission is not { } permission ||
                 permissions.HasEffectivePermission(
                     permission,
                     principal,
-                    project));
+                    project
+                ));
     }
 
     public byte[] Encode(IGameCommand command)
     {
         if (_write is null)
         {
-            throw new InvalidOperationException(
-                $"Command {typeof(TCommand).Name} does not support remote invocation.");
+            throw new InvalidOperationException($"Command {typeof(TCommand).Name} does not support remote invocation.");
         }
 
         using var writer = new ProtocolWriter();
@@ -199,23 +204,20 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
     {
         if (_read is null)
         {
-            throw new InvalidOperationException(
-                $"Command {typeof(TCommand).Name} does not support remote invocation.");
+            throw new InvalidOperationException($"Command {typeof(TCommand).Name} does not support remote invocation.");
         }
 
         using var reader = new ProtocolReader(payload);
         var command = _read(reader);
         if (reader.BaseStream.Position != reader.BaseStream.Length)
         {
-            throw new InvalidDataException(
-                $"Command {typeof(TCommand).Name} payload contains trailing data.");
+            throw new InvalidDataException($"Command {typeof(TCommand).Name} payload contains trailing data.");
         }
 
         return command;
     }
 
-    private static CommandPrincipalKinds GetDefaultPrincipals(
-        CommandDomain domain)
+    private static CommandPrincipalKinds GetDefaultPrincipals(CommandDomain domain)
     {
         return domain switch
         {
@@ -233,4 +235,5 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
 
 public sealed record RegisteredGameCommand(
     ResourceId Id,
-    ICommandDefinition Definition);
+    ICommandDefinition Definition
+);

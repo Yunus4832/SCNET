@@ -19,13 +19,29 @@ public class RottenPumpkinSoupBucketBlock : BucketBlock
             contentsMesh.ParentBone ??
             throw new InvalidOperationException("Required ContentsMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(contentsMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
-            Matrix.CreateTranslation(0f, -0.3f, 0f), false, false, false, false, new Color(255, 160, 64));
+        StandaloneBlockMesh.AppendModelMeshPart(
+            contentsMesh.MeshParts[0],
+            boneAbsoluteTransform2 *
+            Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
+            Matrix.CreateTranslation(0f, -0.3f, 0f),
+            false,
+            false,
+            false,
+            false,
+            new Color(255, 160, 64)
+        );
         StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(0f, 0.625f, 0f));
-        StandaloneBlockMesh.AppendModelMeshPart(bucketMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
-            Matrix.CreateTranslation(0f, -0.3f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            bucketMesh.MeshParts[0],
+            boneAbsoluteTransform *
+            Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
+            Matrix.CreateTranslation(0f, -0.3f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 

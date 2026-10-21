@@ -10,7 +10,9 @@ namespace Game.Managers;
 public sealed class RendezvousManager
 {
     private readonly Lock _gate = new();
+
     private readonly Action<RendezvousSettings> _save;
+
     private IReadOnlyList<InstalledRendezvousService> _services;
 
     public static RendezvousManager Current { get; private set; } = new(new RendezvousSettings(), _ => { });
@@ -77,10 +79,13 @@ public sealed class RendezvousManager
         ArgumentNullException.ThrowIfNull(ids);
         lock (_gate)
         {
-            if (ids.Count != _services.Count || ids.Distinct().Count() != ids.Count || ids.Any(id => _services.All(item => item.Id != id)))
+            if (ids.Count != _services.Count ||
+                ids.Distinct().Count() != ids.Count ||
+                ids.Any(id => _services.All(item => item.Id != id)))
             {
                 throw new ArgumentException("Order must contain every installed signaling service once.", nameof(ids));
             }
+
             var byId = _services.ToDictionary(item => item.Id);
             Commit(ids.Select((id, order) => byId[id] with { Order = order }));
         }
@@ -107,6 +112,7 @@ public sealed class RendezvousManager
         {
             return new RendezvousSettings();
         }
+
         using var stream = Storage.OpenFile(GamePaths.RendezvousFile, OpenFileMode.Read);
         return Read(XElement.Load(stream));
     }
@@ -117,6 +123,7 @@ public sealed class RendezvousManager
         {
             Storage.CreateDirectory(GamePaths.Config);
         }
+
         using var stream = Storage.OpenFile(GamePaths.RendezvousFile, OpenFileMode.Create);
         Write(settings).Save(stream);
     }
@@ -124,11 +131,19 @@ public sealed class RendezvousManager
     public static XElement Write(RendezvousSettings settings)
     {
         var normalized = Normalize(settings);
-        return new XElement("RendezvousServices", normalized.Services.Select(service => new XElement("Service",
-            new XAttribute("Id", service.Id),
-            service.RegistrationId is null ? null : new XAttribute("RegistrationId", service.RegistrationId),
-            new XAttribute("Name", service.Name), new XAttribute("ControlUrl", service.ControlUrl),
-            new XAttribute("IsEnabled", service.IsEnabled), new XAttribute("Order", service.Order))));
+        return new XElement(
+            "RendezvousServices",
+            normalized.Services.Select(service => new XElement(
+                    "Service",
+                    new XAttribute("Id", service.Id),
+                    service.RegistrationId is null ? null : new XAttribute("RegistrationId", service.RegistrationId),
+                    new XAttribute("Name", service.Name),
+                    new XAttribute("ControlUrl", service.ControlUrl),
+                    new XAttribute("IsEnabled", service.IsEnabled),
+                    new XAttribute("Order", service.Order)
+                )
+            )
+        );
     }
 
     public static RendezvousSettings Read(XElement document)
@@ -137,18 +152,22 @@ public sealed class RendezvousManager
         {
             throw new FormatException("Invalid signaling services root element.");
         }
-        return Normalize(new RendezvousSettings
-        {
-            Services = document.Elements("Service").Select(item => new InstalledRendezvousService
+
+        return Normalize(
+            new RendezvousSettings
             {
-                Id = Guid.Parse(Required(item, "Id")),
-                Name = Required(item, "Name"),
-                ControlUrl = Required(item, "ControlUrl"),
-                IsEnabled = bool.Parse(Required(item, "IsEnabled")),
-                Order = int.Parse(Required(item, "Order"), CultureInfo.InvariantCulture),
-                RegistrationId = item.Attribute("RegistrationId")?.Value
-            }).ToArray()
-        });
+                Services = document.Elements("Service").Select(item => new InstalledRendezvousService
+                    {
+                        Id = Guid.Parse(Required(item, "Id")),
+                        Name = Required(item, "Name"),
+                        ControlUrl = Required(item, "ControlUrl"),
+                        IsEnabled = bool.Parse(Required(item, "IsEnabled")),
+                        Order = int.Parse(Required(item, "Order"), CultureInfo.InvariantCulture),
+                        RegistrationId = item.Attribute("RegistrationId")?.Value
+                    }
+                ).ToArray()
+            }
+        );
     }
 
     private static string Required(XElement item, string name) =>
@@ -158,22 +177,30 @@ public sealed class RendezvousManager
     {
         ArgumentNullException.ThrowIfNull(settings);
         var services = settings.Services.Select(service =>
-        {
-            if (service.Id == Guid.Empty || string.IsNullOrWhiteSpace(service.Name) || service.Name.Length > 100 || service.ControlUrl.Length > 2048)
             {
-                throw new ArgumentException("Invalid installed signaling service.");
+                if (service.Id == Guid.Empty ||
+                    string.IsNullOrWhiteSpace(service.Name) ||
+                    service.Name.Length > 100 ||
+                    service.ControlUrl.Length > 2048)
+                {
+                    throw new ArgumentException("Invalid installed signaling service.");
+                }
+
+                return service with
+                {
+                    Name = service.Name.Trim(),
+                    ControlUrl = RendezvousAddress.Normalize(new Uri(service.ControlUrl.Trim())).AbsoluteUri
+                };
             }
-            return service with
-            {
-                Name = service.Name.Trim(),
-                ControlUrl = RendezvousAddress.Normalize(new Uri(service.ControlUrl.Trim())).AbsoluteUri
-            };
-        }).OrderBy(service => service.Order).ThenBy(service => service.Id).ToArray();
+        ).OrderBy(service => service.Order).ThenBy(service => service.Id).ToArray();
         if (services.Select(service => service.Id).Distinct().Count() != services.Length ||
             services.Select(service => service.ControlUrl).Distinct(StringComparer.Ordinal).Count() != services.Length)
         {
-            throw new ArgumentException("Installed signaling services must have unique identities and control addresses.");
+            throw new ArgumentException(
+                "Installed signaling services must have unique identities and control addresses."
+            );
         }
+
         return settings with { Services = services };
     }
 }

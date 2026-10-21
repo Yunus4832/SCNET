@@ -74,8 +74,13 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
             var num = float.MaxValue;
             foreach (var key2 in Campfires)
             {
-                var x = _subsystemAmbientSounds.SubsystemAudio.CalculateListenerDistanceSquared(new Vector3(key2.X,
-                    key2.Y, key2.Z));
+                var x = _subsystemAmbientSounds.SubsystemAudio.CalculateListenerDistanceSquared(
+                    new Vector3(
+                        key2.X,
+                        key2.Y,
+                        key2.Z
+                    )
+                );
                 num = MathUtils.Min(num, x);
             }
 
@@ -121,7 +126,9 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
         var list = new List<Point3>();
         foreach (var key in Campfires)
         {
-            if (key.X >= chunk.Origin.X && key.X < chunk.Origin.X + 16 && key.Z >= chunk.Origin.Y &&
+            if (key.X >= chunk.Origin.X &&
+                key.X < chunk.Origin.X + 16 &&
+                key.Z >= chunk.Origin.Y &&
                 key.Z < chunk.Origin.Y + 16)
             {
                 list.Add(key);
@@ -137,8 +144,14 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
 
     public override void OnHitByProjectile(CellFace cellFace, WorldItem worldItem)
     {
-        if (!worldItem.ToRemove && AddFuel(cellFace.X, cellFace.Y, cellFace.Z, worldItem.Value,
-                (worldItem as Pickable)?.Count ?? 1))
+        if (!worldItem.ToRemove &&
+            AddFuel(
+                cellFace.X,
+                cellFace.Y,
+                cellFace.Z,
+                worldItem.Value,
+                (worldItem as Pickable)?.Count ?? 1
+            ))
         {
             worldItem.ToRemove = true;
         }
@@ -146,8 +159,13 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
 
     public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
     {
-        if (AddFuel(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z,
-                componentMiner.ActiveBlockValue, 1))
+        if (AddFuel(
+                raycastResult.CellFace.X,
+                raycastResult.CellFace.Y,
+                raycastResult.CellFace.Z,
+                componentMiner.ActiveBlockValue,
+                1
+            ))
         {
             componentMiner.RemoveActiveTool(1);
         }
@@ -273,13 +291,25 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
 
         if (steps >= 0)
         {
-            _subsystemAmbientSounds.SubsystemAudio.PlaySound("Audio/BlockPlaced", 1f, 0f,
-                new Vector3(x, y, z), 3f, false);
+            _subsystemAmbientSounds.SubsystemAudio.PlaySound(
+                "Audio/BlockPlaced",
+                1f,
+                0f,
+                new Vector3(x, y, z),
+                3f,
+                false
+            );
         }
         else
         {
-            _subsystemAmbientSounds.SubsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, 0f,
-                new Vector3(x, y, z), 3f, true);
+            _subsystemAmbientSounds.SubsystemAudio.PlayRandomSound(
+                "Audio/Sizzles",
+                1f,
+                0f,
+                new Vector3(x, y, z),
+                3f,
+                true
+            );
         }
 
         return true;

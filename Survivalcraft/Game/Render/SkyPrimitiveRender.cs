@@ -21,9 +21,17 @@ public class SkyPrimitiveRender
         while (num2 > 0)
         {
             var num3 = MathUtils.Min(num2, 196605);
-            Display.DrawUserIndexed(PrimitiveType.TriangleList, shader, VertexPositionColorTexture.VertexDeclaration,
-                baseTexturedBatch.TriangleVertices.Array, 0, baseTexturedBatch.TriangleVertices.Count,
-                baseTexturedBatch.TriangleIndices.Array, num, num3);
+            Display.DrawUserIndexed(
+                PrimitiveType.TriangleList,
+                shader,
+                VertexPositionColorTexture.VertexDeclaration,
+                baseTexturedBatch.TriangleVertices.Array,
+                0,
+                baseTexturedBatch.TriangleVertices.Count,
+                baseTexturedBatch.TriangleIndices.Array,
+                num,
+                num3
+            );
             num += num3;
             num2 -= num3;
         }
@@ -49,20 +57,22 @@ public class SkyPrimitiveRender
         if (primitiveRend.SortNeeded)
         {
             primitiveRend.SortNeeded = false;
-            primitiveRend.AllBatches.Sort(delegate (BaseBatch b1, BaseBatch b2)
-            {
-                if (b1.Layer < b2.Layer)
+            primitiveRend.AllBatches.Sort(
+                delegate(BaseBatch b1, BaseBatch b2)
                 {
-                    return -1;
-                }
+                    if (b1.Layer < b2.Layer)
+                    {
+                        return -1;
+                    }
 
-                if (b1.Layer <= b2.Layer)
-                {
-                    return 0;
-                }
+                    if (b1.Layer <= b2.Layer)
+                    {
+                        return 0;
+                    }
 
-                return 1;
-            });
+                    return 1;
+                }
+            );
         }
 
         foreach (var baseBatch in primitiveRend.AllBatches)

@@ -13,6 +13,7 @@ internal static class PreviewScenarioLoader
         {
             return new XmlScenario(xml);
         }
+
         var path = options.AssemblyPath!;
         var resolver = new AssemblyDependencyResolver(path);
         AssemblyLoadContext.Default.Resolving += (_, name) =>
@@ -23,10 +24,15 @@ internal static class PreviewScenarioLoader
         };
         var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
         var type = assembly.GetType(options.FactoryType!, throwOnError: true)!;
-        if (!typeof(IUiPreviewScenario).IsAssignableFrom(type) || type.IsAbstract || type.GetConstructor(Type.EmptyTypes) == null)
+        if (!typeof(IUiPreviewScenario).IsAssignableFrom(type) ||
+            type.IsAbstract ||
+            type.GetConstructor(Type.EmptyTypes) == null)
         {
-            throw new ArgumentException("Factory must implement IUiPreviewScenario and have a public parameterless constructor.");
+            throw new ArgumentException(
+                "Factory must implement IUiPreviewScenario and have a public parameterless constructor."
+            );
         }
+
         return (IUiPreviewScenario)Activator.CreateInstance(type)!;
     }
 

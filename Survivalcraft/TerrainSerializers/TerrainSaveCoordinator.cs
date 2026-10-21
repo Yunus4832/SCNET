@@ -26,8 +26,10 @@ internal sealed class TerrainSaveCoordinator : IDisposable
 
     private int _outstandingCount;
 
-    public TerrainSaveCoordinator(Action<Point2, int[], long[]> writer,
-        int queueCapacity = _defaultQueueCapacity)
+    public TerrainSaveCoordinator(
+        Action<Point2, int[], long[]> writer,
+        int queueCapacity = _defaultQueueCapacity
+    )
     {
         ArgumentNullException.ThrowIfNull(writer);
         if (queueCapacity <= 0)
@@ -37,13 +39,15 @@ internal sealed class TerrainSaveCoordinator : IDisposable
 
         _writer = writer;
         _maximumOutstanding = queueCapacity;
-        _queue = Channel.CreateBounded<TerrainSaveSnapshot>(new BoundedChannelOptions(queueCapacity)
-        {
-            AllowSynchronousContinuations = false,
-            FullMode = BoundedChannelFullMode.Wait,
-            SingleReader = true,
-            SingleWriter = true
-        });
+        _queue = Channel.CreateBounded<TerrainSaveSnapshot>(
+            new BoundedChannelOptions(queueCapacity)
+            {
+                AllowSynchronousContinuations = false,
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = true,
+                SingleWriter = true
+            }
+        );
         _worker = Task.Run(WorkerLoop);
     }
 
@@ -241,8 +245,12 @@ internal sealed class TerrainSaveCoordinator : IDisposable
                     {
                         snapshot.Failed = true;
                         snapshot.Error = error;
-                        Log.Error(ExceptionManager.MakeFullErrorMessage(
-                            $"Error saving terrain snapshot ({snapshot.Coords.X},{snapshot.Coords.Y}).", error));
+                        Log.Error(
+                            ExceptionManager.MakeFullErrorMessage(
+                                $"Error saving terrain snapshot ({snapshot.Coords.X},{snapshot.Coords.Y}).",
+                                error
+                            )
+                        );
                     }
                 }
                 else

@@ -18,45 +18,68 @@ using ServerSource.Protocol;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOptions<ContentServerOptions>()
     .Bind(builder.Configuration.GetSection(ContentServerOptions.SectionName))
-    .Validate(options => !options.BuiltInServerDirectoryEnabled || ServerSourceValidator.Validate(
-        new ServerSourcePage(ServerSourceProtocol.CurrentVersion,
-            new ServerSourceDescriptor(options.BuiltInServerDirectoryId, options.BuiltInServerDirectoryName), [],
-            null)).IsValid, "Built-in server directory identity is invalid.")
-    .Validate(options => string.IsNullOrWhiteSpace(options.PublicBaseUrl) ||
-                         Uri.TryCreate(options.PublicBaseUrl, UriKind.Absolute, out var uri) &&
-                         uri.Scheme is "http" or "https" && string.IsNullOrEmpty(uri.UserInfo) &&
-                         string.IsNullOrEmpty(uri.Query) && string.IsNullOrEmpty(uri.Fragment),
-        "ContentServer PublicBaseUrl must be an absolute HTTP URL without credentials, query, or fragment.")
+    .Validate(
+        options => !options.BuiltInServerDirectoryEnabled ||
+                   ServerSourceValidator.Validate(
+                       new ServerSourcePage(
+                           ServerSourceProtocol.CurrentVersion,
+                           new ServerSourceDescriptor(
+                               options.BuiltInServerDirectoryId,
+                               options.BuiltInServerDirectoryName
+                           ),
+                           [],
+                           null
+                       )
+                   ).IsValid,
+        "Built-in server directory identity is invalid."
+    )
+    .Validate(
+        options => string.IsNullOrWhiteSpace(options.PublicBaseUrl) ||
+                   Uri.TryCreate(options.PublicBaseUrl, UriKind.Absolute, out var uri) &&
+                   uri.Scheme is "http" or "https" &&
+                   string.IsNullOrEmpty(uri.UserInfo) &&
+                   string.IsNullOrEmpty(uri.Query) &&
+                   string.IsNullOrEmpty(uri.Fragment),
+        "ContentServer PublicBaseUrl must be an absolute HTTP URL without credentials, query, or fragment."
+    )
     .ValidateOnStart();
 var allowedOrigins = builder.Configuration
-    .GetSection($"{ContentServerOptions.SectionName}:AllowedOrigins").Get<string[]>() ?? [];
-builder.Services.AddCors(options => options.AddPolicy("ContentWebUI", policy =>
-{
-    if (allowedOrigins.Length > 0)
-    {
-        policy.WithOrigins(allowedOrigins)
-            .WithMethods("GET", "POST", "DELETE", "OPTIONS")
-            .WithHeaders("Authorization", "Content-Type")
-            .WithExposedHeaders("Content-Disposition");
-    }
-}));
+                         .GetSection($"{ContentServerOptions.SectionName}:AllowedOrigins").Get<string[]>() ??
+                     [];
+builder.Services.AddCors(options => options.AddPolicy(
+        "ContentWebUI",
+        policy =>
+        {
+            if (allowedOrigins.Length > 0)
+            {
+                policy.WithOrigins(allowedOrigins)
+                    .WithMethods("GET", "POST", "DELETE", "OPTIONS")
+                    .WithHeaders("Authorization", "Content-Type")
+                    .WithExposedHeaders("Content-Disposition");
+            }
+        }
+    )
+);
 builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    options.SerializerOptions.WriteIndented = true;
-});
+    {
+        options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.SerializerOptions.WriteIndented = true;
+    }
+);
 
 builder.Services.AddDbContext<ContentServerDbContext>((services, options) =>
-{
-    var configuredPath = services.GetRequiredService<IOptions<ContentServerOptions>>().Value.DatabasePath;
-    var contentRoot = services.GetRequiredService<IHostEnvironment>().ContentRootPath;
-    var databasePath = Path.GetFullPath(configuredPath, contentRoot);
-    Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
-    options.UseSqlite($"Data Source={databasePath}");
-});
+    {
+        var configuredPath = services.GetRequiredService<IOptions<ContentServerOptions>>().Value.DatabasePath;
+        var contentRoot = services.GetRequiredService<IHostEnvironment>().ContentRootPath;
+        var databasePath = Path.GetFullPath(configuredPath, contentRoot);
+        Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
+        options.UseSqlite($"Data Source={databasePath}");
+    }
+);
 builder.Services.AddMediatR(configuration => configuration
     .RegisterServicesFromAssemblyContaining<ApplyPublisherCommand>()
-    .AddUnitOfWorkBehaviors());
+    .AddUnitOfWorkBehaviors()
+);
 builder.Services.AddUnitOfWork<ContentServerDbContext>();
 builder.Services.AddRepositories(typeof(ContentServerDbContext).Assembly);
 builder.Services.AddSingleton<ContentPackageStore>();

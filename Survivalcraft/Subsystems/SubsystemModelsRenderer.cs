@@ -144,10 +144,18 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
             return;
         }
 
-        _shaderOpaque = new ModelShader(ShaderCodeManager.GetFast("Shaders/Model.vsh"),
-            ShaderCodeManager.GetFast("Shaders/Model.psh"), false, _maxInstancesCount);
-        _shaderAlphaTested = new ModelShader(ShaderCodeManager.GetFast("Shaders/Model.vsh"),
-            ShaderCodeManager.GetFast("Shaders/Model.psh"), true, _maxInstancesCount);
+        _shaderOpaque = new ModelShader(
+            ShaderCodeManager.GetFast("Shaders/Model.vsh"),
+            ShaderCodeManager.GetFast("Shaders/Model.psh"),
+            false,
+            _maxInstancesCount
+        );
+        _shaderAlphaTested = new ModelShader(
+            ShaderCodeManager.GetFast("Shaders/Model.vsh"),
+            ShaderCodeManager.GetFast("Shaders/Model.psh"),
+            true,
+            _maxInstancesCount
+        );
     }
 
     public override void OnEntityAdded(Entity entity)
@@ -223,8 +231,11 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
         modelShader.LightDirection1 = -Vector3.TransformNormal(LightingManager.DirectionToLight1, camera.ViewMatrix);
         modelShader.LightDirection2 = -Vector3.TransformNormal(LightingManager.DirectionToLight2, camera.ViewMatrix);
         modelShader.FogColor = new Vector3(_subsystemSky.ViewFogColor);
-        modelShader.FogBottomTopDensity = new Vector3(_subsystemSky.ViewFogBottom - camera.ViewPosition.Y,
-            _subsystemSky.ViewFogTop - camera.ViewPosition.Y, _subsystemSky.ViewFogDensity);
+        modelShader.FogBottomTopDensity = new Vector3(
+            _subsystemSky.ViewFogBottom - camera.ViewPosition.Y,
+            _subsystemSky.ViewFogTop - camera.ViewPosition.Y,
+            _subsystemSky.ViewFogDensity
+        );
         modelShader.HazeStartDensity = new Vector2(_subsystemSky.ViewHazeStart, _subsystemSky.ViewHazeDensity);
         modelShader.FogYMultiplier = _subsystemSky.VisibilityRangeYMultiplier;
         modelShader.WorldUp = Vector3.TransformNormal(Vector3.UnitY, camera.ViewMatrix);
@@ -257,12 +268,21 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
                 modelShader.Texture = componentModel.TextureOverride;
             }
 
-            Array.Copy(componentModel.AbsoluteBoneTransformsForCamera, modelShader.Transforms.World,
-                componentModel.AbsoluteBoneTransformsForCamera.Length);
+            Array.Copy(
+                componentModel.AbsoluteBoneTransformsForCamera,
+                modelShader.Transforms.World,
+                componentModel.AbsoluteBoneTransformsForCamera.Length
+            );
             var instancedModelData =
                 InstancedModelsManager.GetInstancedModelData(componentModel.Model, componentModel.MeshDrawOrders);
-            Display.DrawIndexed(PrimitiveType.TriangleList, modelShader, instancedModelData.VertexBuffer,
-                instancedModelData.IndexBuffer, 0, instancedModelData.IndexBuffer.IndicesCount);
+            Display.DrawIndexed(
+                PrimitiveType.TriangleList,
+                modelShader,
+                instancedModelData.VertexBuffer,
+                instancedModelData.IndexBuffer,
+                0,
+                instancedModelData.IndexBuffer.IndicesCount
+            );
             ModelsDrawn++;
         }
 
@@ -279,8 +299,11 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
                 continue;
             }
 
-            var color = Color.Lerp(Color.White, Color.Transparent,
-                MathUtils.Saturate((position.Length() - 4f) / 3f));
+            var color = Color.Lerp(
+                Color.White,
+                Color.Transparent,
+                MathUtils.Saturate((position.Length() - 4f) / 3f)
+            );
             if (color.A <= 8)
             {
                 continue;
@@ -288,18 +311,36 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
 
             var right = Vector3.TransformNormal(
                 0.005f * Vector3.Normalize(Vector3.Cross(camera.ViewDirection, Vector3.UnitY)),
-                camera.ViewMatrix);
+                camera.ViewMatrix
+            );
             var down = Vector3.TransformNormal(-0.005f * Vector3.UnitY, camera.ViewMatrix);
             var font = LabelWidget.BitmapFont;
             PrimitivesRenderer
-                .FontBatch(font, 1, DepthStencilState.DepthRead, RasterizerState.CullNoneScissor,
-                    BlendState.AlphaBlend, SamplerState.LinearClamp).QueueText(obj.Text, position, right, down,
-                    color, TextAnchor.HorizontalCenter | TextAnchor.Bottom);
+                .FontBatch(
+                    font,
+                    1,
+                    DepthStencilState.DepthRead,
+                    RasterizerState.CullNoneScissor,
+                    BlendState.AlphaBlend,
+                    SamplerState.LinearClamp
+                ).QueueText(
+                    obj.Text,
+                    position,
+                    right,
+                    down,
+                    color,
+                    TextAnchor.HorizontalCenter | TextAnchor.Bottom
+                );
         }
     }
 
-    public DrawText AddDrawText(Vector3 position, string text, Color color, double displaySeconds = 0,
-        int maxHeight = 24)
+    public DrawText AddDrawText(
+        Vector3 position,
+        string text,
+        Color color,
+        double displaySeconds = 0,
+        int maxHeight = 24
+    )
     {
         var x = new DrawText { Position = position, Text = text, Color = color, MaxHeight = maxHeight };
         _signDatas.Add(x);
@@ -325,8 +366,12 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
                 var shadowPosition = modelData.ComponentBody.Position + new Vector3(0f, 0.1f, 0f);
                 var boundingBox = modelData.ComponentBody.BoundingBox;
                 var shadowDiameter = 2.25f * (boundingBox.Max.X - boundingBox.Min.X);
-                _subsystemShadows.QueueShadow(camera, shadowPosition, shadowDiameter,
-                    modelData.ComponentModel.Opacity ?? 1f);
+                _subsystemShadows.QueueShadow(
+                    camera,
+                    shadowPosition,
+                    shadowDiameter,
+                    modelData.ComponentModel.Opacity ?? 1f
+                );
             }
 
             modelData.ComponentModel?.DrawExtras(camera);
@@ -362,8 +407,10 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
         var timeOfDay = subsystemSky.SubsystemTimeOfDay.TimeOfDay;
         var num = 2f * timeOfDay * (float)Math.PI;
         var x = num + (float)Math.PI;
-        var f = MathUtils.Max(subsystemSky.CalculateDawnGlowIntensity(timeOfDay),
-            subsystemSky.CalculateDuskGlowIntensity(timeOfDay));
+        var f = MathUtils.Max(
+            subsystemSky.CalculateDawnGlowIntensity(timeOfDay),
+            subsystemSky.CalculateDuskGlowIntensity(timeOfDay)
+        );
         var s = MathUtils.Lerp(90f, 160f, f);
         var vector = new Vector3
         {
@@ -378,8 +425,13 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
     }
 
     //阴影绘制
-    public void ShadowDraw(SubsystemShadows subsystemShadows, Camera camera, Vector3 shadowPosition,
-        float shadowDiameter, float alpha)
+    public void ShadowDraw(
+        SubsystemShadows subsystemShadows,
+        Camera camera,
+        Vector3 shadowPosition,
+        float shadowDiameter,
+        float alpha
+    )
     {
         if (!SettingsManager.Current.ObjectsShadowsEnabled)
         {
@@ -434,8 +486,15 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
                             var p2 = new Vector3(boundingBox.Max.X + i, num13 + num15, boundingBox.Min.Z + j);
                             var p3 = new Vector3(boundingBox.Max.X + i, num13 + num15, boundingBox.Max.Z + j);
                             var p4 = new Vector3(boundingBox.Min.X + i, num13 + num15, boundingBox.Max.Z + j);
-                            subsystemShadows.DrawShadowOverQuad(p, p2, p3, p4, shadowPosition, shadowDiameter,
-                                0.45f * block.ObjectShadowStrength * alpha * num3 * num16);
+                            subsystemShadows.DrawShadowOverQuad(
+                                p,
+                                p2,
+                                p3,
+                                p4,
+                                shadowPosition,
+                                shadowDiameter,
+                                0.45f * block.ObjectShadowStrength * alpha * num3 * num16
+                            );
                         }
 
                         break;

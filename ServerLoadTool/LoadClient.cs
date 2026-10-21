@@ -11,47 +11,87 @@ public sealed class LoadClient : IDisposable
     private const byte _defaultPlayerClass = 0;
 
     private readonly LoadOptions _options;
+
     private readonly NetworkHost _network;
+
     private readonly CancellationTokenSource _stop = new();
+
     private readonly Task<NetworkConnection> _connecting;
+
     private readonly Guid _identity = Guid.NewGuid();
+
     private readonly Guid _token = Guid.NewGuid();
+
     private readonly Dictionary<Point2, Chunk> _chunks = [];
+
     private readonly Stopwatch _clock = Stopwatch.StartNew();
+
     private NetworkConnection? _peer;
+
     private byte? _id;
+
     private Guid _epoch;
+
     private bool _hasEntity;
+
     private bool _snapshot;
+
     private double _lastMotion;
+
     private double _lastLocation;
+
     private Vector2? _locationCenter;
+
     private ulong _generation;
+
     private Vector3 _origin;
+
     private int _entityId;
+
     private bool _mounted;
+
     private double _lastDismountRequest;
+
     private double _dismountReadyAt;
+
     private double? _divergedAt;
+
     private double _movingSeconds;
+
     private bool _stopping;
 
     public int Index { get; }
+
     public string Name { get; }
+
     public string State { get; private set; } = "connecting";
+
     public string? Error { get; private set; }
+
     public Vector3 Position { get; private set; }
+
     public Vector3? AuthoritativePosition { get; private set; }
+
     public bool SpawnedMounted { get; private set; }
+
     public LoadWorldInfo? World { get; private set; }
+
     public double? PlayingSeconds { get; private set; }
+
     public long ReceivedBytes { get; private set; }
+
     public long SentBytes { get; private set; }
+
     public long ReceivedPackages { get; private set; }
+
     public long CompletedChunks { get; private set; }
+
     public long RetriedChunks { get; private set; }
+
     public List<double> ChunkMilliseconds { get; } = [];
+
     public int PendingChunks => _chunks.Values.Count(chunk => !chunk.Completed);
+
     public int Ping => _peer?.RoundTripMilliseconds ?? 0;
 
     public LoadClient(LoadOptions options, int index, string runName)
@@ -89,7 +129,12 @@ public sealed class LoadClient : IDisposable
     private async Task<NetworkConnection> ConnectAsync()
     {
         await using var preparation = await _network.PrepareAddressAsync(_options.Host, _options.Port, _stop.Token);
-        var request = new ConnectionRequestPackage(_token, GameProtocol.CurrentVersion, _identity, GameProtocol.EmptyModDataHash);
+        var request = new ConnectionRequestPackage(
+            _token,
+            GameProtocol.CurrentVersion,
+            _identity,
+            GameProtocol.EmptyModDataHash
+        );
         return await preparation.ConnectAsync(LoadWire.Encode(request), _stop.Token);
     }
 
@@ -99,13 +144,15 @@ public sealed class LoadClient : IDisposable
         {
             try
             {
-                return LoadWire.Decode(information.Data).OfType<ConnectionRejectPackage>().FirstOrDefault()?.Reason ?? information.Reason.ToString();
+                return LoadWire.Decode(information.Data).OfType<ConnectionRejectPackage>().FirstOrDefault()?.Reason ??
+                       information.Reason.ToString();
             }
             catch (Exception)
             {
                 // A transport rejection without a game payload still represents a failed run.
             }
         }
+
         return information.Reason.ToString();
     }
 
@@ -132,6 +179,7 @@ public sealed class LoadClient : IDisposable
             Fail($"send: {result}");
             return;
         }
+
         SentBytes += data.Length;
     }
 
@@ -158,13 +206,15 @@ public sealed class LoadClient : IDisposable
                 ReadEntities(snapshot.PlayerEntities);
                 _snapshot = true;
                 Send(new ConnectionPhaseAckPackage(_epoch, ConnectionPhase.WorldSnapshotApplied));
-                Send(new PlayerDataPackage
-                {
-                    Type = PlayerDataPackage.DataType.Create,
-                    PlayerName = Name,
-                    SkinName = "$Male1",
-                    PlayerClass = _defaultPlayerClass
-                });
+                Send(
+                    new PlayerDataPackage
+                    {
+                        Type = PlayerDataPackage.DataType.Create,
+                        PlayerName = Name,
+                        SkinName = "$Male1",
+                        PlayerClass = _defaultPlayerClass
+                    }
+                );
                 State = "joining";
                 break;
             case EntityPackage { Type: EntityPackage.EventType.LoadOne or EntityPackage.EventType.LoadList } entities:
@@ -189,7 +239,9 @@ public sealed class LoadClient : IDisposable
                 break;
             case SubsystemTerrainPackage { Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment } terrain:
                 if (_chunks.TryGetValue(terrain.ChunkFragment.Allocation.Coords, out var chunk) &&
-                    !chunk.Completed && chunk.Allocation == terrain.ChunkFragment.Allocation && chunk.Fragments.Add(terrain.ChunkFragment, out _))
+                    !chunk.Completed &&
+                    chunk.Allocation == terrain.ChunkFragment.Allocation &&
+                    chunk.Fragments.Add(terrain.ChunkFragment, out _))
                 {
                     chunk.Completed = true;
                     CompletedChunks++;
@@ -218,6 +270,7 @@ public sealed class LoadClient : IDisposable
         foreach (var entity in entities)
         {
             if (entity.PlayerGuid != _identity || _hasEntity) { continue; }
+
             Position = entity.Position;
             _entityId = entity.EntityId;
             _mounted = entity.ParentBodyId != 0;
@@ -244,10 +297,12 @@ public sealed class LoadClient : IDisposable
                 Fail($"connect: {exception.Message}");
             }
         }
+
         if (_network.Failure is { } failure)
         {
             Fail($"transport: {failure.Message}");
         }
+
         _network.DispatchEvents();
         if (Error != null)
         {
@@ -270,13 +325,17 @@ public sealed class LoadClient : IDisposable
         {
             _lastLocation = now;
             _locationCenter = Position.XZ;
-            Send(new PlayerDataPackage(new TerrainUpdateLocation
-            {
-                Center = Position.XZ,
-                ContentDistance = _options.Visibility,
-                VisibilityDistance = _options.Visibility,
-                LastChunksUpdateCenter = _locationCenter
-            }));
+            Send(
+                new PlayerDataPackage(
+                    new TerrainUpdateLocation
+                    {
+                        Center = Position.XZ,
+                        ContentDistance = _options.Visibility,
+                        VisibilityDistance = _options.Visibility,
+                        LastChunksUpdateCenter = _locationCenter
+                    }
+                )
+            );
             UpdateChunks(now);
         }
 
@@ -284,10 +343,17 @@ public sealed class LoadClient : IDisposable
         if (_mounted && now - _lastDismountRequest >= 1)
         {
             _lastDismountRequest = now;
-            Send(new ComponentMountPackage { Type = ComponentMountPackage.EventType.DismountRequest, FromId = _entityId });
+            Send(
+                new ComponentMountPackage
+                    { Type = ComponentMountPackage.EventType.DismountRequest, FromId = _entityId }
+            );
         }
 
-        if (State != "playing" && !_mounted && now >= _dismountReadyAt && _chunks.Count > 0 && _chunks.Values.All(chunk => chunk.Completed))
+        if (State != "playing" &&
+            !_mounted &&
+            now >= _dismountReadyAt &&
+            _chunks.Count > 0 &&
+            _chunks.Values.All(chunk => chunk.Completed))
         {
             State = "playing";
             PlayingSeconds = now;
@@ -323,15 +389,19 @@ public sealed class LoadClient : IDisposable
                 Position = LoadMotion.Position(_origin, _movingSeconds, Index, _options);
             }
 
-            Send(new PlayerStatePackage
-            {
-
-                PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange | ComponentPlayerPackage.ChangFlag.VelocityChange |
-                    ComponentPlayerPackage.ChangFlag.RotationChange | ComponentPlayerPackage.ChangFlag.LookAnglesChange | ComponentPlayerPackage.ChangFlag.SneakChange,
-                Position = Position,
-                Velocity = (Position - previousPosition) / (float)dt,
-                Rotation = Quaternion.Identity
-            });
+            Send(
+                new PlayerStatePackage
+                {
+                    PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange |
+                                        ComponentPlayerPackage.ChangFlag.VelocityChange |
+                                        ComponentPlayerPackage.ChangFlag.RotationChange |
+                                        ComponentPlayerPackage.ChangFlag.LookAnglesChange |
+                                        ComponentPlayerPackage.ChangFlag.SneakChange,
+                    Position = Position,
+                    Velocity = (Position - previousPosition) / (float)dt,
+                    Rotation = Quaternion.Identity
+                }
+            );
         }
     }
 
@@ -404,9 +474,13 @@ public sealed class LoadClient : IDisposable
     private sealed class Chunk(ChunkAllocationId allocation, double now)
     {
         public ChunkAllocationId Allocation { get; } = allocation;
+
         public double Started { get; } = now;
+
         public double LastRequest { get; set; } = now;
+
         public bool Completed { get; set; }
+
         public TerrainChunkFragmentReassembler Fragments { get; } = new();
     }
 }

@@ -58,11 +58,9 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
 
         CommonLib.WorkType = WorkType.Local;
         var localMainPlayer = CreatePlayer(true);
-        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(
-            CreateGui(localMainPlayer)));
+        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(localMainPlayer)));
         var additionalLocalPlayer = CreatePlayer(false);
-        Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(
-            CreateGui(additionalLocalPlayer)));
+        Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(additionalLocalPlayer)));
     }
 
     [Fact]
@@ -74,13 +72,11 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
         var remotePlayer = CreatePlayer(false);
 
         Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(mainPlayer)));
-        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(
-            new ComponentInput { ComponentPlayer = mainPlayer }));
+        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(new ComponentInput { ComponentPlayer = mainPlayer }));
         Assert.True(SubsystemDrawing.ShouldScheduleDrawable(CreateGui(mainPlayer)));
 
         Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(remotePlayer)));
-        Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(
-            new ComponentInput { ComponentPlayer = remotePlayer }));
+        Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(new ComponentInput { ComponentPlayer = remotePlayer }));
         Assert.False(SubsystemDrawing.ShouldScheduleDrawable(CreateGui(remotePlayer)));
     }
 

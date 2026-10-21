@@ -13,8 +13,16 @@ public abstract class CrossBlock : Block
         int z
     )
     {
-        generator.GenerateCrossingFaceVertices(this, value, x, y, z, Color.White, GetFaceTextureSlot(0, value),
-            geometry.SubsetAlphaTest);
+        generator.GenerateCrossingFaceVertices(
+            this,
+            value,
+            x,
+            y,
+            z,
+            Color.White,
+            GetFaceTextureSlot(0, value),
+            geometry.SubsetAlphaTest
+        );
     }
 
     public override void DrawBlock(

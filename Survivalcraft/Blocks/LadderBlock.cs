@@ -26,38 +26,83 @@ public abstract class LadderBlock(string modelName, float offset) : Block
         {
             BlockMeshesByData[i] = new BlockMesh();
             var m = Matrix.CreateTranslation(0f, 0f, 0f - (0.5f - Offset)) *
-                    Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-            BlockMeshesByData[i].AppendModelMeshPart(ladderMesh.MeshParts[0], boneAbsoluteTransform * m,
-                false, false, false, false, Color.White);
+                    Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
+                    Matrix.CreateTranslation(0.5f, 0f, 0.5f);
+            BlockMeshesByData[i].AppendModelMeshPart(
+                ladderMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             BlockMeshesByData[i].GenerateSidesData();
             CollisionBoxesByData[i] = [BlockMeshesByData[i].CalculateBoundingBox()];
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(ladderMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            ladderMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 
-    public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value,
-        int x, int y, int z)
+    public override void GenerateTerrainVertices(
+        BlockGeometryGenerator generator,
+        TerrainGeometry geometry,
+        int value,
+        int x,
+        int y,
+        int z
+    )
     {
         var num = Terrain.ExtractData(value);
         if (num < BlockMeshesByData.Length)
         {
-            generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null,
-                geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshesByData[num],
+                Color.White,
+                null,
+                geometry.SubsetOpaque
+            );
         }
     }
 
-    public override void DrawBlock(PrimitivesRenderer3D primitivesRenderer, int value, Color color, float size,
-        ref Matrix matrix, DrawBlockEnvironmentData environmentData)
+    public override void DrawBlock(
+        PrimitivesRenderer3D primitivesRenderer,
+        int value,
+        Color color,
+        float size,
+        ref Matrix matrix,
+        DrawBlockEnvironmentData environmentData
+    )
     {
-        BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMesh, color, size, ref matrix,
-            environmentData);
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneBlockMesh,
+            color,
+            size,
+            ref matrix,
+            environmentData
+        );
     }
 
-    public override BlockPlacementData GetPlacementValue(SubsystemTerrain subsystemTerrain,
-        ComponentMiner componentMiner, int value, TerrainRaycastResult raycastResult)
+    public override BlockPlacementData GetPlacementValue(
+        SubsystemTerrain subsystemTerrain,
+        ComponentMiner componentMiner,
+        int value,
+        TerrainRaycastResult raycastResult
+    )
     {
         BlockPlacementData result = default;
         result.Value = raycastResult.CellFace.Face < 4

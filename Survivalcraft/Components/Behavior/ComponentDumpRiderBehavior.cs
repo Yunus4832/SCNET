@@ -56,7 +56,8 @@ public class ComponentDumpRiderBehavior : ComponentBehavior, IUpdateable
             },
             delegate
             {
-                if (_isEnabled && _random.Float(0f, 1f) < 1f * _subsystemTime.GameTimeDelta &&
+                if (_isEnabled &&
+                    _random.Float(0f, 1f) < 1f * _subsystemTime.GameTimeDelta &&
                     _componentMount.Rider != null)
                 {
                     _importanceLevel = 220f;
@@ -117,7 +118,10 @@ public class ComponentDumpRiderBehavior : ComponentBehavior, IUpdateable
                             {
                                 _componentMount.Rider.ComponentCreature.ComponentHealth.Injure(
                                     _random.Float(0.05f, 0.2f),
-                                    _componentCreature, false, "Thrown from a mount");
+                                    _componentCreature,
+                                    false,
+                                    "Thrown from a mount"
+                                );
                             }
                         }
 
@@ -125,9 +129,12 @@ public class ComponentDumpRiderBehavior : ComponentBehavior, IUpdateable
                         {
                             if (CommonLib.WorkType != WorkType.Client)
                             {
-                                _componentMount.Rider.ComponentCreature.ComponentHealth.Injure(0.05f,
+                                _componentMount.Rider.ComponentCreature.ComponentHealth.Injure(
+                                    0.05f,
                                     _componentCreature,
-                                    false, "Thrown from a mount");
+                                    false,
+                                    "Thrown from a mount"
+                                );
                             }
                         }
                     }
@@ -156,8 +163,15 @@ public class ComponentDumpRiderBehavior : ComponentBehavior, IUpdateable
                 _componentCreature.ComponentCreatureSounds.PlayPainSound();
                 _componentPathfinding.SetDestination(
                     _componentCreature.ComponentBody.Position +
-                    new Vector3(_random.Float(-15f, 15f), 0f, _random.Float(-15f, 15f)), 1f, 2f, 0, false, true, false,
-                    null);
+                    new Vector3(_random.Float(-15f, 15f), 0f, _random.Float(-15f, 15f)),
+                    1f,
+                    2f,
+                    0,
+                    false,
+                    true,
+                    false,
+                    null
+                );
             },
             delegate
             {

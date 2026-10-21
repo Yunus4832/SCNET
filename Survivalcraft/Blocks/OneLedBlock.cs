@@ -23,18 +23,34 @@ public class OneLedBlock : MountedElectricElementBlock
                 ? i != 4
                     ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
                     : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                : Matrix.CreateRotationX((float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByFace[i] = new BlockMesh();
-            BlockMeshesByFace[i].AppendModelMeshPart(ledMesh.MeshParts[0], boneAbsoluteTransform * m, false, false,
-                false, false, Color.White);
+            BlockMeshesByFace[i].AppendModelMeshPart(
+                ledMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             CollisionBoxesByFace[i] = [BlockMeshesByFace[i].CalculateBoundingBox()];
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(ledMesh.MeshParts[0], boneAbsoluteTransform * m2, false, false,
-            false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            ledMesh.MeshParts[0],
+            boneAbsoluteTransform * m2,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
     }
 
     public override IEnumerable<CraftingRecipe> GetProceduralCraftingRecipes()
@@ -70,8 +86,12 @@ public class OneLedBlock : MountedElectricElementBlock
         return GetMountingFace(Terrain.ExtractData(value));
     }
 
-    public override BlockPlacementData GetPlacementValue(SubsystemTerrain subsystemTerrain,
-        ComponentMiner componentMiner, int value, TerrainRaycastResult raycastResult)
+    public override BlockPlacementData GetPlacementValue(
+        SubsystemTerrain subsystemTerrain,
+        ComponentMiner componentMiner,
+        int value,
+        TerrainRaycastResult raycastResult
+    )
     {
         var data = SetMountingFace(Terrain.ExtractData(value), raycastResult.CellFace.Face);
         var value2 = Terrain.ReplaceData(value, data);
@@ -90,11 +110,13 @@ public class OneLedBlock : MountedElectricElementBlock
         out bool showDebris
     )
     {
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, 0),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, 0),
+                Count = 1
+            }
+        );
         showDebris = true;
     }
 
@@ -119,8 +141,16 @@ public class OneLedBlock : MountedElectricElementBlock
             return;
         }
 
-        generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByFace[mountingFace], Color.White, null,
-            geometry.SubsetOpaque);
+        generator.GenerateMeshVertices(
+            this,
+            x,
+            y,
+            z,
+            BlockMeshesByFace[mountingFace],
+            Color.White,
+            null,
+            geometry.SubsetOpaque
+        );
         generator.GenerateWireVertices(value, x, y, z, mountingFace, 1f, Vector2.Zero, geometry.SubsetOpaque);
     }
 
@@ -133,8 +163,14 @@ public class OneLedBlock : MountedElectricElementBlock
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMesh, color, 2f * size, ref matrix,
-            environmentData);
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneBlockMesh,
+            color,
+            2f * size,
+            ref matrix,
+            environmentData
+        );
     }
 
     public override ElectricElement CreateElectricElement(

@@ -1,7 +1,11 @@
 namespace Game.Network.Diagnostics;
 
 public readonly record struct NetworkInterestStatistics(
-    long Updates, double TotalMilliseconds, double MaximumMilliseconds, long AllocatedBytes)
+    long Updates,
+    double TotalMilliseconds,
+    double MaximumMilliseconds,
+    long AllocatedBytes
+)
 {
     internal NetworkInterestStatistics AddSample(double milliseconds, long allocatedBytes)
     {
@@ -11,7 +15,11 @@ public readonly record struct NetworkInterestStatistics(
         }
 
         ArgumentOutOfRangeException.ThrowIfNegative(allocatedBytes);
-        return new NetworkInterestStatistics(Updates + 1, TotalMilliseconds + milliseconds,
-            Math.Max(MaximumMilliseconds, milliseconds), AllocatedBytes + allocatedBytes);
+        return new NetworkInterestStatistics(
+            Updates + 1,
+            TotalMilliseconds + milliseconds,
+            Math.Max(MaximumMilliseconds, milliseconds),
+            AllocatedBytes + allocatedBytes
+        );
     }
 }

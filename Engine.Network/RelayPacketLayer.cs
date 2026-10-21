@@ -19,6 +19,7 @@ internal sealed class RelayPacketLayer() : PacketLayerBase(RelayDatagramCodec.Ov
         {
             throw new ArgumentException("Invalid relay route.");
         }
+
         if (!_routes.TryAdd(endpoint, new Route(routeId, side, key.ToArray())))
         {
             throw new InvalidOperationException("Relay endpoint already assigned.");
@@ -28,7 +29,9 @@ internal sealed class RelayPacketLayer() : PacketLayerBase(RelayDatagramCodec.Ov
     internal bool Contains(IPEndPoint endpoint) => _routes.ContainsKey(endpoint);
 
     internal bool Matches(IPEndPoint endpoint, Guid routeId, byte side, ReadOnlySpan<byte> key) =>
-        _routes.TryGetValue(endpoint, out var route) && route.Id == routeId && route.Side == side &&
+        _routes.TryGetValue(endpoint, out var route) &&
+        route.Id == routeId &&
+        route.Side == side &&
         CryptographicOperations.FixedTimeEquals(route.Key, key);
 
     internal void Remove(IPEndPoint endpoint)
@@ -48,15 +51,25 @@ internal sealed class RelayPacketLayer() : PacketLayerBase(RelayDatagramCodec.Ov
                 NetworkDiagnostics.log.RelayPacket(endPoint.ToString(), string.Empty, "unassigned-endpoint", length);
                 length = 0;
             }
+
             return;
         }
+
         if (!RelayDatagramCodec.TryDecode(data.AsSpan(offset, length), route.Key, out var packet) ||
-            packet is null || packet.RouteId != route.Id || packet.Side != route.Side)
+            packet is null ||
+            packet.RouteId != route.Id ||
+            packet.Side != route.Side)
         {
-            NetworkDiagnostics.log.RelayPacket(endPoint.ToString(), route.Id.ToString(), "invalid-authentication", length);
+            NetworkDiagnostics.log.RelayPacket(
+                endPoint.ToString(),
+                route.Id.ToString(),
+                "invalid-authentication",
+                length
+            );
             length = 0;
             return;
         }
+
         lock (route.Replay)
         {
             if (!route.Replay.TryAccept(packet.Sequence))
@@ -66,6 +79,7 @@ internal sealed class RelayPacketLayer() : PacketLayerBase(RelayDatagramCodec.Ov
                 return;
             }
         }
+
         NetworkDiagnostics.log.RelayPacket(endPoint.ToString(), route.Id.ToString(), "accepted", length);
         data = packet.Payload;
         offset = 0;
@@ -78,6 +92,7 @@ internal sealed class RelayPacketLayer() : PacketLayerBase(RelayDatagramCodec.Ov
         {
             return;
         }
+
         var sequence = unchecked((ulong)Interlocked.Increment(ref route.sequence));
         data = RelayDatagramCodec.Encode(route.Id, route.Side, sequence, route.Key, data.AsSpan(offset, length));
         offset = 0;

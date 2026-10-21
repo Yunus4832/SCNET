@@ -103,7 +103,8 @@ public sealed unsafe class SdlTextInputBackend(bool processEditingKeyEvents = fa
             rectangle.X,
             rectangle.Y,
             Math.Max(rectangle.Width, 1),
-            Math.Max(rectangle.Height, 1));
+            Math.Max(rectangle.Height, 1)
+        );
         _sdl!.SetTextInputRect(in sdlRectangle);
     }
 
@@ -183,13 +184,15 @@ public sealed unsafe class SdlTextInputBackend(bool processEditingKeyEvents = fa
                 UpdateComposition(
                     ReadUtf8(sdlEvent->Edit.Text, 32),
                     sdlEvent->Edit.Start,
-                    sdlEvent->Edit.Length);
+                    sdlEvent->Edit.Length
+                );
                 break;
             case EventType.TexteditingExt:
                 UpdateComposition(
                     ReadUtf8(sdlEvent->EditExt.Text),
                     sdlEvent->EditExt.Start,
-                    sdlEvent->EditExt.Length);
+                    sdlEvent->EditExt.Length
+                );
                 break;
         }
 
@@ -238,7 +241,9 @@ public sealed unsafe class SdlTextInputBackend(bool processEditingKeyEvents = fa
             new TextComposition(
                 text,
                 MathUtils.Clamp(caretPosition, 0, text.Length),
-                MathUtils.Clamp(selectionLength, 0, text.Length)));
+                MathUtils.Clamp(selectionLength, 0, text.Length)
+            )
+        );
     }
 
     private static string ReadUtf8(byte* bytes, int maximumLength = int.MaxValue)

@@ -33,17 +33,33 @@ public class SpikedPlankBlock : MountedElectricElementBlock
                     ? j != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
                         : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                    : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                      Matrix.CreateRotationY(j * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                    : Matrix.CreateRotationX((float)Math.PI / 2f) *
+                      Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                      Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
+                      Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 BlockMeshesByData[num] = new BlockMesh();
-                BlockMeshesByData[num].AppendModelMeshPart(modelMesh.MeshParts[0],
-                    boneAbsoluteTransform * m, false, false, false, false, Color.White);
+                BlockMeshesByData[num].AppendModelMeshPart(
+                    modelMesh.MeshParts[0],
+                    boneAbsoluteTransform * m,
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
                 CollisionBoxesByData[num] = [BlockMeshesByData[num].CalculateBoundingBox()];
             }
 
             var identity = Matrix.Identity;
-            StandaloneBlockMesh.AppendModelMeshPart(modelMesh.MeshParts[0],
-                boneAbsoluteTransform * identity, false, false, false, false, Color.White);
+            StandaloneBlockMesh.AppendModelMeshPart(
+                modelMesh.MeshParts[0],
+                boneAbsoluteTransform * identity,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
         }
     }
 
@@ -90,8 +106,12 @@ public class SpikedPlankBlock : MountedElectricElementBlock
         return GetMountingFace(Terrain.ExtractData(value));
     }
 
-    public override BlockPlacementData GetPlacementValue(SubsystemTerrain subsystemTerrain,
-        ComponentMiner componentMiner, int value, TerrainRaycastResult raycastResult)
+    public override BlockPlacementData GetPlacementValue(
+        SubsystemTerrain subsystemTerrain,
+        ComponentMiner componentMiner,
+        int value,
+        TerrainRaycastResult raycastResult
+    )
     {
         var data = SetMountingFace(SetSpikesState(Terrain.ExtractData(value), true), raycastResult.CellFace.Face);
         BlockPlacementData result = default;
@@ -126,8 +146,17 @@ public class SpikedPlankBlock : MountedElectricElementBlock
             return;
         }
 
-        generator.GenerateShadedMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null, [],
-            geometry.SubsetOpaque);
+        generator.GenerateShadedMeshVertices(
+            this,
+            x,
+            y,
+            z,
+            BlockMeshesByData[num],
+            Color.White,
+            null,
+            [],
+            geometry.SubsetOpaque
+        );
         generator.GenerateWireVertices(value, x, y, z, GetFace(value), 1f, Vector2.Zero, geometry.SubsetOpaque);
     }
 

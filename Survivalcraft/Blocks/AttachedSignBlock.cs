@@ -92,34 +92,68 @@ public abstract class AttachedSignBlock(
         for (var i = 0; i < 4; i++)
         {
             var radians = (float)Math.PI / 2f * i;
-            var m = Matrix.CreateTranslation(0f, 0f, -15f / 32f) * Matrix.CreateRotationY(radians) *
+            var m = Matrix.CreateTranslation(0f, 0f, -15f / 32f) *
+                    Matrix.CreateRotationY(radians) *
                     Matrix.CreateTranslation(0.5f, -0.3125f, 0.5f);
             var blockMesh = new BlockMesh();
-            blockMesh.AppendModelMeshPart(signMesh.MeshParts[0], boneAbsoluteTransform * m, false, false,
-                false, false, Color.White);
+            blockMesh.AppendModelMeshPart(
+                signMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             BlockMeshes[i] = new BlockMesh();
             BlockMeshes[i].AppendBlockMesh(blockMesh);
             ColoredBlockMeshes[i] = new BlockMesh();
             ColoredBlockMeshes[i].AppendBlockMesh(BlockMeshes[i]);
-            BlockMeshes[i].TransformTextureCoordinates(Matrix.CreateTranslation(TextureSlot % 16 / 16f,
-                TextureSlot / 16 / 16f, 0f));
+            BlockMeshes[i].TransformTextureCoordinates(
+                Matrix.CreateTranslation(
+                    TextureSlot % 16 / 16f,
+                    TextureSlot / 16 / 16f,
+                    0f
+                )
+            );
             ColoredBlockMeshes[i].TransformTextureCoordinates(
-                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+            );
             CollisionBoxes[i] = new BoundingBox[1];
             CollisionBoxes[i][0] = blockMesh.CalculateBoundingBox();
             SurfaceMeshes[i] = new BlockMesh();
-            SurfaceMeshes[i].AppendModelMeshPart(surfaceMesh.MeshParts[0], boneAbsoluteTransform2 * m,
-                false, false, false, false, Color.White);
+            SurfaceMeshes[i].AppendModelMeshPart(
+                surfaceMesh.MeshParts[0],
+                boneAbsoluteTransform2 * m,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             SurfaceNormals[i] = -m.Forward;
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(signMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.6f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            signMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.6f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandaloneColoredBlockMesh.AppendBlockMesh(StandaloneBlockMesh);
-        StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(TextureSlot % 16 / 16f,
-            TextureSlot / 16 / 16f, 0f));
+        StandaloneBlockMesh.TransformTextureCoordinates(
+            Matrix.CreateTranslation(
+                TextureSlot % 16 / 16f,
+                TextureSlot / 16 / 16f,
+                0f
+            )
+        );
         StandaloneColoredBlockMesh.TransformTextureCoordinates(
-            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+        );
         base.Initialize();
     }
 
@@ -135,11 +169,13 @@ public abstract class AttachedSignBlock(
         showDebris = true;
         var color = GetColor(Terrain.ExtractData(oldValue));
         var data = PostedSignBlock.SetColor(0, color);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(PostedSignBlockIndex, 0, data),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(PostedSignBlockIndex, 0, data),
+                Count = 1
+            }
+        );
     }
 
     public override BlockDebrisParticleSystem CreateDebrisParticleSystem(
@@ -157,7 +193,8 @@ public abstract class AttachedSignBlock(
                 position,
                 strength,
                 DestructionDebrisScale,
-                SubsystemPalette.GetColor(subsystemTerrain, color), ColoredTextureSlot
+                SubsystemPalette.GetColor(subsystemTerrain, color),
+                ColoredTextureSlot
             );
         }
 
@@ -185,13 +222,29 @@ public abstract class AttachedSignBlock(
         var color = GetColor(data);
         if (color.HasValue)
         {
-            generator.GenerateMeshVertices(this, x, y, z, ColoredBlockMeshes[face],
-                SubsystemPalette.GetColor(generator, color), null, geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                ColoredBlockMeshes[face],
+                SubsystemPalette.GetColor(generator, color),
+                null,
+                geometry.SubsetOpaque
+            );
         }
         else
         {
-            generator.GenerateMeshVertices(this, x, y, z, BlockMeshes[face], Color.White, null,
-                geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshes[face],
+                Color.White,
+                null,
+                geometry.SubsetOpaque
+            );
         }
 
         generator.GenerateWireVertices(value, x, y, z, GetFace(data), 0.375f, Vector2.Zero, geometry.SubsetOpaque);

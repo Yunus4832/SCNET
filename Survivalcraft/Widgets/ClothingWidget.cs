@@ -93,8 +93,13 @@ public class ClothingWidget : CanvasWidget
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(new ComponentSleepPackage(_componentPlayer.ComponentSleep.Entity.EntityId,
-                ComponentSleepPackage.EventType.SleepRequest, true));
+            NetworkSender.SendToServer(
+                new ComponentSleepPackage(
+                    _componentPlayer.ComponentSleep.Entity.EntityId,
+                    ComponentSleepPackage.EventType.SleepRequest,
+                    true
+                )
+            );
         }
         else
         {

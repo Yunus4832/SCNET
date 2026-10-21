@@ -18,7 +18,8 @@ public sealed class TextCommand : ICommandAdapterBinding
         string name,
         LocalizedText description,
         IEnumerable<CommandRoute> routes,
-        IEnumerable<string>? aliases = null)
+        IEnumerable<string>? aliases = null
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         Name = ValidateName(name, nameof(name));
@@ -40,17 +41,21 @@ public sealed class TextCommand : ICommandAdapterBinding
             {
                 throw new ArgumentException(
                     $"Command route contains duplicate argument \"{duplicateArgument.Key}\".",
-                    nameof(routes));
+                    nameof(routes)
+                );
             }
 
             foreach (var argument in route.Segments.OfType<CommandArgument>())
             {
                 if (argument.Choices?.Any(choice =>
-                        string.IsNullOrWhiteSpace(choice) || choice.Any(char.IsWhiteSpace)) == true)
+                        string.IsNullOrWhiteSpace(choice) || choice.Any(char.IsWhiteSpace)
+                    ) ==
+                    true)
                 {
                     throw new ArgumentException(
                         $"Choices for argument \"{argument.Name}\" must be non-empty single tokens.",
-                        nameof(routes));
+                        nameof(routes)
+                    );
                 }
             }
         }
@@ -63,7 +68,8 @@ public sealed class TextCommand : ICommandAdapterBinding
         {
             throw new ArgumentException(
                 "Command names and aliases must be single tokens without a leading slash.",
-                parameterName);
+                parameterName
+            );
         }
 
         return value;

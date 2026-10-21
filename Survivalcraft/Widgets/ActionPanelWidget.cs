@@ -7,19 +7,33 @@ public sealed class ActionPanelWidget : CanvasWidget
     private const int _maximumItemsPerGroup = 4;
 
     private readonly CanvasWidget _primaryAccessoryHost;
+
     private readonly ButtonWidget[] _primaryButtons;
+
     private readonly object?[] _primaryItems = new object?[_maximumItemsPerGroup];
+
     private readonly ContainerWidget _primaryPanel;
+
     private readonly float[] _primaryWeights = [1f, 1f, 1f, 1f];
+
     private readonly CanvasWidget _primaryTrailingActionHost;
+
     private readonly ButtonWidget[] _secondaryButtons;
+
     private readonly object?[] _secondaryItems = new object?[_maximumItemsPerGroup];
+
     private readonly ContainerWidget _secondaryPanel;
+
     private readonly float[] _secondaryWeights = [1f, 1f, 1f, 1f];
+
     private readonly ButtonWidget _toggleButton;
+
     private readonly Dictionary<BevelledButtonWidget, (Color Center, Color Bevel)> _defaultButtonColors = [];
+
     private Func<object, bool> _itemEnabledProvider = _ => true;
+
     private Func<object, Color?> _itemColorProvider = _ => null;
+
     private Func<object, string> _itemTextProvider = item => item.ToString() ?? string.Empty;
 
     public ActionPanelWidget()
@@ -231,7 +245,8 @@ public sealed class ActionPanelWidget : CanvasWidget
         {
             throw new ArgumentException(
                 $"An action group supports at most {destination.Length} weights.",
-                nameof(weights));
+                nameof(weights)
+            );
         }
 
         if (source.Any(weight => !float.IsFinite(weight) || weight < 0f))
@@ -274,7 +289,8 @@ public sealed class ActionPanelWidget : CanvasWidget
         float[] weights,
         float availableWidth,
         CanvasWidget? leadingSlot = null,
-        CanvasWidget? trailingSlot = null)
+        CanvasWidget? trailingSlot = null
+    )
     {
         var totalWeight = weights.Sum();
         var unitWidth = availableWidth / totalWeight;
@@ -312,7 +328,8 @@ public sealed class ActionPanelWidget : CanvasWidget
             _primaryWeights,
             availableWidth,
             PrimaryAccessory is not null ? _primaryAccessoryHost : null,
-            PrimaryTrailingAction is not null ? _primaryTrailingActionHost : null);
+            PrimaryTrailingAction is not null ? _primaryTrailingActionHost : null
+        );
         UpdateGroupWidths(_secondaryButtons, _secondaryItems, _secondaryWeights, availableWidth);
     }
 

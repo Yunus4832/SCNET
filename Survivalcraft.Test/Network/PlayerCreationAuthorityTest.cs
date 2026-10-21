@@ -42,7 +42,8 @@ public sealed class PlayerCreationAuthorityTest
     public void MissingOrEmptyConnectionIdentityCannotCreatePlayer()
     {
         Assert.False(PlayerDataPackageHandler.CanCreatePlayer(null, []));
-        Assert.False(PlayerDataPackageHandler.CanCreatePlayer(
-            new Client(null, 1, Guid.NewGuid(), Guid.Empty, null), []));
+        Assert.False(
+            PlayerDataPackageHandler.CanCreatePlayer(new Client(null, 1, Guid.NewGuid(), Guid.Empty, null), [])
+        );
     }
 }

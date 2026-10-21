@@ -28,22 +28,32 @@ public class PermissionCompletionTest
             Assert.Equal("TeleportOther_Description", others.DescriptionSource!.Key);
             Assert.Equal("TeleportSelf_Description", self.DescriptionSource!.Key);
             Assert.All(grants, item => Assert.NotEqual(LocalizedText.Empty, item.DescriptionSource));
-            Assert.Contains(adapter.Suggest("/permission delegate Tester ", principal),
-                item => item.Value == "game:player.teleport.others");
-            Assert.Contains(adapter.Suggest("/permission delegate Tester ", principal),
-                item => item.Value == "game:player.teleport.self");
+            Assert.Contains(
+                adapter.Suggest("/permission delegate Tester ", principal),
+                item => item.Value == "game:player.teleport.others"
+            );
+            Assert.Contains(
+                adapter.Suggest("/permission delegate Tester ", principal),
+                item => item.Value == "game:player.teleport.self"
+            );
             Assert.DoesNotContain(grants, item => item.Value == "game:server.stop");
             var manager = CommandPrincipal.CreatePlayer("Manager", permissions: [BuiltInPermissionIds.ManageStandard]);
-            Assert.Contains(adapter.Suggest("/permission grant Tester ", manager),
-                item => item.Value == "game:player.teleport.others");
+            Assert.Contains(
+                adapter.Suggest("/permission grant Tester ", manager),
+                item => item.Value == "game:player.teleport.others"
+            );
             var permission = new ResourceId(new ModId("game"), "player.teleport.others");
             var delegated = CommandPrincipal.CreatePlayer("Delegate", delegablePermissions: [permission]);
-            Assert.Contains(adapter.Suggest("/permission delegate Tester ", delegated),
-                item => item.Value == "game:player.teleport.others");
+            Assert.Contains(
+                adapter.Suggest("/permission delegate Tester ", delegated),
+                item => item.Value == "game:player.teleport.others"
+            );
             var user = CommandPrincipal.CreatePlayer("User", permissions: [permission]);
             Assert.True(registry.CanInvoke(typeof(TeleportPlayerCommand), user));
-            Assert.DoesNotContain(adapter.Suggest("/permission delegate Tester ", user),
-                item => item.Value == "game:player.teleport.others");
+            Assert.DoesNotContain(
+                adapter.Suggest("/permission delegate Tester ", user),
+                item => item.Value == "game:player.teleport.others"
+            );
         }
         finally
         {

@@ -108,13 +108,22 @@ public class ComponentRandomFeedBehavior : ComponentBehavior, IUpdateable
                     var position = _componentCreature.ComponentBody.Position;
                     var forward = _componentCreature.ComponentBody.Matrix.Forward;
                     var num4 = _random.Float(0f, 1f) < 0.2f ? 5f : 1.5f;
-                    value = position + num4 * forward +
+                    value = position +
+                            num4 * forward +
                             0.5f * num4 * new Vector3(_random.Float(-1f, 1f), 0f, _random.Float(-1f, 1f));
                 }
 
                 value.Y = _subsystemTerrain.Terrain.GetTopHeight(Terrain.ToCell(value.X), Terrain.ToCell(value.Z)) + 1;
-                _componentPathfinding.SetDestination(value, _random.Float(0.25f, 0.35f), 1f, 0, false, true, false,
-                    null);
+                _componentPathfinding.SetDestination(
+                    value,
+                    _random.Float(0.25f, 0.35f),
+                    1f,
+                    0,
+                    false,
+                    true,
+                    false,
+                    null
+                );
             },
             delegate
             {
@@ -163,15 +172,15 @@ public class ComponentRandomFeedBehavior : ComponentBehavior, IUpdateable
                             stateMachine.TransitionTo("LookAround");
                             break;
                         case < 0.75f:
+                        {
+                            stateMachine.TransitionTo("Move");
+                            if (_random.Float(0f, 1f) < 0.1f * _subsystemTime.GameTimeDelta)
                             {
-                                stateMachine.TransitionTo("Move");
-                                if (_random.Float(0f, 1f) < 0.1f * _subsystemTime.GameTimeDelta)
-                                {
-                                    _componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
-                                }
-
-                                break;
+                                _componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
                             }
+
+                            break;
+                        }
                         default:
                             stateMachine.TransitionTo("Feed");
                             break;

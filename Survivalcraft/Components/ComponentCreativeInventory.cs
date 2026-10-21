@@ -165,8 +165,16 @@ public class ComponentCreativeInventory : Component, IPagedInventory
         return 1;
     }
 
-    public virtual void ProcessSlotItems(IInventory sourceInventory, int sourceSlotIndex, int slotIndex, int value,
-        int count, int processCount, out int processedValue, out int processedCount)
+    public virtual void ProcessSlotItems(
+        IInventory sourceInventory,
+        int sourceSlotIndex,
+        int slotIndex,
+        int value,
+        int count,
+        int processCount,
+        out int processedValue,
+        out int processedCount
+    )
     {
         var slotCount = GetSlotCount(slotIndex);
         var slotValue = GetSlotValue(slotIndex);
@@ -183,9 +191,15 @@ public class ComponentCreativeInventory : Component, IPagedInventory
                     continue;
                 }
 
-                subsystemBlockBehavior.ProcessInventoryItem(this, slotIndex, value, count,
-                    MathUtils.Min(processInventoryItemCapacity, processCount), out processedValue,
-                    out processedCount);
+                subsystemBlockBehavior.ProcessInventoryItem(
+                    this,
+                    slotIndex,
+                    value,
+                    count,
+                    MathUtils.Min(processInventoryItemCapacity, processCount),
+                    out processedValue,
+                    out processedCount
+                );
                 return;
             }
         }
@@ -242,13 +256,16 @@ public class ComponentCreativeInventory : Component, IPagedInventory
 
             var externalValues = creativeValues
                 .Where(creativeValue =>
-                    CurrentModRuntime.Value!.RequireWorldCatalog().TryGetBlockId(Terrain.ExtractContents(creativeValue), out var id) &&
-                    id.Namespace != new ModId("game"))
+                    CurrentModRuntime.Value!.RequireWorldCatalog()
+                        .TryGetBlockId(Terrain.ExtractContents(creativeValue), out var id) &&
+                    id.Namespace != new ModId("game")
+                )
                 .ToArray();
             Log.Information(
                 "Initialized creative inventory with {0} registered values; external values: {1}.",
                 creativeValues.Length,
-                string.Join(",", externalValues));
+                string.Join(",", externalValues)
+            );
         }
     }
 

@@ -120,10 +120,7 @@ public class FurnitureDesign
         }
     }
 
-    public int ShadowStrengthFactor
-    {
-        get { return _shadowStrengthFactor ??= CalculateShadowStrengthFactor(); }
-    }
+    public int ShadowStrengthFactor { get { return _shadowStrengthFactor ??= CalculateShadowStrengthFactor(); } }
 
     public bool IsLightEmitter => GetTorchPoints(0).Length != 0;
 
@@ -166,11 +163,7 @@ public class FurnitureDesign
         }
     }
 
-    public int Index
-    {
-        get => _index;
-        set => _index = value;
-    }
+    public int Index { get => _index; set => _index = value; }
 
     public string Name
     {
@@ -389,7 +382,12 @@ public class FurnitureDesign
                     var num = k + delta.X;
                     var num2 = j + delta.Y;
                     var num3 = i + delta.Z;
-                    if (num >= 0 && num < Resolution && num2 >= 0 && num2 < Resolution && num3 >= 0 && num3 < Resolution)
+                    if (num >= 0 &&
+                        num < Resolution &&
+                        num2 >= 0 &&
+                        num2 < Resolution &&
+                        num3 >= 0 &&
+                        num3 < Resolution)
                     {
                         array[num + num2 * Resolution + num3 * Resolution * Resolution] =
                             _values[k + j * Resolution + i * Resolution * Resolution];
@@ -423,9 +421,16 @@ public class FurnitureDesign
                 {
                     var vector = RotatePoint(new Vector3(k, j, i) - new Vector3(Resolution / 2f - 0.5f), axis, steps) +
                                  new Vector3(Resolution / 2f - 0.5f);
-                    var point = new Point3((int)MathUtils.Round(vector.X), (int)MathUtils.Round(vector.Y),
-                        (int)MathUtils.Round(vector.Z));
-                    if (point.X >= 0 && point.X < Resolution && point.Y >= 0 && point.Y < Resolution && point.Z >= 0 &&
+                    var point = new Point3(
+                        (int)MathUtils.Round(vector.X),
+                        (int)MathUtils.Round(vector.Y),
+                        (int)MathUtils.Round(vector.Z)
+                    );
+                    if (point.X >= 0 &&
+                        point.X < Resolution &&
+                        point.Y >= 0 &&
+                        point.Y < Resolution &&
+                        point.Z >= 0 &&
                         point.Z < Resolution)
                     {
                         array[point.X + point.Y * Resolution + point.Z * Resolution * Resolution] =
@@ -449,9 +454,16 @@ public class FurnitureDesign
                 {
                     var vector = MirrorPoint(new Vector3(k, j, i) - new Vector3(Resolution / 2f - 0.5f), axis) +
                                  new Vector3(Resolution / 2f - 0.5f);
-                    var point = new Point3((int)MathUtils.Round(vector.X), (int)MathUtils.Round(vector.Y),
-                        (int)MathUtils.Round(vector.Z));
-                    if (point.X >= 0 && point.X < Resolution && point.Y >= 0 && point.Y < Resolution && point.Z >= 0 &&
+                    var point = new Point3(
+                        (int)MathUtils.Round(vector.X),
+                        (int)MathUtils.Round(vector.Y),
+                        (int)MathUtils.Round(vector.Z)
+                    );
+                    if (point.X >= 0 &&
+                        point.X < Resolution &&
+                        point.Y >= 0 &&
+                        point.Y < Resolution &&
+                        point.Z >= 0 &&
                         point.Z < Resolution)
                     {
                         array[point.X + point.Y * Resolution + point.Z * Resolution * Resolution] =
@@ -786,7 +798,9 @@ public class FurnitureDesign
                         var cell2 = cell;
                         if (j > 0 && num6 != 0)
                         {
-                            var num7 = num2 - point.X + (num3 - point.Y) * Resolution +
+                            var num7 = num2 -
+                                       point.X +
+                                       (num3 - point.Y) * Resolution +
                                        (num4 - point.Z) * Resolution * Resolution;
                             var value = _values[num7];
                             if (!IsValueTransparent(value) ||
@@ -951,7 +965,8 @@ public class FurnitureDesign
         var collisionBoxesByRotation = new BoundingBox[4][];
         for (var j = 0; j < 4; j++)
         {
-            var m = Matrix.CreateTranslation(-0.5f, 0f, -0.5f) * Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
+            var m = Matrix.CreateTranslation(-0.5f, 0f, -0.5f) *
+                    Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
                     Matrix.CreateTranslation(0.5f, 0f, 0.5f);
             collisionBoxesByRotation[j] = new BoundingBox[list.Count];
             for (var k = 0; k < list.Count; k++)
@@ -982,7 +997,8 @@ public class FurnitureDesign
                             item = BoundingBox.Union(b, b2);
                             var vector = item.Size();
                             if ((item.Volume() - b.Volume() - b2.Volume()) /
-                                MathUtils.Min(vector.X, vector.Y, vector.Z) < 0.4f)
+                                MathUtils.Min(vector.X, vector.Y, vector.Z) <
+                                0.4f)
                             {
                                 goto end_IL_0263;
                             }
@@ -1039,7 +1055,7 @@ public class FurnitureDesign
                 }
 
                 return collisionBoxesByRotation;
-            end_IL_0263:
+                end_IL_0263:
                 break;
             }
 
@@ -1064,8 +1080,10 @@ public class FurnitureDesign
                         continue;
                     }
 
-                    var boundingBox = new BoundingBox(new Vector3(k, j, i) / Resolution,
-                        new Vector3(k + 1, j + 1, i + 1) / Resolution);
+                    var boundingBox = new BoundingBox(
+                        new Vector3(k, j, i) / Resolution,
+                        new Vector3(k + 1, j + 1, i + 1) / Resolution
+                    );
                     var num2 = -1;
                     for (var l = 0; l < list.Count; l++)
                     {
@@ -1099,7 +1117,8 @@ public class FurnitureDesign
         var torchPointsByRotation = new BoundingBox[4][];
         for (var m = 0; m < 4; m++)
         {
-            var m2 = Matrix.CreateTranslation(-0.5f, 0f, -0.5f) * Matrix.CreateRotationY(m * (float)Math.PI / 2f) *
+            var m2 = Matrix.CreateTranslation(-0.5f, 0f, -0.5f) *
+                     Matrix.CreateRotationY(m * (float)Math.PI / 2f) *
                      Matrix.CreateTranslation(0.5f, 0f, 0.5f);
             torchPointsByRotation[m] = new BoundingBox[list.Count];
             for (var n = 0; n < list.Count; n++)
@@ -1247,10 +1266,14 @@ public class FurnitureDesign
         {
             for (var num2 = box.Bottom - 1; num2 >= box.Top + 1; num2--)
             {
-                var box2 = CalculateBox(new Box(box.Left, box.Top, box.Near, box.Width, num2 - box.Top, box.Depth),
-                    precedingEmptySpaces);
-                var box3 = CalculateBox(new Box(box.Left, num2, box.Near, box.Width, box.Bottom - num2, box.Depth),
-                    precedingEmptySpaces);
+                var box2 = CalculateBox(
+                    new Box(box.Left, box.Top, box.Near, box.Width, num2 - box.Top, box.Depth),
+                    precedingEmptySpaces
+                );
+                var box3 = CalculateBox(
+                    new Box(box.Left, num2, box.Near, box.Width, box.Bottom - num2, box.Depth),
+                    precedingEmptySpaces
+                );
                 var subdivision = CreateBoundingBoxesHelper(box2, depth + 1, precedingEmptySpaces);
                 var subdivision2 = CreateBoundingBoxesHelper(box3, depth + 1, precedingEmptySpaces);
                 var num3 = subdivision.Boxes.Count + subdivision2.Boxes.Count;
@@ -1268,10 +1291,14 @@ public class FurnitureDesign
 
             for (var i = box.Near + 1; i < box.Far; i++)
             {
-                var box4 = CalculateBox(new Box(box.Left, box.Top, box.Near, box.Width, box.Height, i - box.Near),
-                    precedingEmptySpaces);
-                var box5 = CalculateBox(new Box(box.Left, box.Top, i, box.Width, box.Height, box.Far - i),
-                    precedingEmptySpaces);
+                var box4 = CalculateBox(
+                    new Box(box.Left, box.Top, box.Near, box.Width, box.Height, i - box.Near),
+                    precedingEmptySpaces
+                );
+                var box5 = CalculateBox(
+                    new Box(box.Left, box.Top, i, box.Width, box.Height, box.Far - i),
+                    precedingEmptySpaces
+                );
                 var subdivision3 = CreateBoundingBoxesHelper(box4, depth + 1, precedingEmptySpaces);
                 var subdivision4 = CreateBoundingBoxesHelper(box5, depth + 1, precedingEmptySpaces);
                 var num7 = subdivision3.Boxes.Count + subdivision4.Boxes.Count;
@@ -1289,10 +1316,14 @@ public class FurnitureDesign
 
             for (var j = box.Left + 1; j < box.Right; j++)
             {
-                var box6 = CalculateBox(new Box(box.Left, box.Top, box.Near, j - box.Left, box.Height, box.Depth),
-                    precedingEmptySpaces);
-                var box7 = CalculateBox(new Box(j, box.Top, box.Near, box.Right - j, box.Height, box.Depth),
-                    precedingEmptySpaces);
+                var box6 = CalculateBox(
+                    new Box(box.Left, box.Top, box.Near, j - box.Left, box.Height, box.Depth),
+                    precedingEmptySpaces
+                );
+                var box7 = CalculateBox(
+                    new Box(j, box.Top, box.Near, box.Right - j, box.Height, box.Depth),
+                    precedingEmptySpaces
+                );
                 var subdivision5 = CreateBoundingBoxesHelper(box6, depth + 1, precedingEmptySpaces);
                 var subdivision6 = CreateBoundingBoxesHelper(box7, depth + 1, precedingEmptySpaces);
                 var num11 = subdivision5.Boxes.Count + subdivision6.Boxes.Count;

@@ -183,10 +183,10 @@ public class ProtocolWriter() : BinaryWriter(new MemoryStream())
             Write(false);
         }
     }
+
     public void Write(CellFace cellFace)
     {
         WriteBlockPoint(cellFace.Point);
         Write(cellFace.Face);
     }
-
 }

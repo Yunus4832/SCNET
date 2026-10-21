@@ -27,14 +27,16 @@ public sealed class PublicModVersionsEndpoint(IMediator mediator) : ContentEndpo
     private async Task<ResponseData<PagedData<ModPackageResponse>>> Mods(
         string modId,
         PaginationRequest page,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var items = await mediator.Send(
             new ListVersionsQuery(
                 VersionQueryScope.Public,
                 page.ToPageRequest(),
                 Type: "Mod",
-                Identifier: modId),
+                Identifier: modId
+            ),
             cancellationToken
         );
         if (items.Total == 0)

@@ -7,9 +7,13 @@ namespace Game.Dialogs;
 public sealed class GameAnnouncementsDialog : Dialog
 {
     private readonly LabelWidget _bodyLabel;
+
     private readonly ButtonWidget _closeButton;
+
     private readonly LabelWidget _dateLabel;
+
     private readonly ListPanelWidget _listPanel;
+
     private readonly LabelWidget _titleLabel;
 
     private GameAnnouncement? _selectedAnnouncement;

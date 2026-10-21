@@ -134,11 +134,13 @@ public static partial class Mouse
 
         if (IsMouseVisible && MouseDown != null)
         {
-            MouseDown(new MouseButtonEvent
-            {
-                Button = mouseButton,
-                Position = scaledPosition,
-            });
+            MouseDown(
+                new MouseButtonEvent
+                {
+                    Button = mouseButton,
+                    Position = scaledPosition,
+                }
+            );
         }
     }
 
@@ -164,11 +166,13 @@ public static partial class Mouse
         var scaledPosition = position * Window.Scale;
         if (IsMouseVisible && MouseUp != null)
         {
-            MouseUp(new MouseButtonEvent
-            {
-                Button = mouseButton,
-                Position = scaledPosition,
-            });
+            MouseUp(
+                new MouseButtonEvent
+                {
+                    Button = mouseButton,
+                    Position = scaledPosition,
+                }
+            );
         }
     }
 
@@ -181,10 +185,12 @@ public static partial class Mouse
 
         var scaledPosition = position * Window.Scale;
         MousePosition = scaledPosition;
-        MouseMove?.Invoke(new MouseEvent
-        {
-            Position = scaledPosition,
-        });
+        MouseMove?.Invoke(
+            new MouseEvent
+            {
+                Position = scaledPosition,
+            }
+        );
     }
 
     public static void ProcessMouseWheel(float value)

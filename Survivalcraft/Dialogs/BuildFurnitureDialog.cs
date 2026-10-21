@@ -79,8 +79,12 @@ public class BuildFurnitureDialog : Dialog
         num += _design.Geometry.SubsetOpaqueByFace.Sum(b => b != null ? b.Indices.Count / 3 : 0);
         num += _design.Geometry.SubsetAlphaTestByFace.Sum(b => b != null ? b.Indices.Count / 3 : 0);
         _isValid = num <= 65535;
-        _statusLabel.Text = string.Format(LanguageManager.Get(_typeName, 1), num, 65535,
-            _isValid ? LanguageManager.Get(_typeName, 2) : LanguageManager.Get(_typeName, 3));
+        _statusLabel.Text = string.Format(
+            LanguageManager.Get(_typeName, 1),
+            num,
+            65535,
+            _isValid ? LanguageManager.Get(_typeName, 2) : LanguageManager.Get(_typeName, 3)
+        );
         _designWidget2D.Design = _design;
         _designWidget3D.Design = _design;
     }
@@ -118,73 +122,91 @@ public class BuildFurnitureDialog : Dialog
             var list = new List<Tuple<string, Action>>();
             if (_sourceDesign != null)
             {
-                list.Add(new Tuple<string, Action>(LanguageManager.Get(_typeName, 7), delegate
-                {
-                    Dismiss(false);
-                    DialogsManager.ShowDialog(ParentWidget,
-                        new TextBoxDialog(
-                            LanguageManager.Get(_typeName, 10),
-                            _sourceDesign.Name,
-                            20,
-                            delegate (string s)
-                            {
-                                try
-                                {
-                                    _sourceDesign.Name = s;
-                                }
-                                catch (Exception ex3)
-                                {
-                                    DialogsManager.Alert(ex3.Message);
-                                }
-                            }
-                        )
-                    );
-                }));
-                list.Add(new Tuple<string, Action>(LanguageManager.Get(_typeName, 8), delegate
-                {
-                    DialogsManager.ShowDialog(
-                        ParentWidget,
-                        new TextBoxDialog(LanguageManager.Get(_typeName, 11),
-                            _design.Name,
-                            20,
-                            delegate (string s)
-                            {
-                                try
-                                {
-                                    _design.Name = s;
-                                }
-                                catch (Exception ex2)
-                                {
-                                    DialogsManager.Alert(ex2.Message);
-                                }
-                            }
-                        )
-                    );
-                }));
+                list.Add(
+                    new Tuple<string, Action>(
+                        LanguageManager.Get(_typeName, 7),
+                        delegate
+                        {
+                            Dismiss(false);
+                            DialogsManager.ShowDialog(
+                                ParentWidget,
+                                new TextBoxDialog(
+                                    LanguageManager.Get(_typeName, 10),
+                                    _sourceDesign.Name,
+                                    20,
+                                    delegate(string s)
+                                    {
+                                        try
+                                        {
+                                            _sourceDesign.Name = s;
+                                        }
+                                        catch (Exception ex3)
+                                        {
+                                            DialogsManager.Alert(ex3.Message);
+                                        }
+                                    }
+                                )
+                            );
+                        }
+                    )
+                );
+                list.Add(
+                    new Tuple<string, Action>(
+                        LanguageManager.Get(_typeName, 8),
+                        delegate
+                        {
+                            DialogsManager.ShowDialog(
+                                ParentWidget,
+                                new TextBoxDialog(
+                                    LanguageManager.Get(_typeName, 11),
+                                    _design.Name,
+                                    20,
+                                    delegate(string s)
+                                    {
+                                        try
+                                        {
+                                            _design.Name = s;
+                                        }
+                                        catch (Exception ex2)
+                                        {
+                                            DialogsManager.Alert(ex2.Message);
+                                        }
+                                    }
+                                )
+                            );
+                        }
+                    )
+                );
             }
             else
             {
-                list.Add(new Tuple<string, Action>(LanguageManager.Get(_typeName, 9), delegate
-                {
-                    DialogsManager.ShowDialog(
-                        ParentWidget,
-                        new TextBoxDialog(LanguageManager.Get(_typeName, 11),
-                            _design.Name,
-                            20,
-                            delegate (string s)
-                            {
-                                try
-                                {
-                                    _design.Name = s;
-                                }
-                                catch (Exception ex)
-                                {
-                                    DialogsManager.Alert(ex.Message);
-                                }
-                            }
-                        )
-                    );
-                }));
+                list.Add(
+                    new Tuple<string, Action>(
+                        LanguageManager.Get(_typeName, 9),
+                        delegate
+                        {
+                            DialogsManager.ShowDialog(
+                                ParentWidget,
+                                new TextBoxDialog(
+                                    LanguageManager.Get(_typeName, 11),
+                                    _design.Name,
+                                    20,
+                                    delegate(string s)
+                                    {
+                                        try
+                                        {
+                                            _design.Name = s;
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            DialogsManager.Alert(ex.Message);
+                                        }
+                                    }
+                                )
+                            );
+                        }
+                    )
+                );
             }
 
             if (list.Count == 1)
@@ -200,7 +222,7 @@ public class BuildFurnitureDialog : Dialog
                         list,
                         64f,
                         t => ((Tuple<string, Action>)t).Item1,
-                        delegate (object t) { ((Tuple<string, Action>)t).Item2(); }
+                        delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
                     )
                 );
             }

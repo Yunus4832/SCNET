@@ -331,3 +331,37 @@ ContentTool 将完整运行输出打入工具目录，独立运行时不依赖�
 该项目的 `Scripts/` 包含 Android 图像库及桌面 PNG/zlib 构建脚本：在临时目录中编译，
 全部成功后复制到项目的 `runtimes` 并更新校验值。成功后清理临时目录，失败时保留日志和中间文件。
 这些项目专用脚本不发布应用，也不注册到解决方案级脚本分组。
+
+## C# 代码风格与排版
+
+`.editorconfig` 集中保存三类规则：基础 EditorConfig 规则、Microsoft/Roslyn C# 规则、
+JetBrains 专属格式规则。文件中按适用工具分区注明，`resharper_` 键仅由 Rider、ReSharper、
+CleanupCode 执行，`dotnet format` 不检查这些键。JetBrains 是统一排版的执行与检查工具，
+Roslyn 只检查语法、命名等风格诊断；不再并列执行两套互相冲突的空白排版检查。
+
+方法体不压成一行，字段和属性声明之间各空一行。过长的二元表达式链每个操作数一行，运算符放在上一行末尾；布尔条件链的各个 `&&` / `||` 条件因此分别换行。方法及构造调用（包括 `new(...)`）过长时，每个实参独占一行，右括号另起一行。声明参数过长或已换行时，每个参数一行，右括号另起一行；
+普通方法/构造方法、主构造方法及 record 参数分别配置。短声明保留紧凑形式，建议行宽为 120。
+
+Rider 中执行 Reformat Code；命令行可安装免费的跨平台 JetBrains 工具后格式化指定文件：
+
+```bash
+dotnet tool install --global JetBrains.ReSharper.GlobalTools --version 2026.2.3.1
+jb cleanupcode Game.Protocol/Blocks/EditableBlockPackage.cs Engine/Input/TextInputTypes.cs
+```
+
+CleanupCode 的文件模式仅执行排版；解决方案模式必须显式选择 `--profile="Built-in: Reformat Code"`，
+避免默认 Full Cleanup 同时改写语法。Roslyn 专项修复（例如主构造方法转换）单独执行并审查。
+格式化后仍需运行 `.agents/skills/scnet-code-style/scripts/validate_changed_csharp.sh`。
+脚本先检查枚举显式赋值，再将变更文件及相应 `.editorconfig` 复制到临时目录，用 CleanupCode
+验证排版，最后执行 Roslyn 语法/命名风格检查。它不修改工作区，缺少 JetBrains CLI 会明确失败。
+CLI 不在 PATH 时可设置 `SCNET_JB` 为 `jb` 可执行文件路径；普通编译不依赖该工具。
+IDE/MCP 返回成功不能代替检查实际结果。
+
+枚举成员必须显式赋值，包括首项与零值；已有数值、别名和 Flags 组合保持不变。
+这不是 `.editorconfig` 的内置排版规则：上述检查脚本会调用 skill 内的 .NET 10 单文件 Roslyn 检查器，
+报告 `SCNETSTYLE001`，并覆盖条件编译分支。业务项目不增加分析器依赖，也不会因此出现 IDE 实时诊断。
+首次运行需还原该检查器固定版本的 Roslyn 包；全仓检查可执行：
+
+```bash
+dotnet run --file .agents/skills/scnet-code-style/scripts/check_explicit_enum_values.cs -- --all
+```

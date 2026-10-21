@@ -15,10 +15,11 @@ public class RichTextWidgetTest
         var richText = new FixedMetricsRichTextWidget
         {
             Content = new MessageContent(
-            [
-                new MessageSegment("AA", MessageTextStyle.Sender),
-                new MessageSegment("BBBBBBBB")
-            ])
+                [
+                    new MessageSegment("AA", MessageTextStyle.Sender),
+                    new MessageSegment("BBBBBBBB")
+                ]
+            )
         };
 
         richText.Measure(new Vector2(prefixWidth + partialBodyWidth, 100f));

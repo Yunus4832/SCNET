@@ -15,7 +15,12 @@ public sealed class ComponentHealthPackageTest
 
         var writer = new ProtocolWriter();
         ProtocolMessageCodec.Write(package, writer);
-        var clone = Assert.IsType<ComponentHealthPackage>(ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data())));
+        var clone = Assert.IsType<ComponentHealthPackage>(
+            ProtocolMessageCodec.Read(
+                package.ID,
+                new ProtocolReader(writer.Data())
+            )
+        );
 
         Assert.Equal(ComponentHealthPackage.EventType.SyncHealth, clone.Type);
         Assert.Equal(42, clone.TargetId);

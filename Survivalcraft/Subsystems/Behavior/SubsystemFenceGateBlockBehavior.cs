@@ -23,8 +23,14 @@ public class SubsystemFenceGateBlockBehavior : SubsystemBlockBehavior
         var value = Terrain.ReplaceData(cellValue, data);
         SubsystemTerrain.ChangeCell(x, y, z, value);
         var name = open ? "Audio/Doors/DoorOpen" : "Audio/Doors/DoorClose";
-        SubsystemTerrain.Project.FindSubsystem<SubsystemAudio>(true)!.PlaySound(name, 0.7f,
-            _sharedRandom.Float(-0.1f, 0.1f), new Vector3(x, y, z), 4f, true);
+        SubsystemTerrain.Project.FindSubsystem<SubsystemAudio>(true)!.PlaySound(
+            name,
+            0.7f,
+            _sharedRandom.Float(-0.1f, 0.1f),
+            new Vector3(x, y, z),
+            4f,
+            true
+        );
         return true;
     }
 

@@ -3,7 +3,8 @@ namespace Game;
 public sealed class StartupContext(
     RunningSetting settings,
     StartupRequest request,
-    SessionInfo session)
+    SessionInfo session
+)
 {
     public RunningSetting Settings { get; } = settings;
 

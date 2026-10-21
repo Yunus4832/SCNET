@@ -21,7 +21,8 @@ public static class PageQueryableExtensions
         int pageIndex = 1,
         int pageSize = 10,
         bool countTotal = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         if (pageIndex <= 0)
         {
@@ -57,18 +58,22 @@ public static class PageQueryableExtensions
     public static Task<PagedData<T>> ToPagedDataAsync<T>(
         this IQueryable<T> query,
         IPagedQuery<T> pagedQuery,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         return query.ToPagedDataAsync(
             pagedQuery.PageIndex,
-            pagedQuery.PageSize, pagedQuery.CountTotal,
-            cancellationToken);
+            pagedQuery.PageSize,
+            pagedQuery.CountTotal,
+            cancellationToken
+        );
     }
 
     public static Task<PagedData<T>> ToPagedDataAsync<T>(
         this IQueryable<T> query,
         IPageRequest pageRequest,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         return query.ToPagedDataAsync(
             pageRequest.PageIndex,

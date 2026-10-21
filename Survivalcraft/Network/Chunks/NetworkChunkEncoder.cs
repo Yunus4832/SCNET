@@ -8,17 +8,25 @@ namespace Game.Network.Chunks;
 internal sealed class NetworkChunkEncoder : IDisposable
 {
     private readonly ConcurrentQueue<EncodingCompletion> _completions = new();
+
     private readonly Func<AuthorityChunkSnapshot, EncodedTerrainChunk> _encode;
+
     private readonly Lock _lock = new();
+
     private readonly HashSet<AuthorityChunkDescriptor> _pending = [];
+
     private readonly Channel<AuthorityChunkSnapshot> _queue;
+
     private readonly int _maximumOutstanding;
+
     private readonly Task _worker;
+
     private bool _disposed;
 
     public NetworkChunkEncoder(
         int maximumOutstanding = NetworkTerrainPolicy.DefaultServerChunkCountSendPer,
-        Func<AuthorityChunkSnapshot, EncodedTerrainChunk>? encode = null)
+        Func<AuthorityChunkSnapshot, EncodedTerrainChunk>? encode = null
+    )
     {
         if (maximumOutstanding <= 0)
         {
@@ -27,13 +35,15 @@ internal sealed class NetworkChunkEncoder : IDisposable
 
         _maximumOutstanding = maximumOutstanding;
         _encode = encode ?? NetworkChunkCodec.Encode;
-        _queue = Channel.CreateBounded<AuthorityChunkSnapshot>(new BoundedChannelOptions(maximumOutstanding)
-        {
-            AllowSynchronousContinuations = false,
-            FullMode = BoundedChannelFullMode.Wait,
-            SingleReader = true,
-            SingleWriter = true
-        });
+        _queue = Channel.CreateBounded<AuthorityChunkSnapshot>(
+            new BoundedChannelOptions(maximumOutstanding)
+            {
+                AllowSynchronousContinuations = false,
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = true,
+                SingleWriter = true
+            }
+        );
         _worker = Task.Run(WorkerLoop);
     }
 
@@ -71,7 +81,8 @@ internal sealed class NetworkChunkEncoder : IDisposable
             {
                 Log.Warning(
                     $"Failed to encode terrain chunk {completion.Descriptor.Coords}: " +
-                    $"{completion.Error.GetType().Name}: {completion.Error.Message}");
+                    $"{completion.Error.GetType().Name}: {completion.Error.Message}"
+                );
                 continue;
             }
 
@@ -166,5 +177,6 @@ internal sealed class NetworkChunkEncoder : IDisposable
     private sealed record EncodingCompletion(
         AuthorityChunkDescriptor Descriptor,
         EncodedTerrainChunk? Encoded,
-        Exception? Error);
+        Exception? Error
+    );
 }

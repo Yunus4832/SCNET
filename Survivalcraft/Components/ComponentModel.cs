@@ -23,11 +23,7 @@ public class ComponentModel : Component
 
     public Vector4? EmissionColor { get; set; }
 
-    public Model Model
-    {
-        get => _model;
-        private set => SetModel(value);
-    }
+    public Model Model { get => _model; private set => SetModel(value); }
 
     public Texture2D? TextureOverride { get; set; }
 

@@ -27,8 +27,11 @@ public class SubsystemAmbientSounds : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        _fireSound.Volume = MathUtils.Lerp(_fireSound.Volume, SettingsManager.Current.SoundsVolume * FireSoundVolume,
-            MathUtils.Saturate(3f * Time.FrameDuration));
+        _fireSound.Volume = MathUtils.Lerp(
+            _fireSound.Volume,
+            SettingsManager.Current.SoundsVolume * FireSoundVolume,
+            MathUtils.Saturate(3f * Time.FrameDuration)
+        );
         if (_fireSound.Volume > 0.5f * AudioManager.MinAudibleVolume)
         {
             _fireSound.Play();
@@ -38,8 +41,11 @@ public class SubsystemAmbientSounds : Subsystem, IUpdateable
             _fireSound.Pause();
         }
 
-        _waterSound.Volume = MathUtils.Lerp(_waterSound.Volume, SettingsManager.Current.SoundsVolume * WaterSoundVolume,
-            MathUtils.Saturate(3f * Time.FrameDuration));
+        _waterSound.Volume = MathUtils.Lerp(
+            _waterSound.Volume,
+            SettingsManager.Current.SoundsVolume * WaterSoundVolume,
+            MathUtils.Saturate(3f * Time.FrameDuration)
+        );
         if (_waterSound.Volume > 0.5f * AudioManager.MinAudibleVolume)
         {
             _waterSound.Play();
@@ -49,8 +55,11 @@ public class SubsystemAmbientSounds : Subsystem, IUpdateable
             _waterSound.Pause();
         }
 
-        _magmaSound.Volume = MathUtils.Lerp(_magmaSound.Volume, SettingsManager.Current.SoundsVolume * MagmaSoundVolume,
-            MathUtils.Saturate(3f * Time.FrameDuration));
+        _magmaSound.Volume = MathUtils.Lerp(
+            _magmaSound.Volume,
+            SettingsManager.Current.SoundsVolume * MagmaSoundVolume,
+            MathUtils.Saturate(3f * Time.FrameDuration)
+        );
         if (_magmaSound.Volume > 0.5f * AudioManager.MinAudibleVolume)
         {
             _magmaSound.Play();

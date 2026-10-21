@@ -8,10 +8,12 @@ internal static class ContentPayloadValidation
         string entry,
         string mediaType,
         IEnumerable<string> metadataProperties,
-        bool allowAdditionalPayload = false)
+        bool allowAdditionalPayload = false
+    )
     {
         var manifest = context.Manifest;
-        if (manifest.Payload.Format != format || manifest.Payload.Entry != entry ||
+        if (manifest.Payload.Format != format ||
+            manifest.Payload.Entry != entry ||
             manifest.Payload.MediaType != mediaType)
         {
             throw new ContentPackageException("manifest.payload does not match its content type.");
@@ -26,7 +28,8 @@ internal static class ContentPayloadValidation
         if (!allowAdditionalPayload && !context.Paths.SetEquals(["manifest.json", entry]))
         {
             throw new ContentPackageException(
-                "Package contains payload files that are not allowed for its content type.");
+                "Package contains payload files that are not allowed for its content type."
+            );
         }
     }
 

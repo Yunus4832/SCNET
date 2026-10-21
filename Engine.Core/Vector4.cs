@@ -68,7 +68,9 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
 
     public static float DistanceSquared(Vector4 v1, Vector4 v2)
     {
-        return MathUtils.Sqr(v1.X - v2.X) + MathUtils.Sqr(v1.Y - v2.Y) + MathUtils.Sqr(v1.Z - v2.Z) +
+        return MathUtils.Sqr(v1.X - v2.X) +
+               MathUtils.Sqr(v1.Y - v2.Y) +
+               MathUtils.Sqr(v1.Z - v2.Z) +
                MathUtils.Sqr(v1.W - v2.W);
     }
 
@@ -112,8 +114,12 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
 
     public static Vector4 Min(Vector4 v1, Vector4 v2)
     {
-        return new Vector4(MathUtils.Min(v1.X, v2.X), MathUtils.Min(v1.Y, v2.Y), MathUtils.Min(v1.Z, v2.Z),
-            MathUtils.Min(v1.W, v2.W));
+        return new Vector4(
+            MathUtils.Min(v1.X, v2.X),
+            MathUtils.Min(v1.Y, v2.Y),
+            MathUtils.Min(v1.Z, v2.Z),
+            MathUtils.Min(v1.W, v2.W)
+        );
     }
 
     public static Vector4 Max(Vector4 v, float f)
@@ -123,33 +129,52 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
 
     public static Vector4 Max(Vector4 v1, Vector4 v2)
     {
-        return new Vector4(MathUtils.Max(v1.X, v2.X), MathUtils.Max(v1.Y, v2.Y), MathUtils.Max(v1.Z, v2.Z),
-            MathUtils.Max(v1.W, v2.W));
+        return new Vector4(
+            MathUtils.Max(v1.X, v2.X),
+            MathUtils.Max(v1.Y, v2.Y),
+            MathUtils.Max(v1.Z, v2.Z),
+            MathUtils.Max(v1.W, v2.W)
+        );
     }
 
     public static Vector4 Clamp(Vector4 v, float min, float max)
     {
-        return new Vector4(MathUtils.Clamp(v.X, min, max), MathUtils.Clamp(v.Y, min, max),
-            MathUtils.Clamp(v.Z, min, max), MathUtils.Clamp(v.W, min, max));
+        return new Vector4(
+            MathUtils.Clamp(v.X, min, max),
+            MathUtils.Clamp(v.Y, min, max),
+            MathUtils.Clamp(v.Z, min, max),
+            MathUtils.Clamp(v.W, min, max)
+        );
     }
 
     public static Vector4 Saturate(Vector4 v)
     {
-        return new Vector4(MathUtils.Saturate(v.X), MathUtils.Saturate(v.Y), MathUtils.Saturate(v.Z),
-            MathUtils.Saturate(v.W));
+        return new Vector4(
+            MathUtils.Saturate(v.X),
+            MathUtils.Saturate(v.Y),
+            MathUtils.Saturate(v.Z),
+            MathUtils.Saturate(v.W)
+        );
     }
 
     public static Vector4 Lerp(Vector4 v1, Vector4 v2, float f)
     {
-        return new Vector4(MathUtils.Lerp(v1.X, v2.X, f), MathUtils.Lerp(v1.Y, v2.Y, f), MathUtils.Lerp(v1.Z, v2.Z, f),
-            MathUtils.Lerp(v1.W, v2.W, f));
+        return new Vector4(
+            MathUtils.Lerp(v1.X, v2.X, f),
+            MathUtils.Lerp(v1.Y, v2.Y, f),
+            MathUtils.Lerp(v1.Z, v2.Z, f),
+            MathUtils.Lerp(v1.W, v2.W, f)
+        );
     }
 
     public static Vector4 CatmullRom(Vector4 v1, Vector4 v2, Vector4 v3, Vector4 v4, float f)
     {
-        return new Vector4(MathUtils.CatmullRom(v1.X, v2.X, v3.X, v4.X, f),
-            MathUtils.CatmullRom(v1.Y, v2.Y, v3.Y, v4.Y, f), MathUtils.CatmullRom(v1.Z, v2.Z, v3.Z, v4.Z, f),
-            MathUtils.CatmullRom(v1.W, v2.W, v3.W, v4.W, f));
+        return new Vector4(
+            MathUtils.CatmullRom(v1.X, v2.X, v3.X, v4.X, f),
+            MathUtils.CatmullRom(v1.Y, v2.Y, v3.Y, v4.Y, f),
+            MathUtils.CatmullRom(v1.Z, v2.Z, v3.Z, v4.Z, f),
+            MathUtils.CatmullRom(v1.W, v2.W, v3.W, v4.W, f)
+        );
     }
 
     public static Vector4 Normalize(Vector4 v)
@@ -176,20 +201,32 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
 
     public static Vector4 Transform(Vector4 v, Matrix m)
     {
-        return new Vector4(v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31 + m.M41,
-            v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32 + m.M42, v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33 + m.M43,
-            v.X * m.M14 + v.Y * m.M24 + v.Z * m.M34 + m.M44);
+        return new Vector4(
+            v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31 + m.M41,
+            v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32 + m.M42,
+            v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33 + m.M43,
+            v.X * m.M14 + v.Y * m.M24 + v.Z * m.M34 + m.M44
+        );
     }
 
     public static void Transform(ref Vector4 v, ref Matrix m, out Vector4 result)
     {
-        result = new Vector4(v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31 + m.M41,
-            v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32 + m.M42, v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33 + m.M43,
-            v.X * m.M14 + v.Y * m.M24 + v.Z * m.M34 + m.M44);
+        result = new Vector4(
+            v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31 + m.M41,
+            v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32 + m.M42,
+            v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33 + m.M43,
+            v.X * m.M14 + v.Y * m.M24 + v.Z * m.M34 + m.M44
+        );
     }
 
-    public static void Transform(Vector4[] sourceArray, int sourceIndex, ref Matrix m, Vector4[] destinationArray,
-        int destinationIndex, int count)
+    public static void Transform(
+        Vector4[] sourceArray,
+        int sourceIndex,
+        ref Matrix m,
+        Vector4[] destinationArray,
+        int destinationIndex,
+        int count
+    )
     {
         if (Vector128.IsHardwareAccelerated)
         {
@@ -197,8 +234,10 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
             for (var i = 0; i < count; i++)
             {
                 var vector = sourceArray[sourceIndex + i];
-                var result = row1 * Vector128.Create(vector.X) + row2 * Vector128.Create(vector.Y) +
-                             row3 * Vector128.Create(vector.Z) + row4;
+                var result = row1 * Vector128.Create(vector.X) +
+                             row2 * Vector128.Create(vector.Y) +
+                             row3 * Vector128.Create(vector.Z) +
+                             row4;
                 destinationArray[destinationIndex + i] = new Vector4(result[0], result[1], result[2], result[3]);
             }
 
@@ -212,12 +251,18 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
                 vector.X * m.M11 + vector.Y * m.M21 + vector.Z * m.M31 + m.M41,
                 vector.X * m.M12 + vector.Y * m.M22 + vector.Z * m.M32 + m.M42,
                 vector.X * m.M13 + vector.Y * m.M23 + vector.Z * m.M33 + m.M43,
-                vector.X * m.M14 + vector.Y * m.M24 + vector.Z * m.M34 + m.M44);
+                vector.X * m.M14 + vector.Y * m.M24 + vector.Z * m.M34 + m.M44
+            );
         }
     }
 
-    private static void CreateTransformRows(ref Matrix matrix, out Vector128<float> row1,
-        out Vector128<float> row2, out Vector128<float> row3, out Vector128<float> row4)
+    private static void CreateTransformRows(
+        ref Matrix matrix,
+        out Vector128<float> row1,
+        out Vector128<float> row2,
+        out Vector128<float> row3,
+        out Vector128<float> row4
+    )
     {
         row1 = Vector128.Create(matrix.M11, matrix.M12, matrix.M13, matrix.M14);
         row2 = Vector128.Create(matrix.M21, matrix.M22, matrix.M23, matrix.M24);

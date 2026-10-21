@@ -48,7 +48,12 @@ public sealed class TerrainUpdaterTest
             [-2] = new() { Center = Vector2.Zero, VisibilityDistance = 0f, ContentDistance = 16f }
         };
         var selected = TerrainUpdater.SelectChunkToUpdate(
-            [chunk], locations.Values, TerrainContentRole.Authority, true, out var state);
+            [chunk],
+            locations.Values,
+            TerrainContentRole.Authority,
+            true,
+            out var state
+        );
         Assert.Same(chunk, selected);
         Assert.Equal(TerrainChunkState.InvalidVertices1, state);
     }
@@ -62,7 +67,8 @@ public sealed class TerrainUpdaterTest
         TerrainContentRole role,
         bool preferContent,
         bool reverse,
-        bool selectsContent)
+        bool selectsContent
+    )
     {
         using var derived = new TerrainChunk(null!, 0, 0) { WorkerState = TerrainChunkState.InvalidLight };
         using var content = new TerrainChunk(null!, 2, 0);
@@ -89,7 +95,12 @@ public sealed class TerrainUpdaterTest
         };
 
         var selected = TerrainUpdater.SelectChunkToUpdate(
-            [far, outside, near], locations.Values, TerrainContentRole.Authority, true, out var state);
+            [far, outside, near],
+            locations.Values,
+            TerrainContentRole.Authority,
+            true,
+            out var state
+        );
 
         Assert.Same(near, selected);
         Assert.Equal(TerrainChunkState.Valid, state);
@@ -106,7 +117,12 @@ public sealed class TerrainUpdaterTest
         };
 
         var selected = TerrainUpdater.SelectChunkToUpdate(
-            [outside, derived], locations.Values, TerrainContentRole.Authority, true, out _);
+            [outside, derived],
+            locations.Values,
+            TerrainContentRole.Authority,
+            true,
+            out _
+        );
 
         Assert.Same(derived, selected);
     }
@@ -150,10 +166,11 @@ public sealed class TerrainUpdaterTest
         using var pause = new ManualResetEvent(true);
         using var token = new AutoResetEvent(false);
         var worker = Task.Run(() =>
-        {
-            Assert.True(SpinWait.SpinUntil(() => !pause.WaitOne(0), TimeSpan.FromSeconds(5)));
-            token.Set();
-        });
+            {
+                Assert.True(SpinWait.SpinUntil(() => !pause.WaitOne(0), TimeSpan.FromSeconds(5)));
+                token.Set();
+            }
+        );
 
         // A generous test deadline validates the handoff rather than OS timer precision.
         Assert.True(TerrainUpdater.TryPauseUpdateThread(pause, token, 5000));
@@ -341,14 +358,20 @@ public sealed class TerrainUpdaterTest
         var bufferedCenter = new Vector2(152, 0);
 
         Assert.False(TerrainUpdater.IsChunkInRange(bufferedCenter, locations));
-        Assert.True(TerrainUpdater.IsChunkInRange(
-            bufferedCenter,
-            locations,
-            NetworkTerrainPolicy.ClientChunkRetentionMargin));
-        Assert.False(TerrainUpdater.IsChunkInRange(
-            new Vector2(161, 0),
-            locations,
-            NetworkTerrainPolicy.ClientChunkRetentionMargin));
+        Assert.True(
+            TerrainUpdater.IsChunkInRange(
+                bufferedCenter,
+                locations,
+                NetworkTerrainPolicy.ClientChunkRetentionMargin
+            )
+        );
+        Assert.False(
+            TerrainUpdater.IsChunkInRange(
+                new Vector2(161, 0),
+                locations,
+                NetworkTerrainPolicy.ClientChunkRetentionMargin
+            )
+        );
     }
 
     [Fact]
@@ -358,11 +381,14 @@ public sealed class TerrainUpdaterTest
         var middle = new Point2(2, 0);
         var newest = new Point2(3, 0);
 
-        var evicted = TerrainUpdater.SelectRetainedChunkCoordsToEvict([
-            (middle, 20),
-            (oldest, 10),
-            (newest, 30)
-        ], 2);
+        var evicted = TerrainUpdater.SelectRetainedChunkCoordsToEvict(
+            [
+                (middle, 20),
+                (oldest, 10),
+                (newest, 30)
+            ],
+            2
+        );
 
         Assert.Equal([oldest], evicted);
     }
@@ -370,10 +396,13 @@ public sealed class TerrainUpdaterTest
     [Fact]
     public void ZeroRetentionCapacityEvictsEveryBufferedChunk()
     {
-        var evicted = TerrainUpdater.SelectRetainedChunkCoordsToEvict([
-            (new Point2(1, 0), 10),
-            (new Point2(2, 0), 20)
-        ], 0);
+        var evicted = TerrainUpdater.SelectRetainedChunkCoordsToEvict(
+            [
+                (new Point2(1, 0), 10),
+                (new Point2(2, 0), 20)
+            ],
+            0
+        );
 
         Assert.Equal(2, evicted.Count);
     }

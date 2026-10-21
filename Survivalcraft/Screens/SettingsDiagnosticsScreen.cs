@@ -39,6 +39,7 @@ public class SettingsDiagnosticsScreen : Screen
                 ((int)SettingsManager.Current.InvitationRelayPolicy + 1) % Enum.GetValues<RelayPolicy>().Length);
             SettingsManager.SaveSettings();
         }
+
         _relayPreference.Text = P2PRoomStatusDialog.Text($"Relay{SettingsManager.Current.InvitationRelayPolicy}");
         if (_displayDebugInfoButton.IsClicked)
         {
@@ -77,7 +78,7 @@ public class SettingsDiagnosticsScreen : Screen
             ? LanguageManager.On
             : LanguageManager.Off;
         _resetCompatibilityButton.IsEnabled = SettingsManager.Current.UseReducedZRange ||
-                                               SettingsManager.Current.InvitationRelayPolicy != RelayPolicy.Allowed;
+                                              SettingsManager.Current.InvitationRelayPolicy != RelayPolicy.Allowed;
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {

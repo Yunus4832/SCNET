@@ -32,23 +32,53 @@ public class SwitchBlock : MountedElectricElementBlock
                     ? i != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
                         : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                    : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                      Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                    : Matrix.CreateRotationX((float)Math.PI / 2f) *
+                      Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                      Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
+                      Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 var matrix2 = Matrix.CreateRotationX(j == 0 ? MathUtils.DegToRad(30f) : MathUtils.DegToRad(-30f));
                 BlockMeshesByIndex[num] = new BlockMesh();
-                BlockMeshesByIndex[num].AppendModelMeshPart(bodyMesh.MeshParts[0],
-                    boneAbsoluteTransform * matrix, false, false, false, false, Color.White);
-                BlockMeshesByIndex[num].AppendModelMeshPart(leverMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * matrix2 * matrix, false, false, false, false, Color.White);
+                BlockMeshesByIndex[num].AppendModelMeshPart(
+                    bodyMesh.MeshParts[0],
+                    boneAbsoluteTransform * matrix,
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
+                BlockMeshesByIndex[num].AppendModelMeshPart(
+                    leverMesh.MeshParts[0],
+                    boneAbsoluteTransform2 * matrix2 * matrix,
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
                 CollisionBoxesByIndex[num] = [BlockMeshesByIndex[num].CalculateBoundingBox()];
             }
         }
 
         var matrix3 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBlockMesh.AppendModelMeshPart(bodyMesh.MeshParts[0], boneAbsoluteTransform * matrix3,
-            false, false, false, false, Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(leverMesh.MeshParts[0],
-            boneAbsoluteTransform2 * matrix3, false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            bodyMesh.MeshParts[0],
+            boneAbsoluteTransform * matrix3,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            leverMesh.MeshParts[0],
+            boneAbsoluteTransform2 * matrix3,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
     }
 
     public static bool GetLeverState(int value)
@@ -112,8 +142,16 @@ public class SwitchBlock : MountedElectricElementBlock
             return;
         }
 
-        generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByIndex[num], Color.White, null,
-            geometry.SubsetOpaque);
+        generator.GenerateMeshVertices(
+            this,
+            x,
+            y,
+            z,
+            BlockMeshesByIndex[num],
+            Color.White,
+            null,
+            geometry.SubsetOpaque
+        );
         generator.GenerateWireVertices(value, x, y, z, GetFace(value), 0.25f, Vector2.Zero, geometry.SubsetOpaque);
     }
 

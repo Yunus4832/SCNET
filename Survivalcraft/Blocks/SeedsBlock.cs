@@ -6,14 +6,21 @@ public class SeedsBlock : FlatBlock
 {
     public enum SeedType
     {
-        TallGrass,
-        RedFlower,
-        PurpleFlower,
-        WhiteFlower,
-        WildRye,
-        Rye,
-        Cotton,
-        Pumpkin
+        TallGrass = 0,
+
+        RedFlower = 1,
+
+        PurpleFlower = 2,
+
+        WhiteFlower = 3,
+
+        WildRye = 4,
+
+        Rye = 5,
+
+        Cotton = 6,
+
+        Pumpkin = 7
     }
 
     public override IEnumerable<int> GetCreativeValues()

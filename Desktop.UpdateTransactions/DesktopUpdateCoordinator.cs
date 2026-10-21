@@ -18,8 +18,12 @@ public static class DesktopUpdateCoordinator
         Directory.CreateDirectory(work);
         try
         {
-            using var guard = new FileStream(Path.Combine(work, "update.lock"), FileMode.CreateNew,
-                FileAccess.ReadWrite, FileShare.None);
+            using var guard = new FileStream(
+                Path.Combine(work, "update.lock"),
+                FileMode.CreateNew,
+                FileAccess.ReadWrite,
+                FileShare.None
+            );
             var staged = Path.Combine(work, "staged");
             Directory.CreateDirectory(staged);
             using var archive = ZipFile.OpenRead(archivePath);
@@ -42,20 +46,30 @@ public static class DesktopUpdateCoordinator
 
             var manifest = DesktopReleaseManifest.Read(Path.Combine(staged, DesktopReleaseManifest.FileName), platform);
             if (!archive.Entries.Select(entry => entry.FullName).Order(StringComparer.Ordinal)
-                    .SequenceEqual(manifest.Files.Append(DesktopReleaseManifest.FileName)
-                        .Order(StringComparer.Ordinal)))
+                    .SequenceEqual(
+                        manifest.Files.Append(DesktopReleaseManifest.FileName)
+                            .Order(StringComparer.Ordinal)
+                    ))
             {
                 throw new InvalidDataException("The release manifest does not match the archive files.");
             }
 
-            var current = DesktopReleaseManifest.Read(Path.Combine(targetDirectory, DesktopReleaseManifest.FileName),
-                platform);
+            var current = DesktopReleaseManifest.Read(
+                Path.Combine(targetDirectory, DesktopReleaseManifest.FileName),
+                platform
+            );
             if (!OperatingSystem.IsWindows())
             {
-                File.SetUnixFileMode(Path.Combine(staged, manifest.Executable),
-                    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
-                    UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead |
-                    UnixFileMode.OtherExecute);
+                File.SetUnixFileMode(
+                    Path.Combine(staged, manifest.Executable),
+                    UnixFileMode.UserRead |
+                    UnixFileMode.UserWrite |
+                    UnixFileMode.UserExecute |
+                    UnixFileMode.GroupRead |
+                    UnixFileMode.GroupExecute |
+                    UnixFileMode.OtherRead |
+                    UnixFileMode.OtherExecute
+                );
             }
 
             var task = new DesktopUpdateTask
@@ -127,8 +141,13 @@ public static class DesktopUpdateCoordinator
         }
     }
 
-    public static bool HandleStartup(string[] args, string targetDirectory, string platform,
-        Action<string, string> replace, Action<string, bool> notify)
+    public static bool HandleStartup(
+        string[] args,
+        string targetDirectory,
+        string platform,
+        Action<string, string> replace,
+        Action<string, bool> notify
+    )
     {
         string? taskPath = null;
         try
@@ -142,9 +161,12 @@ public static class DesktopUpdateCoordinator
 
                 taskPath = Path.GetFullPath(args[1]);
                 RunHelper(taskPath, platform, args[0] == "--recover-update", replace);
-                notify(args[0] == "--recover-update"
-                    ? "The previous installation has been restored. Please start SCNET again."
-                    : "SCNET has been updated. Please start it again.", false);
+                notify(
+                    args[0] == "--recover-update"
+                        ? "The previous installation has been restored. Please start SCNET again."
+                        : "SCNET has been updated. Please start it again.",
+                    false
+                );
                 return true;
             }
 
@@ -161,8 +183,12 @@ public static class DesktopUpdateCoordinator
 
                     try
                     {
-                        using var guard = new FileStream(Path.Combine(work, "update.lock"), FileMode.OpenOrCreate,
-                            FileAccess.ReadWrite, FileShare.None);
+                        using var guard = new FileStream(
+                            Path.Combine(work, "update.lock"),
+                            FileMode.OpenOrCreate,
+                            FileAccess.ReadWrite,
+                            FileShare.None
+                        );
                     }
                     catch (IOException)
                     {
@@ -216,8 +242,10 @@ public static class DesktopUpdateCoordinator
             {
                 try
                 {
-                    File.AppendAllText(Path.Combine(Path.GetDirectoryName(taskPath)!, "result.log"),
-                        $"{DateTimeOffset.Now:O} {exception}\n");
+                    File.AppendAllText(
+                        Path.Combine(Path.GetDirectoryName(taskPath)!, "result.log"),
+                        $"{DateTimeOffset.Now:O} {exception}\n"
+                    );
                 }
                 catch (Exception logFailure) when (logFailure is IOException or UnauthorizedAccessException)
                 {
@@ -240,8 +268,12 @@ public static class DesktopUpdateCoordinator
             throw new InvalidOperationException("Update mode must run from the staged release directory.");
         }
 
-        using var guard = new FileStream(Path.Combine(work, "update.lock"), FileMode.OpenOrCreate,
-            FileAccess.ReadWrite, FileShare.None);
+        using var guard = new FileStream(
+            Path.Combine(work, "update.lock"),
+            FileMode.OpenOrCreate,
+            FileAccess.ReadWrite,
+            FileShare.None
+        );
         using var process = Process.GetCurrentProcess();
         task.HelperProcessId = process.Id;
         task.HelperStartTimeUtcTicks = process.StartTime.ToUniversalTime().Ticks;

@@ -16,11 +16,13 @@ public class TallGrassBlock : CrossBlock
         var data = Terrain.ExtractData(oldValue);
         if (!GetIsSmall(data))
         {
-            dropValues.Add(new BlockDropValue
-            {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
-                Count = 1
-            });
+            dropValues.Add(
+                new BlockDropValue
+                {
+                    Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                    Count = 1
+                }
+            );
         }
 
         showDebris = true;
@@ -46,9 +48,11 @@ public class TallGrassBlock : CrossBlock
             size,
             ref matrix,
             null,
-            color * BlockColorsMap.GrassColorsMap.Lookup(
+            color *
+            BlockColorsMap.GrassColorsMap.Lookup(
                 environmentData.Temperature,
-                environmentData.Humidity),
+                environmentData.Humidity
+            ),
             false,
             environmentData
         );
@@ -63,9 +67,16 @@ public class TallGrassBlock : CrossBlock
         int z
     )
     {
-        generator.GenerateCrossingFaceVertices(this, value, x, y, z,
-            BlockColorsMap.GrassColorsMap.Lookup(generator.Terrain, x, y, z), GetFaceTextureSlot(0, value),
-            geometry.SubsetAlphaTest);
+        generator.GenerateCrossingFaceVertices(
+            this,
+            value,
+            x,
+            y,
+            z,
+            BlockColorsMap.GrassColorsMap.Lookup(generator.Terrain, x, y, z),
+            GetFaceTextureSlot(0, value),
+            geometry.SubsetAlphaTest
+        );
     }
 
     public override int GetShadowStrength(int value)
@@ -78,13 +89,27 @@ public class TallGrassBlock : CrossBlock
         return ShadowStrength / 2;
     }
 
-    public override BlockDebrisParticleSystem CreateDebrisParticleSystem(SubsystemTerrain subsystemTerrain,
-        Vector3 position, int value, float strength)
+    public override BlockDebrisParticleSystem CreateDebrisParticleSystem(
+        SubsystemTerrain subsystemTerrain,
+        Vector3 position,
+        int value,
+        float strength
+    )
     {
-        var color = BlockColorsMap.GrassColorsMap.Lookup(subsystemTerrain.Terrain, Terrain.ToCell(position.X),
-            Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, color,
-            GetFaceTextureSlot(4, value));
+        var color = BlockColorsMap.GrassColorsMap.Lookup(
+            subsystemTerrain.Terrain,
+            Terrain.ToCell(position.X),
+            Terrain.ToCell(position.Y),
+            Terrain.ToCell(position.Z)
+        );
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            color,
+            GetFaceTextureSlot(4, value)
+        );
     }
 
     public static bool GetIsSmall(int data)

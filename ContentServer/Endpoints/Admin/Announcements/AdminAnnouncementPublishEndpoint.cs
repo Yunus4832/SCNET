@@ -26,8 +26,10 @@ public sealed class AdminAnnouncementPublishEndpoint(IMediator mediator) : Conte
                 throw new KnownException("announcement_not_found", StatusCodes.Status404NotFound);
             }
 
-            await Send.ResponseAsync(new ResponseData(true, "success", StatusCodes.Status200OK),
-                cancellation: cancellationToken);
+            await Send.ResponseAsync(
+                new ResponseData(true, "success", StatusCodes.Status200OK),
+                cancellation: cancellationToken
+            );
         }
         catch (InvalidOperationException)
         {

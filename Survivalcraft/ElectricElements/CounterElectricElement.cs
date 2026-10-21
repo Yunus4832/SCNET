@@ -43,8 +43,10 @@ public class CounterElectricElement : RotateableElectricElement
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
-            return RestorePersistentVoltage(SubsystemElectricity.ReadPersistentVoltage(CellFaces[0].Point) ??
-                _counter / 15f * (!_overflow ? 1 : -1));
+            return RestorePersistentVoltage(
+                SubsystemElectricity.ReadPersistentVoltage(CellFaces[0].Point) ??
+                _counter / 15f * (!_overflow ? 1 : -1)
+            );
         }
 
         var counter = _counter;
@@ -67,17 +69,20 @@ public class CounterElectricElement : RotateableElectricElement
                 if (connectorDirection == ElectricConnectorDirection.Right)
                 {
                     flag = IsSignalHigh(
-                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                    );
                 }
                 else if (connectorDirection == ElectricConnectorDirection.Left)
                 {
                     flag2 = IsSignalHigh(
-                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                    );
                 }
                 else if (connectorDirection == ElectricConnectorDirection.In)
                 {
                     flag3 = IsSignalHigh(
-                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                    );
                 }
             }
         }

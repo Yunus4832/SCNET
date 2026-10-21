@@ -10,8 +10,12 @@ public sealed class TerrainChunkFragmentReassemblerTest
     public void ReassemblesOutOfOrderFragmentsAndIgnoresDuplicates()
     {
         var allocation = new ChunkAllocationId(new Point2(2, 3), 4);
-        var encoded = new EncodedTerrainChunk(allocation.Coords, 5, Enumerable.Range(0, 2500)
-            .Select(value => (byte)value).ToArray());
+        var encoded = new EncodedTerrainChunk(
+            allocation.Coords,
+            5,
+            Enumerable.Range(0, 2500)
+                .Select(value => (byte)value).ToArray()
+        );
         var fragments = EncodedTerrainChunkFragmenter.Split(encoded, allocation).Reverse().ToArray();
         var reassembler = new TerrainChunkFragmentReassembler();
 
@@ -58,7 +62,9 @@ public sealed class TerrainChunkFragmentReassemblerTest
         var oldAllocation = new ChunkAllocationId(coords, 1);
         var newAllocation = new ChunkAllocationId(coords, 2);
         var fragment = EncodedTerrainChunkFragmenter.Split(
-            new EncodedTerrainChunk(coords, 3, new byte[1800]), oldAllocation).First();
+            new EncodedTerrainChunk(coords, 3, new byte[1800]),
+            oldAllocation
+        ).First();
         var reassembler = new TerrainChunkFragmentReassembler();
 
         Assert.False(reassembler.Add(fragment, out _));
@@ -92,8 +98,11 @@ public sealed class TerrainChunkFragmentReassemblerTest
         Assert.Equal(allocation, request.Allocation);
         Assert.Equal(encoded.ContentVersion, request.ContentVersion);
         Assert.Equal(fragments.Length, request.FragmentCount);
-        Assert.Equal(fragments.Where(fragment => fragment.FragmentIndex is not (0 or 2))
-            .Select(fragment => fragment.FragmentIndex), request.MissingFragmentIndices);
+        Assert.Equal(
+            fragments.Where(fragment => fragment.FragmentIndex is not (0 or 2))
+                .Select(fragment => fragment.FragmentIndex),
+            request.MissingFragmentIndices
+        );
     }
 
     [Fact]
@@ -104,7 +113,8 @@ public sealed class TerrainChunkFragmentReassemblerTest
         var newAllocation = new ChunkAllocationId(coords, 9);
         var fragment = EncodedTerrainChunkFragmenter.Split(
             new EncodedTerrainChunk(coords, 10, new byte[1800]),
-            oldAllocation).First();
+            oldAllocation
+        ).First();
         var reassembler = new TerrainChunkFragmentReassembler();
         reassembler.Add(fragment, out _);
 

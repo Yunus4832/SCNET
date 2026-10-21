@@ -15,16 +15,20 @@ public sealed record ReviewContentVersionCommand(
 
 public enum ReviewContentVersionResult
 {
-    Completed,
-    NotFound,
-    InvalidState
+    Completed = 0,
+
+    NotFound = 1,
+
+    InvalidState = 2
 }
 
 public sealed class ReviewContentVersionCommandHandler(ContentRepository repository)
     : ICommandHandler<ReviewContentVersionCommand, ReviewContentVersionResult>
 {
-    public async Task<ReviewContentVersionResult> Handle(ReviewContentVersionCommand command,
-        CancellationToken cancellationToken)
+    public async Task<ReviewContentVersionResult> Handle(
+        ReviewContentVersionCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var content = await repository.FindByVersionAsync(command.VersionId, cancellationToken);
         if (content is null)

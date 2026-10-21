@@ -15,11 +15,7 @@ public static class DatabaseManager
 
     public static XElement? DatabaseNodeField;
 
-    public static XElement? DatabaseNode
-    {
-        get => DatabaseNodeField;
-        set => DatabaseNodeField = value;
-    }
+    public static XElement? DatabaseNode { get => DatabaseNodeField; set => DatabaseNodeField = value; }
 
     public static GameDatabase GameDatabase =>
         _gameDatabase ?? throw new InvalidOperationException("Database not loaded.");
@@ -35,7 +31,9 @@ public static class DatabaseManager
     {
         _gameDatabase = new GameDatabase(XmlDatabaseSerializer.LoadDatabase(node));
         foreach (var explicitNestingChild in GameDatabase.Database.Root.GetExplicitNestingChildren(
-                     GameDatabase.EntityTemplateType, false))
+                     GameDatabase.EntityTemplateType,
+                     false
+                 ))
         {
             var valuesDictionary = new ValuesDictionary();
             valuesDictionary.PopulateFromDatabaseObject(explicitNestingChild);
@@ -78,8 +76,12 @@ public static class DatabaseManager
         return valuesDictionary == null ? null : project.CreateEntity(valuesDictionary);
     }
 
-    public static Entity? CreateEntity(Project project, string entityTemplateName, ValuesDictionary overrides,
-        bool throwIfNotFound)
+    public static Entity? CreateEntity(
+        Project project,
+        string entityTemplateName,
+        ValuesDictionary overrides,
+        bool throwIfNotFound
+    )
     {
         var valuesDictionary = FindEntityValuesDictionary(entityTemplateName, throwIfNotFound);
         if (valuesDictionary == null)

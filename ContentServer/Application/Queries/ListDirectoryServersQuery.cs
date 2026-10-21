@@ -8,20 +8,40 @@ using NetCorePal.Extensions.Primitives;
 
 namespace ContentServer.Application.Queries;
 
-public sealed record DirectoryServerDto(DirectoryServerId Id, PublisherId PublisherId, string PublisherName,
-    string Name, string Address, string? Description, string TagsJson, DirectoryServerReviewStatus ReviewStatus,
-    string? ReviewMessage, bool IsEnabledByPublisher, DateTimeOffset? SuspendedAt, string? SuspensionReason,
-    DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt, DateTimeOffset? ReviewedAt);
+public sealed record DirectoryServerDto(
+    DirectoryServerId Id,
+    PublisherId PublisherId,
+    string PublisherName,
+    string Name,
+    string Address,
+    string? Description,
+    string TagsJson,
+    DirectoryServerReviewStatus ReviewStatus,
+    string? ReviewMessage,
+    bool IsEnabledByPublisher,
+    DateTimeOffset? SuspendedAt,
+    string? SuspensionReason,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    DateTimeOffset? ReviewedAt
+);
 
-public sealed record ListDirectoryServersQuery(PublisherId? PublisherId = null,
-    DirectoryServerReviewStatus? ReviewStatus = null, bool PublicOnly = false, DirectoryServerId? Id = null,
-    int? Offset = null, int? Limit = null) : IQuery<IReadOnlyList<DirectoryServerDto>>;
+public sealed record ListDirectoryServersQuery(
+    PublisherId? PublisherId = null,
+    DirectoryServerReviewStatus? ReviewStatus = null,
+    bool PublicOnly = false,
+    DirectoryServerId? Id = null,
+    int? Offset = null,
+    int? Limit = null
+) : IQuery<IReadOnlyList<DirectoryServerDto>>;
 
 public sealed class ListDirectoryServersQueryHandler(ContentServerDbContext db)
     : IQueryHandler<ListDirectoryServersQuery, IReadOnlyList<DirectoryServerDto>>
 {
-    public async Task<IReadOnlyList<DirectoryServerDto>> Handle(ListDirectoryServersQuery query,
-        CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<DirectoryServerDto>> Handle(
+        ListDirectoryServersQuery query,
+        CancellationToken cancellationToken
+    )
     {
         var servers = db.DirectoryServers.AsNoTracking();
         if (query.PublisherId is not null)
@@ -42,7 +62,9 @@ public sealed class ListDirectoryServersQueryHandler(ContentServerDbContext db)
         if (query.PublicOnly)
         {
             servers = servers.Where(server => server.ReviewStatus == DirectoryServerReviewStatus.Approved &&
-                                              server.IsEnabledByPublisher && server.SuspendedAt == null);
+                                              server.IsEnabledByPublisher &&
+                                              server.SuspendedAt == null
+            );
         }
 
         var ordered = servers.OrderBy(server => server.Id);
@@ -57,12 +79,28 @@ public sealed class ListDirectoryServersQueryHandler(ContentServerDbContext db)
             selected = selected.Take(query.Limit.Value);
         }
 
-        return await selected.Join(db.Publishers.AsNoTracking(), server => server.PublisherId,
-                publisher => publisher.Id, (server, publisher) => new DirectoryServerDto(server.Id,
-                    server.PublisherId, publisher.DisplayName, server.Name, server.Address, server.Description,
-                    server.TagsJson, server.ReviewStatus, server.ReviewMessage, server.IsEnabledByPublisher,
-                    server.SuspendedAt, server.SuspensionReason, server.CreatedAt, server.UpdatedAt,
-                    server.ReviewedAt))
+        return await selected.Join(
+                db.Publishers.AsNoTracking(),
+                server => server.PublisherId,
+                publisher => publisher.Id,
+                (server, publisher) => new DirectoryServerDto(
+                    server.Id,
+                    server.PublisherId,
+                    publisher.DisplayName,
+                    server.Name,
+                    server.Address,
+                    server.Description,
+                    server.TagsJson,
+                    server.ReviewStatus,
+                    server.ReviewMessage,
+                    server.IsEnabledByPublisher,
+                    server.SuspendedAt,
+                    server.SuspensionReason,
+                    server.CreatedAt,
+                    server.UpdatedAt,
+                    server.ReviewedAt
+                )
+            )
             .ToArrayAsync(cancellationToken);
     }
 }

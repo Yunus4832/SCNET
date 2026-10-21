@@ -41,7 +41,9 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
         var worldPos =
             Vector3.Normalize(
                 GameWidget.ActiveCamera.ScreenToWorld(new Vector3(screenPos.X, screenPos.Y, 1f), Matrix.Identity) -
-                GameWidget.ActiveCamera.ViewPosition) * 12f;
+                GameWidget.ActiveCamera.ViewPosition
+            ) *
+            12f;
         var componentPlayer = GameWidget.PlayerData.ComponentPlayer;
         var count =
             componentPlayer != null &&
@@ -58,8 +60,15 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(PlayerPackageBuilder.Capture(GameWidget.PlayerData,
-                inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count));
+            NetworkSender.SendToServer(
+                PlayerPackageBuilder.Capture(
+                    GameWidget.PlayerData,
+                    inventoryDragData.Inventory.Id,
+                    inventoryDragData.SlotIndex,
+                    worldPos,
+                    count
+                )
+            );
         }
         else
         {
@@ -141,12 +150,18 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
         var point2 = point;
         if ((num < 1f || GlobalColorTransform != Color.White) && point2.X > 0 && point2.Y > 0)
         {
-            if (_scalingRenderTarget == null || _scalingRenderTarget.Width != point2.X ||
+            if (_scalingRenderTarget == null ||
+                _scalingRenderTarget.Width != point2.X ||
                 _scalingRenderTarget.Height != point2.Y)
             {
                 Utilities.Dispose(ref _scalingRenderTarget);
-                _scalingRenderTarget = new RenderTarget2D(point2.X, point2.Y, 1, ColorFormat.Rgba8888,
-                    DepthFormat.Depth24Stencil8);
+                _scalingRenderTarget = new RenderTarget2D(
+                    point2.X,
+                    point2.Y,
+                    1,
+                    ColorFormat.Rgba8888,
+                    DepthFormat.Depth24Stencil8
+                );
             }
 
             Display.RenderTarget = _scalingRenderTarget;
@@ -163,8 +178,15 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
         if (_scalingRenderTarget != null)
         {
             var blendState = GlobalColorTransform.A < byte.MaxValue ? BlendState.AlphaBlend : BlendState.Opaque;
-            var texturedBatch2D = dc.PrimitivesRenderer2D.TexturedBatch(_scalingRenderTarget, false, 0,
-                DepthStencilState.None, RasterizerState.CullNoneScissor, blendState, SamplerState.PointClamp);
+            var texturedBatch2D = dc.PrimitivesRenderer2D.TexturedBatch(
+                _scalingRenderTarget,
+                false,
+                0,
+                DepthStencilState.None,
+                RasterizerState.CullNoneScissor,
+                blendState,
+                SamplerState.PointClamp
+            );
             var count = texturedBatch2D.TriangleVertices.Count;
             texturedBatch2D.QueueQuad(Vector2.Zero, ActualSize, 0f, Vector2.Zero, Vector2.One, GlobalColorTransform);
             texturedBatch2D.TransformTriangles(GlobalTransform, count);

@@ -30,8 +30,10 @@ public class TerritorySubsystemTest
                 subsystem = project.FindSubsystem<TerritorySubsystem>(true)!;
                 Assert.True(subsystem.Store.TryCreate(owner, new Point3(1, 64, 2)));
                 saved = project.Save();
-                Assert.Single(saved.ExtensionData.GetValue<ValuesDictionary>(ModEntry.ModId)
-                    .GetValue<ValuesDictionary>(TerritorySubsystem.DataKey));
+                Assert.Single(
+                    saved.ExtensionData.GetValue<ValuesDictionary>(ModEntry.ModId)
+                        .GetValue<ValuesDictionary>(TerritorySubsystem.DataKey)
+                );
                 Assert.False(saved.ValuesDictionary.ContainsKey("Territory"));
 
                 project.SendToClientMode = true;
@@ -60,7 +62,8 @@ public class TerritorySubsystemTest
             "MemberComponentTemplate", "ComponentTemplate", "ParameterSet", "Parameter"
         };
         var types = names.Select(name =>
-            new DatabaseObjectType(name, name, name, 0, name == "Parameter", false, 64, false)).ToArray();
+            new DatabaseObjectType(name, name, name, 0, name == "Parameter", false, 64, false)
+        ).ToArray();
         foreach (var type in types)
         {
             type.InitializeRelations(types, types, types[^1]);

@@ -5,16 +5,42 @@ namespace Engine.Test.Math;
 public class SimdMathTest
 {
     private static readonly Matrix _left = new(
-        1.25f, -2.5f, 3.75f, -4.125f,
-        5.5f, -6.25f, 7.125f, -8.75f,
-        9.5f, -10.25f, 11.75f, -12.5f,
-        13.125f, -14.75f, 15.5f, -16.25f);
+        1.25f,
+        -2.5f,
+        3.75f,
+        -4.125f,
+        5.5f,
+        -6.25f,
+        7.125f,
+        -8.75f,
+        9.5f,
+        -10.25f,
+        11.75f,
+        -12.5f,
+        13.125f,
+        -14.75f,
+        15.5f,
+        -16.25f
+    );
 
     private static readonly Matrix _right = new(
-        -0.75f, 1.5f, -2.25f, 3.125f,
-        -4.5f, 5.25f, -6.125f, 7.75f,
-        -8.5f, 9.25f, -10.75f, 11.5f,
-        -12.125f, 13.75f, -14.5f, 15.25f);
+        -0.75f,
+        1.5f,
+        -2.25f,
+        3.125f,
+        -4.5f,
+        5.25f,
+        -6.125f,
+        7.75f,
+        -8.5f,
+        9.25f,
+        -10.75f,
+        11.5f,
+        -12.125f,
+        13.75f,
+        -14.5f,
+        15.25f
+    );
 
     [Fact]
     public void MatrixOperationsMatchScalarResultsBitwise()
@@ -74,12 +100,33 @@ public class SimdMathTest
     public void Vector4RoundingMatchesScalarResultsBitwise()
     {
         var value = new Vector4(-2.75f, -1.5f, 1.5f, 2.75f);
-        AssertVectorBitsEqual(new Vector4(MathF.Floor(value.X), MathF.Floor(value.Y), MathF.Floor(value.Z),
-            MathF.Floor(value.W)), Vector4.Floor(value));
-        AssertVectorBitsEqual(new Vector4(MathF.Ceiling(value.X), MathF.Ceiling(value.Y), MathF.Ceiling(value.Z),
-            MathF.Ceiling(value.W)), Vector4.Ceiling(value));
-        AssertVectorBitsEqual(new Vector4(MathF.Round(value.X), MathF.Round(value.Y), MathF.Round(value.Z),
-            MathF.Round(value.W)), Vector4.Round(value));
+        AssertVectorBitsEqual(
+            new Vector4(
+                MathF.Floor(value.X),
+                MathF.Floor(value.Y),
+                MathF.Floor(value.Z),
+                MathF.Floor(value.W)
+            ),
+            Vector4.Floor(value)
+        );
+        AssertVectorBitsEqual(
+            new Vector4(
+                MathF.Ceiling(value.X),
+                MathF.Ceiling(value.Y),
+                MathF.Ceiling(value.Z),
+                MathF.Ceiling(value.W)
+            ),
+            Vector4.Ceiling(value)
+        );
+        AssertVectorBitsEqual(
+            new Vector4(
+                MathF.Round(value.X),
+                MathF.Round(value.Y),
+                MathF.Round(value.Z),
+                MathF.Round(value.W)
+            ),
+            Vector4.Round(value)
+        );
     }
 
     private static Matrix AddScalar(Matrix left, Matrix right)
@@ -130,8 +177,24 @@ public class SimdMathTest
 
     private static Matrix FromValues(float[] values)
     {
-        return new Matrix(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7],
-            values[8], values[9], values[10], values[11], values[12], values[13], values[14], values[15]);
+        return new Matrix(
+            values[0],
+            values[1],
+            values[2],
+            values[3],
+            values[4],
+            values[5],
+            values[6],
+            values[7],
+            values[8],
+            values[9],
+            values[10],
+            values[11],
+            values[12],
+            values[13],
+            values[14],
+            values[15]
+        );
     }
 
     private static Matrix LerpScalar(Matrix left, Matrix right, float factor)
@@ -157,7 +220,8 @@ public class SimdMathTest
             left.M41 * right.M11 + left.M42 * right.M21 + left.M43 * right.M31 + left.M44 * right.M41,
             left.M41 * right.M12 + left.M42 * right.M22 + left.M43 * right.M32 + left.M44 * right.M42,
             left.M41 * right.M13 + left.M42 * right.M23 + left.M43 * right.M33 + left.M44 * right.M43,
-            left.M41 * right.M14 + left.M42 * right.M24 + left.M43 * right.M34 + left.M44 * right.M44);
+            left.M41 * right.M14 + left.M42 * right.M24 + left.M43 * right.M34 + left.M44 * right.M44
+        );
     }
 
     private static Matrix NegateScalar(Matrix value)
@@ -188,35 +252,45 @@ public class SimdMathTest
 
     private static Vector2 TransformScalar(Vector2 vector, Matrix matrix)
     {
-        return new Vector2(vector.X * matrix.M11 + vector.Y * matrix.M21 + matrix.M41,
-            vector.X * matrix.M12 + vector.Y * matrix.M22 + matrix.M42);
+        return new Vector2(
+            vector.X * matrix.M11 + vector.Y * matrix.M21 + matrix.M41,
+            vector.X * matrix.M12 + vector.Y * matrix.M22 + matrix.M42
+        );
     }
 
     private static Vector3 TransformScalar(Vector3 vector, Matrix matrix)
     {
-        return new Vector3(vector.X * matrix.M11 + vector.Y * matrix.M21 + vector.Z * matrix.M31 + matrix.M41,
+        return new Vector3(
+            vector.X * matrix.M11 + vector.Y * matrix.M21 + vector.Z * matrix.M31 + matrix.M41,
             vector.X * matrix.M12 + vector.Y * matrix.M22 + vector.Z * matrix.M32 + matrix.M42,
-            vector.X * matrix.M13 + vector.Y * matrix.M23 + vector.Z * matrix.M33 + matrix.M43);
+            vector.X * matrix.M13 + vector.Y * matrix.M23 + vector.Z * matrix.M33 + matrix.M43
+        );
     }
 
     private static Vector4 TransformScalar(Vector4 vector, Matrix matrix)
     {
-        return new Vector4(vector.X * matrix.M11 + vector.Y * matrix.M21 + vector.Z * matrix.M31 + matrix.M41,
+        return new Vector4(
+            vector.X * matrix.M11 + vector.Y * matrix.M21 + vector.Z * matrix.M31 + matrix.M41,
             vector.X * matrix.M12 + vector.Y * matrix.M22 + vector.Z * matrix.M32 + matrix.M42,
             vector.X * matrix.M13 + vector.Y * matrix.M23 + vector.Z * matrix.M33 + matrix.M43,
-            vector.X * matrix.M14 + vector.Y * matrix.M24 + vector.Z * matrix.M34 + matrix.M44);
+            vector.X * matrix.M14 + vector.Y * matrix.M24 + vector.Z * matrix.M34 + matrix.M44
+        );
     }
 
     private static Vector2 TransformNormalScalar(Vector2 vector, Matrix matrix)
     {
-        return new Vector2(vector.X * matrix.M11 + vector.Y * matrix.M21,
-            vector.X * matrix.M12 + vector.Y * matrix.M22);
+        return new Vector2(
+            vector.X * matrix.M11 + vector.Y * matrix.M21,
+            vector.X * matrix.M12 + vector.Y * matrix.M22
+        );
     }
 
     private static Vector3 TransformNormalScalar(Vector3 vector, Matrix matrix)
     {
-        return new Vector3(vector.X * matrix.M11 + vector.Y * matrix.M21 + vector.Z * matrix.M31,
+        return new Vector3(
+            vector.X * matrix.M11 + vector.Y * matrix.M21 + vector.Z * matrix.M31,
             vector.X * matrix.M12 + vector.Y * matrix.M22 + vector.Z * matrix.M32,
-            vector.X * matrix.M13 + vector.Y * matrix.M23 + vector.Z * matrix.M33);
+            vector.X * matrix.M13 + vector.Y * matrix.M23 + vector.Z * matrix.M33
+        );
     }
 }

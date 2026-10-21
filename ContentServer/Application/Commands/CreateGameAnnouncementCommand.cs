@@ -10,8 +10,10 @@ public sealed record CreateGameAnnouncementCommand(string Title, string Body) : 
 public sealed class CreateGameAnnouncementCommandHandler(GameAnnouncementRepository repository)
     : ICommandHandler<CreateGameAnnouncementCommand, GameAnnouncementId>
 {
-    public async Task<GameAnnouncementId> Handle(CreateGameAnnouncementCommand command,
-        CancellationToken cancellationToken)
+    public async Task<GameAnnouncementId> Handle(
+        CreateGameAnnouncementCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var announcement = GameAnnouncement.Create(command.Title, command.Body, DateTimeOffset.UtcNow);
         await repository.AddAsync(announcement, cancellationToken);

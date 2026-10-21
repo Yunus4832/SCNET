@@ -129,7 +129,9 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
     }
 
     public event Action<PlayerData>? PlayerAdded;
+
     public event Action<PlayerData>? PlayerRemoved;
+
     public event Action? PlayerListChanged;
 
     private void SendOnlinePlayerStates()
@@ -144,17 +146,20 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             var states = _playersData
                 .Where(player => player.ComponentPlayer is not null)
                 .Select(player =>
-                {
-                    var componentPlayer = player.ComponentPlayer!;
-                    return new OnlinePlayerState(
-                        player.PlayerGUID,
-                        componentPlayer.ComponentBody.Position,
-                        MathUtils.Saturate(componentPlayer.ComponentHealth.Health),
-                        componentPlayer.ComponentSleep.IsSleeping);
-                });
+                    {
+                        var componentPlayer = player.ComponentPlayer!;
+                        return new OnlinePlayerState(
+                            player.PlayerGUID,
+                            componentPlayer.ComponentBody.Position,
+                            MathUtils.Saturate(componentPlayer.ComponentHealth.Health),
+                            componentPlayer.ComponentSleep.IsSleeping
+                        );
+                    }
+                );
             CommonLib.Net.QueuePackage(
                 new OnlinePlayerStatePackage(states),
-                PackageAudience.To(client));
+                PackageAudience.To(client)
+            );
         }
     }
 
@@ -210,10 +215,13 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         }
 
         _playersData.Add(playerData);
-        SetPlayerListEntry(new PlayerListEntry(
-            playerData.PlayerGUID,
-            playerData.Name,
-            true));
+        SetPlayerListEntry(
+            new PlayerListEntry(
+                playerData.PlayerGUID,
+                playerData.Name,
+                true
+            )
+        );
 
         FindUnusedIndex(playerData);
 
@@ -235,7 +243,9 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
                         "PlayerJoined",
                         [playerData.Name],
                         presentation:
-                        GameMessagePresentation.Default | GameMessagePresentation.Toast));
+                        GameMessagePresentation.Default | GameMessagePresentation.Toast
+                    )
+                );
             }
         }
 
@@ -408,6 +418,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             marks.Clear();
             marks.ApplyOverrides(_positionMarks.Save());
         }
+
         var onlinePlayersListVd = new ValuesDictionary();
         var num = 0;
         foreach (var playersDatum in _playersData)
@@ -530,7 +541,9 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
                         "PlayerLeft",
                         [pd.Name],
                         presentation:
-                        GameMessagePresentation.Default | GameMessagePresentation.Toast));
+                        GameMessagePresentation.Default | GameMessagePresentation.Toast
+                    )
+                );
             }
 
             if (CommonLib.WorkType == WorkType.Server)
@@ -539,7 +552,8 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
                 if (list.EntitiesData.Count != 1)
                 {
                     throw new InvalidOperationException(
-                        $"Expected one serialized entity for player {playerGuid}, got {list.EntitiesData.Count}.");
+                        $"Expected one serialized entity for player {playerGuid}, got {list.EntitiesData.Count}."
+                    );
                 }
 
                 var playerValues = new ValuesDictionary();
@@ -552,10 +566,13 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             Project.RemoveEntity(componentPlayer.Entity, true);
         }
 
-        SetPlayerListEntry(new PlayerListEntry(
-            pd.PlayerGUID,
-            pd.Name,
-            false));
+        SetPlayerListEntry(
+            new PlayerListEntry(
+                pd.PlayerGUID,
+                pd.Name,
+                false
+            )
+        );
         _subsystemTerrain.TerrainUpdater.RemoveUpdateLocation(pd.PlayerIndex);
         RemovePlayerData(pd);
     }
@@ -595,8 +612,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
         if (existing != null)
         {
-            throw new InvalidOperationException(
-                $"Player {playerGuid} has active data but no active entity.");
+            throw new InvalidOperationException($"Player {playerGuid} has active data but no active entity.");
         }
 
         PlayerData? restoredPlayerData = null;
@@ -610,7 +626,8 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             {
                 throw new InvalidOperationException(
                     $"Offline player record key {playerGuid} does not match data guid " +
-                    $"{restoredPlayerData.PlayerGUID}.");
+                    $"{restoredPlayerData.PlayerGUID}."
+                );
             }
 
             AddPlayerData(restoredPlayerData);
@@ -630,15 +647,15 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             if (entityList.Count != 1)
             {
                 throw new InvalidOperationException(
-                    $"Expected one restored entity for player {playerGuid}, got {entityList.Count}.");
+                    $"Expected one restored entity for player {playerGuid}, got {entityList.Count}."
+                );
             }
 
             entity = entityList[0];
             var componentPlayer = entity.FindComponent<ComponentPlayer>();
             if (componentPlayer == null || componentPlayer.PlayerData.PlayerGUID != playerGuid)
             {
-                throw new InvalidOperationException(
-                    $"Restored entity does not belong to player {playerGuid}.");
+                throw new InvalidOperationException($"Restored entity does not belong to player {playerGuid}.");
             }
 
             // 恢复的实体先不加入项目，等连接完成初始世界快照后再挂载。
@@ -663,7 +680,8 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
                 }
             }
 
-            if (playerDataAdded && restoredPlayerData != null &&
+            if (playerDataAdded &&
+                restoredPlayerData != null &&
                 _playersData.Contains(restoredPlayerData))
             {
                 RemovePlayerData(restoredPlayerData);
@@ -709,7 +727,8 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         foreach (var playerGuid in _onlinePlayerStates.Keys
                      .Where(playerGuid =>
                          !_playerList.TryGetValue(playerGuid, out var player) ||
-                         !player.IsOnline)
+                         !player.IsOnline
+                     )
                      .ToList())
         {
             _onlinePlayerStates.Remove(playerGuid);
@@ -726,7 +745,8 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             entries[offlinePlayer.Key] = new PlayerListEntry(
                 offlinePlayer.Key,
                 offlinePlayer.Value.PlayerData.GetValue("Name", "Player"),
-                false);
+                false
+            );
         }
 
         foreach (var playerData in _playersData)
@@ -734,7 +754,8 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             entries[playerData.PlayerGUID] = new PlayerListEntry(
                 playerData.PlayerGUID,
                 playerData.Name,
-                true);
+                true
+            );
         }
 
         _playerList.Clear();
@@ -751,7 +772,9 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         foreach (var (playerGuid, record) in _offlinePlayers)
         {
             if (_playersData.Any(player => player.PlayerGUID == playerGuid &&
-                player.ComponentPlayer is { } componentPlayer && Project.EntityKeys.Contains(componentPlayer.Entity)))
+                                           player.ComponentPlayer is { } componentPlayer &&
+                                           Project.EntityKeys.Contains(componentPlayer.Entity)
+                ))
             {
                 continue;
             }

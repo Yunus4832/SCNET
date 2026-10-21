@@ -8,11 +8,7 @@ public class ComponentInventory : ComponentInventoryBase, IPagedInventory
     public int HotbarSlotsCount =>
         Project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.SurvivalHotbarSlotsCount;
 
-    public override int ActiveSlotIndex
-    {
-        get;
-        set => field = MathUtils.Clamp(value, 0, HotbarSlotsCount - 1);
-    }
+    public override int ActiveSlotIndex { get; set => field = MathUtils.Clamp(value, 0, HotbarSlotsCount - 1); }
 
     public override int VisibleSlotsCount
     {

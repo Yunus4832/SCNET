@@ -7,6 +7,7 @@ namespace Game.Managers;
 public static class FurniturePacksManager
 {
     private const string _assetExtension = ".xml";
+
     private static readonly List<string> _furniturePackNames = [];
 
     public static ReadOnlyList<string> ReadOnlyFurniturePackNames => new(_furniturePackNames);
@@ -42,8 +43,13 @@ public static class FurniturePacksManager
 
     public static string ImportFurniturePack(string name, Stream stream)
     {
-        return ContentAssetStore.Install(GamePaths.FurniturePacks, _assetExtension,
-            Storage.GetFileNameWithoutExtension(name), stream, ValidateFurniturePack);
+        return ContentAssetStore.Install(
+            GamePaths.FurniturePacks,
+            _assetExtension,
+            Storage.GetFileNameWithoutExtension(name),
+            stream,
+            ValidateFurniturePack
+        );
     }
 
     public static string ImportFurnitureDesigns(string name, Stream designs)
@@ -52,8 +58,14 @@ public static class FurniturePacksManager
     }
 
     public static string ReplaceFurnitureDesigns(string assetKey, string displayName, Stream designs) =>
-        ContentAssetStore.Replace(GamePaths.FurniturePacks, _assetExtension, assetKey, displayName, designs,
-            ValidateFurniturePack);
+        ContentAssetStore.Replace(
+            GamePaths.FurniturePacks,
+            _assetExtension,
+            assetKey,
+            displayName,
+            designs,
+            ValidateFurniturePack
+        );
 
     public static void ExportFurniturePack(string name, Stream stream)
     {

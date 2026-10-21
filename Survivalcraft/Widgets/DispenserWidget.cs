@@ -62,8 +62,11 @@ public class DispenserWidget : CanvasWidget
 
     public override void Update()
     {
-        var value = _subsystemTerrain.Terrain.GetCellValue(_componentBlockEntity.Coordinates.X,
-            _componentBlockEntity.Coordinates.Y, _componentBlockEntity.Coordinates.Z);
+        var value = _subsystemTerrain.Terrain.GetCellValue(
+            _componentBlockEntity.Coordinates.X,
+            _componentBlockEntity.Coordinates.Y,
+            _componentBlockEntity.Coordinates.Z
+        );
         var data = Terrain.ExtractData(value);
         var flag = false;
         if (_dispenseButton.IsClicked)
@@ -71,8 +74,12 @@ public class DispenserWidget : CanvasWidget
             data = DispenserBlock.SetMode(data, DispenserBlock.Mode.Dispense);
             value = Terrain.ReplaceData(value, data);
             flag = true;
-            _subsystemTerrain.ChangeCell(_componentBlockEntity.Coordinates.X, _componentBlockEntity.Coordinates.Y,
-                _componentBlockEntity.Coordinates.Z, value);
+            _subsystemTerrain.ChangeCell(
+                _componentBlockEntity.Coordinates.X,
+                _componentBlockEntity.Coordinates.Y,
+                _componentBlockEntity.Coordinates.Z,
+                value
+            );
         }
 
         if (_shootButton.IsClicked)
@@ -80,8 +87,12 @@ public class DispenserWidget : CanvasWidget
             data = DispenserBlock.SetMode(data, DispenserBlock.Mode.Shoot);
             value = Terrain.ReplaceData(value, data);
             flag = true;
-            _subsystemTerrain.ChangeCell(_componentBlockEntity.Coordinates.X, _componentBlockEntity.Coordinates.Y,
-                _componentBlockEntity.Coordinates.Z, value);
+            _subsystemTerrain.ChangeCell(
+                _componentBlockEntity.Coordinates.X,
+                _componentBlockEntity.Coordinates.Y,
+                _componentBlockEntity.Coordinates.Z,
+                value
+            );
         }
 
         if (_acceptsDropsBox.IsClicked)
@@ -89,8 +100,12 @@ public class DispenserWidget : CanvasWidget
             data = DispenserBlock.SetAcceptsDrops(data, !DispenserBlock.GetAcceptsDrops(data));
             value = Terrain.ReplaceData(value, data);
             flag = true;
-            _subsystemTerrain.ChangeCell(_componentBlockEntity.Coordinates.X, _componentBlockEntity.Coordinates.Y,
-                _componentBlockEntity.Coordinates.Z, value);
+            _subsystemTerrain.ChangeCell(
+                _componentBlockEntity.Coordinates.X,
+                _componentBlockEntity.Coordinates.Y,
+                _componentBlockEntity.Coordinates.Z,
+                value
+            );
         }
 
         var mode = DispenserBlock.GetMode(data);

@@ -2,15 +2,15 @@ using Engine.Core;
 
 namespace Game.Protocol.Terrain;
 
-public struct CellFace : IEquatable<CellFace>
+public struct CellFace(int x, int y, int z, int face) : IEquatable<CellFace>
 {
-    public int X;
+    public int X = x;
 
-    public int Y;
+    public int Y = y;
 
-    public int Z;
+    public int Z = z;
 
-    public int Face;
+    public int Face = face;
 
     private static readonly int[] _oppositeFaceArray =
     [
@@ -51,14 +51,6 @@ public struct CellFace : IEquatable<CellFace>
             Y = value.Y;
             Z = value.Z;
         }
-    }
-
-    public CellFace(int x, int y, int z, int face)
-    {
-        X = x;
-        Y = y;
-        Z = z;
-        Face = face;
     }
 
     public static int OppositeFace(int face)

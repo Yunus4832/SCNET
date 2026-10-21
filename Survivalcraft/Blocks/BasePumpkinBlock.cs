@@ -41,9 +41,17 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
             BlockMeshesBySize[i] = new BlockMesh();
             if (i >= 1)
             {
-                BlockMeshesBySize[i].AppendModelMeshPart(pumpkinMesh.MeshParts[0],
-                    boneAbsoluteTransform * Matrix.CreateScale(num) *
-                    Matrix.CreateTranslation(0.5f + num2, 0f, 0.5f + num2), false, false, false, false, color);
+                BlockMeshesBySize[i].AppendModelMeshPart(
+                    pumpkinMesh.MeshParts[0],
+                    boneAbsoluteTransform *
+                    Matrix.CreateScale(num) *
+                    Matrix.CreateTranslation(0.5f + num2, 0f, 0.5f + num2),
+                    false,
+                    false,
+                    false,
+                    false,
+                    color
+                );
             }
 
             if (IsRotten)
@@ -52,9 +60,15 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
             }
 
             StandaloneBlockMeshesBySize[i] = new BlockMesh();
-            StandaloneBlockMeshesBySize[i].AppendModelMeshPart(pumpkinMesh.MeshParts[0],
-                boneAbsoluteTransform * Matrix.CreateScale(num) * Matrix.CreateTranslation(0f, -0.23f, 0f), false,
-                false, false, false, color);
+            StandaloneBlockMeshesBySize[i].AppendModelMeshPart(
+                pumpkinMesh.MeshParts[0],
+                boneAbsoluteTransform * Matrix.CreateScale(num) * Matrix.CreateTranslation(0f, -0.23f, 0f),
+                false,
+                false,
+                false,
+                false,
+                color
+            );
             if (IsRotten)
             {
                 StandaloneBlockMeshesBySize[i]
@@ -114,14 +128,30 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
         var isDead = GetIsDead(data);
         if (size >= 1)
         {
-            generator.GenerateMeshVertices(this, x, y, z, BlockMeshesBySize[size], Color.White, null,
-                geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshesBySize[size],
+                Color.White,
+                null,
+                geometry.SubsetOpaque
+            );
         }
 
         if (size == 0)
         {
-            generator.GenerateCrossingFaceVertices(this, value, x, y, z, new Color(160, 160, 160), 11,
-                geometry.SubsetAlphaTest);
+            generator.GenerateCrossingFaceVertices(
+                this,
+                value,
+                x,
+                y,
+                z,
+                new Color(160, 160, 160),
+                11,
+                geometry.SubsetAlphaTest
+            );
         }
         else if (size < 7 && !isDead)
         {
@@ -132,7 +162,8 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
     public override void DrawBlock(
         PrimitivesRenderer3D primitivesRenderer,
         int value,
-        Color color, float size,
+        Color color,
+        float size,
         ref Matrix matrix,
         DrawBlockEnvironmentData environmentData
     )
@@ -175,13 +206,17 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
         var size = GetSize(Terrain.ExtractData(oldValue));
         if (size >= 1)
         {
-            var value = SetDamage(Terrain.MakeBlockValue(BlockIndex, 0, SetSize(SetIsDead(0, true), size)),
-                GetDamage(oldValue));
-            dropValues.Add(new BlockDropValue
-            {
-                Value = value,
-                Count = 1
-            });
+            var value = SetDamage(
+                Terrain.MakeBlockValue(BlockIndex, 0, SetSize(SetIsDead(0, true), size)),
+                GetDamage(oldValue)
+            );
+            dropValues.Add(
+                new BlockDropValue
+                {
+                    Value = value,
+                    Count = 1
+                }
+            );
         }
 
         showDebris = true;
@@ -197,8 +232,14 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
         var size = GetSize(Terrain.ExtractData(value));
         var num = MathUtils.Lerp(0.2f, 1f, size / 7f);
         var color = size == 7 ? Color.White : new Color(0, 128, 128);
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, 1.5f * strength, DestructionDebrisScale * num,
-            color, TextureSlot);
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            1.5f * strength,
+            DestructionDebrisScale * num,
+            color,
+            TextureSlot
+        );
     }
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)

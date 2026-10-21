@@ -23,12 +23,28 @@ public class PaintBucketBlock : BucketBlock
             contentsMesh.ParentBone ??
             throw new InvalidOperationException("Required ContentsMesh.ParentBone is null")
         );
-        StandaloneBucketBlockMesh.AppendModelMeshPart(bucketMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
-            Matrix.CreateTranslation(0f, -0.3f, 0f), false, false, false, false, Color.White);
-        StandalonePaintBlockMesh.AppendModelMeshPart(contentsMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
-            Matrix.CreateTranslation(0f, -0.3f, 0f), false, false, false, false, Color.White);
+        StandaloneBucketBlockMesh.AppendModelMeshPart(
+            bucketMesh.MeshParts[0],
+            boneAbsoluteTransform *
+            Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
+            Matrix.CreateTranslation(0f, -0.3f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandalonePaintBlockMesh.AppendModelMeshPart(
+            contentsMesh.MeshParts[0],
+            boneAbsoluteTransform2 *
+            Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
+            Matrix.CreateTranslation(0f, -0.3f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandalonePaintBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(0.9375f, 0f, 0f));
         base.Initialize();
     }
@@ -98,7 +114,8 @@ public class PaintBucketBlock : BucketBlock
                         RequiredHeatLevel = 1f,
                         Ingredients =
                         {
-                            [0] = Catalog.Blocks[BlockIndex].CraftingId + ":" +
+                            [0] = Catalog.Blocks[BlockIndex].CraftingId +
+                                  ":" +
                                   color.ToString(CultureInfo.InvariantCulture),
                             [1] = additives[additive]
                         }

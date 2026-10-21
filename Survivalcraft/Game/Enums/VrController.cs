@@ -2,6 +2,7 @@ namespace Game;
 
 public enum VrController
 {
-    Left,
-    Right
+    Left = 0,
+
+    Right = 1
 }

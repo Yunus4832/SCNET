@@ -73,7 +73,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         foreach (var projectile in _projectiles)
         {
             var position = projectile.Position;
-            if (projectile.NoChunk || !(Vector3.DistanceSquared(camera.ViewPosition, position) < num) ||
+            if (projectile.NoChunk ||
+                !(Vector3.DistanceSquared(camera.ViewPosition, position) < num) ||
                 !camera.ViewFrustum.Intersection(position))
             {
                 continue;
@@ -104,8 +105,10 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             }
             else if (projectile.Rotation != Vector3.Zero)
             {
-                matrix = Matrix.CreateFromAxisAngle(Vector3.Normalize(projectile.Rotation),
-                    projectile.Rotation.Length());
+                matrix = Matrix.CreateFromAxisAngle(
+                    Vector3.Normalize(projectile.Rotation),
+                    projectile.Rotation.Length()
+                );
                 matrix.Translation = projectile.Position;
             }
             else
@@ -113,8 +116,14 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                 matrix = Matrix.CreateTranslation(projectile.Position);
             }
 
-            block.DrawBlock(_primitivesRenderer, projectile.Value, Color.White, 0.3f, ref matrix,
-                _drawBlockEnvironmentData);
+            block.DrawBlock(
+                _primitivesRenderer,
+                projectile.Value,
+                Color.White,
+                0.3f,
+                ref matrix,
+                _drawBlockEnvironmentData
+            );
         }
 
         _primitivesRenderer.Flush(camera.ViewProjectionMatrix);
@@ -139,7 +148,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             }
             else
             {
-                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(projectile.Value)];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog()
+                    .Blocks[Terrain.ExtractContents(projectile.Value)];
                 if (totalElapsedGameTime - projectile.CreationTime > 40.0)
                 {
                     projectile.ToRemove = true;
@@ -163,8 +173,14 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                     var v = block.ProjectileTipOffset * Vector3.Normalize(projectile.Velocity);
                     var bodyRaycastResult =
                         _subsystemBodies.Raycast(position + v, vector + v, 0.2f, (_, _) => true);
-                    var terrainRaycastResult = _subsystemTerrain.Raycast(position + v, vector + v, false, true,
-                        (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable);
+                    var terrainRaycastResult = _subsystemTerrain.Raycast(
+                        position + v,
+                        vector + v,
+                        false,
+                        true,
+                        (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog()
+                            .Blocks[Terrain.ExtractContents(value)].Collidable
+                    );
                     var flag = block.DisintegratesOnHit;
                     if (terrainRaycastResult.HasValue || bodyRaycastResult.HasValue)
                     {
@@ -183,15 +199,21 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                     }
 
                     Vector3? vector2 = null;
-                    if (bodyRaycastResult.HasValue && (!terrainRaycastResult.HasValue ||
-                                                       bodyRaycastResult.Value.Distance <
-                                                       terrainRaycastResult.Value.Distance))
+                    if (bodyRaycastResult.HasValue &&
+                        (!terrainRaycastResult.HasValue ||
+                         bodyRaycastResult.Value.Distance <
+                         terrainRaycastResult.Value.Distance))
                     {
                         if (projectile.Velocity.Length() > 10f)
                         {
-                            ComponentMiner.AttackBody(bodyRaycastResult.Value.ComponentBody, projectile.Owner,
-                                bodyRaycastResult.Value.HitPoint(), Vector3.Normalize(projectile.Velocity),
-                                block.GetProjectilePower(projectile.Value), false);
+                            ComponentMiner.AttackBody(
+                                bodyRaycastResult.Value.ComponentBody,
+                                projectile.Owner,
+                                bodyRaycastResult.Value.HitPoint(),
+                                Vector3.Normalize(projectile.Velocity),
+                                block.GetProjectilePower(projectile.Value),
+                                false
+                            );
                             if (projectile.Owner is { PlayerStats: not null })
                             {
                                 projectile.Owner.PlayerStats.RangedHits++;
@@ -231,19 +253,31 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
 
                         if (projectile.IsIncendiary)
                         {
-                            _subsystemFireBlockBehavior.SetCellOnFire(terrainRaycastResult.Value.CellFace.X,
-                                terrainRaycastResult.Value.CellFace.Y, terrainRaycastResult.Value.CellFace.Z, 1f);
+                            _subsystemFireBlockBehavior.SetCellOnFire(
+                                terrainRaycastResult.Value.CellFace.X,
+                                terrainRaycastResult.Value.CellFace.Y,
+                                terrainRaycastResult.Value.CellFace.Z,
+                                1f
+                            );
                             var vector3 = projectile.Position - 0.75f * Vector3.Normalize(projectile.Velocity);
                             for (var k = 0; k < 8; k++)
                             {
                                 var v2 = k == 0 ? Vector3.Normalize(projectile.Velocity) : _random.Vector3(1.5f);
-                                var terrainRaycastResult2 = _subsystemTerrain.Raycast(vector3, vector3 + v2, false,
-                                    true, (_, _) => true);
+                                var terrainRaycastResult2 = _subsystemTerrain.Raycast(
+                                    vector3,
+                                    vector3 + v2,
+                                    false,
+                                    true,
+                                    (_, _) => true
+                                );
                                 if (terrainRaycastResult2.HasValue)
                                 {
-                                    _subsystemFireBlockBehavior.SetCellOnFire(terrainRaycastResult2.Value.CellFace.X,
-                                        terrainRaycastResult2.Value.CellFace.Y, terrainRaycastResult2.Value.CellFace.Z,
-                                        1f);
+                                    _subsystemFireBlockBehavior.SetCellOnFire(
+                                        terrainRaycastResult2.Value.CellFace.X,
+                                        terrainRaycastResult2.Value.CellFace.Y,
+                                        terrainRaycastResult2.Value.CellFace.Z,
+                                        1f
+                                    );
                                 }
                             }
                         }
@@ -294,23 +328,39 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                     {
                         if (flag)
                         {
-                            _subsystemParticles.AddParticleSystem(block.CreateDebrisParticleSystem(_subsystemTerrain,
-                                projectile.Position, projectile.Value, 1f));
+                            _subsystemParticles.AddParticleSystem(
+                                block.CreateDebrisParticleSystem(
+                                    _subsystemTerrain,
+                                    projectile.Position,
+                                    projectile.Value,
+                                    1f
+                                )
+                            );
                             SendEffect(ProjectilePackage.EffectType.Debris, projectile.Value, projectile.Position);
                         }
                         else if (!projectile.ToRemove && (vector2.HasValue || projectile.Velocity.Length() < 1f))
                         {
                             if (projectile.ProjectileStoppedAction == ProjectileStoppedAction.TurnIntoPickable)
                             {
-                                var num4 = CurrentModRuntime.Value!.RequireWorldCatalog().DamageItem(projectile.Value, 1);
+                                var num4 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                                    .DamageItem(projectile.Value, 1);
                                 if (num4 != 0)
                                 {
                                     if (vector2.HasValue)
                                     {
-                                        CalculateVelocityAlignMatrix(block, vector2.Value, projectile.Velocity,
-                                            out var matrix);
-                                        _subsystemPickables.AddPickable(num4, 1, projectile.Position, Vector3.Zero,
-                                            matrix);
+                                        CalculateVelocityAlignMatrix(
+                                            block,
+                                            vector2.Value,
+                                            projectile.Velocity,
+                                            out var matrix
+                                        );
+                                        _subsystemPickables.AddPickable(
+                                            num4,
+                                            1,
+                                            projectile.Position,
+                                            Vector3.Zero,
+                                            matrix
+                                        );
                                     }
                                     else
                                     {
@@ -338,15 +388,20 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                     if (projectile.TrailParticleSystem != null)
                     {
                         if (!_subsystemParticles.ContainsParticleSystem(
-                                (ParticleSystemBase)projectile.TrailParticleSystem))
+                                (ParticleSystemBase)projectile.TrailParticleSystem
+                            ))
                         {
                             _subsystemParticles.AddParticleSystem((ParticleSystemBase)projectile.TrailParticleSystem);
                         }
 
                         var v4 = projectile.TrailOffset != Vector3.Zero
-                            ? Vector3.TransformNormal(projectile.TrailOffset,
-                                Matrix.CreateFromAxisAngle(Vector3.Normalize(projectile.Rotation),
-                                    projectile.Rotation.Length()))
+                            ? Vector3.TransformNormal(
+                                projectile.TrailOffset,
+                                Matrix.CreateFromAxisAngle(
+                                    Vector3.Normalize(projectile.Rotation),
+                                    projectile.Rotation.Length()
+                                )
+                            )
                             : Vector3.Zero;
                         projectile.TrailParticleSystem.Position = projectile.Position + v4;
                         if (projectile.IsInWater)
@@ -373,17 +428,32 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                             }
 
                             var surfaceHeight = _subsystemFluidBlockBehavior.GetSurfaceHeight(
-                                Terrain.ToCell(projectile.Position.X), Terrain.ToCell(projectile.Position.Y),
-                                Terrain.ToCell(projectile.Position.Z));
+                                Terrain.ToCell(projectile.Position.X),
+                                Terrain.ToCell(projectile.Position.Y),
+                                Terrain.ToCell(projectile.Position.Z)
+                            );
                             if (surfaceHeight.HasValue)
                             {
-                                _subsystemParticles.AddParticleSystem(new WaterSplashParticleSystem(_subsystemTerrain,
-                                    new Vector3(projectile.Position.X, surfaceHeight.Value, projectile.Position.Z),
-                                    false));
-                                _subsystemAudio.PlayRandomSound("Audio/Splashes", 1f, _random.Float(-0.2f, 0.2f),
-                                    projectile.Position, 6f, true);
-                                SendEffect(ProjectilePackage.EffectType.WaterSplash, projectile.Value,
-                                    new Vector3(projectile.Position.X, surfaceHeight.Value, projectile.Position.Z));
+                                _subsystemParticles.AddParticleSystem(
+                                    new WaterSplashParticleSystem(
+                                        _subsystemTerrain,
+                                        new Vector3(projectile.Position.X, surfaceHeight.Value, projectile.Position.Z),
+                                        false
+                                    )
+                                );
+                                _subsystemAudio.PlayRandomSound(
+                                    "Audio/Splashes",
+                                    1f,
+                                    _random.Float(-0.2f, 0.2f),
+                                    projectile.Position,
+                                    6f,
+                                    true
+                                );
+                                SendEffect(
+                                    ProjectilePackage.EffectType.WaterSplash,
+                                    projectile.Value,
+                                    new Vector3(projectile.Position.X, surfaceHeight.Value, projectile.Position.Z)
+                                );
                                 MakeProjectileNoise(projectile);
                             }
                         }
@@ -394,29 +464,54 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                     if (IsMagma(projectile.Position))
                     {
                         _subsystemParticles.AddParticleSystem(
-                            new MagmaSplashParticleSystem(_subsystemTerrain, projectile.Position, false));
-                        _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.2f, 0.2f),
-                            projectile.Position, 3f, true);
+                            new MagmaSplashParticleSystem(_subsystemTerrain, projectile.Position, false)
+                        );
+                        _subsystemAudio.PlayRandomSound(
+                            "Audio/Sizzles",
+                            1f,
+                            _random.Float(-0.2f, 0.2f),
+                            projectile.Position,
+                            3f,
+                            true
+                        );
                         SendEffect(ProjectilePackage.EffectType.MagmaSplash, projectile.Value, projectile.Position);
                         projectile.ToRemove = true;
-                        _subsystemExplosions.TryExplodeBlock(Terrain.ToCell(projectile.Position.X),
-                            Terrain.ToCell(projectile.Position.Y), Terrain.ToCell(projectile.Position.Z),
-                            projectile.Value);
+                        _subsystemExplosions.TryExplodeBlock(
+                            Terrain.ToCell(projectile.Position.X),
+                            Terrain.ToCell(projectile.Position.Y),
+                            Terrain.ToCell(projectile.Position.Z),
+                            projectile.Value
+                        );
                     }
 
                     if (_subsystemTime.PeriodicGameTimeEvent(1.0, projectile.GetHashCode() % 100 / 100.0) &&
-                        (_subsystemFireBlockBehavior.IsCellOnFire(Terrain.ToCell(projectile.Position.X),
-                             Terrain.ToCell(projectile.Position.Y + 0.1f), Terrain.ToCell(projectile.Position.Z)) ||
-                         _subsystemFireBlockBehavior.IsCellOnFire(Terrain.ToCell(projectile.Position.X),
-                             Terrain.ToCell(projectile.Position.Y + 0.1f) - 1, Terrain.ToCell(projectile.Position.Z))))
+                        (_subsystemFireBlockBehavior.IsCellOnFire(
+                             Terrain.ToCell(projectile.Position.X),
+                             Terrain.ToCell(projectile.Position.Y + 0.1f),
+                             Terrain.ToCell(projectile.Position.Z)
+                         ) ||
+                         _subsystemFireBlockBehavior.IsCellOnFire(
+                             Terrain.ToCell(projectile.Position.X),
+                             Terrain.ToCell(projectile.Position.Y + 0.1f) - 1,
+                             Terrain.ToCell(projectile.Position.Z)
+                         )))
                     {
-                        _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.2f, 0.2f),
-                            projectile.Position, 3f, true);
+                        _subsystemAudio.PlayRandomSound(
+                            "Audio/Sizzles",
+                            1f,
+                            _random.Float(-0.2f, 0.2f),
+                            projectile.Position,
+                            3f,
+                            true
+                        );
                         SendEffect(ProjectilePackage.EffectType.Sizzle, projectile.Value, projectile.Position);
                         projectile.ToRemove = true;
-                        _subsystemExplosions.TryExplodeBlock(Terrain.ToCell(projectile.Position.X),
-                            Terrain.ToCell(projectile.Position.Y), Terrain.ToCell(projectile.Position.Z),
-                            projectile.Value);
+                        _subsystemExplosions.TryExplodeBlock(
+                            Terrain.ToCell(projectile.Position.X),
+                            Terrain.ToCell(projectile.Position.Y),
+                            Terrain.ToCell(projectile.Position.Z),
+                            projectile.Value
+                        );
                     }
                 }
             }
@@ -485,15 +580,30 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                 _subsystemSoundMaterials.PlayImpactSound(value, position, 1f);
                 break;
             case ProjectilePackage.EffectType.Debris:
-                _subsystemParticles.AddParticleSystem(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
-                    .CreateDebrisParticleSystem(_subsystemTerrain, position, value, 1f));
+                _subsystemParticles.AddParticleSystem(
+                    CurrentModRuntime.Value!.RequireWorldCatalog()
+                        .Blocks[Terrain.ExtractContents(value)]
+                        .CreateDebrisParticleSystem(_subsystemTerrain, position, value, 1f)
+                );
                 break;
             case ProjectilePackage.EffectType.WaterSplash:
-                _subsystemParticles.AddParticleSystem(new WaterSplashParticleSystem(_subsystemTerrain, position, false));
+                _subsystemParticles.AddParticleSystem(
+                    new WaterSplashParticleSystem(
+                        _subsystemTerrain,
+                        position,
+                        false
+                    )
+                );
                 _subsystemAudio.PlayRandomSound("Audio/Splashes", 1f, _random.Float(-0.2f, 0.2f), position, 6f, true);
                 break;
             case ProjectilePackage.EffectType.MagmaSplash:
-                _subsystemParticles.AddParticleSystem(new MagmaSplashParticleSystem(_subsystemTerrain, position, false));
+                _subsystemParticles.AddParticleSystem(
+                    new MagmaSplashParticleSystem(
+                        _subsystemTerrain,
+                        position,
+                        false
+                    )
+                );
                 goto case ProjectilePackage.EffectType.Sizzle;
             case ProjectilePackage.EffectType.Sizzle:
                 _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.2f, 0.2f), position, 3f, true);
@@ -506,7 +616,10 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         foreach (var projectile in _projectiles)
         {
             var chunk = _subsystemTerrain.Terrain.GetChunkAtCell(
-                Terrain.ToCell(projectile.Position.X), Terrain.ToCell(projectile.Position.Z), false);
+                Terrain.ToCell(projectile.Position.X),
+                Terrain.ToCell(projectile.Position.Z),
+                false
+            );
             projectile.NoChunk = chunk is not { MainThreadState: > TerrainChunkState.InvalidContents4 };
             if (projectile.NoChunk)
             {
@@ -514,7 +627,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                 continue;
             }
 
-            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(projectile.Value)];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[Terrain.ExtractContents(projectile.Value)];
             projectile.Position += projectile.Velocity * dt;
             projectile.IsInWater = IsWater(projectile.Position);
             var damping = MathUtils.Pow(projectile.IsInWater ? 0.001f : block.ProjectileDamping, dt);
@@ -541,6 +655,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
     }
 
     public event Action<Projectile>? ProjectileAdded;
+
     public event Action<Projectile>? ProjectileRemoved;
 
     public Projectile? AddProjectile(
@@ -592,8 +707,13 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         return projectile;
     }
 
-    public Projectile? FireProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity,
-        ComponentCreature? owner)
+    public Projectile? FireProjectile(
+        int value,
+        Vector3 position,
+        Vector3 velocity,
+        Vector3 angularVelocity,
+        ComponentCreature? owner
+    )
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
@@ -611,9 +731,14 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         return proj;
     }
 
-    public Projectile? FireProjectileNet(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity,
+    public Projectile? FireProjectileNet(
+        int value,
+        Vector3 position,
+        Vector3 velocity,
+        Vector3 angularVelocity,
         ComponentCreature? owner,
-        int networkId = 0)
+        int networkId = 0
+    )
     {
         var num = Terrain.ExtractContents(value);
         var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
@@ -638,8 +763,14 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         }
 
         var end = vector + v * block.ProjectileTipOffset;
-        if (_subsystemTerrain.Raycast(position, end, false, true,
-                (testValue, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(testValue)].Collidable)
+        if (_subsystemTerrain.Raycast(
+                position,
+                end,
+                false,
+                true,
+                (testValue, _) => CurrentModRuntime.Value!.RequireWorldCatalog()
+                    .Blocks[Terrain.ExtractContents(testValue)].Collidable
+            )
             .HasValue)
         {
             return null;
@@ -658,7 +789,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             package.Velocity,
             package.AngularVelocity,
             owner,
-            package.NetworkId);
+            package.NetworkId
+        );
         if (package.IsFireProjectile)
         {
             InitializeFiredProjectile(projectile);
@@ -694,7 +826,6 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         {
             behavior.OnFiredAsProjectile(projectile);
         }
-
     }
 
     public void AddTrail(Projectile projectile, Vector3 offset, ITrailParticleSystem particleSystem)
@@ -816,20 +947,25 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         {
             CommonLib.Net.QueuePackage(
                 new ProjectilePackage(projectile.NetworkId),
-                PackageAudience.To(observers));
+                PackageAudience.To(observers)
+            );
         }
 
         _subsystemNetworkInterest.Entities.RemoveEntity(
             EntityInterestGroup.Projectiles,
-            projectile.NetworkId);
+            projectile.NetworkId
+        );
     }
 
     private void UpdateClientProjectileInterests()
     {
         _networkStateTick++;
         var projectiles = _projectiles.ToDictionary(projectile => projectile.NetworkId);
-        var relevant = _subsystemNetworkInterest.GetPointCandidates(projectiles.Values.Select(projectile =>
-            (projectile.NetworkId, projectile.Position.XZ)));
+        var relevant = _subsystemNetworkInterest.GetPointCandidates(
+            projectiles.Values.Select(projectile =>
+                (projectile.NetworkId, projectile.Position.XZ)
+            )
+        );
         foreach (var client in CommonLib.Net.Clients.Values)
         {
             if (client == CommonLib.Net.Self || !client.IsConnected)
@@ -843,14 +979,16 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                 EntityInterestGroup.Projectiles,
                 current,
                 projectiles.ContainsKey,
-                3);
+                3
+            );
             foreach (var networkId in changes.Entered)
             {
                 if (projectiles.TryGetValue(networkId, out var projectile))
                 {
                     CommonLib.Net.QueuePackage(
                         ProjectilePackageBuilder.Capture(projectile) with { StateTick = _networkStateTick },
-                        PackageAudience.To(client));
+                        PackageAudience.To(client)
+                    );
                 }
             }
 
@@ -858,7 +996,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             {
                 CommonLib.Net.QueuePackage(
                     new ProjectilePackage(networkId),
-                    PackageAudience.To(client));
+                    PackageAudience.To(client)
+                );
             }
 
             foreach (var networkId in current.Except(changes.Entered))
@@ -870,22 +1009,29 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                         Type = ProjectilePackage.EventType.Update,
                         StateTick = _networkStateTick
                     },
-                    PackageAudience.To(client));
+                    PackageAudience.To(client)
+                );
             }
         }
     }
 
     private bool IsWater(Vector3 position)
     {
-        var cellContents = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(position.X),
-            Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
+        var cellContents = _subsystemTerrain.Terrain.GetCellContents(
+            Terrain.ToCell(position.X),
+            Terrain.ToCell(position.Y),
+            Terrain.ToCell(position.Z)
+        );
         return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents] is WaterBlock;
     }
 
     private bool IsMagma(Vector3 position)
     {
-        var cellContents = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(position.X),
-            Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
+        var cellContents = _subsystemTerrain.Terrain.GetCellContents(
+            Terrain.ToCell(position.X),
+            Terrain.ToCell(position.Y),
+            Terrain.ToCell(position.Z)
+        );
         return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents] is MagmaBlock;
     }
 

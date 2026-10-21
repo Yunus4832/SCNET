@@ -12,9 +12,8 @@ public sealed record SetContentStatusCommand(
     ContentStatus Status
 ) : ICommand<bool>;
 
-public sealed class SetContentStatusCommandHandler(
-    ContentRepository repository
-) : ICommandHandler<SetContentStatusCommand, bool>
+public sealed class SetContentStatusCommandHandler(ContentRepository repository)
+    : ICommandHandler<SetContentStatusCommand, bool>
 {
     public async Task<bool> Handle(SetContentStatusCommand command, CancellationToken cancellationToken)
     {

@@ -18,7 +18,9 @@ public sealed class PublicAnnouncementListEndpoint(IMediator mediator) : Content
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
         var items = await mediator.Send(new ListGameAnnouncementsQuery(true), cancellationToken);
-        await Send.ResponseAsync(items.Select(AnnouncementResponse.From).ToArray().AsResponseData(),
-            cancellation: cancellationToken);
+        await Send.ResponseAsync(
+            items.Select(AnnouncementResponse.From).ToArray().AsResponseData(),
+            cancellation: cancellationToken
+        );
     }
 }

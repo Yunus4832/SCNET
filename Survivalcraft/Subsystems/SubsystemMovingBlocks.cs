@@ -86,7 +86,8 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         {
             var viewPosition = camera.ViewPosition;
             var v = new Vector3(MathUtils.Floor(viewPosition.X), 0f, MathUtils.Floor(viewPosition.Z));
-            var value = Matrix.CreateTranslation(v - viewPosition) * camera.ViewMatrix.OrientationMatrix *
+            var value = Matrix.CreateTranslation(v - viewPosition) *
+                        camera.ViewMatrix.OrientationMatrix *
                         camera.ProjectionMatrix;
             Display.BlendState = BlendState.AlphaBlend;
             Display.DepthStencilState = DepthStencilState.Default;
@@ -97,8 +98,13 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             _shader.GetParameter("u_texture").SetValue(_subsystemAnimatedTextures.AnimatedBlocksTexture);
             _shader.GetParameter("u_samplerState").SetValue(SamplerState.PointClamp);
             _shader.GetParameter("u_fogColor").SetValue(new Vector3(_subsystemSky.ViewFogColor));
-            _shader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
-                _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
+            _shader.GetParameter("u_fogBottomTopDensity").SetValue(
+                new Vector3(
+                    _subsystemSky.ViewFogBottom,
+                    _subsystemSky.ViewFogTop,
+                    _subsystemSky.ViewFogDensity
+                )
+            );
             _shader.GetParameter("u_hazeStartDensity")
                 .SetValue(new Vector2(_subsystemSky.ViewHazeStart, _subsystemSky.ViewHazeDensity));
             _shader.GetParameter("u_alphaThreshold").SetValue(0.5f);
@@ -106,8 +112,14 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             var indexBuffer = new IndexBuffer(IndexFormat.ThirtyTwoBits, _indices.Count);
             vertexBuffer.SetData(_vertices.Array, 0, _vertices.Count);
             indexBuffer.SetData(_indices.Array, 0, _indices.Count);
-            Display.DrawIndexed(PrimitiveType.TriangleList, _shader, vertexBuffer, indexBuffer, 0,
-                indexBuffer.IndicesCount);
+            Display.DrawIndexed(
+                PrimitiveType.TriangleList,
+                _shader,
+                vertexBuffer,
+                indexBuffer,
+                0,
+                indexBuffer.IndicesCount
+            );
             vertexBuffer.Dispose();
             indexBuffer.Dispose();
         }
@@ -128,7 +140,8 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(
                 Terrain.ToCell(movingBlockSet.Position.X),
                 Terrain.ToCell(movingBlockSet.Position.Z),
-                false);
+                false
+            );
             if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
             {
                 continue;
@@ -350,7 +363,8 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         {
             CommonLib.Net.QueuePackage(
                 MovingBlockPackageBuilder.Capture(movingBlockSet, stopped),
-                PackageAudience.To(observers));
+                PackageAudience.To(observers)
+            );
         }
     }
 
@@ -358,8 +372,11 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
     {
         _networkStateTick++;
         var movingBlocks = MovingBlockSets.ToDictionary(set => set.NetworkId);
-        var relevant = _subsystemNetworkInterest.GetPointCandidates(movingBlocks.Values.Select(set =>
-            (set.NetworkId, set.Position.XZ)));
+        var relevant = _subsystemNetworkInterest.GetPointCandidates(
+            movingBlocks.Values.Select(set =>
+                (set.NetworkId, set.Position.XZ)
+            )
+        );
         foreach (var client in CommonLib.Net.Clients.Values)
         {
             if (client == CommonLib.Net.Self || !client.IsConnected)
@@ -373,14 +390,16 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                 EntityInterestGroup.MovingBlocks,
                 current,
                 movingBlocks.ContainsKey,
-                3);
+                3
+            );
             foreach (var networkId in changes.Entered)
             {
                 if (movingBlocks.TryGetValue(networkId, out var movingBlockSet))
                 {
                     CommonLib.Net.QueuePackage(
                         MovingBlockPackageBuilder.Capture(movingBlockSet) with { StateTick = _networkStateTick },
-                        PackageAudience.To(client));
+                        PackageAudience.To(client)
+                    );
                 }
             }
 
@@ -390,7 +409,8 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                 {
                     CommonLib.Net.QueuePackage(
                         MovingBlockPackageBuilder.Capture(movingBlockSet, false),
-                        PackageAudience.To(client));
+                        PackageAudience.To(client)
+                    );
                 }
             }
 
@@ -403,7 +423,8 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                         Type = MovingBlockPackage.EventType.Update,
                         StateTick = _networkStateTick
                     },
-                    PackageAudience.To(client));
+                    PackageAudience.To(client)
+                );
             }
         }
     }
@@ -514,7 +535,8 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             list,
             value7,
             value8,
-            false);
+            false
+        );
         if (movingBlockSet is not null)
         {
             movingBlockSet.StartPosition = value9.GetValue<Vector3>("StartPosition");
@@ -613,7 +635,8 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         point2.Y = (int)MathUtils.Ceiling(movingBlockSet.Box.Bottom + movingBlockSet.Position.Y);
         point2.Z = (int)MathUtils.Ceiling(movingBlockSet.Box.Far + movingBlockSet.Position.Z);
         CurrentModRuntime.Value?.Gameplay.Invoke(
-            new MovingBlockSetTerrainCollisionContext(this, movingBlockSet, point, point2));
+            new MovingBlockSetTerrainCollisionContext(this, movingBlockSet, point, point2)
+        );
         for (var i = point.X; i < point2.X; i++)
         {
             for (var j = point.Z; j < point2.Z; j++)
@@ -697,8 +720,10 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             var x3 = block.Offset.X - p.X + 1;
             var y2 = block.Offset.Y - p.Y + 1;
             var z2 = block.Offset.Z - p.Z + 1;
-            var value = Terrain.ReplaceLight(light: _blockGeometryGenerator.Terrain.GetCellLightFast(x3, y2, z2),
-                value: block.Value);
+            var value = Terrain.ReplaceLight(
+                light: _blockGeometryGenerator.Terrain.GetCellLightFast(x3, y2, z2),
+                value: block.Value
+            );
             _blockGeometryGenerator.Terrain.SetCellValueFast(x3, y2, z2, value);
         }
 
@@ -717,8 +742,14 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                         var num3 = Terrain.ExtractContents(cellValueFast);
                         if (num3 != 0)
                         {
-                            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3].GenerateTerrainVertices(_blockGeometryGenerator,
-                                movingBlockSet.Geometry, cellValueFast, n, num, num2);
+                            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3].GenerateTerrainVertices(
+                                _blockGeometryGenerator,
+                                movingBlockSet.Geometry,
+                                cellValueFast,
+                                n,
+                                num,
+                                num2
+                            );
                         }
                     }
                 }
@@ -760,7 +791,10 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
 
     private static bool ExclusiveBoxIntersection(BoundingBox b1, BoundingBox b2)
     {
-        if (b1.Max.X > b2.Min.X && b1.Min.X < b2.Max.X && b1.Max.Y > b2.Min.Y && b1.Min.Y < b2.Max.Y &&
+        if (b1.Max.X > b2.Min.X &&
+            b1.Min.X < b2.Max.X &&
+            b1.Max.Y > b2.Min.Y &&
+            b1.Min.Y < b2.Max.Y &&
             b1.Max.Z > b2.Min.Z)
         {
             return b1.Min.Z < b2.Max.Z;
@@ -885,11 +919,13 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             Blocks.RemoveAll(b => b.Offset == offset);
             if (value != 0)
             {
-                Blocks.Add(new MovingBlock
-                {
-                    Offset = offset,
-                    Value = value
-                });
+                Blocks.Add(
+                    new MovingBlock
+                    {
+                        Offset = offset,
+                        Value = value
+                    }
+                );
             }
 
             UpdateBox();
@@ -918,8 +954,14 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                     return;
                 }
 
-                Box = new Box(point.Value.X, point.Value.Y, point.Value.Z, point2.Value.X - point.Value.X + 1,
-                    point2.Value.Y - point.Value.Y + 1, point2.Value.Z - point.Value.Z + 1);
+                Box = new Box(
+                    point.Value.X,
+                    point.Value.Y,
+                    point.Value.Z,
+                    point2.Value.X - point.Value.X + 1,
+                    point2.Value.Y - point.Value.Y + 1,
+                    point2.Value.Z - point.Value.Z + 1
+                );
             }
             else
             {

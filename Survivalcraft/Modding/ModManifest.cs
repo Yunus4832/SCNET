@@ -26,7 +26,8 @@ public sealed record ModManifest(
     string Version,
     IReadOnlyList<ModDependency>? Dependencies = null,
     ModSide Side = ModSide.Common,
-    ModEntrypoints? Entrypoints = null)
+    ModEntrypoints? Entrypoints = null
+)
 {
     public ModId ModId => new(Id);
 
@@ -38,8 +39,8 @@ public sealed record ModManifest(
 
     public static ModManifest Parse(string json)
     {
-        var manifest = JsonSerializer.Deserialize<ModManifest>(json, _jsonOptions)
-                       ?? throw new InvalidOperationException("Mod manifest is empty.");
+        var manifest = JsonSerializer.Deserialize<ModManifest>(json, _jsonOptions) ??
+                       throw new InvalidOperationException("Mod manifest is empty.");
         manifest.Validate();
         return manifest;
     }
@@ -67,7 +68,8 @@ public sealed record ModManifest(
             if (dependency.MinimumVersion is not null && !SemanticVersion.TryParse(dependency.MinimumVersion, out _))
             {
                 throw new InvalidOperationException(
-                    $"Mod {Id} has invalid minimum version \"{dependency.MinimumVersion}\" for {dependencyId}.");
+                    $"Mod {Id} has invalid minimum version \"{dependency.MinimumVersion}\" for {dependencyId}."
+                );
             }
         }
     }
@@ -87,7 +89,9 @@ public sealed record ModManifest(
 
 public enum ModSide
 {
-    Common,
-    Client,
-    Server
+    Common = 0,
+
+    Client = 1,
+
+    Server = 2
 }

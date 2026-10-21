@@ -56,8 +56,15 @@ public static class CommonLib
 
     public static bool StartServer(WorldSettings worldSettings)
     {
-        return Net.StartServer(SettingsManager.Current.ServerPort, SettingsManager.Current.BroadcastPort, worldSettings.MaxOnlinePlayerCount,
-            worldSettings.P2P with { Name = string.IsNullOrEmpty(worldSettings.P2P.Name) ? worldSettings.Name : worldSettings.P2P.Name });
+        return Net.StartServer(
+            SettingsManager.Current.ServerPort,
+            SettingsManager.Current.BroadcastPort,
+            worldSettings.MaxOnlinePlayerCount,
+            worldSettings.P2P with
+            {
+                Name = string.IsNullOrEmpty(worldSettings.P2P.Name) ? worldSettings.Name : worldSettings.P2P.Name
+            }
+        );
     }
 
     public static bool StartServer(SessionInfo sessionInfo, WorldSettings worldSettings)
@@ -71,14 +78,19 @@ public static class CommonLib
             > 0 => sessionInfo.BroadcastPort,
             _ => SettingsManager.Current.BroadcastPort
         };
-        return Net.StartServer(serverPort, broadcastPort, worldSettings.MaxOnlinePlayerCount,
-            sessionInfo.P2POverrides.Apply(worldSettings.P2P, worldSettings.Name));
+        return Net.StartServer(
+            serverPort,
+            broadcastPort,
+            worldSettings.MaxOnlinePlayerCount,
+            sessionInfo.P2POverrides.Apply(worldSettings.P2P, worldSettings.Name)
+        );
     }
 
     public static NetDataWriter GetWriter(
         ProtocolWriter writer,
         out int size,
-        CompressionPolicy compressionPolicy = CompressionPolicy.Adaptive)
+        CompressionPolicy compressionPolicy = CompressionPolicy.Adaptive
+    )
     {
         var data = writer.Data(compressionPolicy);
         var tmp = new NetDataWriter();

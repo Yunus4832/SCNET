@@ -11,7 +11,8 @@ public sealed class InputSimulationTest : IDisposable
 {
     private readonly FieldInfo _windowState = typeof(Window).GetField(
         "_state",
-        BindingFlags.Static | BindingFlags.NonPublic)!;
+        BindingFlags.Static | BindingFlags.NonPublic
+    )!;
 
     private readonly object _previousWindowState;
 
@@ -132,7 +133,8 @@ public sealed class InputSimulationTest : IDisposable
     {
         var method = typeof(Keyboard).GetMethod(
             isDown ? "ProcessKeyDown" : "ProcessKeyUp",
-            BindingFlags.Static | BindingFlags.NonPublic)!;
+            BindingFlags.Static | BindingFlags.NonPublic
+        )!;
         method.Invoke(null, [key, false]);
     }
 
@@ -140,7 +142,8 @@ public sealed class InputSimulationTest : IDisposable
     {
         var method = typeof(Mouse).GetMethod(
             isDown ? "ProcessMouseDown" : "ProcessMouseUp",
-            BindingFlags.Static | BindingFlags.NonPublic)!;
+            BindingFlags.Static | BindingFlags.NonPublic
+        )!;
         method.Invoke(null, [button, position, false]);
     }
 }

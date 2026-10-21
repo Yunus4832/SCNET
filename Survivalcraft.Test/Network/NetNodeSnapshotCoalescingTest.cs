@@ -24,7 +24,8 @@ public class NetNodeSnapshotCoalescingTest
                     Position = new Vector3(1f, 2f, 3f),
                     Velocity = new Vector3(4f, 5f, 6f)
                 },
-                PackageAudience.Global)
+                PackageAudience.Global
+            )
         };
         var newer = new PlayerStatePackage
         {
@@ -35,9 +36,12 @@ public class NetNodeSnapshotCoalescingTest
             Position = new Vector3(10f, 11f, 12f),
             Velocity = new Vector3(7f, 8f, 9f)
         };
-        Assert.True(SnapshotPackageCoalescer.TryCoalesce(
-            packages,
-            new OutboundPackage(newer, PackageAudience.Global)));
+        Assert.True(
+            SnapshotPackageCoalescer.TryCoalesce(
+                packages,
+                new OutboundPackage(newer, PackageAudience.Global)
+            )
+        );
 
         var package = Assert.IsType<PlayerStatePackage>(Assert.Single(packages).Package);
         Assert.True(package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.PositionChange));
@@ -66,9 +70,12 @@ public class NetNodeSnapshotCoalescingTest
 
         packages.Add(new OutboundPackage(older, PackageAudience.Global));
         // 生物快照按独立小包发送，不允许合并器吃掉其它分块。
-        Assert.False(SnapshotPackageCoalescer.TryCoalesce(
-            packages,
-            new OutboundPackage(newer, PackageAudience.Global)));
+        Assert.False(
+            SnapshotPackageCoalescer.TryCoalesce(
+                packages,
+                new OutboundPackage(newer, PackageAudience.Global)
+            )
+        );
         Assert.Single(packages);
         Assert.Same(older, packages[0].Package);
     }
@@ -90,9 +97,12 @@ public class NetNodeSnapshotCoalescingTest
         };
 
         packages.Add(new OutboundPackage(older, PackageAudience.Global));
-        Assert.False(SnapshotPackageCoalescer.TryCoalesce(
-            packages,
-            new OutboundPackage(newer, PackageAudience.Global)));
+        Assert.False(
+            SnapshotPackageCoalescer.TryCoalesce(
+                packages,
+                new OutboundPackage(newer, PackageAudience.Global)
+            )
+        );
 
         var package = Assert.IsType<PickablePackage>(Assert.Single(packages).Package);
         Assert.Equal((ushort)1, Assert.Single(package.Positions).Id);
@@ -107,14 +117,19 @@ public class NetNodeSnapshotCoalescingTest
         {
             new(
                 new OnlinePlayerStatePackage(),
-                PackageAudience.To(firstClient))
+                PackageAudience.To(firstClient)
+            )
         };
 
-        Assert.False(SnapshotPackageCoalescer.TryCoalesce(
-            packages,
-            new OutboundPackage(
-                new OnlinePlayerStatePackage(),
-                PackageAudience.To(secondClient))));
+        Assert.False(
+            SnapshotPackageCoalescer.TryCoalesce(
+                packages,
+                new OutboundPackage(
+                    new OnlinePlayerStatePackage(),
+                    PackageAudience.To(secondClient)
+                )
+            )
+        );
         Assert.Single(packages);
     }
 
@@ -127,13 +142,21 @@ public class NetNodeSnapshotCoalescingTest
         var newClient = new Client(null, 1, Guid.NewGuid(), oldClient.GUID, null);
         var packages = new List<OutboundPackage>
         {
-            new(new OnlinePlayerStatePackage(),
-                exclusion ? PackageAudience.Except(oldClient) : PackageAudience.To(oldClient))
+            new(
+                new OnlinePlayerStatePackage(),
+                exclusion ? PackageAudience.Except(oldClient) : PackageAudience.To(oldClient)
+            )
         };
 
-        Assert.False(SnapshotPackageCoalescer.TryCoalesce(packages,
-            new OutboundPackage(new OnlinePlayerStatePackage(),
-                exclusion ? PackageAudience.Except(newClient) : PackageAudience.To(newClient))));
+        Assert.False(
+            SnapshotPackageCoalescer.TryCoalesce(
+                packages,
+                new OutboundPackage(
+                    new OnlinePlayerStatePackage(),
+                    exclusion ? PackageAudience.Except(newClient) : PackageAudience.To(newClient)
+                )
+            )
+        );
     }
 
     [Fact]
@@ -145,8 +168,12 @@ public class NetNodeSnapshotCoalescingTest
         var newer = new OnlinePlayerStatePackage();
         var packages = new List<OutboundPackage> { new(older, PackageAudience.To([first, second])) };
 
-        Assert.True(SnapshotPackageCoalescer.TryCoalesce(packages,
-            new OutboundPackage(newer, PackageAudience.To([second, first, first]))));
+        Assert.True(
+            SnapshotPackageCoalescer.TryCoalesce(
+                packages,
+                new OutboundPackage(newer, PackageAudience.To([second, first, first]))
+            )
+        );
         Assert.Same(newer, Assert.Single(packages).Package);
     }
 }

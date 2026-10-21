@@ -10,10 +10,15 @@ public sealed class ImageBuffer : IDisposable
     private Color[]? _pixels;
 
     public int Width { get; }
+
     public int Height { get; }
+
     public int Stride => checked(Width * 4);
+
     public bool IsDisposed => _pixels is null;
+
     public Color[] Pixels => _pixels ?? throw new ObjectDisposedException(nameof(ImageBuffer));
+
     public Span<byte> Bytes => MemoryMarshal.AsBytes(Pixels.AsSpan());
 
     public ImageBuffer(int width, int height)
@@ -30,6 +35,7 @@ public sealed class ImageBuffer : IDisposable
         {
             throw new ArgumentOutOfRangeException(nameof(y));
         }
+
         return Pixels.AsSpan(y * Width, Width);
     }
 

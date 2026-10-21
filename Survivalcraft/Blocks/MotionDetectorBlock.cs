@@ -25,17 +25,33 @@ public class MotionDetectorBlock : MountedElectricElementBlock
                 ? i != 4
                     ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
                     : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                : Matrix.CreateRotationX((float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByData[num] = new BlockMesh();
-            BlockMeshesByData[num].AppendModelMeshPart(motionDetectorMesh.MeshParts[0],
-                boneAbsoluteTransform * m, false, false, false, false, Color.White);
+            BlockMeshesByData[num].AppendModelMeshPart(
+                motionDetectorMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             CollisionBoxesByData[num] = [BlockMeshesByData[num].CalculateBoundingBox()];
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBlockMesh.AppendModelMeshPart(motionDetectorMesh.MeshParts[0],
-            boneAbsoluteTransform * m2, false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            motionDetectorMesh.MeshParts[0],
+            boneAbsoluteTransform * m2,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
     }
 
     public override int GetFace(int value)
@@ -77,8 +93,16 @@ public class MotionDetectorBlock : MountedElectricElementBlock
             return;
         }
 
-        generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null,
-            geometry.SubsetOpaque);
+        generator.GenerateMeshVertices(
+            this,
+            x,
+            y,
+            z,
+            BlockMeshesByData[num],
+            Color.White,
+            null,
+            geometry.SubsetOpaque
+        );
         generator.GenerateWireVertices(value, x, y, z, GetFace(value), 0.25f, Vector2.Zero, geometry.SubsetOpaque);
     }
 

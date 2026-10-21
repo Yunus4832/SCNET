@@ -151,8 +151,16 @@ public class LitShader : Shader
     ) : base(
         GetLitVshString(),
         GetLitPshString(),
-        PrepareShaderMacros(lightsCount, useEmissionColor, useVertexColor, useTexture, useFog, useAlphaThreshold,
-            maxInstancesCount))
+        PrepareShaderMacros(
+            lightsCount,
+            useEmissionColor,
+            useVertexColor,
+            useTexture,
+            useFog,
+            useAlphaThreshold,
+            maxInstancesCount
+        )
+    )
     {
         if (lightsCount is < 0 or > 3)
         {
@@ -217,85 +225,37 @@ public class LitShader : Shader
         }
     }
 
-    public Texture2D Texture
-    {
-        set => TextureParameter.SetValue(value);
-    }
+    public Texture2D Texture { set => TextureParameter.SetValue(value); }
 
-    public SamplerState SamplerState
-    {
-        set => SamplerStateParameter.SetValue(value);
-    }
+    public SamplerState SamplerState { set => SamplerStateParameter.SetValue(value); }
 
-    public Vector4 MaterialColor
-    {
-        set => MaterialColorParameter.SetValue(value);
-    }
+    public Vector4 MaterialColor { set => MaterialColorParameter.SetValue(value); }
 
-    public Vector4 EmissionColor
-    {
-        set => EmissionColorParameter.SetValue(value);
-    }
+    public Vector4 EmissionColor { set => EmissionColorParameter.SetValue(value); }
 
-    public float AlphaThreshold
-    {
-        set => AlphaThresholdParameter.SetValue(value);
-    }
+    public float AlphaThreshold { set => AlphaThresholdParameter.SetValue(value); }
 
-    public Vector3 AmbientLightColor
-    {
-        set => AmbientLightColorParameter.SetValue(value);
-    }
+    public Vector3 AmbientLightColor { set => AmbientLightColorParameter.SetValue(value); }
 
-    public Vector3 DiffuseLightColor1
-    {
-        set => DiffuseLightColor1Parameter.SetValue(value);
-    }
+    public Vector3 DiffuseLightColor1 { set => DiffuseLightColor1Parameter.SetValue(value); }
 
-    public Vector3 DiffuseLightColor2
-    {
-        set => DiffuseLightColor2Parameter.SetValue(value);
-    }
+    public Vector3 DiffuseLightColor2 { set => DiffuseLightColor2Parameter.SetValue(value); }
 
-    public Vector3 DiffuseLightColor3
-    {
-        set => DiffuseLightColor3Parameter.SetValue(value);
-    }
+    public Vector3 DiffuseLightColor3 { set => DiffuseLightColor3Parameter.SetValue(value); }
 
-    public Vector3 LightDirection1
-    {
-        set => DirectionToLight1Parameter.SetValue(-value);
-    }
+    public Vector3 LightDirection1 { set => DirectionToLight1Parameter.SetValue(-value); }
 
-    public Vector3 LightDirection2
-    {
-        set => DirectionToLight2Parameter.SetValue(-value);
-    }
+    public Vector3 LightDirection2 { set => DirectionToLight2Parameter.SetValue(-value); }
 
-    public Vector3 LightDirection3
-    {
-        set => DirectionToLight3Parameter.SetValue(-value);
-    }
+    public Vector3 LightDirection3 { set => DirectionToLight3Parameter.SetValue(-value); }
 
-    public float FogStart
-    {
-        set => FogStartParameter.SetValue(value);
-    }
+    public float FogStart { set => FogStartParameter.SetValue(value); }
 
-    public float FogLength
-    {
-        set => FogLengthParameter.SetValue(value);
-    }
+    public float FogLength { set => FogLengthParameter.SetValue(value); }
 
-    public Vector3 FogColor
-    {
-        set => FogColorParameter.SetValue(value);
-    }
+    public Vector3 FogColor { set => FogColorParameter.SetValue(value); }
 
-    public float Time
-    {
-        set => _time?.SetValue(value);
-    }
+    public float Time { set => _time?.SetValue(value); }
 
     public int InstancesCount
     {
@@ -326,8 +286,15 @@ public class LitShader : Shader
         }
     }
 
-    private static ShaderMacro[] PrepareShaderMacros(int lightsCount, bool useEmissionColor, bool useVertexColor,
-        bool useTexture, bool useFog, bool useAlphaThreshold, int maxInstancesCount)
+    private static ShaderMacro[] PrepareShaderMacros(
+        int lightsCount,
+        bool useEmissionColor,
+        bool useVertexColor,
+        bool useTexture,
+        bool useFog,
+        bool useAlphaThreshold,
+        int maxInstancesCount
+    )
     {
         var list = new List<ShaderMacro>();
         if (lightsCount > 0)
@@ -392,7 +359,8 @@ public class LitShader : Shader
     {
         return new StreamReader(
                 typeof(Shader).GetTypeInfo().Assembly.GetManifestResourceStream("Engine.Resources.Lit.vsh") ??
-                throw new InvalidOperationException("Engine.Resources.Lit.vsh not found"))
+                throw new InvalidOperationException("Engine.Resources.Lit.vsh not found")
+            )
             .ReadToEnd();
     }
 
@@ -404,7 +372,8 @@ public class LitShader : Shader
     {
         return new StreamReader(
                 typeof(Shader).GetTypeInfo().Assembly.GetManifestResourceStream("Engine.Resources.Lit.psh") ??
-                throw new InvalidOperationException("Engine.Resources.Lit.psh not found"))
+                throw new InvalidOperationException("Engine.Resources.Lit.psh not found")
+            )
             .ReadToEnd();
     }
 }

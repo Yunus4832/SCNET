@@ -258,7 +258,8 @@ public static partial class ProtocolMessageCodec
     {
         var epoch = reader.ReadGuid();
         var phase = reader.ReadEnum<ConnectionPhase>();
-        return Enum.IsDefined(phase) ? new ConnectionPhaseAckPackage(epoch, phase)
+        return Enum.IsDefined(phase)
+            ? new ConnectionPhaseAckPackage(epoch, phase)
             : throw new InvalidDataException("Unknown connection phase.");
     }
 

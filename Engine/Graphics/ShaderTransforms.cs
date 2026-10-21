@@ -27,17 +27,9 @@ public class ShaderTransforms
 
     public Matrix[] World { get; }
 
-    public Matrix View
-    {
-        get => _view;
-        set => _view = value;
-    }
+    public Matrix View { get => _view; set => _view = value; }
 
-    public Matrix Projection
-    {
-        get => _projection;
-        set => _projection = value;
-    }
+    public Matrix Projection { get => _projection; set => _projection = value; }
 
     public Matrix ViewProjection => _viewProjection;
 

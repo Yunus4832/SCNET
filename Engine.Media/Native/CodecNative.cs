@@ -22,6 +22,7 @@ internal static unsafe class CodecNative
         {
             return 0;
         }
+
         var platform = OperatingSystem.IsAndroid() ? "android" : OperatingSystem.IsWindows() ? "win" : "linux";
         var architecture = RuntimeInformation.ProcessArchitecture switch
         {
@@ -37,25 +38,46 @@ internal static unsafe class CodecNative
         if (name == "scnet_webp" && !OperatingSystem.IsAndroid())
         {
             var dependency = OperatingSystem.IsWindows() ? "libsharpyuv.dll" : "libsharpyuv.so";
-            NativeLibrary.Load(File.Exists(Path.Combine(nativePath, dependency))
-                ? Path.Combine(nativePath, dependency)
-                : dependency, assembly, searchPath);
+            NativeLibrary.Load(
+                File.Exists(Path.Combine(nativePath, dependency))
+                    ? Path.Combine(nativePath, dependency)
+                    : dependency,
+                assembly,
+                searchPath
+            );
         }
+
         return File.Exists(Path.Combine(nativePath, file))
             ? NativeLibrary.Load(Path.Combine(nativePath, file))
             : NativeLibrary.Load(file, assembly, searchPath);
     }
 
-    [DllImport("scnet_png", CallingConvention = CallingConvention.Cdecl, EntryPoint = "png_image_begin_read_from_memory")]
+    [DllImport(
+        "scnet_png",
+        CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "png_image_begin_read_from_memory"
+    )]
     internal static extern int PngBeginRead(PngImage* image, byte* input, nuint size);
 
     [DllImport("scnet_png", CallingConvention = CallingConvention.Cdecl, EntryPoint = "png_image_finish_read")]
-    internal static extern int PngFinishRead(PngImage* image, void* background, byte* output,
-        int stride, void* colormap);
+    internal static extern int PngFinishRead(
+        PngImage* image,
+        void* background,
+        byte* output,
+        int stride,
+        void* colormap
+    );
 
     [DllImport("scnet_png", CallingConvention = CallingConvention.Cdecl, EntryPoint = "png_image_write_to_memory")]
-    internal static extern int PngWrite(PngImage* image, byte* output, nuint* size, int linear,
-        byte* pixels, int stride, void* colormap);
+    internal static extern int PngWrite(
+        PngImage* image,
+        byte* output,
+        nuint* size,
+        int linear,
+        byte* pixels,
+        int stride,
+        void* colormap
+    );
 
     [DllImport("scnet_png", CallingConvention = CallingConvention.Cdecl, EntryPoint = "png_image_free")]
     internal static extern void PngFree(PngImage* image);

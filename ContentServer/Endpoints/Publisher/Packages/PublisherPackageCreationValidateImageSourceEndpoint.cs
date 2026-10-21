@@ -24,7 +24,8 @@ public sealed class PublisherPackageCreationValidateImageSourceEndpoint(
     IMediator mediator,
     ApiKeyAuthenticationContext authenticationContext,
     IOptions<ContentServerOptions> options,
-    ImageContentPackageBuilder imageBuilder) : ContentEndpoint
+    ImageContentPackageBuilder imageBuilder
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -51,8 +52,11 @@ public sealed class PublisherPackageCreationValidateImageSourceEndpoint(
         {
             await using var input = file.OpenReadStream();
             return (await imageBuilder.ValidateSourceAsync(
-                input, ParseImageType(form["type"].ToString()), options.Value.MaximumPackageBytes,
-                cancellationToken)).AsResponseData();
+                input,
+                ParseImageType(form["type"].ToString()),
+                options.Value.MaximumPackageBytes,
+                cancellationToken
+            )).AsResponseData();
         }
         catch (Exception exception) when (exception is ContentPackageException)
         {
@@ -63,8 +67,10 @@ public sealed class PublisherPackageCreationValidateImageSourceEndpoint(
     private async Task<PublisherDto> RequireActivePublisherAsync(CancellationToken cancellationToken)
     {
         var publisher = await mediator.Send(
-                            new GetPublisherQuery(authenticationContext.RequirePublisherId()), cancellationToken)
-                        ?? throw new KnownException("publisher_not_found", 401);
+                            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                            cancellationToken
+                        ) ??
+                        throw new KnownException("publisher_not_found", 401);
         if (publisher.Status != PublisherStatus.Active)
         {
             throw new KnownException("publisher_not_active", 403);

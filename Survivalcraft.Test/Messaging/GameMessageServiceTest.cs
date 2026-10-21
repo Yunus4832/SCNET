@@ -18,15 +18,24 @@ public sealed class GameMessageServiceTest
         service.OverlayRequested += overlayMessages.Add;
         service.ToastRequested += toastMessages.Add;
 
-        service.DisplayLocal(GameMessage.System(
-            "history",
-            presentation: GameMessagePresentation.History));
-        service.DisplayLocal(GameMessage.System(
-            "overlay",
-            presentation: GameMessagePresentation.Overlay));
-        service.DisplayLocal(GameMessage.System(
-            "toast",
-            presentation: GameMessagePresentation.Toast));
+        service.DisplayLocal(
+            GameMessage.System(
+                "history",
+                presentation: GameMessagePresentation.History
+            )
+        );
+        service.DisplayLocal(
+            GameMessage.System(
+                "overlay",
+                presentation: GameMessagePresentation.Overlay
+            )
+        );
+        service.DisplayLocal(
+            GameMessage.System(
+                "toast",
+                presentation: GameMessagePresentation.Toast
+            )
+        );
         service.DisplayLocal(GameMessage.System("default"));
 
         Assert.Equal(["history", "default"], historyMessages.Select(MessageText).ToArray());

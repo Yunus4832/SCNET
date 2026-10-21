@@ -168,7 +168,7 @@ public static class ContentManager
             }
 
             if (contents.Count == 0)
-            //没有找到对应资源?
+                //没有找到对应资源?
             {
                 throw new Exception("未能找到资源[" + name + "][" + type.FullName + "]");
             }
@@ -210,7 +210,8 @@ public static class ContentManager
             if (_resourceOwners.TryGetValue(contentInfo.AbsolutePath, out var owner))
             {
                 throw new InvalidOperationException(
-                    $"Content {contentInfo.AbsolutePath} is owned by mod {owner} and cannot be replaced by legacy content.");
+                    $"Content {contentInfo.AbsolutePath} is owned by mod {owner} and cannot be replaced by legacy content."
+                );
             }
 
             Replace(contentInfo);
@@ -225,13 +226,15 @@ public static class ContentManager
                 !_resourceOwners.TryGetValue(contentInfo.AbsolutePath, out var existingOwner))
             {
                 throw new InvalidOperationException(
-                    $"Content {contentInfo.AbsolutePath} already exists without a mod owner.");
+                    $"Content {contentInfo.AbsolutePath} already exists without a mod owner."
+                );
             }
 
             if (_resourceOwners.TryGetValue(contentInfo.AbsolutePath, out existingOwner) && existingOwner != owner)
             {
                 throw new InvalidOperationException(
-                    $"Content {contentInfo.AbsolutePath} is already owned by mod {existingOwner}.");
+                    $"Content {contentInfo.AbsolutePath} is already owned by mod {existingOwner}."
+                );
             }
 
             Replace(contentInfo);
@@ -345,7 +348,8 @@ public static class ContentManager
     {
         foreach (var key in _caches.Keys
                      .Where(key => key.Equals(contentPath, StringComparison.Ordinal) ||
-                                   key.StartsWith(contentPath + ".", StringComparison.Ordinal))
+                                   key.StartsWith(contentPath + ".", StringComparison.Ordinal)
+                     )
                      .ToArray())
         {
             DisposeCache(key);

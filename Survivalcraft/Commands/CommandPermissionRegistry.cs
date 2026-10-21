@@ -11,22 +11,24 @@ public sealed class CommandPermissionRegistry
     public IReadOnlyList<RegisteredCommandPermission> Definitions =>
         _definitions
             .Select(pair => new RegisteredCommandPermission(
-                pair.Key,
-                pair.Value.Definition))
+                    pair.Key,
+                    pair.Value.Definition
+                )
+            )
             .OrderBy(entry => entry.Id.ToString(), StringComparer.Ordinal)
             .ToArray();
 
     internal IDisposable Register(
         ModId owner,
         ResourceId id,
-        CommandPermissionDefinition definition)
+        CommandPermissionDefinition definition
+    )
     {
         ArgumentNullException.ThrowIfNull(definition);
         EnsureCanRegister(owner, id);
         if (!_definitions.TryAdd(id, new Entry(owner, definition)))
         {
-            throw new InvalidOperationException(
-                $"Command permission {id} is already registered.");
+            throw new InvalidOperationException($"Command permission {id} is already registered.");
         }
 
         return new Registration(this, owner, id);
@@ -34,7 +36,8 @@ public sealed class CommandPermissionRegistry
 
     public bool TryGet(
         ResourceId id,
-        out RegisteredCommandPermission? registered)
+        out RegisteredCommandPermission? registered
+    )
     {
         if (_definitions.TryGetValue(id, out var entry))
         {
@@ -49,7 +52,8 @@ public sealed class CommandPermissionRegistry
     public bool HasEffectivePermission(
         ResourceId id,
         CommandPrincipal principal,
-        Project? project)
+        Project? project
+    )
     {
         ArgumentNullException.ThrowIfNull(principal);
         if (!_definitions.TryGetValue(id, out var entry))
@@ -80,7 +84,8 @@ public sealed class CommandPermissionRegistry
         ResourceId id,
         CommandPrincipal principal,
         Project? project,
-        bool canDelegate = false)
+        bool canDelegate = false
+    )
     {
         ArgumentNullException.ThrowIfNull(principal);
         if (!_definitions.TryGetValue(id, out var entry) ||
@@ -109,7 +114,8 @@ public sealed class CommandPermissionRegistry
             pair.Value.Definition.ManagesStandardPermissions &&
             (canDelegate
                 ? principal.CanDelegate(pair.Key)
-                : HasEffectivePermission(pair.Key, principal, project)));
+                : HasEffectivePermission(pair.Key, principal, project))
+        );
     }
 
     internal void Freeze()
@@ -132,25 +138,25 @@ public sealed class CommandPermissionRegistry
     {
         if (IsFrozen)
         {
-            throw new InvalidOperationException(
-                "Command permission registry is frozen.");
+            throw new InvalidOperationException("Command permission registry is frozen.");
         }
 
         if (owner != id.Namespace)
         {
-            throw new InvalidOperationException(
-                $"Mod {owner} cannot register permission {id} in another namespace.");
+            throw new InvalidOperationException($"Mod {owner} cannot register permission {id} in another namespace.");
         }
     }
 
     private sealed record Entry(
         ModId Owner,
-        CommandPermissionDefinition Definition);
+        CommandPermissionDefinition Definition
+    );
 
     private sealed class Registration(
         CommandPermissionRegistry registry,
         ModId owner,
-        ResourceId id) : IDisposable
+        ResourceId id
+    ) : IDisposable
     {
         private CommandPermissionRegistry? _registry = registry;
 

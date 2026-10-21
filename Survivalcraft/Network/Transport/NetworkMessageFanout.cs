@@ -5,8 +5,11 @@ namespace Game.Network.Transport;
 internal sealed class NetworkMessageFanout(NetworkSendStatistics statistics, Type packageType, NetworkChannel channel)
 {
     private readonly Lock _gate = new();
+
     private Client? _firstRecipient;
+
     private HashSet<Client>? _otherRecipients;
+
     private int _pending = 1;
 
     public void DeliveredTo(Client client)
@@ -45,8 +48,11 @@ internal sealed class NetworkMessageFanout(NetworkSendStatistics statistics, Typ
             _pending = checked(_pending - consumed + deferred);
             if (_pending == 0)
             {
-                statistics.RecordFanout(packageType, channel,
-                    (_firstRecipient == null ? 0 : 1) + (_otherRecipients?.Count ?? 0));
+                statistics.RecordFanout(
+                    packageType,
+                    channel,
+                    (_firstRecipient == null ? 0 : 1) + (_otherRecipients?.Count ?? 0)
+                );
             }
         }
     }

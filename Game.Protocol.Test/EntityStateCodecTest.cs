@@ -12,6 +12,7 @@ namespace Game.Protocol.Test;
 public sealed class EntityStateCodecTest
 {
     private static readonly Guid _id = Guid.Parse("11111111-2222-3333-4444-555555555555");
+
     public static TheoryData<IProtocolMessage> Messages => new()
     {
         new DispenserPackage(new Point3(-2, 64, 3), 4),
@@ -21,8 +22,16 @@ public sealed class EntityStateCodecTest
         new OnlinePlayerStatePackage([new OnlinePlayerState(_id, Vector3.One, 0.5f, true)]),
         new ComponentMountPackage(3, 4, true),
         new ComponentSleepPackage(3, ComponentSleepPackage.EventType.Sleep, true, false, "Reason"),
-        new SubsystemWeatherPackage { PrecipitationStartTime = 2, PrecipitationEndTime = 3, LightningIntensity = 0.5f, FogStartTime = 4, FogRampTime = 5, FogEndTime = 6 },
-        new ComponentFluPackage { EntityId = 3, PackageEventType = ComponentFluPackage.EventType.Sneeze, FluOnset = 4, FluDuration = 5, CoughDuration = 6, SneezeDuration = 7 }
+        new SubsystemWeatherPackage
+        {
+            PrecipitationStartTime = 2, PrecipitationEndTime = 3, LightningIntensity = 0.5f, FogStartTime = 4,
+            FogRampTime = 5, FogEndTime = 6
+        },
+        new ComponentFluPackage
+        {
+            EntityId = 3, PackageEventType = ComponentFluPackage.EventType.Sneeze, FluOnset = 4, FluDuration = 5,
+            CoughDuration = 6, SneezeDuration = 7
+        }
     };
 
     [Theory]
@@ -47,9 +56,13 @@ public sealed class EntityStateCodecTest
     {
         var message = new ModEnvelopePackage("test.example", "update", [1, 2, 3, 4]);
         using var writer = new ProtocolWriter();
-        writer.Write((byte)0x88); writer.Write(message.ID);
+        writer.Write((byte)0x88);
+        writer.Write(message.ID);
         ProtocolMessageCodec.Write(message, writer);
-        Assert.Equal(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "mod-envelope.bin")), writer.Data(CompressionPolicy.None));
+        Assert.Equal(
+            File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "mod-envelope.bin")),
+            writer.Data(CompressionPolicy.None)
+        );
     }
 
     [Theory]

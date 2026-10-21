@@ -180,17 +180,9 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 
     public bool ShowEmptyPlaceholder { get; set; }
 
-    public Color CenterColor
-    {
-        get => _rectangleWidget.CenterColor;
-        set => _rectangleWidget.CenterColor = value;
-    }
+    public Color CenterColor { get => _rectangleWidget.CenterColor; set => _rectangleWidget.CenterColor = value; }
 
-    public Color BevelColor
-    {
-        get => _rectangleWidget.BevelColor;
-        set => _rectangleWidget.BevelColor = value;
-    }
+    public Color BevelColor { get => _rectangleWidget.BevelColor; set => _rectangleWidget.BevelColor = value; }
 
     public Matrix? CustomViewMatrix
     {
@@ -311,13 +303,16 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             _focus = true;
         }
 
-        if (input.SpecialClick.HasValue && HitTestGlobal(input.SpecialClick.Value.Start) == this &&
+        if (input.SpecialClick.HasValue &&
+            HitTestGlobal(input.SpecialClick.Value.Start) == this &&
             HitTestGlobal(input.SpecialClick.Value.End) == this)
         {
             IInventory? inventory = null;
             foreach (var item in ((ContainerWidget)RootWidget).AllChildren.OfType<InventorySlotWidget>())
             {
-                if (item._inventory == null || item._inventory == _inventory || item.Input != Input ||
+                if (item._inventory == null ||
+                    item._inventory == _inventory ||
+                    item.Input != Input ||
                     item is not { IsEnabledGlobal: true, IsVisibleGlobal: true })
                 {
                     continue;
@@ -337,7 +332,8 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             }
         }
 
-        if (input.Click.HasValue && HitTestGlobal(input.Click.Value.Start) == this &&
+        if (input.Click.HasValue &&
+            HitTestGlobal(input.Click.Value.Start) == this &&
             HitTestGlobal(input.Click.Value.End) == this)
         {
             var flag = false;
@@ -351,8 +347,13 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                 }
                 else if (viewPlayer.ComponentInput.SplitSourceInventory != null)
                 {
-                    flag = HandleMoveItem(viewPlayer.ComponentInput.SplitSourceInventory,
-                        viewPlayer.ComponentInput.SplitSourceSlotIndex, _inventory, _slotIndex, 1);
+                    flag = HandleMoveItem(
+                        viewPlayer.ComponentInput.SplitSourceInventory,
+                        viewPlayer.ComponentInput.SplitSourceSlotIndex,
+                        _inventory,
+                        _slotIndex,
+                        1
+                    );
                     AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
                 }
             }
@@ -375,7 +376,8 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         }
 
         var hold = input.Hold;
-        if (hold.HasValue && HitTestGlobal(hold.Value) == this &&
+        if (hold.HasValue &&
+            HitTestGlobal(hold.Value) == this &&
             DragHostWidget is { IsDragInProgress: false } &&
             _inventory.GetSlotCount(_slotIndex) > 0 &&
             (viewPlayer.ComponentInput.SplitSourceInventory != _inventory ||
@@ -420,8 +422,10 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         containerWidget.Children.Find<LabelWidget>("InventoryDragWidget.Count")!.Text = num3.ToString();
         containerWidget.Children.Find<LabelWidget>("InventoryDragWidget.Count")!.IsVisible =
             _inventory is not ComponentCreativeInventory && _inventory is not ComponentFurnitureInventory;
-        UpdateEnvironmentData(containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!
-            .DrawBlockEnvironmentData);
+        UpdateEnvironmentData(
+            containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!
+                .DrawBlockEnvironmentData
+        );
         DragHostWidget.BeginDrag(
             containerWidget,
             new InventoryDragData
@@ -463,9 +467,10 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 
                 _countWidget.IsVisible = num > 1 && !flag;
                 _editOverlayWidget.IsVisible = !HideEditOverlay && block.Editable;
-                _interactiveOverlayWidget.IsVisible = !HideInteractiveOverlay && (_subsystemTerrain != null
-                    ? block.IsInteractive(_subsystemTerrain, slotValue)
-                    : block.Interactive);
+                _interactiveOverlayWidget.IsVisible = !HideInteractiveOverlay &&
+                                                      (_subsystemTerrain != null
+                                                          ? block.IsInteractive(_subsystemTerrain, slotValue)
+                                                          : block.Interactive);
                 _foodOverlayWidget.IsVisible = !HideFoodOverlay && block.GetRotPeriod(slotValue) > 0;
                 _foodOverlayWidget.FillColor = flag2 ? new Color(128, 64, 0) : new Color(160, 160, 160);
                 if (!flag && !HideHealthBar && block.Durability >= 0)
@@ -533,12 +538,27 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                 var num = 80f * GlobalTransform.Right.Length();
                 var center = Vector2.Transform(ActualSize / 2f, GlobalTransform);
                 var flatBatch2D = dc.PrimitivesRenderer2D.FlatBatch(100);
-                flatBatch2D.QueueEllipse(center, new Vector2(num), 0f, new Color(0, 0, 0, 96) * GlobalColorTransform,
-                    64);
-                flatBatch2D.QueueEllipse(center, new Vector2(num - 0.5f), 0f,
-                    new Color(0, 0, 0, 64) * GlobalColorTransform, 64);
-                flatBatch2D.QueueEllipse(center, new Vector2(num + 0.5f), 0f,
-                    new Color(0, 0, 0, 48) * GlobalColorTransform, 64);
+                flatBatch2D.QueueEllipse(
+                    center,
+                    new Vector2(num),
+                    0f,
+                    new Color(0, 0, 0, 96) * GlobalColorTransform,
+                    64
+                );
+                flatBatch2D.QueueEllipse(
+                    center,
+                    new Vector2(num - 0.5f),
+                    0f,
+                    new Color(0, 0, 0, 64) * GlobalColorTransform,
+                    64
+                );
+                flatBatch2D.QueueEllipse(
+                    center,
+                    new Vector2(num + 0.5f),
+                    0f,
+                    new Color(0, 0, 0, 48) * GlobalColorTransform,
+                    64
+                );
                 flatBatch2D.QueueDisc(center, new Vector2(num), 0f, new Color(0, 0, 0, 48) * GlobalColorTransform, 64);
             }
         }
@@ -611,21 +631,29 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            IProtocolMessage package = new ComponentInventoryPackage(sourceInventorySlot, targetInventorySlot,
-                ComponentInventoryPackage.EventType.HandleMoveItem);
+            IProtocolMessage package = new ComponentInventoryPackage(
+                sourceInventorySlot,
+                targetInventorySlot,
+                ComponentInventoryPackage.EventType.HandleMoveItem
+            );
             NetworkSender.SendToServer(package);
             //return false; // 这样搞的话客户端太难受了
         }
 
 
-        if (slotCount2 != 0 && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(slotValue)]
+        if (slotCount2 != 0 &&
+            !CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[Terrain.ExtractContents(slotValue)]
                 .CanAutoStack(slotValue, slotValue2))
         {
             return false;
         }
 
-        var num = MathUtils.Min(targetInventory.GetSlotCapacity(targetSlotIndex, slotValue) - slotCount2, slotCount,
-            count);
+        var num = MathUtils.Min(
+            targetInventory.GetSlotCapacity(targetSlotIndex, slotValue) - slotCount2,
+            slotCount,
+            count
+        );
         if (num <= 0)
         {
             return false;
@@ -685,7 +713,8 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             var package = new ComponentInventoryPackage(
                 sourceInventorySlot,
                 targetInventorySlot,
-                ComponentInventoryPackage.EventType.HandleDragDrop)
+                ComponentInventoryPackage.EventType.HandleDragDrop
+            )
             {
                 DragMode = ProtocolEnum.Encode(dragMode),
                 ProcessingOnly = processingOnly
@@ -705,12 +734,22 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             // 这个可能就是拖拽衣服到角色身上，还有拖拽箭到弓上的实现
             var num6 = MathUtils.Min(sourceCount, slotProcessCapacity);
             var processCount = sourceInventory.RemoveSlotItems(sourceSlotIndex, num6);
-            targetInventory.ProcessSlotItems(sourceInventory, sourceSlotIndex, targetSlotIndex, sourceValue,
-                sourceCount, processCount, out var processedValue, out var processedCount);
+            targetInventory.ProcessSlotItems(
+                sourceInventory,
+                sourceSlotIndex,
+                targetSlotIndex,
+                sourceValue,
+                sourceCount,
+                processCount,
+                out var processedValue,
+                out var processedCount
+            );
             if (processedValue != 0 && processedCount != 0)
             {
-                var count = MathUtils.Min(sourceInventory.GetSlotCapacity(sourceSlotIndex, processedValue),
-                    processedCount);
+                var count = MathUtils.Min(
+                    sourceInventory.GetSlotCapacity(sourceSlotIndex, processedValue),
+                    processedCount
+                );
                 sourceInventory.AddSlotItems(sourceSlotIndex, processedValue, count);
             }
 
@@ -725,29 +764,29 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                      CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(sourceValue)]
                          .CanAutoStack(sourceValue, targetValue)) &&
                     targetCount < slotCapacity:
+                {
+                    // 这个应该跟上面的移动一样吧
+                    var num2 = MathUtils.Min(slotCapacity - targetCount, sourceCount);
+                    if (num2 > 0)
                     {
-                        // 这个应该跟上面的移动一样吧
-                        var num2 = MathUtils.Min(slotCapacity - targetCount, sourceCount);
-                        if (num2 > 0)
-                        {
-                            var count2 = sourceInventory.RemoveSlotItems(sourceSlotIndex, num2);
-                            targetInventory.AddSlotItems(targetSlotIndex, sourceValue, count2);
-                            flag = true;
-                        }
-
-                        break;
+                        var count2 = sourceInventory.RemoveSlotItems(sourceSlotIndex, num2);
+                        targetInventory.AddSlotItems(targetSlotIndex, sourceValue, count2);
+                        flag = true;
                     }
+
+                    break;
+                }
                 case false when targetInventory.GetSlotCapacity(targetSlotIndex, sourceValue) >= sourceCount &&
                                 sourceInventory.GetSlotCapacity(sourceSlotIndex, targetValue) >= targetCount &&
                                 sourceInventory.GetSlotCount(sourceSlotIndex) == sourceCount:
-                    {
-                        var count3 = targetInventory.RemoveSlotItems(targetSlotIndex, targetCount);
-                        var count4 = sourceInventory.RemoveSlotItems(sourceSlotIndex, sourceCount);
-                        targetInventory.AddSlotItems(targetSlotIndex, sourceValue, count4);
-                        sourceInventory.AddSlotItems(sourceSlotIndex, targetValue, count3);
-                        flag = true;
-                        break;
-                    }
+                {
+                    var count3 = targetInventory.RemoveSlotItems(targetSlotIndex, targetCount);
+                    var count4 = sourceInventory.RemoveSlotItems(sourceSlotIndex, sourceCount);
+                    targetInventory.AddSlotItems(targetSlotIndex, sourceValue, count4);
+                    sourceInventory.AddSlotItems(sourceSlotIndex, targetValue, count3);
+                    flag = true;
+                    break;
+                }
             }
         }
 

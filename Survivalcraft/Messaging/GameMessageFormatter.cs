@@ -19,21 +19,30 @@ public static class GameMessageFormatter
                 AppendChannelPrefix(segments, message.Channel);
                 if (!string.IsNullOrWhiteSpace(message.SenderName))
                 {
-                    segments.Add(new MessageSegment(
-                        $"[{message.SenderName}]",
-                        MessageTextStyle.Sender));
+                    segments.Add(
+                        new MessageSegment(
+                            $"[{message.SenderName}]",
+                            MessageTextStyle.Sender
+                        )
+                    );
                 }
 
                 break;
             case GameMessageKind.System:
-                segments.Add(new MessageSegment(
-                    GetText("SystemPrefix", "[系统]"),
-                    ResolveToneStyle(message.Tone, MessageTextStyle.System)));
+                segments.Add(
+                    new MessageSegment(
+                        GetText("SystemPrefix", "[系统]"),
+                        ResolveToneStyle(message.Tone, MessageTextStyle.System)
+                    )
+                );
                 break;
             case GameMessageKind.Command:
-                segments.Add(new MessageSegment(
-                    GetText("CommandPrefix", "[指令]"),
-                    ResolveToneStyle(message.Tone, MessageTextStyle.Accent)));
+                segments.Add(
+                    new MessageSegment(
+                        GetText("CommandPrefix", "[指令]"),
+                        ResolveToneStyle(message.Tone, MessageTextStyle.Accent)
+                    )
+                );
                 break;
             case GameMessageKind.Sign:
                 break;
@@ -42,21 +51,26 @@ public static class GameMessageFormatter
 
     private static void AppendChannelPrefix(
         List<MessageSegment> segments,
-        GameMessageChannel channel)
+        GameMessageChannel channel
+    )
     {
         switch (channel)
         {
             case GameMessageChannel.Team:
-                segments.Add(new MessageSegment(
-                    GetText("TeamPrefix", "[队]"),
-                    MessageTextStyle.Team));
+                segments.Add(
+                    new MessageSegment(
+                        GetText("TeamPrefix", "[队]"),
+                        MessageTextStyle.Team
+                    )
+                );
                 break;
         }
     }
 
     private static MessageTextStyle ResolveToneStyle(
         GameMessageTone tone,
-        MessageTextStyle fallback) =>
+        MessageTextStyle fallback
+    ) =>
         tone switch
         {
             GameMessageTone.Success => MessageTextStyle.Success,

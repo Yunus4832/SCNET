@@ -32,8 +32,16 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
         }
     }
 
-    public void QueueTriangle(Vector2 p1, Vector2 p2, Vector2 p3, float depth, Vector2 texCoord1, Vector2 texCoord2,
-        Vector2 texCoord3, Color color)
+    public void QueueTriangle(
+        Vector2 p1,
+        Vector2 p2,
+        Vector2 p3,
+        float depth,
+        Vector2 texCoord1,
+        Vector2 texCoord2,
+        Vector2 texCoord3,
+        Color color
+    )
     {
         var count = TriangleVertices.Count;
         TriangleVertices.Count += 3;
@@ -50,8 +58,18 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
         TriangleIndices.Array[count2 + 2] = (ushort)(count + 2);
     }
 
-    public void QueueTriangle(Vector2 p1, Vector2 p2, Vector2 p3, float depth, Vector2 texCoord1, Vector2 texCoord2,
-        Vector2 texCoord3, Color color1, Color color2, Color color3)
+    public void QueueTriangle(
+        Vector2 p1,
+        Vector2 p2,
+        Vector2 p3,
+        float depth,
+        Vector2 texCoord1,
+        Vector2 texCoord2,
+        Vector2 texCoord3,
+        Color color1,
+        Color color2,
+        Color color3
+    )
     {
         var count = TriangleVertices.Count;
         TriangleVertices.Count += 3;
@@ -68,19 +86,37 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
         TriangleIndices.Array[count2 + 2] = (ushort)(count + 2);
     }
 
-    public void QueueQuad(Vector2 corner1, Vector2 corner2, float depth, Vector2 texCoord1, Vector2 texCoord2,
-        Color color)
+    public void QueueQuad(
+        Vector2 corner1,
+        Vector2 corner2,
+        float depth,
+        Vector2 texCoord1,
+        Vector2 texCoord2,
+        Color color
+    )
     {
         var count = TriangleVertices.Count;
         TriangleVertices.Count += 4;
-        TriangleVertices.Array[count] = new VertexPositionColorTexture(new Vector3(corner1.X, corner1.Y, depth), color,
-            new Vector2(texCoord1.X, texCoord1.Y));
-        TriangleVertices.Array[count + 1] = new VertexPositionColorTexture(new Vector3(corner1.X, corner2.Y, depth),
-            color, new Vector2(texCoord1.X, texCoord2.Y));
-        TriangleVertices.Array[count + 2] = new VertexPositionColorTexture(new Vector3(corner2.X, corner2.Y, depth),
-            color, new Vector2(texCoord2.X, texCoord2.Y));
-        TriangleVertices.Array[count + 3] = new VertexPositionColorTexture(new Vector3(corner2.X, corner1.Y, depth),
-            color, new Vector2(texCoord2.X, texCoord1.Y));
+        TriangleVertices.Array[count] = new VertexPositionColorTexture(
+            new Vector3(corner1.X, corner1.Y, depth),
+            color,
+            new Vector2(texCoord1.X, texCoord1.Y)
+        );
+        TriangleVertices.Array[count + 1] = new VertexPositionColorTexture(
+            new Vector3(corner1.X, corner2.Y, depth),
+            color,
+            new Vector2(texCoord1.X, texCoord2.Y)
+        );
+        TriangleVertices.Array[count + 2] = new VertexPositionColorTexture(
+            new Vector3(corner2.X, corner2.Y, depth),
+            color,
+            new Vector2(texCoord2.X, texCoord2.Y)
+        );
+        TriangleVertices.Array[count + 3] = new VertexPositionColorTexture(
+            new Vector3(corner2.X, corner1.Y, depth),
+            color,
+            new Vector2(texCoord2.X, texCoord1.Y)
+        );
         var count2 = TriangleIndices.Count;
         TriangleIndices.Count += 6;
         TriangleIndices.Array[count2] = (ushort)count;
@@ -91,8 +127,18 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
         TriangleIndices.Array[count2 + 5] = (ushort)count;
     }
 
-    public void QueueQuad(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float depth, Vector2 texCoord1,
-        Vector2 texCoord2, Vector2 texCoord3, Vector2 texCoord4, Color color)
+    public void QueueQuad(
+        Vector2 p1,
+        Vector2 p2,
+        Vector2 p3,
+        Vector2 p4,
+        float depth,
+        Vector2 texCoord1,
+        Vector2 texCoord2,
+        Vector2 texCoord3,
+        Vector2 texCoord4,
+        Color color
+    )
     {
         var count = TriangleVertices.Count;
         TriangleVertices.Count += 4;
@@ -114,8 +160,21 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
         TriangleIndices.Array[count2 + 5] = (ushort)count;
     }
 
-    public void QueueQuad(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float depth, Vector2 texCoord1,
-        Vector2 texCoord2, Vector2 texCoord3, Vector2 texCoord4, Color color1, Color color2, Color color3, Color color4)
+    public void QueueQuad(
+        Vector2 p1,
+        Vector2 p2,
+        Vector2 p3,
+        Vector2 p4,
+        float depth,
+        Vector2 texCoord1,
+        Vector2 texCoord2,
+        Vector2 texCoord3,
+        Vector2 texCoord4,
+        Color color1,
+        Color color2,
+        Color color3,
+        Color color4
+    )
     {
         var count = TriangleVertices.Count;
         TriangleVertices.Count += 4;

@@ -74,8 +74,14 @@ public class ComponentCreatureSounds : Component
         }
 
         _lastSoundTime = _subsystemTime.GameTime;
-        _subsystemAudio.PlayRandomSound(_idleSound, 1f, _random.Float(-0.1f, 0.1f),
-            _componentCreature.ComponentBody.Position, _idleSoundMinDistance, false);
+        _subsystemAudio.PlayRandomSound(
+            _idleSound,
+            1f,
+            _random.Float(-0.1f, 0.1f),
+            _componentCreature.ComponentBody.Position,
+            _idleSoundMinDistance,
+            false
+        );
         return true;
     }
 
@@ -100,8 +106,14 @@ public class ComponentCreatureSounds : Component
         }
 
         _lastSoundTime = _subsystemTime.GameTime;
-        _subsystemAudio.PlayRandomSound(_painSound, 1f, _random.Float(-0.1f, 0.1f),
-            _componentCreature.ComponentBody.Position, _painSoundMinDistance, false);
+        _subsystemAudio.PlayRandomSound(
+            _painSound,
+            1f,
+            _random.Float(-0.1f, 0.1f),
+            _componentCreature.ComponentBody.Position,
+            _painSoundMinDistance,
+            false
+        );
         return true;
     }
 
@@ -126,8 +138,14 @@ public class ComponentCreatureSounds : Component
         }
 
         _lastSoundTime = _subsystemTime.GameTime;
-        _subsystemAudio.PlayRandomSound(_moanSound, 1f, _random.Float(-0.1f, 0.1f),
-            _componentCreature.ComponentBody.Position, _moanSoundMinDistance, false);
+        _subsystemAudio.PlayRandomSound(
+            _moanSound,
+            1f,
+            _random.Float(-0.1f, 0.1f),
+            _componentCreature.ComponentBody.Position,
+            _moanSoundMinDistance,
+            false
+        );
         return true;
     }
 
@@ -152,8 +170,14 @@ public class ComponentCreatureSounds : Component
         }
 
         _lastSoundTime = _subsystemTime.GameTime;
-        _subsystemAudio.PlayRandomSound(_sneezeSound, 1f, _random.Float(-0.1f, 0.1f),
-            _componentCreature.ComponentBody.Position, _sneezeSoundMinDistance, false);
+        _subsystemAudio.PlayRandomSound(
+            _sneezeSound,
+            1f,
+            _random.Float(-0.1f, 0.1f),
+            _componentCreature.ComponentBody.Position,
+            _sneezeSoundMinDistance,
+            false
+        );
         return true;
     }
 
@@ -178,8 +202,14 @@ public class ComponentCreatureSounds : Component
         }
 
         _lastCoughingSoundTime = _subsystemTime.GameTime;
-        _subsystemAudio.PlayRandomSound(_coughSound, 1f, _random.Float(-0.1f, 0.1f),
-            _componentCreature.ComponentBody.Position, _coughSoundMinDistance, false);
+        _subsystemAudio.PlayRandomSound(
+            _coughSound,
+            1f,
+            _random.Float(-0.1f, 0.1f),
+            _componentCreature.ComponentBody.Position,
+            _coughSoundMinDistance,
+            false
+        );
         return true;
     }
 
@@ -204,8 +234,14 @@ public class ComponentCreatureSounds : Component
         }
 
         _lastPukeSoundTime = _subsystemTime.GameTime;
-        _subsystemAudio.PlayRandomSound(_pukeSound, 1f, _random.Float(-0.1f, 0.1f),
-            _componentCreature.ComponentBody.Position, _pukeSoundMinDistance, false);
+        _subsystemAudio.PlayRandomSound(
+            _pukeSound,
+            1f,
+            _random.Float(-0.1f, 0.1f),
+            _componentCreature.ComponentBody.Position,
+            _pukeSoundMinDistance,
+            false
+        );
         return true;
     }
 
@@ -230,8 +266,14 @@ public class ComponentCreatureSounds : Component
         }
 
         _lastSoundTime = _subsystemTime.GameTime;
-        _subsystemAudio.PlayRandomSound(_attackSound, 1f, _random.Float(-0.1f, 0.1f),
-            _componentCreature.ComponentBody.Position, _attackSoundMinDistance, false);
+        _subsystemAudio.PlayRandomSound(
+            _attackSound,
+            1f,
+            _random.Float(-0.1f, 0.1f),
+            _componentCreature.ComponentBody.Position,
+            _attackSoundMinDistance,
+            false
+        );
         return true;
     }
 

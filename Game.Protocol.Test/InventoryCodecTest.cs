@@ -5,7 +5,8 @@ namespace Game.Protocol.Test;
 
 public sealed class InventoryCodecTest
 {
-    public static IEnumerable<object[]> Modes() => Enum.GetValues<ComponentInventoryPackage.EventType>().Select(type => new object[] { type });
+    public static IEnumerable<object[]> Modes() =>
+        Enum.GetValues<ComponentInventoryPackage.EventType>().Select(type => new object[] { type });
 
     [Theory]
     [MemberData(nameof(Modes))]
@@ -30,13 +31,15 @@ public sealed class InventoryCodecTest
             }
         };
         Assert.True(ProtocolMessageCodec.IsDefined(message.ID));
-        using var writer = new ProtocolWriter(); ProtocolMessageCodec.Write(message, writer);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(message, writer);
         var bytes = writer.Data(CompressionPolicy.None);
         using var reader = new ProtocolReader(bytes);
         var restored = Assert.IsType<ComponentInventoryPackage>(ProtocolMessageCodec.Read(message.ID, reader));
         Assert.Equal(type, restored.PackageEventType);
         Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
-        using var repeated = new ProtocolWriter(); ProtocolMessageCodec.Write(restored, repeated);
+        using var repeated = new ProtocolWriter();
+        ProtocolMessageCodec.Write(restored, repeated);
         Assert.Equal(bytes, repeated.Data(CompressionPolicy.None));
     }
 
@@ -46,16 +49,23 @@ public sealed class InventoryCodecTest
     [InlineData(255)]
     public void UnsupportedInventoryModesAreRejected(byte mode)
     {
-        using var writer = new ProtocolWriter(); writer.Write(mode);
+        using var writer = new ProtocolWriter();
+        writer.Write(mode);
         using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read((byte)PackageType.ComponentInventory, reader));
+        Assert.Throws<InvalidDataException>(() =>
+            ProtocolMessageCodec.Read((byte)PackageType.ComponentInventory, reader)
+        );
     }
 
     [Fact]
     public void TruncatedInventoryCountIsRejectedBeforeAllocation()
     {
-        using var writer = new ProtocolWriter(); writer.WriteEnum(ComponentInventoryPackage.EventType.InventorySync); writer.Write(int.MaxValue);
+        using var writer = new ProtocolWriter();
+        writer.WriteEnum(ComponentInventoryPackage.EventType.InventorySync);
+        writer.Write(int.MaxValue);
         using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read((byte)PackageType.ComponentInventory, reader));
+        Assert.Throws<InvalidDataException>(() =>
+            ProtocolMessageCodec.Read((byte)PackageType.ComponentInventory, reader)
+        );
     }
 }

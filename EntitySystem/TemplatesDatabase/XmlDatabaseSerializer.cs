@@ -22,8 +22,16 @@ public static class XmlDatabaseSerializer
             var attributeValue6 = XmlUtils.GetAttributeValue<bool>(item, "MustInherit");
             var attributeValue7 = XmlUtils.GetAttributeValue<int>(item, "NameLengthLimit");
             var attributeValue8 = XmlUtils.GetAttributeValue<bool>(item, "SaveStandalone");
-            var value = new DatabaseObjectType(attributeValue, attributeValue2, attributeValue3, attributeValue4,
-                attributeValue5, attributeValue6, attributeValue7, attributeValue8);
+            var value = new DatabaseObjectType(
+                attributeValue,
+                attributeValue2,
+                attributeValue3,
+                attributeValue4,
+                attributeValue5,
+                attributeValue6,
+                attributeValue7,
+                attributeValue8
+            );
             dictionary.Add(attributeValue, value);
         }
 
@@ -74,8 +82,14 @@ public static class XmlDatabaseSerializer
         var node2 = XmlUtils.FindChildElement(node, "DatabaseObjects", true)!;
         var database =
             new Database(
-                new DatabaseObject(guid: XmlUtils.GetAttributeValue<Guid>(node2, "RootGuid"),
-                    databaseObjectType: dictionary["Root"], name: "Root", value: null), dictionary.Values);
+                new DatabaseObject(
+                    guid: XmlUtils.GetAttributeValue<Guid>(node2, "RootGuid"),
+                    databaseObjectType: dictionary["Root"],
+                    name: "Root",
+                    value: null
+                ),
+                dictionary.Values
+            );
         foreach (var item4 in LoadDatabaseObjectsList(node2, database))
         {
             item4.NestingParent = database.Root;
@@ -84,8 +98,11 @@ public static class XmlDatabaseSerializer
         return database;
     }
 
-    public static List<DatabaseObject> LoadDatabaseObjectsList(XElement node, Database database,
-        bool generateNewGuids = false)
+    public static List<DatabaseObject> LoadDatabaseObjectsList(
+        XElement node,
+        Database database,
+        bool generateNewGuids = false
+    )
     {
         var dictionary = new Dictionary<DatabaseObject, Guid>();
         var dictionary2 = new Dictionary<DatabaseObject, Guid>();
@@ -112,7 +129,8 @@ public static class XmlDatabaseSerializer
             if (!dictionary4.TryGetValue(key, out var value2))
             {
                 throw new InvalidOperationException(
-                    $"Required nesting parent {item2.Value} not found in database objects list.");
+                    $"Required nesting parent {item2.Value} not found in database objects list."
+                );
             }
 
             item2.Key.NestingParent = value2;
@@ -154,19 +172,32 @@ public static class XmlDatabaseSerializer
             var node2 = XmlUtils.AddElement(parentNode, "DatabaseObjectType");
             XmlUtils.SetAttributeValue(node2, "Name", databaseObjectType.Name);
             XmlUtils.SetAttributeValue(node2, "DefaultInstanceName", databaseObjectType.DefaultInstanceName);
-            XmlUtils.SetAttributeValue(node2, "IconName",
-                !string.IsNullOrEmpty(databaseObjectType.IconName) ? databaseObjectType.IconName : string.Empty);
+            XmlUtils.SetAttributeValue(
+                node2,
+                "IconName",
+                !string.IsNullOrEmpty(databaseObjectType.IconName) ? databaseObjectType.IconName : string.Empty
+            );
             XmlUtils.SetAttributeValue(node2, "Order", databaseObjectType.Order);
             XmlUtils.SetAttributeValue(node2, "SupportsValue", databaseObjectType.SupportsValue);
             XmlUtils.SetAttributeValue(node2, "MustInherit", databaseObjectType.MustInherit);
             XmlUtils.SetAttributeValue(node2, "NameLengthLimit", databaseObjectType.NameLengthLimit);
             XmlUtils.SetAttributeValue(node2, "SaveStandalone", databaseObjectType.SaveStandalone);
-            XmlUtils.SetAttributeValue(node2, "AllowedNestingParents",
-                databaseObjectType.AllowedNestingParents.Aggregate(string.Empty,
-                    (r, d) => r.Length != 0 ? r + "," + d.Name : d.Name));
-            XmlUtils.SetAttributeValue(node2, "AllowedInheritanceParents",
-                databaseObjectType.AllowedInheritanceParents.Aggregate(string.Empty,
-                    (r, d) => r.Length != 0 ? r + "," + d.Name : d.Name));
+            XmlUtils.SetAttributeValue(
+                node2,
+                "AllowedNestingParents",
+                databaseObjectType.AllowedNestingParents.Aggregate(
+                    string.Empty,
+                    (r, d) => r.Length != 0 ? r + "," + d.Name : d.Name
+                )
+            );
+            XmlUtils.SetAttributeValue(
+                node2,
+                "AllowedInheritanceParents",
+                databaseObjectType.AllowedInheritanceParents.Aggregate(
+                    string.Empty,
+                    (r, d) => r.Length != 0 ? r + "," + d.Name : d.Name
+                )
+            );
             XmlUtils.SetAttributeValue(node2, "NestedValueType", databaseObjectType.NestedValueType.Name);
         }
 
@@ -185,8 +216,11 @@ public static class XmlDatabaseSerializer
         var parentNode2 = XmlUtils.AddElement(node, "Assemblies");
         foreach (var item2 in list2)
         {
-            XmlUtils.SetAttributeValue(XmlUtils.AddElement(parentNode2, "Assembly"), "Name",
-                item2.GetName().Name ?? throw new InvalidOperationException("Cannot get AssemblyName"));
+            XmlUtils.SetAttributeValue(
+                XmlUtils.AddElement(parentNode2, "Assembly"),
+                "Name",
+                item2.GetName().Name ?? throw new InvalidOperationException("Cannot get AssemblyName")
+            );
         }
 
         var node3 = XmlUtils.AddElement(node, "DatabaseObjects");
@@ -200,9 +234,11 @@ public static class XmlDatabaseSerializer
         var databaseObjectArray = databaseObjects as DatabaseObject[] ?? databaseObjects.ToArray();
         foreach (var databaseObject in databaseObjectArray)
         {
-            list.AddRange(from x in databaseObject.GetExplicitNestingChildren(null, false)
-                          where x.Type.SaveStandalone
-                          select x);
+            list.AddRange(
+                from x in databaseObject.GetExplicitNestingChildren(null, false)
+                where x.Type.SaveStandalone
+                select x
+            );
         }
 
         InternalSaveDatabaseObjectsList(node, list, true);
@@ -223,7 +259,8 @@ public static class XmlDatabaseSerializer
     )
     {
         return node.Elements().Select(item2 =>
-            InternalLoadDatabaseObject(item2, database, nestingParents, inheritanceParents, guidTranslation)).ToList();
+            InternalLoadDatabaseObject(item2, database, nestingParents, inheritanceParents, guidTranslation)
+        ).ToList();
     }
 
     private static DatabaseObject InternalLoadDatabaseObject(
@@ -274,8 +311,13 @@ public static class XmlDatabaseSerializer
             inheritanceParents.Add(databaseObject, attributeValue4);
         }
 
-        foreach (var item in InternalLoadDatabaseObjectsList(node, database, nestingParents, inheritanceParents,
-                     guidTranslation))
+        foreach (var item in InternalLoadDatabaseObjectsList(
+                     node,
+                     database,
+                     nestingParents,
+                     inheritanceParents,
+                     guidTranslation
+                 ))
         {
             item.NestingParent = databaseObject;
         }
@@ -291,7 +333,8 @@ public static class XmlDatabaseSerializer
     {
         var list = new List<DatabaseObject>(databaseObjects);
         list.Sort((o1, o2) =>
-            o1.Type.Order != o2.Type.Order ? o1.Type.Order - o2.Type.Order : o1.Guid.CompareTo(o2.Guid));
+            o1.Type.Order != o2.Type.Order ? o1.Type.Order - o2.Type.Order : o1.Guid.CompareTo(o2.Guid)
+        );
         foreach (var item in list)
         {
             InternalSaveDatabaseObject(XmlUtils.AddElement(node, item.Type.Name), item, saveNestingParents);
@@ -308,9 +351,14 @@ public static class XmlDatabaseSerializer
 
         XmlUtils.SetAttributeValue(node, "Guid", databaseObject.Guid);
         XmlUtils.SetAttributeValue(node, "Value", databaseObject.Value);
-        XmlUtils.SetAttributeValue(node, "Type",
-            TypeCache.GetShortTypeName(databaseObject.Value.GetType().FullName ??
-                                       throw new InvalidOperationException("Cannot get type FullName")));
+        XmlUtils.SetAttributeValue(
+            node,
+            "Type",
+            TypeCache.GetShortTypeName(
+                databaseObject.Value.GetType().FullName ??
+                throw new InvalidOperationException("Cannot get type FullName")
+            )
+        );
 
         if (databaseObject.ExplicitInheritanceParent != null)
         {
@@ -322,8 +370,12 @@ public static class XmlDatabaseSerializer
             XmlUtils.SetAttributeValue(node, "NestingParent", databaseObject.NestingParent.Guid);
         }
 
-        InternalSaveDatabaseObjectsList(node, from x in databaseObject.GetExplicitNestingChildren(null, true)
-                                              where !x.Type.SaveStandalone
-                                              select x, false);
+        InternalSaveDatabaseObjectsList(
+            node,
+            from x in databaseObject.GetExplicitNestingChildren(null, true)
+            where !x.Type.SaveStandalone
+            select x,
+            false
+        );
     }
 }

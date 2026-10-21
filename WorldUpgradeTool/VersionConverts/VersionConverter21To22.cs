@@ -19,12 +19,12 @@ public class VersionConverter21To22 : VersionConverter
         XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
         _ = string.Empty;
         foreach (var item in from e in projectNode.Element("Subsystems")?.Elements()
-                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "GameInfo"
-                             select e)
+                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "GameInfo"
+                 select e)
         {
             foreach (var item2 in from e in item.Elements("Value")
-                                  where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "TerrainGenerationMode"
-                                  select e)
+                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "TerrainGenerationMode"
+                     select e)
             {
                 if (XmlUtils.GetAttributeValue(item2, "Value", "") == "Flat")
                 {
@@ -34,18 +34,18 @@ public class VersionConverter21To22 : VersionConverter
         }
 
         foreach (var item3 in from e in projectNode.Element("Subsystems")?.Elements()
-                              where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
-                              select e)
+                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
+                 select e)
         {
             foreach (var item4 in from e in item3.Elements("Values")
-                                  where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
-                                  select e)
+                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
+                     select e)
             {
                 foreach (var item5 in item4.Elements("Values"))
                 {
                     foreach (var item6 in from e in item5.Elements("Value")
-                                          where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                                          select e)
+                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                             select e)
                     {
                         var num = ConvertValue(XmlUtils.GetAttributeValue<int>(item6, "Value"));
                         XmlUtils.SetAttributeValue(item6, "Value", num);
@@ -55,18 +55,18 @@ public class VersionConverter21To22 : VersionConverter
         }
 
         foreach (var item7 in from e in projectNode.Element("Subsystems")?.Elements()
-                              where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
-                              select e)
+                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
+                 select e)
         {
             foreach (var item8 in from e in item7.Elements("Values")
-                                  where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
-                                  select e)
+                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
+                     select e)
             {
                 foreach (var item9 in item8.Elements("Values"))
                 {
                     foreach (var item10 in from e in item9.Elements("Value")
-                                           where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                                           select e)
+                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                             select e)
                     {
                         var num2 = ConvertValue(XmlUtils.GetAttributeValue<int>(item10, "Value"));
                         XmlUtils.SetAttributeValue(item10, "Value", num2);
@@ -76,18 +76,18 @@ public class VersionConverter21To22 : VersionConverter
         }
 
         foreach (var item11 in from e in projectNode.Element("Subsystems")?.Elements()
-                               where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlockBehavior"
-                               select e)
+                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlockBehavior"
+                 select e)
         {
             foreach (var item12 in from e in item11.Elements("Values")
-                                   where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlocks"
-                                   select e)
+                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlocks"
+                     select e)
             {
                 foreach (var item13 in item12.Elements("Values"))
                 {
                     foreach (var item14 in from e in item13.Elements("Value")
-                                           where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                                           select e)
+                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                             select e)
                     {
                         var num3 = ConvertValue(XmlUtils.GetAttributeValue<int>(item14, "Value"));
                         XmlUtils.SetAttributeValue(item14, "Value", num3);
@@ -99,12 +99,12 @@ public class VersionConverter21To22 : VersionConverter
         foreach (var item15 in projectNode.Element("Entities")?.Elements() ?? [])
         {
             foreach (var item16 in from e in item15.Elements("Values")
-                                   where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothing"
-                                   select e)
+                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothing"
+                     select e)
             {
                 foreach (var item17 in from e in item16.Elements("Values")
-                                       where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothes"
-                                       select e)
+                         where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothes"
+                         select e)
                 {
                     foreach (var item18 in item17.Elements())
                     {
@@ -134,18 +134,18 @@ public class VersionConverter21To22 : VersionConverter
         foreach (var item19 in projectNode.Element("Entities")?.Elements() ?? [])
         {
             foreach (var item20 in from e in item19.Elements("Values")
-                                   where inventoryNames.Contains(XmlUtils.GetAttributeValue(e, "Name", string.Empty))
-                                   select e)
+                     where inventoryNames.Contains(XmlUtils.GetAttributeValue(e, "Name", string.Empty))
+                     select e)
             {
                 foreach (var item21 in from e in item20.Elements("Values")
-                                       where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Slots"
-                                       select e)
+                         where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Slots"
+                         select e)
                 {
                     foreach (var item22 in item21.Elements())
                     {
                         foreach (var item23 in from e in item22.Elements("Value")
-                                               where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Contents"
-                                               select e)
+                                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Contents"
+                                 select e)
                         {
                             var num4 = ConvertValue(XmlUtils.GetAttributeValue<int>(item23, "Value"));
                             XmlUtils.SetAttributeValue(item23, "Value", num4);
@@ -163,8 +163,8 @@ public class VersionConverter21To22 : VersionConverter
             ConvertChunks(directoryName);
             ConvertProject(directoryName);
             foreach (var item in from f in Storage.ListFileNames(directoryName)
-                                 where Storage.GetExtension(f) == ".new"
-                                 select f)
+                     where Storage.GetExtension(f) == ".new"
+                     select f)
             {
                 var sourcePath = Storage.CombinePaths(directoryName, item);
                 var destinationPath = Storage.CombinePaths(directoryName, Storage.GetFileNameWithoutExtension(item));
@@ -172,8 +172,8 @@ public class VersionConverter21To22 : VersionConverter
             }
 
             foreach (var item2 in from f in Storage.ListFileNames(directoryName)
-                                  where Storage.GetExtension(f) == ".old"
-                                  select f)
+                     where Storage.GetExtension(f) == ".old"
+                     select f)
             {
                 Storage.DeleteFile(Storage.CombinePaths(directoryName, item2));
             }
@@ -181,8 +181,8 @@ public class VersionConverter21To22 : VersionConverter
         catch (Exception)
         {
             foreach (var item3 in from f in Storage.ListFileNames(directoryName)
-                                  where Storage.GetExtension(f) == ".old"
-                                  select f)
+                     where Storage.GetExtension(f) == ".old"
+                     select f)
             {
                 var sourcePath2 = Storage.CombinePaths(directoryName, item3);
                 var destinationPath2 = Storage.CombinePaths(directoryName, Storage.GetFileNameWithoutExtension(item3));
@@ -190,8 +190,8 @@ public class VersionConverter21To22 : VersionConverter
             }
 
             foreach (var item4 in from f in Storage.ListFileNames(directoryName)
-                                  where Storage.GetExtension(f) == ".new"
-                                  select f)
+                     where Storage.GetExtension(f) == ".new"
+                     select f)
             {
                 Storage.DeleteFile(Storage.CombinePaths(directoryName, item4));
             }
@@ -225,7 +225,8 @@ public class VersionConverter21To22 : VersionConverter
         if (Storage.FreeSpace < num)
         {
             throw new InvalidOperationException(
-                $"Not enough free space to convert world. {num / 1024 / 1024}MB required.");
+                $"Not enough free space to convert world. {num / 1024 / 1024}MB required."
+            );
         }
 
         using (var stream2 = Storage.OpenFile(path, OpenFileMode.Read))
@@ -267,8 +268,12 @@ public class VersionConverter21To22 : VersionConverter
                                 int num5;
                                 if (l <= 127)
                                 {
-                                    num5 = ConvertValue(array[4 * num3] | (array[4 * num3 + 1] << 8) |
-                                                        (array[4 * num3 + 2] << 16) | (array[4 * num3 + 3] << 24));
+                                    num5 = ConvertValue(
+                                        array[4 * num3] |
+                                        (array[4 * num3 + 1] << 8) |
+                                        (array[4 * num3 + 2] << 16) |
+                                        (array[4 * num3 + 3] << 24)
+                                    );
                                     num3++;
                                 }
                                 else
@@ -293,8 +298,10 @@ public class VersionConverter21To22 : VersionConverter
             }
         }
 
-        Storage.MoveFile(Storage.CombinePaths(directoryName, "Chunks32.dat"),
-            Storage.CombinePaths(directoryName, "Chunks32.dat.old"));
+        Storage.MoveFile(
+            Storage.CombinePaths(directoryName, "Chunks32.dat"),
+            Storage.CombinePaths(directoryName, "Chunks32.dat.old")
+        );
     }
 
     public static int ConvertValue(int value)

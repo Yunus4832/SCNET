@@ -61,9 +61,10 @@ public class SubsystemSoilBlockBehavior : SubsystemPollableBlockBehavior, IUpdat
         }
 
         var velocity2 = componentBody.Velocity;
-        if (velocity2.Y < -3f || (velocity2.Y < 0f &&
-                                  _random.Float(0f, 1f) < 1.5f * _subsystemTime.GameTimeDelta &&
-                                  velocity2.LengthSquared() > 1f))
+        if (velocity2.Y < -3f ||
+            (velocity2.Y < 0f &&
+             _random.Float(0f, 1f) < 1.5f * _subsystemTime.GameTimeDelta &&
+             velocity2.LengthSquared() > 1f))
         {
             _toDegrade[cellFace.Point] = true;
         }

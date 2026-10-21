@@ -18,7 +18,8 @@ namespace ContentServer.Endpoints.Publisher.Contents;
 [AllowAnonymous]
 public sealed class PublisherSubmissionStatusEndpoint(
     IMediator mediator,
-    ApiKeyAuthenticationContext authenticationContext) : ContentEndpoint
+    ApiKeyAuthenticationContext authenticationContext
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -29,17 +30,22 @@ public sealed class PublisherSubmissionStatusEndpoint(
 
     private async Task<ResponseData<ContentVersionResponse>> SubmissionStatus(
         string versionId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (!Guid.TryParse(versionId, out var id))
         {
             throw new KnownException("invalid_id", StatusCodes.Status400BadRequest);
         }
 
-        var item = await mediator.Send(new GetPublisherSubmissionQuery(
-                       authenticationContext.RequirePublisherId(),
-                       new ContentVersionId(id)), cancellationToken)
-                   ?? throw new KnownException("submission_not_found", StatusCodes.Status404NotFound);
+        var item = await mediator.Send(
+                       new GetPublisherSubmissionQuery(
+                           authenticationContext.RequirePublisherId(),
+                           new ContentVersionId(id)
+                       ),
+                       cancellationToken
+                   ) ??
+                   throw new KnownException("submission_not_found", StatusCodes.Status404NotFound);
         return item.ToResponse().AsResponseData();
     }
 }

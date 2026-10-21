@@ -22,12 +22,26 @@ public class StoneAxeBlock : Block
             throw new InvalidOperationException("Required HeadMesh.ParentBone is null")
         );
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(handleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        blockMesh.AppendModelMeshPart(
+            handleMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         blockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
         var blockMesh2 = new BlockMesh();
-        blockMesh2.AppendModelMeshPart(headMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        blockMesh2.AppendModelMeshPart(
+            headMesh.MeshParts[0],
+            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         blockMesh2.TransformTextureCoordinates(Matrix.CreateTranslation(num2 % 16 / 16f, num2 / 16 / 16f, 0f));
         StandaloneBlockMesh.AppendBlockMesh(blockMesh);
         StandaloneBlockMesh.AppendBlockMesh(blockMesh2);

@@ -10,8 +10,11 @@ public sealed class ContentRepositoryManager
         new(new ContentRepositorySettings(), _ => { });
 
     private readonly Lock _gate = new();
+
     private readonly Action<ContentRepositorySettings> _save;
+
     private Guid? _gameInformationSourceId;
+
     private IReadOnlyList<ContentRepository> _repositories;
 
     internal event Action? GameInformationSourceChanged;
@@ -94,8 +97,10 @@ public sealed class ContentRepositoryManager
         lock (_gate)
         {
             EnsureExists(repositoryId);
-            Commit(_repositories.Where(item => item.Id != repositoryId),
-                repositoryId == _gameInformationSourceId ? null : _gameInformationSourceId);
+            Commit(
+                _repositories.Where(item => item.Id != repositoryId),
+                repositoryId == _gameInformationSourceId ? null : _gameInformationSourceId
+            );
         }
     }
 
@@ -104,16 +109,21 @@ public sealed class ContentRepositoryManager
         ArgumentNullException.ThrowIfNull(repositoryIds);
         lock (_gate)
         {
-            if (repositoryIds.Count != _repositories.Count || repositoryIds.Distinct().Count() != repositoryIds.Count ||
+            if (repositoryIds.Count != _repositories.Count ||
+                repositoryIds.Distinct().Count() != repositoryIds.Count ||
                 repositoryIds.Any(id => _repositories.All(repository => repository.Id != id)))
             {
-                throw new ArgumentException("Repository order must contain every configured repository exactly once.",
-                    nameof(repositoryIds));
+                throw new ArgumentException(
+                    "Repository order must contain every configured repository exactly once.",
+                    nameof(repositoryIds)
+                );
             }
 
             var repositoriesById = _repositories.ToDictionary(repository => repository.Id);
-            Commit(repositoryIds.Select((id, priority) => repositoriesById[id] with { Priority = priority }),
-                _gameInformationSourceId);
+            Commit(
+                repositoryIds.Select((id, priority) => repositoriesById[id] with { Priority = priority }),
+                _gameInformationSourceId
+            );
         }
     }
 
@@ -127,18 +137,22 @@ public sealed class ContentRepositoryManager
 
     private void Commit(IEnumerable<ContentRepository> repositories, Guid? gameInformationSourceId)
     {
-        var normalized = Normalize(new ContentRepositorySettings
-        {
-            GameInformationSourceId = gameInformationSourceId,
-            Repositories = repositories.ToArray()
-        });
+        var normalized = Normalize(
+            new ContentRepositorySettings
+            {
+                GameInformationSourceId = gameInformationSourceId,
+                Repositories = repositories.ToArray()
+            }
+        );
         var previous = GameInformationSource;
         _save(normalized);
         _repositories = normalized.Repositories;
         _gameInformationSourceId = normalized.GameInformationSourceId;
         var current = GameInformationSource;
-        if (previous?.Id != current?.Id || previous?.BaseUrl != current?.BaseUrl ||
-            previous?.Name != current?.Name || previous?.IsEnabled != current?.IsEnabled)
+        if (previous?.Id != current?.Id ||
+            previous?.BaseUrl != current?.BaseUrl ||
+            previous?.Name != current?.Name ||
+            previous?.IsEnabled != current?.IsEnabled)
         {
             Interlocked.Increment(ref _gameInformationSourceRevision);
             GameInformationSourceChanged?.Invoke();
@@ -193,36 +207,48 @@ public sealed class ContentRepositoryManager
             sourceId = Guid.Parse(sourceIdAttribute.Value);
         }
 
-        return Normalize(new ContentRepositorySettings
-        {
-            GameInformationSourceId = sourceId,
-            Repositories = ContentRepository.NormalizeAll(document.Elements("Repository").Select(item =>
-                new ContentRepository
-                {
-                    Id = Guid.Parse(Required(item, "Id")),
-                    Name = Required(item, "Name"),
-                    BaseUrl = Required(item, "BaseUrl"),
-                    IsEnabled = bool.Parse(Required(item, "IsEnabled")),
-                    Priority = int.Parse(Required(item, "Priority"),
-                        System.Globalization.CultureInfo.InvariantCulture)
-                }))
-        });
+        return Normalize(
+            new ContentRepositorySettings
+            {
+                GameInformationSourceId = sourceId,
+                Repositories = ContentRepository.NormalizeAll(
+                    document.Elements("Repository").Select(item =>
+                        new ContentRepository
+                        {
+                            Id = Guid.Parse(Required(item, "Id")),
+                            Name = Required(item, "Name"),
+                            BaseUrl = Required(item, "BaseUrl"),
+                            IsEnabled = bool.Parse(Required(item, "IsEnabled")),
+                            Priority = int.Parse(
+                                Required(item, "Priority"),
+                                System.Globalization.CultureInfo.InvariantCulture
+                            )
+                        }
+                    )
+                )
+            }
+        );
     }
 
     public static XElement Write(ContentRepositorySettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
         var normalized = Normalize(settings);
-        return new XElement("ContentRepositories",
+        return new XElement(
+            "ContentRepositories",
             normalized.GameInformationSourceId is { } sourceId
                 ? new XAttribute("GameInformationSourceId", sourceId)
                 : null,
-            normalized.Repositories.Select(item => new XElement("Repository",
-                new XAttribute("Id", item.Id),
-                new XAttribute("Name", item.Name),
-                new XAttribute("BaseUrl", item.BaseUrl),
-                new XAttribute("IsEnabled", item.IsEnabled),
-                new XAttribute("Priority", item.Priority))));
+            normalized.Repositories.Select(item => new XElement(
+                    "Repository",
+                    new XAttribute("Id", item.Id),
+                    new XAttribute("Name", item.Name),
+                    new XAttribute("BaseUrl", item.BaseUrl),
+                    new XAttribute("IsEnabled", item.IsEnabled),
+                    new XAttribute("Priority", item.Priority)
+                )
+            )
+        );
     }
 
     private static ContentRepositorySettings Normalize(ContentRepositorySettings settings)

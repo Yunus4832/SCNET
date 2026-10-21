@@ -7,15 +7,19 @@ public class ModWorldSelectionDialog : Dialog
     private const string _typeName = nameof(ModWorldSelectionDialog);
 
     private readonly ButtonWidget _cancelButton;
+
     private readonly List<WorldSelection> _selections = [];
+
     private readonly ButtonWidget _okButton;
+
     private readonly Action<IReadOnlyList<WorldSelection>> _selectionHandler;
 
     public ModWorldSelectionDialog(
         string modName,
         IEnumerable<WorldInfo> worlds,
         Func<WorldInfo, bool> isSelected,
-        Action<IReadOnlyList<WorldSelection>> selectionHandler)
+        Action<IReadOnlyList<WorldSelection>> selectionHandler
+    )
     {
         _selectionHandler = selectionHandler;
         var node = ContentManager.Get<XElement>("Dialogs/ModWorldSelectionDialog");

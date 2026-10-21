@@ -4,12 +4,17 @@ namespace Game.Content;
 
 public enum OnlineContentStatusFilter
 {
-    All,
-    Cached,
-    Profile,
-    CurrentSession,
-    Conflict,
-    Missing
+    All = 0,
+
+    Cached = 1,
+
+    Profile = 2,
+
+    CurrentSession = 3,
+
+    Conflict = 4,
+
+    Missing = 5
 }
 
 public sealed record OnlineContentNavigation(
@@ -17,7 +22,8 @@ public sealed record OnlineContentNavigation(
     string? Identifier = null,
     string? Version = null,
     string? PackageHash = null,
-    string ReturnScreen = "Content")
+    string ReturnScreen = "Content"
+)
 {
     public OnlineContentNavigation Normalize()
     {
@@ -43,11 +49,14 @@ public sealed record OnlineContentNavigation(
             (version is null) != (packageHash is null) ||
             version is not null && (Type is null || identifier is null) ||
             packageHash is not null &&
-            (packageHash.Length != 64 || packageHash.Any(character =>
-                character is not (>= '0' and <= '9' or >= 'a' and <= 'f'))))
+            (packageHash.Length != 64 ||
+             packageHash.Any(character =>
+                 character is not (>= '0' and <= '9' or >= 'a' and <= 'f')
+             )))
         {
             throw new ArgumentException(
-                "Exact online content navigation requires type, identifier, version and canonical SHA-256 hash.");
+                "Exact online content navigation requires type, identifier, version and canonical SHA-256 hash."
+            );
         }
 
         return this with
@@ -64,15 +73,19 @@ public sealed record OnlineContentVersionState(
     AggregatedContentVersion Version,
     bool IsCached,
     bool IsProfileReferenced,
-    bool IsCurrentSessionReferenced);
+    bool IsCurrentSessionReferenced
+);
 
 public sealed record OnlineContentReference(ContentPackageType Type, string Identifier, string PackageHash);
 
 public sealed class OnlineContentCatalogState
 {
     private readonly Dictionary<(ContentPackageType Type, string Identifier), AggregatedContentEntry> _entries = [];
+
     private HashSet<string> _cachedHashes = new(StringComparer.Ordinal);
+
     private IReadOnlyList<OnlineContentReference> _currentSessionReferences = [];
+
     private IReadOnlyList<OnlineContentReference> _profileReferences = [];
 
     public IReadOnlyList<ContentCatalogRepositoryFailure> Failures { get; private set; } = [];
@@ -89,8 +102,11 @@ public sealed class OnlineContentCatalogState
         NextPageIndex = 1;
     }
 
-    public void SetReferences(IEnumerable<string> cachedHashes, IEnumerable<OnlineContentReference> profileReferences,
-        IEnumerable<OnlineContentReference> currentSessionReferences)
+    public void SetReferences(
+        IEnumerable<string> cachedHashes,
+        IEnumerable<OnlineContentReference> profileReferences,
+        IEnumerable<OnlineContentReference> currentSessionReferences
+    )
     {
         ArgumentNullException.ThrowIfNull(cachedHashes);
         ArgumentNullException.ThrowIfNull(profileReferences);
@@ -125,8 +141,12 @@ public sealed class OnlineContentCatalogState
         NextPageIndex++;
     }
 
-    public IReadOnlyList<AggregatedContentEntry> Filter(string? search, ContentPackageType? type,
-        Guid? repositoryId, OnlineContentStatusFilter status)
+    public IReadOnlyList<AggregatedContentEntry> Filter(
+        string? search,
+        ContentPackageType? type,
+        Guid? repositoryId,
+        OnlineContentStatusFilter status
+    )
     {
         var normalizedSearch = search?.Trim();
         return _entries.Values
@@ -135,9 +155,12 @@ public sealed class OnlineContentCatalogState
                             entry.Name.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) ||
                             entry.Identifier.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) ||
                             entry.Summary?.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) == true ||
-                            entry.Description?.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) == true)
-            .Where(entry => repositoryId is null || entry.Versions.SelectMany(version => version.Sources)
-                .Any(source => source.RepositoryId == repositoryId))
+                            entry.Description?.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) == true
+            )
+            .Where(entry => repositoryId is null ||
+                            entry.Versions.SelectMany(version => version.Sources)
+                                .Any(source => source.RepositoryId == repositoryId)
+            )
             .Where(entry => MatchesStatus(entry, status))
             .OrderBy(entry => entry.Type)
             .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
@@ -148,10 +171,13 @@ public sealed class OnlineContentCatalogState
     public IReadOnlyList<OnlineContentVersionState> GetVersions(AggregatedContentEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
-        return entry.Versions.Select(version => new OnlineContentVersionState(version,
-                _cachedHashes.Contains(version.PackageHash),
-                _profileReferences.Any(reference => reference.PackageHash == version.PackageHash),
-                _currentSessionReferences.Any(reference => reference.PackageHash == version.PackageHash)))
+        return entry.Versions.Select(version => new OnlineContentVersionState(
+                    version,
+                    _cachedHashes.Contains(version.PackageHash),
+                    _profileReferences.Any(reference => reference.PackageHash == version.PackageHash),
+                    _currentSessionReferences.Any(reference => reference.PackageHash == version.PackageHash)
+                )
+            )
             .ToArray();
     }
 
@@ -161,7 +187,8 @@ public sealed class OnlineContentCatalogState
         var entry = _entries.Values.FirstOrDefault(candidate =>
             (navigation.Type is null || candidate.Type == navigation.Type) &&
             (navigation.Identifier is null ||
-             string.Equals(candidate.Identifier, navigation.Identifier, StringComparison.Ordinal)));
+             string.Equals(candidate.Identifier, navigation.Identifier, StringComparison.Ordinal))
+        );
         if (entry is null)
         {
             return null;
@@ -171,7 +198,8 @@ public sealed class OnlineContentCatalogState
             ? null
             : entry.Versions.FirstOrDefault(candidate =>
                 string.Equals(candidate.Version, navigation.Version, StringComparison.Ordinal) &&
-                string.Equals(candidate.PackageHash, navigation.PackageHash, StringComparison.Ordinal));
+                string.Equals(candidate.PackageHash, navigation.PackageHash, StringComparison.Ordinal)
+            );
         return (entry, version);
     }
 
@@ -181,7 +209,8 @@ public sealed class OnlineContentCatalogState
         {
             OnlineContentStatusFilter.All => true,
             OnlineContentStatusFilter.Cached => entry.Versions.Any(version =>
-                _cachedHashes.Contains(version.PackageHash)),
+                _cachedHashes.Contains(version.PackageHash)
+            ),
             OnlineContentStatusFilter.Profile => MatchesReference(entry, _profileReferences),
             OnlineContentStatusFilter.CurrentSession => MatchesReference(entry, _currentSessionReferences),
             OnlineContentStatusFilter.Conflict => entry.Versions.Any(version => version.HasHashConflict),
@@ -191,8 +220,10 @@ public sealed class OnlineContentCatalogState
         };
     }
 
-    private static bool MatchesReference(AggregatedContentEntry entry,
-        IEnumerable<OnlineContentReference> references)
+    private static bool MatchesReference(
+        AggregatedContentEntry entry,
+        IEnumerable<OnlineContentReference> references
+    )
     {
         return references.Any(reference => MatchesIdentity(entry, reference));
     }

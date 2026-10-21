@@ -29,8 +29,10 @@ public class StorageTest : IDisposable
         Assert.True(Storage.FileExists("test:folder/file.txt"));
         Assert.Equal("hello", Storage.ReadAllText("test:folder/file.txt"));
         Assert.Equal(["file.txt"], Storage.ListFileNames("test:folder"));
-        Assert.Equal(Path.Combine(_directoryPath, "folder", "file.txt"),
-            Storage.GetSystemPath("test:folder/file.txt"));
+        Assert.Equal(
+            Path.Combine(_directoryPath, "folder", "file.txt"),
+            Storage.GetSystemPath("test:folder/file.txt")
+        );
     }
 
     [Fact]

@@ -28,8 +28,11 @@ public sealed class PublisherUpdateServerEndpoint(IMediator mediator, ApiKeyAuth
         await Send.ResponseAsync(result, HttpContext.Response.StatusCode, cancellationToken);
     }
 
-    private async Task<ResponseData> UpdateServer(Guid id, UpdateDirectoryServerRequest request,
-        CancellationToken cancellationToken)
+    private async Task<ResponseData> UpdateServer(
+        Guid id,
+        UpdateDirectoryServerRequest request,
+        CancellationToken cancellationToken
+    )
     {
         var publisher = await RequirePublisherAsync(cancellationToken);
         if (publisher.Status != PublisherStatus.Active)
@@ -38,10 +41,17 @@ public sealed class PublisherUpdateServerEndpoint(IMediator mediator, ApiKeyAuth
         }
 
         var normalized = EndpointMappings.ValidateServerUpdate(request);
-        var result = await mediator.Send(new UpdateDirectoryServerCommand(new DirectoryServerId(id),
-                publisher.PublisherId, request.Name.Trim(), normalized.Address, normalized.Description,
-                normalized.Tags),
-            cancellationToken);
+        var result = await mediator.Send(
+            new UpdateDirectoryServerCommand(
+                new DirectoryServerId(id),
+                publisher.PublisherId,
+                request.Name.Trim(),
+                normalized.Address,
+                normalized.Description,
+                normalized.Tags
+            ),
+            cancellationToken
+        );
         EndpointMappings.EnsureServerUpdated(result);
         return new ResponseData(true, "success", StatusCodes.Status200OK);
     }
@@ -49,9 +59,10 @@ public sealed class PublisherUpdateServerEndpoint(IMediator mediator, ApiKeyAuth
     private async Task<PublisherDto> RequirePublisherAsync(CancellationToken cancellationToken)
     {
         return await mediator.Send(
-            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
-            cancellationToken
-        ) ?? throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
+                   new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                   cancellationToken
+               ) ??
+               throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
     }
 }
 

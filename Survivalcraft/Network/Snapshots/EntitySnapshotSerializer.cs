@@ -22,13 +22,19 @@ public static class EntitySnapshotSerializer
         {
             project.FindEntityById(entity.Id, existing => project.RemoveEntity(existing, true));
         }
+
         return project.LoadEntitiesAll(entityData);
     }
 
     public static PlayerEntitySnapshot[] CapturePlayerEntities(IEnumerable<Entity> entities) => entities
         .Select(entity => entity.FindComponent<ComponentPlayer>())
         .OfType<ComponentPlayer>()
-        .Select(player => new PlayerEntitySnapshot(player.PlayerData.PlayerGUID, player.Entity.EntityId,
-            player.ComponentBody.Position, player.ComponentBody.ParentBody?.Entity.EntityId ?? 0))
+        .Select(player => new PlayerEntitySnapshot(
+                player.PlayerData.PlayerGUID,
+                player.Entity.EntityId,
+                player.ComponentBody.Position,
+                player.ComponentBody.ParentBody?.Entity.EntityId ?? 0
+            )
+        )
         .ToArray();
 }

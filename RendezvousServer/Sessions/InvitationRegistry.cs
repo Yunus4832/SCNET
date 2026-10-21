@@ -6,12 +6,21 @@ using Rendezvous.Protocol;
 namespace RendezvousServer.Sessions;
 
 /// <summary>Owns short-lived invitations; all operations are atomic within this process.</summary>
-public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, int capacity, int ticketLifetimeSeconds = 30)
+public sealed class InvitationRegistry(
+    TimeProvider clock,
+    TimeSpan lifetime,
+    int capacity,
+    int ticketLifetimeSeconds = 30
+)
 {
     private readonly Lock _gate = new();
+
     private readonly Guid _directoryGeneration = Guid.NewGuid();
+
     private long _nextSequence;
+
     private readonly Dictionary<Guid, Invitation> _invitations = [];
+
     private readonly Dictionary<string, Guid> _codes = new(StringComparer.Ordinal);
 
     private readonly Dictionary<string, Ticket> _tickets = new(StringComparer.Ordinal);
@@ -34,9 +43,16 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
                 code = RandomNumberGenerator.GetInt32(1_000_000).ToString("D6", CultureInfo.InvariantCulture);
             } while (_codes.ContainsKey(code));
 
-            var registration = new SessionRegistration(Guid.NewGuid(), code, NewCredential(),
-                clock.GetUtcNow() + lifetime);
-            _invitations.Add(registration.SessionId, new Invitation(registration, maxParticipants) { Sequence = ++_nextSequence });
+            var registration = new SessionRegistration(
+                Guid.NewGuid(),
+                code,
+                NewCredential(),
+                clock.GetUtcNow() + lifetime
+            );
+            _invitations.Add(
+                registration.SessionId,
+                new Invitation(registration, maxParticipants) { Sequence = ++_nextSequence }
+            );
             _codes.Add(code, registration.SessionId);
             return registration;
         }
@@ -49,6 +65,7 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
         {
             throw new ArgumentException("invalid_room_publication", nameof(publication));
         }
+
         lock (_gate)
         {
             GetAuthorizedHost(sessionId, credential).Publication = publication with { Name = publication.Name.Trim() };
@@ -73,6 +90,7 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
         {
             throw new ArgumentException("invalid_room_limit", nameof(limit));
         }
+
         lock (_gate)
         {
             RemoveExpired();
@@ -81,24 +99,41 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
             if (cursor is not null)
             {
                 var parts = cursor.Split(':');
-                if (cursor.Length > RendezvousLimits.MaximumRoomCursorLength || parts.Length != 3 ||
-                    !Guid.TryParseExact(parts[0], "N", out var generation) || generation != _directoryGeneration ||
+                if (cursor.Length > RendezvousLimits.MaximumRoomCursorLength ||
+                    parts.Length != 3 ||
+                    !Guid.TryParseExact(parts[0], "N", out var generation) ||
+                    generation != _directoryGeneration ||
                     !long.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out last) ||
                     !long.TryParse(parts[2], NumberStyles.None, CultureInfo.InvariantCulture, out upper) ||
-                    last < 0 || upper < last || upper > _nextSequence)
+                    last < 0 ||
+                    upper < last ||
+                    upper > _nextSequence)
                 {
                     throw new ArgumentException("invalid_room_cursor", nameof(cursor));
                 }
             }
-            var visible = _invitations.Values.Where(item => item.Sequence > last && item.Sequence <= upper &&
-                    item.Publication?.IsPublic == true && item.EndpointExpiresAt > clock.GetUtcNow())
+
+            var visible = _invitations.Values.Where(item => item.Sequence > last &&
+                                                            item.Sequence <= upper &&
+                                                            item.Publication?.IsPublic == true &&
+                                                            item.EndpointExpiresAt > clock.GetUtcNow()
+                )
                 .OrderBy(item => item.Sequence).Take(limit + 1).ToArray();
             var page = visible.Take(limit).ToArray();
             var next = visible.Length > limit
                 ? $"{_directoryGeneration:N}:{page[^1].Sequence.ToString(CultureInfo.InvariantCulture)}:{upper.ToString(CultureInfo.InvariantCulture)}"
                 : null;
-            return new RoomPage(page.Select(item => new RoomSummary(item.Registration.SessionId,
-                item.Publication!.Name, item.Publication.Description, item.Registration.JoinCode, ["holePunch", "relay"])).ToArray(), next);
+            return new RoomPage(
+                page.Select(item => new RoomSummary(
+                        item.Registration.SessionId,
+                        item.Publication!.Name,
+                        item.Publication.Description,
+                        item.Registration.JoinCode,
+                        ["holePunch", "relay"]
+                    )
+                ).ToArray(),
+                next
+            );
         }
     }
 
@@ -108,10 +143,12 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
         {
             throw new InvalidOperationException("invalid_request_id");
         }
+
         if (string.IsNullOrEmpty(code) || code.Length != 6 || code.Any(character => character is < '0' or > '9'))
         {
             throw new InvalidOperationException("invalid_join_code");
         }
+
         lock (_gate)
         {
             RemoveExpired();
@@ -130,6 +167,7 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
         {
             throw new InvalidOperationException("invalid_session_request");
         }
+
         lock (_gate)
         {
             RemoveExpired();
@@ -143,24 +181,34 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
         {
             throw new InvalidOperationException("invitation_not_found");
         }
+
         if (invitation.JoinRequests.TryGetValue(requestId, out var previous))
         {
-            if (!invitation.Participants.TryGetValue(previous.ParticipantId, out var current) || current.ExpiresAt <= clock.GetUtcNow())
+            if (!invitation.Participants.TryGetValue(previous.ParticipantId, out var current) ||
+                current.ExpiresAt <= clock.GetUtcNow())
             {
                 throw new InvalidOperationException("join_request_expired");
             }
+
             return current;
         }
+
         if (invitation.JoinRequests.Count >= 1024)
         {
             throw new InvalidOperationException("join_request_capacity_reached");
         }
+
         if (invitation.Participants.Count >= invitation.MaxParticipants)
         {
             throw new InvalidOperationException("invitation_full");
         }
-        var participant = new ParticipantRegistration(sessionId, Guid.NewGuid(), NewCredential(),
-            invitation.Registration.ExpiresAt);
+
+        var participant = new ParticipantRegistration(
+            sessionId,
+            Guid.NewGuid(),
+            NewCredential(),
+            invitation.Registration.ExpiresAt
+        );
         invitation.Participants.Add(participant.ParticipantId, participant);
         invitation.JoinRequests.Add(requestId, participant);
         return participant;
@@ -175,18 +223,24 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
             {
                 throw new InvalidOperationException("unauthorized_participant");
             }
+
             if (!_invitations.TryGetValue(sessionId, out var invitation))
             {
                 return;
             }
-            var registration = invitation.JoinRequests.Values.FirstOrDefault(item => item.ParticipantId == participantId);
+
+            var registration =
+                invitation.JoinRequests.Values.FirstOrDefault(item => item.ParticipantId == participantId);
             if (registration is null || !Matches(registration.Credential, credential))
             {
                 throw new InvalidOperationException("unauthorized_participant");
             }
+
             invitation.Participants.Remove(participantId);
             foreach (var token in _tickets.Where(item => item.Value.SessionId == sessionId &&
-                         item.Value.ParticipantId == participantId).Select(item => item.Key).ToArray())
+                                                         item.Value.ParticipantId == participantId
+                         )
+                         .Select(item => item.Key).ToArray())
             {
                 _tickets.Remove(token);
             }
@@ -201,9 +255,11 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
             {
                 throw new InvalidOperationException("unauthorized_participant");
             }
+
             var invitation = _invitations[sessionId];
             var expiresAt = invitation.Registration.ExpiresAt;
-            invitation.Participants[participantId] = invitation.Participants[participantId] with { ExpiresAt = expiresAt };
+            invitation.Participants[participantId] =
+                invitation.Participants[participantId] with { ExpiresAt = expiresAt };
             return expiresAt;
         }
     }
@@ -245,7 +301,8 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
             }
 
             return invitation.Participants.TryGetValue(participantId, out var participant) &&
-                   participant.ExpiresAt > clock.GetUtcNow() && Matches(participant.Credential, credential);
+                   participant.ExpiresAt > clock.GetUtcNow() &&
+                   Matches(participant.Credential, credential);
         }
     }
 
@@ -266,7 +323,9 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
             var expiresAt = deadline < ownerDeadline ? deadline : ownerDeadline;
             // One outstanding registration capability per participant bounds storage.
             foreach (var token in _tickets.Where(item => item.Value.SessionId == sessionId &&
-                         item.Value.ParticipantId == participantId).Select(item => item.Key).ToArray())
+                                                         item.Value.ParticipantId == participantId
+                         )
+                         .Select(item => item.Key).ToArray())
             {
                 _tickets.Remove(token);
             }
@@ -282,8 +341,11 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
         lock (_gate)
         {
             RemoveExpired();
-            return !string.IsNullOrEmpty(token) && _tickets.TryGetValue(token, out var ticket) && ticket.SessionId == sessionId &&
-                   ticket.ParticipantId == participantId && ticket.ExpiresAt > clock.GetUtcNow() &&
+            return !string.IsNullOrEmpty(token) &&
+                   _tickets.TryGetValue(token, out var ticket) &&
+                   ticket.SessionId == sessionId &&
+                   ticket.ParticipantId == participantId &&
+                   ticket.ExpiresAt > clock.GetUtcNow() &&
                    _invitations.TryGetValue(sessionId, out var invitation) &&
                    (participantId == Guid.Empty || invitation.Participants.ContainsKey(participantId));
         }
@@ -321,7 +383,9 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
         }
 
         foreach (var token in _tickets.Where(item => item.Value.ExpiresAt <= now ||
-                     !_invitations.ContainsKey(item.Value.SessionId)).Select(item => item.Key).ToArray())
+                                                     !_invitations.ContainsKey(item.Value.SessionId)
+                     )
+                     .Select(item => item.Key).ToArray())
         {
             _tickets.Remove(token);
         }
@@ -344,8 +408,10 @@ public sealed class InvitationRegistry(TimeProvider clock, TimeSpan lifetime, in
             return false;
         }
 
-        return CryptographicOperations.FixedTimeEquals(System.Text.Encoding.ASCII.GetBytes(expected),
-            System.Text.Encoding.ASCII.GetBytes(supplied));
+        return CryptographicOperations.FixedTimeEquals(
+            System.Text.Encoding.ASCII.GetBytes(expected),
+            System.Text.Encoding.ASCII.GetBytes(supplied)
+        );
     }
 
     private sealed record Ticket(Guid SessionId, Guid ParticipantId, DateTimeOffset ExpiresAt);

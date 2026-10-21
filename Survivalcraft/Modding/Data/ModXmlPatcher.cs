@@ -91,8 +91,11 @@ public static class ModXmlPatcher
             {
                 if (HasAttribute(element, name => name == "Index", out var xAttribute))
                 {
-                    if (FindElement(xElement, _ => element.Attribute("Index")!.Value == xAttribute!.Value,
-                            out var element1))
+                    if (FindElement(
+                            xElement,
+                            _ => element.Attribute("Index")!.Value == xAttribute!.Value,
+                            out var element1
+                        ))
                     {
                         var px = attribute!.Name.ToString()
                             .Split(["new-"], StringSplitOptions.RemoveEmptyEntries);
@@ -107,8 +110,11 @@ public static class ModXmlPatcher
             {
                 if (HasAttribute(element, name => name == "Index", out var xAttribute))
                 {
-                    if (FindElement(xElement, _ => element.Attribute("Index")!.Value == xAttribute!.Value,
-                            out var element1))
+                    if (FindElement(
+                            xElement,
+                            _ => element.Attribute("Index")!.Value == xAttribute!.Value,
+                            out var element1
+                        ))
                     {
                         element1!.Remove();
                         element.Remove();
@@ -137,7 +143,9 @@ public static class ModXmlPatcher
                     var px = attribute!.Name.ToString()
                         .Split(["new-"], StringSplitOptions.RemoveEmptyEntries);
 
-                    if (FindElement(xElement, ele =>
+                    if (FindElement(
+                            xElement,
+                            ele =>
                             {
                                 foreach (var xAttribute in element.Attributes())
                                 {
@@ -154,7 +162,8 @@ public static class ModXmlPatcher
 
                                 return true;
                             },
-                            out var element1))
+                            out var element1
+                        ))
                     {
                         if (px.Length == 1)
                         {
@@ -165,23 +174,27 @@ public static class ModXmlPatcher
                 }
                 else if (HasAttribute(element, name => name.StartsWith("r-"), out var attribute1))
                 {
-                    if (FindElement(xElement, ele =>
-                        {
-                            foreach (var xAttribute in element.Attributes())
+                    if (FindElement(
+                            xElement,
+                            ele =>
                             {
-                                if (xAttribute.Name == attribute1!.Name)
+                                foreach (var xAttribute in element.Attributes())
                                 {
-                                    continue;
+                                    if (xAttribute.Name == attribute1!.Name)
+                                    {
+                                        continue;
+                                    }
+
+                                    if (!HasAttribute(ele, tname => tname == xAttribute.Name, out _))
+                                    {
+                                        return false;
+                                    }
                                 }
 
-                                if (!HasAttribute(ele, tname => tname == xAttribute.Name, out _))
-                                {
-                                    return false;
-                                }
-                            }
-
-                            return true;
-                        }, out var element1))
+                                return true;
+                            },
+                            out var element1
+                        ))
                     {
                         element1!.Remove();
                         element.Remove();
@@ -199,11 +212,14 @@ public static class ModXmlPatcher
 
     public static void Modify(XElement source, XElement change)
     {
-        if (FindElement(source, item => item.Name.LocalName == change.Name.LocalName &&
-                                        item.Attribute("Guid") != null &&
-                                        change.Attribute("Guid") != null &&
-                                        item.Attribute("Guid")?.Value == change.Attribute("Guid")?.Value,
-                out var xElement1))
+        if (FindElement(
+                source,
+                item => item.Name.LocalName == change.Name.LocalName &&
+                        item.Attribute("Guid") != null &&
+                        change.Attribute("Guid") != null &&
+                        item.Attribute("Guid")?.Value == change.Attribute("Guid")?.Value,
+                out var xElement1
+            ))
         {
             foreach (var xElement in change.Elements())
             {
@@ -214,9 +230,12 @@ public static class ModXmlPatcher
         {
             if (change.Name.LocalName.StartsWith("Parameter") || change.Name.LocalName == "MemberComponentTemplate")
             {
-                if (FindElement(source, item => item.Name.LocalName == change.Name.LocalName &&
-                                                item.Attribute("Name")?.Name == change.Attribute("Name")?.Name,
-                        out var x))
+                if (FindElement(
+                        source,
+                        item => item.Name.LocalName == change.Name.LocalName &&
+                                item.Attribute("Name")?.Name == change.Attribute("Name")?.Name,
+                        out var x
+                    ))
                 {
                     Log.Warning($"重复的参数{x!.Name.LocalName}:{x.Attribute("Name")?.Value}设置");
                 }

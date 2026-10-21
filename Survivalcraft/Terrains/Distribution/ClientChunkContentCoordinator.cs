@@ -16,7 +16,8 @@ public sealed class ClientChunkContentCoordinator(Terrain terrain)
         ArgumentNullException.ThrowIfNull(snapshot);
         var target = _terrain.GetChunkAtCoords(
             snapshot.Allocation.Coords.X,
-            snapshot.Allocation.Coords.Y);
+            snapshot.Allocation.Coords.Y
+        );
         if (!CanInstall(target, snapshot.Allocation, snapshot.ContentVersion))
         {
             return false;
@@ -33,7 +34,8 @@ public sealed class ClientChunkContentCoordinator(Terrain terrain)
     internal static bool CanInstall(
         [NotNullWhen(true)] TerrainChunk? target,
         ChunkAllocationId allocation,
-        long contentVersion) =>
+        long contentVersion
+    ) =>
         target is { IsLoaded: false } &&
         target.Coords == allocation.Coords &&
         target.AllocationGeneration == allocation.Generation &&

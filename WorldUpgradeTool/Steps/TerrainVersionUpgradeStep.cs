@@ -27,12 +27,14 @@ internal sealed class TerrainVersionUpgradeStep : IWorldMaintenanceStep
         var version = context.Inspection.ProjectVersion;
         var transforms = _versionPathFinder.FindPath(version, WorldUpgradeManager.TargetTerrainStorageVersion) ??
                          throw new InvalidOperationException(
-                             $"Cannot find conversion path from version \"{version}\" to version \"{WorldUpgradeManager.TargetTerrainStorageVersion}\".");
+                             $"Cannot find conversion path from version \"{version}\" to version \"{WorldUpgradeManager.TargetTerrainStorageVersion}\"."
+                         );
 
         foreach (var converter in transforms)
         {
             Console.WriteLine(
-                $"Upgrading terrain storage version {converter.SourceVersion} -> {converter.TargetVersion}");
+                $"Upgrading terrain storage version {converter.SourceVersion} -> {converter.TargetVersion}"
+            );
             converter.ConvertWorld(context.DirectoryName);
         }
     }

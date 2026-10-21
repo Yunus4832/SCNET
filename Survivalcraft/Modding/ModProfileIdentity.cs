@@ -12,8 +12,12 @@ public static class ModProfileIdentity
     private static IReadOnlyList<PackageIdentity> CreateIdentities(ModProfile? profile)
     {
         return (profile?.Packages ?? [])
-            .Select(package => new PackageIdentity(package.ModId.Trim().ToLowerInvariant(),
-                package.Version.Trim(), package.PackageHash.Trim()))
+            .Select(package => new PackageIdentity(
+                    package.ModId.Trim().ToLowerInvariant(),
+                    package.Version.Trim(),
+                    package.PackageHash.Trim()
+                )
+            )
             .OrderBy(identity => identity.ModId, StringComparer.Ordinal)
             .ThenBy(identity => identity.Version, StringComparer.Ordinal)
             .ThenBy(identity => identity.PackageHash, StringComparer.Ordinal)

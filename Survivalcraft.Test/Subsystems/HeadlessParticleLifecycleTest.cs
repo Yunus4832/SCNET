@@ -37,6 +37,8 @@ public sealed class HeadlessParticleLifecycleTest
     {
         public override bool Simulate(float dt) => false;
 
-        public override void Draw(Camera camera) { }
+        public override void Draw(Camera camera)
+        {
+        }
     }
 }

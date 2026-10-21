@@ -20,7 +20,8 @@ internal static class ResponseMappingExtensions
             publisher.HasActiveKey,
             publisher.ReviewMessage,
             publisher.CreatedAt,
-            publisher.ReviewedAt);
+            publisher.ReviewedAt
+        );
     }
 
     public static ContentVersionResponse ToResponse(this ContentVersionDto version)
@@ -44,7 +45,8 @@ internal static class ResponseMappingExtensions
             version.ReviewMessage,
             version.CreatedAt,
             version.PublishedAt,
-            $"/api/v1/packages/{version.PackageHash}");
+            $"/api/v1/packages/{version.PackageHash}"
+        );
     }
 
     public static ModPackageResponse ToModResponse(this ContentVersionDto version)
@@ -59,17 +61,20 @@ internal static class ResponseMappingExtensions
             version.Summary,
             version.Description,
             version.CreatedAt,
-            $"/api/v1/packages/{version.PackageHash}");
+            $"/api/v1/packages/{version.PackageHash}"
+        );
     }
 
     public static PagedData<TResult> Map<TSource, TResult>(
         this PagedData<TSource> page,
-        Func<TSource, TResult> map)
+        Func<TSource, TResult> map
+    )
     {
         return new PagedData<TResult>(
             page.Items.Select(map),
             page.Total,
             page.PageIndex,
-            page.PageSize);
+            page.PageSize
+        );
     }
 }

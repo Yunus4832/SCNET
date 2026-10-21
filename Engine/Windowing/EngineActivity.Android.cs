@@ -100,9 +100,11 @@ public class EngineActivity : SilkActivity
     {
         RequestWindowFeature(WindowFeatures.NoTitle);
         base.OnCreate(savedInstanceState);
-        Window?.AddFlags(WindowManagerFlags.Fullscreen |
-                         WindowManagerFlags.TranslucentStatus |
-                         WindowManagerFlags.TranslucentNavigation);
+        Window?.AddFlags(
+            WindowManagerFlags.Fullscreen |
+            WindowManagerFlags.TranslucentStatus |
+            WindowManagerFlags.TranslucentNavigation
+        );
         EnableImmersiveMode();
         VolumeControlStream = AndroidStream.Music;
         RequestedOrientation = DefaultScreenOrientation;
@@ -167,9 +169,9 @@ public class EngineActivity : SilkActivity
         {
             Touch.HandleTouchEvent(e);
         }
-        else if ((e.Source & InputSourceType.Mouse) == InputSourceType.Mouse
-                 || (e.Source & InputSourceType.ClassPointer) == InputSourceType.ClassPointer
-                 || (e.Source & InputSourceType.MouseRelative) == InputSourceType.MouseRelative)
+        else if ((e.Source & InputSourceType.Mouse) == InputSourceType.Mouse ||
+                 (e.Source & InputSourceType.ClassPointer) == InputSourceType.ClassPointer ||
+                 (e.Source & InputSourceType.MouseRelative) == InputSourceType.MouseRelative)
         {
             Mouse.HandleMotionEvent(e);
         }
@@ -188,8 +190,10 @@ public class EngineActivity : SilkActivity
         var invocationList = OnDispatchKeyEvent?.GetInvocationList();
         if (invocationList is not null)
         {
-            handled = invocationList.Aggregate(handled,
-                (current, invocation) => current | (bool)invocation.DynamicInvoke(e)!);
+            handled = invocationList.Aggregate(
+                handled,
+                (current, invocation) => current | (bool)invocation.DynamicInvoke(e)!
+            );
         }
 
         if (!handled)
@@ -259,8 +263,8 @@ public class EngineActivity : SilkActivity
             return true;
         }
 
-        if ((e.Source & InputSourceType.Gamepad) == InputSourceType.Gamepad
-            || (e.Source & InputSourceType.Joystick) == InputSourceType.Joystick)
+        if ((e.Source & InputSourceType.Gamepad) == InputSourceType.Gamepad ||
+            (e.Source & InputSourceType.Joystick) == InputSourceType.Joystick)
         {
             GamePad.HandleKeyEvent(e);
         }
@@ -284,8 +288,8 @@ public class EngineActivity : SilkActivity
             return true;
         }
 
-        if ((e.Source & InputSourceType.Gamepad) == InputSourceType.Gamepad
-            || (e.Source & InputSourceType.Joystick) == InputSourceType.Joystick)
+        if ((e.Source & InputSourceType.Gamepad) == InputSourceType.Gamepad ||
+            (e.Source & InputSourceType.Joystick) == InputSourceType.Joystick)
         {
             GamePad.HandleKeyEvent(e);
         }
@@ -305,15 +309,15 @@ public class EngineActivity : SilkActivity
         }
 
         if (((e.Source & InputSourceType.Gamepad) == InputSourceType.Gamepad ||
-             (e.Source & InputSourceType.Joystick) == InputSourceType.Joystick)
-            && e.Action == MotionEventActions.Move)
+             (e.Source & InputSourceType.Joystick) == InputSourceType.Joystick) &&
+            e.Action == MotionEventActions.Move)
         {
             GamePad.HandleMotionEvent(e);
         }
 
-        if ((e.Source & InputSourceType.Mouse) == InputSourceType.Mouse
-            || (e.Source & InputSourceType.ClassPointer) == InputSourceType.ClassPointer
-            || (e.Source & InputSourceType.MouseRelative) == InputSourceType.MouseRelative)
+        if ((e.Source & InputSourceType.Mouse) == InputSourceType.Mouse ||
+            (e.Source & InputSourceType.ClassPointer) == InputSourceType.ClassPointer ||
+            (e.Source & InputSourceType.MouseRelative) == InputSourceType.MouseRelative)
         {
             Mouse.HandleMotionEvent(e);
         }
@@ -358,10 +362,10 @@ public class EngineActivity : SilkActivity
 
                 break;
             case > (BuildVersionCodes)19:
-                Window.DecorView.SystemUiFlags = SystemUiFlags.Fullscreen
-                                                 | SystemUiFlags.HideNavigation
-                                                 | SystemUiFlags.Immersive
-                                                 | SystemUiFlags.ImmersiveSticky;
+                Window.DecorView.SystemUiFlags = SystemUiFlags.Fullscreen |
+                                                 SystemUiFlags.HideNavigation |
+                                                 SystemUiFlags.Immersive |
+                                                 SystemUiFlags.ImmersiveSticky;
                 break;
         }
     }

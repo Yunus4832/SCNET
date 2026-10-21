@@ -9,8 +9,11 @@ public class BatteryElectricElement(
     {
         var point = CellFaces[0].Point;
         return BatteryBlock.GetVoltageLevel(
-            Terrain.ExtractData(
-                SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z))) / 15f;
+                   Terrain.ExtractData(
+                       SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z)
+                   )
+               ) /
+               15f;
     }
 
     public override void OnNeighborBlockChanged(CellFace cellFace, int neighborX, int neighborY, int neighborZ)

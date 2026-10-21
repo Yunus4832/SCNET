@@ -20,8 +20,10 @@ public sealed class AdminAnnouncementCreateEndpoint(IMediator mediator) : Conten
         var request = await ReadBodyAsync<CreateAnnouncementRequest>(cancellationToken);
         try
         {
-            var id = await mediator.Send(new CreateGameAnnouncementCommand(request.Title, request.Body),
-                cancellationToken);
+            var id = await mediator.Send(
+                new CreateGameAnnouncementCommand(request.Title, request.Body),
+                cancellationToken
+            );
             await Send.ResponseAsync(new { id = id.ToString() }.AsResponseData(), cancellation: cancellationToken);
         }
         catch (ArgumentException)

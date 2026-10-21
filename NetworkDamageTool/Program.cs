@@ -22,7 +22,8 @@ try
 
     await using var proxy = new DamageProxy(options);
     Console.WriteLine(
-        $"Network damage proxy listening on {options.ListenEndPoint}, forwarding to {options.TargetEndPoint}.");
+        $"Network damage proxy listening on {options.ListenEndPoint}, forwarding to {options.TargetEndPoint}."
+    );
     Console.WriteLine($"Seed={options.Seed}; upstream={options.Upstream}; downstream={options.Downstream}");
     await proxy.RunAsync(cancellation.Token);
     return 0;

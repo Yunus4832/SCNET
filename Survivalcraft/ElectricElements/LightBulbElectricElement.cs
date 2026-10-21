@@ -25,8 +25,10 @@ public class LightBulbElectricElement : MountedElectricElement
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                num2 = MathUtils.Max(num2,
-                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                num2 = MathUtils.Max(
+                    num2,
+                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                );
             }
         }
 

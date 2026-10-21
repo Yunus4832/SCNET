@@ -67,7 +67,8 @@ public class TextInputManagerTest : IDisposable
         using var session = TextInputManager.BeginInput(
             commitText: text => committed = text,
             backspace: () => backspaceCount++,
-            updateComposition: value => composition = value);
+            updateComposition: value => composition = value
+        );
 
         backend.Sink!.CommitText("中文");
         backend.Sink.Backspace();

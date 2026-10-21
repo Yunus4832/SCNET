@@ -60,7 +60,8 @@ public sealed class AdminApprovePublisherEndpoint(IMediator mediator, ApiKeyAuth
     private static void EnsureReviewCompleted(
         ReviewPublisherResult result,
         string notFoundMessage,
-        string invalidStateMessage)
+        string invalidStateMessage
+    )
     {
         if (result == ReviewPublisherResult.NotFound)
         {

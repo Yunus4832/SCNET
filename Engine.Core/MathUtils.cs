@@ -376,8 +376,11 @@ public static class MathUtils
     {
         var num = f * f;
         var num2 = num * f;
-        return 0.5f * (2f * v2 + (v3 - v1) * f + (2f * v1 - 5f * v2 + 4f * v3 - v4) * num +
-                       (3f * v2 - v1 - 3f * v3 + v4) * num2);
+        return 0.5f *
+               (2f * v2 +
+                (v3 - v1) * f +
+                (2f * v1 - 5f * v2 + 4f * v3 - v4) * num +
+                (3f * v2 - v1 - 3f * v3 + v4) * num2);
     }
 
     public static float NormalizeAngle(float angle)
@@ -597,8 +600,11 @@ public static class MathUtils
     {
         var num = f * f;
         var num2 = num * f;
-        return 0.5 * (2.0 * v2 + (v3 - v1) * f + (2.0 * v1 - 5.0 * v2 + 4.0 * v3 - v4) * num +
-                      (3.0 * v2 - v1 - 3.0 * v3 + v4) * num2);
+        return 0.5 *
+               (2.0 * v2 +
+                (v3 - v1) * f +
+                (2.0 * v1 - 5.0 * v2 + 4.0 * v3 - v4) * num +
+                (3.0 * v2 - v1 - 3.0 * v3 + v4) * num2);
     }
 
     public static double NormalizeAngle(double angle)

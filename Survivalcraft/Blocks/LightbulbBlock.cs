@@ -50,29 +50,66 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
                 ? i != 4
                     ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
                     : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                : Matrix.CreateRotationX((float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BulbBlockMeshes[i] = new BlockMesh();
-            BulbBlockMeshes[i].AppendModelMeshPart(topMesh.MeshParts[0], boneAbsoluteTransform * m,
-                false, false, false, false, Color.White);
+            BulbBlockMeshes[i].AppendModelMeshPart(
+                topMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             BulbBlockMeshes[i].TransformTextureCoordinates(Matrix.CreateTranslation(0.1875f, 0.25f, 0f));
             BulbBlockMeshesLit[i] = new BlockMesh();
-            BulbBlockMeshesLit[i].AppendModelMeshPart(topMesh.MeshParts[0], boneAbsoluteTransform * m,
-                true, false, false, false, new Color(255, 255, 230));
+            BulbBlockMeshesLit[i].AppendModelMeshPart(
+                topMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                true,
+                false,
+                false,
+                false,
+                new Color(255, 255, 230)
+            );
             BulbBlockMeshesLit[i].TransformTextureCoordinates(Matrix.CreateTranslation(0.9375f, 0f, 0f));
             SidesBlockMeshes[i] = new BlockMesh();
-            SidesBlockMeshes[i].AppendModelMeshPart(sidesMesh.MeshParts[0], boneAbsoluteTransform2 * m,
-                false, false, true, false, Color.White);
+            SidesBlockMeshes[i].AppendModelMeshPart(
+                sidesMesh.MeshParts[0],
+                boneAbsoluteTransform2 * m,
+                false,
+                false,
+                true,
+                false,
+                Color.White
+            );
             SidesBlockMeshes[i].TransformTextureCoordinates(Matrix.CreateTranslation(0.9375f, 0.1875f, 0f));
             CollisionBoxes[i] = [SidesBlockMeshes[i].CalculateBoundingBox()];
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBulbBlockMesh.AppendModelMeshPart(topMesh.MeshParts[0], boneAbsoluteTransform * m2,
-            false, false, true, false, Color.White);
+        StandaloneBulbBlockMesh.AppendModelMeshPart(
+            topMesh.MeshParts[0],
+            boneAbsoluteTransform * m2,
+            false,
+            false,
+            true,
+            false,
+            Color.White
+        );
         StandaloneBulbBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(0.1875f, 0.25f, 0f));
-        StandaloneSidesBlockMesh.AppendModelMeshPart(sidesMesh.MeshParts[0],
-            boneAbsoluteTransform2 * m2, false, false, true, false, Color.White);
+        StandaloneSidesBlockMesh.AppendModelMeshPart(
+            sidesMesh.MeshParts[0],
+            boneAbsoluteTransform2 * m2,
+            false,
+            false,
+            true,
+            false,
+            Color.White
+        );
         StandaloneSidesBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(0.9375f, 0.1875f, 0f));
     }
 
@@ -123,8 +160,11 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
     )
     {
         BlockPlacementData result = default;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0,
-            SetMountingFace(Terrain.ExtractData(value), raycastResult.CellFace.Face));
+        result.Value = Terrain.MakeBlockValue(
+            BlockIndex,
+            0,
+            SetMountingFace(Terrain.ExtractData(value), raycastResult.CellFace.Face)
+        );
         result.CellFace = raycastResult.CellFace;
         return result;
     }
@@ -139,11 +179,13 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
     )
     {
         var color = GetColor(Terrain.ExtractData(oldValue));
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
+                Count = 1
+            }
+        );
         showDebris = true;
     }
 
@@ -171,20 +213,44 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
         {
             if (lightIntensity <= 0)
             {
-                generator.GenerateMeshVertices(this, x, y, z, BulbBlockMeshes[mountingFace], Color.White, null,
-                    geometry.SubsetAlphaTest);
+                generator.GenerateMeshVertices(
+                    this,
+                    x,
+                    y,
+                    z,
+                    BulbBlockMeshes[mountingFace],
+                    Color.White,
+                    null,
+                    geometry.SubsetAlphaTest
+                );
             }
             else
             {
                 var r = (byte)(195 + lightIntensity * 4);
                 var g = (byte)(180 + lightIntensity * 5);
                 var b = (byte)(165 + lightIntensity * 6);
-                generator.GenerateMeshVertices(this, x, y, z, BulbBlockMeshesLit[mountingFace], new Color(r, g, b),
-                    null, geometry.SubsetOpaque);
+                generator.GenerateMeshVertices(
+                    this,
+                    x,
+                    y,
+                    z,
+                    BulbBlockMeshesLit[mountingFace],
+                    new Color(r, g, b),
+                    null,
+                    geometry.SubsetOpaque
+                );
             }
 
-            generator.GenerateMeshVertices(this, x, y, z, SidesBlockMeshes[mountingFace], color2, null,
-                geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                SidesBlockMeshes[mountingFace],
+                color2,
+                null,
+                geometry.SubsetOpaque
+            );
             generator.GenerateWireVertices(value, x, y, z, mountingFace, 0.875f, Vector2.Zero, geometry.SubsetOpaque);
         }
     }

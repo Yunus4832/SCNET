@@ -16,10 +16,24 @@ public class CactusBlock : Block
             cactusMesh.ParentBone ??
             throw new InvalidOperationException("Required CactusMesh.ParentBone is null")
         );
-        BlockMesh.AppendModelMeshPart(cactusMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f), false, false, false, false, Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(cactusMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        BlockMesh.AppendModelMeshPart(
+            cactusMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            cactusMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 

@@ -10,10 +10,12 @@ public class WorldDataExtensionsTest
     public void ModWorldDataUsesItsOwnerAndDoesNotFollowTheModAcrossWorlds()
     {
         var host = new ModHost();
-        host.LoadAndStart([
-            new ModDescriptor(new ModManifest("example.first", "First", "1.0.0"), () => new EmptyMod()),
-            new ModDescriptor(new ModManifest("example.second", "Second", "1.0.0"), () => new EmptyMod())
-        ]);
+        host.LoadAndStart(
+            [
+                new ModDescriptor(new ModManifest("example.first", "First", "1.0.0"), () => new EmptyMod()),
+                new ModDescriptor(new ModManifest("example.second", "Second", "1.0.0"), () => new EmptyMod())
+            ]
+        );
         try
         {
             using var world = new Project();

@@ -52,12 +52,15 @@ public class ComponentSummonBehavior : ComponentBehavior, IUpdateable
             {
                 if (_isEnabled && SummonTarget != null && _summonedTime == 0.0)
                 {
-                    _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 0.5, delegate
-                    {
-                        _componentCreature.ComponentCreatureSounds.PlayIdleSound(true);
-                        _importanceLevel = 270f;
-                        _summonedTime = _subsystemTime.GameTime;
-                    });
+                    _subsystemTime.QueueGameTimeDelayedExecution(
+                        _subsystemTime.GameTime + 0.5,
+                        delegate
+                        {
+                            _componentCreature.ComponentCreatureSounds.PlayIdleSound(true);
+                            _importanceLevel = 270f;
+                            _summonedTime = _subsystemTime.GameTime;
+                        }
+                    );
                 }
 
                 if (IsActive)
@@ -76,7 +79,8 @@ public class ComponentSummonBehavior : ComponentBehavior, IUpdateable
                 {
                     stateMachine.TransitionTo("Inactive");
                 }
-                else if (SummonTarget == null || _componentPathfinding.IsStuck ||
+                else if (SummonTarget == null ||
+                         _componentPathfinding.IsStuck ||
                          _subsystemTime.GameTime - _summonedTime > 30.0)
                 {
                     _importanceLevel = 0f;
@@ -115,12 +119,24 @@ public class ComponentSummonBehavior : ComponentBehavior, IUpdateable
             return;
         }
 
-        var v = Vector3.Normalize(Vector3.Cross(Vector3.UnitY,
-            SummonTarget.Position - _componentCreature.ComponentBody.Position));
+        var v = Vector3.Normalize(
+            Vector3.Cross(
+                Vector3.UnitY,
+                SummonTarget.Position - _componentCreature.ComponentBody.Position
+            )
+        );
         v *= 0.75f * (GetHashCode() % 2 != 0 ? 1 : -1) * (1 + GetHashCode() % 3);
         var speed = MathUtils.Lerp(0.4f, 1f, MathUtils.Saturate(0.25f * (num - 5f)));
-        _componentPathfinding.SetDestination(SummonTarget.Position + v, speed, 3.75f, 2000, true, false, true,
-            null);
+        _componentPathfinding.SetDestination(
+            SummonTarget.Position + v,
+            speed,
+            3.75f,
+            2000,
+            true,
+            false,
+            true,
+            null
+        );
         _stoppedTime = -1.0;
     }
 }

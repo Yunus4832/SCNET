@@ -28,7 +28,8 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private readonly int[] _visited = new int[8192];
 
-    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:thermometer"), ResourceId.Parse("game:hygrometer")];
+    public override ResourceId[] HandledBlocks =>
+        [ResourceId.Parse("game:thermometer"), ResourceId.Parse("game:hygrometer")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -90,7 +91,9 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var list = new List<Point3>();
         foreach (var key in _thermometersByPoint.Keys)
         {
-            if (key.X >= chunk.Origin.X && key.X < chunk.Origin.X + 16 && key.Z >= chunk.Origin.Y &&
+            if (key.X >= chunk.Origin.X &&
+                key.X < chunk.Origin.X + 16 &&
+                key.Z >= chunk.Origin.Y &&
                 key.Z < chunk.Origin.Y + 16)
             {
                 list.Add(key);
@@ -122,8 +125,15 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
     //meterInsulation: 温度计的绝缘系数。
     //temperature: 计算出的温度（通过 out 返回）。
     //temperatureFlux: 温度波动值（通过 out 返回）。
-    public void CalculateTemperature(int x, int y, int z, float meterTemperature, float meterInsulation,
-        out float temperature, out float temperatureFlux)
+    public void CalculateTemperature(
+        int x,
+        int y,
+        int z,
+        float meterTemperature,
+        float meterInsulation,
+        out float temperature,
+        out float temperatureFlux
+    )
     {
         _toVisit.Clear();
         for (var i = 0; i < _visited.Length; i++)
@@ -174,7 +184,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
             var terrain = SubsystemTerrain.Terrain;
             var chunkAtCell = terrain.GetChunkAtCell(num11, num13, false);
             if (chunkAtCell == null || num12 < 0 || num12 >= 256)
-            // 获取当前坐标所在的地形块。如果地形块不存在（如超出世界范围）或 y 坐标超出有效范围[0, 256)，则跳过。
+                // 获取当前坐标所在的地形块。如果地形块不存在（如超出世界范围）或 y 坐标超出有效范围[0, 256)，则跳过。
             {
                 continue;
             }
@@ -303,13 +313,19 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     }
 
                     var heat2 = GetHeat(chunkAtCell2.GetCellValueFast(x3, num33, z3));
-                    if (heat2 > 0f && !SubsystemTerrain.Raycast(new Vector3(x, y, z) + new Vector3(0.5f, 0.75f, 0.5f),
-                            new Vector3(x + k, y + m, z + l) + new Vector3(0.5f, 0.75f, 0.5f), false, true,
-                            delegate (int raycastValue, float _)
+                    if (heat2 > 0f &&
+                        !SubsystemTerrain.Raycast(
+                            new Vector3(x, y, z) + new Vector3(0.5f, 0.75f, 0.5f),
+                            new Vector3(x + k, y + m, z + l) + new Vector3(0.5f, 0.75f, 0.5f),
+                            false,
+                            true,
+                            delegate(int raycastValue, float _)
                             {
-                                var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(raycastValue)];
+                                var block2 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                                    .Blocks[Terrain.ExtractContents(raycastValue)];
                                 return block2 is { Collidable: true, Transparent: false };
-                            }).HasValue)
+                            }
+                        ).HasValue)
                     {
                         num31 += heat2 * 3f / (num32 + 2);
                     }
@@ -394,8 +410,12 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
         if (chunkAtCell != null)
         {
-            SubsystemTerrain.TerrainUpdater.DowngradeChunkNeighborhoodState(chunkAtCell.Coords, 0,
-                TerrainChunkState.InvalidVertices1, true);
+            SubsystemTerrain.TerrainUpdater.DowngradeChunkNeighborhoodState(
+                chunkAtCell.Coords,
+                0,
+                TerrainChunkState.InvalidVertices1,
+                true
+            );
         }
     }
 

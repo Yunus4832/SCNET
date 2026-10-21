@@ -25,5 +25,6 @@ if (( ${#existing_files[@]} == 0 )); then
 fi
 
 echo "Validating ${#existing_files[@]} changed C# file(s)."
-dotnet format SCNET.slnx whitespace --verify-no-changes --no-restore --include "${existing_files[@]}"
+dotnet run --file .agents/skills/scnet-code-style/scripts/check_explicit_enum_values.cs -- "${existing_files[@]}"
+bash .agents/skills/scnet-code-style/scripts/validate_jetbrains_format.sh "${existing_files[@]}"
 dotnet format SCNET.slnx style --verify-no-changes --no-restore --include "${existing_files[@]}"

@@ -2,7 +2,9 @@ namespace Game.Protocol.Serialization;
 
 public enum CompressionPolicy : byte
 {
-    None,
-    Adaptive,
-    Always
+    None = 0,
+
+    Adaptive = 1,
+
+    Always = 2
 }

@@ -34,18 +34,32 @@ public sealed class OnlineContentCatalogStateTest
         var source = Source("A", 0);
         var entry = Entry(Version("2.0.0", cachedHash, source), Version("1.0.0", missingHash, source));
         var state = new OnlineContentCatalogState();
-        state.SetReferences([cachedHash],
+        state.SetReferences(
+            [cachedHash],
             [new OnlineContentReference(ContentPackageType.Mod, "example.mod", missingHash)],
-            [new OnlineContentReference(ContentPackageType.Mod, "example.mod", cachedHash)]);
+            [new OnlineContentReference(ContentPackageType.Mod, "example.mod", cachedHash)]
+        );
         state.Append(Page(entry, false), 1);
 
-        Assert.Single(state.Filter("example.mod", ContentPackageType.Mod, source.RepositoryId,
-            OnlineContentStatusFilter.Cached));
+        Assert.Single(
+            state.Filter(
+                "example.mod",
+                ContentPackageType.Mod,
+                source.RepositoryId,
+                OnlineContentStatusFilter.Cached
+            )
+        );
         Assert.Single(state.Filter(null, null, null, OnlineContentStatusFilter.Profile));
         Assert.Single(state.Filter(null, null, null, OnlineContentStatusFilter.CurrentSession));
         Assert.Single(state.Filter(null, null, null, OnlineContentStatusFilter.Missing));
-        var found = state.Find(new OnlineContentNavigation(ContentPackageType.Mod, "example.mod", "1.0.0",
-            missingHash));
+        var found = state.Find(
+            new OnlineContentNavigation(
+                ContentPackageType.Mod,
+                "example.mod",
+                "1.0.0",
+                missingHash
+            )
+        );
         Assert.Equal(missingHash, found?.Version?.PackageHash);
         Assert.Equal([true, false], state.GetVersions(entry).Select(version => version.IsCached));
     }
@@ -56,7 +70,8 @@ public sealed class OnlineContentCatalogStateTest
         var state = new OnlineContentCatalogState();
 
         Assert.Throws<ArgumentException>(() =>
-            new OnlineContentNavigation(Version: "1.0.0").Normalize());
+            new OnlineContentNavigation(Version: "1.0.0").Normalize()
+        );
         Assert.Throws<ArgumentOutOfRangeException>(() => state.Append(Page(Entry(), false), 2));
     }
 
@@ -81,7 +96,14 @@ public sealed class OnlineContentCatalogStateTest
 
     private static AggregatedContentEntry Entry(params AggregatedContentVersion[] versions)
     {
-        return new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", "Summary", "Description", versions);
+        return new AggregatedContentEntry(
+            ContentPackageType.Mod,
+            "example.mod",
+            "Example",
+            "Summary",
+            "Description",
+            versions
+        );
     }
 
     private static AggregatedContentVersion Version(string version, string hash, params ContentCatalogSource[] sources)
@@ -91,7 +113,15 @@ public sealed class OnlineContentCatalogStateTest
 
     private static ContentCatalogSource Source(string name, int priority)
     {
-        return new ContentCatalogSource(Guid.Empty, Guid.NewGuid(), name, priority, false,
-            $"content-{name}", $"version-{name}", $"api/v1/packages/{name}");
+        return new ContentCatalogSource(
+            Guid.Empty,
+            Guid.NewGuid(),
+            name,
+            priority,
+            false,
+            $"content-{name}",
+            $"version-{name}",
+            $"api/v1/packages/{name}"
+        );
     }
 }

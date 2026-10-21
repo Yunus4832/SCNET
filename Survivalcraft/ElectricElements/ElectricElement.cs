@@ -13,7 +13,8 @@ public abstract class ElectricElement(
         new List<CellFace>
         {
             cellFace
-        })
+        }
+    )
     {
     }
 
@@ -78,7 +79,8 @@ public abstract class ElectricElement(
         var num = 0;
         foreach (var connection in Connections)
         {
-            if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0 &&
+            if (connection.ConnectorType != ElectricConnectorType.Output &&
+                connection.NeighborConnectorType != 0 &&
                 IsSignalHigh(connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)))
             {
                 num++;

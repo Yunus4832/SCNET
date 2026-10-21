@@ -119,8 +119,14 @@ public class ComponentFlyAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
             delegate
             {
                 _componentPathfinding.SetDestination(FindSafePlace(), 1f, 1f, 0, false, true, false, null);
-                _subsystemAudio.PlayRandomSound("Audio/Creatures/Wings", 0.8f, _random.Float(-0.1f, 0.2f),
-                    _componentCreature.ComponentBody.Position, 3f, true);
+                _subsystemAudio.PlayRandomSound(
+                    "Audio/Creatures/Wings",
+                    0.8f,
+                    _random.Float(-0.1f, 0.2f),
+                    _componentCreature.ComponentBody.Position,
+                    3f,
+                    true
+                );
                 _componentCreature.ComponentCreatureSounds.PlayPainSound();
                 _subsystemNoise.MakeNoise(_componentCreature.ComponentBody, 0.25f, 6f);
             },
@@ -130,8 +136,12 @@ public class ComponentFlyAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
                 {
                     stateMachine.TransitionTo("LookingForDanger");
                 }
-                else if (ScoreSafePlace(_componentCreature.ComponentBody.Position,
-                             _componentPathfinding.Destination.Value, null) < 4f)
+                else if (ScoreSafePlace(
+                             _componentCreature.ComponentBody.Position,
+                             _componentPathfinding.Destination.Value,
+                             null
+                         ) <
+                         4f)
                 {
                     _componentPathfinding.SetDestination(FindSafePlace(), 1f, 0.5f, 0, false, true, false, null);
                 }
@@ -161,7 +171,8 @@ public class ComponentFlyAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
             for (var num4 = 255; num4 >= 0; num4--)
             {
                 var cellContents = _subsystemTerrain.Terrain.GetCellContents(num2, num4, num3);
-                if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Collidable && cellContents != 18)
+                if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Collidable &&
+                    cellContents != 18)
                 {
                     continue;
                 }

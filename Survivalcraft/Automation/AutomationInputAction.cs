@@ -9,4 +9,5 @@ public sealed record AutomationInputAction(
     int DurationFrames,
     int MouseDeltaX = 0,
     int MouseDeltaY = 0,
-    double? DurationSeconds = null);
+    double? DurationSeconds = null
+);

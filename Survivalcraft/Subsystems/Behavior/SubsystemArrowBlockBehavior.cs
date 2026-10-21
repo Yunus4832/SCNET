@@ -17,8 +17,11 @@ public class SubsystemArrowBlockBehavior : SubsystemBlockBehavior
             return;
         }
 
-        _subsystemProjectiles.AddTrail(projectile, Vector3.Zero,
-            new SmokeTrailParticleSystem(20, 0.5f, float.MaxValue, Color.White));
+        _subsystemProjectiles.AddTrail(
+            projectile,
+            Vector3.Zero,
+            new SmokeTrailParticleSystem(20, 0.5f, float.MaxValue, Color.White)
+        );
         projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
         projectile.IsIncendiary = true;
     }

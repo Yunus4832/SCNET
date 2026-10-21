@@ -32,8 +32,11 @@ public class SubsystemBoatBlockBehavior : SubsystemBlockBehavior
 
         var position = terrainRaycastResult.Value.HitPoint();
         var dynamicArray = new DynamicArray<ComponentBody>();
-        _subsystemBodies.FindBodiesInArea(new Vector2(position.X, position.Z) - new Vector2(8f),
-            new Vector2(position.X, position.Z) + new Vector2(8f), dynamicArray);
+        _subsystemBodies.FindBodiesInArea(
+            new Vector2(position.X, position.Z) - new Vector2(8f),
+            new Vector2(position.X, position.Z) + new Vector2(8f),
+            dynamicArray
+        );
         if (dynamicArray.Count(b => b.Entity.ValuesDictionary.DatabaseObject.Name == "Boat") < 6)
         {
             _creatureSpawn.SpawnCreature("Boat", position, true);

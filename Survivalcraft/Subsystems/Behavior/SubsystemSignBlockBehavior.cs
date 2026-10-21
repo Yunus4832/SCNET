@@ -58,7 +58,11 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
     public bool ShowSignsTexture;
 
     public override ResourceId[] HandledBlocks =>
-    [ResourceId.Parse("game:stick"), ResourceId.Parse("game:wooden_posted_sign"), ResourceId.Parse("game:wooden_attached_sign"), ResourceId.Parse("game:iron_posted_sign"), ResourceId.Parse("game:iron_attached_sign")];
+    [
+        ResourceId.Parse("game:stick"), ResourceId.Parse("game:wooden_posted_sign"),
+        ResourceId.Parse("game:wooden_attached_sign"), ResourceId.Parse("game:iron_posted_sign"),
+        ResourceId.Parse("game:iron_attached_sign")
+    ];
 
     public int[] DrawOrders => _drawOrders;
 
@@ -131,7 +135,8 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
     private void SendChunkState(Client client, Point2 chunk)
     {
         foreach (var data in _textsByPoint.Values.Where(data =>
-                     data.Point.X >> 4 == chunk.X && data.Point.Z >> 4 == chunk.Y))
+                     data.Point.X >> 4 == chunk.X && data.Point.Z >> 4 == chunk.Y
+                 ))
         {
             NetworkSender.SendTo(client, new SignBlockPackage(data.Point, data.Lines, data.Colors, data.Url));
         }
@@ -140,7 +145,8 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
     public void ClearChunkState(Point2 chunk)
     {
         foreach (var point in _textsByPoint.Keys.Where(point =>
-                     point.X >> 4 == chunk.X && point.Z >> 4 == chunk.Y).ToArray())
+                     point.X >> 4 == chunk.X && point.Z >> 4 == chunk.Y
+                 ).ToArray())
         {
             _textsByPoint.Remove(point);
         }
@@ -157,33 +163,34 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         switch (block)
         {
             case AttachedSignBlock:
+            {
+                var point = CellFace.FaceToPoint3(AttachedSignBlock.GetFace(data));
+                var x2 = x - point.X;
+                var y2 = y - point.Y;
+                var z2 = z - point.Z;
+                var cellValue = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
+                var cellContents = Terrain.ExtractContents(cellValue);
+                if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].IsCollidable(cellValue))
                 {
-                    var point = CellFace.FaceToPoint3(AttachedSignBlock.GetFace(data));
-                    var x2 = x - point.X;
-                    var y2 = y - point.Y;
-                    var z2 = z - point.Z;
-                    var cellValue = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
-                    var cellContents = Terrain.ExtractContents(cellValue);
-                    if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].IsCollidable(cellValue))
-                    {
-                        SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                    }
-
-                    break;
+                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
                 }
+
+                break;
+            }
             case PostedSignBlock:
+            {
+                var num2 = PostedSignBlock.GetHanging(data)
+                    ? SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z)
+                    : SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z);
+
+                if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(num2)]
+                        .IsCollidable(num2))
                 {
-                    var num2 = PostedSignBlock.GetHanging(data)
-                        ? SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z)
-                        : SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z);
-
-                    if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(num2)].IsCollidable(num2))
-                    {
-                        SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                    }
-
-                    break;
+                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
                 }
+
+                break;
+            }
         }
     }
 
@@ -198,7 +205,8 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
 
         componentPlayer.ComponentGui.ModalPanelWidget = new SignViewerWidget(
             GetSignData(point),
-            () => componentPlayer.ComponentGui.ModalPanelWidget = null);
+            () => componentPlayer.ComponentGui.ModalPanelWidget = null
+        );
         AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
         return true;
     }
@@ -211,7 +219,8 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
                 LanguageManager.GetContentWidgets(nameof(SignEditorWidget), "ReadOnly"),
                 Color.White,
                 false,
-                false);
+                false
+            );
             return true;
         }
 
@@ -255,7 +264,8 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
                     NetworkSender.SendToServer(package);
                 }
             },
-            () => componentPlayer.ComponentGui.ModalPanelWidget = null);
+            () => componentPlayer.ComponentGui.ModalPanelWidget = null
+        );
     }
 
     public override void OnBlockRemoved(int value, int newValue, int x, int y, int z)
@@ -394,8 +404,13 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
 
     private void CreateRenderTarget()
     {
-        RenderTarget = new RenderTarget2D((int)_font.GlyphHeight * 16, (int)_font.GlyphHeight * 4 * 32, 1,
-            ColorFormat.Rgba8888, DepthFormat.None);
+        RenderTarget = new RenderTarget2D(
+            (int)_font.GlyphHeight * 16,
+            (int)_font.GlyphHeight * 4 * 32,
+            1,
+            ColorFormat.Rgba8888,
+            DepthFormat.None
+        );
     }
 
     private void InvalidateRenderTarget()
@@ -429,9 +444,11 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
             }
 
             var line = textData.Lines[i].Replace("\\", "").ToUpper();
-            list.Add(line.Length > _surfaceLineMaximumLength
-                ? $"{line[..(_surfaceLineMaximumLength - 3)]}..."
-                : line);
+            list.Add(
+                line.Length > _surfaceLineMaximumLength
+                    ? $"{line[..(_surfaceLineMaximumLength - 3)]}..."
+                    : line
+            );
             list2.Add(textData.Colors[i]);
         }
 
@@ -459,10 +476,19 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         for (var j = 0; j < list.Count; j++)
         {
             fontBatch.QueueText(
-                position: new Vector2(num4 / 2f,
-                j * _font.GlyphHeight + textData.TextureLocation.Value * (4f * _font.GlyphHeight) +
-                    (num5 - num2) / 2f), text: list[j], depth: 0f, color: list2[j],
-                anchor: TextAnchor.HorizontalCenter, scale: new Vector2(1f / _font.Scale), spacing: Vector2.Zero);
+                position: new Vector2(
+                    num4 / 2f,
+                    j * _font.GlyphHeight +
+                    textData.TextureLocation.Value * (4f * _font.GlyphHeight) +
+                    (num5 - num2) / 2f
+                ),
+                text: list[j],
+                depth: 0f,
+                color: list2[j],
+                anchor: TextAnchor.HorizontalCenter,
+                scale: new Vector2(1f / _font.Scale),
+                spacing: Vector2.Zero
+            );
         }
 
         textData.UsedTextureWidth = num4;
@@ -570,8 +596,14 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         {
             Display.Clear(new Vector4(Color.Transparent));
             var flatBatch = _primitivesRenderer2D.FlatBatch(0, DepthStencilState.None, null, BlendState.Opaque);
-            var fontBatch = _primitivesRenderer2D.FontBatch(_font, 1, DepthStencilState.None, null, BlendState.Opaque,
-                SamplerState.PointClamp);
+            var fontBatch = _primitivesRenderer2D.FontBatch(
+                _font,
+                1,
+                DepthStencilState.None,
+                null,
+                BlendState.Opaque,
+                SamplerState.PointClamp
+            );
             foreach (var textData3 in _textureLocations)
             {
                 if (textData3 != null)
@@ -595,8 +627,15 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
             return;
         }
 
-        var texturedBatch3D = _primitivesRenderer3D.TexturedBatch(RenderTarget, false, 0,
-            DepthStencilState.DepthRead, RasterizerState.CullCounterClockwiseScissor, null, SamplerState.PointClamp);
+        var texturedBatch3D = _primitivesRenderer3D.TexturedBatch(
+            RenderTarget,
+            false,
+            0,
+            DepthStencilState.DepthRead,
+            RasterizerState.CullCounterClockwiseScissor,
+            null,
+            SamplerState.PointClamp
+        );
         foreach (var nearText in _nearTexts)
         {
             if (!nearText.TextureLocation.HasValue)
@@ -651,8 +690,15 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
                 textureCoordinates.Y = MathUtils.Lerp(x3, x4, textureCoordinates.Y);
                 textureCoordinates2.Y = MathUtils.Lerp(x3, x4, textureCoordinates2.Y);
                 textureCoordinates3.Y = MathUtils.Lerp(x3, x4, textureCoordinates3.Y);
-                texturedBatch3D.QueueTriangle(p, p2, p3, textureCoordinates, textureCoordinates2,
-                    textureCoordinates3, color);
+                texturedBatch3D.QueueTriangle(
+                    p,
+                    p2,
+                    p3,
+                    textureCoordinates,
+                    textureCoordinates2,
+                    textureCoordinates3,
+                    color
+                );
             }
         }
 

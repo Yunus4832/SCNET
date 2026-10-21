@@ -30,11 +30,22 @@ public sealed class AdminDirectoryServerApproveEndpoint(
     private Task<ResponseData> Approve(Guid id, CancellationToken cancellationToken) =>
         Review(id, true, null, cancellationToken);
 
-    private async Task<ResponseData> Review(Guid id, bool approved, string? message,
-        CancellationToken cancellationToken)
+    private async Task<ResponseData> Review(
+        Guid id,
+        bool approved,
+        string? message,
+        CancellationToken cancellationToken
+    )
     {
-        var result = await mediator.Send(new ReviewDirectoryServerCommand(new DirectoryServerId(id),
-            authenticationContext.RequireAdministratorId(), approved, message), cancellationToken);
+        var result = await mediator.Send(
+            new ReviewDirectoryServerCommand(
+                new DirectoryServerId(id),
+                authenticationContext.RequireAdministratorId(),
+                approved,
+                message
+            ),
+            cancellationToken
+        );
         if (result == ReviewDirectoryServerResult.NotFound)
         {
             throw new KnownException("server_not_found", StatusCodes.Status404NotFound);

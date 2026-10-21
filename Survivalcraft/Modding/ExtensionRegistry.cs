@@ -3,6 +3,7 @@ namespace Game.Modding;
 public sealed class ExtensionRegistry
 {
     private readonly Dictionary<RegistryKey, IRegistryControl> _registries = [];
+
     private bool _isFrozen;
 
     public NamespacedRegistry<T> GetRegistry<T>(string name) where T : class

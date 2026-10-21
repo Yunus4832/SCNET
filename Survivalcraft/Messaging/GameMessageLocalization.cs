@@ -7,7 +7,8 @@ public static class GameMessageLocalization
         string key,
         IReadOnlyList<string>? arguments = null,
         GameMessageTone tone = GameMessageTone.Normal,
-        GameMessagePresentation presentation = GameMessagePresentation.Default)
+        GameMessagePresentation presentation = GameMessagePresentation.Default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(section);
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
@@ -16,12 +17,13 @@ public static class GameMessageLocalization
         return GameMessage.System(
                 FormatLocalizedText(template, normalizedArguments),
                 tone,
-                presentation) with
-        {
-            LocalizationSection = section,
-            LocalizationKey = key,
-            LocalizationArguments = normalizedArguments
-        };
+                presentation
+            ) with
+            {
+                LocalizationSection = section,
+                LocalizationKey = key,
+                LocalizationArguments = normalizedArguments
+            };
     }
 
     public static GameMessage ResolveLocalization(this GameMessage message)
@@ -42,29 +44,30 @@ public static class GameMessageLocalization
         {
             return message with
             {
-                Content = MessageContent.Plain(
-                    FormatLocalizedText(template, message.LocalizationArguments))
+                Content = MessageContent.Plain(FormatLocalizedText(template, message.LocalizationArguments))
             };
         }
         catch (FormatException exception)
         {
             Log.Error(
                 $"Invalid message localization format " +
-                $"{message.LocalizationSection}.{message.LocalizationKey}: {exception}");
+                $"{message.LocalizationSection}.{message.LocalizationKey}: {exception}"
+            );
             return message;
         }
     }
 
     private static string FormatLocalizedText(
         string template,
-        IReadOnlyList<string> arguments)
+        IReadOnlyList<string> arguments
+    )
     {
         return arguments.Count == 0
             ? template
             : string.Format(
                 global::System.Globalization.CultureInfo.CurrentCulture,
                 template,
-                arguments.Cast<object>().ToArray());
+                arguments.Cast<object>().ToArray()
+            );
     }
-
 }

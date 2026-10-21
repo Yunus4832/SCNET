@@ -111,8 +111,15 @@ public class RectangleWidget : Widget
                     : TextureLinearFilter
                         ? SamplerState.LinearWrap
                         : SamplerState.PointWrap;
-                var texturedBatch2D = dc.PrimitivesRenderer2D.TexturedBatch(Subtexture.Texture, true, 0,
-                    depthStencilState, null, null, samplerState);
+                var texturedBatch2D = dc.PrimitivesRenderer2D.TexturedBatch(
+                    Subtexture.Texture,
+                    true,
+                    0,
+                    depthStencilState,
+                    null,
+                    null,
+                    samplerState
+                );
                 Vector2 zero = default;
                 Vector2 texCoord;
                 Vector2 texCoord2 = default;
@@ -121,8 +128,10 @@ public class RectangleWidget : Widget
                 {
                     zero = Vector2.Zero;
                     texCoord = new Vector2(ActualSize.X / Subtexture.Texture.Width, 0f);
-                    texCoord2 = new Vector2(ActualSize.X / Subtexture.Texture.Width,
-                        ActualSize.Y / Subtexture.Texture.Height);
+                    texCoord2 = new Vector2(
+                        ActualSize.X / Subtexture.Texture.Width,
+                        ActualSize.Y / Subtexture.Texture.Height
+                    );
                     texCoord3 = new Vector2(0f, ActualSize.Y / Subtexture.Texture.Height);
                 }
                 else
@@ -147,8 +156,18 @@ public class RectangleWidget : Widget
                     Utilities.Swap(ref texCoord.Y, ref texCoord3.Y);
                 }
 
-                texturedBatch2D.QueueQuad(result, result2, result3, result4, Depth, zero, texCoord, texCoord2,
-                    texCoord3, color);
+                texturedBatch2D.QueueQuad(
+                    result,
+                    result2,
+                    result3,
+                    result4,
+                    Depth,
+                    zero,
+                    texCoord,
+                    texCoord2,
+                    texCoord3,
+                    color
+                );
             }
             else
             {

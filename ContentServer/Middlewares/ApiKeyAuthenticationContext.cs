@@ -10,12 +10,11 @@ public sealed class ApiKeyAuthenticationContext
     public PublisherId? PublisherId { get; private set; }
 
     public AdministratorId RequireAdministratorId() =>
-        AdministratorId
-        ?? throw new InvalidOperationException("Administrator authentication middleware was not applied.");
+        AdministratorId ??
+        throw new InvalidOperationException("Administrator authentication middleware was not applied.");
 
     public PublisherId RequirePublisherId() =>
-        PublisherId
-        ?? throw new InvalidOperationException("Publisher authentication middleware was not applied.");
+        PublisherId ?? throw new InvalidOperationException("Publisher authentication middleware was not applied.");
 
     internal void SetAdministrator(AdministratorId administratorId)
     {

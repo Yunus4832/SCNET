@@ -127,7 +127,10 @@ public class ImageTest
     private sealed class ShortReadStream(byte[] bytes) : MemoryStream(bytes)
     {
         public override bool CanSeek => false;
-        public override int Read(byte[] buffer, int offset, int count) => base.Read(buffer, offset, System.Math.Min(count, 3));
+
+        public override int Read(byte[] buffer, int offset, int count) =>
+            base.Read(buffer, offset, System.Math.Min(count, 3));
+
         public override int Read(Span<byte> buffer) => base.Read(buffer[..System.Math.Min(buffer.Length, 3)]);
     }
 }

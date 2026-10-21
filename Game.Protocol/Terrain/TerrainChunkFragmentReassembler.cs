@@ -5,9 +5,13 @@ namespace Game.Protocol.Terrain;
 public sealed class TerrainChunkFragmentReassembler
 {
     private const int _maximumCompletedTransfers = 4096;
+
     private readonly Dictionary<TransferKey, Assembly> _assemblies = [];
+
     private readonly HashSet<TransferKey> _completed = [];
+
     private readonly Queue<TransferKey> _completedOrder = [];
+
     private readonly Lock _lock = new();
 
     public int PendingCount
@@ -34,13 +38,15 @@ public sealed class TerrainChunkFragmentReassembler
             }
 
             foreach (var obsolete in _assemblies.Keys.Where(candidate =>
-                         candidate.Allocation == fragment.Allocation && candidate != key).ToArray())
+                         candidate.Allocation == fragment.Allocation && candidate != key
+                     ).ToArray())
             {
                 _assemblies.Remove(obsolete);
             }
 
             foreach (var obsolete in _completed.Where(candidate =>
-                         candidate.Allocation == fragment.Allocation && candidate != key).ToArray())
+                         candidate.Allocation == fragment.Allocation && candidate != key
+                     ).ToArray())
             {
                 _completed.Remove(obsolete);
             }
@@ -70,7 +76,8 @@ public sealed class TerrainChunkFragmentReassembler
             {
                 _assemblies.Remove(key);
                 throw new InvalidDataException(
-                    $"Terrain fragment length mismatch: {assembly.ReceivedLength}/{assembly.TotalLength}.");
+                    $"Terrain fragment length mismatch: {assembly.ReceivedLength}/{assembly.TotalLength}."
+                );
             }
 
             var payload = new byte[assembly.TotalLength];
@@ -96,7 +103,8 @@ public sealed class TerrainChunkFragmentReassembler
 
     public bool TryCreateMissingFragmentRequest(
         ChunkAllocationId allocation,
-        out TerrainChunkFragmentRequest request)
+        out TerrainChunkFragmentRequest request
+    )
     {
         lock (_lock)
         {
@@ -122,7 +130,8 @@ public sealed class TerrainChunkFragmentReassembler
                 allocation,
                 entry.Key.ContentVersion,
                 checked((ushort)entry.Value.Fragments.Length),
-                missing);
+                missing
+            );
             return true;
         }
     }
@@ -139,7 +148,8 @@ public sealed class TerrainChunkFragmentReassembler
 
             var obsolete = _assemblies.Keys.Where(key =>
                     current.TryGetValue(key.Allocation.Coords, out var allocation) &&
-                    allocation != key.Allocation)
+                    allocation != key.Allocation
+                )
                 .ToArray();
             foreach (var key in obsolete)
             {
@@ -148,7 +158,8 @@ public sealed class TerrainChunkFragmentReassembler
 
             foreach (var key in _completed.Where(key =>
                          current.TryGetValue(key.Allocation.Coords, out var allocation) &&
-                         allocation != key.Allocation).ToArray())
+                         allocation != key.Allocation
+                     ).ToArray())
             {
                 _completed.Remove(key);
             }
@@ -162,7 +173,8 @@ public sealed class TerrainChunkFragmentReassembler
         var expectedFragmentCount = Math.Max(
             1,
             (fragment.TotalLength + ProtocolLimits.TerrainFragmentPayloadSize - 1) /
-            ProtocolLimits.TerrainFragmentPayloadSize);
+            ProtocolLimits.TerrainFragmentPayloadSize
+        );
         if (fragment.TotalLength is < 0 or > ProtocolLimits.MaximumTerrainPayloadLength ||
             fragment.FragmentCount is 0 or > ProtocolLimits.MaximumTerrainFragmentCount ||
             fragment.FragmentCount != expectedFragmentCount ||
@@ -179,8 +191,11 @@ public sealed class TerrainChunkFragmentReassembler
     private sealed class Assembly(int totalLength, ushort fragmentCount)
     {
         public byte[][] Fragments { get; } = new byte[fragmentCount][];
+
         public int ReceivedCount;
+
         public int ReceivedLength;
+
         public int TotalLength { get; } = totalLength;
     }
 }

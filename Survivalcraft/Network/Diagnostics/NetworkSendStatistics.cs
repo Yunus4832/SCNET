@@ -3,7 +3,11 @@ namespace Game.Network.Diagnostics;
 public readonly record struct NetworkChannelSendStatistics(long Batches, long EncodedBytes);
 
 public readonly record struct NetworkPackageSendStatistics(
-    Type PackageType, NetworkChannel Channel, long Deliveries, long PayloadBytes);
+    Type PackageType,
+    NetworkChannel Channel,
+    long Deliveries,
+    long PayloadBytes
+);
 
 public sealed class NetworkSendStatistics
 {
@@ -11,20 +15,29 @@ public sealed class NetworkSendStatistics
 
     private readonly Dictionary<NetworkChannel, NetworkChannelSendStatistics> _channels = [];
 
-    private readonly Dictionary<(Type Type, NetworkChannel Channel), (long Deliveries, long PayloadBytes)> _packages = [];
+    private readonly Dictionary<(Type Type, NetworkChannel Channel), (long Deliveries, long PayloadBytes)> _packages =
+        [];
 
     private readonly Dictionary<(Type Type, NetworkChannel Channel), NetworkPackageFanoutStatistics> _fanout = [];
 
     private long _routingEvaluations;
+
     private long _selectedPackages;
+
     private long _routingTicks;
+
     private long _maximumRoutingTicks;
 
     private long _encodingBatches;
+
     private long _encodedPackages;
+
     private long _rawEncodingBytes;
+
     private long _encodedBytes;
+
     private long _serializationTicks;
+
     private long _frameEncodingTicks;
 
     public void RecordFanout(Type packageType, NetworkChannel channel, int recipients)
@@ -35,9 +48,13 @@ public sealed class NetworkSendStatistics
         {
             var key = (packageType, channel);
             _fanout.TryGetValue(key, out var previous);
-            _fanout[key] = new NetworkPackageFanoutStatistics(packageType, channel,
-                previous.Messages + 1, previous.RecipientDeliveries + recipients,
-                Math.Max(previous.MaximumFanout, recipients));
+            _fanout[key] = new NetworkPackageFanoutStatistics(
+                packageType,
+                channel,
+                previous.Messages + 1,
+                previous.RecipientDeliveries + recipients,
+                Math.Max(previous.MaximumFanout, recipients)
+            );
         }
     }
 
@@ -49,8 +66,13 @@ public sealed class NetworkSendStatistics
         }
     }
 
-    public void RecordEncoding(int packages, long rawBytes, int encodedBytes,
-        long serializationTicks, long frameEncodingTicks)
+    public void RecordEncoding(
+        int packages,
+        long rawBytes,
+        int encodedBytes,
+        long serializationTicks,
+        long frameEncodingTicks
+    )
     {
         ArgumentOutOfRangeException.ThrowIfNegative(packages);
         ArgumentOutOfRangeException.ThrowIfNegative(rawBytes);
@@ -72,9 +94,14 @@ public sealed class NetworkSendStatistics
     {
         lock (_gate)
         {
-            return new NetworkEncodingStatistics(_encodingBatches, _encodedPackages,
-                _rawEncodingBytes, _encodedBytes, _serializationTicks * 1000d / Stopwatch.Frequency,
-                _frameEncodingTicks * 1000d / Stopwatch.Frequency);
+            return new NetworkEncodingStatistics(
+                _encodingBatches,
+                _encodedPackages,
+                _rawEncodingBytes,
+                _encodedBytes,
+                _serializationTicks * 1000d / Stopwatch.Frequency,
+                _frameEncodingTicks * 1000d / Stopwatch.Frequency
+            );
         }
     }
 
@@ -96,21 +123,29 @@ public sealed class NetworkSendStatistics
     {
         lock (_gate)
         {
-            return new NetworkRoutingStatistics(_routingEvaluations, _selectedPackages,
+            return new NetworkRoutingStatistics(
+                _routingEvaluations,
+                _selectedPackages,
                 _routingTicks * 1000d / Stopwatch.Frequency,
-                _maximumRoutingTicks * 1000d / Stopwatch.Frequency);
+                _maximumRoutingTicks * 1000d / Stopwatch.Frequency
+            );
         }
     }
 
-    public void Record(NetworkChannel channel, int encodedBytes,
-        IEnumerable<(Type PackageType, int PayloadBytes)> packages)
+    public void Record(
+        NetworkChannel channel,
+        int encodedBytes,
+        IEnumerable<(Type PackageType, int PayloadBytes)> packages
+    )
     {
         ArgumentOutOfRangeException.ThrowIfNegative(encodedBytes);
         lock (_gate)
         {
             _channels.TryGetValue(channel, out var previous);
             _channels[channel] = new NetworkChannelSendStatistics(
-                previous.Batches + 1, previous.EncodedBytes + encodedBytes);
+                previous.Batches + 1,
+                previous.EncodedBytes + encodedBytes
+            );
             foreach (var (type, payloadBytes) in packages)
             {
                 var key = (type, channel);
@@ -133,7 +168,12 @@ public sealed class NetworkSendStatistics
         lock (_gate)
         {
             return _packages.Select(item => new NetworkPackageSendStatistics(
-                item.Key.Type, item.Key.Channel, item.Value.Deliveries, item.Value.PayloadBytes)).ToArray();
+                    item.Key.Type,
+                    item.Key.Channel,
+                    item.Value.Deliveries,
+                    item.Value.PayloadBytes
+                )
+            ).ToArray();
         }
     }
 }

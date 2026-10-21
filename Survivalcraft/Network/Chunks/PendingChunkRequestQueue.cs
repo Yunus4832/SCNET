@@ -83,15 +83,17 @@ public sealed class PendingChunkRequestQueue : IEnumerable<ChunkContentRequest>
     public IEnumerable<ChunkContentRequest> TakePrioritized(
         Vector2 center,
         Vector2 predictedCenter,
-        int count) =>
+        int count
+    ) =>
         _ordered
             .OrderBy(request =>
-            {
-                var coords = request.Allocation.Coords;
-                var chunkCenter = new Vector2((coords.X + 0.5f) * 16f, (coords.Y + 0.5f) * 16f);
-                return Vector2.DistanceSquared(predictedCenter, chunkCenter) * 0.7f +
-                       Vector2.DistanceSquared(center, chunkCenter) * 0.3f;
-            })
+                {
+                    var coords = request.Allocation.Coords;
+                    var chunkCenter = new Vector2((coords.X + 0.5f) * 16f, (coords.Y + 0.5f) * 16f);
+                    return Vector2.DistanceSquared(predictedCenter, chunkCenter) * 0.7f +
+                           Vector2.DistanceSquared(center, chunkCenter) * 0.3f;
+                }
+            )
             .Take(count);
 
     public IEnumerator<ChunkContentRequest> GetEnumerator() => _ordered.GetEnumerator();

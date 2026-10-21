@@ -24,9 +24,11 @@ public static class ModPackageReferenceTracker
     internal static bool IsReferenced(LocalModPackageEntry entry, IEnumerable<ModProfile> profiles)
     {
         return profiles.Any(profile => profile.Packages.Any(requirement =>
-            string.Equals(requirement.ModId, entry.ModId, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(requirement.Version, entry.Version, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(requirement.PackageHash, entry.PackageHash, StringComparison.Ordinal)));
+                string.Equals(requirement.ModId, entry.ModId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(requirement.Version, entry.Version, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(requirement.PackageHash, entry.PackageHash, StringComparison.Ordinal)
+            )
+        );
     }
 
     private static IEnumerable<ModProfile> EnumerateProfiles()
@@ -53,8 +55,7 @@ public static class ModPackageReferenceTracker
         {
             foreach (var directoryName in Storage.ListDirectoryNames(GamePaths.Worlds))
             {
-                var profile = ModProfileManager.LoadWorldProfile(
-                    Storage.CombinePaths(GamePaths.Worlds, directoryName));
+                var profile = ModProfileManager.LoadWorldProfile(Storage.CombinePaths(GamePaths.Worlds, directoryName));
                 if (profile is not null)
                 {
                     yield return profile;

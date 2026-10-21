@@ -53,7 +53,8 @@ public class Database
         if (type != null && value.Type != type)
         {
             throw new InvalidOperationException(
-                $"Database object {guid} has invalid type. Expected {type.Name}, found {value.Type.Name}.");
+                $"Database object {guid} has invalid type. Expected {type.Name}, found {value.Type.Name}."
+            );
         }
 
         return value;
@@ -85,7 +86,8 @@ public class Database
         if (!_databaseObjectTypes.Contains(databaseObject.Type))
         {
             throw new InvalidOperationException(
-                $"Database object type \"{databaseObject.Type.Name}\" is not supported by the database.");
+                $"Database object type \"{databaseObject.Type.Name}\" is not supported by the database."
+            );
         }
 
         if (checkThatGuidsAreUnique)
@@ -93,7 +95,8 @@ public class Database
             if (databaseObject.Guid != Guid.Empty && _databaseObjectsByGuid.ContainsKey(databaseObject.Guid))
             {
                 throw new InvalidOperationException(
-                    $"Database object {databaseObject.Guid} is already present in the database.");
+                    $"Database object {databaseObject.Guid} is already present in the database."
+                );
             }
 
             foreach (var explicitNestingChild in databaseObject.GetExplicitNestingChildren(null, false))
@@ -102,7 +105,8 @@ public class Database
                     _databaseObjectsByGuid.ContainsKey(explicitNestingChild.Guid))
                 {
                     throw new InvalidOperationException(
-                        $"Database object {explicitNestingChild.Guid} is already present in the database.");
+                        $"Database object {explicitNestingChild.Guid} is already present in the database."
+                    );
                 }
             }
         }

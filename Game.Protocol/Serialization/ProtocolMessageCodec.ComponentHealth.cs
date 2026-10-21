@@ -61,16 +61,31 @@ public static partial class ProtocolMessageCodec
                     Amount = reader.ReadSingle(),
                     Cause = reader.ReadString(),
                     InjureRequestType = type == ComponentHealthPackage.EventType.RequestInjure
-                        ? reader.ReadEnum<ComponentHealthPackage.RequestInjureType>() : ComponentHealthPackage.RequestInjureType.Unknown
+                        ? reader.ReadEnum<ComponentHealthPackage.RequestInjureType>()
+                        : ComponentHealthPackage.RequestInjureType.Unknown
                 };
-                if (!Enum.IsDefined(message.InjureRequestType)) { throw new InvalidDataException("Unknown injury request type."); }
+                if (!Enum.IsDefined(message.InjureRequestType))
+                {
+                    throw new InvalidDataException("Unknown injury request type.");
+                }
+
                 return message;
             case ComponentHealthPackage.EventType.HitResult:
-                return new ComponentHealthPackage(reader.ReadVector3(), reader.ReadVector3(), reader.ReadColor(), reader.ReadString());
+                return new ComponentHealthPackage(
+                    reader.ReadVector3(),
+                    reader.ReadVector3(),
+                    reader.ReadColor(),
+                    reader.ReadString()
+                );
             case ComponentHealthPackage.EventType.SyncHealth:
-                return new ComponentHealthPackage { Type = type, TargetId = reader.ReadInt32(), Health = reader.ReadSingle(), Cause = reader.ReadString() };
+                return new ComponentHealthPackage
+                {
+                    Type = type, TargetId = reader.ReadInt32(), Health = reader.ReadSingle(),
+                    Cause = reader.ReadString()
+                };
             case ComponentHealthPackage.EventType.Damage:
-                return new ComponentHealthPackage { Type = type, TargetId = reader.ReadInt32(), Health = reader.ReadSingle() };
+                return new ComponentHealthPackage
+                    { Type = type, TargetId = reader.ReadInt32(), Health = reader.ReadSingle() };
             default: throw new InvalidDataException("Unknown health message mode.");
         }
     }

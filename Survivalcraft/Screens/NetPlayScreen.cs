@@ -10,57 +10,85 @@ public sealed class NetPlayScreen : Screen
 {
     private enum ServerAction
     {
-        Connect,
-        JoinCode,
-        Add,
-        Favorite,
-        Refresh,
-        Delete,
+        Connect = 0,
+
+        JoinCode = 1,
+
+        Add = 2,
+
+        Favorite = 3,
+
+        Refresh = 4,
+
+        Delete = 5,
     }
 
     private enum ServerSortOrder
     {
-        None,
-        Ping,
-        Players,
-        Name
+        None = 0,
+
+        Ping = 1,
+
+        Players = 2,
+
+        Name = 3
     }
 
     private enum SourceCategory
     {
-        Local,
-        Lan,
-        External,
-        Rendezvous
+        Local = 0,
+
+        Lan = 1,
+
+        External = 2,
+
+        Rendezvous = 3
     }
 
     private sealed record SourceFilterOption(
         IServerSource? Source,
         LocalServerTag Tag = LocalServerTag.None,
-        InstalledRendezvousService? Rendezvous = null);
+        InstalledRendezvousService? Rendezvous = null
+    );
 
     private sealed record ServerLoadResult(IReadOnlyList<ServerItem> Items, bool HadSourceErrors);
 
     private static readonly HttpClient _connectionHttp = new();
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly ServerDiscoveryService _discoveryService = new();
+
     private readonly TextBoxWidget _searchTextBox;
+
     private readonly LabelWidget _searchPlaceholder;
+
     private readonly ListPanelWidget _serverList;
+
     private readonly SelectionDrawerWidget _sourceCategoryDrawer;
+
     private readonly SelectionDrawerWidget _sourceDrawer;
+
     private readonly SelectionDrawerWidget _sortDrawer;
+
     private readonly LabelWidget _statusLabel;
+
     private CancellationTokenSource? _refreshCancellation;
+
     private CancellationTokenSource? _connectionCancellation;
+
     private IReadOnlyList<ServerItem> _loadedServers = [];
+
     private IReadOnlyList<RendezvousRoom> _loadedRooms = [];
 
     private bool IsRoomCategory => _sourceCategoryDrawer.SelectedItem is SourceCategory.Rendezvous;
+
     private IReadOnlyList<IServerSource> _sources = [];
+
     private bool _busy;
+
     private bool _hadSourceErrors;
+
     private bool _updatingSourceOptions;
 
     public NetPlayScreen()
@@ -112,7 +140,8 @@ public sealed class NetPlayScreen : Screen
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
             [ServerAction.Connect, ServerAction.Add, ServerAction.Favorite, ServerAction.Refresh],
-            [3f, 2f, 2f, 2f]);
+            [3f, 2f, 2f, 2f]
+        );
         _actionPanel.SetSecondaryItems([ServerAction.JoinCode, ServerAction.Delete]);
 
         GameEntry.HandleUri += uri =>
@@ -177,19 +206,27 @@ public sealed class NetPlayScreen : Screen
                 Margin = new Vector2(12f, 0f),
                 VerticalAlignment = WidgetAlignment.Center
             };
-            row.Children.Add(new LabelWidget
-            { Text = room.Summary.Name, FontScale = 0.8f, Ellipsis = true, MaxLines = 1 });
-            row.Children.Add(new LabelWidget
-            {
-                Text = $"{room.ServiceName} | {room.Summary.JoinCode} | " +
-                       string.Join(" / ", room.Summary.ConnectionMethods.Select(method =>
-                           Text(method == "holePunch" ? "RoomHolePunch" : "RoomRelay"))) +
-                       $" | {room.Summary.Description}",
-                FontScale = 0.55f,
-                Color = new Color(170, 170, 170),
-                Ellipsis = true,
-                MaxLines = 1
-            });
+            row.Children.Add(
+                new LabelWidget
+                    { Text = room.Summary.Name, FontScale = 0.8f, Ellipsis = true, MaxLines = 1 }
+            );
+            row.Children.Add(
+                new LabelWidget
+                {
+                    Text = $"{room.ServiceName} | {room.Summary.JoinCode} | " +
+                           string.Join(
+                               " / ",
+                               room.Summary.ConnectionMethods.Select(method =>
+                                   Text(method == "holePunch" ? "RoomHolePunch" : "RoomRelay")
+                               )
+                           ) +
+                           $" | {room.Summary.Description}",
+                    FontScale = 0.55f,
+                    Color = new Color(170, 170, 170),
+                    Ellipsis = true,
+                    MaxLines = 1
+                }
+            );
             return row;
         }
 
@@ -337,104 +374,125 @@ public sealed class NetPlayScreen : Screen
         ApplyView();
         Task.Run(() => LoadRoomsAsync(services, cancellation.Token), cancellation.Token)
             .ContinueWith(task => Dispatcher.Dispatch(() =>
-            {
-                if (!ReferenceEquals(_refreshCancellation, cancellation))
-                {
-                    _ = task.Exception;
-                    cancellation.Dispose();
-                    return;
-                }
+                    {
+                        if (!ReferenceEquals(_refreshCancellation, cancellation))
+                        {
+                            _ = task.Exception;
+                            cancellation.Dispose();
+                            return;
+                        }
 
-                _refreshCancellation = null;
-                var canceled = cancellation.IsCancellationRequested;
-                cancellation.Dispose();
-                _busy = false;
-                if (canceled)
-                {
-                    _ = task.Exception;
-                    return;
-                }
+                        _refreshCancellation = null;
+                        var canceled = cancellation.IsCancellationRequested;
+                        cancellation.Dispose();
+                        _busy = false;
+                        if (canceled)
+                        {
+                            _ = task.Exception;
+                            return;
+                        }
 
-                if (task.IsCompletedSuccessfully)
-                {
-                    _loadedRooms = task.Result.Rooms;
-                    _hadSourceErrors = task.Result.HadErrors;
-                }
-                else
-                {
-                    _hadSourceErrors = true;
-                    Log.Warning($"Could not load signaling rooms: {task.Exception?.GetBaseException().Message}");
-                }
+                        if (task.IsCompletedSuccessfully)
+                        {
+                            _loadedRooms = task.Result.Rooms;
+                            _hadSourceErrors = task.Result.HadErrors;
+                        }
+                        else
+                        {
+                            _hadSourceErrors = true;
+                            Log.Warning(
+                                $"Could not load signaling rooms: {task.Exception?.GetBaseException().Message}"
+                            );
+                        }
 
-                ApplyView();
-            }));
+                        ApplyView();
+                    }
+                )
+            );
     }
 
     private async Task<(IReadOnlyList<RendezvousRoom> Rooms, bool HadErrors)> LoadRoomsAsync(
-        IReadOnlyList<InstalledRendezvousService> services, CancellationToken cancellationToken)
+        IReadOnlyList<InstalledRendezvousService> services,
+        CancellationToken cancellationToken
+    )
     {
         using var concurrency = new SemaphoreSlim(8);
-        var results = await Task.WhenAll(services.Select(async service =>
-        {
-            await concurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
-            {
-                return (Rooms: await RendezvousRoomDirectory.LoadAsync(_connectionHttp, service, cancellationToken)
-                    .ConfigureAwait(false), Failed: false);
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (Exception exception)
-            {
-                Log.Warning($"Could not load signaling rooms from '{service.Name}': {exception.Message}");
-                return (Rooms: Array.Empty<RendezvousRoom>(), Failed: true);
-            }
-            finally
-            {
-                concurrency.Release();
-            }
-        })).ConfigureAwait(false);
+        var results = await Task.WhenAll(
+            services.Select(async service =>
+                {
+                    await concurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        return (Rooms: await RendezvousRoomDirectory
+                            .LoadAsync(_connectionHttp, service, cancellationToken)
+                            .ConfigureAwait(false), Failed: false);
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception exception)
+                    {
+                        Log.Warning($"Could not load signaling rooms from '{service.Name}': {exception.Message}");
+                        return (Rooms: Array.Empty<RendezvousRoom>(), Failed: true);
+                    }
+                    finally
+                    {
+                        concurrency.Release();
+                    }
+                }
+            )
+        ).ConfigureAwait(false);
         return (results.SelectMany(result => result.Rooms).ToArray(), results.Any(result => result.Failed));
     }
 
-    private async Task<ServerLoadResult> LoadAndProbeAsync(IReadOnlyList<IServerSource> sources,
-        CancellationToken cancellationToken)
+    private async Task<ServerLoadResult> LoadAndProbeAsync(
+        IReadOnlyList<IServerSource> sources,
+        CancellationToken cancellationToken
+    )
     {
-        var sourceResults = await Task.WhenAll(sources.Select(async source =>
-        {
-            try
-            {
-                return (Items: await source.LoadAsync(cancellationToken).ConfigureAwait(false), Failed: false);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception exception)
-            {
-                Log.Warning($"Could not load server source '{source.Name}': {exception.Message}");
-                return (Items: [], Failed: true);
-            }
-        })).ConfigureAwait(false);
+        var sourceResults = await Task.WhenAll(
+            sources.Select(async source =>
+                {
+                    try
+                    {
+                        return (Items: await source.LoadAsync(cancellationToken).ConfigureAwait(false), Failed: false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception exception)
+                    {
+                        Log.Warning($"Could not load server source '{source.Name}': {exception.Message}");
+                        return (Items: [], Failed: true);
+                    }
+                }
+            )
+        ).ConfigureAwait(false);
         var items = sourceResults.SelectMany(result => result.Items).ToArray();
 
         using var concurrency = new SemaphoreSlim(8);
-        await Task.WhenAll(items.Where(item => item.SourceKind != ServerSourceKind.Lan).Select(async item =>
-        {
-            await concurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
-            {
-                item.RuntimeStatus = new ServerRuntimeStatus { Availability = ServerAvailability.Checking };
-                item.RuntimeStatus = await _discoveryService.ProbeAsync(item.Address, TimeSpan.FromMilliseconds(800),
-                    cancellationToken).ConfigureAwait(false);
-            }
-            finally
-            {
-                concurrency.Release();
-            }
-        })).ConfigureAwait(false);
+        await Task.WhenAll(
+            items.Where(item => item.SourceKind != ServerSourceKind.Lan).Select(async item =>
+                {
+                    await concurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        item.RuntimeStatus = new ServerRuntimeStatus { Availability = ServerAvailability.Checking };
+                        item.RuntimeStatus = await _discoveryService.ProbeAsync(
+                            item.Address,
+                            TimeSpan.FromMilliseconds(800),
+                            cancellationToken
+                        ).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        concurrency.Release();
+                    }
+                }
+            )
+        ).ConfigureAwait(false);
         return new ServerLoadResult(items, sourceResults.Any(result => result.Failed));
     }
 
@@ -479,7 +537,8 @@ public sealed class NetPlayScreen : Screen
             var rooms = _loadedRooms.Where(room =>
                 room.Summary.Name.Contains(searchText, StringComparison.CurrentCultureIgnoreCase) ||
                 room.Summary.Description.Contains(searchText, StringComparison.CurrentCultureIgnoreCase) ||
-                room.Summary.JoinCode.Contains(searchText, StringComparison.Ordinal));
+                room.Summary.JoinCode.Contains(searchText, StringComparison.Ordinal)
+            );
             if (_sortDrawer.SelectedItem is ServerSortOrder.Name)
             {
                 rooms = rooms.OrderBy(room => room.Summary.Name, StringComparer.CurrentCultureIgnoreCase);
@@ -493,8 +552,10 @@ public sealed class NetPlayScreen : Screen
             }
 
             _serverList.SelectedItem = visible.FirstOrDefault(room =>
-                selectedRoom is not null && room.Summary.Id == selectedRoom.Summary.Id &&
-                room.ControlUrl == selectedRoom.ControlUrl);
+                selectedRoom is not null &&
+                room.Summary.Id == selectedRoom.Summary.Id &&
+                room.ControlUrl == selectedRoom.ControlUrl
+            );
             _statusLabel.Text = _busy
                 ? Text("Loading")
                 : _hadSourceErrors
@@ -535,8 +596,10 @@ public sealed class NetPlayScreen : Screen
             ServerSortOrder.Players => servers
                 .OrderBy(server => server.RuntimeStatus.Availability == ServerAvailability.Available ? 0 : 1)
                 .ThenByDescending(server => server.RuntimeStatus.PlayerCount),
-            ServerSortOrder.Name => servers.OrderBy(server => server.DisplayName,
-                StringComparer.CurrentCultureIgnoreCase),
+            ServerSortOrder.Name => servers.OrderBy(
+                server => server.DisplayName,
+                StringComparer.CurrentCultureIgnoreCase
+            ),
             _ => servers
         };
 
@@ -567,7 +630,8 @@ public sealed class NetPlayScreen : Screen
                GetSourceName(server.SourceKind, server.SourceName)
                    .Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
                GetLocalTagNames(server.LocalTags).Any(name =>
-                   name.Contains(search, StringComparison.CurrentCultureIgnoreCase)) ||
+                   name.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+               ) ||
                server.Description.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
                server.Tags.Any(tag => tag.Contains(search, StringComparison.CurrentCultureIgnoreCase));
     }
@@ -632,36 +696,52 @@ public sealed class NetPlayScreen : Screen
 
     private void ShowJoinCodeDialog()
     {
-        DialogsManager.ShowDialog(this, new JoinCodeDialog(SettingsManager.Current.InvitationRelayPolicy,
-            ConnectToRemoteSession));
+        DialogsManager.ShowDialog(
+            this,
+            new JoinCodeDialog(
+                SettingsManager.Current.InvitationRelayPolicy,
+                ConnectToRemoteSession
+            )
+        );
     }
 
     private void ShowAddDialog()
     {
-        DialogsManager.ShowDialog(null, new ContentRepositoryDialog(Text("AddTitle"), Text("NameLabel"),
-            Text("AddressLabel"), Text("Add"), string.Empty, string.Empty, (name, address) =>
-            {
-                try
+        DialogsManager.ShowDialog(
+            null,
+            new ContentRepositoryDialog(
+                Text("AddTitle"),
+                Text("NameLabel"),
+                Text("AddressLabel"),
+                Text("Add"),
+                string.Empty,
+                string.Empty,
+                (name, address) =>
                 {
-                    var normalizedAddress = ServerAddress.Normalize(address);
-                    if (ServerDirectoryManager.Current.Snapshot().LocalServers.Any(entry =>
-                            entry.Address == normalizedAddress &&
-                            entry.Tags.HasFlag(LocalServerTag.MyServer)))
+                    try
                     {
-                        DialogsManager.Alert(Text("DuplicateLocalServer"));
+                        var normalizedAddress = ServerAddress.Normalize(address);
+                        if (ServerDirectoryManager.Current.Snapshot().LocalServers.Any(entry =>
+                                entry.Address == normalizedAddress &&
+                                entry.Tags.HasFlag(LocalServerTag.MyServer)
+                            ))
+                        {
+                            DialogsManager.Alert(Text("DuplicateLocalServer"));
+                            return false;
+                        }
+
+                        ServerDirectoryManager.Current.AddMyServer(name, address);
+                        SelectLocalTagAndRefresh(LocalServerTag.MyServer);
+                        return true;
+                    }
+                    catch (ArgumentException)
+                    {
+                        DialogsManager.Alert(Text("InvalidServer"));
                         return false;
                     }
-
-                    ServerDirectoryManager.Current.AddMyServer(name, address);
-                    SelectLocalTagAndRefresh(LocalServerTag.MyServer);
-                    return true;
                 }
-                catch (ArgumentException)
-                {
-                    DialogsManager.Alert(Text("InvalidServer"));
-                    return false;
-                }
-            }));
+            )
+        );
     }
 
     private void ToggleFavorite(ServerItem server)
@@ -698,17 +778,20 @@ public sealed class NetPlayScreen : Screen
             return;
         }
 
-        DialogsManager.Confirm(string.Format(Text("ConfirmDelete"), server.DisplayName), button =>
-        {
-            if (button == MessageDialogButton.Button1)
+        DialogsManager.Confirm(
+            string.Format(Text("ConfirmDelete"), server.DisplayName),
+            button =>
             {
-                if (server.SourceKind == ServerSourceKind.Local)
+                if (button == MessageDialogButton.Button1)
                 {
-                    ServerDirectoryManager.Current.DeleteLocalServer(id);
-                    RefreshSelectedSource();
+                    if (server.SourceKind == ServerSourceKind.Local)
+                    {
+                        ServerDirectoryManager.Current.DeleteLocalServer(id);
+                        RefreshSelectedSource();
+                    }
                 }
             }
-        });
+        );
     }
 
     private void ConnectSelected()
@@ -745,38 +828,47 @@ public sealed class NetPlayScreen : Screen
         busyDialog.CancelRequested += cancellation.Cancel;
         var cancellationToken = cancellation.Token;
         DialogsManager.ShowDialog(null, busyDialog);
-        Task.Run(() => ServerConnectionPreparation.PrepareAsync(target, _connectionHttp, cancellationToken),
-                cancellationToken)
+        Task.Run(
+                () => ServerConnectionPreparation.PrepareAsync(target, _connectionHttp, cancellationToken),
+                cancellationToken
+            )
             .ContinueWith(task => Dispatcher.Dispatch(() =>
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    _ = task.Exception;
-                    if (task.IsCompletedSuccessfully)
                     {
-                        ReleasePrepared(task.Result, () => FinishConnectionPreparation(busyDialog, cancellation));
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            _ = task.Exception;
+                            if (task.IsCompletedSuccessfully)
+                            {
+                                ReleasePrepared(
+                                    task.Result,
+                                    () => FinishConnectionPreparation(busyDialog, cancellation)
+                                );
+                            }
+                            else
+                            {
+                                FinishConnectionPreparation(busyDialog, cancellation);
+                            }
+
+                            return;
+                        }
+
+                        if (!task.IsCompletedSuccessfully)
+                        {
+                            FinishConnectionPreparation(busyDialog, cancellation);
+                            var exception = task.Exception?.GetBaseException();
+                            Log.Warning($"Server connection preparation failed: {exception?.Message}");
+                            DialogsManager.Alert(
+                                exception is RendezvousException failure
+                                    ? Text($"SignalError_{failure.Kind}")
+                                    : exception?.Message ?? Text("LoadFailed")
+                            );
+                            return;
+                        }
+
+                        PrepareRemoteSessionAndConnect(task.Result, busyDialog, cancellation);
                     }
-                    else
-                    {
-                        FinishConnectionPreparation(busyDialog, cancellation);
-                    }
-
-                    return;
-                }
-
-                if (!task.IsCompletedSuccessfully)
-                {
-                    FinishConnectionPreparation(busyDialog, cancellation);
-                    var exception = task.Exception?.GetBaseException();
-                    Log.Warning($"Server connection preparation failed: {exception?.Message}");
-                    DialogsManager.Alert(exception is RendezvousException failure
-                        ? Text($"SignalError_{failure.Kind}")
-                        : exception?.Message ?? Text("LoadFailed"));
-                    return;
-                }
-
-                PrepareRemoteSessionAndConnect(task.Result, busyDialog, cancellation);
-            }));
+                )
+            );
     }
 
     private void FinishConnectionPreparation(CancellableBusyDialog dialog, CancellationTokenSource cancellation)
@@ -797,8 +889,10 @@ public sealed class NetPlayScreen : Screen
         {
             var normalized = ServerAddress.Normalize(address);
             var uri = new Uri("tcp://" + normalized);
-            var target = new AddressNetworkTarget(uri.DnsSafeHost,
-                uri.Port > 0 ? uri.Port : SettingsManager.Current.ServerPort);
+            var target = new AddressNetworkTarget(
+                uri.DnsSafeHost,
+                uri.Port > 0 ? uri.Port : SettingsManager.Current.ServerPort
+            );
             ServerDirectoryManager.Current.RecordConnectionAttempt(name, normalized, DateTimeOffset.UtcNow);
             ConnectToRemoteSession(target);
         }
@@ -837,8 +931,10 @@ public sealed class NetPlayScreen : Screen
             ],
             SourceCategory.Lan => [new SourceFilterOption(null)],
             SourceCategory.Rendezvous => new[] { new SourceFilterOption(null) }
-                .Concat(RendezvousManager.Current.Snapshot().Where(service => service.IsEnabled)
-                    .Select(service => new SourceFilterOption(null, Rendezvous: service))).ToArray(),
+                .Concat(
+                    RendezvousManager.Current.Snapshot().Where(service => service.IsEnabled)
+                        .Select(service => new SourceFilterOption(null, Rendezvous: service))
+                ).ToArray(),
             _ => new[] { new SourceFilterOption(null) }
                 .Concat(GetCategorySources().Select(source => new SourceFilterOption(source))).ToArray()
         };
@@ -848,13 +944,16 @@ public sealed class NetPlayScreen : Screen
             _sourceDrawer.SetItems(options);
             _sourceDrawer.SelectedItem = options.FirstOrDefault(option => option.Source?.Id == selectedId &&
                                                                           option.Tag == selectedTag &&
-                                                                          option.Rendezvous?.Id == selectedServiceId) ??
+                                                                          option.Rendezvous?.Id == selectedServiceId
+                                         ) ??
                                          options[0];
             _sourceDrawer.IsEnabled = options.Length > 1;
             var sort = _sortDrawer.SelectedItem as ServerSortOrder? ?? ServerSortOrder.None;
-            _sortDrawer.SetItems(IsRoomCategory
-                ? new object[] { ServerSortOrder.None, ServerSortOrder.Name }
-                : Enum.GetValues<ServerSortOrder>().Cast<object>().ToArray());
+            _sortDrawer.SetItems(
+                IsRoomCategory
+                    ? new object[] { ServerSortOrder.None, ServerSortOrder.Name }
+                    : Enum.GetValues<ServerSortOrder>().Cast<object>().ToArray()
+            );
             _sortDrawer.SelectedItem = IsRoomCategory && sort is not (ServerSortOrder.None or ServerSortOrder.Name)
                 ? ServerSortOrder.None
                 : sort;
@@ -884,7 +983,8 @@ public sealed class NetPlayScreen : Screen
             return string.Empty;
         }
 
-        if (action == ServerAction.Favorite && _serverList.SelectedItem is ServerItem selected &&
+        if (action == ServerAction.Favorite &&
+            _serverList.SelectedItem is ServerItem selected &&
             IsFavorite(selected))
         {
             return Text("Unfavorite");
@@ -971,11 +1071,15 @@ public sealed class NetPlayScreen : Screen
 
         var address = ServerAddress.Normalize(server.Address);
         return ServerDirectoryManager.Current.Snapshot().LocalServers.Any(entry =>
-            entry.Address == address && entry.Tags.HasFlag(LocalServerTag.Favorite));
+            entry.Address == address && entry.Tags.HasFlag(LocalServerTag.Favorite)
+        );
     }
 
-    private void PrepareRemoteSessionAndConnect(ServerConnectionPreparation prepared, CancellableBusyDialog busyDialog,
-        CancellationTokenSource cancellation)
+    private void PrepareRemoteSessionAndConnect(
+        ServerConnectionPreparation prepared,
+        CancellableBusyDialog busyDialog,
+        CancellationTokenSource cancellation
+    )
     {
         var requiredProfile = prepared.Status.RequiredModProfile;
         if (requiredProfile is null)
@@ -988,65 +1092,81 @@ public sealed class NetPlayScreen : Screen
         busyDialog.SmallMessage = Text("CheckingMods");
         var cancellationToken = cancellation.Token;
         Task.Run(() => ModRestartHelper.PrepareRemoteSession(
-                SessionInfoManager.CreateRemoteClientSession(prepared.Target),
-                requiredProfile, prepared.Status.TemporaryRepositories, cancellationToken,
-                message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message)))
+                    SessionInfoManager.CreateRemoteClientSession(prepared.Target),
+                    requiredProfile,
+                    prepared.Status.TemporaryRepositories,
+                    cancellationToken,
+                    message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message)
+                )
+            )
             .ContinueWith(task => Dispatcher.Dispatch(() =>
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    _ = task.Exception;
-                    ReleasePrepared(prepared, () => FinishConnectionPreparation(busyDialog, cancellation));
-                    return;
-                }
-
-                if (!task.IsCompletedSuccessfully)
-                {
-                    ReleasePrepared(prepared, () =>
                     {
-                        FinishConnectionPreparation(busyDialog, cancellation);
-                        if (!cancellationToken.IsCancellationRequested)
-                        {
-                            Log.Error($"Remote mod session preparation failed: {task.Exception}");
-                            DialogsManager.Alert(Text("ModPreparationFailed"));
-                        }
-                        else
+                        if (cancellationToken.IsCancellationRequested)
                         {
                             _ = task.Exception;
+                            ReleasePrepared(prepared, () => FinishConnectionPreparation(busyDialog, cancellation));
+                            return;
                         }
-                    });
-                    return;
-                }
 
-                if (!task.Result.RequiresRestart)
-                {
-                    FinishConnectionPreparation(busyDialog, cancellation);
-                    ConnectPreparedRemoteSession(prepared);
-                    return;
-                }
+                        if (!task.IsCompletedSuccessfully)
+                        {
+                            ReleasePrepared(
+                                prepared,
+                                () =>
+                                {
+                                    FinishConnectionPreparation(busyDialog, cancellation);
+                                    if (!cancellationToken.IsCancellationRequested)
+                                    {
+                                        Log.Error($"Remote mod session preparation failed: {task.Exception}");
+                                        DialogsManager.Alert(Text("ModPreparationFailed"));
+                                    }
+                                    else
+                                    {
+                                        _ = task.Exception;
+                                    }
+                                }
+                            );
+                            return;
+                        }
 
-                ReleasePrepared(prepared, () =>
-                {
-                    FinishConnectionPreparation(busyDialog, cancellation);
-                    if (!cancellationToken.IsCancellationRequested)
-                    {
-                        ConfirmRemoteModRestart(task.Result);
+                        if (!task.Result.RequiresRestart)
+                        {
+                            FinishConnectionPreparation(busyDialog, cancellation);
+                            ConnectPreparedRemoteSession(prepared);
+                            return;
+                        }
+
+                        ReleasePrepared(
+                            prepared,
+                            () =>
+                            {
+                                FinishConnectionPreparation(busyDialog, cancellation);
+                                if (!cancellationToken.IsCancellationRequested)
+                                {
+                                    ConfirmRemoteModRestart(task.Result);
+                                }
+                            }
+                        );
                     }
-                });
-            }));
+                )
+            );
     }
 
     private static void ReleasePrepared(ServerConnectionPreparation prepared, Action completed)
     {
         Task.Run(async () => await prepared.DisposeAsync()).ContinueWith(task => Dispatcher.Dispatch(() =>
-        {
-            if (task.IsFaulted)
-            {
-                Log.Warning($"Could not release server preparation: {task.Exception!.GetBaseException().Message}");
-            }
+                {
+                    if (task.IsFaulted)
+                    {
+                        Log.Warning(
+                            $"Could not release server preparation: {task.Exception!.GetBaseException().Message}"
+                        );
+                    }
 
-            completed();
-        }));
+                    completed();
+                }
+            )
+        );
     }
 
     private static void ConnectPreparedRemoteSession(ServerConnectionPreparation prepared)
@@ -1057,15 +1177,22 @@ public sealed class NetPlayScreen : Screen
 
     private static void ConfirmRemoteModRestart(RemoteModSessionPreparation result)
     {
-        DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.GetContentWidgets(nameof(PlayScreen), 16),
-            string.Format(LanguageManager.GetContentWidgets(nameof(PlayScreen), 17), result.RestartReason),
-            LanguageManager.GetContentWidgets(nameof(PlayScreen), 18), LanguageManager.Get("Usual", "cancel"), button =>
-            {
-                if (button == MessageDialogButton.Button1)
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                LanguageManager.GetContentWidgets(nameof(PlayScreen), 16),
+                string.Format(LanguageManager.GetContentWidgets(nameof(PlayScreen), 17), result.RestartReason),
+                LanguageManager.GetContentWidgets(nameof(PlayScreen), 18),
+                LanguageManager.Get("Usual", "cancel"),
+                button =>
                 {
-                    GameExitManager.RequestRestart(result.RemoteSession!, result.SessionProfile!);
+                    if (button == MessageDialogButton.Button1)
+                    {
+                        GameExitManager.RequestRestart(result.RemoteSession!, result.SessionProfile!);
+                    }
                 }
-            }));
+            )
+        );
     }
 
     private static string Text(string key)

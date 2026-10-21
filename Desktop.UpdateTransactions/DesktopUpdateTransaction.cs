@@ -11,13 +11,16 @@ public static class DesktopUpdateTransaction
         }
 
         var work = Path.GetDirectoryName(taskPath)!;
-        var manifest = DesktopReleaseManifest.Read(Path.Combine(work, "staged", DesktopReleaseManifest.FileName),
-            task.Platform);
+        var manifest = DesktopReleaseManifest.Read(
+            Path.Combine(work, "staged", DesktopReleaseManifest.FileName),
+            task.Platform
+        );
         DesktopUpdateProcesses.RequireOtherInstancesStopped(task.TargetDirectory, Environment.ProcessId);
         try
         {
             Directory.CreateDirectory(Path.Combine(work, "backup"));
-            task.OriginalFiles = task.Files.Where(file => File.Exists(Path.Combine(task.TargetDirectory, file))).ToList();
+            task.OriginalFiles = task.Files.Where(file => File.Exists(Path.Combine(task.TargetDirectory, file)))
+                .ToList();
             foreach (var file in task.OriginalFiles)
             {
                 File.Copy(Path.Combine(task.TargetDirectory, file), Path.Combine(work, "backup", file), true);
@@ -51,8 +54,11 @@ public static class DesktopUpdateTransaction
                 }
                 catch (Exception rollbackFailure)
                 {
-                    throw new AggregateException("Update and rollback failed; recovery files were retained.",
-                        failure, rollbackFailure);
+                    throw new AggregateException(
+                        "Update and rollback failed; recovery files were retained.",
+                        failure,
+                        rollbackFailure
+                    );
                 }
             }
             else if (task.State != DesktopUpdateState.Completed)

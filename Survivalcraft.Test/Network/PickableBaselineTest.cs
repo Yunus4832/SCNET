@@ -27,8 +27,11 @@ public sealed class PickableBaselineTest
         Assert.Null(pickable.FlyToPosition);
         Assert.False(pickable.ToRemove);
 
-        SubsystemPickables.ApplyMotionSnapshot(pickable,
-            new PickablePosition(0, Vector3.Zero), 10);
+        SubsystemPickables.ApplyMotionSnapshot(
+            pickable,
+            new PickablePosition(0, Vector3.Zero),
+            10
+        );
         Assert.Equal(snapshot.Position, pickable.NetworkPosition);
         Assert.Null(pickable.FlyToPosition);
         SubsystemPickables.UpdateClientPosition(pickable, 0.1f);
@@ -51,8 +54,10 @@ public sealed class PickableBaselineTest
             StuckMatrix = Matrix.Identity
         };
 
-        PickablePackageHandler.ApplyBaseline(pickable,
-            PickablePackageBuilder.Capture(authoritative, PickablePackage.PickType.Create) with { StateTick = 42 });
+        PickablePackageHandler.ApplyBaseline(
+            pickable,
+            PickablePackageBuilder.Capture(authoritative, PickablePackage.PickType.Create) with { StateTick = 42 }
+        );
 
         Assert.Equal(authoritative.Id, pickable.Id);
         Assert.Equal(authoritative.Value, pickable.Value);

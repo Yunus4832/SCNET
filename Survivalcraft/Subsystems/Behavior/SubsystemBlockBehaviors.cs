@@ -18,12 +18,18 @@ public class SubsystemBlockBehaviors : Subsystem
     public override void Load(ValuesDictionary valuesDictionary)
     {
         _blockBehaviors.AddRange(Project.FindSubsystems<SubsystemBlockBehavior>());
-        _blockBehaviorsByContents = BuildTable(CurrentModRuntime.Value!.RequireWorldCatalog(), _blockBehaviors,
-            name => Project.FindSubsystem<SubsystemBlockBehavior>(name, true)!);
+        _blockBehaviorsByContents = BuildTable(
+            CurrentModRuntime.Value!.RequireWorldCatalog(),
+            _blockBehaviors,
+            name => Project.FindSubsystem<SubsystemBlockBehavior>(name, true)!
+        );
     }
 
-    internal static SubsystemBlockBehavior[][] BuildTable(BlockContentCatalog catalog,
-        IEnumerable<SubsystemBlockBehavior> behaviors, Func<string, SubsystemBlockBehavior> findByName)
+    internal static SubsystemBlockBehavior[][] BuildTable(
+        BlockContentCatalog catalog,
+        IEnumerable<SubsystemBlockBehavior> behaviors,
+        Func<string, SubsystemBlockBehavior> findByName
+    )
     {
         var table = Enumerable.Range(0, BlockRuntimeCatalog.Capacity)
             .Select(_ => new List<SubsystemBlockBehavior>()).ToArray();

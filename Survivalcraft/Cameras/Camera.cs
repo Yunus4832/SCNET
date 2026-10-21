@@ -42,24 +42,40 @@ public abstract class Camera(GameWidget gameWidget)
     {
         if (!Eye.HasValue)
         {
-            return new Viewport(0, 0, Window.Size.X, Window.Size.Y).Project(worldPoint, ScreenProjectionMatrix,
-                ViewMatrix, worldMatrix);
+            return new Viewport(0, 0, Window.Size.X, Window.Size.Y).Project(
+                worldPoint,
+                ScreenProjectionMatrix,
+                ViewMatrix,
+                worldMatrix
+            );
         }
 
-        return new Viewport(0, 0, (int)ViewportSize.X, (int)ViewportSize.Y).Project(worldPoint, ScreenProjectionMatrix,
-            ViewMatrix, worldMatrix);
+        return new Viewport(0, 0, (int)ViewportSize.X, (int)ViewportSize.Y).Project(
+            worldPoint,
+            ScreenProjectionMatrix,
+            ViewMatrix,
+            worldMatrix
+        );
     }
 
     public Vector3 ScreenToWorld(Vector3 screenPoint, Matrix worldMatrix)
     {
         if (!Eye.HasValue)
         {
-            return new Viewport(0, 0, Window.Size.X, Window.Size.Y).Unproject(screenPoint, ScreenProjectionMatrix,
-                ViewMatrix, worldMatrix);
+            return new Viewport(0, 0, Window.Size.X, Window.Size.Y).Unproject(
+                screenPoint,
+                ScreenProjectionMatrix,
+                ViewMatrix,
+                worldMatrix
+            );
         }
 
-        return new Viewport(0, 0, (int)ViewportSize.X, (int)ViewportSize.Y).Unproject(screenPoint,
-            ScreenProjectionMatrix, ViewMatrix, worldMatrix);
+        return new Viewport(0, 0, (int)ViewportSize.X, (int)ViewportSize.Y).Unproject(
+            screenPoint,
+            ScreenProjectionMatrix,
+            ViewMatrix,
+            worldMatrix
+        );
     }
 
     public virtual void Activate(Camera previousCamera)

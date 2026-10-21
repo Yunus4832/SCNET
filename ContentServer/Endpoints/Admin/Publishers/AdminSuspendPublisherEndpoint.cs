@@ -40,12 +40,17 @@ public sealed class AdminSuspendPublisherEndpoint(
     private async Task<ResponseData> SuspendPublisherCore(
         string id,
         string? message,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var result = await mediator.Send(new SuspendPublisherCommand(
-            new PublisherId(ParseId(id)),
-            authenticationContext.RequireAdministratorId(),
-            message), cancellationToken);
+        var result = await mediator.Send(
+            new SuspendPublisherCommand(
+                new PublisherId(ParseId(id)),
+                authenticationContext.RequireAdministratorId(),
+                message
+            ),
+            cancellationToken
+        );
         EnsureReviewCompleted(result, "publisher_not_found", "publisher_cannot_be_suspended");
         return Success();
     }
@@ -60,7 +65,8 @@ public sealed class AdminSuspendPublisherEndpoint(
     private static void EnsureReviewCompleted(
         ReviewPublisherResult result,
         string notFoundMessage,
-        string invalidStateMessage)
+        string invalidStateMessage
+    )
     {
         if (result == ReviewPublisherResult.NotFound)
         {

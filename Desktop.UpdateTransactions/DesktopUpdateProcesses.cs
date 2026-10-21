@@ -15,8 +15,9 @@ public static class DesktopUpdateProcesses
         try
         {
             using var process = Process.GetProcessById(pid);
-            return !process.HasExited && Math.Abs(process.StartTime.ToUniversalTime().Ticks - startTimeTicks) <
-                TimeSpan.TicksPerSecond;
+            return !process.HasExited &&
+                   Math.Abs(process.StartTime.ToUniversalTime().Ticks - startTimeTicks) <
+                   TimeSpan.TicksPerSecond;
         }
         catch (ArgumentException)
         {

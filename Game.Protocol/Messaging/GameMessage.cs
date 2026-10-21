@@ -6,7 +6,8 @@ public sealed record GameMessage(
     string SenderName,
     MessageContent Content,
     GameMessageTone Tone = GameMessageTone.Normal,
-    GameMessagePresentation Presentation = GameMessagePresentation.Default)
+    GameMessagePresentation Presentation = GameMessagePresentation.Default
+)
 {
     public string LocalizationSection { get; init; } = string.Empty;
 
@@ -17,20 +18,23 @@ public sealed record GameMessage(
     public static GameMessage Chat(
         GameMessageChannel channel,
         string senderName,
-        string text) =>
+        string text
+    ) =>
         new(GameMessageKind.Chat, channel, senderName, MessageContent.Plain(text));
 
     public static GameMessage System(
         string text,
         GameMessageTone tone = GameMessageTone.Normal,
-        GameMessagePresentation presentation = GameMessagePresentation.Default) =>
+        GameMessagePresentation presentation = GameMessagePresentation.Default
+    ) =>
         new(
             GameMessageKind.System,
             GameMessageChannel.Global,
             string.Empty,
             MessageContent.Plain(text),
             tone,
-            presentation);
+            presentation
+        );
 
     public static GameMessage Sign(IEnumerable<MessageSegment> segments) =>
         new(
@@ -38,19 +42,22 @@ public sealed record GameMessage(
             GameMessageChannel.Global,
             string.Empty,
             new MessageContent(segments),
-            Presentation: GameMessagePresentation.Toast);
+            Presentation: GameMessagePresentation.Toast
+        );
 
     public static GameMessage System(
         IEnumerable<MessageSegment> segments,
         GameMessageTone tone = GameMessageTone.Normal,
-        GameMessagePresentation presentation = GameMessagePresentation.Default) =>
+        GameMessagePresentation presentation = GameMessagePresentation.Default
+    ) =>
         new(
             GameMessageKind.System,
             GameMessageChannel.Global,
             string.Empty,
             new MessageContent(segments),
             tone,
-            presentation);
+            presentation
+        );
 
     public static GameMessage Command(string text, bool success) =>
         new(
@@ -58,5 +65,6 @@ public sealed record GameMessage(
             GameMessageChannel.Global,
             string.Empty,
             MessageContent.Plain(text),
-            success ? GameMessageTone.Success : GameMessageTone.Error);
+            success ? GameMessageTone.Success : GameMessageTone.Error
+        );
 }

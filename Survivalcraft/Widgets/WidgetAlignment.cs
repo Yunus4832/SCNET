@@ -2,8 +2,11 @@ namespace Game.Widgets;
 
 public enum WidgetAlignment
 {
-    Near,
-    Center,
-    Far,
-    Stretch
+    Near = 0,
+
+    Center = 1,
+
+    Far = 2,
+
+    Stretch = 3
 }

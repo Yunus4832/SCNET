@@ -44,10 +44,12 @@ public class TeleportCommandTest
     {
         var box = TeleportCommandHandlers.GetDestinationBox(new Vector3(30f), new Vector3(0.6f, 1.8f, 0.6f));
         DynamicArray<ComponentBody.CollisionBox> collisions = [];
-        collisions.Add(new ComponentBody.CollisionBox
-        {
-            Box = new BoundingBox(new Vector3(29f, bottom, 29f), new Vector3(31f, top, 31f))
-        });
+        collisions.Add(
+            new ComponentBody.CollisionBox
+            {
+                Box = new BoundingBox(new Vector3(29f, bottom, 29f), new Vector3(31f, top, 31f))
+            }
+        );
         Assert.Equal(blocked, new ComponentBody().IsColliding(box, collisions));
     }
 
@@ -92,17 +94,20 @@ public class TeleportCommandTest
         var box = TeleportCommandHandlers.GetDestinationBox(new Vector3(30f), new Vector3(0.6f, 1.8f, 0.6f));
         DynamicArray<ComponentBody.CollisionBox> collisions = [];
         Assert.False(new ComponentBody().IsColliding(box, collisions));
-        collisions.Add(new ComponentBody.CollisionBox
-        {
-            Box = new BoundingBox(new Vector3(wallX, 30f, 29f), new Vector3(wallX + 1f, 32f, 31f))
-        });
+        collisions.Add(
+            new ComponentBody.CollisionBox
+            {
+                Box = new BoundingBox(new Vector3(wallX, 30f, 29f), new Vector3(wallX + 1f, 32f, 31f))
+            }
+        );
         Assert.Equal(blocked, new ComponentBody().IsColliding(box, collisions));
     }
 
     [Fact]
     public void AuthoritativePositionResetsMotionAndInterpolation()
     {
-        var body = new ComponentBody { Velocity = new Vector3(0f, -20f, 0f), CollisionVelocityChange = new Vector3(0f, 20f, 0f) };
+        var body = new ComponentBody
+            { Velocity = new Vector3(0f, -20f, 0f), CollisionVelocityChange = new Vector3(0f, 20f, 0f) };
         var target = new Vector3(100f, 65f, 200f);
         body.ApplyAuthoritativePosition(target, Vector3.Zero);
         Assert.Equal(target, body.Position);

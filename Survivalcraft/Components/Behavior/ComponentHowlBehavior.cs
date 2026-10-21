@@ -87,8 +87,14 @@ public class ComponentHowlBehavior : ComponentBehavior, IUpdateable
                 var num = _howlTime + _subsystemTime.GameTimeDelta;
                 if (_howlTime <= 0.5f && num > 0.5f)
                 {
-                    _subsystemAudio.PlayRandomSound(_howlSoundName, 1f, _random.Float(-0.1f, 0.1f),
-                        _componentCreature.ComponentBody.Position, 10f, true);
+                    _subsystemAudio.PlayRandomSound(
+                        _howlSoundName,
+                        1f,
+                        _random.Float(-0.1f, 0.1f),
+                        _componentCreature.ComponentBody.Position,
+                        10f,
+                        true
+                    );
                 }
 
                 _howlTime = num;

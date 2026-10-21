@@ -18,7 +18,8 @@ public class BlockRuntimeCatalogTest
     {
         var expected = File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "Fixtures", "BuiltInBlocks.txt"));
         var actual = BuiltInBlockRegistry.Entries.Select(entry =>
-            $"{entry.Index};game:{entry.Path};{entry.BlockType.FullName}").ToArray();
+            $"{entry.Index};game:{entry.Path};{entry.BlockType.FullName}"
+        ).ToArray();
         Assert.Equal(expected, actual);
         Assert.Equal(258, actual.Length);
         Assert.Equal(258, BuiltInBlockRegistry.Entries.Select(entry => entry.Index).Distinct().Count());
@@ -39,8 +40,10 @@ public class BlockRuntimeCatalogTest
         var b = BlockIndexMapping.Allocate([second, first], saved);
         Assert.Equal(300, a.Entries[first]);
         Assert.Equal(a.Entries[second], b.Entries[second]);
-        Assert.Equal(a.Entries.OrderBy(pair => pair.Key.ToString()),
-            BlockIndexMapping.FromXml(a.ToXml()).Entries.OrderBy(pair => pair.Key.ToString()));
+        Assert.Equal(
+            a.Entries.OrderBy(pair => pair.Key.ToString()),
+            BlockIndexMapping.FromXml(a.ToXml()).Entries.OrderBy(pair => pair.Key.ToString())
+        );
     }
 
     [Theory]
@@ -50,7 +53,9 @@ public class BlockRuntimeCatalogTest
     [InlineData(1024)]
     public void MappingRejectsInvalidOrReservedIndices(int index)
     {
-        Assert.Throws<InvalidDataException>(() => new BlockIndexMapping([new(ResourceId.Parse("test:machine"), index)]));
+        Assert.Throws<InvalidDataException>(() =>
+            new BlockIndexMapping([new(ResourceId.Parse("test:machine"), index)])
+        );
     }
 
     [Fact]
@@ -112,8 +117,12 @@ public class BlockRuntimeCatalogTest
     public void ServerMappingMustIncludeEveryRegisteredModBlock()
     {
         var registry = Definitions();
-        Assert.Throws<InvalidDataException>(() => BlockRuntimeCatalog.Compile(registry,
-            savedMapping: BlockIndexMapping.Empty, requireExactMapping: true));
+        Assert.Throws<InvalidDataException>(() => BlockRuntimeCatalog.Compile(
+                registry,
+                savedMapping: BlockIndexMapping.Empty,
+                requireExactMapping: true
+            )
+        );
     }
 
     [Fact]
@@ -126,16 +135,21 @@ public class BlockRuntimeCatalogTest
         var encoded = persisted.ToMessagePack();
         var mapping = BlockIndexMapping.FromXml(XElement.Parse(original.Registry.Mapping.ToXml().ToString()));
         var definitions = Definitions();
-        definitions.Register(new ModId("another"), ResourceId.Parse("another:new_block"),
-            new BlockRegistration(static () => new AirBlock()));
+        definitions.Register(
+            new ModId("another"),
+            ResourceId.Parse("another:new_block"),
+            new BlockRegistration(static () => new AirBlock())
+        );
         using var updated = new BlockContentCatalog(BlockRuntimeCatalog.Compile(definitions, savedMapping: mapping));
         var restored = new ValuesDictionary();
         restored.ApplyOverridesUseMessagePack(encoded);
         var restoredValue = restored.GetValue<int>("Value");
         Assert.Equal(item, restoredValue);
         Assert.Equal(7, Terrain.ExtractData(restoredValue));
-        Assert.Same(updated.GetBlock(ResourceId.Parse("test:machine")),
-            updated.Blocks[Terrain.ExtractContents(restoredValue)]);
+        Assert.Same(
+            updated.GetBlock(ResourceId.Parse("test:machine")),
+            updated.Blocks[Terrain.ExtractContents(restoredValue)]
+        );
         Assert.NotEqual(300, updated.GetBlock(ResourceId.Parse("another:new_block")).BlockIndex);
     }
 
@@ -149,8 +163,12 @@ public class BlockRuntimeCatalogTest
         var table = SubsystemBlockBehaviors.BuildTable(world, [behavior], _ => behavior);
         Assert.Same(behavior, Assert.Single(table[300]));
         Assert.Empty(table[264]);
-        Assert.Throws<KeyNotFoundException>(() => SubsystemBlockBehaviors.BuildTable(world,
-            [new TestBehavior(ResourceId.Parse("test:unknown"))], _ => behavior));
+        Assert.Throws<KeyNotFoundException>(() => SubsystemBlockBehaviors.BuildTable(
+                world,
+                [new TestBehavior(ResourceId.Parse("test:unknown"))],
+                _ => behavior
+            )
+        );
     }
 
     [Fact]
@@ -187,22 +205,39 @@ public class BlockRuntimeCatalogTest
     public void VanillaDerivedBlocksGenerateTheirAllocatedCreativeIndices()
     {
         var registry = new NamespacedRegistry<BlockRegistration>();
-        registry.Register(new ModId("game"), ResourceId.Parse("game:air"),
-            new BlockRegistration(static () => new AirBlock()));
-        registry.Register(new ModId("test"), ResourceId.Parse("test:paint"),
-            new BlockRegistration(static () => new PaintBucketBlock()));
-        registry.Register(new ModId("test"), ResourceId.Parse("test:sapling"),
-            new BlockRegistration(static () => new SaplingBlock()));
-        registry.Register(new ModId("test"), ResourceId.Parse("test:plate"),
-            new BlockRegistration(static () => new PressurePlateBlock()));
-        registry.Register(new ModId("test"), ResourceId.Parse("test:wire"),
-            new BlockRegistration(static () => new WireBlock()));
-        var mapping = new BlockIndexMapping([
-            new(ResourceId.Parse("test:paint"), 300),
-            new(ResourceId.Parse("test:sapling"), 301),
-            new(ResourceId.Parse("test:plate"), 302),
-            new(ResourceId.Parse("test:wire"), 303)
-        ]);
+        registry.Register(
+            new ModId("game"),
+            ResourceId.Parse("game:air"),
+            new BlockRegistration(static () => new AirBlock())
+        );
+        registry.Register(
+            new ModId("test"),
+            ResourceId.Parse("test:paint"),
+            new BlockRegistration(static () => new PaintBucketBlock())
+        );
+        registry.Register(
+            new ModId("test"),
+            ResourceId.Parse("test:sapling"),
+            new BlockRegistration(static () => new SaplingBlock())
+        );
+        registry.Register(
+            new ModId("test"),
+            ResourceId.Parse("test:plate"),
+            new BlockRegistration(static () => new PressurePlateBlock())
+        );
+        registry.Register(
+            new ModId("test"),
+            ResourceId.Parse("test:wire"),
+            new BlockRegistration(static () => new WireBlock())
+        );
+        var mapping = new BlockIndexMapping(
+            [
+                new(ResourceId.Parse("test:paint"), 300),
+                new(ResourceId.Parse("test:sapling"), 301),
+                new(ResourceId.Parse("test:plate"), 302),
+                new(ResourceId.Parse("test:wire"), 303)
+            ]
+        );
         using var catalog = new BlockContentCatalog(BlockRuntimeCatalog.Compile(registry, savedMapping: mapping));
         foreach (var (id, index) in mapping.Entries)
         {
@@ -224,8 +259,11 @@ public class BlockRuntimeCatalogTest
     {
         var shared = new TestBlock();
         var registry = new NamespacedRegistry<BlockRegistration>();
-        registry.Register(new ModId("game"), ResourceId.Parse("game:air"),
-            new BlockRegistration(static () => new AirBlock()));
+        registry.Register(
+            new ModId("game"),
+            ResourceId.Parse("game:air"),
+            new BlockRegistration(static () => new AirBlock())
+        );
         registry.Register(new ModId("test"), ResourceId.Parse("test:machine"), new BlockRegistration(() => shared));
         using var preview = new BlockContentCatalog(BlockRuntimeCatalog.Compile(registry));
         Assert.Throws<InvalidOperationException>(() => BlockRuntimeCatalog.Compile(registry));
@@ -236,8 +274,16 @@ public class BlockRuntimeCatalogTest
     private static NamespacedRegistry<BlockRegistration> Definitions()
     {
         var registry = new NamespacedRegistry<BlockRegistration>();
-        registry.Register(new ModId("game"), ResourceId.Parse("game:air"), new BlockRegistration(static () => new AirBlock()));
-        registry.Register(new ModId("test"), ResourceId.Parse("test:machine"), new BlockRegistration(static () => new TestBlock()));
+        registry.Register(
+            new ModId("game"),
+            ResourceId.Parse("game:air"),
+            new BlockRegistration(static () => new AirBlock())
+        );
+        registry.Register(
+            new ModId("test"),
+            ResourceId.Parse("test:machine"),
+            new BlockRegistration(static () => new TestBlock())
+        );
         return registry;
     }
 
@@ -247,12 +293,17 @@ public class BlockRuntimeCatalogTest
         var registry = BlockRuntimeCatalog.Compile(Definitions(), savedMapping: mapping);
         var catalog = new BlockContentCatalog(registry);
         catalog.LoadBlocksData("Id;DisplayName;DropContent\ntest:machine;Machine;#");
-        catalog.Initialize(null, XElement.Parse("""
-            <Recipes>
-              <Recipe Result="test:machine@7" ResultCount="1" Remains="test:machine" RemainsCount="1"
-                      Description="Machine" RequiredHeatLevel="0" a="machine">"a"</Recipe>
-            </Recipes>
-            """));
+        catalog.Initialize(
+            null,
+            XElement.Parse(
+                """
+                <Recipes>
+                  <Recipe Result="test:machine@7" ResultCount="1" Remains="test:machine" RemainsCount="1"
+                          Description="Machine" RequiredHeatLevel="0" a="machine">"a"</Recipe>
+                </Recipes>
+                """
+            )
+        );
         Assert.Equal(index, catalog.GetBlock(ResourceId.Parse("test:machine")).DropContent);
         return catalog;
     }

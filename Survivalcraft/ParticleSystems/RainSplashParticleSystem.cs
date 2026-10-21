@@ -80,8 +80,13 @@ public class RainSplashParticleSystem : ParticleSystem<RainSplashParticleSystem.
                     particle.Position += particle.Velocity * dt;
                     particle.Velocity.Y += particle.Gravity * dt;
                     particle.Velocity *= num;
-                    particle.Size = new Vector2(MathUtils.Lerp(particle.BaseSize1, particle.BaseSize2,
-                        (particle.Duration - particle.TimeToLive) / particle.Duration));
+                    particle.Size = new Vector2(
+                        MathUtils.Lerp(
+                            particle.BaseSize1,
+                            particle.BaseSize2,
+                            (particle.Duration - particle.TimeToLive) / particle.Duration
+                        )
+                    );
                     particle.Color = particle.BaseColor * MathUtils.Saturate(particle.FadeFactor * particle.TimeToLive);
                     particle.TimeToLive -= dt;
                     particle.FlipX = _random.Bool();

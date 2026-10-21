@@ -6,7 +6,8 @@ public class SwitchElectricElement : MountedElectricElement
 
     public SwitchElectricElement(
         SubsystemElectricity subsystemElectricity,
-        CellFace cellFace, int value
+        CellFace cellFace,
+        int value
     ) : base(subsystemElectricity, cellFace)
     {
         var voltageLevel = SwitchBlock.GetVoltageLevel(Terrain.ExtractData(value));
@@ -24,8 +25,14 @@ public class SwitchElectricElement : MountedElectricElement
         var cellValue = SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
         var value = SwitchBlock.SetLeverState(cellValue, !SwitchBlock.GetLeverState(cellValue));
         SubsystemElectricity.SubsystemTerrain.ChangeCell(cellFace.X, cellFace.Y, cellFace.Z, value);
-        SubsystemElectricity.SubsystemAudio.PlaySound("Audio/Click", 1f, 0f,
-            new Vector3(cellFace.X, cellFace.Y, cellFace.Z), 2f, true);
+        SubsystemElectricity.SubsystemAudio.PlaySound(
+            "Audio/Click",
+            1f,
+            0f,
+            new Vector3(cellFace.X, cellFace.Y, cellFace.Z),
+            2f,
+            true
+        );
         return true;
     }
 }

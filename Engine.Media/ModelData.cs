@@ -35,5 +35,4 @@ public class ModelData
         var format = DetermineFileFormat(peekStream.GetInitialBytesStream());
         return Load(peekStream, format);
     }
-
 }

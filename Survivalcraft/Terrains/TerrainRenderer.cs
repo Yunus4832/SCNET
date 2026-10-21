@@ -51,12 +51,21 @@ public class TerrainRenderer : IDisposable
         _subsystemTerrain = subsystemTerrain;
         _subsystemSky = subsystemTerrain.Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemAnimatedTextures = subsystemTerrain.SubsystemAnimatedTextures;
-        _opaqueShader = new Shader(ShaderCodeManager.GetFast("Shaders/Opaque.vsh"),
-            ShaderCodeManager.GetFast("Shaders/Opaque.psh"), new ShaderMacro("Opaque"));
-        _alphaTestedShader = new Shader(ShaderCodeManager.GetFast("Shaders/AlphaTested.vsh"),
-            ShaderCodeManager.GetFast("Shaders/AlphaTested.psh"), new ShaderMacro("ALPHATESTED"));
-        _transparentShader = new Shader(ShaderCodeManager.GetFast("Shaders/Transparent.vsh"),
-            ShaderCodeManager.GetFast("Shaders/Transparent.psh"), new ShaderMacro("Transparent"));
+        _opaqueShader = new Shader(
+            ShaderCodeManager.GetFast("Shaders/Opaque.vsh"),
+            ShaderCodeManager.GetFast("Shaders/Opaque.psh"),
+            new ShaderMacro("Opaque")
+        );
+        _alphaTestedShader = new Shader(
+            ShaderCodeManager.GetFast("Shaders/AlphaTested.vsh"),
+            ShaderCodeManager.GetFast("Shaders/AlphaTested.psh"),
+            new ShaderMacro("ALPHATESTED")
+        );
+        _transparentShader = new Shader(
+            ShaderCodeManager.GetFast("Shaders/Transparent.vsh"),
+            ShaderCodeManager.GetFast("Shaders/Transparent.psh"),
+            new ShaderMacro("Transparent")
+        );
         Display.DeviceReset += DisplayDeviceReset;
     }
 
@@ -173,7 +182,8 @@ public class TerrainRenderer : IDisposable
         var gameWidgetIndex = camera.GameWidget.GameWidgetIndex;
         var viewPosition = camera.ViewPosition;
         var v = new Vector3(MathUtils.Floor(viewPosition.X), 0f, MathUtils.Floor(viewPosition.Z));
-        var value = Matrix.CreateTranslation(v - viewPosition) * camera.ViewMatrix.OrientationMatrix *
+        var value = Matrix.CreateTranslation(v - viewPosition) *
+                    camera.ViewMatrix.OrientationMatrix *
                     camera.ProjectionMatrix;
         Display.BlendState = BlendState.Opaque;
         Display.DepthStencilState = DepthStencilState.Default;
@@ -185,15 +195,22 @@ public class TerrainRenderer : IDisposable
             .SetValue(SettingsManager.Current.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
         _opaqueShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _opaqueShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
-        _opaqueShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
-            _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
+        _opaqueShader.GetParameter("u_fogBottomTopDensity").SetValue(
+            new Vector3(
+                _subsystemSky.ViewFogBottom,
+                _subsystemSky.ViewFogTop,
+                _subsystemSky.ViewFogDensity
+            )
+        );
         var parameter = _opaqueShader.GetParameter("u_hazeStartDensity");
         var point = Terrain.ToChunk(camera.ViewPosition.XZ);
         _subsystemTerrain.Terrain.GetChunkAtCoords(point.X, point.Y);
         foreach (var terrainChunk in _chunksToDraw)
         {
-            var num = MathUtils.Min(terrainChunk.HazeEnds[gameWidgetIndex],
-                _subsystemSky.ViewHazeStart + 1f / _subsystemSky.ViewHazeDensity);
+            var num = MathUtils.Min(
+                terrainChunk.HazeEnds[gameWidgetIndex],
+                _subsystemSky.ViewHazeStart + 1f / _subsystemSky.ViewHazeDensity
+            );
             var num2 = MathUtils.Min(_subsystemSky.ViewHazeStart, num - 1f);
             parameter.SetValue(new Vector2(num2, 1f / (num - num2)));
             var num3 = 16;
@@ -227,7 +244,8 @@ public class TerrainRenderer : IDisposable
         var gameWidgetIndex = camera.GameWidget.GameWidgetIndex;
         var viewPosition = camera.ViewPosition;
         var v = new Vector3(MathUtils.Floor(viewPosition.X), 0f, MathUtils.Floor(viewPosition.Z));
-        var value = Matrix.CreateTranslation(v - viewPosition) * camera.ViewMatrix.OrientationMatrix *
+        var value = Matrix.CreateTranslation(v - viewPosition) *
+                    camera.ViewMatrix.OrientationMatrix *
                     camera.ProjectionMatrix;
         Display.BlendState = BlendState.Opaque;
         Display.DepthStencilState = DepthStencilState.Default;
@@ -239,14 +257,21 @@ public class TerrainRenderer : IDisposable
             .SetValue(SettingsManager.Current.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
         _alphaTestedShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _alphaTestedShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
-        _alphaTestedShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
-            _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
+        _alphaTestedShader.GetParameter("u_fogBottomTopDensity").SetValue(
+            new Vector3(
+                _subsystemSky.ViewFogBottom,
+                _subsystemSky.ViewFogTop,
+                _subsystemSky.ViewFogDensity
+            )
+        );
         _alphaTestedShader.GetParameter("u_alphaThreshold").SetValue(0.5f);
         var parameter = _alphaTestedShader.GetParameter("u_hazeStartDensity");
         foreach (var terrainChunk in _chunksToDraw)
         {
-            var num = MathUtils.Min(terrainChunk.HazeEnds[gameWidgetIndex],
-                _subsystemSky.ViewHazeStart + 1f / _subsystemSky.ViewHazeDensity);
+            var num = MathUtils.Min(
+                terrainChunk.HazeEnds[gameWidgetIndex],
+                _subsystemSky.ViewHazeStart + 1f / _subsystemSky.ViewHazeDensity
+            );
             var num2 = MathUtils.Min(_subsystemSky.ViewHazeStart, num - 1f);
             parameter.SetValue(new Vector2(num2, 1f / (num - num2)));
             const int subsetsMask = 32;
@@ -259,7 +284,8 @@ public class TerrainRenderer : IDisposable
         var gameWidgetIndex = camera.GameWidget.GameWidgetIndex;
         var viewPosition = camera.ViewPosition;
         var v = new Vector3(MathUtils.Floor(viewPosition.X), 0f, MathUtils.Floor(viewPosition.Z));
-        var value = Matrix.CreateTranslation(v - viewPosition) * camera.ViewMatrix.OrientationMatrix *
+        var value = Matrix.CreateTranslation(v - viewPosition) *
+                    camera.ViewMatrix.OrientationMatrix *
                     camera.ProjectionMatrix;
         Display.BlendState = BlendState.AlphaBlend;
         Display.DepthStencilState = DepthStencilState.Default;
@@ -273,13 +299,20 @@ public class TerrainRenderer : IDisposable
             .SetValue(SettingsManager.Current.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
         _transparentShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _transparentShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
-        _transparentShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
-            _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
+        _transparentShader.GetParameter("u_fogBottomTopDensity").SetValue(
+            new Vector3(
+                _subsystemSky.ViewFogBottom,
+                _subsystemSky.ViewFogTop,
+                _subsystemSky.ViewFogDensity
+            )
+        );
         var parameter = _transparentShader.GetParameter("u_hazeStartDensity");
         foreach (var terrainChunk in _chunksToDraw)
         {
-            var num = MathUtils.Min(terrainChunk.HazeEnds[gameWidgetIndex],
-                _subsystemSky.ViewHazeStart + 1f / _subsystemSky.ViewHazeDensity);
+            var num = MathUtils.Min(
+                terrainChunk.HazeEnds[gameWidgetIndex],
+                _subsystemSky.ViewHazeStart + 1f / _subsystemSky.ViewHazeDensity
+            );
             var num2 = MathUtils.Min(_subsystemSky.ViewHazeStart, num - 1f);
             parameter.SetValue(new Vector2(num2, 1f / (num - num2)));
             const int subsetsMask = 64;
@@ -386,16 +419,24 @@ public class TerrainRenderer : IDisposable
                         if (terrainGeometrySubset2.Indices.Count > 0)
                         {
                             _tmpIndices.Count = terrainGeometrySubset2.Indices.Count;
-                            ShiftIndices(terrainGeometrySubset2.Indices.Array, _tmpIndices.Array, num6,
-                                terrainGeometrySubset2.Indices.Count);
+                            ShiftIndices(
+                                terrainGeometrySubset2.Indices.Array,
+                                _tmpIndices.Array,
+                                num6,
+                                terrainGeometrySubset2.Indices.Count
+                            );
                             buffer.IndexBuffer.SetData(_tmpIndices.Array, 0, _tmpIndices.Count, num7);
                             num7 += _tmpIndices.Count;
                         }
 
                         if (terrainGeometrySubset2.Vertices.Count > 0)
                         {
-                            buffer.VertexBuffer.SetData(terrainGeometrySubset2.Vertices.Array, 0,
-                                terrainGeometrySubset2.Vertices.Count, num6);
+                            buffer.VertexBuffer.SetData(
+                                terrainGeometrySubset2.Vertices.Array,
+                                0,
+                                terrainGeometrySubset2.Vertices.Count,
+                                num6
+                            );
                             num6 += terrainGeometrySubset2.Vertices.Count;
                         }
 
@@ -447,8 +488,14 @@ public class TerrainRenderer : IDisposable
                             shader.GetParameter("u_texture", true).SetValue(buffer.Texture);
                         }
 
-                        Display.DrawIndexed(PrimitiveType.TriangleList, shader, buffer.VertexBuffer, buffer.IndexBuffer,
-                            num, num2 - num);
+                        Display.DrawIndexed(
+                            PrimitiveType.TriangleList,
+                            shader,
+                            buffer.VertexBuffer,
+                            buffer.IndexBuffer,
+                            num,
+                            num2 - num
+                        );
                         ChunkTrianglesDrawn += (num2 - num) / 3;
                         ChunkDrawCalls++;
                     }

@@ -32,7 +32,8 @@ public class ModDependencyResolverTest
         var second = Descriptor("example.second", new ModDependency("example.first"));
 
         var exception = Assert.Throws<ModDependencyException>(() =>
-            ModDependencyResolver.Resolve([first, second]));
+            ModDependencyResolver.Resolve([first, second])
+        );
 
         Assert.Contains("Circular mod dependency", exception.Message);
     }

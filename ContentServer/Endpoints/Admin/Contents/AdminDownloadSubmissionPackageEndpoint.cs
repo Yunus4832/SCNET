@@ -23,13 +23,19 @@ public sealed class AdminDownloadSubmissionPackageEndpoint(
     {
         var versionId = Route<string>("versionId") ?? throw new BadHttpRequestException("Missing route value.");
         var package = await mediator.Send(
-            new DownloadSubmissionPackageQuery(new ContentVersionId(ParseId(versionId))),
-            cancellationToken) ?? throw new KnownException(
-            "submission_package_not_found",
-            StatusCodes.Status404NotFound
-        );
-        await Results.File(packageStore.Open(package.Hash), package.MediaType, package.FileName,
-            enableRangeProcessing: true).ExecuteAsync(HttpContext);
+                          new DownloadSubmissionPackageQuery(new ContentVersionId(ParseId(versionId))),
+                          cancellationToken
+                      ) ??
+                      throw new KnownException(
+                          "submission_package_not_found",
+                          StatusCodes.Status404NotFound
+                      );
+        await Results.File(
+            packageStore.Open(package.Hash),
+            package.MediaType,
+            package.FileName,
+            enableRangeProcessing: true
+        ).ExecuteAsync(HttpContext);
     }
 
     private static Guid ParseId(string value)

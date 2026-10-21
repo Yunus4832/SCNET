@@ -38,5 +38,4 @@ public static class BodySnapshotBuilder
 
         return bodyItem;
     }
-
 }

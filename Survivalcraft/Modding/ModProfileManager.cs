@@ -58,7 +58,8 @@ public static class ModProfileManager
                 globalProfile,
                 worldContext.WorldDirectoryName,
                 worldContext.WorldName,
-                worldContext.Strategy);
+                worldContext.Strategy
+            );
         }
 
         return globalProfile;
@@ -121,18 +122,21 @@ public static class ModProfileManager
     public static ModProfile CreateSessionProfile(string sessionId, ModProfile profile)
     {
         ArgumentNullException.ThrowIfNull(profile);
-        return Normalize(new ModProfile
-        {
-            Id = NormalizeSessionId(sessionId),
-            Packages = profile.Packages
-                .Select(package => new ModPackageRequirement
-                {
-                    ModId = package.ModId,
-                    Version = package.Version,
-                    PackageHash = package.PackageHash
-                })
-                .ToList()
-        });
+        return Normalize(
+            new ModProfile
+            {
+                Id = NormalizeSessionId(sessionId),
+                Packages = profile.Packages
+                    .Select(package => new ModPackageRequirement
+                        {
+                            ModId = package.ModId,
+                            Version = package.Version,
+                            PackageHash = package.PackageHash
+                        }
+                    )
+                    .ToList()
+            }
+        );
     }
 
     private static bool TryLoadGlobalProfile(out ModProfile profile)
@@ -181,7 +185,8 @@ public static class ModProfileManager
         {
             throw new InvalidOperationException(
                 $"Failed to load session profile '{GetSessionProfilePath(NormalizeSessionId(sessionId))}': {ex.Message}",
-                ex);
+                ex
+            );
         }
     }
 
@@ -226,27 +231,39 @@ public static class ModProfileManager
         {
             Id = root.Attribute(nameof(ModProfile.Id))?.Value ?? "default",
             Packages = root.Element(nameof(ModProfile.Packages))?
-                .Elements("Package")
-                .Select(element => new ModPackageRequirement
-                {
-                    ModId = element.Attribute(nameof(ModPackageRequirement.ModId))?.Value ?? string.Empty,
-                    Version = element.Attribute(nameof(ModPackageRequirement.Version))?.Value ?? string.Empty,
-                    PackageHash = element.Attribute(nameof(ModPackageRequirement.PackageHash))?.Value ?? string.Empty
-                })
-                .ToList() ?? []
+                           .Elements("Package")
+                           .Select(element => new ModPackageRequirement
+                               {
+                                   ModId =
+                                       element.Attribute(nameof(ModPackageRequirement.ModId))?.Value ?? string.Empty,
+                                   Version = element.Attribute(nameof(ModPackageRequirement.Version))?.Value ??
+                                             string.Empty,
+                                   PackageHash = element.Attribute(nameof(ModPackageRequirement.PackageHash))?.Value ??
+                                                 string.Empty
+                               }
+                           )
+                           .ToList() ??
+                       []
         };
         return Normalize(profile);
     }
 
     private static XElement SerializeModProfile(ModProfile profile)
     {
-        return new XElement("ModProfile",
+        return new XElement(
+            "ModProfile",
             new XAttribute(nameof(ModProfile.Id), profile.Id),
-            new XElement(nameof(ModProfile.Packages),
-                profile.Packages.Select(package => new XElement("Package",
-                    new XAttribute(nameof(ModPackageRequirement.ModId), package.ModId),
-                    new XAttribute(nameof(ModPackageRequirement.Version), package.Version),
-                    new XAttribute(nameof(ModPackageRequirement.PackageHash), package.PackageHash)))));
+            new XElement(
+                nameof(ModProfile.Packages),
+                profile.Packages.Select(package => new XElement(
+                        "Package",
+                        new XAttribute(nameof(ModPackageRequirement.ModId), package.ModId),
+                        new XAttribute(nameof(ModPackageRequirement.Version), package.Version),
+                        new XAttribute(nameof(ModPackageRequirement.PackageHash), package.PackageHash)
+                    )
+                )
+            )
+        );
     }
 
     private static ModProfile Normalize(ModProfile profile)
@@ -255,11 +272,12 @@ public static class ModProfileManager
         profile.Packages ??= [];
         profile.Packages = profile.Packages
             .Select(package => new ModPackageRequirement
-            {
-                ModId = package.ModId.Trim(),
-                Version = package.Version.Trim(),
-                PackageHash = package.PackageHash.Trim()
-            })
+                {
+                    ModId = package.ModId.Trim(),
+                    Version = package.Version.Trim(),
+                    PackageHash = package.PackageHash.Trim()
+                }
+            )
             .ToList();
         ModProfileValidation.Validate(profile);
         return profile;
@@ -277,7 +295,8 @@ public static class ModProfileManager
     private static bool TryResolveWorldProfileContext(SessionInfo? sessionInfo, out WorldProfileContext context)
     {
         context = default;
-        if (sessionInfo == null || sessionInfo.Target != SessionTarget.World ||
+        if (sessionInfo == null ||
+            sessionInfo.Target != SessionTarget.World ||
             string.IsNullOrWhiteSpace(sessionInfo.World))
         {
             return false;
@@ -287,9 +306,13 @@ public static class ModProfileManager
         var normalizedWorld = sessionInfo.World.Trim();
         var worldInfo = WorldsManager.WorldInfos.FirstOrDefault(world =>
                             string.Equals(world.DirectoryName, normalizedWorld, StringComparison.OrdinalIgnoreCase) ||
-                            string.Equals(world.WorldSettings.Name, normalizedWorld,
-                                StringComparison.OrdinalIgnoreCase))
-                        ?? null;
+                            string.Equals(
+                                world.WorldSettings.Name,
+                                normalizedWorld,
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                        ) ??
+                        null;
         if (worldInfo == null)
         {
             var worldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, normalizedWorld);
@@ -307,7 +330,8 @@ public static class ModProfileManager
         context = new WorldProfileContext(
             worldInfo.DirectoryName,
             worldInfo.WorldSettings.Name,
-            worldInfo.WorldSettings.ModProfileResolutionStrategy);
+            worldInfo.WorldSettings.ModProfileResolutionStrategy
+        );
         return true;
     }
 
@@ -315,7 +339,8 @@ public static class ModProfileManager
         ModProfile globalProfile,
         string worldDirectoryName,
         string worldName,
-        ModProfileResolutionStrategy strategy)
+        ModProfileResolutionStrategy strategy
+    )
     {
         var hasWorldProfile = TryLoadWorldProfile(worldDirectoryName, out var worldProfile);
         return strategy switch
@@ -328,14 +353,16 @@ public static class ModProfileManager
                     globalProfile,
                     worldProfile!,
                     worldName,
-                    worldOverrides: true)
+                    worldOverrides: true
+                )
                 : CloneProfile(globalProfile, worldName),
             ModProfileResolutionStrategy.WorldPlusGlobal => hasWorldProfile
                 ? MergeProfiles(
                     worldProfile!,
                     globalProfile,
                     worldName,
-                    worldOverrides: false)
+                    worldOverrides: false
+                )
                 : CloneProfile(globalProfile, worldName),
             _ => CloneProfile(globalProfile, worldName)
         };
@@ -345,7 +372,8 @@ public static class ModProfileManager
         ModProfile primary,
         ModProfile secondary,
         string resultId,
-        bool worldOverrides)
+        bool worldOverrides
+    )
     {
         var packages = new Dictionary<string, ModPackageRequirement>(StringComparer.OrdinalIgnoreCase);
         foreach (var package in primary.Packages)
@@ -361,14 +389,16 @@ public static class ModProfileManager
             }
         }
 
-        return Normalize(new ModProfile
-        {
-            Id = string.IsNullOrWhiteSpace(resultId) ? "default" : resultId.Trim(),
-            Packages = packages.Values
-                .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
-                .ToList()
-        });
+        return Normalize(
+            new ModProfile
+            {
+                Id = string.IsNullOrWhiteSpace(resultId) ? "default" : resultId.Trim(),
+                Packages = packages.Values
+                    .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
+                    .ToList()
+            }
+        );
     }
 
     private static ModProfile CloneProfile(ModProfile profile, string id)
@@ -405,8 +435,10 @@ public static class ModProfileManager
     {
         return string.IsNullOrWhiteSpace(sessionId) ? "default" : sessionId.Trim();
     }
+
     private readonly record struct WorldProfileContext(
         string WorldDirectoryName,
         string WorldName,
-        ModProfileResolutionStrategy Strategy);
+        ModProfileResolutionStrategy Strategy
+    );
 }

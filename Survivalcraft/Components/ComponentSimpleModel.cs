@@ -14,15 +14,22 @@ public class ComponentSimpleModel : ComponentModel
         if (_componentSpawn != null)
         {
             Opacity = _componentSpawn.SpawnDuration > 0f
-                ? (float)MathUtils.Saturate((_subsystemGameInfo.TotalElapsedGameTime - _componentSpawn.SpawnTime) /
-                                            _componentSpawn.SpawnDuration)
+                ? (float)MathUtils.Saturate(
+                    (_subsystemGameInfo.TotalElapsedGameTime - _componentSpawn.SpawnTime) /
+                    _componentSpawn.SpawnDuration
+                )
                 : 1f;
             if (_componentSpawn.DespawnTime.HasValue)
             {
-                Opacity = MathUtils.Min(Opacity.Value,
-                    (float)MathUtils.Saturate(1.0 -
-                                              (_subsystemGameInfo.TotalElapsedGameTime -
-                                               _componentSpawn.DespawnTime.Value) / _componentSpawn.DespawnDuration));
+                Opacity = MathUtils.Min(
+                    Opacity.Value,
+                    (float)MathUtils.Saturate(
+                        1.0 -
+                        (_subsystemGameInfo.TotalElapsedGameTime -
+                         _componentSpawn.DespawnTime.Value) /
+                        _componentSpawn.DespawnDuration
+                    )
+                );
             }
         }
 

@@ -12,12 +12,17 @@ public sealed class ContentPackageScreen : Screen
 
     private enum PackageAction
     {
-        Create,
-        Details,
-        Import,
-        Export,
-        Install,
-        Delete
+        Create = 0,
+
+        Details = 1,
+
+        Import = 2,
+
+        Export = 3,
+
+        Install = 4,
+
+        Delete = 5
     }
 
     private static readonly ContentPackageType[] _allowedTypes =
@@ -29,9 +34,13 @@ public sealed class ContentPackageScreen : Screen
     ];
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly ListPanelWidget _packageList;
+
     private readonly LabelWidget _pickerUnavailableLabel;
+
     private bool _busy;
+
     private int _operationGeneration;
 
     public ContentPackageScreen()
@@ -47,18 +56,22 @@ public sealed class ContentPackageScreen : Screen
         _actionPanel.ItemColorProvider = item => item is PackageAction.Delete ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
-        [
-            PackageAction.Create,
-            PackageAction.Import,
-            PackageAction.Export,
-            PackageAction.Install
-        ]);
+            [
+                PackageAction.Create,
+                PackageAction.Import,
+                PackageAction.Export,
+                PackageAction.Install
+            ]
+        );
         _actionPanel.SetSecondaryItems([PackageAction.Details, PackageAction.Delete]);
         _packageList.ItemWidgetFactory = item =>
         {
             var package = (ContentPackageCacheEntry)item;
             var widget = (ContainerWidget)LoadWidget(
-                this, ContentManager.Get<XElement>("Widgets/ContentServerItem"), null);
+                this,
+                ContentManager.Get<XElement>("Widgets/ContentServerItem"),
+                null
+            );
             widget.Children.Find<LabelWidget>("ContentServerItem.Name")!.Text =
                 $"{package.Name}  {package.Version}";
             widget.Children.Find<LabelWidget>("ContentServerItem.Summary")!.Text = package.Summary;
@@ -146,27 +159,34 @@ public sealed class ContentPackageScreen : Screen
     private void CreatePackage()
     {
         var generation = _operationGeneration;
-        ContentPackageCreationDialogs.Show(busy => SetBusy(generation, busy),
+        ContentPackageCreationDialogs.Show(
+            busy => SetBusy(generation, busy),
             () =>
             {
                 if (IsCurrentOperation(generation))
                 {
                     DialogsManager.Alert(LanguageManager.Get(_typeName, "CreationSaved"));
                 }
-            }, exception => ShowError(generation, exception));
+            },
+            exception => ShowError(generation, exception)
+        );
     }
 
     private void InstallPackage(ContentPackageCacheEntry package)
     {
         var generation = _operationGeneration;
-        ContentPackageInstallDialogs.Show(package, busy => SetBusy(generation, busy),
+        ContentPackageInstallDialogs.Show(
+            package,
+            busy => SetBusy(generation, busy),
             () =>
             {
                 if (IsCurrentOperation(generation))
                 {
                     DialogsManager.Alert(LanguageManager.Get(_typeName, "Installed"));
                 }
-            }, exception => ShowError(generation, exception));
+            },
+            exception => ShowError(generation, exception)
+        );
     }
 
     private void Refresh()
@@ -192,8 +212,13 @@ public sealed class ContentPackageScreen : Screen
         _busy = true;
         try
         {
-            var files = await FilePicker.PickFilesAsync(new FilePickerRequest(
-                [ContentPackageReader.FileExtension], true, LanguageManager.Get(_typeName, "SelectPackages")));
+            var files = await FilePicker.PickFilesAsync(
+                new FilePickerRequest(
+                    [ContentPackageReader.FileExtension],
+                    true,
+                    LanguageManager.Get(_typeName, "SelectPackages")
+                )
+            );
             if (files.Count == 0)
             {
                 return;
@@ -214,26 +239,28 @@ public sealed class ContentPackageScreen : Screen
             }
 
             Dispatcher.Dispatch(() =>
-            {
-                if (!IsCurrentOperation(generation))
                 {
-                    return;
-                }
+                    if (!IsCurrentOperation(generation))
+                    {
+                        return;
+                    }
 
-                Refresh();
-                DialogsManager.Alert(string.Format(LanguageManager.Get(_typeName, "ImportComplete"), imported));
-            });
+                    Refresh();
+                    DialogsManager.Alert(string.Format(LanguageManager.Get(_typeName, "ImportComplete"), imported));
+                }
+            );
         }
         catch (Exception exception)
         {
             Dispatcher.Dispatch(() =>
-            {
-                if (IsCurrentOperation(generation))
                 {
-                    Refresh();
-                    ShowError(exception);
+                    if (IsCurrentOperation(generation))
+                    {
+                        Refresh();
+                        ShowError(exception);
+                    }
                 }
-            });
+            );
         }
         finally
         {
@@ -248,8 +275,13 @@ public sealed class ContentPackageScreen : Screen
         try
         {
             var fileName = MakeFileName($"{package.Identifier}-{package.Version}") + ContentPackageReader.FileExtension;
-            var target = await FilePicker.PickSaveTargetAsync(new FileSaveRequest(fileName,
-                "application/vnd.scnet.content-package", LanguageManager.Get(_typeName, "ExportTitle")));
+            var target = await FilePicker.PickSaveTargetAsync(
+                new FileSaveRequest(
+                    fileName,
+                    "application/vnd.scnet.content-package",
+                    LanguageManager.Get(_typeName, "ExportTitle")
+                )
+            );
             if (target is null)
             {
                 return;
@@ -263,12 +295,13 @@ public sealed class ContentPackageScreen : Screen
             await using var destination = await target.OpenWriteAsync(CancellationToken.None);
             await CreateCache().ExportAsync(package.PackageHash, destination);
             Dispatcher.Dispatch(() =>
-            {
-                if (IsCurrentOperation(generation))
                 {
-                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name);
+                    if (IsCurrentOperation(generation))
+                    {
+                        DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name);
+                    }
                 }
-            });
+            );
         }
         catch (Exception exception)
         {
@@ -283,20 +316,25 @@ public sealed class ContentPackageScreen : Screen
     private void ConfirmDelete(ContentPackageCacheEntry package)
     {
         var generation = _operationGeneration;
-        DialogsManager.ShowDialog(null, new MessageDialog(
-            LanguageManager.Get(_typeName, "DeleteTitle"),
-            string.Format(LanguageManager.Get(_typeName, "DeleteQuestion"), package.Name, package.Version),
-            LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
-            button =>
-            {
-                if (button != MessageDialogButton.Button1 || !IsCurrentOperation(generation))
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                LanguageManager.Get(_typeName, "DeleteTitle"),
+                string.Format(LanguageManager.Get(_typeName, "DeleteQuestion"), package.Name, package.Version),
+                LanguageManager.Get("Usual", "yes"),
+                LanguageManager.Get("Usual", "no"),
+                button =>
                 {
-                    return;
-                }
+                    if (button != MessageDialogButton.Button1 || !IsCurrentOperation(generation))
+                    {
+                        return;
+                    }
 
-                CreateCache().Delete(package.PackageHash);
-                Refresh();
-            }));
+                    CreateCache().Delete(package.PackageHash);
+                    Refresh();
+                }
+            )
+        );
     }
 
     private static string MakeFileName(string value)
@@ -331,7 +369,13 @@ public sealed class ContentPackageScreen : Screen
 
     private static void ShowError(Exception exception)
     {
-        DialogsManager.ShowDialog(null, new MessageDialog(
-            LanguageManager.Get("Usual", "error"), exception.Message, LanguageManager.Get("Usual", "ok")));
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                LanguageManager.Get("Usual", "error"),
+                exception.Message,
+                LanguageManager.Get("Usual", "ok")
+            )
+        );
     }
 }

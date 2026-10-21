@@ -9,9 +9,13 @@ namespace NetworkProbe;
 internal sealed class ProbeReport : IDisposable
 {
     private readonly Stopwatch _elapsed = Stopwatch.StartNew();
+
     private readonly StreamWriter? _events;
+
     private readonly StreamWriter? _samples;
+
     private readonly Lock _gate = new();
+
     private string _phase = "starting";
 
     public string? DirectoryPath { get; }
@@ -22,11 +26,13 @@ internal sealed class ProbeReport : IDisposable
         {
             return;
         }
+
         DirectoryPath = Path.GetFullPath(directory);
         if (Directory.Exists(DirectoryPath) || File.Exists(DirectoryPath))
         {
             throw new IOException("Probe output directory must not already exist.");
         }
+
         Directory.CreateDirectory(DirectoryPath);
         _events = new StreamWriter(new FileStream(Path.Combine(DirectoryPath, "events.jsonl"), FileMode.CreateNew))
         {
@@ -38,14 +44,18 @@ internal sealed class ProbeReport : IDisposable
         };
         var binaries = new[] { typeof(ProbeReport).Assembly.Location, typeof(NetworkHost).Assembly.Location }
             .Select(path => new { Name = Path.GetFileName(path), Sha256 = HashFile(path) }).ToArray();
-        WriteFile("manifest.json", new
-        {
-            Mode = mode,
-            StartedAt = DateTimeOffset.UtcNow,
-            Environment.ProcessId,
-            Binding = new { IPv4 = binding.IPv4Address.ToString(), IPv6 = binding.IPv6Address.ToString(), binding.Port },
-            Binaries = binaries
-        });
+        WriteFile(
+            "manifest.json",
+            new
+            {
+                Mode = mode,
+                StartedAt = DateTimeOffset.UtcNow,
+                Environment.ProcessId,
+                Binding =
+                    new { IPv4 = binding.IPv4Address.ToString(), IPv6 = binding.IPv6Address.ToString(), binding.Port },
+                Binaries = binaries
+            }
+        );
     }
 
     public void Record(string phase, object? details = null, bool advancePhase = true)
@@ -56,13 +66,18 @@ internal sealed class ProbeReport : IDisposable
             {
                 _phase = phase;
             }
-            _events?.WriteLine(JsonSerializer.Serialize(new
-            {
-                Phase = phase,
-                ElapsedMilliseconds = _elapsed.Elapsed.TotalMilliseconds,
-                Utc = DateTimeOffset.UtcNow,
-                Details = details
-            }));
+
+            _events?.WriteLine(
+                JsonSerializer.Serialize(
+                    new
+                    {
+                        Phase = phase,
+                        ElapsedMilliseconds = _elapsed.Elapsed.TotalMilliseconds,
+                        Utc = DateTimeOffset.UtcNow,
+                        Details = details
+                    }
+                )
+            );
         }
     }
 
@@ -72,35 +87,45 @@ internal sealed class ProbeReport : IDisposable
         {
             return;
         }
+
         var rendezvous = failure as RendezvousException;
-        WriteFile("summary.json", new
-        {
-            Passed = failure is null,
-            LastPhase = _phase,
-            ElapsedMilliseconds = _elapsed.Elapsed.TotalMilliseconds,
-            Failure = failure is null ? null : new
+        WriteFile(
+            "summary.json",
+            new
             {
-                Type = failure.GetType().Name,
-                failure.Message,
-                rendezvous?.Operation,
-                Kind = rendezvous?.Kind.ToString(),
-                Code = rendezvous?.ErrorCode,
-                Status = rendezvous?.StatusCode
+                Passed = failure is null,
+                LastPhase = _phase,
+                ElapsedMilliseconds = _elapsed.Elapsed.TotalMilliseconds,
+                Failure = failure is null
+                    ? null
+                    : new
+                    {
+                        Type = failure.GetType().Name,
+                        failure.Message,
+                        rendezvous?.Operation,
+                        Kind = rendezvous?.Kind.ToString(),
+                        Code = rendezvous?.ErrorCode,
+                        Status = rendezvous?.StatusCode
+                    }
             }
-        });
+        );
     }
 
     public void Sample(object details, string? phase = null)
     {
         lock (_gate)
         {
-            _samples?.WriteLine(JsonSerializer.Serialize(new
-            {
-                Phase = phase ?? _phase,
-                ElapsedMilliseconds = _elapsed.Elapsed.TotalMilliseconds,
-                Utc = DateTimeOffset.UtcNow,
-                Details = details
-            }));
+            _samples?.WriteLine(
+                JsonSerializer.Serialize(
+                    new
+                    {
+                        Phase = phase ?? _phase,
+                        ElapsedMilliseconds = _elapsed.Elapsed.TotalMilliseconds,
+                        Utc = DateTimeOffset.UtcNow,
+                        Details = details
+                    }
+                )
+            );
         }
     }
 

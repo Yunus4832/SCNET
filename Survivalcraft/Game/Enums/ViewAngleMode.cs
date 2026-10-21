@@ -2,7 +2,9 @@ namespace Game;
 
 public enum ViewAngleMode
 {
-    Normal,
-    Narrow,
-    Wide
+    Normal = 0,
+
+    Narrow = 1,
+
+    Wide = 2
 }

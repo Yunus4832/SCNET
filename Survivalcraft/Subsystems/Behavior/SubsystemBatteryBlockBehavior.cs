@@ -12,20 +12,31 @@ public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
         inventory.GetSlotCount(slotIndex);
         var data = Terrain.ExtractData(value);
         var voltageLevel = BatteryBlock.GetVoltageLevel(data);
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditBatteryDialog(voltageLevel,
-            delegate (int newVoltageLevel)
-            {
-                var data2 = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
-                var num = Terrain.ReplaceData(value, data2);
-                if (num == value)
+        DialogsManager.ShowDialog(
+            componentPlayer.GuiWidget,
+            new EditBatteryDialog(
+                voltageLevel,
+                delegate(int newVoltageLevel)
                 {
-                    return;
-                }
+                    var data2 = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
+                    var num = Terrain.ReplaceData(value, data2);
+                    if (num == value)
+                    {
+                        return;
+                    }
 
-                var p = new EditableBlockPackage(BuiltInBlockEditKind.Battery, default, true, inventory.Id, slotIndex,
-                    newVoltageLevel);
-                EditableBlockPackageHandler.Submit(p);
-            }));
+                    var p = new EditableBlockPackage(
+                        BuiltInBlockEditKind.Battery,
+                        default,
+                        true,
+                        inventory.Id,
+                        slotIndex,
+                        newVoltageLevel
+                    );
+                    EditableBlockPackageHandler.Submit(p);
+                }
+            )
+        );
         return true;
     }
 
@@ -33,27 +44,32 @@ public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
     {
         var data = Terrain.ExtractData(value);
         var voltageLevel = BatteryBlock.GetVoltageLevel(data);
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditBatteryDialog(voltageLevel,
-            delegate (int newVoltageLevel)
-            {
-                var num = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
-                if (num == data)
+        DialogsManager.ShowDialog(
+            componentPlayer.GuiWidget,
+            new EditBatteryDialog(
+                voltageLevel,
+                delegate(int newVoltageLevel)
                 {
-                    return;
-                }
+                    var num = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
+                    if (num == data)
+                    {
+                        return;
+                    }
 
-                const int face = 4;
-                var cell = new CellFace(x, y, z, face);
-                var p = new EditableBlockPackage(
-                    BuiltInBlockEditKind.Battery,
-                    cell,
-                    false,
-                    0,
-                    0,
-                    newVoltageLevel
-                );
-                EditableBlockPackageHandler.Submit(p);
-            }));
+                    const int face = 4;
+                    var cell = new CellFace(x, y, z, face);
+                    var p = new EditableBlockPackage(
+                        BuiltInBlockEditKind.Battery,
+                        cell,
+                        false,
+                        0,
+                        0,
+                        newVoltageLevel
+                    );
+                    EditableBlockPackageHandler.Submit(p);
+                }
+            )
+        );
         return true;
     }
 }

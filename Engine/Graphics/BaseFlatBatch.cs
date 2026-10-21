@@ -69,8 +69,17 @@ public abstract class BaseFlatBatch : BaseBatch
             while (num2 > 0)
             {
                 var num3 = MathUtils.Min(num2, 196605);
-                Display.DrawUserIndexed(PrimitiveType.TriangleList, inputShader, VertexPositionColor.VertexDeclaration,
-                    TriangleVertices.Array, 0, TriangleVertices.Count, TriangleIndices.Array, num, num3);
+                Display.DrawUserIndexed(
+                    PrimitiveType.TriangleList,
+                    inputShader,
+                    VertexPositionColor.VertexDeclaration,
+                    TriangleVertices.Array,
+                    0,
+                    TriangleVertices.Count,
+                    TriangleIndices.Array,
+                    num,
+                    num3
+                );
                 num += num3;
                 num2 -= num3;
             }
@@ -83,8 +92,17 @@ public abstract class BaseFlatBatch : BaseBatch
             while (num5 > 0)
             {
                 var num6 = MathUtils.Min(num5, 131070);
-                Display.DrawUserIndexed(PrimitiveType.LineList, inputShader, VertexPositionColor.VertexDeclaration,
-                    LineVertices.Array, 0, LineVertices.Count, LineIndices.Array, num4, num6);
+                Display.DrawUserIndexed(
+                    PrimitiveType.LineList,
+                    inputShader,
+                    VertexPositionColor.VertexDeclaration,
+                    LineVertices.Array,
+                    0,
+                    LineVertices.Count,
+                    LineIndices.Array,
+                    num4,
+                    num6
+                );
                 num4 += num6;
                 num5 -= num6;
             }
@@ -117,8 +135,17 @@ public abstract class BaseFlatBatch : BaseBatch
             while (num2 > 0)
             {
                 var num3 = Math.Min(num2, 196605);
-                Display.DrawUserIndexed(PrimitiveType.TriangleList, inputShader, VertexPositionColor.VertexDeclaration,
-                    TriangleVertices.Array, 0, TriangleVertices.Count, TriangleIndices.Array, num, num3);
+                Display.DrawUserIndexed(
+                    PrimitiveType.TriangleList,
+                    inputShader,
+                    VertexPositionColor.VertexDeclaration,
+                    TriangleVertices.Array,
+                    0,
+                    TriangleVertices.Count,
+                    TriangleIndices.Array,
+                    num,
+                    num3
+                );
                 num += num3;
                 num2 -= num3;
             }
@@ -131,8 +158,17 @@ public abstract class BaseFlatBatch : BaseBatch
             while (num5 > 0)
             {
                 var num6 = Math.Min(num5, 131070);
-                Display.DrawUserIndexed(PrimitiveType.LineList, inputShader, VertexPositionColor.VertexDeclaration,
-                    LineVertices.Array, 0, LineVertices.Count, LineIndices.Array, num4, num6);
+                Display.DrawUserIndexed(
+                    PrimitiveType.LineList,
+                    inputShader,
+                    VertexPositionColor.VertexDeclaration,
+                    LineVertices.Array,
+                    0,
+                    LineVertices.Count,
+                    LineIndices.Array,
+                    num4,
+                    num6
+                );
                 num4 += num6;
                 num5 -= num6;
             }

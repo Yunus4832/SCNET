@@ -26,8 +26,24 @@ public class CarpetBlock : CubeBlock
     {
         var data = Terrain.ExtractData(value);
         var fabricColor = SubsystemPalette.GetFabricColor(generator, GetColor(data));
-        generator.GenerateCubeVertices(this, value, x, y, z, 0.0625f, 0.0625f, 0.0625f, 0.0625f, fabricColor,
-            fabricColor, fabricColor, fabricColor, fabricColor, -1, geometry.OpaqueSubsetsByFace);
+        generator.GenerateCubeVertices(
+            this,
+            value,
+            x,
+            y,
+            z,
+            0.0625f,
+            0.0625f,
+            0.0625f,
+            0.0625f,
+            fabricColor,
+            fabricColor,
+            fabricColor,
+            fabricColor,
+            fabricColor,
+            -1,
+            geometry.OpaqueSubsetsByFace
+        );
     }
 
     public override void DrawBlock(
@@ -79,11 +95,13 @@ public class CarpetBlock : CubeBlock
         }
 
         var data = Terrain.ExtractData(oldValue);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Count = 1
+            }
+        );
     }
 
     public override BlockDebrisParticleSystem CreateDebrisParticleSystem(
@@ -95,8 +113,14 @@ public class CarpetBlock : CubeBlock
     {
         var data = Terrain.ExtractData(value);
         var fabricColor = SubsystemPalette.GetFabricColor(subsystemTerrain, GetColor(data));
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, fabricColor,
-            TextureSlot);
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            fabricColor,
+            TextureSlot
+        );
     }
 
     public override CraftingRecipe? GetAdHocCraftingRecipe(
@@ -151,8 +175,10 @@ public class CarpetBlock : CubeBlock
                     ResultCount = 1,
                     ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, num5),
                     RemainsCount = 1,
-                    RemainsValue = Catalog.DamageItem(Terrain.MakeBlockValue(129, 0, color),
-                        damage + MathUtils.Max(block.Durability / 4, 1)),
+                    RemainsValue = Catalog.DamageItem(
+                        Terrain.MakeBlockValue(129, 0, color),
+                        damage + MathUtils.Max(block.Durability / 4, 1)
+                    ),
                     RequiredHeatLevel = 1f,
                     Description = $"Dye carpet {SubsystemPalette.GetName(color, string.Empty)}",
                     Ingredients = (string[])ingredients.Clone()
@@ -175,8 +201,10 @@ public class CarpetBlock : CubeBlock
                 ResultCount = 1,
                 ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, 0),
                 RemainsCount = 1,
-                RemainsValue = Catalog.DamageItem(Terrain.MakeBlockValue(128, 0, 0),
-                    damage2 + MathUtils.Max(block2.Durability / 4, 1)),
+                RemainsValue = Catalog.DamageItem(
+                    Terrain.MakeBlockValue(128, 0, 0),
+                    damage2 + MathUtils.Max(block2.Durability / 4, 1)
+                ),
                 RequiredHeatLevel = 1f,
                 Description = "Undye carpet",
                 Ingredients = (string[])ingredients.Clone()

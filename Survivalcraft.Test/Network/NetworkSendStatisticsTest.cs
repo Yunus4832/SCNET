@@ -16,12 +16,16 @@ public sealed class NetworkSendStatisticsTest
         statistics.RecordFanout(typeof(EntityPackage), NetworkChannel.Bulk, 2);
         statistics.RecordFanout(typeof(EntityPackage), NetworkChannel.Bulk, 4);
 
-        Assert.Equal(new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 1, 0, 0),
-            first);
+        Assert.Equal(
+            new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 1, 0, 0),
+            first
+        );
         Assert.Equal(0d, first.AverageFanout);
         var latest = Assert.Single(statistics.GetFanout());
-        Assert.Equal(new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 3, 6, 4),
-            latest);
+        Assert.Equal(
+            new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 3, 6, 4),
+            latest
+        );
         Assert.Equal(2d, latest.AverageFanout);
         Assert.Empty(statistics.GetPackages());
         Assert.Empty(statistics.GetChannels());
@@ -36,15 +40,22 @@ public sealed class NetworkSendStatisticsTest
         statistics.RecordFanout(typeof(SubsystemBodyPackage), NetworkChannel.Bulk, 2);
         var snapshot = statistics.GetFanout();
         Assert.Equal(3, snapshot.Count);
-        Assert.Contains(new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 1, 3, 3),
-            snapshot);
-        Assert.Contains(new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Control, 1, 1, 1),
-            snapshot);
-        Assert.Contains(new NetworkPackageFanoutStatistics(typeof(SubsystemBodyPackage), NetworkChannel.Bulk, 1, 2, 2),
-            snapshot);
+        Assert.Contains(
+            new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 1, 3, 3),
+            snapshot
+        );
+        Assert.Contains(
+            new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Control, 1, 1, 1),
+            snapshot
+        );
+        Assert.Contains(
+            new NetworkPackageFanoutStatistics(typeof(SubsystemBodyPackage), NetworkChannel.Bulk, 1, 2, 2),
+            snapshot
+        );
         Assert.Throws<ArgumentNullException>(() => statistics.RecordFanout(null!, NetworkChannel.Bulk, 1));
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            statistics.RecordFanout(typeof(EntityPackage), NetworkChannel.Bulk, -1));
+            statistics.RecordFanout(typeof(EntityPackage), NetworkChannel.Bulk, -1)
+        );
         Assert.Equal(snapshot, statistics.GetFanout());
     }
 
@@ -94,8 +105,10 @@ public sealed class NetworkSendStatisticsTest
         var channels = statistics.GetChannels();
         Assert.Equal(new NetworkChannelSendStatistics(2, 180), channels[NetworkChannel.Bulk]);
         Assert.Equal(new NetworkChannelSendStatistics(1, 20), channels[NetworkChannel.StateStream]);
-        Assert.Contains(new NetworkPackageSendStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 3, 210),
-            statistics.GetPackages());
+        Assert.Contains(
+            new NetworkPackageSendStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 3, 210),
+            statistics.GetPackages()
+        );
     }
 
     [Fact]

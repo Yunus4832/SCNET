@@ -6,6 +6,7 @@ namespace Content.Packaging;
 internal static class PngPayloadValidator
 {
     private static readonly byte[] _signature = [137, 80, 78, 71, 13, 10, 26, 10];
+
     private const int _bufferSize = 64 * 1024;
 
     public static void Validate(Stream stream, int expectedWidth, int expectedHeight, string path)
@@ -37,8 +38,10 @@ internal static class PngPayloadValidator
             }
 
             if (type[0] is >= (byte)'A' and <= (byte)'Z' &&
-                !type.SequenceEqual("IHDR"u8) && !type.SequenceEqual("PLTE"u8) &&
-                !type.SequenceEqual("IDAT"u8) && !type.SequenceEqual("IEND"u8))
+                !type.SequenceEqual("IHDR"u8) &&
+                !type.SequenceEqual("PLTE"u8) &&
+                !type.SequenceEqual("IDAT"u8) &&
+                !type.SequenceEqual("IEND"u8))
             {
                 throw new ContentPackageException($"PNG payload '{path}' contains an unsupported critical chunk.");
             }
@@ -123,10 +126,14 @@ internal static class PngPayloadValidator
     {
         if (BinaryPrimitives.ReadInt32BigEndian(data[..4]) != expectedWidth ||
             BinaryPrimitives.ReadInt32BigEndian(data[4..8]) != expectedHeight ||
-            data[10] != 0 || data[11] != 0 || data[12] != 0 || !IsValidColorDepth(data[8], data[9]))
+            data[10] != 0 ||
+            data[11] != 0 ||
+            data[12] != 0 ||
+            !IsValidColorDepth(data[8], data[9]))
         {
             throw new ContentPackageException(
-                $"PNG payload '{path}' does not match its declared dimensions or format.");
+                $"PNG payload '{path}' does not match its declared dimensions or format."
+            );
         }
     }
 

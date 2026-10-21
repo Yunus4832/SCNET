@@ -60,35 +60,15 @@ public class ComponentVitalStats : Component, IUpdateable
 
     private float _temperatureBlackoutFactor;
 
-    public float Food
-    {
-        get;
-        set => field = MathUtils.Saturate(value);
-    }
+    public float Food { get; set => field = MathUtils.Saturate(value); }
 
-    public float Stamina
-    {
-        get;
-        set => field = MathUtils.Saturate(value);
-    }
+    public float Stamina { get; set => field = MathUtils.Saturate(value); }
 
-    public float Sleep
-    {
-        get;
-        set => field = MathUtils.Saturate(value);
-    }
+    public float Sleep { get; set => field = MathUtils.Saturate(value); }
 
-    public float Temperature
-    {
-        get;
-        set => field = MathUtils.Clamp(value, 0f, 24f);
-    }
+    public float Temperature { get; set => field = MathUtils.Clamp(value, 0f, 24f); }
 
-    public float Wetness
-    {
-        get;
-        set => field = MathUtils.Saturate(value);
-    }
+    public float Wetness { get; set => field = MathUtils.Saturate(value); }
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -143,20 +123,34 @@ public class ComponentVitalStats : Component, IUpdateable
 
         if (_componentPlayer.ComponentSickness.IsSick && sicknessProbability > 0f)
         {
-            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 1), Color.White, true,
-                true);
+            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                LanguageManager.Get(_typeName, 1),
+                Color.White,
+                true,
+                true
+            );
             return false;
         }
 
         if (Food >= 0.98f)
         {
-            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 2), Color.White, true,
-                true);
+            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                LanguageManager.Get(_typeName, 2),
+                Color.White,
+                true,
+                true
+            );
             return false;
         }
 
-        _subsystemAudio.PlayRandomSound("Audio/Creatures/HumanEat", 1f, _random.Float(-0.2f, 0.2f),
-            _componentPlayer.ComponentBody.Position, 2f, 0f);
+        _subsystemAudio.PlayRandomSound(
+            "Audio/Creatures/HumanEat",
+            1f,
+            _random.Float(-0.2f, 0.2f),
+            _componentPlayer.ComponentBody.Position,
+            2f,
+            0f
+        );
         if (_componentPlayer.ComponentSickness.IsSick)
         {
             num2 *= 0.75f;
@@ -175,50 +169,68 @@ public class ComponentVitalStats : Component, IUpdateable
             switch (sicknessProbability)
             {
                 case >= 0.5f:
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 3), Color.White,
+                    _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        LanguageManager.Get(_typeName, 3),
+                        Color.White,
                         true,
-                        true);
+                        true
+                    );
                     break;
                 case > 0f:
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 4), Color.White,
+                    _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        LanguageManager.Get(_typeName, 4),
+                        Color.White,
                         true,
-                        true);
+                        true
+                    );
                     break;
                 default:
+                {
+                    switch (value2)
                     {
-                        switch (value2)
+                        case > 2.5f:
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                LanguageManager.Get(_typeName, 5),
+                                Color.White,
+                                true,
+                                true
+                            );
+                            break;
+                        case > 2f:
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                LanguageManager.Get(_typeName, 6),
+                                Color.White,
+                                true,
+                                true
+                            );
+                            break;
+                        default:
                         {
-                            case > 2.5f:
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 5),
-                                    Color.White, true,
-                                    true);
-                                break;
-                            case > 2f:
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 6),
-                                    Color.White, true,
-                                    true);
-                                break;
-                            default:
-                                {
-                                    if (Food > 0.85f)
-                                    {
-                                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 7),
-                                            Color.White, true,
-                                            true);
-                                    }
-                                    else
-                                    {
-                                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 8),
-                                            Color.White, true,
-                                            false);
-                                    }
+                            if (Food > 0.85f)
+                            {
+                                _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                    LanguageManager.Get(_typeName, 7),
+                                    Color.White,
+                                    true,
+                                    true
+                                );
+                            }
+                            else
+                            {
+                                _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                    LanguageManager.Get(_typeName, 8),
+                                    Color.White,
+                                    true,
+                                    false
+                                );
+                            }
 
-                                    break;
-                                }
+                            break;
                         }
-
-                        break;
                     }
+
+                    break;
+                }
             }
         }
 
@@ -353,8 +365,12 @@ public class ComponentVitalStats : Component, IUpdateable
                         _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 9));
                         if (runGui)
                         {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 10),
-                                Color.White, true, false);
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                LanguageManager.Get(_typeName, 10),
+                                Color.White,
+                                true,
+                                false
+                            );
                             _componentPlayer.ComponentGui.FoodBarWidget.Flash(10);
                         }
                     }
@@ -364,19 +380,28 @@ public class ComponentVitalStats : Component, IUpdateable
                     switch (runGui)
                     {
                         case true when Food < 0.1f && (_lastFood >= 0.1f) | flag3:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 11),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                LanguageManager.Get(_typeName, 11),
                                 Color.White,
-                                true, true);
+                                true,
+                                true
+                            );
                             break;
                         case true when Food < 0.25f && (_lastFood >= 0.25f) | flag3:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 12),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                LanguageManager.Get(_typeName, 12),
                                 Color.White,
-                                true, true);
+                                true,
+                                true
+                            );
                             break;
                         case true when Food < 0.5f && (_lastFood >= 0.5f) | flag3:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 13),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                LanguageManager.Get(_typeName, 13),
                                 Color.White,
-                                true, false);
+                                true,
+                                false
+                            );
                             break;
                     }
                 }
@@ -442,14 +467,22 @@ public class ComponentVitalStats : Component, IUpdateable
 
             if (!flag2 && !flag && Stamina < 0.33f && _lastStamina >= 0.33f)
             {
-                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 14), Color.White, true,
-                    false);
+                _componentPlayer.ComponentGui.DisplaySmallMessage(
+                    LanguageManager.Get(_typeName, 14),
+                    Color.White,
+                    true,
+                    false
+                );
             }
 
             if (flag2 | flag && Stamina < 0.4f && _lastStamina >= 0.4f)
             {
-                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 15), Color.White, true,
-                    true);
+                _componentPlayer.ComponentGui.DisplaySmallMessage(
+                    LanguageManager.Get(_typeName, 15),
+                    Color.White,
+                    true,
+                    true
+                );
             }
 
             if (Stamina < 0.1f)
@@ -459,9 +492,12 @@ public class ComponentVitalStats : Component, IUpdateable
                     if (_subsystemTime.PeriodicGameTimeEvent(5.0, 0.0))
                     {
                         _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 16));
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 17),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(_typeName, 17),
                             Color.White,
-                            true, false);
+                            true,
+                            false
+                        );
                     }
 
                     if (_random.Float(0f, 1f) < 1f * gameTimeDelta)
@@ -471,8 +507,12 @@ public class ComponentVitalStats : Component, IUpdateable
                 }
                 else if (_subsystemTime.PeriodicGameTimeEvent(5.0, 0.0))
                 {
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 18), Color.White,
-                        true, true);
+                    _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        LanguageManager.Get(_typeName, 18),
+                        Color.White,
+                        true,
+                        true
+                    );
                 }
             }
 
@@ -490,14 +530,31 @@ public class ComponentVitalStats : Component, IUpdateable
                 var distanceVolume = _componentPlayer.PlayerData.IsMainPlayer
                     ? 1f
                     : _subsystemAudio.CalculateVolume(
-                        _subsystemAudio.CalculateListenerDistance(_componentPlayer.ComponentBody.Position), 2f);
-                _pantingSound.Volume = SettingsManager.Current.SoundsVolume * MathUtils.Saturate(num4) *
-                                       distanceVolume * MathUtils.Lerp(0.8f, 1f,
-                                           SimplexNoise.Noise((float)MathUtils.Remainder(3.0 * Time.RealTime + 100.0,
-                                               1000.0)));
-                _pantingSound.Pitch = AudioManager.ToEnginePitch(num5 + MathUtils.Lerp(-0.15f, 0.05f, num4) *
-                    MathUtils.Lerp(0.8f, 1.2f,
-                        SimplexNoise.Noise((float)MathUtils.Remainder(3.0 * Time.RealTime + 200.0, 1000.0))));
+                        _subsystemAudio.CalculateListenerDistance(_componentPlayer.ComponentBody.Position),
+                        2f
+                    );
+                _pantingSound.Volume = SettingsManager.Current.SoundsVolume *
+                                       MathUtils.Saturate(num4) *
+                                       distanceVolume *
+                                       MathUtils.Lerp(
+                                           0.8f,
+                                           1f,
+                                           SimplexNoise.Noise(
+                                               (float)MathUtils.Remainder(
+                                                   3.0 * Time.RealTime + 100.0,
+                                                   1000.0
+                                               )
+                                           )
+                                       );
+                _pantingSound.Pitch = AudioManager.ToEnginePitch(
+                    num5 +
+                    MathUtils.Lerp(-0.15f, 0.05f, num4) *
+                    MathUtils.Lerp(
+                        0.8f,
+                        1.2f,
+                        SimplexNoise.Noise((float)MathUtils.Remainder(3.0 * Time.RealTime + 200.0, 1000.0))
+                    )
+                );
                 _pantingSound.Play();
             }
             else
@@ -542,26 +599,38 @@ public class ComponentVitalStats : Component, IUpdateable
                 switch (runGui)
                 {
                     case true when Sleep < 0.075f && (_lastSleep >= 0.075f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 19),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(_typeName, 19),
                             Color.White,
-                            true, true);
+                            true,
+                            true
+                        );
                         _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
                         break;
                     case true when Sleep < 0.2f && (_lastSleep >= 0.2f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 20),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(_typeName, 20),
                             Color.White,
-                            true, true);
+                            true,
+                            true
+                        );
                         _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
                         break;
                     case true when Sleep < 0.33f && (_lastSleep >= 0.33f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 21),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(_typeName, 21),
                             Color.White,
-                            true, false);
+                            true,
+                            false
+                        );
                         break;
                     case true when Sleep < 0.5f && (_lastSleep >= 0.5f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 22),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(_typeName, 22),
                             Color.White,
-                            true, false);
+                            true,
+                            false
+                        );
                         break;
                 }
 
@@ -581,8 +650,12 @@ public class ComponentVitalStats : Component, IUpdateable
                     _componentPlayer.ComponentSleep.Sleep(false);
                     if (runGui)
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 23),
-                            Color.White, true, true);
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(_typeName, 23),
+                            Color.White,
+                            true,
+                            true
+                        );
                         _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
                     }
                 }
@@ -608,8 +681,10 @@ public class ComponentVitalStats : Component, IUpdateable
             return;
         }
 
-        _componentPlayer.ComponentScreenOverlays.BlackoutFactor = MathUtils.Max(_sleepBlackoutFactor,
-            _componentPlayer.ComponentScreenOverlays.BlackoutFactor);
+        _componentPlayer.ComponentScreenOverlays.BlackoutFactor = MathUtils.Max(
+            _sleepBlackoutFactor,
+            _componentPlayer.ComponentScreenOverlays.BlackoutFactor
+        );
         if (!(_sleepBlackoutFactor > 0.01))
         {
             return;
@@ -644,8 +719,15 @@ public class ComponentVitalStats : Component, IUpdateable
             var x = Terrain.ToCell(_componentPlayer.ComponentBody.Position.X);
             var y = Terrain.ToCell(_componentPlayer.ComponentBody.Position.Y + 0.1f);
             var z = Terrain.ToCell(_componentPlayer.ComponentBody.Position.Z);
-            _subsystemMetersBlockBehavior.CalculateTemperature(x, y, z, 12f, num, out _environmentTemperature,
-                out _environmentTemperatureFlux);
+            _subsystemMetersBlockBehavior.CalculateTemperature(
+                x,
+                y,
+                z,
+                12f,
+                num,
+                out _environmentTemperature,
+                out _environmentTemperatureFlux
+            );
         }
 
         if (_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative &&
@@ -680,67 +762,70 @@ public class ComponentVitalStats : Component, IUpdateable
                 _componentPlayer.ComponentHealth.Injure(1f, null, false, LanguageManager.Get(_typeName, 25));
                 break;
             case < 3f:
+            {
+                if (_subsystemTime.PeriodicGameTimeEvent(10.0, 0.0))
                 {
-                    if (_subsystemTime.PeriodicGameTimeEvent(10.0, 0.0))
+                    _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 26));
+                    string text;
+
+                    if (Wetness > 0f)
                     {
-                        _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 26));
-                        string text;
-
-                        if (Wetness > 0f)
-                        {
-                            text = string.Format(LanguageManager.Get(_typeName, 27), arg); // 你的{0}冻僵了,弄干你的衣服,
-                        }
-                        else if (num >= 1f) // 有衣服，但依然受冻的时候
-                        {
-                            text = string.Format(LanguageManager.Get(_typeName, 28), arg); // 你的{0}冻僵了,寻找庇护所,
-                        }
-                        else
-                        {
-                            text = string.Format(LanguageManager.Get(_typeName, 29), arg); // 你的{0}冻僵了,快穿上衣服,
-                        }
-
-                        if (runGui)
-                        {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(text, Color.White, true, false);
-                            _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
-                        }
+                        text = string.Format(LanguageManager.Get(_typeName, 27), arg); // 你的{0}冻僵了,弄干你的衣服,
+                    }
+                    else if (num >= 1f) // 有衣服，但依然受冻的时候
+                    {
+                        text = string.Format(LanguageManager.Get(_typeName, 28), arg); // 你的{0}冻僵了,寻找庇护所,
+                    }
+                    else
+                    {
+                        text = string.Format(LanguageManager.Get(_typeName, 29), arg); // 你的{0}冻僵了,快穿上衣服,
                     }
 
-                    break;
+                    if (runGui)
+                    {
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(text, Color.White, true, false);
+                        _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
+                    }
                 }
+
+                break;
+            }
             default:
+            {
+                switch (runGui)
                 {
-                    switch (runGui)
+                    // 当体温低于 6 时
+                    case true when Temperature < 6f && (_lastTemperature >= 6f) | flag:
                     {
-                        // 当体温低于 6 时
-                        case true when Temperature < 6f && (_lastTemperature >= 6f) | flag:
-                            {
-                                var text2 = Wetness switch
-                                {
-                                    > 0f => string.Format(LanguageManager.Get(_typeName, 30), arg), // 你的{0}有点冷, 弄干你的衣服
-                                    _ => string.Format(num >= 1f
-                                        ? LanguageManager.Get(_typeName, 31) // 你的{0}有点冷,寻找庇护所
-                                        : LanguageManager.Get(_typeName, 32), arg) // 你的{0}有点冷,快穿上衣服
-                                };
+                        var text2 = Wetness switch
+                        {
+                            > 0f => string.Format(LanguageManager.Get(_typeName, 30), arg), // 你的{0}有点冷, 弄干你的衣服
+                            _ => string.Format(
+                                num >= 1f
+                                    ? LanguageManager.Get(_typeName, 31) // 你的{0}有点冷,寻找庇护所
+                                    : LanguageManager.Get(_typeName, 32),
+                                arg
+                            ) // 你的{0}有点冷,快穿上衣服
+                        };
 
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(text2, Color.White, true, true);
-                                _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
-                                break;
-                            }
-                        // 当体温低于 8 时： 你觉得有点冷
-                        case true when Temperature < 8f && (_lastTemperature >= 8f) | flag:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(
-                                LanguageManager.Get(_typeName, 33),
-                                Color.White,
-                                true,
-                                false
-                            );
-                            _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
-                            break;
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(text2, Color.White, true, true);
+                        _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
+                        break;
                     }
-
-                    break;
+                    // 当体温低于 8 时： 你觉得有点冷
+                    case true when Temperature < 8f && (_lastTemperature >= 8f) | flag:
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(_typeName, 33),
+                            Color.White,
+                            true,
+                            false
+                        );
+                        _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
+                        break;
                 }
+
+                break;
+            }
         }
 
         if (Temperature >= 24f) // 体温大于24
@@ -792,8 +877,10 @@ public class ComponentVitalStats : Component, IUpdateable
         var num4 = MathUtils.Saturate(0.5f * _temperatureBlackoutDuration);
         _temperatureBlackoutFactor =
             MathUtils.Saturate(_temperatureBlackoutFactor + 2f * gameTimeDelta * (num4 - _temperatureBlackoutFactor));
-        _componentPlayer.ComponentScreenOverlays.BlackoutFactor = MathUtils.Max(_temperatureBlackoutFactor,
-            _componentPlayer.ComponentScreenOverlays.BlackoutFactor);
+        _componentPlayer.ComponentScreenOverlays.BlackoutFactor = MathUtils.Max(
+            _temperatureBlackoutFactor,
+            _componentPlayer.ComponentScreenOverlays.BlackoutFactor
+        );
         if (_temperatureBlackoutFactor > 0.01)
         {
             _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageManager.Get(_typeName, 37);
@@ -858,11 +945,15 @@ public class ComponentVitalStats : Component, IUpdateable
                     {
                         if (Wetness > 0.8f)
                         {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 38),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                LanguageManager.Get(_typeName, 38),
                                 Color.White,
-                                true, true);
+                                true,
+                                true
+                            );
                         }
-                    });
+                    }
+                );
                 break;
             case true when Wetness > 0.2f && _lastWetness <= 0.2f:
                 Time.QueueTimeDelayedExecution(
@@ -878,7 +969,8 @@ public class ComponentVitalStats : Component, IUpdateable
                                 true
                             );
                         }
-                    });
+                    }
+                );
                 break;
             case true when Wetness <= 0f && _lastWetness > 0f:
                 Time.QueueTimeDelayedExecution(
@@ -894,7 +986,8 @@ public class ComponentVitalStats : Component, IUpdateable
                                 true
                             );
                         }
-                    });
+                    }
+                );
                 break;
         }
 

@@ -6,7 +6,8 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
 {
     internal static Client ResolveServerClient(Client? current, Client incoming, Client? sender)
     {
-        if (current is not null && current.GUID == incoming.GUID &&
+        if (current is not null &&
+            current.GUID == incoming.GUID &&
             ReferenceEquals(current.Peer, sender?.Peer))
         {
             current.ID = incoming.ID;
@@ -37,12 +38,14 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
                 }
 
                 var project = GameManager.Project;
-                netNode.AddClient(new Client(
-                    context.Sender?.Peer,
-                    package.Client!.ID,
-                    package.Client.TokenId,
-                    package.Client.GUID,
-                    project)
+                netNode.AddClient(
+                    new Client(
+                        context.Sender?.Peer,
+                        package.Client!.ID,
+                        package.Client.TokenId,
+                        package.Client.GUID,
+                        project
+                    )
                 );
                 break;
             case ClientPackage.EventType.Remove:

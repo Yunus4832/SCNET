@@ -104,8 +104,13 @@ public class GameLogSink : ILogSink
                 }
 
                 var nameWithoutExt = fileName.Substring(4, fileName.Length - 8);
-                if (DateTime.TryParseExact(nameWithoutExt, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None,
-                        out var date))
+                if (DateTime.TryParseExact(
+                        nameWithoutExt,
+                        "yyyy-MM-dd",
+                        null,
+                        System.Globalization.DateTimeStyles.None,
+                        out var date
+                    ))
                 {
                     logFiles.Add((file, date));
                 }

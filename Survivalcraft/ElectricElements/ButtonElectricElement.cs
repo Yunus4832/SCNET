@@ -27,8 +27,14 @@ public class ButtonElectricElement : MountedElectricElement
 
         _wasPressed = true;
         var cellFace = CellFaces[0];
-        SubsystemElectricity.SubsystemAudio.PlaySound("Audio/Click", 1f, 0f,
-            new Vector3(cellFace.X, cellFace.Y, cellFace.Z), 2f, true);
+        SubsystemElectricity.SubsystemAudio.PlaySound(
+            "Audio/Click",
+            1f,
+            0f,
+            new Vector3(cellFace.X, cellFace.Y, cellFace.Z),
+            2f,
+            true
+        );
         SubsystemElectricity.QueueElectricElementForSimulation(this, SubsystemElectricity.CircuitStep + 1);
     }
 

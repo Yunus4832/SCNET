@@ -102,19 +102,25 @@ public sealed class ContentServerClientPoolTest
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         public bool IsDisposed { get; private set; }
 
         public void Complete()
         {
-            _response.SetResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(
-                    "{\"success\":true,\"data\":{\"items\":[],\"total\":0,\"pageIndex\":1,\"pageSize\":20}}")
-            });
+            _response.SetResult(
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        "{\"success\":true,\"data\":{\"items\":[],\"total\":0,\"pageIndex\":1,\"pageSize\":20}}"
+                    )
+                }
+            );
         }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-            CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             Started.TrySetResult();
             return _response.Task;

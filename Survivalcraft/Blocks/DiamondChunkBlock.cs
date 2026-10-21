@@ -12,9 +12,17 @@ public class DiamondChunkBlock : Block
         var diamondMesh = model.FindMesh("Diamond")!;
         var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
             diamondMesh.ParentBone ??
-            throw new InvalidOperationException("Require DiamondMesh.ParentBone is null"));
-        StandaloneBlockMesh.AppendModelMeshPart(diamondMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
+            throw new InvalidOperationException("Require DiamondMesh.ParentBone is null")
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            diamondMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 

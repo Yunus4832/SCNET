@@ -12,18 +12,29 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
         inventory.GetSlotCount(slotIndex);
         var data = Terrain.ExtractData(value);
         var voltageLevel = SwitchBlock.GetVoltageLevel(data);
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditVoltageLevelDialog(voltageLevel,
-            delegate (int newVoltageLevel)
-            {
-                var data2 = SwitchBlock.SetVoltageLevel(data, newVoltageLevel);
-                var num = Terrain.ReplaceData(value, data2);
-                if (num != value)
+        DialogsManager.ShowDialog(
+            componentPlayer.GuiWidget,
+            new EditVoltageLevelDialog(
+                voltageLevel,
+                delegate(int newVoltageLevel)
                 {
-                    var p = new EditableBlockPackage(BuiltInBlockEditKind.Switch, default, true, inventory.Id, slotIndex,
-                        newVoltageLevel);
-                    EditableBlockPackageHandler.Submit(p);
+                    var data2 = SwitchBlock.SetVoltageLevel(data, newVoltageLevel);
+                    var num = Terrain.ReplaceData(value, data2);
+                    if (num != value)
+                    {
+                        var p = new EditableBlockPackage(
+                            BuiltInBlockEditKind.Switch,
+                            default,
+                            true,
+                            inventory.Id,
+                            slotIndex,
+                            newVoltageLevel
+                        );
+                        EditableBlockPackageHandler.Submit(p);
+                    }
                 }
-            }));
+            )
+        );
         return true;
     }
 
@@ -33,8 +44,9 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
         var voltageLevel = SwitchBlock.GetVoltageLevel(data);
         DialogsManager.ShowDialog(
             componentPlayer.GuiWidget,
-            new EditVoltageLevelDialog(voltageLevel,
-                delegate (int newVoltageLevel)
+            new EditVoltageLevelDialog(
+                voltageLevel,
+                delegate(int newVoltageLevel)
                 {
                     var num = SwitchBlock.SetVoltageLevel(data, newVoltageLevel);
                     if (num == data)
@@ -44,8 +56,14 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
 
                     const int face = 4;
                     var cell = new CellFace(x, y, z, face);
-                    var p = new EditableBlockPackage(BuiltInBlockEditKind.Switch, cell, false, 0, 0,
-                        newVoltageLevel);
+                    var p = new EditableBlockPackage(
+                        BuiltInBlockEditKind.Switch,
+                        cell,
+                        false,
+                        0,
+                        0,
+                        newVoltageLevel
+                    );
                     EditableBlockPackageHandler.Submit(p);
                 }
             )

@@ -62,6 +62,7 @@ public sealed class FrameCodecTest
             writer.Write(8);
             writer.Write((byte)1);
         }
+
         raw.Position = 0;
         using var reader = new ProtocolReader(raw);
         Assert.Throws<InvalidDataException>(() => reader.ReadBuff());
@@ -74,9 +75,15 @@ public sealed class FrameCodecTest
     {
         Assert.Equal(1, GameProtocol.CurrentVersion);
         var assembly = typeof(GameProtocol).Assembly;
-        Assert.Equal("1", assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
-            .Single(attribute => attribute.Key == "GameProtocolVersion").Value);
-        Assert.DoesNotContain(assembly.GetReferencedAssemblies(), reference =>
-            reference.Name is "Survivalcraft" or "Engine" or "Engine.Media" or "Engine.Network" or "LiteNetLib");
+        Assert.Equal(
+            "1",
+            assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+                .Single(attribute => attribute.Key == "GameProtocolVersion").Value
+        );
+        Assert.DoesNotContain(
+            assembly.GetReferencedAssemblies(),
+            reference =>
+                reference.Name is "Survivalcraft" or "Engine" or "Engine.Media" or "Engine.Network" or "LiteNetLib"
+        );
     }
 }

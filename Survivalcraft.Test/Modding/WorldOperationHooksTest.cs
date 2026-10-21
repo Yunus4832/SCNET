@@ -19,15 +19,17 @@ public sealed class WorldOperationHooksTest
     {
         var calls = 0;
         using var runtime = new RuntimeScope(context =>
-        {
-            context.Gameplay.OnTerrainCellChanging(changing =>
             {
-                calls++;
-                Assert.Equal(2, changing.OldValue);
-                changing.Cancel = true;
-            });
-            context.BlockBehaviors.OnItemHarvested(_ => throw new InvalidOperationException("Must not harvest."));
-        });
+                context.Gameplay.OnTerrainCellChanging(changing =>
+                    {
+                        calls++;
+                        Assert.Equal(2, changing.OldValue);
+                        changing.Cancel = true;
+                    }
+                );
+                context.BlockBehaviors.OnItemHarvested(_ => throw new InvalidOperationException("Must not harvest."));
+            }
+        );
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
         terrain.SetCellValueFast(1, 2, 3, 2);
@@ -51,20 +53,23 @@ public sealed class WorldOperationHooksTest
         var ignitions = 0;
         var explosions = 0;
         using var runtime = new RuntimeScope(context =>
-        {
-            context.Gameplay.OnCellIgniting(igniting =>
             {
-                ignitions++;
-                Assert.Equal(new Point3(1, 2, 3), igniting.Point);
-                igniting.Cancel = true;
-            });
-            context.Gameplay.OnExplosionPointProcessing(processing =>
-            {
-                explosions++;
-                Assert.Equal(new Point3(1, 2, 3), processing.Point);
-                processing.Cancel = true;
-            });
-        });
+                context.Gameplay.OnCellIgniting(igniting =>
+                    {
+                        ignitions++;
+                        Assert.Equal(new Point3(1, 2, 3), igniting.Point);
+                        igniting.Cancel = true;
+                    }
+                );
+                context.Gameplay.OnExplosionPointProcessing(processing =>
+                    {
+                        explosions++;
+                        Assert.Equal(new Point3(1, 2, 3), processing.Point);
+                        processing.Cancel = true;
+                    }
+                );
+            }
+        );
         var fire = new SubsystemFireBlockBehavior();
         var explosion = new SubsystemExplosions();
         var processed = new SubsystemExplosions.SparseSpatialArray<bool>(0, 0, 0, false);
@@ -86,15 +91,21 @@ public sealed class WorldOperationHooksTest
         var bounds = new BoundingBox(new Vector3(0, 300, 0), new Vector3(1, 301, 1));
         var body = new ComponentBody();
         var boxes = new DynamicArray<ComponentBody.CollisionBox>();
-        host.LoadAndStart([
-            new ModDescriptor(new ModManifest("test.operations", "Operations", "1.0.0"),
-                () => new CallbackMod(context => context.Gameplay.OnTerrainCollisionBoxes(query =>
-                {
-                    Assert.Same(body, query.Body);
-                    Assert.Equal(bounds, query.Bounds);
-                    query.CollisionBoxes.Add(new ComponentBody.CollisionBox { Box = bounds });
-                })))
-        ]);
+        host.LoadAndStart(
+            [
+                new ModDescriptor(
+                    new ModManifest("test.operations", "Operations", "1.0.0"),
+                    () => new CallbackMod(context => context.Gameplay.OnTerrainCollisionBoxes(query =>
+                            {
+                                Assert.Same(body, query.Body);
+                                Assert.Equal(bounds, query.Bounds);
+                                query.CollisionBoxes.Add(new ComponentBody.CollisionBox { Box = bounds });
+                            }
+                        )
+                    )
+                )
+            ]
+        );
         try
         {
             host.Gameplay.Invoke(new TerrainCollisionBoxesContext(body, bounds, boxes));
@@ -114,10 +125,12 @@ public sealed class WorldOperationHooksTest
     {
         var calls = 0;
         using var runtime = new RuntimeScope(context => context.Gameplay.OnMounting(mounting =>
-        {
-            calls++;
-            mounting.Cancel = true;
-        }));
+                {
+                    calls++;
+                    mounting.Cancel = true;
+                }
+            )
+        );
         var body = new ComponentBody();
         var rider = new ComponentRider { ComponentCreature = new ComponentCreature { ComponentBody = body } };
 
@@ -125,8 +138,10 @@ public sealed class WorldOperationHooksTest
 
         Assert.Equal(1, calls);
         Assert.Null(body.ParentBody);
-        Assert.False((bool)typeof(ComponentRider).GetField("_isAnimating", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(rider)!);
+        Assert.False(
+            (bool)typeof(ComponentRider).GetField("_isAnimating", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .GetValue(rider)!
+        );
     }
 
     [Fact]
@@ -134,26 +149,46 @@ public sealed class WorldOperationHooksTest
     {
         var calls = 0;
         var host = new ModHost();
-        host.LoadAndStart([
-            new ModDescriptor(new ModManifest("test.operations", "Operations", "1.0.0"),
-                () => new CallbackMod(context =>
-                {
-                    context.Gameplay.OnCellIgniting(_ => calls++);
-                    context.Gameplay.OnExplosionPointProcessing(_ => calls++);
-                    context.Gameplay.OnTerrainCollisionBoxes(_ => calls++);
-                    context.Gameplay.OnMounting(_ => calls++);
-                    context.Gameplay.OnPistonBlockMoving(_ => calls++);
-                    context.Gameplay.OnMovingBlockSetTerrainCollision(_ => calls++);
-                }))
-        ]);
+        host.LoadAndStart(
+            [
+                new ModDescriptor(
+                    new ModManifest("test.operations", "Operations", "1.0.0"),
+                    () => new CallbackMod(context =>
+                        {
+                            context.Gameplay.OnCellIgniting(_ => calls++);
+                            context.Gameplay.OnExplosionPointProcessing(_ => calls++);
+                            context.Gameplay.OnTerrainCollisionBoxes(_ => calls++);
+                            context.Gameplay.OnMounting(_ => calls++);
+                            context.Gameplay.OnPistonBlockMoving(_ => calls++);
+                            context.Gameplay.OnMovingBlockSetTerrainCollision(_ => calls++);
+                        }
+                    )
+                )
+            ]
+        );
+
         void DispatchAll()
         {
             host.Gameplay.Invoke(new CellIgnitingContext(new SubsystemTerrain(), Point3.Zero, null));
             host.Gameplay.Invoke(new ExplosionPointProcessingContext(new SubsystemExplosions(), Point3.Zero, null));
             host.Gameplay.Invoke(new TerrainCollisionBoxesContext(new ComponentBody(), default, []));
             host.Gameplay.Invoke(new MountingContext(new ComponentRider(), new ComponentMount()));
-            host.Gameplay.Invoke(new PistonBlockMovingContext(new SubsystemPistonBlockBehavior(), Point3.Zero, Point3.Zero, false));
-            host.Gameplay.Invoke(new MovingBlockSetTerrainCollisionContext(new SubsystemMovingBlocks(), null!, Point3.Zero, Point3.Zero));
+            host.Gameplay.Invoke(
+                new PistonBlockMovingContext(
+                    new SubsystemPistonBlockBehavior(),
+                    Point3.Zero,
+                    Point3.Zero,
+                    false
+                )
+            );
+            host.Gameplay.Invoke(
+                new MovingBlockSetTerrainCollisionContext(
+                    new SubsystemMovingBlocks(),
+                    null!,
+                    Point3.Zero,
+                    Point3.Zero
+                )
+            );
         }
 
         try
@@ -161,7 +196,8 @@ public sealed class WorldOperationHooksTest
             Assert.True(host.Gameplay.HasExplosionPointProcessingHandlers);
             Assert.True(host.Gameplay.HasTerrainCollisionBoxesHandlers);
             Assert.Throws<InvalidOperationException>(() =>
-                host.Runtimes[0].Context.Gameplay.OnMounting(_ => { }));
+                host.Runtimes[0].Context.Gameplay.OnMounting(_ => { })
+            );
             DispatchAll();
             Assert.Equal(6, calls);
             host.StopAll();
@@ -179,15 +215,21 @@ public sealed class WorldOperationHooksTest
     private sealed class RuntimeScope : IDisposable
     {
         private readonly GameModRuntime? _previous = CurrentModRuntime.Value;
+
         private readonly WorkType _previousWorkType = CommonLib.WorkType;
+
         private readonly GameModRuntime _runtime;
 
         public RuntimeScope(Action<IModContext> configure)
         {
-            _runtime = GameModRuntime.Start([
-                new ModDescriptor(new ModManifest("test.operations", "Operations", "1.0.0"),
-                    () => new CallbackMod(configure))
-            ]);
+            _runtime = GameModRuntime.Start(
+                [
+                    new ModDescriptor(
+                        new ModManifest("test.operations", "Operations", "1.0.0"),
+                        () => new CallbackMod(configure)
+                    )
+                ]
+            );
             CurrentModRuntime.Set(_runtime);
             CommonLib.WorkType = WorkType.Local;
         }
@@ -203,6 +245,7 @@ public sealed class WorldOperationHooksTest
     private sealed class CallbackMod(Action<IModContext> configure) : IMod
     {
         public void Configure(IModContext context) => configure(context);
+
         public void Start(IModContext context)
         {
         }

@@ -42,14 +42,16 @@ internal static class WorldDirectoryCopier
         {
             CopyDirectory(
                 Storage.CombinePaths(sourceDirectoryName, directoryName),
-                Storage.CombinePaths(destinationDirectoryName, directoryName));
+                Storage.CombinePaths(destinationDirectoryName, directoryName)
+            );
         }
 
         foreach (var fileName in Storage.ListFileNames(sourceDirectoryName))
         {
             Storage.CopyFile(
                 Storage.CombinePaths(sourceDirectoryName, fileName),
-                Storage.CombinePaths(destinationDirectoryName, fileName));
+                Storage.CombinePaths(destinationDirectoryName, fileName)
+            );
         }
     }
 }

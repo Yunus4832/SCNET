@@ -16,8 +16,9 @@ public class StraightFlightCamera(GameWidget gameWidget) : BasePerspectiveCamera
 
     public override void Update(float dt)
     {
-        var vector = 10f * (Vector3.UnitX +
-                            (float)MathUtils.Sin(0.20000000298023224 * Time.FrameStartTime) * Vector3.UnitZ);
+        var vector = 10f *
+                     (Vector3.UnitX +
+                      (float)MathUtils.Sin(0.20000000298023224 * Time.FrameStartTime) * Vector3.UnitZ);
         _position.Y = 120f;
         _position += vector * dt;
         SetupPerspectiveCamera(_position, vector, Vector3.UnitY);

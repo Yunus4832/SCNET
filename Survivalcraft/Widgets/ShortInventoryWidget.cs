@@ -87,14 +87,19 @@ public class ShortInventoryWidget : CanvasWidget
         }
 
         var controlsWidth = AreSideControlsVisible ? _sideControlsReservedWidth : 0f;
-        var availableWidth = parentAvailableSize.X - controlsWidth - _horizontalMargin -
+        var availableWidth = parentAvailableSize.X -
+                             controlsWidth -
+                             _horizontalMargin -
                              2f * HorizontalSafeAreaPadding;
         var pagedInventory = _inventory as IPagedInventory;
         if (pagedInventory != null)
         {
             availableWidth -= 2f * _pageButtonWidth;
-            _inventory.VisibleSlotsCount = MathUtils.Clamp((int)(availableWidth / 72f), 6,
-                pagedInventory.HotbarSlotsCount);
+            _inventory.VisibleSlotsCount = MathUtils.Clamp(
+                (int)(availableWidth / 72f),
+                6,
+                pagedInventory.HotbarSlotsCount
+            );
         }
 
         var pageIndex = pagedInventory?.GetHotbarPageIndex() ?? 0;

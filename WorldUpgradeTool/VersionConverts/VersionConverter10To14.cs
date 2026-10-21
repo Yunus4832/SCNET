@@ -44,8 +44,10 @@ public class VersionConverter10To14 : VersionConverter
                     var cx = int.Parse(array3[1], CultureInfo.InvariantCulture);
                     var cz = int.Parse(array3[2], CultureInfo.InvariantCulture);
                     using var stream2 =
-                        Storage.OpenFile(Storage.CombinePaths(directoryName, Storage.CombinePaths("Chunks", text)),
-                            OpenFileMode.Read);
+                        Storage.OpenFile(
+                            Storage.CombinePaths(directoryName, Storage.CombinePaths("Chunks", text)),
+                            OpenFileMode.Read
+                        );
                     var array4 = new byte[stream2.Length];
                     stream2.ReadExactly(array4, 0, array4.Length);
                     var num2 = (int)stream.Length;

@@ -16,10 +16,14 @@ public sealed class BlockIndexMapping
         var reserved = BuiltInBlockRegistry.Entries.Select(entry => entry.Index).ToHashSet();
         foreach (var (id, index) in entries)
         {
-            if (string.IsNullOrEmpty(id.Namespace.Value) || string.IsNullOrEmpty(id.Path) ||
-                id.ToString().Length > MaximumResourceIdLength || id.Namespace == BuiltInContentMod.Manifest.ModId ||
-                index is < 0 or >= BlockRuntimeCatalog.Capacity || reserved.Contains(index) ||
-                !byId.TryAdd(id, index) || !indices.Add(index))
+            if (string.IsNullOrEmpty(id.Namespace.Value) ||
+                string.IsNullOrEmpty(id.Path) ||
+                id.ToString().Length > MaximumResourceIdLength ||
+                id.Namespace == BuiltInContentMod.Manifest.ModId ||
+                index is < 0 or >= BlockRuntimeCatalog.Capacity ||
+                reserved.Contains(index) ||
+                !byId.TryAdd(id, index) ||
+                !indices.Add(index))
             {
                 throw new InvalidDataException($"Invalid or duplicate block mapping: {id} -> {index}.");
             }
@@ -59,8 +63,11 @@ public sealed class BlockIndexMapping
         return new BlockIndexMapping(result);
     }
 
-    public XElement ToXml() => new("BlockRegistry", Entries.OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal)
-        .Select(pair => new XElement("Block", new XAttribute("Id", pair.Key), new XAttribute("Index", pair.Value))));
+    public XElement ToXml() => new(
+        "BlockRegistry",
+        Entries.OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal)
+            .Select(pair => new XElement("Block", new XAttribute("Id", pair.Key), new XAttribute("Index", pair.Value)))
+    );
 
     public static BlockIndexMapping FromXml(XElement? element)
     {
@@ -69,9 +76,16 @@ public sealed class BlockIndexMapping
             return Empty;
         }
 
-        return new BlockIndexMapping(element.Elements("Block").Select(block =>
-            new KeyValuePair<ResourceId, int>(ResourceId.Parse((string?)block.Attribute("Id")
-                ?? throw new InvalidDataException("Block mapping has no resource id.")),
-                (int?)block.Attribute("Index") ?? throw new InvalidDataException("Block mapping has no index."))));
+        return new BlockIndexMapping(
+            element.Elements("Block").Select(block =>
+                new KeyValuePair<ResourceId, int>(
+                    ResourceId.Parse(
+                        (string?)block.Attribute("Id") ??
+                        throw new InvalidDataException("Block mapping has no resource id.")
+                    ),
+                    (int?)block.Attribute("Index") ?? throw new InvalidDataException("Block mapping has no index.")
+                )
+            )
+        );
     }
 }

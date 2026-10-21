@@ -9,9 +9,11 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
 {
     public enum Gait
     {
-        Walk,
-        Trot,
-        Canter
+        Walk = 0,
+
+        Trot = 1,
+
+        Canter = 2
     }
 
     public float LastMove;
@@ -75,8 +77,11 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
     public override void Update(float dt)
     {
         var footstepsPhase = _footstepsPhase;
-        var num = ComponentCreature.ComponentLocomotion.SlipSpeed ?? Vector3.Dot(
-            ComponentCreature.ComponentBody.Velocity, ComponentCreature.ComponentBody.Matrix.Forward);
+        var num = ComponentCreature.ComponentLocomotion.SlipSpeed ??
+                  Vector3.Dot(
+                      ComponentCreature.ComponentBody.Velocity,
+                      ComponentCreature.ComponentBody.Matrix.Forward
+                  );
         if (_canCanter && num > 0.7f * ComponentCreature.ComponentLocomotion.WalkSpeed)
         {
             _gait = Gait.Canter;
@@ -127,8 +132,14 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
                     _subsystemSoundMaterials.GetFootstepSoundMaterialName(ComponentCreature);
                 if (!string.IsNullOrEmpty(footstepSoundMaterialName) && footstepSoundMaterialName != "Water")
                 {
-                    _subsystemAudio.PlayRandomSound("Audio/Footsteps/CanterDirt", 0.75f, random.Float(-0.25f, 0f),
-                        ComponentCreature.ComponentBody.Position, 3f, true);
+                    _subsystemAudio.PlayRandomSound(
+                        "Audio/Footsteps/CanterDirt",
+                        0.75f,
+                        random.Float(-0.25f, 0f),
+                        ComponentCreature.ComponentBody.Position,
+                        3f,
+                        true
+                    );
                 }
             }
         }
@@ -188,8 +199,9 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
             var num3 = 0f;
             var num4 = 0f;
             var num5 = 0f;
-            if (MovementAnimationPhase != 0f && (ComponentCreature.ComponentBody.StandingOnValue.HasValue ||
-                                                 ComponentCreature.ComponentBody.ImmersionFactor > 0f))
+            if (MovementAnimationPhase != 0f &&
+                (ComponentCreature.ComponentBody.StandingOnValue.HasValue ||
+                 ComponentCreature.ComponentBody.ImmersionFactor > 0f))
             {
                 if (_gait == Gait.Canter)
                 {
@@ -248,16 +260,28 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
 
             if (_feedFactor > 0f)
             {
-                var y = 0f - MathUtils.DegToRad(25f +
-                                                45f * SimplexNoise.OctavedNoise((float)subsystemTime.GameTime, 3f, 2,
-                                                    2f, 0.75f));
+                var y = 0f -
+                        MathUtils.DegToRad(
+                            25f +
+                            45f *
+                            SimplexNoise.OctavedNoise(
+                                (float)subsystemTime.GameTime,
+                                3f,
+                                2,
+                                2f,
+                                0.75f
+                            )
+                        );
                 vector2 = Vector2.Lerp(v2: new Vector2(0f, y), v1: vector2, f: _feedFactor);
                 if (_moveLegWhenFeeding)
                 {
                     var x = MathUtils.DegToRad(20f) +
                             MathUtils.PowSign(
                                 SimplexNoise.OctavedNoise((float)subsystemTime.GameTime, 1f, 1, 1f, 1f) - 0.5f,
-                                0.33f) / 0.5f * MathUtils.DegToRad(25f) *
+                                0.33f
+                            ) /
+                            0.5f *
+                            MathUtils.DegToRad(25f) *
                             (float)MathUtils.Sin(17.0 * subsystemTime.GameTime);
                     _ = MathUtils.Lerp(num2, x, _feedFactor);
                 }
@@ -270,14 +294,20 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
                 vector2 = Vector2.Lerp(v2: new Vector2(0f, y2), v1: vector2, f: _buttFactor);
             }
 
-            SetBoneTransform(_bodyBone.Index,
-                Matrix.CreateRotationY(vector.X) * Matrix.CreateTranslation(position.X, position.Y + Bob, position.Z));
-            SetBoneTransform(_headBone.Index,
-                Matrix.CreateRotationX(vector2.Y) * Matrix.CreateRotationZ(0f - vector2.X));
+            SetBoneTransform(
+                _bodyBone.Index,
+                Matrix.CreateRotationY(vector.X) * Matrix.CreateTranslation(position.X, position.Y + Bob, position.Z)
+            );
+            SetBoneTransform(
+                _headBone.Index,
+                Matrix.CreateRotationX(vector2.Y) * Matrix.CreateRotationZ(0f - vector2.X)
+            );
             if (_neckBone != null)
             {
-                SetBoneTransform(_neckBone.Index,
-                    Matrix.CreateRotationX(vector3.Y) * Matrix.CreateRotationZ(0f - vector3.X));
+                SetBoneTransform(
+                    _neckBone.Index,
+                    Matrix.CreateRotationX(vector3.Y) * Matrix.CreateRotationZ(0f - vector3.X)
+                );
             }
 
             SetBoneTransform(_leg1Bone.Index, Matrix.CreateRotationX(_legAngle1));
@@ -291,11 +321,13 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
             float num20 = Vector3.Dot(componentFrame.Matrix.Right, DeathCauseOffset) > 0f ? 1 : -1;
             var num21 = ComponentCreature.ComponentBody.BoundingBox.Max.Y -
                         ComponentCreature.ComponentBody.BoundingBox.Min.Y;
-            SetBoneTransform(_bodyBone.Index,
+            SetBoneTransform(
+                _bodyBone.Index,
                 Matrix.CreateTranslation(-0.5f * num21 * Vector3.UnitY * DeathPhase) *
                 Matrix.CreateFromYawPitchRoll(vector.X, 0f, (float)Math.PI / 2f * DeathPhase * num20) *
                 Matrix.CreateTranslation(0.2f * num21 * Vector3.UnitY * DeathPhase) *
-                Matrix.CreateTranslation(position));
+                Matrix.CreateTranslation(position)
+            );
             SetBoneTransform(_headBone.Index, Matrix.CreateRotationX(MathUtils.DegToRad(50f) * DeathPhase));
             if (_neckBone != null)
             {

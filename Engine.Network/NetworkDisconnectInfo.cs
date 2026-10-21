@@ -1,3 +1,7 @@
 namespace Engine.Network;
 
-public sealed record NetworkDisconnectInfo(NetworkDisconnectReason Reason, ReadOnlyMemory<byte> Data, int SocketErrorCode);
+public sealed record NetworkDisconnectInfo(
+    NetworkDisconnectReason Reason,
+    ReadOnlyMemory<byte> Data,
+    int SocketErrorCode
+);

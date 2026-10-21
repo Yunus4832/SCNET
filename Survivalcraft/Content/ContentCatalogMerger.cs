@@ -18,22 +18,23 @@ public static class ContentCatalogMerger
         var versions = allVersions
             .GroupBy(version => (version.Version, version.PackageHash))
             .Select(group =>
-            {
-                var version = group.Last();
-                var sources = group.SelectMany(item => item.Sources)
-                    .DistinctBy(source => new ContentSourceId(source.ScopeId, source.RepositoryId))
-                    .OrderByDescending(source => source.IsSession)
-                    .ThenBy(source => source.RepositoryPriority)
-                    .ThenBy(source => source.RepositoryId)
-                    .ToArray();
-                var conflict = allVersions
-                    .Where(item => string.Equals(item.Version, version.Version, StringComparison.Ordinal))
-                    .Select(item => item.PackageHash)
-                    .Distinct(StringComparer.Ordinal)
-                    .Skip(1)
-                    .Any();
-                return version with { Sources = sources, HasHashConflict = conflict };
-            })
+                {
+                    var version = group.Last();
+                    var sources = group.SelectMany(item => item.Sources)
+                        .DistinctBy(source => new ContentSourceId(source.ScopeId, source.RepositoryId))
+                        .OrderByDescending(source => source.IsSession)
+                        .ThenBy(source => source.RepositoryPriority)
+                        .ThenBy(source => source.RepositoryId)
+                        .ToArray();
+                    var conflict = allVersions
+                        .Where(item => string.Equals(item.Version, version.Version, StringComparison.Ordinal))
+                        .Select(item => item.PackageHash)
+                        .Distinct(StringComparer.Ordinal)
+                        .Skip(1)
+                        .Any();
+                    return version with { Sources = sources, HasHashConflict = conflict };
+                }
+            )
             .OrderByDescending(version => SemanticVersion.Parse(version.Version))
             .ThenBy(version => version.PackageHash, StringComparer.Ordinal)
             .ToArray();

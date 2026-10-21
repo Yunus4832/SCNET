@@ -21,20 +21,34 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
         );
         for (var i = 0; i < 4; i++)
         {
-            var m = Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                    Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+            var m = Matrix.CreateRotationX((float)Math.PI / 2f) *
+                    Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                    Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
+                    Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByFace[i] = new BlockMesh();
-            BlockMeshesByFace[i].AppendModelMeshPart(sevenSegmentDisplayMesh.MeshParts[0], boneAbsoluteTransform * m,
-                false, false,
-                false, false, Color.White);
+            BlockMeshesByFace[i].AppendModelMeshPart(
+                sevenSegmentDisplayMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             CollisionBoxesByFace[i] = [BlockMeshesByFace[i].CalculateBoundingBox()];
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(sevenSegmentDisplayMesh.MeshParts[0], boneAbsoluteTransform * m2, false,
+        StandaloneBlockMesh.AppendModelMeshPart(
+            sevenSegmentDisplayMesh.MeshParts[0],
+            boneAbsoluteTransform * m2,
             false,
-            false, false, Color.White);
+            false,
+            false,
+            false,
+            Color.White
+        );
     }
 
     public override IEnumerable<CraftingRecipe> GetProceduralCraftingRecipes()
@@ -128,11 +142,13 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
     )
     {
         var color = GetColor(Terrain.ExtractData(oldValue));
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
+                Count = 1
+            }
+        );
         showDebris = true;
     }
 
@@ -157,8 +173,16 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
             return;
         }
 
-        generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByFace[mountingFace], Color.White, null,
-            geometry.SubsetOpaque);
+        generator.GenerateMeshVertices(
+            this,
+            x,
+            y,
+            z,
+            BlockMeshesByFace[mountingFace],
+            Color.White,
+            null,
+            geometry.SubsetOpaque
+        );
         generator.GenerateWireVertices(value, x, y, z, mountingFace, 1f, Vector2.Zero, geometry.SubsetOpaque);
     }
 

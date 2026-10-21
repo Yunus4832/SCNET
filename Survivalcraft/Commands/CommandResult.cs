@@ -13,7 +13,8 @@ public sealed record CommandResult(
     string MessageKey = "",
     IReadOnlyList<string>? MessageArguments = null,
     JsonNode? Data = null,
-    CommandPanelBehavior PanelBehavior = CommandPanelBehavior.ReturnToMessage)
+    CommandPanelBehavior PanelBehavior = CommandPanelBehavior.ReturnToMessage
+)
 {
     public static CommandResult Ok(string message, string code = "command.ok") => new(true, code, message);
 
@@ -35,45 +36,52 @@ public sealed record CommandResult(
         string code,
         string messageKey,
         string fallback,
-        params string[] arguments) =>
+        params string[] arguments
+    ) =>
         new(
             true,
             code,
             FormatFallback(fallback, arguments),
             MessageKey: messageKey,
-            MessageArguments: arguments);
+            MessageArguments: arguments
+        );
 
     public static CommandResult LocalizedHistoryOk(
         string code,
         string messageKey,
         string fallback,
-        params string[] arguments) =>
+        params string[] arguments
+    ) =>
         new(
             true,
             code,
             FormatFallback(fallback, arguments),
             Presentation: CommandResultPresentation.History,
             MessageKey: messageKey,
-            MessageArguments: arguments);
+            MessageArguments: arguments
+        );
 
     public static CommandResult LocalizedPublicOk(
         string code,
         string messageKey,
         string fallback,
-        params string[] arguments) =>
+        params string[] arguments
+    ) =>
         new(
             true,
             code,
             FormatFallback(fallback, arguments),
             Audience: CommandResultAudience.AllPlayers,
             MessageKey: messageKey,
-            MessageArguments: arguments);
+            MessageArguments: arguments
+        );
 
     public static CommandResult LocalizedPublicToast(
         string code,
         string messageKey,
         string fallback,
-        params string[] arguments) =>
+        params string[] arguments
+    ) =>
         new(
             true,
             code,
@@ -81,45 +89,52 @@ public sealed record CommandResult(
             Audience: CommandResultAudience.AllPlayers,
             Presentation: CommandResultPresentation.Toast,
             MessageKey: messageKey,
-            MessageArguments: arguments);
+            MessageArguments: arguments
+        );
 
     public static CommandResult LocalizedSensitiveOk(
         string code,
         string messageKey,
         string fallback,
-        params string[] arguments) =>
+        params string[] arguments
+    ) =>
         new(
             true,
             code,
             FormatFallback(fallback, arguments),
             Sensitive: true,
             MessageKey: messageKey,
-            MessageArguments: arguments);
+            MessageArguments: arguments
+        );
 
     public static CommandResult LocalizedPending(
         string code,
         string messageKey,
         string fallback,
-        params string[] arguments) =>
+        params string[] arguments
+    ) =>
         new(
             true,
             code,
             FormatFallback(fallback, arguments),
             State: CommandResultState.Pending,
             MessageKey: messageKey,
-            MessageArguments: arguments);
+            MessageArguments: arguments
+        );
 
     public static CommandResult LocalizedFail(
         string code,
         string messageKey,
         string fallback,
-        params string[] arguments) =>
+        params string[] arguments
+    ) =>
         new(
             false,
             code,
             FormatFallback(fallback, arguments),
             MessageKey: messageKey,
-            MessageArguments: arguments);
+            MessageArguments: arguments
+        );
 
     private static string FormatFallback(string fallback, string[] arguments)
     {
@@ -128,6 +143,7 @@ public sealed record CommandResult(
             : string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
                 fallback,
-                arguments);
+                arguments
+            );
     }
 }

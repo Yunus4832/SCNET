@@ -50,7 +50,8 @@ public static class InstancedModelsManager
                 var vertexElements = vertexBuffer.VertexDeclaration.VertexElements;
                 var indexData = BlockMesh.GetIndexData<ushort>(indexBuffer);
                 var dictionary = new Dictionary<ushort, ushort>();
-                if (vertexElements.Count != 3 || vertexElements[0].Offset != 0 ||
+                if (vertexElements.Count != 3 ||
+                    vertexElements[0].Offset != 0 ||
                     vertexElements[0].Semantic != VertexElementSemantic.Position.GetSemanticString() ||
                     vertexElements[1].Offset != 12 ||
                     vertexElements[1].Semantic != VertexElementSemantic.Normal.GetSemanticString() ||

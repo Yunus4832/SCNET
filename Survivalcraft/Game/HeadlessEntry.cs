@@ -9,7 +9,8 @@ namespace Game;
 
 public sealed record HeadlessCommandSuggestions(
     IReadOnlyList<CommandSuggestion> Items,
-    bool CanExecute);
+    bool CanExecute
+);
 
 public static class HeadlessEntry
 {
@@ -18,11 +19,13 @@ public static class HeadlessEntry
     private sealed record ConsoleCommandRequest(
         string Input,
         bool WriteResultToLog,
-        TaskCompletionSource<CommandResult>? Completion);
+        TaskCompletionSource<CommandResult>? Completion
+    );
 
     private sealed record ConsoleSuggestionRequest(
         string Input,
-        TaskCompletionSource<HeadlessCommandSuggestions> Completion);
+        TaskCompletionSource<HeadlessCommandSuggestions> Completion
+    );
 
     private static GameModRuntime? _modRuntime;
 
@@ -49,10 +52,13 @@ public static class HeadlessEntry
     {
         if (string.IsNullOrWhiteSpace(input))
         {
-            return Task.FromResult(CommandResult.LocalizedFail(
-                "command.empty",
-                "CommandEmpty_Message",
-                "请输入指令。"));
+            return Task.FromResult(
+                CommandResult.LocalizedFail(
+                    "command.empty",
+                    "CommandEmpty_Message",
+                    "请输入指令。"
+                )
+            );
         }
 
         if (!_commandConsoleReady)
@@ -60,12 +66,14 @@ public static class HeadlessEntry
             return Task.FromResult(CreateCommandConsoleUnavailableResult());
         }
 
-        var completion = new TaskCompletionSource<CommandResult>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        _consoleCommands.Enqueue(new ConsoleCommandRequest(
-            input.Trim(),
-            WriteResultToLog: false,
-            completion));
+        var completion = new TaskCompletionSource<CommandResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _consoleCommands.Enqueue(
+            new ConsoleCommandRequest(
+                input.Trim(),
+                WriteResultToLog: false,
+                completion
+            )
+        );
         return completion.Task;
     }
 
@@ -81,7 +89,8 @@ public static class HeadlessEntry
         }
 
         var completion = new TaskCompletionSource<HeadlessCommandSuggestions>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         _consoleSuggestions.Enqueue(new ConsoleSuggestionRequest(input ?? string.Empty, completion));
         return completion.Task;
     }
@@ -130,8 +139,7 @@ public static class HeadlessEntry
                 _ => SettingsManager.Current.BroadcastPort.ToString()
             };
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
-            Log.Information(
-                $"Server ports: game={serverPort}, broadcast={broadcastPort}");
+            Log.Information($"Server ports: game={serverPort}, broadcast={broadcastPort}");
             CommonLib.WorkType = WorkType.Server;
             var gamesWidget = new GamesWidget();
             GameManager.LoadProject(world, gamesWidget);
@@ -144,7 +152,8 @@ public static class HeadlessEntry
             SetCommandConsoleReady(true);
             HttpCommandHostManager.Start(
                 startup.Session,
-                CommandPrincipal.LocalOperator);
+                CommandPrincipal.LocalOperator
+            );
             Log.Information("Headless server started. Press Ctrl+C to stop.");
             WriteAdministrationBootstrapInstructions();
             StartConsoleReader();
@@ -230,34 +239,38 @@ public static class HeadlessEntry
         }
 
         _ = Task.Run(() =>
-        {
-            while (_running)
             {
-                string? line;
-                try
+                while (_running)
                 {
-                    line = Console.ReadLine();
-                }
-                catch (Exception exception)
-                {
-                    Log.Error($"Failed to read server console input: {exception}");
-                    return;
-                }
+                    string? line;
+                    try
+                    {
+                        line = Console.ReadLine();
+                    }
+                    catch (Exception exception)
+                    {
+                        Log.Error($"Failed to read server console input: {exception}");
+                        return;
+                    }
 
-                if (line is null)
-                {
-                    return;
-                }
+                    if (line is null)
+                    {
+                        return;
+                    }
 
-                if (!string.IsNullOrWhiteSpace(line))
-                {
-                    _consoleCommands.Enqueue(new ConsoleCommandRequest(
-                        line,
-                        WriteResultToLog: true,
-                        Completion: null));
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        _consoleCommands.Enqueue(
+                            new ConsoleCommandRequest(
+                                line,
+                                WriteResultToLog: true,
+                                Completion: null
+                            )
+                        );
+                    }
                 }
             }
-        });
+        );
     }
 
     private static void ExecuteConsoleCommands()
@@ -266,7 +279,8 @@ public static class HeadlessEntry
         {
             var result = CommandExecutor.ExecuteLocal(
                 request.Input,
-                GameManager.Project);
+                GameManager.Project
+            );
             if (GameManager.Project is { } project)
             {
                 CommandResultPublisher.Publish(project, result, includeServer: false);
@@ -312,14 +326,17 @@ public static class HeadlessEntry
                     var items = adapter.Suggest(
                             request.Input,
                             CommandPrincipal.LocalOperator,
-                            CommandInvocationChannel.Console)
+                            CommandInvocationChannel.Console
+                        )
                         .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
                         .ToArray();
                     result = new HeadlessCommandSuggestions(
                         items,
                         adapter.CanExecute(
                             request.Input,
-                            CommandPrincipal.LocalOperator));
+                            CommandPrincipal.LocalOperator
+                        )
+                    );
                 }
             }
             catch (Exception exception)
@@ -360,7 +377,8 @@ public static class HeadlessEntry
         return CommandResult.LocalizedFail(
             "command.unavailable",
             "CommandUnavailable_Message",
-            "指令系统尚未就绪。");
+            "指令系统尚未就绪。"
+        );
     }
 
     private static void WriteAdministrationBootstrapInstructions()
@@ -372,10 +390,13 @@ public static class HeadlessEntry
         }
 
         Console.WriteLine();
-        Console.WriteLine(CommandText.Get(
-            "AuthConsoleBootstrap_Message",
-            "服务器管理尚未初始化\n当前没有玩家拥有管理权限。\n认领码：{0}\n初始化管理权限：\n1. 以玩家身份连接此服务器。\n2. 执行：/auth claim {0}\n如有需要，可在此控制台执行 auth code 或 auth regenerate。",
-            code));
+        Console.WriteLine(
+            CommandText.Get(
+                "AuthConsoleBootstrap_Message",
+                "服务器管理尚未初始化\n当前没有玩家拥有管理权限。\n认领码：{0}\n初始化管理权限：\n1. 以玩家身份连接此服务器。\n2. 执行：/auth claim {0}\n如有需要，可在此控制台执行 auth code 或 auth regenerate。",
+                code
+            )
+        );
         Console.WriteLine();
     }
 
@@ -390,7 +411,8 @@ public static class HeadlessEntry
         var startupSession = StartupManager.Current.Session;
         var profile = ModProfileManager.LoadEffectiveProfile(
             startupSession.SessionId,
-            startupSession);
+            startupSession
+        );
         ModProfileResolver.EnsurePackagesAvailable(
             profile,
             Storage.GetSystemPath(GamePaths.ContentPackageCache),
@@ -403,9 +425,10 @@ public static class HeadlessEntry
             Log.Information
         );
         CurrentModRuntime.Set(_modRuntime);
-        _modRuntime.InitializeLanguage(AppConfigStore.Values.TryGetValue("Language", out var language)
-            ? language
-            : "zh-CN"
+        _modRuntime.InitializeLanguage(
+            AppConfigStore.Values.TryGetValue("Language", out var language)
+                ? language
+                : "zh-CN"
         );
         _modRuntime.InitializeContentData();
 

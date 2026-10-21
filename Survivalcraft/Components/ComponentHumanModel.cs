@@ -209,7 +209,8 @@ public class ComponentHumanModel : ComponentCreatureModel
             HasData = false;
         }
 
-        if ((RowLeft || RowRight) && componentMount is { ComponentBody.ImmersionFactor: > 0f } &&
+        if ((RowLeft || RowRight) &&
+            componentMount is { ComponentBody.ImmersionFactor: > 0f } &&
             MathUtils.Floor(1.1000000238418579 * subsystemTime.GameTime) !=
             MathUtils.Floor(1.1000000238418579 * (subsystemTime.GameTime - subsystemTime.GameTimeDelta)))
         {
@@ -224,8 +225,15 @@ public class ComponentHumanModel : ComponentCreatureModel
             {
                 NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this));
             }
-            _subsystemAudio.PlayRandomSound("Audio/Rowing", random.Float(0.4f, 0.6f), random.Float(-0.3f, 0.2f),
-                ComponentCreature.ComponentBody.Position, 3f, true);
+
+            _subsystemAudio.PlayRandomSound(
+                "Audio/Rowing",
+                random.Float(0.4f, 0.6f),
+                random.Float(-0.3f, 0.2f),
+                ComponentCreature.ComponentBody.Position,
+                3f,
+                true
+            );
         }
 
         var num6 = MathUtils.Floor(_footstepsPhase);
@@ -266,16 +274,23 @@ public class ComponentHumanModel : ComponentCreatureModel
             position.Y += Bob;
             vector.X += _headingOffset;
             var num2 = (float)MathUtils.Remainder(
-                0.75 * subsystemGameInfo.TotalElapsedGameTime + (GetHashCode() & 0xFFFF), 10000.0);
+                0.75 * subsystemGameInfo.TotalElapsedGameTime + (GetHashCode() & 0xFFFF),
+                10000.0
+            );
             var x = MathUtils.Clamp(
                 MathUtils.Lerp(-0.3f, 0.3f, SimplexNoise.Noise(1.02f * num2 - 100f)) +
                 ComponentCreature.ComponentLocomotion.LookAngles.X +
-                1f * ComponentCreature.ComponentLocomotion.LastTurnOrder.X + _headingOffset,
-                0f - MathUtils.DegToRad(80f), MathUtils.DegToRad(80f));
+                1f * ComponentCreature.ComponentLocomotion.LastTurnOrder.X +
+                _headingOffset,
+                0f - MathUtils.DegToRad(80f),
+                MathUtils.DegToRad(80f)
+            );
             var y = MathUtils.Clamp(
                 MathUtils.Lerp(-0.3f, 0.3f, SimplexNoise.Noise(0.96f * num2 - 200f)) +
-                ComponentCreature.ComponentLocomotion.LookAngles.Y, 0f - MathUtils.DegToRad(45f),
-                MathUtils.DegToRad(45f));
+                ComponentCreature.ComponentLocomotion.LookAngles.Y,
+                0f - MathUtils.DegToRad(45f),
+                MathUtils.DegToRad(45f)
+            );
             var num3 = 0f;
             var y2 = 0f;
             var x2 = 0f;
@@ -396,40 +411,67 @@ public class ComponentHumanModel : ComponentCreatureModel
             var position4 = new Vector3(0f, MathUtils.Lerp(0f, 7f, f), MathUtils.Lerp(0f, 28f, f));
             var scale = new Vector3(1f, 1f, MathUtils.Lerp(1f, 0.5f, f));
             SetBoneTransform(_bodyBone.Index, Matrix.CreateRotationY(vector.X) * Matrix.CreateTranslation(position3));
-            SetBoneTransform(_headBone.Index,
-                Matrix.CreateRotationX(_headAngles.Y) * Matrix.CreateRotationZ(0f - _headAngles.X));
-            SetBoneTransform(_hand1Bone.Index,
-                Matrix.CreateRotationY(_handAngles1.Y) * Matrix.CreateRotationX(_handAngles1.X));
-            SetBoneTransform(_hand2Bone.Index,
-                Matrix.CreateRotationY(_handAngles2.Y) * Matrix.CreateRotationX(_handAngles2.X));
-            SetBoneTransform(_leg1Bone.Index,
-                Matrix.CreateRotationY(_legAngles1.Y) * Matrix.CreateRotationX(_legAngles1.X) *
-                Matrix.CreateTranslation(position4) * Matrix.CreateScale(scale));
-            SetBoneTransform(_leg2Bone.Index,
-                Matrix.CreateRotationY(_legAngles2.Y) * Matrix.CreateRotationX(_legAngles2.X) *
-                Matrix.CreateTranslation(position4) * Matrix.CreateScale(scale));
+            SetBoneTransform(
+                _headBone.Index,
+                Matrix.CreateRotationX(_headAngles.Y) * Matrix.CreateRotationZ(0f - _headAngles.X)
+            );
+            SetBoneTransform(
+                _hand1Bone.Index,
+                Matrix.CreateRotationY(_handAngles1.Y) * Matrix.CreateRotationX(_handAngles1.X)
+            );
+            SetBoneTransform(
+                _hand2Bone.Index,
+                Matrix.CreateRotationY(_handAngles2.Y) * Matrix.CreateRotationX(_handAngles2.X)
+            );
+            SetBoneTransform(
+                _leg1Bone.Index,
+                Matrix.CreateRotationY(_legAngles1.Y) *
+                Matrix.CreateRotationX(_legAngles1.X) *
+                Matrix.CreateTranslation(position4) *
+                Matrix.CreateScale(scale)
+            );
+            SetBoneTransform(
+                _leg2Bone.Index,
+                Matrix.CreateRotationY(_legAngles2.Y) *
+                Matrix.CreateRotationX(_legAngles2.X) *
+                Matrix.CreateTranslation(position4) *
+                Matrix.CreateScale(scale)
+            );
         }
         else
         {
             var num25 = MathUtils.Max(DeathPhase, _lieDownFactorModel);
             var num26 = 1f - num25;
             var position2 = position +
-                            num25 * 0.5f * ComponentCreature.ComponentBody.BoxSize.Y *
+                            num25 *
+                            0.5f *
+                            ComponentCreature.ComponentBody.BoxSize.Y *
                             Vector3.Normalize(
-                                ComponentCreature.ComponentBody.Matrix.Forward * new Vector3(1f, 0f, 1f)) +
+                                ComponentCreature.ComponentBody.Matrix.Forward * new Vector3(1f, 0f, 1f)
+                            ) +
                             num25 * Vector3.UnitY * ComponentCreature.ComponentBody.BoxSize.Z * 0.1f;
-            SetBoneTransform(_bodyBone.Index,
+            SetBoneTransform(
+                _bodyBone.Index,
                 Matrix.CreateFromYawPitchRoll(vector.X, (float)Math.PI / 2f * num25, 0f) *
-                Matrix.CreateTranslation(position2));
+                Matrix.CreateTranslation(position2)
+            );
             SetBoneTransform(_headBone.Index, Matrix.Identity);
-            SetBoneTransform(_hand1Bone.Index,
-                Matrix.CreateRotationY(_handAngles1.Y * num26) * Matrix.CreateRotationX(_handAngles1.X * num26));
-            SetBoneTransform(_hand2Bone.Index,
-                Matrix.CreateRotationY(_handAngles2.Y * num26) * Matrix.CreateRotationX(_handAngles2.X * num26));
-            SetBoneTransform(_leg1Bone.Index,
-                Matrix.CreateRotationY(_legAngles1.Y * num26) * Matrix.CreateRotationX(_legAngles1.X * num26));
-            SetBoneTransform(_leg2Bone.Index,
-                Matrix.CreateRotationY(_legAngles2.Y * num26) * Matrix.CreateRotationX(_legAngles2.X * num26));
+            SetBoneTransform(
+                _hand1Bone.Index,
+                Matrix.CreateRotationY(_handAngles1.Y * num26) * Matrix.CreateRotationX(_handAngles1.X * num26)
+            );
+            SetBoneTransform(
+                _hand2Bone.Index,
+                Matrix.CreateRotationY(_handAngles2.Y * num26) * Matrix.CreateRotationX(_handAngles2.X * num26)
+            );
+            SetBoneTransform(
+                _leg1Bone.Index,
+                Matrix.CreateRotationY(_legAngles1.Y * num26) * Matrix.CreateRotationX(_legAngles1.X * num26)
+            );
+            SetBoneTransform(
+                _leg2Bone.Index,
+                Matrix.CreateRotationY(_legAngles2.Y * num26) * Matrix.CreateRotationX(_legAngles2.X * num26)
+            );
         }
 
         base.Animate();
@@ -437,7 +479,8 @@ public class ComponentHumanModel : ComponentCreatureModel
 
     public override void DrawExtras(Camera camera)
     {
-        if (ComponentCreature.ComponentHealth.Health > 0f && _componentMiner != null &&
+        if (ComponentCreature.ComponentHealth.Health > 0f &&
+            _componentMiner != null &&
             _componentMiner.ActiveBlockValue != 0)
         {
             var num = Terrain.ExtractContents(_componentMiner.ActiveBlockValue);
@@ -451,8 +494,11 @@ public class ComponentHumanModel : ComponentCreatureModel
                          Matrix.CreateRotationZ(MathUtils.DegToRad(block.InHandRotation.Z) + _inHandItemRotation.Z) *
                          Matrix.CreateRotationX(MathUtils.DegToRad(block.InHandRotation.X) + _inHandItemRotation.X) *
                          Matrix.CreateTranslation(block.InHandOffset + _inHandItemOffset) *
-                         Matrix.CreateTranslation(new Vector3(0.05f, 0.05f, -0.56f) *
-                                                  (ComponentCreature.ComponentBody.BoxSize.Y / 1.77f)) * m;
+                         Matrix.CreateTranslation(
+                             new Vector3(0.05f, 0.05f, -0.56f) *
+                             (ComponentCreature.ComponentBody.BoxSize.Y / 1.77f)
+                         ) *
+                         m;
             var x = Terrain.ToCell(matrix.Translation.X);
             var y = Terrain.ToCell(matrix.Translation.Y);
             var z = Terrain.ToCell(matrix.Translation.Z);
@@ -465,8 +511,14 @@ public class ComponentHumanModel : ComponentCreatureModel
             _drawBlockEnvironmentData.BillboardDirection = -Vector3.UnitZ;
             _drawBlockEnvironmentData.SubsystemTerrain = _subsystemTerrain;
             var matrix2 = matrix * camera.ViewMatrix;
-            block.DrawBlock(_subsystemModelsRenderer.PrimitivesRenderer, _componentMiner.ActiveBlockValue,
-                Color.White, block.InHandScale, ref matrix2, _drawBlockEnvironmentData);
+            block.DrawBlock(
+                _subsystemModelsRenderer.PrimitivesRenderer,
+                _componentMiner.ActiveBlockValue,
+                Color.White,
+                block.InHandScale,
+                ref matrix2,
+                _drawBlockEnvironmentData
+            );
         }
 
         if (_componentPlayer != null && camera.GameWidget.PlayerData != _componentPlayer.PlayerData)
@@ -474,24 +526,41 @@ public class ComponentHumanModel : ComponentCreatureModel
             var position =
                 Vector3.Transform(
                     ComponentCreature.ComponentBody.Position +
-                    1.02f * Vector3.UnitY * ComponentCreature.ComponentBody.BoxSize.Y, camera.ViewMatrix);
+                    1.02f * Vector3.UnitY * ComponentCreature.ComponentBody.BoxSize.Y,
+                    camera.ViewMatrix
+                );
             if (position.Z < 0f)
             {
-                var color = Color.Lerp(Color.White, Color.Transparent,
-                    MathUtils.Saturate((position.Length() - 4f) / 3f));
+                var color = Color.Lerp(
+                    Color.White,
+                    Color.Transparent,
+                    MathUtils.Saturate((position.Length() - 4f) / 3f)
+                );
                 if (color.A > 8)
                 {
                     const float nameTagScale = 0.007f;
                     var right = Vector3.TransformNormal(
                         nameTagScale * Vector3.Normalize(Vector3.Cross(camera.ViewDirection, Vector3.UnitY)),
-                        camera.ViewMatrix);
+                        camera.ViewMatrix
+                    );
                     var down = Vector3.TransformNormal(-nameTagScale * Vector3.UnitY, camera.ViewMatrix);
                     var font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
                     _subsystemModelsRenderer.PrimitivesRenderer
-                        .FontBatch(font, 1, DepthStencilState.DepthRead, RasterizerState.CullNoneScissor,
-                            BlendState.AlphaBlend, SamplerState.LinearClamp).QueueText(
-                            _componentPlayer.PlayerData.Name, position, right, down, color,
-                            TextAnchor.HorizontalCenter | TextAnchor.Bottom);
+                        .FontBatch(
+                            font,
+                            1,
+                            DepthStencilState.DepthRead,
+                            RasterizerState.CullNoneScissor,
+                            BlendState.AlphaBlend,
+                            SamplerState.LinearClamp
+                        ).QueueText(
+                            _componentPlayer.PlayerData.Name,
+                            position,
+                            right,
+                            down,
+                            color,
+                            TextAnchor.HorizontalCenter | TextAnchor.Bottom
+                        );
                 }
             }
         }
@@ -533,7 +602,8 @@ public class ComponentHumanModel : ComponentCreatureModel
         var num2 = 0.875f * ComponentCreature.ComponentBody.BoxSize.Y;
         var num3 = MathUtils.Lerp(MathUtils.Lerp(num2, 0.45f * num2, num), 0.2f * num2, f);
         var matrix = ComponentCreature.ComponentBody.Matrix;
-        return ComponentCreature.ComponentBody.Position + matrix.Up * (num3 + 2f * Bob) +
+        return ComponentCreature.ComponentBody.Position +
+               matrix.Up * (num3 + 2f * Bob) +
                matrix.Forward * -0.2f * num;
     }
 
@@ -545,8 +615,11 @@ public class ComponentHumanModel : ComponentCreatureModel
             num += MathUtils.DegToRad(80f) * MathUtils.Sigmoid(MathUtils.Max(_lieDownFactorEye - 0.2f, 0f) / 0.8f, 4f);
         }
 
-        return ComponentCreature.ComponentBody.Rotation * Quaternion.CreateFromYawPitchRoll(
-            0f - ComponentCreature.ComponentLocomotion.LookAngles.X,
-            ComponentCreature.ComponentLocomotion.LookAngles.Y, num);
+        return ComponentCreature.ComponentBody.Rotation *
+               Quaternion.CreateFromYawPitchRoll(
+                   0f - ComponentCreature.ComponentLocomotion.LookAngles.X,
+                   ComponentCreature.ComponentLocomotion.LookAngles.Y,
+                   num
+               );
     }
 }

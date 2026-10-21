@@ -20,36 +20,42 @@ public sealed class ContentServerClientModTest : IDisposable
         var packageBytes = CreatePackageBytes("example.test", "1.0.0");
         using var packageStream = new MemoryStream(packageBytes, writable: false);
         var packageHash = LocalModRepository.ComputePackageHash(packageStream, "example.test.1.0.0.scpkg");
-        using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
-        {
-            if (request.RequestUri!.AbsoluteUri == "https://mods.example/api/v1/mods/example.test/versions/1.0.0")
-            {
-                return CreateJsonResponse(new
+        using var httpClient = new HttpClient(
+            new StubHttpMessageHandler(request =>
                 {
-                    success = true,
-                    message = string.Empty,
-                    code = 200,
-                    data = new ContentServerModPackage
+                    if (request.RequestUri!.AbsoluteUri ==
+                        "https://mods.example/api/v1/mods/example.test/versions/1.0.0")
                     {
-                        ModId = "example.test",
-                        Version = "1.0.0",
-                        PackageHash = packageHash,
-                        FileName = "example.test.1.0.0.scpkg",
-                        DownloadUrl = $"https://mods.example/api/v1/packages/{packageHash}"
+                        return CreateJsonResponse(
+                            new
+                            {
+                                success = true,
+                                message = string.Empty,
+                                code = 200,
+                                data = new ContentServerModPackage
+                                {
+                                    ModId = "example.test",
+                                    Version = "1.0.0",
+                                    PackageHash = packageHash,
+                                    FileName = "example.test.1.0.0.scpkg",
+                                    DownloadUrl = $"https://mods.example/api/v1/packages/{packageHash}"
+                                }
+                            }
+                        );
                     }
-                });
-            }
 
-            if (request.RequestUri.AbsoluteUri == $"https://mods.example/api/v1/packages/{packageHash}")
-            {
-                return new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new ByteArrayContent(packageBytes)
-                };
-            }
+                    if (request.RequestUri.AbsoluteUri == $"https://mods.example/api/v1/packages/{packageHash}")
+                    {
+                        return new HttpResponseMessage(HttpStatusCode.OK)
+                        {
+                            Content = new ByteArrayContent(packageBytes)
+                        };
+                    }
 
-            return new HttpResponseMessage(HttpStatusCode.NotFound);
-        }));
+                    return new HttpResponseMessage(HttpStatusCode.NotFound);
+                }
+            )
+        );
         var source = new ContentRepository { Name = "Mods", BaseUrl = "https://mods.example/" };
         using var pool = new ContentServerClientPool(new TestClientFactory(httpClient));
         var cache = new ContentPackageCache(_root);
@@ -120,8 +126,13 @@ public sealed class ContentServerClientModTest : IDisposable
 
         var cache = new ContentPackageCache(_root);
         using var packageStream = new MemoryStream(packageBytes, writable: false);
-        await cache.ImportExactAsync(packageStream, ContentPackageType.Mod,
-            requirement.ModId, requirement.Version, requirement.PackageHash);
+        await cache.ImportExactAsync(
+            packageStream,
+            ContentPackageType.Mod,
+            requirement.ModId,
+            requirement.Version,
+            requirement.PackageHash
+        );
 
         Assert.Null(repository.Find(requirement));
         repository.Invalidate();
@@ -133,33 +144,39 @@ public sealed class ContentServerClientModTest : IDisposable
     {
         var packages = Enumerable.Range(1, 11)
             .Select(index => new ContentCatalogItem
-            {
-                Identifier = $"example.{index}",
-                Type = "Mod",
-                Version = "1.0.0",
-                PackageHash = index.ToString("x64"),
-                FileName = $"example.{index}.scpkg",
-                DownloadUrl = $"/api/v1/packages/{index:x64}"
-            })
-            .ToArray();
-        using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
-        {
-            var pageIndex = request.RequestUri!.Query.Contains("pageIndex=2", StringComparison.Ordinal) ? 2 : 1;
-            var items = pageIndex == 1 ? packages.Take(10) : packages.Skip(10);
-            return CreateJsonResponse(new
-            {
-                success = true,
-                message = string.Empty,
-                code = 200,
-                data = new
                 {
-                    items,
-                    total = packages.Length,
-                    pageIndex,
-                    pageSize = 10
+                    Identifier = $"example.{index}",
+                    Type = "Mod",
+                    Version = "1.0.0",
+                    PackageHash = index.ToString("x64"),
+                    FileName = $"example.{index}.scpkg",
+                    DownloadUrl = $"/api/v1/packages/{index:x64}"
                 }
-            });
-        }));
+            )
+            .ToArray();
+        using var httpClient = new HttpClient(
+            new StubHttpMessageHandler(request =>
+                {
+                    var pageIndex = request.RequestUri!.Query.Contains("pageIndex=2", StringComparison.Ordinal) ? 2 : 1;
+                    var items = pageIndex == 1 ? packages.Take(10) : packages.Skip(10);
+                    return CreateJsonResponse(
+                        new
+                        {
+                            success = true,
+                            message = string.Empty,
+                            code = 200,
+                            data = new
+                            {
+                                items,
+                                total = packages.Length,
+                                pageIndex,
+                                pageSize = 10
+                            }
+                        }
+                    );
+                }
+            )
+        );
         using var client = new ContentServerClient("https://mods.example", httpClient);
 
         var first = await client.ListPageAsync(new ContentCatalogQuery(Type: "Mod", PageSize: 10));
@@ -189,14 +206,16 @@ public sealed class ContentServerClientModTest : IDisposable
 
     private static byte[] CreatePackageBytes(string modId, string version)
     {
-        using var stream = ScpkgTestPackage.Create($$"""
-                                                     {
-                                                       "id": "{{modId}}",
-                                                       "name": "{{modId}}",
-                                                       "version": "{{version}}"
-                                                     }
-                                                     """,
-            new Dictionary<string, string> { ["data/marker.txt"] = "data" });
+        using var stream = ScpkgTestPackage.Create(
+            $$"""
+              {
+                "id": "{{modId}}",
+                "name": "{{modId}}",
+                "version": "{{version}}"
+              }
+              """,
+            new Dictionary<string, string> { ["data/marker.txt"] = "data" }
+        );
         return stream.ToArray();
     }
 
@@ -213,7 +232,8 @@ public sealed class ContentServerClientModTest : IDisposable
     {
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken
+        )
         {
             return Task.FromResult(handler(request));
         }

@@ -14,8 +14,10 @@ public sealed class EditGameAnnouncementCommandHandler(ContentServerDbContext db
 {
     public async Task<bool> Handle(EditGameAnnouncementCommand command, CancellationToken cancellationToken)
     {
-        var announcement = await db.GameAnnouncements.FirstOrDefaultAsync(item => item.Id == command.Id,
-            cancellationToken);
+        var announcement = await db.GameAnnouncements.FirstOrDefaultAsync(
+            item => item.Id == command.Id,
+            cancellationToken
+        );
         if (announcement is null)
         {
             return false;

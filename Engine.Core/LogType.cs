@@ -2,9 +2,13 @@ namespace Engine.Core;
 
 public enum LogType
 {
-    Debug,
-    Verbose,
-    Information,
-    Warning,
-    Error
+    Debug = 0,
+
+    Verbose = 1,
+
+    Information = 2,
+
+    Warning = 3,
+
+    Error = 4
 }

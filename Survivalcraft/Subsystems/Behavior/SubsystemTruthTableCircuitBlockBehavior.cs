@@ -18,16 +18,20 @@ public class SubsystemTruthTableCircuitBlockBehavior() : SubsystemEditableItemBe
         var id = Terrain.ExtractData(value);
         var truthTableData = GetItemData(id);
         truthTableData = truthTableData != null ? (TruthTableData)truthTableData.Copy() : new TruthTableData();
-        var editor = new TruthTableEditorWidget(truthTableData, saved =>
-        {
-            if (!saved)
+        var editor = new TruthTableEditorWidget(
+            truthTableData,
+            saved =>
             {
-                return;
-            }
+                if (!saved)
+                {
+                    return;
+                }
 
-            var p = EditableBlockPackageBuilder.Capture(default, true, inventory.Id, slotIndex, truthTableData);
-            EditableBlockPackageHandler.Submit(p);
-        }, () => componentPlayer.ComponentGui.ModalPanelWidget = null);
+                var p = EditableBlockPackageBuilder.Capture(default, true, inventory.Id, slotIndex, truthTableData);
+                EditableBlockPackageHandler.Submit(p);
+            },
+            () => componentPlayer.ComponentGui.ModalPanelWidget = null
+        );
         componentPlayer.ComponentGui.ModalPanelWidget = editor;
         return true;
     }
@@ -35,18 +39,23 @@ public class SubsystemTruthTableCircuitBlockBehavior() : SubsystemEditableItemBe
     public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer componentPlayer)
     {
         var truthTableData = GetBlockData(new Point3(x, y, z)) ?? new TruthTableData();
-        var editor = new TruthTableEditorWidget(truthTableData, saved =>
-        {
-            if (!saved)
+        var editor = new TruthTableEditorWidget(
+            truthTableData,
+            saved =>
             {
-                return;
-            }
+                if (!saved)
+                {
+                    return;
+                }
 
-            var face = ((TruthTableCircuitBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[188]).GetFace(value);
-            var cell = new CellFace(x, y, z, face);
-            var p = EditableBlockPackageBuilder.Capture(cell, false, 0, 0, truthTableData);
-            EditableBlockPackageHandler.Submit(p);
-        }, () => componentPlayer.ComponentGui.ModalPanelWidget = null);
+                var face =
+                    ((TruthTableCircuitBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[188]).GetFace(value);
+                var cell = new CellFace(x, y, z, face);
+                var p = EditableBlockPackageBuilder.Capture(cell, false, 0, 0, truthTableData);
+                EditableBlockPackageHandler.Submit(p);
+            },
+            () => componentPlayer.ComponentGui.ModalPanelWidget = null
+        );
         componentPlayer.ComponentGui.ModalPanelWidget = editor;
         return true;
     }

@@ -29,9 +29,8 @@ public sealed record ListAdministratorsQuery(
     string? Search = null
 ) : IQuery<PagedData<AdministratorDto>>;
 
-public sealed class ListAdministratorsQueryHandler(
-    ContentServerDbContext db
-) : IQueryHandler<ListAdministratorsQuery, PagedData<AdministratorDto>>
+public sealed class ListAdministratorsQueryHandler(ContentServerDbContext db)
+    : IQueryHandler<ListAdministratorsQuery, PagedData<AdministratorDto>>
 {
     public async Task<PagedData<AdministratorDto>> Handle(ListAdministratorsQuery q, CancellationToken ct)
     {
@@ -42,17 +41,18 @@ public sealed class ListAdministratorsQueryHandler(
             .WhereIf(search is not null, x => x.Name.Contains(search!) || x.Contact.Contains(search!))
             .OrderByDescending(x => x.Id)
             .Select(x => new AdministratorDto(
-                x.Id,
-                x.Name,
-                x.Contact,
-                x.Description,
-                x.Status,
-                x.IsSuperAdministrator,
-                x.Keys.Any(key => key.RevokedAt == null),
-                x.ReviewMessage,
-                x.CreatedAt,
-                x.ReviewedAt
-            ))
+                    x.Id,
+                    x.Name,
+                    x.Contact,
+                    x.Description,
+                    x.Status,
+                    x.IsSuperAdministrator,
+                    x.Keys.Any(key => key.RevokedAt == null),
+                    x.ReviewMessage,
+                    x.CreatedAt,
+                    x.ReviewedAt
+                )
+            )
             .ToPagedDataAsync(q.Page, ct);
     }
 }

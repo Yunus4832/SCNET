@@ -4,12 +4,19 @@ namespace Game.Automation;
 public sealed class AutomationViewController
 {
     private ComponentPlayer? _player;
+
     private Vector3 _target;
+
     private float _tolerance;
+
     private float _error;
+
     private double _deadline;
+
     private long _id;
+
     private string _status = "idle";
+
     private string? _reason;
 
     public object Capture() => new
@@ -23,16 +30,24 @@ public sealed class AutomationViewController
 
     public long Start(ComponentPlayer player, Vector3 target, float toleranceDegrees, double timeoutSeconds)
     {
-        if (!float.IsFinite(target.X) || !float.IsFinite(target.Y) || !float.IsFinite(target.Z) ||
-            !float.IsFinite(toleranceDegrees) || toleranceDegrees is < 0.1f or > 5f ||
-            !double.IsFinite(timeoutSeconds) || timeoutSeconds is < 1 or > 30)
+        if (!float.IsFinite(target.X) ||
+            !float.IsFinite(target.Y) ||
+            !float.IsFinite(target.Z) ||
+            !float.IsFinite(toleranceDegrees) ||
+            toleranceDegrees is < 0.1f or > 5f ||
+            !double.IsFinite(timeoutSeconds) ||
+            timeoutSeconds is < 1 or > 30)
         {
-            throw new ArgumentException("Finite coordinates, toleranceDegrees 0.1–5 and timeoutSeconds 1–30 are required.");
+            throw new ArgumentException(
+                "Finite coordinates, toleranceDegrees 0.1–5 and timeoutSeconds 1–30 are required."
+            );
         }
 
         if (!CanControl(player))
         {
-            throw new InvalidOperationException("A ready first-person character and active stable Game screen are required.");
+            throw new InvalidOperationException(
+                "A ready first-person character and active stable Game screen are required."
+            );
         }
 
         var delta = target - player.GameWidget.ActiveCamera.ViewPosition;
@@ -58,8 +73,14 @@ public sealed class AutomationViewController
         return ++_id;
     }
 
-    public long StartAngles(ComponentPlayer player, float yawDegrees, float pitchDegrees, bool relative,
-        float toleranceDegrees, double timeoutSeconds)
+    public long StartAngles(
+        ComponentPlayer player,
+        float yawDegrees,
+        float pitchDegrees,
+        bool relative,
+        float toleranceDegrees,
+        double timeoutSeconds
+    )
     {
         if (!float.IsFinite(yawDegrees) || !float.IsFinite(pitchDegrees))
         {
@@ -69,7 +90,8 @@ public sealed class AutomationViewController
         var camera = player.GameWidget.ActiveCamera;
         if (relative)
         {
-            yawDegrees = yawDegrees % 360f + MathUtils.RadToDeg(MathF.Atan2(camera.ViewDirection.X, camera.ViewDirection.Z));
+            yawDegrees = yawDegrees % 360f +
+                         MathUtils.RadToDeg(MathF.Atan2(camera.ViewDirection.X, camera.ViewDirection.Z));
             pitchDegrees += MathUtils.RadToDeg(MathF.Asin(Math.Clamp(camera.ViewDirection.Y, -1f, 1f)));
         }
 
@@ -93,10 +115,15 @@ public sealed class AutomationViewController
     }
 
     private static bool CanControl(ComponentPlayer player) =>
-        Window.IsActive && ScreensManager.GetCurrentScreenName() == "Game" && !ScreensManager.IsAnimating &&
-        player.Entity.IsAddedToProject && player.PlayerData.IsReadyForPlaying &&
-        player.ComponentHealth.Health > 0 && player.ComponentSleep.SleepFactor == 0 &&
-        player.ComponentGui.ModalPanelWidget == null && !DialogsManager.HasDialogs(player.GuiWidget) &&
+        Window.IsActive &&
+        ScreensManager.GetCurrentScreenName() == "Game" &&
+        !ScreensManager.IsAnimating &&
+        player.Entity.IsAddedToProject &&
+        player.PlayerData.IsReadyForPlaying &&
+        player.ComponentHealth.Health > 0 &&
+        player.ComponentSleep.SleepFactor == 0 &&
+        player.ComponentGui.ModalPanelWidget == null &&
+        !DialogsManager.HasDialogs(player.GuiWidget) &&
         player.GameWidget.ActiveCamera is FppCamera;
 
     public void UpdateSafety()
@@ -124,8 +151,12 @@ public sealed class AutomationViewController
             return;
         }
 
-        if (input.Look != Vector2.Zero || input.Move != Vector3.Zero || input.Jump ||
-            input.Dig != null || input.Aim != null || input.Interact != null)
+        if (input.Look != Vector2.Zero ||
+            input.Move != Vector3.Zero ||
+            input.Jump ||
+            input.Dig != null ||
+            input.Aim != null ||
+            input.Interact != null)
         {
             Cancel("manual_input");
             return;

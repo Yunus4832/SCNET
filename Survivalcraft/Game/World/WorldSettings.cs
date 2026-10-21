@@ -60,11 +60,7 @@ public class WorldSettings
 
     public string KeywordBlocking = string.Empty;
 
-    public ushort MaxOnlinePlayerCount
-    {
-        get;
-        set => field = Math.Min(value, MaximumOnlinePlayerCount);
-    } = 20;
+    public ushort MaxOnlinePlayerCount { get; set => field = Math.Min(value, MaximumOnlinePlayerCount); } = 20;
 
     public ModProfileResolutionStrategy ModProfileResolutionStrategy = ModProfileResolutionStrategy.GlobalPlusWorld;
 
@@ -151,12 +147,22 @@ public class WorldSettings
         Name = valuesDictionary.GetValue<string>("WorldName");
         Seed = valuesDictionary.GetValue("WorldSeedString", string.Empty);
         GameMode = valuesDictionary.GetValue("GameMode", GameMode.Challenging);
-        SurvivalHotbarSlotsCount = MathUtils.Clamp(valuesDictionary.GetValue("SurvivalHotbarSlotsCount",
-            PlayerInventoryLayout.MinHotbarSlotsCount), PlayerInventoryLayout.MinHotbarSlotsCount,
-            PlayerInventoryLayout.MaxHotbarSlotsCount);
-        CreativeHotbarSlotsCount = MathUtils.Clamp(valuesDictionary.GetValue("CreativeHotbarSlotsCount",
-            PlayerInventoryLayout.MaxHotbarSlotsCount), PlayerInventoryLayout.MinHotbarSlotsCount,
-            PlayerInventoryLayout.MaxHotbarSlotsCount);
+        SurvivalHotbarSlotsCount = MathUtils.Clamp(
+            valuesDictionary.GetValue(
+                "SurvivalHotbarSlotsCount",
+                PlayerInventoryLayout.MinHotbarSlotsCount
+            ),
+            PlayerInventoryLayout.MinHotbarSlotsCount,
+            PlayerInventoryLayout.MaxHotbarSlotsCount
+        );
+        CreativeHotbarSlotsCount = MathUtils.Clamp(
+            valuesDictionary.GetValue(
+                "CreativeHotbarSlotsCount",
+                PlayerInventoryLayout.MaxHotbarSlotsCount
+            ),
+            PlayerInventoryLayout.MinHotbarSlotsCount,
+            PlayerInventoryLayout.MaxHotbarSlotsCount
+        );
         EnvironmentBehaviorMode = valuesDictionary.GetValue("EnvironmentBehaviorMode", EnvironmentBehaviorMode.Living);
         TimeOfDayMode = valuesDictionary.GetValue("TimeOfDayMode", TimeOfDayMode.Changing);
         AreSeasonsChanging = valuesDictionary.GetValue("AreSeasonsChanging", true);

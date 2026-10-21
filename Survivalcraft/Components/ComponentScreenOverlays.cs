@@ -161,8 +161,14 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
         flatBatch2D.Flush();
     }
 
-    public void DrawTexturedOverlay(Camera camera, Texture2D texture, Color color, float innerFactor, float outerFactor,
-        Vector2 offset)
+    public void DrawTexturedOverlay(
+        Camera camera,
+        Texture2D texture,
+        Color color,
+        float innerFactor,
+        float outerFactor,
+        Vector2 offset
+    )
     {
         var viewportSize = camera.ViewportSize;
         var num = viewportSize.X / viewportSize.Y;
@@ -180,8 +186,15 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
         var texCoord = new Vector2(num / 2f, 0.5f) + offset;
         var color2 = color * outerFactor;
         var color3 = color * innerFactor;
-        var texturedBatch2D = _primitivesRenderer2D.TexturedBatch(texture, false, 0, DepthStencilState.None, null,
-            BlendState.Additive, SamplerState.PointWrap);
+        var texturedBatch2D = _primitivesRenderer2D.TexturedBatch(
+            texture,
+            false,
+            0,
+            DepthStencilState.None,
+            null,
+            BlendState.Additive,
+            SamplerState.PointWrap
+        );
         var count = texturedBatch2D.TriangleVertices.Count;
         texturedBatch2D.QueueTriangle(vector, vector2, p, 0f, vector5, vector6, texCoord, color2, color2, color3);
         texturedBatch2D.QueueTriangle(vector2, vector3, p, 0f, vector6, vector7, texCoord, color2, color2, color3);
@@ -238,8 +251,15 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
         var color = Color.MultiplyColorOnly(Color.White, _light.Value);
         _random.Seed(0);
         var texture = ContentManager.Get<Texture2D>("Textures/IceOverlay");
-        var texturedBatch3D = _primitivesRenderer3D.TexturedBatch(texture, false, 0, DepthStencilState.None,
-            RasterizerState.CullNoneScissor, BlendState.AlphaBlend, SamplerState.PointWrap);
+        var texturedBatch3D = _primitivesRenderer3D.TexturedBatch(
+            texture,
+            false,
+            0,
+            DepthStencilState.None,
+            RasterizerState.CullNoneScissor,
+            BlendState.AlphaBlend,
+            SamplerState.PointWrap
+        );
         var v3 = new Vector2(viewportSize.X / viewportSize.Y, 1f);
         var vector3 = new Vector2(point.X - 1, point.Y - 1);
         for (var k = 0; k < point.X; k++)
@@ -276,16 +296,24 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
         if (!camera.Eye.HasValue)
         {
             var position = camera.ViewportSize / 2f;
-            position.X += 0.07f * camera.ViewportSize.X *
+            position.X += 0.07f *
+                          camera.ViewportSize.X *
                           (float)MathUtils.Sin(1.7300000190734863 * Time.FrameStartTime);
-            position.Y += 0.07f * camera.ViewportSize.Y *
+            position.Y += 0.07f *
+                          camera.ViewportSize.Y *
                           (float)MathUtils.Cos(1.1200000047683716 * Time.FrameStartTime);
             var fontBatch2D =
                 _primitivesRenderer2D.FontBatch(font, 1, DepthStencilState.None, null, BlendState.AlphaBlend);
             var count = fontBatch2D.TriangleVertices.Count;
-            fontBatch2D.QueueText(message, position, 0f, Color.White * factor,
-                TextAnchor.HorizontalCenter | TextAnchor.VerticalCenter, Vector2.One * camera.GameWidget.GlobalScale,
-                Vector2.Zero);
+            fontBatch2D.QueueText(
+                message,
+                position,
+                0f,
+                Color.White * factor,
+                TextAnchor.HorizontalCenter | TextAnchor.VerticalCenter,
+                Vector2.One * camera.GameWidget.GlobalScale,
+                Vector2.Zero
+            );
             fontBatch2D.TransformTriangles(camera.ViewportMatrix, count);
             fontBatch2D.Flush();
         }
@@ -294,10 +322,22 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
             var position2 = -4f * Vector3.UnitZ;
             position2.X += 0.28f * (float)MathUtils.Sin(1.7300000190734863 * Time.FrameStartTime);
             position2.Y += 0.28f * (float)MathUtils.Cos(1.1200000047683716 * Time.FrameStartTime);
-            var fontBatch3D = _primitivesRenderer3D.FontBatch(font, 1, DepthStencilState.None,
-                RasterizerState.CullNoneScissor, BlendState.AlphaBlend);
-            fontBatch3D.QueueText(message, position2, 0.008f * Vector3.UnitX, -0.008f * Vector3.UnitY,
-                Color.White * factor, TextAnchor.HorizontalCenter | TextAnchor.VerticalCenter, Vector2.Zero);
+            var fontBatch3D = _primitivesRenderer3D.FontBatch(
+                font,
+                1,
+                DepthStencilState.None,
+                RasterizerState.CullNoneScissor,
+                BlendState.AlphaBlend
+            );
+            fontBatch3D.QueueText(
+                message,
+                position2,
+                0.008f * Vector3.UnitX,
+                -0.008f * Vector3.UnitY,
+                Color.White * factor,
+                TextAnchor.HorizontalCenter | TextAnchor.VerticalCenter,
+                Vector2.Zero
+            );
             fontBatch3D.Flush(camera.ProjectionMatrix);
         }
     }
@@ -311,19 +351,37 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
             var fontBatch2D =
                 _primitivesRenderer2D.FontBatch(font, 0, DepthStencilState.None, null, BlendState.AlphaBlend);
             var count = fontBatch2D.TriangleVertices.Count;
-            fontBatch2D.QueueText(message, position, 0f, Color.Gray * factor,
-                TextAnchor.HorizontalCenter | TextAnchor.Bottom, Vector2.One * camera.GameWidget.GlobalScale,
-                Vector2.Zero);
+            fontBatch2D.QueueText(
+                message,
+                position,
+                0f,
+                Color.Gray * factor,
+                TextAnchor.HorizontalCenter | TextAnchor.Bottom,
+                Vector2.One * camera.GameWidget.GlobalScale,
+                Vector2.Zero
+            );
             fontBatch2D.TransformTriangles(camera.ViewportMatrix, count);
             fontBatch2D.Flush();
         }
         else
         {
             var position2 = -4f * Vector3.UnitZ + -0.24f / camera.ProjectionMatrix.M22 * 2f * Vector3.UnitY;
-            var fontBatch3D = _primitivesRenderer3D.FontBatch(font, 0, DepthStencilState.None,
-                RasterizerState.CullNoneScissor, BlendState.AlphaBlend);
-            fontBatch3D.QueueText(message, position2, 0.0104f * Vector3.UnitX, -0.0104f * Vector3.UnitY,
-                Color.White * factor, TextAnchor.HorizontalCenter | TextAnchor.VerticalCenter, Vector2.Zero);
+            var fontBatch3D = _primitivesRenderer3D.FontBatch(
+                font,
+                0,
+                DepthStencilState.None,
+                RasterizerState.CullNoneScissor,
+                BlendState.AlphaBlend
+            );
+            fontBatch3D.QueueText(
+                message,
+                position2,
+                0.0104f * Vector3.UnitX,
+                -0.0104f * Vector3.UnitY,
+                Color.White * factor,
+                TextAnchor.HorizontalCenter | TextAnchor.VerticalCenter,
+                Vector2.Zero
+            );
             fontBatch3D.Flush(camera.ProjectionMatrix);
         }
     }

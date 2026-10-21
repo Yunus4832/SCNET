@@ -176,10 +176,12 @@ public class EditColorDialog : Dialog
         children10.Add(widget);
         children9.Add(obj9);
         children4.Add(obj4);
-        obj3.Children.Add(new CanvasWidget
-        {
-            Size = new Vector2(20f, 0f)
-        });
+        obj3.Children.Add(
+            new CanvasWidget
+            {
+                Size = new Vector2(20f, 0f)
+            }
+        );
         var children11 = obj3.Children;
         var canvasWidget = new CanvasWidget();
         var children12 = canvasWidget.Children;
@@ -203,10 +205,12 @@ public class EditColorDialog : Dialog
         children13.Add(obj12);
         children11.Add(canvasWidget);
         children3.Add(obj3);
-        obj2.Children.Add(new CanvasWidget
-        {
-            Size = new Vector2(0f, 1f / 0f)
-        });
+        obj2.Children.Add(
+            new CanvasWidget
+            {
+                Size = new Vector2(0f, 1f / 0f)
+            }
+        );
         var children14 = obj2.Children;
         var obj13 = new StackPanelWidget
         {
@@ -222,10 +226,12 @@ public class EditColorDialog : Dialog
         ButtonWidget widget4 = obj14;
         _okButton = obj14;
         children15.Add(widget4);
-        obj13.Children.Add(new CanvasWidget
-        {
-            Size = new Vector2(50f, 0f)
-        });
+        obj13.Children.Add(
+            new CanvasWidget
+            {
+                Size = new Vector2(50f, 0f)
+            }
+        );
         var children16 = obj13.Children;
         var obj15 = new BevelledButtonWidget
         {
@@ -253,7 +259,7 @@ public class EditColorDialog : Dialog
                     "Enter Color",
                     GetColorString(),
                     20,
-                    delegate (string s)
+                    delegate(string s)
                     {
                         try
                         {

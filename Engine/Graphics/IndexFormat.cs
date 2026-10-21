@@ -2,6 +2,7 @@ namespace Engine.Graphics;
 
 public enum IndexFormat
 {
-    SixteenBits,
-    ThirtyTwoBits
+    SixteenBits = 0,
+
+    ThirtyTwoBits = 1
 }

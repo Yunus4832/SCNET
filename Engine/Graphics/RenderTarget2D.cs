@@ -76,17 +76,30 @@ public sealed class RenderTarget2D : Texture2D
         GLWrapper.GL.GenFramebuffers(1, out uint uFrameBuffer);
         frameBuffer = (int)uFrameBuffer;
         GLWrapper.BindFramebuffer(uFrameBuffer);
-        GLWrapper.GL.FramebufferTexture2D(GLEnum.Framebuffer, GLEnum.ColorAttachment0, TextureTarget.Texture2D,
-            (uint)texture, 0);
+        GLWrapper.GL.FramebufferTexture2D(
+            GLEnum.Framebuffer,
+            GLEnum.ColorAttachment0,
+            TextureTarget.Texture2D,
+            (uint)texture,
+            0
+        );
         if (DepthFormat != 0)
         {
             GLWrapper.GL.GenRenderbuffers(1, out uint uDepthBuffer);
             depthBuffer = (int)uDepthBuffer;
             GLWrapper.GL.BindRenderbuffer(GLEnum.Renderbuffer, uDepthBuffer);
-            GLWrapper.GL.RenderbufferStorage(GLEnum.Renderbuffer, GLWrapper.TranslateDepthFormat(DepthFormat),
-                (uint)Width, (uint)Height);
-            GLWrapper.GL.FramebufferRenderbuffer(GLEnum.Framebuffer, GLEnum.DepthAttachment, GLEnum.Renderbuffer,
-                uDepthBuffer);
+            GLWrapper.GL.RenderbufferStorage(
+                GLEnum.Renderbuffer,
+                GLWrapper.TranslateDepthFormat(DepthFormat),
+                (uint)Width,
+                (uint)Height
+            );
+            GLWrapper.GL.FramebufferRenderbuffer(
+                GLEnum.Framebuffer,
+                GLEnum.DepthAttachment,
+                GLEnum.Renderbuffer,
+                uDepthBuffer
+            );
             GLWrapper.GL.FramebufferRenderbuffer(GLEnum.Framebuffer, GLEnum.StencilAttachment, GLEnum.Renderbuffer, 0);
         }
         else
@@ -135,8 +148,13 @@ public sealed class RenderTarget2D : Texture2D
         return base.GetGpuMemoryUsage() + DepthFormat.GetSize() * Width * Height;
     }
 
-    public void InitializeRenderTarget2D(int width, int height, int mipLevelsCount, ColorFormat colorFormat,
-        DepthFormat depthFormat)
+    public void InitializeRenderTarget2D(
+        int width,
+        int height,
+        int mipLevelsCount,
+        ColorFormat colorFormat,
+        DepthFormat depthFormat
+    )
     {
         DepthFormat = depthFormat;
     }
@@ -156,8 +174,11 @@ public sealed class RenderTarget2D : Texture2D
             throw new InvalidOperationException("Pixel size is not an integer multiple of target array element size.");
         }
 
-        if (sourceRectangle.Left < 0 || sourceRectangle.Width <= 0 || sourceRectangle.Top < 0 ||
-            sourceRectangle.Height <= 0 || sourceRectangle.Left + sourceRectangle.Width > Width ||
+        if (sourceRectangle.Left < 0 ||
+            sourceRectangle.Width <= 0 ||
+            sourceRectangle.Top < 0 ||
+            sourceRectangle.Height <= 0 ||
+            sourceRectangle.Left + sourceRectangle.Width > Width ||
             sourceRectangle.Top + sourceRectangle.Height > Height)
         {
             throw new ArgumentOutOfRangeException(nameof(sourceRectangle));

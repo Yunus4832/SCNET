@@ -24,17 +24,33 @@ public class DetonatorBlock : MountedElectricElementBlock
                 ? i != 4
                     ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
                     : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                : Matrix.CreateRotationX((float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByData[i] = new BlockMesh();
-            BlockMeshesByData[i].AppendModelMeshPart(detonatorMesh.MeshParts[0],
-                boneAbsoluteTransform * m, false, false, false, false, Color.White);
+            BlockMeshesByData[i].AppendModelMeshPart(
+                detonatorMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             CollisionBoxesByData[i] = [BlockMeshesByData[i].CalculateBoundingBox()];
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBlockMesh.AppendModelMeshPart(detonatorMesh.MeshParts[0], boneAbsoluteTransform * m2,
-            false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            detonatorMesh.MeshParts[0],
+            boneAbsoluteTransform * m2,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
     }
 
     public override int GetFace(int value)
@@ -76,8 +92,16 @@ public class DetonatorBlock : MountedElectricElementBlock
             return;
         }
 
-        generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null,
-            geometry.SubsetOpaque);
+        generator.GenerateMeshVertices(
+            this,
+            x,
+            y,
+            z,
+            BlockMeshesByData[num],
+            Color.White,
+            null,
+            geometry.SubsetOpaque
+        );
         generator.GenerateWireVertices(value, x, y, z, GetFace(value), 0.125f, Vector2.Zero, geometry.SubsetOpaque);
     }
 
@@ -90,8 +114,14 @@ public class DetonatorBlock : MountedElectricElementBlock
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMesh, color, 4f * size, ref matrix,
-            environmentData);
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneBlockMesh,
+            color,
+            4f * size,
+            ref matrix,
+            environmentData
+        );
     }
 
     public override ElectricElement CreateElectricElement(

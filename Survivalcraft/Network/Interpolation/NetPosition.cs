@@ -1,17 +1,12 @@
 namespace Game.Network.Interpolation;
 
-public class NetPosition
+public class NetPosition(Vector3 v)
 {
-    protected Vector3 previous;
-    private float _elapsedTime;
-    protected Vector3 next;
+    protected Vector3 previous = v;
 
-    public NetPosition(Vector3 v)
-    {
-        previous = v;
-        next = v;
-        _elapsedTime = 0;
-    }
+    private float _elapsedTime = 0;
+
+    protected Vector3 next = v;
 
     public void SetNext(Vector3 v)
     {

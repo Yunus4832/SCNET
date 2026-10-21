@@ -4,12 +4,14 @@ namespace Game.Widgets;
 
 public sealed record VerticalTabMenuItem(
     string Text,
-    Action Selected);
+    Action Selected
+);
 
 public sealed record VerticalTabMenu(
     string Icon,
     Func<IReadOnlyList<VerticalTabMenuItem>> Items,
-    Vector2 ItemSize);
+    Vector2 ItemSize
+);
 
 public sealed class VerticalTabMenuWidget : CanvasWidget
 {
@@ -175,25 +177,29 @@ public sealed class VerticalTabMenuWidget : CanvasWidget
             Size = size,
             IsAutoCheckingEnabled = false
         };
-        button.Children.Add(new RectangleWidget
-        {
-            Size = new Vector2(28f),
-            HorizontalAlignment = WidgetAlignment.Center,
-            VerticalAlignment = WidgetAlignment.Center,
-            Subtexture = ContentManager.Get<Subtexture>(icon),
-            FillColor = Color.White,
-            OutlineColor = Color.Transparent,
-            IsHitTestVisible = false
-        });
+        button.Children.Add(
+            new RectangleWidget
+            {
+                Size = new Vector2(28f),
+                HorizontalAlignment = WidgetAlignment.Center,
+                VerticalAlignment = WidgetAlignment.Center,
+                Subtexture = ContentManager.Get<Subtexture>(icon),
+                FillColor = Color.White,
+                OutlineColor = Color.Transparent,
+                IsHitTestVisible = false
+            }
+        );
         return button;
     }
 
     private sealed record TabBinding(
         VerticalTabMenu? Menu,
         Action? Selected,
-        BevelledButtonWidget Button);
+        BevelledButtonWidget Button
+    );
 
     private sealed record ItemBinding(
         VerticalTabMenuItem Item,
-        ClickableTextRowWidget Button);
+        ClickableTextRowWidget Button
+    );
 }

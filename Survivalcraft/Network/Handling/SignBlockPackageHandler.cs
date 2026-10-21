@@ -25,27 +25,36 @@ public sealed class SignBlockPackageHandler : PackageHandlerBase<SignBlockPackag
             return;
         }
 
-        if (isServer && (context.Sender is null ||
-                         !project.FindSubsystem<SubsystemNetworkInterest>(true)!
-                             .IsPositionRelevant(context.Sender, new Vector2(package.Point.X, package.Point.Z))))
+        if (isServer &&
+            (context.Sender is null ||
+             !project.FindSubsystem<SubsystemNetworkInterest>(true)!
+                 .IsPositionRelevant(context.Sender, new Vector2(package.Point.X, package.Point.Z))))
         {
             return;
         }
 
         var value = project.FindSubsystem<SubsystemTerrain>(true)!
             .Terrain.GetCellValue(package.Point.X, package.Point.Y, package.Point.Z);
-        if (isServer && CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)] is not SignBlock)
+        if (isServer &&
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)] is not SignBlock)
         {
             return;
         }
 
         project.FindSubsystem<SubsystemSignBlockBehavior>(true)!.SetSignData(
-            package.Point, package.Lines.ToArray(), package.Colors.ToArray(), package.Url);
+            package.Point,
+            package.Lines.ToArray(),
+            package.Colors.ToArray(),
+            package.Url
+        );
 
         if (isServer)
         {
-            NetworkSender.SendToChunkObservers(project, new Point2(package.Point.X >> 4, package.Point.Z >> 4),
-                package);
+            NetworkSender.SendToChunkObservers(
+                project,
+                new Point2(package.Point.X >> 4, package.Point.Z >> 4),
+                package
+            );
         }
     }
 }

@@ -37,7 +37,8 @@ public sealed class PublisherApplicationApplyEndpoint(IMediator mediator) : Cont
             new ApplyPublisherCommand(
                 request.DisplayName.Trim(),
                 request.Contact.Trim(),
-                request.Description),
+                request.Description
+            ),
             cancellationToken
         );
 
@@ -45,16 +46,19 @@ public sealed class PublisherApplicationApplyEndpoint(IMediator mediator) : Cont
         return new PublisherApplicationResponse(
             result.PublisherId.ToString(),
             result.Status.ToString().ToLowerInvariant(),
-            result.ApiKey).AsResponseData(code: StatusCodes.Status201Created);
+            result.ApiKey
+        ).AsResponseData(code: StatusCodes.Status201Created);
     }
 }
 
 public sealed record PublisherApplicationResponse(
     string PublisherId,
     string Status,
-    string ApiKey);
+    string ApiKey
+);
 
 public sealed record CreatePublisherRequest(
     string DisplayName,
     string Contact,
-    string? Description);
+    string? Description
+);

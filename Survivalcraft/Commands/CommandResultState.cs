@@ -2,6 +2,7 @@ namespace Game.Commands;
 
 public enum CommandResultState
 {
-    Completed,
-    Pending
+    Completed = 0,
+
+    Pending = 1
 }

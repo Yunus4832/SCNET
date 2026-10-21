@@ -21,8 +21,10 @@ public sealed class NetworkChunkCodecTest
         var directBytes = MeasureAllocatedBytes(() => NetworkChunkCodec.Encode(chunk));
         var snapshotBytes = MeasureAllocatedBytes(() => NetworkChunkCodec.Encode(snapshot));
         // Encoding an immutable snapshot must not add another 256 KiB cell-array copy.
-        Assert.True(snapshotBytes <= directBytes + 32 * 1024,
-            $"Direct encoding allocated {directBytes} bytes; snapshot encoding allocated {snapshotBytes}.");
+        Assert.True(
+            snapshotBytes <= directBytes + 32 * 1024,
+            $"Direct encoding allocated {directBytes} bytes; snapshot encoding allocated {snapshotBytes}."
+        );
     }
 
     [Fact]
@@ -112,7 +114,8 @@ public sealed class NetworkChunkCodecTest
         chunk.Coords,
         chunk.NetworkContentRevision + 1,
         chunk.Cells.ToArray(),
-        chunk.Shafts.ToArray());
+        chunk.Shafts.ToArray()
+    );
 
     private static long MeasureAllocatedBytes(Func<EncodedTerrainChunk> encode)
     {

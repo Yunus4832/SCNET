@@ -2,8 +2,11 @@ namespace Game.Servers;
 
 public enum ServerAvailability
 {
-    Unknown,
-    Checking,
-    Unavailable,
-    Available
+    Unknown = 0,
+
+    Checking = 1,
+
+    Unavailable = 2,
+
+    Available = 3
 }

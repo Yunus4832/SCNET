@@ -17,8 +17,14 @@ public static class AutomationGameplayContext
         var inventory = player.ComponentMiner.Inventory;
         var position = player.ComponentBody.Position;
         var chunk = project!.FindSubsystem<SubsystemTerrain>()?.Terrain.GetChunkAtCell(
-            Terrain.ToCell(position.X), Terrain.ToCell(position.Z), false);
-        var hit = player.ComponentMiner.Raycast(new Ray3(camera.ViewPosition, camera.ViewDirection), RaycastMode.Digging);
+            Terrain.ToCell(position.X),
+            Terrain.ToCell(position.Z),
+            false
+        );
+        var hit = player.ComponentMiner.Raycast(
+            new Ray3(camera.ViewPosition, camera.ViewDirection),
+            RaycastMode.Digging
+        );
         var target = hit is TerrainRaycastResult terrain
             ? new
             {
@@ -66,14 +72,18 @@ public static class AutomationGameplayContext
             TotalSlotsCount = inventory.SlotsCount,
             (inventory as IPagedInventory)?.HotbarSlotsCount,
             inventory.VisibleSlotsCount,
-            Slots = Enumerable.Range(0, inventory is ComponentCreativeInventory
-                ? Math.Min(inventory.SlotsCount, PlayerInventoryLayout.StorageSlotsCount)
-                : inventory.SlotsCount).Select(index => new
+            Slots = Enumerable.Range(
+                0,
+                inventory is ComponentCreativeInventory
+                    ? Math.Min(inventory.SlotsCount, PlayerInventoryLayout.StorageSlotsCount)
+                    : inventory.SlotsCount
+            ).Select(index => new
                 {
                     Index = index,
                     Value = inventory.GetSlotValue(index),
                     Count = inventory.GetSlotCount(index)
-                }).ToArray()
+                }
+            ).ToArray()
         };
     }
 

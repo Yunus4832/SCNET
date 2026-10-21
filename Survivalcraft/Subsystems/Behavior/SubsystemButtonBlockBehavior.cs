@@ -12,20 +12,31 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
         inventory.GetSlotCount(slotIndex);
         var data = Terrain.ExtractData(value);
         var voltageLevel = ButtonBlock.GetVoltageLevel(data);
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditVoltageLevelDialog(voltageLevel,
-            delegate (int newVoltageLevel)
-            {
-                var data2 = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
-                var num = Terrain.ReplaceData(value, data2);
-                if (num == value)
+        DialogsManager.ShowDialog(
+            componentPlayer.GuiWidget,
+            new EditVoltageLevelDialog(
+                voltageLevel,
+                delegate(int newVoltageLevel)
                 {
-                    return;
-                }
+                    var data2 = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
+                    var num = Terrain.ReplaceData(value, data2);
+                    if (num == value)
+                    {
+                        return;
+                    }
 
-                var p = new EditableBlockPackage(BuiltInBlockEditKind.Button, default, true, inventory.Id, slotIndex,
-                    newVoltageLevel);
-                EditableBlockPackageHandler.Submit(p);
-            }));
+                    var p = new EditableBlockPackage(
+                        BuiltInBlockEditKind.Button,
+                        default,
+                        true,
+                        inventory.Id,
+                        slotIndex,
+                        newVoltageLevel
+                    );
+                    EditableBlockPackageHandler.Submit(p);
+                }
+            )
+        );
         return true;
     }
 
@@ -35,8 +46,9 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
         var voltageLevel = ButtonBlock.GetVoltageLevel(data);
         DialogsManager.ShowDialog(
             componentPlayer.GuiWidget,
-            new EditVoltageLevelDialog(voltageLevel,
-                delegate (int newVoltageLevel)
+            new EditVoltageLevelDialog(
+                voltageLevel,
+                delegate(int newVoltageLevel)
                 {
                     var num = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
                     if (num == data)
@@ -55,7 +67,9 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
                         newVoltageLevel
                     );
                     EditableBlockPackageHandler.Submit(p);
-                }));
+                }
+            )
+        );
         return true;
     }
 }

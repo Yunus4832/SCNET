@@ -7,7 +7,8 @@ public sealed record LinkImpairmentOptions(
     int LatencyMilliseconds,
     int JitterMilliseconds,
     double LossProbability,
-    int BandwidthKilobitsPerSecond)
+    int BandwidthKilobitsPerSecond
+)
 {
     public TimeSpan OutageStart { get; init; }
 
@@ -26,7 +27,8 @@ public sealed record DamageProxyOptions(
     LinkImpairmentOptions Upstream,
     LinkImpairmentOptions Downstream,
     string? EventsPath,
-    TimeSpan? Duration)
+    TimeSpan? Duration
+)
 {
     public static DamageProxyOptions Parse(string[] args)
     {
@@ -44,29 +46,32 @@ public sealed record DamageProxyOptions(
             upstream,
             downstream,
             options.GetValueOrDefault("events"),
-            durationSeconds == 0 ? null : TimeSpan.FromSeconds(durationSeconds));
+            durationSeconds == 0 ? null : TimeSpan.FromSeconds(durationSeconds)
+        );
     }
 
     public static void PrintHelp()
     {
-        Console.WriteLine("""
-                          Usage:
-                            dotnet run --project NetworkDamageTool -- run \
-                              --listen 127.0.0.1:28989 --target 127.0.0.1:28987 [options]
+        Console.WriteLine(
+            """
+            Usage:
+              dotnet run --project NetworkDamageTool -- run \
+                --listen 127.0.0.1:28989 --target 127.0.0.1:28987 [options]
 
-                          Common options:
-                            --seed N                  Deterministic random seed (default: 1)
-                            --events PATH             Write one JSONL statistics record per second
-                            --duration-seconds N      Stop automatically; 0 runs until Ctrl+C
+            Common options:
+              --seed N                  Deterministic random seed (default: 1)
+              --events PATH             Write one JSONL statistics record per second
+              --duration-seconds N      Stop automatically; 0 runs until Ctrl+C
 
-                          Direction options (replace DIR with up or down):
-                            --DIR-latency-ms N        Fixed one-way delay
-                            --DIR-jitter-ms N         Uniform +/- jitter
-                            --DIR-loss P              Drop probability from 0 to 1
-                            --DIR-bandwidth-kbps N    Link bandwidth; 0 means unlimited
-                            --DIR-outage-start-seconds N  Outage start since proxy run began
-                            --DIR-outage-duration-seconds N  Drop all traffic during this window
-                          """);
+            Direction options (replace DIR with up or down):
+              --DIR-latency-ms N        Fixed one-way delay
+              --DIR-jitter-ms N         Uniform +/- jitter
+              --DIR-loss P              Drop probability from 0 to 1
+              --DIR-bandwidth-kbps N    Link bandwidth; 0 means unlimited
+              --DIR-outage-start-seconds N  Outage start since proxy run began
+              --DIR-outage-duration-seconds N  Drop all traffic during this window
+            """
+        );
     }
 
     private static LinkImpairmentOptions ParseLink(Dictionary<string, string> options, string prefix)
@@ -82,7 +87,8 @@ public sealed record DamageProxyOptions(
             ParseInt(options, $"{prefix}-latency-ms", 0, 0, 60_000),
             ParseInt(options, $"{prefix}-jitter-ms", 0, 0, 60_000),
             ParseDouble(options, $"{prefix}-loss", 0, 0, 1),
-            ParseInt(options, $"{prefix}-bandwidth-kbps", 0, 0, int.MaxValue))
+            ParseInt(options, $"{prefix}-bandwidth-kbps", 0, 0, int.MaxValue)
+        )
         {
             OutageStart = TimeSpan.FromSeconds(start),
             OutageDuration = TimeSpan.FromSeconds(duration)
@@ -119,7 +125,8 @@ public sealed record DamageProxyOptions(
         string name,
         int defaultValue,
         int minimum,
-        int maximum)
+        int maximum
+    )
     {
         if (!options.TryGetValue(name, out var value))
         {
@@ -127,7 +134,8 @@ public sealed record DamageProxyOptions(
         }
 
         if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ||
-            parsed < minimum || parsed > maximum)
+            parsed < minimum ||
+            parsed > maximum)
         {
             throw new ArgumentException($"Invalid value for '--{name}': '{value}'.");
         }
@@ -140,7 +148,8 @@ public sealed record DamageProxyOptions(
         string name,
         double defaultValue,
         double minimum,
-        double maximum)
+        double maximum
+    )
     {
         if (!options.TryGetValue(name, out var value))
         {
@@ -148,7 +157,9 @@ public sealed record DamageProxyOptions(
         }
 
         if (!double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) ||
-            !double.IsFinite(parsed) || parsed < minimum || parsed > maximum)
+            !double.IsFinite(parsed) ||
+            parsed < minimum ||
+            parsed > maximum)
         {
             throw new ArgumentException($"Invalid value for '--{name}': '{value}'.");
         }

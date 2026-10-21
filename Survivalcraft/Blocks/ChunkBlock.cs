@@ -25,11 +25,19 @@ public abstract class ChunkBlock(
             ? ContentManager.Get<Model>("Models/ChunkSmooth")
             : ContentManager.Get<Model>("Models/Chunk");
         var matrix = BlockMesh.GetBoneAbsoluteTransform(
-            model.Meshes[0].ParentBone ??
-            throw new InvalidOperationException("Required Model.ParentBone is null")
-        ) * Transform;
-        StandaloneBlockMesh.AppendModelMeshPart(model.Meshes[0].MeshParts[0], matrix, false, false, false, false,
-            Color);
+                         model.Meshes[0].ParentBone ??
+                         throw new InvalidOperationException("Required Model.ParentBone is null")
+                     ) *
+                     Transform;
+        StandaloneBlockMesh.AppendModelMeshPart(
+            model.Meshes[0].MeshParts[0],
+            matrix,
+            false,
+            false,
+            false,
+            false,
+            Color
+        );
         StandaloneBlockMesh.TransformTextureCoordinates(TcTransform);
         base.Initialize();
     }
@@ -54,7 +62,13 @@ public abstract class ChunkBlock(
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMesh, color, 2f * size, ref matrix,
-            environmentData);
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneBlockMesh,
+            color,
+            2f * size,
+            ref matrix,
+            environmentData
+        );
     }
 }

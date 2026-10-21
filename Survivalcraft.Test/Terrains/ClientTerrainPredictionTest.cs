@@ -78,12 +78,18 @@ public sealed class ClientTerrainPredictionTest
         var id = prediction.Begin(_cell, 0, 7, 0);
         prediction.Complete(id, _cell, 0);
         Assert.False(prediction.IsPending(_cell));
-        Assert.Equal(63, subsystem.Raycast(start, end, true, true, null, includePredictedBlocks: true)!.Value.CellFace.Y);
+        Assert.Equal(
+            63,
+            subsystem.Raycast(start, end, true, true, null, includePredictedBlocks: true)!.Value.CellFace.Y
+        );
 
         prediction.Begin(_cell, 0, 7, 0);
         prediction.Update(ClientTerrainPrediction.TimeoutSeconds);
         Assert.False(prediction.IsPending(_cell));
-        Assert.Equal(63, subsystem.Raycast(start, end, true, true, null, includePredictedBlocks: true)!.Value.CellFace.Y);
+        Assert.Equal(
+            63,
+            subsystem.Raycast(start, end, true, true, null, includePredictedBlocks: true)!.Value.CellFace.Y
+        );
     }
 
     [Fact]
@@ -97,8 +103,14 @@ public sealed class ClientTerrainPredictionTest
         var subsystem = new SubsystemTerrain { Terrain = terrain };
         var prediction = new ClientTerrainPrediction(terrain, _ => { });
         prediction.Begin(_cell, 7, 0, 0);
-        var hit = subsystem.Raycast(new Vector3(15.5f, 66, 15.5f), new Vector3(15.5f, 61, 15.5f),
-            true, true, null, includePredictedBlocks: true);
+        var hit = subsystem.Raycast(
+            new Vector3(15.5f, 66, 15.5f),
+            new Vector3(15.5f, 61, 15.5f),
+            true,
+            true,
+            null,
+            includePredictedBlocks: true
+        );
         Assert.Equal(_cell, hit!.Value.CellFace.Point);
         Assert.True(prediction.IsPending(hit.Value.CellFace.Point));
     }

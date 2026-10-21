@@ -24,6 +24,7 @@ public static class VertexExtensions
             _ => throw new InvalidOperationException("Unrecognized vertex semantic.")
         };
     }
+
     public static int GetElementsCount(this VertexElementFormat format)
     {
         return format switch
@@ -41,6 +42,7 @@ public static class VertexExtensions
             _ => throw new InvalidOperationException("Unsupported VertexElementFormat.")
         };
     }
+
     public static int GetElementSize(this VertexElementFormat format)
     {
         return format switch

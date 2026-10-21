@@ -16,10 +16,24 @@ public class CraftingTableBlock : Block
             craftingTableMesh.ParentBone ??
             throw new InvalidOperationException("Required CraftingTableMesh.ParentBone is null")
         );
-        BlockMesh.AppendModelMeshPart(craftingTableMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f), false, false, false, false, Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(craftingTableMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        BlockMesh.AppendModelMeshPart(
+            craftingTableMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            craftingTableMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 

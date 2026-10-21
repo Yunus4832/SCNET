@@ -18,7 +18,8 @@ public sealed class SubsystemPathfindingTest
     public void WorkerPolicyReservesProcessorsForOtherSubsystems(
         int processorCount,
         bool isServer,
-        int expected)
+        int expected
+    )
     {
         Assert.Equal(expected, SubsystemPathfinding.CalculateWorkerCount(processorCount, isServer));
     }
@@ -47,10 +48,13 @@ public sealed class SubsystemPathfindingTest
         subsystem.Dispose();
 
         Assert.Equal(0, subsystem.PendingRequestCount);
-        Assert.All(accepted, result =>
-        {
-            Assert.False(result.IsInProgress);
-            Assert.True(result.IsCompleted);
-        });
+        Assert.All(
+            accepted,
+            result =>
+            {
+                Assert.False(result.IsInProgress);
+                Assert.True(result.IsCompleted);
+            }
+        );
     }
 }

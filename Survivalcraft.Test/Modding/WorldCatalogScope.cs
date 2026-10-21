@@ -8,15 +8,20 @@ namespace Survivalcraft.Test.Modding;
 internal sealed class WorldCatalogScope : IDisposable
 {
     private readonly GameModRuntime? _previous = CurrentModRuntime.Value;
+
     private readonly GameModRuntime _runtime;
 
     public WorldCatalogScope(params ModDescriptor[] mods)
     {
         _runtime = GameModRuntime.Start(mods);
         var registry = BlockRuntimeCatalog.Compile(
-            _runtime.Host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName));
+            _runtime.Host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName)
+        );
         Catalog = new BlockContentCatalog(registry);
-        typeof(GameModRuntime).GetProperty(nameof(GameModRuntime.WorldCatalog), BindingFlags.Public | BindingFlags.Instance)!
+        typeof(GameModRuntime).GetProperty(
+                nameof(GameModRuntime.WorldCatalog),
+                BindingFlags.Public | BindingFlags.Instance
+            )!
             .SetValue(_runtime, Catalog);
         CurrentModRuntime.Set(_runtime);
     }

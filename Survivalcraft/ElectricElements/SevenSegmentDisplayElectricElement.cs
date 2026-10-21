@@ -59,7 +59,8 @@ public class SevenSegmentDisplayElectricElement(
     {
         var cellFace = CellFaces[0];
         var data = Terrain.ExtractData(
-            SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z));
+            SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z)
+        );
         var mountingFace = SevenSegmentDisplayBlock.GetMountingFace(data);
         _color = LedBlock.LedColors[SevenSegmentDisplayBlock.GetColor(data)];
         for (var i = 0; i < 7; i++)
@@ -69,8 +70,10 @@ public class SevenSegmentDisplayElectricElement(
             var vector2 = mountingFace < 4 ? Vector3.UnitY : Vector3.UnitX;
             var v2 = Vector3.Cross(vector, vector2);
             _glowPoints[i] = _subsystemGlow.AddGlowPoint();
-            _glowPoints[i].Position = v - 0.4375f * CellFace.FaceToVector3(mountingFace) +
-                                      _centers[i].X * 0.0625f * v2 + _centers[i].Y * 0.0625f * vector2;
+            _glowPoints[i].Position = v -
+                                      0.4375f * CellFace.FaceToVector3(mountingFace) +
+                                      _centers[i].X * 0.0625f * v2 +
+                                      _centers[i].Y * 0.0625f * vector2;
             _glowPoints[i].Forward = vector;
             _glowPoints[i].Right = v2 * _sizes[i].X * 0.0625f;
             _glowPoints[i].Up = vector2 * _sizes[i].Y * 0.0625f;
@@ -100,8 +103,10 @@ public class SevenSegmentDisplayElectricElement(
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                _voltage = MathUtils.Max(_voltage,
-                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                _voltage = MathUtils.Max(
+                    _voltage,
+                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                );
             }
         }
 

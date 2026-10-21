@@ -2,6 +2,7 @@ namespace Game;
 
 public enum PrecipitationType
 {
-    Rain,
-    Snow
+    Rain = 0,
+
+    Snow = 1
 }

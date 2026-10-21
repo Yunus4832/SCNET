@@ -22,8 +22,10 @@ public static class NetworkTerrainPolicy
     {
         var min = new Vector2(chunk.X * 16f, chunk.Y * 16f);
         var max = min + new Vector2(16f);
-        var closest = new Vector2(MathUtils.Clamp(center.X, min.X, max.X),
-            MathUtils.Clamp(center.Y, min.Y, max.Y));
+        var closest = new Vector2(
+            MathUtils.Clamp(center.X, min.X, max.X),
+            MathUtils.Clamp(center.Y, min.Y, max.Y)
+        );
         return Vector2.DistanceSquared(center, closest) <= MathUtils.Sqr(distance);
     }
 
@@ -31,7 +33,8 @@ public static class NetworkTerrainPolicy
         TerrainUpdateLocation requested,
         int configuredMaximum,
         Vector2 authoritativeCenter,
-        out TerrainUpdateLocation clamped)
+        out TerrainUpdateLocation clamped
+    )
     {
         clamped = requested;
         if (!float.IsFinite(requested.Center.X) || !float.IsFinite(requested.Center.Y))

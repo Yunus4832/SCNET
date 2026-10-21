@@ -151,7 +151,8 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                 _componentCreature,
                 componentCreature,
                 CreatureTargetingKind.Chase,
-                1f);
+                1f
+            );
             CurrentModRuntime.Value?.Gameplay.Invoke(context);
             if (context.Cancel || context.Score <= 0f)
             {
@@ -188,7 +189,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
         _chaseNonPlayerProbability = valuesDictionary.GetValue<float>("ChaseNonPlayerProbability");
         _chaseWhenAttackedProbability = valuesDictionary.GetValue<float>("ChaseWhenAttackedProbability");
         _chaseOnTouchProbability = valuesDictionary.GetValue<float>("ChaseOnTouchProbability");
-        _componentCreature.ComponentHealth.Attacked += delegate (ComponentCreature attacker)
+        _componentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
         {
             if (!(_random.Float(0f, 1f) < _chaseWhenAttackedProbability))
             {
@@ -204,9 +205,10 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                 Attack(attacker, 7f, 7f, false);
             }
         };
-        _componentCreature.ComponentBody.CollidedWithBody += delegate (ComponentBody body)
+        _componentCreature.ComponentBody.CollidedWithBody += delegate(ComponentBody body)
         {
-            if (_target == null && _autoChaseSuppressionTime <= 0f &&
+            if (_target == null &&
+                _autoChaseSuppressionTime <= 0f &&
                 _random.Float(0f, 1f) < _chaseOnTouchProbability)
             {
                 var componentCreature2 = body.Entity.FindComponent<ComponentCreature>();
@@ -221,7 +223,8 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                 }
             }
 
-            if (_target != null && body == _target.ComponentBody &&
+            if (_target != null &&
+                body == _target.ComponentBody &&
                 body.StandingOnBody == _componentCreature.ComponentBody)
             {
                 _componentCreature.ComponentLocomotion.JumpOrder = 1f;
@@ -240,7 +243,8 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                 {
                     stateMachine.TransitionTo("Chasing");
                 }
-                else if (_autoChaseSuppressionTime <= 0f && (_target == null || ScoreTarget(_target) <= 0f) &&
+                else if (_autoChaseSuppressionTime <= 0f &&
+                         (_target == null || ScoreTarget(_target) <= 0f) &&
                          _componentCreature.ComponentHealth.Health > 0.4f)
                 {
                     _range = _subsystemSky.SkyLightIntensity < 0.2f ? _nightChaseRange : _dayChaseRange;
@@ -274,8 +278,20 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
             delegate
             {
                 _componentPathfinding.SetDestination(
-                    _componentCreature.ComponentBody.Position + new Vector3(6f * _random.Float(-1f, 1f), 0f,
-                        6f * _random.Float(-1f, 1f)), 1f, 1f, 0, false, true, false, null);
+                    _componentCreature.ComponentBody.Position +
+                    new Vector3(
+                        6f * _random.Float(-1f, 1f),
+                        0f,
+                        6f * _random.Float(-1f, 1f)
+                    ),
+                    1f,
+                    1f,
+                    0,
+                    false,
+                    true,
+                    false,
+                    null
+                );
             },
             delegate
             {
@@ -318,14 +334,16 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                 {
                     if (_componentFeedBehavior != null)
                     {
-                        _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + _random.Float(1f, 3f),
+                        _subsystemTime.QueueGameTimeDelayedExecution(
+                            _subsystemTime.GameTime + _random.Float(1f, 3f),
                             delegate
                             {
                                 if (_target != null)
                                 {
                                     _componentFeedBehavior.Feed(_target.ComponentBody.Position);
                                 }
-                            });
+                            }
+                        );
                     }
 
                     _importanceLevel = 0f;
@@ -367,8 +385,16 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                         var vector = 0.5f * (boundingBox2.Min + boundingBox2.Max);
                         var num = Vector3.Distance(v, vector);
                         var num2 = num < 4f ? 0.2f : 0f;
-                        _componentPathfinding.SetDestination(vector + num2 * num * _target.ComponentBody.Velocity, 1f,
-                            1.5f, maxPathfindingPositions, true, false, true, _target.ComponentBody);
+                        _componentPathfinding.SetDestination(
+                            vector + num2 * num * _target.ComponentBody.Velocity,
+                            1f,
+                            1.5f,
+                            maxPathfindingPositions,
+                            true,
+                            false,
+                            true,
+                            _target.ComponentBody
+                        );
                         if (_random.Float(0f, 1f) < 0.33f * _dt)
                         {
                             _componentCreature.ComponentCreatureSounds.PlayAttackSound();
@@ -416,18 +442,25 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                     _componentCreature.Category != CreatureCategory.WaterOther;
         var flag3 = componentCreature == Target || _subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
         var flag4 = (componentCreature.Category & _autoChaseMask) != 0;
-        var flag5 = componentCreature == Target || (flag4 &&
-                                                    MathUtils.Remainder(
-                                                        0.004999999888241291 * _subsystemTime.GameTime +
-                                                        GetHashCode() % 1000 / 1000f +
-                                                        componentCreature.GetHashCode() % 1000 / 1000f, 1.0) <
-                                                    _chaseNonPlayerProbability);
-        if (componentCreature != _componentCreature && ((!flag && flag5) || (flag && flag3)) &&
-            componentCreature.Entity.IsAddedToProject && componentCreature.ComponentHealth.Health > 0f &&
+        var flag5 = componentCreature == Target ||
+                    (flag4 &&
+                     MathUtils.Remainder(
+                         0.004999999888241291 * _subsystemTime.GameTime +
+                         GetHashCode() % 1000 / 1000f +
+                         componentCreature.GetHashCode() % 1000 / 1000f,
+                         1.0
+                     ) <
+                     _chaseNonPlayerProbability);
+        if (componentCreature != _componentCreature &&
+            ((!flag && flag5) || (flag && flag3)) &&
+            componentCreature.Entity.IsAddedToProject &&
+            componentCreature.ComponentHealth.Health > 0f &&
             (flag2 || IsTargetInWater(componentCreature.ComponentBody)))
         {
-            var num = Vector3.Distance(_componentCreature.ComponentBody.Position,
-                componentCreature.ComponentBody.Position);
+            var num = Vector3.Distance(
+                _componentCreature.ComponentBody.Position,
+                componentCreature.ComponentBody.Position
+            );
             if (num < _range)
             {
                 var score = _range - num;
@@ -440,7 +473,8 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                     _componentCreature,
                     componentCreature,
                     CreatureTargetingKind.Chase,
-                    score);
+                    score
+                );
                 CurrentModRuntime.Value?.Gameplay.Invoke(context);
                 return context.Cancel ? 0f : context.Score;
             }
@@ -461,7 +495,8 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
             return true;
         }
 
-        return target.StandingOnBody != null && target.StandingOnBody.Position.Y < target.Position.Y &&
+        return target.StandingOnBody != null &&
+               target.StandingOnBody.Position.Y < target.Position.Y &&
                IsTargetInWater(target.StandingOnBody);
     }
 
@@ -497,7 +532,8 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
             return true;
         }
 
-        return target.StandingOnBody != null && target.StandingOnBody.Position.Y < target.Position.Y &&
+        return target.StandingOnBody != null &&
+               target.StandingOnBody.Position.Y < target.Position.Y &&
                IsTargetInAttackRange(target.StandingOnBody);
     }
 

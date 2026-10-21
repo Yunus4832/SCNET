@@ -9,14 +9,16 @@ namespace ContentServer.Application.Commands;
 public sealed record SuspendPublisherCommand(
     PublisherId PublisherId,
     AdministratorId AdministratorId,
-    string? Message) : ICommand<ReviewPublisherResult>;
+    string? Message
+) : ICommand<ReviewPublisherResult>;
 
 public sealed class SuspendPublisherCommandHandler(PublisherRepository repository)
     : ICommandHandler<SuspendPublisherCommand, ReviewPublisherResult>
 {
     public async Task<ReviewPublisherResult> Handle(
         SuspendPublisherCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var publisher = await repository.FindAsync(command.PublisherId, cancellationToken);
         if (publisher is null)

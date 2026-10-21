@@ -18,8 +18,13 @@ public class Starter
 {
     public static void Main(string[] args)
     {
-        if (DesktopUpdateCoordinator.HandleStartup(args, AppContext.BaseDirectory, "windows-x64",
-                DesktopUpdateFiles.Replace, DesktopUpdateFiles.Notify))
+        if (DesktopUpdateCoordinator.HandleStartup(
+                args,
+                AppContext.BaseDirectory,
+                "windows-x64",
+                DesktopUpdateFiles.Replace,
+                DesktopUpdateFiles.Notify
+            ))
         {
             return;
         }
@@ -35,16 +40,21 @@ public class Starter
             RunHeadlessServer(startup);
             if (GameExitManager.ExitAction is GameExitAction.Restart or GameExitAction.SwitchInstance)
             {
-                Restart(GameExitManager.ExitAction is GameExitAction.SwitchInstance
-                    ? GameExitManager.SwitchInstanceId
-                    : instance.Id);
+                Restart(
+                    GameExitManager.ExitAction is GameExitAction.SwitchInstance
+                        ? GameExitManager.SwitchInstanceId
+                        : instance.Id
+                );
             }
 
             return;
         }
 
-        PlatformManager.RegisterUpdateSupport(Path.Combine(Path.GetTempPath(), "scnet-updates"),
-            ".zip", "ConfirmDesktopInstall");
+        PlatformManager.RegisterUpdateSupport(
+            Path.Combine(Path.GetTempPath(), "scnet-updates"),
+            ".zip",
+            "ConfirmDesktopInstall"
+        );
         RunMode.Value = RunModeType.Gui;
         PlatformManager.RegisterTextInput(new SdlTextInputBackend());
         PlatformManager.RegisterClipboard(new SdlClipboardBackend());
@@ -60,9 +70,11 @@ public class Starter
 
         if (exitAction is GameExitAction.Restart or GameExitAction.SwitchInstance)
         {
-            Restart(exitAction is GameExitAction.SwitchInstance
-                ? GameExitManager.SwitchInstanceId
-                : instance.Id);
+            Restart(
+                exitAction is GameExitAction.SwitchInstance
+                    ? GameExitManager.SwitchInstanceId
+                    : instance.Id
+            );
         }
     }
 
@@ -76,7 +88,10 @@ public class Starter
         catch (Exception exception)
         {
             Console.Error.WriteLine($"Could not start desktop update: {exception}");
-            DesktopUpdateFiles.Notify($"{LanguageManager.GetContentWidgets("GameInformationManager", "DesktopInstallFailed")}\n{GameExitManager.UpdateDownloadUrl}\n{exception.Message}", true);
+            DesktopUpdateFiles.Notify(
+                $"{LanguageManager.GetContentWidgets("GameInformationManager", "DesktopInstallFailed")}\n{GameExitManager.UpdateDownloadUrl}\n{exception.Message}",
+                true
+            );
             return;
         }
 
@@ -132,8 +147,8 @@ public class Starter
 
     private static void StartInstanceProcess(string instanceId, bool forceGui)
     {
-        var executablePath = Environment.ProcessPath
-                             ?? throw new InvalidOperationException("Cannot determine executable path.");
+        var executablePath = Environment.ProcessPath ??
+                             throw new InvalidOperationException("Cannot determine executable path.");
         var startInfo = new ProcessStartInfo(executablePath) { UseShellExecute = false };
         if (forceGui)
         {

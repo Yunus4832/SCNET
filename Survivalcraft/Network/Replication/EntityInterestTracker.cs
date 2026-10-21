@@ -2,17 +2,23 @@ namespace Game.Network.Replication;
 
 public enum EntityInterestGroup
 {
-    Creatures,
-    Pickables,
-    Projectiles,
-    MovingBlocks,
-    Inventories,
-    BlockEntities
+    Creatures = 0,
+
+    Pickables = 1,
+
+    Projectiles = 2,
+
+    MovingBlocks = 3,
+
+    Inventories = 4,
+
+    BlockEntities = 5
 }
 
 public readonly record struct EntityInterestChanges(
     IReadOnlyList<int> Entered,
-    IReadOnlyList<int> Left);
+    IReadOnlyList<int> Left
+);
 
 public sealed class EntityInterestTracker
 {
@@ -32,7 +38,8 @@ public sealed class EntityInterestTracker
         EntityInterestGroup group,
         IReadOnlySet<int> current,
         Func<int, bool> isTrackable,
-        int leaveDelayTicks)
+        int leaveDelayTicks
+    )
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(leaveDelayTicks, 1);
         var state = GetOrCreateState(client, group);

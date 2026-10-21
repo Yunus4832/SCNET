@@ -174,7 +174,8 @@ public class SettingsUiScreen : Screen
 
         var result = CommandExecutor.ExecuteLocal(
             new SetLanguageCommand(languageType),
-            GameManager.Project);
+            GameManager.Project
+        );
         if (!result.Success)
         {
             DialogsManager.ShowDialog(
@@ -182,8 +183,9 @@ public class SettingsUiScreen : Screen
                 new MessageDialog(
                     LanguageManager.Error,
                     CommandText.Resolve(result),
-                    LanguageManager.Ok));
+                    LanguageManager.Ok
+                )
+            );
         }
     }
-
 }

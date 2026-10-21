@@ -14,10 +14,12 @@ public static class ImageCodec
         {
             return ImageFormat.Png;
         }
+
         if (data.Length >= 12 && data[..4].SequenceEqual("RIFF"u8) && data.Slice(8, 4).SequenceEqual("WEBP"u8))
         {
             return ImageFormat.WebP;
         }
+
         throw new InvalidDataException("Unsupported image format. Expected PNG or WebP.");
     }
 
@@ -56,6 +58,7 @@ public static class ImageCodec
         {
             throw new InvalidDataException("Animated images are not supported.");
         }
+
         return info.Format switch
         {
             ImageFormat.Png => PngCodec.Decode(data),
@@ -76,8 +79,10 @@ public static class ImageCodec
             {
                 opaque.Pixels[index].A = 255;
             }
+
             return WebPCodec.Encode(opaque);
         }
+
         return format switch
         {
             ImageFormat.Png => PngCodec.Encode(image, saveAlpha),
@@ -99,6 +104,7 @@ public static class ImageCodec
         {
             throw new InvalidDataException("Encoded image exceeds the size limit.");
         }
+
         using var memory = new MemoryStream();
         var buffer = new byte[64 * 1024];
         int read;
@@ -108,24 +114,29 @@ public static class ImageCodec
             {
                 throw new InvalidDataException("Encoded image exceeds the size limit.");
             }
+
             memory.Write(buffer, 0, read);
         }
+
         return memory.ToArray();
     }
 
     private static ImageInfo IdentifyPng(ReadOnlySpan<byte> data)
     {
-        if (data.Length < 33 || BinaryPrimitives.ReadUInt32BigEndian(data.Slice(8, 4)) != 13 ||
+        if (data.Length < 33 ||
+            BinaryPrimitives.ReadUInt32BigEndian(data.Slice(8, 4)) != 13 ||
             !data.Slice(12, 4).SequenceEqual("IHDR"u8))
         {
             throw new InvalidDataException("Invalid PNG header.");
         }
+
         var width = BinaryPrimitives.ReadUInt32BigEndian(data.Slice(16, 4));
         var height = BinaryPrimitives.ReadUInt32BigEndian(data.Slice(20, 4));
         if (width > int.MaxValue || height > int.MaxValue)
         {
             throw new InvalidDataException("Invalid PNG dimensions.");
         }
+
         var frames = 1;
         var offset = 8;
         var sawEnd = false;
@@ -136,6 +147,7 @@ public static class ImageCodec
             {
                 throw new InvalidDataException("Truncated PNG chunk.");
             }
+
             var type = data.Slice(offset + 4, 4);
             if (type.SequenceEqual("acTL"u8))
             {
@@ -143,19 +155,27 @@ public static class ImageCodec
                 {
                     throw new InvalidDataException("Invalid PNG animation header.");
                 }
-                frames = Math.Max(2, (int)Math.Min(int.MaxValue, BinaryPrimitives.ReadUInt32BigEndian(data.Slice(offset + 8, 4))));
+
+                frames = Math.Max(
+                    2,
+                    (int)Math.Min(int.MaxValue, BinaryPrimitives.ReadUInt32BigEndian(data.Slice(offset + 8, 4)))
+                );
             }
+
             if (type.SequenceEqual("IEND"u8))
             {
                 sawEnd = true;
                 break;
             }
+
             offset = checked(offset + (int)length + 12);
         }
+
         if (!sawEnd)
         {
             throw new InvalidDataException("PNG end chunk is missing.");
         }
+
         return new ImageInfo((int)width, (int)height, ImageFormat.Png, frames);
     }
 }

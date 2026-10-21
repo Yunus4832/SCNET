@@ -11,7 +11,9 @@ return GuiAtlasProgram.Run(args);
 internal static class GuiAtlasProgram
 {
     private const int _atlasWidth = 1024;
+
     private const int _padding = 2;
+
     private const int _svgSupersamplingScale = 2;
 
     public static int Run(string[] args)
@@ -58,13 +60,19 @@ internal static class GuiAtlasProgram
         Console.WriteLine($"Prepared PNG source: {Path.GetFullPath(outputPath)}");
     }
 
-    private static void Extract(string texturePath, string definitionPath, string outputDirectory,
-        string[] arguments)
+    private static void Extract(
+        string texturePath,
+        string definitionPath,
+        string outputDirectory,
+        string[] arguments
+    )
     {
         var overwrite = arguments.Contains("--overwrite", StringComparer.Ordinal);
         var names = arguments.Where(argument => argument != "--overwrite").ToArray();
-        if (names.Length == 0 || arguments.Any(argument => argument.StartsWith("--", StringComparison.Ordinal) &&
-                                                           argument != "--overwrite"))
+        if (names.Length == 0 ||
+            arguments.Any(argument => argument.StartsWith("--", StringComparison.Ordinal) &&
+                                      argument != "--overwrite"
+            ))
         {
             throw new InvalidDataException("Extract requires one or more entry names and only supports --overwrite.");
         }
@@ -77,34 +85,51 @@ internal static class GuiAtlasProgram
         var regions = ReadDefinition(definitionPath);
         using var atlas = LoadPng(texturePath);
         var selections = names.Select(name =>
-        {
-            ValidateEntryName(name);
-            if (!regions.TryGetValue(name, out var region))
             {
-                throw new InvalidDataException($"Atlas entry does not exist: {name}");
-            }
+                ValidateEntryName(name);
+                if (!regions.TryGetValue(name, out var region))
+                {
+                    throw new InvalidDataException($"Atlas entry does not exist: {name}");
+                }
 
-            if (region.X < 0 || region.Y < 0 || region.Width <= 0 || region.Height <= 0 ||
-                region.X + region.Width > atlas.Width || region.Y + region.Height > atlas.Height)
-            {
-                throw new InvalidDataException($"Atlas entry is outside the texture: {name}");
-            }
+                if (region.X < 0 ||
+                    region.Y < 0 ||
+                    region.Width <= 0 ||
+                    region.Height <= 0 ||
+                    region.X + region.Width > atlas.Width ||
+                    region.Y + region.Height > atlas.Height)
+                {
+                    throw new InvalidDataException($"Atlas entry is outside the texture: {name}");
+                }
 
-            var outputPath = Path.Combine(outputDirectory, $"{name}.png");
-            if (!overwrite && File.Exists(outputPath))
-            {
-                throw new InvalidDataException("Output already exists; pass --overwrite to replace it: " +
-                                               Path.GetFullPath(outputPath));
-            }
+                var outputPath = Path.Combine(outputDirectory, $"{name}.png");
+                if (!overwrite && File.Exists(outputPath))
+                {
+                    throw new InvalidDataException(
+                        "Output already exists; pass --overwrite to replace it: " +
+                        Path.GetFullPath(outputPath)
+                    );
+                }
 
-            return (Name: name, Region: region, OutputPath: outputPath);
-        }).ToArray();
+                return (Name: name, Region: region, OutputPath: outputPath);
+            }
+        ).ToArray();
 
         foreach (var selection in selections)
         {
             using var image = CreateBitmap(selection.Region.Width, selection.Region.Height);
-            CopyImage(atlas, image, 0, 0, SKRectI.Create(selection.Region.X, selection.Region.Y,
-                selection.Region.Width, selection.Region.Height));
+            CopyImage(
+                atlas,
+                image,
+                0,
+                0,
+                SKRectI.Create(
+                    selection.Region.X,
+                    selection.Region.Y,
+                    selection.Region.Width,
+                    selection.Region.Height
+                )
+            );
             UnpremultiplyAlpha(image);
             SaveSourcePng(image, selection.OutputPath, overwrite);
             Console.WriteLine($"Extracted PNG source: {Path.GetFullPath(selection.OutputPath)}");
@@ -166,9 +191,15 @@ internal static class GuiAtlasProgram
             CopyImage(image, atlas, entry.X, entry.Y, SKRectI.Create(image.Width, image.Height));
         }
 
-        var definition = string.Join('\n', entries.OrderBy(entry => entry.Source.Name, StringComparer.Ordinal)
-            .Select(entry => string.Create(CultureInfo.InvariantCulture,
-                $"{entry.Source.Name} {entry.X} {entry.Y} {entry.Source.Width} {entry.Source.Height} 0 0 0 0"))) +
+        var definition = string.Join(
+                             '\n',
+                             entries.OrderBy(entry => entry.Source.Name, StringComparer.Ordinal)
+                                 .Select(entry => string.Create(
+                                         CultureInfo.InvariantCulture,
+                                         $"{entry.Source.Name} {entry.X} {entry.Y} {entry.Source.Width} {entry.Source.Height} 0 0 0 0"
+                                     )
+                                 )
+                         ) +
                          '\n';
         WriteOutputs(atlas, definition, texturePath, definitionPath);
         Console.WriteLine($"Generated {sources.Length} atlas entries in {_atlasWidth}x{atlasHeight} texture.");
@@ -189,8 +220,10 @@ internal static class GuiAtlasProgram
 
     private static void ValidateEntryName(string name)
     {
-        if (name.Length == 0 || name.Any(character => char.IsWhiteSpace(character)) ||
-            name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || Path.GetFileName(name) != name)
+        if (name.Length == 0 ||
+            name.Any(character => char.IsWhiteSpace(character)) ||
+            name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+            Path.GetFileName(name) != name)
         {
             throw new InvalidDataException($"Invalid atlas entry name: {name}");
         }
@@ -231,7 +264,8 @@ internal static class GuiAtlasProgram
             !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var y) ||
             !float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var viewBoxWidth) ||
             !float.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var viewBoxHeight) ||
-            viewBoxWidth <= 0f || viewBoxHeight <= 0f)
+            viewBoxWidth <= 0f ||
+            viewBoxHeight <= 0f)
         {
             throw new InvalidDataException($"SVG viewBox must contain four valid numbers: {path}");
         }
@@ -327,9 +361,11 @@ internal static class GuiAtlasProgram
             throw new InvalidDataException($"Unable to read SVG pixels: {source.Path}");
         }
 
-        using var resized = rendered.Resize(new SKSizeI(source.Width, source.Height),
-            new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear)) ??
-            throw new InvalidDataException($"Unable to resize SVG: {source.Path}");
+        using var resized = rendered.Resize(
+                                new SKSizeI(source.Width, source.Height),
+                                new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear)
+                            ) ??
+                            throw new InvalidDataException($"Unable to resize SVG: {source.Path}");
         var image = CreateBitmap(source.Width, source.Height);
         using var pixels = resized.PeekPixels();
         if (!pixels.ReadPixels(image.Info, image.GetPixels(), image.RowBytes, 0, 0))
@@ -397,8 +433,9 @@ internal static class GuiAtlasProgram
                 var alpha = row[x + 3];
                 for (var channel = 0; channel < 3; channel++)
                 {
-                    row[x + channel] = alpha == 0 ? (byte)0 :
-                        (byte)Math.Min(255, (row[x + channel] * 255 + alpha / 2) / alpha);
+                    row[x + channel] = alpha == 0
+                        ? (byte)0
+                        : (byte)Math.Min(255, (row[x + channel] * 255 + alpha / 2) / alpha);
                 }
             }
         }
@@ -467,21 +504,32 @@ internal static class GuiAtlasProgram
         }
     }
 
-    private static void CopyImage(SKBitmap source, SKBitmap target, int targetX, int targetY,
-        SKRectI sourceRegion)
+    private static void CopyImage(
+        SKBitmap source,
+        SKBitmap target,
+        int targetX,
+        int targetY,
+        SKRectI sourceRegion
+    )
     {
         var sourcePixels = source.GetPixelSpan();
         var targetPixels = target.GetPixelSpan();
         for (var y = 0; y < sourceRegion.Height; y++)
         {
-            sourcePixels.Slice((sourceRegion.Top + y) * source.RowBytes + sourceRegion.Left * 4,
-                    sourceRegion.Width * 4)
+            sourcePixels.Slice(
+                    (sourceRegion.Top + y) * source.RowBytes + sourceRegion.Left * 4,
+                    sourceRegion.Width * 4
+                )
                 .CopyTo(targetPixels.Slice((targetY + y) * target.RowBytes + targetX * 4));
         }
     }
 
-    private static void WriteOutputs(SKBitmap atlas, string definition, string texturePath,
-        string definitionPath)
+    private static void WriteOutputs(
+        SKBitmap atlas,
+        string definition,
+        string texturePath,
+        string definitionPath
+    )
     {
         var fullTexturePath = Path.GetFullPath(texturePath);
         var fullDefinitionPath = Path.GetFullPath(definitionPath);
@@ -518,15 +566,19 @@ internal static class GuiAtlasProgram
     {
         Console.Error.WriteLine("Usage:");
         Console.Error.WriteLine(
-            "  SCNET.GuiAtlasTool generate <asset-directory> <atlas-texture.png> <atlas-definition.txt>");
+            "  SCNET.GuiAtlasTool generate <asset-directory> <atlas-texture.png> <atlas-definition.txt>"
+        );
         Console.Error.WriteLine(
-            "  SCNET.GuiAtlasTool prepare-png <input.png> <output.png> [--premultiplied] [--overwrite]");
+            "  SCNET.GuiAtlasTool prepare-png <input.png> <output.png> [--premultiplied] [--overwrite]"
+        );
         Console.Error.WriteLine(
-            "  SCNET.GuiAtlasTool extract <atlas.png> <atlas.txt> <output-directory> <entry>... [--overwrite]");
+            "  SCNET.GuiAtlasTool extract <atlas.png> <atlas.txt> <output-directory> <entry>... [--overwrite]"
+        );
         Console.Error.WriteLine(
             "  SCNET.GuiAtlasTool compose-game-button <floating|left-attached|right-attached> " +
             "<icon.svg> <resource-name> [--scale <factor>] [--offset-x <value>] [--offset-y <value>] " +
-            "[--asset-directory <directory>] [--overwrite]");
+            "[--asset-directory <directory>] [--overwrite]"
+        );
     }
 
     private sealed record AtlasSource(string Name, string Path, int Width, int Height, AtlasSourceKind Kind);
@@ -537,7 +589,8 @@ internal static class GuiAtlasProgram
 
     private enum AtlasSourceKind
     {
-        Svg,
-        Png
+        Svg = 0,
+
+        Png = 1
     }
 }

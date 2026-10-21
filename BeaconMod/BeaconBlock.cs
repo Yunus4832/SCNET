@@ -24,9 +24,13 @@ public sealed class BeaconBlock : Block, IElectricElementBlock
     ];
 
     private readonly BlockMesh _baseMesh = new();
+
     private readonly BlockMesh _glassMesh = new();
+
     private readonly BlockMesh[] _cores = new BlockMesh[16];
+
     private readonly BlockMesh[] _standalone = new BlockMesh[16];
+
     private readonly BoundingBox[] _collision = [new(new Vector3(0.1f, 0, 0.1f), new Vector3(0.9f, 0.5f, 0.9f))];
 
     // Bits 0–2 select a color; bits 3–6 contain the circuit's light intensity.
@@ -36,12 +40,22 @@ public sealed class BeaconBlock : Block, IElectricElementBlock
     public static bool IsEnabled(int data) => GetIntensity(data) > 0;
     public static Color GetColor(int data) => Colors[data & 7];
     public static Color GetEmitterColor(int data) => Color.Lerp(GetColor(data), Color.White, 0.8f);
+
     public ElectricElement CreateElectricElement(SubsystemElectricity electricity, int value, int x, int y, int z) =>
         new BeaconElectricElement(electricity, new CellFace(x, y, z, 4));
 
-    public ElectricConnectorType? GetConnectorType(SubsystemTerrain terrain, int value, int face,
-        int connectorFace, int x, int y, int z) => face == 4 &&
-        SubsystemElectricity.GetConnectorDirection(4, 0, connectorFace).HasValue ? ElectricConnectorType.Input : null;
+    public ElectricConnectorType? GetConnectorType(
+        SubsystemTerrain terrain,
+        int value,
+        int face,
+        int connectorFace,
+        int x,
+        int y,
+        int z
+    ) => face == 4 &&
+         SubsystemElectricity.GetConnectorDirection(4, 0, connectorFace).HasValue
+        ? ElectricConnectorType.Input
+        : null;
 
     public int GetConnectionMask(int value) => int.MaxValue;
 
@@ -60,8 +74,15 @@ public sealed class BeaconBlock : Block, IElectricElementBlock
         for (var data = 0; data < 16; data++)
         {
             var core = new BlockMesh();
-            AppendPart(core, model, "core", (data & 8) != 0 ? GetEmitterColor(data) : new Color(65, 75, 80),
-                (data & 8) != 0, emissiveSlot, false);
+            AppendPart(
+                core,
+                model,
+                "core",
+                (data & 8) != 0 ? GetEmitterColor(data) : new Color(65, 75, 80),
+                (data & 8) != 0,
+                emissiveSlot,
+                false
+            );
             _cores[data] = core;
             var standalone = new BlockMesh();
             standalone.AppendBlockMesh(_baseMesh);
@@ -72,15 +93,30 @@ public sealed class BeaconBlock : Block, IElectricElementBlock
         }
     }
 
-    private static void AppendPart(BlockMesh target, Model model, string name, Color color, bool emissive,
-        int slot, bool glass)
+    private static void AppendPart(
+        BlockMesh target,
+        Model model,
+        string name,
+        Color color,
+        bool emissive,
+        int slot,
+        bool glass
+    )
     {
         var mesh = model.FindMesh(name)!;
         foreach (var part in mesh.MeshParts)
         {
-            target.AppendModelMeshPart(part, BlockMesh.GetBoneAbsoluteTransform(mesh.ParentBone!),
-                emissive, false, glass, false, color);
+            target.AppendModelMeshPart(
+                part,
+                BlockMesh.GetBoneAbsoluteTransform(mesh.ParentBone!),
+                emissive,
+                false,
+                glass,
+                false,
+                color
+            );
         }
+
         var bounds = target.CalculateBoundingBox();
         for (var i = 0; i < target.Vertices.Count; i++)
         {
@@ -97,8 +133,11 @@ public sealed class BeaconBlock : Block, IElectricElementBlock
             {
                 uv = new Vector2(0.5f);
             }
+
             vertex.TextureCoordinates = (new Vector2(slot % 16, slot / 16) +
-                new Vector2(0.01f) + uv * 0.98f) / 16f;
+                                         new Vector2(0.01f) +
+                                         uv * 0.98f) /
+                                        16f;
             vertex.Position += new Vector3(0.5f, 0, 0.5f);
             target.Vertices.Array[i] = vertex;
         }
@@ -109,28 +148,64 @@ public sealed class BeaconBlock : Block, IElectricElementBlock
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value) => _collision;
     public override IEnumerable<int> GetCreativeValues() => [Terrain.MakeBlockValue(BlockIndex)];
 
-    public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry,
-        int value, int x, int y, int z)
+    public override void GenerateTerrainVertices(
+        BlockGeometryGenerator generator,
+        TerrainGeometry geometry,
+        int value,
+        int x,
+        int y,
+        int z
+    )
     {
         var data = Terrain.ExtractData(value);
         var meshIndex = (data & 7) | (IsEnabled(data) ? 8 : 0);
         generator.GenerateMeshVertices(this, x, y, z, _baseMesh, Color.White, null, geometry.SubsetOpaque);
         var brightness = IsEnabled(data) ? GetIntensity(data) / 15f : 1f;
-        generator.GenerateMeshVertices(this, x, y, z, _cores[meshIndex],
-            Color.MultiplyColorOnly(Color.White, brightness), null, geometry.SubsetOpaque);
+        generator.GenerateMeshVertices(
+            this,
+            x,
+            y,
+            z,
+            _cores[meshIndex],
+            Color.MultiplyColorOnly(Color.White, brightness),
+            null,
+            geometry.SubsetOpaque
+        );
         generator.GenerateWireVertices(value, x, y, z, 4, 0.01f, Vector2.Zero, geometry.SubsetOpaque);
         generator.GenerateMeshVertices(this, x, y, z, _glassMesh, Color.White, null, geometry.SubsetAlphaTest);
     }
 
-    public override void DrawBlock(PrimitivesRenderer3D renderer, int value, Color color, float size,
-        ref Matrix matrix, DrawBlockEnvironmentData environmentData) => BlocksManager.DrawMeshBlock(renderer,
-        _standalone[0], color, size, ref matrix, environmentData);
+    public override void DrawBlock(
+        PrimitivesRenderer3D renderer,
+        int value,
+        Color color,
+        float size,
+        ref Matrix matrix,
+        DrawBlockEnvironmentData environmentData
+    ) => BlocksManager.DrawMeshBlock(
+        renderer,
+        _standalone[0],
+        color,
+        size,
+        ref matrix,
+        environmentData
+    );
 
-    public override BlockPlacementData GetPlacementValue(SubsystemTerrain terrain, ComponentMiner miner, int value,
-        TerrainRaycastResult hit) => new() { Value = Terrain.MakeBlockValue(BlockIndex), CellFace = hit.CellFace };
+    public override BlockPlacementData GetPlacementValue(
+        SubsystemTerrain terrain,
+        ComponentMiner miner,
+        int value,
+        TerrainRaycastResult hit
+    ) => new() { Value = Terrain.MakeBlockValue(BlockIndex), CellFace = hit.CellFace };
 
-    public override void GetDropValues(SubsystemTerrain terrain, int oldValue, int newValue, int toolLevel,
-        List<BlockDropValue> drops, out bool showDebris)
+    public override void GetDropValues(
+        SubsystemTerrain terrain,
+        int oldValue,
+        int newValue,
+        int toolLevel,
+        List<BlockDropValue> drops,
+        out bool showDebris
+    )
     {
         showDebris = true;
         drops.Add(new BlockDropValue { Value = Terrain.MakeBlockValue(BlockIndex), Count = 1 });
@@ -141,12 +216,18 @@ public sealed class BeaconBlock : Block, IElectricElementBlock
         string Ingredient(string id) => Catalog.GetBlock(ResourceId.Parse("game:" + id)).CraftingId + ":0";
         var glass = Ingredient("glass");
         var iron = Ingredient("iron_ingot");
-        return [new CraftingRecipe
-        {
-            ResultValue = Terrain.MakeBlockValue(BlockIndex), ResultCount = 1,
-            Ingredients = [glass, glass, glass, glass, Ingredient("lightbulb"), glass,
-                iron, iron, iron],
-            Description = LanguageManager.Get("Beacon", "Recipe")
-        }];
+        return
+        [
+            new CraftingRecipe
+            {
+                ResultValue = Terrain.MakeBlockValue(BlockIndex), ResultCount = 1,
+                Ingredients =
+                [
+                    glass, glass, glass, glass, Ingredient("lightbulb"), glass,
+                    iron, iron, iron
+                ],
+                Description = LanguageManager.Get("Beacon", "Recipe")
+            }
+        ];
     }
 }

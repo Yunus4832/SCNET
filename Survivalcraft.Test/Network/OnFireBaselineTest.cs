@@ -59,8 +59,12 @@ public sealed class OnFireBaselineTest
     {
         public BaselineProject()
         {
-            subsystems.AddRange([new SubsystemTime(), new SubsystemTerrain(), new SubsystemAudio(),
-                new SubsystemAmbientSounds(), new SubsystemParticles()]);
+            subsystems.AddRange(
+                [
+                    new SubsystemTime(), new SubsystemTerrain(), new SubsystemAudio(),
+                    new SubsystemAmbientSounds(), new SubsystemParticles()
+                ]
+            );
         }
     }
 }

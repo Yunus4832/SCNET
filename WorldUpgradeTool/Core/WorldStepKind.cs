@@ -2,8 +2,11 @@ namespace WorldUpgradeTool.Core;
 
 internal enum WorldStepKind
 {
-    NormalizeFormat,
-    UpgradeVersion,
-    Repair,
-    Validate
+    NormalizeFormat = 0,
+
+    UpgradeVersion = 1,
+
+    Repair = 2,
+
+    Validate = 3
 }

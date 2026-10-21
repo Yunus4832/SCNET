@@ -30,7 +30,8 @@ public sealed class PackageBlob : Entity<PackageBlobId>, IAggregateRoot
         long size,
         string fileName,
         string mediaType,
-        DateTimeOffset now)
+        DateTimeOffset now
+    )
     {
         return new PackageBlob
         {

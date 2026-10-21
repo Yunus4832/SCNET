@@ -109,8 +109,11 @@ public sealed class WorldSnapshotCodecTest
     public void GameAndUiEnumsAreNotDefinedByTheProtocol()
     {
         var assembly = typeof(GameProtocol).Assembly;
-        Assert.DoesNotContain(assembly.GetTypes(), type =>
-            type.Name is "GameMode" or "PlayerClass" or "Season" or "DragMode");
+        Assert.DoesNotContain(
+            assembly.GetTypes(),
+            type =>
+                type.Name is "GameMode" or "PlayerClass" or "Season" or "DragMode"
+        );
         Assert.Equal(assembly, typeof(ClientState).Assembly);
     }
 

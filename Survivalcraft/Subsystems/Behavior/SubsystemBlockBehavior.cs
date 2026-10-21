@@ -66,13 +66,25 @@ public abstract class SubsystemBlockBehavior : Subsystem
         return false;
     }
 
-    public virtual void OnBlockPlaced(ComponentMiner miner, int x, int y, int z, ref BlockPlacementData placementData,
-        int value)
+    public virtual void OnBlockPlaced(
+        ComponentMiner miner,
+        int x,
+        int y,
+        int z,
+        ref BlockPlacementData placementData,
+        int value
+    )
     {
     }
 
-    public virtual void OnItemHarvested(int x, int y, int z, int blockValue, ref BlockDropValue dropValue,
-        ref int newBlockValue)
+    public virtual void OnItemHarvested(
+        int x,
+        int y,
+        int z,
+        int blockValue,
+        ref BlockDropValue dropValue,
+        ref int newBlockValue
+    )
     {
     }
 
@@ -102,8 +114,15 @@ public abstract class SubsystemBlockBehavior : Subsystem
         return 0;
     }
 
-    public virtual void ProcessInventoryItem(IInventory inventory, int slotIndex, int value, int count,
-        int processCount, out int processedValue, out int processedCount)
+    public virtual void ProcessInventoryItem(
+        IInventory inventory,
+        int slotIndex,
+        int value,
+        int count,
+        int processCount,
+        out int processedValue,
+        out int processedCount
+    )
     {
         throw new InvalidOperationException("Cannot process items.");
     }

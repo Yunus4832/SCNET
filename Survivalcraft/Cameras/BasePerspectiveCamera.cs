@@ -86,11 +86,19 @@ public abstract class BasePerspectiveCamera(GameWidget gameWidget) : Camera(game
                 if (!viewWidget.ScalingRenderTargetSize.HasValue && !Eye.HasValue)
                 {
                     _projectionMatrix *=
-                        MatrixUtils.CreateScaleTranslation(0.5f * viewWidget.ActualSize.X,
-                            -0.5f * viewWidget.ActualSize.Y, viewWidget.ActualSize.X / 2f,
-                            viewWidget.ActualSize.Y / 2f) * viewWidget.GlobalTransform *
-                        MatrixUtils.CreateScaleTranslation(2f / Display.Viewport.Width, -2f / Display.Viewport.Height,
-                            -1f, 1f);
+                        MatrixUtils.CreateScaleTranslation(
+                            0.5f * viewWidget.ActualSize.X,
+                            -0.5f * viewWidget.ActualSize.Y,
+                            viewWidget.ActualSize.X / 2f,
+                            viewWidget.ActualSize.Y / 2f
+                        ) *
+                        viewWidget.GlobalTransform *
+                        MatrixUtils.CreateScaleTranslation(
+                            2f / Display.Viewport.Width,
+                            -2f / Display.Viewport.Height,
+                            -1f,
+                            1f
+                        );
                 }
             }
 
@@ -109,9 +117,13 @@ public abstract class BasePerspectiveCamera(GameWidget gameWidget) : Camera(game
                     var size = Window.Size;
                     var viewWidget = GameWidget.ViewWidget;
                     _screenProjectionMatrix = CalculateBaseProjectionMatrix() *
-                                              MatrixUtils.CreateScaleTranslation(0.5f * viewWidget.ActualSize.X,
-                                                  -0.5f * viewWidget.ActualSize.Y, viewWidget.ActualSize.X / 2f,
-                                                  viewWidget.ActualSize.Y / 2f) * viewWidget.GlobalTransform *
+                                              MatrixUtils.CreateScaleTranslation(
+                                                  0.5f * viewWidget.ActualSize.X,
+                                                  -0.5f * viewWidget.ActualSize.Y,
+                                                  viewWidget.ActualSize.X / 2f,
+                                                  viewWidget.ActualSize.Y / 2f
+                                              ) *
+                                              viewWidget.GlobalTransform *
                                               MatrixUtils.CreateScaleTranslation(2f / size.X, -2f / size.Y, -1f, 1f);
                 }
                 else
@@ -167,8 +179,10 @@ public abstract class BasePerspectiveCamera(GameWidget gameWidget) : Camera(game
             else
             {
                 _viewportSize = !Eye.HasValue
-                    ? new Vector2(viewWidget.ActualSize.X * viewWidget.GlobalTransform.Right.Length(),
-                        viewWidget.ActualSize.Y * viewWidget.GlobalTransform.Up.Length())
+                    ? new Vector2(
+                        viewWidget.ActualSize.X * viewWidget.GlobalTransform.Right.Length(),
+                        viewWidget.ActualSize.Y * viewWidget.GlobalTransform.Up.Length()
+                    )
                     : (Vector2?)new Vector2(
                         VrManager.VrRenderTarget?.Width ?? 0,
                         VrManager.VrRenderTarget?.Height ?? 0

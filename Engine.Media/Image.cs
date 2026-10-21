@@ -5,12 +5,18 @@ namespace Engine.Media;
 public sealed class Image : IDisposable
 {
     public ImageBuffer Buffer { get; }
+
     public int Width => Buffer.Width;
+
     public int Height => Buffer.Height;
+
     public Color[] Pixels => Buffer.Pixels;
+
     public bool IsDisposed => Buffer.IsDisposed;
 
-    public Image() : this(1, 1) { }
+    public Image() : this(1, 1)
+    {
+    }
 
     public Image(int width, int height) => Buffer = new ImageBuffer(width, height);
 
@@ -36,7 +42,11 @@ public sealed class Image : IDisposable
         {
             var pixel = image.Pixels[index];
             image.Pixels[index] = new Color(
-                pixel.R * pixel.A / 255, pixel.G * pixel.A / 255, pixel.B * pixel.A / 255, pixel.A);
+                pixel.R * pixel.A / 255,
+                pixel.G * pixel.A / 255,
+                pixel.B * pixel.A / 255,
+                pixel.A
+            );
         }
     }
 
@@ -54,6 +64,7 @@ public sealed class Image : IDisposable
         {
             return ImageFileFormat.Bmp;
         }
+
         return ImageCodec.Identify(stream).Format switch
         {
             ImageFormat.Png => ImageFileFormat.Png,
@@ -69,10 +80,12 @@ public sealed class Image : IDisposable
             using var buffered = BufferEncoded(stream);
             return Load(buffered);
         }
+
         if (stream.CanSeek && Bmp.IsBmpStream(stream))
         {
             return Bmp.Load(stream);
         }
+
         return new Image(ImageCodec.Decode(stream));
     }
 
@@ -83,10 +96,12 @@ public sealed class Image : IDisposable
             using var buffered = BufferEncoded(stream);
             return Load(buffered, format);
         }
+
         if (DetermineFileFormat(stream) != format)
         {
             throw new FormatException($"Image does not have the requested format: {format}.");
         }
+
         return Load(stream);
     }
 
@@ -97,6 +112,7 @@ public sealed class Image : IDisposable
             Bmp.Save(image, stream, saveAlpha ? Bmp.Format.RGBA8 : Bmp.Format.RGB8);
             return;
         }
+
         var codecFormat = format switch
         {
             ImageFileFormat.Png => ImageFormat.Png,
@@ -119,8 +135,10 @@ public sealed class Image : IDisposable
                 {
                     throw new InvalidDataException("Encoded image exceeds the size limit.");
                 }
+
                 result.Write(buffer, 0, read);
             }
+
             result.Position = 0;
             return result;
         }

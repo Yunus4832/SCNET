@@ -86,17 +86,19 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
         _componentSwimAwayBehavior = Entity.FindComponent<ComponentSwimAwayBehavior>(true)!;
         var digInBlockName = valuesDictionary.GetValue<string>("DigInBlockName");
         _digInBlockIndex = !string.IsNullOrEmpty(digInBlockName)
-            ? CurrentModRuntime.Value!.RequireWorldCatalog().Blocks.First(b => b.GetType().Name == digInBlockName).BlockIndex
+            ? CurrentModRuntime.Value!.RequireWorldCatalog().Blocks.First(b => b.GetType().Name == digInBlockName)
+                .BlockIndex
             : 0;
         _maxDigInDepth = valuesDictionary.GetValue<float>("MaxDigInDepth");
-        _componentCreature.ComponentBody.CollidedWithBody += delegate (ComponentBody b) { _collidedWithBody = b; };
+        _componentCreature.ComponentBody.CollidedWithBody += delegate(ComponentBody b) { _collidedWithBody = b; };
         stateMachine.AddState(
             "Inactive",
             delegate { _importanceLevel = 0f; },
             delegate
             {
                 if (_random.Float(0f, 1f) < 0.5f * _subsystemTime.GameTimeDelta &&
-                    _subsystemTime.GameTime > _digOutTime + 15.0 && _digInBlockIndex != 0)
+                    _subsystemTime.GameTime > _digOutTime + 15.0 &&
+                    _digInBlockIndex != 0)
                 {
                     var x = Terrain.ToCell(_componentCreature.ComponentBody.Position.X);
                     var y = Terrain.ToCell(_componentCreature.ComponentBody.Position.Y - 0.9f);
@@ -153,15 +155,19 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
                 {
                     if (_subsystemTime.GameTime - _digInTime > 2.0 && _collidedWithBody.Density < 0.95f)
                     {
-                        _componentMiner.Hit(_collidedWithBody, _collidedWithBody.Position,
-                            Vector3.Normalize(_collidedWithBody.Position - _componentCreature.ComponentBody.Position));
+                        _componentMiner.Hit(
+                            _collidedWithBody,
+                            _collidedWithBody.Position,
+                            Vector3.Normalize(_collidedWithBody.Position - _componentCreature.ComponentBody.Position)
+                        );
                     }
 
                     _componentSwimAwayBehavior.SwimAwayFrom(_collidedWithBody);
                     stateMachine.TransitionTo("Inactive");
                 }
 
-                if (!IsActive || _subsystemTime.GameTime >= _digOutTime ||
+                if (!IsActive ||
+                    _subsystemTime.GameTime >= _digOutTime ||
                     _componentCreature.ComponentBody.StandingOnValue != _digInBlockIndex ||
                     _componentCreature.ComponentBody.Velocity.LengthSquared() > 1f)
                 {
@@ -186,7 +192,7 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
                 vector2,
                 false,
                 false,
-                delegate (int value, float _)
+                delegate(int value, float _)
                 {
                     var num = Terrain.ExtractContents(value);
                     return !(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is WaterBlock);

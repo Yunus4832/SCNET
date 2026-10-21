@@ -14,18 +14,21 @@ public sealed class ComponentFurnacePackageHandler : PackageHandlerBase<Componen
         var project = GameManager.Project;
         foreach (var furnaceData in package.FurnaceDataList)
         {
-            project.FindEntityById(furnaceData.EntityID, e =>
-            {
-                var furnace = e.FindComponent<ComponentFurnace>();
-                if (furnace == null)
+            project.FindEntityById(
+                furnaceData.EntityID,
+                e =>
                 {
-                    return;
-                }
+                    var furnace = e.FindComponent<ComponentFurnace>();
+                    if (furnace == null)
+                    {
+                        return;
+                    }
 
-                furnace.SmeltingProgress = furnaceData.SmeltingProgress;
-                furnace.FireTimeRemaining = furnaceData.FireTimeRemaining;
-                furnace.HeatLevel = furnaceData.HeatLevel;
-            });
+                    furnace.SmeltingProgress = furnaceData.SmeltingProgress;
+                    furnace.FireTimeRemaining = furnaceData.FireTimeRemaining;
+                    furnace.HeatLevel = furnaceData.HeatLevel;
+                }
+            );
         }
     }
 }

@@ -21,7 +21,8 @@ public class XorGateElectricElement(
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
                 var num2 = (int)MathUtils.Round(
-                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) * 15f);
+                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) * 15f
+                );
                 num = !num.HasValue ? num2 : num ^ num2;
             }
         }

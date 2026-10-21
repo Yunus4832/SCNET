@@ -45,7 +45,8 @@ public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSyste
             obj.Color = white;
             obj.Size = new Vector2(0.14f * num5);
             obj.TimeToLive = obj.Duration = _random.Float(0.5f, 2.5f);
-            var v = 1.5f * _random.Float(0f, 1f) *
+            var v = 1.5f *
+                    _random.Float(0f, 1f) *
                     Vector3.Normalize(new Vector3(_random.Float(-1f, 1f), 0f, _random.Float(-1f, 1f)));
             obj.Velocity = num5 * (v + new Vector3(0f, _random.Float(0f, 5f), 0f));
         }
@@ -79,8 +80,11 @@ public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSyste
                 continue;
             }
 
-            var cellValue = _subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(particle.Position.X),
-                Terrain.ToCell(particle.Position.Y), Terrain.ToCell(particle.Position.Z));
+            var cellValue = _subsystemTerrain.Terrain.GetCellValue(
+                Terrain.ToCell(particle.Position.X),
+                Terrain.ToCell(particle.Position.Y),
+                Terrain.ToCell(particle.Position.Z)
+            );
             var num2 = Terrain.ExtractContents(cellValue);
             if (num2 == 0)
             {
@@ -102,8 +106,10 @@ public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSyste
                 }
 
                 particle.Velocity.Y = 0f;
-                var num3 = Vector2.Distance(new Vector2(particle.Position.X, particle.Position.Z),
-                    new Vector2(_position.X, _position.Z));
+                var num3 = Vector2.Distance(
+                    new Vector2(particle.Position.X, particle.Position.Z),
+                    new Vector2(_position.X, _position.Z)
+                );
                 var num4 = 0.02f * MathUtils.Sin(2f * num3 + 10f * _time);
                 particle.Position.Y = MathUtils.Floor(particle.Position.Y) + levelHeight + num4;
                 particle.TimeToLive -= 1f * dt;

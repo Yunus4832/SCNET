@@ -25,30 +25,45 @@ internal static class P2PCommandHandlers
         {
             return Fail("server_not_listening", "P2PListenerRequired_Message", "游戏服务器尚未开始监听。");
         }
+
         if (!status.WorldReady)
         {
             return Fail("world_not_ready", "P2PWorldRequired_Message", "服务器世界尚未加载完成。");
         }
+
         if (status.State is P2PRoomState.Stopping)
         {
             return Fail("stopping", "P2PStopping_Message", "P2P 房间正在停止，请稍后再试。");
         }
+
         if (ValidateConfiguration(node.P2PConfiguration, out var configuration) is { } failure)
         {
             return failure;
         }
+
         if (!status.DesiredEnabled)
         {
             node.StartP2P(configuration);
         }
+
         status = node.GetP2PStatus();
         var result = status.State is P2PRoomState.Active
-            ? CommandResult.LocalizedSensitiveOk("p2p.active", "P2PActive_Message", "P2P 房间已启用，联机码：{0}。", status.JoinCode ?? "--")
-            : CommandResult.LocalizedSensitiveOk(status.State is P2PRoomState.RetryWaiting ? "p2p.retry_waiting" : "p2p.registering", "P2PRequested_Message", "P2P 请求已受理，当前状态：{0}。", StateText(status.State))
+            ? CommandResult.LocalizedSensitiveOk(
+                "p2p.active",
+                "P2PActive_Message",
+                "P2P 房间已启用，联机码：{0}。",
+                status.JoinCode ?? "--"
+            )
+            : CommandResult.LocalizedSensitiveOk(
+                    status.State is P2PRoomState.RetryWaiting ? "p2p.retry_waiting" : "p2p.registering",
+                    "P2PRequested_Message",
+                    "P2P 请求已受理，当前状态：{0}。",
+                    StateText(status.State)
+                )
                 with
-            {
-                State = CommandResultState.Pending
-            };
+                {
+                    State = CommandResultState.Pending
+                };
         return WithStatus(result, status);
     }
 
@@ -59,21 +74,41 @@ internal static class P2PCommandHandlers
         {
             return Fail("server_not_listening", "P2PListenerRequired_Message", "游戏服务器尚未开始监听。");
         }
+
         node.StopP2P();
         var status = node.GetP2PStatus();
-        return WithStatus(CommandResult.LocalizedSensitiveOk(status.State is P2PRoomState.Disabled ? "p2p.disabled" : "p2p.stopping", "P2PStopRequested_Message",
-            "P2P 停止请求已受理，当前状态：{0}。", StateText(status.State)) with
-        {
-            State = status.State is P2PRoomState.Disabled ? CommandResultState.Completed : CommandResultState.Pending
-        }, status);
+        return WithStatus(
+            CommandResult.LocalizedSensitiveOk(
+                    status.State is P2PRoomState.Disabled ? "p2p.disabled" : "p2p.stopping",
+                    "P2PStopRequested_Message",
+                    "P2P 停止请求已受理，当前状态：{0}。",
+                    StateText(status.State)
+                ) with
+                {
+                    State = status.State is P2PRoomState.Disabled
+                        ? CommandResultState.Completed
+                        : CommandResultState.Pending
+                },
+            status
+        );
     }
 
     public static CommandResult Status(CommandContext context, GetP2PStatusCommand command)
     {
         var status = CommonLib.Net.GetP2PStatus();
-        return WithStatus(CommandResult.LocalizedSensitiveOk("p2p.status", "P2PStatus_Message",
-            "状态：{0}\n信令：{1}\n房间：{2}\n联机码：{3}\n错误：{4}", StateText(status.State),
-            status.ControlUrl, status.Name, status.JoinCode ?? "--", status.LastError), status);
+        return WithStatus(
+            CommandResult.LocalizedSensitiveOk(
+                "p2p.status",
+                "P2PStatus_Message",
+                "状态：{0}\n信令：{1}\n房间：{2}\n联机码：{3}\n错误：{4}",
+                StateText(status.State),
+                status.ControlUrl,
+                status.Name,
+                status.JoinCode ?? "--",
+                status.LastError
+            ),
+            status
+        );
     }
 
     internal static CommandResult? ValidateConfiguration(P2PRoomSettings current, out P2PRoomSettings configuration)
@@ -83,6 +118,7 @@ internal static class P2PCommandHandlers
         {
             return Fail("service_required", "P2PServiceRequired_Message", "请先在存档服务器设置中配置信令服务。");
         }
+
         try
         {
             configuration = configuration with
@@ -98,6 +134,7 @@ internal static class P2PCommandHandlers
         {
             return Fail("invalid_configuration", "P2PInvalid_Message", "P2P 配置无效，请检查信令地址和房间信息。");
         }
+
         return null;
     }
 

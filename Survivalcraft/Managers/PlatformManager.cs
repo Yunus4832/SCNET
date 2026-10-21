@@ -68,14 +68,20 @@ public static class PlatformManager
 
     public static bool CanRequestUpdate => _updateDownloadDirectory is not null;
 
-    public static string UpdateDownloadDirectory => _updateDownloadDirectory
-        ?? throw new InvalidOperationException("Update download directory is unavailable.");
+    public static string UpdateDownloadDirectory => _updateDownloadDirectory ??
+                                                    throw new InvalidOperationException(
+                                                        "Update download directory is unavailable."
+                                                    );
 
-    public static string UpdateDownloadExtension => _updateDownloadExtension
-        ?? throw new InvalidOperationException("Update download extension is unavailable.");
+    public static string UpdateDownloadExtension => _updateDownloadExtension ??
+                                                    throw new InvalidOperationException(
+                                                        "Update download extension is unavailable."
+                                                    );
 
-    public static string UpdateConfirmationKey => _updateConfirmationKey
-        ?? throw new InvalidOperationException("Update confirmation is unavailable.");
+    public static string UpdateConfirmationKey => _updateConfirmationKey ??
+                                                  throw new InvalidOperationException(
+                                                      "Update confirmation is unavailable."
+                                                  );
 
     public static bool CanLaunchInstance => _instanceLauncher != null;
 

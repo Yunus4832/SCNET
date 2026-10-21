@@ -52,7 +52,8 @@ public class SubsystemAudio : Subsystem, IUpdateable
             var soundInfo = _queuedSounds[num];
             if (_subsystemTime.GameTime >= soundInfo.Time)
             {
-                if (_subsystemTime.GameTimeFactor.CloseTo(1f) && !_subsystemTime.FixedTimeStep.HasValue &&
+                if (_subsystemTime.GameTimeFactor.CloseTo(1f) &&
+                    !_subsystemTime.FixedTimeStep.HasValue &&
                     soundInfo.Volume * SettingsManager.Current.SoundsVolume > AudioManager.MinAudibleVolume &&
                     UpdateCongestion(soundInfo.Name, soundInfo.Volume))
                 {
@@ -115,14 +116,16 @@ public class SubsystemAudio : Subsystem, IUpdateable
     {
         var num = _subsystemTime.GameTime + delay;
         _nextSoundTime = MathUtils.Min(_nextSoundTime, num);
-        _queuedSounds.Add(new SoundInfo
-        {
-            Time = num,
-            Name = name,
-            Volume = volume,
-            Pitch = pitch,
-            Pan = pan
-        });
+        _queuedSounds.Add(
+            new SoundInfo
+            {
+                Time = num,
+                Name = name,
+                Volume = volume,
+                Pitch = pitch,
+                Pan = pan
+            }
+        );
     }
 
     public void PlaySound(string name, float volume, float pitch, Vector3 position, float minDistance, float delay)
@@ -151,15 +154,27 @@ public class SubsystemAudio : Subsystem, IUpdateable
         }
     }
 
-    public void PlayRandomSound(string directory, float volume, float pitch, Vector3 position, float minDistance,
-        float delay)
+    public void PlayRandomSound(
+        string directory,
+        float volume,
+        float pitch,
+        Vector3 position,
+        float minDistance,
+        float delay
+    )
     {
         var num = CalculateVolume(CalculateListenerDistance(position), minDistance);
         PlayRandomSound(directory, volume * num, pitch, 0f, delay);
     }
 
-    public void PlayRandomSound(string directory, float volume, float pitch, Vector3 position, float minDistance,
-        bool autoDelay)
+    public void PlayRandomSound(
+        string directory,
+        float volume,
+        float pitch,
+        Vector3 position,
+        float minDistance,
+        bool autoDelay
+    )
     {
         var num = CalculateVolume(CalculateListenerDistance(position), minDistance);
         PlayRandomSound(directory, volume * num, pitch, 0f, autoDelay ? CalculateDelay(position) : 0f);
@@ -243,6 +258,7 @@ public class SubsystemAudio : Subsystem, IUpdateable
         public double LastPlayedTime;
 
         public float LastPlayedVolume;
+
         public double LastUpdateTime;
 
         public float Value;

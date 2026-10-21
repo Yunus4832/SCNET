@@ -6,11 +6,7 @@ public class UniformSpacingPanelWidget : ContainerWidget
 
     private LayoutDirection _direction;
 
-    public LayoutDirection Direction
-    {
-        get => _direction;
-        set => _direction = value;
-    }
+    public LayoutDirection Direction { get => _direction; set => _direction = value; }
 
     public override void ArrangeOverride()
     {

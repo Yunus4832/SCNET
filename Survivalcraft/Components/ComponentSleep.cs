@@ -59,7 +59,8 @@ public class ComponentSleep : Component, IUpdateable
             _componentPlayer.PlayerStats.TimeSlept += _subsystemGameInfo.TotalElapsedGameTimeDelta;
             if ((_componentPlayer.ComponentVitalStats.Sleep >= 1f ||
                  _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative) &&
-                _subsystemTimeOfDay.TimeOfDay > 0.3f && _subsystemTimeOfDay.TimeOfDay < 0.599999964f &&
+                _subsystemTimeOfDay.TimeOfDay > 0.3f &&
+                _subsystemTimeOfDay.TimeOfDay < 0.599999964f &&
                 _sleepStartTime.HasValue &&
                 _subsystemGameInfo.TotalElapsedGameTime > _sleepStartTime + 180.0)
             {
@@ -79,12 +80,18 @@ public class ComponentSleep : Component, IUpdateable
                 WakeUp();
                 if (runGui)
                 {
-                    _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 1.0,
+                    _subsystemTime.QueueGameTimeDelayedExecution(
+                        _subsystemTime.GameTime + 1.0,
                         delegate
                         {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 6),
-                                Color.White, true, true);
-                        });
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                LanguageManager.Get(_typeName, 6),
+                                Color.White,
+                                true,
+                                true
+                            );
+                        }
+                    );
                 }
             }
 
@@ -98,12 +105,18 @@ public class ComponentSleep : Component, IUpdateable
                     {
                         _componentPlayer.GameWidget.Input.Clear();
                         WakeUp();
-                        _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 2.0,
+                        _subsystemTime.QueueGameTimeDelayedExecution(
+                            _subsystemTime.GameTime + 2.0,
                             delegate
                             {
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 7),
-                                    Color.White, true, false);
-                            });
+                                _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                    LanguageManager.Get(_typeName, 7),
+                                    Color.White,
+                                    true,
+                                    false
+                                );
+                            }
+                        );
                     }
 
                     _messageFactor = MathUtils.Min(_messageFactor + 0.5f * Time.FrameDuration, 1f);
@@ -144,7 +157,8 @@ public class ComponentSleep : Component, IUpdateable
     public bool CanSleep(out string reason)
     {
         var block = _componentPlayer.ComponentBody.StandingOnValue.HasValue
-            ? CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(_componentPlayer.ComponentBody.StandingOnValue.Value)]
+            ? CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[Terrain.ExtractContents(_componentPlayer.ComponentBody.StandingOnValue.Value)]
             : null;
 
         if (block is null || _componentPlayer.ComponentBody.ImmersionDepth > 0f)
@@ -197,15 +211,26 @@ public class ComponentSleep : Component, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(new ComponentSleepPackage(Entity.EntityId, ComponentSleepPackage.EventType.SleepRequest,
-                allowManualWakeup));
+            NetworkSender.SendToServer(
+                new ComponentSleepPackage(
+                    Entity.EntityId,
+                    ComponentSleepPackage.EventType.SleepRequest,
+                    allowManualWakeup
+                )
+            );
         }
         else
         {
             NetSleep(allowManualWakeup);
             NetworkSender.SendToObservers(
                 Entity,
-                new ComponentSleepPackage(Entity.EntityId, ComponentSleepPackage.EventType.Sleep, allowManualWakeup, true));
+                new ComponentSleepPackage(
+                    Entity.EntityId,
+                    ComponentSleepPackage.EventType.Sleep,
+                    allowManualWakeup,
+                    true
+                )
+            );
         }
     }
 
@@ -213,14 +238,20 @@ public class ComponentSleep : Component, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(new ComponentSleepPackage(Entity.EntityId, ComponentSleepPackage.EventType.WakeupRequest));
+            NetworkSender.SendToServer(
+                new ComponentSleepPackage(
+                    Entity.EntityId,
+                    ComponentSleepPackage.EventType.WakeupRequest
+                )
+            );
         }
         else
         {
             NetWakeUp();
             NetworkSender.SendToObservers(
                 Entity,
-                new ComponentSleepPackage(Entity.EntityId, ComponentSleepPackage.EventType.WakeUp));
+                new ComponentSleepPackage(Entity.EntityId, ComponentSleepPackage.EventType.WakeUp)
+            );
         }
     }
 

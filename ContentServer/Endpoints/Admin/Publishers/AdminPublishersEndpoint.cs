@@ -30,11 +30,13 @@ public sealed class AdminPublishersEndpoint(IMediator mediator) : ContentEndpoin
         PublisherStatus? status,
         string? query,
         PaginationRequest page,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var items = await mediator.Send(
             new ListPublishersQuery(page.ToPageRequest(), status, query),
-            cancellationToken);
+            cancellationToken
+        );
         return items.Map(item => item.ToResponse())
             .AsResponseData();
     }

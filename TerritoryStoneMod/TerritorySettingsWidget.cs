@@ -13,33 +13,61 @@ namespace TerritoryStoneMod;
 public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingWidget
 {
     private readonly TerritorySubsystem _subsystem;
+
     private readonly ComponentPlayer _player;
+
     private readonly Guid _owner;
+
     private readonly Action _close;
+
     private readonly BevelledButtonWidget _closeButton;
+
     private readonly BevelledButtonWidget _applyButton;
+
     private readonly LabelWidget _sizeLabel;
+
     private readonly SliderWidget _size;
+
     private readonly CheckboxWidget _entry;
+
     private readonly CheckboxWidget _exit;
+
     private readonly CheckboxWidget _digging;
+
     private readonly CheckboxWidget _placing;
+
     private readonly BevelledButtonWidget _settingsTab;
+
     private readonly BevelledButtonWidget _grantsTab;
+
     private readonly BevelledButtonWidget _editGrant;
+
     private readonly BevelledButtonWidget _revokeGrant;
+
     private readonly CanvasWidget _grantPage;
+
     private readonly ListPanelWidget _grantList;
+
     private readonly LabelWidget _emptyGrants;
+
     private KeyValuePair<Guid, TerritoryGrant>[] _grantSnapshot = [];
+
     private readonly CheckboxWidget _show;
+
     private readonly CanvasWidget _rows;
+
     private int _responseVersion;
+
     private int _pendingRequestId;
+
     private double? _pendingUntil;
 
-    public TerritorySettingsWidget(TerritorySubsystem subsystem, Territory territory, ComponentPlayer player,
-        Action close)
+    public TerritorySettingsWidget(
+        TerritorySubsystem subsystem,
+        Territory territory,
+        ComponentPlayer player,
+        Action close
+    )
     {
         _subsystem = subsystem;
         _player = player;
@@ -111,6 +139,7 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
             _rows.Children.Add(options[index]);
             _rows.SetWidgetPosition(options[index], new Vector2(12 + index % 2 * 272, 146 + index / 2 * 44));
         }
+
         _grantPage = new CanvasWidget { Size = body.Size };
         body.Children.Add(_grantPage);
         _grantList = new ListPanelWidget
@@ -163,10 +192,12 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
             _close();
             return;
         }
+
         if (_settingsTab.IsClicked || _grantsTab.IsClicked)
         {
             ShowPage(_grantsTab.IsClicked);
         }
+
         RefreshGrants(territory!);
         var selected = _grantList.SelectedItem as KeyValuePair<Guid, TerritoryGrant>?;
         _editGrant.IsEnabled = selected.HasValue;
@@ -175,23 +206,34 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
         {
             EditGrant(edit);
         }
+
         if (_revokeGrant.IsClicked && selected is { } revoke)
         {
-            DialogsManager.ShowDialog(_player.GameWidget.GuiWidget, new MessageDialog(
-                AccessText("Revoke"), string.Format(AccessText("ConfirmRevoke"), revoke.Value.Name),
-                AccessText("Revoke"), Text("Close"), response =>
-                {
-                    if (response == MessageDialogButton.Button1)
+            DialogsManager.ShowDialog(
+                _player.GameWidget.GuiWidget,
+                new MessageDialog(
+                    AccessText("Revoke"),
+                    string.Format(AccessText("ConfirmRevoke"), revoke.Value.Name),
+                    AccessText("Revoke"),
+                    Text("Close"),
+                    response =>
                     {
-                        SetGrant(revoke.Key, TerritoryPermission.None);
+                        if (response == MessageDialogButton.Button1)
+                        {
+                            SetGrant(revoke.Key, TerritoryPermission.None);
+                        }
                     }
-                }));
+                )
+            );
         }
+
         if (_responseVersion != _subsystem.SettingsResponseVersion)
         {
             _responseVersion = _subsystem.SettingsResponseVersion;
-            if (_subsystem.LastSettingsResponse is { } response && response.Owner == _owner &&
-                _pendingUntil != null && response.RequestId == _pendingRequestId)
+            if (_subsystem.LastSettingsResponse is { } response &&
+                response.Owner == _owner &&
+                _pendingUntil != null &&
+                response.RequestId == _pendingRequestId)
             {
                 _pendingUntil = null;
                 ShowSettings(response.Settings);
@@ -201,18 +243,26 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
                 }
             }
         }
+
         if (_pendingUntil is { } deadline && Time.RealTime >= deadline)
         {
             _pendingUntil = null;
             ShowSettings(territory!.Settings);
             Notify("Unavailable");
         }
+
         _applyButton.IsEnabled = _pendingUntil == null;
         _rows.IsEnabled = _pendingUntil == null;
         if (_applyButton.IsClicked && _pendingUntil == null)
         {
-            var settings = new TerritorySettings((int)_size.Value, _entry.IsChecked, _exit.IsChecked,
-                _digging.IsChecked, _placing.IsChecked, _show.IsChecked);
+            var settings = new TerritorySettings(
+                (int)_size.Value,
+                _entry.IsChecked,
+                _exit.IsChecked,
+                _digging.IsChecked,
+                _placing.IsChecked,
+                _show.IsChecked
+            );
             var error = _subsystem.ChangeSettings(territory!, settings);
             if (error != null)
             {
@@ -225,6 +275,7 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
                 _pendingUntil = Time.RealTime + 10;
             }
         }
+
         _sizeLabel.Text = string.Format(Text("Size"), (int)_size.Value, (int)_size.Value * 2 + 1);
         if (_closeButton.IsClicked || Input.Cancel || Input.Back)
         {
@@ -274,8 +325,10 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
                     _grantList.SelectedItem = grant;
                 }
             }
+
             _grantList.ScrollPosition = scroll;
         }
+
         _emptyGrants.IsVisible = grants.Length == 0;
         _grantList.IsVisible = grants.Length > 0;
     }
@@ -293,11 +346,14 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
         };
         var permissions = new LabelWidget
         {
-            Text = string.Join(" · ", new[]
-            {
-                (TerritoryPermission.Enter, "AllowEntry"), (TerritoryPermission.Exit, "AllowExit"),
-                (TerritoryPermission.Dig, "AllowDigging"), (TerritoryPermission.Place, "AllowPlacing")
-            }.Where(option => (grant.Permissions & option.Item1) != 0).Select(option => Text(option.Item2))),
+            Text = string.Join(
+                " · ",
+                new[]
+                {
+                    (TerritoryPermission.Enter, "AllowEntry"), (TerritoryPermission.Exit, "AllowExit"),
+                    (TerritoryPermission.Dig, "AllowDigging"), (TerritoryPermission.Place, "AllowPlacing")
+                }.Where(option => (grant.Permissions & option.Item1) != 0).Select(option => Text(option.Item2))
+            ),
             Size = new Vector2(530, 24),
             FontScale = 0.65f,
             Ellipsis = true,
@@ -311,13 +367,21 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
     }
 
     private void EditGrant(KeyValuePair<Guid, TerritoryGrant> grant) =>
-        DialogsManager.ShowDialog(_player.GameWidget.GuiWidget, new TerritoryPermissionsDialog(
-            grant.Value.Name, grant.Value.Permissions, TerritoryPermission.All,
-            selected => SetGrant(grant.Key, selected)));
+        DialogsManager.ShowDialog(
+            _player.GameWidget.GuiWidget,
+            new TerritoryPermissionsDialog(
+                grant.Value.Name,
+                grant.Value.Permissions,
+                TerritoryPermission.All,
+                selected => SetGrant(grant.Key, selected)
+            )
+        );
 
     private void SetGrant(Guid player, TerritoryPermission permissions) =>
-        CommandGateway.Submit(_player.PlayerData,
-            new SetTerritoryGrantCommand(player, permissions.ToString().ToLowerInvariant().Replace(" ", "")));
+        CommandGateway.Submit(
+            _player.PlayerData,
+            new SetTerritoryGrantCommand(player, permissions.ToString().ToLowerInvariant().Replace(" ", ""))
+        );
 
     private static BevelledButtonWidget CreateButton(string text) => new()
     {

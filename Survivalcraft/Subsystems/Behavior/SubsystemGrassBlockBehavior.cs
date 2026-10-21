@@ -67,7 +67,8 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
                     }
 
                     var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(i, k + 1, j);
-                    if (KillsGrassIfOnTopOfIt(cellValue2) || Terrain.ExtractLight(cellValue2) < 13 ||
+                    if (KillsGrassIfOnTopOfIt(cellValue2) ||
+                        Terrain.ExtractLight(cellValue2) < 13 ||
                         !(_random.Float(0f, 1f) < 0.1f))
                     {
                         continue;
@@ -114,7 +115,9 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
 
     public override void OnExplosion(int value, int x, int y, int z, float damage)
     {
-        if (damage > CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[8].ExplosionResilience * SubsystemExplosions.SharedRandom.Float(0f, 1f))
+        if (damage >
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[8].ExplosionResilience *
+            SubsystemExplosions.SharedRandom.Float(0f, 1f))
         {
             SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(2, 0, 0));
         }

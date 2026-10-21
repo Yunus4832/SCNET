@@ -107,8 +107,24 @@ public abstract class FluidBlock : CubeBlock
             var x2 = ZeroSubst(num3, levelHeight) - ZeroSubst(num2, levelHeight);
             var x3 = ZeroSubst(num4, levelHeight) - ZeroSubst(num, levelHeight);
             var overrideTopTextureSlot = TextureSlot - (int)MathUtils.Sign(x2) - 16 * (int)MathUtils.Sign(x3);
-            generator.GenerateCubeVertices(this, value, x, y, z, height, height2, height3, height4, sideColor, topColor,
-                topColor, topColor, topColor, overrideTopTextureSlot, subset);
+            generator.GenerateCubeVertices(
+                this,
+                value,
+                x,
+                y,
+                z,
+                height,
+                height2,
+                height3,
+                height4,
+                sideColor,
+                topColor,
+                topColor,
+                topColor,
+                topColor,
+                overrideTopTextureSlot,
+                subset
+            );
         }
         else
         {

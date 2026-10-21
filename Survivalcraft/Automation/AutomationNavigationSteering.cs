@@ -14,8 +14,11 @@ public static class AutomationNavigationSteering
         }
 
         var angle = Vector2.Angle(forward.XZ, delta.XZ);
-        var movement = new Vector3(0, 0,
-            Math.Abs(angle) < 0.5f ? Math.Clamp(delta.XZ.Length(), 0.1f, 0.8f) : 0f);
+        var movement = new Vector3(
+            0,
+            0,
+            Math.Abs(angle) < 0.5f ? Math.Clamp(delta.XZ.Length(), 0.1f, 0.8f) : 0f
+        );
         return new PlayerInput
         {
             Look = new Vector2(Math.Clamp(angle * 2f, -1f, 1f), 0f),

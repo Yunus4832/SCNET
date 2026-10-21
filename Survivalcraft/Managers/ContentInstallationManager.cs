@@ -7,6 +7,7 @@ namespace Game.Managers;
 public interface IContentInstaller
 {
     ContentPackageType Type { get; }
+
     ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package, ContentInstallOptions options);
 }
 
@@ -35,20 +36,26 @@ public static class ContentInstallationManager
         var inspection = ContentPackageReader.Inspect(package);
         package.Position = 0;
         using var archive = new ZipArchive(package, ZipArchiveMode.Read, leaveOpen: true);
-        return _installers[inspection.Manifest.Type].Install(inspection.Manifest, archive,
-            options ?? new ContentInstallOptions());
+        return _installers[inspection.Manifest.Type].Install(
+            inspection.Manifest,
+            archive,
+            options ?? new ContentInstallOptions()
+        );
     }
 
     private static Stream OpenPayload(ContentPackageManifest manifest, ZipArchive package) =>
-        package.GetEntry(manifest.Payload.Entry)?.Open()
-        ?? throw new ContentPackageException($"Package payload '{manifest.Payload.Entry}' is missing.");
+        package.GetEntry(manifest.Payload.Entry)?.Open() ??
+        throw new ContentPackageException($"Package payload '{manifest.Payload.Entry}' is missing.");
 
     private sealed class ModContentInstaller : IContentInstaller
     {
         public ContentPackageType Type => ContentPackageType.Mod;
 
-        public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
-            ContentInstallOptions options)
+        public ContentInstallResult Install(
+            ContentPackageManifest manifest,
+            ZipArchive package,
+            ContentInstallOptions options
+        )
         {
             if (options.ReplaceAssetKey is not null)
             {
@@ -63,8 +70,11 @@ public static class ContentInstallationManager
     {
         public ContentPackageType Type => ContentPackageType.World;
 
-        public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
-            ContentInstallOptions options)
+        public ContentInstallResult Install(
+            ContentPackageManifest manifest,
+            ZipArchive package,
+            ContentInstallOptions options
+        )
         {
             var name = options.ReplaceAssetKey is null
                 ? WorldsManager.ImportWorldPackage(package)
@@ -77,8 +87,11 @@ public static class ContentInstallationManager
     {
         public ContentPackageType Type => ContentPackageType.BlocksTexture;
 
-        public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
-            ContentInstallOptions options)
+        public ContentInstallResult Install(
+            ContentPackageManifest manifest,
+            ZipArchive package,
+            ContentInstallOptions options
+        )
         {
             using var payload = OpenPayload(manifest, package);
             var name = options.ReplaceAssetKey is null
@@ -92,8 +105,11 @@ public static class ContentInstallationManager
     {
         public ContentPackageType Type => ContentPackageType.CharacterSkin;
 
-        public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
-            ContentInstallOptions options)
+        public ContentInstallResult Install(
+            ContentPackageManifest manifest,
+            ZipArchive package,
+            ContentInstallOptions options
+        )
         {
             using var payload = OpenPayload(manifest, package);
             var name = options.ReplaceAssetKey is null
@@ -107,8 +123,11 @@ public static class ContentInstallationManager
     {
         public ContentPackageType Type => ContentPackageType.FurniturePack;
 
-        public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
-            ContentInstallOptions options)
+        public ContentInstallResult Install(
+            ContentPackageManifest manifest,
+            ZipArchive package,
+            ContentInstallOptions options
+        )
         {
             using var payload = OpenPayload(manifest, package);
             var name = options.ReplaceAssetKey is null

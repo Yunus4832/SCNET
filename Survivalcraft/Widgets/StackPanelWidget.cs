@@ -26,8 +26,10 @@ public class StackPanelWidget : ContainerWidget
                     {
                         _fixedSize += child.ParentDesiredSize.X + 2f * child.Margin.X;
                         parentAvailableSize.X =
-                            MathUtils.Max(parentAvailableSize.X - (child.ParentDesiredSize.X + 2f * child.Margin.X),
-                                0f);
+                            MathUtils.Max(
+                                parentAvailableSize.X - (child.ParentDesiredSize.X + 2f * child.Margin.X),
+                                0f
+                            );
                     }
                     else
                     {
@@ -42,8 +44,10 @@ public class StackPanelWidget : ContainerWidget
                     {
                         _fixedSize += child.ParentDesiredSize.Y + 2f * child.Margin.Y;
                         parentAvailableSize.Y =
-                            MathUtils.Max(parentAvailableSize.Y - (child.ParentDesiredSize.Y + 2f * child.Margin.Y),
-                                0f);
+                            MathUtils.Max(
+                                parentAvailableSize.Y - (child.ParentDesiredSize.Y + 2f * child.Margin.Y),
+                                0f
+                            );
                     }
                     else
                     {

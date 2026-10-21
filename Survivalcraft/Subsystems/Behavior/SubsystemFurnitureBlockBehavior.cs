@@ -178,8 +178,12 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             furnitureDesign = GetDesign(designIndex);
             if (furnitureDesign == null)
             {
-                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 0),
-                    Color.White, true, false);
+                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                    LanguageManager.Get(_typeName, 0),
+                    Color.White,
+                    true,
+                    false
+                );
                 return;
             }
 
@@ -203,8 +207,12 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 var cellValue = SubsystemTerrain.Terrain.GetCellValue(key.X, key.Y, key.Z);
                 if (IsValueDisallowed(cellValue))
                 {
-                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 1),
-                        Color.White, true, false);
+                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                        LanguageManager.Get(_typeName, 1),
+                        Color.White,
+                        true,
+                        false
+                    );
                     return;
                 }
 
@@ -243,11 +251,16 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                     point2.Z = key.Z;
                 }
 
-                if (MathUtils.Abs(point.X - point2.X) >= 16 || MathUtils.Abs(point.Y - point2.Y) >= 16 ||
+                if (MathUtils.Abs(point.X - point2.X) >= 16 ||
+                    MathUtils.Abs(point.Y - point2.Y) >= 16 ||
                     MathUtils.Abs(point.Z - point2.Z) >= 16)
                 {
-                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 2),
-                        Color.White, true, false);
+                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                        LanguageManager.Get(_typeName, 2),
+                        Color.White,
+                        true,
+                        false
+                    );
                     return;
                 }
 
@@ -262,8 +275,12 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
             if (valuesDictionary.Count == 0)
             {
-                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 0),
-                    Color.White, true, false);
+                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                    LanguageManager.Get(_typeName, 0),
+                    Color.White,
+                    true,
+                    false
+                );
                 return;
             }
 
@@ -288,7 +305,8 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
         var dialog = new BuildFurnitureDialog(
             design,
-            furnitureDesign, delegate (bool result)
+            furnitureDesign,
+            delegate(bool result)
             {
                 if (!result)
                 {
@@ -301,11 +319,12 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 }
 
                 var package = FurniturePackageBuilder.Capture(
-                        design,
-                        valuesDictionary,
-                        start,
-                        startValue,
-                        CommonLib.WorkType == WorkType.Client);
+                    design,
+                    valuesDictionary,
+                    start,
+                    startValue,
+                    CommonLib.WorkType == WorkType.Client
+                );
                 if (CommonLib.WorkType == WorkType.Client)
                 {
                     NetworkSender.SendToServer(package);
@@ -314,7 +333,8 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 {
                     CommonLib.Net.QueuePackage(package, PackageAudience.Global);
                 }
-            });
+            }
+        );
         DialogsManager.ShowDialog(componentMiner.ComponentPlayer?.GuiWidget, dialog);
     }
 
@@ -340,8 +360,16 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
         {
             foreach (var item2 in valuesDictionary)
             {
-                SubsystemTerrain.DestroyCell(0, item2.Key.X, item2.Key.Y, item2.Key.Z, 0, true, true,
-                    componentMiner);
+                SubsystemTerrain.DestroyCell(
+                    0,
+                    item2.Key.X,
+                    item2.Key.Y,
+                    item2.Key.Z,
+                    0,
+                    true,
+                    true,
+                    componentMiner
+                );
             }
         }
 
@@ -350,8 +378,10 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             var num3 = AddPickable(componentMiner.ComponentPlayer, design);
             for (var i = 0; i < 3; i++)
             {
-                Time.QueueTimeDelayedExecution(Time.FrameStartTime + i * 0.25f,
-                    delegate { _subsystemSoundMaterials.PlayImpactSound(startValue, new Vector3(start.Point), 1f); });
+                Time.QueueTimeDelayedExecution(
+                    Time.FrameStartTime + i * 0.25f,
+                    delegate { _subsystemSoundMaterials.PlayImpactSound(startValue, new Vector3(start.Point), 1f); }
+                );
             }
 
             componentMiner.ComponentCreature.PlayerStats?.FurnitureItemsMade += num3;
@@ -364,8 +394,11 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
     private int AddPickable(ComponentPlayer player, FurnitureDesign design)
     {
         var componentMiner = player.ComponentMiner;
-        var value = Terrain.MakeBlockValue(227, 0,
-            FurnitureBlock.SetDesignIndex(0, design.Index, design.ShadowStrengthFactor, design.IsLightEmitter));
+        var value = Terrain.MakeBlockValue(
+            227,
+            0,
+            FurnitureBlock.SetDesignIndex(0, design.Index, design.ShadowStrengthFactor, design.IsLightEmitter)
+        );
         var num3 = MathUtils.Clamp(design.Resolution, 4, 8);
         var matrix = componentMiner.ComponentCreature.ComponentBody.Matrix;
         var position = matrix.Translation + 1f * matrix.Forward + 1f * Vector3.UnitY;
@@ -402,14 +435,19 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             var design = GetDesign(designIndex);
             if (design is not { LinkedDesign.Index: >= 0 } ||
                 (list.Count != 1 &&
-                 design.InteractionMode != FurnitureInteractionMode
+                 design.InteractionMode !=
+                 FurnitureInteractionMode
                      .ConnectedMultistate))
             {
                 continue;
             }
 
-            var data2 = FurnitureBlock.SetDesignIndex(data, design.LinkedDesign.Index,
-                design.LinkedDesign.ShadowStrengthFactor, design.LinkedDesign.IsLightEmitter);
+            var data2 = FurnitureBlock.SetDesignIndex(
+                data,
+                design.LinkedDesign.Index,
+                design.LinkedDesign.ShadowStrengthFactor,
+                design.LinkedDesign.IsLightEmitter
+            );
             var value = Terrain.ReplaceData(cellValue, data2);
             SubsystemTerrain.ChangeCell(item.X, item.Y, item.Z, value);
             if (design.InteractionMode != FurnitureInteractionMode.ConnectedMultistate)
@@ -461,7 +499,9 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
     {
         var baseName = name[..Math.Min(name.Length, MaxFurnitureSetNameLength)];
         var candidate = baseName;
-        for (var suffix = 1; _furnitureSets.Any(set => !ReferenceEquals(set, excluded) && set.Name == candidate); suffix++)
+        for (var suffix = 1;
+             _furnitureSets.Any(set => !ReferenceEquals(set, excluded) && set.Name == candidate);
+             suffix++)
         {
             var number = suffix.ToString(CultureInfo.InvariantCulture);
             candidate = baseName[..Math.Min(baseName.Length, MaxFurnitureSetNameLength - number.Length)] + number;
@@ -576,7 +616,9 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
         var list = new List<Point3>();
         foreach (var key in _particleSystemsByCell.Keys)
         {
-            if (key.X >= chunk.Origin.X && key.X < chunk.Origin.X + 16 && key.Z >= chunk.Origin.Y &&
+            if (key.X >= chunk.Origin.X &&
+                key.X < chunk.Origin.X + 16 &&
+                key.Z >= chunk.Origin.Y &&
                 key.Z < chunk.Origin.Y + 16)
             {
                 list.Add(key);
@@ -591,14 +633,18 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
     public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
     {
-        var cellValue = SubsystemTerrain.Terrain.GetCellValue(raycastResult.CellFace.X, raycastResult.CellFace.Y,
-            raycastResult.CellFace.Z);
+        var cellValue = SubsystemTerrain.Terrain.GetCellValue(
+            raycastResult.CellFace.X,
+            raycastResult.CellFace.Y,
+            raycastResult.CellFace.Z
+        );
         if (Terrain.ExtractContents(cellValue) == 227)
         {
             var designIndex = FurnitureBlock.GetDesignIndex(Terrain.ExtractData(cellValue));
             var design = GetDesign(designIndex);
-            if (design != null && (design.InteractionMode == FurnitureInteractionMode.Multistate ||
-                                   design.InteractionMode == FurnitureInteractionMode.ConnectedMultistate))
+            if (design != null &&
+                (design.InteractionMode == FurnitureInteractionMode.Multistate ||
+                 design.InteractionMode == FurnitureInteractionMode.ConnectedMultistate))
             {
                 SwitchToNextState(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z, true);
                 return true;
@@ -668,8 +714,11 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 valuesDictionary4.SetValue("ImportedFrom", furnitureSet.ImportedFrom);
             }
 
-            var value = HumanReadableConverter.ValuesListToString(';', (from d in GetFurnitureSetDesigns(furnitureSet)
-                                                                        select d.Index).ToArray());
+            var value = HumanReadableConverter.ValuesListToString(
+                ';',
+                (from d in GetFurnitureSetDesigns(furnitureSet)
+                    select d.Index).ToArray()
+            );
             valuesDictionary4.SetValue("Indices", value);
             num++;
         }
@@ -754,7 +803,8 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
         var list = new List<int>();
         for (var k = 0; k < FurnitureDesigns.Length; k++)
         {
-            if (FurnitureDesigns[k] != null && !FurnitureDesigns[k]!.GcUsed &&
+            if (FurnitureDesigns[k] != null &&
+                !FurnitureDesigns[k]!.GcUsed &&
                 FurnitureDesigns[k]!.FurnitureSet is FurnitureSetDefault)
             {
                 var item = FurnitureDesigns[k]!;

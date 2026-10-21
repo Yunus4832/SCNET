@@ -18,7 +18,8 @@ namespace ContentServer.Endpoints.Admin.Administrators;
 [AllowAnonymous]
 public sealed class AdminRevokeAdministratorKeysEndpoint(
     IMediator mediator,
-    ApiKeyAuthenticationContext authenticationContext) : ContentEndpoint
+    ApiKeyAuthenticationContext authenticationContext
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -28,16 +29,20 @@ public sealed class AdminRevokeAdministratorKeysEndpoint(
         await Send.ResponseAsync(result, HttpContext.Response.StatusCode, cancellationToken);
     }
 
-    private async Task<ResponseData> RevokeAdministratorKeys(string administratorId,
-        CancellationToken cancellationToken)
+    private async Task<ResponseData> RevokeAdministratorKeys(
+        string administratorId,
+        CancellationToken cancellationToken
+    )
     {
         if (!await IsSuperAdministratorAsync(cancellationToken))
         {
             throw new KnownException("super_administrator_required", StatusCodes.Status403Forbidden);
         }
 
-        var found = await mediator.Send(new RevokeAdministratorKeyCommand(
-            new AdministratorId(ParseId(administratorId))), cancellationToken);
+        var found = await mediator.Send(
+            new RevokeAdministratorKeyCommand(new AdministratorId(ParseId(administratorId))),
+            cancellationToken
+        );
         EnsureFound(found, "administrator_key_not_found_or_protected");
         return Success();
     }
@@ -52,9 +57,13 @@ public sealed class AdminRevokeAdministratorKeysEndpoint(
     private async Task<bool> IsSuperAdministratorAsync(CancellationToken cancellationToken)
     {
         var administratorId = authenticationContext.RequireAdministratorId();
-        var page = await mediator.Send(new ListAdministratorsQuery(
-            new PageRequest { PageIndex = 1, PageSize = 1, CountTotal = false },
-            AdministratorId: administratorId), cancellationToken);
+        var page = await mediator.Send(
+            new ListAdministratorsQuery(
+                new PageRequest { PageIndex = 1, PageSize = 1, CountTotal = false },
+                AdministratorId: administratorId
+            ),
+            cancellationToken
+        );
         return page.Items.FirstOrDefault()?.IsSuperAdministrator == true;
     }
 

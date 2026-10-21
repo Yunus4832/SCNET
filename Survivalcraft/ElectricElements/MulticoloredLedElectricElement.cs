@@ -15,8 +15,11 @@ public class MulticoloredLedElectricElement(
     {
         _glowPoint = _subsystemGlow.AddGlowPoint();
         var cellFace = CellFaces[0];
-        var mountingFace = MulticoloredLedBlock.GetMountingFace(Terrain.ExtractData(
-            SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z)));
+        var mountingFace = MulticoloredLedBlock.GetMountingFace(
+            Terrain.ExtractData(
+                SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z)
+            )
+        );
         var v = new Vector3(cellFace.X + 0.5f, cellFace.Y + 0.5f, cellFace.Z + 0.5f);
         _glowPoint.Position = v - 0.4375f * CellFace.FaceToVector3(mountingFace);
         _glowPoint.Forward = CellFace.FaceToVector3(mountingFace);
@@ -42,8 +45,10 @@ public class MulticoloredLedElectricElement(
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                _voltage = MathUtils.Max(_voltage,
-                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                _voltage = MathUtils.Max(
+                    _voltage,
+                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                );
             }
         }
 

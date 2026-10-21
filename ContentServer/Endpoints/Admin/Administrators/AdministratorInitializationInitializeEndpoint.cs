@@ -25,7 +25,8 @@ public sealed class AdministratorInitializationInitializeEndpoint(IMediator medi
 
     private async Task<ResponseData<AdministratorInitializationResponse>> Initialize(
         InitializeAdministratorRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (string.IsNullOrWhiteSpace(request.Name))
         {
@@ -38,11 +39,13 @@ public sealed class AdministratorInitializationInitializeEndpoint(IMediator medi
         }
 
         var result = await mediator.Send(
-            new InitializeAdministratorCommand(request.Name.Trim(), request.ApiKey),
-            cancellationToken
-        ) ?? throw new KnownException(
-            "administrator_already_initialized",
-            StatusCodes.Status409Conflict);
+                         new InitializeAdministratorCommand(request.Name.Trim(), request.ApiKey),
+                         cancellationToken
+                     ) ??
+                     throw new KnownException(
+                         "administrator_already_initialized",
+                         StatusCodes.Status409Conflict
+                     );
 
         HttpContext.Response.StatusCode = StatusCodes.Status201Created;
         return new AdministratorInitializationResponse(
@@ -56,8 +59,10 @@ public sealed class AdministratorInitializationInitializeEndpoint(IMediator medi
 public sealed record AdministratorInitializationResponse(
     string AdministratorId,
     string Name,
-    string Status);
+    string Status
+);
 
 public sealed record InitializeAdministratorRequest(
     string Name,
-    string ApiKey);
+    string ApiKey
+);

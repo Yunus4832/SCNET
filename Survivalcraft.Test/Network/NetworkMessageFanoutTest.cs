@@ -46,8 +46,12 @@ public sealed class NetworkMessageFanoutTest
                 Fanout = message
             }
         };
-        Assert.True(SnapshotPackageCoalescer.TryCoalesce(pending,
-            new OutboundPackage(new OnlinePlayerStatePackage(), PackageAudience.To(first))));
+        Assert.True(
+            SnapshotPackageCoalescer.TryCoalesce(
+                pending,
+                new OutboundPackage(new OnlinePlayerStatePackage(), PackageAudience.To(first))
+            )
+        );
         Assert.Empty(statistics.GetFanout());
         Assert.Same(message, pending[1].Fanout);
         message.DeliveredTo(second);
@@ -63,12 +67,15 @@ public sealed class NetworkMessageFanoutTest
         var clients = Enumerable.Range(0, 64)
             .Select(_ => new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null)).ToArray();
         message.Advance(1, clients.Length);
-        Parallel.ForEach(clients, client =>
-        {
-            message.DeliveredTo(client);
-            message.DeliveredTo(client);
-            message.Advance(1, 0);
-        });
+        Parallel.ForEach(
+            clients,
+            client =>
+            {
+                message.DeliveredTo(client);
+                message.DeliveredTo(client);
+                message.Advance(1, 0);
+            }
+        );
         var result = Assert.Single(statistics.GetFanout());
         Assert.Equal(1, result.Messages);
         Assert.Equal(clients.Length, result.RecipientDeliveries);
@@ -91,8 +98,10 @@ public sealed class NetworkMessageFanoutTest
         Assert.Empty(statistics.GetFanout());
         message.DeliveredTo(first);
         message.Advance(1, 0);
-        Assert.Equal(new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 1, 2, 2),
-            Assert.Single(statistics.GetFanout()));
+        Assert.Equal(
+            new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 1, 2, 2),
+            Assert.Single(statistics.GetFanout())
+        );
         Assert.Throws<InvalidOperationException>(() => message.Advance(1, 0));
         Assert.Throws<InvalidOperationException>(() => message.DeliveredTo(first));
     }
@@ -138,8 +147,12 @@ public sealed class NetworkMessageFanoutTest
                 Fanout = message
             }
         };
-        Assert.True(SnapshotPackageCoalescer.TryCoalesce(pending,
-            new OutboundPackage(new OnlinePlayerStatePackage(), PackageAudience.Global)));
+        Assert.True(
+            SnapshotPackageCoalescer.TryCoalesce(
+                pending,
+                new OutboundPackage(new OnlinePlayerStatePackage(), PackageAudience.Global)
+            )
+        );
         Assert.Null(Assert.Single(pending).Fanout);
         Assert.Equal(1, Assert.Single(statistics.GetFanout()).RecipientDeliveries);
     }

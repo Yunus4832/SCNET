@@ -22,7 +22,8 @@ public class KelpBlock : WaterPlantBlock
             primitivesRenderer,
             value,
             size,
-            ref matrix, null,
+            ref matrix,
+            null,
             color * BlockColorsMap.KelpColorsMap.Lookup(environmentData.Temperature, environmentData.Humidity),
             false,
             environmentData
@@ -39,8 +40,16 @@ public class KelpBlock : WaterPlantBlock
     )
     {
         var color = BlockColorsMap.KelpColorsMap.Lookup(generator.Terrain, x, y, z);
-        generator.GenerateCrossingFaceVertices(this, value, x, y, z, color, GetFaceTextureSlot(-1, value),
-            geometry.SubsetAlphaTest);
+        generator.GenerateCrossingFaceVertices(
+            this,
+            value,
+            x,
+            y,
+            z,
+            color,
+            GetFaceTextureSlot(-1, value),
+            geometry.SubsetAlphaTest
+        );
         base.GenerateTerrainVertices(generator, geometry, value, x, y, z);
     }
 
@@ -60,7 +69,8 @@ public class KelpBlock : WaterPlantBlock
                 subsystemTerrain.Terrain,
                 Terrain.ToCell(position.X),
                 Terrain.ToCell(position.Y),
-                Terrain.ToCell(position.Z)),
+                Terrain.ToCell(position.Z)
+            ),
             104
         );
     }

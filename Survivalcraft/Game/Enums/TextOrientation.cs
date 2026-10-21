@@ -2,6 +2,7 @@ namespace Game;
 
 public enum TextOrientation
 {
-    Horizontal,
-    VerticalLeft
+    Horizontal = 0,
+
+    VerticalLeft = 1
 }

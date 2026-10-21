@@ -9,13 +9,15 @@ public sealed class ClientChunkSnapshot
         ChunkAllocationId allocation,
         long contentVersion,
         int[] cells,
-        long[] shafts)
+        long[] shafts
+    )
     {
         var authoritySnapshot = new AuthorityChunkSnapshot(
             allocation.Coords,
             contentVersion,
             cells,
-            shafts);
+            shafts
+        );
         Allocation = allocation;
         ContentVersion = authoritySnapshot.ContentVersion;
         Cells = authoritySnapshot.Cells;

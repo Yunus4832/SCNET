@@ -2,6 +2,7 @@ namespace Game;
 
 public enum LayoutDirection
 {
-    Horizontal,
-    Vertical
+    Horizontal = 0,
+
+    Vertical = 1
 }

@@ -40,13 +40,21 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
         foreach (var particle in Particles)
         {
             particle.IsActive = true;
-            particle.Position = position + 0.5f * new Vector3(_random.Float(-1f, 1f), _random.Float(-1f, 1f),
-                _random.Float(-1f, 1f));
+            particle.Position = position +
+                                0.5f *
+                                new Vector3(
+                                    _random.Float(-1f, 1f),
+                                    _random.Float(-1f, 1f),
+                                    _random.Float(-1f, 1f)
+                                );
             particle.Color = white;
             particle.Size = new Vector2(0.5f);
             particle.TimeToLive = _random.Float(0.75f, 2f);
-            particle.Velocity = new Vector3(3f * _random.Float(-1f, 1f), 2f * _random.Float(-1f, 1f),
-                3f * _random.Float(-1f, 1f));
+            particle.Velocity = new Vector3(
+                3f * _random.Float(-1f, 1f),
+                2f * _random.Float(-1f, 1f),
+                3f * _random.Float(-1f, 1f)
+            );
             particle.TextureSlot = 8;
         }
     }
@@ -69,8 +77,14 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
             {
                 var position = particle.Position;
                 var vector = position + particle.Velocity * dt;
-                var terrainRaycastResult = _subsystemTerrain.Raycast(position, vector, false, true,
-                    (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable);
+                var terrainRaycastResult = _subsystemTerrain.Raycast(
+                    position,
+                    vector,
+                    false,
+                    true,
+                    (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
+                        .Collidable
+                );
                 if (terrainRaycastResult.HasValue)
                 {
                     var plane = terrainRaycastResult.Value.CellFace.CalculatePlane();
@@ -109,6 +123,7 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
     public class Particle : Game.Particle
     {
         public float TimeToLive;
+
         public Vector3 Velocity;
     }
 }

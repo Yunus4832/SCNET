@@ -31,9 +31,11 @@ public sealed class WorldBlockRegistryLoadTest
         {
             Dispatcher.Initialize();
             ContentManager.Initialize();
-            using var runtime = GameModRuntime.Start([
-                new ModDescriptor(new ModManifest("test", "Metadata", "1.0.0"), static () => new MetadataMod())
-            ]);
+            using var runtime = GameModRuntime.Start(
+                [
+                    new ModDescriptor(new ModManifest("test", "Metadata", "1.0.0"), static () => new MetadataMod())
+                ]
+            );
             runtime.InitializeLanguage("zh-CN");
             runtime.InitializeContentData();
             CurrentModRuntime.Set(runtime);
@@ -43,7 +45,8 @@ public sealed class WorldBlockRegistryLoadTest
                 ProjectFormatVersion = WorldVersions.ProjectFormatVersion
             };
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                GameManager.LoadProject(world, new CanvasWidget()));
+                GameManager.LoadProject(world, new CanvasWidget())
+            );
             Assert.Equal("Storage root is read-only.", exception.Message);
             Assert.Null(GameManager.Project);
             Assert.Null(runtime.WorldCatalog);
@@ -63,8 +66,10 @@ public sealed class WorldBlockRegistryLoadTest
     private sealed class MetadataMod : IMod
     {
         public void Configure(IModContext context) => context.Extensions.Register(
-            BlockExtensions.RegistryName, ResourceId.Parse("test:new"),
-            new BlockRegistration(static () => new MetadataBlock()));
+            BlockExtensions.RegistryName,
+            ResourceId.Parse("test:new"),
+            new BlockRegistration(static () => new MetadataBlock())
+        );
 
         public void Start(IModContext context)
         {

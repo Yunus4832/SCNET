@@ -65,8 +65,10 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
             if (package.EditAsItem)
             {
                 editedInventory = subInventory.GetInventoryById(package.InventoryId);
-                if (editedInventory is null || !SubsystemInventories.CanClientAccess(editedInventory, context.Sender) ||
-                    package.SlotIndex < 0 || package.SlotIndex >= editedInventory.SlotsCount)
+                if (editedInventory is null ||
+                    !SubsystemInventories.CanClientAccess(editedInventory, context.Sender) ||
+                    package.SlotIndex < 0 ||
+                    package.SlotIndex >= editedInventory.SlotsCount)
                 {
                     return;
                 }
@@ -108,18 +110,21 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
                 {
                     if (package.EditAsItem)
                     {
-                        subInventory.FindInventoryById(package.InventoryId, inventory =>
-                        {
-                            if (!package.Id.HasValue)
+                        subInventory.FindInventoryById(
+                            package.InventoryId,
+                            inventory =>
                             {
-                                package = package with { Id = behavior.StoreItemDataAtUniqueId(data) };
-                                ReplaceDataAtSlot(inventory, package.SlotIndex, _ => package.Id.Value);
+                                if (!package.Id.HasValue)
+                                {
+                                    package = package with { Id = behavior.StoreItemDataAtUniqueId(data) };
+                                    ReplaceDataAtSlot(inventory, package.SlotIndex, _ => package.Id.Value);
+                                }
+                                else
+                                {
+                                    behavior.ItemsData[package.Id.Value] = data;
+                                }
                             }
-                            else
-                            {
-                                behavior.ItemsData[package.Id.Value] = data;
-                            }
-                        });
+                        );
                     }
                     else
                     {
@@ -142,18 +147,21 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
                 {
                     if (package.EditAsItem)
                     {
-                        subInventory.FindInventoryById(package.InventoryId, inventory =>
-                        {
-                            if (!package.Id.HasValue)
+                        subInventory.FindInventoryById(
+                            package.InventoryId,
+                            inventory =>
                             {
-                                package = package with { Id = truthBehavior.StoreItemDataAtUniqueId(truthData) };
-                                ReplaceDataAtSlot(inventory, package.SlotIndex, _ => package.Id.Value);
+                                if (!package.Id.HasValue)
+                                {
+                                    package = package with { Id = truthBehavior.StoreItemDataAtUniqueId(truthData) };
+                                    ReplaceDataAtSlot(inventory, package.SlotIndex, _ => package.Id.Value);
+                                }
+                                else
+                                {
+                                    truthBehavior.ItemsData[package.Id.Value] = truthData;
+                                }
                             }
-                            else
-                            {
-                                truthBehavior.ItemsData[package.Id.Value] = truthData;
-                            }
-                        });
+                        );
                     }
                     else
                     {
@@ -165,19 +173,26 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
             case BuiltInBlockEditKind.AdjustableDelayGate:
                 if (package.EditAsItem)
                 {
-                    subInventory.FindInventoryById(package.InventoryId,
+                    subInventory.FindInventoryById(
+                        package.InventoryId,
                         inventory =>
                         {
-                            ReplaceDataAtSlot(inventory, package.SlotIndex,
-                                d => AdjustableDelayGateBlock.SetDelay(d, package.Delay));
-                        });
+                            ReplaceDataAtSlot(
+                                inventory,
+                                package.SlotIndex,
+                                d => AdjustableDelayGateBlock.SetDelay(d, package.Delay)
+                            );
+                        }
+                    );
                 }
                 else
                 {
                     var st = project.FindSubsystem<SubsystemTerrain>(true)!;
                     var value = st.Terrain.GetCellValue(package.CellFace.X, package.CellFace.Y, package.CellFace.Z);
-                    var newValue = Terrain.ReplaceData(value,
-                        AdjustableDelayGateBlock.SetDelay(Terrain.ExtractData(value), package.Delay));
+                    var newValue = Terrain.ReplaceData(
+                        value,
+                        AdjustableDelayGateBlock.SetDelay(Terrain.ExtractData(value), package.Delay)
+                    );
                     st.ChangeCell(package.CellFace.X, package.CellFace.Y, package.CellFace.Z, newValue);
                 }
 
@@ -185,19 +200,26 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
             case BuiltInBlockEditKind.Battery:
                 if (package.EditAsItem)
                 {
-                    subInventory.FindInventoryById(package.InventoryId,
+                    subInventory.FindInventoryById(
+                        package.InventoryId,
                         inventory =>
                         {
-                            ReplaceDataAtSlot(inventory, package.SlotIndex,
-                                d => BatteryBlock.SetVoltageLevel(d, package.Delay));
-                        });
+                            ReplaceDataAtSlot(
+                                inventory,
+                                package.SlotIndex,
+                                d => BatteryBlock.SetVoltageLevel(d, package.Delay)
+                            );
+                        }
+                    );
                 }
                 else
                 {
                     var st = project.FindSubsystem<SubsystemTerrain>(true)!;
                     var value = st.Terrain.GetCellValue(package.CellFace.X, package.CellFace.Y, package.CellFace.Z);
-                    var newValue = Terrain.ReplaceData(value,
-                        BatteryBlock.SetVoltageLevel(Terrain.ExtractData(value), package.Delay));
+                    var newValue = Terrain.ReplaceData(
+                        value,
+                        BatteryBlock.SetVoltageLevel(Terrain.ExtractData(value), package.Delay)
+                    );
                     st.ChangeCell(package.CellFace.X, package.CellFace.Y, package.CellFace.Z, newValue);
                 }
 
@@ -205,19 +227,26 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
             case BuiltInBlockEditKind.Switch:
                 if (package.EditAsItem)
                 {
-                    subInventory.FindInventoryById(package.InventoryId,
+                    subInventory.FindInventoryById(
+                        package.InventoryId,
                         inventory =>
                         {
-                            ReplaceDataAtSlot(inventory, package.SlotIndex,
-                                d => SwitchBlock.SetVoltageLevel(d, package.Delay));
-                        });
+                            ReplaceDataAtSlot(
+                                inventory,
+                                package.SlotIndex,
+                                d => SwitchBlock.SetVoltageLevel(d, package.Delay)
+                            );
+                        }
+                    );
                 }
                 else
                 {
                     var st = project.FindSubsystem<SubsystemTerrain>(true)!;
                     var value = st.Terrain.GetCellValue(package.CellFace.X, package.CellFace.Y, package.CellFace.Z);
-                    var newValue = Terrain.ReplaceData(value,
-                        SwitchBlock.SetVoltageLevel(Terrain.ExtractData(value), package.Delay));
+                    var newValue = Terrain.ReplaceData(
+                        value,
+                        SwitchBlock.SetVoltageLevel(Terrain.ExtractData(value), package.Delay)
+                    );
                     st.ChangeCell(package.CellFace.X, package.CellFace.Y, package.CellFace.Z, newValue);
                 }
 
@@ -225,19 +254,26 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
             case BuiltInBlockEditKind.Button:
                 if (package.EditAsItem)
                 {
-                    subInventory.FindInventoryById(package.InventoryId,
+                    subInventory.FindInventoryById(
+                        package.InventoryId,
                         inventory =>
                         {
-                            ReplaceDataAtSlot(inventory, package.SlotIndex,
-                                d => ButtonBlock.SetVoltageLevel(d, package.Delay));
-                        });
+                            ReplaceDataAtSlot(
+                                inventory,
+                                package.SlotIndex,
+                                d => ButtonBlock.SetVoltageLevel(d, package.Delay)
+                            );
+                        }
+                    );
                 }
                 else
                 {
                     var st = project.FindSubsystem<SubsystemTerrain>(true)!;
                     var value = st.Terrain.GetCellValue(package.CellFace.X, package.CellFace.Y, package.CellFace.Z);
-                    var newValue = Terrain.ReplaceData(value,
-                        ButtonBlock.SetVoltageLevel(Terrain.ExtractData(value), package.Delay));
+                    var newValue = Terrain.ReplaceData(
+                        value,
+                        ButtonBlock.SetVoltageLevel(Terrain.ExtractData(value), package.Delay)
+                    );
                     st.ChangeCell(package.CellFace.X, package.CellFace.Y, package.CellFace.Z, newValue);
                 }
 
@@ -245,8 +281,10 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
             case BuiltInBlockEditKind.Piston:
                 if (package.EditAsItem)
                 {
-                    subInventory.FindInventoryById(package.InventoryId,
-                        inventory => { ReplaceDataAtSlot(inventory, package.SlotIndex, _ => package.Delay); });
+                    subInventory.FindInventoryById(
+                        package.InventoryId,
+                        inventory => { ReplaceDataAtSlot(inventory, package.SlotIndex, _ => package.Delay); }
+                    );
                 }
                 else
                 {
@@ -275,12 +313,16 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
             if (package.Id.HasValue)
             {
                 var definition = package.ItemType == BuiltInBlockEditKind.MemoryBank
-                    ? EditableBlockPackageBuilder.Capture(package.Id.Value,
+                    ? EditableBlockPackageBuilder.Capture(
+                        package.Id.Value,
                         project.FindSubsystem<SubsystemMemoryBankBlockBehavior>(true)!
-                            .ItemsData[package.Id.Value])
-                    : EditableBlockPackageBuilder.Capture(package.Id.Value,
+                            .ItemsData[package.Id.Value]
+                    )
+                    : EditableBlockPackageBuilder.Capture(
+                        package.Id.Value,
                         project.FindSubsystem<SubsystemTruthTableCircuitBlockBehavior>(true)!
-                            .ItemsData[package.Id.Value]);
+                            .ItemsData[package.Id.Value]
+                    );
                 // 物品数据 ID 是世界级字典引用，不是库存操作；后续观察者也必须能解析。
                 NetworkSender.SendGlobal(definition);
             }
@@ -295,10 +337,14 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
         }
         else
         {
-            NetworkSender.SendToChunkObservers(project,
-                new Point2(package.CellFace.X >> 4, package.CellFace.Z >> 4), package);
+            NetworkSender.SendToChunkObservers(
+                project,
+                new Point2(package.CellFace.X >> 4, package.CellFace.Z >> 4),
+                package
+            );
         }
     }
+
     private static void ReplaceDataAtSlot(IInventory inventory, int slotIndex, Func<int, int> newData)
     {
         var value = inventory.GetSlotValue(slotIndex);

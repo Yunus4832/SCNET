@@ -74,8 +74,24 @@ public class SoilBlock : CubeBlock
     )
     {
         var color = GetHydration(Terrain.ExtractData(value)) ? new Color(180, 170, 150) : Color.White;
-        generator.GenerateCubeVertices(this, value, x, y, z, 0.9375f, 0.9375f, 0.9375f, 0.9375f, color, color, color,
-            color, color, -1, geometry.OpaqueSubsetsByFace);
+        generator.GenerateCubeVertices(
+            this,
+            value,
+            x,
+            y,
+            z,
+            0.9375f,
+            0.9375f,
+            0.9375f,
+            0.9375f,
+            color,
+            color,
+            color,
+            color,
+            color,
+            -1,
+            geometry.OpaqueSubsetsByFace
+        );
     }
 
     public override void DrawBlock(

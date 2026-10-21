@@ -11,5 +11,5 @@ public static partial class ProtocolMessageCodec
     }
 
     private static DispenserPackage ReadDispenserPackage(ProtocolReader reader) => new()
-    { Point = reader.ReadPoint3(), Flag = reader.ReadByte() };
+        { Point = reader.ReadPoint3(), Flag = reader.ReadByte() };
 }

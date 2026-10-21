@@ -14,7 +14,8 @@ public sealed class PacketCodecTest
     [InlineData(CompressionPolicy.Adaptive)]
     public void FullPacketRoundTripsBatchAndOuterLength(CompressionPolicy compression)
     {
-        var messages = new IProtocolMessage[] { new ConnectionRejectPackage(new string('x', 1000)), new SubsystemTimePackage(42, 0.5) };
+        var messages = new IProtocolMessage[]
+            { new ConnectionRejectPackage(new string('x', 1000)), new SubsystemTimePackage(42, 0.5) };
         var packet = ProtocolPacketCodec.Encode(messages, compression);
         Assert.Equal(packet.Length - 4, System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(packet));
         var restored = ProtocolPacketCodec.Decode(packet);
@@ -26,7 +27,12 @@ public sealed class PacketCodecTest
     {
         var frame = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "connection-reject.bin"));
         using var stream = new MemoryStream();
-        using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true)) { writer.Write(frame.Length); writer.Write(frame); }
+        using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
+        {
+            writer.Write(frame.Length);
+            writer.Write(frame);
+        }
+
         Assert.Equal(stream.ToArray(), ProtocolPacketCodec.WrapFrame(frame));
         Assert.Single(ProtocolPacketCodec.Decode(stream.ToArray()));
     }
@@ -45,6 +51,9 @@ public sealed class PacketCodecTest
     [Fact]
     public void EmptyModFingerprintIsTheCanonicalSha256OfNoData()
     {
-        Assert.Equal(Convert.ToHexString(SHA256.HashData(Array.Empty<byte>())).ToLowerInvariant(), GameProtocol.EmptyModDataHash);
+        Assert.Equal(
+            Convert.ToHexString(SHA256.HashData(Array.Empty<byte>())).ToLowerInvariant(),
+            GameProtocol.EmptyModDataHash
+        );
     }
 }

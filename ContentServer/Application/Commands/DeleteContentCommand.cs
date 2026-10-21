@@ -10,8 +10,10 @@ public sealed record DeleteContentCommand(ContentId ContentId) : ICommand<bool>;
 public sealed class DeleteContentCommandHandler(ContentRepository repository)
     : ICommandHandler<DeleteContentCommand, bool>
 {
-    public async Task<bool> Handle(DeleteContentCommand command,
-        CancellationToken cancellationToken)
+    public async Task<bool> Handle(
+        DeleteContentCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var content = await repository.FindWithVersionsAsync(command.ContentId, cancellationToken);
         if (content is null)

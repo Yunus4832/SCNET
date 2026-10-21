@@ -78,30 +78,66 @@ public sealed class FlatBatch3D : BaseFlatBatch
 
     public void QueueBoundingBox(BoundingBox boundingBox, Color color)
     {
-        QueueLine(new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Min.Z),
-            new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Min.Z), color);
-        QueueLine(new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Min.Z),
-            new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Min.Z), color);
-        QueueLine(new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Min.Z),
-            new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Min.Z), color);
-        QueueLine(new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Min.Z),
-            new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Min.Z), color);
-        QueueLine(new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Max.Z),
-            new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Max.Z), color);
-        QueueLine(new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Max.Z),
-            new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Max.Z), color);
-        QueueLine(new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Max.Z),
-            new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Max.Z), color);
-        QueueLine(new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Max.Z),
-            new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Max.Z), color);
-        QueueLine(new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Min.Z),
-            new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Max.Z), color);
-        QueueLine(new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Min.Z),
-            new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Max.Z), color);
-        QueueLine(new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Min.Z),
-            new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Max.Z), color);
-        QueueLine(new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Min.Z),
-            new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Max.Z), color);
+        QueueLine(
+            new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Min.Z),
+            new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Min.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Min.Z),
+            new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Min.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Min.Z),
+            new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Min.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Min.Z),
+            new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Min.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Max.Z),
+            new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Max.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Max.Z),
+            new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Max.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Max.Z),
+            new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Max.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Max.Z),
+            new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Max.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Min.Z),
+            new Vector3(boundingBox.Min.X, boundingBox.Min.Y, boundingBox.Max.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Min.Z),
+            new Vector3(boundingBox.Min.X, boundingBox.Max.Y, boundingBox.Max.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Min.Z),
+            new Vector3(boundingBox.Max.X, boundingBox.Max.Y, boundingBox.Max.Z),
+            color
+        );
+        QueueLine(
+            new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Min.Z),
+            new Vector3(boundingBox.Max.X, boundingBox.Min.Y, boundingBox.Max.Z),
+            color
+        );
     }
 
     public void QueueBoundingFrustum(BoundingFrustum boundingFrustum, Color color)

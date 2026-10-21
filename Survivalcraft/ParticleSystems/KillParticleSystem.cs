@@ -31,12 +31,15 @@ public class KillParticleSystem : ParticleSystem<KillParticleSystem.Particle>
         foreach (var particle in Particles)
         {
             particle.IsActive = true;
-            particle.Position = position + 0.4f * size *
-                new Vector3(_random.Float(-1f, 1f), _random.Float(-1f, 1f), _random.Float(-1f, 1f));
+            particle.Position = position +
+                                0.4f *
+                                size *
+                                new Vector3(_random.Float(-1f, 1f), _random.Float(-1f, 1f), _random.Float(-1f, 1f));
             particle.Color = white;
             particle.Size = new Vector2(0.3f * size);
             particle.TimeToLive = _random.Float(0.5f, 3.5f);
-            particle.Velocity = 1.2f * size *
+            particle.Velocity = 1.2f *
+                                size *
                                 new Vector3(_random.Float(-1f, 1f), _random.Float(-1f, 1f), _random.Float(-1f, 1f));
             particle.FlipX = _random.Bool();
             particle.FlipY = _random.Bool();
@@ -76,6 +79,7 @@ public class KillParticleSystem : ParticleSystem<KillParticleSystem.Particle>
     public class Particle : Game.Particle
     {
         public float TimeToLive;
+
         public Vector3 Velocity;
     }
 }

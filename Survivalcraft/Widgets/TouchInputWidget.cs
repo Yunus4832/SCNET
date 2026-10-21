@@ -22,11 +22,7 @@ public class TouchInputWidget : Widget
 
     private double _touchTime;
 
-    public float Radius
-    {
-        get => _radius;
-        set => _radius = MathUtils.Max(value, 1f);
-    }
+    public float Radius { get => _radius; set => _radius = MathUtils.Max(value, 1f); }
 
     public TouchInput? TouchInput
     {
@@ -95,7 +91,8 @@ public class TouchInputWidget : Widget
                 _touchInput = value;
                 _touchLastPosition = touchLocation.Position;
             }
-            else if (touchLocation.State == TouchLocationState.Released && _touchId.HasValue &&
+            else if (touchLocation.State == TouchLocationState.Released &&
+                     _touchId.HasValue &&
                      touchLocation.Id == _touchId.Value)
             {
                 if (frameStartTime - _touchTime <= SettingsManager.Current.MinimumHoldDuration &&

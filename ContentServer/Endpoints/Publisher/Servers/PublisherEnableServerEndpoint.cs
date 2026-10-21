@@ -38,8 +38,14 @@ public sealed class PublisherEnableServerEndpoint(IMediator mediator, ApiKeyAuth
             throw new KnownException("publisher_not_active", StatusCodes.Status403Forbidden);
         }
 
-        var result = await mediator.Send(new SetPublisherDirectoryServerEnabledCommand(new DirectoryServerId(id),
-            publisher.PublisherId, enabled), cancellationToken);
+        var result = await mediator.Send(
+            new SetPublisherDirectoryServerEnabledCommand(
+                new DirectoryServerId(id),
+                publisher.PublisherId,
+                enabled
+            ),
+            cancellationToken
+        );
         if (result == SetDirectoryServerStateResult.NotFound)
         {
             throw new KnownException("server_not_found", StatusCodes.Status404NotFound);
@@ -56,8 +62,9 @@ public sealed class PublisherEnableServerEndpoint(IMediator mediator, ApiKeyAuth
     private async Task<PublisherDto> RequirePublisherAsync(CancellationToken cancellationToken)
     {
         return await mediator.Send(
-            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
-            cancellationToken
-        ) ?? throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
+                   new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                   cancellationToken
+               ) ??
+               throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
     }
 }

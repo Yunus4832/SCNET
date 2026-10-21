@@ -17,11 +17,7 @@ public sealed class VertexBuffer : GraphicsResource
         AllocateBuffer();
     }
 
-    public string DebugName
-    {
-        get => string.Empty;
-        set { }
-    }
+    public string DebugName { get => string.Empty; set { } }
 
     public VertexDeclaration VertexDeclaration { get; set; } = null!;
 
@@ -125,8 +121,13 @@ public sealed class VertexBuffer : GraphicsResource
         VerticesCount = verticesCount;
     }
 
-    public void VerifyParametersSetData<T>(T[] source, int sourceStartIndex, int sourceCount, int targetStartIndex =
-        0) where T : struct
+    public void VerifyParametersSetData<T>(
+        T[] source,
+        int sourceStartIndex,
+        int sourceCount,
+        int targetStartIndex =
+            0
+    ) where T : struct
     {
         VerifyNotDisposed();
         var num = Utilities.SizeOf<T>();

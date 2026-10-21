@@ -59,9 +59,11 @@ public class ComponentSickness : Component, IUpdateable
             }
 
             SicknessDuration = MathUtils.Max(SicknessDuration - dt, 0f);
-            if (_componentPlayer.ComponentHealth.Health > 0f && !_componentPlayer.ComponentSleep.IsSleeping &&
-                _subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821) && (!_lastNauseaTime.HasValue ||
-                    _subsystemTime.GameTime - _lastNauseaTime > 15.0))
+            if (_componentPlayer.ComponentHealth.Health > 0f &&
+                !_componentPlayer.ComponentSleep.IsSleeping &&
+                _subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821) &&
+                (!_lastNauseaTime.HasValue ||
+                 _subsystemTime.GameTime - _lastNauseaTime > 15.0))
             {
                 if (CommonLib.WorkType != WorkType.Client)
                 {
@@ -73,14 +75,21 @@ public class ComponentSickness : Component, IUpdateable
 
         if (_pukeParticleSystem != null)
         {
-            var num = MathUtils.DegToRad(MathUtils.Lerp(-35f, -60f,
-                SimplexNoise.Noise(2f * (float)MathUtils.Remainder(_subsystemTime.GameTime, 10000.0))));
+            var num = MathUtils.DegToRad(
+                MathUtils.Lerp(
+                    -35f,
+                    -60f,
+                    SimplexNoise.Noise(2f * (float)MathUtils.Remainder(_subsystemTime.GameTime, 10000.0))
+                )
+            );
             _componentPlayer.ComponentLocomotion.LookOrder = new Vector2(
                 _componentPlayer.ComponentLocomotion.LookOrder.X,
-                MathUtils.Clamp(num - _componentPlayer.ComponentLocomotion.LookAngles.Y, -2f, 2f));
+                MathUtils.Clamp(num - _componentPlayer.ComponentLocomotion.LookAngles.Y, -2f, 2f)
+            );
             var upVector = _componentPlayer.ComponentCreatureModel.EyeRotation.GetUpVector();
             var forwardVector = _componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector();
-            _pukeParticleSystem.Position = _componentPlayer.ComponentCreatureModel.EyePosition - 0.08f * upVector +
+            _pukeParticleSystem.Position = _componentPlayer.ComponentCreatureModel.EyePosition -
+                                           0.08f * upVector +
                                            0.3f * forwardVector;
             _pukeParticleSystem.Direction = Vector3.Normalize(forwardVector + 0.5f * upVector);
             if (_pukeParticleSystem.IsStopped)
@@ -99,8 +108,10 @@ public class ComponentSickness : Component, IUpdateable
             _greenoutFactor = MathUtils.Max(_greenoutFactor - 0.5f * dt, 0f);
         }
 
-        _componentPlayer.ComponentScreenOverlays.GreenOutFactor = MathUtils.Max(_greenoutFactor,
-            _componentPlayer.ComponentScreenOverlays.GreenOutFactor);
+        _componentPlayer.ComponentScreenOverlays.GreenOutFactor = MathUtils.Max(
+            _greenoutFactor,
+            _componentPlayer.ComponentScreenOverlays.GreenOutFactor
+        );
     }
 
     public void StartSickness()
@@ -153,11 +164,13 @@ public class ComponentSickness : Component, IUpdateable
         var injury = MathUtils.Min(0.1f, _componentPlayer.ComponentHealth.Health - 0.075f);
         if (injury > 0f)
         {
-            _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 0.75,
+            _subsystemTime.QueueGameTimeDelayedExecution(
+                _subsystemTime.GameTime + 0.75,
                 delegate
                 {
                     _componentPlayer.ComponentHealth.Injure(injury, null, false, LanguageManager.Get(Name, 1));
-                });
+                }
+            );
         }
 
         if (_pukeParticleSystem == null &&
@@ -171,12 +184,18 @@ public class ComponentSickness : Component, IUpdateable
             if (!_lastMessageTime.HasValue || Time.FrameStartTime - _lastMessageTime > 60.0)
             {
                 _lastMessageTime = Time.FrameStartTime;
-                _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 1.5,
+                _subsystemTime.QueueGameTimeDelayedExecution(
+                    _subsystemTime.GameTime + 1.5,
                     delegate
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(Name, 2), Color.White,
-                            true, true);
-                    });
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(Name, 2),
+                            Color.White,
+                            true,
+                            true
+                        );
+                    }
+                );
             }
         }
     }

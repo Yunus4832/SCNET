@@ -37,9 +37,13 @@ public class SubsystemBombBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     player = key.Owner.Entity.FindComponent<ComponentPlayer>();
                 }
 
-                _subsystemExplosions.TryExplodeBlock(Terrain.ToCell(key.Position.X),
-                    Terrain.ToCell(key.Position.Y), Terrain.ToCell(key.Position.Z), key.Value,
-                    player?.PlayerData);
+                _subsystemExplosions.TryExplodeBlock(
+                    Terrain.ToCell(key.Position.X),
+                    Terrain.ToCell(key.Position.Y),
+                    Terrain.ToCell(key.Position.Z),
+                    key.Value,
+                    player?.PlayerData
+                );
                 key.ToRemove = true;
             }
         }
@@ -59,7 +63,7 @@ public class SubsystemBombBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
 
         _subsystemProjectiles.ProjectileAdded += ScanProjectile;
-        _subsystemProjectiles.ProjectileRemoved += delegate (Projectile projectile) { _projectiles.Remove(projectile); };
+        _subsystemProjectiles.ProjectileRemoved += delegate(Projectile projectile) { _projectiles.Remove(projectile); };
     }
 
     private void ScanProjectile(Projectile projectile)
@@ -78,7 +82,10 @@ public class SubsystemBombBlockBehavior : SubsystemBlockBehavior, IUpdateable
         _projectiles.Add(projectile, true);
         projectile.ProjectileStoppedAction = ProjectileStoppedAction.DoNothing;
         var color = num == 228 ? new Color(255, 140, 192) : Color.White;
-        _subsystemProjectiles.AddTrail(projectile, new Vector3(0f, 0.25f, 0.1f),
-            new SmokeTrailParticleSystem(20, 0.33f, float.MaxValue, color));
+        _subsystemProjectiles.AddTrail(
+            projectile,
+            new Vector3(0f, 0.25f, 0.1f),
+            new SmokeTrailParticleSystem(20, 0.33f, float.MaxValue, color)
+        );
     }
 }

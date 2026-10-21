@@ -13,7 +13,13 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
     private SubsystemParticles _subsystemParticles = null!;
 
     public override ResourceId[] HandledBlocks =>
-    [ResourceId.Parse("game:empty_bucket"), ResourceId.Parse("game:water_bucket"), ResourceId.Parse("game:magma_bucket"), ResourceId.Parse("game:milk_bucket"), ResourceId.Parse("game:rotten_milk_bucket"), ResourceId.Parse("game:pumpkin_soup_bucket"), ResourceId.Parse("game:rotten_pumpkin_soup_bucket"), ResourceId.Parse("game:paint_bucket"), ResourceId.Parse("game:paint_stripper_bucket")];
+    [
+        ResourceId.Parse("game:empty_bucket"), ResourceId.Parse("game:water_bucket"),
+        ResourceId.Parse("game:magma_bucket"), ResourceId.Parse("game:milk_bucket"),
+        ResourceId.Parse("game:rotten_milk_bucket"), ResourceId.Parse("game:pumpkin_soup_bucket"),
+        ResourceId.Parse("game:rotten_pumpkin_soup_bucket"), ResourceId.Parse("game:paint_bucket"),
+        ResourceId.Parse("game:paint_stripper_bucket")
+    ];
 
     public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
     {
@@ -34,30 +40,50 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                     if (block is WaterBlock && FluidBlock.GetLevel(data) == 0)
                     {
                         var value = Terrain.ReplaceContents(activeBlockValue, 91);
-                        inventory.RemoveNetSlotItems(inventory.ActiveSlotIndex,
-                            inventory.GetSlotCount(inventory.ActiveSlotIndex));
+                        inventory.RemoveNetSlotItems(
+                            inventory.ActiveSlotIndex,
+                            inventory.GetSlotCount(inventory.ActiveSlotIndex)
+                        );
                         if (inventory.GetSlotCount(inventory.ActiveSlotIndex) == 0)
                         {
                             inventory.AddNetSlotItems(inventory.ActiveSlotIndex, value, 1);
                         }
 
-                        SubsystemTerrain.DestroyCell(0, cellFace.X, cellFace.Y, cellFace.Z, 0, false, false,
-                            componentMiner);
+                        SubsystemTerrain.DestroyCell(
+                            0,
+                            cellFace.X,
+                            cellFace.Y,
+                            cellFace.Z,
+                            0,
+                            false,
+                            false,
+                            componentMiner
+                        );
                         return true;
                     }
 
                     if (block is MagmaBlock && FluidBlock.GetLevel(data) == 0)
                     {
                         var value2 = Terrain.ReplaceContents(activeBlockValue, 93);
-                        inventory.RemoveNetSlotItems(inventory.ActiveSlotIndex,
-                            inventory.GetSlotCount(inventory.ActiveSlotIndex));
+                        inventory.RemoveNetSlotItems(
+                            inventory.ActiveSlotIndex,
+                            inventory.GetSlotCount(inventory.ActiveSlotIndex)
+                        );
                         if (inventory.GetSlotCount(inventory.ActiveSlotIndex) == 0)
                         {
                             inventory.AddNetSlotItems(inventory.ActiveSlotIndex, value2, 1);
                         }
 
-                        SubsystemTerrain.DestroyCell(0, cellFace.X, cellFace.Y, cellFace.Z, 0, false, false,
-                            componentMiner);
+                        SubsystemTerrain.DestroyCell(
+                            0,
+                            cellFace.X,
+                            cellFace.Y,
+                            cellFace.Z,
+                            0,
+                            false,
+                            false,
+                            componentMiner
+                        );
                         return true;
                     }
                 }
@@ -70,8 +96,10 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                     }
 
                     var value3 = Terrain.ReplaceContents(activeBlockValue, 110);
-                    inventory.RemoveNetSlotItems(inventory.ActiveSlotIndex,
-                        inventory.GetSlotCount(inventory.ActiveSlotIndex));
+                    inventory.RemoveNetSlotItems(
+                        inventory.ActiveSlotIndex,
+                        inventory.GetSlotCount(inventory.ActiveSlotIndex)
+                    );
                     if (inventory.GetSlotCount(inventory.ActiveSlotIndex) == 0)
                     {
                         inventory.AddNetSlotItems(inventory.ActiveSlotIndex, value3, 1);
@@ -124,47 +152,63 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
 
                 break;
             case var milkBucketContents when milkBucketContents == BuiltInBlockRegistry.GetIndex<MilkBucketBlock>():
-            case var rottenMilkBucketContents when rottenMilkBucketContents == BuiltInBlockRegistry.GetIndex<RottenMilkBucketBlock>():
+            case var rottenMilkBucketContents
+                when rottenMilkBucketContents == BuiltInBlockRegistry.GetIndex<RottenMilkBucketBlock>():
                 return true;
-            case var pumpkinSoupBucketContents when pumpkinSoupBucketContents == BuiltInBlockRegistry.GetIndex<PumpkinSoupBucketBlock>():
-            case var rottenPumpkinSoupBucketContents when rottenPumpkinSoupBucketContents == BuiltInBlockRegistry.GetIndex<RottenPumpkinSoupBucketBlock>():
+            case var pumpkinSoupBucketContents
+                when pumpkinSoupBucketContents == BuiltInBlockRegistry.GetIndex<PumpkinSoupBucketBlock>():
+            case var rottenPumpkinSoupBucketContents when rottenPumpkinSoupBucketContents ==
+                                                          BuiltInBlockRegistry.GetIndex<RottenPumpkinSoupBucketBlock>():
                 return true;
-            case var paintStripperBucketContents when paintStripperBucketContents == BuiltInBlockRegistry.GetIndex<PaintStripperBucketBlock>():
+            case var paintStripperBucketContents when paintStripperBucketContents ==
+                                                      BuiltInBlockRegistry.GetIndex<PaintStripperBucketBlock>():
             case var paintBucketContents when paintBucketContents == BuiltInBlockRegistry.GetIndex<PaintBucketBlock>():
+            {
+                var terrainRaycastResult3 = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Digging);
+                if (terrainRaycastResult3.HasValue)
                 {
-                    var terrainRaycastResult3 = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Digging);
-                    if (terrainRaycastResult3.HasValue)
+                    var cellFace2 = terrainRaycastResult3.Value.CellFace;
+                    var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
+                    var num3 = Terrain.ExtractContents(cellValue2);
+                    var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3];
+                    if (block2 is not IPaintableBlock block)
                     {
-                        var cellFace2 = terrainRaycastResult3.Value.CellFace;
-                        var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
-                        var num3 = Terrain.ExtractContents(cellValue2);
-                        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3];
-                        if (block2 is not IPaintableBlock block)
-                        {
-                            return true;
-                        }
-
-                        var normal = CellFace.FaceToVector3(terrainRaycastResult3.Value.CellFace.Face);
-                        var position = terrainRaycastResult3.Value.HitPoint();
-                        var num4 = num == 128
-                            ? null
-                            : new int?(PaintBucketBlock.GetColor(Terrain.ExtractData(activeBlockValue)));
-                        var color = num4.HasValue
-                            ? SubsystemPalette.GetColor(SubsystemTerrain, num4)
-                            : new Color(128, 128, 128, 128);
-                        var value6 = block.Paint(SubsystemTerrain, cellValue2, num4);
-                        SubsystemTerrain.ChangeCell(cellFace2.X, cellFace2.Y, cellFace2.Z, value6);
-                        componentMiner.DamageActiveTool(1);
-                        _subsystemAudio.PlayRandomSound("Audio/Paint", 0.4f, _random.Float(-0.1f, 0.1f),
-                            componentMiner.ComponentCreature.ComponentBody.Position, 2f, true);
-                        _subsystemParticles.AddParticleSystem(new PaintParticleSystem(SubsystemTerrain, position,
-                            normal, color));
-
                         return true;
                     }
 
-                    break;
+                    var normal = CellFace.FaceToVector3(terrainRaycastResult3.Value.CellFace.Face);
+                    var position = terrainRaycastResult3.Value.HitPoint();
+                    var num4 = num == 128
+                        ? null
+                        : new int?(PaintBucketBlock.GetColor(Terrain.ExtractData(activeBlockValue)));
+                    var color = num4.HasValue
+                        ? SubsystemPalette.GetColor(SubsystemTerrain, num4)
+                        : new Color(128, 128, 128, 128);
+                    var value6 = block.Paint(SubsystemTerrain, cellValue2, num4);
+                    SubsystemTerrain.ChangeCell(cellFace2.X, cellFace2.Y, cellFace2.Z, value6);
+                    componentMiner.DamageActiveTool(1);
+                    _subsystemAudio.PlayRandomSound(
+                        "Audio/Paint",
+                        0.4f,
+                        _random.Float(-0.1f, 0.1f),
+                        componentMiner.ComponentCreature.ComponentBody.Position,
+                        2f,
+                        true
+                    );
+                    _subsystemParticles.AddParticleSystem(
+                        new PaintParticleSystem(
+                            SubsystemTerrain,
+                            position,
+                            normal,
+                            color
+                        )
+                    );
+
+                    return true;
                 }
+
+                break;
+            }
         }
 
         return false;

@@ -29,14 +29,16 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
         {
             if (package.Mode is CommandPackage.CommandPackageMode.SuggestionRequest)
             {
-                if (context.Sender is not { } sender || package.Input.Length > _maximumCommandLength ||
+                if (context.Sender is not { } sender ||
+                    package.Input.Length > _maximumCommandLength ||
                     CurrentModRuntime.Value is not { } runtime)
                 {
                     return;
                 }
 
                 var now = Stopwatch.GetTimestamp();
-                if (_lastSuggestionTimestamp.TryGetValue(sender.GUID, out var last) && now - last < _minimumCommandInterval)
+                if (_lastSuggestionTimestamp.TryGetValue(sender.GUID, out var last) &&
+                    now - last < _minimumCommandInterval)
                 {
                     return;
                 }
@@ -47,8 +49,14 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
                 }
 
                 _lastSuggestionTimestamp[sender.GUID] = now;
-                var suggestions = new TextCommandAdapter(runtime.Commands).Suggest(package.Input, CommandPrincipal.FromPlayer(sender.PlayerData));
-                netNode.QueuePackage(CommandPackage.CreateSuggestions(package.Input, package.CorrelationId, suggestions), PackageAudience.To(sender));
+                var suggestions = new TextCommandAdapter(runtime.Commands).Suggest(
+                    package.Input,
+                    CommandPrincipal.FromPlayer(sender.PlayerData)
+                );
+                netNode.QueuePackage(
+                    CommandPackage.CreateSuggestions(package.Input, package.CorrelationId, suggestions),
+                    PackageAudience.To(sender)
+                );
                 return;
             }
 
@@ -58,8 +66,15 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
         if (package.Mode is CommandPackage.CommandPackageMode.Suggestions)
         {
-            CommonLib.MainPlayer?.GameWidget.MessagePanel?.ReceiveSuggestions(package.Input, package.CorrelationId, package.Suggestions.Select(value => value with
-            { Description = value.DescriptionSource?.Resolve() ?? value.Description }).ToArray());
+            CommonLib.MainPlayer?.GameWidget.MessagePanel?.ReceiveSuggestions(
+                package.Input,
+                package.CorrelationId,
+                package.Suggestions.Select(value => value with
+                    {
+                        Description = value.DescriptionSource?.Resolve() ?? value.Description
+                    }
+                ).ToArray()
+            );
             return;
         }
 
@@ -77,6 +92,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
                 DialogsManager.HideLoadingDialogs();
                 CommandResultPublisher.DisplayLocal(project, restored, package.CorrelationId);
             }
+
             return;
         }
 
@@ -88,11 +104,15 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             if (CommonLib.MainPlayer?.PlayerData.PlayerGUID == package.PlayerGuid)
             {
                 GameManager.Project.FindSubsystem<SubsystemGameWidgets>(true)!
-                    .Messages.DisplayLocal(GameMessage.Command(
-                        CommandText.Get(
-                            "PermissionUpdated_Message",
-                            "你的指令权限已更新。"),
-                        success: true));
+                    .Messages.DisplayLocal(
+                        GameMessage.Command(
+                            CommandText.Get(
+                                "PermissionUpdated_Message",
+                                "你的指令权限已更新。"
+                            ),
+                            success: true
+                        )
+                    );
             }
         }
     }
@@ -125,7 +145,8 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             result = CommandResult.LocalizedFail(
                 "command.rate_limited",
                 "CommandRateLimited_Message",
-                "指令发送过于频繁。");
+                "指令发送过于频繁。"
+            );
         }
         else
         {
@@ -137,32 +158,42 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             project,
             result,
             context.Sender,
-            package.CorrelationId);
+            package.CorrelationId
+        );
     }
 
     private static CommandResult ExecuteRequest(
         CommandPackage package,
-        PlayerData player)
+        PlayerData player
+    )
     {
         if (CurrentModRuntime.Value is not { } runtime)
         {
             return CommandResult.LocalizedFail(
                 "command.unavailable",
                 "CommandUnavailable_Message",
-                "命令系统尚未就绪。");
+                "命令系统尚未就绪。"
+            );
         }
 
         if (!runtime.Commands.TryDecode(
                 package.CommandId,
                 package.Payload,
                 out var command,
-                out var error))
+                out var error
+            ))
         {
             return CommandResult.Fail("command.invalid_payload", error);
         }
 
-        return new CommandDispatcher(runtime.Commands).Execute(command!, new CommandContext(
-            CommandInvocationChannel.Network, CommandPrincipal.FromPlayer(player),
-            player.Project, package.CorrelationId));
+        return new CommandDispatcher(runtime.Commands).Execute(
+            command!,
+            new CommandContext(
+                CommandInvocationChannel.Network,
+                CommandPrincipal.FromPlayer(player),
+                player.Project,
+                package.CorrelationId
+            )
+        );
     }
 }

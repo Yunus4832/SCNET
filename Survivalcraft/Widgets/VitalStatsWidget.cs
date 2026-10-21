@@ -109,21 +109,37 @@ public class VitalStatsWidget : CanvasWidget
         _wetnessValueBar.Value = _componentPlayer.ComponentVitalStats.Wetness;
         _experienceValueBar.Value =
             _componentPlayer.PlayerData.Level - MathUtils.Floor(_componentPlayer.PlayerData.Level);
-        _strengthLabel.Text = string.Format(CultureInfo.InvariantCulture, "x {0:0.00}",
-            _componentPlayer.ComponentLevel.StrengthFactor);
-        _resilienceLabel.Text = string.Format(CultureInfo.InvariantCulture, "x {0:0.00}",
-            _componentPlayer.ComponentLevel.ResilienceFactor);
-        _speedLabel.Text = string.Format(CultureInfo.InvariantCulture, "x {0:0.00}",
-            _componentPlayer.ComponentLevel.SpeedFactor);
-        _hungerLabel.Text = string.Format(CultureInfo.InvariantCulture, "x {0:0.00}",
-            _componentPlayer.ComponentLevel.HungerFactor);
-        _insulationLabel.Text = string.Format(CultureInfo.InvariantCulture, "{0:0.00} clo",
-            _componentPlayer.ComponentClothing.Insulation);
+        _strengthLabel.Text = string.Format(
+            CultureInfo.InvariantCulture,
+            "x {0:0.00}",
+            _componentPlayer.ComponentLevel.StrengthFactor
+        );
+        _resilienceLabel.Text = string.Format(
+            CultureInfo.InvariantCulture,
+            "x {0:0.00}",
+            _componentPlayer.ComponentLevel.ResilienceFactor
+        );
+        _speedLabel.Text = string.Format(
+            CultureInfo.InvariantCulture,
+            "x {0:0.00}",
+            _componentPlayer.ComponentLevel.SpeedFactor
+        );
+        _hungerLabel.Text = string.Format(
+            CultureInfo.InvariantCulture,
+            "x {0:0.00}",
+            _componentPlayer.ComponentLevel.HungerFactor
+        );
+        _insulationLabel.Text = string.Format(
+            CultureInfo.InvariantCulture,
+            "{0:0.00} clo",
+            _componentPlayer.ComponentClothing.Insulation
+        );
         var helpScreen = ScreensManager.FindScreen<HelpScreen>("Help", true)!;
         if (_healthLink.IsClicked)
         {
             var topic = helpScreen.GetTopic("Health");
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
                 new MessageDialog(
                     topic.Title,
                     topic.Text,
@@ -139,7 +155,8 @@ public class VitalStatsWidget : CanvasWidget
         if (_staminaLink.IsClicked)
         {
             var topic2 = helpScreen.GetTopic("Stamina");
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
                 new MessageDialog(
                     topic2.Title,
                     topic2.Text,
@@ -155,7 +172,8 @@ public class VitalStatsWidget : CanvasWidget
         if (_foodLink.IsClicked)
         {
             var topic3 = helpScreen.GetTopic("Hunger");
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
                 new MessageDialog(
                     topic3.Title,
                     topic3.Text,
@@ -171,13 +189,16 @@ public class VitalStatsWidget : CanvasWidget
         if (_sleepLink.IsClicked)
         {
             var topic4 = helpScreen.GetTopic("Sleep");
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
                 new MessageDialog(
                     topic4.Title,
                     topic4.Text,
                     LanguageManager.Get("Usual", "ok"),
                     string.Empty,
-                    new Vector2(700f, 360f), MessageDialog.CancelBehavior.InvokeButton1, _ => { }
+                    new Vector2(700f, 360f),
+                    MessageDialog.CancelBehavior.InvokeButton1,
+                    _ => { }
                 )
             );
         }
@@ -185,7 +206,8 @@ public class VitalStatsWidget : CanvasWidget
         if (_temperatureLink.IsClicked)
         {
             var topic5 = helpScreen.GetTopic("Temperature");
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
                 new MessageDialog(
                     topic5.Title,
                     topic5.Text,
@@ -201,7 +223,8 @@ public class VitalStatsWidget : CanvasWidget
         if (_wetnessLink.IsClicked)
         {
             var topic6 = helpScreen.GetTopic("Wetness");
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
                 new MessageDialog(
                     topic6.Title,
                     topic6.Text,
@@ -218,42 +241,67 @@ public class VitalStatsWidget : CanvasWidget
         {
             var factors = new List<ComponentLevel.Factor>();
             var total = _componentPlayer.ComponentLevel.CalculateStrengthFactor(factors);
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
-                new LevelFactorDialog(LanguageManager.GetContentWidgets(_typeName, "Strength"),
-                    LanguageManager.GetContentWidgets(_typeName, 16), factors, total));
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
+                new LevelFactorDialog(
+                    LanguageManager.GetContentWidgets(_typeName, "Strength"),
+                    LanguageManager.GetContentWidgets(_typeName, 16),
+                    factors,
+                    total
+                )
+            );
         }
 
         if (_resilienceLink.IsClicked)
         {
             var factors2 = new List<ComponentLevel.Factor>();
             var total2 = _componentPlayer.ComponentLevel.CalculateResilienceFactor(factors2);
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
-                new LevelFactorDialog(LanguageManager.GetContentWidgets(_typeName, "Resilience"),
-                    LanguageManager.GetContentWidgets(_typeName, 17), factors2, total2));
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
+                new LevelFactorDialog(
+                    LanguageManager.GetContentWidgets(_typeName, "Resilience"),
+                    LanguageManager.GetContentWidgets(_typeName, 17),
+                    factors2,
+                    total2
+                )
+            );
         }
 
         if (_speedLink.IsClicked)
         {
             var factors3 = new List<ComponentLevel.Factor>();
             var total3 = _componentPlayer.ComponentLevel.CalculateSpeedFactor(factors3);
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
-                new LevelFactorDialog(LanguageManager.GetContentWidgets(_typeName, "Speed"),
-                    LanguageManager.GetContentWidgets(_typeName, 18), factors3, total3));
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
+                new LevelFactorDialog(
+                    LanguageManager.GetContentWidgets(_typeName, "Speed"),
+                    LanguageManager.GetContentWidgets(_typeName, 18),
+                    factors3,
+                    total3
+                )
+            );
         }
 
         if (_hungerLink.IsClicked)
         {
             var factors4 = new List<ComponentLevel.Factor>();
             var total4 = _componentPlayer.ComponentLevel.CalculateHungerFactor(factors4);
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
-                new LevelFactorDialog(LanguageManager.GetContentWidgets(_typeName, "Hunger"),
-                    LanguageManager.GetContentWidgets(_typeName, 19), factors4, total4));
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
+                new LevelFactorDialog(
+                    LanguageManager.GetContentWidgets(_typeName, "Hunger"),
+                    LanguageManager.GetContentWidgets(_typeName, 19),
+                    factors4,
+                    total4
+                )
+            );
         }
 
         if (_experienceLink.IsClicked)
         {
             var topic7 = helpScreen.GetTopic("Levels");
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
                 new MessageDialog(
                     topic7.Title,
                     topic7.Text,
@@ -269,7 +317,8 @@ public class VitalStatsWidget : CanvasWidget
         if (_insulationLink.IsClicked)
         {
             var topic8 = helpScreen.GetTopic("Clothing");
-            DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
+            DialogsManager.ShowDialog(
+                _componentPlayer.GuiWidget,
                 new MessageDialog(
                     topic8.Title,
                     topic8.Text,
@@ -277,21 +326,35 @@ public class VitalStatsWidget : CanvasWidget
                     string.Empty,
                     new Vector2(700f, 360f),
                     MessageDialog.CancelBehavior.InvokeButton1,
-                    _ => { }));
+                    _ => { }
+                )
+            );
         }
 
         if (_chokeButton.IsClicked)
         {
             if (CommonLib.WorkType == WorkType.Client)
             {
-                NetworkSender.SendToServer(EntityStatePackageBuilder.Capture(_componentPlayer.ComponentHealth, null, 0.1f,
-                    LanguageManager.GetContentWidgets(_typeName, "Choked"), true, true,
-                    ComponentHealthPackage.RequestInjureType.Choke));
+                NetworkSender.SendToServer(
+                    EntityStatePackageBuilder.Capture(
+                        _componentPlayer.ComponentHealth,
+                        null,
+                        0.1f,
+                        LanguageManager.GetContentWidgets(_typeName, "Choked"),
+                        true,
+                        true,
+                        ComponentHealthPackage.RequestInjureType.Choke
+                    )
+                );
             }
             else
             {
-                _componentPlayer.ComponentHealth.Injure(0.1f, null, true,
-                    LanguageManager.GetContentWidgets(_typeName, "Choked"));
+                _componentPlayer.ComponentHealth.Injure(
+                    0.1f,
+                    null,
+                    true,
+                    LanguageManager.GetContentWidgets(_typeName, "Choked")
+                );
             }
         }
     }

@@ -14,10 +14,11 @@ public sealed class NetworkTargetTest
         var preparation = await host.PrepareAddressAsync("127.0.0.1", 1, CancellationToken.None);
         var released = 0;
         preparation.SetRegistrationRelease(_ =>
-        {
-            released++;
-            return Task.FromException(new HttpRequestException("release unavailable"));
-        });
+            {
+                released++;
+                return Task.FromException(new HttpRequestException("release unavailable"));
+            }
+        );
         var firstFailure = await Assert.ThrowsAsync<HttpRequestException>(() => preparation.DisposeAsync().AsTask());
         Assert.Throws<ObjectDisposedException>(() => preparation.SendDatagram("closed"u8));
         var repeatedFailure = await Assert.ThrowsAsync<HttpRequestException>(() => preparation.DisposeAsync().AsTask());
@@ -58,6 +59,7 @@ public sealed class NetworkTargetTest
             client.DispatchEvents();
             await Task.Delay(2, timeout.Token);
         }
+
         Assert.Equal("before-handshake"u8.ToArray(), received);
         var connecting = preparation.ConnectAsync(ReadOnlyMemory<byte>.Empty, timeout.Token);
         while (!connecting.IsCompleted)
@@ -66,6 +68,7 @@ public sealed class NetworkTargetTest
             client.DispatchEvents();
             await Task.Delay(2, timeout.Token);
         }
+
         Assert.True((await connecting).IsConnected);
         Assert.Equal(NetworkPathKind.Direct, preparation.PathKind);
     }
@@ -77,7 +80,10 @@ public sealed class NetworkTargetTest
         using var handler = new DescriptorHandler();
         using var http = new HttpClient(handler);
         var target = new InvitationCodeNetworkTarget(new Uri("http://localhost/"), "012345");
-        var failure = await Assert.ThrowsAsync<RendezvousException>(() => host.PrepareConnectionAsync(target, http, CancellationToken.None));
+        var failure =
+            await Assert.ThrowsAsync<RendezvousException>(() =>
+                host.PrepareConnectionAsync(target, http, CancellationToken.None)
+            );
         Assert.Equal(RendezvousFailureKind.InvalidResponse, failure.Kind);
         Assert.Equal(1, handler.Requests);
     }
@@ -86,15 +92,20 @@ public sealed class NetworkTargetTest
     {
         internal int Requests { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             Requests++;
             Assert.Equal(HttpMethod.Get, request.Method);
             Assert.Equal("/transport", request.RequestUri!.AbsolutePath);
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = JsonContent.Create(new RendezvousDescriptor(0, null))
-            });
+            return Task.FromResult(
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(new RendezvousDescriptor(0, null))
+                }
+            );
         }
     }
 }

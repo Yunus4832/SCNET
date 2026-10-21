@@ -29,17 +29,25 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
         _createFallenLeaves = createFallenLeaves;
         Texture = ContentManager.Get<Texture2D>("Textures/LeafParticle");
         TextureSlotsCount = 1;
-        var color = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)] is LeavesBlock leavesBlock
-            ? leavesBlock.GetLeavesBlockColor(value, _subsystemTerrain.Terrain, point.X, point.Y, point.Z)
-            : Color.Transparent;
+        var color =
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)] is LeavesBlock
+                leavesBlock
+                ? leavesBlock.GetLeavesBlockColor(value, _subsystemTerrain.Terrain, point.X, point.Y, point.Z)
+                : Color.Transparent;
         foreach (var particle in Particles)
         {
             var f = _random.Float();
             var color2 = Color.Lerp(new Color(180, 120, 120), new Color(200, 255, 255), _random.Float(0f, 1f));
             particle.IsActive = true;
             particle.EndTime = 12f;
-            particle.Position = new Vector3(point) + new Vector3(0.5f) + 0.45f * new Vector3(_random.Float(-1f, 1f),
-                MathUtils.Lerp(1f, -1f, f), _random.Float(-1f, 1f));
+            particle.Position = new Vector3(point) +
+                                new Vector3(0.5f) +
+                                0.45f *
+                                new Vector3(
+                                    _random.Float(-1f, 1f),
+                                    MathUtils.Lerp(1f, -1f, f),
+                                    _random.Float(-1f, 1f)
+                                );
             particle.Light = 7;
             particle.BaseColor = color * color2;
             particle.Color = Color.Transparent;
@@ -78,9 +86,17 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
                 particle.Up = particle.Size.Y * new Vector3(vector.X * vector2.X, vector.Y, vector.X * vector2.Y);
                 var num = MathUtils.Saturate(4f * particle.Time);
                 particle.Position += 0.8f * particle.Speed * num * dt * new Vector3(0f, -1f, 0f);
-                particle.Position += 0.4f * particle.Speed * num * dt * MathUtils.Cos(particle.Phase) *
+                particle.Position += 0.4f *
+                                     particle.Speed *
+                                     num *
+                                     dt *
+                                     MathUtils.Cos(particle.Phase) *
                                      new Vector3(vector2.X, 0f, vector2.Y);
-                particle.Position += 0.3f * particle.Speed * num * dt * MathUtils.Cos(2f * particle.Phase) *
+                particle.Position += 0.3f *
+                                     particle.Speed *
+                                     num *
+                                     dt *
+                                     MathUtils.Cos(2f * particle.Phase) *
                                      new Vector3(0f, -1f, 0f);
             }
 
@@ -93,8 +109,10 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
                 particle.Light = terrain.GetCellLight(num2, num3, num4);
             }
 
-            particle.Color = Color.MultiplyColorOnlyNotSaturated(particle.BaseColor,
-                LightingManager.LightIntensityByLightValue[particle.Light]);
+            particle.Color = Color.MultiplyColorOnlyNotSaturated(
+                particle.BaseColor,
+                LightingManager.LightIntensityByLightValue[particle.Light]
+            );
             var num5 = MathUtils.Saturate(0.5f * (particle.EndTime - particle.Time));
             if (_fadeIn)
             {
@@ -114,8 +132,10 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
                 else if (block.Collidable && !(block is LeavesBlock))
                 {
                     const float num7 = 0.5f;
-                    var ray = new Ray3(particle.Position - new Vector3(num2, num3, num4) + new Vector3(0f, num7, 0f),
-                        -Vector3.UnitY);
+                    var ray = new Ray3(
+                        particle.Position - new Vector3(num2, num3, num4) + new Vector3(0f, num7, 0f),
+                        -Vector3.UnitY
+                    );
                     var num8 = block.Raycast(ray, _subsystemTerrain, cellValue, false, out _, out _);
                     if (num8 is < num7 - 0f)
                     {

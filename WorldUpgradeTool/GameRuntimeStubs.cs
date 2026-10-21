@@ -2,16 +2,25 @@ namespace Game
 {
     public enum TerrainChunkState
     {
-        NotLoaded,
-        InvalidContents1,
-        InvalidContents2,
-        InvalidContents3,
-        InvalidContents4,
-        InvalidLight,
-        InvalidPropagatedLight,
-        InvalidVertices1,
-        InvalidVertices2,
-        Valid
+        NotLoaded = 0,
+
+        InvalidContents1 = 1,
+
+        InvalidContents2 = 2,
+
+        InvalidContents3 = 3,
+
+        InvalidContents4 = 4,
+
+        InvalidLight = 5,
+
+        InvalidPropagatedLight = 6,
+
+        InvalidVertices1 = 7,
+
+        InvalidVertices2 = 8,
+
+        Valid = 9
     }
 }
 
@@ -20,19 +29,33 @@ namespace Game.Terrains
     public sealed class Terrain
     {
         private const int _contentsMask = 0x3FF;
+
         private const int _lightMask = 0x3C00;
+
         private const int _lightShift = 10;
+
         private const int _dataMask = unchecked((int)0xFFFFC000);
+
         private const int _dataShift = 14;
+
         private const long _topHeightMask = 0xFFF;
+
         private const int _topHeightShift = 0;
+
         private const long _temperatureMask = 0xF000;
+
         private const int _temperatureShift = 12;
+
         private const long _humidityMask = 0xF0000;
+
         private const int _humidityShift = 16;
+
         private const long _bottomHeightMask = 0xFFF00000;
+
         private const int _bottomHeightShift = 20;
+
         private const long _sunlightHeightMask = 0xFFF00000000;
+
         private const int _sunlightHeightShift = 32;
 
         private readonly Dictionary<Point2, TerrainChunk> _chunks = new();
@@ -143,9 +166,11 @@ namespace Game.Terrains
     public sealed class TerrainChunk
     {
         private const int _size = 16;
+
         private const int _height = 256;
 
         private readonly int[] _cells = new int[_size * _height * _size];
+
         private readonly long[] _shafts = new long[_size * _size];
 
         public TerrainChunk(Terrain? terrain, int x, int z)
@@ -215,6 +240,7 @@ namespace Game.Subsystems
     public static class SubsystemSeasons
     {
         public const float SummerStart = 0.375f;
+
         public const float AutumnStart = 0.625f;
     }
 }
@@ -246,7 +272,8 @@ namespace Game.Dialogs
             string smallMessage,
             string button1Text,
             string button2Text,
-            Action handler)
+            Action handler
+        )
         {
         }
     }

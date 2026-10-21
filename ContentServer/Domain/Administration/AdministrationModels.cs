@@ -4,10 +4,13 @@ namespace ContentServer.Domain.Administration;
 
 public enum AdministratorStatus
 {
-    Pending,
-    Active,
-    Rejected,
-    Suspended
+    Pending = 0,
+
+    Active = 1,
+
+    Rejected = 2,
+
+    Suspended = 3
 }
 
 public partial record AdministratorId : IGuidStronglyTypedId;
@@ -47,7 +50,8 @@ public class Administrator : Entity<AdministratorId>, IAggregateRoot
         string keyPrefix,
         string keyHash,
         DateTimeOffset now,
-        bool isSuperAdministrator = false)
+        bool isSuperAdministrator = false
+    )
     {
         var administrator = new Administrator
         {
@@ -61,8 +65,14 @@ public class Administrator : Entity<AdministratorId>, IAggregateRoot
         return administrator;
     }
 
-    public static Administrator Apply(string name, string contact, string? description,
-        string keyPrefix, string keyHash, DateTimeOffset now)
+    public static Administrator Apply(
+        string name,
+        string contact,
+        string? description,
+        string keyPrefix,
+        string keyHash,
+        DateTimeOffset now
+    )
     {
         var administrator = new Administrator
         {
@@ -144,7 +154,8 @@ public sealed record AdministratorStatusChangedDomainEvent(
     AdministratorId ReviewerId,
     AdministratorStatus Status,
     string? Message,
-    DateTimeOffset OccurredAt) : IDomainEvent;
+    DateTimeOffset OccurredAt
+) : IDomainEvent;
 
 public class AdministratorKey : Entity<AdministratorKeyId>
 {

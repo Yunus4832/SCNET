@@ -35,10 +35,13 @@ public class SubsystemUpdate : Subsystem
                         continue;
                     }
 
-                    _updatable.Add(item.Key, new UpdateableInfo
-                    {
-                        UpdateOrder = item.Key.UpdateOrder
-                    });
+                    _updatable.Add(
+                        item.Key,
+                        new UpdateableInfo
+                        {
+                            UpdateOrder = item.Key.UpdateOrder
+                        }
+                    );
                 }
                 else
                 {

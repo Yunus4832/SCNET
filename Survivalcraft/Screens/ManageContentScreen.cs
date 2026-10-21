@@ -8,7 +8,7 @@ public class ManageContentScreen : Screen
 
     private enum ManageContentAction
     {
-        Delete
+        Delete = 0
     }
 
     private readonly ActionPanelWidget _actionPanel;
@@ -37,12 +37,13 @@ public class ManageContentScreen : Screen
         };
         _filterDrawer.ItemTextProvider = item => GetFilterDisplayName((ContentType)item);
         _filterDrawer.SetItems(
-        [
-            ContentType.Unknown,
-            ContentType.BlocksTexture,
-            ContentType.CharacterSkin,
-            ContentType.FurniturePack
-        ]);
+            [
+                ContentType.Unknown,
+                ContentType.BlocksTexture,
+                ContentType.CharacterSkin,
+                ContentType.FurniturePack
+            ]
+        );
         _filterDrawer.SelectedItem = _filter;
         _filterDrawer.SelectionChanged += FilterChanged;
         _actionPanel.PrimaryAccessory = _filterDrawer;
@@ -51,7 +52,7 @@ public class ManageContentScreen : Screen
         _actionPanel.ItemColorProvider = _ => new Color(150, 50, 35);
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems([ManageContentAction.Delete]);
-        _contentList.ItemWidgetFactory = delegate (object obj)
+        _contentList.ItemWidgetFactory = delegate(object obj)
         {
             var listItem = (ListItem)obj;
             ContainerWidget containerWidget;
@@ -95,8 +96,10 @@ public class ManageContentScreen : Screen
                     try
                     {
                         var designs = FurniturePacksManager.LoadFurniturePack(null, listItem.Name);
-                        labelWidget4.Text = string.Format(LanguageManager.Get(_typeName, 3),
-                            FurnitureDesign.ListChains(designs).Count);
+                        labelWidget4.Text = string.Format(
+                            LanguageManager.Get(_typeName, 3),
+                            FurnitureDesign.ListChains(designs).Count
+                        );
                         if (string.IsNullOrEmpty(listItem.Name))
                         {
                             return containerWidget;
@@ -171,7 +174,8 @@ public class ManageContentScreen : Screen
 
     private void ExecuteAction(object item)
     {
-        if (item is not ManageContentAction.Delete || !IsActionEnabled(item) ||
+        if (item is not ManageContentAction.Delete ||
+            !IsActionEnabled(item) ||
             _contentList.SelectedItem is not ListItem selectedItem)
         {
             return;
@@ -181,11 +185,18 @@ public class ManageContentScreen : Screen
             selectedItem.Type is ContentType.BlocksTexture or ContentType.CharacterSkin)
         {
             var replacements = _contentList.Items.Cast<ListItem>().Where(candidate =>
-                candidate.Type == selectedItem.Type && candidate.Name != selectedItem.Name).ToList();
-            DialogsManager.ShowDialog(null, new ListSelectionDialog(
-                LanguageManager.Get(_typeName, 9), replacements, 60f,
-                replacement => ((ListItem)replacement).DisplayName,
-                replacement => ConfirmDelete(selectedItem, (ListItem)replacement)));
+                candidate.Type == selectedItem.Type && candidate.Name != selectedItem.Name
+            ).ToList();
+            DialogsManager.ShowDialog(
+                null,
+                new ListSelectionDialog(
+                    LanguageManager.Get(_typeName, 9),
+                    replacements,
+                    60f,
+                    replacement => ((ListItem)replacement).DisplayName,
+                    replacement => ConfirmDelete(selectedItem, (ListItem)replacement)
+                )
+            );
             return;
         }
 
@@ -213,8 +224,9 @@ public class ManageContentScreen : Screen
             new MessageDialog(
                 LanguageManager.Get(_typeName, 9),
                 smallMessage,
-                LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
-                delegate (MessageDialogButton button)
+                LanguageManager.Get("Usual", "yes"),
+                LanguageManager.Get("Usual", "no"),
+                delegate(MessageDialogButton button)
                 {
                     if (button != MessageDialogButton.Button1)
                     {
@@ -240,65 +252,78 @@ public class ManageContentScreen : Screen
         if (_filter is ContentType.BlocksTexture or ContentType.Unknown)
         {
             BlocksTexturesManager.UpdateBlocksTexturesList();
-            list.AddRange(BlocksTexturesManager.ReadOnlyBlockTexturesNames.Select(name2 => new ListItem
-            {
-                Name = name2,
-                IsBuiltIn = BlocksTexturesManager.IsBuiltIn(name2),
-                Type = ContentType.BlocksTexture,
-                DisplayName = BlocksTexturesManager.GetDisplayName(name2),
-                CreationTime = BlocksTexturesManager.GetCreationDate(name2),
-                UseCount = WorldsManager.WorldInfos.Count(wi => wi.WorldSettings.BlocksTextureName == name2)
-            }));
+            list.AddRange(
+                BlocksTexturesManager.ReadOnlyBlockTexturesNames.Select(name2 => new ListItem
+                    {
+                        Name = name2,
+                        IsBuiltIn = BlocksTexturesManager.IsBuiltIn(name2),
+                        Type = ContentType.BlocksTexture,
+                        DisplayName = BlocksTexturesManager.GetDisplayName(name2),
+                        CreationTime = BlocksTexturesManager.GetCreationDate(name2),
+                        UseCount = WorldsManager.WorldInfos.Count(wi => wi.WorldSettings.BlocksTextureName == name2)
+                    }
+                )
+            );
         }
 
         if (_filter is ContentType.CharacterSkin or ContentType.Unknown)
         {
             CharacterSkinsManager.UpdateCharacterSkinsList();
-            list.AddRange(CharacterSkinsManager.ReadOnlyCharacterSkinsNames.Select(name => new ListItem
-            {
-                Name = name,
-                IsBuiltIn = CharacterSkinsManager.IsBuiltIn(name),
-                Type = ContentType.CharacterSkin,
-                DisplayName = CharacterSkinsManager.GetDisplayName(name),
-                CreationTime = CharacterSkinsManager.GetCreationDate(name),
-                UseCount = WorldsManager.WorldInfos.Count(wi => wi.PlayerInfos.Any(pi => pi.CharacterSkinName == name))
-            }));
+            list.AddRange(
+                CharacterSkinsManager.ReadOnlyCharacterSkinsNames.Select(name => new ListItem
+                    {
+                        Name = name,
+                        IsBuiltIn = CharacterSkinsManager.IsBuiltIn(name),
+                        Type = ContentType.CharacterSkin,
+                        DisplayName = CharacterSkinsManager.GetDisplayName(name),
+                        CreationTime = CharacterSkinsManager.GetCreationDate(name),
+                        UseCount = WorldsManager.WorldInfos.Count(wi =>
+                            wi.PlayerInfos.Any(pi => pi.CharacterSkinName == name)
+                        )
+                    }
+                )
+            );
         }
 
         if (_filter == ContentType.FurniturePack || _filter == ContentType.Unknown)
         {
             FurniturePacksManager.UpdateFurniturePacksList();
-            list.AddRange(FurniturePacksManager.ReadOnlyFurniturePackNames.Select(furniturePackName => new ListItem
-            {
-                Name = furniturePackName,
-                IsBuiltIn = false,
-                Type = ContentType.FurniturePack,
-                DisplayName = FurniturePacksManager.GetDisplayName(furniturePackName),
-                CreationTime = FurniturePacksManager.GetCreationDate(furniturePackName)
-            }));
+            list.AddRange(
+                FurniturePacksManager.ReadOnlyFurniturePackNames.Select(furniturePackName => new ListItem
+                    {
+                        Name = furniturePackName,
+                        IsBuiltIn = false,
+                        Type = ContentType.FurniturePack,
+                        DisplayName = FurniturePacksManager.GetDisplayName(furniturePackName),
+                        CreationTime = FurniturePacksManager.GetCreationDate(furniturePackName)
+                    }
+                )
+            );
         }
 
-        list.Sort(delegate (ListItem o1, ListItem o2)
-        {
-            if (o1.IsBuiltIn && !o2.IsBuiltIn)
+        list.Sort(
+            delegate(ListItem o1, ListItem o2)
             {
-                return -1;
-            }
+                if (o1.IsBuiltIn && !o2.IsBuiltIn)
+                {
+                    return -1;
+                }
 
-            if (o2.IsBuiltIn && !o1.IsBuiltIn)
-            {
-                return 1;
-            }
+                if (o2.IsBuiltIn && !o1.IsBuiltIn)
+                {
+                    return 1;
+                }
 
-            if (string.IsNullOrEmpty(o1.Name) && !string.IsNullOrEmpty(o2.Name))
-            {
-                return -1;
-            }
+                if (string.IsNullOrEmpty(o1.Name) && !string.IsNullOrEmpty(o2.Name))
+                {
+                    return -1;
+                }
 
-            return !string.IsNullOrEmpty(o1.Name) && string.IsNullOrEmpty(o2.Name)
-                ? 1
-                : string.CompareOrdinal(o1.DisplayName, o2.DisplayName);
-        });
+                return !string.IsNullOrEmpty(o1.Name) && string.IsNullOrEmpty(o2.Name)
+                    ? 1
+                    : string.CompareOrdinal(o1.DisplayName, o2.DisplayName);
+            }
+        );
         _contentList.ClearItems();
         foreach (var item in list)
         {

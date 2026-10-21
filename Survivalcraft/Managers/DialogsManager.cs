@@ -22,43 +22,47 @@ public static class DialogsManager
 
     public static void ShowDialog(ContainerWidget? parentWidget, Dialog dialog)
     {
-        Dispatcher.Dispatch(delegate
-        {
-            if (_dialogs.Contains(dialog))
+        Dispatcher.Dispatch(
+            delegate
             {
-                return;
-            }
+                if (_dialogs.Contains(dialog))
+                {
+                    return;
+                }
 
-            parentWidget ??= ScreensManager.CurrentScreen ?? ScreensManager.RootWidget;
-            dialog.WidgetsHierarchyInput = null;
-            _dialogs.Add(dialog);
-            var animationData = new AnimationData
-            {
-                Direction = 1
-            };
-            _animationDataDict[dialog] = animationData;
-            parentWidget?.Children.Add(animationData.CoverRectangle);
-            dialog.ParentWidget?.Children.Remove(dialog);
-            parentWidget?.Children.Add(dialog);
-            UpdateDialog(dialog, animationData);
-            dialog.Input.Clear();
-        });
+                parentWidget ??= ScreensManager.CurrentScreen ?? ScreensManager.RootWidget;
+                dialog.WidgetsHierarchyInput = null;
+                _dialogs.Add(dialog);
+                var animationData = new AnimationData
+                {
+                    Direction = 1
+                };
+                _animationDataDict[dialog] = animationData;
+                parentWidget?.Children.Add(animationData.CoverRectangle);
+                dialog.ParentWidget?.Children.Remove(dialog);
+                parentWidget?.Children.Add(dialog);
+                UpdateDialog(dialog, animationData);
+                dialog.Input.Clear();
+            }
+        );
     }
 
     public static void HideDialog(Dialog dialog)
     {
-        Dispatcher.Dispatch(delegate
-        {
-            if (!_dialogs.Contains(dialog))
+        Dispatcher.Dispatch(
+            delegate
             {
-                return;
-            }
+                if (!_dialogs.Contains(dialog))
+                {
+                    return;
+                }
 
-            dialog.ParentWidget?.Input.Clear();
-            dialog.WidgetsHierarchyInput = new WidgetInput(WidgetInputDevice.None);
-            _dialogs.Remove(dialog);
-            _animationDataDict[dialog].Direction = -1;
-        });
+                dialog.ParentWidget?.Input.Clear();
+                dialog.WidgetsHierarchyInput = new WidgetInput(WidgetInputDevice.None);
+                _dialogs.Remove(dialog);
+                _animationDataDict[dialog].Direction = -1;
+            }
+        );
     }
 
     public static void HideLoadingDialogs()
@@ -142,15 +146,15 @@ public static class DialogsManager
                     value.Factor = MathUtils.Min(value.Factor + 6f * Time.FrameDuration, 1f);
                     break;
                 case < 0:
+                {
+                    value.Factor = MathUtils.Max(value.Factor - 6f * Time.FrameDuration, 0f);
+                    if (value.Factor <= 0f)
                     {
-                        value.Factor = MathUtils.Max(value.Factor - 6f * Time.FrameDuration, 0f);
-                        if (value.Factor <= 0f)
-                        {
-                            _toRemove.Add(key);
-                        }
-
-                        break;
+                        _toRemove.Add(key);
                     }
+
+                    break;
+                }
             }
 
             UpdateDialog(key, value);
@@ -198,6 +202,7 @@ public static class DialogsManager
         };
 
         public int Direction;
+
         public float Factor;
     }
 }

@@ -22,16 +22,19 @@ public sealed class AdministratorInitializationInitializationStatusEndpoint(IMed
     }
 
     private async Task<ResponseData<AdministratorInitializationStatusResponse>> InitializationStatus(
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var required = await mediator.Send(
             new GetAdministratorInitializationQuery(),
-            cancellationToken);
+            cancellationToken
+        );
         return new AdministratorInitializationStatusResponse(
             required,
             ApiKeyUtility.MinimumLength,
             ApiKeyUtility.MaximumLength,
-            ApiKeyUtility.AllowedCharacters).AsResponseData();
+            ApiKeyUtility.AllowedCharacters
+        ).AsResponseData();
     }
 }
 
@@ -39,4 +42,5 @@ public sealed record AdministratorInitializationStatusResponse(
     bool Required,
     int ApiKeyMinimumLength,
     int ApiKeyMaximumLength,
-    string ApiKeyAllowedCharacters);
+    string ApiKeyAllowedCharacters
+);

@@ -318,13 +318,21 @@ public class BlockMesh
         AppendBlockMesh(blockMesh);
     }
 
-    public void AppendModelMeshPart(ModelMeshPart meshPart, Matrix matrix, bool makeEmissive, bool flipWindingOrder,
-        bool doubleSided, bool flipNormals, Color color)
+    public void AppendModelMeshPart(
+        ModelMeshPart meshPart,
+        Matrix matrix,
+        bool makeEmissive,
+        bool flipWindingOrder,
+        bool doubleSided,
+        bool flipNormals,
+        Color color
+    )
     {
         var vertexBuffer = meshPart.VertexBuffer;
         var indexBuffer = meshPart.IndexBuffer;
         var vertexElements = vertexBuffer.VertexDeclaration.VertexElements;
-        if (vertexElements.Count != 3 || vertexElements[0].Offset != 0 ||
+        if (vertexElements.Count != 3 ||
+            vertexElements[0].Offset != 0 ||
             vertexElements[0].Semantic != VertexElementSemantic.Position.GetSemanticString() ||
             vertexElements[1].Offset != 12 ||
             vertexElements[1].Semantic != VertexElementSemantic.Normal.GetSemanticString() ||
@@ -348,8 +356,11 @@ public class BlockMesh
                 item.TextureCoordinates = vertexData[num].TextureCoordinate;
                 var vector =
                     Vector3.Normalize(
-                        Vector3.TransformNormal(flipNormals ? -vertexData[num].Normal : vertexData[num].Normal,
-                            matrix));
+                        Vector3.TransformNormal(
+                            flipNormals ? -vertexData[num].Normal : vertexData[num].Normal,
+                            matrix
+                        )
+                    );
                 if (makeEmissive)
                 {
                     item.IsEmissive = true;
@@ -578,10 +589,26 @@ public class BlockMesh
     public void AppendImageExtrusion(Image image, Rectangle bounds, Vector3 scale, Color color, int alphaThreshold)
     {
         var count = Vertices.Count;
-        AppendImageExtrusionSlice(image, bounds, new Vector3(1f, 0f, 0f), new Vector3(0f, 1f, 0f),
-            new Vector3(0f, 0f, 1f), new Vector3(0f, 0f, 0f), color, alphaThreshold);
-        AppendImageExtrusionSlice(image, bounds, new Vector3(1f, 0f, 0f), new Vector3(0f, 1f, 0f),
-            new Vector3(0f, 0f, -1f), new Vector3(0f, 0f, 1f), color, alphaThreshold);
+        AppendImageExtrusionSlice(
+            image,
+            bounds,
+            new Vector3(1f, 0f, 0f),
+            new Vector3(0f, 1f, 0f),
+            new Vector3(0f, 0f, 1f),
+            new Vector3(0f, 0f, 0f),
+            color,
+            alphaThreshold
+        );
+        AppendImageExtrusionSlice(
+            image,
+            bounds,
+            new Vector3(1f, 0f, 0f),
+            new Vector3(0f, 1f, 0f),
+            new Vector3(0f, 0f, -1f),
+            new Vector3(0f, 0f, 1f),
+            color,
+            alphaThreshold
+        );
         for (var i = bounds.Left; i < bounds.Right; i++)
         {
             var image2 = new Image(1, bounds.Height);
@@ -593,9 +620,16 @@ public class BlockMesh
                 }
             }
 
-            AppendImageExtrusionSlice(image2, new Rectangle(0, 0, image2.Width, image2.Height), new Vector3(0f, 0f, 1f),
-                new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f), new Vector3(i, bounds.Top, 0f), color,
-                alphaThreshold);
+            AppendImageExtrusionSlice(
+                image2,
+                new Rectangle(0, 0, image2.Width, image2.Height),
+                new Vector3(0f, 0f, 1f),
+                new Vector3(0f, 1f, 0f),
+                new Vector3(1f, 0f, 0f),
+                new Vector3(i, bounds.Top, 0f),
+                color,
+                alphaThreshold
+            );
         }
 
         for (var k = bounds.Left; k < bounds.Right; k++)
@@ -609,9 +643,16 @@ public class BlockMesh
                 }
             }
 
-            AppendImageExtrusionSlice(image3, new Rectangle(0, 0, image3.Width, image3.Height), new Vector3(0f, 0f, 1f),
-                new Vector3(0f, 1f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(k + 1, bounds.Top, 0f), color,
-                alphaThreshold);
+            AppendImageExtrusionSlice(
+                image3,
+                new Rectangle(0, 0, image3.Width, image3.Height),
+                new Vector3(0f, 0f, 1f),
+                new Vector3(0f, 1f, 0f),
+                new Vector3(-1f, 0f, 0f),
+                new Vector3(k + 1, bounds.Top, 0f),
+                color,
+                alphaThreshold
+            );
         }
 
         for (var m = bounds.Top; m < bounds.Bottom; m++)
@@ -625,9 +666,16 @@ public class BlockMesh
                 }
             }
 
-            AppendImageExtrusionSlice(image4, new Rectangle(0, 0, image4.Width, image4.Height), new Vector3(1f, 0f, 0f),
-                new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(bounds.Left, m, 0f), color,
-                alphaThreshold);
+            AppendImageExtrusionSlice(
+                image4,
+                new Rectangle(0, 0, image4.Width, image4.Height),
+                new Vector3(1f, 0f, 0f),
+                new Vector3(0f, 0f, 1f),
+                new Vector3(0f, 1f, 0f),
+                new Vector3(bounds.Left, m, 0f),
+                color,
+                alphaThreshold
+            );
         }
 
         for (var num = bounds.Top; num < bounds.Bottom; num++)
@@ -641,9 +689,16 @@ public class BlockMesh
                 }
             }
 
-            AppendImageExtrusionSlice(image5, new Rectangle(0, 0, image5.Width, image5.Height), new Vector3(1f, 0f, 0f),
-                new Vector3(0f, 0f, 1f), new Vector3(0f, -1f, 0f), new Vector3(bounds.Left, num + 1, 0f), color,
-                alphaThreshold);
+            AppendImageExtrusionSlice(
+                image5,
+                new Rectangle(0, 0, image5.Width, image5.Height),
+                new Vector3(1f, 0f, 0f),
+                new Vector3(0f, 0f, 1f),
+                new Vector3(0f, -1f, 0f),
+                new Vector3(bounds.Left, num + 1, 0f),
+                color,
+                alphaThreshold
+            );
         }
 
         for (var num3 = count; num3 < Vertices.Count; num3++)
@@ -660,8 +715,16 @@ public class BlockMesh
         }
     }
 
-    private void AppendImageExtrusionSlice(Image slice, Rectangle bounds, Vector3 right, Vector3 up, Vector3 forward,
-        Vector3 position, Color color, int alphaThreshold)
+    private void AppendImageExtrusionSlice(
+        Image slice,
+        Rectangle bounds,
+        Vector3 right,
+        Vector3 up,
+        Vector3 forward,
+        Vector3 position,
+        Color color,
+        int alphaThreshold
+    )
     {
         var num = int.MaxValue;
         var num2 = int.MaxValue;
@@ -683,8 +746,24 @@ public class BlockMesh
 
         if (num != int.MaxValue)
         {
-            var m = new Matrix(right.X, right.Y, right.Z, 0f, up.X, up.Y, up.Z, 0f, forward.X, forward.Y, forward.Z, 0f,
-                position.X, position.Y, position.Z, 1f);
+            var m = new Matrix(
+                right.X,
+                right.Y,
+                right.Z,
+                0f,
+                up.X,
+                up.Y,
+                up.Z,
+                0f,
+                forward.X,
+                forward.Y,
+                forward.Z,
+                0f,
+                position.X,
+                position.Y,
+                position.Z,
+                1f
+            );
             var flip = m.Determinant() > 0f;
             var s = LightingManager.CalculateLighting(-forward);
             var p = Vector3.Transform(new Vector3(num, num2, 0f), m);
@@ -695,8 +774,15 @@ public class BlockMesh
         }
     }
 
-    private void AppendImageExtrusionRectangle(Vector3 p11, Vector3 p21, Vector3 p12, Vector3 p22, Vector3 forward,
-        bool flip, Color color)
+    private void AppendImageExtrusionRectangle(
+        Vector3 p11,
+        Vector3 p21,
+        Vector3 p12,
+        Vector3 p22,
+        Vector3 forward,
+        bool flip,
+        Color color
+    )
     {
         var count = Vertices.Count;
         Vertices.Count += 4;

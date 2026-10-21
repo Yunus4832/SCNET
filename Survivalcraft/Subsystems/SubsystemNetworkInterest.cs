@@ -46,7 +46,8 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
         var clients = CommonLib.Net.Clients.Values.Where(client => client.IsConnected).ToArray();
         Entities.RetainClients(clients);
         foreach (var client in _requestedLocations.Keys.Where(client =>
-                     !clients.Any(connected => ReferenceEquals(connected, client))).ToArray())
+                     !clients.Any(connected => ReferenceEquals(connected, client))
+                 ).ToArray())
         {
             _requestedLocations.Remove(client);
         }
@@ -89,7 +90,8 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
         }
 
         foreach (var client in clients.Where(client => client != CommonLib.Net.Self &&
-                                                       client.State == ClientState.Playing))
+                                                       client.State == ClientState.Playing
+                 ))
         {
             var current = relevant.TryGetValue(client, out var chunks) ? chunks : [];
             var changes = _chunks.Synchronize(client, current);
@@ -105,8 +107,10 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
             }
         }
 
-        Statistics = Statistics.AddSample(Stopwatch.GetElapsedTime(started).TotalMilliseconds,
-            GC.GetAllocatedBytesForCurrentThread() - allocatedBytes);
+        Statistics = Statistics.AddSample(
+            Stopwatch.GetElapsedTime(started).TotalMilliseconds,
+            GC.GetAllocatedBytesForCurrentThread() - allocatedBytes
+        );
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
@@ -129,9 +133,12 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
 
     private bool ApplyRequestedLocation(Client client, PlayerData player, TerrainUpdateLocation requested)
     {
-        if (!NetworkTerrainPolicy.TryClampClientUpdateLocation(requested,
+        if (!NetworkTerrainPolicy.TryClampClientUpdateLocation(
+                requested,
                 SettingsManager.Current.MaxClientVisibilityRange,
-                player.ComponentPlayer?.ComponentBody.Position.XZ ?? player.SpawnPosition.XZ, out var approved))
+                player.ComponentPlayer?.ComponentBody.Position.XZ ?? player.SpawnPosition.XZ,
+                out var approved
+            ))
         {
             return false;
         }
@@ -139,13 +146,18 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
         var updater = _subsystemTerrain.TerrainUpdater;
         // Reconcile the original camera request after movement arrives on another channel.
         // LastChunksUpdateCenter remains owned by the server updater.
-        updater.SetUpdateLocation(player.PlayerIndex, approved.Center,
-            approved.VisibilityDistance, approved.ContentDistance);
+        updater.SetUpdateLocation(
+            player.PlayerIndex,
+            approved.Center,
+            approved.VisibilityDistance,
+            approved.ContentDistance
+        );
         _spatial.SetLocation(client, approved.Center, approved.ContentDistance);
         var distribution = updater.ServerChunkDistribution;
         if (distribution != null &&
             (!distribution.TryGetClientLocation(client, out var center, out var distance) ||
-             center != approved.Center || distance != approved.ContentDistance))
+             center != approved.Center ||
+             distance != approved.ContentDistance))
         {
             distribution.UpdateClientLocation(client, approved.Center, approved.ContentDistance);
         }
@@ -173,14 +185,23 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
         }
 
         foreach (var client in clients.Where(client => client.State == ClientState.Playing &&
-                                                       !ReferenceEquals(client, CommonLib.Net.Self)))
+                                                       !ReferenceEquals(client, CommonLib.Net.Self)
+                 ))
         {
             var current = relevant.TryGetValue(client, out var ids) ? ids : [];
-            var changes = Entities.Synchronize(client, EntityInterestGroup.BlockEntities, current,
-                blocks.ContainsKey, 1);
+            var changes = Entities.Synchronize(
+                client,
+                EntityInterestGroup.BlockEntities,
+                current,
+                blocks.ContainsKey,
+                1
+            );
             if (changes.Entered.Count > 0)
             {
-                NetworkSender.SendTo(client, EntityPackageBuilder.Capture(Project, changes.Entered.Select(id => blocks[id].Entity).ToList()));
+                NetworkSender.SendTo(
+                    client,
+                    EntityPackageBuilder.Capture(Project, changes.Entered.Select(id => blocks[id].Entity).ToList())
+                );
             }
 
             foreach (var id in changes.Left)
@@ -203,7 +224,8 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
     public IEnumerable<Client> GetObservers(Vector2 position)
     {
         return _spatial.GetObservers(position).Where(client => client.IsConnected &&
-            !ReferenceEquals(client, CommonLib.Net.Self));
+                                                               !ReferenceEquals(client, CommonLib.Net.Self)
+        );
     }
 
     internal Dictionary<Client, HashSet<int>> GetPointCandidates(IEnumerable<(int Id, Vector2 Position)> points)
@@ -214,13 +236,18 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
     public IEnumerable<Client> GetObserversWithin(Vector2 position, float radius)
     {
         return _spatial.GetObserversWithin(position, radius).Where(client => client.IsConnected &&
-            !ReferenceEquals(client, CommonLib.Net.Self));
+                                                                             !ReferenceEquals(
+                                                                                 client,
+                                                                                 CommonLib.Net.Self
+                                                                             )
+        );
     }
 
     public IEnumerable<Client> GetChunkObservers(Point2 chunk)
     {
         return _spatial.GetChunkObservers(chunk).Where(client => client.IsConnected &&
-            !ReferenceEquals(client, CommonLib.Net.Self));
+                                                                 !ReferenceEquals(client, CommonLib.Net.Self)
+        );
     }
 
     private bool IsChunkRelevant(Client client, Point2 chunk)
@@ -261,7 +288,8 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
     {
         var missing = GetBodyGroup(body)
             .Where(member => !Entities.GetObservers(EntityInterestGroup.Creatures, member.Entity.EntityId)
-                .Any(observer => ReferenceEquals(observer, client)))
+                .Any(observer => ReferenceEquals(observer, client))
+            )
             .Select(member => member.Entity)
             .ToList();
         if (missing.Count == 0)
@@ -280,7 +308,8 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
     {
         return GetBodyGroup(body).Any(member =>
             ReferenceEquals(member.Player?.PlayerData.Client, client) ||
-            IsPositionRelevant(client, member.Position.XZ));
+            IsPositionRelevant(client, member.Position.XZ)
+        );
     }
 
     internal IEnumerable<Client> GetBodyCandidates(ComponentBody body)
@@ -328,9 +357,13 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
             .Where(body => body is not null)
             .Select(body => body!.Entity.EntityId);
         Entities.Seed(client, EntityInterestGroup.Creatures, creatureIds);
-        Entities.Seed(client, EntityInterestGroup.BlockEntities, entities
-            .Where(entity => entity.FindComponent<ComponentBlockEntity>() is not null)
-            .Select(entity => entity.EntityId));
+        Entities.Seed(
+            client,
+            EntityInterestGroup.BlockEntities,
+            entities
+                .Where(entity => entity.FindComponent<ComponentBlockEntity>() is not null)
+                .Select(entity => entity.EntityId)
+        );
         Entities.Seed(client, EntityInterestGroup.Pickables, []);
         Entities.Seed(client, EntityInterestGroup.Projectiles, []);
         Entities.Seed(client, EntityInterestGroup.MovingBlocks, []);
@@ -355,7 +388,8 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
 
         if (_subsystemTerrain.TerrainUpdater.UpdateLocations.TryGetValue(
                 playerData.PlayerIndex,
-                out var updateLocation))
+                out var updateLocation
+            ))
         {
             center = updateLocation.Center;
             contentDistance = updateLocation.ContentDistance;

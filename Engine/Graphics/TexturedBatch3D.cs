@@ -4,8 +4,15 @@ namespace Engine.Graphics;
 
 public sealed class TexturedBatch3D : BaseTexturedBatch
 {
-    public void QueueTriangle(Vector3 p1, Vector3 p2, Vector3 p3, Vector2 texCoord1, Vector2 texCoord2,
-        Vector2 texCoord3, Color color)
+    public void QueueTriangle(
+        Vector3 p1,
+        Vector3 p2,
+        Vector3 p3,
+        Vector2 texCoord1,
+        Vector2 texCoord2,
+        Vector2 texCoord3,
+        Color color
+    )
     {
         var count = TriangleVertices.Count;
         TriangleVertices.Count += 3;
@@ -19,8 +26,17 @@ public sealed class TexturedBatch3D : BaseTexturedBatch
         TriangleIndices.Array[count2 + 2] = (ushort)(count + 2);
     }
 
-    public void QueueTriangle(Vector3 p1, Vector3 p2, Vector3 p3, Vector2 texCoord1, Vector2 texCoord2,
-        Vector2 texCoord3, Color color1, Color color2, Color color3)
+    public void QueueTriangle(
+        Vector3 p1,
+        Vector3 p2,
+        Vector3 p3,
+        Vector2 texCoord1,
+        Vector2 texCoord2,
+        Vector2 texCoord3,
+        Color color1,
+        Color color2,
+        Color color3
+    )
     {
         var count = TriangleVertices.Count;
         TriangleVertices.Count += 3;
@@ -34,8 +50,17 @@ public sealed class TexturedBatch3D : BaseTexturedBatch
         TriangleIndices.Array[count2 + 2] = (ushort)(count + 2);
     }
 
-    public void QueueQuad(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4, Vector2 texCoord1, Vector2 texCoord2,
-        Vector2 texCoord3, Vector2 texCoord4, Color color)
+    public void QueueQuad(
+        Vector3 p1,
+        Vector3 p2,
+        Vector3 p3,
+        Vector3 p4,
+        Vector2 texCoord1,
+        Vector2 texCoord2,
+        Vector2 texCoord3,
+        Vector2 texCoord4,
+        Color color
+    )
     {
         var count = TriangleVertices.Count;
         TriangleVertices.Count += 4;
@@ -53,8 +78,20 @@ public sealed class TexturedBatch3D : BaseTexturedBatch
         TriangleIndices.Array[count2 + 5] = (ushort)count;
     }
 
-    public void QueueQuad(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4, Vector2 texCoord1, Vector2 texCoord2,
-        Vector2 texCoord3, Vector2 texCoord4, Color color1, Color color2, Color color3, Color color4)
+    public void QueueQuad(
+        Vector3 p1,
+        Vector3 p2,
+        Vector3 p3,
+        Vector3 p4,
+        Vector2 texCoord1,
+        Vector2 texCoord2,
+        Vector2 texCoord3,
+        Vector2 texCoord4,
+        Color color1,
+        Color color2,
+        Color color3,
+        Color color4
+    )
     {
         var count = TriangleVertices.Count;
         TriangleVertices.Count += 4;

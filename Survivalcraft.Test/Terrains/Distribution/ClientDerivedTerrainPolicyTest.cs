@@ -14,17 +14,26 @@ public sealed class ClientDerivedTerrainPolicyTest
             WorkerState = TerrainChunkState.NotLoaded
         };
 
-        Assert.False(ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
-            TerrainContentRole.Replica,
-            neighbor));
-        Assert.True(ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
-            TerrainContentRole.Authority,
-            neighbor));
+        Assert.False(
+            ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
+                TerrainContentRole.Replica,
+                neighbor
+            )
+        );
+        Assert.True(
+            ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
+                TerrainContentRole.Authority,
+                neighbor
+            )
+        );
 
         neighbor.IsLoaded = true;
-        Assert.True(ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
-            TerrainContentRole.Replica,
-            neighbor));
+        Assert.True(
+            ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
+                TerrainContentRole.Replica,
+                neighbor
+            )
+        );
     }
 
     [Fact]
@@ -43,19 +52,26 @@ public sealed class ClientDerivedTerrainPolicyTest
             ClientDerivedTerrainPolicy.FindPendingLightingDependency(
                 terrain,
                 TerrainContentRole.Replica,
-                target));
+                target
+            )
+        );
 
         dependency.IsLoaded = false;
-        Assert.Null(ClientDerivedTerrainPolicy.FindPendingLightingDependency(
-            terrain,
-            TerrainContentRole.Replica,
-            target));
+        Assert.Null(
+            ClientDerivedTerrainPolicy.FindPendingLightingDependency(
+                terrain,
+                TerrainContentRole.Replica,
+                target
+            )
+        );
         Assert.Same(
             dependency,
             ClientDerivedTerrainPolicy.FindPendingLightingDependency(
                 terrain,
                 TerrainContentRole.Authority,
-            target));
+                target
+            )
+        );
     }
 
     [Fact]
@@ -74,13 +90,18 @@ public sealed class ClientDerivedTerrainPolicyTest
             ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
                 terrain,
                 TerrainContentRole.Replica,
-                target));
+                target
+            )
+        );
 
         dependency.WorkerState = TerrainChunkState.InvalidVertices1;
-        Assert.Null(ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
-            terrain,
-            TerrainContentRole.Replica,
-            target));
+        Assert.Null(
+            ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
+                terrain,
+                TerrainContentRole.Replica,
+                target
+            )
+        );
     }
 
     [Fact]
@@ -100,7 +121,8 @@ public sealed class ClientDerivedTerrainPolicyTest
         var pendingGeometry = ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
             terrain,
             TerrainContentRole.Replica,
-            target);
+            target
+        );
 
         Assert.Same(geometryDependency, pendingGeometry);
         Assert.Same(
@@ -108,6 +130,8 @@ public sealed class ClientDerivedTerrainPolicyTest
             ClientDerivedTerrainPolicy.FindPendingLightingDependency(
                 terrain,
                 TerrainContentRole.Replica,
-                pendingGeometry!));
+                pendingGeometry!
+            )
+        );
     }
 }

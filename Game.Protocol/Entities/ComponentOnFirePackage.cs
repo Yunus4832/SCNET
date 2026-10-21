@@ -4,20 +4,33 @@ public sealed record ComponentOnFirePackage : IProtocolMessage
 {
     public enum EventType
     {
-        ComponentOnFire,
-        BlockOnFireAdd,
-        BlockOnFireRemove
+        ComponentOnFire = 0,
+
+        BlockOnFireAdd = 1,
+
+        BlockOnFireRemove = 2
     }
 
     public int AttackerEntityId { get; init; }
+
     public float Duration { get; init; }
+
     public int EntityId { get; init; }
+
     public EventType Type { get; init; }
+
     public int X { get; init; }
+
     public int Y { get; init; }
+
     public int Z { get; init; }
+
     public byte ID => (byte)PackageType.ComponentOnFire;
-    public ComponentOnFirePackage() { }
+
+    public ComponentOnFirePackage()
+    {
+    }
+
     public ComponentOnFirePackage(int x, int y, int z, float expandability)
     {
         Type = EventType.BlockOnFireAdd;
@@ -26,6 +39,7 @@ public sealed record ComponentOnFirePackage : IProtocolMessage
         Z = z;
         Duration = expandability;
     }
+
     public ComponentOnFirePackage(int x, int y, int z)
     {
         Type = EventType.BlockOnFireRemove;

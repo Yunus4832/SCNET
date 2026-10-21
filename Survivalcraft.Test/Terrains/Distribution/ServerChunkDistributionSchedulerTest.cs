@@ -140,10 +140,13 @@ public sealed class ServerChunkDistributionSchedulerTest
         queue.Enqueue(new ChunkContentRequest(new ChunkAllocationId(new Point2(-2, 0), 1)));
         queue.Enqueue(new ChunkContentRequest(new ChunkAllocationId(new Point2(2, 0), 1)));
 
-        var selected = Assert.Single(queue.TakePrioritized(
-            new Vector2(8, 8),
-            new Vector2(40, 8),
-            1));
+        var selected = Assert.Single(
+            queue.TakePrioritized(
+                new Vector2(8, 8),
+                new Vector2(40, 8),
+                1
+            )
+        );
 
         Assert.Equal(new Point2(2, 0), selected.Allocation.Coords);
     }
@@ -156,10 +159,13 @@ public sealed class ServerChunkDistributionSchedulerTest
         var count = (ushort)EncodedTerrainChunkFragmenter.Split(encoded, allocation).Count();
         var request = new TerrainChunkFragmentRequest(allocation, 7, count, [1, 3, 3]);
 
-        Assert.True(ServerChunkDistributionScheduler.TrySelectMissingFragments(
-            encoded,
-            request,
-            out var selected));
+        Assert.True(
+            ServerChunkDistributionScheduler.TrySelectMissingFragments(
+                encoded,
+                request,
+                out var selected
+            )
+        );
 
         Assert.Equal([1, 3], selected.Select(fragment => (int)fragment.FragmentIndex));
     }
@@ -172,10 +178,13 @@ public sealed class ServerChunkDistributionSchedulerTest
         var count = (ushort)EncodedTerrainChunkFragmenter.Split(encoded, allocation).Count();
         var request = new TerrainChunkFragmentRequest(allocation, 7, count, [1]);
 
-        Assert.False(ServerChunkDistributionScheduler.TrySelectMissingFragments(
-            encoded,
-            request,
-            out var selected));
+        Assert.False(
+            ServerChunkDistributionScheduler.TrySelectMissingFragments(
+                encoded,
+                request,
+                out var selected
+            )
+        );
         Assert.Empty(selected);
     }
 

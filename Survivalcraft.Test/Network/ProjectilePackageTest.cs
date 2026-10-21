@@ -35,15 +35,19 @@ public sealed class ProjectilePackageTest
     [Fact]
     public void MotionUpdatePreservesStateAndUsesUnreliableStateStream()
     {
-        var package = ProjectilePackageBuilder.Capture(new Projectile
-        {
-            NetworkId = 42,
-            Position = new Vector3(1, 2, 3),
-            Rotation = new Vector3(4, 5, 6),
-            Velocity = new Vector3(7, 8, 9),
-            AngularVelocity = new Vector3(10, 11, 12)
-        }) with
-        { Type = ProjectilePackage.EventType.Update, StateTick = 5 };
+        var package = ProjectilePackageBuilder.Capture(
+                new Projectile
+                {
+                    NetworkId = 42,
+                    Position = new Vector3(1, 2, 3),
+                    Rotation = new Vector3(4, 5, 6),
+                    Velocity = new Vector3(7, 8, 9),
+                    AngularVelocity = new Vector3(10, 11, 12)
+                }
+            ) with
+            {
+                Type = ProjectilePackage.EventType.Update, StateTick = 5
+            };
         var clone = RoundTrip(package);
 
         Assert.Equal(package.Position, clone.Position);

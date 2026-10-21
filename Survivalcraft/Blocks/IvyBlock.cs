@@ -32,7 +32,8 @@ public class IvyBlock : Block
         }
 
         result.CellFace = raycastResult.CellFace;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetFace(0, CellFace.OppositeFace(raycastResult.CellFace.Face)));
+        result.Value =
+            Terrain.MakeBlockValue(BlockIndex, 0, SetFace(0, CellFace.OppositeFace(raycastResult.CellFace.Face)));
 
         return result;
     }
@@ -60,14 +61,42 @@ public class IvyBlock : Block
         {
             case 0:
                 vertices.Count += 4;
-                BlockGeometryGenerator.SetupLitCornerVertex(x, y, z + 1, color, TextureSlot, 0,
-                    ref vertices.Array[count]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y, z + 1, color, TextureSlot, 1,
-                    ref vertices.Array[count + 1]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y + 1, z + 1, color, TextureSlot, 2,
-                    ref vertices.Array[count + 2]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x, y + 1, z + 1, color, TextureSlot, 3,
-                    ref vertices.Array[count + 3]);
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x,
+                    y,
+                    z + 1,
+                    color,
+                    TextureSlot,
+                    0,
+                    ref vertices.Array[count]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x + 1,
+                    y,
+                    z + 1,
+                    color,
+                    TextureSlot,
+                    1,
+                    ref vertices.Array[count + 1]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x + 1,
+                    y + 1,
+                    z + 1,
+                    color,
+                    TextureSlot,
+                    2,
+                    ref vertices.Array[count + 2]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x,
+                    y + 1,
+                    z + 1,
+                    color,
+                    TextureSlot,
+                    3,
+                    ref vertices.Array[count + 3]
+                );
                 indices.Add(count);
                 indices.Add(count + 1);
                 indices.Add(count + 2);
@@ -83,14 +112,42 @@ public class IvyBlock : Block
                 break;
             case 1:
                 vertices.Count += 4;
-                BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y, z, color, TextureSlot, 0,
-                    ref vertices.Array[count]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y + 1, z, color, TextureSlot, 3,
-                    ref vertices.Array[count + 1]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y + 1, z + 1, color, TextureSlot, 2,
-                    ref vertices.Array[count + 2]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y, z + 1, color, TextureSlot, 1,
-                    ref vertices.Array[count + 3]);
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x + 1,
+                    y,
+                    z,
+                    color,
+                    TextureSlot,
+                    0,
+                    ref vertices.Array[count]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x + 1,
+                    y + 1,
+                    z,
+                    color,
+                    TextureSlot,
+                    3,
+                    ref vertices.Array[count + 1]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x + 1,
+                    y + 1,
+                    z + 1,
+                    color,
+                    TextureSlot,
+                    2,
+                    ref vertices.Array[count + 2]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x + 1,
+                    y,
+                    z + 1,
+                    color,
+                    TextureSlot,
+                    1,
+                    ref vertices.Array[count + 3]
+                );
                 indices.Add(count);
                 indices.Add(count + 1);
                 indices.Add(count + 2);
@@ -106,14 +163,42 @@ public class IvyBlock : Block
                 break;
             case 2:
                 vertices.Count += 4;
-                BlockGeometryGenerator.SetupLitCornerVertex(x, y, z, color, TextureSlot, 0,
-                    ref vertices.Array[count]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y, z, color, TextureSlot, 1,
-                    ref vertices.Array[count + 1]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y + 1, z, color, TextureSlot, 2,
-                    ref vertices.Array[count + 2]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x, y + 1, z, color, TextureSlot, 3,
-                    ref vertices.Array[count + 3]);
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x,
+                    y,
+                    z,
+                    color,
+                    TextureSlot,
+                    0,
+                    ref vertices.Array[count]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x + 1,
+                    y,
+                    z,
+                    color,
+                    TextureSlot,
+                    1,
+                    ref vertices.Array[count + 1]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x + 1,
+                    y + 1,
+                    z,
+                    color,
+                    TextureSlot,
+                    2,
+                    ref vertices.Array[count + 2]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x,
+                    y + 1,
+                    z,
+                    color,
+                    TextureSlot,
+                    3,
+                    ref vertices.Array[count + 3]
+                );
                 indices.Add(count);
                 indices.Add(count + 2);
                 indices.Add(count + 1);
@@ -129,14 +214,42 @@ public class IvyBlock : Block
                 break;
             case 3:
                 vertices.Count += 4;
-                BlockGeometryGenerator.SetupLitCornerVertex(x, y, z, color, TextureSlot, 0,
-                    ref vertices.Array[count]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x, y + 1, z, color, TextureSlot, 3,
-                    ref vertices.Array[count + 1]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x, y + 1, z + 1, color, TextureSlot, 2,
-                    ref vertices.Array[count + 2]);
-                BlockGeometryGenerator.SetupLitCornerVertex(x, y, z + 1, color, TextureSlot, 1,
-                    ref vertices.Array[count + 3]);
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x,
+                    y,
+                    z,
+                    color,
+                    TextureSlot,
+                    0,
+                    ref vertices.Array[count]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x,
+                    y + 1,
+                    z,
+                    color,
+                    TextureSlot,
+                    3,
+                    ref vertices.Array[count + 1]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x,
+                    y + 1,
+                    z + 1,
+                    color,
+                    TextureSlot,
+                    2,
+                    ref vertices.Array[count + 2]
+                );
+                BlockGeometryGenerator.SetupLitCornerVertex(
+                    x,
+                    y,
+                    z + 1,
+                    color,
+                    TextureSlot,
+                    1,
+                    ref vertices.Array[count + 3]
+                );
                 indices.Add(count);
                 indices.Add(count + 2);
                 indices.Add(count + 1);
@@ -182,10 +295,20 @@ public class IvyBlock : Block
         float strength
     )
     {
-        var color = BlockColorsMap.IvyColorsMap.Lookup(subsystemTerrain.Terrain, Terrain.ToCell(position.X),
-            Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, color,
-            TextureSlot);
+        var color = BlockColorsMap.IvyColorsMap.Lookup(
+            subsystemTerrain.Terrain,
+            Terrain.ToCell(position.X),
+            Terrain.ToCell(position.Y),
+            Terrain.ToCell(position.Z)
+        );
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            color,
+            TextureSlot
+        );
     }
 
     public static int GetFace(int data)

@@ -11,10 +11,12 @@ public sealed class ModProfileIdentityTest
         var hashB = new string('b', 64);
         var first = Profile(
             Requirement("example.a", "1.0.0", hashA),
-            Requirement("example.b", "2.0.0", hashB));
+            Requirement("example.b", "2.0.0", hashB)
+        );
         var second = Profile(
             Requirement("EXAMPLE.B", "2.0.0", hashB),
-            Requirement("EXAMPLE.A", "1.0.0", hashA));
+            Requirement("EXAMPLE.A", "1.0.0", hashA)
+        );
 
         Assert.True(ModProfileIdentity.AreEquivalent(first, second));
     }

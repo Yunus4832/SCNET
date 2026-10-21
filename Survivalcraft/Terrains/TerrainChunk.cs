@@ -103,8 +103,10 @@ public class TerrainChunk : IDisposable
         Terrain = terrain;
         Coords = new Point2(x, z);
         Origin = new Point2(x * _size, z * _size);
-        BoundingBox = new BoundingBox(new Vector3(Origin.X, 0f, Origin.Y),
-            new Vector3(Origin.X + _size, 256f, Origin.Y + _size));
+        BoundingBox = new BoundingBox(
+            new Vector3(Origin.X, 0f, Origin.Y),
+            new Vector3(Origin.X + _size, 256f, Origin.Y + _size)
+        );
         Center = new Vector2(Origin.X + 8f, Origin.Y + 8f);
     }
 
@@ -240,7 +242,8 @@ public class TerrainChunk : IDisposable
     {
         var value = Cells[index];
         var predictions = Volatile.Read(ref _geometryPredictions);
-        return predictions is not null && predictions.TryGetValue(index, out var prediction) &&
+        return predictions is not null &&
+               predictions.TryGetValue(index, out var prediction) &&
                Terrain.ReplaceLight(value, 0) == prediction.Expected
             ? Terrain.ReplaceLight(prediction.Value, Terrain.ExtractLight(value))
             : value;

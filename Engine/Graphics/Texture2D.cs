@@ -49,11 +49,7 @@ public class Texture2D : GraphicsResource
 
     public IntPtr NativeHandle => texture;
 
-    public string DebugName
-    {
-        get => string.Empty;
-        set { }
-    }
+    public string DebugName { get => string.Empty; set { } }
 
     public int Width { get; set; }
 

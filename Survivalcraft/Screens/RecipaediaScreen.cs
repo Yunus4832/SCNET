@@ -36,20 +36,21 @@ public class RecipaediaScreen : Screen
         _recipesButton = Children.Find<ButtonWidget>("RecipesButton")!;
         _categories.Add(string.Empty);
         _categories.AddRange(CurrentModRuntime.Value!.PreviewCatalog.ReadOnlyCategories);
-        _blocksList.ItemWidgetFactory = delegate (object item)
+        _blocksList.ItemWidgetFactory = delegate(object item)
         {
             var value = (int)item;
             var num = Terrain.ExtractContents(value);
             var block = CurrentModRuntime.Value!.PreviewCatalog.Blocks[num];
             var node2 = ContentManager.Get<XElement>("Widgets/RecipaediaItem");
             var obj = (ContainerWidget)LoadWidget(this, node2, null);
-            obj.Children.Find<BlockIconWidget>("RecipaediaItem.Icon")!.Catalog = CurrentModRuntime.Value!.PreviewCatalog;
+            obj.Children.Find<BlockIconWidget>("RecipaediaItem.Icon")!.Catalog =
+                CurrentModRuntime.Value!.PreviewCatalog;
             obj.Children.Find<BlockIconWidget>("RecipaediaItem.Icon")!.Value = value;
             obj.Children.Find<LabelWidget>("RecipaediaItem.Text")!.Text = block.GetDisplayName(null, value);
             obj.Children.Find<LabelWidget>("RecipaediaItem.Details")!.Text = block.GetDescription(value);
             return obj;
         };
-        _blocksList.ItemClicked += delegate (object item)
+        _blocksList.ItemClicked += delegate(object item)
         {
             if (_blocksList.SelectedItem == item && item is int)
             {
@@ -136,9 +137,9 @@ public class RecipaediaScreen : Screen
         _blocksList.ClearItems();
 
         var orders = (from item in CurrentModRuntime.Value!.PreviewCatalog.RegisteredBlocks
-                      from creativeValue in item.GetCreativeValues()
-                      where string.IsNullOrEmpty(text) || item.GetCategory(creativeValue) == text
-                      select new Order(item, item.GetDisplayOrder(creativeValue), creativeValue)).ToList();
+            from creativeValue in item.GetCreativeValues()
+            where string.IsNullOrEmpty(text) || item.GetCategory(creativeValue) == text
+            select new Order(item, item.GetDisplayOrder(creativeValue), creativeValue)).ToList();
 
         var orderList = orders.OrderBy(o => o.BlockOrder);
         foreach (var c in orderList)

@@ -26,31 +26,15 @@ public class CheckboxWidget : CanvasWidget
 
     public bool IsAutoCheckingEnabled { get; set; }
 
-    public string Text
-    {
-        get => _labelWidget.Text;
-        set => _labelWidget.Text = value;
-    }
+    public string Text { get => _labelWidget.Text; set => _labelWidget.Text = value; }
 
-    public BitmapFont Font
-    {
-        get => _labelWidget.Font;
-        set => _labelWidget.Font = value;
-    }
+    public BitmapFont Font { get => _labelWidget.Font; set => _labelWidget.Font = value; }
 
-    public Subtexture? TickSubtexture
-    {
-        get => _tickWidget.Subtexture;
-        set => _tickWidget.Subtexture = value;
-    }
+    public Subtexture? TickSubtexture { get => _tickWidget.Subtexture; set => _tickWidget.Subtexture = value; }
 
     public Color Color { get; set; }
 
-    public Vector2 CheckboxSize
-    {
-        get => _canvasWidget.Size;
-        set => _canvasWidget.Size = value;
-    }
+    public Vector2 CheckboxSize { get => _canvasWidget.Size; set => _canvasWidget.Size = value; }
 
     public event Action<bool>? CheckStatusChanged;
 

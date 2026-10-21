@@ -39,7 +39,8 @@ public sealed class MessageCodecTest
     public void MessageIdsMatchTheExplicitUniqueAssignments()
     {
         var assignments = JsonSerializer.Deserialize<Dictionary<string, byte>>(
-            File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "package-ids.json")))!;
+            File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "package-ids.json"))
+        )!;
         Assert.Equal(assignments.Count, Enum.GetValues<PackageType>().Length);
         foreach (var (name, value) in assignments)
         {
@@ -61,6 +62,8 @@ public sealed class MessageCodecTest
         using var unknown = new ProtocolReader(new MemoryStream());
         Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read(250, unknown));
         using var truncated = new ProtocolReader(new MemoryStream(new byte[8]));
-        Assert.Throws<EndOfStreamException>(() => ProtocolMessageCodec.Read((byte)PackageType.ConnectionRequest, truncated));
+        Assert.Throws<EndOfStreamException>(() =>
+            ProtocolMessageCodec.Read((byte)PackageType.ConnectionRequest, truncated)
+        );
     }
 }

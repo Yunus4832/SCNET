@@ -17,7 +17,8 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
 
     public bool TryFind(
         string name,
-        out RegisteredTextCommand? registered)
+        out RegisteredTextCommand? registered
+    )
     {
         if (_registry.Adapters.TryFindText(name, out var entry) &&
             entry is not null)
@@ -56,14 +57,16 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
             route.Segments.Count == arguments.Length &&
             MatchesCompleted(route, arguments) &&
             _registry.TryGetDefinition(route.CommandType, out var command) &&
-            command?.Definition.Domain == domain);
+            command?.Definition.Domain == domain
+        );
     }
 
     public IReadOnlyList<CommandSuggestion> Suggest(
         string input,
         CommandPrincipal principal,
         CommandInvocationChannel channel = CommandInvocationChannel.Text,
-        CommandDomain? domain = null)
+        CommandDomain? domain = null
+    )
     {
         ArgumentNullException.ThrowIfNull(principal);
         var line = input.TrimStart();
@@ -79,12 +82,17 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
             return Entries
                 .Where(entry => IsVisible(entry.Command, principal, domain))
                 .Where(entry => entry.Command.Name.StartsWith(
-                    prefix,
-                    StringComparison.OrdinalIgnoreCase))
+                        prefix,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
                 .Select(entry => new CommandSuggestion(
-                    entry.Command.Name,
-                    entry.Command.Description.Resolve(),
-                    false, entry.Command.Description))
+                        entry.Command.Name,
+                        entry.Command.Description.Resolve(),
+                        false,
+                        entry.Command.Description
+                    )
+                )
                 .ToArray();
         }
 
@@ -96,17 +104,21 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
 
         var completed = tokens.Skip(1).Take(tokens.Count - 2).ToArray();
         var prefixToken = tokens[^1];
-        var suggestions = new Dictionary<string, CommandSuggestion>(
-            StringComparer.OrdinalIgnoreCase);
+        var suggestions = new Dictionary<string, CommandSuggestion>(StringComparer.OrdinalIgnoreCase);
         var suggestionContext = new CommandSuggestionContext(
             _registry,
             principal,
             channel,
-            completed);
+            completed
+        );
         var matchedRoutes = registered.Command.Routes.Where(route =>
-            MatchesDomain(route, domain) && _registry.CanInvoke(route.CommandType, principal) && route.Segments.Count >= completed.Length &&
-            MatchesCompleted(route, completed)).ToArray();
-        var specificity = matchedRoutes.Select(route => route.Segments.Take(completed.Length).OfType<CommandLiteral>().Count())
+            MatchesDomain(route, domain) &&
+            _registry.CanInvoke(route.CommandType, principal) &&
+            route.Segments.Count >= completed.Length &&
+            MatchesCompleted(route, completed)
+        ).ToArray();
+        var specificity = matchedRoutes
+            .Select(route => route.Segments.Take(completed.Length).OfType<CommandLiteral>().Count())
             .DefaultIfEmpty(0).Max();
         foreach (var route in matchedRoutes)
         {
@@ -126,17 +138,23 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                         new CommandSuggestion(
                             literal.Value,
                             (literal.Description ?? route.Description).Resolve(),
-                            false, literal.Description ?? route.Description));
+                            false,
+                            literal.Description ?? route.Description
+                        )
+                    );
                     break;
                 case CommandArgument argument:
                     var argumentSuggestions = GetArgumentSuggestions(
                         argument,
                         suggestionContext,
-                        route.Description);
+                        route.Description
+                    );
                     foreach (var suggestion in argumentSuggestions.Where(item =>
                                  item.Value.StartsWith(
                                      prefixToken,
-                                     StringComparison.OrdinalIgnoreCase)))
+                                     StringComparison.OrdinalIgnoreCase
+                                 )
+                             ))
                     {
                         suggestions.TryAdd(
                             suggestion.Value,
@@ -144,7 +162,10 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                                 suggestion.Value,
                                 (suggestion.Description ??
                                  route.Description).Resolve(),
-                                true, suggestion.Description ?? route.Description));
+                                true,
+                                suggestion.Description ?? route.Description
+                            )
+                        );
                     }
 
                     if (argumentSuggestions.Count > 0)
@@ -158,7 +179,10 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                         new CommandSuggestion(
                             placeholder,
                             route.Description.Resolve(),
-                            true, route.Description));
+                            true,
+                            route.Description
+                        )
+                    );
                     break;
             }
         }
@@ -171,7 +195,8 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
     public bool CanExecute(
         string input,
         CommandPrincipal principal,
-        CommandDomain? domain = null)
+        CommandDomain? domain = null
+    )
     {
         ArgumentNullException.ThrowIfNull(principal);
         if (string.IsNullOrWhiteSpace(input))
@@ -195,9 +220,11 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
 
         var arguments = tokens.Skip(1).ToArray();
         return registered.Command.Routes.Any(route =>
-            MatchesDomain(route, domain) && _registry.CanInvoke(route.CommandType, principal) &&
+            MatchesDomain(route, domain) &&
+            _registry.CanInvoke(route.CommandType, principal) &&
             route.Segments.Count == arguments.Length &&
-            MatchesCompleted(route, arguments));
+            MatchesCompleted(route, arguments)
+        );
     }
 
     public CommandResult Execute(string input, CommandContext context)
@@ -208,8 +235,11 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
     }
 
     public bool TryCreate(
-        string input, CommandContext context,
-        out IGameCommand? command, out CommandResult? error)
+        string input,
+        CommandContext context,
+        out IGameCommand? command,
+        out CommandResult? error
+    )
     {
         ArgumentNullException.ThrowIfNull(context);
         command = null;
@@ -219,7 +249,8 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
             error = CommandResult.LocalizedFail(
                 "command.empty",
                 "CommandEmpty_Message",
-                "请输入指令。");
+                "请输入指令。"
+            );
             return false;
         }
 
@@ -236,7 +267,8 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                 "CommandQuoteUnclosed_Message",
                 string.IsNullOrWhiteSpace(tokenizeError)
                     ? "指令中存在未闭合的引号。"
-                    : tokenizeError);
+                    : tokenizeError
+            );
             return false;
         }
 
@@ -245,7 +277,8 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
             error = CommandResult.LocalizedFail(
                 "command.empty",
                 "CommandEmpty_Message",
-                "请输入指令。");
+                "请输入指令。"
+            );
             return false;
         }
 
@@ -255,7 +288,8 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                 "command.unknown",
                 "CommandUnknown_Message",
                 "未知指令：{0}。输入 /help 查看可用指令。",
-                tokens[0]);
+                tokens[0]
+            );
             return false;
         }
 
@@ -276,37 +310,44 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
             {
                 Log.Error(
                     $"Command {registered.Id} failed, principal={context.Principal.Name}, " +
-                    $"channel={context.Channel}, correlation={context.CorrelationId}: {exception}");
+                    $"channel={context.Channel}, correlation={context.CorrelationId}: {exception}"
+                );
                 error = CommandResult.LocalizedFail(
                     "command.failed",
                     "CommandFailed_Message",
-                    "指令执行失败，详细信息已写入服务器日志。");
+                    "指令执行失败，详细信息已写入服务器日志。"
+                );
                 return false;
             }
         }
 
         var visibleRoutes = registered.Command.Routes
             .Where(route =>
-                _registry.CanInvoke(route.CommandType, context.Principal))
+                _registry.CanInvoke(route.CommandType, context.Principal)
+            )
             .ToArray();
         if (visibleRoutes.Length == 0)
         {
             error = CommandResult.LocalizedFail(
                 "command.forbidden",
                 "CommandForbidden_Message",
-                "你没有执行该指令的权限。");
+                "你没有执行该指令的权限。"
+            );
             return false;
         }
 
         var usage = string.Join(
             "\n",
             visibleRoutes.Select(route =>
-                $"- {FormatUsage(registered.Command.Name, route)}"));
+                $"- {FormatUsage(registered.Command.Name, route)}"
+            )
+        );
         error = CommandResult.LocalizedFail(
             "command.usage",
             "CommandUsage_Message",
             "指令参数不正确。\n用法：\n{0}",
-            usage);
+            usage
+        );
         return false;
     }
 
@@ -339,10 +380,12 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
     private bool IsVisible(
         TextCommand command,
         CommandPrincipal principal,
-        CommandDomain? domain)
+        CommandDomain? domain
+    )
     {
         return command.Routes.Any(route =>
-            MatchesDomain(route, domain) && _registry.CanInvoke(route.CommandType, principal));
+            MatchesDomain(route, domain) && _registry.CanInvoke(route.CommandType, principal)
+        );
     }
 
     private bool MatchesDomain(CommandRoute route, CommandDomain? domain)
@@ -354,26 +397,29 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
 
     private static bool MatchesCompleted(
         CommandRoute route,
-        IReadOnlyList<string> tokens)
+        IReadOnlyList<string> tokens
+    )
     {
         return !tokens.Where((token, index) =>
-            !TryMatchSegment(route.Segments[index], token, out _)).Any();
+            !TryMatchSegment(route.Segments[index], token, out _)
+        ).Any();
     }
 
     private static IReadOnlyList<CommandArgumentSuggestion> GetArgumentSuggestions(
         CommandArgument argument,
         CommandSuggestionContext context,
-        LocalizedText description)
+        LocalizedText description
+    )
     {
-        var suggestions = new Dictionary<string, CommandArgumentSuggestion>(
-            StringComparer.OrdinalIgnoreCase);
+        var suggestions = new Dictionary<string, CommandArgumentSuggestion>(StringComparer.OrdinalIgnoreCase);
         if (argument.Choices is { Count: > 0 })
         {
             foreach (var choice in argument.Choices)
             {
                 suggestions.TryAdd(
                     choice,
-                    new CommandArgumentSuggestion(choice, description));
+                    new CommandArgumentSuggestion(choice, description)
+                );
             }
         }
 
@@ -401,7 +447,8 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
     private static bool TryMatchRoute(
         CommandRoute route,
         IReadOnlyList<string> tokens,
-        out Dictionary<string, object> values)
+        out Dictionary<string, object> values
+    )
     {
         values = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
         if (route.Segments.Count != tokens.Count)
@@ -458,11 +505,13 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
         var suffix = string.Join(
             " ",
             route.Segments.Select(segment => segment switch
-            {
-                CommandLiteral literal => literal.Value,
-                CommandArgument argument => $"<{argument.Name}>",
-                _ => string.Empty
-            }));
+                {
+                    CommandLiteral literal => literal.Value,
+                    CommandArgument argument => $"<{argument.Name}>",
+                    _ => string.Empty
+                }
+            )
+        );
         return string.IsNullOrEmpty(suffix) ? $"/{name}" : $"/{name} {suffix}";
     }
 }

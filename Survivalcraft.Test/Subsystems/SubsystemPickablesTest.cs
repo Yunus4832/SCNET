@@ -64,7 +64,8 @@ public sealed class SubsystemPickablesTest
             1,
             Vector3.Zero,
             Vector3.Zero,
-            null);
+            null
+        );
 
         Assert.NotNull(pickable);
         Assert.Null(subsystem.CreatePickable(42, 1, 1, Vector3.Zero, Vector3.Zero, null));

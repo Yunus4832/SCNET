@@ -21,7 +21,8 @@ public class ComponentDispenser : ComponentInventoryBase
     {
         var coordinates = _componentBlockEntity.Coordinates;
         var data = Terrain.ExtractData(
-            _subsystemTerrain.Terrain.GetCellValue(coordinates.X, coordinates.Y, coordinates.Z));
+            _subsystemTerrain.Terrain.GetCellValue(coordinates.X, coordinates.Y, coordinates.Z)
+        );
         var direction = DispenserBlock.GetDirection(data);
         var mode = DispenserBlock.GetMode(data);
         var num = 0;
@@ -81,18 +82,35 @@ public class ComponentDispenser : ComponentInventoryBase
             {
                 const float s = 1.8f;
                 _subsystemPickables.AddPickable(value, 1, position, s * (vector + sharedRandom.Vector3(0.2f)), null);
-                _subsystemAudio.PlaySound("Audio/DispenserDispense", 1f, 0f,
-                    new Vector3(position.X, position.Y, position.Z), 3f, true);
+                _subsystemAudio.PlaySound(
+                    "Audio/DispenserDispense",
+                    1f,
+                    0f,
+                    new Vector3(position.X, position.Y, position.Z),
+                    3f,
+                    true
+                );
                 return;
             }
 
             var s2 = sharedRandom.Float(39f, 41f);
-            if (_subsystemProjectiles.FireProjectile(value, position,
-                    s2 * (vector + sharedRandom.Vector3(0.025f) + new Vector3(0f, 0.05f, 0f)), Vector3.Zero,
-                    _componentBlockEntity.OwnPlayerData?.ComponentPlayer) != null)
+            if (_subsystemProjectiles.FireProjectile(
+                    value,
+                    position,
+                    s2 * (vector + sharedRandom.Vector3(0.025f) + new Vector3(0f, 0.05f, 0f)),
+                    Vector3.Zero,
+                    _componentBlockEntity.OwnPlayerData?.ComponentPlayer
+                ) !=
+                null)
             {
-                _subsystemAudio.PlaySound("Audio/DispenserShoot", 1f, 0f,
-                    new Vector3(position.X, position.Y, position.Z), 4f, true);
+                _subsystemAudio.PlaySound(
+                    "Audio/DispenserShoot",
+                    1f,
+                    0f,
+                    new Vector3(position.X, position.Y, position.Z),
+                    4f,
+                    true
+                );
             }
             else
             {

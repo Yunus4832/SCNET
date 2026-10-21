@@ -2,6 +2,7 @@ namespace Game;
 
 public enum BreathingMode
 {
-    Air,
-    Water
+    Air = 0,
+
+    Water = 1
 }

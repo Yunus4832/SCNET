@@ -18,7 +18,8 @@ public sealed class CommandDispatcher(CommandRegistry registry)
                 "command.unregistered",
                 "CommandTypeUnregistered_Message",
                 "未注册的命令类型：{0}。",
-                command.GetType().Name);
+                command.GetType().Name
+            );
         }
 
         var definition = registered.Definition;
@@ -29,7 +30,8 @@ public sealed class CommandDispatcher(CommandRegistry registry)
             return CommandResult.LocalizedFail(
                 "command.unavailable",
                 "CommandEnvironmentUnavailable_Message",
-                "当前运行环境不支持该命令。");
+                "当前运行环境不支持该命令。"
+            );
         }
 
         if (!definition.IsAuthorized(context, command))
@@ -37,7 +39,8 @@ public sealed class CommandDispatcher(CommandRegistry registry)
             return CommandResult.LocalizedFail(
                 "command.forbidden",
                 "CommandTypedForbidden_Message",
-                "你没有执行该命令的权限。");
+                "你没有执行该命令的权限。"
+            );
         }
 
         try
@@ -48,11 +51,13 @@ public sealed class CommandDispatcher(CommandRegistry registry)
         {
             Log.Error(
                 $"Command {registered.Id} failed, principal={context.Principal.Name}, " +
-                $"channel={context.Channel}, correlation={context.CorrelationId}: {exception}");
+                $"channel={context.Channel}, correlation={context.CorrelationId}: {exception}"
+            );
             return CommandResult.LocalizedFail(
                 "command.failed",
                 "CommandFailed_Message",
-                "命令执行失败，详细信息已写入服务器日志。");
+                "命令执行失败，详细信息已写入服务器日志。"
+            );
         }
     }
 }

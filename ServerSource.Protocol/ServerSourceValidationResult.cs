@@ -1,13 +1,8 @@
 namespace ServerSource.Protocol;
 
-public sealed class ServerSourceValidationResult
+public sealed class ServerSourceValidationResult(IReadOnlyList<ServerSourceValidationIssue> issues)
 {
-    public ServerSourceValidationResult(IReadOnlyList<ServerSourceValidationIssue> issues)
-    {
-        Issues = issues;
-    }
-
     public bool IsValid => Issues.Count == 0;
 
-    public IReadOnlyList<ServerSourceValidationIssue> Issues { get; }
+    public IReadOnlyList<ServerSourceValidationIssue> Issues { get; } = issues;
 }

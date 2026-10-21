@@ -26,9 +26,8 @@ public sealed class RevokePublisherKeyCommandHandler(PublisherRepository reposit
 
 public sealed record RestorePublisherKeyCommand(PublisherId PublisherId) : ICommand<bool>;
 
-public sealed class RestorePublisherKeyCommandHandler(
-    PublisherRepository repository
-) : ICommandHandler<RestorePublisherKeyCommand, bool>
+public sealed class RestorePublisherKeyCommandHandler(PublisherRepository repository)
+    : ICommandHandler<RestorePublisherKeyCommand, bool>
 {
     public async Task<bool> Handle(RestorePublisherKeyCommand command, CancellationToken cancellationToken)
     {

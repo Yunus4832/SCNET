@@ -17,8 +17,10 @@ public sealed class DeleteUnreferencedPackagesCommandHandler(ContentServerDbCont
             .ToListAsync(cancellationToken);
         foreach (var package in packages)
         {
-            if (!await db.ContentVersions.AnyAsync(version => version.PackageBlobId == package.Id,
-                    cancellationToken))
+            if (!await db.ContentVersions.AnyAsync(
+                    version => version.PackageBlobId == package.Id,
+                    cancellationToken
+                ))
             {
                 package.Delete();
             }

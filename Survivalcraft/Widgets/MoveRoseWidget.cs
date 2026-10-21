@@ -55,7 +55,8 @@ public class MoveRoseWidget : Widget
                     _jumpTouchId = touchLocation.Id;
                 }
 
-                if (touchLocation.State == TouchLocationState.Released && _jumpTouchId.HasValue &&
+                if (touchLocation.State == TouchLocationState.Released &&
+                    _jumpTouchId.HasValue &&
                     touchLocation.Id == _jumpTouchId.Value)
                 {
                     _jumpTouchId = null;
@@ -115,16 +116,32 @@ public class MoveRoseWidget : Widget
             var subtextureCoords = GetSubtextureCoords(subtexture2, new Vector2(0f, 0f));
             var subtextureCoords2 = GetSubtextureCoords(subtexture2, new Vector2(1f, 0f));
             var subtextureCoords3 = GetSubtextureCoords(subtexture2, new Vector2(0.5f, 0.5f));
-            texturedBatch2D2.QueueTriangle(vector, vector2, p, 0f, subtextureCoords, subtextureCoords2,
-                subtextureCoords3, GlobalColorTransform);
+            texturedBatch2D2.QueueTriangle(
+                vector,
+                vector2,
+                p,
+                0f,
+                subtextureCoords,
+                subtextureCoords2,
+                subtextureCoords3,
+                GlobalColorTransform
+            );
         }
         else
         {
             var subtextureCoords4 = GetSubtextureCoords(subtexture, new Vector2(0f, 0f));
             var subtextureCoords5 = GetSubtextureCoords(subtexture, new Vector2(1f, 0f));
             var subtextureCoords6 = GetSubtextureCoords(subtexture, new Vector2(0.5f, 0.5f));
-            texturedBatch2D.QueueTriangle(vector, vector2, p, 0f, subtextureCoords4, subtextureCoords5,
-                subtextureCoords6, GlobalColorTransform);
+            texturedBatch2D.QueueTriangle(
+                vector,
+                vector2,
+                p,
+                0f,
+                subtextureCoords4,
+                subtextureCoords5,
+                subtextureCoords6,
+                GlobalColorTransform
+            );
         }
 
         if (_direction.X > 0f)
@@ -132,16 +149,32 @@ public class MoveRoseWidget : Widget
             var subtextureCoords7 = GetSubtextureCoords(subtexture2, new Vector2(1f, 0f));
             var subtextureCoords8 = GetSubtextureCoords(subtexture2, new Vector2(1f, 1f));
             var subtextureCoords9 = GetSubtextureCoords(subtexture2, new Vector2(0.5f, 0.5f));
-            texturedBatch2D2.QueueTriangle(vector2, vector3, p, 0f, subtextureCoords7, subtextureCoords8,
-                subtextureCoords9, GlobalColorTransform);
+            texturedBatch2D2.QueueTriangle(
+                vector2,
+                vector3,
+                p,
+                0f,
+                subtextureCoords7,
+                subtextureCoords8,
+                subtextureCoords9,
+                GlobalColorTransform
+            );
         }
         else
         {
             var subtextureCoords10 = GetSubtextureCoords(subtexture, new Vector2(1f, 0f));
             var subtextureCoords11 = GetSubtextureCoords(subtexture, new Vector2(1f, 1f));
             var subtextureCoords12 = GetSubtextureCoords(subtexture, new Vector2(0.5f, 0.5f));
-            texturedBatch2D.QueueTriangle(vector2, vector3, p, 0f, subtextureCoords10, subtextureCoords11,
-                subtextureCoords12, GlobalColorTransform);
+            texturedBatch2D.QueueTriangle(
+                vector2,
+                vector3,
+                p,
+                0f,
+                subtextureCoords10,
+                subtextureCoords11,
+                subtextureCoords12,
+                GlobalColorTransform
+            );
         }
 
         if (_direction.Z < 0f)
@@ -149,16 +182,32 @@ public class MoveRoseWidget : Widget
             var subtextureCoords13 = GetSubtextureCoords(subtexture2, new Vector2(1f, 1f));
             var subtextureCoords14 = GetSubtextureCoords(subtexture2, new Vector2(0f, 1f));
             var subtextureCoords15 = GetSubtextureCoords(subtexture2, new Vector2(0.5f, 0.5f));
-            texturedBatch2D2.QueueTriangle(vector3, vector4, p, 0f, subtextureCoords13, subtextureCoords14,
-                subtextureCoords15, GlobalColorTransform);
+            texturedBatch2D2.QueueTriangle(
+                vector3,
+                vector4,
+                p,
+                0f,
+                subtextureCoords13,
+                subtextureCoords14,
+                subtextureCoords15,
+                GlobalColorTransform
+            );
         }
         else
         {
             var subtextureCoords16 = GetSubtextureCoords(subtexture, new Vector2(1f, 1f));
             var subtextureCoords17 = GetSubtextureCoords(subtexture, new Vector2(0f, 1f));
             var subtextureCoords18 = GetSubtextureCoords(subtexture, new Vector2(0.5f, 0.5f));
-            texturedBatch2D.QueueTriangle(vector3, vector4, p, 0f, subtextureCoords16, subtextureCoords17,
-                subtextureCoords18, GlobalColorTransform);
+            texturedBatch2D.QueueTriangle(
+                vector3,
+                vector4,
+                p,
+                0f,
+                subtextureCoords16,
+                subtextureCoords17,
+                subtextureCoords18,
+                GlobalColorTransform
+            );
         }
 
         if (_direction.X < 0f)
@@ -166,16 +215,32 @@ public class MoveRoseWidget : Widget
             var subtextureCoords19 = GetSubtextureCoords(subtexture2, new Vector2(0f, 1f));
             var subtextureCoords20 = GetSubtextureCoords(subtexture2, new Vector2(0f, 0f));
             var subtextureCoords21 = GetSubtextureCoords(subtexture2, new Vector2(0.5f, 0.5f));
-            texturedBatch2D2.QueueTriangle(vector4, vector, p, 0f, subtextureCoords19, subtextureCoords20,
-                subtextureCoords21, GlobalColorTransform);
+            texturedBatch2D2.QueueTriangle(
+                vector4,
+                vector,
+                p,
+                0f,
+                subtextureCoords19,
+                subtextureCoords20,
+                subtextureCoords21,
+                GlobalColorTransform
+            );
         }
         else
         {
             var subtextureCoords22 = GetSubtextureCoords(subtexture, new Vector2(0f, 1f));
             var subtextureCoords23 = GetSubtextureCoords(subtexture, new Vector2(0f, 0f));
             var subtextureCoords24 = GetSubtextureCoords(subtexture, new Vector2(0.5f, 0.5f));
-            texturedBatch2D.QueueTriangle(vector4, vector, p, 0f, subtextureCoords22, subtextureCoords23,
-                subtextureCoords24, GlobalColorTransform);
+            texturedBatch2D.QueueTriangle(
+                vector4,
+                vector,
+                p,
+                0f,
+                subtextureCoords22,
+                subtextureCoords23,
+                subtextureCoords24,
+                GlobalColorTransform
+            );
         }
 
         if (texturedBatch2D == texturedBatch2D2)
@@ -190,7 +255,9 @@ public class MoveRoseWidget : Widget
 
     public static Vector2 GetSubtextureCoords(Subtexture subtexture, Vector2 texCoords)
     {
-        return new Vector2(MathUtils.Lerp(subtexture.TopLeft.X, subtexture.BottomRight.X, texCoords.X),
-            MathUtils.Lerp(subtexture.TopLeft.Y, subtexture.BottomRight.Y, texCoords.Y));
+        return new Vector2(
+            MathUtils.Lerp(subtexture.TopLeft.X, subtexture.BottomRight.X, texCoords.X),
+            MathUtils.Lerp(subtexture.TopLeft.Y, subtexture.BottomRight.Y, texCoords.Y)
+        );
     }
 }

@@ -30,33 +30,37 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
         switch (package.PackageEventType)
         {
             case ComponentInventoryPackage.EventType.ActiveSlotChange:
-                subsystemInventories?.FindInventoryById(package.InventoryID, inventory =>
-                {
-                    if (!IsValidSlot(package.ActiveSlot, inventory.SlotsCount))
+                subsystemInventories?.FindInventoryById(
+                    package.InventoryID,
+                    inventory =>
                     {
-                        return;
-                    }
+                        if (!IsValidSlot(package.ActiveSlot, inventory.SlotsCount))
+                        {
+                            return;
+                        }
 
-                    if (isServer && (context.Sender is null ||
-                                     !SubsystemInventories.CanClientAccess(inventory, context.Sender)))
-                    {
-                        return;
-                    }
+                        if (isServer &&
+                            (context.Sender is null ||
+                             !SubsystemInventories.CanClientAccess(inventory, context.Sender)))
+                        {
+                            return;
+                        }
 
-                    inventory.ActiveSlotIndex = package.ActiveSlot;
-                    if (!isServer)
-                    {
-                        return;
-                    }
+                        inventory.ActiveSlotIndex = package.ActiveSlot;
+                        if (!isServer)
+                        {
+                            return;
+                        }
 
-                    var observers = SubsystemInventories.GetObservers(inventory)
-                        .Where(client => client.IsConnected && !ReferenceEquals(client, context.Sender))
-                        .ToArray();
-                    if (observers.Length > 0)
-                    {
-                        netNode.QueuePackage(package, PackageAudience.To(observers));
+                        var observers = SubsystemInventories.GetObservers(inventory)
+                            .Where(client => client.IsConnected && !ReferenceEquals(client, context.Sender))
+                            .ToArray();
+                        if (observers.Length > 0)
+                        {
+                            netNode.QueuePackage(package, PackageAudience.To(observers));
+                        }
                     }
-                });
+                );
                 break;
             case ComponentInventoryPackage.EventType.InventorySync:
                 if (isServer)
@@ -67,20 +71,26 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                     //客户端接受服务器的包
                     foreach (var item in package.Slots)
                     {
-                        subsystemInventories?.FindInventoryById(item.Key, inventory =>
-                        {
-                            foreach (var item2 in item.Value)
+                        subsystemInventories?.FindInventoryById(
+                            item.Key,
+                            inventory =>
                             {
-                                if (item2.Type == 0)
+                                foreach (var item2 in item.Value)
                                 {
-                                    inventory.SetSlotValue(item2.SlotIndex, new ComponentInventoryBase.Slot { Count = item2.Count, Value = item2.Value });
-                                }
-                                else
-                                {
-                                    inventory.SetSlotValue(item2.SlotIndex, item2.ClothingList.ToList());
+                                    if (item2.Type == 0)
+                                    {
+                                        inventory.SetSlotValue(
+                                            item2.SlotIndex,
+                                            new ComponentInventoryBase.Slot { Count = item2.Count, Value = item2.Value }
+                                        );
+                                    }
+                                    else
+                                    {
+                                        inventory.SetSlotValue(item2.SlotIndex, item2.ClothingList.ToList());
+                                    }
                                 }
                             }
-                        });
+                        );
                     }
                 }
 
@@ -122,20 +132,24 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                         targetInventoryObject =
                             subsystemInventories?.GetInventoryById(package.TargetInventorySlot.InventoryId);
                         if (sourceInventoryObject is not null)
-                        // 数据捕捉
+                            // 数据捕捉
                         {
                             if (targetInventoryObject != null &&
                                 IsValidSlot(package.SourceInventorySlot.SlotIndex, sourceInventoryObject.SlotsCount) &&
                                 IsValidSlot(package.TargetInventorySlot.SlotIndex, targetInventoryObject.SlotsCount) &&
                                 package.TargetInventorySlot.Count > 0 &&
-                                package.TargetInventorySlot.Count <= sourceInventoryObject.GetSlotCount(package.SourceInventorySlot.SlotIndex) &&
+                                package.TargetInventorySlot.Count <=
+                                sourceInventoryObject.GetSlotCount(package.SourceInventorySlot.SlotIndex) &&
                                 SubsystemInventories.CanClientAccess(sourceInventoryObject, context.Sender) &&
                                 SubsystemInventories.CanClientAccess(targetInventoryObject, context.Sender))
                             {
-                                InventorySlotWidget.HandleMoveItem(sourceInventoryObject,
+                                InventorySlotWidget.HandleMoveItem(
+                                    sourceInventoryObject,
                                     package.SourceInventorySlot.SlotIndex,
-                                    targetInventoryObject, package.TargetInventorySlot.SlotIndex,
-                                    package.TargetInventorySlot.Count);
+                                    targetInventoryObject,
+                                    package.TargetInventorySlot.SlotIndex,
+                                    package.TargetInventorySlot.Count
+                                );
                             }
                         }
                     }
@@ -158,7 +172,7 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                         targetInventoryObject =
                             subsystemInventories?.GetInventoryById(package.TargetInventorySlot.InventoryId);
                         if (sourceInventoryObject is not null)
-                        // 数据捕捉
+                            // 数据捕捉
                         {
                             if (targetInventoryObject != null &&
                                 IsValidSlot(package.SourceInventorySlot.SlotIndex, sourceInventoryObject.SlotsCount) &&
@@ -167,10 +181,14 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                                 SubsystemInventories.CanClientAccess(sourceInventoryObject, context.Sender) &&
                                 SubsystemInventories.CanClientAccess(targetInventoryObject, context.Sender))
                             {
-                                InventorySlotWidget.HandleDragDrop(sourceInventoryObject,
+                                InventorySlotWidget.HandleDragDrop(
+                                    sourceInventoryObject,
                                     package.SourceInventorySlot.SlotIndex,
-                                    dragMode, targetInventoryObject, package.TargetInventorySlot.SlotIndex,
-                                    package.ProcessingOnly);
+                                    dragMode,
+                                    targetInventoryObject,
+                                    package.TargetInventorySlot.SlotIndex,
+                                    package.ProcessingOnly
+                                );
                             }
                         }
                     }

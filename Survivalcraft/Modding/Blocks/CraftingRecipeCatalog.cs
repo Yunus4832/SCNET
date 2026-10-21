@@ -27,8 +27,10 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
                 var resultParts = attributeValue.Split('@');
                 var languageId = catalog.GetBlock(ResourceId.Parse(resultParts[0])).GetType().Name +
                                  (resultParts.Length > 1 ? ":" + resultParts[1] : string.Empty);
-                desc = LanguageManager.GetBlock(languageId,
-                    string.Concat("CRDescription:", desc.AsSpan(1, desc.Length - 2)));
+                desc = LanguageManager.GetBlock(
+                    languageId,
+                    string.Concat("CRDescription:", desc.AsSpan(1, desc.Length - 2))
+                );
             }
 
             craftingRecipe.ResultValue = DecodeResult(attributeValue);
@@ -48,20 +50,23 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
                 catalog.Blocks[Terrain.ExtractContents(craftingRecipe.ResultValue)].MaxStacking)
             {
                 throw new InvalidOperationException(
-                    $"In recipe for \"{attributeValue}\" ResultCount is larger than max stacking of result block.");
+                    $"In recipe for \"{attributeValue}\" ResultCount is larger than max stacking of result block."
+                );
             }
 
-            if (craftingRecipe.RemainsValue != 0 && craftingRecipe.RemainsCount >
+            if (craftingRecipe.RemainsValue != 0 &&
+                craftingRecipe.RemainsCount >
                 catalog.Blocks[Terrain.ExtractContents(craftingRecipe.RemainsValue)].MaxStacking)
             {
                 throw new InvalidOperationException(
-                    $"In Recipe for \"{attributeValue2}\" RemainsCount is larger than max stacking of remains block.");
+                    $"In Recipe for \"{attributeValue2}\" RemainsCount is larger than max stacking of remains block."
+                );
             }
 
             var dictionary = new Dictionary<char, string>();
             foreach (var item2 in from a in item.Attributes()
-                                  where a.Name.LocalName.Length == 1 && char.IsLower(a.Name.LocalName[0])
-                                  select a)
+                     where a.Name.LocalName.Length == 1 && char.IsLower(a.Name.LocalName[0])
+                     select a)
             {
                 DecodeIngredient(item2.Value, out var craftingId, out var data);
                 if (catalog.FindBlocksByCraftingId(craftingId).Length == 0)
@@ -72,7 +77,8 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
                 if (data is < 0 or > 262143)
                 {
                     throw new InvalidOperationException(
-                        $"Data in recipe ingredient \"{item2.Value}\" must be between 0 and 0x3FFFF.");
+                        $"Data in recipe ingredient \"{item2.Value}\" must be between 0 and 0x3FFFF."
+                    );
                 }
 
                 dictionary.Add(item2.Name.LocalName[0], item2.Value);
@@ -111,12 +117,14 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
             _recipes.AddRange(block.GetProceduralCraftingRecipes());
         }
 
-        _recipes.Sort(delegate (CraftingRecipe r1, CraftingRecipe r2)
-        {
-            var y = r1.Ingredients.Count(s => !string.IsNullOrEmpty(s));
-            var x = r2.Ingredients.Count(s => !string.IsNullOrEmpty(s));
-            return Comparer<int>.Default.Compare(x, y);
-        });
+        _recipes.Sort(
+            delegate(CraftingRecipe r1, CraftingRecipe r2)
+            {
+                var y = r1.Ingredients.Count(s => !string.IsNullOrEmpty(s));
+                var x = r2.Ingredients.Count(s => !string.IsNullOrEmpty(s));
+                return Comparer<int>.Default.Compare(x, y);
+            }
+        );
     }
 
     public CraftingRecipe? FindMatchingRecipe(
@@ -149,7 +157,8 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
         if (craftingRecipe == null)
         {
             foreach (var recipe in ReadonlyRecipes.Where(recipe =>
-                         !recipe.IsAdHocCraftingRecipe && MatchRecipe(recipe.Ingredients, ingredients)))
+                         !recipe.IsAdHocCraftingRecipe && MatchRecipe(recipe.Ingredients, ingredients)
+                     ))
             {
                 craftingRecipe = recipe;
                 break;
@@ -175,11 +184,17 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
                 craftingRecipe = !(craftingRecipe.RequiredHeatLevel > 0f)
                     ? new CraftingRecipe
                     {
-                        Message = string.Format(LanguageManager.Get(_languageSection, 2), craftingRecipe.RequiredPlayerLevel)
+                        Message = string.Format(
+                            LanguageManager.Get(_languageSection, 2),
+                            craftingRecipe.RequiredPlayerLevel
+                        )
                     }
                     : new CraftingRecipe
                     {
-                        Message = string.Format(LanguageManager.Get(_languageSection, 3), craftingRecipe.RequiredPlayerLevel)
+                        Message = string.Format(
+                            LanguageManager.Get(_languageSection, 3),
+                            craftingRecipe.RequiredPlayerLevel
+                        )
                     };
             }
         }
@@ -215,7 +230,9 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
         var block = catalog.GetBlock(ResourceId.Parse(array[0]));
         return Terrain.MakeBlockValue(
             data: array.Length >= 2 ? int.Parse(array[1], CultureInfo.InvariantCulture) : 0,
-            contents: block.BlockIndex, light: 0);
+            contents: block.BlockIndex,
+            light: 0
+        );
     }
 
     public static void DecodeIngredient(string ingredient, out string craftingId, out int? data)
@@ -266,8 +283,13 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
         return false;
     }
 
-    private static bool TransformRecipe(string[] transformedIngredients, string[] ingredients, int shiftX, int shiftY,
-        bool flip)
+    private static bool TransformRecipe(
+        string[] transformedIngredients,
+        string[] ingredients,
+        int shiftX,
+        int shiftY,
+        bool flip
+    )
     {
         for (var i = 0; i < 9; i++)
         {

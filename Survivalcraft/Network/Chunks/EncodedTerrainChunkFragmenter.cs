@@ -12,7 +12,8 @@ public static class EncodedTerrainChunkFragmenter
 
     public static IEnumerable<EncodedTerrainChunkFragment> Split(
         EncodedTerrainChunk chunk,
-        ChunkAllocationId allocation)
+        ChunkAllocationId allocation
+    )
     {
         ArgumentNullException.ThrowIfNull(chunk);
         if (chunk.Payload.Length > MaximumPayloadLength)
@@ -36,7 +37,8 @@ public static class EncodedTerrainChunkFragmenter
                 chunk.Payload.Length,
                 (ushort)index,
                 (ushort)count,
-                chunk.Payload.AsSpan(offset, length).ToArray());
+                chunk.Payload.AsSpan(offset, length).ToArray()
+            );
         }
     }
 }

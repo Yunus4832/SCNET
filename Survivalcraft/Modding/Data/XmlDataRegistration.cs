@@ -5,8 +5,9 @@ namespace Game.Modding.Data;
 
 public enum XmlContributionMode
 {
-    Base,
-    Patch
+    Base = 0,
+
+    Patch = 1
 }
 
 public sealed record XmlDataRegistration(XmlContributionMode Mode, Func<XElement> Read);
@@ -24,7 +25,8 @@ public static class XmlDataExtensions
         string registryName,
         ResourceId id,
         XmlContributionMode mode,
-        Func<XElement> read)
+        Func<XElement> read
+    )
     {
         ArgumentNullException.ThrowIfNull(read);
         return extensions.Register(registryName, id, new XmlDataRegistration(mode, read));

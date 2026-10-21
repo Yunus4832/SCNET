@@ -161,8 +161,7 @@ public sealed class TerrainSerializer24Test
         using var allowSave = new ManualResetEventSlim();
         storage.SaveStarted = saveStarted;
         storage.AllowSave = allowSave;
-        var saveTask = Task.Run(() => serializer.SaveSnapshot(
-            new Point2(9, 9), source.Cells, source.Shafts));
+        var saveTask = Task.Run(() => serializer.SaveSnapshot(new Point2(9, 9), source.Cells, source.Shafts));
 
         try
         {

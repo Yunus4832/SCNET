@@ -58,7 +58,8 @@ public sealed class PlayerManagementItemWidget : CanvasWidget
         object item,
         PlayerData main,
         PlayerListWidget.ListKind kind,
-        float width)
+        float width
+    )
     {
         if (item is not PlayerData and not PlayerListEntry and not BlacklistPlayerData)
         {
@@ -72,7 +73,8 @@ public sealed class PlayerManagementItemWidget : CanvasWidget
         Size = new Vector2(width, 52f);
         _name.Margin = new Vector2(
             kind == PlayerListWidget.ListKind.BlackList ? 14f : 32f,
-            0f);
+            0f
+        );
         Children.Add(_onlineState);
         Children.Add(_name);
         Children.Add(_summary);
@@ -133,11 +135,13 @@ public sealed class PlayerManagementItemWidget : CanvasWidget
         {
             PlayerData player when _main.SubsystemPlayers.PlayerList.TryGetValue(
                 player.PlayerGUID,
-                out var playerListEntry) => playerListEntry,
+                out var playerListEntry
+            ) => playerListEntry,
             PlayerData player => new PlayerListEntry(
                 player.PlayerGUID,
                 player.Name,
-                true),
+                true
+            ),
             PlayerListEntry player => player,
             _ => null
         };

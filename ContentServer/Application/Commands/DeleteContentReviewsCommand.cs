@@ -15,7 +15,8 @@ public sealed class DeleteContentReviewsCommandHandler(ContentServerDbContext db
     {
         var reviews = await db.ReviewRecords.Where(review =>
                 (review.TargetType == "Content" && review.TargetId == command.ContentId) ||
-                (review.TargetType == "ContentVersion" && command.VersionIds.Contains(review.TargetId)))
+                (review.TargetType == "ContentVersion" && command.VersionIds.Contains(review.TargetId))
+            )
             .ToListAsync(cancellationToken);
         foreach (var review in reviews)
         {

@@ -21,12 +21,32 @@ public abstract class WoodBlock(int cutTextureSlot, int sideTextureSlot) : CubeB
                 generator.GenerateCubeVertices(this, value, x, y, z, Color.White, geometry.OpaqueSubsetsByFace);
                 break;
             case 0:
-                generator.GenerateCubeVertices(this, value, x, y, z, 1, 0, 0, Color.White,
-                    geometry.OpaqueSubsetsByFace);
+                generator.GenerateCubeVertices(
+                    this,
+                    value,
+                    x,
+                    y,
+                    z,
+                    1,
+                    0,
+                    0,
+                    Color.White,
+                    geometry.OpaqueSubsetsByFace
+                );
                 break;
             default:
-                generator.GenerateCubeVertices(this, value, x, y, z, 0, 1, 1, Color.White,
-                    geometry.OpaqueSubsetsByFace);
+                generator.GenerateCubeVertices(
+                    this,
+                    value,
+                    x,
+                    y,
+                    z,
+                    0,
+                    1,
+                    1,
+                    Color.White,
+                    geometry.OpaqueSubsetsByFace
+                );
                 break;
         }
     }
@@ -82,11 +102,13 @@ public abstract class WoodBlock(int cutTextureSlot, int sideTextureSlot) : CubeB
     {
         var data = Terrain.ExtractData(oldValue);
         data = SetCutFace(data, 4);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Count = 1
+            }
+        );
         showDebris = true;
     }
 

@@ -9,8 +9,10 @@ public sealed class ComponentMountPackageHandlerTest
     [InlineData(ComponentMountPackage.EventType.Dismount, false)]
     [InlineData(ComponentMountPackage.EventType.MountRequest, true)]
     [InlineData(ComponentMountPackage.EventType.DismountRequest, true)]
-    public void RequestsAndAuthoritativeEventsHaveOppositeDirections(ComponentMountPackage.EventType type,
-        bool acceptedByServer)
+    public void RequestsAndAuthoritativeEventsHaveOppositeDirections(
+        ComponentMountPackage.EventType type,
+        bool acceptedByServer
+    )
     {
         Assert.Equal(acceptedByServer, ComponentMountPackageHandler.AcceptsDirection(type, true));
         Assert.Equal(!acceptedByServer, ComponentMountPackageHandler.AcceptsDirection(type, false));

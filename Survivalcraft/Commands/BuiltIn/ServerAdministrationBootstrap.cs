@@ -65,7 +65,8 @@ public static class ServerAdministrationBootstrap
     public static BootstrapClaimResult TryClaim(
         Project project,
         PlayerData player,
-        string claimCode)
+        string claimCode
+    )
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(player);
@@ -74,7 +75,8 @@ public static class ServerAdministrationBootstrap
             return BootstrapClaimResult.LocalizedFail(
                 "auth.server_only",
                 "AuthServerOnly_Message",
-                "服务器认领只能在服务器上完成。");
+                "服务器认领只能在服务器上完成。"
+            );
         }
 
         if (!ReferenceEquals(player.Project, project) ||
@@ -83,7 +85,8 @@ public static class ServerAdministrationBootstrap
             return BootstrapClaimResult.LocalizedFail(
                 "auth.player_offline",
                 "AuthPlayerBindingInvalid_Message",
-                "认领必须绑定到当前服务器中的在线玩家。");
+                "认领必须绑定到当前服务器中的在线玩家。"
+            );
         }
 
         var state = GetState(project);
@@ -94,7 +97,8 @@ public static class ServerAdministrationBootstrap
                 return BootstrapClaimResult.LocalizedFail(
                     "auth.already_claimed",
                     "AuthClaimed_Message",
-                    "服务器管理员已经完成首次认领。");
+                    "服务器管理员已经完成首次认领。"
+                );
             }
 
             state.ClaimCode ??= GenerateClaimCode();
@@ -103,19 +107,22 @@ public static class ServerAdministrationBootstrap
                 return BootstrapClaimResult.LocalizedFail(
                     "auth.invalid_code",
                     "AuthInvalidCode_Message",
-                    "服务器认领码不正确。");
+                    "服务器认领码不正确。"
+                );
             }
 
             player.CommandPermissions.Grant(
                 BuiltInPermissionIds.ManageStandard,
-                canDelegate: true);
+                canDelegate: true
+            );
             project.FindSubsystem<SubsystemGameInfo>(true)!
                 .ServerAdministrationClaimed = true;
             state.ClaimCode = null;
             return BootstrapClaimResult.LocalizedOk(
                 "AuthClaimSuccess_Message",
                 "玩家 {0} 已成为首位权限管理员，可管理和再授权标准指令权限。",
-                player.Name);
+                player.Name
+            );
         }
     }
 
@@ -131,7 +138,9 @@ public static class ServerAdministrationBootstrap
         var hasAdministrator = players.PlayersData.Any(player =>
             player.CommandPermissions.Grants.Any(grant =>
                 grant.CanDelegate &&
-                grant.Permission == BuiltInPermissionIds.ManageStandard));
+                grant.Permission == BuiltInPermissionIds.ManageStandard
+            )
+        );
         if (hasAdministrator)
         {
             gameInfo.ServerAdministrationClaimed = true;
@@ -172,9 +181,11 @@ public static class ServerAdministrationBootstrap
 
     private static string NormalizeCode(string code)
     {
-        return string.Concat((code ?? string.Empty)
+        return string.Concat(
+            (code ?? string.Empty)
             .Where(character => character != '-')
-            .Select(char.ToUpperInvariant));
+            .Select(char.ToUpperInvariant)
+        );
     }
 
     private sealed class BootstrapState
@@ -190,12 +201,14 @@ public sealed record BootstrapClaimResult(
     string Code,
     string Message,
     string MessageKey = "",
-    IReadOnlyList<string>? MessageArguments = null)
+    IReadOnlyList<string>? MessageArguments = null
+)
 {
     public static BootstrapClaimResult LocalizedOk(
         string messageKey,
         string fallback,
-        params string[] arguments)
+        params string[] arguments
+    )
     {
         return new BootstrapClaimResult(
             true,
@@ -203,16 +216,19 @@ public sealed record BootstrapClaimResult(
             string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
                 fallback,
-                arguments.Cast<object>().ToArray()),
+                arguments.Cast<object>().ToArray()
+            ),
             messageKey,
-            arguments);
+            arguments
+        );
     }
 
     public static BootstrapClaimResult LocalizedFail(
         string code,
         string messageKey,
         string fallback,
-        params string[] arguments)
+        params string[] arguments
+    )
     {
         return new BootstrapClaimResult(
             false,
@@ -220,8 +236,10 @@ public sealed record BootstrapClaimResult(
             string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
                 fallback,
-                arguments.Cast<object>().ToArray()),
+                arguments.Cast<object>().ToArray()
+            ),
             messageKey,
-            arguments);
+            arguments
+        );
     }
 }

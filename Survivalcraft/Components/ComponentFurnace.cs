@@ -164,16 +164,24 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
             {
                 if (contents != 65)
                 {
-                    _subsystemTerrain.ChangeCell(coordinates.X, coordinates.Y, coordinates.Z,
-                        Terrain.ReplaceContents(cellValue, 65));
+                    _subsystemTerrain.ChangeCell(
+                        coordinates.X,
+                        coordinates.Y,
+                        coordinates.Z,
+                        Terrain.ReplaceContents(cellValue, 65)
+                    );
                 }
             }
             else
             {
                 if (contents != 64)
                 {
-                    _subsystemTerrain.ChangeCell(coordinates.X, coordinates.Y, coordinates.Z,
-                        Terrain.ReplaceContents(cellValue, 64));
+                    _subsystemTerrain.ChangeCell(
+                        coordinates.X,
+                        coordinates.Y,
+                        coordinates.Z,
+                        Terrain.ReplaceContents(cellValue, 64)
+                    );
                 }
             }
         }
@@ -197,14 +205,18 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
             {
                 CommonLib.Net.QueuePackage(
                     new ComponentFurnacePackage(Entity.EntityId, FireTimeRemaining, SmeltingProgress, HeatLevel),
-                    PackageAudience.To(observers));
+                    PackageAudience.To(observers)
+                );
             }
         }
     }
 
     public override int GetSlotCapacity(int slotIndex, int value)
     {
-        if (slotIndex != FuelSlotIndex || CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].FuelHeatLevel > 0f)
+        if (slotIndex != FuelSlotIndex ||
+            CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[Terrain.ExtractContents(value)].FuelHeatLevel >
+            0f)
         {
             return base.GetSlotCapacity(slotIndex, value);
         }
@@ -297,9 +309,10 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
             {
                 var slot = slots[ResultSlotIndex];
                 var num3 = Terrain.ExtractContents(craftingRecipe.ResultValue);
-                if (slot.Count != 0 && (craftingRecipe.ResultValue != slot.Value ||
-                                        craftingRecipe.ResultCount + slot.Count >
-                                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3].MaxStacking))
+                if (slot.Count != 0 &&
+                    (craftingRecipe.ResultValue != slot.Value ||
+                     craftingRecipe.ResultCount + slot.Count >
+                     CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3].MaxStacking))
                 {
                     craftingRecipe = null;
                 }
@@ -310,8 +323,10 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
                 if (slots[RemainsSlotIndex].Count == 0 ||
                     slots[RemainsSlotIndex].Value == craftingRecipe.RemainsValue)
                 {
-                    if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(craftingRecipe.RemainsValue)].MaxStacking -
-                        slots[RemainsSlotIndex].Count < craftingRecipe.RemainsCount)
+                    if (CurrentModRuntime.Value!.RequireWorldCatalog()
+                            .Blocks[Terrain.ExtractContents(craftingRecipe.RemainsValue)].MaxStacking -
+                        slots[RemainsSlotIndex].Count <
+                        craftingRecipe.RemainsCount)
                     {
                         craftingRecipe = null;
                     }

@@ -150,7 +150,8 @@ public class ComponentIntro : Component, IUpdateable
         );
         var introCamera = _componentPlayer.GameWidget.FindCamera<IntroCamera>()!;
         _componentPlayer.GameWidget.ActiveCamera = introCamera;
-        introCamera.CameraPosition = vector4 + new Vector3(12f * vector.X, 8f, 12f * vector.Y) +
+        introCamera.CameraPosition = vector4 +
+                                     new Vector3(12f * vector.X, 8f, 12f * vector.Y) +
                                      new Vector3(-5f * vector.Y, 0f, 5f * vector.X);
         introCamera.TargetPosition = _componentPlayer.ComponentCreatureModel.EyePosition +
                                      2.5f * new Vector3(vector.X, 0f, vector.Y);
@@ -161,8 +162,11 @@ public class ComponentIntro : Component, IUpdateable
     public void ShipViewUpdate()
     {
         var introCamera = _componentPlayer.GameWidget.FindCamera<IntroCamera>()!;
-        introCamera.Speed = MathUtils.Lerp(0f, 8f,
-            MathUtils.Saturate(((float)_subsystemGameInfo.TotalElapsedGameTime - 6f) / 3f));
+        introCamera.Speed = MathUtils.Lerp(
+            0f,
+            8f,
+            MathUtils.Saturate(((float)_subsystemGameInfo.TotalElapsedGameTime - 6f) / 3f)
+        );
         if (!(Vector3.Distance(introCamera.TargetCameraPosition, introCamera.CameraPosition) < 0.3f))
         {
             return;

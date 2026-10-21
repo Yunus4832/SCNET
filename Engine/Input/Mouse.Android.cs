@@ -14,7 +14,9 @@ public static partial class Mouse
     public struct MouseButtonInfo(MouseButton button, bool press, Point2 position)
     {
         public readonly MouseButton Button = button;
+
         public readonly bool Press = press;
+
         public Point2 Position = position;
     }
 
@@ -121,32 +123,38 @@ public static partial class Mouse
         switch (e.Action)
         {
             case MotionEventActions.Move:
+            {
+                for (var num = e.HistorySize - 1; num >= 0; num--)
                 {
-                    for (var num = e.HistorySize - 1; num >= 0; num--)
-                    {
-                        _queuedMouseMovement += new Vector2(e.GetHistoricalX(num), e.GetHistoricalY(num));
-                    }
-
-                    MousePosition = Point2.Round(e.GetX(), e.GetY());
-                    break;
+                    _queuedMouseMovement += new Vector2(e.GetHistoricalX(num), e.GetHistoricalY(num));
                 }
+
+                MousePosition = Point2.Round(e.GetX(), e.GetY());
+                break;
+            }
             case MotionEventActions.HoverMove: MousePosition = Point2.Round(e.GetX(), e.GetY()); break;
             case MotionEventActions.ButtonPress:
-                EnqueueMouseButtonEvent(TranslateMouseButton(e.ActionButton), true,
-                    Point2.Round(e.GetX(), e.GetY())); break;
+                EnqueueMouseButtonEvent(
+                    TranslateMouseButton(e.ActionButton),
+                    true,
+                    Point2.Round(e.GetX(), e.GetY())
+                ); break;
             case MotionEventActions.ButtonRelease:
-                EnqueueMouseButtonEvent(TranslateMouseButton(e.ActionButton), false,
-                    Point2.Round(e.GetX(), e.GetY())); break;
+                EnqueueMouseButtonEvent(
+                    TranslateMouseButton(e.ActionButton),
+                    false,
+                    Point2.Round(e.GetX(), e.GetY())
+                ); break;
             case MotionEventActions.PointerIdShift:
+            {
+                for (var num2 = e.HistorySize - 1; num2 >= 0; num2--)
                 {
-                    for (var num2 = e.HistorySize - 1; num2 >= 0; num2--)
-                    {
-                        _queuedMouseWheelMovement += MathUtils.Sign(e.GetHistoricalAxisValue(Axis.Vscroll, num2));
-                    }
-
-                    _queuedMouseWheelMovement += MathUtils.Sign(e.GetAxisValue(Axis.Vscroll));
-                    break;
+                    _queuedMouseWheelMovement += MathUtils.Sign(e.GetHistoricalAxisValue(Axis.Vscroll, num2));
                 }
+
+                _queuedMouseWheelMovement += MathUtils.Sign(e.GetAxisValue(Axis.Vscroll));
+                break;
+            }
         }
     }
 

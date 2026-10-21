@@ -6,14 +6,23 @@ namespace Game.Commands;
 internal sealed class PlayerTeleportRequest : IDisposable
 {
     private readonly CommandContext _context;
+
     private readonly IGameCommand _command;
+
     private readonly PlayerData _target;
+
     private readonly ComponentPlayer _character;
+
     private readonly Client? _requesterClient;
+
     private readonly TerrainUpdater _updater;
+
     private readonly Vector3 _position;
+
     private readonly double _deadline;
+
     private readonly int _locationIndex;
+
     private bool _disposed;
 
     public PlayerTeleportRequest(CommandContext context, PlayerData target, IGameCommand command, Vector3 position)
@@ -71,7 +80,9 @@ internal sealed class PlayerTeleportRequest : IDisposable
                 !registered.Definition.CanInvoke(principal, context.Project) ||
                 !registered.Definition.IsAuthorized(context, _command))
             {
-                Finish(CommandResult.LocalizedFail("command.forbidden", "CommandTypedForbidden_Message", "你没有执行该命令的权限。"));
+                Finish(
+                    CommandResult.LocalizedFail("command.forbidden", "CommandTypedForbidden_Message", "你没有执行该命令的权限。")
+                );
                 return;
             }
 
@@ -124,19 +135,29 @@ internal sealed class PlayerTeleportRequest : IDisposable
             result = result with { PanelBehavior = registered!.Definition.PanelBehavior };
         }
 
-        Log.Information($"Teleport completed: code={result.Code}, success={result.Success}, correlation={_context.CorrelationId}: {result.Message}");
+        Log.Information(
+            $"Teleport completed: code={result.Code}, success={result.Success}, correlation={_context.CorrelationId}: {result.Message}"
+        );
         if (CommonLib.WorkType == WorkType.Server && _requesterClient != null)
         {
             if (_requesterClient.IsConnected)
             {
-                CommandResultPublisher.PublishRemote(_context.Project!, result, _requesterClient, _context.CorrelationId);
+                CommandResultPublisher.PublishRemote(
+                    _context.Project!,
+                    result,
+                    _requesterClient,
+                    _context.CorrelationId
+                );
             }
         }
         else
         {
-            CommandResultPublisher.Publish(_context.Project!, result,
+            CommandResultPublisher.Publish(
+                _context.Project!,
+                result,
                 includeServer: _context.Principal.Player is null or { IsMainPlayer: true },
-                correlationId: _context.CorrelationId);
+                correlationId: _context.CorrelationId
+            );
         }
     }
 }

@@ -16,13 +16,17 @@ public class ConnectionBootstrapPackageTest
     [Fact]
     public async Task BlockMappingCrossesMtuAsOneReliableBootstrap()
     {
-        var mapping = new BlockIndexMapping(Enumerable.Range(0, 128).Select(index =>
-            new KeyValuePair<ResourceId, int>(ResourceId.Parse($"test:block_{Guid.NewGuid():N}"), 300 + index)));
+        var mapping = new BlockIndexMapping(
+            Enumerable.Range(0, 128).Select(index =>
+                new KeyValuePair<ResourceId, int>(ResourceId.Parse($"test:block_{Guid.NewGuid():N}"), 300 + index)
+            )
+        );
         var package = new BootstrapPackage
         {
             World = new WorldMetadata("Protocol test", 123, ProtocolEnum.Encode(Game.GameMode.Creative), 20),
             Epoch = Guid.NewGuid(),
-            BlockMapping = mapping.Entries.Select(pair => new BlockIndexEntry(pair.Key, checked((ushort)pair.Value))).ToArray(),
+            BlockMapping = mapping.Entries.Select(pair => new BlockIndexEntry(pair.Key, checked((ushort)pair.Value)))
+                .ToArray(),
             ClientList = new ClientPackage([]),
             ProjectData = [4, 5, 6]
         };
@@ -38,8 +42,11 @@ public class ConnectionBootstrapPackageTest
             using var reader = new ProtocolReader(message.Payload.ToArray());
             received = (BootstrapPackage)ProtocolMessageCodec.Read((byte)PackageType.Bootstrap, reader);
         };
-        var connecting = client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var connecting = client.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         while (!connecting.IsCompleted)
         {
@@ -50,8 +57,11 @@ public class ConnectionBootstrapPackageTest
 
         var connection = await connecting;
         Assert.True(payload.Length > connection.GetMaxPayloadSize(DeliveryMode.ReliableOrdered));
-        connection.Send(payload, channel: PackageTransportPolicy.Bulk.ChannelNumber,
-            delivery: DeliveryMode.ReliableOrdered);
+        connection.Send(
+            payload,
+            channel: PackageTransportPolicy.Bulk.ChannelNumber,
+            delivery: DeliveryMode.ReliableOrdered
+        );
         while (received is null)
         {
             server.DispatchEvents();
@@ -61,8 +71,11 @@ public class ConnectionBootstrapPackageTest
 
         Assert.Equal(package.Epoch, received.Epoch);
         Assert.Equal(package.ProjectData, received.ProjectData);
-        Assert.Equal(mapping.Entries.OrderBy(pair => pair.Value),
-            received.BlockMapping.Select(entry => new KeyValuePair<ResourceId, int>(entry.Id, entry.Index)).OrderBy(pair => pair.Value));
+        Assert.Equal(
+            mapping.Entries.OrderBy(pair => pair.Value),
+            received.BlockMapping.Select(entry => new KeyValuePair<ResourceId, int>(entry.Id, entry.Index))
+                .OrderBy(pair => pair.Value)
+        );
     }
 
     [Fact]
@@ -77,7 +90,12 @@ public class ConnectionBootstrapPackageTest
             ClientList = ClientPackageBuilder.Snapshot([new Client(null, 1, token, Guid.NewGuid(), null)])
         };
         Assert.True(BootstrapPackageHandler.CanApply(package, node));
-        Assert.False(BootstrapPackageHandler.CanApply(package with { World = package.World with { Mode = byte.MaxValue } }, node));
+        Assert.False(
+            BootstrapPackageHandler.CanApply(
+                package with { World = package.World with { Mode = byte.MaxValue } },
+                node
+            )
+        );
         node.TokenId = Guid.NewGuid();
         Assert.False(BootstrapPackageHandler.CanApply(package, node));
         node.TokenId = token;

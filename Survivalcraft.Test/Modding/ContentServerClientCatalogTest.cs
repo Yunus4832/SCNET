@@ -15,15 +15,27 @@ public sealed class ContentServerClientCatalogTest
     public async Task SignalingDirectoryValidatesPublicControlAddresses(string address, bool accepted)
     {
         Uri? requested = null;
-        using var http = new HttpClient(new StubHandler(request =>
-        {
-            requested = request.RequestUri;
-            var body = new { success = true, data = new { items = new[] { new ContentServerRendezvousService("service", "Signal", address, null) }, total = 1, pageIndex = 1, pageSize = 100 } };
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
-            };
-        }));
+        using var http = new HttpClient(
+            new StubHandler(request =>
+                {
+                    requested = request.RequestUri;
+                    var body = new
+                    {
+                        success = true,
+                        data = new
+                        {
+                            items = new[] { new ContentServerRendezvousService("service", "Signal", address, null) },
+                            total = 1,
+                            pageIndex = 1, pageSize = 100
+                        }
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
+                    };
+                }
+            )
+        );
         using var client = new ContentServerClient("https://content.example/base", http);
         if (accepted)
         {
@@ -33,29 +45,47 @@ public sealed class ContentServerClientCatalogTest
         {
             await Assert.ThrowsAsync<InvalidDataException>(() => client.ListRendezvousServicesAsync());
         }
-        Assert.Equal("https://content.example/base/api/v1/rendezvous-services?pageIndex=1&pageSize=100", requested?.AbsoluteUri);
+
+        Assert.Equal(
+            "https://content.example/base/api/v1/rendezvous-services?pageIndex=1&pageSize=100",
+            requested?.AbsoluteUri
+        );
     }
 
     [Fact]
     public async Task SignalingDirectoryReadsEveryBoundedPage()
     {
         var requests = new List<string>();
-        using var http = new HttpClient(new StubHandler(request =>
-        {
-            requests.Add(request.RequestUri!.Query);
-            var second = requests.Count == 2;
-            var items = Enumerable.Range(second ? 100 : 0, second ? 1 : 100)
-                .Select(index => new ContentServerRendezvousService(index.ToString(), $"Signal {index}",
-                    $"https://signal{index}.example/", null)).ToArray();
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(new
+        using var http = new HttpClient(
+            new StubHandler(request =>
                 {
-                    success = true,
-                    data = new { items, total = 101, pageIndex = second ? 2 : 1, pageSize = 100 }
-                }), Encoding.UTF8, "application/json")
-            };
-        }));
+                    requests.Add(request.RequestUri!.Query);
+                    var second = requests.Count == 2;
+                    var items = Enumerable.Range(second ? 100 : 0, second ? 1 : 100)
+                        .Select(index => new ContentServerRendezvousService(
+                                index.ToString(),
+                                $"Signal {index}",
+                                $"https://signal{index}.example/",
+                                null
+                            )
+                        ).ToArray();
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(
+                            JsonSerializer.Serialize(
+                                new
+                                {
+                                    success = true,
+                                    data = new { items, total = 101, pageIndex = second ? 2 : 1, pageSize = 100 }
+                                }
+                            ),
+                            Encoding.UTF8,
+                            "application/json"
+                        )
+                    };
+                }
+            )
+        );
         using var client = new ContentServerClient("https://content.example/", http);
         Assert.Equal(101, (await client.ListRendezvousServicesAsync()).Count);
         Assert.Equal(["?pageIndex=1&pageSize=100", "?pageIndex=2&pageSize=100"], requests);
@@ -65,11 +95,14 @@ public sealed class ContentServerClientCatalogTest
     public async Task CatalogQueryEscapesFiltersAndUsesBoundedPage()
     {
         Uri? requested = null;
-        using var httpClient = new HttpClient(new StubHandler(request =>
-        {
-            requested = request.RequestUri;
-            return Page([], 0, 2, 25);
-        }));
+        using var httpClient = new HttpClient(
+            new StubHandler(request =>
+                {
+                    requested = request.RequestUri;
+                    return Page([], 0, 2, 25);
+                }
+            )
+        );
         using var client = new ContentServerClient("https://content.example/base", httpClient);
 
         var page = await client.ListPageAsync(new ContentCatalogQuery("Mod", "name & value", 2, 25));
@@ -77,9 +110,11 @@ public sealed class ContentServerClientCatalogTest
         Assert.Empty(page.Items);
         Assert.Equal(
             "https://content.example/base/api/v1/content?pageIndex=2&pageSize=25&type=Mod&query=name%20%26%20value",
-            requested?.AbsoluteUri);
+            requested?.AbsoluteUri
+        );
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
-            client.ListPageAsync(new ContentCatalogQuery(PageSize: 101)));
+            client.ListPageAsync(new ContentCatalogQuery(PageSize: 101))
+        );
     }
 
     [Fact]
@@ -87,14 +122,22 @@ public sealed class ContentServerClientCatalogTest
     {
         var hash = new string('a', 64);
         Uri? requested = null;
-        using var httpClient = new HttpClient(new StubHandler(request =>
-        {
-            requested = request.RequestUri;
-            return Page([
-                Item("1.0.0", new string('b', 64)),
-                Item("1.0.0", hash)
-            ], 2, 1, 100);
-        }));
+        using var httpClient = new HttpClient(
+            new StubHandler(request =>
+                {
+                    requested = request.RequestUri;
+                    return Page(
+                        [
+                            Item("1.0.0", new string('b', 64)),
+                            Item("1.0.0", hash)
+                        ],
+                        2,
+                        1,
+                        100
+                    );
+                }
+            )
+        );
         using var client = new ContentServerClient("https://content.example", httpClient);
 
         var item = await client.FindVersionAsync("publisher:item", "1.0.0", hash);
@@ -102,18 +145,22 @@ public sealed class ContentServerClientCatalogTest
         Assert.Equal(hash, item?.PackageHash);
         Assert.Equal(
             "https://content.example/api/v1/content/publisher%3Aitem/versions?pageIndex=1&pageSize=100",
-            requested?.AbsoluteUri);
+            requested?.AbsoluteUri
+        );
     }
 
     [Fact]
     public async Task RejectsJsonResponseDeclaredAboveSizeLimit()
     {
-        using var httpClient = new HttpClient(new StubHandler(_ =>
-        {
-            var content = new StringContent("{}", Encoding.UTF8, "application/json");
-            content.Headers.ContentLength = ContentServerClient.MaximumJsonResponseBytes + 1;
-            return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };
-        }));
+        using var httpClient = new HttpClient(
+            new StubHandler(_ =>
+                {
+                    var content = new StringContent("{}", Encoding.UTF8, "application/json");
+                    content.Headers.ContentLength = ContentServerClient.MaximumJsonResponseBytes + 1;
+                    return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };
+                }
+            )
+        );
         using var client = new ContentServerClient("https://content.example", httpClient);
 
         await Assert.ThrowsAsync<InvalidDataException>(() => client.CheckHealthAsync());
@@ -135,7 +182,8 @@ public sealed class ContentServerClientCatalogTest
     [Fact]
     public async Task HealthCheckReturnsUnreachableForNetworkFailure()
     {
-        using var httpClient = new HttpClient(new StubHandler(_ => throw new HttpRequestException("Connection refused")));
+        using var httpClient =
+            new HttpClient(new StubHandler(_ => throw new HttpRequestException("Connection refused")));
         using var client = new ContentServerClient("https://content.example", httpClient);
 
         await Assert.ThrowsAsync<HttpRequestException>(() => client.CheckHealthAsync());
@@ -153,7 +201,8 @@ public sealed class ContentServerClientCatalogTest
     [Fact]
     public async Task AnnouncementAndReleaseQueriesPropagateConnectionFailure()
     {
-        using var httpClient = new HttpClient(new StubHandler(_ => throw new HttpRequestException("Connection refused")));
+        using var httpClient =
+            new HttpClient(new StubHandler(_ => throw new HttpRequestException("Connection refused")));
         using var client = new ContentServerClient("https://content.example", httpClient);
 
         await Assert.ThrowsAsync<HttpRequestException>(() => client.ListGameAnnouncementsAsync());
@@ -173,24 +222,31 @@ public sealed class ContentServerClientCatalogTest
     public async Task ReadsRegisteredServerSources()
     {
         Uri? requested = null;
-        using var httpClient = new HttpClient(new StubHandler(request =>
-        {
-            requested = request.RequestUri;
-            var body = new
-            {
-                success = true,
-                message = string.Empty,
-                code = 200,
-                data = new[]
+        using var httpClient = new HttpClient(
+            new StubHandler(request =>
                 {
-                    new { id = "source-1", name = "Public", apiUrl = "https://source.example/list", description = "A source" }
+                    requested = request.RequestUri;
+                    var body = new
+                    {
+                        success = true,
+                        message = string.Empty,
+                        code = 200,
+                        data = new[]
+                        {
+                            new
+                            {
+                                id = "source-1", name = "Public", apiUrl = "https://source.example/list",
+                                description = "A source"
+                            }
+                        }
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
+                    };
                 }
-            };
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
-            };
-        }));
+            )
+        );
         using var client = new ContentServerClient("https://content.example", httpClient);
 
         var sources = await client.ListServerSourcesAsync();
@@ -204,8 +260,12 @@ public sealed class ContentServerClientCatalogTest
         return new ContentCatalogItem { Version = version, PackageHash = hash };
     }
 
-    private static HttpResponseMessage Page(IReadOnlyList<ContentCatalogItem> items, int total, int pageIndex,
-        int pageSize)
+    private static HttpResponseMessage Page(
+        IReadOnlyList<ContentCatalogItem> items,
+        int total,
+        int pageIndex,
+        int pageSize
+    )
     {
         var body = new
         {
@@ -222,8 +282,10 @@ public sealed class ContentServerClientCatalogTest
 
     private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> handler) : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-            CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             return Task.FromResult(handler(request));
         }

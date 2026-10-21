@@ -25,21 +25,32 @@ public static class ContentPackageCreationDialogs
             return;
         }
 
-        DialogsManager.ShowDialog(null, new ListSelectionDialog(
-            LanguageManager.Get(_typeName, "SelectType"), _types, 64f,
-            item => GetTypeName((ContentPackageType)item),
-            item => SelectSource((ContentPackageType)item, setBusy, saved, failed)));
+        DialogsManager.ShowDialog(
+            null,
+            new ListSelectionDialog(
+                LanguageManager.Get(_typeName, "SelectType"),
+                _types,
+                64f,
+                item => GetTypeName((ContentPackageType)item),
+                item => SelectSource((ContentPackageType)item, setBusy, saved, failed)
+            )
+        );
     }
 
-    private static void SelectSource(ContentPackageType type, Action<bool> setBusy, Action saved,
-        Action<Exception> failed)
+    private static void SelectSource(
+        ContentPackageType type,
+        Action<bool> setBusy,
+        Action saved,
+        Action<Exception> failed
+    )
     {
         if (type == ContentPackageType.World)
         {
             WorldsManager.UpdateWorldsList();
             var running = GameManager.Project?.FindSubsystem<SubsystemGameInfo>()?.DirectoryName;
             var sources = WorldsManager.WorldInfos.Where(world =>
-                    !string.Equals(world.DirectoryName, running, StringComparison.OrdinalIgnoreCase))
+                    !string.Equals(world.DirectoryName, running, StringComparison.OrdinalIgnoreCase)
+                )
                 .Select(world => new AssetSource(Storage.GetFileName(world.DirectoryName), world.WorldSettings.Name))
                 .ToArray();
             SelectAsset(type, sources, setBusy, saved, failed);
@@ -58,8 +69,13 @@ public static class ContentPackageCreationDialogs
         SelectImage(type, setBusy, saved, failed);
     }
 
-    private static void SelectAsset(ContentPackageType type, IReadOnlyList<AssetSource> sources,
-        Action<bool> setBusy, Action saved, Action<Exception> failed)
+    private static void SelectAsset(
+        ContentPackageType type,
+        IReadOnlyList<AssetSource> sources,
+        Action<bool> setBusy,
+        Action saved,
+        Action<Exception> failed
+    )
     {
         if (sources.Count == 0)
         {
@@ -67,28 +83,49 @@ public static class ContentPackageCreationDialogs
             return;
         }
 
-        DialogsManager.ShowDialog(null, new ListSelectionDialog(
-            LanguageManager.Get(_typeName, "SelectSource"), sources, 64f,
-            item => ((AssetSource)item).DisplayName,
-            item => AskIdentity(type, (AssetSource)item, null, setBusy, saved, failed)));
+        DialogsManager.ShowDialog(
+            null,
+            new ListSelectionDialog(
+                LanguageManager.Get(_typeName, "SelectSource"),
+                sources,
+                64f,
+                item => ((AssetSource)item).DisplayName,
+                item => AskIdentity(type, (AssetSource)item, null, setBusy, saved, failed)
+            )
+        );
     }
 
-    private static async void SelectImage(ContentPackageType type, Action<bool> setBusy, Action saved,
-        Action<Exception> failed)
+    private static async void SelectImage(
+        ContentPackageType type,
+        Action<bool> setBusy,
+        Action saved,
+        Action<Exception> failed
+    )
     {
         try
         {
-            var files = await FilePicker.PickFilesAsync(new FilePickerRequest([".png"], false,
-                LanguageManager.Get(_typeName, "SelectImage")));
+            var files = await FilePicker.PickFilesAsync(
+                new FilePickerRequest(
+                    [".png"],
+                    false,
+                    LanguageManager.Get(_typeName, "SelectImage")
+                )
+            );
             if (files.Count == 0)
             {
                 return;
             }
 
             var file = files[0];
-            Dispatcher.Dispatch(() => AskIdentity(type,
-                new AssetSource(string.Empty, Path.GetFileNameWithoutExtension(file.Name)), file,
-                setBusy, saved, failed));
+            Dispatcher.Dispatch(() => AskIdentity(
+                    type,
+                    new AssetSource(string.Empty, Path.GetFileNameWithoutExtension(file.Name)),
+                    file,
+                    setBusy,
+                    saved,
+                    failed
+                )
+            );
         }
         catch (Exception exception)
         {
@@ -96,41 +133,109 @@ public static class ContentPackageCreationDialogs
         }
     }
 
-    private static void AskIdentity(ContentPackageType type, AssetSource source, PickedFile? image,
-        Action<bool> setBusy, Action saved, Action<Exception> failed)
+    private static void AskIdentity(
+        ContentPackageType type,
+        AssetSource source,
+        PickedFile? image,
+        Action<bool> setBusy,
+        Action saved,
+        Action<Exception> failed
+    )
     {
-        DialogsManager.ShowDialog(null, new TextBoxDialog(
-            LanguageManager.Get(_typeName, "Name"), source.DisplayName, 80,
-            name =>
-            {
-                if (string.IsNullOrWhiteSpace(name))
+        DialogsManager.ShowDialog(
+            null,
+            new TextBoxDialog(
+                LanguageManager.Get(_typeName, "Name"),
+                source.DisplayName,
+                80,
+                name =>
                 {
-                    failed(new ContentPackageException(LanguageManager.Get(_typeName, "NameRequired")));
-                    return;
-                }
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        failed(new ContentPackageException(LanguageManager.Get(_typeName, "NameRequired")));
+                        return;
+                    }
 
-                DialogsManager.ShowDialog(null, new TextBoxDialog(
-                    LanguageManager.Get(_typeName, "Version"), "1.0.0", 40,
-                    version => AskDescription(type, source, image, name.Trim(), version.Trim(),
-                        setBusy, saved, failed),
-                    false));
-            }, false));
+                    DialogsManager.ShowDialog(
+                        null,
+                        new TextBoxDialog(
+                            LanguageManager.Get(_typeName, "Version"),
+                            "1.0.0",
+                            40,
+                            version => AskDescription(
+                                type,
+                                source,
+                                image,
+                                name.Trim(),
+                                version.Trim(),
+                                setBusy,
+                                saved,
+                                failed
+                            ),
+                            false
+                        )
+                    );
+                },
+                false
+            )
+        );
     }
 
-    private static void AskDescription(ContentPackageType type, AssetSource source, PickedFile? image,
-        string name, string version, Action<bool> setBusy, Action saved, Action<Exception> failed)
+    private static void AskDescription(
+        ContentPackageType type,
+        AssetSource source,
+        PickedFile? image,
+        string name,
+        string version,
+        Action<bool> setBusy,
+        Action saved,
+        Action<Exception> failed
+    )
     {
-        DialogsManager.ShowDialog(null, new TextBoxDialog(
-            LanguageManager.Get(_typeName, "Summary"), string.Empty, 160,
-            summary => DialogsManager.ShowDialog(null, new TextBoxDialog(
-                LanguageManager.Get(_typeName, "Description"), string.Empty, 4000,
-                description => _ = Create(type, source, image, name, summary.Trim(), description.Trim(), version,
-                    setBusy, saved, failed), false)), false));
+        DialogsManager.ShowDialog(
+            null,
+            new TextBoxDialog(
+                LanguageManager.Get(_typeName, "Summary"),
+                string.Empty,
+                160,
+                summary => DialogsManager.ShowDialog(
+                    null,
+                    new TextBoxDialog(
+                        LanguageManager.Get(_typeName, "Description"),
+                        string.Empty,
+                        4000,
+                        description => _ = Create(
+                            type,
+                            source,
+                            image,
+                            name,
+                            summary.Trim(),
+                            description.Trim(),
+                            version,
+                            setBusy,
+                            saved,
+                            failed
+                        ),
+                        false
+                    )
+                ),
+                false
+            )
+        );
     }
 
-    private static async Task Create(ContentPackageType type, AssetSource source, PickedFile? image,
-        string name, string summary, string description, string version,
-        Action<bool> setBusy, Action saved, Action<Exception> failed)
+    private static async Task Create(
+        ContentPackageType type,
+        AssetSource source,
+        PickedFile? image,
+        string name,
+        string summary,
+        string description,
+        string version,
+        Action<bool> setBusy,
+        Action saved,
+        Action<Exception> failed
+    )
     {
         setBusy(true);
         try
@@ -139,16 +244,25 @@ public static class ContentPackageCreationDialogs
             if (image is not null)
             {
                 await using var input = await image.OpenReadAsync(CancellationToken.None);
-                artifact = await Task.Run(() => ContentPackageCreationManager.CreateImage(type,
-                    new ContentCreationIdentity(name, summary, description, version), input));
+                artifact = await Task.Run(() => ContentPackageCreationManager.CreateImage(
+                        type,
+                        new ContentCreationIdentity(name, summary, description, version),
+                        input
+                    )
+                );
             }
             else
             {
                 artifact = await Task.Run(() => type == ContentPackageType.World
                     ? ContentPackageCreationManager.CreateWorld(
-                        new ContentCreationIdentity(name, summary, description, version), source.AssetKey)
+                        new ContentCreationIdentity(name, summary, description, version),
+                        source.AssetKey
+                    )
                     : ContentPackageCreationManager.CreateFurniture(
-                        new ContentCreationIdentity(name, summary, description, version), source.AssetKey));
+                        new ContentCreationIdentity(name, summary, description, version),
+                        source.AssetKey
+                    )
+                );
             }
 
             await using var validationStream = artifact.OpenRead();
@@ -165,38 +279,64 @@ public static class ContentPackageCreationDialogs
         }
     }
 
-    private static void ShowPreview(ContentPackageCreationArtifact artifact, ContentPackageInspection inspection,
-        Action<bool> setBusy, Action saved, Action<Exception> failed)
+    private static void ShowPreview(
+        ContentPackageCreationArtifact artifact,
+        ContentPackageInspection inspection,
+        Action<bool> setBusy,
+        Action saved,
+        Action<Exception> failed
+    )
     {
         var manifest = inspection.Manifest;
-        var preview = string.Format(LanguageManager.Get(_typeName, "Preview"), GetTypeName(manifest.Type),
-                          manifest.Name, manifest.Version, manifest.Identifier, artifact.PackageHash) +
+        var preview = string.Format(
+                          LanguageManager.Get(_typeName, "Preview"),
+                          GetTypeName(manifest.Type),
+                          manifest.Name,
+                          manifest.Version,
+                          manifest.Identifier,
+                          artifact.PackageHash
+                      ) +
                       $"\n{manifest.Summary}\n{manifest.Description}";
-        DialogsManager.ShowDialog(null, new MessageDialog(
-            LanguageManager.Get(_typeName, "PreviewTitle"), preview,
-            LanguageManager.Get(_typeName, "Save"), LanguageManager.Get("Usual", "cancel"),
-            button =>
-            {
-                if (button == MessageDialogButton.Button1)
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                LanguageManager.Get(_typeName, "PreviewTitle"),
+                preview,
+                LanguageManager.Get(_typeName, "Save"),
+                LanguageManager.Get("Usual", "cancel"),
+                button =>
                 {
-                    _ = SaveArtifact(artifact, manifest, setBusy, saved, failed);
+                    if (button == MessageDialogButton.Button1)
+                    {
+                        _ = SaveArtifact(artifact, manifest, setBusy, saved, failed);
+                    }
+                    else
+                    {
+                        artifact.Dispose();
+                    }
                 }
-                else
-                {
-                    artifact.Dispose();
-                }
-            }));
+            )
+        );
     }
 
-    private static async Task SaveArtifact(ContentPackageCreationArtifact artifact, ContentPackageManifest manifest,
-        Action<bool> setBusy, Action saved, Action<Exception> failed)
+    private static async Task SaveArtifact(
+        ContentPackageCreationArtifact artifact,
+        ContentPackageManifest manifest,
+        Action<bool> setBusy,
+        Action saved,
+        Action<Exception> failed
+    )
     {
         setBusy(true);
         try
         {
-            var target = await FilePicker.PickSaveTargetAsync(new FileSaveRequest(
-                MakeFileName($"{manifest.Name}-{manifest.Version}") + ContentPackageReader.FileExtension,
-                "application/vnd.scnet.content-package", LanguageManager.Get(_typeName, "SaveTitle")));
+            var target = await FilePicker.PickSaveTargetAsync(
+                new FileSaveRequest(
+                    MakeFileName($"{manifest.Name}-{manifest.Version}") + ContentPackageReader.FileExtension,
+                    "application/vnd.scnet.content-package",
+                    LanguageManager.Get(_typeName, "SaveTitle")
+                )
+            );
             if (target is null)
             {
                 return;

@@ -29,8 +29,15 @@ public sealed class PrimitivesRenderer3D : BasePrimitivesRenderer<FlatBatch3D, T
         rasterizerState ??= RasterizerState.CullNoneScissor;
         blendState ??= BlendState.AlphaBlend;
         samplerState ??= SamplerState.LinearClamp;
-        return FindTexturedBatch(texture, useAlphaTest, layer, depthStencilState, rasterizerState, blendState,
-            samplerState);
+        return FindTexturedBatch(
+            texture,
+            useAlphaTest,
+            layer,
+            depthStencilState,
+            rasterizerState,
+            blendState,
+            samplerState
+        );
     }
 
     protected override FontBatch3D CreateFontBatch(BitmapFont font) => new(font);

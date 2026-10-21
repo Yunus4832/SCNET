@@ -9,6 +9,7 @@ public class SubsystemEggBlockBehavior : SubsystemBlockBehavior
     private readonly Random _random = new();
 
     private SubsystemCreatureSpawn _subsystemCreatureSpawn = null!;
+
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
     public override ResourceId[] HandledBlocks => [];
@@ -18,8 +19,9 @@ public class SubsystemEggBlockBehavior : SubsystemBlockBehavior
         var data = Terrain.ExtractData(worldItem.Value);
         var isCooked = EggBlock.GetIsCooked(data);
         var isLaid = EggBlock.GetIsLaid(data);
-        if (isCooked || (_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative &&
-                         !(_random.Float(0f, 1f) <= (isLaid ? 0.15f : 1f))))
+        if (isCooked ||
+            (_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative &&
+             !(_random.Float(0f, 1f) <= (isLaid ? 0.15f : 1f))))
         {
             return true;
         }
@@ -32,8 +34,12 @@ public class SubsystemEggBlockBehavior : SubsystemBlockBehavior
         }
         else
         {
-            ((worldItem as Projectile)?.Owner as ComponentPlayer)?.ComponentGui.DisplaySmallMessage("太多生物了",
-                Color.White, true, false);
+            ((worldItem as Projectile)?.Owner as ComponentPlayer)?.ComponentGui.DisplaySmallMessage(
+                "太多生物了",
+                Color.White,
+                true,
+                false
+            );
         }
 
         return true;

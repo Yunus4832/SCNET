@@ -44,12 +44,33 @@ public class FireBlock : Block
             var count = vertices.Count;
             vertices.Count += 4;
             BlockGeometryGenerator.SetupLitCornerVertex(x, y, z + 1, Color.White, num5, 0, ref vertices.Array[count]);
-            BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y, z + 1, Color.White, num5, 1,
-                ref vertices.Array[count + 1]);
-            BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y + 1, z + 1, Color.White, num5, 2,
-                ref vertices.Array[count + 2]);
-            BlockGeometryGenerator.SetupLitCornerVertex(x, y + 1, z + 1, Color.White, num5, 3,
-                ref vertices.Array[count + 3]);
+            BlockGeometryGenerator.SetupLitCornerVertex(
+                x + 1,
+                y,
+                z + 1,
+                Color.White,
+                num5,
+                1,
+                ref vertices.Array[count + 1]
+            );
+            BlockGeometryGenerator.SetupLitCornerVertex(
+                x + 1,
+                y + 1,
+                z + 1,
+                Color.White,
+                num5,
+                2,
+                ref vertices.Array[count + 2]
+            );
+            BlockGeometryGenerator.SetupLitCornerVertex(
+                x,
+                y + 1,
+                z + 1,
+                Color.White,
+                num5,
+                3,
+                ref vertices.Array[count + 3]
+            );
             indices.Add(count);
             indices.Add(count + 1);
             indices.Add(count + 2);
@@ -87,12 +108,33 @@ public class FireBlock : Block
             var count2 = vertices2.Count;
             vertices2.Count += 4;
             BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y, z, Color.White, num8, 0, ref vertices2.Array[count2]);
-            BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y + 1, z, Color.White, num8, 3,
-                ref vertices2.Array[count2 + 1]);
-            BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y + 1, z + 1, Color.White, num8, 2,
-                ref vertices2.Array[count2 + 2]);
-            BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y, z + 1, Color.White, num8, 1,
-                ref vertices2.Array[count2 + 3]);
+            BlockGeometryGenerator.SetupLitCornerVertex(
+                x + 1,
+                y + 1,
+                z,
+                Color.White,
+                num8,
+                3,
+                ref vertices2.Array[count2 + 1]
+            );
+            BlockGeometryGenerator.SetupLitCornerVertex(
+                x + 1,
+                y + 1,
+                z + 1,
+                Color.White,
+                num8,
+                2,
+                ref vertices2.Array[count2 + 2]
+            );
+            BlockGeometryGenerator.SetupLitCornerVertex(
+                x + 1,
+                y,
+                z + 1,
+                Color.White,
+                num8,
+                1,
+                ref vertices2.Array[count2 + 3]
+            );
             indices2.Add(count2);
             indices2.Add(count2 + 1);
             indices2.Add(count2 + 2);
@@ -130,12 +172,33 @@ public class FireBlock : Block
             var count3 = vertices3.Count;
             vertices3.Count += 4;
             BlockGeometryGenerator.SetupLitCornerVertex(x, y, z, Color.White, num11, 0, ref vertices3.Array[count3]);
-            BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y, z, Color.White, num11, 1,
-                ref vertices3.Array[count3 + 1]);
-            BlockGeometryGenerator.SetupLitCornerVertex(x + 1, y + 1, z, Color.White, num11, 2,
-                ref vertices3.Array[count3 + 2]);
-            BlockGeometryGenerator.SetupLitCornerVertex(x, y + 1, z, Color.White, num11, 3,
-                ref vertices3.Array[count3 + 3]);
+            BlockGeometryGenerator.SetupLitCornerVertex(
+                x + 1,
+                y,
+                z,
+                Color.White,
+                num11,
+                1,
+                ref vertices3.Array[count3 + 1]
+            );
+            BlockGeometryGenerator.SetupLitCornerVertex(
+                x + 1,
+                y + 1,
+                z,
+                Color.White,
+                num11,
+                2,
+                ref vertices3.Array[count3 + 2]
+            );
+            BlockGeometryGenerator.SetupLitCornerVertex(
+                x,
+                y + 1,
+                z,
+                Color.White,
+                num11,
+                3,
+                ref vertices3.Array[count3 + 3]
+            );
             indices3.Add(count3);
             indices3.Add(count3 + 2);
             indices3.Add(count3 + 1);
@@ -176,12 +239,33 @@ public class FireBlock : Block
         var count4 = vertices4.Count;
         vertices4.Count += 4;
         BlockGeometryGenerator.SetupLitCornerVertex(x, y, z, Color.White, num14, 0, ref vertices4.Array[count4]);
-        BlockGeometryGenerator.SetupLitCornerVertex(x, y + 1, z, Color.White, num14, 3,
-            ref vertices4.Array[count4 + 1]);
-        BlockGeometryGenerator.SetupLitCornerVertex(x, y + 1, z + 1, Color.White, num14, 2,
-            ref vertices4.Array[count4 + 2]);
-        BlockGeometryGenerator.SetupLitCornerVertex(x, y, z + 1, Color.White, num14, 1,
-            ref vertices4.Array[count4 + 3]);
+        BlockGeometryGenerator.SetupLitCornerVertex(
+            x,
+            y + 1,
+            z,
+            Color.White,
+            num14,
+            3,
+            ref vertices4.Array[count4 + 1]
+        );
+        BlockGeometryGenerator.SetupLitCornerVertex(
+            x,
+            y + 1,
+            z + 1,
+            Color.White,
+            num14,
+            2,
+            ref vertices4.Array[count4 + 2]
+        );
+        BlockGeometryGenerator.SetupLitCornerVertex(
+            x,
+            y,
+            z + 1,
+            Color.White,
+            num14,
+            1,
+            ref vertices4.Array[count4 + 3]
+        );
         indices4.Add(count4);
         indices4.Add(count4 + 2);
         indices4.Add(count4 + 1);

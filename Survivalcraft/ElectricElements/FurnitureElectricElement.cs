@@ -8,7 +8,8 @@ public abstract class FurnitureElectricElement(
     public static IEnumerable<CellFace> GetMountingCellFaces(SubsystemElectricity subsystemElectricity, Point3 point)
     {
         var data = Terrain.ExtractData(
-            subsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z));
+            subsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z)
+        );
         var rotation = FurnitureBlock.GetRotation(data);
         var designIndex = FurnitureBlock.GetDesignIndex(data);
         var design = subsystemElectricity.SubsystemTerrain.SubsystemFurnitureBlockBehavior.GetDesign(designIndex);

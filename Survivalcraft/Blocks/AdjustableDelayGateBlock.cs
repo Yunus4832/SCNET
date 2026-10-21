@@ -23,11 +23,13 @@ public class AdjustableDelayGateBlock() : RotatableMountedElectricElementBlock(
 
         var delay = GetDelay(Terrain.ExtractData(oldValue));
         var data = SetDelay(0, delay);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Count = 1
+            }
+        );
     }
 
     public override ElectricElement CreateElectricElement(

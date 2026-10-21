@@ -36,7 +36,8 @@ public sealed class PlayerInformationOverlayWidget : CanvasWidget
             _playerData,
             GetListKind(Filter),
             true,
-            overlaySize);
+            overlaySize
+        );
 
         Size = overlaySize;
         ClampToBounds = true;

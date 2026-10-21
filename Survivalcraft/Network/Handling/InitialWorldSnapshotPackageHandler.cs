@@ -33,8 +33,10 @@ public sealed class InitialWorldSnapshotPackageHandler : PackageHandlerBase<Init
 
         project.AddEntities(EntitySnapshotSerializer.Deserialize(project, package.EntityData));
         netNode.CurrentConnectionPhase = ConnectionPhase.Live;
-        netNode.QueuePackage(new ConnectionPhaseAckPackage(package.Epoch, ConnectionPhase.WorldSnapshotApplied),
-            PackageAudience.To(netNode.Server!));
+        netNode.QueuePackage(
+            new ConnectionPhaseAckPackage(package.Epoch, ConnectionPhase.WorldSnapshotApplied),
+            PackageAudience.To(netNode.Server!)
+        );
         ScreensManager.FindScreen<GameLoadingScreen>("GameLoading", true)!.WorldSnapshotApplied();
     }
 }

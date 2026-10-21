@@ -6,7 +6,9 @@ namespace Survivalcraft.Test.Modding;
 public class ConnectionRequestPackageTest
 {
     private const string _hashA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
     private const string _hashB = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+
     private const string _hashC = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
 
     [Fact]
@@ -16,7 +18,8 @@ public class ConnectionRequestPackageTest
             Guid.NewGuid(),
             1,
             Guid.NewGuid(),
-            "mod-data-hash");
+            "mod-data-hash"
+        );
 
         var writer = new ProtocolWriter();
         ProtocolMessageCodec.Write(package, writer);
@@ -47,31 +50,37 @@ public class ConnectionRequestPackageTest
     [Fact]
     public void ModDataHashUsesStableKeyInformation()
     {
-        var left = ModProfileManager.ComputeDataHash(new ModProfile
-        {
-            Packages =
-            [
-                new ModPackageRequirement { ModId = "example.addon", Version = "2.0.0", PackageHash = _hashA },
-                new ModPackageRequirement { ModId = "other.addon", Version = "1.0.0", PackageHash = _hashB }
-            ]
-        });
-        var right = ModProfileManager.ComputeDataHash(new ModProfile
-        {
-            Packages =
-            [
-                new ModPackageRequirement { ModId = "other.addon", Version = "1.0.0", PackageHash = _hashB },
-                new ModPackageRequirement { ModId = "example.addon", Version = "2.0.0", PackageHash = _hashA }
-            ]
-        });
-        var changed = ModProfileManager.ComputeDataHash(new ModProfile
-        {
-            Packages =
-            [
-                new ModPackageRequirement
-                    { ModId = "example.addon", Version = "2.0.0", PackageHash = _hashC },
-                new ModPackageRequirement { ModId = "other.addon", Version = "1.0.0", PackageHash = _hashB }
-            ]
-        });
+        var left = ModProfileManager.ComputeDataHash(
+            new ModProfile
+            {
+                Packages =
+                [
+                    new ModPackageRequirement { ModId = "example.addon", Version = "2.0.0", PackageHash = _hashA },
+                    new ModPackageRequirement { ModId = "other.addon", Version = "1.0.0", PackageHash = _hashB }
+                ]
+            }
+        );
+        var right = ModProfileManager.ComputeDataHash(
+            new ModProfile
+            {
+                Packages =
+                [
+                    new ModPackageRequirement { ModId = "other.addon", Version = "1.0.0", PackageHash = _hashB },
+                    new ModPackageRequirement { ModId = "example.addon", Version = "2.0.0", PackageHash = _hashA }
+                ]
+            }
+        );
+        var changed = ModProfileManager.ComputeDataHash(
+            new ModProfile
+            {
+                Packages =
+                [
+                    new ModPackageRequirement
+                        { ModId = "example.addon", Version = "2.0.0", PackageHash = _hashC },
+                    new ModPackageRequirement { ModId = "other.addon", Version = "1.0.0", PackageHash = _hashB }
+                ]
+            }
+        );
 
         Assert.Equal(left, right);
         Assert.NotEqual(left, changed);
@@ -88,10 +97,12 @@ public class ConnectionRequestPackageTest
             [
                 new ContentRepositoryDescriptor(Guid.NewGuid(), "http://127.0.0.1:9527", 0)
             ],
-            RequiredModProfile = new RequiredModProfile("server",
+            RequiredModProfile = new RequiredModProfile(
+                "server",
                 [
                     new RequiredModPackage("example.addon", "2.0.0", _hashA)
-                ])
+                ]
+            )
         };
 
         var writer = new ProtocolWriter();
@@ -118,10 +129,12 @@ public class ConnectionRequestPackageTest
     {
         var package = new ServerInfoPackage
         {
-            RequiredModProfile = new RequiredModProfile("server",
+            RequiredModProfile = new RequiredModProfile(
+                "server",
                 [
                     new RequiredModPackage("example.addon", "1.0.0", string.Empty)
-                ])
+                ]
+            )
         };
 
         Assert.Throws<ArgumentException>(() => ProtocolMessageCodec.Write(package, new ProtocolWriter()));
@@ -140,7 +153,9 @@ public class ConnectionRequestPackageTest
         writer.Write(0f);
 
         var package = new ServerInfoPackage();
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data())));
+        Assert.Throws<InvalidDataException>(() =>
+            ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data()))
+        );
     }
 
     [Fact]
@@ -158,7 +173,9 @@ public class ConnectionRequestPackageTest
         writer.Write(0f);
 
         var package = new ServerInfoPackage();
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data())));
+        Assert.Throws<InvalidDataException>(() =>
+            ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data()))
+        );
     }
 
     private static ProtocolWriter CreateServerInfoPrefix()

@@ -5,6 +5,7 @@ namespace Game.Modding;
 public sealed class ModHost
 {
     private readonly List<ModRuntime> _runtimes = [];
+
     private readonly HashSet<IDisposable> _disposedLifetimes = [];
 
     public ExtensionRegistry Extensions { get; } = new();
@@ -40,7 +41,8 @@ public sealed class ModHost
                     BlockBehaviors,
                     ContextActions,
                     Network,
-                    Commands);
+                    Commands
+                );
                 var runtime = new ModRuntime(descriptor, descriptor.Factory(), context);
                 _runtimes.Add(runtime);
                 runtime.State = ModState.Configuring;
@@ -64,7 +66,8 @@ public sealed class ModHost
         catch (Exception exception)
         {
             var failedRuntime = _runtimes.LastOrDefault(runtime =>
-                runtime.State is ModState.Configuring or ModState.Starting);
+                runtime.State is ModState.Configuring or ModState.Starting
+            );
             if (failedRuntime is not null)
             {
                 failedRuntime.State = ModState.Failed;
@@ -125,7 +128,8 @@ public sealed class ModHost
         BlockBehaviorHooks blockBehaviors,
         PlayerContextActionHooks contextActions,
         ModNetworkHooks network,
-        CommandRegistry commands) : IModContext
+        CommandRegistry commands
+    ) : IModContext
     {
         public ModManifest Manifest { get; } = manifest;
 
@@ -165,7 +169,8 @@ public sealed class ModHost
 
         public IDisposable Register<TCommand>(
             ResourceId id,
-            CommandDefinition<TCommand> definition)
+            CommandDefinition<TCommand> definition
+        )
             where TCommand : IGameCommand
         {
             return commands.Register(owner, id, definition);
@@ -174,11 +179,13 @@ public sealed class ModHost
 
     private sealed class OwnedCommandPermissions(
         ModId owner,
-        CommandPermissionRegistry permissions) : IModCommandPermissions
+        CommandPermissionRegistry permissions
+    ) : IModCommandPermissions
     {
         public IDisposable Register(
             ResourceId id,
-            CommandPermissionDefinition definition)
+            CommandPermissionDefinition definition
+        )
         {
             return permissions.Register(owner, id, definition);
         }
@@ -186,11 +193,13 @@ public sealed class ModHost
 
     private sealed class OwnedCommandAdapters(
         ModId owner,
-        CommandAdapterRegistry adapters) : IModCommandAdapters
+        CommandAdapterRegistry adapters
+    ) : IModCommandAdapters
     {
         public IDisposable Register<TBinding>(
             ResourceId id,
-            TBinding binding)
+            TBinding binding
+        )
             where TBinding : class, ICommandAdapterBinding
         {
             return adapters.Register(owner, id, binding);

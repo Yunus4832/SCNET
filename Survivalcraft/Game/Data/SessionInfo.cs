@@ -4,11 +4,15 @@ namespace Game;
 
 public enum SessionTarget
 {
-    MainMenu,
-    WorldList,
-    World,
-    ServerBrowser,
-    RemoteServer
+    MainMenu = 0,
+
+    WorldList = 1,
+
+    World = 2,
+
+    ServerBrowser = 3,
+
+    RemoteServer = 4
 }
 
 public sealed class SessionInfo

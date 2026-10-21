@@ -21,15 +21,29 @@ public class MagnetBlock : Block
         for (var i = 0; i < 2; i++)
         {
             MeshesByData[i] = new BlockMesh();
-            MeshesByData[i].AppendModelMeshPart(magnetMesh.MeshParts[0],
-                boneAbsoluteTransform * Matrix.CreateRotationY((float)Math.PI / 2f * i) *
-                Matrix.CreateTranslation(0.5f, 0f, 0.5f), false, false, true, false, Color.White);
+            MeshesByData[i].AppendModelMeshPart(
+                magnetMesh.MeshParts[0],
+                boneAbsoluteTransform *
+                Matrix.CreateRotationY((float)Math.PI / 2f * i) *
+                Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+                false,
+                false,
+                true,
+                false,
+                Color.White
+            );
             CollisionBoxesByData[i] = [MeshesByData[i].CalculateBoundingBox()];
         }
 
-        StandaloneMesh.AppendModelMeshPart(magnetMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateScale(1.5f) * Matrix.CreateTranslation(0f, -0.25f, 0f), false, false,
-            true, false, Color.White);
+        StandaloneMesh.AppendModelMeshPart(
+            magnetMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateScale(1.5f) * Matrix.CreateTranslation(0f, -0.25f, 0f),
+            false,
+            false,
+            true,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 
@@ -51,8 +65,16 @@ public class MagnetBlock : Block
         var num = Terrain.ExtractData(value);
         if (num < CollisionBoxesByData.Length)
         {
-            generator.GenerateMeshVertices(this, x, y, z, MeshesByData[num], Color.White, null,
-                geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                MeshesByData[num],
+                Color.White,
+                null,
+                geometry.SubsetOpaque
+            );
         }
     }
 

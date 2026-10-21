@@ -76,8 +76,15 @@ public class ScreenSpaceFireRenderer
 
     public void Draw(PrimitivesRenderer2D primitivesRenderer, float depth, Matrix matrix, Color color)
     {
-        var texturedBatch2D = primitivesRenderer.TexturedBatch(_texture, false, 0, DepthStencilState.None, null, null,
-            SamplerState.PointClamp);
+        var texturedBatch2D = primitivesRenderer.TexturedBatch(
+            _texture,
+            false,
+            0,
+            DepthStencilState.None,
+            null,
+            null,
+            SamplerState.PointClamp
+        );
         var count = texturedBatch2D.TriangleVertices.Count;
         foreach (var particle in _particles)
         {

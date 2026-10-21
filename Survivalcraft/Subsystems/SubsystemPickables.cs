@@ -101,7 +101,8 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 {
                     MainThreadState: >= TerrainChunkState.InvalidVertices1,
                     WorkerState: >= TerrainChunkState.InvalidVertices1
-                } && num5 is >= 0 and < 255 &&
+                } &&
+                num5 is >= 0 and < 255 &&
                 !IsInsidePredictedOpaqueBlock(_subsystemTerrain.Terrain, new Point3(x, num5, z)))
             {
                 _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
@@ -110,7 +111,9 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 var f = MathUtils.Max(position.Y - num5 - 0.75f, 0f) / 0.25f;
                 pickable.Light = (int)MathUtils.Lerp(
                     _subsystemTerrain.Terrain.GetCellLightFast(x, num5, z),
-                    _subsystemTerrain.Terrain.GetCellLightFast(x, num5 + 1, z), f);
+                    _subsystemTerrain.Terrain.GetCellLightFast(x, num5 + 1, z),
+                    f
+                );
                 pickable.HasLightSample = true;
             }
 
@@ -125,14 +128,26 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             if (pickable.StuckMatrix.HasValue)
             {
                 var matrix2 = pickable.StuckMatrix.Value;
-                block.DrawBlock(_primitivesRenderer, pickable.Value, Color.White, 0.3f, ref matrix2,
-                    _drawBlockEnvironmentData);
+                block.DrawBlock(
+                    _primitivesRenderer,
+                    pickable.Value,
+                    Color.White,
+                    0.3f,
+                    ref matrix2,
+                    _drawBlockEnvironmentData
+                );
             }
             else
             {
                 matrix.Translation = position + new Vector3(0f, 0.04f * MathUtils.Sin(3f * num4), 0f);
-                block.DrawBlock(_primitivesRenderer, pickable.Value, Color.White, 0.3f, ref matrix,
-                    _drawBlockEnvironmentData);
+                block.DrawBlock(
+                    _primitivesRenderer,
+                    pickable.Value,
+                    Color.White,
+                    0.3f,
+                    ref matrix,
+                    _drawBlockEnvironmentData
+                );
             }
         }
 
@@ -169,8 +184,11 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             {
                 UpdateClientPosition(pickable, dt);
                 _subsystemFluidBlockBehavior.GetSurfaceHeight(
-                    Terrain.ToCell(pickable.Position.X), Terrain.ToCell(pickable.Position.Y + 0.1f),
-                    Terrain.ToCell(pickable.Position.Z), out var clientSurface);
+                    Terrain.ToCell(pickable.Position.X),
+                    Terrain.ToCell(pickable.Position.Y + 0.1f),
+                    Terrain.ToCell(pickable.Position.Z),
+                    out var clientSurface
+                );
                 UpdateSplashEffects(pickable, clientSurface);
                 continue;
             }
@@ -242,26 +260,46 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 else
                 {
                     var vector2 = _subsystemFluidBlockBehavior.CalculateFlowSpeed(
-                        Terrain.ToCell(pickable.Position.X), Terrain.ToCell(pickable.Position.Y + 0.1f),
-                        Terrain.ToCell(pickable.Position.Z), out var surfaceBlock, out var surfaceHeight);
+                        Terrain.ToCell(pickable.Position.X),
+                        Terrain.ToCell(pickable.Position.Y + 0.1f),
+                        Terrain.ToCell(pickable.Position.Z),
+                        out var surfaceBlock,
+                        out var surfaceHeight
+                    );
                     if (!pickable.StuckMatrix.HasValue)
                     {
-                        var terrainRaycastResult = _subsystemTerrain.Raycast(position, vector, false, true,
-                            (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable);
+                        var terrainRaycastResult = _subsystemTerrain.Raycast(
+                            position,
+                            vector,
+                            false,
+                            true,
+                            (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog()
+                                .Blocks[Terrain.ExtractContents(value)].Collidable
+                        );
                         if (terrainRaycastResult.HasValue)
                         {
-                            var contents = Terrain.ExtractContents(_subsystemTerrain.Terrain.GetCellValue(
-                                terrainRaycastResult.Value.CellFace.X, terrainRaycastResult.Value.CellFace.Y,
-                                terrainRaycastResult.Value.CellFace.Z));
+                            var contents = Terrain.ExtractContents(
+                                _subsystemTerrain.Terrain.GetCellValue(
+                                    terrainRaycastResult.Value.CellFace.X,
+                                    terrainRaycastResult.Value.CellFace.Y,
+                                    terrainRaycastResult.Value.CellFace.Z
+                                )
+                            );
                             var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(contents);
                             foreach (var behavior in blockBehaviors)
                             {
                                 behavior.OnHitByProjectile(terrainRaycastResult.Value.CellFace, pickable);
                             }
 
-                            if (_subsystemTerrain.Raycast(position, position, false, true,
+                            if (_subsystemTerrain.Raycast(
+                                    position,
+                                    position,
+                                    false,
+                                    true,
                                     (value2, _) =>
-                                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value2)].Collidable)
+                                        CurrentModRuntime.Value!.RequireWorldCatalog()
+                                            .Blocks[Terrain.ExtractContents(value2)].Collidable
+                                )
                                 .HasValue)
                             {
                                 var num8 = Terrain.ToCell(position.X);
@@ -278,7 +316,11 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                                         for (var l = -3; l <= 3; l++)
                                         {
                                             if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[
-                                                    _subsystemTerrain.Terrain.GetCellContents(j + num8, k + num9, l + num10)]
+                                                    _subsystemTerrain.Terrain.GetCellContents(
+                                                        j + num8,
+                                                        k + num9,
+                                                        l + num10
+                                                    )]
                                                 .Collidable)
                                             {
                                                 continue;
@@ -313,8 +355,12 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                                 var flag2 = vector2.HasValue && vector2.Value != Vector2.Zero;
                                 if (plane.Normal.X != 0f)
                                 {
-                                    var num16 = flag2 || MathUtils.Sqrt(MathUtils.Sqr(pickable.Velocity.Y) +
-                                                                        MathUtils.Sqr(pickable.Velocity.Z)) > 10f
+                                    var num16 = flag2 ||
+                                                MathUtils.Sqrt(
+                                                    MathUtils.Sqr(pickable.Velocity.Y) +
+                                                    MathUtils.Sqr(pickable.Velocity.Z)
+                                                ) >
+                                                10f
                                         ? 0.95f
                                         : 0.25f;
                                     pickable.Velocity *= new Vector3(0f - num16, num16, num16);
@@ -322,8 +368,12 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
                                 if (plane.Normal.Y != 0f)
                                 {
-                                    var num17 = flag2 || MathUtils.Sqrt(MathUtils.Sqr(pickable.Velocity.X) +
-                                                                        MathUtils.Sqr(pickable.Velocity.Z)) > 10f
+                                    var num17 = flag2 ||
+                                                MathUtils.Sqrt(
+                                                    MathUtils.Sqr(pickable.Velocity.X) +
+                                                    MathUtils.Sqr(pickable.Velocity.Z)
+                                                ) >
+                                                10f
                                         ? 0.95f
                                         : 0.25f;
                                     pickable.Velocity *= new Vector3(num17, 0f - num17, num17);
@@ -335,8 +385,12 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
                                 if (plane.Normal.Z != 0f)
                                 {
-                                    var num18 = flag2 || MathUtils.Sqrt(MathUtils.Sqr(pickable.Velocity.X) +
-                                                                        MathUtils.Sqr(pickable.Velocity.Y)) > 10f
+                                    var num18 = flag2 ||
+                                                MathUtils.Sqrt(
+                                                    MathUtils.Sqr(pickable.Velocity.X) +
+                                                    MathUtils.Sqr(pickable.Velocity.Y)
+                                                ) >
+                                                10f
                                         ? 0.95f
                                         : 0.25f;
                                     pickable.Velocity *= new Vector3(num18, num18, 0f - num18);
@@ -350,9 +404,15 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                     {
                         var vector3 = pickable.StuckMatrix.Value.Translation +
                                       pickable.StuckMatrix.Value.Up * block.ProjectileTipOffset;
-                        if (!_subsystemTerrain.Raycast(vector3, vector3, false, true,
+                        if (!_subsystemTerrain.Raycast(
+                                vector3,
+                                vector3,
+                                false,
+                                true,
                                 (value, _) =>
-                                    CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable).HasValue)
+                                    CurrentModRuntime.Value!.RequireWorldCatalog()
+                                        .Blocks[Terrain.ExtractContents(value)].Collidable
+                            ).HasValue)
                         {
                             pickable.Position = pickable.StuckMatrix.Value.Translation;
                             pickable.Velocity = Vector3.Zero;
@@ -363,23 +423,42 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                     if (UpdateSplashEffects(pickable, surfaceBlock) && surfaceBlock is MagmaBlock)
                     {
                         pickable.ToRemove = true;
-                        _subsystemExplosions.TryExplodeBlock(Terrain.ToCell(pickable.Position.X),
-                            Terrain.ToCell(pickable.Position.Y), Terrain.ToCell(pickable.Position.Z),
-                            pickable.Value);
+                        _subsystemExplosions.TryExplodeBlock(
+                            Terrain.ToCell(pickable.Position.X),
+                            Terrain.ToCell(pickable.Position.Y),
+                            Terrain.ToCell(pickable.Position.Z),
+                            pickable.Value
+                        );
                     }
 
                     if (_subsystemTime.PeriodicGameTimeEvent(1.0, pickable.GetHashCode() % 100 / 100.0) &&
-                        (_subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(pickable.Position.X),
-                                Terrain.ToCell(pickable.Position.Y + 0.1f), Terrain.ToCell(pickable.Position.Z)) ==
-                            104 || _subsystemFireBlockBehavior.IsCellOnFire(Terrain.ToCell(pickable.Position.X),
-                                Terrain.ToCell(pickable.Position.Y + 0.1f), Terrain.ToCell(pickable.Position.Z))))
+                        (_subsystemTerrain.Terrain.GetCellContents(
+                             Terrain.ToCell(pickable.Position.X),
+                             Terrain.ToCell(pickable.Position.Y + 0.1f),
+                             Terrain.ToCell(pickable.Position.Z)
+                         ) ==
+                         104 ||
+                         _subsystemFireBlockBehavior.IsCellOnFire(
+                             Terrain.ToCell(pickable.Position.X),
+                             Terrain.ToCell(pickable.Position.Y + 0.1f),
+                             Terrain.ToCell(pickable.Position.Z)
+                         )))
                     {
-                        _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.2f, 0.2f),
-                            pickable.Position, 3f, true);
+                        _subsystemAudio.PlayRandomSound(
+                            "Audio/Sizzles",
+                            1f,
+                            _random.Float(-0.2f, 0.2f),
+                            pickable.Position,
+                            3f,
+                            true
+                        );
                         pickable.ToRemove = true;
-                        _subsystemExplosions.TryExplodeBlock(Terrain.ToCell(pickable.Position.X),
-                            Terrain.ToCell(pickable.Position.Y), Terrain.ToCell(pickable.Position.Z),
-                            pickable.Value);
+                        _subsystemExplosions.TryExplodeBlock(
+                            Terrain.ToCell(pickable.Position.X),
+                            Terrain.ToCell(pickable.Position.Y),
+                            Terrain.ToCell(pickable.Position.Z),
+                            pickable.Value
+                        );
                     }
 
                     if (!pickable.StuckMatrix.HasValue)
@@ -422,7 +501,8 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 {
                     CommonLib.Net.QueuePackage(
                         PickablePackageBuilder.Capture(item, PickablePackage.PickType.Delete),
-                        PackageAudience.To(observers));
+                        PackageAudience.To(observers)
+                    );
                 }
 
                 _subsystemNetworkInterest.Entities.RemoveEntity(EntityInterestGroup.Pickables, item.Id);
@@ -437,6 +517,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
     }
 
     public event Action<Pickable>? PickableAdded;
+
     public event Action<Pickable>? PickableRemoved;
 
     public Pickable? AddPickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix)
@@ -456,8 +537,14 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         return pickable;
     }
 
-    public Pickable? CreatePickable(ushort? id, int value, int count, Vector3 position, Vector3? velocity,
-        Matrix? stuckMatrix)
+    public Pickable? CreatePickable(
+        ushort? id,
+        int value,
+        int count,
+        Vector3 position,
+        Vector3? velocity,
+        Matrix? stuckMatrix
+    )
     {
         var pickableId = id ?? FindAvailableId();
         if (pickableId == 0 || id.HasValue && !TryReservePickableId(pickableId))
@@ -486,8 +573,11 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         }
         else
         {
-            pickable.Velocity = new Vector3(_random.Float(-0.5f, 0.5f), _random.Float(1f, 1.2f),
-                _random.Float(-0.5f, 0.5f));
+            pickable.Velocity = new Vector3(
+                _random.Float(-0.5f, 0.5f),
+                _random.Float(1f, 1.2f),
+                _random.Float(-0.5f, 0.5f)
+            );
         }
 
         _pickables.Add(pickable);
@@ -585,7 +675,12 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
         if (!found && CommonLib.WorkType == WorkType.Client && requestSync)
         {
-            NetworkSender.SendToServer(new PickablePackage { Type = PickablePackage.PickType.RequestSync, Id = id, StateTick = unchecked((uint)Time.FrameIndex) });
+            NetworkSender.SendToServer(
+                new PickablePackage
+                {
+                    Type = PickablePackage.PickType.RequestSync, Id = id, StateTick = unchecked((uint)Time.FrameIndex)
+                }
+            );
         }
 
         return found;
@@ -600,10 +695,13 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
     {
         foreach (var position in positions)
         {
-            PickableAction(position.Id, pickable =>
-            {
-                ApplyMotionSnapshot(pickable, position, stateTick);
-            });
+            PickableAction(
+                position.Id,
+                pickable =>
+                {
+                    ApplyMotionSnapshot(pickable, position, stateTick);
+                }
+            );
         }
     }
 
@@ -645,16 +743,30 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         if (surfaceBlock is WaterBlock)
         {
             _subsystemParticles.AddParticleSystem(
-                new WaterSplashParticleSystem(_subsystemTerrain, pickable.Position, false));
-            _subsystemAudio.PlayRandomSound("Audio/Splashes", 1f, _random.Float(-0.2f, 0.2f),
-                pickable.Position, 6f, true);
+                new WaterSplashParticleSystem(_subsystemTerrain, pickable.Position, false)
+            );
+            _subsystemAudio.PlayRandomSound(
+                "Audio/Splashes",
+                1f,
+                _random.Float(-0.2f, 0.2f),
+                pickable.Position,
+                6f,
+                true
+            );
         }
         else if (surfaceBlock is MagmaBlock)
         {
             _subsystemParticles.AddParticleSystem(
-                new MagmaSplashParticleSystem(_subsystemTerrain, pickable.Position, false));
-            _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.2f, 0.2f),
-                pickable.Position, 3f, true);
+                new MagmaSplashParticleSystem(_subsystemTerrain, pickable.Position, false)
+            );
+            _subsystemAudio.PlayRandomSound(
+                "Audio/Sizzles",
+                1f,
+                _random.Float(-0.2f, 0.2f),
+                pickable.Position,
+                3f,
+                true
+            );
         }
 
         pickable.SplashGenerated = true;
@@ -722,8 +834,11 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
     private void UpdateNetworkInterest()
     {
-        var candidates = _subsystemNetworkInterest.GetPointCandidates(_pickables.Select(pickable =>
-            ((int)pickable.Id, pickable.Position.XZ)));
+        var candidates = _subsystemNetworkInterest.GetPointCandidates(
+            _pickables.Select(pickable =>
+                ((int)pickable.Id, pickable.Position.XZ)
+            )
+        );
         foreach (var client in CommonLib.Net.Clients.Values)
         {
             if (client == CommonLib.Net.Self || !client.IsConnected)
@@ -738,7 +853,8 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 EntityInterestGroup.Pickables,
                 current,
                 id => _pickablesById.ContainsKey((ushort)id),
-                _outOfRangeRemoveTicks);
+                _outOfRangeRemoveTicks
+            );
 
             var entered = changes.Entered
                 .Select(id => _pickablesById[(ushort)id])
@@ -747,7 +863,8 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             {
                 CommonLib.Net.QueuePackage(
                     PickablePackageBuilder.Capture(entered, PickablePackage.PickType.CreateList),
-                    PackageAudience.To(client));
+                    PackageAudience.To(client)
+                );
             }
 
             if (changes.Left.Count > 0)
@@ -755,16 +872,22 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 var left = changes.Left.Select(id => new Pickable { Id = (ushort)id }).ToList();
                 CommonLib.Net.QueuePackage(
                     PickablePackageBuilder.Capture(left, PickablePackage.PickType.DeleteList),
-                    PackageAudience.To(client));
+                    PackageAudience.To(client)
+                );
             }
 
             // 24 * (ushort ID + Vector3) leaves ample framing space below the minimum MTU.
             for (var i = 0; i < relevant.Count; i += PickablePackage.MaxPositionsPerSnapshot)
             {
                 CommonLib.Net.QueuePackage(
-                    PickablePackageBuilder.Capture(relevant.GetRange(i,
-                        Math.Min(PickablePackage.MaxPositionsPerSnapshot, relevant.Count - i))),
-                    PackageAudience.To(client));
+                    PickablePackageBuilder.Capture(
+                        relevant.GetRange(
+                            i,
+                            Math.Min(PickablePackage.MaxPositionsPerSnapshot, relevant.Count - i)
+                        )
+                    ),
+                    PackageAudience.To(client)
+                );
             }
         }
     }

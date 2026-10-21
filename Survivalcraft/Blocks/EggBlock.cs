@@ -22,8 +22,8 @@ public class EggBlock : Block
                 .Database
                 .Root
                 .GetExplicitNestingChildren(parameterSetType, false)
-                       where o.EffectiveInheritanceRoot.Guid == eggParameterSetGuid
-                       select o;
+            where o.EffectiveInheritanceRoot.Guid == eggParameterSetGuid
+            select o;
         foreach (var item in eggItems)
         {
             var nestedValue = item.GetNestedValue<int>("EggTypeIndex");
@@ -75,9 +75,15 @@ public class EggBlock : Block
         );
         foreach (var eggType in EggTypes.OfType<EggType>())
         {
-            eggType.BlockMesh.AppendModelMeshPart(eggMesh.MeshParts[0], boneAbsoluteTransform,
-                false, false, false, false,
-                eggType.Color);
+            eggType.BlockMesh.AppendModelMeshPart(
+                eggMesh.MeshParts[0],
+                boneAbsoluteTransform,
+                false,
+                false,
+                false,
+                false,
+                eggType.Color
+            );
             var identity = Matrix.Identity;
             if (eggType.SwapUv)
             {
@@ -88,8 +94,11 @@ public class EggBlock : Block
             }
 
             identity *= Matrix.CreateScale(0.0625f * eggType.ScaleUv.X, 0.0625f * eggType.ScaleUv.Y, 1f);
-            identity *= Matrix.CreateTranslation(eggType.TextureSlot % 16 / 16f, eggType.TextureSlot / 16 / 16f,
-                0f);
+            identity *= Matrix.CreateTranslation(
+                eggType.TextureSlot % 16 / 16f,
+                eggType.TextureSlot / 16 / 16f,
+                0f
+            );
             eggType.BlockMesh.TransformTextureCoordinates(identity);
         }
 
@@ -177,7 +186,11 @@ public class EggBlock : Block
             yield return Terrain.MakeBlockValue(BlockIndex, 0, SetEggType(0, eggType.EggTypeIndex));
             if (eggType.NutritionalValue > 0f)
             {
-                yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsCooked(SetEggType(0, eggType.EggTypeIndex), true));
+                yield return Terrain.MakeBlockValue(
+                    BlockIndex,
+                    0,
+                    SetIsCooked(SetEggType(0, eggType.EggTypeIndex), true)
+                );
             }
         }
     }
@@ -197,8 +210,11 @@ public class EggBlock : Block
                 var craftingRecipe = new CraftingRecipe
                 {
                     ResultCount = 1,
-                    ResultValue = Terrain.MakeBlockValue(BlockIndex, 0,
-                        SetEggType(SetIsCooked(0, true), eggType.EggTypeIndex)),
+                    ResultValue = Terrain.MakeBlockValue(
+                        BlockIndex,
+                        0,
+                        SetEggType(SetIsCooked(0, true), eggType.EggTypeIndex)
+                    ),
                     RemainsCount = 1,
                     RemainsValue = Terrain.MakeBlockValue(91),
                     RequiredHeatLevel = 1f,

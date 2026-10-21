@@ -47,15 +47,23 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
                 var texturedBatch3D =
                     _primitivesRenderer3D.TexturedBatch(subtexture.Texture, false, 0, DepthStencilState.None);
                 var count = texturedBatch3D.TriangleVertices.Count;
-                texturedBatch3D.QueueQuad(p, p2, p3, p4,
+                texturedBatch3D.QueueQuad(
+                    p,
+                    p2,
+                    p3,
+                    p4,
                     new Vector2(subtexture.TopLeft.X, subtexture.TopLeft.Y),
                     new Vector2(subtexture.BottomRight.X, subtexture.TopLeft.Y),
                     new Vector2(subtexture.BottomRight.X, subtexture.BottomRight.Y),
-                    new Vector2(subtexture.TopLeft.X, subtexture.BottomRight.Y), Color.White);
+                    new Vector2(subtexture.TopLeft.X, subtexture.BottomRight.Y),
+                    Color.White
+                );
                 texturedBatch3D.TransformTriangles(camera.ViewMatrix, count);
             }
 
-            if (!camera.Eye.HasValue && !camera.UsesMovementControls && !IsSightsVisible &&
+            if (!camera.Eye.HasValue &&
+                !camera.UsesMovementControls &&
+                !IsSightsVisible &&
                 (SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch ||
                  !_componentPlayer.ComponentInput.IsTouchInputActive))
             {
@@ -71,10 +79,17 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
                 var texturedBatch3D2 =
                     _primitivesRenderer3D.TexturedBatch(subtexture.Texture, false, 0, DepthStencilState.None);
                 var count2 = texturedBatch3D2.TriangleVertices.Count;
-                texturedBatch3D2.QueueQuad(p5, p6, p7, p8, new Vector2(subtexture.TopLeft.X, subtexture.TopLeft.Y),
+                texturedBatch3D2.QueueQuad(
+                    p5,
+                    p6,
+                    p7,
+                    p8,
+                    new Vector2(subtexture.TopLeft.X, subtexture.TopLeft.Y),
                     new Vector2(subtexture.BottomRight.X, subtexture.TopLeft.Y),
                     new Vector2(subtexture.BottomRight.X, subtexture.BottomRight.Y),
-                    new Vector2(subtexture.TopLeft.X, subtexture.BottomRight.Y), Color.White);
+                    new Vector2(subtexture.TopLeft.X, subtexture.BottomRight.Y),
+                    Color.White
+                );
                 texturedBatch3D2.TransformTriangles(camera.ViewMatrix, count2);
             }
         }

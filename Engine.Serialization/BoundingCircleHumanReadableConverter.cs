@@ -8,8 +8,12 @@ internal class BoundingCircleHumanReadableConverter : IHumanReadableConverter
     public string ConvertToString(object value)
     {
         var boundingCircle = (BoundingCircle)value;
-        return HumanReadableConverter.ValuesListToString(',', boundingCircle.Center.X, boundingCircle.Center.Y,
-            boundingCircle.Radius);
+        return HumanReadableConverter.ValuesListToString(
+            ',',
+            boundingCircle.Center.X,
+            boundingCircle.Center.Y,
+            boundingCircle.Radius
+        );
     }
 
     public object ConvertFromString(Type type, string data)

@@ -5,7 +5,8 @@ public sealed record ConnectionRequestPackage(
     int ProtocolVersion,
     Guid MultiplayerClientId,
     string ModDataHash,
-    int Magic = GameProtocol.ConnectionMagic) : IProtocolMessage
+    int Magic = GameProtocol.ConnectionMagic
+) : IProtocolMessage
 {
     public byte ID => (byte)PackageType.ConnectionRequest;
 }

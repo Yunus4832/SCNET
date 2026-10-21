@@ -7,7 +7,9 @@ namespace Game.Protocol.Serialization;
 public static partial class ProtocolMessageCodec
 {
     private const int _maximumLocalizationArgumentCount = 16;
+
     private const int _maximumSegmentCount = 64;
+
     private static void WriteMessagePackage(MessagePackage message, ProtocolWriter writer)
     {
         writer.WriteEnum(message.GameMessage.Kind);
@@ -17,8 +19,7 @@ public static partial class ProtocolMessageCodec
         writer.Write(message.GameMessage.SenderName);
         if (message.GameMessage.Content.Segments.Count > _maximumSegmentCount)
         {
-            throw new InvalidDataException(
-                $"Too many message segments: {message.GameMessage.Content.Segments.Count}.");
+            throw new InvalidDataException($"Too many message segments: {message.GameMessage.Content.Segments.Count}.");
         }
 
         writer.Write((byte)message.GameMessage.Content.Segments.Count);
@@ -38,8 +39,7 @@ public static partial class ProtocolMessageCodec
         writer.Write(message.GameMessage.LocalizationKey);
         if (message.GameMessage.LocalizationArguments.Count > _maximumLocalizationArgumentCount)
         {
-            throw new InvalidDataException(
-                "Too many message localization arguments.");
+            throw new InvalidDataException("Too many message localization arguments.");
         }
 
         writer.Write((byte)message.GameMessage.LocalizationArguments.Count);
@@ -76,8 +76,7 @@ public static partial class ProtocolMessageCodec
         var localizationArgumentCount = reader.ReadByte();
         if (localizationArgumentCount > _maximumLocalizationArgumentCount)
         {
-            throw new InvalidDataException(
-                "Too many message localization arguments.");
+            throw new InvalidDataException("Too many message localization arguments.");
         }
 
         var localizationArguments = new string[localizationArgumentCount];
@@ -92,7 +91,8 @@ public static partial class ProtocolMessageCodec
             senderName,
             new MessageContent(segments),
             tone,
-            presentation)
+            presentation
+        )
         {
             LocalizationSection = localizationSection,
             LocalizationKey = localizationKey,

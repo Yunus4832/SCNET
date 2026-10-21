@@ -215,8 +215,12 @@ public class SubsystemSpawn : Subsystem, IUpdateable
         var centers = new List<Vector2>();
         foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
         {
-            centers.Add(new Vector2(componentPlayer.ComponentBody.Position.X,
-                componentPlayer.ComponentBody.Position.Z));
+            centers.Add(
+                new Vector2(
+                    componentPlayer.ComponentBody.Position.X,
+                    componentPlayer.ComponentBody.Position.Z
+                )
+            );
         }
 
         foreach (var v in centers)
@@ -297,12 +301,14 @@ public class SubsystemSpawn : Subsystem, IUpdateable
         foreach (var item in list)
         {
             var point = Terrain.ToChunk(item.ComponentFrame.Position.XZ);
-            GetOrCreateSpawnChunk(point).SpawnsData.Add(new SpawnEntityData
-            {
-                TemplateName = item.Entity.ValuesDictionary.DatabaseObject.Name,
-                Position = item.ComponentFrame.Position,
-                ConstantSpawn = item.ComponentCreature?.ConstantSpawn ?? false
-            });
+            GetOrCreateSpawnChunk(point).SpawnsData.Add(
+                new SpawnEntityData
+                {
+                    TemplateName = item.Entity.ValuesDictionary.DatabaseObject.Name,
+                    Position = item.ComponentFrame.Position,
+                    ConstantSpawn = item.ComponentCreature?.ConstantSpawn ?? false
+                }
+            );
             item.Despawn();
         }
     }
@@ -379,13 +385,16 @@ public class SubsystemSpawn : Subsystem, IUpdateable
             stringBuilder.Append(spawnsDatum.TemplateName);
             stringBuilder.Append(',');
             stringBuilder.Append(
-                (MathUtils.Round(spawnsDatum.Position.X * 10f) / 10f).ToString(CultureInfo.InvariantCulture));
+                (MathUtils.Round(spawnsDatum.Position.X * 10f) / 10f).ToString(CultureInfo.InvariantCulture)
+            );
             stringBuilder.Append(',');
             stringBuilder.Append(
-                (MathUtils.Round(spawnsDatum.Position.Y * 10f) / 10f).ToString(CultureInfo.InvariantCulture));
+                (MathUtils.Round(spawnsDatum.Position.Y * 10f) / 10f).ToString(CultureInfo.InvariantCulture)
+            );
             stringBuilder.Append(',');
             stringBuilder.Append(
-                (MathUtils.Round(spawnsDatum.Position.Z * 10f) / 10f).ToString(CultureInfo.InvariantCulture));
+                (MathUtils.Round(spawnsDatum.Position.Z * 10f) / 10f).ToString(CultureInfo.InvariantCulture)
+            );
             stringBuilder.Append(',');
             stringBuilder.Append(spawnsDatum.ConstantSpawn.ToString());
             stringBuilder.Append(';');

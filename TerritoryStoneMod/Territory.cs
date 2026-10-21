@@ -9,9 +9,12 @@ public sealed class Territory
         Owner = owner;
         StonePoint = stonePoint;
         Settings = settings ?? new TerritorySettings();
-        if (!Settings.IsValid || stonePoint.Y is < 0 or > 255 ||
-            stonePoint.X is < int.MinValue + TerritorySettings.MaximumSize or > int.MaxValue - TerritorySettings.MaximumSize - 1 ||
-            stonePoint.Z is < int.MinValue + TerritorySettings.MaximumSize or > int.MaxValue - TerritorySettings.MaximumSize - 1)
+        if (!Settings.IsValid ||
+            stonePoint.Y is < 0 or > 255 ||
+            stonePoint.X is < int.MinValue + TerritorySettings.MaximumSize
+                or > int.MaxValue - TerritorySettings.MaximumSize - 1 ||
+            stonePoint.Z is < int.MinValue + TerritorySettings.MaximumSize
+                or > int.MaxValue - TerritorySettings.MaximumSize - 1)
         {
             throw new InvalidDataException("Invalid territory size or stone coordinates.");
         }
@@ -30,30 +33,41 @@ public sealed class Territory
         {
             throw new InvalidDataException("Invalid territory grant.");
         }
+
         if (permissions == TerritoryPermission.None)
         {
             _grants.Remove(player);
             return;
         }
+
         if (!_grants.ContainsKey(player) && _grants.Count >= 128)
         {
             throw new InvalidDataException("Too many territory grants.");
         }
+
         _grants[player] = new TerritoryGrant(name, permissions);
     }
 
     public Guid Owner { get; }
+
     public Point3 StonePoint { get; }
+
     public TerritorySettings Settings { get; private set; }
+
     public int MinX => StonePoint.X - Settings.Size;
+
     public int MaxX => StonePoint.X + Settings.Size + 1;
+
     public int MinZ => StonePoint.Z - Settings.Size;
+
     public int MaxZ => StonePoint.Z + Settings.Size + 1;
+
     public BoundingBox Bounds => new(new Vector3(MinX, 0, MinZ), new Vector3(MaxX, 256, MaxZ));
 
     internal void ApplySettings(TerritorySettings settings) => Settings = settings;
 
     public bool Contains(int x, int z) => x >= MinX && x < MaxX && z >= MinZ && z < MaxZ;
+
     public bool Contains(Vector3 position) =>
         position.X >= MinX && position.X < MaxX && position.Z >= MinZ && position.Z < MaxZ;
 

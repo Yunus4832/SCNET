@@ -6,7 +6,8 @@ public sealed class CommandSuggestionContext(
     CommandRegistry registry,
     CommandPrincipal principal,
     CommandInvocationChannel channel,
-    IReadOnlyList<string> completedTokens)
+    IReadOnlyList<string> completedTokens
+)
 {
     public CommandRegistry Registry { get; } = registry;
 

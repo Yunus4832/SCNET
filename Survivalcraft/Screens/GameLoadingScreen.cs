@@ -114,7 +114,8 @@ public class GameLoadingScreen : Screen
                 {
                     NetworkSender.SendToServer(new ClientPackage(CommonLib.Net.Self!.ID, ClientState.Connected));
                 }
-            });
+            }
+        );
 
         _stateMachine.AddState(
             "Loading",
@@ -141,8 +142,12 @@ public class GameLoadingScreen : Screen
                     GameManager.LoadProject(_worldInfo, gamesWidget);
                     if (_isAdventureRestart && CommonLib.WorkType == WorkType.Client)
                     {
-                        NetworkSender.SendToServer(PlayerPackageBuilder.Capture(CommonLib.MainPlayer!,
-                            ComponentPlayerPackage.PlayerAction.IntoPlaying));
+                        NetworkSender.SendToServer(
+                            PlayerPackageBuilder.Capture(
+                                CommonLib.MainPlayer!,
+                                ComponentPlayerPackage.PlayerAction.IntoPlaying
+                            )
+                        );
                     }
 
                     ScreensManager.SwitchScreen("Game");
@@ -162,9 +167,12 @@ public class GameLoadingScreen : Screen
                     return;
                 }
 
-                GameManager.LoadProject(_projectXmlData,
+                GameManager.LoadProject(
+                    _projectXmlData,
                     ScreensManager.FindScreen<GameScreen>("Game", true)!.Children
-                        .Find<ContainerWidget>("GamesWidget")!, _blockMapping);
+                        .Find<ContainerWidget>("GamesWidget")!,
+                    _blockMapping
+                );
                 _projectXmlData = [];
                 _isServerReply = false;
                 _stateMachine.TransitionTo("WaitWorldSnapshot");
@@ -180,7 +188,8 @@ public class GameLoadingScreen : Screen
                 SetSpawnDialogMessage("应用初始世界快照", 0.8f);
                 if (_isWorldSnapshotApplied &&
                     GameManager.Project?.FindSubsystem<SubsystemPlayers>()?.PlayersData
-                        .Any(player => player.IsMainPlayer) == true)
+                        .Any(player => player.IsMainPlayer) ==
+                    true)
                 {
                     ScreensManager.SwitchScreen("Game");
                 }
@@ -328,12 +337,15 @@ public class GameLoadingScreen : Screen
         {
             var prepared = _serverPreparation;
             Task.Run(async () => await prepared.DisposeAsync()).ContinueWith(task =>
-            {
-                if (task.IsFaulted)
                 {
-                    Log.Warning($"Could not close loading preparation: {task.Exception!.GetBaseException().Message}");
+                    if (task.IsFaulted)
+                    {
+                        Log.Warning(
+                            $"Could not close loading preparation: {task.Exception!.GetBaseException().Message}"
+                        );
+                    }
                 }
-            });
+            );
         }
     }
 

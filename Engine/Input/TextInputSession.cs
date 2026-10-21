@@ -13,7 +13,8 @@ public sealed class TextInputSession : IDisposable
     internal TextInputSession(
         Action<string> commitText,
         Action backspace,
-        Action<TextComposition> updateComposition)
+        Action<TextComposition> updateComposition
+    )
     {
         _commitText = commitText;
         _backspace = backspace;

@@ -18,6 +18,7 @@ public sealed class NetworkNotificationQueueTest
         {
             action!();
         }
+
         Assert.Equal(new[] { 1, 2, 3 }, order);
         Assert.Equal(0, queue.Count);
         Assert.True(queue.TryEnqueue(() => { }, 8));

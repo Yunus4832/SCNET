@@ -2,7 +2,9 @@ namespace Engine.Graphics;
 
 public enum CullMode
 {
-    None,
-    CullClockwise,
-    CullCounterClockwise
+    None = 0,
+
+    CullClockwise = 1,
+
+    CullCounterClockwise = 2
 }

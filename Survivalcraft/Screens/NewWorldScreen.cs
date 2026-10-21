@@ -65,9 +65,14 @@ public class NewWorldScreen : Screen
     {
         if (_gameModeButton.IsClicked)
         {
-            DialogsManager.ShowDialog(null,
-                new SelectGameModeDialog(string.Empty, false,
-                    delegate (GameMode gameMode) { _worldSettings.GameMode = gameMode; }));
+            DialogsManager.ShowDialog(
+                null,
+                new SelectGameModeDialog(
+                    string.Empty,
+                    false,
+                    delegate(GameMode gameMode) { _worldSettings.GameMode = gameMode; }
+                )
+            );
         }
 
         if (_startingPositionButton.IsClicked)
@@ -126,35 +131,40 @@ public class NewWorldScreen : Screen
         var busyDialog = new BusyDialog("准备世界模组", "正在检查所需模组...");
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() =>
-        {
-            try
             {
-                var result = ModRestartHelper.PrepareWorldSession(
-                    worldInfo,
-                    message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message));
-                Dispatcher.Dispatch(() =>
+                try
                 {
-                    DialogsManager.HideDialog(busyDialog);
-                    if (!result.RequiresRestart)
-                    {
-                        PlayPreparedWorld(worldInfo, runServer);
-                        return;
-                    }
+                    var result = ModRestartHelper.PrepareWorldSession(
+                        worldInfo,
+                        message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message)
+                    );
+                    Dispatcher.Dispatch(() =>
+                        {
+                            DialogsManager.HideDialog(busyDialog);
+                            if (!result.RequiresRestart)
+                            {
+                                PlayPreparedWorld(worldInfo, runServer);
+                                return;
+                            }
 
-                    ConfirmWorldModRestart(result);
-                });
-            }
-            catch (Exception ex)
-            {
-                Dispatcher.Dispatch(() =>
+                            ConfirmWorldModRestart(result);
+                        }
+                    );
+                }
+                catch (Exception ex)
                 {
-                    DialogsManager.HideDialog(busyDialog);
-                    DialogsManager.Alert(
-                        "模组准备失败",
-                        $"无法准备该世界需要的模组。\n{ex.Message}");
-                });
+                    Dispatcher.Dispatch(() =>
+                        {
+                            DialogsManager.HideDialog(busyDialog);
+                            DialogsManager.Alert(
+                                "模组准备失败",
+                                $"无法准备该世界需要的模组。\n{ex.Message}"
+                            );
+                        }
+                    );
+                }
             }
-        });
+        );
     }
 
     private static void ConfirmWorldModRestart(RemoteModSessionPreparation result)
@@ -174,7 +184,9 @@ public class NewWorldScreen : Screen
                     }
 
                     GameExitManager.RequestRestart(result.RemoteSession!, result.SessionProfile!);
-                }));
+                }
+            )
+        );
     }
 
     private void PlayPreparedWorld(WorldInfo worldInfo, bool runServer)
@@ -192,12 +204,15 @@ public class NewWorldScreen : Screen
                     new MessageDialog(
                         "提示",
                         "创建服务器失败，端口已被占用",
-                        "确定", string.Empty,
+                        "确定",
+                        string.Empty,
                         _ =>
                         {
                             CommonLib.Net.StopImmediate();
                             DialogsManager.HideAllDialogs();
-                        }));
+                        }
+                    )
+                );
             }
         }
         else

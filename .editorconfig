@@ -1,20 +1,29 @@
 root = true
 
 [*]
-end_of_line = lf # 全平台统一使用 LF
-charset = utf-8 # 文件编码字符集为 UTF-8
-trim_trailing_whitespace = true # 删除文件末尾空格
-insert_final_newline = true # 末尾插入新行
-indent_style = space # 以空格代替 tab
-indent_size = 4 # 代替 tab 的空格数量
+# EditorConfig 基础规则：由支持 EditorConfig 的编辑器和格式工具读取。
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+indent_size = 4
 
 [*.cs]
-# 代码风格
+# Microsoft/Roslyn C# 规则：dotnet format 执行，Rider/ReSharper 同时支持。
 csharp_prefer_braces = true:error
 csharp_style_var_for_built_in_types = true:warning
 csharp_style_var_when_type_is_apparent = true:warning
 csharp_style_var_elsewhere = true:warning
 csharp_style_namespace_declarations = file_scoped:error
+# 表达式体方法仅用于整个声明能保持单行的情况；过长时展开方法体。
+# Roslyn when_on_single_line 只判断表达式，不含声明总宽度，不能准确约束此规则。
+
+csharp_new_line_before_open_brace = all
+csharp_preserve_single_line_blocks = true
+csharp_preserve_single_line_statements = false
+
+# 枚举成员显式赋值由 scnet-code-style 的 Roslyn 检查器约束，无对应内置 EditorConfig 键。
 
 # Using 规则
 dotnet_sort_system_directives_first = true
@@ -37,3 +46,43 @@ dotnet_naming_style.camel_case_no_underscore.capitalization = camel_case
 dotnet_naming_rule.nonprivate_fields_should_be_camel_case.severity = warning
 dotnet_naming_rule.nonprivate_fields_should_be_camel_case.symbols = nonprivate_fields_camel
 dotnet_naming_rule.nonprivate_fields_should_be_camel_case.style = camel_case_no_underscore
+
+# JetBrains 格式扩展：由 Rider、ReSharper、CleanupCode 执行。
+# dotnet format 忽略这些键，不能检查下列精细排版规则。
+resharper_csharp_max_line_length = 120
+
+# 字段和属性（包括自动属性、表达式属性）声明之间保留一个空行。
+resharper_csharp_blank_lines_around_field = 1
+resharper_csharp_blank_lines_around_single_line_field = 1
+resharper_csharp_blank_lines_around_property = 1
+resharper_csharp_blank_lines_around_single_line_property = 1
+resharper_csharp_blank_lines_around_auto_property = 1
+resharper_csharp_blank_lines_around_single_line_auto_property = 1
+
+# 普通方法/构造方法：短声明可单行，过长或多行时每个参数一行，右括号另起一行。
+resharper_csharp_wrap_parameters_style = chop_if_long
+resharper_csharp_keep_existing_declaration_parens_arrangement = false
+resharper_csharp_wrap_after_declaration_lpar = true
+resharper_csharp_wrap_before_declaration_rpar = true
+
+# 主构造方法及 record 参数沿用相同的声明排版。
+resharper_csharp_wrap_primary_constructor_parameters_style = chop_if_long
+resharper_csharp_keep_existing_primary_constructor_declaration_parens_arrangement = false
+resharper_csharp_wrap_after_primary_constructor_declaration_lpar = true
+resharper_csharp_wrap_before_primary_constructor_declaration_rpar = true
+
+# 不将方法体压成一行；自动属性的访问器仍可保持单行。
+resharper_csharp_keep_existing_declaration_block_arrangement = false
+resharper_csharp_place_simple_method_on_single_line = false
+resharper_csharp_place_abstract_accessorholder_on_single_line = true
+resharper_csharp_place_simple_accessorholder_on_single_line = true
+
+# 方法和构造调用：过长时每个实参一行，左右括号分别控制换行。
+resharper_csharp_wrap_arguments_style = chop_if_long
+resharper_csharp_keep_existing_invocation_parens_arrangement = false
+resharper_csharp_wrap_after_invocation_lpar = true
+resharper_csharp_wrap_before_invocation_rpar = true
+
+# 长布尔条件链展开时每个条件一行，逻辑运算符保留在上一行末尾。
+resharper_csharp_wrap_chained_binary_expressions = chop_if_long
+resharper_csharp_wrap_before_binary_opsign = false

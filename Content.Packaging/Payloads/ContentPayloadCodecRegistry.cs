@@ -13,18 +13,23 @@ public sealed class ContentPayloadCodecRegistry
         }
         catch (ArgumentException exception)
         {
-            throw new ArgumentException("Only one payload codec can be registered for each content type.",
-                nameof(codecs), exception);
+            throw new ArgumentException(
+                "Only one payload codec can be registered for each content type.",
+                nameof(codecs),
+                exception
+            );
         }
     }
 
-    public static ContentPayloadCodecRegistry Default { get; } = new([
-        new ModPayloadCodec(),
-        new WorldPayloadCodec(),
-        new BlocksTexturePayloadCodec(),
-        new CharacterSkinPayloadCodec(),
-        new FurniturePackPayloadCodec()
-    ]);
+    public static ContentPayloadCodecRegistry Default { get; } = new(
+        [
+            new ModPayloadCodec(),
+            new WorldPayloadCodec(),
+            new BlocksTexturePayloadCodec(),
+            new CharacterSkinPayloadCodec(),
+            new FurniturePackPayloadCodec()
+        ]
+    );
 
     public IContentPayloadCodec Get(ContentPackageType type) =>
         _codecs.TryGetValue(type, out var codec)

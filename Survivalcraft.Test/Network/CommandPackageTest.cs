@@ -15,8 +15,13 @@ public class CommandPackageTest
         Assert.Equal("completion-1", request.CorrelationId);
         Assert.Null(request.Result);
         var description = new LocalizedText("Commands", "TeleportMark_Description", "Teleport to a mark");
-        var response = RoundTrip(CommandPackage.CreateSuggestions(request.Input, request.CorrelationId,
-            [new CommandSuggestion("Home One", description.Resolve(), true, description)]));
+        var response = RoundTrip(
+            CommandPackage.CreateSuggestions(
+                request.Input,
+                request.CorrelationId,
+                [new CommandSuggestion("Home One", description.Resolve(), true, description)]
+            )
+        );
         Assert.Equal(CommandPackage.CommandPackageMode.Suggestions, response.Mode);
         Assert.Equal(request.CorrelationId, response.CorrelationId);
         Assert.Equal(request.Input, response.Input);
@@ -29,8 +34,13 @@ public class CommandPackageTest
     [Fact]
     public void SuggestionResponseIsBounded()
     {
-        var response = RoundTrip(CommandPackage.CreateSuggestions("/tp self private ", "bounded",
-            Enumerable.Range(0, 100).Select(index => new CommandSuggestion(index.ToString(), "", true))));
+        var response = RoundTrip(
+            CommandPackage.CreateSuggestions(
+                "/tp self private ",
+                "bounded",
+                Enumerable.Range(0, 100).Select(index => new CommandSuggestion(index.ToString(), "", true))
+            )
+        );
         Assert.Equal(64, response.Suggestions.Count);
     }
 
@@ -65,11 +75,14 @@ public class CommandPackageTest
             [
                 new CommandPermissionGrant(
                     new ResourceId(owner, "server.stop"),
-                    false),
+                    false
+                ),
                 new CommandPermissionGrant(
                     new ResourceId(owner, "world.time.set"),
-                    true)
-            ]);
+                    true
+                )
+            ]
+        );
 
         var clone = RoundTrip(package);
 
@@ -79,12 +92,15 @@ public class CommandPackageTest
             [
                 new CommandPermissionGrant(
                     new ResourceId(owner, "server.stop"),
-                    false),
+                    false
+                ),
                 new CommandPermissionGrant(
                     new ResourceId(owner, "world.time.set"),
-                    true)
+                    true
+                )
             ],
-            clone.PermissionGrants);
+            clone.PermissionGrants
+        );
     }
 
     [Fact]
@@ -94,7 +110,8 @@ public class CommandPackageTest
         var package = CommandPackage.CreateRequest(
             commandId,
             [1, 2, 3, 4],
-            "request-typed");
+            "request-typed"
+        );
 
         var clone = RoundTrip(package);
 
@@ -117,7 +134,8 @@ public class CommandPackageTest
             CommandResultPresentation.History | CommandResultPresentation.Toast,
             "TeamInvitationPending_Message",
             ["Alice"],
-            PanelBehavior: CommandPanelBehavior.CloseOnSuccess);
+            PanelBehavior: CommandPanelBehavior.CloseOnSuccess
+        );
         var package = CommandPackage.CreateResult(CommandResponseBuilder.Capture(result), "request-result");
 
         var clone = RoundTrip(package);

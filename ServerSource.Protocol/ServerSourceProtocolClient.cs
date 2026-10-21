@@ -3,20 +3,20 @@ using System.Text.Json;
 
 namespace ServerSource.Protocol;
 
-public sealed class ServerSourceProtocolClient
+public sealed class ServerSourceProtocolClient(HttpClient httpClient)
 {
     private const int _maximumPages = 100;
+
     private static readonly JsonSerializerOptions _serializerOptions = new(JsonSerializerDefaults.Web);
 
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
-    public ServerSourceProtocolClient(HttpClient httpClient)
-    {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-    }
-
-    public async Task<ServerSourcePage> GetPageAsync(Uri sourceUrl, string? cursor = null,
-        int limit = ServerSourceProtocol.DefaultPageSize, CancellationToken cancellationToken = default)
+    public async Task<ServerSourcePage> GetPageAsync(
+        Uri sourceUrl,
+        string? cursor = null,
+        int limit = ServerSourceProtocol.DefaultPageSize,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(sourceUrl);
         if (!sourceUrl.IsAbsoluteUri || sourceUrl.Scheme is not ("http" or "https"))
@@ -37,8 +37,11 @@ public sealed class ServerSourceProtocolClient
         var requestUri = BuildRequestUri(sourceUrl, cursor, limit);
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken
+        ).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         EnsureJsonContentType(response.Content.Headers.ContentType);
         EnsureContentLength(response.Content.Headers.ContentLength);
@@ -66,8 +69,10 @@ public sealed class ServerSourceProtocolClient
         return page!;
     }
 
-    public async Task<ServerSourceSnapshot> GetAllAsync(Uri sourceUrl,
-        CancellationToken cancellationToken = default)
+    public async Task<ServerSourceSnapshot> GetAllAsync(
+        Uri sourceUrl,
+        CancellationToken cancellationToken = default
+    )
     {
         var servers = new List<ServerSourceEntry>();
         var entryIds = new HashSet<string>(StringComparer.Ordinal);
@@ -76,8 +81,12 @@ public sealed class ServerSourceProtocolClient
         string? cursor = null;
         for (var pageNumber = 0; pageNumber < _maximumPages; pageNumber++)
         {
-            var page = await GetPageAsync(sourceUrl, cursor, ServerSourceProtocol.MaximumPageSize,
-                cancellationToken).ConfigureAwait(false);
+            var page = await GetPageAsync(
+                sourceUrl,
+                cursor,
+                ServerSourceProtocol.MaximumPageSize,
+                cancellationToken
+            ).ConfigureAwait(false);
             descriptor ??= page.Source;
             if (!string.Equals(descriptor.Id, page.Source.Id, StringComparison.Ordinal))
             {

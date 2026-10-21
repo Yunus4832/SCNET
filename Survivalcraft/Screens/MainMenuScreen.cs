@@ -111,31 +111,48 @@ public class MainMenuScreen : Screen
 
     private void ConfigureMainMenuTabs()
     {
-        _mainMenuTabs.AddTab(new VerticalTabMenu(
-            "Textures/Atlas/Exit",
-            () =>
-            [
-                new VerticalTabMenuItem(MainMenuText("Restart"),
-                    () => ExecutePowerMenuAction(PowerMenuAction.Restart)),
-                new VerticalTabMenuItem(MainMenuText("SwitchInstance"),
-                    () => ExecutePowerMenuAction(PowerMenuAction.SwitchInstance)),
-                new VerticalTabMenuItem(MainMenuText("RestartHeadless"),
-                    () => ExecutePowerMenuAction(PowerMenuAction.RestartHeadless)),
-                new VerticalTabMenuItem(MainMenuText("Exit"),
-                    () => ExecutePowerMenuAction(PowerMenuAction.Exit))
-            ],
-            new Vector2(180f, 44f)));
+        _mainMenuTabs.AddTab(
+            new VerticalTabMenu(
+                "Textures/Atlas/Exit",
+                () =>
+                [
+                    new VerticalTabMenuItem(
+                        MainMenuText("Restart"),
+                        () => ExecutePowerMenuAction(PowerMenuAction.Restart)
+                    ),
+                    new VerticalTabMenuItem(
+                        MainMenuText("SwitchInstance"),
+                        () => ExecutePowerMenuAction(PowerMenuAction.SwitchInstance)
+                    ),
+                    new VerticalTabMenuItem(
+                        MainMenuText("RestartHeadless"),
+                        () => ExecutePowerMenuAction(PowerMenuAction.RestartHeadless)
+                    ),
+                    new VerticalTabMenuItem(
+                        MainMenuText("Exit"),
+                        () => ExecutePowerMenuAction(PowerMenuAction.Exit)
+                    )
+                ],
+                new Vector2(180f, 44f)
+            )
+        );
         _mainMenuTabs.AddNavigationTab(
             "Textures/Atlas/Instance",
-            () => ScreensManager.SwitchScreen("InstanceManagement"));
-        _mainMenuTabs.AddTab(new VerticalTabMenu(
-            "Textures/Atlas/Earth",
-            () => LanguageManager.LanguageTypes
-                .Select(languageType => new VerticalTabMenuItem(
-                    LanguageManager.GetLanguageDisplayName(languageType),
-                    () => SettingsUiScreen.ChangeLanguage(languageType)))
-                .ToArray(),
-            new Vector2(180f, 44f)));
+            () => ScreensManager.SwitchScreen("InstanceManagement")
+        );
+        _mainMenuTabs.AddTab(
+            new VerticalTabMenu(
+                "Textures/Atlas/Earth",
+                () => LanguageManager.LanguageTypes
+                    .Select(languageType => new VerticalTabMenuItem(
+                            LanguageManager.GetLanguageDisplayName(languageType),
+                            () => SettingsUiScreen.ChangeLanguage(languageType)
+                        )
+                    )
+                    .ToArray(),
+                new Vector2(180f, 44f)
+            )
+        );
     }
 
     private static void ExecutePowerMenuAction(PowerMenuAction action)
@@ -143,11 +160,18 @@ public class MainMenuScreen : Screen
         switch (action)
         {
             case PowerMenuAction.Restart:
-                ConfirmAction(MainMenuText("ConfirmRestart"), () =>
-                    ExecuteApplicationCommand(new RestartApplicationCommand(new SessionInfo
-                    {
-                        Target = SessionTarget.MainMenu
-                    })));
+                ConfirmAction(
+                    MainMenuText("ConfirmRestart"),
+                    () =>
+                        ExecuteApplicationCommand(
+                            new RestartApplicationCommand(
+                                new SessionInfo
+                                {
+                                    Target = SessionTarget.MainMenu
+                                }
+                            )
+                        )
+                );
                 break;
             case PowerMenuAction.SwitchInstance:
                 ShowInstanceMenu();
@@ -165,9 +189,11 @@ public class MainMenuScreen : Screen
     {
         var instances = StarterInstanceManager.ListInstances()
             .Where(instanceId => !string.Equals(
-                instanceId,
-                StarterInstanceManager.Current.Id,
-                StringComparison.OrdinalIgnoreCase))
+                    instanceId,
+                    StarterInstanceManager.Current.Id,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
             .ToArray();
         if (instances.Length == 0)
         {
@@ -176,7 +202,9 @@ public class MainMenuScreen : Screen
                 new MessageDialog(
                     MainMenuText("SelectInstance"),
                     MainMenuText("NoOtherInstances"),
-                    LanguageManager.Ok));
+                    LanguageManager.Ok
+                )
+            );
             return;
         }
 
@@ -192,9 +220,11 @@ public class MainMenuScreen : Screen
                     var instanceId = (string)item;
                     ConfirmAction(
                         string.Format(MainMenuText("ConfirmSwitchInstance"), instanceId),
-                        () => ExecuteApplicationCommand(
-                            new SwitchInstanceCommand(instanceId)));
-                }));
+                        () => ExecuteApplicationCommand(new SwitchInstanceCommand(instanceId))
+                    );
+                }
+            )
+        );
     }
 
     private static void ShowHeadlessTargetMenu()
@@ -204,9 +234,13 @@ public class MainMenuScreen : Screen
         {
             new(null, MainMenuText("HeadlessDefaultWorld"))
         };
-        targets.AddRange(WorldsManager.WorldInfos.Select(worldInfo => new HeadlessTarget(
-            worldInfo.DirectoryName,
-            worldInfo.WorldSettings.Name)));
+        targets.AddRange(
+            WorldsManager.WorldInfos.Select(worldInfo => new HeadlessTarget(
+                    worldInfo.DirectoryName,
+                    worldInfo.WorldSettings.Name
+                )
+            )
+        );
 
         DialogsManager.ShowDialog(
             null,
@@ -227,10 +261,16 @@ public class MainMenuScreen : Screen
                         };
                     ConfirmAction(
                         string.Format(MainMenuText("ConfirmRestartHeadless"), target.DisplayName),
-                        () => ExecuteApplicationCommand(new SetRunModeCommand(
-                            RunModeType.HeadlessServer,
-                            restartSession)));
-                }));
+                        () => ExecuteApplicationCommand(
+                            new SetRunModeCommand(
+                                RunModeType.HeadlessServer,
+                                restartSession
+                            )
+                        )
+                    );
+                }
+            )
+        );
     }
 
     private static void ExecuteApplicationCommand(IGameCommand command)
@@ -243,7 +283,9 @@ public class MainMenuScreen : Screen
                 new MessageDialog(
                     LanguageManager.Error,
                     CommandText.Resolve(result),
-                    LanguageManager.Ok));
+                    LanguageManager.Ok
+                )
+            );
         }
     }
 
@@ -342,19 +384,25 @@ public class MainMenuScreen : Screen
 
     private static void ConfirmExit()
     {
-        ConfirmAction(MainMenuText("ConfirmExit"), () =>
-            ExecuteApplicationCommand(new ExitApplicationCommand()));
+        ConfirmAction(
+            MainMenuText("ConfirmExit"),
+            () =>
+                ExecuteApplicationCommand(new ExitApplicationCommand())
+        );
     }
 
     private static void ConfirmAction(string message, Action action)
     {
-        DialogsManager.Confirm(message, button =>
-        {
-            if (button is MessageDialogButton.Button1)
+        DialogsManager.Confirm(
+            message,
+            button =>
             {
-                action();
+                if (button is MessageDialogButton.Button1)
+                {
+                    action();
+                }
             }
-        });
+        );
     }
 
     private static string MainMenuText(string key) =>
@@ -362,13 +410,17 @@ public class MainMenuScreen : Screen
 
     private enum PowerMenuAction
     {
-        Restart,
-        SwitchInstance,
-        RestartHeadless,
-        Exit
+        Restart = 0,
+
+        SwitchInstance = 1,
+
+        RestartHeadless = 2,
+
+        Exit = 3
     }
 
     private sealed record HeadlessTarget(
         string? WorldDirectoryName,
-        string DisplayName);
+        string DisplayName
+    );
 }

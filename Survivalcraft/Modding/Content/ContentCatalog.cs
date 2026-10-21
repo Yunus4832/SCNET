@@ -7,6 +7,7 @@ public sealed class ContentCatalog
     private static readonly ModId _gameModId = new("game");
 
     private readonly IReadOnlyList<Entry> _entries;
+
     private readonly HashSet<ModId> _installedOwners = [];
 
     private ContentCatalog(IReadOnlyList<Entry> entries)
@@ -84,7 +85,8 @@ public sealed class ContentCatalog
 
         var languagePath = $"lang/{resolvedLanguage}.json";
         foreach (var entry in _entries.Where(entry =>
-                     entry.Registration.RelativePath.Equals(languagePath, StringComparison.OrdinalIgnoreCase)))
+                     entry.Registration.RelativePath.Equals(languagePath, StringComparison.OrdinalIgnoreCase)
+                 ))
         {
             using var stream = entry.Registration.OpenRead();
             LanguageManager.LoadJson(stream, resolvedLanguage);
@@ -154,8 +156,8 @@ public sealed class ContentCatalog
             return LanguageTypes.First(type => type.Equals("en-US", StringComparison.OrdinalIgnoreCase));
         }
 
-        return LanguageTypes.FirstOrDefault()
-               ?? throw new InvalidOperationException("No language resources are registered.");
+        return LanguageTypes.FirstOrDefault() ??
+               throw new InvalidOperationException("No language resources are registered.");
     }
 
     private sealed record Entry(ResourceId Id, ContentRegistration Registration);

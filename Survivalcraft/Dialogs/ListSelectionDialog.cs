@@ -71,20 +71,18 @@ public class ListSelectionDialog : Dialog
     {
     }
 
-    public Vector2 ContentSize
-    {
-        get => _contentWidget.Size;
-        set => _contentWidget.Size = value;
-    }
+    public Vector2 ContentSize { get => _contentWidget.Size; set => _contentWidget.Size = value; }
 
     protected override void MeasureOverride(Vector2 parentAvailableSize)
     {
         var availableContentSize = new Vector2(
             MathUtils.Max(parentAvailableSize.X - 40f, 0f),
-            MathUtils.Max(parentAvailableSize.Y - _dialogVerticalPadding, 0f));
+            MathUtils.Max(parentAvailableSize.Y - _dialogVerticalPadding, 0f)
+        );
         _contentWidget.Size = new Vector2(
             MathUtils.Min(_maximumContentSize.X, availableContentSize.X),
-            MathUtils.Min(_itemsHeight, MathUtils.Min(_maximumContentSize.Y, availableContentSize.Y)));
+            MathUtils.Min(_itemsHeight, MathUtils.Min(_maximumContentSize.Y, availableContentSize.Y))
+        );
         base.MeasureOverride(parentAvailableSize);
     }
 

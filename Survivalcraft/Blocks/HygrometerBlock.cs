@@ -28,8 +28,15 @@ public class HygrometerBlock : Block, IElectricElementBlock
         return new HygrometerElectricElement(subsystemElectricity, new CellFace(x, y, z, num & 3));
     }
 
-    public ElectricConnectorType? GetConnectorType(SubsystemTerrain terrain, int value, int face, int connectorFace,
-        int x, int y, int z)
+    public ElectricConnectorType? GetConnectorType(
+        SubsystemTerrain terrain,
+        int value,
+        int face,
+        int connectorFace,
+        int x,
+        int y,
+        int z
+    )
     {
         if ((Terrain.ExtractData(value) & 3) == face)
         {
@@ -58,13 +65,28 @@ public class HygrometerBlock : Block, IElectricElementBlock
             throw new InvalidOperationException("Required PointerMesh.ParentBone is null")
         );
         InvPointerMatrix = Matrix.Invert(PointerMatrix);
-        CaseMesh.AppendModelMeshPart(caseMesh.MeshParts[0], boneAbsoluteTransform, false, false, true,
-            false, Color.White);
-        PointerMesh.AppendModelMeshPart(pointerMesh.MeshParts[0], matrix, false, false, false, false,
-            Color.White);
+        CaseMesh.AppendModelMeshPart(
+            caseMesh.MeshParts[0],
+            boneAbsoluteTransform,
+            false,
+            false,
+            true,
+            false,
+            Color.White
+        );
+        PointerMesh.AppendModelMeshPart(
+            pointerMesh.MeshParts[0],
+            matrix,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         for (var i = 0; i < 4; i++)
         {
-            MatricesByData[i] = Matrix.CreateScale(5f) * Matrix.CreateTranslation(0.95f, 0.15f, 0.5f) *
+            MatricesByData[i] = Matrix.CreateScale(5f) *
+                                Matrix.CreateTranslation(0.95f, 0.15f, 0.5f) *
                                 Matrix.CreateTranslation(-0.5f, 0f, -0.5f) *
                                 Matrix.CreateRotationY((i + 1) * (float)Math.PI / 2f) *
                                 Matrix.CreateTranslation(0.5f, 0f, 0.5f);

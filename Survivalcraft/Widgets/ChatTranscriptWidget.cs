@@ -29,11 +29,7 @@ public sealed class ChatTranscriptWidget : CanvasWidget
 
     public int MaximumMessages { get; set; } = 200;
 
-    public bool IsBackgroundVisible
-    {
-        get => _background.IsVisible;
-        set => _background.IsVisible = value;
-    }
+    public bool IsBackgroundVisible { get => _background.IsVisible; set => _background.IsVisible = value; }
 
     public float MessageContentScale { get; set; } = 1f;
 
@@ -43,11 +39,7 @@ public sealed class ChatTranscriptWidget : CanvasWidget
 
     public bool FadeOlderMessages { get; set; }
 
-    public float Padding
-    {
-        get => _messages.Margin.X;
-        set => _messages.Margin = new Vector2(MathUtils.Max(value, 0f));
-    }
+    public float Padding { get => _messages.Margin.X; set => _messages.Margin = new Vector2(MathUtils.Max(value, 0f)); }
 
     public ChatTranscriptWidget()
     {

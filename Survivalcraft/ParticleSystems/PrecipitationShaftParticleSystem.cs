@@ -86,11 +86,17 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
             _intensity = precipitationShaftInfo.Intensity;
             _yLimit = precipitationShaftInfo.YLimit;
             _topmostValue =
-                _subsystemWeather.SubsystemTerrain.Terrain.GetCellValue(Point.X, precipitationShaftInfo.YLimit - 1,
-                    Point.Y);
+                _subsystemWeather.SubsystemTerrain.Terrain.GetCellValue(
+                    Point.X,
+                    precipitationShaftInfo.YLimit - 1,
+                    Point.Y
+                );
             _topmostBelowValue =
-                _subsystemWeather.SubsystemTerrain.Terrain.GetCellValue(Point.X, precipitationShaftInfo.YLimit - 2,
-                    Point.Y);
+                _subsystemWeather.SubsystemTerrain.Terrain.GetCellValue(
+                    Point.X,
+                    precipitationShaftInfo.YLimit - 2,
+                    Point.Y
+                );
         }
 
         var activeCamera = _gameWidget.ActiveCamera;
@@ -100,8 +106,12 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
         }
 
         var v = Vector2.Normalize(new Vector2(activeCamera.ViewDirection.X, activeCamera.ViewDirection.Z));
-        var v2 = Vector2.Normalize(new Vector2(Point.X + 0.5f - activeCamera.ViewPosition.X + 0.7f * v.X,
-            Point.Y + 0.5f - activeCamera.ViewPosition.Z + 0.7f * v.Y));
+        var v2 = Vector2.Normalize(
+            new Vector2(
+                Point.X + 0.5f - activeCamera.ViewPosition.X + 0.7f * v.X,
+                Point.Y + 0.5f - activeCamera.ViewPosition.Z + 0.7f * v.Y
+            )
+        );
         var num = Vector2.Dot(v, v2);
         _isVisible = num > 0.5f;
         if (_isVisible)
@@ -167,16 +177,22 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
 
                     if (_precipitationType == PrecipitationType.Rain && _random.Bool(0.5f))
                     {
-                        _subsystemWeather.RainSplashParticleSystem.AddSplash(_topmostValue,
+                        _subsystemWeather.RainSplashParticleSystem.AddSplash(
+                            _topmostValue,
                             new Vector3(particle.Position.X, particle.YLimit + num8, particle.Position.Z),
-                            _subsystemWeather.RainColor);
+                            _subsystemWeather.RainColor
+                        );
                     }
 
                     if (_precipitationType == PrecipitationType.Snow)
                     {
-                        _subsystemWeather.SnowSplashParticleSystem.AddSplash(_topmostValue,
+                        _subsystemWeather.SnowSplashParticleSystem.AddSplash(
+                            _topmostValue,
                             new Vector3(particle.Position.X, particle.YLimit + num8, particle.Position.Z),
-                            _size, _subsystemWeather.SnowColor, particle.TextureSlot);
+                            _size,
+                            _subsystemWeather.SnowColor,
+                            particle.TextureSlot
+                        );
                     }
                 }
                 else if (num7 > 0)
@@ -276,8 +292,17 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
             var p6 = particle2.Position + v7;
             var p7 = particle2.Position + v8;
             var color2 = _subsystemWeather.SnowColor * MathUtils.Min(0.6f * (num - particle2.Position.Y), 1f);
-            _batch.QueueQuad(p4, p5, p6, p7, particle2.TexCoord1, particle2.TexCoord2, particle2.TexCoord3,
-                particle2.TexCoord4, color2);
+            _batch.QueueQuad(
+                p4,
+                p5,
+                p6,
+                p7,
+                particle2.TexCoord1,
+                particle2.TexCoord2,
+                particle2.TexCoord3,
+                particle2.TexCoord4,
+                color2
+            );
         }
     }
 
@@ -291,8 +316,10 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
             return;
         }
 
-        var ray = new Ray3(new Vector3(particle.Position.X - Point.X, 1f, particle.Position.Z - Point.Y),
-            -Vector3.UnitY);
+        var ray = new Ray3(
+            new Vector3(particle.Position.X - Point.X, 1f, particle.Position.Z - Point.Y),
+            -Vector3.UnitY
+        );
         var num = block.Raycast(ray, _subsystemWeather.SubsystemTerrain, _topmostValue, false, out _, out _);
         if (num.HasValue)
         {
@@ -317,45 +344,45 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
         switch (_precipitationType)
         {
             case PrecipitationType.Rain:
+            {
+                var num4 = 8f;
+                var num5 = 12f;
+                _averageSpeed = (num4 + num5) / 2f;
+                _size = new Vector2(0.02f, 0.15f);
+                Texture = ContentManager.Get<Texture2D>("Textures/RainParticle");
+                foreach (var obj in _particles)
                 {
-                    var num4 = 8f;
-                    var num5 = 12f;
-                    _averageSpeed = (num4 + num5) / 2f;
-                    _size = new Vector2(0.02f, 0.15f);
-                    Texture = ContentManager.Get<Texture2D>("Textures/RainParticle");
-                    foreach (var obj in _particles)
-                    {
-                        obj.IsActive = false;
-                        obj.TexCoord1 = new Vector2(0f, 1f);
-                        obj.TexCoord2 = new Vector2(1f, 1f);
-                        obj.TexCoord3 = new Vector2(0.5f, 0f);
-                        obj.Speed = _random.Float(num4, num5);
-                    }
-
-                    break;
+                    obj.IsActive = false;
+                    obj.TexCoord1 = new Vector2(0f, 1f);
+                    obj.TexCoord2 = new Vector2(1f, 1f);
+                    obj.TexCoord3 = new Vector2(0.5f, 0f);
+                    obj.Speed = _random.Float(num4, num5);
                 }
+
+                break;
+            }
             case PrecipitationType.Snow:
+            {
+                var num = 0.25f;
+                var num2 = 0.5f;
+                var num3 = 3f;
+                _averageSpeed = (num2 + num3) / 2f;
+                _size = new Vector2(0.07f, 0.07f);
+                Texture = ContentManager.Get<Texture2D>("Textures/SnowParticle");
+                foreach (var particle in _particles)
                 {
-                    var num = 0.25f;
-                    var num2 = 0.5f;
-                    var num3 = 3f;
-                    _averageSpeed = (num2 + num3) / 2f;
-                    _size = new Vector2(0.07f, 0.07f);
-                    Texture = ContentManager.Get<Texture2D>("Textures/SnowParticle");
-                    foreach (var particle in _particles)
-                    {
-                        particle.IsActive = false;
-                        particle.TextureSlot = (byte)_random.Int(0, 15);
-                        var v = new Vector2(particle.TextureSlot % 4, particle.TextureSlot / 4) * num;
-                        particle.TexCoord1 = v + new Vector2(0f, 0f);
-                        particle.TexCoord2 = v + new Vector2(num, 0f);
-                        particle.TexCoord3 = v + new Vector2(num, num);
-                        particle.TexCoord4 = v + new Vector2(0f, num);
-                        particle.Speed = _random.Float(num2, num3);
-                    }
-
-                    break;
+                    particle.IsActive = false;
+                    particle.TextureSlot = (byte)_random.Int(0, 15);
+                    var v = new Vector2(particle.TextureSlot % 4, particle.TextureSlot / 4) * num;
+                    particle.TexCoord1 = v + new Vector2(0f, 0f);
+                    particle.TexCoord2 = v + new Vector2(num, 0f);
+                    particle.TexCoord3 = v + new Vector2(num, num);
+                    particle.TexCoord4 = v + new Vector2(0f, num);
+                    particle.Speed = _random.Float(num2, num3);
                 }
+
+                break;
+            }
             default:
                 throw new InvalidOperationException("Unknown precipitation type.");
         }

@@ -82,9 +82,14 @@ public class ModifyWorldScreen : Screen
     {
         if (_gameModeButton.IsClicked && _changingGameModeAllowed)
         {
-            DialogsManager.ShowDialog(null,
-                new SelectGameModeDialog(string.Empty, _cruelAllowed,
-                    delegate (GameMode gameMode) { WorldSettings.GameMode = gameMode; }));
+            DialogsManager.ShowDialog(
+                null,
+                new SelectGameModeDialog(
+                    string.Empty,
+                    _cruelAllowed,
+                    delegate(GameMode gameMode) { WorldSettings.GameMode = gameMode; }
+                )
+            );
         }
 
         _currentWorldSettingsData.Clear();
@@ -104,8 +109,13 @@ public class ModifyWorldScreen : Screen
 
         if (_serverSettingsButton.IsClicked)
         {
-            ScreensManager.SwitchScreen("WorldServerSettings", WorldSettings, "ModifyWorld", _directoryName,
-                WorldSettings);
+            ScreensManager.SwitchScreen(
+                "WorldServerSettings",
+                WorldSettings,
+                "ModifyWorld",
+                _directoryName,
+                WorldSettings
+            );
         }
 
         if ((_applyButton.IsClicked && flag2) & flag)
@@ -123,15 +133,22 @@ public class ModifyWorldScreen : Screen
         {
             if (flag)
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Get(_typeName, 3),
-                    LanguageManager.Get(_typeName, 4), LanguageManager.Get("Usual", "yes"),
-                    LanguageManager.Get("Usual", "no"), delegate (MessageDialogButton button)
-                    {
-                        if (button == MessageDialogButton.Button1)
+                DialogsManager.ShowDialog(
+                    null,
+                    new MessageDialog(
+                        LanguageManager.Get(_typeName, 3),
+                        LanguageManager.Get(_typeName, 4),
+                        LanguageManager.Get("Usual", "yes"),
+                        LanguageManager.Get("Usual", "no"),
+                        delegate(MessageDialogButton button)
                         {
-                            ScreensManager.SwitchScreen("Play");
+                            if (button == MessageDialogButton.Button1)
+                            {
+                                ScreensManager.SwitchScreen("Play");
+                            }
                         }
-                    }));
+                    )
+                );
             }
             else
             {

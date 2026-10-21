@@ -48,7 +48,8 @@ public class WorldPalette
         }
 
         Colors = array.Select((s, i) =>
-            !string.IsNullOrEmpty(s) ? HumanReadableConverter.ConvertFromString<Color>(s) : DefaultColors[i]).ToArray();
+            !string.IsNullOrEmpty(s) ? HumanReadableConverter.ConvertFromString<Color>(s) : DefaultColors[i]
+        ).ToArray();
         var array2 = valuesDictionary.GetValue("Names", new string(';', 15)).Split(';');
         if (array2.Length != 16)
         {
@@ -79,9 +80,12 @@ public class WorldPalette
     public ValuesDictionary Save()
     {
         var valuesDictionary = new ValuesDictionary();
-        var value = string.Join(";",
+        var value = string.Join(
+            ";",
             Colors.Select((c, i) =>
-                !(c == DefaultColors[i]) ? HumanReadableConverter.ConvertToString(c) : string.Empty));
+                !(c == DefaultColors[i]) ? HumanReadableConverter.ConvertToString(c) : string.Empty
+            )
+        );
         var value2 = string.Join(";", Names);
         valuesDictionary.SetValue("Colors", value);
         valuesDictionary.SetValue("Names", value2);

@@ -27,7 +27,8 @@ public class PreviewLayoutTest
     [Fact]
     public void OversizedRootIsReportedWhileExpectedScrollableClippingIsInformational()
     {
-        using var viewport = new CanvasWidget { Name = "Preview.Viewport", Size = new Vector2(100, 100), ClampToBounds = true };
+        using var viewport = new CanvasWidget
+            { Name = "Preview.Viewport", Size = new Vector2(100, 100), ClampToBounds = true };
         var content = new CanvasWidget { Size = new Vector2(120, 120) };
         viewport.Children.Add(content);
         PreviewLayout.Arrange(viewport, new Vector2(100, 100));

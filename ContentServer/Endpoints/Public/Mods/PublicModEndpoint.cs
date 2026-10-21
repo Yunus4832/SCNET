@@ -26,7 +26,8 @@ public sealed class PublicModEndpoint(IMediator mediator) : ContentEndpoint
     private async Task<ResponseData<ModPackageResponse>> Mod(
         string modId,
         string version,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var items = await mediator.Send(
             new ListVersionsQuery(
@@ -34,7 +35,8 @@ public sealed class PublicModEndpoint(IMediator mediator) : ContentEndpoint
                 new PageRequest { PageIndex = 1, PageSize = 1, CountTotal = false },
                 Type: "Mod",
                 Identifier: modId,
-                Version: version),
+                Version: version
+            ),
             cancellationToken
         );
         var item = items.Items.FirstOrDefault();

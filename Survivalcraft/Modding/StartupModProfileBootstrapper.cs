@@ -6,7 +6,8 @@ public static class StartupModProfileBootstrapper
         string? activeSessionId,
         SessionInfo startupSession,
         string localRepositoryPath,
-        Action<string>? log = null)
+        Action<string>? log = null
+    )
     {
         ArgumentNullException.ThrowIfNull(startupSession);
 

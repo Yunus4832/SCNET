@@ -41,7 +41,8 @@ internal class SystemDrawingTypesConverters
             }
 
             throw new InvalidOperationException(
-                $"Cannot convert string \"{data}\" to a value of type {type.FullName}.");
+                $"Cannot convert string \"{data}\" to a value of type {type.FullName}."
+            );
         }
     }
 
@@ -63,7 +64,8 @@ internal class SystemDrawingTypesConverters
             }
 
             throw new InvalidOperationException(
-                $"Cannot convert string \"{data}\" to a value of type {type.FullName}.");
+                $"Cannot convert string \"{data}\" to a value of type {type.FullName}."
+            );
         }
     }
 
@@ -85,7 +87,8 @@ internal class SystemDrawingTypesConverters
             }
 
             throw new InvalidOperationException(
-                $"Cannot convert string \"{data}\" to a value of type {type.FullName}.");
+                $"Cannot convert string \"{data}\" to a value of type {type.FullName}."
+            );
         }
     }
 
@@ -107,7 +110,8 @@ internal class SystemDrawingTypesConverters
             }
 
             throw new InvalidOperationException(
-                $"Cannot convert string \"{data}\" to a value of type {type.FullName}.");
+                $"Cannot convert string \"{data}\" to a value of type {type.FullName}."
+            );
         }
     }
 
@@ -129,7 +133,8 @@ internal class SystemDrawingTypesConverters
             }
 
             throw new InvalidOperationException(
-                $"Cannot convert string \"{data}\" to a value of type {type.FullName}.");
+                $"Cannot convert string \"{data}\" to a value of type {type.FullName}."
+            );
         }
     }
 
@@ -139,8 +144,13 @@ internal class SystemDrawingTypesConverters
         public string ConvertToString(object value)
         {
             var rectangle = (Rectangle)value;
-            return HumanReadableConverter.ValuesListToString(',', rectangle.X, rectangle.Y, rectangle.Width,
-                rectangle.Height);
+            return HumanReadableConverter.ValuesListToString(
+                ',',
+                rectangle.X,
+                rectangle.Y,
+                rectangle.Width,
+                rectangle.Height
+            );
         }
 
         public object ConvertFromString(Type type, string data)
@@ -152,7 +162,8 @@ internal class SystemDrawingTypesConverters
             }
 
             throw new InvalidOperationException(
-                $"Cannot convert string \"{data}\" to a value of type {type.FullName}.");
+                $"Cannot convert string \"{data}\" to a value of type {type.FullName}."
+            );
         }
     }
 
@@ -162,8 +173,13 @@ internal class SystemDrawingTypesConverters
         public string ConvertToString(object value)
         {
             var rectangleF = (RectangleF)value;
-            return HumanReadableConverter.ValuesListToString(',', rectangleF.X, rectangleF.Y, rectangleF.Width,
-                rectangleF.Height);
+            return HumanReadableConverter.ValuesListToString(
+                ',',
+                rectangleF.X,
+                rectangleF.Y,
+                rectangleF.Width,
+                rectangleF.Height
+            );
         }
 
         public object ConvertFromString(Type type, string data)
@@ -175,7 +191,8 @@ internal class SystemDrawingTypesConverters
             }
 
             throw new InvalidOperationException(
-                $"Cannot convert string \"{data}\" to a value of type {type.FullName}.");
+                $"Cannot convert string \"{data}\" to a value of type {type.FullName}."
+            );
         }
     }
 }

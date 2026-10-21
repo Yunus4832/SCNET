@@ -5,8 +5,11 @@ public sealed class ContentServerClientPool(ContentServerClientFactory factory) 
     public static ContentServerClientPool Shared { get; } = new(new ContentServerClientFactory());
 
     private readonly Lock _gate = new();
+
     private readonly Dictionary<(Guid Scope, Guid Repository), Entry> _entries = [];
+
     private readonly HashSet<Guid> _closedScopes = [];
+
     private bool _disposed;
 
     public void Update(Guid scope, IEnumerable<ContentRepository> repositories)
@@ -125,9 +128,13 @@ public sealed class ContentServerClientPool(ContentServerClientFactory factory) 
     private sealed class Entry(string baseUrl, ContentRepository repository)
     {
         public string BaseUrl { get; } = baseUrl;
+
         public ContentRepository Repository { get; set; } = repository;
+
         public ContentServerClient? Client { get; set; }
+
         public int Users { get; set; }
+
         public bool Retired { get; set; }
     }
 

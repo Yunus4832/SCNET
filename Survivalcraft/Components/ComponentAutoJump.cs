@@ -28,8 +28,10 @@ public class ComponentAutoJump : Component, IUpdateable
             var lastWalkOrder = _componentCreature.ComponentLocomotion.LastWalkOrder;
             if (lastWalkOrder.HasValue)
             {
-                var vector = new Vector2(_componentCreature.ComponentBody.CollisionVelocityChange.X,
-                    _componentCreature.ComponentBody.CollisionVelocityChange.Z);
+                var vector = new Vector2(
+                    _componentCreature.ComponentBody.CollisionVelocityChange.X,
+                    _componentCreature.ComponentBody.CollisionVelocityChange.Z
+                );
                 if (vector != Vector2.Zero && !_collidedWithBody)
                 {
                     var v = Vector2.Normalize(vector);
@@ -74,30 +76,51 @@ public class ComponentAutoJump : Component, IUpdateable
 
                     if (flag)
                     {
-                        var cellContents = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(v3.X),
-                            Terrain.ToCell(v3.Y), Terrain.ToCell(v3.Z));
-                        var cellContents2 = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(vector3.X),
-                            Terrain.ToCell(vector3.Y), Terrain.ToCell(vector3.Z));
-                        var cellContents3 = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(vector4.X),
-                            Terrain.ToCell(vector4.Y), Terrain.ToCell(vector4.Z));
-                        var cellContents4 = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(v3.X),
-                            Terrain.ToCell(v3.Y) + 1, Terrain.ToCell(v3.Z));
-                        var cellContents5 = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(vector3.X),
-                            Terrain.ToCell(vector3.Y) + 1, Terrain.ToCell(vector3.Z));
-                        var cellContents6 = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(vector4.X),
-                            Terrain.ToCell(vector4.Y) + 1, Terrain.ToCell(vector4.Z));
+                        var cellContents = _subsystemTerrain.Terrain.GetCellContents(
+                            Terrain.ToCell(v3.X),
+                            Terrain.ToCell(v3.Y),
+                            Terrain.ToCell(v3.Z)
+                        );
+                        var cellContents2 = _subsystemTerrain.Terrain.GetCellContents(
+                            Terrain.ToCell(vector3.X),
+                            Terrain.ToCell(vector3.Y),
+                            Terrain.ToCell(vector3.Z)
+                        );
+                        var cellContents3 = _subsystemTerrain.Terrain.GetCellContents(
+                            Terrain.ToCell(vector4.X),
+                            Terrain.ToCell(vector4.Y),
+                            Terrain.ToCell(vector4.Z)
+                        );
+                        var cellContents4 = _subsystemTerrain.Terrain.GetCellContents(
+                            Terrain.ToCell(v3.X),
+                            Terrain.ToCell(v3.Y) + 1,
+                            Terrain.ToCell(v3.Z)
+                        );
+                        var cellContents5 = _subsystemTerrain.Terrain.GetCellContents(
+                            Terrain.ToCell(vector3.X),
+                            Terrain.ToCell(vector3.Y) + 1,
+                            Terrain.ToCell(vector3.Z)
+                        );
+                        var cellContents6 = _subsystemTerrain.Terrain.GetCellContents(
+                            Terrain.ToCell(vector4.X),
+                            Terrain.ToCell(vector4.Y) + 1,
+                            Terrain.ToCell(vector4.Z)
+                        );
                         var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents];
                         var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents2];
                         var block3 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents3];
                         var block4 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents4];
                         var block5 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents5];
                         var block6 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents6];
-                        if (!block.NoAutoJump && ((block.Collidable && !block4.Collidable) ||
-                                                  (block2.Collidable && !block5.Collidable) ||
-                                                  (block3.Collidable && !block6.Collidable)))
+                        if (!block.NoAutoJump &&
+                            ((block.Collidable && !block4.Collidable) ||
+                             (block2.Collidable && !block5.Collidable) ||
+                             (block3.Collidable && !block6.Collidable)))
                         {
-                            _componentCreature.ComponentLocomotion.JumpOrder = MathUtils.Max(_jumpStrength,
-                                _componentCreature.ComponentLocomotion.JumpOrder);
+                            _componentCreature.ComponentLocomotion.JumpOrder = MathUtils.Max(
+                                _jumpStrength,
+                                _componentCreature.ComponentLocomotion.JumpOrder
+                            );
                             _lastAutoJumpTime = _subsystemTime.GameTime;
                         }
                     }

@@ -28,7 +28,10 @@ public sealed class PackageDecodingTest
     {
         Assert.Empty(PackageManager.DecodePackages(null, ReadOnlyMemory<byte>.Empty));
         var package = new ConnectionRejectPackage("world-unavailable");
-        PackageManager.RegisterPackage(() => new ConnectionRejectPackage(string.Empty), new ConnectionRejectPackageHandler());
+        PackageManager.RegisterPackage(
+            () => new ConnectionRejectPackage(string.Empty),
+            new ConnectionRejectPackageHandler()
+        );
         try
         {
             using var writer = new ProtocolWriter();
@@ -53,7 +56,10 @@ public sealed class PackageDecodingTest
     public void InvalidBatchDoesNotDeliverItsValidPrefix()
     {
         var package = new ConnectionRejectPackage("valid-prefix");
-        PackageManager.RegisterPackage(() => new ConnectionRejectPackage(string.Empty), new ConnectionRejectPackageHandler());
+        PackageManager.RegisterPackage(
+            () => new ConnectionRejectPackage(string.Empty),
+            new ConnectionRejectPackageHandler()
+        );
         try
         {
             using var writer = new ProtocolWriter();
@@ -69,5 +75,4 @@ public sealed class PackageDecodingTest
             PackageManager.UnRegisterPackage(package);
         }
     }
-
 }

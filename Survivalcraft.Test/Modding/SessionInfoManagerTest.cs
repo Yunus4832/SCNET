@@ -28,16 +28,21 @@ public sealed class SessionInfoManagerTest : IDisposable
     [InlineData(true)]
     public void RoomRestartPreservesLogicalInvitationTarget(bool prepared)
     {
-        var room = new RendezvousRoom(new Uri("https://signal.example.test/"), "Installed service",
-            new RoomSummary(Guid.NewGuid(), "Room", "Description", "001234", ["holePunch", "relay"]));
+        var room = new RendezvousRoom(
+            new Uri("https://signal.example.test/"),
+            "Installed service",
+            new RoomSummary(Guid.NewGuid(), "Room", "Description", "001234", ["holePunch", "relay"])
+        );
         NetworkTarget target = prepared
             ? new InvitationSessionNetworkTarget(room.ControlUrl, room.Summary.Id, RelayPolicy.Required)
             : room.CreateTarget(RelayPolicy.Required);
-        var restart = SessionInfoManager.PrepareRestartSession(new SessionInfo
-        {
-            Target = SessionTarget.RemoteServer,
-            RemoteTarget = target
-        });
+        var restart = SessionInfoManager.PrepareRestartSession(
+            new SessionInfo
+            {
+                Target = SessionTarget.RemoteServer,
+                RemoteTarget = target
+            }
+        );
         var restored = SessionInfoManager.Load(restart.SessionId);
         Assert.Equal(SessionTarget.RemoteServer, restored.Target);
         Assert.Equal(target, restored.RemoteTarget);
@@ -50,7 +55,11 @@ public sealed class SessionInfoManagerTest : IDisposable
     [Fact]
     public void InvitationSessionRoundTripPreservesLocatorAndRelayPolicy()
     {
-        var target = new InvitationSessionNetworkTarget(new Uri("https://signal.example.test/"), Guid.NewGuid(), RelayPolicy.Required);
+        var target = new InvitationSessionNetworkTarget(
+            new Uri("https://signal.example.test/"),
+            Guid.NewGuid(),
+            RelayPolicy.Required
+        );
         var session = new SessionInfo
         {
             SessionId = Guid.NewGuid().ToString("N"),
@@ -69,14 +78,16 @@ public sealed class SessionInfoManagerTest : IDisposable
     public void DnsTargetRoundTripDoesNotResolveOrStoreAListenerPortOverride()
     {
         var target = new AddressNetworkTarget("unresolved.example.test", 28887);
-        SessionInfoManager.Save(new SessionInfo
-        {
-            SessionId = Guid.NewGuid().ToString("N"),
-            Name = "DnsClient",
-            Target = SessionTarget.RemoteServer,
-            RemoteTarget = target,
-            ServerPort = 31987
-        });
+        SessionInfoManager.Save(
+            new SessionInfo
+            {
+                SessionId = Guid.NewGuid().ToString("N"),
+                Name = "DnsClient",
+                Target = SessionTarget.RemoteServer,
+                RemoteTarget = target,
+                ServerPort = 31987
+            }
+        );
         var restored = SessionInfoManager.LoadByName("DnsClient");
         Assert.NotNull(restored);
         Assert.Equal(target, restored.RemoteTarget);
@@ -86,23 +97,27 @@ public sealed class SessionInfoManagerTest : IDisposable
     [Fact]
     public void SavePersistsMultipleNamedSessions()
     {
-        SessionInfoManager.Save(new SessionInfo
-        {
-            SessionId = Guid.NewGuid().ToString("N"),
-            Name = "Alpha",
-            Target = SessionTarget.World,
-            World = "AlphaWorld",
-            Seed = "11",
-            GameMode = GameMode.Creative
-        });
-        SessionInfoManager.Save(new SessionInfo
-        {
-            SessionId = Guid.NewGuid().ToString("N"),
-            Name = "Beta",
-            Target = SessionTarget.World,
-            World = "BetaWorld",
-            Seed = "22"
-        });
+        SessionInfoManager.Save(
+            new SessionInfo
+            {
+                SessionId = Guid.NewGuid().ToString("N"),
+                Name = "Alpha",
+                Target = SessionTarget.World,
+                World = "AlphaWorld",
+                Seed = "11",
+                GameMode = GameMode.Creative
+            }
+        );
+        SessionInfoManager.Save(
+            new SessionInfo
+            {
+                SessionId = Guid.NewGuid().ToString("N"),
+                Name = "Beta",
+                Target = SessionTarget.World,
+                World = "BetaWorld",
+                Seed = "22"
+            }
+        );
 
         var alpha = SessionInfoManager.LoadByName("Alpha");
         var beta = SessionInfoManager.LoadByName("Beta");
@@ -166,17 +181,18 @@ public sealed class SessionInfoManagerTest : IDisposable
     [Fact]
     public void CreateRemoteClientSessionPreservesEffectiveTransientOverrides()
     {
-        var startup = StartupManager.Load([
-            "--gui",
-            "--session", "client",
-            "--player", "DebugPlayer",
-            "--http-command",
-            "--http-command-port", "30989",
-            "--http-command-access-token", "access-token"
-        ]);
+        var startup = StartupManager.Load(
+            [
+                "--gui",
+                "--session", "client",
+                "--player", "DebugPlayer",
+                "--http-command",
+                "--http-command-port", "30989",
+                "--http-command-access-token", "access-token"
+            ]
+        );
 
-        var restartSession = SessionInfoManager.CreateRemoteClientSession(
-            new AddressNetworkTarget("127.0.0.1", 30987));
+        var restartSession = SessionInfoManager.CreateRemoteClientSession(new AddressNetworkTarget("127.0.0.1", 30987));
 
         Assert.Equal(startup.Session.SessionId, restartSession.SessionId);
         Assert.Equal(SessionTarget.RemoteServer, restartSession.Target);
@@ -191,13 +207,15 @@ public sealed class SessionInfoManagerTest : IDisposable
     [Fact]
     public void LoadByNameFindsNamedSession()
     {
-        SessionInfoManager.Save(new SessionInfo
-        {
-            SessionId = Guid.NewGuid().ToString("N"),
-            Name = "named-session",
-            Target = SessionTarget.World,
-            World = "NamedWorld"
-        });
+        SessionInfoManager.Save(
+            new SessionInfo
+            {
+                SessionId = Guid.NewGuid().ToString("N"),
+                Name = "named-session",
+                Target = SessionTarget.World,
+                World = "NamedWorld"
+            }
+        );
 
         var sessionInfo = SessionInfoManager.LoadByName("named-session");
 
@@ -213,7 +231,8 @@ public sealed class SessionInfoManagerTest : IDisposable
         var sessionInfo = SessionInfoManager.ResolveStartupSession(
             new RunningSetting { RunMode = RunModeType.Gui },
             new StartupRequest(),
-            sessionId);
+            sessionId
+        );
 
         Assert.Equal(sessionId, sessionInfo.SessionId);
         Assert.Equal(string.Empty, sessionInfo.Name);
@@ -232,7 +251,8 @@ public sealed class SessionInfoManagerTest : IDisposable
                 SessionName = "alpha",
                 World = "CustomWorld"
             },
-            sessionId);
+            sessionId
+        );
 
         Assert.Equal(sessionId, sessionInfo.SessionId);
         Assert.Equal("alpha", sessionInfo.Name);
@@ -251,7 +271,8 @@ public sealed class SessionInfoManagerTest : IDisposable
                 HasExplicitSession = true,
                 SessionName = "alpha"
             },
-            sessionId);
+            sessionId
+        );
 
         Assert.Equal(sessionId, sessionInfo.SessionId);
         Assert.Equal("alpha", sessionInfo.Name);
@@ -263,12 +284,14 @@ public sealed class SessionInfoManagerTest : IDisposable
     public void ResolveStartupSessionUpgradesExistingNamedGuiSessionToWorldLoadingWhenWorldOverrideExists()
     {
         var sessionId = Guid.NewGuid().ToString("N");
-        SessionInfoManager.Save(new SessionInfo
-        {
-            SessionId = sessionId,
-            Name = "alpha",
-            Target = SessionTarget.MainMenu
-        });
+        SessionInfoManager.Save(
+            new SessionInfo
+            {
+                SessionId = sessionId,
+                Name = "alpha",
+                Target = SessionTarget.MainMenu
+            }
+        );
 
         var sessionInfo = SessionInfoManager.ResolveStartupSession(
             new RunningSetting { RunMode = RunModeType.Gui },
@@ -278,7 +301,8 @@ public sealed class SessionInfoManagerTest : IDisposable
                 SessionName = "alpha",
                 World = "CustomWorld"
             },
-            sessionId);
+            sessionId
+        );
 
         Assert.Equal(sessionId, sessionInfo.SessionId);
         Assert.Equal("alpha", sessionInfo.Name);
@@ -294,7 +318,9 @@ public sealed class SessionInfoManagerTest : IDisposable
     private sealed class FileBackup : IDisposable
     {
         private readonly string _path;
+
         private readonly string _backupPath;
+
         private readonly bool _hadOriginal;
 
         private FileBackup(string path, string backupPath, bool hadOriginal)

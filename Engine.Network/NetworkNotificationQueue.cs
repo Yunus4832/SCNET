@@ -4,9 +4,13 @@ namespace Engine.Network;
 internal sealed class NetworkNotificationQueue(int dataCapacity, int byteCapacity, int controlCapacity)
 {
     private readonly Lock _gate = new();
+
     private readonly Queue<Entry> _queue = new();
+
     private int _dataCount;
+
     private int _controlCount;
+
     private int _bytes;
 
     public int Count
@@ -24,10 +28,13 @@ internal sealed class NetworkNotificationQueue(int dataCapacity, int byteCapacit
     {
         lock (_gate)
         {
-            if (control ? _controlCount >= controlCapacity : _dataCount >= dataCapacity || bytes > byteCapacity - _bytes)
+            if (control
+                    ? _controlCount >= controlCapacity
+                    : _dataCount >= dataCapacity || bytes > byteCapacity - _bytes)
             {
                 return false;
             }
+
             _queue.Enqueue(new Entry(action, bytes, control));
             if (control)
             {
@@ -38,6 +45,7 @@ internal sealed class NetworkNotificationQueue(int dataCapacity, int byteCapacit
                 _dataCount++;
                 _bytes += bytes;
             }
+
             return true;
         }
     }
@@ -51,6 +59,7 @@ internal sealed class NetworkNotificationQueue(int dataCapacity, int byteCapacit
                 action = null;
                 return false;
             }
+
             if (entry.Control)
             {
                 _controlCount--;
@@ -60,6 +69,7 @@ internal sealed class NetworkNotificationQueue(int dataCapacity, int byteCapacit
                 _dataCount--;
                 _bytes -= entry.Bytes;
             }
+
             action = entry.Action;
             return true;
         }

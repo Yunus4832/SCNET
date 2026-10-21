@@ -61,13 +61,17 @@ public sealed class SnapshotBudgetTransportTest
                 receiver.DispatchEvents();
                 Thread.Sleep(5);
             }
+
             Assert.True(condition(), "Loopback transport did not reach the expected state within five seconds.");
         }
 
         try
         {
-            var connecting = receiver.ConnectAsync(new IPEndPoint(IPAddress.Loopback, sender.LocalPort),
-                ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+            var connecting = receiver.ConnectAsync(
+                new IPEndPoint(IPAddress.Loopback, sender.LocalPort),
+                ReadOnlyMemory<byte>.Empty,
+                CancellationToken.None
+            );
             PumpUntil(() => senderPeer is not null && connecting.IsCompleted);
             await connecting;
             var observer = new Client(senderPeer, 1, Guid.NewGuid(), Guid.NewGuid(), null)
@@ -85,21 +89,28 @@ public sealed class SnapshotBudgetTransportTest
             {
                 var identity = new Client(null, id, Guid.NewGuid(), Guid.NewGuid(), null);
                 CommonLib.Net.Clients.Add(id, identity);
-                node.QueuePackage(new PlayerStatePackage
-                {
-                    FromPlayerId = id,
+                node.QueuePackage(
+                    new PlayerStatePackage
+                    {
+                        FromPlayerId = id,
 
-                    PackageChangeFlag = (ComponentPlayerPackage.ChangFlag)byte.MaxValue,
-                    Position = new Vector3(id, 70f, -id),
-                    Rotation = Quaternion.Identity,
-                    Velocity = new Vector3(id, 1f, 2f),
-                    LookAngles = new Vector2(0.1f, 0.2f),
-                    ChildLookAngles = new Vector2(0.3f, 0.4f)
-                }, PackageAudience.To(observer));
+                        PackageChangeFlag = (ComponentPlayerPackage.ChangFlag)byte.MaxValue,
+                        Position = new Vector3(id, 70f, -id),
+                        Rotation = Quaternion.Identity,
+                        Velocity = new Vector3(id, 1f, 2f),
+                        LookAngles = new Vector2(0.1f, 0.2f),
+                        ChildLookAngles = new Vector2(0.3f, 0.4f)
+                    },
+                    PackageAudience.To(observer)
+                );
                 expectedPlayers.Add(id);
             }
+
             node.QueuePackage(new EntityPackage(4242), PackageAudience.To(observer));
-            var flush = typeof(NetNode).GetMethod("FlushPendingPackages", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            var flush = typeof(NetNode).GetMethod(
+                "FlushPendingPackages",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            )!;
             flush.Invoke(node, null);
             Assert.InRange(node.PendingPackageCount, 1, 31);
             PumpUntil(() => receivedRemovals.Count == 1 && receivedPlayers.Count > 0);
@@ -113,6 +124,7 @@ public sealed class SnapshotBudgetTransportTest
                 sender.DispatchEvents();
                 receiver.DispatchEvents();
             }
+
             Assert.Equal(0, node.PendingPackageCount);
             PumpUntil(() => receivedPlayers.SetEquals(expectedPlayers));
             Assert.True(receivedDatagrams > 2);

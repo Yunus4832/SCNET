@@ -24,8 +24,12 @@ public sealed class GameInformationManagerTest : IDisposable
     [InlineData(Platform.Desktop, Architecture.X64, false, "linux-x64")]
     [InlineData(Platform.Desktop, Architecture.X64, true, "windows-x64")]
     [InlineData(Platform.Desktop, Architecture.Arm64, false, null)]
-    public void PlatformSelectionNeverSubstitutesAnotherArchitecture(Platform platform, Architecture architecture,
-        bool windows, string? expected)
+    public void PlatformSelectionNeverSubstitutesAnotherArchitecture(
+        Platform platform,
+        Architecture architecture,
+        bool windows,
+        string? expected
+    )
     {
         Assert.Equal(expected, GameInformationManager.GetReleasePlatform(platform, architecture, windows));
     }
@@ -36,8 +40,14 @@ public sealed class GameInformationManagerTest : IDisposable
     [InlineData("0.1.1", "Available")]
     public void ValidReleasesAreComparedWithTheCurrentVersion(string version, string expected)
     {
-        Assert.Equal(expected, GameInformationManager.EvaluateRelease(Release() with { Version = version },
-            "linux-x64", "0.1.0").ToString());
+        Assert.Equal(
+            expected,
+            GameInformationManager.EvaluateRelease(
+                Release() with { Version = version },
+                "linux-x64",
+                "0.1.0"
+            ).ToString()
+        );
     }
 
     [Theory]
@@ -47,15 +57,23 @@ public sealed class GameInformationManagerTest : IDisposable
     [InlineData("0.1.0", "0.1.0-alpha.1", "UpToDate")]
     public void ReleaseComparisonUsesSemanticVersionOrdering(string current, string available, string expected)
     {
-        Assert.Equal(expected, GameInformationManager.EvaluateRelease(Release() with { Version = available },
-            "linux-x64", current).ToString());
+        Assert.Equal(
+            expected,
+            GameInformationManager.EvaluateRelease(
+                Release() with { Version = available },
+                "linux-x64",
+                current
+            ).ToString()
+        );
     }
 
     [Fact]
     public void NoPublishedReleaseIsDistinctFromAlreadyUpToDate()
     {
-        Assert.Equal(GameInformationManager.ReleaseCheckResult.NotPublished,
-            GameInformationManager.EvaluateRelease(null, "linux-x64", "0.1.0"));
+        Assert.Equal(
+            GameInformationManager.ReleaseCheckResult.NotPublished,
+            GameInformationManager.EvaluateRelease(null, "linux-x64", "0.1.0")
+        );
     }
 
     [Theory]
@@ -79,7 +97,8 @@ public sealed class GameInformationManagerTest : IDisposable
             _ => release with { Id = value }
         };
         Assert.Throws<InvalidDataException>(() =>
-            GameInformationManager.EvaluateRelease(release, "linux-x64", "0.1.0"));
+            GameInformationManager.EvaluateRelease(release, "linux-x64", "0.1.0")
+        );
     }
 
     [Fact]
@@ -183,8 +202,12 @@ public sealed class GameInformationManagerTest : IDisposable
         using var body = new BlockingBody();
         using var http = new HttpClient(new ResponseHandler(() => new StreamContent(body)));
         using var client = new ContentServerClient("https://source.example", http);
-        var request = GameInformationManager.FetchReleaseAsync(client, "linux-x64", CancellationToken.None,
-            TimeSpan.FromMilliseconds(100));
+        var request = GameInformationManager.FetchReleaseAsync(
+            client,
+            "linux-x64",
+            CancellationToken.None,
+            TimeSpan.FromMilliseconds(100)
+        );
         await body.Reading.Task.WaitAsync(TimeSpan.FromSeconds(5));
         await Assert.ThrowsAsync<TimeoutException>(() => request.WaitAsync(TimeSpan.FromSeconds(5)));
     }
@@ -195,8 +218,14 @@ public sealed class GameInformationManagerTest : IDisposable
         using var body = new BlockingBody();
         using var client = new HttpClient(new ResponseHandler(() => new StreamContent(body)));
         var path = Path.Combine(_directory, "update.zip");
-        var download = GameInformationManager.DownloadPackageAsync(client, Release(), path, (_, _) => { },
-            CancellationToken.None, TimeSpan.FromMilliseconds(100));
+        var download = GameInformationManager.DownloadPackageAsync(
+            client,
+            Release(),
+            path,
+            (_, _) => { },
+            CancellationToken.None,
+            TimeSpan.FromMilliseconds(100)
+        );
         await body.Reading.Task.WaitAsync(TimeSpan.FromSeconds(5));
         await Assert.ThrowsAsync<TimeoutException>(() => download.WaitAsync(TimeSpan.FromSeconds(5)));
         Assert.False(File.Exists(path));
@@ -209,9 +238,15 @@ public sealed class GameInformationManagerTest : IDisposable
         using var client = new HttpClient(new ResponseHandler(() => new StreamContent(body)));
         var path = Path.Combine(_directory, "update.zip");
         long progress = 0;
-        await Assert.ThrowsAsync<TimeoutException>(() => GameInformationManager.DownloadPackageAsync(client,
-            Release(), path, (count, _) => progress = count, CancellationToken.None,
-            TimeSpan.FromMilliseconds(200)).WaitAsync(TimeSpan.FromSeconds(5)));
+        await Assert.ThrowsAsync<TimeoutException>(() => GameInformationManager.DownloadPackageAsync(
+                client,
+                Release(),
+                path,
+                (count, _) => progress = count,
+                CancellationToken.None,
+                TimeSpan.FromMilliseconds(200)
+            ).WaitAsync(TimeSpan.FromSeconds(5))
+        );
         Assert.True(progress > 0);
         Assert.False(File.Exists(path));
     }
@@ -223,8 +258,14 @@ public sealed class GameInformationManagerTest : IDisposable
         using var client = new HttpClient(new ResponseHandler(() => new StreamContent(body)));
         using var cancellation = new CancellationTokenSource();
         var path = Path.Combine(_directory, "update.zip");
-        var download = GameInformationManager.DownloadPackageAsync(client, Release(), path, (_, _) => { },
-            cancellation.Token, TimeSpan.FromMinutes(10));
+        var download = GameInformationManager.DownloadPackageAsync(
+            client,
+            Release(),
+            path,
+            (_, _) => { },
+            cancellation.Token,
+            TimeSpan.FromMinutes(10)
+        );
         await body.Reading.Task.WaitAsync(TimeSpan.FromSeconds(5));
         cancellation.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => download.WaitAsync(TimeSpan.FromSeconds(5)));
@@ -238,26 +279,51 @@ public sealed class GameInformationManagerTest : IDisposable
         using var client = new HttpClient(new ResponseHandler(() => new ByteArrayContent(bytes)));
         var path = Path.Combine(_directory, "update.zip");
         var release = Release() with { Sha256 = Convert.ToHexString(SHA256.HashData(bytes)) };
-        await GameInformationManager.DownloadPackageAsync(client, release, path, (_, _) => { },
-            CancellationToken.None, TimeSpan.FromSeconds(5));
+        await GameInformationManager.DownloadPackageAsync(
+            client,
+            release,
+            path,
+            (_, _) => { },
+            CancellationToken.None,
+            TimeSpan.FromSeconds(5)
+        );
         Assert.Equal(bytes, File.ReadAllBytes(path));
-        await Assert.ThrowsAsync<InvalidDataException>(() => GameInformationManager.DownloadPackageAsync(client,
-            Release(), path, (_, _) => { }, CancellationToken.None, TimeSpan.FromSeconds(5)));
+        await Assert.ThrowsAsync<InvalidDataException>(() => GameInformationManager.DownloadPackageAsync(
+                client,
+                Release(),
+                path,
+                (_, _) => { },
+                CancellationToken.None,
+                TimeSpan.FromSeconds(5)
+            )
+        );
         Assert.False(File.Exists(path));
     }
 
-    private static GameRelease Release() => new("release-id", "0.1.1", "linux-x64", "Update",
-        "https://source.example/update.zip", new string('a', 64), "published", DateTimeOffset.UtcNow, null);
+    private static GameRelease Release() => new(
+        "release-id",
+        "0.1.1",
+        "linux-x64",
+        "Update",
+        "https://source.example/update.zip",
+        new string('a', 64),
+        "published",
+        DateTimeOffset.UtcNow,
+        null
+    );
 
     private static (ContentRepositoryManager Manager, ContentRepository First, ContentRepository Second) CreateSources()
     {
         var first = new ContentRepository { Name = "First", BaseUrl = "https://first.example" };
         var second = new ContentRepository { Name = "Second", BaseUrl = "https://second.example" };
-        return (new ContentRepositoryManager(new ContentRepositorySettings
-        {
-            GameInformationSourceId = first.Id,
-            Repositories = [first, second]
-        }, _ => { }), first, second);
+        return (new ContentRepositoryManager(
+            new ContentRepositorySettings
+            {
+                GameInformationSourceId = first.Id,
+                Repositories = [first, second]
+            },
+            _ => { }
+        ), first, second);
     }
 
     public void Dispose()
@@ -270,28 +336,39 @@ public sealed class GameInformationManagerTest : IDisposable
 
     private sealed class ResponseHandler(Func<HttpContent> content) : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-            CancellationToken cancellationToken) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        ) => Task.FromResult(
+            new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = content()
-            });
+            }
+        );
     }
 
     private sealed class BlockingBody(bool makeProgress = false) : Stream
     {
         internal TaskCompletionSource Reading { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         public override bool CanRead => true;
+
         public override bool CanSeek => false;
+
         public override bool CanWrite => false;
+
         public override long Length => throw new NotSupportedException();
+
         public override long Position
         {
             get => throw new NotSupportedException();
             set => throw new NotSupportedException();
         }
 
-        public override async ValueTask<int> ReadAsync(Memory<byte> buffer,
-            CancellationToken cancellationToken = default)
+        public override async ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default
+        )
         {
             Reading.TrySetResult();
             await Task.Delay(makeProgress ? 10 : Timeout.Infinite, cancellationToken);
@@ -300,9 +377,11 @@ public sealed class GameInformationManagerTest : IDisposable
         }
 
         public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
         public override void Flush()
         {
         }
+
         public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
         public override void SetLength(long value) => throw new NotSupportedException();
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();

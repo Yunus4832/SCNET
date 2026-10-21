@@ -4,14 +4,16 @@ namespace Scnet.UiPreviewTool;
 
 internal static class Program
 {
-    internal static string Version => typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
-        .InformationalVersion.Split('+')[0];
+    internal static string Version =>
+        typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+            .InformationalVersion.Split('+')[0];
 
     public static int Main(string[] args)
     {
         if (args is ["--help"] or ["-h"])
         {
-            Console.WriteLine("""
+            Console.WriteLine(
+                """
                 SCNET UI Preview
                 --xml FILE | --assembly FILE --factory TYPE
                 --output EMPTY_DIRECTORY
@@ -20,23 +22,30 @@ internal static class Program
                 Writes PNG images and XML layout/check reports without loading a world.
                 Requires a working desktop graphics environment; it briefly opens a window.
                 Exit codes: 0 success, 1 runtime failure, 2 invalid arguments, 3 layout check failure.
-                """);
+                """
+            );
             return 0;
         }
+
         if (args is ["--version"])
         {
             Console.WriteLine(Version);
             return 0;
         }
+
         PreviewOptions options;
         IUiPreviewScenario scenario;
         try
         {
             options = PreviewOptions.Parse(args);
-            if (Directory.Exists(options.OutputDirectory) && Directory.EnumerateFileSystemEntries(options.OutputDirectory).Any())
+            if (Directory.Exists(options.OutputDirectory) &&
+                Directory.EnumerateFileSystemEntries(options.OutputDirectory).Any())
             {
-                throw new ArgumentException("Output directory must be empty; choose a new directory to preserve earlier results.");
+                throw new ArgumentException(
+                    "Output directory must be empty; choose a new directory to preserve earlier results."
+                );
             }
+
             scenario = PreviewScenarioLoader.Load(options);
             Directory.CreateDirectory(options.OutputDirectory);
         }
@@ -45,6 +54,7 @@ internal static class Program
             Console.Error.WriteLine(exception.Message);
             return 2;
         }
+
         try
         {
             return PreviewRenderer.Run(options, scenario);

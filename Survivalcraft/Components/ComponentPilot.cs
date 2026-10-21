@@ -81,13 +81,16 @@ public class ComponentPilot : Component, IUpdateable
                 var x = Vector2.Angle(forward.XZ, vector.XZ);
                 var num3 =
                     (_componentCreature.ComponentBody.CollisionVelocityChange * new Vector3(1f, 0f, 1f))
-                    .LengthSquared() > 0f && _componentCreature.ComponentBody.StandingOnValue.HasValue
+                    .LengthSquared() >
+                    0f &&
+                    _componentCreature.ComponentBody.StandingOnValue.HasValue
                         ? 0.15f
                         : 0.4f;
                 if (_subsystemTime.GameTime >= _lastStuckCheckTime + num3 || !_lastStuckCheckPosition.HasValue)
                 {
                     _lastStuckCheckTime = _subsystemTime.GameTime;
-                    if (MathUtils.Abs(x) > MathUtils.DegToRad(20f) || !_lastStuckCheckPosition.HasValue ||
+                    if (MathUtils.Abs(x) > MathUtils.DegToRad(20f) ||
+                        !_lastStuckCheckPosition.HasValue ||
                         Vector3.Dot(position - _lastStuckCheckPosition.Value, Vector3.Normalize(vector)) > 0.2f)
                     {
                         _lastStuckCheckPosition = position;
@@ -101,12 +104,15 @@ public class ComponentPilot : Component, IUpdateable
                     IsStuck = _stuckCount >= 4;
                 }
 
-                if (_componentCreature.ComponentLocomotion.FlySpeed > 0f && (num > 9f || vector.Y > 0.5f ||
-                                                                             vector.Y < -1.5f ||
-                                                                             (!_componentCreature.ComponentBody
-                                                                                  .StandingOnValue.HasValue &&
-                                                                              _componentCreature.ComponentBody
-                                                                                  .ImmersionFactor == 0f)) &&
+                if (_componentCreature.ComponentLocomotion.FlySpeed > 0f &&
+                    (num > 9f ||
+                     vector.Y > 0.5f ||
+                     vector.Y < -1.5f ||
+                     (!_componentCreature.ComponentBody
+                          .StandingOnValue.HasValue &&
+                      _componentCreature.ComponentBody
+                          .ImmersionFactor ==
+                      0f)) &&
                     _componentCreature.ComponentBody.ImmersionFactor < 1f)
                 {
                     var y = MathUtils.Min(0.08f * vector2.LengthSquared(), 12f);
@@ -131,10 +137,14 @@ public class ComponentPilot : Component, IUpdateable
                         _turnOrder = new Vector2(MathUtils.Clamp(x, -1f, 1f), 0f);
                         if (num2 > 1f)
                         {
-                            _walkOrder = new Vector2(0f,
-                                MathUtils.Lerp(Speed, 0f, MathUtils.Saturate((MathUtils.Abs(x) - 0.33f) / 0.66f)));
-                            if (Speed >= 1f && _componentCreature.ComponentLocomotion.InAirWalkFactor >= 1f &&
-                                num > 1f && _random.Float(0f, 1f) < 0.05f)
+                            _walkOrder = new Vector2(
+                                0f,
+                                MathUtils.Lerp(Speed, 0f, MathUtils.Saturate((MathUtils.Abs(x) - 0.33f) / 0.66f))
+                            );
+                            if (Speed >= 1f &&
+                                _componentCreature.ComponentLocomotion.InAirWalkFactor >= 1f &&
+                                num > 1f &&
+                                _random.Float(0f, 1f) < 0.05f)
                             {
                                 _jumpOrder = 1f;
                             }
@@ -142,8 +152,10 @@ public class ComponentPilot : Component, IUpdateable
                         else
                         {
                             var x2 = Speed * MathUtils.Min(1f * MathUtils.Sqrt(num2), 1f);
-                            _walkOrder = new Vector2(0f,
-                                MathUtils.Lerp(x2, 0f, MathUtils.Saturate(2f * MathUtils.Abs(x))));
+                            _walkOrder = new Vector2(
+                                0f,
+                                MathUtils.Lerp(x2, 0f, MathUtils.Saturate(2f * MathUtils.Abs(x)))
+                            );
                         }
                     }
                     else
@@ -179,10 +191,15 @@ public class ComponentPilot : Component, IUpdateable
                 {
                     if (RaycastDestination)
                     {
-                        if (!_subsystemTerrain.Raycast(position + new Vector3(0f, 0.5f, 0f),
-                                    v + new Vector3(0f, 0.5f, 0f), false, true,
+                        if (!_subsystemTerrain.Raycast(
+                                    position + new Vector3(0f, 0.5f, 0f),
+                                    v + new Vector3(0f, 0.5f, 0f),
+                                    false,
+                                    true,
                                     (value, _) =>
-                                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable)
+                                        CurrentModRuntime.Value!.RequireWorldCatalog()
+                                            .Blocks[Terrain.ExtractContents(value)].Collidable
+                                )
                                 .HasValue)
                         {
                             Destination = null;
@@ -195,7 +212,8 @@ public class ComponentPilot : Component, IUpdateable
                 }
             }
 
-            if (!Destination.HasValue && _componentCreature.ComponentLocomotion.FlySpeed > 0f &&
+            if (!Destination.HasValue &&
+                _componentCreature.ComponentLocomotion.FlySpeed > 0f &&
                 !_componentCreature.ComponentBody.StandingOnValue.HasValue &&
                 _componentCreature.ComponentBody.ImmersionFactor == 0f)
             {
@@ -270,9 +288,11 @@ public class ComponentPilot : Component, IUpdateable
 
     public bool IsTerrainSafeToGo(Vector3 position, Vector3 direction)
     {
-        var vector = position + new Vector3(0f, 0.1f, 0f) + (direction.LengthSquared() < 1.2f
-            ? new Vector3(direction.X, 0f, direction.Z)
-            : 1.2f * Vector3.Normalize(new Vector3(direction.X, 0f, direction.Z)));
+        var vector = position +
+                     new Vector3(0f, 0.1f, 0f) +
+                     (direction.LengthSquared() < 1.2f
+                         ? new Vector3(direction.X, 0f, direction.Z)
+                         : 1.2f * Vector3.Normalize(new Vector3(direction.X, 0f, direction.Z)));
         for (var i = -1; i <= 1; i++)
         {
             for (var j = -1; j <= 1; j++)
@@ -284,9 +304,13 @@ public class ComponentPilot : Component, IUpdateable
 
                 for (var num = 0; num >= -2; num--)
                 {
-                    var cellValue = _subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(vector.X) + i,
-                        Terrain.ToCell(vector.Y) + num, Terrain.ToCell(vector.Z) + j);
-                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)];
+                    var cellValue = _subsystemTerrain.Terrain.GetCellValue(
+                        Terrain.ToCell(vector.X) + i,
+                        Terrain.ToCell(vector.Y) + num,
+                        Terrain.ToCell(vector.Z) + j
+                    );
+                    var block = CurrentModRuntime.Value!.RequireWorldCatalog()
+                        .Blocks[Terrain.ExtractContents(cellValue)];
                     if (block.ShouldAvoid(cellValue))
                     {
                         return false;
@@ -300,15 +324,20 @@ public class ComponentPilot : Component, IUpdateable
             }
         }
 
-        var vector2 = position + new Vector3(0f, 0.1f, 0f) + (direction.LengthSquared() < 1f
-            ? new Vector3(direction.X, 0f, direction.Z)
-            : 1f * Vector3.Normalize(new Vector3(direction.X, 0f, direction.Z)));
+        var vector2 = position +
+                      new Vector3(0f, 0.1f, 0f) +
+                      (direction.LengthSquared() < 1f
+                          ? new Vector3(direction.X, 0f, direction.Z)
+                          : 1f * Vector3.Normalize(new Vector3(direction.X, 0f, direction.Z)));
         var flag = true;
         var num2 = TakeRisks ? 7 : 5;
         for (var num3 = 0; num3 >= -num2; num3--)
         {
-            var cellValue2 = _subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(vector2.X),
-                Terrain.ToCell(vector2.Y) + num3, Terrain.ToCell(vector2.Z));
+            var cellValue2 = _subsystemTerrain.Terrain.GetCellValue(
+                Terrain.ToCell(vector2.X),
+                Terrain.ToCell(vector2.Y) + num3,
+                Terrain.ToCell(vector2.Z)
+            );
             var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue2)];
             if ((!block2.Collidable && block2.BlockIndex != 18) || block2.ShouldAvoid(cellValue2))
             {

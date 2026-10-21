@@ -44,14 +44,22 @@ internal sealed class ProbeRunner(Uri control, IPEndPoint? beacon, ProbeBinding 
                 session.Send(connection, payload.Payload.Span);
             }
         };
-        Console.WriteLine($"READY joinCode={invitation.JoinCode} localPort={host.LocalPort} sessionId={invitation.SessionId}");
+        Console.WriteLine(
+            $"READY joinCode={invitation.JoinCode} localPort={host.LocalPort} sessionId={invitation.SessionId}"
+        );
         await DispatchUntilAsync(host, completed.Task, cancellationToken);
         await completed.Task;
         report.Record("host-complete");
         Console.WriteLine("PASS host received completion after reliable echo");
     }
 
-    public async Task RunClientAsync(string joinCode, TimeSpan preparationDelay, RelayPolicy relayPolicy, CancellationToken cancellationToken, bool verifyRecovery = false)
+    public async Task RunClientAsync(
+        string joinCode,
+        TimeSpan preparationDelay,
+        RelayPolicy relayPolicy,
+        CancellationToken cancellationToken,
+        bool verifyRecovery = false
+    )
     {
         using var http = new HttpClient();
         var signaling = new RendezvousClient(http, control);
@@ -69,6 +77,7 @@ internal sealed class ProbeRunner(Uri control, IPEndPoint? beacon, ProbeBinding 
         {
             throw new InvalidOperationException("Preparation did not retain a restorable session locator.");
         }
+
         Console.WriteLine($"PATH challengeConfirmed localPort={host.LocalPort} path={preparation.PathKind}");
         report.Record("path-confirmed", new { Path = preparation.PathKind.ToString(), host.LocalPort });
         using (var holding = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
@@ -84,10 +93,12 @@ internal sealed class ProbeRunner(Uri control, IPEndPoint? beacon, ProbeBinding 
                 await renewal;
             }
         }
+
         if (preparation.PathKind == NetworkPathKind.HolePunch && host.PendingPathCount != 1)
         {
             throw new InvalidOperationException("Prepared path was not retained.");
         }
+
         var probed = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
         preparation.DatagramReceived += payload => probed.TrySetResult(payload);
         var probeDeadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(10);
@@ -98,14 +109,17 @@ internal sealed class ProbeRunner(Uri control, IPEndPoint? beacon, ProbeBinding 
             {
                 throw new TimeoutException("The prepared path did not answer the server-info probe.");
             }
+
             preparation.SendDatagram("probe-server-info"u8);
             host.DispatchEvents();
             await Task.Delay(250, cancellationToken);
         }
+
         if (!(await probed.Task).AsSpan().SequenceEqual("probe-server-info"u8))
         {
             throw new InvalidDataException("Preparation datagram mismatch.");
         }
+
         var echoed = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
         report.Record("datagram-echo-confirmed");
         host.Received += (_, payload) => echoed.TrySetResult(payload.Payload.ToArray());
@@ -115,16 +129,19 @@ internal sealed class ProbeRunner(Uri control, IPEndPoint? beacon, ProbeBinding 
         {
             throw new InvalidOperationException("Prepared path was not released after connection transfer.");
         }
+
         session.Send(connection, "probe-roundtrip"u8);
         await DispatchUntilAsync(host, echoed.Task, cancellationToken);
         if (!(await echoed.Task).AsSpan().SequenceEqual("probe-roundtrip"u8))
         {
             throw new InvalidDataException("Transport echo mismatch.");
         }
+
         if (verifyRecovery)
         {
             await VerifyRecoveryAsync(session, connection, cancellationToken);
         }
+
         report.Record("reliable-echo-confirmed", new { connection.PendingReliableBytes });
         session.Send(connection, "probe-complete"u8);
         // Keep the transport alive until the host has received the final reliable message and disconnected.
@@ -135,29 +152,39 @@ internal sealed class ProbeRunner(Uri control, IPEndPoint? beacon, ProbeBinding 
         Console.WriteLine("PASS client candidate challenge and reliable echo over its original socket");
     }
 
-    private static async Task VerifyRecoveryAsync(ProbeSession session, NetworkConnection connection, CancellationToken cancellationToken)
+    private static async Task VerifyRecoveryAsync(
+        ProbeSession session,
+        NetworkConnection connection,
+        CancellationToken cancellationToken
+    )
     {
         var host = session.Host;
         const int count = 80;
         var received = 0;
         var complete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
         void Receive(NetworkConnection source, NetworkMessage message)
         {
             if (source.Id != connection.Id)
             {
                 return;
             }
+
             var expected = Enumerable.Repeat((byte)received, 1024).ToArray();
             if (received >= count || !message.Payload.Span.SequenceEqual(expected))
             {
-                complete.TrySetException(new InvalidDataException("Recovery echo is missing, duplicated, reordered or corrupted."));
+                complete.TrySetException(
+                    new InvalidDataException("Recovery echo is missing, duplicated, reordered or corrupted.")
+                );
                 return;
             }
+
             if (++received == count)
             {
                 complete.TrySetResult();
             }
         }
+
         host.Received += Receive;
         try
         {
@@ -165,10 +192,14 @@ internal sealed class ProbeRunner(Uri control, IPEndPoint? beacon, ProbeBinding 
             var receipts = new List<Task>();
             for (var index = 0; index < count; index++)
             {
-                receipts.Add(session.SendWithReceipt(connection, Enumerable.Repeat((byte)index, 1024).ToArray()).Completion);
+                receipts.Add(
+                    session.SendWithReceipt(connection, Enumerable.Repeat((byte)index, 1024).ToArray())
+                        .Completion
+                );
                 host.DispatchEvents();
                 await Task.Delay(100, cancellationToken);
             }
+
             await DispatchUntilAsync(host, complete.Task, cancellationToken);
             await complete.Task;
             await Task.WhenAll(receipts).WaitAsync(cancellationToken);
@@ -176,6 +207,7 @@ internal sealed class ProbeRunner(Uri control, IPEndPoint? beacon, ProbeBinding 
             {
                 throw new InvalidOperationException("Reliable queue did not converge after recovery.");
             }
+
             Console.WriteLine($"PASS recovery echoed={received} pendingReliableBytes=0 utc={DateTimeOffset.UtcNow:O}");
         }
         finally
@@ -184,7 +216,10 @@ internal sealed class ProbeRunner(Uri control, IPEndPoint? beacon, ProbeBinding 
         }
     }
 
-    private static async Task RenewPreparationAsync(ConnectionPreparation preparation, CancellationToken cancellationToken)
+    private static async Task RenewPreparationAsync(
+        ConnectionPreparation preparation,
+        CancellationToken cancellationToken
+    )
     {
         try
         {

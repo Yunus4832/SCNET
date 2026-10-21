@@ -6,9 +6,11 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
 {
     public enum CornerType
     {
-        None,
-        OneQuarter,
-        ThreeQuarters
+        None = 0,
+
+        OneQuarter = 1,
+
+        ThreeQuarters = 2
     }
 
     public BoundingBox[][] CollisionBoxes = new BoundingBox[24][];
@@ -58,61 +60,113 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
             var cornerType = GetCornerType(i);
             var m = !isUpsideDown
                 ? Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                : Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, -0.5f, 0.5f) *
-                  Matrix.CreateScale(1f, -1f, 1f) * Matrix.CreateTranslation(0f, 0.5f, 0f);
+                : Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0.5f, -0.5f, 0.5f) *
+                  Matrix.CreateScale(1f, -1f, 1f) *
+                  Matrix.CreateTranslation(0f, 0.5f, 0f);
             var blockMesh = new BlockMesh();
             switch (cornerType)
             {
                 case CornerType.None:
-                    blockMesh.AppendModelMeshPart(stairsMesh.MeshParts[0], boneAbsoluteTransform * m,
-                        false, isUpsideDown, false, false, Color.White);
+                    blockMesh.AppendModelMeshPart(
+                        stairsMesh.MeshParts[0],
+                        boneAbsoluteTransform * m,
+                        false,
+                        isUpsideDown,
+                        false,
+                        false,
+                        Color.White
+                    );
                     break;
                 case CornerType.OneQuarter:
-                    blockMesh.AppendModelMeshPart(stairsOuterCornerMesh.MeshParts[0],
-                        boneAbsoluteTransform2 * m, false, isUpsideDown, false, false, Color.White);
+                    blockMesh.AppendModelMeshPart(
+                        stairsOuterCornerMesh.MeshParts[0],
+                        boneAbsoluteTransform2 * m,
+                        false,
+                        isUpsideDown,
+                        false,
+                        false,
+                        Color.White
+                    );
                     break;
                 case CornerType.ThreeQuarters:
-                    blockMesh.AppendModelMeshPart(stairsInnerCornerMesh.MeshParts[0],
-                        boneAbsoluteTransform3 * m, false, isUpsideDown, false, false, Color.White);
+                    blockMesh.AppendModelMeshPart(
+                        stairsInnerCornerMesh.MeshParts[0],
+                        boneAbsoluteTransform3 * m,
+                        false,
+                        isUpsideDown,
+                        false,
+                        false,
+                        Color.White
+                    );
                     break;
             }
 
             float num = isUpsideDown ? rotation : -rotation;
             blockMesh.TransformTextureCoordinates(
-                Matrix.CreateTranslation(-0.03125f, -0.03125f, 0f) * Matrix.CreateRotationZ(num * (float)Math.PI / 2f) *
-                Matrix.CreateTranslation(0.03125f, 0.03125f, 0f), 16);
+                Matrix.CreateTranslation(-0.03125f, -0.03125f, 0f) *
+                Matrix.CreateRotationZ(num * (float)Math.PI / 2f) *
+                Matrix.CreateTranslation(0.03125f, 0.03125f, 0f),
+                16
+            );
             blockMesh.TransformTextureCoordinates(
                 Matrix.CreateTranslation(-0.03125f, -0.03125f, 0f) *
                 Matrix.CreateRotationZ((0f - num) * (float)Math.PI / 2f) *
-                Matrix.CreateTranslation(0.03125f, 0.03125f, 0f), 32);
+                Matrix.CreateTranslation(0.03125f, 0.03125f, 0f),
+                32
+            );
             if (isUpsideDown)
             {
-                blockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(-0.03125f, -0.03125f, 0f) *
-                                                      Matrix.CreateScale(1f, -1f, 1f) *
-                                                      Matrix.CreateTranslation(0.03125f, 0.03125f, 0f));
+                blockMesh.TransformTextureCoordinates(
+                    Matrix.CreateTranslation(-0.03125f, -0.03125f, 0f) *
+                    Matrix.CreateScale(1f, -1f, 1f) *
+                    Matrix.CreateTranslation(0.03125f, 0.03125f, 0f)
+                );
             }
 
             ColoredBlockMeshes[i] = new BlockMesh();
             ColoredBlockMeshes[i].AppendBlockMesh(blockMesh);
             ColoredBlockMeshes[i].TransformTextureCoordinates(
-                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+            );
             ColoredBlockMeshes[i].GenerateSidesData();
             UncoloredBlockMeshes[i] = new BlockMesh();
             UncoloredBlockMeshes[i].AppendBlockMesh(blockMesh);
             UncoloredBlockMeshes[i]
-                .TransformTextureCoordinates(Matrix.CreateTranslation(TextureSlot % 16 / 16f,
-                    TextureSlot / 16 / 16f, 0f));
+                .TransformTextureCoordinates(
+                    Matrix.CreateTranslation(
+                        TextureSlot % 16 / 16f,
+                        TextureSlot / 16 / 16f,
+                        0f
+                    )
+                );
             UncoloredBlockMeshes[i].GenerateSidesData();
         }
 
-        StandaloneUncoloredBlockMesh.AppendModelMeshPart(stairsMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        StandaloneUncoloredBlockMesh.AppendModelMeshPart(
+            stairsMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandaloneUncoloredBlockMesh.TransformTextureCoordinates(
-            Matrix.CreateTranslation(TextureSlot % 16 / 16f, TextureSlot / 16 / 16f, 0f));
-        StandaloneColoredBlockMesh.AppendModelMeshPart(stairsMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+            Matrix.CreateTranslation(TextureSlot % 16 / 16f, TextureSlot / 16 / 16f, 0f)
+        );
+        StandaloneColoredBlockMesh.AppendModelMeshPart(
+            stairsMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandaloneColoredBlockMesh.TransformTextureCoordinates(
-            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+        );
         CollisionBoxes[0] =
         [
             new(new Vector3(0f, 0f, 0f), new Vector3(1f, 1f, 0.5f)),
@@ -270,22 +324,22 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
                 switch (GetCornerType(data))
                 {
                     case CornerType.None:
-                        {
-                            var rotation2 = GetRotation(data);
-                            return face != ((rotation2 + 2) & 3);
-                        }
+                    {
+                        var rotation2 = GetRotation(data);
+                        return face != ((rotation2 + 2) & 3);
+                    }
                     case CornerType.OneQuarter:
                         return true;
                     default:
+                    {
+                        var rotation = GetRotation(data);
+                        if (face != ((rotation + 1) & 3))
                         {
-                            var rotation = GetRotation(data);
-                            if (face != ((rotation + 1) & 3))
-                            {
-                                return face != ((rotation + 2) & 3);
-                            }
-
-                            return false;
+                            return face != ((rotation + 2) & 3);
                         }
+
+                        return false;
+                    }
                 }
         }
     }
@@ -303,13 +357,31 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
         var color = GetColor(data);
         if (color.HasValue)
         {
-            generator.GenerateShadedMeshVertices(this, x, y, z, ColoredBlockMeshes[GetVariant(data)],
-                SubsystemPalette.GetColor(generator, color), null, [], geometry.SubsetOpaque);
+            generator.GenerateShadedMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                ColoredBlockMeshes[GetVariant(data)],
+                SubsystemPalette.GetColor(generator, color),
+                null,
+                [],
+                geometry.SubsetOpaque
+            );
         }
         else
         {
-            generator.GenerateShadedMeshVertices(this, x, y, z, UncoloredBlockMeshes[GetVariant(data)], Color.White,
-                null, [], geometry.SubsetOpaque);
+            generator.GenerateShadedMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                UncoloredBlockMeshes[GetVariant(data)],
+                Color.White,
+                null,
+                [],
+                geometry.SubsetOpaque
+            );
         }
     }
 
@@ -404,18 +476,26 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
         return !GetColor(Terrain.ExtractData(value)).HasValue ? base.GetCategory(value) : "Painted";
     }
 
-    public override void GetDropValues(SubsystemTerrain subsystemTerrain, int oldValue, int newValue, int toolLevel,
-        List<BlockDropValue> dropValues, out bool showDebris)
+    public override void GetDropValues(
+        SubsystemTerrain subsystemTerrain,
+        int oldValue,
+        int newValue,
+        int toolLevel,
+        List<BlockDropValue> dropValues,
+        out bool showDebris
+    )
     {
         showDebris = true;
         var data = Terrain.ExtractData(oldValue);
         var data2 = SetColor(0, GetColor(data));
         var value = Terrain.MakeBlockValue(BlockIndex, 0, data2);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = value,
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = value,
+                Count = 1
+            }
+        );
     }
 
     public override BlockDebrisParticleSystem CreateDebrisParticleSystem(
@@ -428,12 +508,24 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
         var color = GetColor(Terrain.ExtractData(value));
         if (color.HasValue)
         {
-            return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale,
-                SubsystemPalette.GetColor(subsystemTerrain, color), ColoredTextureSlot);
+            return new BlockDebrisParticleSystem(
+                subsystemTerrain,
+                position,
+                strength,
+                DestructionDebrisScale,
+                SubsystemPalette.GetColor(subsystemTerrain, color),
+                ColoredTextureSlot
+            );
         }
 
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, Color.White,
-            base.GetFaceTextureSlot(0, value));
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            Color.White,
+            base.GetFaceTextureSlot(0, value)
+        );
     }
 
     public static Point3 RotationToDirection(int rotation)

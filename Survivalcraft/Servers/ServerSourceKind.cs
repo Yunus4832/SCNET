@@ -2,7 +2,9 @@ namespace Game.Servers;
 
 public enum ServerSourceKind
 {
-    Local,
-    Lan,
-    Http
+    Local = 0,
+
+    Lan = 1,
+
+    Http = 2
 }

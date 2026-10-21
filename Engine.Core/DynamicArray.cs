@@ -325,21 +325,13 @@ public class DynamicArray<T> : IList<T>
         return new Enumerator(this);
     }
 
-    public struct Enumerator : IEnumerator<T>
+    public struct Enumerator(DynamicArray<T> array) : IEnumerator<T>
     {
-        private readonly DynamicArray<T> _mArray = [];
+        private int _index = -1;
 
-        private int _mIndex;
+        public T Current => array.Array[_index];
 
-        public T Current => _mArray.Array[_mIndex];
-
-        object? IEnumerator.Current => _mArray.Array[_mIndex];
-
-        public Enumerator(DynamicArray<T> array)
-        {
-            _mArray = array;
-            _mIndex = -1;
-        }
+        object? IEnumerator.Current => array.Array[_index];
 
         public void Dispose()
         {
@@ -347,13 +339,13 @@ public class DynamicArray<T> : IList<T>
 
         public bool MoveNext()
         {
-            _mIndex++;
-            return _mIndex < _mArray.Count;
+            _index++;
+            return _index < array.Count;
         }
 
         public void Reset()
         {
-            _mIndex = -1;
+            _index = -1;
         }
     }
 }

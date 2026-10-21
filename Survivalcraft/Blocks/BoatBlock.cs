@@ -14,12 +14,24 @@ public class BoatBlock : Block
             boatMesh.ParentBone ??
             throw new InvalidOperationException("Required BoatMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(boatMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.4f, 0f), false, false, false, false,
-            new Color(96, 96, 96));
-        StandaloneBlockMesh.AppendModelMeshPart(boatMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.4f, 0f), false, true, false, false,
-            new Color(255, 255, 255));
+        StandaloneBlockMesh.AppendModelMeshPart(
+            boatMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.4f, 0f),
+            false,
+            false,
+            false,
+            false,
+            new Color(96, 96, 96)
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            boatMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.4f, 0f),
+            false,
+            true,
+            false,
+            false,
+            new Color(255, 255, 255)
+        );
         base.Initialize();
     }
 

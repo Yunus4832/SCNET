@@ -102,10 +102,19 @@ public class ModelWidget : Widget
         if (IsPerspective)
         {
             litShader.Transforms.Projection = Matrix.CreatePerspectiveFieldOfView(ViewFov, num, 0.1f, 100f) *
-                                              MatrixUtils.CreateScaleTranslation(0.5f * ActualSize.X,
-                                                  -0.5f * ActualSize.Y, ActualSize.X / 2f, ActualSize.Y / 2f) *
-                                              GlobalTransform * MatrixUtils.CreateScaleTranslation(2f / viewport.Width,
-                                                  -2f / viewport.Height, -1f, 1f);
+                                              MatrixUtils.CreateScaleTranslation(
+                                                  0.5f * ActualSize.X,
+                                                  -0.5f * ActualSize.Y,
+                                                  ActualSize.X / 2f,
+                                                  ActualSize.Y / 2f
+                                              ) *
+                                              GlobalTransform *
+                                              MatrixUtils.CreateScaleTranslation(
+                                                  2f / viewport.Width,
+                                                  -2f / viewport.Height,
+                                                  -1f,
+                                                  1f
+                                              );
         }
         else
         {
@@ -120,10 +129,19 @@ public class ModelWidget : Widget
             }
 
             litShader.Transforms.Projection =
-                Matrix.CreateOrthographic(orthographicFrustumSize.X, orthographicFrustumSize.Y, 0f,
-                    OrthographicFrustumSize.Z) *
-                MatrixUtils.CreateScaleTranslation(0.5f * ActualSize.X, -0.5f * ActualSize.Y, ActualSize.X / 2f,
-                    ActualSize.Y / 2f) * GlobalTransform *
+                Matrix.CreateOrthographic(
+                    orthographicFrustumSize.X,
+                    orthographicFrustumSize.Y,
+                    0f,
+                    OrthographicFrustumSize.Z
+                ) *
+                MatrixUtils.CreateScaleTranslation(
+                    0.5f * ActualSize.X,
+                    -0.5f * ActualSize.Y,
+                    ActualSize.X / 2f,
+                    ActualSize.Y / 2f
+                ) *
+                GlobalTransform *
                 MatrixUtils.CreateScaleTranslation(2f / viewport.Width, -2f / viewport.Height, -1f, 1f);
         }
 

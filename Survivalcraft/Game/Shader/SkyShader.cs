@@ -41,25 +41,13 @@ public class SkyShader : Shader
         Color = Vector4.One;
     }
 
-    public Texture2D Texture
-    {
-        set => _textureParameter?.SetValue(value);
-    }
+    public Texture2D Texture { set => _textureParameter?.SetValue(value); }
 
-    public SamplerState SamplerState
-    {
-        set => _samplerStateParameter?.SetValue(value);
-    }
+    public SamplerState SamplerState { set => _samplerStateParameter?.SetValue(value); }
 
-    public Vector4 Color
-    {
-        set => _colorParameter?.SetValue(value);
-    }
+    public Vector4 Color { set => _colorParameter?.SetValue(value); }
 
-    public float AlphaThreshold
-    {
-        set => _alphaThresholdParameter?.SetValue(value);
-    }
+    public float AlphaThreshold { set => _alphaThresholdParameter?.SetValue(value); }
 
     public void SetParameter()
     {
@@ -79,7 +67,8 @@ public class SkyShader : Shader
     private static ShaderMacro[] PrepareShaderMacros(
         bool useVertexColor,
         bool useTexture,
-        bool useAlphaThreshold)
+        bool useAlphaThreshold
+    )
     {
         return PrepareShaderMacros(useVertexColor, useTexture, useAlphaThreshold, []);
     }

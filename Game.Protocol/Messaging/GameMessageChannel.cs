@@ -2,6 +2,7 @@ namespace Game.Protocol.Messaging;
 
 public enum GameMessageChannel : byte
 {
-    Global,
-    Team
+    Global = 0,
+
+    Team = 1
 }

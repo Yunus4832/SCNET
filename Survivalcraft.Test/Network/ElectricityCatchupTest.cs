@@ -34,12 +34,14 @@ public sealed class ElectricityCatchupTest : IDisposable
             .GetValue(electricity)!;
         elements.Add(face, element);
         var neighbor = new SRLatchElectricElement(electricity, new CellFace(2, 20, 3, 4));
-        element.Connections.Add(new ElectricConnection
-        {
-            ConnectorType = ElectricConnectorType.Output,
-            NeighborConnectorType = ElectricConnectorType.Input,
-            NeighborElectricElement = neighbor
-        });
+        element.Connections.Add(
+            new ElectricConnection
+            {
+                ConnectorType = ElectricConnectorType.Output,
+                NeighborConnectorType = ElectricConnectorType.Input,
+                NeighborElectricElement = neighbor
+            }
+        );
         var snapshot = new SubsystemElectricity.NetSimulate { StartStep = 0, IsBaseline = true };
         snapshot.SaveData[point] = 1f;
         electricity.ReceiveNetworkSnapshot(ElectricityTestSnapshots.Capture(snapshot));
@@ -95,7 +97,12 @@ public sealed class ElectricityCatchupTest : IDisposable
         var late = new SubsystemElectricity.NetSimulate { StartStep = 5, IsBaseline = true };
         late.SaveData[point] = 1f;
         electricity.ReceiveNetworkSnapshot(ElectricityTestSnapshots.Capture(late));
-        electricity.ReceiveNetworkSnapshot(ElectricityTestSnapshots.Capture(new SubsystemElectricity.NetSimulate { StartStep = 10 }));
+        electricity.ReceiveNetworkSnapshot(
+            ElectricityTestSnapshots.Capture(
+                new SubsystemElectricity.NetSimulate
+                    { StartStep = 10 }
+            )
+        );
 
         electricity.Update(0.001f);
 
@@ -115,7 +122,13 @@ public sealed class ElectricityCatchupTest : IDisposable
         using var writer = new ProtocolWriter();
         ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)), writer);
         using var reader = new ProtocolReader(writer.Data());
-        var received = Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader));
+        var received =
+            Assert.IsType<SubsystemElectricityPackage>(
+                ProtocolMessageCodec.Read(
+                    (byte)PackageType.SubsystemElectricity,
+                    reader
+                )
+            );
         electricity.ReceiveNetworkSnapshot(received.Snapshot);
     }
 

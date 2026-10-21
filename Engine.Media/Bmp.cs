@@ -8,8 +8,9 @@ public static class Bmp
 {
     public enum Format
     {
-        RGBA8,
-        RGB8
+        RGBA8 = 0,
+
+        RGB8 = 1
     }
 
     public static bool IsBmpStream(Stream stream)

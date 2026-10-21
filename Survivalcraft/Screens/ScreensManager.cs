@@ -145,10 +145,17 @@ public static class ScreensManager
                 var scale = 1f;
                 _animationData.OldScreen.ColorTransform = new Color(num2, num2, num2, num2);
                 _animationData.OldScreen.RenderTransform =
-                    Matrix.CreateTranslation((0f - _animationData.OldScreen.ActualSize.X) / 2f,
-                        (0f - _animationData.OldScreen.ActualSize.Y) / 2f, 0f) * Matrix.CreateScale(scale) *
-                    Matrix.CreateTranslation(_animationData.OldScreen.ActualSize.X / 2f,
-                        _animationData.OldScreen.ActualSize.Y / 2f, 0f);
+                    Matrix.CreateTranslation(
+                        (0f - _animationData.OldScreen.ActualSize.X) / 2f,
+                        (0f - _animationData.OldScreen.ActualSize.Y) / 2f,
+                        0f
+                    ) *
+                    Matrix.CreateScale(scale) *
+                    Matrix.CreateTranslation(
+                        _animationData.OldScreen.ActualSize.X / 2f,
+                        _animationData.OldScreen.ActualSize.Y / 2f,
+                        0f
+                    );
             }
         }
         else if (factor < 0.5f)
@@ -166,10 +173,17 @@ public static class ScreensManager
             var scale2 = 1f;
             _animationData.NewScreen.ColorTransform = new Color(num3, num3, num3, num3);
             _animationData.NewScreen.RenderTransform =
-                Matrix.CreateTranslation((0f - _animationData.NewScreen.ActualSize.X) / 2f,
-                    (0f - _animationData.NewScreen.ActualSize.Y) / 2f, 0f) * Matrix.CreateScale(scale2) *
-                Matrix.CreateTranslation(_animationData.NewScreen.ActualSize.X / 2f,
-                    _animationData.NewScreen.ActualSize.Y / 2f, 0f);
+                Matrix.CreateTranslation(
+                    (0f - _animationData.NewScreen.ActualSize.X) / 2f,
+                    (0f - _animationData.NewScreen.ActualSize.Y) / 2f,
+                    0f
+                ) *
+                Matrix.CreateScale(scale2) *
+                Matrix.CreateTranslation(
+                    _animationData.NewScreen.ActualSize.X / 2f,
+                    _animationData.NewScreen.ActualSize.Y / 2f,
+                    0f
+                );
         }
 
         if (_animationData.Factor >= 1f)
@@ -233,8 +247,10 @@ public static class ScreensManager
 
         const float num = 6f;
         var hmdMatrix = Matrix.Identity;
-        var vector = hmdMatrix.Translation + num * (Vector3.Normalize(hmdMatrix.Forward * new Vector3(1f, 0f, 1f)) +
-                                                    new Vector3(0f, 0.1f, 0f));
+        var vector = hmdMatrix.Translation +
+                     num *
+                     (Vector3.Normalize(hmdMatrix.Forward * new Vector3(1f, 0f, 1f)) +
+                      new Vector3(0f, 0.1f, 0f));
         if (_vrQuadPosition == Vector3.Zero)
         {
             _vrQuadPosition = vector;
@@ -247,11 +263,17 @@ public static class ScreensManager
             var num2 = v.Length();
             var num3 = v2.Length();
             _vrQuadPosition +=
-                v * MathUtils.Min(
-                    0.75f * MathUtils.Pow(MathUtils.Max(num2 - 0.15f * num, 0f), 0.33f) * Time.FrameDuration, 1f);
+                v *
+                MathUtils.Min(
+                    0.75f * MathUtils.Pow(MathUtils.Max(num2 - 0.15f * num, 0f), 0.33f) * Time.FrameDuration,
+                    1f
+                );
             _vrQuadPosition +=
-                v2 * MathUtils.Min(
-                    1.5f * MathUtils.Pow(MathUtils.Max(num3 - 0.05f * num, 0f), 0.33f) * Time.FrameDuration, 1f);
+                v2 *
+                MathUtils.Min(
+                    1.5f * MathUtils.Pow(MathUtils.Max(num3 - 0.05f * num, 0f), 0.33f) * Time.FrameDuration,
+                    1f
+                );
         }
 
         var vector2 = new Vector2(_uiRenderTarget.Width / (float)_uiRenderTarget.Height, 1f);
@@ -273,9 +295,20 @@ public static class ScreensManager
         }
 
         QueueQuad(
-            _pr3.TexturedBatch(_uiRenderTarget, false, 0, DepthStencilState.Default, RasterizerState.CullNoneScissor,
-                BlendState.Opaque, SamplerState.LinearClamp), _vrQuadMatrix.Translation, _vrQuadMatrix.Right,
-            _vrQuadMatrix.Up, Color.White);
+            _pr3.TexturedBatch(
+                _uiRenderTarget,
+                false,
+                0,
+                DepthStencilState.Default,
+                RasterizerState.CullNoneScissor,
+                BlendState.Opaque,
+                SamplerState.LinearClamp
+            ),
+            _vrQuadMatrix.Translation,
+            _vrQuadMatrix.Right,
+            _vrQuadMatrix.Up,
+            Color.White
+        );
     }
 
     public static void DrawVrBackground()
@@ -294,8 +327,15 @@ public static class ScreensManager
             QueueQuad(batch, vector + hmdMatrix.Translation, vector2, up, rgb);
         }
 
-        var batch2 = _pr3.TexturedBatch(ContentManager.Get<Texture2D>("Textures/Blocks"), true, 1, null, null, null,
-            SamplerState.PointClamp);
+        var batch2 = _pr3.TexturedBatch(
+            ContentManager.Get<Texture2D>("Textures/Blocks"),
+            true,
+            1,
+            null,
+            null,
+            null,
+            SamplerState.PointClamp
+        );
         for (var j = -8; j <= 8; j++)
         {
             for (var k = -8; k <= 8; k++)
@@ -303,14 +343,24 @@ public static class ScreensManager
                 var num2 = 1f;
                 var num3 = 1f;
                 var vector3 = new Vector3((j - 0.5f) * num2, 0f, (k - 0.5f) * num2) +
-                              new Vector3(MathUtils.Round(hmdMatrix.Translation.X), 0f,
-                                  MathUtils.Round(hmdMatrix.Translation.Z));
+                              new Vector3(
+                                  MathUtils.Round(hmdMatrix.Translation.X),
+                                  0f,
+                                  MathUtils.Round(hmdMatrix.Translation.Z)
+                              );
                 var num4 = Vector3.Distance(vector3, hmdMatrix.Translation);
                 var num5 = MathUtils.Lerp(1f, 0f, MathUtils.Saturate(num4 / 7f));
                 if (num5 > 0f)
                 {
-                    QueueQuad(batch2, vector3, new Vector3(num3, 0f, 0f), new Vector3(0f, 0f, num3), Color.Gray * num5,
-                        new Vector2(0.1875f, 0.25f), new Vector2(0.25f, 0.3125f));
+                    QueueQuad(
+                        batch2,
+                        vector3,
+                        new Vector3(num3, 0f, 0f),
+                        new Vector3(0f, 0f, num3),
+                        Color.Gray * num5,
+                        new Vector2(0.1875f, 0.25f),
+                        new Vector2(0.25f, 0.3125f)
+                    );
                 }
             }
         }
@@ -357,14 +407,30 @@ public static class ScreensManager
         QueueQuad(batch, center, right, up, color, new Vector2(0f, 0f), new Vector2(1f, 1f));
     }
 
-    private static void QueueQuad(TexturedBatch3D batch, Vector3 corner, Vector3 right, Vector3 up, Color color,
-        Vector2 tc1, Vector2 tc2)
+    private static void QueueQuad(
+        TexturedBatch3D batch,
+        Vector3 corner,
+        Vector3 right,
+        Vector3 up,
+        Color color,
+        Vector2 tc1,
+        Vector2 tc2
+    )
     {
         var p = corner + right;
         var p2 = corner + right + up;
         var p3 = corner + up;
-        batch.QueueQuad(corner, p, p2, p3, new Vector2(tc1.X, tc2.Y), new Vector2(tc2.X, tc2.Y),
-            new Vector2(tc2.X, tc1.Y), new Vector2(tc1.X, tc1.Y), color);
+        batch.QueueQuad(
+            corner,
+            p,
+            p2,
+            p3,
+            new Vector2(tc1.X, tc2.Y),
+            new Vector2(tc2.X, tc2.Y),
+            new Vector2(tc2.X, tc1.Y),
+            new Vector2(tc1.X, tc1.Y),
+            color
+        );
     }
 
     private class AnimationData

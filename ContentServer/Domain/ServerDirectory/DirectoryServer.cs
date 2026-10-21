@@ -9,9 +9,11 @@ namespace ContentServer.Domain.ServerDirectory;
 
 public enum DirectoryServerReviewStatus
 {
-    Pending,
-    Approved,
-    Rejected
+    Pending = 0,
+
+    Approved = 1,
+
+    Rejected = 2
 }
 
 public partial record DirectoryServerId : IGuidStronglyTypedId;
@@ -52,8 +54,14 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
 
     public IReadOnlyList<string> Tags => JsonSerializer.Deserialize<string[]>(TagsJson) ?? [];
 
-    public static DirectoryServer Submit(PublisherId publisherId, string name, string address,
-        string? description, IReadOnlyList<string> tags, DateTimeOffset now)
+    public static DirectoryServer Submit(
+        PublisherId publisherId,
+        string name,
+        string address,
+        string? description,
+        IReadOnlyList<string> tags,
+        DateTimeOffset now
+    )
     {
         ArgumentNullException.ThrowIfNull(publisherId);
         ValidateFields(name, address, description, tags);
@@ -83,13 +91,26 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
         ReviewMessage = Normalize(message);
         ReviewedAt = now;
         UpdatedAt = now;
-        AddDomainEvent(new DirectoryServerReviewedDomainEvent(this, administratorId, ReviewStatus, ReviewMessage,
-            now));
+        AddDomainEvent(
+            new DirectoryServerReviewedDomainEvent(
+                this,
+                administratorId,
+                ReviewStatus,
+                ReviewMessage,
+                now
+            )
+        );
         return true;
     }
 
-    public void Update(string name, string address, string? description, IReadOnlyList<string> tags,
-        bool requiresReview, DateTimeOffset now)
+    public void Update(
+        string name,
+        string address,
+        string? description,
+        IReadOnlyList<string> tags,
+        bool requiresReview,
+        DateTimeOffset now
+    )
     {
         ValidateFields(name, address, description, tags);
         Name = name.Trim();
@@ -127,8 +148,15 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
         SuspendedAt = now;
         SuspensionReason = Normalize(reason);
         UpdatedAt = now;
-        AddDomainEvent(new DirectoryServerSuspensionChangedDomainEvent(this, administratorId, true,
-            SuspensionReason, now));
+        AddDomainEvent(
+            new DirectoryServerSuspensionChangedDomainEvent(
+                this,
+                administratorId,
+                true,
+                SuspensionReason,
+                now
+            )
+        );
         return true;
     }
 
@@ -153,7 +181,10 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
         ArgumentNullException.ThrowIfNull(tags);
-        if (name.Length > 100 || address.Length > 255 || description?.Length > 1024 || tags.Count > 16 ||
+        if (name.Length > 100 ||
+            address.Length > 255 ||
+            description?.Length > 1024 ||
+            tags.Count > 16 ||
             tags.Any(tag => string.IsNullOrWhiteSpace(tag) || tag.Length > 32))
         {
             throw new ArgumentException("Directory server fields exceed their limits.");
@@ -161,8 +192,18 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
     }
 }
 
-public sealed record DirectoryServerReviewedDomainEvent(DirectoryServer Server, AdministratorId AdministratorId,
-    DirectoryServerReviewStatus Status, string? Message, DateTimeOffset OccurredAt) : IDomainEvent;
+public sealed record DirectoryServerReviewedDomainEvent(
+    DirectoryServer Server,
+    AdministratorId AdministratorId,
+    DirectoryServerReviewStatus Status,
+    string? Message,
+    DateTimeOffset OccurredAt
+) : IDomainEvent;
 
-public sealed record DirectoryServerSuspensionChangedDomainEvent(DirectoryServer Server,
-    AdministratorId AdministratorId, bool Suspended, string? Reason, DateTimeOffset OccurredAt) : IDomainEvent;
+public sealed record DirectoryServerSuspensionChangedDomainEvent(
+    DirectoryServer Server,
+    AdministratorId AdministratorId,
+    bool Suspended,
+    string? Reason,
+    DateTimeOffset OccurredAt
+) : IDomainEvent;

@@ -193,7 +193,9 @@ public class ShaderParameter
             throw new InvalidOperationException("Shader parameter type mismatch.");
         }
 
-        if (!isChanged && inputValue.X.CloseTo(value[0]) && inputValue.Y.CloseTo(value[1]) &&
+        if (!isChanged &&
+            inputValue.X.CloseTo(value[0]) &&
+            inputValue.Y.CloseTo(value[1]) &&
             inputValue.Z.CloseTo(value[2]))
         {
             return;
@@ -337,13 +339,21 @@ public class ShaderParameter
             throw new InvalidOperationException("Shader parameter type mismatch.");
         }
 
-        if (!isChanged && inputValue.M11.CloseTo(value[0]) && inputValue.M12.CloseTo(value[1]) &&
+        if (!isChanged &&
+            inputValue.M11.CloseTo(value[0]) &&
+            inputValue.M12.CloseTo(value[1]) &&
             inputValue.M13.CloseTo(value[2]) &&
-            inputValue.M14.CloseTo(value[3]) && inputValue.M21.CloseTo(value[4]) && inputValue.M22.CloseTo(value[5]) &&
-            inputValue.M23.CloseTo(value[6]) && inputValue.M24.CloseTo(value[7]) && inputValue.M31.CloseTo(value[8]) &&
-            inputValue.M32.CloseTo(value[9]) && inputValue.M33.CloseTo(value[10]) &&
+            inputValue.M14.CloseTo(value[3]) &&
+            inputValue.M21.CloseTo(value[4]) &&
+            inputValue.M22.CloseTo(value[5]) &&
+            inputValue.M23.CloseTo(value[6]) &&
+            inputValue.M24.CloseTo(value[7]) &&
+            inputValue.M31.CloseTo(value[8]) &&
+            inputValue.M32.CloseTo(value[9]) &&
+            inputValue.M33.CloseTo(value[10]) &&
             inputValue.M34.CloseTo(value[11]) &&
-            inputValue.M41.CloseTo(value[12]) && inputValue.M42.CloseTo(value[13]) &&
+            inputValue.M41.CloseTo(value[12]) &&
+            inputValue.M42.CloseTo(value[13]) &&
             inputValue.M43.CloseTo(value[14]) &&
             inputValue.M44.CloseTo(value[15]))
         {
@@ -392,14 +402,22 @@ public class ShaderParameter
             var num = 0;
             for (; i < count; i++)
             {
-                if (value[num++].CloseTo(inputValue[i].M11) && value[num++].CloseTo(inputValue[i].M12) &&
-                    value[num++].CloseTo(inputValue[i].M13) && value[num++].CloseTo(inputValue[i].M14) &&
-                    value[num++].CloseTo(inputValue[i].M21) && value[num++].CloseTo(inputValue[i].M22) &&
-                    value[num++].CloseTo(inputValue[i].M23) && value[num++].CloseTo(inputValue[i].M24) &&
-                    value[num++].CloseTo(inputValue[i].M31) && value[num++].CloseTo(inputValue[i].M32) &&
-                    value[num++].CloseTo(inputValue[i].M33) && value[num++].CloseTo(inputValue[i].M34) &&
-                    value[num++].CloseTo(inputValue[i].M41) && value[num++].CloseTo(inputValue[i].M42) &&
-                    value[num++].CloseTo(inputValue[i].M43) && value[num++].CloseTo(inputValue[i].M44))
+                if (value[num++].CloseTo(inputValue[i].M11) &&
+                    value[num++].CloseTo(inputValue[i].M12) &&
+                    value[num++].CloseTo(inputValue[i].M13) &&
+                    value[num++].CloseTo(inputValue[i].M14) &&
+                    value[num++].CloseTo(inputValue[i].M21) &&
+                    value[num++].CloseTo(inputValue[i].M22) &&
+                    value[num++].CloseTo(inputValue[i].M23) &&
+                    value[num++].CloseTo(inputValue[i].M24) &&
+                    value[num++].CloseTo(inputValue[i].M31) &&
+                    value[num++].CloseTo(inputValue[i].M32) &&
+                    value[num++].CloseTo(inputValue[i].M33) &&
+                    value[num++].CloseTo(inputValue[i].M34) &&
+                    value[num++].CloseTo(inputValue[i].M41) &&
+                    value[num++].CloseTo(inputValue[i].M42) &&
+                    value[num++].CloseTo(inputValue[i].M43) &&
+                    value[num++].CloseTo(inputValue[i].M44))
                 {
                     continue;
                 }

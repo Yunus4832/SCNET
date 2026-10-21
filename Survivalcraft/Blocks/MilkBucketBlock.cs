@@ -19,13 +19,29 @@ public class MilkBucketBlock : BucketBlock
             contentsMesh.ParentBone ??
             throw new InvalidOperationException("Required ContentsMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(contentsMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
-            Matrix.CreateTranslation(0f, -0.3f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            contentsMesh.MeshParts[0],
+            boneAbsoluteTransform2 *
+            Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
+            Matrix.CreateTranslation(0f, -0.3f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(0.9375f, 0f, 0f));
-        StandaloneBlockMesh.AppendModelMeshPart(bucketMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
-            Matrix.CreateTranslation(0f, -0.3f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            bucketMesh.MeshParts[0],
+            boneAbsoluteTransform *
+            Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
+            Matrix.CreateTranslation(0f, -0.3f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 

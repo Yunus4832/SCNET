@@ -116,26 +116,53 @@ public abstract class PostedSignBlock(
 
             Directions[i] = m.Forward;
             var blockMesh = new BlockMesh();
-            blockMesh.AppendModelMeshPart(signMesh.MeshParts[0], boneAbsoluteTransform * m, false,
-                hanging, false, false, Color.White);
+            blockMesh.AppendModelMeshPart(
+                signMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                false,
+                hanging,
+                false,
+                false,
+                Color.White
+            );
             var blockMesh2 = new BlockMesh();
-            blockMesh2.AppendModelMeshPart(postMesh.MeshParts[0], boneAbsoluteTransform2 * m, false,
-                hanging, false, false, Color.White);
+            blockMesh2.AppendModelMeshPart(
+                postMesh.MeshParts[0],
+                boneAbsoluteTransform2 * m,
+                false,
+                hanging,
+                false,
+                false,
+                Color.White
+            );
             BlockMeshes[i] = new BlockMesh();
             BlockMeshes[i].AppendBlockMesh(blockMesh);
             BlockMeshes[i].AppendBlockMesh(blockMesh2);
             ColoredBlockMeshes[i] = new BlockMesh();
             ColoredBlockMeshes[i].AppendBlockMesh(BlockMeshes[i]);
-            BlockMeshes[i].TransformTextureCoordinates(Matrix.CreateTranslation(TextureSlot % 16 / 16f,
-                TextureSlot / 16 / 16f, 0f));
+            BlockMeshes[i].TransformTextureCoordinates(
+                Matrix.CreateTranslation(
+                    TextureSlot % 16 / 16f,
+                    TextureSlot / 16 / 16f,
+                    0f
+                )
+            );
             ColoredBlockMeshes[i].TransformTextureCoordinates(
-                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+            );
             CollisionBoxes[i] = new BoundingBox[2];
             CollisionBoxes[i][0] = blockMesh.CalculateBoundingBox();
             CollisionBoxes[i][1] = blockMesh2.CalculateBoundingBox();
             SurfaceMeshes[i] = new BlockMesh();
-            SurfaceMeshes[i].AppendModelMeshPart(surfaceMesh.MeshParts[0], boneAbsoluteTransform3 * m,
-                false, hanging, false, false, Color.White);
+            SurfaceMeshes[i].AppendModelMeshPart(
+                surfaceMesh.MeshParts[0],
+                boneAbsoluteTransform3 * m,
+                false,
+                hanging,
+                false,
+                false,
+                Color.White
+            );
             SurfaceNormals[i] = -m.Forward;
             if (hanging)
             {
@@ -148,15 +175,35 @@ public abstract class PostedSignBlock(
             }
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(signMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.6f, 0f), false, false, false, false, Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(postMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.6f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            signMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.6f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            postMesh.MeshParts[0],
+            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.6f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandaloneColoredBlockMesh.AppendBlockMesh(StandaloneBlockMesh);
-        StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(TextureSlot % 16 / 16f,
-            TextureSlot / 16 / 16f, 0f));
+        StandaloneBlockMesh.TransformTextureCoordinates(
+            Matrix.CreateTranslation(
+                TextureSlot % 16 / 16f,
+                TextureSlot / 16 / 16f,
+                0f
+            )
+        );
         StandaloneColoredBlockMesh.TransformTextureCoordinates(
-            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+        );
         base.Initialize();
     }
 
@@ -200,11 +247,13 @@ public abstract class PostedSignBlock(
         showDebris = true;
         var color = GetColor(Terrain.ExtractData(oldValue));
         var data = SetColor(0, color);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Count = 1
+            }
+        );
     }
 
     public override BlockDebrisParticleSystem CreateDebrisParticleSystem(
@@ -217,12 +266,24 @@ public abstract class PostedSignBlock(
         var color = GetColor(Terrain.ExtractData(value));
         if (color.HasValue)
         {
-            return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale,
-                SubsystemPalette.GetColor(subsystemTerrain, color), ColoredTextureSlot);
+            return new BlockDebrisParticleSystem(
+                subsystemTerrain,
+                position,
+                strength,
+                DestructionDebrisScale,
+                SubsystemPalette.GetColor(subsystemTerrain, color),
+                ColoredTextureSlot
+            );
         }
 
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, Color.White,
-            TextureSlot);
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            Color.White,
+            TextureSlot
+        );
     }
 
     public override void GenerateTerrainVertices(
@@ -239,17 +300,41 @@ public abstract class PostedSignBlock(
         var color = GetColor(data);
         if (color.HasValue)
         {
-            generator.GenerateMeshVertices(this, x, y, z, ColoredBlockMeshes[variant],
-                SubsystemPalette.GetColor(generator, color), null, geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                ColoredBlockMeshes[variant],
+                SubsystemPalette.GetColor(generator, color),
+                null,
+                geometry.SubsetOpaque
+            );
         }
         else
         {
-            generator.GenerateMeshVertices(this, x, y, z, BlockMeshes[variant], Color.White, null,
-                geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshes[variant],
+                Color.White,
+                null,
+                geometry.SubsetOpaque
+            );
         }
 
-        generator.GenerateWireVertices(value, x, y, z, GetHanging(data) ? 5 : 4, 0.01f, Vector2.Zero,
-            geometry.SubsetOpaque);
+        generator.GenerateWireVertices(
+            value,
+            x,
+            y,
+            z,
+            GetHanging(data) ? 5 : 4,
+            0.01f,
+            Vector2.Zero,
+            geometry.SubsetOpaque
+        );
     }
 
     public override void DrawBlock(
@@ -264,13 +349,25 @@ public abstract class PostedSignBlock(
         var color2 = GetColor(Terrain.ExtractData(value));
         if (color2.HasValue)
         {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneColoredBlockMesh,
-                color * SubsystemPalette.GetColor(environmentData, color2), 1.25f * size, ref matrix, environmentData);
+            BlocksManager.DrawMeshBlock(
+                primitivesRenderer,
+                StandaloneColoredBlockMesh,
+                color * SubsystemPalette.GetColor(environmentData, color2),
+                1.25f * size,
+                ref matrix,
+                environmentData
+            );
         }
         else
         {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMesh, color, 1.25f * size, ref matrix,
-                environmentData);
+            BlocksManager.DrawMeshBlock(
+                primitivesRenderer,
+                StandaloneBlockMesh,
+                color,
+                1.25f * size,
+                ref matrix,
+                environmentData
+            );
         }
     }
 

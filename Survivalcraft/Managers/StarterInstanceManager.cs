@@ -5,15 +5,19 @@ namespace Game.Managers;
 public sealed record StarterInstanceContext(
     string Id,
     string InstancePath,
-    string[] GameArguments);
+    string[] GameArguments
+);
 
 public static class StarterInstanceManager
 {
     public const string DefaultInstanceId = "default";
+
     public const string InstanceArgument = "--instance";
 
     private const string _settingsPath = "starter:Starter.xml";
+
     private const string _instancesPath = "starter:Instances";
+
     private const string _runtimeDirectoryName = ".runtime";
 
     private static string? _currentRuntimeMarkerPath;
@@ -23,7 +27,8 @@ public static class StarterInstanceManager
     public static StarterInstanceContext Current { get; private set; } = new(
         DefaultInstanceId,
         string.Empty,
-        []);
+        []
+    );
 
     public static StarterInstanceContext Initialize(string[] args)
     {
@@ -32,10 +37,9 @@ public static class StarterInstanceManager
         var parsedArguments = ParseArguments(args);
         var settings = Load();
         var selectedFromArgument = parsedArguments.InstanceId is not null;
-        var instanceId = parsedArguments.InstanceId
-                         ?? NormalizeOptionalInstanceId(settings.NextInstance)
-                         ?? NormalizeOptionalInstanceId(settings.CurrentInstance)
-                         ?? DefaultInstanceId;
+        var instanceId = parsedArguments.InstanceId ??
+                         NormalizeOptionalInstanceId(settings.NextInstance) ??
+                         NormalizeOptionalInstanceId(settings.CurrentInstance) ?? DefaultInstanceId;
 
         ValidateInstanceId(instanceId);
         var instancePath = GetInstancePath(instanceId);
@@ -45,10 +49,12 @@ public static class StarterInstanceManager
         }
 
         var consumesPendingSwitch = !string.IsNullOrWhiteSpace(settings.NextInstance) &&
-                                    (!selectedFromArgument || string.Equals(
-                                        parsedArguments.InstanceId,
-                                        settings.NextInstance,
-                                        StringComparison.Ordinal));
+                                    (!selectedFromArgument ||
+                                     string.Equals(
+                                         parsedArguments.InstanceId,
+                                         settings.NextInstance,
+                                         StringComparison.Ordinal
+                                     ));
         if (consumesPendingSwitch)
         {
             settings.CurrentInstance = instanceId;
@@ -63,7 +69,8 @@ public static class StarterInstanceManager
         Current = new StarterInstanceContext(
             instanceId,
             instancePath,
-            parsedArguments.GameArguments);
+            parsedArguments.GameArguments
+        );
         try
         {
             RegisterCurrentProcess();
@@ -220,7 +227,8 @@ public static class StarterInstanceManager
         var runningSettingPath = Storage.CombinePaths(
             GetInstancePath(instanceId),
             "Config",
-            "RunningSetting.xml");
+            "RunningSetting.xml"
+        );
         if (!Storage.FileExists(runningSettingPath))
         {
             return RunModeType.Gui;
@@ -233,7 +241,8 @@ public static class StarterInstanceManager
             return Enum.TryParse<RunModeType>(
                 root.Attribute(nameof(RunningSetting.RunMode))?.Value,
                 true,
-                out var runMode)
+                out var runMode
+            )
                 ? runMode
                 : RunModeType.Gui;
         }
@@ -252,7 +261,8 @@ public static class StarterInstanceManager
         {
             throw new ArgumentException(
                 "Instance id can contain only ASCII letters, digits, '-' and '_'.",
-                nameof(instanceId));
+                nameof(instanceId)
+            );
         }
     }
 
@@ -303,9 +313,11 @@ public static class StarterInstanceManager
 
     private static void Save(StarterSettings settings)
     {
-        var root = new XElement("Starter",
+        var root = new XElement(
+            "Starter",
             new XAttribute(nameof(StarterSettings.CurrentInstance), settings.CurrentInstance),
-            new XAttribute(nameof(StarterSettings.NextInstance), settings.NextInstance));
+            new XAttribute(nameof(StarterSettings.NextInstance), settings.NextInstance)
+        );
         using var stream = Storage.OpenFile(_settingsPath, OpenFileMode.Create);
         root.Save(stream);
     }
@@ -318,8 +330,9 @@ public static class StarterInstanceManager
     private static string ResolveExistingInstanceId(string instanceId)
     {
         return ListInstances().FirstOrDefault(candidate =>
-                   string.Equals(candidate, instanceId, StringComparison.OrdinalIgnoreCase))
-               ?? throw new InvalidOperationException($"Starter instance '{instanceId}' does not exist.");
+                   string.Equals(candidate, instanceId, StringComparison.OrdinalIgnoreCase)
+               ) ??
+               throw new InvalidOperationException($"Starter instance '{instanceId}' does not exist.");
     }
 
     private static void CopyInstanceDirectory(string sourcePath, string targetPath, bool isRoot)
@@ -328,7 +341,8 @@ public static class StarterInstanceManager
         {
             Storage.CopyFile(
                 Storage.CombinePaths(sourcePath, fileName),
-                Storage.CombinePaths(targetPath, fileName));
+                Storage.CombinePaths(targetPath, fileName)
+            );
         }
 
         foreach (var directoryName in Storage.ListDirectoryNames(sourcePath))
@@ -356,9 +370,11 @@ public static class StarterInstanceManager
         Storage.CreateDirectory(runtimeDirectory);
         var process = Process.GetCurrentProcess();
         _currentRuntimeMarkerPath = Storage.CombinePaths(runtimeDirectory, $"{process.Id}.xml");
-        var marker = new XElement("InstanceProcess",
+        var marker = new XElement(
+            "InstanceProcess",
             new XAttribute("Pid", process.Id),
-            new XAttribute("StartTimeUtcTicks", process.StartTime.ToUniversalTime().Ticks));
+            new XAttribute("StartTimeUtcTicks", process.StartTime.ToUniversalTime().Ticks)
+        );
         using (var stream = Storage.OpenFile(_currentRuntimeMarkerPath, OpenFileMode.Create))
         {
             marker.Save(stream);

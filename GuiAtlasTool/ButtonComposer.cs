@@ -17,14 +17,21 @@ internal static class ButtonComposer
         EnsureOutputsAvailable(normalPath, pressedPath, options.Overwrite);
 
         var icon = LoadIcon(iconPath);
-        var scale = Math.Min(definition.SafeWidth / icon.ViewBox.Width,
-            definition.SafeHeight / icon.ViewBox.Height) * options.Scale;
-        var translateX = definition.CenterX + options.OffsetX -
+        var scale = Math.Min(
+                        definition.SafeWidth / icon.ViewBox.Width,
+                        definition.SafeHeight / icon.ViewBox.Height
+                    ) *
+                    options.Scale;
+        var translateX = definition.CenterX +
+                         options.OffsetX -
                          (icon.ViewBox.X + icon.ViewBox.Width / 2f) * scale;
-        var translateY = definition.CenterY + options.OffsetY -
+        var translateY = definition.CenterY +
+                         options.OffsetY -
                          (icon.ViewBox.Y + icon.ViewBox.Height / 2f) * scale;
-        var transform = string.Create(CultureInfo.InvariantCulture,
-            $"translate({translateX} {translateY}) scale({scale})");
+        var transform = string.Create(
+            CultureInfo.InvariantCulture,
+            $"translate({translateX} {translateY}) scale({scale})"
+        );
 
         var normal = ComposeDocument(Path.Combine(templateDirectory, definition.NormalTemplate), icon, transform);
         var pressed = ComposeDocument(Path.Combine(templateDirectory, definition.PressedTemplate), icon, transform);
@@ -135,8 +142,7 @@ internal static class ButtonComposer
         var directory = Path.GetFullPath(Path.Combine("GuiAtlasTool", "Assets"));
         if (!Directory.Exists(directory))
         {
-            throw new InvalidDataException(
-                "Default asset directory was not found; pass --asset-directory explicitly.");
+            throw new InvalidDataException("Default asset directory was not found; pass --asset-directory explicitly.");
         }
 
         return directory;
@@ -155,7 +161,8 @@ internal static class ButtonComposer
         var viewBox = ParseViewBox(root.Attribute("viewBox")?.Value, fullPath);
         RejectExternalResources(root, fullPath);
         var content = root.Nodes().Where(node => node is not XElement element ||
-                                                 element.Name.LocalName is not "namedview" and not "metadata")
+                                                 element.Name.LocalName is not "namedview" and not "metadata"
+            )
             .Select(CloneNode).ToArray();
         PrefixIds(content);
         return new IconDocument(content, viewBox);
@@ -169,7 +176,8 @@ internal static class ButtonComposer
             !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var y) ||
             !float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var width) ||
             !float.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var height) ||
-            width <= 0f || height <= 0f)
+            width <= 0f ||
+            height <= 0f)
         {
             throw new InvalidDataException($"Icon SVG must declare a valid viewBox: {path}");
         }
@@ -214,7 +222,8 @@ internal static class ButtonComposer
         }
 
         var idMap = idAttributes.Select((attribute, index) =>
-                (Attribute: attribute, NewId: $"button-icon-{index}"))
+                (Attribute: attribute, NewId: $"button-icon-{index}")
+            )
             .ToDictionary(item => item.Attribute.Value, item => item.NewId, StringComparer.Ordinal);
         foreach (var item in elements.Select(element => element.Attribute("id")).Where(attribute => attribute != null))
         {
@@ -222,10 +231,12 @@ internal static class ButtonComposer
         }
 
         foreach (var attribute in elements.SelectMany(element => element.Attributes()).Where(attribute =>
-                     attribute.Name.LocalName != "id"))
+                     attribute.Name.LocalName != "id"
+                 ))
         {
             attribute.Value = RewriteUrlReferences(attribute.Value, idMap);
-            if (attribute.Name.LocalName == "href" && attribute.Value.StartsWith('#') &&
+            if (attribute.Name.LocalName == "href" &&
+                attribute.Value.StartsWith('#') &&
                 idMap.TryGetValue(attribute.Value[1..], out var referencedId))
             {
                 attribute.Value = $"#{referencedId}";
@@ -252,8 +263,14 @@ internal static class ButtonComposer
     {
         var document = XDocument.Load(templatePath, LoadOptions.PreserveWhitespace);
         var root = document.Root ?? throw new InvalidDataException($"Button template has no root: {templatePath}");
-        root.Add(new XElement(_svgNamespace + "g", new XAttribute("id", "buttonIcon"),
-            new XAttribute("transform", transform), icon.Nodes.Select(CloneNode)));
+        root.Add(
+            new XElement(
+                _svgNamespace + "g",
+                new XAttribute("id", "buttonIcon"),
+                new XAttribute("transform", transform),
+                icon.Nodes.Select(CloneNode)
+            )
+        );
         return document;
     }
 
@@ -262,12 +279,18 @@ internal static class ButtonComposer
         if (!overwrite && (File.Exists(normalPath) || File.Exists(pressedPath)))
         {
             throw new InvalidDataException(
-                $"Button output already exists; pass --overwrite to replace the pair: {normalPath}");
+                $"Button output already exists; pass --overwrite to replace the pair: {normalPath}"
+            );
         }
     }
 
-    private static void WritePair(XDocument normal, string normalPath, XDocument pressed, string pressedPath,
-        bool overwrite)
+    private static void WritePair(
+        XDocument normal,
+        string normalPath,
+        XDocument pressed,
+        string pressedPath,
+        bool overwrite
+    )
     {
         Directory.CreateDirectory(Path.GetDirectoryName(normalPath)!);
         var normalTemporaryPath = $"{normalPath}.{Guid.NewGuid():N}.tmp";
@@ -288,7 +311,8 @@ internal static class ButtonComposer
 
     private static void ValidateResourceName(string resourceName)
     {
-        if (resourceName.Length == 0 || resourceName.Any(character => char.IsWhiteSpace(character)) ||
+        if (resourceName.Length == 0 ||
+            resourceName.Any(character => char.IsWhiteSpace(character)) ||
             resourceName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
             Path.GetFileName(resourceName) != resourceName)
         {
@@ -296,11 +320,22 @@ internal static class ButtonComposer
         }
     }
 
-    private sealed record ComposeOptions(float Scale, float OffsetX, float OffsetY, string? AssetDirectory,
-        bool Overwrite);
+    private sealed record ComposeOptions(
+        float Scale,
+        float OffsetX,
+        float OffsetY,
+        string? AssetDirectory,
+        bool Overwrite
+    );
 
-    private sealed record ButtonDefinition(string NormalTemplate, string PressedTemplate, float SafeWidth,
-        float SafeHeight, float CenterX, float CenterY);
+    private sealed record ButtonDefinition(
+        string NormalTemplate,
+        string PressedTemplate,
+        float SafeWidth,
+        float SafeHeight,
+        float CenterX,
+        float CenterY
+    );
 
     private sealed record IconDocument(XNode[] Nodes, ViewBox ViewBox);
 

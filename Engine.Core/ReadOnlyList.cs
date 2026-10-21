@@ -31,11 +31,7 @@ public readonly struct ReadOnlyList<T>(IList<T> list) : IList<T>
 
     public static ReadOnlyList<T> Empty { get; } = new(Array.Empty<T>());
 
-    public T this[int index]
-    {
-        get => _list[index];
-        set => throw new NotSupportedException("List is readonly.");
-    }
+    public T this[int index] { get => _list[index]; set => throw new NotSupportedException("List is readonly."); }
 
     public int Count => _list.Count;
 

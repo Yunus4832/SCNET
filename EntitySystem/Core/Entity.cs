@@ -39,11 +39,11 @@ public class Entity : IDisposable
         ValuesDictionary = valuesDictionary;
         var list = new List<KeyValuePair<int, Component>>();
         var items = from x in valuesDictionary.Values
-                    select x as ValuesDictionary
+            select x as ValuesDictionary
             into x
-                    where x is { DatabaseObject: not null } &&
-                          x.DatabaseObject.Type == project.GameDatabase.MemberComponentTemplateType
-                    select x;
+            where x is { DatabaseObject: not null } &&
+                  x.DatabaseObject.Type == project.GameDatabase.MemberComponentTemplateType
+            select x;
 
         foreach (var item in items)
         {
@@ -65,13 +65,15 @@ public class Entity : IDisposable
             {
                 throw new InvalidOperationException(
                     $"Error constructing component \"{value2}\" for entity template \"{valuesDictionary.DatabaseObject.Name}\".",
-                    ex.InnerException ?? ex);
+                    ex.InnerException ?? ex
+                );
             }
 
             if (obj is not Component component)
             {
                 throw new InvalidOperationException(
-                    $"Type \"{value2}\" cannot be used as a component because it does not inherit from Component class.");
+                    $"Type \"{value2}\" cannot be used as a component because it does not inherit from Component class."
+                );
             }
 
             component.Initialize(this, item);
@@ -204,8 +206,10 @@ public class Entity : IDisposable
             }
             catch (Exception innerException)
             {
-                throw new InvalidOperationException($"Error loading component {component.GetType().FullName}.",
-                    innerException);
+                throw new InvalidOperationException(
+                    $"Error loading component {component.GetType().FullName}.",
+                    innerException
+                );
             }
         }
     }

@@ -12,7 +12,8 @@ public static class CommandResultPublisher
         CommandResult result,
         byte? requesterId = null,
         bool includeServer = true,
-        string? correlationId = null)
+        string? correlationId = null
+    )
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(result);
@@ -37,7 +38,8 @@ public static class CommandResultPublisher
             messages.Publish(
                 message,
                 [requesterId.Value],
-                includePublisher: includeServer);
+                includePublisher: includeServer
+            );
         }
         else if (includeServer)
         {
@@ -49,14 +51,16 @@ public static class CommandResultPublisher
         Project project,
         CommandResult result,
         Client requester,
-        string correlationId)
+        string correlationId
+    )
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(requester);
         var messages = project.FindSubsystem<SubsystemGameWidgets>(true)!.Messages;
         if (result.Audience is CommandResultAudience.AllPlayers &&
-            !result.Sensitive && result.Presentation != CommandResultPresentation.Silent)
+            !result.Sensitive &&
+            result.Presentation != CommandResultPresentation.Silent)
         {
             var message = CreateMessage(result);
             messages.Relay(message, recipients: null, except: requester);
@@ -70,7 +74,8 @@ public static class CommandResultPublisher
     public static void DisplayLocal(
         Project project,
         CommandResult result,
-        string? correlationId = null)
+        string? correlationId = null
+    )
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(result);

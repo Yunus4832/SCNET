@@ -18,11 +18,7 @@ public class SliderWidget : CanvasWidget
 
     private readonly Widget _tabWidget;
 
-    public Color TextColor
-    {
-        get => _labelWidget.Color;
-        set => _labelWidget.Color = value;
-    }
+    public Color TextColor { get => _labelWidget.Color; set => _labelWidget.Color = value; }
 
     public bool IsSliding { get; set; }
 
@@ -69,31 +65,15 @@ public class SliderWidget : CanvasWidget
                 : MathUtils.Clamp(value, MinValue, MaxValue);
     }
 
-    public float Granularity
-    {
-        get => _granularity;
-        set => _granularity = MathUtils.Max(value, 0f);
-    }
+    public float Granularity { get => _granularity; set => _granularity = MathUtils.Max(value, 0f); }
 
-    public string Text
-    {
-        get => _labelWidget.Text;
-        set => _labelWidget.Text = value;
-    }
+    public string Text { get => _labelWidget.Text; set => _labelWidget.Text = value; }
 
-    public BitmapFont Font
-    {
-        get => _labelWidget.Font;
-        set => _labelWidget.Font = value;
-    }
+    public BitmapFont Font { get => _labelWidget.Font; set => _labelWidget.Font = value; }
 
     public string SoundName { get; set; } = string.Empty;
 
-    public bool IsLabelVisible
-    {
-        get => _labelCanvasWidget.IsVisible;
-        set => _labelCanvasWidget.IsVisible = value;
-    }
+    public bool IsLabelVisible { get => _labelCanvasWidget.IsVisible; set => _labelCanvasWidget.IsVisible = value; }
 
     public float LabelWidth
     {

@@ -14,7 +14,8 @@ public class GroupManagePackageTest
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            60);
+            60
+        );
         var package = GroupPackageBuilder.CreatePrompt(operation);
 
         var clone = RoundTrip(package);
@@ -35,7 +36,8 @@ public class GroupManagePackageTest
                 nameof(GroupManagePackage.CommandType.PromptInvitation),
                 nameof(GroupManagePackage.CommandType.SyncGroups)
             ],
-            Enum.GetNames<GroupManagePackage.CommandType>());
+            Enum.GetNames<GroupManagePackage.CommandType>()
+        );
     }
 
     [Fact]
@@ -47,8 +49,11 @@ public class GroupManagePackageTest
         var package = new GroupManagePackage
         {
             Command = GroupManagePackage.CommandType.SyncGroups,
-            Groups = [new GroupManagePackage.GroupState
-            { GroupKey = groupKey, Name = "Builders", Members = [firstMember, secondMember] }]
+            Groups =
+            [
+                new GroupManagePackage.GroupState
+                    { GroupKey = groupKey, Name = "Builders", Members = [firstMember, secondMember] }
+            ]
         };
 
         var clone = RoundTrip(package);

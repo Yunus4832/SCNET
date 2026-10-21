@@ -30,11 +30,22 @@ public sealed class AdminDirectoryServerRestoreEndpoint(
     private Task<ResponseData> Restore(Guid id, CancellationToken cancellationToken) =>
         SetSuspended(id, false, null, cancellationToken);
 
-    private async Task<ResponseData> SetSuspended(Guid id, bool suspended, string? reason,
-        CancellationToken cancellationToken)
+    private async Task<ResponseData> SetSuspended(
+        Guid id,
+        bool suspended,
+        string? reason,
+        CancellationToken cancellationToken
+    )
     {
-        var result = await mediator.Send(new SetDirectoryServerSuspendedCommand(new DirectoryServerId(id),
-            authenticationContext.RequireAdministratorId(), suspended, reason), cancellationToken);
+        var result = await mediator.Send(
+            new SetDirectoryServerSuspendedCommand(
+                new DirectoryServerId(id),
+                authenticationContext.RequireAdministratorId(),
+                suspended,
+                reason
+            ),
+            cancellationToken
+        );
         if (result == SetDirectoryServerStateResult.NotFound)
         {
             throw new KnownException("server_not_found", StatusCodes.Status404NotFound);

@@ -8,6 +8,7 @@ public sealed record InvitePlayerToTeamCommand(Guid PlayerId) : IGameCommand;
 
 public sealed record RespondTeamRequestCommand(
     Guid OperationId,
-    bool Accepted) : IGameCommand;
+    bool Accepted
+) : IGameCommand;
 
 public sealed record LeaveTeamCommand : IGameCommand;

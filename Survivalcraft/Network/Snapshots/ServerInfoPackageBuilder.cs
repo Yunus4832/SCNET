@@ -11,6 +11,7 @@ public static class ServerInfoPackageBuilder
         var seasons = project.FindSubsystem<SubsystemSeasons>(true)!;
         var profile = CurrentModRuntime.Value?.CreateServerRequiredProfile();
         if (profile != null) { ModProfileValidation.Validate(profile); }
+
         return new ServerInfoPackage
         {
             ProtocolVersion = VersionsManager.ProtocolVersion,
@@ -20,11 +21,18 @@ public static class ServerInfoPackageBuilder
             TimeOfDay = project.FindSubsystem<SubsystemTimeOfDay>(true)!.CalculateTimeOfDay(),
             Season = ProtocolEnum.Encode(seasons.Season),
             TimeOfSeason = seasons.TimeOfSeason,
-            RequiredModProfile = profile == null ? null : new RequiredModProfile(profile.Id,
-                profile.Packages.Select(p => new RequiredModPackage(p.ModId, p.Version, p.PackageHash)).ToArray()),
-            TemporaryRepositories = TemporaryContentRepositories.Validate(ContentRepositoryManager.Current.Snapshot()
-                .Where(repository => repository.IsEnabled)).Select(repository =>
-                    new ContentRepositoryDescriptor(repository.Id, repository.BaseUrl, repository.Priority)).ToArray()
+            RequiredModProfile = profile == null
+                ? null
+                : new RequiredModProfile(
+                    profile.Id,
+                    profile.Packages.Select(p => new RequiredModPackage(p.ModId, p.Version, p.PackageHash)).ToArray()
+                ),
+            TemporaryRepositories = TemporaryContentRepositories.Validate(
+                ContentRepositoryManager.Current.Snapshot()
+                    .Where(repository => repository.IsEnabled)
+            ).Select(repository =>
+                new ContentRepositoryDescriptor(repository.Id, repository.BaseUrl, repository.Priority)
+            ).ToArray()
         };
     }
 }

@@ -8,14 +8,19 @@ public class InstanceManagementScreen : Screen
 {
     private enum InstanceAction
     {
-        Create,
-        Clone,
-        Delete,
-        Switch,
-        Launch
+        Create = 0,
+
+        Clone = 1,
+
+        Delete = 2,
+
+        Switch = 3,
+
+        Launch = 4
     }
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly ListPanelWidget _instancesList;
 
     private Screen? _previousScreen;
@@ -32,12 +37,13 @@ public class InstanceManagementScreen : Screen
         _actionPanel.ItemColorProvider = item => item is InstanceAction.Delete ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
-        [
-            InstanceAction.Create,
-            InstanceAction.Clone,
-            InstanceAction.Switch,
-            InstanceAction.Launch
-        ]);
+            [
+                InstanceAction.Create,
+                InstanceAction.Clone,
+                InstanceAction.Switch,
+                InstanceAction.Launch
+            ]
+        );
         _actionPanel.SetSecondaryItems([InstanceAction.Delete]);
         _instancesList.ItemWidgetFactory = CreateInstanceItemWidget;
     }
@@ -100,7 +106,8 @@ public class InstanceManagementScreen : Screen
             case InstanceAction.Switch when selected is { IsCurrent: false }:
                 ConfirmSwitch(selected);
                 break;
-            case InstanceAction.Launch when selected is { IsCurrent: false, IsRunning: false, RunMode: RunModeType.Gui }:
+            case InstanceAction.Launch
+                when selected is { IsCurrent: false, IsRunning: false, RunMode: RunModeType.Gui }:
                 ConfirmLaunch(selected);
                 break;
         }
@@ -112,7 +119,8 @@ public class InstanceManagementScreen : Screen
         var widget = (ContainerWidget)LoadWidget(
             null,
             ContentManager.Get<XElement>("Widgets/InstanceItem"),
-            null);
+            null
+        );
         var idLabel = widget.Children.Find<LabelWidget>("InstanceItem.Id")!;
         idLabel.Text = instance.Id;
         var statusColor = instance.IsCurrent
@@ -139,11 +147,13 @@ public class InstanceManagementScreen : Screen
         var selectedId = (_instancesList.SelectedItem as InstanceItem)?.Id;
         var instances = StarterInstanceManager.ListInstances()
             .Select(instanceId => new InstanceItem(
-                instanceId,
-                string.Equals(instanceId, StarterInstanceManager.Current.Id, StringComparison.OrdinalIgnoreCase),
-                StarterInstanceManager.IsInstanceRunning(instanceId),
-                StarterInstanceManager.CanCloneInstance(instanceId),
-                StarterInstanceManager.GetRunMode(instanceId)))
+                    instanceId,
+                    string.Equals(instanceId, StarterInstanceManager.Current.Id, StringComparison.OrdinalIgnoreCase),
+                    StarterInstanceManager.IsInstanceRunning(instanceId),
+                    StarterInstanceManager.CanCloneInstance(instanceId),
+                    StarterInstanceManager.GetRunMode(instanceId)
+                )
+            )
             .ToArray();
         if (_instancesList.Items.Cast<InstanceItem>().SequenceEqual(instances))
         {
@@ -181,7 +191,9 @@ public class InstanceManagementScreen : Screen
                         RefreshInstances();
                     }
                 },
-                false));
+                false
+            )
+        );
     }
 
     private void ConfirmDelete(InstanceItem instance)
@@ -195,7 +207,8 @@ public class InstanceManagementScreen : Screen
                 {
                     RefreshInstances();
                 }
-            });
+            }
+        );
     }
 
     private void ShowCloneDialog(InstanceItem source)
@@ -215,9 +228,12 @@ public class InstanceManagementScreen : Screen
 
                     ExecuteLongOperation(
                         new CloneInstanceCommand(source.Id, targetInstanceId.Trim()),
-                        RefreshInstances);
+                        RefreshInstances
+                    );
                 },
-                false));
+                false
+            )
+        );
     }
 
     private static void ConfirmSwitch(InstanceItem instance)
@@ -230,7 +246,8 @@ public class InstanceManagementScreen : Screen
                 {
                     Execute(new SwitchInstanceCommand(instance.Id));
                 }
-            });
+            }
+        );
     }
 
     private void ConfirmLaunch(InstanceItem instance)
@@ -259,10 +276,13 @@ public class InstanceManagementScreen : Screen
                 catch (Exception ex)
                 {
                     Log.Error($"Failed to launch instance '{instance.Id}': {ex}");
-                    DialogsManager.ShowDialog(null, new MessageDialog(
-                        LanguageManager.Error, Text("LaunchFailed"), LanguageManager.Ok));
+                    DialogsManager.ShowDialog(
+                        null,
+                        new MessageDialog(LanguageManager.Error, Text("LaunchFailed"), LanguageManager.Ok)
+                    );
                 }
-            });
+            }
+        );
     }
 
     private static bool Execute(IGameCommand command)
@@ -278,13 +298,16 @@ public class InstanceManagementScreen : Screen
             new MessageDialog(
                 LanguageManager.Error,
                 CommandText.Resolve(result),
-                LanguageManager.Ok));
+                LanguageManager.Ok
+            )
+        );
         return false;
     }
 
     private void ExecuteLongOperation(
         IGameCommand command,
-        Action? success)
+        Action? success
+    )
     {
         var busyDialog = new CancellableBusyDialog(Text("Working"), false)
         {
@@ -293,34 +316,40 @@ public class InstanceManagementScreen : Screen
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() => CommandExecutor.ExecuteLocal(command, GameManager.Project))
             .ContinueWith(task => Dispatcher.Dispatch(() =>
-            {
-                DialogsManager.HideDialog(busyDialog);
-                if (task.IsFaulted)
-                {
-                    Log.Error($"Instance operation failed: {task.Exception}");
-                    DialogsManager.ShowDialog(
-                        null,
-                        new MessageDialog(
-                            LanguageManager.Error,
-                            Text("OperationFailed"),
-                            LanguageManager.Ok));
-                    return;
-                }
+                    {
+                        DialogsManager.HideDialog(busyDialog);
+                        if (task.IsFaulted)
+                        {
+                            Log.Error($"Instance operation failed: {task.Exception}");
+                            DialogsManager.ShowDialog(
+                                null,
+                                new MessageDialog(
+                                    LanguageManager.Error,
+                                    Text("OperationFailed"),
+                                    LanguageManager.Ok
+                                )
+                            );
+                            return;
+                        }
 
-                var result = task.Result;
-                if (!result.Success)
-                {
-                    DialogsManager.ShowDialog(
-                        null,
-                        new MessageDialog(
-                            LanguageManager.Error,
-                            CommandText.Resolve(result),
-                            LanguageManager.Ok));
-                    return;
-                }
+                        var result = task.Result;
+                        if (!result.Success)
+                        {
+                            DialogsManager.ShowDialog(
+                                null,
+                                new MessageDialog(
+                                    LanguageManager.Error,
+                                    CommandText.Resolve(result),
+                                    LanguageManager.Ok
+                                )
+                            );
+                            return;
+                        }
 
-                success?.Invoke();
-            }));
+                        success?.Invoke();
+                    }
+                )
+            );
     }
 
     private static string Text(string key) =>
@@ -331,5 +360,6 @@ public class InstanceManagementScreen : Screen
         bool IsCurrent,
         bool IsRunning,
         bool CanClone,
-        RunModeType RunMode);
+        RunModeType RunMode
+    );
 }

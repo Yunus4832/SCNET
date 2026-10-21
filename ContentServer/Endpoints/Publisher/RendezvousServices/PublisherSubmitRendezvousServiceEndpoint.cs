@@ -18,7 +18,11 @@ namespace ContentServer.Endpoints.Publisher.RendezvousServices;
 
 [HttpPost("/api/v1/publisher/rendezvous-services")]
 [AllowAnonymous]
-public sealed class PublisherSubmitRendezvousServiceEndpoint(IMediator mediator, ApiKeyAuthenticationContext authenticationContext, RendezvousInspectionClient inspection) : ContentEndpoint
+public sealed class PublisherSubmitRendezvousServiceEndpoint(
+    IMediator mediator,
+    ApiKeyAuthenticationContext authenticationContext,
+    RendezvousInspectionClient inspection
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -29,7 +33,8 @@ public sealed class PublisherSubmitRendezvousServiceEndpoint(IMediator mediator,
 
     private async Task<ResponseData<RendezvousServiceRegistrationResponse>> SubmitRendezvousService(
         SubmitRendezvousServiceRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var publisher = await RequirePublisherAsync(cancellationToken);
         if (publisher.Status != PublisherStatus.Active)
@@ -37,7 +42,8 @@ public sealed class PublisherSubmitRendezvousServiceEndpoint(IMediator mediator,
             throw new KnownException("publisher_not_active", StatusCodes.Status403Forbidden);
         }
 
-        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 100 ||
+        if (string.IsNullOrWhiteSpace(request.Name) ||
+            request.Name.Length > 100 ||
             request.Description?.Length > 1000 ||
             !EndpointMappings.TryParsePublicHttpUrl(request.ControlUrl, out var controlUrl))
         {
@@ -50,16 +56,26 @@ public sealed class PublisherSubmitRendezvousServiceEndpoint(IMediator mediator,
             await inspection.InspectAsync(controlUrl, cancellationToken);
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or
-                                          System.Text.Json.JsonException)
+                                              System.Text.Json.JsonException)
         {
-            throw new KnownException("rendezvous_service_unavailable_or_invalid", StatusCodes.Status422UnprocessableEntity);
+            throw new KnownException(
+                "rendezvous_service_unavailable_or_invalid",
+                StatusCodes.Status422UnprocessableEntity
+            );
         }
 
         SubmitRendezvousServiceResult result;
         try
         {
-            result = await mediator.Send(new SubmitRendezvousServiceCommand(publisher.PublisherId, request.Name, controlUrl,
-                request.Description), cancellationToken);
+            result = await mediator.Send(
+                new SubmitRendezvousServiceCommand(
+                    publisher.PublisherId,
+                    request.Name,
+                    controlUrl,
+                    request.Description
+                ),
+                cancellationToken
+            );
         }
         catch (InvalidOperationException)
         {
@@ -67,19 +83,30 @@ public sealed class PublisherSubmitRendezvousServiceEndpoint(IMediator mediator,
         }
 
         HttpContext.Response.StatusCode = StatusCodes.Status201Created;
-        return new RendezvousServiceRegistrationResponse(result.Id.ToString(), publisher.PublisherId.ToString(),
-            publisher.DisplayName, request.Name.Trim(), controlUrl.AbsoluteUri, Normalize(request.Description),
-            result.Status.ToString().ToLowerInvariant(), null, result.CreatedAt, null)
+        return new RendezvousServiceRegistrationResponse(
+                result.Id.ToString(),
+                publisher.PublisherId.ToString(),
+                publisher.DisplayName,
+                request.Name.Trim(),
+                controlUrl.AbsoluteUri,
+                Normalize(request.Description),
+                result.Status.ToString().ToLowerInvariant(),
+                null,
+                result.CreatedAt,
+                null
+            )
             .AsResponseData(code: StatusCodes.Status201Created);
     }
 
     private async Task<PublisherDto> RequirePublisherAsync(CancellationToken cancellationToken)
     {
         return await mediator.Send(
-            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
-            cancellationToken
-        ) ?? throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
+                   new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                   cancellationToken
+               ) ??
+               throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
     }
+
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 

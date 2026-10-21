@@ -46,7 +46,8 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
                     {
                         explosiveData.FuseParticleSystem =
                             new FuseParticleSystem(
-                                new Vector3(point.X, point.Y, point.Z) + gunpowderKegBlock.FuseOffset);
+                                new Vector3(point.X, point.Y, point.Z) + gunpowderKegBlock.FuseOffset
+                            );
                         _subsystemParticles.AddParticleSystem(explosiveData.FuseParticleSystem);
                     }
                 }
@@ -54,12 +55,19 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
                 explosiveData.TimeToExplosion -= dt;
                 if (explosiveData.TimeToExplosion <= 0f)
                 {
-                    _subsystemExplosions.TryExplodeBlock(explosiveData.Point.X, explosiveData.Point.Y,
-                        explosiveData.Point.Z, cellValue, explosiveData.Miner);
+                    _subsystemExplosions.TryExplodeBlock(
+                        explosiveData.Point.X,
+                        explosiveData.Point.Y,
+                        explosiveData.Point.Z,
+                        cellValue,
+                        explosiveData.Miner
+                    );
                 }
 
-                var x = _subsystemAudio.CalculateListenerDistance(new Vector3(point.X, point.Y, point.Z) +
-                                                                  new Vector3(0.5f));
+                var x = _subsystemAudio.CalculateListenerDistance(
+                    new Vector3(point.X, point.Y, point.Z) +
+                    new Vector3(0.5f)
+                );
                 num = MathUtils.Min(num, x);
             }
         }
@@ -112,7 +120,9 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
         var list = new List<Point3>();
         foreach (var key in _explosiveDataByPoint.Keys)
         {
-            if (key.X >= chunk.Origin.X && key.X < chunk.Origin.X + 16 && key.Z >= chunk.Origin.Y &&
+            if (key.X >= chunk.Origin.X &&
+                key.X < chunk.Origin.X + 16 &&
+                key.Z >= chunk.Origin.Y &&
                 key.Z < chunk.Origin.Y + 16)
             {
                 list.Add(key);
@@ -129,7 +139,8 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
     {
         var num = Terrain.ExtractContents(value);
         var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
-        if (block.GetExplosionPressure(value) > 0f && MathUtils.Saturate(damage / block.ExplosionResilience) > 0.01f &&
+        if (block.GetExplosionPressure(value) > 0f &&
+            MathUtils.Saturate(damage / block.ExplosionResilience) > 0.01f &&
             SubsystemExplosions.SharedRandom.Float(0f, 1f) < 0.5f)
         {
             IgniteFuse(x, y, z);

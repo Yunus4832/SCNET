@@ -22,7 +22,7 @@ public class HelpScreen : Screen
         _topicsList = Children.Find<ListPanelWidget>("TopicsList")!;
         _recipaediaButton = Children.Find<ButtonWidget>("RecipaediaButton")!;
         _bestiaryButton = Children.Find<ButtonWidget>("BestiaryButton")!;
-        _topicsList.ItemWidgetFactory = delegate (object item)
+        _topicsList.ItemWidgetFactory = delegate(object item)
         {
             var helpTopic3 = (HelpTopic)item;
             var node2 = ContentManager.Get<XElement>("Widgets/HelpTopicItem");
@@ -30,7 +30,7 @@ public class HelpScreen : Screen
             obj.Children.Find<LabelWidget>("HelpTopicItem.Title")!.Text = helpTopic3.Title;
             return obj;
         };
-        _topicsList.ItemClicked += delegate (object item)
+        _topicsList.ItemClicked += delegate(object item)
         {
             if (item is HelpTopic helpTopic2)
             {
@@ -47,7 +47,9 @@ public class HelpScreen : Screen
             return;
         }
 
-        foreach (var (key, item) in kvs.OrderBy(pair => pair.Value is JsonObject topic && (string?)topic["Name"] == "Disclaimer"))
+        foreach (var (key, item) in kvs.OrderBy(pair =>
+                     pair.Value is JsonObject topic && (string?)topic["Name"] == "Disclaimer"
+                 ))
         {
             if (item is not JsonObject item3)
             {
@@ -58,8 +60,13 @@ public class HelpScreen : Screen
             {
                 var disabledPlatforms = disabledPlatformsNode?.ToString() ?? string.Empty;
                 if (disabledPlatforms.Split([","], StringSplitOptions.None)
-                        .FirstOrDefault(s => string.Equals(s.Trim(), PlatformManager.Platform.ToString(),
-                            StringComparison.CurrentCultureIgnoreCase)) == null)
+                        .FirstOrDefault(s => string.Equals(
+                                s.Trim(),
+                                PlatformManager.Platform.ToString(),
+                                StringComparison.CurrentCultureIgnoreCase
+                            )
+                        ) ==
+                    null)
                 {
                     continue;
                 }
@@ -71,7 +78,8 @@ public class HelpScreen : Screen
                 if (!_topics.TryAdd(helpTopic.Name, helpTopic))
                 {
                     Log.Error(
-                        $"Duplicate help topic name \"{helpTopic.Name}\". Topic \"{helpTopic.Key}\" was skipped.");
+                        $"Duplicate help topic name \"{helpTopic.Name}\". Topic \"{helpTopic.Key}\" was skipped."
+                    );
                     continue;
                 }
             }

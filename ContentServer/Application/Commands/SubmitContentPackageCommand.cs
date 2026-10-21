@@ -22,7 +22,8 @@ public sealed record SubmitContentPackageCommand(
     string BlobHash,
     long PackageSize,
     string FileName,
-    string MediaType) : ICommand;
+    string MediaType
+) : ICommand;
 
 public sealed class SubmitContentPackageCommandHandler(ContentServerDbContext db)
     : ICommandHandler<SubmitContentPackageCommand>
@@ -30,22 +31,39 @@ public sealed class SubmitContentPackageCommandHandler(ContentServerDbContext db
     public async Task Handle(SubmitContentPackageCommand command, CancellationToken cancellationToken)
     {
         var package = await db.PackageBlobs.SingleOrDefaultAsync(
-            item => item.Hash == command.PackageHash, cancellationToken);
+            item => item.Hash == command.PackageHash,
+            cancellationToken
+        );
         if (package is null)
         {
-            package = PackageBlob.Create(command.PackageHash, command.BlobHash, command.PackageSize,
-                command.FileName, command.MediaType, DateTimeOffset.UtcNow);
+            package = PackageBlob.Create(
+                command.PackageHash,
+                command.BlobHash,
+                command.PackageSize,
+                command.FileName,
+                command.MediaType,
+                DateTimeOffset.UtcNow
+            );
             await db.PackageBlobs.AddAsync(package, cancellationToken);
         }
 
         var normalizedIdentifier = command.Identifier.ToLowerInvariant();
         var content = await db.Contents.Include(item => item.Versions).SingleOrDefaultAsync(
-            item => item.NormalizedIdentifier == normalizedIdentifier, cancellationToken);
+            item => item.NormalizedIdentifier == normalizedIdentifier,
+            cancellationToken
+        );
         var now = DateTimeOffset.UtcNow;
         if (content is null)
         {
-            content = ContentItem.Create(command.PublisherId, command.Type, command.Identifier,
-                command.Name, command.Summary, command.Description, now);
+            content = ContentItem.Create(
+                command.PublisherId,
+                command.Type,
+                command.Identifier,
+                command.Name,
+                command.Summary,
+                command.Description,
+                now
+            );
             await db.Contents.AddAsync(content, cancellationToken);
         }
         else
@@ -68,7 +86,15 @@ public sealed class SubmitContentPackageCommandHandler(ContentServerDbContext db
             content.UpdateDetails(command.Name, command.Summary, command.Description, now);
         }
 
-        content.SubmitVersion(command.Version, command.Summary, command.Description, package.Id,
-            command.PackageHash, command.BlobHash, command.Metadata, now);
+        content.SubmitVersion(
+            command.Version,
+            command.Summary,
+            command.Description,
+            package.Id,
+            command.PackageHash,
+            command.BlobHash,
+            command.Metadata,
+            now
+        );
     }
 }

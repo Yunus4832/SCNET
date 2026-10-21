@@ -49,7 +49,8 @@ public static class CommandLineTokenizer
             tokens = [];
             error = CommandText.Get(
                 "CommandQuoteUnclosed_Message",
-                "指令中存在未闭合的引号。");
+                "指令中存在未闭合的引号。"
+            );
             return false;
         }
 

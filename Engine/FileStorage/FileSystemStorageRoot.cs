@@ -3,7 +3,9 @@ namespace Engine.FileStorage;
 public sealed class FileSystemStorageRoot : IStorageRoot
 {
     private readonly string _rootPath;
+
     private readonly bool _readOnly;
+
     private readonly bool _allowEscapingRoot;
 
     public FileSystemStorageRoot(string rootPath, bool readOnly = false, bool allowEscapingRoot = false)

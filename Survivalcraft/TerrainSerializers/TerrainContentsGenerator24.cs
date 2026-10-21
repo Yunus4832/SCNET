@@ -373,15 +373,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
 
     public float CalculateMountainRangeFactor(float x, float z)
     {
-        return SimplexNoise.OctavedNoise(x + _mountainsOffset.X, z + _mountainsOffset.Y,
-            _tgMountainRangeFreq / _tgBiomeScaling, 3, 1.91f, 0.75f, true);
+        return SimplexNoise.OctavedNoise(
+            x + _mountainsOffset.X,
+            z + _mountainsOffset.Y,
+            _tgMountainRangeFreq / _tgBiomeScaling,
+            3,
+            1.91f,
+            0.75f,
+            true
+        );
     }
 
     public float CalculateHeight(float x, float z)
     {
-        var num = _tgOceanSlope + _tgOceanSlopeVariation * MathUtils.PowSign(
-            2f * SimplexNoise.OctavedNoise(x + _mountainsOffset.X, z + _mountainsOffset.Y, 0.01f, 1, 2f, 0.5f) - 1f,
-            0.5f);
+        var num = _tgOceanSlope +
+                  _tgOceanSlopeVariation *
+                  MathUtils.PowSign(
+                      2f *
+                      SimplexNoise.OctavedNoise(x + _mountainsOffset.X, z + _mountainsOffset.Y, 0.01f, 1, 2f, 0.5f) -
+                      1f,
+                      0.5f
+                  );
         var num2 = CalculateOceanShoreDistance(x, z);
         var num3 = MathUtils.Saturate(2f - 0.05f * MathUtils.Abs(num2));
         var num4 = MathUtils.Saturate(MathUtils.Sin(_tgIslandsFrequency * num2));
@@ -395,14 +407,31 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
         var num9 = 1f * SimplexNoise.OctavedNoise(x, z, _tgHillsFrequency, _tgHillsOctaves, 1.93f, _tgHillsPersistence);
         var amplitudeStep =
             MathUtils.Lerp(0.75f * _tgMountainsDetailPersistence, 1.33f * _tgMountainsDetailPersistence, f);
-        var num10 = 1.5f * SimplexNoise.OctavedNoise(x, z, _tgMountainsDetailFreq, _tgMountainsDetailOctaves, 1.98f,
-            amplitudeStep) - 0.5f;
-        var num11 = MathUtils.Lerp(80f, 35f,
-            MathUtils.Saturate(1f * num8 + 0.5f * num7 + MathUtils.Saturate(1f - num2 / 30f)));
+        var num10 = 1.5f *
+                    SimplexNoise.OctavedNoise(
+                        x,
+                        z,
+                        _tgMountainsDetailFreq,
+                        _tgMountainsDetailOctaves,
+                        1.98f,
+                        amplitudeStep
+                    ) -
+                    0.5f;
+        var num11 = MathUtils.Lerp(
+            80f,
+            35f,
+            MathUtils.Saturate(1f * num8 + 0.5f * num7 + MathUtils.Saturate(1f - num2 / 30f))
+        );
         var x2 = MathUtils.Lerp(-2f, -4f, MathUtils.Saturate(num8 + 0.5f * num7));
-        var num12 = MathUtils.Saturate(1.5f - num11 *
-            MathUtils.Abs(2f *
-                SimplexNoise.OctavedNoise(x + _riversOffset.X, z + _riversOffset.Y, 0.001f, 4, 2f, 0.5f) - 1f));
+        var num12 = MathUtils.Saturate(
+            1.5f -
+            num11 *
+            MathUtils.Abs(
+                2f *
+                SimplexNoise.OctavedNoise(x + _riversOffset.X, z + _riversOffset.Y, 0.001f, 4, 2f, 0.5f) -
+                1f
+            )
+        );
         var num13 = -50f * num5 + _tgHeightBias;
         var num14 = MathUtils.Lerp(0f, 8f, f);
         var num15 = MathUtils.Lerp(0f, -6f, f2);
@@ -418,17 +447,44 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
     {
         return MathUtils.Clamp(
             (int)(MathUtils.Saturate(
-                3f * SimplexNoise.OctavedNoise(x + _temperatureOffset.X, z + _temperatureOffset.Y,
-                    0.0015f / _tgBiomeScaling, 5, 2f, 0.6f) - 1.1f + _worldSettings.TemperatureOffset / 16f) * 16f), 0,
-            15);
+                      3f *
+                      SimplexNoise.OctavedNoise(
+                          x + _temperatureOffset.X,
+                          z + _temperatureOffset.Y,
+                          0.0015f / _tgBiomeScaling,
+                          5,
+                          2f,
+                          0.6f
+                      ) -
+                      1.1f +
+                      _worldSettings.TemperatureOffset / 16f
+                  ) *
+                  16f),
+            0,
+            15
+        );
     }
 
     public int CalculateHumidity(float x, float z)
     {
         return MathUtils.Clamp(
             (int)(MathUtils.Saturate(
-                3f * SimplexNoise.OctavedNoise(x + _humidityOffset.X, z + _humidityOffset.Y, 0.0012f / _tgBiomeScaling,
-                    5, 2f, 0.6f) - 0.9f + _worldSettings.HumidityOffset / 16f) * 16f), 0, 15);
+                      3f *
+                      SimplexNoise.OctavedNoise(
+                          x + _humidityOffset.X,
+                          z + _humidityOffset.Y,
+                          0.0012f / _tgBiomeScaling,
+                          5,
+                          2f,
+                          0.6f
+                      ) -
+                      0.9f +
+                      _worldSettings.HumidityOffset / 16f
+                  ) *
+                  16f),
+            0,
+            15
+        );
     }
 
     public void GenerateBasin(TerrainChunk chunk) //盆地
@@ -446,8 +502,14 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             {
                 var num = i + chunk.Origin.X;
                 var num2 = j + chunk.Origin.Y;
-                var num3 = SimplexNoise.OctavedNoise(num + _temperatureOffset.X, num2 + _temperatureOffset.Y,
-                    0.001f / _tgBiomeScaling, 2, 2.9f, 2f);
+                var num3 = SimplexNoise.OctavedNoise(
+                    num + _temperatureOffset.X,
+                    num2 + _temperatureOffset.Y,
+                    0.001f / _tgBiomeScaling,
+                    2,
+                    2.9f,
+                    2f
+                );
                 var flag = num3 < 0.29; //代表着原本就是低洼地带
                 if (!flag)
                 {
@@ -528,22 +590,26 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
 
     public float CalculateOceanShoreX(float z)
     {
-        return _oceanCorner.X + _tgShoreFluctuations *
-            SimplexNoise.OctavedNoise(z, 0f, 0.005f / _tgShoreFluctuationsScaling, 4, 1.95f, 1f);
+        return _oceanCorner.X +
+               _tgShoreFluctuations *
+               SimplexNoise.OctavedNoise(z, 0f, 0.005f / _tgShoreFluctuationsScaling, 4, 1.95f, 1f);
     }
 
     public float CalculateOceanShoreZ(float x)
     {
-        return _oceanCorner.Y + _tgShoreFluctuations *
-            SimplexNoise.OctavedNoise(0f, x, 0.005f / _tgShoreFluctuationsScaling, 4, 1.95f, 1f);
+        return _oceanCorner.Y +
+               _tgShoreFluctuations *
+               SimplexNoise.OctavedNoise(0f, x, 0.005f / _tgShoreFluctuationsScaling, 4, 1.95f, 1f);
     }
 
     public float CalculateForestDensity(float x, float z)
     {
         var point = Terrain.ToChunk(new Vector2(x, z));
         var flag = MathUtils.Hash((uint)(point.X + 1000 * point.Y)) % 1000 < 300;
-        return MathUtils.Saturate((SimplexNoise.OctavedNoise(point.X, point.Y, 0.1f, 2, 2f, 0.5f) - 0.25f) / 0.2f +
-                                  (flag ? 0.6f : 0f));
+        return MathUtils.Saturate(
+            (SimplexNoise.OctavedNoise(point.X, point.Y, 0.1f, 2, 2f, 0.5f) - 0.25f) / 0.2f +
+            (flag ? 0.6f : 0f)
+        );
     }
 
     public float ScoreSpawnPosition(int x, int z)
@@ -655,9 +721,20 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 for (var m = 0; m < grid3D.SizeY; m++)
                 {
                     var num9 = m * 8;
-                    var num10 = _tgTurbulenceStrength * num8 * MathUtils.Saturate(num7 - num9) * (2f *
-                        SimplexNoise.OctavedNoise(num5, num9, num6, _tgTurbulenceFreq, _tgTurbulenceOctaves, 4f,
-                            _tgTurbulencePersistence) - 1f);
+                    var num10 = _tgTurbulenceStrength *
+                                num8 *
+                                MathUtils.Saturate(num7 - num9) *
+                                (2f *
+                                 SimplexNoise.OctavedNoise(
+                                     num5,
+                                     num9,
+                                     num6,
+                                     _tgTurbulenceFreq,
+                                     _tgTurbulenceOctaves,
+                                     4f,
+                                     _tgTurbulencePersistence
+                                 ) -
+                                 1f);
                     var num11 = num9 + num10;
                     var num12 = num7 - num11;
                     num12 += MathUtils.Max(4f * (_tgDensityBias - num9), 0f);
@@ -673,8 +750,19 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             {
                 for (var num14 = 0; num14 < grid3D.SizeY - 1; num14++)
                 {
-                    grid3D.Get8(n, num14, num13, out var v2, out var v3, out var v4, out var v5, out var v6, out var v7,
-                        out var v8, out var v9);
+                    grid3D.Get8(
+                        n,
+                        num14,
+                        num13,
+                        out var v2,
+                        out var v3,
+                        out var v4,
+                        out var v5,
+                        out var v6,
+                        out var v7,
+                        out var v8,
+                        out var v9
+                    );
                     var num15 = (v3 - v2) / 4f;
                     var num16 = (v5 - v4) / 4f;
                     var num17 = (v7 - v6) / 4f;
@@ -790,7 +878,8 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                             {
                                 num7 = 62; //设置为冰块
                             }
-                            else if ((num4 < 66 || num4 == 84 + num8 || num4 == 103 + num8) && humidity == 9 &&
+                            else if ((num4 < 66 || num4 == 84 + num8 || num4 == 103 + num8) &&
+                                     humidity == 9 &&
                                      temperature % 6 == 1)
                             {
                                 num7 = 66; //石灰石
@@ -813,8 +902,11 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                         else
                         {
                             var num11 = MathUtils.Saturate((num4 - 100f) * 0.05f);
-                            var f = MathUtils.Saturate(MathUtils.Saturate((num6 - 0.9f) / 0.1f) -
-                                MathUtils.Saturate((humidity - 3f) / 12f) + _tgSurfaceMultiplier * num11);
+                            var f = MathUtils.Saturate(
+                                MathUtils.Saturate((num6 - 0.9f) / 0.1f) -
+                                MathUtils.Saturate((humidity - 3f) / 12f) +
+                                _tgSurfaceMultiplier * num11
+                            );
                             var min = (int)MathUtils.Lerp(4f, 0f, f);
                             var max = (int)MathUtils.Lerp(7f, 0f, f);
                             num10 = MathUtils.Min(random.Int(min, max), num4);
@@ -957,7 +1049,8 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                     var x = num * 16 + random.Int(0, 15);
                     var y = random.Int(50, 150);
                     var z = num2 * 16 + random.Int(0, 15);
-                    _dirtPocketBrushes[random.Int(0, _dirtPocketBrushes.Count - 1)].PaintFastSelective(chunk, x, y, z, 3);
+                    _dirtPocketBrushes[random.Int(0, _dirtPocketBrushes.Count - 1)]
+                        .PaintFastSelective(chunk, x, y, z, 3);
                 }
 
                 for (var m = 0; m < 30; m++)
@@ -1104,13 +1197,15 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 var direction = Vector3.Normalize(Vector3.Cross(v, v2));
                 if (direction.Y > -0.6f)
                 {
-                    list.Add(new CavePoint
-                    {
-                        Position = position,
-                        Direction = direction,
-                        BrushType = 0,
-                        Length = random.Int(80, 240)
-                    });
+                    list.Add(
+                        new CavePoint
+                        {
+                            Position = position,
+                            Direction = direction,
+                            BrushType = 0,
+                            Length = random.Int(80, 240)
+                        }
+                    );
                 }
 
                 var num6 = i * 16 + 8;
@@ -1120,8 +1215,12 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 {
                     var cavePoint = list[num8];
                     var list2 = _caveBrushesByType[cavePoint.BrushType];
-                    list2[random.Int(0, list2.Count - 1)].PaintFastAvoidWater(chunk, Terrain.ToCell(cavePoint.Position.X),
-                        Terrain.ToCell(cavePoint.Position.Y), Terrain.ToCell(cavePoint.Position.Z));
+                    list2[random.Int(0, list2.Count - 1)].PaintFastAvoidWater(
+                        chunk,
+                        Terrain.ToCell(cavePoint.Position.X),
+                        Terrain.ToCell(cavePoint.Position.Y),
+                        Terrain.ToCell(cavePoint.Position.Z)
+                    );
                     cavePoint.Position += 2f * cavePoint.Direction;
                     cavePoint.StepsTaken += 2;
                     var num9 = cavePoint.Position.X - num6;
@@ -1179,19 +1278,28 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                             (int)(MathUtils.Pow(random.Float(0f, 0.999f), 7f) * _caveBrushesByType.Count);
                     }
 
-                    if (random.Bool(0.06f) && list.Count < 12 && cavePoint.StepsTaken > 20 && cavePoint.Position.Y < 58f)
+                    if (random.Bool(0.06f) &&
+                        list.Count < 12 &&
+                        cavePoint.StepsTaken > 20 &&
+                        cavePoint.Position.Y < 58f)
                     {
-                        list.Add(new CavePoint
-                        {
-                            Position = cavePoint.Position,
-                            Direction = Vector3.Normalize(random.Vector3(1f, 1f) * new Vector3(1f, 0.33f, 1f)),
-                            BrushType = (int)(MathUtils.Pow(random.Float(0f, 0.999f), 7f) * _caveBrushesByType.Count),
-                            Length = random.Int(40, 180)
-                        });
+                        list.Add(
+                            new CavePoint
+                            {
+                                Position = cavePoint.Position,
+                                Direction = Vector3.Normalize(random.Vector3(1f, 1f) * new Vector3(1f, 0.33f, 1f)),
+                                BrushType =
+                                    (int)(MathUtils.Pow(random.Float(0f, 0.999f), 7f) * _caveBrushesByType.Count),
+                                Length = random.Int(40, 180)
+                            }
+                        );
                     }
 
-                    if (cavePoint.StepsTaken >= cavePoint.Length || MathUtils.Abs(num9) > 34f ||
-                        MathUtils.Abs(num10) > 34f || cavePoint.Position.Y < 5f || cavePoint.Position.Y > 246f)
+                    if (cavePoint.StepsTaken >= cavePoint.Length ||
+                        MathUtils.Abs(num9) > 34f ||
+                        MathUtils.Abs(num10) > 34f ||
+                        cavePoint.Position.Y < 5f ||
+                        cavePoint.Position.Y > 246f)
                     {
                         num8++;
                     }
@@ -1228,8 +1336,10 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 var random = new Random(_seed + i + 3943 * j);
                 var humidity = CalculateHumidity(i * 16, j * 16);
                 var num3 = CalculateTemperature(i * 16, j * 16);
-                var num4 = MathUtils.Saturate((SimplexNoise.OctavedNoise(i, j, 0.1f, 2, 2f, 0.5f) - 0.25f) / 0.2f +
-                                              (random.Bool(0.25f) ? 0.5f : 0f));
+                var num4 = MathUtils.Saturate(
+                    (SimplexNoise.OctavedNoise(i, j, 0.1f, 2, 2f, 0.5f) - 0.25f) / 0.2f +
+                    (random.Bool(0.25f) ? 0.5f : 0f)
+                );
                 var num5 = 0;
                 if (num4 > 0.9f)
                 {
@@ -1296,13 +1406,15 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                             num11 >= num - 1 ||
                             num12 < y + 1 ||
                             num12 >= num2 - 1 ||
-                            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
+                            CurrentModRuntime.Value!.RequireWorldCatalog()
+                                .Blocks[_terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
                         {
                             flag = false;
                             break;
                         }
 
-                        if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num11, num9 - 1, num12)].Collidable)
+                        if (!CurrentModRuntime.Value!.RequireWorldCatalog()
+                                .Blocks[_terrain.GetCellContentsFast(num11, num9 - 1, num12)].Collidable)
                         {
                             continue;
                         }
@@ -1324,13 +1436,20 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                     }
 
                     var point2 = point.X != 0 ? new Point3(0, 0, 1) : new Point3(1, 0, 0);
-                    var treeType = PlantsManager.GenerateRandomTreeType(random,
-                        num3 + SubsystemWeather.GetTemperatureAdjustmentAtHeight(num9), humidity, num9, 2f);
+                    var treeType = PlantsManager.GenerateRandomTreeType(
+                        random,
+                        num3 + SubsystemWeather.GetTemperatureAdjustmentAtHeight(num9),
+                        humidity,
+                        num9,
+                        2f
+                    );
                     if (treeType.HasValue)
                     {
                         var treeTrunkValue = PlantsManager.GetTreeTrunkValue(treeType.Value);
-                        treeTrunkValue = Terrain.ReplaceData(treeTrunkValue,
-                            WoodBlock.SetCutFace(Terrain.ExtractData(treeTrunkValue), point.X != 0 ? 1 : 0));
+                        treeTrunkValue = Terrain.ReplaceData(
+                            treeTrunkValue,
+                            WoodBlock.SetCutFace(Terrain.ExtractData(treeTrunkValue), point.X != 0 ? 1 : 0)
+                        );
                         var treeLeavesValue = PlantsManager.GetTreeLeavesValue(treeType.Value);
                         for (var m = 0; m < num10; m++)
                         {
@@ -1342,31 +1461,41 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                                 continue;
                             }
 
-                            if (random.Bool(0.5f) && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
+                            if (random.Bool(0.5f) &&
+                                !CurrentModRuntime.Value!.RequireWorldCatalog()
+                                    .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
                                     .Collidable)
                             {
                                 _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeLeavesValue);
                             }
 
-                            if (random.Bool(0.05f) && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
+                            if (random.Bool(0.05f) &&
+                                !CurrentModRuntime.Value!.RequireWorldCatalog()
+                                    .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
                                     .Collidable)
                             {
                                 _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeTrunkValue);
                             }
 
-                            if (random.Bool(0.5f) && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
+                            if (random.Bool(0.5f) &&
+                                !CurrentModRuntime.Value!.RequireWorldCatalog()
+                                    .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
                                     .Collidable)
                             {
                                 _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeLeavesValue);
                             }
 
-                            if (random.Bool(0.05f) && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
+                            if (random.Bool(0.05f) &&
+                                !CurrentModRuntime.Value!.RequireWorldCatalog()
+                                    .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
                                     .Collidable)
                             {
                                 _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeTrunkValue);
                             }
 
-                            if (random.Bool(0.5f) && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num13, num9 + 1, num14)]
+                            if (random.Bool(0.5f) &&
+                                !CurrentModRuntime.Value!.RequireWorldCatalog()
+                                    .Blocks[_terrain.GetCellContentsFast(num13, num9 + 1, num14)]
                                     .Collidable)
                             {
                                 _terrain.SetCellValueFast(num13, num9 + 1, num14, treeLeavesValue);
@@ -1421,16 +1550,24 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             return;
         }
 
-        Parallel.ForEach(missingCoords, new ParallelOptions
-        {
-            MaxDegreeOfParallelism = SeedTerrainGenerationPolicy.GetParallelism(Environment.ProcessorCount)
-        }, coords => _ = GetCleanTreeBrush(coords));
+        Parallel.ForEach(
+            missingCoords,
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = SeedTerrainGenerationPolicy.GetParallelism(Environment.ProcessorCount)
+            },
+            coords => _ = GetCleanTreeBrush(coords)
+        );
     }
 
     private BrushPaint[] GetCleanTreeBrush(Point2 coords)
     {
-        var entry = _cleanTreeBrushCache.GetOrAdd((_seed, coords), static (key, generator) =>
-            generator.CreateCleanTreeBrushEntry(key.Coords), this);
+        var entry = _cleanTreeBrushCache.GetOrAdd(
+            (_seed, coords),
+            static (key, generator) =>
+                generator.CreateCleanTreeBrushEntry(key.Coords),
+            this
+        );
         entry.LastAccessTicks = Environment.TickCount64;
         MaybeCleanupCleanTreeBrushCache();
         return entry.BrushPaints;
@@ -1447,9 +1584,16 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
 
     private void RegisterCleanTreeBrush(TerrainChunk chunk)
     {
-        _cleanTreeBrushCache.GetOrAdd((_seed, chunk.Coords), static (_, state) =>
-            new CleanTreeBrushCacheEntry(state.Generator.GenerateCleanTreeBrush(state.Chunk),
-                Environment.TickCount64, null), (Generator: this, Chunk: chunk));
+        _cleanTreeBrushCache.GetOrAdd(
+            (_seed, chunk.Coords),
+            static (_, state) =>
+                new CleanTreeBrushCacheEntry(
+                    state.Generator.GenerateCleanTreeBrush(state.Chunk),
+                    Environment.TickCount64,
+                    null
+                ),
+            (Generator: this, Chunk: chunk)
+        );
     }
 
     public bool TryTakeSeedGeneratedChunkBasis(TerrainChunk chunk)
@@ -1507,26 +1651,34 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
 
                     heightLimit++;
 
-                    if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[chunk.GetCellContentsFast(localX + 1, heightLimit, localZ)].Collidable ||
-                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[chunk.GetCellContentsFast(localX - 1, heightLimit, localZ)].Collidable ||
-                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ + 1)].Collidable ||
-                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ - 1)].Collidable)
+                    if (CurrentModRuntime.Value!.RequireWorldCatalog()
+                            .Blocks[chunk.GetCellContentsFast(localX + 1, heightLimit, localZ)].Collidable ||
+                        CurrentModRuntime.Value!.RequireWorldCatalog()
+                            .Blocks[chunk.GetCellContentsFast(localX - 1, heightLimit, localZ)].Collidable ||
+                        CurrentModRuntime.Value!.RequireWorldCatalog()
+                            .Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ + 1)].Collidable ||
+                        CurrentModRuntime.Value!.RequireWorldCatalog()
+                            .Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ - 1)].Collidable)
                     {
                         continue;
                     }
 
-                    var treeType = PlantsManager.GenerateRandomTreeType(random,
-                        temperature + SubsystemWeather.GetTemperatureAdjustmentAtHeight(heightLimit), humidity,
-                        heightLimit);
+                    var treeType = PlantsManager.GenerateRandomTreeType(
+                        random,
+                        temperature + SubsystemWeather.GetTemperatureAdjustmentAtHeight(heightLimit),
+                        humidity,
+                        heightLimit
+                    );
                     if (treeType.HasValue)
                     {
                         var treeBrushes = PlantsManager.GetTreeBrushes(treeType.Value);
                         var treeBrush = treeBrushes[random.Int(treeBrushes.Count)];
-                        result.Add(new BrushPaint
-                        {
-                            Position = new Point3(randomX, heightLimit, randomZ),
-                            Brush = treeBrush
-                        }
+                        result.Add(
+                            new BrushPaint
+                            {
+                                Position = new Point3(randomX, heightLimit, randomZ),
+                                Brush = treeBrush
+                            }
                         );
                     }
 
@@ -1586,7 +1738,8 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
     private sealed class CleanTreeBrushCacheEntry(
         BrushPaint[] brushPaints,
         long lastAccessTicks,
-        SeedGeneratedChunkBasis? basis)
+        SeedGeneratedChunkBasis? basis
+    )
     {
         public readonly BrushPaint[] BrushPaints = brushPaints;
 
@@ -1640,8 +1793,13 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                     {
                         var temperatureFast = chunk.GetTemperatureFast(i, j);
                         var humidityFast = chunk.GetHumidityFast(i, j);
-                        var num3 = PlantsManager.GenerateRandomPlantValue(random, cellValueFast, temperatureFast,
-                            humidityFast, num + 1);
+                        var num3 = PlantsManager.GenerateRandomPlantValue(
+                            random,
+                            cellValueFast,
+                            temperatureFast,
+                            humidityFast,
+                            num + 1
+                        );
                         if (num3 != 0)
                         {
                             chunk.SetCellValueFast(i, num + 1, j, num3);
@@ -1692,8 +1850,12 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                         num3++;
                         var face = random.Int(0, 5);
                         var point = CellFace.FaceToPoint3(face);
-                        if (i + point.X < 0 || i + point.X >= 16 || num4 + point.Y < 0 || num4 + point.Y >= 254 ||
-                            j + point.Z < 0 || j + point.Z >= 16)
+                        if (i + point.X < 0 ||
+                            i + point.X >= 16 ||
+                            num4 + point.Y < 0 ||
+                            num4 + point.Y >= 254 ||
+                            j + point.Z < 0 ||
+                            j + point.Z >= 16)
                         {
                             continue;
                         }
@@ -1753,8 +1915,10 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                         }
 
                         var face2 = random.Int(0, 3);
-                        var data = BottomSuckerBlock.SetFace(BottomSuckerBlock.SetSubvariant(0, face2),
-                            CellFace.OppositeFace(face));
+                        var data = BottomSuckerBlock.SetFace(
+                            BottomSuckerBlock.SetSubvariant(0, face2),
+                            CellFace.OppositeFace(face)
+                        );
                         var value = Terrain.MakeBlockValue(num5, 0, data);
                         chunk.SetCellValueFast(i, num4, j, value);
                     }
@@ -1803,19 +1967,20 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                     switch (Terrain.ExtractContents(chunk.GetCellValueFast(num4, num6, num5)))
                     {
                         case 7:
+                        {
+                            for (var k = num6 + 1;
+                                 k <= num6 + 3 &&
+                                 chunk.GetCellContentsFast(num4 + 1, k, num5) == 0 &&
+                                 chunk.GetCellContentsFast(num4 - 1, k, num5) == 0 &&
+                                 chunk.GetCellContentsFast(num4, k, num5 + 1) == 0 &&
+                                 chunk.GetCellContentsFast(num4, k, num5 - 1) == 0;
+                                 k++)
                             {
-                                for (var k = num6 + 1;
-                                     k <= num6 + 3 && chunk.GetCellContentsFast(num4 + 1, k, num5) == 0 &&
-                                     chunk.GetCellContentsFast(num4 - 1, k, num5) == 0 &&
-                                     chunk.GetCellContentsFast(num4, k, num5 + 1) == 0 &&
-                                     chunk.GetCellContentsFast(num4, k, num5 - 1) == 0;
-                                     k++)
-                                {
-                                    chunk.SetCellValueFast(num4, k, num5, Terrain.MakeBlockValue(127));
-                                }
-
-                                break;
+                                chunk.SetCellValueFast(num4, k, num5, Terrain.MakeBlockValue(127));
                             }
+
+                            break;
+                        }
                         case 0:
                             continue;
                     }
@@ -1862,8 +2027,12 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                     switch (Terrain.ExtractContents(chunk.GetCellValueFast(x2, num4, z)))
                     {
                         case 8:
-                            chunk.SetCellValueFast(x2, num4 + 1, z,
-                                random.Bool(0.25f) ? Terrain.MakeBlockValue(244) : Terrain.MakeBlockValue(131));
+                            chunk.SetCellValueFast(
+                                x2,
+                                num4 + 1,
+                                z,
+                                random.Bool(0.25f) ? Terrain.MakeBlockValue(244) : Terrain.MakeBlockValue(131)
+                            );
                             break;
                         case 0:
                             continue;
@@ -2061,48 +2230,52 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                     case 12:
                     case 66:
                     case 67:
+                    {
+                        var num8 = random.Int(0, 3);
+                        for (var k = 0; k < 4; k++)
                         {
-                            var num8 = random.Int(0, 3);
-                            for (var k = 0; k < 4; k++)
+                            var face = (k + num8) % 4;
+                            var point = CellFace.FaceToPoint3(face);
+                            if (chunk.GetCellContentsFast(num5 + point.X, num6, num7 + point.Z) != 0)
                             {
-                                var face = (k + num8) % 4;
-                                var point = CellFace.FaceToPoint3(face);
-                                if (chunk.GetCellContentsFast(num5 + point.X, num6, num7 + point.Z) != 0)
-                                {
-                                    continue;
-                                }
+                                continue;
+                            }
 
-                                var num9 = num6 - 1;
-                                while (num9 >= 1 && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0 &&
-                                       chunk.GetCellContentsFast(num5, num9, num7) != 0)
-                                {
-                                    num9--;
-                                }
+                            var num9 = num6 - 1;
+                            while (num9 >= 1 &&
+                                   chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0 &&
+                                   chunk.GetCellContentsFast(num5, num9, num7) != 0)
+                            {
+                                num9--;
+                            }
 
-                                if (chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) != 0)
+                            if (chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) != 0)
+                            {
+                                break;
+                            }
+
+                            num9++;
+                            var value = Terrain.MakeBlockValue(
+                                197,
+                                0,
+                                IvyBlock.SetFace(0, CellFace.OppositeFace(face))
+                            );
+                            while (num9 >= 1 && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0)
+                            {
+                                chunk.SetCellValueFast(num5 + point.X, num9, num7 + point.Z, value);
+                                if (IvyBlock.IsGrowthStopCell(num5 + point.X, num9, num7 + point.Z))
                                 {
                                     break;
                                 }
 
-                                num9++;
-                                var value = Terrain.MakeBlockValue(197, 0,
-                                    IvyBlock.SetFace(0, CellFace.OppositeFace(face)));
-                                while (num9 >= 1 && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0)
-                                {
-                                    chunk.SetCellValueFast(num5 + point.X, num9, num7 + point.Z, value);
-                                    if (IvyBlock.IsGrowthStopCell(num5 + point.X, num9, num7 + point.Z))
-                                    {
-                                        break;
-                                    }
-
-                                    num9--;
-                                }
-
-                                break;
+                                num9--;
                             }
 
                             break;
                         }
+
+                        break;
+                    }
                 }
             }
         }
@@ -2189,7 +2362,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 }
 
                 break;
-            end_IL_019b:
+                end_IL_019b:
                 break;
             }
         }
@@ -2347,32 +2520,52 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
 
                         if (num17 < 0.3f)
                         {
-                            var value = Terrain.MakeBlockValue(contents, 0,
-                                StairsBlock.SetRotation(0, CellFace.Point3ToFace(p2)));
-                            var value2 = Terrain.MakeBlockValue(contents, 0,
-                                StairsBlock.SetRotation(0, CellFace.OppositeFace(CellFace.Point3ToFace(p2))));
+                            var value = Terrain.MakeBlockValue(
+                                contents,
+                                0,
+                                StairsBlock.SetRotation(0, CellFace.Point3ToFace(p2))
+                            );
+                            var value2 = Terrain.MakeBlockValue(
+                                contents,
+                                0,
+                                StairsBlock.SetRotation(0, CellFace.OppositeFace(CellFace.Point3ToFace(p2)))
+                            );
                             chunk.SetCellValueFast(num23 + p2.X, num21 - 1, num24 + p2.Z, value);
                             chunk.SetCellValueFast(num23 - p2.X, num21 - 1, num24 - p2.Z, value2);
                             if (num22 == -1)
                             {
-                                var value3 = Terrain.MakeBlockValue(contents, 0,
-                                    StairsBlock.SetRotation(0, CellFace.OppositeFace(CellFace.Point3ToFace(p))));
+                                var value3 = Terrain.MakeBlockValue(
+                                    contents,
+                                    0,
+                                    StairsBlock.SetRotation(0, CellFace.OppositeFace(CellFace.Point3ToFace(p)))
+                                );
                                 chunk.SetCellValueFast(num23, num21 - 1, num24, value3);
                             }
 
                             if (num22 == 2)
                             {
-                                var value4 = Terrain.MakeBlockValue(contents, 0,
-                                    StairsBlock.SetRotation(0, CellFace.Point3ToFace(p)));
+                                var value4 = Terrain.MakeBlockValue(
+                                    contents,
+                                    0,
+                                    StairsBlock.SetRotation(0, CellFace.Point3ToFace(p))
+                                );
                                 chunk.SetCellValueFast(num23, num21 - 1, num24, value4);
                             }
                         }
                         else if (num17 < 0.4f)
                         {
-                            chunk.SetCellValueFast(num23 + p2.X, num21 - 1, num24 + p2.Z,
-                                Terrain.MakeBlockValue(contents2));
-                            chunk.SetCellValueFast(num23 - p2.X, num21 - 1, num24 - p2.Z,
-                                Terrain.MakeBlockValue(contents2));
+                            chunk.SetCellValueFast(
+                                num23 + p2.X,
+                                num21 - 1,
+                                num24 + p2.Z,
+                                Terrain.MakeBlockValue(contents2)
+                            );
+                            chunk.SetCellValueFast(
+                                num23 - p2.X,
+                                num21 - 1,
+                                num24 - p2.Z,
+                                Terrain.MakeBlockValue(contents2)
+                            );
                             if (num22 == -1)
                             {
                                 chunk.SetCellValueFast(num23, num21 - 1, num24, Terrain.MakeBlockValue(contents2));
@@ -2387,16 +2580,28 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                         {
                             if (num22 is 0 or 1)
                             {
-                                chunk.SetCellValueFast(num23 + p2.X, num21 - 1, num24 + p2.Z,
-                                    Terrain.MakeBlockValue(31, 0, CellFace.Point3ToFace(p2)));
-                                chunk.SetCellValueFast(num23 - p2.X, num21 - 1, num24 - p2.Z,
-                                    Terrain.MakeBlockValue(31, 0, CellFace.OppositeFace(CellFace.Point3ToFace(p2))));
+                                chunk.SetCellValueFast(
+                                    num23 + p2.X,
+                                    num21 - 1,
+                                    num24 + p2.Z,
+                                    Terrain.MakeBlockValue(31, 0, CellFace.Point3ToFace(p2))
+                                );
+                                chunk.SetCellValueFast(
+                                    num23 - p2.X,
+                                    num21 - 1,
+                                    num24 - p2.Z,
+                                    Terrain.MakeBlockValue(31, 0, CellFace.OppositeFace(CellFace.Point3ToFace(p2)))
+                                );
                             }
 
                             if (num22 == -1)
                             {
-                                chunk.SetCellValueFast(num23, num21 - 1, num24,
-                                    Terrain.MakeBlockValue(31, 0, CellFace.OppositeFace(num9)));
+                                chunk.SetCellValueFast(
+                                    num23,
+                                    num21 - 1,
+                                    num24,
+                                    Terrain.MakeBlockValue(31, 0, CellFace.OppositeFace(num9))
+                                );
                             }
 
                             if (num22 == 2)
@@ -2407,7 +2612,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                     }
 
                     break;
-                IL_06ac:;
+                    IL_06ac: ;
                 }
             }
         }
@@ -2473,8 +2678,17 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                             if (CalculateOceanShoreDistance(num, num2) > -20f)
                             {
                                 float num5 = 1 +
-                                             (int)(2f * MathUtils.Sqr(SimplexNoise.OctavedNoise(num, num2, 0.2f, 1, 2f,
-                                                 1f)));
+                                             (int)(2f *
+                                                   MathUtils.Sqr(
+                                                       SimplexNoise.OctavedNoise(
+                                                           num,
+                                                           num2,
+                                                           0.2f,
+                                                           1,
+                                                           2f,
+                                                           1f
+                                                       )
+                                                   ));
                                 for (var k = 0; k < num5; k++)
                                 {
                                     if (num3 - k <= 0)
@@ -2526,7 +2740,9 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 while (num3 >= 0)
                 {
                     var num4 = Terrain.ExtractContents(chunk.GetCellValueFast(num));
-                    if (num4 == 0 && num2 != 0 && CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num2] != null)
+                    if (num4 == 0 &&
+                        num2 != 0 &&
+                        CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num2] != null)
                     {
                         chunk.SetCellValueFast(num, num2);
                         num4 = num2;
@@ -2553,7 +2769,9 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 {
                     var cellValueFast = chunk.GetCellValueFast(num);
                     var num4 = Terrain.ExtractContents(cellValueFast);
-                    if (num4 != num2 && CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num4] != null && CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num2] == null)
+                    if (num4 != num2 &&
+                        CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num4] != null &&
+                        CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num2] == null)
                     {
                         var data = Terrain.ExtractData(cellValueFast);
                         chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, 0, FluidBlock.SetIsTop(data, true)));
@@ -2576,14 +2794,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(4, 12);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f), random.Float(-1f, 1f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var coalCount = random.Int(3, 8);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < coalCount; k++)
                 {
-                    coalBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X), (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 16);
+                    coalBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
+                        (int)MathUtils.Floor(curGrowDirection.Y),
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        16
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2603,14 +2834,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(3, 7);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f), random.Float(-1f, 1f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var ironCount = random.Int(3, 6);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < ironCount; k++)
                 {
-                    ironBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X), (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 39);
+                    ironBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
+                        (int)MathUtils.Floor(curGrowDirection.Y),
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        39
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2625,15 +2869,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(4, 10);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f), random.Float(-2f, 2f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-2f, 2f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var copperCount = random.Int(3, 6);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < copperCount; k++)
                 {
-                    copperBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    copperBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 41);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        41
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2648,16 +2904,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(8, 16);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f),
-                    random.Float(-0.25f, 0.25f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-0.25f, 0.25f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var saltpeterCount = random.Int(4, 8);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < saltpeterCount; k++)
                 {
-                    saltpeterBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    saltpeterBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 100);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        100
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2672,14 +2939,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(4, 10);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f), random.Float(-1f, 1f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var sulphurCount = random.Int(3, 6);
                 var curDirection = Vector3.Zero;
                 for (var k = 0; k < sulphurCount; k++)
                 {
-                    sulphurBrush.AddBox((int)MathUtils.Floor(curDirection.X), (int)MathUtils.Floor(curDirection.Y),
-                        (int)MathUtils.Floor(curDirection.Z), 1, 1, 1, 101);
+                    sulphurBrush.AddBox(
+                        (int)MathUtils.Floor(curDirection.X),
+                        (int)MathUtils.Floor(curDirection.Y),
+                        (int)MathUtils.Floor(curDirection.Z),
+                        1,
+                        1,
+                        1,
+                        101
+                    );
                     curDirection += growDirection;
                 }
             }
@@ -2694,15 +2974,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(2, 6);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f), random.Float(-1f, 1f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var diamondCount = random.Int(3, 6);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < diamondCount; k++)
                 {
-                    diamondBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    diamondBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 112);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        112
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2717,15 +3009,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(4, 10);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f), random.Float(-1f, 1f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var germaniumCount = random.Int(3, 6);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < germaniumCount; k++)
                 {
-                    germaniumBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    germaniumBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 148);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        148
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2740,16 +3044,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(16, 32);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f),
-                    random.Float(-0.75f, 0.75f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-0.75f, 0.75f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var dirtPocketCount = random.Int(6, 12);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < dirtPocketCount; k++)
                 {
-                    dirtPocketBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    dirtPocketBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 2);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        2
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2764,16 +3079,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(16, 32);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f),
-                    random.Float(-0.75f, 0.75f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-0.75f, 0.75f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var gravePocketCount = random.Int(6, 12);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < gravePocketCount; k++)
                 {
-                    gravePocketBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    gravePocketBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 6);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        6
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2788,16 +3114,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(16, 32);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f),
-                    random.Float(-0.75f, 0.75f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-0.75f, 0.75f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var limestonePocketCount = random.Int(6, 12);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < limestonePocketCount; k++)
                 {
-                    limestonePocketBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    limestonePocketBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 66);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        66
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2812,16 +3149,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(16, 32);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f),
-                    random.Float(-0.1f, 0.1f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-0.1f, 0.1f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var clayPocketCount = random.Int(6, 12);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < clayPocketCount; k++)
                 {
-                    clayPocketBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    clayPocketBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 72);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        72
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2836,16 +3184,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(16, 32);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f),
-                    random.Float(-0.75f, 0.75f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-0.75f, 0.75f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var sandPocketCount = random.Int(6, 12);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < sandPocketCount; k++)
                 {
-                    sandPocketBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    sandPocketBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 7);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        7
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2860,16 +3219,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(16, 32);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f),
-                    random.Float(-0.75f, 0.75f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-0.75f, 0.75f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var basaltPocketCount = random.Int(6, 12);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < basaltPocketCount; k++)
                 {
-                    basaltPocketBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    basaltPocketBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 67);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        67
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2884,15 +3254,27 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             var veinCount = random.Int(16, 32);
             for (var j = 0; j < veinCount; j++)
             {
-                var growDirection = 0.5f * Vector3.Normalize(new Vector3(random.Float(-1f, 1f), random.Float(-1f, 1f),
-                    random.Float(-1f, 1f)));
+                var growDirection = 0.5f *
+                                    Vector3.Normalize(
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f),
+                                            random.Float(-1f, 1f)
+                                        )
+                                    );
                 var granitePocketCount = random.Int(5, 10);
                 var curGrowDirection = Vector3.Zero;
                 for (var k = 0; k < granitePocketCount; k++)
                 {
-                    granitePocketBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X),
+                    granitePocketBrush.AddBox(
+                        (int)MathUtils.Floor(curGrowDirection.X),
                         (int)MathUtils.Floor(curGrowDirection.Y),
-                        (int)MathUtils.Floor(curGrowDirection.Z), 1, 1, 1, 3);
+                        (int)MathUtils.Floor(curGrowDirection.Z),
+                        1,
+                        1,
+                        1,
+                        3
+                    );
                     curGrowDirection += growDirection;
                 }
             }
@@ -2915,15 +3297,31 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 var distanceFromCenter = horizontalPosition.Length();
                 var horizontalSize = random.Int(3, 4);
                 var verticalHeight =
-                    1 + (int)MathUtils.Lerp(MathUtils.Max(curBaseSize / 3, 2.5f) * shapeCorrectionFactor, 0f,
-                        distanceFromCenter / curBaseSize) +
+                    1 +
+                    (int)MathUtils.Lerp(
+                        MathUtils.Max(curBaseSize / 3, 2.5f) * shapeCorrectionFactor,
+                        0f,
+                        distanceFromCenter / curBaseSize
+                    ) +
                     random.Int(0, 1);
-                waterPocketBrush.AddBox((int)MathUtils.Floor(horizontalPosition.X), 0,
-                    (int)MathUtils.Floor(horizontalPosition.Y), horizontalSize,
-                    verticalHeight, horizontalSize, 0);
-                waterPocketBrush.AddBox((int)MathUtils.Floor(horizontalPosition.X), -verticalOffset,
-                    (int)MathUtils.Floor(horizontalPosition.Y), horizontalSize,
-                    verticalOffset, horizontalSize, 18);
+                waterPocketBrush.AddBox(
+                    (int)MathUtils.Floor(horizontalPosition.X),
+                    0,
+                    (int)MathUtils.Floor(horizontalPosition.Y),
+                    horizontalSize,
+                    verticalHeight,
+                    horizontalSize,
+                    0
+                );
+                waterPocketBrush.AddBox(
+                    (int)MathUtils.Floor(horizontalPosition.X),
+                    -verticalOffset,
+                    (int)MathUtils.Floor(horizontalPosition.Y),
+                    horizontalSize,
+                    verticalOffset,
+                    horizontalSize,
+                    18
+                );
             }
 
             waterPocketBrush.Compile();
@@ -2944,17 +3342,34 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 var distanceFromCenter = horizontalPosition.Length();
                 var horizontalSize = random.Int(3, 4);
                 var verticalHeight =
-                    1 + (int)MathUtils.Lerp(MathUtils.Max(curBaseSize / 3, 2.5f) * shapeCorrectionFactor, 0f,
-                        distanceFromCenter / curBaseSize) +
+                    1 +
+                    (int)MathUtils.Lerp(
+                        MathUtils.Max(curBaseSize / 3, 2.5f) * shapeCorrectionFactor,
+                        0f,
+                        distanceFromCenter / curBaseSize
+                    ) +
                     random.Int(0, 1);
-                var num81 = 1 + (int)MathUtils.Lerp(verticalOffset, 0f, distanceFromCenter / curBaseSize) +
+                var num81 = 1 +
+                            (int)MathUtils.Lerp(verticalOffset, 0f, distanceFromCenter / curBaseSize) +
                             random.Int(0, 1);
-                magmaPocketBrush.AddBox((int)MathUtils.Floor(horizontalPosition.X), 0,
-                    (int)MathUtils.Floor(horizontalPosition.Y), horizontalSize,
-                    verticalHeight, horizontalSize, 0);
-                magmaPocketBrush.AddBox((int)MathUtils.Floor(horizontalPosition.X), -num81,
-                    (int)MathUtils.Floor(horizontalPosition.Y), horizontalSize,
-                    num81, horizontalSize, 92);
+                magmaPocketBrush.AddBox(
+                    (int)MathUtils.Floor(horizontalPosition.X),
+                    0,
+                    (int)MathUtils.Floor(horizontalPosition.Y),
+                    horizontalSize,
+                    verticalHeight,
+                    horizontalSize,
+                    0
+                );
+                magmaPocketBrush.AddBox(
+                    (int)MathUtils.Floor(horizontalPosition.X),
+                    -num81,
+                    (int)MathUtils.Floor(horizontalPosition.Y),
+                    horizontalSize,
+                    num81,
+                    horizontalSize,
+                    92
+                );
             }
 
             magmaPocketBrush.Compile();
@@ -2974,15 +3389,24 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 {
                     var tunnelCrossSectionSize = 2;
                     var tunnelLength = random.Int(8, maxLengthLimit) - 2 * tunnelCrossSectionSize;
-                    var growDirection = 0.5f * new Vector3(random.Float(-1f, 1f), random.Float(0f, 1f),
-                        random.Float(-1f, 1f));
+                    var growDirection = 0.5f *
+                                        new Vector3(
+                                            random.Float(-1f, 1f),
+                                            random.Float(0f, 1f),
+                                            random.Float(-1f, 1f)
+                                        );
                     var curGrowDirection = Vector3.Zero;
                     for (var l = 0; l < tunnelLength; l++)
                     {
-                        caveBrush.AddBox((int)MathUtils.Floor(curGrowDirection.X) - tunnelCrossSectionSize / 2,
+                        caveBrush.AddBox(
+                            (int)MathUtils.Floor(curGrowDirection.X) - tunnelCrossSectionSize / 2,
                             (int)MathUtils.Floor(curGrowDirection.Y) - tunnelCrossSectionSize / 2,
                             (int)MathUtils.Floor(curGrowDirection.Z) - tunnelCrossSectionSize / 2,
-                            tunnelCrossSectionSize, tunnelCrossSectionSize, tunnelCrossSectionSize, 0);
+                            tunnelCrossSectionSize,
+                            tunnelCrossSectionSize,
+                            tunnelCrossSectionSize,
+                            0
+                        );
                         curGrowDirection += growDirection;
                     }
                 }
@@ -3080,8 +3504,19 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
 
         public int SizeZ => _sizeZ;
 
-        public void Get8(int x, int y, int z, out float v111, out float v211, out float v121, out float v221,
-            out float v112, out float v212, out float v122, out float v222)
+        public void Get8(
+            int x,
+            int y,
+            int z,
+            out float v111,
+            out float v211,
+            out float v121,
+            out float v221,
+            out float v112,
+            out float v212,
+            out float v122,
+            out float v222
+        )
         {
             var num = x + y * _sizeX + z * _sizeXy;
             v111 = _data[num];

@@ -11,4 +11,5 @@ public sealed record SignalMessage(
     DateTimeOffset? ExpiresAt = null,
     string? Error = null,
     string? Challenge = null,
-    string[]? LocalEndpoints = null);
+    string[]? LocalEndpoints = null
+);

@@ -31,8 +31,16 @@ public sealed class TerrainChunkContentAuthorityTest
         var replica = client.AllocateChunk(0, 0);
         var snapshots = new ClientChunkContentCoordinator(client);
         var allocation = new ChunkAllocationId(replica.Coords, replica.AllocationGeneration);
-        Assert.True(snapshots.TryInstall(new ClientChunkSnapshot(allocation, initial.ContentVersion,
-            initial.Cells.ToArray(), initial.Shafts.ToArray())));
+        Assert.True(
+            snapshots.TryInstall(
+                new ClientChunkSnapshot(
+                    allocation,
+                    initial.ContentVersion,
+                    initial.Cells.ToArray(),
+                    initial.Shafts.ToArray()
+                )
+            )
+        );
 
         server.FreeChunk(original);
         var reloaded = server.AllocateChunk(0, 0);
@@ -50,8 +58,10 @@ public sealed class TerrainChunkContentAuthorityTest
         var requestId = prediction.Begin(cell, 7, 0, 0);
         reloaded.SetCellValueFast(1, 64, 1, 0);
         var resultVersion = reloaded.NetworkContentRevision + 1;
-        var deltas = new ClientTerrainDeltaCoordinator(client,
-            delta => client.SetCellValueFast(delta.Cell.X, delta.Cell.Y, delta.Cell.Z, delta.Value));
+        var deltas = new ClientTerrainDeltaCoordinator(
+            client,
+            delta => client.SetCellValueFast(delta.Cell.X, delta.Cell.Y, delta.Cell.Z, delta.Value)
+        );
         var result = deltas.Receive(new TerrainCellDelta(cell, 0, baseVersion, resultVersion));
         prediction.Complete(requestId, cell, resultVersion);
 
@@ -68,15 +78,27 @@ public sealed class TerrainChunkContentAuthorityTest
         var latestEncoding = cache.GetOrEncode(latest);
         Assert.NotSame(initialEncoding, latestEncoding);
         Assert.Equal(resultVersion, latestEncoding.ContentVersion);
-        Assert.True(snapshots.TryInstall(new ClientChunkSnapshot(allocation, latest.ContentVersion,
-            latest.Cells.ToArray(), latest.Shafts.ToArray())));
+        Assert.True(
+            snapshots.TryInstall(
+                new ClientChunkSnapshot(
+                    allocation,
+                    latest.ContentVersion,
+                    latest.Cells.ToArray(),
+                    latest.Shafts.ToArray()
+                )
+            )
+        );
         Assert.False(prediction.IsPending(cell));
         Assert.Equal(0, Terrain.ExtractContents(client.GetCellValueFast(1, 64, 1)));
 
         // Subsequent edits use contiguous deltas again, without another reconnect or snapshot.
         reloaded.SetCellValueFast(2, 64, 1, 0);
-        Assert.Equal(TerrainDeltaApplyResult.Applied, deltas.Receive(new TerrainCellDelta(
-            new Point3(2, 64, 1), 0, resultVersion, reloaded.NetworkContentRevision + 1)));
+        Assert.Equal(
+            TerrainDeltaApplyResult.Applied,
+            deltas.Receive(
+                new TerrainCellDelta(new Point3(2, 64, 1), 0, resultVersion, reloaded.NetworkContentRevision + 1)
+            )
+        );
         Assert.Equal(0, Terrain.ExtractContents(client.GetCellValueFast(2, 64, 1)));
     }
 

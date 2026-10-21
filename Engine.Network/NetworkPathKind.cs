@@ -2,7 +2,9 @@ namespace Engine.Network;
 
 public enum NetworkPathKind
 {
-    Direct,
-    HolePunch,
-    Relay
+    Direct = 0,
+
+    HolePunch = 1,
+
+    Relay = 2
 }

@@ -143,10 +143,20 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
 
                 var speed = _satiation == 0f ? _random.Float(0.5f, 0.7f) : 0.5f;
                 var maxPathfindingPositions = _satiation == 0f ? 1000 : 500;
-                var num2 = Vector3.Distance(_componentCreature.ComponentCreatureModel.EyePosition,
-                    _componentCreature.ComponentBody.Position);
-                _componentPathfinding.SetDestination(_pickable.Position, speed, 1f + num2, maxPathfindingPositions,
-                    true, false, true, null);
+                var num2 = Vector3.Distance(
+                    _componentCreature.ComponentCreatureModel.EyePosition,
+                    _componentCreature.ComponentBody.Position
+                );
+                _componentPathfinding.SetDestination(
+                    _pickable.Position,
+                    speed,
+                    1f + num2,
+                    maxPathfindingPositions,
+                    true,
+                    false,
+                    true,
+                    null
+                );
                 if (_random.Float(0f, 1f) < 0.66f)
                 {
                     _componentCreature.ComponentCreatureSounds.PlayIdleSound(true);
@@ -207,7 +217,8 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
                 {
                     stateMachine.TransitionTo("Move");
                 }
-            }, Actions.Empty
+            },
+            Actions.Empty
         );
         stateMachine.AddState(
             "Eat",
@@ -232,9 +243,13 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
                 if (_pickable != null)
                 {
                     if (Vector3.DistanceSquared(
-                            new Vector3(_componentCreature.ComponentCreatureModel.EyePosition.X,
+                            new Vector3(
+                                _componentCreature.ComponentCreatureModel.EyePosition.X,
                                 _componentCreature.ComponentBody.Position.Y,
-                                _componentCreature.ComponentCreatureModel.EyePosition.Z), _pickable.Position) <
+                                _componentCreature.ComponentCreatureModel.EyePosition.Z
+                            ),
+                            _pickable.Position
+                        ) <
                         0.640000045f)
                     {
                         _eatTime -= _subsystemTime.GameTimeDelta;
@@ -256,11 +271,20 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
                     }
                     else
                     {
-                        var num = Vector3.Distance(_componentCreature.ComponentCreatureModel.EyePosition,
-                            _componentCreature.ComponentBody.Position);
-                        _componentPathfinding.SetDestination(_pickable.Position, 0.3f, 0.5f + num, 0, false, true,
+                        var num = Vector3.Distance(
+                            _componentCreature.ComponentCreatureModel.EyePosition,
+                            _componentCreature.ComponentBody.Position
+                        );
+                        _componentPathfinding.SetDestination(
+                            _pickable.Position,
+                            0.3f,
+                            0.5f + num,
+                            0,
                             false,
-                            null);
+                            true,
+                            false,
+                            null
+                        );
                         _blockedTime += _subsystemTime.GameTimeDelta;
                     }
 
@@ -340,9 +364,9 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
         }
 
         return (from key in _pickables.Keys
-                let num = Vector3.DistanceSquared(position, key.Position)
-                where _random.Float(0f, 1f) > num / 512f
-                select key).FirstOrDefault();
+            let num = Vector3.DistanceSquared(position, key.Position)
+            where _random.Float(0f, 1f) > num / 512f
+            select key).FirstOrDefault();
     }
 
     public bool TryAddPickable(Pickable pickable)

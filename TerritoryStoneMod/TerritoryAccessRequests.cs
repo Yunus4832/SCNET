@@ -3,15 +3,23 @@ namespace TerritoryStoneMod;
 public sealed class TerritoryAccessRequests
 {
     public const double Lifetime = 120;
+
     public const double Cooldown = 30;
 
     private readonly Dictionary<Guid, TerritoryAccessRequest> _pending = new();
+
     private readonly Dictionary<Guid, double> _lastRequest = new();
 
     public IReadOnlyCollection<TerritoryAccessRequest> Pending => _pending.Values;
 
-    public bool TryAdd(Guid owner, Guid player, string name, double now,
-        out TerritoryAccessRequest? request, out string error)
+    public bool TryAdd(
+        Guid owner,
+        Guid player,
+        string name,
+        double now,
+        out TerritoryAccessRequest? request,
+        out string error
+    )
     {
         request = null;
         if (owner == Guid.Empty || player == Guid.Empty || owner == player)
@@ -19,21 +27,25 @@ public sealed class TerritoryAccessRequests
             error = "InvalidRequest";
             return false;
         }
+
         if (_pending.Values.Any(item => item.Player == player && item.ExpiresAt > now))
         {
             error = "AlreadyPending";
             return false;
         }
+
         if (_lastRequest.TryGetValue(player, out var last) && now - last < Cooldown)
         {
             error = "RateLimited";
             return false;
         }
+
         if (_pending.Count >= 128 || _pending.Values.Count(item => item.Owner == owner) >= 8)
         {
             error = "QueueFull";
             return false;
         }
+
         request = new TerritoryAccessRequest(Guid.NewGuid(), owner, player, name, now + Lifetime);
         _pending.Add(request.Id, request);
         _lastRequest[player] = now;
@@ -41,15 +53,23 @@ public sealed class TerritoryAccessRequests
         return true;
     }
 
-    public bool TryResolve(Guid id, Guid owner, TerritoryPermission permissions, double now,
-        out TerritoryAccessRequest? request)
+    public bool TryResolve(
+        Guid id,
+        Guid owner,
+        TerritoryPermission permissions,
+        double now,
+        out TerritoryAccessRequest? request
+    )
     {
         request = null;
-        if (!TerritoryPermissions.IsValid(permissions) || !_pending.TryGetValue(id, out var found) ||
-            found.Owner != owner || found.ExpiresAt <= now)
+        if (!TerritoryPermissions.IsValid(permissions) ||
+            !_pending.TryGetValue(id, out var found) ||
+            found.Owner != owner ||
+            found.ExpiresAt <= now)
         {
             return false;
         }
+
         request = found;
         _pending.Remove(id);
         return true;
@@ -62,10 +82,13 @@ public sealed class TerritoryAccessRequests
         {
             _pending.Remove(request.Id);
         }
-        foreach (var player in _lastRequest.Where(pair => now - pair.Value >= Cooldown).Select(pair => pair.Key).ToArray())
+
+        foreach (var player in _lastRequest.Where(pair => now - pair.Value >= Cooldown).Select(pair => pair.Key)
+                     .ToArray())
         {
             _lastRequest.Remove(player);
         }
+
         return removed;
     }
 

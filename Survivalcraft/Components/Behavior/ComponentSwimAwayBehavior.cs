@@ -45,7 +45,7 @@ public class ComponentSwimAwayBehavior : ComponentBehavior, IUpdateable
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
         _componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true)!;
         _componentHerdBehavior = Entity.FindComponent<ComponentHerdBehavior>();
-        _componentCreature.ComponentHealth.Attacked += delegate (ComponentCreature attacker)
+        _componentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
         {
             SwimAwayFrom(attacker.ComponentBody);
         };
@@ -101,8 +101,9 @@ public class ComponentSwimAwayBehavior : ComponentBehavior, IUpdateable
 
     public Vector3 FindSafePlace()
     {
-        var vector = 0.5f * (_componentCreature.ComponentBody.BoundingBox.Min +
-                             _componentCreature.ComponentBody.BoundingBox.Max);
+        var vector = 0.5f *
+                     (_componentCreature.ComponentBody.BoundingBox.Min +
+                      _componentCreature.ComponentBody.BoundingBox.Max);
         var herdPosition = _componentHerdBehavior?.FindHerdCenter();
         var num = float.NegativeInfinity;
         var result = vector;
@@ -112,12 +113,17 @@ public class ComponentSwimAwayBehavior : ComponentBehavior, IUpdateable
             var y = 0.4f * _random.Float(-1f, 1f);
             var v = Vector3.Normalize(new Vector3(vector2.X, y, vector2.Y));
             var vector3 = vector + _random.Float(10f, 20f) * v;
-            var terrainRaycastResult = _subsystemTerrain.Raycast(vector, vector3, false, false,
-                delegate (int value, float d)
+            var terrainRaycastResult = _subsystemTerrain.Raycast(
+                vector,
+                vector3,
+                false,
+                false,
+                delegate(int value, float d)
                 {
                     var num3 = Terrain.ExtractContents(value);
                     return !(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3] is WaterBlock);
-                });
+                }
+            );
             var vector4 = terrainRaycastResult.HasValue ? vector + v * terrainRaycastResult.Value.Distance : vector3;
             var num2 = ScoreSafePlace(vector, vector4, herdPosition);
             if (!(num2 > num))

@@ -33,15 +33,24 @@ public sealed class ElectricityBoundaryReplicationTest
 
         void Send(Point2 observedChunk, int step)
         {
-            var voltages = SubsystemElectricity.BuildNetworkVoltages([client], authority,
-                chunk => chunk == observedChunk ? [client] : [])[client];
+            var voltages = SubsystemElectricity.BuildNetworkVoltages(
+                [client],
+                authority,
+                chunk => chunk == observedChunk ? [client] : []
+            )[client];
             var changes = tracker.Capture(client, voltages);
             var snapshot = new ElectricitySnapshot
-            { StartStep = step, IsBaseline = changes.IsBaseline, SaveData = changes.Voltages, Removed = changes.Removed };
+            {
+                StartStep = step, IsBaseline = changes.IsBaseline, SaveData = changes.Voltages,
+                Removed = changes.Removed
+            };
             using var writer = new ProtocolWriter();
             ProtocolMessageCodec.Write(new SubsystemElectricityPackage(snapshot), writer);
             using var reader = new ProtocolReader(writer.Data());
-            var received = Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader));
+            var received =
+                Assert.IsType<SubsystemElectricityPackage>(
+                    ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader)
+                );
             receiver.ReceiveNetworkSnapshot(received.Snapshot);
         }
     }

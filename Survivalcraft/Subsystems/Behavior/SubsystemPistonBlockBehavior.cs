@@ -65,8 +65,12 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         if (CommonLib.WorkType == WorkType.Server)
         {
             // 距离衰减在 21 格达到 0.05 的听觉阈值；保守候选范围为镜头偏移留余量。
-            NetworkSender.SendNearPoint(Project, soundPosition, 64f,
-                new MovingBlockPackage { Type = MovingBlockPackage.EventType.PistonSound, Position = soundPosition });
+            NetworkSender.SendNearPoint(
+                Project,
+                soundPosition,
+                64f,
+                new MovingBlockPackage { Type = MovingBlockPackage.EventType.PistonSound, Position = soundPosition }
+            );
         }
     }
 
@@ -75,18 +79,30 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var value = inventory.GetSlotValue(slotIndex);
         inventory.GetSlotCount(slotIndex);
         var data = Terrain.ExtractData(value);
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditPistonDialog(data, delegate (int newData)
-        {
-            var num = Terrain.ReplaceData(value, newData);
-            if (num == value)
-            {
-                return;
-            }
+        DialogsManager.ShowDialog(
+            componentPlayer.GuiWidget,
+            new EditPistonDialog(
+                data,
+                delegate(int newData)
+                {
+                    var num = Terrain.ReplaceData(value, newData);
+                    if (num == value)
+                    {
+                        return;
+                    }
 
-            var p = new EditableBlockPackage(BuiltInBlockEditKind.Piston, default, true, inventory.Id, slotIndex,
-                newData);
-            EditableBlockPackageHandler.Submit(p);
-        }));
+                    var p = new EditableBlockPackage(
+                        BuiltInBlockEditKind.Piston,
+                        default,
+                        true,
+                        inventory.Id,
+                        slotIndex,
+                        newData
+                    );
+                    EditableBlockPackageHandler.Submit(p);
+                }
+            )
+        );
         return true;
     }
 
@@ -94,17 +110,23 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         var contents = Terrain.ExtractContents(value);
         var data = Terrain.ExtractData(value);
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditPistonDialog(data, delegate (int newData)
-        {
-            if (newData == data || SubsystemTerrain.Terrain.GetCellContents(x, y, z) != contents)
-            {
-                return;
-            }
+        DialogsManager.ShowDialog(
+            componentPlayer.GuiWidget,
+            new EditPistonDialog(
+                data,
+                delegate(int newData)
+                {
+                    if (newData == data || SubsystemTerrain.Terrain.GetCellContents(x, y, z) != contents)
+                    {
+                        return;
+                    }
 
-            var cell = new CellFace(x, y, z, 0);
-            var p = new EditableBlockPackage(BuiltInBlockEditKind.Piston, cell, false, 0, 0, newData);
-            EditableBlockPackageHandler.Submit(p);
-        }));
+                    var cell = new CellFace(x, y, z, 0);
+                    var p = new EditableBlockPackage(BuiltInBlockEditKind.Piston, cell, false, 0, 0, newData);
+                    EditableBlockPackageHandler.Submit(p);
+                }
+            )
+        );
         return true;
     }
 
@@ -120,20 +142,20 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         switch (num)
         {
             case var pistonContents when pistonContents == BuiltInBlockRegistry.GetIndex<PistonBlock>():
+            {
+                StopPiston(new Point3(x, y, z));
+                var face2 = PistonBlock.GetFace(data);
+                var point2 = CellFace.FaceToPoint3(face2);
+                var cellValue3 = _subsystemTerrain.Terrain.GetCellValue(x + point2.X, y + point2.Y, z + point2.Z);
+                var num4 = Terrain.ExtractContents(cellValue3);
+                var data4 = Terrain.ExtractData(cellValue3);
+                if (num4 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() && PistonHeadBlock.GetFace(data4) == face2)
                 {
-                    StopPiston(new Point3(x, y, z));
-                    var face2 = PistonBlock.GetFace(data);
-                    var point2 = CellFace.FaceToPoint3(face2);
-                    var cellValue3 = _subsystemTerrain.Terrain.GetCellValue(x + point2.X, y + point2.Y, z + point2.Z);
-                    var num4 = Terrain.ExtractContents(cellValue3);
-                    var data4 = Terrain.ExtractData(cellValue3);
-                    if (num4 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() && PistonHeadBlock.GetFace(data4) == face2)
-                    {
-                        _subsystemTerrain.DestroyCell(0, x + point2.X, y + point2.Y, z + point2.Z, 0, false, false);
-                    }
-
-                    break;
+                    _subsystemTerrain.DestroyCell(0, x + point2.X, y + point2.Y, z + point2.Z, 0, false, false);
                 }
+
+                break;
+            }
             case var pistonHeadContents when pistonHeadContents == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>():
                 if (!_allowPistonHeadRemove)
                 {
@@ -145,13 +167,15 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     var num3 = Terrain.ExtractContents(cellValue2);
                     var data2 = Terrain.ExtractData(cellValue);
                     var data3 = Terrain.ExtractData(cellValue2);
-                    if (num2 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() && PistonHeadBlock.GetFace(data2) == face)
+                    if (num2 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() &&
+                        PistonHeadBlock.GetFace(data2) == face)
                     {
                         _subsystemTerrain.DestroyCell(0, x + point.X, y + point.Y, z + point.Z, 0, false, false);
                     }
 
                     if (num3 == BuiltInBlockRegistry.GetIndex<PistonBlock>() && PistonBlock.GetFace(data3) == face ||
-                        num3 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() && PistonHeadBlock.GetFace(data3) == face)
+                        num3 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() &&
+                        PistonHeadBlock.GetFace(data3) == face)
                     {
                         _subsystemTerrain.DestroyCell(0, x - point.X, y - point.Y, z - point.Z, 0, false, false);
                     }
@@ -163,8 +187,10 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override void OnChunkDiscarding(TerrainChunk chunk)
     {
-        var boundingBox = new BoundingBox(chunk.BoundingBox.Min - new Vector3(16f),
-            chunk.BoundingBox.Max + new Vector3(16f));
+        var boundingBox = new BoundingBox(
+            chunk.BoundingBox.Min - new Vector3(16f),
+            chunk.BoundingBox.Max + new Vector3(16f)
+        );
         var dynamicArray = new DynamicArray<IMovingBlockSet>();
         _subsystemMovingBlocks.FindMovingBlocks(boundingBox, false, dynamicArray);
         foreach (var item in dynamicArray.Where(item => item.Id == IdString))
@@ -208,7 +234,8 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
         foreach (var (key2, value2) in _tmpActions)
         {
-            if (value2 is not { Move: not null, Stop: false } || Time.FrameIndex == value2.StoppedFrame ||
+            if (value2 is not { Move: not null, Stop: false } ||
+                Time.FrameIndex == value2.StoppedFrame ||
                 _subsystemMovingBlocks.FindMovingBlocks(IdString, key2) != null)
             {
                 continue;
@@ -268,17 +295,25 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 num = MathUtils.Min(num, block.Offset.X * p.X + block.Offset.Y * p.Y + block.Offset.Z * p.Z);
             }
 
-            var num2 = movingBlockSet.Position.X * p.X + movingBlockSet.Position.Y * p.Y +
+            var num2 = movingBlockSet.Position.X * p.X +
+                       movingBlockSet.Position.Y * p.Y +
                        movingBlockSet.Position.Z * p.Z;
             float num3 = point.X * p.X + point.Y * p.Y + point.Z * p.Z;
             if (num2 > num3)
             {
                 if (num + num2 - num3 > 1f)
                 {
-                    movingBlockSet.SetBlock(p * (num - 1),
-                        Terrain.MakeBlockValue(238, 0,
+                    movingBlockSet.SetBlock(
+                        p * (num - 1),
+                        Terrain.MakeBlockValue(
+                            238,
+                            0,
                             PistonHeadBlock.SetFace(
-                                PistonHeadBlock.SetIsShaft(PistonHeadBlock.SetMode(0, mode), true), face)));
+                                PistonHeadBlock.SetIsShaft(PistonHeadBlock.SetMode(0, mode), true),
+                                face
+                            )
+                        )
+                    );
                 }
             }
             else if (num2 < num3 && num + num2 - num3 <= 0f)
@@ -356,9 +391,14 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             item = new MovingBlock
             {
                 Offset = Point3.Zero,
-                Value = Terrain.MakeBlockValue(BuiltInBlockRegistry.GetIndex<PistonHeadBlock>(), 0,
-                    PistonHeadBlock.SetFace(PistonHeadBlock.SetMode(PistonHeadBlock.SetIsShaft(0, num > 0), mode),
-                        face))
+                Value = Terrain.MakeBlockValue(
+                    BuiltInBlockRegistry.GetIndex<PistonHeadBlock>(),
+                    0,
+                    PistonHeadBlock.SetFace(
+                        PistonHeadBlock.SetMode(PistonHeadBlock.SetIsShaft(0, num > 0), mode),
+                        face
+                    )
+                )
             };
             _movingBlocks.Add(item);
             var num3 = 0;
@@ -397,10 +437,13 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 }
             }
 
-            if (IsBlockBlocking(terrain.GetCellValue(
-                    position.X + offset.X,
-                    position.Y + offset.Y,
-                    position.Z + offset.Z)) ||
+            if (IsBlockBlocking(
+                    terrain.GetCellValue(
+                        position.X + offset.X,
+                        position.Y + offset.Y,
+                        position.Z + offset.Z
+                    )
+                ) ||
                 !pass)
             {
                 return false;
@@ -408,8 +451,19 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
             GetSpeedAndSmoothness(speed, out var speed2, out var smoothness);
             var p = position + (length - num) * point;
-            if (_subsystemMovingBlocks.AddMovingBlockSet(new Vector3(position) + 0.01f * new Vector3(point),
-                    new Vector3(p), speed2, 0f, 0f, smoothness, _movingBlocks, IdString, position, true) == null)
+            if (_subsystemMovingBlocks.AddMovingBlockSet(
+                    new Vector3(position) + 0.01f * new Vector3(point),
+                    new Vector3(p),
+                    speed2,
+                    0f,
+                    0f,
+                    smoothness,
+                    _movingBlocks,
+                    IdString,
+                    position,
+                    true
+                ) ==
+                null)
             {
                 return false;
             }
@@ -419,8 +473,12 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             {
                 foreach (var movingBlock in _movingBlocks.Where(movingBlock => movingBlock.Offset != Point3.Zero))
                 {
-                    _subsystemTerrain.ChangeCell(position.X + movingBlock.Offset.X,
-                        position.Y + movingBlock.Offset.Y, position.Z + movingBlock.Offset.Z, 0);
+                    _subsystemTerrain.ChangeCell(
+                        position.X + movingBlock.Offset.X,
+                        position.Y + movingBlock.Offset.Y,
+                        position.Z + movingBlock.Offset.Z,
+                        0
+                    );
                 }
             }
             finally
@@ -428,8 +486,16 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 _allowPistonHeadRemove = false;
             }
 
-            _subsystemTerrain.ChangeCell(position.X, position.Y, position.Z,
-                Terrain.MakeBlockValue(BuiltInBlockRegistry.GetIndex<PistonBlock>(), 0, PistonBlock.SetIsExtended(data, true)));
+            _subsystemTerrain.ChangeCell(
+                position.X,
+                position.Y,
+                position.Z,
+                Terrain.MakeBlockValue(
+                    BuiltInBlockRegistry.GetIndex<PistonBlock>(),
+                    0,
+                    PistonBlock.SetIsExtended(data, true)
+                )
+            );
             PlayPistonSound(position);
 
             return false;
@@ -452,8 +518,11 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     break;
                 }
 
-                var cellValue3 = terrain.GetCellValue(position.X + offset.X, position.Y + offset.Y,
-                    position.Z + offset.Z);
+                var cellValue3 = terrain.GetCellValue(
+                    position.X + offset.X,
+                    position.Y + offset.Y,
+                    position.Z + offset.Z
+                );
                 if (!IsBlockMovable(cellValue3, face, position.Y + offset.Y, out var isEnd2))
                 {
                     break;
@@ -482,8 +551,19 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         GetSpeedAndSmoothness(speed, out var speed3, out var smoothness2);
         var s = length == 0 ? 0.01f : 0f;
         var targetPosition = new Vector3(position) + (length - num) * new Vector3(point) + s * new Vector3(point);
-        if (_subsystemMovingBlocks.AddMovingBlockSet(new Vector3(position), targetPosition, speed3, 0f, 0f,
-                smoothness2, _movingBlocks, IdString, position, true) == null)
+        if (_subsystemMovingBlocks.AddMovingBlockSet(
+                new Vector3(position),
+                targetPosition,
+                speed3,
+                0f,
+                0f,
+                smoothness2,
+                _movingBlocks,
+                IdString,
+                position,
+                true
+            ) ==
+            null)
         {
             return false;
         }
@@ -558,8 +638,16 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
         if (flag)
         {
-            _subsystemTerrain.ChangeCell(position.X, position.Y, position.Z,
-                Terrain.MakeBlockValue(BuiltInBlockRegistry.GetIndex<PistonBlock>(), 0, PistonBlock.SetIsExtended(data, isExtended)));
+            _subsystemTerrain.ChangeCell(
+                position.X,
+                position.Y,
+                position.Z,
+                Terrain.MakeBlockValue(
+                    BuiltInBlockRegistry.GetIndex<PistonBlock>(),
+                    0,
+                    PistonBlock.SetIsExtended(data, isExtended)
+                )
+            );
         }
     }
 
@@ -602,7 +690,8 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return;
         }
 
-        if (Terrain.ExtractContents(_subsystemTerrain.Terrain.GetCellValue(key.X, key.Y, key.Z)) != BuiltInBlockRegistry.GetIndex<PistonBlock>())
+        if (Terrain.ExtractContents(_subsystemTerrain.Terrain.GetCellValue(key.X, key.Y, key.Z)) !=
+            BuiltInBlockRegistry.GetIndex<PistonBlock>())
         {
             return;
         }
@@ -623,7 +712,8 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var data = Terrain.ExtractData(value);
         switch (num)
         {
-            case var craftingTableContents when craftingTableContents == BuiltInBlockRegistry.GetIndex<CraftingTableBlock>():
+            case var craftingTableContents
+                when craftingTableContents == BuiltInBlockRegistry.GetIndex<CraftingTableBlock>():
             case var chestContents when chestContents == BuiltInBlockRegistry.GetIndex<ChestBlock>():
             case var furnaceContents when furnaceContents == BuiltInBlockRegistry.GetIndex<FurnaceBlock>():
             case var litFurnaceContents when litFurnaceContents == BuiltInBlockRegistry.GetIndex<LitFurnaceBlock>():
@@ -635,38 +725,40 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 return !PistonBlock.GetIsExtended(data);
             case var pistonHeadContents when pistonHeadContents == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>():
             case var pumpkinContents when pumpkinContents == BuiltInBlockRegistry.GetIndex<PumpkinBlock>():
-            case var jackOLanternContents when jackOLanternContents == BuiltInBlockRegistry.GetIndex<JackOLanternBlock>():
-            case var rottenPumpkinContents when rottenPumpkinContents == BuiltInBlockRegistry.GetIndex<RottenPumpkinBlock>():
+            case var jackOLanternContents
+                when jackOLanternContents == BuiltInBlockRegistry.GetIndex<JackOLanternBlock>():
+            case var rottenPumpkinContents
+                when rottenPumpkinContents == BuiltInBlockRegistry.GetIndex<RottenPumpkinBlock>():
             case var cactusContents when cactusContents == BuiltInBlockRegistry.GetIndex<CactusBlock>():
             case var diamondContents when diamondContents == BuiltInBlockRegistry.GetIndex<DiamondBlock>():
                 return false;
             case var bedrockContents when bedrockContents == BuiltInBlockRegistry.GetIndex<BedrockBlock>():
                 return y > 1;
             default:
+            {
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
+                switch (block)
                 {
-                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
-                    switch (block)
-                    {
-                        case BottomSuckerBlock:
-                            return false;
-                        case MountedElectricElementBlock elementBlock:
-                            isEnd = true;
-                            return elementBlock.GetFace(value) == pistonFace;
-                        case DoorBlock or TrapdoorBlock:
-                            return false;
-                        case LadderBlock:
-                            isEnd = true;
-                            return pistonFace == LadderBlock.GetFace(data);
-                    }
-
-                    if (block is not AttachedSignBlock)
-                    {
-                        return block.IsMovableByPiston(value, pistonFace, y, out isEnd);
-                    }
-
-                    isEnd = true;
-                    return pistonFace == AttachedSignBlock.GetFace(data);
+                    case BottomSuckerBlock:
+                        return false;
+                    case MountedElectricElementBlock elementBlock:
+                        isEnd = true;
+                        return elementBlock.GetFace(value) == pistonFace;
+                    case DoorBlock or TrapdoorBlock:
+                        return false;
+                    case LadderBlock:
+                        isEnd = true;
+                        return pistonFace == LadderBlock.GetFace(data);
                 }
+
+                if (block is not AttachedSignBlock)
+                {
+                    return block.IsMovableByPiston(value, pistonFace, y, out isEnd);
+                }
+
+                isEnd = true;
+                return pistonFace == AttachedSignBlock.GetFace(data);
+            }
         }
     }
 
@@ -681,6 +773,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         public int? Move;
 
         public bool Stop;
+
         public int StoppedFrame;
     }
 }

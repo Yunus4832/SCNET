@@ -111,8 +111,11 @@ public class GridPanelWidget : ContainerWidget
             {
                 var column = _columns[widgetCell.X];
                 var row = _rows[widgetCell.Y];
-                ArrangeChildWidgetInCell(new Vector2(column.Position, row.Position),
-                    new Vector2(column.Position + column.ActualWidth, row.Position + row.ActualHeight), child);
+                ArrangeChildWidgetInCell(
+                    new Vector2(column.Position, row.Position),
+                    new Vector2(column.Position + column.ActualWidth, row.Position + row.ActualHeight),
+                    child
+                );
             }
             else
             {
@@ -134,12 +137,14 @@ public class GridPanelWidget : ContainerWidget
     public class Column
     {
         public float ActualWidth;
+
         public float Position;
     }
 
     public class Row
     {
         public float ActualHeight;
+
         public float Position;
     }
 }

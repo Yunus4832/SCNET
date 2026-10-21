@@ -3,12 +3,15 @@ namespace Game.Modding.Blocks;
 public sealed class BlockRuntimeCatalog
 {
     public const int Capacity = ProtocolLimits.BlockCapacity;
+
     private readonly IReadOnlyDictionary<ResourceId, BlockEntry> _byId;
+
     private readonly IReadOnlyList<BlockDataEntry> _dataEntries;
 
     private BlockRuntimeCatalog(
         IReadOnlyDictionary<ResourceId, BlockEntry> byId,
-        IReadOnlyList<BlockDataEntry> dataEntries)
+        IReadOnlyList<BlockDataEntry> dataEntries
+    )
     {
         _byId = byId;
         _dataEntries = dataEntries;
@@ -24,7 +27,8 @@ public sealed class BlockRuntimeCatalog
         NamespacedRegistry<BlockRegistration> registry,
         NamespacedRegistry<BlockDataRegistration>? dataRegistry = null,
         BlockIndexMapping? savedMapping = null,
-        bool requireExactMapping = false)
+        bool requireExactMapping = false
+    )
     {
         var byId = new Dictionary<ResourceId, BlockEntry>();
         var saved = savedMapping ?? BlockIndexMapping.Empty;
@@ -35,12 +39,18 @@ public sealed class BlockRuntimeCatalog
         }
 
         var fixedIndices = BuiltInBlockRegistry.Entries.ToDictionary(
-            entry => new ResourceId(BuiltInContentMod.Manifest.ModId, entry.Path), entry => entry.Index);
-        var assigned = registry.Keys.ToDictionary(id => id, id =>
-            id.Namespace == BuiltInContentMod.Manifest.ModId
-                ? fixedIndices.TryGetValue(id, out var builtInIndex) ? builtInIndex
-                    : throw new InvalidOperationException($"Unknown built-in block {id}.")
-                : mapping.Entries[id]);
+            entry => new ResourceId(BuiltInContentMod.Manifest.ModId, entry.Path),
+            entry => entry.Index
+        );
+        var assigned = registry.Keys.ToDictionary(
+            id => id,
+            id =>
+                id.Namespace == BuiltInContentMod.Manifest.ModId
+                    ? fixedIndices.TryGetValue(id, out var builtInIndex)
+                        ? builtInIndex
+                        : throw new InvalidOperationException($"Unknown built-in block {id}.")
+                    : mapping.Entries[id]
+        );
         if (assigned.Values.Any(index => index is < 0 or >= Capacity) ||
             assigned.Values.Distinct().Count() != assigned.Count)
         {
@@ -62,7 +72,9 @@ public sealed class BlockRuntimeCatalog
                 var block = registration.Factory();
                 if (block.BlockIndex != -1)
                 {
-                    throw new InvalidOperationException($"Factory for {id} reused an already registered block instance.");
+                    throw new InvalidOperationException(
+                        $"Factory for {id} reused an already registered block instance."
+                    );
                 }
 
                 block.BlockIndex = index;
@@ -88,14 +100,14 @@ public sealed class BlockRuntimeCatalog
         }
 
         var dataEntries = dataRegistry?.Entries
-            .OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal)
-            .Select(pair => new BlockDataEntry(pair.Key, pair.Value.Read))
-            .ToArray() ?? [];
+                              .OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal)
+                              .Select(pair => new BlockDataEntry(pair.Key, pair.Value.Read))
+                              .ToArray() ??
+                          [];
         return new BlockRuntimeCatalog(byId, dataEntries) { Mapping = mapping };
     }
 
     public bool TryGet(ResourceId id, out BlockEntry? entry) => _byId.TryGetValue(id, out entry);
-
 }
 
 public sealed record BlockEntry(ResourceId Id, int RuntimeIndex, Block Block);

@@ -22,20 +22,45 @@ public class JackOLanternBlock : Block
         {
             var radians = i * (float)Math.PI / 2f;
             var blockMesh = new BlockMesh();
-            blockMesh.AppendModelMeshPart(jackOLanternMesh.MeshParts[0],
+            blockMesh.AppendModelMeshPart(
+                jackOLanternMesh.MeshParts[0],
                 boneAbsoluteTransform * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
-                false, false, false, false, new Color(232, 232, 232));
-            blockMesh.AppendModelMeshPart(jackOLanternMesh.MeshParts[0],
+                false,
+                false,
+                false,
+                false,
+                new Color(232, 232, 232)
+            );
+            blockMesh.AppendModelMeshPart(
+                jackOLanternMesh.MeshParts[0],
                 boneAbsoluteTransform * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
-                true, true, false, false, Color.White);
+                true,
+                true,
+                false,
+                false,
+                Color.White
+            );
             BlockMeshesByData[i] = blockMesh;
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(jackOLanternMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.23f, 0f), false, false, false, false,
-            new Color(232, 232, 232));
-        StandaloneBlockMesh.AppendModelMeshPart(jackOLanternMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.23f, 0f), true, true, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            jackOLanternMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.23f, 0f),
+            false,
+            false,
+            false,
+            false,
+            new Color(232, 232, 232)
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            jackOLanternMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.23f, 0f),
+            true,
+            true,
+            false,
+            false,
+            Color.White
+        );
         CollisionBoxes[0] = BlockMeshesByData[0].CalculateBoundingBox();
         base.Initialize();
     }
@@ -94,8 +119,16 @@ public class JackOLanternBlock : Block
         var num = Terrain.ExtractData(value);
         if (num < BlockMeshesByData.Length)
         {
-            generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null,
-                geometry.SubsetAlphaTest);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshesByData[num],
+                Color.White,
+                null,
+                geometry.SubsetAlphaTest
+            );
         }
     }
 

@@ -24,7 +24,8 @@ internal sealed class VersionPathFinder
         if (depth > 100)
         {
             throw new InvalidOperationException(
-                "Too deep recursion when searching for version converters. Check for possible loops in transforms.");
+                "Too deep recursion when searching for version converters. Check for possible loops in transforms."
+            );
         }
 
         if (sourceVersion == targetVersion)

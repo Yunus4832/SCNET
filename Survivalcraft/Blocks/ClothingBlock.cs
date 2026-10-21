@@ -224,8 +224,12 @@ public class ClothingBlock : Block
         }
     }
 
-    public override CraftingRecipe? GetAdHocCraftingRecipe(SubsystemTerrain terrain, string[] ingredients,
-        float heatLevel, ComponentPlayer? player)
+    public override CraftingRecipe? GetAdHocCraftingRecipe(
+        SubsystemTerrain terrain,
+        string[] ingredients,
+        float heatLevel,
+        ComponentPlayer? player
+    )
     {
         if (heatLevel < 1f)
         {
@@ -279,11 +283,18 @@ public class ClothingBlock : Block
                         ResultCount = 1,
                         ResultValue =
                             block2.SetDamage(
-                                Terrain.MakeBlockValue(BlockIndex, 0,
-                                    SetClothingIndex(SetClothingColor(0, num4), clothingIndex)), damage),
+                                Terrain.MakeBlockValue(
+                                    BlockIndex,
+                                    0,
+                                    SetClothingIndex(SetClothingColor(0, num4), clothingIndex)
+                                ),
+                                damage
+                            ),
                         RemainsCount = 1,
-                        RemainsValue = Catalog.DamageItem(Terrain.MakeBlockValue(129, 0, color),
-                            damage2 + MathUtils.Max(block.Durability / 4, 1)),
+                        RemainsValue = Catalog.DamageItem(
+                            Terrain.MakeBlockValue(129, 0, color),
+                            damage2 + MathUtils.Max(block.Durability / 4, 1)
+                        ),
                         RequiredHeatLevel = 1f,
                         Description =
                             $"{LanguageManager.Get("BlocksManager", "Dyed")} {SubsystemPalette.GetName(color, string.Empty)}",
@@ -314,13 +325,21 @@ public class ClothingBlock : Block
                         ResultCount = 1,
                         ResultValue =
                             block4.SetDamage(
-                                Terrain.MakeBlockValue(BlockIndex, 0,
-                                    SetClothingIndex(SetClothingColor(0, 0), clothingIndex2)), damage3),
+                                Terrain.MakeBlockValue(
+                                    BlockIndex,
+                                    0,
+                                    SetClothingIndex(SetClothingColor(0, 0), clothingIndex2)
+                                ),
+                                damage3
+                            ),
                         RemainsCount = 1,
-                        RemainsValue = Catalog.DamageItem(Terrain.MakeBlockValue(128, 0, 0),
-                            damage4 + MathUtils.Max(block3.Durability / 4, 1)),
+                        RemainsValue = Catalog.DamageItem(
+                            Terrain.MakeBlockValue(128, 0, 0),
+                            damage4 + MathUtils.Max(block3.Durability / 4, 1)
+                        ),
                         RequiredHeatLevel = 1f,
-                        Description = LanguageManager.Get("BlocksManager", "Not Dyed") + " " +
+                        Description = LanguageManager.Get("BlocksManager", "Not Dyed") +
+                                      " " +
                                       LanguageManager.Get("BlocksManager", "Clothes"),
                         Ingredients = (string[])ingredients.Clone()
                     };
@@ -351,13 +370,25 @@ public class ClothingBlock : Block
         return (data & -61441) | ((color & 0xF) << 12);
     }
 
-    public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value,
-        int x, int y, int z)
+    public override void GenerateTerrainVertices(
+        BlockGeometryGenerator generator,
+        TerrainGeometry geometry,
+        int value,
+        int x,
+        int y,
+        int z
+    )
     {
     }
 
-    public override void DrawBlock(PrimitivesRenderer3D primitivesRenderer, int value, Color color, float size,
-        ref Matrix matrix, DrawBlockEnvironmentData environmentData)
+    public override void DrawBlock(
+        PrimitivesRenderer3D primitivesRenderer,
+        int value,
+        Color color,
+        float size,
+        ref Matrix matrix,
+        DrawBlockEnvironmentData environmentData
+    )
     {
         var data = Terrain.ExtractData(value);
         var clothingColor = GetClothingColor(data);
@@ -365,15 +396,27 @@ public class ClothingBlock : Block
         var matrix2 = _slotTransforms[(int)clothingData.Slot] * Matrix.CreateScale(size) * matrix;
         if (clothingData.IsOuter)
         {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, _outerMesh, clothingData.Texture,
-                color * SubsystemPalette.GetFabricColor(environmentData, clothingColor), 1f, ref matrix2,
-                environmentData);
+            BlocksManager.DrawMeshBlock(
+                primitivesRenderer,
+                _outerMesh,
+                clothingData.Texture,
+                color * SubsystemPalette.GetFabricColor(environmentData, clothingColor),
+                1f,
+                ref matrix2,
+                environmentData
+            );
         }
         else
         {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, _innerMesh, clothingData.Texture,
-                color * SubsystemPalette.GetFabricColor(environmentData, clothingColor), 1f, ref matrix2,
-                environmentData);
+            BlocksManager.DrawMeshBlock(
+                primitivesRenderer,
+                _innerMesh,
+                clothingData.Texture,
+                color * SubsystemPalette.GetFabricColor(environmentData, clothingColor),
+                1f,
+                ref matrix2,
+                environmentData
+            );
         }
     }
 }

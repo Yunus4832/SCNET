@@ -4,7 +4,8 @@ public class IronFenceGateBlock() : FenceGateBlock(
     "Models/IronFenceGate",
     0.0443f,
     true,
-    true, 58,
+    true,
+    58,
     new Color(192, 192, 192),
     new Color(80, 80, 80)
 )

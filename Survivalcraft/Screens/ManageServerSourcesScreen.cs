@@ -10,18 +10,27 @@ public sealed class ManageServerSourcesScreen : Screen
 {
     private enum SourceAction
     {
-        AddOrEdit,
-        Delete,
-        Toggle,
-        MoveUp,
-        MoveDown,
-        Test
+        AddOrEdit = 0,
+
+        Delete = 1,
+
+        Toggle = 2,
+
+        MoveUp = 3,
+
+        MoveDown = 4,
+
+        Test = 5
     }
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly ListPanelWidget _sourceList;
+
     private readonly LabelWidget _statusLabel;
+
     private bool _busy;
+
     private CancellationTokenSource? _testCancellation;
 
     public ManageServerSourcesScreen()
@@ -36,7 +45,8 @@ public sealed class ManageServerSourcesScreen : Screen
         _actionPanel.ItemColorProvider = item => item is SourceAction.Delete ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
-            [SourceAction.AddOrEdit, SourceAction.MoveUp, SourceAction.MoveDown, SourceAction.Test]);
+            [SourceAction.AddOrEdit, SourceAction.MoveUp, SourceAction.MoveDown, SourceAction.Test]
+        );
         _actionPanel.SetSecondaryItems([SourceAction.Toggle, SourceAction.Delete]);
     }
 
@@ -93,12 +103,18 @@ public sealed class ManageServerSourcesScreen : Screen
 
     private void ShowEditor(InstalledServerSource? source)
     {
-        DialogsManager.ShowDialog(null, new ContentRepositoryDialog(
-            source is null ? Text("AddTitle") : Text("EditTitle"),
-            CommonText("NameLabel"), CommonText("AddressLabel"),
-            source is null ? CommonText("Add") : CommonText("Save"),
-            source?.Name ?? string.Empty, source?.ApiUrl ?? string.Empty,
-            (name, address) => SaveEditor(source, name, address)));
+        DialogsManager.ShowDialog(
+            null,
+            new ContentRepositoryDialog(
+                source is null ? Text("AddTitle") : Text("EditTitle"),
+                CommonText("NameLabel"),
+                CommonText("AddressLabel"),
+                source is null ? CommonText("Add") : CommonText("Save"),
+                source?.Name ?? string.Empty,
+                source?.ApiUrl ?? string.Empty,
+                (name, address) => SaveEditor(source, name, address)
+            )
+        );
     }
 
     private bool SaveEditor(InstalledServerSource? source, string name, string address)
@@ -177,10 +193,15 @@ public sealed class ManageServerSourcesScreen : Screen
                 ConfirmDelete(selected);
                 break;
             case SourceAction.Toggle when selected is not null:
-                Execute(() => ServerDirectoryManager.Current.EditInstalledSource(selected with
-                {
-                    IsEnabled = !selected.IsEnabled
-                }), selected.Id);
+                Execute(
+                    () => ServerDirectoryManager.Current.EditInstalledSource(
+                        selected with
+                        {
+                            IsEnabled = !selected.IsEnabled
+                        }
+                    ),
+                    selected.Id
+                );
                 break;
             case SourceAction.MoveUp:
                 Move(sources, index, index - 1);
@@ -196,13 +217,16 @@ public sealed class ManageServerSourcesScreen : Screen
 
     private void ConfirmDelete(InstalledServerSource source)
     {
-        DialogsManager.Confirm(string.Format(Text("ConfirmDelete"), source.Name), button =>
-        {
-            if (button == MessageDialogButton.Button1)
+        DialogsManager.Confirm(
+            string.Format(Text("ConfirmDelete"), source.Name),
+            button =>
             {
-                Execute(() => ServerDirectoryManager.Current.DeleteInstalledSource(source.Id));
+                if (button == MessageDialogButton.Button1)
+                {
+                    Execute(() => ServerDirectoryManager.Current.DeleteInstalledSource(source.Id));
+                }
             }
-        });
+        );
     }
 
     private void Move(IReadOnlyList<InstalledServerSource> sources, int sourceIndex, int targetIndex)
@@ -220,39 +244,49 @@ public sealed class ManageServerSourcesScreen : Screen
         _busy = true;
         var busyDialog = new BusyDialog(Text("Testing"), source.Name);
         DialogsManager.ShowDialog(null, busyDialog);
-        Task.Run(async () =>
-            {
-                using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-                var protocolClient = new ServerSourceProtocolClient(httpClient);
-                return await protocolClient.GetAllAsync(new Uri(source.ApiUrl), cancellation.Token);
-            }, cancellation.Token)
+        Task.Run(
+                async () =>
+                {
+                    using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                    var protocolClient = new ServerSourceProtocolClient(httpClient);
+                    return await protocolClient.GetAllAsync(new Uri(source.ApiUrl), cancellation.Token);
+                },
+                cancellation.Token
+            )
             .ContinueWith(task => Dispatcher.Dispatch(() =>
-            {
-                cancellation.Dispose();
-                if (!ReferenceEquals(_testCancellation, cancellation))
-                {
-                    return;
-                }
+                    {
+                        cancellation.Dispose();
+                        if (!ReferenceEquals(_testCancellation, cancellation))
+                        {
+                            return;
+                        }
 
-                _testCancellation = null;
-                _busy = false;
-                DialogsManager.HideDialog(busyDialog);
-                if (task.IsCanceled)
-                {
-                    return;
-                }
+                        _testCancellation = null;
+                        _busy = false;
+                        DialogsManager.HideDialog(busyDialog);
+                        if (task.IsCanceled)
+                        {
+                            return;
+                        }
 
-                if (task.IsCompletedSuccessfully)
-                {
-                    DialogsManager.Alert(string.Format(Text("TestSucceeded"), task.Result.Source.Name,
-                        task.Result.Servers.Count));
-                }
-                else
-                {
-                    Log.Error($"Server source validation failed: {task.Exception}");
-                    ShowError(Text("TestFailed"));
-                }
-            }));
+                        if (task.IsCompletedSuccessfully)
+                        {
+                            DialogsManager.Alert(
+                                string.Format(
+                                    Text("TestSucceeded"),
+                                    task.Result.Source.Name,
+                                    task.Result.Servers.Count
+                                )
+                            );
+                        }
+                        else
+                        {
+                            Log.Error($"Server source validation failed: {task.Exception}");
+                            ShowError(Text("TestFailed"));
+                        }
+                    }
+                )
+            );
     }
 
     private string GetActionText(object item)

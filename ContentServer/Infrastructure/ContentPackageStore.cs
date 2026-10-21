@@ -12,11 +12,13 @@ public sealed record StagedContentPackage(
     string BlobHash,
     long Size,
     string FileName,
-    string MediaType);
+    string MediaType
+);
 
 public sealed class ContentPackageStore
 {
     private readonly string _packagesPath;
+
     private readonly string _temporaryPath;
 
     public ContentPackageStore(IHostEnvironment environment, IOptions<ContentServerOptions> options)
@@ -33,13 +35,20 @@ public sealed class ContentPackageStore
         string fileName,
         string mediaType,
         long maximumBytes,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var temporaryPath = Path.Combine(_temporaryPath, $"{Guid.NewGuid():N}.upload");
         try
         {
-            await using (var output = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write,
-                             FileShare.None, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
+            await using (var output = new FileStream(
+                             temporaryPath,
+                             FileMode.CreateNew,
+                             FileAccess.Write,
+                             FileShare.None,
+                             64 * 1024,
+                             FileOptions.Asynchronous | FileOptions.SequentialScan
+                         ))
             {
                 var buffer = new byte[64 * 1024];
                 long total = 0;
@@ -67,8 +76,14 @@ public sealed class ContentPackageStore
                 blobHash = Convert.ToHexString(await SHA256.HashDataAsync(input, cancellationToken)).ToLowerInvariant();
             }
 
-            return new StagedContentPackage(temporaryPath, inspection, blobHash,
-                new FileInfo(temporaryPath).Length, Path.GetFileName(fileName), mediaType);
+            return new StagedContentPackage(
+                temporaryPath,
+                inspection,
+                blobHash,
+                new FileInfo(temporaryPath).Length,
+                Path.GetFileName(fileName),
+                mediaType
+            );
         }
         catch
         {
@@ -106,7 +121,8 @@ public sealed class ContentPackageStore
     public async Task<StagedContentPackage> InspectTemporaryPackageAsync(
         string temporaryPath,
         string fileName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         ContentPackageInspection inspection;
         string blobHash;
@@ -117,8 +133,14 @@ public sealed class ContentPackageStore
             blobHash = Convert.ToHexString(await SHA256.HashDataAsync(input, cancellationToken)).ToLowerInvariant();
         }
 
-        return new StagedContentPackage(temporaryPath, inspection, blobHash,
-            new FileInfo(temporaryPath).Length, fileName, "application/vnd.scnet.content-package");
+        return new StagedContentPackage(
+            temporaryPath,
+            inspection,
+            blobHash,
+            new FileInfo(temporaryPath).Length,
+            fileName,
+            "application/vnd.scnet.content-package"
+        );
     }
 
     public void DeleteTemporary(StagedContentPackage package) => File.Delete(package.TemporaryPath);
@@ -155,6 +177,12 @@ public sealed class ContentPackageStore
     private string GetPath(string packageHash) =>
         Path.Combine(_packagesPath, packageHash + ContentPackageReader.FileExtension);
 
-    private static FileStream OpenRead(string path) => new(path, FileMode.Open, FileAccess.Read, FileShare.Read,
-        64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
+    private static FileStream OpenRead(string path) => new(
+        path,
+        FileMode.Open,
+        FileAccess.Read,
+        FileShare.Read,
+        64 * 1024,
+        FileOptions.Asynchronous | FileOptions.SequentialScan
+    );
 }

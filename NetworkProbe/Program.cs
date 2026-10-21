@@ -17,19 +17,32 @@ catch (Exception exception) when (exception is ArgumentException or FormatExcept
     return 2;
 }
 
-if (args.Length < 3 || !Uri.TryCreate(args[1], UriKind.Absolute, out var control) ||
+if (args.Length < 3 ||
+    !Uri.TryCreate(args[1], UriKind.Absolute, out var control) ||
     (args[2] != "auto" && !IPEndPoint.TryParse(args[2], out _)) ||
     (args[0] == "scenario-session" && args[2] != "auto") ||
-    (args[0] is "host" or "scenario" or "scenario-relay" or "scenario-session" or "scenario-lease" or "scenario-candidate-lease" ? (args[0] == "host" ? args.Length is < 3 or > 4 : args.Length != 3) : (args[0] is not "client" and not "client-recovery") || (args.Length is < 4 or > 6)))
+    (args[0] is "host" or "scenario" or "scenario-relay" or "scenario-session" or "scenario-lease"
+        or "scenario-candidate-lease"
+        ? (args[0] == "host" ? args.Length is < 3 or > 4 : args.Length != 3)
+        : (args[0] is not "client" and not "client-recovery") || (args.Length is < 4 or > 6)))
 {
-    Console.Error.WriteLine("Usage: NetworkProbe host|scenario|scenario-relay|scenario-session|scenario-lease|scenario-candidate-lease <control URL> <auto|beacon IP:port>");
-    Console.Error.WriteLine("       NetworkProbe client|client-recovery <control URL> <auto|beacon IP:port> <join code> [prepare delay seconds] [Disabled|Allowed|Required]");
-    Console.Error.WriteLine("       Options: --bind-ipv4 ADDRESS --bind-ipv6 ADDRESS --local-port PORT --output DIRECTORY");
+    Console.Error.WriteLine(
+        "Usage: NetworkProbe host|scenario|scenario-relay|scenario-session|scenario-lease|scenario-candidate-lease <control URL> <auto|beacon IP:port>"
+    );
+    Console.Error.WriteLine(
+        "       NetworkProbe client|client-recovery <control URL> <auto|beacon IP:port> <join code> [prepare delay seconds] [Disabled|Allowed|Required]"
+    );
+    Console.Error.WriteLine(
+        "       Options: --bind-ipv4 ADDRESS --bind-ipv6 ADDRESS --local-port PORT --output DIRECTORY"
+    );
     return 2;
 }
 
 using var diagnostics = Environment.GetEnvironmentVariable("SCNET_PROBE_TRACE") == "1" ? new ProbeDiagnostics() : null;
-using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(args[0] is "scenario-lease" or "scenario-candidate-lease" ? 120 : 45));
+using var deadline =
+    new CancellationTokenSource(
+        TimeSpan.FromSeconds(args[0] is "scenario-lease" or "scenario-candidate-lease" ? 120 : 45)
+    );
 await using var parentCancellation = new ProbeParentCancellation(deadline);
 ConsoleCancelEventHandler interrupt = (_, context) =>
 {
@@ -37,20 +50,35 @@ ConsoleCancelEventHandler interrupt = (_, context) =>
     deadline.Cancel();
 };
 Console.CancelKeyPress += interrupt;
-using var termination = OperatingSystem.IsWindows() ? null : PosixSignalRegistration.Create(PosixSignal.SIGTERM, context =>
-{
-    context.Cancel = true;
-    deadline.Cancel();
-});
+using var termination = OperatingSystem.IsWindows()
+    ? null
+    : PosixSignalRegistration.Create(
+        PosixSignal.SIGTERM,
+        context =>
+        {
+            context.Cancel = true;
+            deadline.Cancel();
+        }
+    );
 ProbeReport? report = null;
 try
 {
     report = new ProbeReport(outputDirectory, args[0], binding);
     var beacon = args[2] == "auto" ? null : IPEndPoint.Parse(args[2]);
     var probe = new ProbeRunner(control, beacon, binding, report);
-    if (args[0] is "scenario" or "scenario-relay" or "scenario-session" or "scenario-lease" or "scenario-candidate-lease")
+    if (args[0] is "scenario" or "scenario-relay" or "scenario-session" or "scenario-lease"
+        or "scenario-candidate-lease")
     {
-        await ProbeScenario.RunAsync(control, beacon, args[0] is "scenario-relay" or "scenario-lease", args[0] == "scenario-session", args[0] is "scenario-lease" or "scenario-candidate-lease" ? 70 : 0, binding, report, deadline.Token);
+        await ProbeScenario.RunAsync(
+            control,
+            beacon,
+            args[0] is "scenario-relay" or "scenario-lease",
+            args[0] == "scenario-session",
+            args[0] is "scenario-lease" or "scenario-candidate-lease" ? 70 : 0,
+            binding,
+            report,
+            deadline.Token
+        );
     }
     else if (args[0] == "host")
     {
@@ -67,8 +95,15 @@ try
         ArgumentOutOfRangeException.ThrowIfGreaterThan(delaySeconds, 90);
         deadline.CancelAfter(TimeSpan.FromSeconds(45 + delaySeconds));
         var relayPolicy = args.Length == 6 ? Enum.Parse<RelayPolicy>(args[5], ignoreCase: true) : RelayPolicy.Allowed;
-        await probe.RunClientAsync(args[3], TimeSpan.FromSeconds(delaySeconds), relayPolicy, deadline.Token, verifyRecovery: args[0] == "client-recovery");
+        await probe.RunClientAsync(
+            args[3],
+            TimeSpan.FromSeconds(delaySeconds),
+            relayPolicy,
+            deadline.Token,
+            verifyRecovery: args[0] == "client-recovery"
+        );
     }
+
     report.Complete();
     return 0;
 }

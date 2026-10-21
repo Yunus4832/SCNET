@@ -4,14 +4,17 @@ namespace Game.Terrains.Distribution;
 public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> invalidateGeometry)
 {
     public const double TimeoutSeconds = 3;
+
     private const int _maximumPending = 64;
 
     private readonly Dictionary<int, PendingEdit> _pending = [];
+
     private int _nextId;
 
     public bool IsPending(Point3 cell) => _pending.Values.Any(pending =>
         pending.Cell == cell &&
-        ReferenceEquals(terrain.GetChunkAtCell(cell.X, cell.Z, false), pending.Chunk));
+        ReferenceEquals(terrain.GetChunkAtCell(cell.X, cell.Z, false), pending.Chunk)
+    );
 
     public int Begin(Point3 cell, int expectedValue, int replacementValue, double now)
     {
@@ -21,7 +24,8 @@ public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> inva
         }
 
         var chunk = terrain.GetChunkAtCell(cell.X, cell.Z, false);
-        if (chunk is null || _pending.Count >= _maximumPending ||
+        if (chunk is null ||
+            _pending.Count >= _maximumPending ||
             Terrain.ReplaceLight(terrain.GetCellValueFast(cell.X, cell.Y, cell.Z), 0) !=
             Terrain.ReplaceLight(expectedValue, 0))
         {
@@ -72,7 +76,10 @@ public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> inva
         foreach (var (id, pending) in _pending.ToArray())
         {
             if (now >= pending.ExpiresAt ||
-                !ReferenceEquals(terrain.GetChunkAtCoords(pending.Chunk.Coords.X, pending.Chunk.Coords.Y), pending.Chunk) ||
+                !ReferenceEquals(
+                    terrain.GetChunkAtCoords(pending.Chunk.Coords.X, pending.Chunk.Coords.Y),
+                    pending.Chunk
+                ) ||
                 pending.RequiredVersion is { } version && pending.Chunk.NetworkContentVersion >= version)
             {
                 Remove(id);
@@ -94,9 +101,13 @@ public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> inva
     private sealed class PendingEdit(Point3 cell, TerrainChunk chunk, int index, double expiresAt)
     {
         public Point3 Cell { get; } = cell;
+
         public TerrainChunk Chunk { get; } = chunk;
+
         public int Index { get; } = index;
+
         public double ExpiresAt { get; } = expiresAt;
+
         public long? RequiredVersion { get; set; }
     }
 }

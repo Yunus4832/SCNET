@@ -31,8 +31,15 @@ public sealed class DesktopUpdateTest : IDisposable
         task = DesktopUpdateTask.Read(taskPath);
         task.ParentProcessId = 0;
         task.Save(taskPath);
-        Assert.False(DesktopUpdateCoordinator.HandleStartup([], task.TargetDirectory, "linux-x64", Replace,
-            (_, _) => Assert.Fail("Successful cleanup should not notify.")));
+        Assert.False(
+            DesktopUpdateCoordinator.HandleStartup(
+                [],
+                task.TargetDirectory,
+                "linux-x64",
+                Replace,
+                (_, _) => Assert.Fail("Successful cleanup should not notify.")
+            )
+        );
         Assert.False(Directory.Exists(Path.GetDirectoryName(taskPath)));
     }
 
@@ -41,15 +48,19 @@ public sealed class DesktopUpdateTest : IDisposable
     {
         var taskPath = Prepare();
         var task = DesktopUpdateTask.Read(taskPath);
-        Assert.Throws<IOException>(() => DesktopUpdateTransaction.Apply(taskPath, (source, destination) =>
-        {
-            if (source.Contains("staged") && Path.GetFileName(destination) == DesktopReleaseManifest.FileName)
-            {
-                throw new IOException("Injected replacement failure.");
-            }
+        Assert.Throws<IOException>(() => DesktopUpdateTransaction.Apply(
+                taskPath,
+                (source, destination) =>
+                {
+                    if (source.Contains("staged") && Path.GetFileName(destination) == DesktopReleaseManifest.FileName)
+                    {
+                        throw new IOException("Injected replacement failure.");
+                    }
 
-            Replace(source, destination);
-        }));
+                    Replace(source, destination);
+                }
+            )
+        );
 
         Assert.Equal(DesktopUpdateState.RolledBack, DesktopUpdateTask.Read(taskPath).State);
         Assert.Equal("old", File.ReadAllText(Path.Combine(task.TargetDirectory, "Content.zip")));
@@ -62,15 +73,19 @@ public sealed class DesktopUpdateTest : IDisposable
     public void InterruptedReplacementCanRecoverRepeatedlyAfterRollbackFailure()
     {
         var taskPath = Prepare();
-        Assert.Throws<AggregateException>(() => DesktopUpdateTransaction.Apply(taskPath, (source, destination) =>
-        {
-            if (Path.GetFileName(destination) == "Content.zip")
-            {
-                throw new IOException("Injected locked file.");
-            }
+        Assert.Throws<AggregateException>(() => DesktopUpdateTransaction.Apply(
+                taskPath,
+                (source, destination) =>
+                {
+                    if (Path.GetFileName(destination) == "Content.zip")
+                    {
+                        throw new IOException("Injected locked file.");
+                    }
 
-            Replace(source, destination);
-        }));
+                    Replace(source, destination);
+                }
+            )
+        );
         var task = DesktopUpdateTask.Read(taskPath);
         Assert.Equal(DesktopUpdateState.RollbackFailed, task.State);
         Assert.True(File.Exists(Path.Combine(Path.GetDirectoryName(taskPath)!, "backup", "Content.zip")));
@@ -85,8 +100,15 @@ public sealed class DesktopUpdateTest : IDisposable
     {
         var taskPath = Prepare();
         var task = DesktopUpdateTask.Read(taskPath);
-        Assert.True(DesktopUpdateCoordinator.HandleStartup([], task.TargetDirectory, "linux-x64", Replace,
-            (_, _) => Assert.Fail("An in-progress update must not hold a notification dialog.")));
+        Assert.True(
+            DesktopUpdateCoordinator.HandleStartup(
+                [],
+                task.TargetDirectory,
+                "linux-x64",
+                Replace,
+                (_, _) => Assert.Fail("An in-progress update must not hold a notification dialog.")
+            )
+        );
         Assert.True(File.Exists(taskPath));
     }
 
@@ -97,8 +119,15 @@ public sealed class DesktopUpdateTest : IDisposable
         var task = DesktopUpdateTask.Read(taskPath);
         task.ParentProcessId = 0;
         task.Save(taskPath);
-        Assert.False(DesktopUpdateCoordinator.HandleStartup([], task.TargetDirectory, "linux-x64", Replace,
-            (_, _) => Assert.Fail("Prepared cleanup should not notify.")));
+        Assert.False(
+            DesktopUpdateCoordinator.HandleStartup(
+                [],
+                task.TargetDirectory,
+                "linux-x64",
+                Replace,
+                (_, _) => Assert.Fail("Prepared cleanup should not notify.")
+            )
+        );
         Assert.Equal("old", File.ReadAllText(Path.Combine(task.TargetDirectory, "Content.zip")));
     }
 
@@ -121,9 +150,17 @@ public sealed class DesktopUpdateTest : IDisposable
     {
         var target = CreateInstallation();
         Assert.Throws<InvalidDataException>(() => DesktopUpdateCoordinator.Prepare(
-            CreateArchive("windows-x64"), target, "linux-x64"));
+                CreateArchive("windows-x64"),
+                target,
+                "linux-x64"
+            )
+        );
         Assert.Throws<InvalidDataException>(() => DesktopUpdateCoordinator.Prepare(
-            CreateArchive("linux-x64", "extra.dll"), target, "linux-x64"));
+                CreateArchive("linux-x64", "extra.dll"),
+                target,
+                "linux-x64"
+            )
+        );
     }
 
     [Fact]
@@ -133,8 +170,11 @@ public sealed class DesktopUpdateTest : IDisposable
         using var process = Process.GetCurrentProcess();
         var runtime = Path.Combine(target, "Instances", "other", ".runtime");
         Directory.CreateDirectory(runtime);
-        new XElement("InstanceProcess", new XAttribute("Pid", process.Id),
-                new XAttribute("StartTimeUtcTicks", process.StartTime.ToUniversalTime().Ticks))
+        new XElement(
+                "InstanceProcess",
+                new XAttribute("Pid", process.Id),
+                new XAttribute("StartTimeUtcTicks", process.StartTime.ToUniversalTime().Ticks)
+            )
             .Save(Path.Combine(runtime, "test.xml"));
         Assert.Throws<IOException>(() => DesktopUpdateProcesses.RequireOtherInstancesStopped(target, 0));
     }
@@ -146,8 +186,15 @@ public sealed class DesktopUpdateTest : IDisposable
         var staged = Path.Combine(target, ".update", "staged");
         Directory.CreateDirectory(staged);
         File.WriteAllText(Path.Combine(staged, "partial.dll"), "partial");
-        Assert.False(DesktopUpdateCoordinator.HandleStartup([], target, "linux-x64", Replace,
-            (_, _) => Assert.Fail("Incomplete preparation has not modified the installation.")));
+        Assert.False(
+            DesktopUpdateCoordinator.HandleStartup(
+                [],
+                target,
+                "linux-x64",
+                Replace,
+                (_, _) => Assert.Fail("Incomplete preparation has not modified the installation.")
+            )
+        );
         Assert.False(Directory.Exists(Path.Combine(target, ".update")));
         Assert.Equal("old", File.ReadAllText(Path.Combine(target, "Content.zip")));
     }
@@ -160,8 +207,15 @@ public sealed class DesktopUpdateTest : IDisposable
         Directory.CreateDirectory(work);
         File.WriteAllText(Path.Combine(work, "task.xml"), "invalid");
         var notified = false;
-        Assert.True(DesktopUpdateCoordinator.HandleStartup([], target, "linux-x64", Replace,
-            (_, error) => notified = error));
+        Assert.True(
+            DesktopUpdateCoordinator.HandleStartup(
+                [],
+                target,
+                "linux-x64",
+                Replace,
+                (_, error) => notified = error
+            )
+        );
         Assert.True(notified);
         Assert.True(Directory.Exists(work));
     }
@@ -179,8 +233,11 @@ public sealed class DesktopUpdateTest : IDisposable
         File.WriteAllText(Path.Combine(target, "SurvivalcraftStarter"), "old");
         File.WriteAllText(Path.Combine(target, "Content.zip"), "old");
         File.WriteAllText(Path.Combine(target, "obsolete.dll"), "obsolete");
-        WriteManifest(Path.Combine(target, DesktopReleaseManifest.FileName), "linux-x64",
-            ["SurvivalcraftStarter", "Content.zip", "obsolete.dll"]);
+        WriteManifest(
+            Path.Combine(target, DesktopReleaseManifest.FileName),
+            "linux-x64",
+            ["SurvivalcraftStarter", "Content.zip", "obsolete.dll"]
+        );
         return target;
     }
 
@@ -196,11 +253,14 @@ public sealed class DesktopUpdateTest : IDisposable
 
         using (var writer = new StreamWriter(zip.CreateEntry(DesktopReleaseManifest.FileName).Open()))
         {
-            new XmlSerializer(typeof(DesktopReleaseManifest)).Serialize(writer, new DesktopReleaseManifest
-            {
-                Platform = platform,
-                Files = ["SurvivalcraftStarter", "Content.zip", "added.dll"]
-            });
+            new XmlSerializer(typeof(DesktopReleaseManifest)).Serialize(
+                writer,
+                new DesktopReleaseManifest
+                {
+                    Platform = platform,
+                    Files = ["SurvivalcraftStarter", "Content.zip", "added.dll"]
+                }
+            );
         }
 
         if (extra is not null)
@@ -215,8 +275,10 @@ public sealed class DesktopUpdateTest : IDisposable
     private static void WriteManifest(string path, string platform, List<string> files)
     {
         using var output = File.Create(path);
-        new XmlSerializer(typeof(DesktopReleaseManifest)).Serialize(output,
-            new DesktopReleaseManifest { Platform = platform, Files = files });
+        new XmlSerializer(typeof(DesktopReleaseManifest)).Serialize(
+            output,
+            new DesktopReleaseManifest { Platform = platform, Files = files }
+        );
     }
 
     private static void Replace(string source, string destination)

@@ -14,13 +14,20 @@ public sealed class InvitationRegistryTest
         var participant = registry.Join(invitation.JoinCode, request);
         clock.Advance(TimeSpan.FromSeconds(30));
         var until = registry.Renew(invitation.SessionId, invitation.HostCredential);
-        Assert.Throws<InvalidOperationException>(() => registry.RenewParticipant(invitation.SessionId, participant.ParticipantId, "wrong"));
-        Assert.Equal(until, registry.RenewParticipant(invitation.SessionId, participant.ParticipantId, participant.Credential));
+        Assert.Throws<InvalidOperationException>(() =>
+            registry.RenewParticipant(invitation.SessionId, participant.ParticipantId, "wrong")
+        );
+        Assert.Equal(
+            until,
+            registry.RenewParticipant(invitation.SessionId, participant.ParticipantId, participant.Credential)
+        );
         clock.Advance(TimeSpan.FromSeconds(35));
         Assert.True(registry.Authenticate(invitation.SessionId, participant.ParticipantId, participant.Credential));
         Assert.Equal(until, registry.JoinSession(invitation.SessionId, request).ExpiresAt);
         clock.Advance(TimeSpan.FromSeconds(26));
-        Assert.Throws<InvalidOperationException>(() => registry.RenewParticipant(invitation.SessionId, participant.ParticipantId, participant.Credential));
+        Assert.Throws<InvalidOperationException>(() =>
+            registry.RenewParticipant(invitation.SessionId, participant.ParticipantId, participant.Credential)
+        );
     }
 
     [Fact]
@@ -31,7 +38,9 @@ public sealed class InvitationRegistryTest
         var request = Guid.NewGuid();
         var participant = registry.Join(invitation.JoinCode, request);
         var ticket = registry.IssueTicket(invitation.SessionId, participant.ParticipantId, participant.Credential);
-        Assert.Throws<InvalidOperationException>(() => registry.Leave(invitation.SessionId, participant.ParticipantId, "wrong"));
+        Assert.Throws<InvalidOperationException>(() =>
+            registry.Leave(invitation.SessionId, participant.ParticipantId, "wrong")
+        );
         Assert.True(registry.Authenticate(invitation.SessionId, participant.ParticipantId, participant.Credential));
         registry.Leave(invitation.SessionId, participant.ParticipantId, participant.Credential);
         registry.Leave(invitation.SessionId, participant.ParticipantId, participant.Credential);
@@ -40,7 +49,10 @@ public sealed class InvitationRegistryTest
         Assert.False(registry.AuthenticateTicket(invitation.SessionId, participant.ParticipantId, ticket.Token));
         var retried = Assert.Throws<InvalidOperationException>(() => registry.Join(invitation.JoinCode, request));
         Assert.Equal("join_request_expired", retried.Message);
-        Assert.NotEqual(participant.ParticipantId, registry.JoinSession(invitation.SessionId, Guid.NewGuid()).ParticipantId);
+        Assert.NotEqual(
+            participant.ParticipantId,
+            registry.JoinSession(invitation.SessionId, Guid.NewGuid()).ParticipantId
+        );
         registry.Close(invitation.SessionId, invitation.HostCredential);
         registry.Leave(invitation.SessionId, participant.ParticipantId, participant.Credential);
     }
@@ -57,7 +69,8 @@ public sealed class InvitationRegistryTest
         Assert.NotEqual(first.ParticipantId, restored.ParticipantId);
         Assert.Throws<InvalidOperationException>(() => registry.JoinSession(invitation.SessionId, Guid.NewGuid()));
         registry.Close(invitation.SessionId, invitation.HostCredential);
-        var failure = Assert.Throws<InvalidOperationException>(() => registry.JoinSession(invitation.SessionId, Guid.NewGuid()));
+        var failure =
+            Assert.Throws<InvalidOperationException>(() => registry.JoinSession(invitation.SessionId, Guid.NewGuid()));
         Assert.Equal("invitation_not_found", failure.Message);
     }
 
@@ -142,17 +155,21 @@ public sealed class InvitationRegistryTest
         var registry = new InvitationRegistry(TimeProvider.System, TimeSpan.FromMinutes(5), 1);
         var invitation = registry.Create(4);
         var accepted = 0;
-        Parallel.For(0, 32, _ =>
-        {
-            try
+        Parallel.For(
+            0,
+            32,
+            _ =>
             {
-                registry.Join(invitation.JoinCode, Guid.NewGuid());
-                Interlocked.Increment(ref accepted);
+                try
+                {
+                    registry.Join(invitation.JoinCode, Guid.NewGuid());
+                    Interlocked.Increment(ref accepted);
+                }
+                catch (InvalidOperationException)
+                {
+                }
             }
-            catch (InvalidOperationException)
-            {
-            }
-        });
+        );
         Assert.Equal(4, accepted);
     }
 
@@ -166,7 +183,13 @@ public sealed class InvitationRegistryTest
         var ticket = registry.IssueTicket(invitation.SessionId, participant.ParticipantId, participant.Credential);
         Assert.True(registry.AuthenticateTicket(invitation.SessionId, participant.ParticipantId, ticket.Token));
         Assert.False(registry.AuthenticateTicket(invitation.SessionId, Guid.Empty, ticket.Token));
-        Assert.False(registry.AuthenticateTicket(invitation.SessionId, participant.ParticipantId, participant.Credential));
+        Assert.False(
+            registry.AuthenticateTicket(
+                invitation.SessionId,
+                participant.ParticipantId,
+                participant.Credential
+            )
+        );
         clock.Advance(TimeSpan.FromSeconds(30));
         Assert.False(registry.AuthenticateTicket(invitation.SessionId, participant.ParticipantId, ticket.Token));
         Assert.True(registry.Authenticate(invitation.SessionId, participant.ParticipantId, participant.Credential));

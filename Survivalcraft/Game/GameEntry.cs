@@ -40,23 +40,24 @@ public static class GameEntry
         var runningSetting = startup.Settings;
         GameExitManager.BeginSession();
         NetworkLogging.Configure((level, message) =>
-        {
-            switch (level)
             {
-                case NetworkLogLevel.Debug:
-                    Log.Debug(message);
-                    break;
-                case NetworkLogLevel.Warning:
-                    Log.Warning(message);
-                    break;
-                case NetworkLogLevel.Error:
-                    Log.Error(message);
-                    break;
-                default:
-                    Log.Information(message);
-                    break;
+                switch (level)
+                {
+                    case NetworkLogLevel.Debug:
+                        Log.Debug(message);
+                        break;
+                    case NetworkLogLevel.Warning:
+                        Log.Warning(message);
+                        break;
+                    case NetworkLogLevel.Error:
+                        Log.Error(message);
+                        break;
+                    default:
+                        Log.Information(message);
+                        break;
+                }
             }
-        });
+        );
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
         CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 
@@ -70,7 +71,7 @@ public static class GameEntry
         Window.Resized += OnWindowResized;
         Window.Closed += Closed;
         Display.DeviceReset += ContentManager.DisplayDeviceReset;
-        Window.UnhandledException += delegate (UnhandledExceptionInfo e)
+        Window.UnhandledException += delegate(UnhandledExceptionInfo e)
         {
             DialogsManager.Alert(
                 "未处理的异常" + e.Exception.Message,
@@ -83,7 +84,8 @@ public static class GameEntry
             runningSetting.WindowWidth,
             runningSetting.WindowHeight,
             runningSetting.WindowMode,
-            VersionsManager.Title);
+            VersionsManager.Title
+        );
         return GameExitManager.ExitAction;
     }
 
@@ -136,10 +138,11 @@ public static class GameEntry
         if (_windowStateReady && _lastWindowSize is { X: > 0, Y: > 0 })
         {
             RunningSettingManager.SaveCurrent(rs =>
-            {
-                rs.WindowWidth = _lastWindowSize.X;
-                rs.WindowHeight = _lastWindowSize.Y;
-            });
+                {
+                    rs.WindowWidth = _lastWindowSize.X;
+                    rs.WindowHeight = _lastWindowSize.Y;
+                }
+            );
         }
 
         ModRuntime?.Dispose();
@@ -155,14 +158,16 @@ public static class GameEntry
         {
             HttpCommandHostManager.Start(
                 StartupManager.Current.Session,
-                CommandPrincipal.LocalOperator);
+                CommandPrincipal.LocalOperator
+            );
         }
     }
 
     public static void Initialize()
     {
         Log.Information(
-            $"Survivalcraft starting up at {DateTime.Now}, Version={VersionsManager.Version}, ProtocolVersion={VersionsManager.ProtocolVersion}, Platform={PlatformManager.Platform}, Storage.AvailableFreeSpace={Storage.FreeSpace / 1024 / 1024}MB, ApproximateScreenDpi={ScreenResolutionManager.ApproximateScreenDpi:0.0}, ApproxScreenInches={ScreenResolutionManager.ApproximateScreenInches:0.0}, ScreenResolution={Window.Size}, ProcessorsCount={Environment.ProcessorCount}, RAM={Utilities.GetTotalAvailableMemory() / 1024 / 1024}MB, 64bit={Marshal.SizeOf<IntPtr>() == 8}");
+            $"Survivalcraft starting up at {DateTime.Now}, Version={VersionsManager.Version}, ProtocolVersion={VersionsManager.ProtocolVersion}, Platform={PlatformManager.Platform}, Storage.AvailableFreeSpace={Storage.FreeSpace / 1024 / 1024}MB, ApproximateScreenDpi={ScreenResolutionManager.ApproximateScreenDpi:0.0}, ApproxScreenInches={ScreenResolutionManager.ApproximateScreenInches:0.0}, ScreenResolution={Window.Size}, ProcessorsCount={Environment.ProcessorCount}, RAM={Utilities.GetTotalAvailableMemory() / 1024 / 1024}MB, 64bit={Marshal.SizeOf<IntPtr>() == 8}"
+        );
         SettingsManager.Initialize();
         ContentRepositoryManager.Initialize();
         ServerDirectoryManager.Initialize();
@@ -261,5 +266,4 @@ public static class GameEntry
 
         public readonly Uri Uri = uri;
     }
-
 }

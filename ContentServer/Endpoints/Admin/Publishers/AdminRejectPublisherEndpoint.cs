@@ -67,7 +67,8 @@ public sealed class AdminRejectPublisherEndpoint(
     private static void EnsureReviewCompleted(
         ReviewPublisherResult result,
         string notFoundMessage,
-        string invalidStateMessage)
+        string invalidStateMessage
+    )
     {
         if (result == ReviewPublisherResult.NotFound)
         {

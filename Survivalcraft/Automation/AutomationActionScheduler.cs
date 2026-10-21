@@ -4,23 +4,33 @@ namespace Game.Automation;
 public sealed class AutomationActionScheduler
 {
     private long _nextId;
+
     private int _elapsedFrames;
+
     private double _elapsedSeconds;
 
     public long Id { get; private set; }
+
     public AutomationInputAction? Action { get; private set; }
+
     public string Status { get; private set; } = "idle";
+
     public string? CancellationReason { get; private set; }
+
     public int ElapsedFrames => _elapsedFrames;
+
     public double ElapsedSeconds => _elapsedSeconds;
 
     public long Start(AutomationInputAction action)
     {
         ArgumentNullException.ThrowIfNull(action);
-        if (action.DurationFrames is < 1 or > 600 || action.Keys == null || action.MouseButtons == null ||
+        if (action.DurationFrames is < 1 or > 600 ||
+            action.Keys == null ||
+            action.MouseButtons == null ||
             action.Keys.Any(key => !Enum.IsDefined(key)) ||
             action.MouseButtons.Any(button => !Enum.IsDefined(button)) ||
-            Math.Abs((long)action.MouseDeltaX) > 10000 || Math.Abs((long)action.MouseDeltaY) > 10000)
+            Math.Abs((long)action.MouseDeltaX) > 10000 ||
+            Math.Abs((long)action.MouseDeltaY) > 10000)
         {
             throw new ArgumentOutOfRangeException(nameof(action));
         }
@@ -36,7 +46,10 @@ public sealed class AutomationActionScheduler
         }
 
         Id = ++_nextId;
-        Action = action with { Keys = action.Keys.Distinct().ToArray(), MouseButtons = action.MouseButtons.Distinct().ToArray() };
+        Action = action with
+        {
+            Keys = action.Keys.Distinct().ToArray(), MouseButtons = action.MouseButtons.Distinct().ToArray()
+        };
         _elapsedFrames = 0;
         _elapsedSeconds = 0;
         Status = "running";

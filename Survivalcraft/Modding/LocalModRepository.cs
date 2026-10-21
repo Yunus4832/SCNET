@@ -12,8 +12,17 @@ public sealed class LocalModRepository(string directoryPath)
     {
         return _cache.List()
             .Where(entry => entry.Type == ContentPackageType.Mod)
-            .Select(entry => new LocalModPackageEntry(entry.Path, Path.GetFileName(entry.Path),
-                entry.Identifier, entry.Version, entry.PackageHash, entry.Name, entry.Summary, entry.Description))
+            .Select(entry => new LocalModPackageEntry(
+                    entry.Path,
+                    Path.GetFileName(entry.Path),
+                    entry.Identifier,
+                    entry.Version,
+                    entry.PackageHash,
+                    entry.Name,
+                    entry.Summary,
+                    entry.Description
+                )
+            )
             .ToArray();
     }
 
@@ -22,13 +31,15 @@ public sealed class LocalModRepository(string directoryPath)
         return ListAll().FirstOrDefault(entry =>
             string.Equals(entry.ModId, requirement.ModId, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(entry.Version, requirement.Version, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(entry.PackageHash, requirement.PackageHash, StringComparison.Ordinal));
+            string.Equals(entry.PackageHash, requirement.PackageHash, StringComparison.Ordinal)
+        );
     }
 
     public LocalModPackageEntry? FindByHash(string packageHash)
     {
         return ListAll().FirstOrDefault(entry =>
-            string.Equals(entry.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase));
+            string.Equals(entry.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     public LocalModPackageEntry AddPackage(Stream content)
@@ -55,7 +66,8 @@ public sealed class LocalModRepository(string directoryPath)
         if (ModPackageReferenceTracker.IsReferenced(entry))
         {
             throw new InvalidOperationException(
-                $"Mod package '{entry.ModId}@{entry.Version}' is referenced by a profile or the current runtime.");
+                $"Mod package '{entry.ModId}@{entry.Version}' is referenced by a profile or the current runtime."
+            );
         }
 
         if (File.Exists(entry.Path))

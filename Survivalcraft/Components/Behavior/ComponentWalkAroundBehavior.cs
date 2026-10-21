@@ -115,8 +115,12 @@ public class ComponentWalkAroundBehavior : ComponentBehavior, IUpdateable
     public float ScoreDestination(Vector3 destination)
     {
         var num = 8f - MathUtils.Abs(_componentCreature.ComponentBody.Position.Y - destination.Y);
-        if (_subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(destination.X), Terrain.ToCell(destination.Y) - 1,
-                Terrain.ToCell(destination.Z)) == 18)
+        if (_subsystemTerrain.Terrain.GetCellContents(
+                Terrain.ToCell(destination.X),
+                Terrain.ToCell(destination.Y) - 1,
+                Terrain.ToCell(destination.Z)
+            ) ==
+            18)
         {
             num -= 5f;
         }

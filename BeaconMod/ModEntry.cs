@@ -22,18 +22,26 @@ public sealed class ModEntry : IMod
             var path = $"lang/{culture}.json";
             context.Extensions.RegisterContent(new ResourceId(context.Manifest.ModId, path), path, bytes.ToArray());
         }
+
         context.Extensions.RegisterBlock<BeaconBlock>(BeaconBlock.Id);
-        context.Extensions.RegisterBlockData(new ResourceId(context.Manifest.ModId, "beacon"), () =>
-        {
-            using var reader = new StreamReader(OpenResource("BlocksData.txt"));
-            return reader.ReadToEnd();
-        });
-        context.Extensions.RegisterXmlData(XmlDataExtensions.DatabaseRegistryName,
-            new ResourceId(context.Manifest.ModId, "beacon"), XmlContributionMode.Patch, () =>
+        context.Extensions.RegisterBlockData(
+            new ResourceId(context.Manifest.ModId, "beacon"),
+            () =>
+            {
+                using var reader = new StreamReader(OpenResource("BlocksData.txt"));
+                return reader.ReadToEnd();
+            }
+        );
+        context.Extensions.RegisterXmlData(
+            XmlDataExtensions.DatabaseRegistryName,
+            new ResourceId(context.Manifest.ModId, "beacon"),
+            XmlContributionMode.Patch,
+            () =>
             {
                 using var stream = OpenResource("BeaconDatabase.xml");
                 return XElement.Load(stream);
-            });
+            }
+        );
     }
 
     public void Start(IModContext context)
@@ -44,6 +52,7 @@ public sealed class ModEntry : IMod
     {
     }
 
-    internal static Stream OpenResource(string name) => typeof(ModEntry).Assembly.GetManifestResourceStream(
-        $"BeaconMod.Resources.{name}") ?? throw new InvalidOperationException($"Missing beacon resource: {name}");
+    internal static Stream OpenResource(string name) =>
+        typeof(ModEntry).Assembly.GetManifestResourceStream($"BeaconMod.Resources.{name}") ??
+        throw new InvalidOperationException($"Missing beacon resource: {name}");
 }

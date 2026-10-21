@@ -125,13 +125,22 @@ public class ComponentSteedBehavior : ComponentBehavior, IUpdateable
                     return;
                 }
 
-                _componentPathfinding.SetDestination(componentRider.ComponentCreature.ComponentBody.Position,
-                    _random.Float(0.2f, 0.3f), 3.25f, 0, false, true, false, null);
+                _componentPathfinding.SetDestination(
+                    componentRider.ComponentCreature.ComponentBody.Position,
+                    _random.Float(0.2f, 0.3f),
+                    3.25f,
+                    0,
+                    false,
+                    true,
+                    false,
+                    null
+                );
                 if (_random.Float(0f, 1f) < 0.5f)
                 {
                     _componentCreature.ComponentCreatureSounds.PlayIdleSound(true);
                 }
-            }, delegate
+            },
+            delegate
             {
                 if (_componentMount.Rider != null)
                 {
@@ -161,7 +170,9 @@ public class ComponentSteedBehavior : ComponentBehavior, IUpdateable
         _bodies.Clear();
         _subsystemBodies.FindBodiesAroundPoint(
             new Vector2(_componentCreature.ComponentBody.Position.X, _componentCreature.ComponentBody.Position.Z),
-            range, _bodies);
+            range,
+            _bodies
+        );
         foreach (var body in _bodies)
         {
             if (!(Vector3.DistanceSquared(_componentCreature.ComponentBody.Position, body.Position) <
@@ -224,9 +235,13 @@ public class ComponentSteedBehavior : ComponentBehavior, IUpdateable
 
         if (_subsystemTime.PeriodicGameTimeEvent(0.25, 0.0))
         {
-            var num = new Vector2(_componentCreature.ComponentBody.CollisionVelocityChange.X,
-                _componentCreature.ComponentBody.CollisionVelocityChange.Z).Length();
-            if (_speedLevel == 0 || num < 0.1f || _componentCreature.ComponentBody.Velocity.Length() >
+            var num = new Vector2(
+                _componentCreature.ComponentBody.CollisionVelocityChange.X,
+                _componentCreature.ComponentBody.CollisionVelocityChange.Z
+            ).Length();
+            if (_speedLevel == 0 ||
+                num < 0.1f ||
+                _componentCreature.ComponentBody.Velocity.Length() >
                 MathUtils.Abs(0.5f * _speed * _componentCreature.ComponentLocomotion.WalkSpeed))
             {
                 _lastNotBlockedTime = _subsystemTime.GameTime;

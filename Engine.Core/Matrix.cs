@@ -18,7 +18,8 @@ public struct Matrix(
     float m41,
     float m42,
     float m43,
-    float m44)
+    float m44
+)
     : IEquatable<Matrix>
 {
     public float M11 = m11;
@@ -136,9 +137,21 @@ public struct Matrix(
 
     public override int GetHashCode()
     {
-        return M11.GetHashCode() + M12.GetHashCode() + M13.GetHashCode() + M14.GetHashCode() + M21.GetHashCode() +
-               M22.GetHashCode() + M23.GetHashCode() + M24.GetHashCode() + M31.GetHashCode() + M32.GetHashCode() +
-               M33.GetHashCode() + M34.GetHashCode() + M41.GetHashCode() + M42.GetHashCode() + M43.GetHashCode() +
+        return M11.GetHashCode() +
+               M12.GetHashCode() +
+               M13.GetHashCode() +
+               M14.GetHashCode() +
+               M21.GetHashCode() +
+               M22.GetHashCode() +
+               M23.GetHashCode() +
+               M24.GetHashCode() +
+               M31.GetHashCode() +
+               M32.GetHashCode() +
+               M33.GetHashCode() +
+               M34.GetHashCode() +
+               M41.GetHashCode() +
+               M42.GetHashCode() +
+               M43.GetHashCode() +
                M44.GetHashCode();
     }
 
@@ -175,8 +188,10 @@ public struct Matrix(
         var num4 = M31 * M44 - M34 * M41;
         var num5 = M31 * M43 - M33 * M41;
         var num6 = M31 * M42 - M32 * M41;
-        return M11 * (M22 * num - M23 * num2 + M24 * num3) - M12 * (M21 * num - M23 * num4 + M24 * num5) +
-            M13 * (M21 * num2 - M22 * num4 + M24 * num6) - M14 * (M21 * num3 - M22 * num5 + M23 * num6);
+        return M11 * (M22 * num - M23 * num2 + M24 * num3) -
+               M12 * (M21 * num - M23 * num4 + M24 * num5) +
+               M13 * (M21 * num2 - M22 * num4 + M24 * num6) -
+               M14 * (M21 * num3 - M22 * num5 + M23 * num6);
     }
 
     public Vector3 ToYawPitchRoll()
@@ -202,9 +217,26 @@ public struct Matrix(
             return false;
         }
 
-        rotation = Quaternion.CreateFromRotationMatrix(new Matrix(M11 / scale.X, M12 / scale.X, M13 / scale.X, 0f,
-            M21 / scale.Y, M22 / scale.Y, M23 / scale.Y, 0f, M31 / scale.Z, M32 / scale.Z, M33 / scale.Z, 0f, 0f, 0f,
-            0f, 1f));
+        rotation = Quaternion.CreateFromRotationMatrix(
+            new Matrix(
+                M11 / scale.X,
+                M12 / scale.X,
+                M13 / scale.X,
+                0f,
+                M21 / scale.Y,
+                M22 / scale.Y,
+                M23 / scale.Y,
+                0f,
+                M31 / scale.Z,
+                M32 / scale.Z,
+                M33 / scale.Z,
+                0f,
+                0f,
+                0f,
+                0f,
+                1f
+            )
+        );
         return true;
     }
 
@@ -291,8 +323,14 @@ public struct Matrix(
         return result;
     }
 
-    public static Matrix CreateOrthographicOffCenter(float left, float right, float bottom, float top, float nearPlane,
-        float farPlane)
+    public static Matrix CreateOrthographicOffCenter(
+        float left,
+        float right,
+        float bottom,
+        float top,
+        float nearPlane,
+        float farPlane
+    )
     {
         var result = default(Matrix);
         result.M11 = 2f / (right - left);
@@ -329,8 +367,12 @@ public struct Matrix(
         return result;
     }
 
-    public static Matrix CreatePerspectiveFieldOfView(float fieldOfViewY, float aspectRatio, float nearPlane,
-        float farPlane)
+    public static Matrix CreatePerspectiveFieldOfView(
+        float fieldOfViewY,
+        float aspectRatio,
+        float nearPlane,
+        float farPlane
+    )
     {
         var num = 1f / MathUtils.Tan(fieldOfViewY * 0.5f);
         var result = default(Matrix);
@@ -346,8 +388,14 @@ public struct Matrix(
         return result;
     }
 
-    public static Matrix CreatePerspectiveOffCenter(float left, float right, float bottom, float top, float nearPlane,
-        float farPlane)
+    public static Matrix CreatePerspectiveOffCenter(
+        float left,
+        float right,
+        float bottom,
+        float top,
+        float nearPlane,
+        float farPlane
+    )
     {
         var result = default(Matrix);
         result.M11 = 2f * nearPlane / (right - left);
@@ -440,7 +488,8 @@ public struct Matrix(
 
     public static Matrix CreateShadow(Vector4 lightDirection, Plane plane)
     {
-        var num = plane.Normal.X * lightDirection.X + plane.Normal.Y * lightDirection.Y +
+        var num = plane.Normal.X * lightDirection.X +
+                  plane.Normal.Y * lightDirection.Y +
                   plane.Normal.Z * lightDirection.Z;
         var num2 = 0f - plane.Normal.X;
         var num3 = 0f - plane.Normal.Y;
@@ -468,8 +517,24 @@ public struct Matrix(
 
     public static Matrix Transpose(Matrix m)
     {
-        return new Matrix(m.M11, m.M21, m.M31, m.M41, m.M12, m.M22, m.M32, m.M42, m.M13, m.M23, m.M33, m.M43, m.M14,
-            m.M24, m.M34, m.M44);
+        return new Matrix(
+            m.M11,
+            m.M21,
+            m.M31,
+            m.M41,
+            m.M12,
+            m.M22,
+            m.M32,
+            m.M42,
+            m.M13,
+            m.M23,
+            m.M33,
+            m.M43,
+            m.M14,
+            m.M24,
+            m.M34,
+            m.M44
+        );
     }
 
     public static Matrix Invert(Matrix m)
@@ -652,11 +717,19 @@ public struct Matrix(
         (start + (end - start) * factor).StoreUnsafe(ref left);
     }
 
-    private static void MultiplyColumn(Vector128<float> column1, Vector128<float> column2,
-        Vector128<float> column3, Vector128<float> column4, Vector128<float> factors, ref float destination)
+    private static void MultiplyColumn(
+        Vector128<float> column1,
+        Vector128<float> column2,
+        Vector128<float> column3,
+        Vector128<float> column4,
+        Vector128<float> factors,
+        ref float destination
+    )
     {
-        var result = column1 * Vector128.Create(factors[0]) + column2 * Vector128.Create(factors[1]) +
-                     column3 * Vector128.Create(factors[2]) + column4 * Vector128.Create(factors[3]);
+        var result = column1 * Vector128.Create(factors[0]) +
+                     column2 * Vector128.Create(factors[1]) +
+                     column3 * Vector128.Create(factors[2]) +
+                     column4 * Vector128.Create(factors[3]);
         result.StoreUnsafe(ref destination);
     }
 
@@ -674,5 +747,4 @@ public struct Matrix(
     {
         (Vector128.LoadUnsafe(ref left) - Vector128.LoadUnsafe(ref right)).StoreUnsafe(ref left);
     }
-
 }

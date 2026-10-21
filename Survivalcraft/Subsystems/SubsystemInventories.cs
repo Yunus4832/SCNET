@@ -38,11 +38,17 @@ public class SubsystemInventories : Subsystem, IUpdateable
         }
 
         foreach (var client in CommonLib.Net.Clients.Values.Where(client =>
-                     client.IsConnected && client.State == ClientState.Playing && client != CommonLib.Net.Self))
+                     client.IsConnected && client.State == ClientState.Playing && client != CommonLib.Net.Self
+                 ))
         {
             var current = relevant.TryGetValue(client, out var ids) ? ids : [];
             var changes = interest.Entities.Synchronize(
-                client, EntityInterestGroup.Inventories, current, _inventories.ContainsKey, 1);
+                client,
+                EntityInterestGroup.Inventories,
+                current,
+                _inventories.ContainsKey,
+                1
+            );
             if (changes.Entered.Count == 0)
             {
                 continue;
@@ -58,8 +64,10 @@ public class SubsystemInventories : Subsystem, IUpdateable
             NetworkSender.SendTo(client, InventoryPackageBuilder.Capture(baseline));
             foreach (var inventory in baseline.Keys.Where(inventory => inventory.ActiveSlotIndex >= 0))
             {
-                NetworkSender.SendTo(client,
-                    new ComponentInventoryPackage(inventory.Id, inventory.ActiveSlotIndex));
+                NetworkSender.SendTo(
+                    client,
+                    new ComponentInventoryPackage(inventory.Id, inventory.ActiveSlotIndex)
+                );
             }
         }
     }
@@ -104,8 +112,12 @@ public class SubsystemInventories : Subsystem, IUpdateable
 
         if (CommonLib.WorkType == WorkType.Client && Log.MinimumLogType is LogType.Debug)
         {
-            NetworkSender.SendToServer(new ComponentInventoryPackage(id,
-                ComponentInventoryPackage.EventType.QueryErrorInventoryInfo));
+            NetworkSender.SendToServer(
+                new ComponentInventoryPackage(
+                    id,
+                    ComponentInventoryPackage.EventType.QueryErrorInventoryInfo
+                )
+            );
         }
 
         return false;
@@ -180,12 +192,12 @@ public class SubsystemInventories : Subsystem, IUpdateable
 
         if (CommonLib.WorkType == WorkType.Server)
         {
-            var batches = new Dictionary<Client, Dictionary<IInventory, List<int>>>(
-                ReferenceEqualityComparer.Instance);
+            var batches = new Dictionary<Client, Dictionary<IInventory, List<int>>>(ReferenceEqualityComparer.Instance);
             foreach (var (inventory, slots) in _syncItems)
             {
                 foreach (var client in GetObservers(inventory).Where(client =>
-                             client.IsConnected && client.State == ClientState.Playing))
+                             client.IsConnected && client.State == ClientState.Playing
+                         ))
                 {
                     if (!batches.TryGetValue(client, out var batch))
                     {

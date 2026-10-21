@@ -17,7 +17,9 @@ namespace TerritoryStoneMod;
 public sealed class TerritoryBlockBehavior : SubsystemBlockBehavior
 {
     private TerritorySubsystem _territories = null!;
+
     private SubsystemModelsRenderer? _models;
+
     private DrawText? _drawText;
 
     public override ResourceId[] HandledBlocks => [TerritoryBlock.Id];
@@ -43,26 +45,39 @@ public sealed class TerritoryBlockBehavior : SubsystemBlockBehavior
 
         RemoveDrawText();
         var territory = _territories.Store.Territories.FirstOrDefault(item =>
-            item.StonePoint == new Point3(x, y, z));
+            item.StonePoint == new Point3(x, y, z)
+        );
         if (territory == null || territory.Owner != player.PlayerData.PlayerGUID)
         {
-            player.ComponentGui.DisplaySmallMessage(LanguageManager.Get("TerritorySettings", "OwnerOnly"),
-                Color.Yellow, false, true);
+            player.ComponentGui.DisplaySmallMessage(
+                LanguageManager.Get("TerritorySettings", "OwnerOnly"),
+                Color.Yellow,
+                false,
+                true
+            );
             return true;
         }
 
         player.ComponentGui.ModalPanelWidget = player.ComponentGui.ModalPanelWidget == null
-            ? new TerritorySettingsWidget(_territories, territory, player,
-                () => player.ComponentGui.ModalPanelWidget = null)
+            ? new TerritorySettingsWidget(
+                _territories,
+                territory,
+                player,
+                () => player.ComponentGui.ModalPanelWidget = null
+            )
             : null;
         return true;
     }
 
     public override void OnHitByProjectile(CellFace cellFace, WorldItem worldItem)
     {
-        if (CommonLib.WorkType == WorkType.Client || _models == null || worldItem.Value == 0 ||
-            !TerritoryBlock.IsTerritoryValue(SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z),
-                CurrentModRuntime.Value!.RequireWorldCatalog()))
+        if (CommonLib.WorkType == WorkType.Client ||
+            _models == null ||
+            worldItem.Value == 0 ||
+            !TerritoryBlock.IsTerritoryValue(
+                SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z),
+                CurrentModRuntime.Value!.RequireWorldCatalog()
+            ))
         {
             return;
         }

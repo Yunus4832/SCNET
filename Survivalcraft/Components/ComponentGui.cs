@@ -218,7 +218,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         MessageContent content,
         Color color,
         bool blinking,
-        bool playNotificationSound)
+        bool playNotificationSound
+    )
     {
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
@@ -306,24 +307,26 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _movePadContainerWidget = guiWidget.Children.Find<ContainerWidget>("MovePadContainer")!;
         _lookPadContainerWidget = guiWidget.Children.Find<ContainerWidget>("LookPadContainer")!;
         _moveButtonsContainerWidget = guiWidget.Children.Find<ContainerWidget>("MoveButtonsContainer")!;
-        _hudSafeAreaButtons.AddRange([
-            (guiWidget.Children.Find<BitmapButtonWidget>("BackButton")!, "BackButton", "BackButtonFloating"),
-            (guiWidget.Children.Find<BitmapButtonWidget>("ClothingButton")!, "ClothingButton",
-                "ClothingButtonFloating"),
-            (guiWidget.Children.Find<BitmapButtonWidget>("InventoryButton")!, "InventoryButton",
-                "InventoryButtonFloating"),
-            (guiWidget.Children.Find<BitmapButtonWidget>("PlayerListButton")!, "PlayerList",
-                "PlayerListFloating"),
-            (guiWidget.Children.Find<BitmapButtonWidget>("MoreButton")!, "MoreButton", "MoreButtonFloating"),
-            (guiWidget.Children.Find<BitmapButtonWidget>("CreativeFlyButton")!, "CreativeFlyButton",
-                "CreativeFlyButtonFloating"),
-            (guiWidget.Children.Find<BitmapButtonWidget>("CrouchButton")!, "SneakButton",
-                "SneakButtonFloating"),
-            (guiWidget.Children.Find<BitmapButtonWidget>("MountButton")!, "MountButton", "MountButtonFloating"),
-            (guiWidget.Children.Find<BitmapButtonWidget>("EditItemButton")!, "EditItemButton",
-                "EditItemButtonFloating"),
-            (guiWidget.Children.Find<BitmapButtonWidget>("MsgButton")!, "Msg", "MsgFloating")
-        ]);
+        _hudSafeAreaButtons.AddRange(
+            [
+                (guiWidget.Children.Find<BitmapButtonWidget>("BackButton")!, "BackButton", "BackButtonFloating"),
+                (guiWidget.Children.Find<BitmapButtonWidget>("ClothingButton")!, "ClothingButton",
+                    "ClothingButtonFloating"),
+                (guiWidget.Children.Find<BitmapButtonWidget>("InventoryButton")!, "InventoryButton",
+                    "InventoryButtonFloating"),
+                (guiWidget.Children.Find<BitmapButtonWidget>("PlayerListButton")!, "PlayerList",
+                    "PlayerListFloating"),
+                (guiWidget.Children.Find<BitmapButtonWidget>("MoreButton")!, "MoreButton", "MoreButtonFloating"),
+                (guiWidget.Children.Find<BitmapButtonWidget>("CreativeFlyButton")!, "CreativeFlyButton",
+                    "CreativeFlyButtonFloating"),
+                (guiWidget.Children.Find<BitmapButtonWidget>("CrouchButton")!, "SneakButton",
+                    "SneakButtonFloating"),
+                (guiWidget.Children.Find<BitmapButtonWidget>("MountButton")!, "MountButton", "MountButtonFloating"),
+                (guiWidget.Children.Find<BitmapButtonWidget>("EditItemButton")!, "EditItemButton",
+                    "EditItemButtonFloating"),
+                (guiWidget.Children.Find<BitmapButtonWidget>("MsgButton")!, "Msg", "MsgFloating")
+            ]
+        );
         ShortInventoryWidget = guiWidget.Children.Find<ShortInventoryWidget>("ShortInventory")!;
         _largeMessageWidget = guiWidget.Children.Find<ContainerWidget>("LargeMessage")!;
         _messageWidget = guiWidget.Children.Find<ToastWidget>("Toast")!;
@@ -377,8 +380,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         var x = num2 - _sidePanelsFactor;
         if (MathUtils.Abs(x) > 0.01f)
         {
-            _sidePanelsFactor += MathUtils.Clamp(12f * MathUtils.PowSign(x, 0.75f) * num, 0f - MathUtils.Abs(x),
-                MathUtils.Abs(x));
+            _sidePanelsFactor += MathUtils.Clamp(
+                12f * MathUtils.PowSign(x, 0.75f) * num,
+                0f - MathUtils.Abs(x),
+                MathUtils.Abs(x)
+            );
         }
         else
         {
@@ -387,9 +393,15 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
         var safeAreaPadding = HudSafeAreaManager.GetEffectivePadding(ComponentPlayer.GameWidget.GlobalScale);
         _leftControlsContainerWidget.RenderTransform = Matrix.CreateTranslation(
-            (0f - (_leftControlsContainerWidget.ActualSize.X + safeAreaPadding)) * _sidePanelsFactor, 0f, 0f);
+            (0f - (_leftControlsContainerWidget.ActualSize.X + safeAreaPadding)) * _sidePanelsFactor,
+            0f,
+            0f
+        );
         _rightControlsContainerWidget.RenderTransform = Matrix.CreateTranslation(
-            (_rightControlsContainerWidget.ActualSize.X + safeAreaPadding) * _sidePanelsFactor, 0f, 0f);
+            (_rightControlsContainerWidget.ActualSize.X + safeAreaPadding) * _sidePanelsFactor,
+            0f,
+            0f
+        );
         _leftControlsContainerWidget.IsEnabled = AreTouchControlsVisible;
         _rightControlsContainerWidget.IsEnabled = AreTouchControlsVisible;
     }
@@ -470,8 +482,10 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             labelWidget2.Text = _message.SmallText;
             labelWidget.IsVisible = !string.IsNullOrEmpty(_message.LargeText);
             labelWidget2.IsVisible = !string.IsNullOrEmpty(_message.SmallText);
-            var num = (float)MathUtils.Min(MathUtils.Saturate(2.0 * (realTime - _message.StartTime)),
-                MathUtils.Saturate(2.0 * (_message.StartTime + _message.Duration - realTime)));
+            var num = (float)MathUtils.Min(
+                MathUtils.Saturate(2.0 * (realTime - _message.StartTime)),
+                MathUtils.Saturate(2.0 * (_message.StartTime + _message.Duration - realTime))
+            );
             labelWidget.Color = new Color(num, num, num, num);
             labelWidget2.Color = new Color(num, num, num, num);
             if (Time.RealTime > _message.StartTime + _message.Duration)
@@ -551,7 +565,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             {
                 _lastMountableCreatureSearchTime = Time.FrameStartTime;
                 _lastResolvedContextAction = CurrentModRuntime.Value?.ContextActions.Resolve(
-                    new PlayerContextActionQueryContext(ComponentPlayer, this));
+                    new PlayerContextActionQueryContext(ComponentPlayer, this)
+                );
                 if (_lastResolvedContextAction != null)
                 {
                     _crouchButtonWidget.IsVisible = false;
@@ -577,8 +592,10 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             }
         }
 
-        if (!ComponentPlayer.IsAddedToProject || ComponentPlayer.ComponentHealth.Health == 0f ||
-            componentSleep.IsSleeping || ComponentPlayer.ComponentSickness.IsPuking)
+        if (!ComponentPlayer.IsAddedToProject ||
+            ComponentPlayer.ComponentHealth.Health == 0f ||
+            componentSleep.IsSleeping ||
+            ComponentPlayer.ComponentSickness.IsPuking)
         {
             ModalPanelWidget = null;
         }
@@ -711,7 +728,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             {
                 ModalPanelWidget = ComponentPlayer.ComponentMiner.Inventory is ComponentCreativeInventory
                     ? new CreativeInventoryWidget(ComponentPlayer.Entity)
-                    : new FullInventoryWidget(ComponentPlayer.ComponentMiner.Inventory,
+                    : new FullInventoryWidget(
+                        ComponentPlayer.ComponentMiner.Inventory,
                         ComponentPlayer.Entity.FindComponent<ComponentCraftingTable>(true)!
                     );
             }
@@ -747,8 +765,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             {
                 try
                 {
-                    _lastResolvedContextAction.Execute(
-                        new PlayerContextActionExecutionContext(ComponentPlayer, this));
+                    _lastResolvedContextAction.Execute(new PlayerContextActionExecutionContext(ComponentPlayer, this));
                 }
                 catch (Exception exception)
                 {
@@ -794,7 +811,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 var blockBehaviors =
                     _subsystemBlockBehaviors.GetBlockBehaviors(contents);
                 for (var i = 0;
-                     i < blockBehaviors.Length && !blockBehaviors[i]
+                     i < blockBehaviors.Length &&
+                     !blockBehaviors[i]
                          .OnEditBlock(value.X, value.Y, value.Z, cellValue, ComponentPlayer);
                      i++)
                 {
@@ -815,7 +833,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 {
                     var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
                     for (var i = 0;
-                         i < blockBehaviors.Length && !blockBehaviors[i]
+                         i < blockBehaviors.Length &&
+                         !blockBehaviors[i]
                              .OnEditInventoryItem(inventory, activeSlotIndex, ComponentPlayer);
                          i++)
                     {
@@ -825,7 +844,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         }
 
         if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
-            (_creativeFlyButtonWidget.IsClicked || playerInput.ToggleCreativeFly) && componentRider.Mount == null)
+            (_creativeFlyButtonWidget.IsClicked || playerInput.ToggleCreativeFly) &&
+            componentRider.Mount == null)
         {
             var isCreativeFlyEnabled = ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled;
             ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled = !isCreativeFlyEnabled;
@@ -844,14 +864,23 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
             if (CommonLib.WorkType == WorkType.Server)
             {
-                NetworkSender.SendToObservers(ComponentPlayer.Entity,
-                    PlayerPackageBuilder.Capture(ComponentPlayer, ComponentPlayerPackage.PlayerAction.CreativeFlyChange),
-                    ComponentPlayer.PlayerData.Client);
+                NetworkSender.SendToObservers(
+                    ComponentPlayer.Entity,
+                    PlayerPackageBuilder.Capture(
+                        ComponentPlayer,
+                        ComponentPlayerPackage.PlayerAction.CreativeFlyChange
+                    ),
+                    ComponentPlayer.PlayerData.Client
+                );
             }
             else if (CommonLib.WorkType == WorkType.Client)
             {
-                NetworkSender.SendToServer(PlayerPackageBuilder.Capture(ComponentPlayer,
-                    ComponentPlayerPackage.PlayerAction.CreativeFlyChange));
+                NetworkSender.SendToServer(
+                    PlayerPackageBuilder.Capture(
+                        ComponentPlayer,
+                        ComponentPlayerPackage.PlayerAction.CreativeFlyChange
+                    )
+                );
             }
         }
 
@@ -865,7 +894,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         {
             ScreenCaptureManager.CapturePhoto(
                 delegate { DisplaySmallMessage(LanguageManager.Get(TypeName, 13), Color.White, false, false); },
-                delegate { DisplaySmallMessage(LanguageManager.Get(TypeName, 14), Color.White, false, false); });
+                delegate { DisplaySmallMessage(LanguageManager.Get(TypeName, 14), Color.White, false, false); }
+            );
         }
 
         if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
@@ -873,7 +903,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         {
             CommandGateway.Submit(
                 ComponentPlayer.PlayerData,
-                new TriggerPlayerLightningCommand());
+                new TriggerPlayerLightningCommand()
+            );
         }
 
         if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
@@ -881,8 +912,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         {
             CommandGateway.Submit(
                 ComponentPlayer.PlayerData,
-                new SetPrecipitationCommand(
-                    !_subsystemWeather.IsPrecipitationStarted));
+                new SetPrecipitationCommand(!_subsystemWeather.IsPrecipitationStarted)
+            );
         }
 
         if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
@@ -890,7 +921,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         {
             CommandGateway.Submit(
                 ComponentPlayer.PlayerData,
-                new SetFogCommand(!_subsystemWeather.IsFogStarted));
+                new SetFogCommand(!_subsystemWeather.IsFogStarted)
+            );
         }
 
         if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
@@ -898,7 +930,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         {
             CommandGateway.Submit(
                 ComponentPlayer.PlayerData,
-                new AdvanceWorldTimeCommand());
+                new AdvanceWorldTimeCommand()
+            );
         }
 
         if (ModalPanelWidget != null)

@@ -43,7 +43,8 @@ public interface IModCommands
 
     IDisposable Register<TCommand>(
         ResourceId id,
-        CommandDefinition<TCommand> definition)
+        CommandDefinition<TCommand> definition
+    )
         where TCommand : IGameCommand;
 }
 
@@ -51,14 +52,16 @@ public interface IModCommandPermissions
 {
     IDisposable Register(
         ResourceId id,
-        CommandPermissionDefinition definition);
+        CommandPermissionDefinition definition
+    );
 }
 
 public interface IModCommandAdapters
 {
     IDisposable Register<TBinding>(
         ResourceId id,
-        TBinding binding)
+        TBinding binding
+    )
         where TBinding : class, ICommandAdapterBinding;
 
     IReadOnlyList<RegisteredCommandAdapter<TBinding>> Get<TBinding>()

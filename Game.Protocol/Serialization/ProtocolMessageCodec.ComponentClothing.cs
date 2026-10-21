@@ -26,8 +26,11 @@ public static partial class ProtocolMessageCodec
     {
         var type = reader.ReadEnum<ComponentClothingPackage.DataType>();
         if (!Enum.IsDefined(type)) { throw new InvalidDataException("Unknown clothing message mode."); }
+
         var skin = reader.ReadString();
-        var data = type is ComponentClothingPackage.DataType.ReplySkin or ComponentClothingPackage.DataType.WhoHasReply ? reader.ReadBuff() : [];
+        var data = type is ComponentClothingPackage.DataType.ReplySkin or ComponentClothingPackage.DataType.WhoHasReply
+            ? reader.ReadBuff()
+            : [];
         return new ComponentClothingPackage(skin, type) { SkinData = data };
     }
 }

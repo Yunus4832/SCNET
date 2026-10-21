@@ -30,7 +30,8 @@ public sealed class TerrainChunkContentAuthority(Terrain terrain) : IChunkConten
             coords,
             captured.Revision + 1,
             captured.Cells.AsSpan(0, AuthorityChunkSnapshot.CellCount).ToArray(),
-            captured.Shafts.AsSpan(0, AuthorityChunkSnapshot.ShaftCount).ToArray());
+            captured.Shafts.AsSpan(0, AuthorityChunkSnapshot.ShaftCount).ToArray()
+        );
         return true;
     }
 

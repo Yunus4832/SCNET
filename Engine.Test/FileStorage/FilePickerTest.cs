@@ -21,10 +21,12 @@ public sealed class FilePickerTest
         using var cancelled = new CancellationTokenSource();
         cancelled.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            FilePicker.PickFilesAsync(new FilePickerRequest([]), cancelled.Token));
+            FilePicker.PickFilesAsync(new FilePickerRequest([]), cancelled.Token)
+        );
         implementation.ThrowOnNextRequest = true;
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            FilePicker.PickSaveTargetAsync(new FileSaveRequest("failed.scpkg")));
+            FilePicker.PickSaveTargetAsync(new FileSaveRequest("failed.scpkg"))
+        );
 
         Assert.Single(single);
         Assert.Equal(2, multiple.Count);
@@ -35,28 +37,43 @@ public sealed class FilePickerTest
     private sealed class TestFilePicker : IFilePicker
     {
         public int RequestCount { get; private set; }
+
         public bool ThrowOnNextRequest { get; set; }
 
-        public Task<IReadOnlyList<PickedFile>> PickFilesAsync(FilePickerRequest request,
-            CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<PickedFile>> PickFilesAsync(
+            FilePickerRequest request,
+            CancellationToken cancellationToken = default
+        )
         {
             RequestCount++;
             cancellationToken.ThrowIfCancellationRequested();
             MaybeThrow();
             var count = request.AllowMultiple ? 2 : 1;
-            return Task.FromResult<IReadOnlyList<PickedFile>>(Enumerable.Range(1, count)
-                .Select(index => new PickedFile($"package-{index}.scpkg", null,
-                    _ => Task.FromResult<Stream>(new MemoryStream([checked((byte)index)])))).ToArray());
+            return Task.FromResult<IReadOnlyList<PickedFile>>(
+                Enumerable.Range(1, count)
+                    .Select(index => new PickedFile(
+                            $"package-{index}.scpkg",
+                            null,
+                            _ => Task.FromResult<Stream>(new MemoryStream([checked((byte)index)]))
+                        )
+                    ).ToArray()
+            );
         }
 
-        public Task<PickedSaveTarget?> PickSaveTargetAsync(FileSaveRequest request,
-            CancellationToken cancellationToken = default)
+        public Task<PickedSaveTarget?> PickSaveTargetAsync(
+            FileSaveRequest request,
+            CancellationToken cancellationToken = default
+        )
         {
             RequestCount++;
             cancellationToken.ThrowIfCancellationRequested();
             MaybeThrow();
-            return Task.FromResult<PickedSaveTarget?>(new PickedSaveTarget(request.SuggestedFileName,
-                _ => Task.FromResult<Stream>(new MemoryStream())));
+            return Task.FromResult<PickedSaveTarget?>(
+                new PickedSaveTarget(
+                    request.SuggestedFileName,
+                    _ => Task.FromResult<Stream>(new MemoryStream())
+                )
+            );
         }
 
         private void MaybeThrow()

@@ -20,17 +20,9 @@ public static partial class Window
 
     public static Point2 ScreenSize => new(View.Size.X, View.Size.Y);
 
-    public static WindowMode WindowMode
-    {
-        get => WindowMode.Fullscreen;
-        set { }
-    }
+    public static WindowMode WindowMode { get => WindowMode.Fullscreen; set { } }
 
-    public static Point2 Position
-    {
-        get => Point2.Zero;
-        set { }
-    }
+    public static Point2 Position { get => Point2.Zero; set { } }
 
     public static Point2 Size
     {
@@ -60,7 +52,8 @@ public static partial class Window
         int width,
         int height,
         WindowMode windowMode,
-        string title)
+        string title
+    )
     {
         Log.Information($"Android.OS.Build.Display: {Build.Display}");
         Log.Information($"Android.OS.Build.Device: {Build.Device}");
@@ -204,5 +197,4 @@ public static partial class Window
 
         return result;
     }
-
 }

@@ -12,7 +12,9 @@ public sealed class ServerDirectoryManager
     public static ServerDirectoryManager Current { get; private set; } = null!;
 
     private readonly Lock _gate = new();
+
     private readonly Action<ServerDirectorySettings> _save;
+
     private ServerDirectorySettings _state;
 
     public static void Initialize()
@@ -59,12 +61,14 @@ public sealed class ServerDirectoryManager
             var entry = existing is null
                 ? CreateServer(name, normalizedAddress, LocalServerTag.MyServer)
                 : existing with { Name = NormalizeName(name), Tags = existing.Tags | LocalServerTag.MyServer };
-            Commit(_state with
-            {
-                LocalServers = existing is null
-                    ? _state.LocalServers.Append(entry).ToArray()
-                    : _state.LocalServers.Select(item => item.Id == existing.Id ? entry : item).ToArray()
-            });
+            Commit(
+                _state with
+                {
+                    LocalServers = existing is null
+                        ? _state.LocalServers.Append(entry).ToArray()
+                        : _state.LocalServers.Select(item => item.Id == existing.Id ? entry : item).ToArray()
+                }
+            );
             return entry;
         }
     }
@@ -88,13 +92,18 @@ public sealed class ServerDirectoryManager
         lock (_gate)
         {
             EnsureExists(_state.LocalServers, id);
-            Commit(_state with
-            {
-                LocalServers = Reorder(_state.LocalServers.Select(entry => entry.Id == id
-                        ? entry with { Tags = entry.Tags & ~tag }
-                        : entry)
-                    .Where(entry => entry.Tags != LocalServerTag.None))
-            });
+            Commit(
+                _state with
+                {
+                    LocalServers = Reorder(
+                        _state.LocalServers.Select(entry => entry.Id == id
+                                ? entry with { Tags = entry.Tags & ~tag }
+                                : entry
+                            )
+                            .Where(entry => entry.Tags != LocalServerTag.None)
+                    )
+                }
+            );
         }
     }
 
@@ -112,12 +121,14 @@ public sealed class ServerDirectoryManager
             var entry = existing is null
                 ? CreateServer(name, normalizedAddress, LocalServerTag.Favorite)
                 : existing with { Tags = existing.Tags | LocalServerTag.Favorite };
-            Commit(_state with
-            {
-                LocalServers = existing is null
-                    ? _state.LocalServers.Append(entry).ToArray()
-                    : _state.LocalServers.Select(item => item.Id == existing.Id ? entry : item).ToArray()
-            });
+            Commit(
+                _state with
+                {
+                    LocalServers = existing is null
+                        ? _state.LocalServers.Append(entry).ToArray()
+                        : _state.LocalServers.Select(item => item.Id == existing.Id ? entry : item).ToArray()
+                }
+            );
             return entry;
         }
     }
@@ -144,13 +155,18 @@ public sealed class ServerDirectoryManager
                 .Skip(MaximumRecentServers)
                 .Select(entry => entry.Id)
                 .ToHashSet();
-            Commit(_state with
-            {
-                LocalServers = Reorder(entries.Select(entry => expired.Contains(entry.Id)
-                        ? entry with { Tags = entry.Tags & ~LocalServerTag.Recent }
-                        : entry)
-                    .Where(entry => entry.Tags != LocalServerTag.None))
-            });
+            Commit(
+                _state with
+                {
+                    LocalServers = Reorder(
+                        entries.Select(entry => expired.Contains(entry.Id)
+                                ? entry with { Tags = entry.Tags & ~LocalServerTag.Recent }
+                                : entry
+                            )
+                            .Where(entry => entry.Tags != LocalServerTag.None)
+                    )
+                }
+            );
         }
     }
 
@@ -183,11 +199,14 @@ public sealed class ServerDirectoryManager
                 throw new ArgumentException("A server source with this URL is already installed.", nameof(source));
             }
 
-            Commit(_state with
-            {
-                InstalledSources = _state.InstalledSources.Select(item => item.Id == normalized.Id ? normalized : item)
-                    .ToArray()
-            });
+            Commit(
+                _state with
+                {
+                    InstalledSources = _state.InstalledSources
+                        .Select(item => item.Id == normalized.Id ? normalized : item)
+                        .ToArray()
+                }
+            );
         }
     }
 
@@ -196,10 +215,12 @@ public sealed class ServerDirectoryManager
         lock (_gate)
         {
             EnsureInstalledSourceExists(id);
-            Commit(_state with
-            {
-                InstalledSources = ReorderInstalledSources(_state.InstalledSources.Where(item => item.Id != id))
-            });
+            Commit(
+                _state with
+                {
+                    InstalledSources = ReorderInstalledSources(_state.InstalledSources.Where(item => item.Id != id))
+                }
+            );
         }
     }
 
@@ -208,18 +229,23 @@ public sealed class ServerDirectoryManager
         ArgumentNullException.ThrowIfNull(ids);
         lock (_gate)
         {
-            if (ids.Count != _state.InstalledSources.Count || ids.Distinct().Count() != ids.Count ||
+            if (ids.Count != _state.InstalledSources.Count ||
+                ids.Distinct().Count() != ids.Count ||
                 ids.Any(id => _state.InstalledSources.All(item => item.Id != id)))
             {
-                throw new ArgumentException("Installed source order must contain every source exactly once.",
-                    nameof(ids));
+                throw new ArgumentException(
+                    "Installed source order must contain every source exactly once.",
+                    nameof(ids)
+                );
             }
 
             var byId = _state.InstalledSources.ToDictionary(item => item.Id);
-            Commit(_state with
-            {
-                InstalledSources = ids.Select((id, order) => byId[id] with { Order = order }).ToArray()
-            });
+            Commit(
+                _state with
+                {
+                    InstalledSources = ids.Select((id, order) => byId[id] with { Order = order }).ToArray()
+                }
+            );
         }
     }
 
@@ -275,7 +301,8 @@ public sealed class ServerDirectoryManager
     }
 
     private static IReadOnlyList<InstalledServerSource> NormalizeInstalledSources(
-        IEnumerable<InstalledServerSource> sources)
+        IEnumerable<InstalledServerSource> sources
+    )
     {
         ArgumentNullException.ThrowIfNull(sources);
         var ids = new HashSet<Guid>();
@@ -304,11 +331,13 @@ public sealed class ServerDirectoryManager
 
         var name = NormalizeName(source.Name);
         if (!Uri.TryCreate(source.ApiUrl.Trim(), UriKind.Absolute, out var uri) ||
-            uri.Scheme is not ("http" or "https") || !string.IsNullOrEmpty(uri.UserInfo) ||
+            uri.Scheme is not ("http" or "https") ||
+            !string.IsNullOrEmpty(uri.UserInfo) ||
             !string.IsNullOrEmpty(uri.Fragment))
         {
             throw new ArgumentException(
-                "Server source URL must be an absolute HTTP(S) URL without credentials or fragment.");
+                "Server source URL must be an absolute HTTP(S) URL without credentials or fragment."
+            );
         }
 
         return source with
@@ -351,7 +380,8 @@ public sealed class ServerDirectoryManager
     }
 
     private static IReadOnlyList<InstalledServerSource> ReorderInstalledSources(
-        IEnumerable<InstalledServerSource> sources)
+        IEnumerable<InstalledServerSource> sources
+    )
     {
         return sources.Select((source, order) => source with { Order = order }).ToArray();
     }
@@ -431,56 +461,77 @@ public sealed class ServerDirectoryManager
     public static XElement Write(ServerDirectorySettings state)
     {
         var normalized = Normalize(state);
-        return new XElement("ServerDirectory",
+        return new XElement(
+            "ServerDirectory",
             WriteServers("LocalServers", normalized.LocalServers),
-            new XElement("InstalledSources", normalized.InstalledSources.Select(source =>
-                new XElement("Source",
-                    new XAttribute("Id", source.Id),
-                    source.RegistrationId is null
-                        ? null
-                        : new XAttribute("RegistrationId", source.RegistrationId),
-                    new XAttribute("Name", source.Name),
-                    new XAttribute("ApiUrl", source.ApiUrl),
-                    new XAttribute("IsEnabled", source.IsEnabled),
-                    new XAttribute("Order", source.Order)))));
+            new XElement(
+                "InstalledSources",
+                normalized.InstalledSources.Select(source =>
+                    new XElement(
+                        "Source",
+                        new XAttribute("Id", source.Id),
+                        source.RegistrationId is null
+                            ? null
+                            : new XAttribute("RegistrationId", source.RegistrationId),
+                        new XAttribute("Name", source.Name),
+                        new XAttribute("ApiUrl", source.ApiUrl),
+                        new XAttribute("IsEnabled", source.IsEnabled),
+                        new XAttribute("Order", source.Order)
+                    )
+                )
+            )
+        );
     }
 
     private static IReadOnlyList<StoredServerEntry> ReadServers(XElement? container)
     {
         return container?.Elements("Server").Select(element => new StoredServerEntry
-        {
-            Id = Guid.Parse(Required(element, "Id")),
-            Name = Required(element, "Name"),
-            Address = Required(element, "Address"),
-            Tags = Enum.Parse<LocalServerTag>(Required(element, "Tags")),
-            Order = int.Parse(Required(element, "Order"), CultureInfo.InvariantCulture),
-            UpdatedAt = DateTimeOffset.Parse(Required(element, "UpdatedAt"), CultureInfo.InvariantCulture,
-                DateTimeStyles.RoundtripKind)
-        }).ToArray() ?? [];
+                   {
+                       Id = Guid.Parse(Required(element, "Id")),
+                       Name = Required(element, "Name"),
+                       Address = Required(element, "Address"),
+                       Tags = Enum.Parse<LocalServerTag>(Required(element, "Tags")),
+                       Order = int.Parse(Required(element, "Order"), CultureInfo.InvariantCulture),
+                       UpdatedAt = DateTimeOffset.Parse(
+                           Required(element, "UpdatedAt"),
+                           CultureInfo.InvariantCulture,
+                           DateTimeStyles.RoundtripKind
+                       )
+                   }
+               ).ToArray() ??
+               [];
     }
 
     private static IReadOnlyList<InstalledServerSource> ReadInstalledSources(XElement? container)
     {
         return container?.Elements("Source").Select(element => new InstalledServerSource
-        {
-            Id = Guid.Parse(Required(element, "Id")),
-            RegistrationId = element.Attribute("RegistrationId")?.Value,
-            Name = Required(element, "Name"),
-            ApiUrl = Required(element, "ApiUrl"),
-            IsEnabled = bool.Parse(Required(element, "IsEnabled")),
-            Order = int.Parse(Required(element, "Order"), CultureInfo.InvariantCulture)
-        }).ToArray() ?? [];
+                   {
+                       Id = Guid.Parse(Required(element, "Id")),
+                       RegistrationId = element.Attribute("RegistrationId")?.Value,
+                       Name = Required(element, "Name"),
+                       ApiUrl = Required(element, "ApiUrl"),
+                       IsEnabled = bool.Parse(Required(element, "IsEnabled")),
+                       Order = int.Parse(Required(element, "Order"), CultureInfo.InvariantCulture)
+                   }
+               ).ToArray() ??
+               [];
     }
 
     private static XElement WriteServers(string name, IEnumerable<StoredServerEntry> servers)
     {
-        return new XElement(name, servers.Select(server => new XElement("Server",
-            new XAttribute("Id", server.Id),
-            new XAttribute("Name", server.Name),
-            new XAttribute("Address", server.Address),
-            new XAttribute("Tags", server.Tags),
-            new XAttribute("Order", server.Order),
-            new XAttribute("UpdatedAt", server.UpdatedAt.ToString("O", CultureInfo.InvariantCulture)))));
+        return new XElement(
+            name,
+            servers.Select(server => new XElement(
+                    "Server",
+                    new XAttribute("Id", server.Id),
+                    new XAttribute("Name", server.Name),
+                    new XAttribute("Address", server.Address),
+                    new XAttribute("Tags", server.Tags),
+                    new XAttribute("Order", server.Order),
+                    new XAttribute("UpdatedAt", server.UpdatedAt.ToString("O", CultureInfo.InvariantCulture))
+                )
+            )
+        );
     }
 
     private static string Required(XElement element, string name)

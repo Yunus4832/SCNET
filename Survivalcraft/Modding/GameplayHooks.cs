@@ -40,29 +40,50 @@ public interface IModGameplayHooks
 
     IDisposable OnPistonBlockMoving(Action<PistonBlockMovingContext> handler, int priority = 0);
 
-    IDisposable OnMovingBlockSetTerrainCollision(Action<MovingBlockSetTerrainCollisionContext> handler, int priority = 0);
+    IDisposable OnMovingBlockSetTerrainCollision(
+        Action<MovingBlockSetTerrainCollisionContext> handler,
+        int priority = 0
+    );
 }
 
 public sealed class GameplayHooks
 {
     private readonly ModHook<CreatureInjuringContext> _creatureInjuring = new();
+
     private readonly ModHook<MinerDiggingContext> _minerDigging = new();
+
     private readonly ModHook<BlockPlacingContext> _blockPlacing = new();
+
     private readonly ModHook<TerrainCellChangingContext> _terrainCellChanging = new();
+
     private readonly ModHook<EntityAddedContext> _entityAdded = new();
+
     private readonly ModHook<WorldUpdatingContext> _worldUpdating = new();
+
     private readonly ModHook<TerrainChunkGeneratedContext> _terrainChunkGenerated = new();
+
     private readonly ModHook<TerrainChunkInitializedContext> _terrainChunkInitialized = new();
+
     private readonly ModHook<TerrainChunkDiscardingContext> _terrainChunkDiscarding = new();
+
     private readonly ModHook<PlayerDyingContext> _playerDying = new();
+
     private readonly ModHook<PlayerSpawnedContext> _playerSpawned = new();
+
     private readonly ModHook<PlayerRespawnRequestedContext> _playerRespawnRequested = new();
+
     private readonly ModHook<CreatureTargetScoringContext> _creatureTargetScoring = new();
+
     private readonly ModHook<CellIgnitingContext> _cellIgniting = new();
+
     private readonly ModHook<ExplosionPointProcessingContext> _explosionPointProcessing = new();
+
     private readonly ModHook<TerrainCollisionBoxesContext> _terrainCollisionBoxes = new();
+
     private readonly ModHook<MountingContext> _mounting = new();
+
     private readonly ModHook<PistonBlockMovingContext> _pistonBlockMoving = new();
+
     private readonly ModHook<MovingBlockSetTerrainCollisionContext> _movingBlockSetTerrainCollision = new();
 
     internal bool HasExplosionPointProcessingHandlers => _explosionPointProcessing.HasHandlers;
@@ -105,7 +126,8 @@ public sealed class GameplayHooks
 
     public void Invoke(PistonBlockMovingContext context) => _pistonBlockMoving.Invoke(context);
 
-    public void Invoke(MovingBlockSetTerrainCollisionContext context) => _movingBlockSetTerrainCollision.Invoke(context);
+    public void Invoke(MovingBlockSetTerrainCollisionContext context) =>
+        _movingBlockSetTerrainCollision.Invoke(context);
 
     internal IModGameplayHooks ForOwner(ModId owner) => new OwnedGameplayHooks(owner, this);
 
@@ -200,7 +222,10 @@ public sealed class GameplayHooks
         public IDisposable OnCellIgniting(Action<CellIgnitingContext> handler, int priority = 0) =>
             hooks._cellIgniting.Register(owner, handler, priority);
 
-        public IDisposable OnExplosionPointProcessing(Action<ExplosionPointProcessingContext> handler, int priority = 0) =>
+        public IDisposable OnExplosionPointProcessing(
+            Action<ExplosionPointProcessingContext> handler,
+            int priority = 0
+        ) =>
             hooks._explosionPointProcessing.Register(owner, handler, priority);
 
         public IDisposable OnTerrainCollisionBoxes(Action<TerrainCollisionBoxesContext> handler, int priority = 0) =>
@@ -212,7 +237,10 @@ public sealed class GameplayHooks
         public IDisposable OnPistonBlockMoving(Action<PistonBlockMovingContext> handler, int priority = 0) =>
             hooks._pistonBlockMoving.Register(owner, handler, priority);
 
-        public IDisposable OnMovingBlockSetTerrainCollision(Action<MovingBlockSetTerrainCollisionContext> handler, int priority = 0) =>
+        public IDisposable OnMovingBlockSetTerrainCollision(
+            Action<MovingBlockSetTerrainCollisionContext> handler,
+            int priority = 0
+        ) =>
             hooks._movingBlockSetTerrainCollision.Register(owner, handler, priority);
     }
 }
@@ -220,8 +248,11 @@ public sealed class GameplayHooks
 internal sealed class ModHook<TContext>
 {
     private readonly List<Registration> _registrations = [];
+
     private Registration[] _handlers = [];
+
     private bool _isFrozen;
+
     private long _sequence;
 
     public bool HasHandlers => _handlers.Length > 0;
@@ -285,13 +316,17 @@ internal sealed class ModHook<TContext>
         ModId owner,
         Action<TContext> handler,
         int priority,
-        long sequence) : IDisposable
+        long sequence
+    ) : IDisposable
     {
         private ModHook<TContext>? _hook = hook;
 
         public ModId Owner { get; } = owner;
+
         public Action<TContext> Handler { get; } = handler;
+
         public int Priority { get; } = priority;
+
         public long Sequence { get; } = sequence;
 
         public void Dispose() => Interlocked.Exchange(ref _hook, null)?.Remove(this);
@@ -303,13 +338,19 @@ public sealed class CreatureInjuringContext(
     float amount,
     ComponentCreature? attacker,
     bool ignoreInvulnerability,
-    string cause)
+    string cause
+)
 {
     public ComponentHealth Health { get; } = health;
+
     public float Amount { get; set; } = amount;
+
     public ComponentCreature? Attacker { get; set; } = attacker;
+
     public bool IgnoreInvulnerability { get; set; } = ignoreInvulnerability;
+
     public string Cause { get; set; } = cause;
+
     public bool Cancel { get; set; }
 }
 
@@ -317,21 +358,30 @@ public sealed class MinerDiggingContext(
     ComponentMiner miner,
     TerrainRaycastResult raycastResult,
     int cellValue,
-    int toolValue)
+    int toolValue
+)
 {
     public ComponentMiner Miner { get; } = miner;
+
     public TerrainRaycastResult RaycastResult { get; } = raycastResult;
+
     public int CellValue { get; } = cellValue;
+
     public int ToolValue { get; } = toolValue;
+
     public float DigTimeMultiplier { get; set; } = 1f;
+
     public bool Cancel { get; set; }
 }
 
 public sealed class BlockPlacingContext(ComponentMiner miner, TerrainRaycastResult raycastResult, int value)
 {
     public ComponentMiner Miner { get; } = miner;
+
     public TerrainRaycastResult RaycastResult { get; } = raycastResult;
+
     public int Value { get; set; } = value;
+
     public bool Cancel { get; set; }
 }
 
@@ -342,27 +392,37 @@ public sealed class TerrainCellChangingContext(
     int z,
     int oldValue,
     int newValue,
-    ComponentMiner? miner)
+    ComponentMiner? miner
+)
 {
     public SubsystemTerrain Terrain { get; } = terrain;
+
     public int X { get; } = x;
+
     public int Y { get; } = y;
+
     public int Z { get; } = z;
+
     public int OldValue { get; } = oldValue;
+
     public int NewValue { get; set; } = newValue;
+
     public ComponentMiner? Miner { get; } = miner;
+
     public bool Cancel { get; set; }
 }
 
 public sealed class EntityAddedContext(Project project, Entity entity)
 {
     public Project Project { get; } = project;
+
     public Entity Entity { get; } = entity;
 }
 
 public sealed class WorldUpdatingContext(Project project, float deltaTime)
 {
     public Project Project { get; } = project;
+
     public float DeltaTime { get; } = deltaTime;
 }
 
@@ -382,7 +442,8 @@ public sealed class PlayerDyingContext(PlayerData player, ComponentPlayer compon
 public sealed class PlayerSpawnedContext(
     PlayerData player,
     ComponentPlayer componentPlayer,
-    PlayerData.SpawnMode spawnMode)
+    PlayerData.SpawnMode spawnMode
+)
 {
     public PlayerData Player { get; } = player;
 
@@ -393,16 +454,20 @@ public sealed class PlayerSpawnedContext(
 
 public enum PlayerRespawnRequestKind
 {
-    StandardRespawn,
-    CruelGameOver,
-    RespawnForbidden,
-    AdventureRestart
+    StandardRespawn = 0,
+
+    CruelGameOver = 1,
+
+    RespawnForbidden = 2,
+
+    AdventureRestart = 3
 }
 
 public sealed class PlayerRespawnRequestedContext(
     PlayerData player,
     ComponentPlayer componentPlayer,
-    PlayerRespawnRequestKind requestKind)
+    PlayerRespawnRequestKind requestKind
+)
 {
     public PlayerData Player { get; } = player;
 
@@ -415,17 +480,21 @@ public sealed class PlayerRespawnRequestedContext(
 
 public enum CreatureTargetingKind
 {
-    FindPlayer,
-    AvoidPlayer,
-    Chase,
-    Stare
+    FindPlayer = 0,
+
+    AvoidPlayer = 1,
+
+    Chase = 2,
+
+    Stare = 3
 }
 
 public sealed class CreatureTargetScoringContext(
     ComponentCreature seeker,
     ComponentCreature target,
     CreatureTargetingKind targetingKind,
-    float score)
+    float score
+)
 {
     public ComponentCreature Seeker { get; } = seeker;
 

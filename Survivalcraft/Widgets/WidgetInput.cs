@@ -104,17 +104,9 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         }
     }
 
-    public bool UseSoftMouseCursor
-    {
-        get => _useSoftMouseCursor;
-        set => _useSoftMouseCursor = value;
-    }
+    public bool UseSoftMouseCursor { get => _useSoftMouseCursor; set => _useSoftMouseCursor = value; }
 
-    public bool IsMouseCursorVisible
-    {
-        get => (Devices & WidgetInputDevice.Mouse) != 0 && field;
-        set;
-    } = true;
+    public bool IsMouseCursorVisible { get => (Devices & WidgetInputDevice.Mouse) != 0 && field; set; } = true;
 
     public Vector2? MousePosition
     {
@@ -159,8 +151,10 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
                     vector2 = new Vector2(Window.Size);
                 }
 
-                _softMouseCursorPosition = new Vector2(MathUtils.Clamp(value.Value.X, vector.X, vector2.X - 1f),
-                    MathUtils.Clamp(value.Value.Y, vector.Y, vector2.Y - 1f));
+                _softMouseCursorPosition = new Vector2(
+                    MathUtils.Clamp(value.Value.X, vector.X, vector2.X - 1f),
+                    MathUtils.Clamp(value.Value.Y, vector.Y, vector2.Y - 1f)
+                );
             }
             else
             {
@@ -525,7 +519,9 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
 
     public void Draw(Widget.DrawContext dc)
     {
-        if (IsMouseCursorVisible && UseSoftMouseCursor && MousePosition.HasValue &&
+        if (IsMouseCursorVisible &&
+            UseSoftMouseCursor &&
+            MousePosition.HasValue &&
             TryGetCursorSubtexture(_mouseDragInProgress, _mouseDownPoint.HasValue, out var mouseCursor))
         {
             DrawCursor(dc, mouseCursor, MousePosition.Value);
@@ -647,7 +643,8 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
                 _mouseDragTime = Time.FrameStartTime;
             }
 
-            if (!IsMouseButtonDown(MouseButton.Left) && _mouseDownPoint.HasValue &&
+            if (!IsMouseButtonDown(MouseButton.Left) &&
+                _mouseDownPoint.HasValue &&
                 _mouseDownButton == MouseButton.Left)
             {
                 if (IsKeyDown(Key.Shift))
@@ -660,7 +657,8 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
                 }
             }
 
-            if (!IsMouseButtonDown(MouseButton.Right) && _mouseDownPoint.HasValue &&
+            if (!IsMouseButtonDown(MouseButton.Right) &&
+                _mouseDownPoint.HasValue &&
                 _mouseDownButton == MouseButton.Right)
             {
                 SpecialClick = new Segment2(_mouseDownPoint.Value, value);
@@ -684,7 +682,8 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
             else if ((IsMouseButtonDown(MouseButton.Left) || IsMouseButtonDown(MouseButton.Right)) &&
                      _mouseDownPoint.HasValue)
             {
-                if (Widget != null && Vector2.Distance(_mouseDownPoint.Value, value) >
+                if (Widget != null &&
+                    Vector2.Distance(_mouseDownPoint.Value, value) >
                     SettingsManager.Current.MinimumDragDistance * Widget.GlobalScale)
                 {
                     _mouseDragInProgress = true;
@@ -771,8 +770,10 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
             }
         }
 
-        if (IsPadButtonDownOnce(GamePadButton.A) || IsPadButtonDownOnce(GamePadButton.B) ||
-            IsPadButtonDownOnce(GamePadButton.X) || IsPadButtonDownOnce(GamePadButton.Y))
+        if (IsPadButtonDownOnce(GamePadButton.A) ||
+            IsPadButtonDownOnce(GamePadButton.B) ||
+            IsPadButtonDownOnce(GamePadButton.X) ||
+            IsPadButtonDownOnce(GamePadButton.Y))
         {
             Any = true;
         }
@@ -799,7 +800,8 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         }
         else if (IsPadButtonDown(GamePadButton.A) && _padDownPoint.HasValue)
         {
-            if (Widget != null && Vector2.Distance(_padDownPoint.Value, PadCursorPosition) >
+            if (Widget != null &&
+                Vector2.Distance(_padDownPoint.Value, PadCursorPosition) >
                 SettingsManager.Current.MinimumDragDistance * Widget.GlobalScale)
             {
                 _padDragInProgress = true;
@@ -826,7 +828,10 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         var v = Vector2.Transform(PadCursorPosition, Widget.InvertedGlobalTransform);
         var padStickPosition = GetPadStickPosition(GamePadStick.Left, SettingsManager.Current.GamepadDeadZone);
         var v2 = new Vector2(padStickPosition.X, 0f - padStickPosition.Y);
-        v2 = 1200f * SettingsManager.Current.GamepadCursorSpeed * v2.LengthSquared() * Vector2.Normalize(v2) *
+        v2 = 1200f *
+             SettingsManager.Current.GamepadCursorSpeed *
+             v2.LengthSquared() *
+             Vector2.Normalize(v2) *
              Time.FrameDuration;
         v += v2;
         PadCursorPosition = Vector2.Transform(v, Widget.GlobalTransform);
@@ -868,7 +873,8 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
                 {
                     Drag = touchLocation.Position;
                 }
-                else if (Widget != null && Vector2.Distance(touchLocation.Position, _touchStartPoint) >
+                else if (Widget != null &&
+                         Vector2.Distance(touchLocation.Position, _touchStartPoint) >
                          SettingsManager.Current.MinimumDragDistance * Widget.GlobalScale)
                 {
                     _touchDragInProgress = true;
@@ -1032,7 +1038,8 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         }
         else if (IsVrButtonDown(VrController.Right, VrControllerButton.Trigger) && _vrDownPoint.HasValue)
         {
-            if (Widget != null && Vector2.Distance(_vrDownPoint.Value, VrCursorPosition) >
+            if (Widget != null &&
+                Vector2.Distance(_vrDownPoint.Value, VrCursorPosition) >
                 SettingsManager.Current.MinimumDragDistance * Widget.GlobalScale)
             {
                 _vrDragInProgress = true;

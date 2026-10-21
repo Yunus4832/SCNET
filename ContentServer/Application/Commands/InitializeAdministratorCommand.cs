@@ -8,20 +8,22 @@ namespace ContentServer.Application.Commands;
 
 public sealed record InitializeAdministratorCommand(
     string Name,
-    string ApiKey) : ICommand<AdministratorInitializationDto?>;
+    string ApiKey
+) : ICommand<AdministratorInitializationDto?>;
 
 public sealed record AdministratorInitializationDto(
     AdministratorId AdministratorId,
     string Name,
-    AdministratorStatus Status);
+    AdministratorStatus Status
+);
 
-public sealed class InitializeAdministratorCommandHandler(
-    AdministratorRepository repository
-) : ICommandHandler<InitializeAdministratorCommand, AdministratorInitializationDto?>
+public sealed class InitializeAdministratorCommandHandler(AdministratorRepository repository)
+    : ICommandHandler<InitializeAdministratorCommand, AdministratorInitializationDto?>
 {
     public async Task<AdministratorInitializationDto?> Handle(
         InitializeAdministratorCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (await repository.AnyAsync(cancellationToken))
         {

@@ -6,10 +6,13 @@ public class FurnitureDesignWidget : Widget
 {
     public enum ViewMode
     {
-        Side,
-        Top,
-        Front,
-        Perspective
+        Side = 0,
+
+        Top = 1,
+
+        Front = 2,
+
+        Perspective = 3
     }
 
     private const string _typeName = nameof(FurnitureDesignWidget);
@@ -57,8 +60,13 @@ public class FurnitureDesignWidget : Widget
             var m = Matrix.CreateLookAt(2.65f * _direction + vector, vector, Vector3.UnitY);
             var m2 = Matrix.CreatePerspectiveFieldOfView(1.2f, ActualSize.X / ActualSize.Y, 0.4f, 4f);
             var m3 =
-                MatrixUtils.CreateScaleTranslation(ActualSize.X, 0f - ActualSize.Y, ActualSize.X / 2f,
-                    ActualSize.Y / 2f) * GlobalTransform *
+                MatrixUtils.CreateScaleTranslation(
+                    ActualSize.X,
+                    0f - ActualSize.Y,
+                    ActualSize.X / 2f,
+                    ActualSize.Y / 2f
+                ) *
+                GlobalTransform *
                 MatrixUtils.CreateScaleTranslation(2f / viewport.Width, -2f / viewport.Height, -1f, 1f);
             matrix = m * m2 * m3;
             var flatBatch3D = _primitivesRenderer3D.FlatBatch(1, DepthStencilState.DepthRead);
@@ -77,10 +85,22 @@ public class FurnitureDesignWidget : Widget
 
             var color2 = new Color(64, 64, 64, 255) * GlobalColorTransform;
             var fontBatch3D = _primitivesRenderer3D.FontBatch(ContentManager.Get<BitmapFont>("Fonts/Pericles"), 1);
-            fontBatch3D.QueueText("Front", new Vector3(0.5f, 0f, 0f), 0.004f * new Vector3(-1f, 0f, 0f),
-                0.004f * new Vector3(0f, 0f, -1f), color2, TextAnchor.HorizontalCenter);
-            fontBatch3D.QueueText("Side", new Vector3(1f, 0f, 0.5f), 0.004f * new Vector3(0f, 0f, -1f),
-                0.004f * new Vector3(1f, 0f, 0f), color2, TextAnchor.HorizontalCenter);
+            fontBatch3D.QueueText(
+                "Front",
+                new Vector3(0.5f, 0f, 0f),
+                0.004f * new Vector3(-1f, 0f, 0f),
+                0.004f * new Vector3(0f, 0f, -1f),
+                color2,
+                TextAnchor.HorizontalCenter
+            );
+            fontBatch3D.QueueText(
+                "Side",
+                new Vector3(1f, 0f, 0.5f),
+                0.004f * new Vector3(0f, 0f, -1f),
+                0.004f * new Vector3(1f, 0f, 0f),
+                color2,
+                TextAnchor.HorizontalCenter
+            );
             if (DrawDebugFurniture)
             {
                 DebugDraw();

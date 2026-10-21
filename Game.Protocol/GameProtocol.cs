@@ -9,8 +9,13 @@ public static class GameProtocol
 
     public const int ConnectionMagic = 9421523;
 
-    public static int CurrentVersion { get; } = int.Parse(typeof(GameProtocol).Assembly
-        .GetCustomAttributes<AssemblyMetadataAttribute>()
-        .Single(attribute => attribute.Key == "GameProtocolVersion").Value
-        ?? throw new InvalidOperationException("The game protocol assembly has no wire version."), CultureInfo.InvariantCulture);
+    public static int CurrentVersion { get; } = int.Parse(
+        typeof(GameProtocol).Assembly
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .Single(attribute =>
+                attribute.Key == "GameProtocolVersion"
+            ).Value ??
+        throw new InvalidOperationException("The game protocol assembly has no wire version."),
+        CultureInfo.InvariantCulture
+    );
 }

@@ -13,18 +13,29 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
         inventory.GetSlotCount(slotIndex);
         var data = Terrain.ExtractData(value);
         var delay = AdjustableDelayGateBlock.GetDelay(data);
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditAdjustableDelayGateDialog(delay,
-            delegate (int newDelay)
-            {
-                var data2 = AdjustableDelayGateBlock.SetDelay(data, newDelay);
-                var num = Terrain.ReplaceData(value, data2);
-                if (num != value)
+        DialogsManager.ShowDialog(
+            componentPlayer.GuiWidget,
+            new EditAdjustableDelayGateDialog(
+                delay,
+                delegate(int newDelay)
                 {
-                    var p = new EditableBlockPackage(BuiltInBlockEditKind.AdjustableDelayGate, default, true, inventory.Id,
-                        slotIndex, newDelay);
-                    EditableBlockPackageHandler.Submit(p);
+                    var data2 = AdjustableDelayGateBlock.SetDelay(data, newDelay);
+                    var num = Terrain.ReplaceData(value, data2);
+                    if (num != value)
+                    {
+                        var p = new EditableBlockPackage(
+                            BuiltInBlockEditKind.AdjustableDelayGate,
+                            default,
+                            true,
+                            inventory.Id,
+                            slotIndex,
+                            newDelay
+                        );
+                        EditableBlockPackageHandler.Submit(p);
+                    }
                 }
-            }));
+            )
+        );
         return true;
     }
 
@@ -36,7 +47,7 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
             componentPlayer.GuiWidget,
             new EditAdjustableDelayGateDialog(
                 delay,
-                delegate (int newDelay)
+                delegate(int newDelay)
                 {
                     var num = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                     if (num == data)
@@ -45,7 +56,8 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
                     }
 
                     var face =
-                        ((AdjustableDelayGateBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[BuiltInBlockRegistry.GetIndex<AdjustableDelayGateBlock>()]).GetFace(value);
+                        ((AdjustableDelayGateBlock)CurrentModRuntime.Value!.RequireWorldCatalog()
+                            .Blocks[BuiltInBlockRegistry.GetIndex<AdjustableDelayGateBlock>()]).GetFace(value);
                     var cell = new CellFace(x, y, z, face);
                     var p = new EditableBlockPackage(
                         BuiltInBlockEditKind.AdjustableDelayGate,
@@ -56,7 +68,9 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
                         newDelay
                     );
                     EditableBlockPackageHandler.Submit(p);
-                }));
+                }
+            )
+        );
         return true;
     }
 }

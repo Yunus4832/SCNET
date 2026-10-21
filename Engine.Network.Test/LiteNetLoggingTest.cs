@@ -10,11 +10,13 @@ public sealed class LiteNetLoggingTest
         var clock = new ManualClock();
         var messages = new List<(NetworkLogLevel Level, string Message)>();
         var logger = new LiteNetLog((level, message) => messages.Add((level, message)), clock);
-        const string unreachable = "[S]System.Net.Sockets.SocketException (101): Network is unreachable\n   at Socket.SendTo()";
+        const string unreachable =
+            "[S]System.Net.Sockets.SocketException (101): Network is unreachable\n   at Socket.SendTo()";
         for (var i = 0; i < 60; i++)
         {
             logger.WriteNet(NetLogLevel.Error, unreachable);
         }
+
         logger.WriteNet(NetLogLevel.Error, "Unexpected failure: {0}", "diagnostic detail");
         Assert.Equal(2, messages.Count);
         Assert.Equal(NetworkLogLevel.Warning, messages[0].Level);

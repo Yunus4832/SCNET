@@ -67,8 +67,10 @@ public static class Wav
         var engineBinaryWriter = new EngineBinaryWriter(stream);
         var structure = default(WavHeader);
         structure.Riff = MakeFourCc("RIFF");
-        structure.FileSize = Utilities.SizeOf<WavHeader>() + Utilities.SizeOf<FmtHeader>() +
-                             Utilities.SizeOf<DataHeader>() + soundData.Data.Length;
+        structure.FileSize = Utilities.SizeOf<WavHeader>() +
+                             Utilities.SizeOf<FmtHeader>() +
+                             Utilities.SizeOf<DataHeader>() +
+                             soundData.Data.Length;
         structure.Wave = MakeFourCc("WAVE");
         engineBinaryWriter.WriteStruct(structure);
         var structure2 = default(FmtHeader);
@@ -90,8 +92,12 @@ public static class Wav
         stream.Write(array, 0, array.Length);
     }
 
-    private static void ReadHeaders(Stream stream, out FmtHeader fmtHeader, out DataHeader dataHeader,
-        out long dataStart)
+    private static void ReadHeaders(
+        Stream stream,
+        out FmtHeader fmtHeader,
+        out DataHeader dataHeader,
+        out long dataStart
+    )
     {
         if (stream == null)
         {
@@ -138,8 +144,11 @@ public static class Wav
             }
         }
 
-        if (fmtHeader.Type != 1 || fmtHeader.ChannelsCount < 1 || fmtHeader.ChannelsCount > 2 ||
-            fmtHeader.SamplingFrequency < 8000 || fmtHeader.SamplingFrequency > 48000 ||
+        if (fmtHeader.Type != 1 ||
+            fmtHeader.ChannelsCount < 1 ||
+            fmtHeader.ChannelsCount > 2 ||
+            fmtHeader.SamplingFrequency < 8000 ||
+            fmtHeader.SamplingFrequency > 48000 ||
             fmtHeader.BitsPerChannel != 16)
         {
             throw new InvalidOperationException("Unsupported WAV format.");

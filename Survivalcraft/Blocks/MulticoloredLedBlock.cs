@@ -25,10 +25,24 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
         );
         var m = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(ledMesh.MeshParts[0], boneAbsoluteTransform * m, false, false,
-            false, false, Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(ledBulbMesh.MeshParts[0], boneAbsoluteTransform2 * m, false, false,
-            false, false, new Color(48, 48, 48));
+        StandaloneBlockMesh.AppendModelMeshPart(
+            ledMesh.MeshParts[0],
+            boneAbsoluteTransform * m,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            ledBulbMesh.MeshParts[0],
+            boneAbsoluteTransform2 * m,
+            false,
+            false,
+            false,
+            false,
+            new Color(48, 48, 48)
+        );
         for (var i = 0; i < 6; i++)
         {
             var num = SetMountingFace(0, i);
@@ -36,13 +50,29 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
                 ? i != 4
                     ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
                     : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                : Matrix.CreateRotationX((float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByData[num] = new BlockMesh();
-            BlockMeshesByData[num].AppendModelMeshPart(ledMesh.MeshParts[0], boneAbsoluteTransform * m2, false,
-                false, false, false, Color.White);
-            BlockMeshesByData[num].AppendModelMeshPart(ledBulbMesh.MeshParts[0], boneAbsoluteTransform2 * m2, false,
-                false, false, false, new Color(48, 48, 48));
+            BlockMeshesByData[num].AppendModelMeshPart(
+                ledMesh.MeshParts[0],
+                boneAbsoluteTransform * m2,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
+            BlockMeshesByData[num].AppendModelMeshPart(
+                ledBulbMesh.MeshParts[0],
+                boneAbsoluteTransform2 * m2,
+                false,
+                false,
+                false,
+                false,
+                new Color(48, 48, 48)
+            );
             CollisionBoxesByData[num] = new BoundingBox[1]
             {
                 BlockMeshesByData[num].CalculateBoundingBox()
@@ -80,8 +110,12 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
         yield return Terrain.MakeBlockValue(BlockIndex, 0, 0);
     }
 
-    public override BlockPlacementData GetPlacementValue(SubsystemTerrain subsystemTerrain,
-        ComponentMiner componentMiner, int value, TerrainRaycastResult raycastResult)
+    public override BlockPlacementData GetPlacementValue(
+        SubsystemTerrain subsystemTerrain,
+        ComponentMiner componentMiner,
+        int value,
+        TerrainRaycastResult raycastResult
+    )
     {
         var data = SetMountingFace(Terrain.ExtractData(value), raycastResult.CellFace.Face);
         var value2 = Terrain.ReplaceData(value, data);
@@ -112,8 +146,16 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
             return;
         }
 
-        generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null,
-            geometry.SubsetOpaque);
+        generator.GenerateMeshVertices(
+            this,
+            x,
+            y,
+            z,
+            BlockMeshesByData[num],
+            Color.White,
+            null,
+            geometry.SubsetOpaque
+        );
         generator.GenerateWireVertices(value, x, y, z, GetFace(value), 0.25f, Vector2.Zero, geometry.SubsetOpaque);
     }
 

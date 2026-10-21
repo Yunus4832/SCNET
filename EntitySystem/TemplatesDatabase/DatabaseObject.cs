@@ -43,7 +43,8 @@ public class DatabaseObject
             if (value.Length > Type.NameLengthLimit)
             {
                 throw new InvalidOperationException(
-                    $"Name \"{value}\" is too long, maximum name length for database object of type \"{Type.Name}\" is {Type.NameLengthLimit}.");
+                    $"Name \"{value}\" is too long, maximum name length for database object of type \"{Type.Name}\" is {Type.NameLengthLimit}."
+                );
             }
 
             if (NestingParent != null)
@@ -53,7 +54,8 @@ public class DatabaseObject
                     if (explicitNestingChild.Name == value)
                     {
                         throw new InvalidOperationException(
-                            $"Database object \"{explicitNestingChild.Name}\" is already nested in parent database object \"{NestingParent.Name}\".");
+                            $"Database object \"{explicitNestingChild.Name}\" is already nested in parent database object \"{NestingParent.Name}\"."
+                        );
                     }
                 }
             }
@@ -123,22 +125,33 @@ public class DatabaseObject
                 if (!Type.AllowedNestingParents.Contains(value.Type))
                 {
                     throw new InvalidOperationException(
-                        $"Database object of type {Type.Name} cannot be nested in {value.Type.Name}.");
+                        $"Database object of type {Type.Name} cannot be nested in {value.Type.Name}."
+                    );
                 }
 
-                if (value == this || value.EffectivelyInheritsFrom(this) || EffectivelyInheritsFrom(value) ||
+                if (value == this ||
+                    value.EffectivelyInheritsFrom(this) ||
+                    EffectivelyInheritsFrom(value) ||
                     value.IsNestedIn(this))
                 {
-                    throw new InvalidOperationException("Cannot set nesting parent of database object \"" + Name +
-                                                        "\" to database object \"" + value.Name +
-                                                        "\" because it would create recursive nesting/inheritance.");
+                    throw new InvalidOperationException(
+                        "Cannot set nesting parent of database object \"" +
+                        Name +
+                        "\" to database object \"" +
+                        value.Name +
+                        "\" because it would create recursive nesting/inheritance."
+                    );
                 }
 
                 if (value.FindExplicitNestedChild(Name, null, true, false) != null)
                 {
-                    throw new InvalidOperationException("Another database object with name \"" + Name +
-                                                        "\" is already nested in database object \"" + value.Name +
-                                                        "\".");
+                    throw new InvalidOperationException(
+                        "Another database object with name \"" +
+                        Name +
+                        "\" is already nested in database object \"" +
+                        value.Name +
+                        "\"."
+                    );
                 }
             }
 
@@ -147,7 +160,8 @@ public class DatabaseObject
                 if (!_nestingParent.InternalNestingChildren.Remove(this))
                 {
                     throw new InvalidOperationException(
-                        "DatabaseObject internal error: nested DatabaseObject not found in container.");
+                        "DatabaseObject internal error: nested DatabaseObject not found in container."
+                    );
                 }
 
                 _nestingParent = null;
@@ -186,15 +200,20 @@ public class DatabaseObject
             {
                 if (value == this || value.EffectivelyInheritsFrom(this) || value.IsNestedIn(this) || IsNestedIn(value))
                 {
-                    throw new InvalidOperationException("Cannot set inheritance parent of database object \"" + Name +
-                                                        "\" to database object \"" + value.Name +
-                                                        "\" because it would create recursive nesting/inheritance.");
+                    throw new InvalidOperationException(
+                        "Cannot set inheritance parent of database object \"" +
+                        Name +
+                        "\" to database object \"" +
+                        value.Name +
+                        "\" because it would create recursive nesting/inheritance."
+                    );
                 }
 
                 if (!Type.AllowedInheritanceParents.Contains(value.Type))
                 {
                     throw new InvalidOperationException(
-                        $"Database object of type {Type.Name} cannot inherit from {value.Type.Name}.");
+                        $"Database object of type {Type.Name} cannot inherit from {value.Type.Name}."
+                    );
                 }
             }
 
@@ -286,7 +305,8 @@ public class DatabaseObject
         if (throwIfNotFound)
         {
             throw new InvalidOperationException(
-                $"Required database object \"{name}\" not found in database object \"{Name}\"");
+                $"Required database object \"{name}\" not found in database object \"{Name}\""
+            );
         }
 
         return null;
@@ -381,7 +401,8 @@ public class DatabaseObject
         if (throwIfNotFound)
         {
             throw new InvalidOperationException(
-                $"Required database object \"{name}\" not found in database object \"{Name}\"");
+                $"Required database object \"{name}\" not found in database object \"{Name}\""
+            );
         }
 
         return null;
@@ -422,7 +443,8 @@ public class DatabaseObject
         if (databaseObject.Value != null && databaseObject.Value is not T)
         {
             throw new Exception(
-                $"Database object \"{databaseObject.Name}\" has invalid type \"{databaseObject.Value.GetType().FullName}\", required type is \"{typeof(T).FullName}\".");
+                $"Database object \"{databaseObject.Name}\" has invalid type \"{databaseObject.Value.GetType().FullName}\", required type is \"{typeof(T).FullName}\"."
+            );
         }
 
         return (T)databaseObject.Value!;
@@ -495,13 +517,15 @@ public class DatabaseObject
         if (!databaseObjectType.IsInitialized)
         {
             throw new InvalidOperationException(
-                $"InitializeRelations of DatabaseObjectType \"{databaseObjectType.Name}\" not called.");
+                $"InitializeRelations of DatabaseObjectType \"{databaseObjectType.Name}\" not called."
+            );
         }
 
         if (databaseObjectType.SupportsValue && value == null)
         {
             throw new InvalidOperationException(
-                $"DatabaseObjectType \"{databaseObjectType.Name}\" SupportsValue is true, value can not be null");
+                $"DatabaseObjectType \"{databaseObjectType.Name}\" SupportsValue is true, value can not be null"
+            );
         }
 
         Type = databaseObjectType;

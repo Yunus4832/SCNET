@@ -92,9 +92,18 @@ public class TerrainSerializer23 : IDisposable
             }
             catch (Exception e)
             {
-                Log.Error(ExceptionManager.MakeFullErrorMessage(
-                    string.Format("Error loading chunk ({0},{1},{2},{3}).", chunk.Coords.X, chunk.Coords.Y,
-                        chunk.Origin.X, chunk.Origin.Y), e));
+                Log.Error(
+                    ExceptionManager.MakeFullErrorMessage(
+                        string.Format(
+                            "Error loading chunk ({0},{1},{2},{3}).",
+                            chunk.Coords.X,
+                            chunk.Coords.Y,
+                            chunk.Origin.X,
+                            chunk.Origin.Y
+                        ),
+                        e
+                    )
+                );
             }
 
             _ = Time.RealTime;
@@ -120,8 +129,12 @@ public class TerrainSerializer23 : IDisposable
             }
             catch (Exception e)
             {
-                Log.Error(ExceptionManager.MakeFullErrorMessage(
-                    $"Error saving chunk ({chunk.Coords.X},{chunk.Coords.Y},{chunk.Origin.X},{chunk.Origin.Y}).", e));
+                Log.Error(
+                    ExceptionManager.MakeFullErrorMessage(
+                        $"Error saving chunk ({chunk.Coords.X},{chunk.Coords.Y},{chunk.Origin.X},{chunk.Origin.Y}).",
+                        e
+                    )
+                );
             }
 
             _ = Time.RealTime;
@@ -240,8 +253,10 @@ public class TerrainSerializer23 : IDisposable
             for (var j = 0; j < 16; j++)
             {
                 var shaftValueByte = _compressBuffer[bufferIndex++];
-                var shaftValue = Terrain.ReplaceTemperature(Terrain.ReplaceHumidity(0, shaftValueByte & 0xF),
-                    shaftValueByte >> 4);
+                var shaftValue = Terrain.ReplaceTemperature(
+                    Terrain.ReplaceHumidity(0, shaftValueByte & 0xF),
+                    shaftValueByte >> 4
+                );
                 chunk.SetShaftValueFast(i, j, shaftValue);
             }
         }
@@ -584,7 +599,7 @@ public class TerrainSerializer23 : IDisposable
                             // Region 文件 Chunk 数据块默认的最小偏移
                             var localRegionDataOffset = _regionDataOffset;
                             for (var i = 0; i < entries.Length; i++)
-                            // 索引 i 等于当前 chunkIndex，更新当前的 Chunk 数据块映射条目的偏移和大小
+                                // 索引 i 等于当前 chunkIndex，更新当前的 Chunk 数据块映射条目的偏移和大小
                             {
                                 if (i == chunkIndex)
                                 {
@@ -611,7 +626,7 @@ public class TerrainSerializer23 : IDisposable
 
                             var buffer2 = new byte[entries.Max(e => e.Size)];
                             for (var j = 0; j < entries.Length; j++)
-                            // 索引 i 等于当前 chunkIndex，根据 Chunk 数据块映射条目的偏移和大小更新数据块
+                                // 索引 i 等于当前 chunkIndex，根据 Chunk 数据块映射条目的偏移和大小更新数据块
                             {
                                 if (j == chunkIndex)
                                 {
@@ -783,7 +798,8 @@ public class TerrainSerializer23 : IDisposable
             if (result.Size < 0 || result.Size > 2097152)
             {
                 throw new InvalidOperationException(
-                    "Region file entry size out of bounds, likely corrupt region file.");
+                    "Region file entry size out of bounds, likely corrupt region file."
+                );
             }
 
             return result;

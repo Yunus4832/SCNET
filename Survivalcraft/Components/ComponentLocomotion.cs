@@ -162,11 +162,7 @@ public class ComponentLocomotion : Component, IUpdateable
 
     public Vector2 LookOrder { get; set; }
 
-    public float JumpOrder
-    {
-        get;
-        set => field = MathUtils.Saturate(value);
-    }
+    public float JumpOrder { get; set => field = MathUtils.Saturate(value); }
 
     public float StunTime { get; set; }
 
@@ -219,7 +215,7 @@ public class ComponentLocomotion : Component, IUpdateable
         {
             //非玩家
             if (_componentPlayer == null)
-            //被骑乘
+                //被骑乘
             {
                 if (_componentCreature.ComponentBody.ChildBodies.Count > 0)
                 {
@@ -301,12 +297,16 @@ public class ComponentLocomotion : Component, IUpdateable
                     }
                 }
 
-                playerStats.DeepestDive = MathUtils.Max(playerStats.DeepestDive,
-                    _componentCreature.ComponentBody.ImmersionDepth);
+                playerStats.DeepestDive = MathUtils.Max(
+                    playerStats.DeepestDive,
+                    _componentCreature.ComponentBody.ImmersionDepth
+                );
                 playerStats.LowestAltitude = MathUtils.Min(playerStats.LowestAltitude, position.Y);
                 playerStats.HighestAltitude = MathUtils.Max(playerStats.HighestAltitude, position.Y);
-                playerStats.EasiestModeUsed = (GameMode)MathUtils.Min((int)_subsystemGameInfo.WorldSettings.GameMode,
-                    (int)playerStats.EasiestModeUsed);
+                playerStats.EasiestModeUsed = (GameMode)MathUtils.Min(
+                    (int)_subsystemGameInfo.WorldSettings.GameMode,
+                    (int)playerStats.EasiestModeUsed
+                );
             }
 
             _lastPosition = position;
@@ -317,8 +317,11 @@ public class ComponentLocomotion : Component, IUpdateable
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(x2, y, z);
             var num = Terrain.ExtractContents(cellValue);
             var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
-            if (LadderSpeed > 0f && !LadderValue.HasValue && block is LadderBlock &&
-                _subsystemTime.GameTime >= _ladderActivationTime && !IsCreativeFlyEnabled &&
+            if (LadderSpeed > 0f &&
+                !LadderValue.HasValue &&
+                block is LadderBlock &&
+                _subsystemTime.GameTime >= _ladderActivationTime &&
+                !IsCreativeFlyEnabled &&
                 _componentCreature.ComponentBody.ParentBody == null)
             {
                 var face = LadderBlock.GetFace(Terrain.ExtractData(cellValue));
@@ -335,8 +338,10 @@ public class ComponentLocomotion : Component, IUpdateable
             }
 
             var rotation = _componentCreature.ComponentBody.Rotation;
-            var num2 = MathUtils.Atan2(2f * rotation.Y * rotation.W - 2f * rotation.X * rotation.Z,
-                1f - 2f * rotation.Y * rotation.Y - 2f * rotation.Z * rotation.Z);
+            var num2 = MathUtils.Atan2(
+                2f * rotation.Y * rotation.W - 2f * rotation.X * rotation.Z,
+                1f - 2f * rotation.Y * rotation.Y - 2f * rotation.Z * rotation.Z
+            );
             num2 += (0f - TurnSpeed) * TurnOrder.X * dt;
             _componentCreature.ComponentBody.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, num2);
             LookAngles += LookSpeed * LookOrder * dt;
@@ -366,8 +371,10 @@ public class ComponentLocomotion : Component, IUpdateable
         SwimOrder = null;
         TurnOrder = Vector2.Zero;
         JumpOrder = 0f;
-        LookOrder = new Vector2(_lookAutoLevelX ? -10f * LookAngles.X / LookSpeed : 0f,
-            _lookAutoLevelY ? -10f * LookAngles.Y / LookSpeed : 0f);
+        LookOrder = new Vector2(
+            _lookAutoLevelX ? -10f * LookAngles.X / LookSpeed : 0f,
+            _lookAutoLevelY ? -10f * LookAngles.Y / LookSpeed : 0f
+        );
     }
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
@@ -422,8 +429,10 @@ public class ComponentLocomotion : Component, IUpdateable
         _componentCreature.ComponentBody.IsWaterDragEnabled = true;
         var velocity = _componentCreature.ComponentBody.Velocity;
         var right = _componentCreature.ComponentBody.Matrix.Right;
-        var vector = Vector3.Transform(_componentCreature.ComponentBody.Matrix.Forward,
-            Quaternion.CreateFromAxisAngle(right, LookAngles.Y));
+        var vector = Vector3.Transform(
+            _componentCreature.ComponentBody.Matrix.Forward,
+            Quaternion.CreateFromAxisAngle(right, LookAngles.Y)
+        );
         if (WalkSpeed > 0f && WalkOrder.HasValue)
         {
             if (IsCreativeFlyEnabled)
@@ -449,9 +458,14 @@ public class ComponentLocomotion : Component, IUpdateable
                 var value = WalkOrder.Value;
                 if (_walkSpeedWhenTurning > 0f && MathUtils.Abs(TurnOrder.X) > 0.02f)
                 {
-                    value.Y = MathUtils.Max(value.Y,
-                        MathUtils.Lerp(0f, _walkSpeedWhenTurning,
-                            MathUtils.Saturate(2f * MathUtils.Abs(TurnOrder.X))));
+                    value.Y = MathUtils.Max(
+                        value.Y,
+                        MathUtils.Lerp(
+                            0f,
+                            _walkSpeedWhenTurning,
+                            MathUtils.Saturate(2f * MathUtils.Abs(TurnOrder.X))
+                        )
+                    );
                 }
 
                 var num2 = WalkSpeed;
@@ -487,8 +501,11 @@ public class ComponentLocomotion : Component, IUpdateable
                 if (_componentCreature.ComponentBody.StandingOnValue.HasValue)
                 {
                     var num3 = MathUtils.Max(
-                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(_componentCreature.ComponentBody.StandingOnValue.Value)]
-                            .FrictionFactor, _minFrictionFactor);
+                        CurrentModRuntime.Value!.RequireWorldCatalog()
+                            .Blocks[Terrain.ExtractContents(_componentCreature.ComponentBody.StandingOnValue.Value)]
+                            .FrictionFactor,
+                        _minFrictionFactor
+                    );
                     num4 = MathUtils.Saturate(dt * 6f * AccelerationFactor * num3);
                     if (num3 < 0.25f)
                     {
@@ -518,10 +535,14 @@ public class ComponentLocomotion : Component, IUpdateable
                     vector3 *= _componentLevel.SpeedFactor;
                 }
 
-                velocity.Y += 10f * AccelerationFactor * vector3.Y * _componentCreature.ComponentBody.ImmersionFactor *
+                velocity.Y += 10f *
+                              AccelerationFactor *
+                              vector3.Y *
+                              _componentCreature.ComponentBody.ImmersionFactor *
                               dt;
                 _componentCreature.ComponentBody.IsGroundDragEnabled = false;
-                if (_componentPlayer != null && Time.PeriodicEvent(10.0, 0.0) &&
+                if (_componentPlayer != null &&
+                    Time.PeriodicEvent(10.0, 0.0) &&
                     (_shoesWarningTime == 0.0 || Time.FrameStartTime - _shoesWarningTime > 300.0) &&
                     _componentCreature.ComponentBody is { StandingOnValue: not null, ImmersionFactor: < 0.1f })
                 {
@@ -530,14 +551,20 @@ public class ComponentLocomotion : Component, IUpdateable
                     if (Terrain.ExtractContents(value2) == BuiltInBlockRegistry.GetIndex<ClothingBlock>())
                     {
                         flag = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value2)]
-                            .GetClothingData(Terrain.ExtractData(value2)).MovementSpeedFactor > 1f;
+                                   .GetClothingData(Terrain.ExtractData(value2)).MovementSpeedFactor >
+                               1f;
                     }
 
-                    if (!flag && vector2.LengthSquared() / velocity.LengthSquared() > 0.99f &&
+                    if (!flag &&
+                        vector2.LengthSquared() / velocity.LengthSquared() > 0.99f &&
                         WalkOrder.Value.LengthSquared() > 0.99f)
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(GetType().Name, 0),
-                            Color.White, true, true);
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(GetType().Name, 0),
+                            Color.White,
+                            true,
+                            true
+                        );
                         _shoesWarningTime = Time.FrameStartTime;
                     }
                 }
@@ -574,7 +601,8 @@ public class ComponentLocomotion : Component, IUpdateable
 
         if (JumpOrder > 0f &&
             (_componentCreature.ComponentBody.StandingOnValue.HasValue ||
-             _componentCreature.ComponentBody.ImmersionFactor > 0.5f) && !_componentCreature.ComponentBody.IsSneaking)
+             _componentCreature.ComponentBody.ImmersionFactor > 0.5f) &&
+            !_componentCreature.ComponentBody.IsSneaking)
         {
             var num6 = JumpSpeed;
             if (_componentLevel != null)

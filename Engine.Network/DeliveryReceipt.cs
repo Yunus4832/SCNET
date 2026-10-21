@@ -15,5 +15,6 @@ public sealed class DeliveryReceipt
 
     internal void Confirm() => _completion.TrySetResult();
 
-    internal void Fail() => _completion.TrySetException(new IOException("Connection ended before transport confirmation."));
+    internal void Fail() =>
+        _completion.TrySetException(new IOException("Connection ended before transport confirmation."));
 }

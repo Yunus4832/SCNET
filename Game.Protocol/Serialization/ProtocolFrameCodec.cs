@@ -6,8 +6,9 @@ public static class ProtocolFrameCodec
 {
     private enum WireCompression : byte
     {
-        None,
-        Deflate
+        None = 0,
+
+        Deflate = 1
     }
 
     private const int _compressionThreshold = 256;
@@ -95,5 +96,4 @@ public static class ProtocolFrameCodec
             ? throw new InvalidDataException("Network frame expands beyond its declared size.")
             : output;
     }
-
 }

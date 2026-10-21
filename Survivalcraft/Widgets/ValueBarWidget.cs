@@ -10,17 +10,9 @@ public class ValueBarWidget : Widget
 
     public override bool IsHitTestVisible { get; set; } = false;
 
-    public float Value
-    {
-        get;
-        set => field = MathUtils.Saturate(value);
-    }
+    public float Value { get; set => field = MathUtils.Saturate(value); }
 
-    public int BarsCount
-    {
-        get;
-        set => field = MathUtils.Clamp(value, 1, 1000);
-    } = 8;
+    public int BarsCount { get; set => field = MathUtils.Clamp(value, 1, 1000); } = 8;
 
     public bool FlipDirection { get; set; }
 
@@ -42,11 +34,7 @@ public class ValueBarWidget : Widget
 
     public bool TextureLinearFilter { get; set; } = true;
 
-    public LayoutDirection LayoutDirection
-    {
-        get => _layoutDirection;
-        set => _layoutDirection = value;
-    }
+    public LayoutDirection LayoutDirection { get => _layoutDirection; set => _layoutDirection = value; }
 
 
     public void Flash(int count)
@@ -58,8 +46,15 @@ public class ValueBarWidget : Widget
     {
         BaseBatch baseBatch = BarSubtexture == null
             ? dc.PrimitivesRenderer2D.FlatBatch(0, DepthStencilState.None)
-            : dc.PrimitivesRenderer2D.TexturedBatch(BarSubtexture.Texture, false, 0, DepthStencilState.None,
-                null, null, TextureLinearFilter ? SamplerState.LinearClamp : SamplerState.PointClamp);
+            : dc.PrimitivesRenderer2D.TexturedBatch(
+                BarSubtexture.Texture,
+                false,
+                0,
+                DepthStencilState.None,
+                null,
+                null,
+                TextureLinearFilter ? SamplerState.LinearClamp : SamplerState.PointClamp
+            );
         var start = 0;
         int num;
         if (baseBatch is TexturedBatch2D texturedBatch2D)
@@ -117,10 +112,18 @@ public class ValueBarWidget : Widget
                         {
                             var topLeft = BarSubtexture.TopLeft;
                             var texCoord =
-                                new Vector2(MathUtils.Lerp(BarSubtexture.TopLeft.X, BarSubtexture.BottomRight.X, v.X),
-                                    MathUtils.Lerp(BarSubtexture.TopLeft.Y, BarSubtexture.BottomRight.Y, v.Y));
-                            batch2D.QueueQuad(zero + zero2 * BarSize, zero + v * BarSize, 0f, topLeft,
-                                texCoord, color);
+                                new Vector2(
+                                    MathUtils.Lerp(BarSubtexture.TopLeft.X, BarSubtexture.BottomRight.X, v.X),
+                                    MathUtils.Lerp(BarSubtexture.TopLeft.Y, BarSubtexture.BottomRight.Y, v.Y)
+                                );
+                            batch2D.QueueQuad(
+                                zero + zero2 * BarSize,
+                                zero + v * BarSize,
+                                0f,
+                                topLeft,
+                                texCoord,
+                                color
+                            );
                         }
                     }
                     else
@@ -139,11 +142,19 @@ public class ValueBarWidget : Widget
                         if (BarSubtexture != null)
                         {
                             var texCoord2 =
-                                new Vector2(MathUtils.Lerp(BarSubtexture.TopLeft.X, BarSubtexture.BottomRight.X, v2.X),
-                                    MathUtils.Lerp(BarSubtexture.TopLeft.Y, BarSubtexture.BottomRight.Y, v2.Y));
+                                new Vector2(
+                                    MathUtils.Lerp(BarSubtexture.TopLeft.X, BarSubtexture.BottomRight.X, v2.X),
+                                    MathUtils.Lerp(BarSubtexture.TopLeft.Y, BarSubtexture.BottomRight.Y, v2.Y)
+                                );
                             var bottomRight = BarSubtexture.BottomRight;
-                            batch2D.QueueQuad(zero + v2 * BarSize, zero + one * BarSize, 0f, texCoord2,
-                                bottomRight, color);
+                            batch2D.QueueQuad(
+                                zero + v2 * BarSize,
+                                zero + one * BarSize,
+                                0f,
+                                texCoord2,
+                                bottomRight,
+                                color
+                            );
                         }
                     }
                     else
@@ -162,15 +173,25 @@ public class ValueBarWidget : Widget
                     {
                         var topLeft2 = BarSubtexture.TopLeft;
                         var bottomRight2 = BarSubtexture.BottomRight;
-                        batch2D.QueueQuad(zero + zero3 * BarSize, zero + one2 * BarSize, 0f, topLeft2,
-                            bottomRight2, color);
+                        batch2D.QueueQuad(
+                            zero + zero3 * BarSize,
+                            zero + one2 * BarSize,
+                            0f,
+                            topLeft2,
+                            bottomRight2,
+                            color
+                        );
                     }
                 }
                 else
                 {
                     ((FlatBatch2D)baseBatch).QueueQuad(zero + zero3 * BarSize, zero + one2 * BarSize, 0f, color);
-                    ((FlatBatch2D)baseBatch).QueueRectangle(zero + zero3 * BarSize, zero + one2 * BarSize, 0f,
-                        Color.MultiplyColorOnly(color, 0.75f));
+                    ((FlatBatch2D)baseBatch).QueueRectangle(
+                        zero + zero3 * BarSize,
+                        zero + one2 * BarSize,
+                        0f,
+                        Color.MultiplyColorOnly(color, 0.75f)
+                    );
                 }
             }
 

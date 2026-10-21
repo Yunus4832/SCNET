@@ -12,11 +12,13 @@ public sealed record ContentCreationIdentity(
     string Summary,
     string Description,
     string Version,
-    Stream? BaselinePackage = null);
+    Stream? BaselinePackage = null
+);
 
 public sealed class ContentPackageCreationArtifact(string path, string packageHash) : IDisposable
 {
     public string PackageHash { get; } = packageHash;
+
     public Stream OpenRead() => Storage.OpenFile(path, OpenFileMode.Read);
 
     public void Dispose()
@@ -30,8 +32,11 @@ public sealed class ContentPackageCreationArtifact(string path, string packageHa
 
 public static class ContentPackageCreationManager
 {
-    public static ContentPackageCreationArtifact CreateImage(ContentPackageType type,
-        ContentCreationIdentity identity, Stream source)
+    public static ContentPackageCreationArtifact CreateImage(
+        ContentPackageType type,
+        ContentCreationIdentity identity,
+        Stream source
+    )
     {
         if (type is not (ContentPackageType.BlocksTexture or ContentPackageType.CharacterSkin))
         {
@@ -59,16 +64,29 @@ public static class ContentPackageCreationManager
 
             var isTexture = type == ContentPackageType.BlocksTexture;
             var entry = isTexture ? "payload/texture.png" : "payload/skin.png";
-            var manifest = CreateManifest(type, identity,
-                new ContentPackagePayload(isTexture ? "scnet.blocks-texture.png-v1" : "scnet.character-skin.png-v1",
-                    entry, "image/png"),
-                JsonSerializer.SerializeToElement(new Dictionary<string, object>
-                { ["width"] = width, ["height"] = height }));
-            return Write(manifest,
-            [
-                new ContentPackageWriteEntry(entry, Storage.GetFileSize(sourcePath),
-                    () => Storage.OpenFile(sourcePath, OpenFileMode.Read))
-            ]);
+            var manifest = CreateManifest(
+                type,
+                identity,
+                new ContentPackagePayload(
+                    isTexture ? "scnet.blocks-texture.png-v1" : "scnet.character-skin.png-v1",
+                    entry,
+                    "image/png"
+                ),
+                JsonSerializer.SerializeToElement(
+                    new Dictionary<string, object>
+                        { ["width"] = width, ["height"] = height }
+                )
+            );
+            return Write(
+                manifest,
+                [
+                    new ContentPackageWriteEntry(
+                        entry,
+                        Storage.GetFileSize(sourcePath),
+                        () => Storage.OpenFile(sourcePath, OpenFileMode.Read)
+                    )
+                ]
+            );
         }
         finally
         {
@@ -92,17 +110,24 @@ public static class ContentPackageCreationManager
         var regions = Storage.CombinePaths(directory, "Regions");
         if (Storage.DirectoryExists(regions))
         {
-            entries.AddRange(Storage.ListFileNames(regions).OrderBy(name => name, StringComparer.Ordinal)
-                .Select(name => Entry($"payload/world/Regions/{name}", Storage.CombinePaths(regions, name))));
+            entries.AddRange(
+                Storage.ListFileNames(regions).OrderBy(name => name, StringComparer.Ordinal)
+                    .Select(name => Entry($"payload/world/Regions/{name}", Storage.CombinePaths(regions, name)))
+            );
         }
 
-        var manifest = CreateManifest(ContentPackageType.World, identity,
+        var manifest = CreateManifest(
+            ContentPackageType.World,
+            identity,
             new ContentPackagePayload("scnet.world-v1", "payload/world/Project.xml", "application/xml"),
-            JsonSerializer.SerializeToElement(new Dictionary<string, object>
-            {
-                ["projectFormat"] = "scnet-project-xml-v1",
-                ["regionsDirectory"] = "payload/world/Regions"
-            }));
+            JsonSerializer.SerializeToElement(
+                new Dictionary<string, object>
+                {
+                    ["projectFormat"] = "scnet-project-xml-v1",
+                    ["regionsDirectory"] = "payload/world/Regions"
+                }
+            )
+        );
         return Write(manifest, entries);
     }
 
@@ -121,14 +146,21 @@ public static class ContentPackageCreationManager
         }
 
         var payload = "payload/furniture/FurnitureDesigns.xml";
-        var manifest = CreateManifest(ContentPackageType.FurniturePack, identity,
+        var manifest = CreateManifest(
+            ContentPackageType.FurniturePack,
+            identity,
             new ContentPackagePayload("scnet.furniture-designs-xml-v1", payload, "application/xml"),
-            JsonSerializer.SerializeToElement(new Dictionary<string, object> { ["designCount"] = count }));
+            JsonSerializer.SerializeToElement(new Dictionary<string, object> { ["designCount"] = count })
+        );
         return Write(manifest, [Entry(payload, path)]);
     }
 
-    private static ContentPackageManifest CreateManifest(ContentPackageType type, ContentCreationIdentity identity,
-        ContentPackagePayload payload, JsonElement metadata)
+    private static ContentPackageManifest CreateManifest(
+        ContentPackageType type,
+        ContentCreationIdentity identity,
+        ContentPackagePayload payload,
+        JsonElement metadata
+    )
     {
         _ = SemanticVersion.Parse(identity.Version);
         var identifier = Guid.NewGuid().ToString();
@@ -150,12 +182,23 @@ public static class ContentPackageCreationManager
             identifier = baseline.Manifest.Identifier;
         }
 
-        return new ContentPackageManifest(ContentPackageManifest.CurrentFormatVersion, type, identifier,
-            identity.Name, identity.Summary, identity.Description, identity.Version, payload, metadata);
+        return new ContentPackageManifest(
+            ContentPackageManifest.CurrentFormatVersion,
+            type,
+            identifier,
+            identity.Name,
+            identity.Summary,
+            identity.Description,
+            identity.Version,
+            payload,
+            metadata
+        );
     }
 
-    private static ContentPackageCreationArtifact Write(ContentPackageManifest manifest,
-        IReadOnlyList<ContentPackageWriteEntry> entries)
+    private static ContentPackageCreationArtifact Write(
+        ContentPackageManifest manifest,
+        IReadOnlyList<ContentPackageWriteEntry> entries
+    )
     {
         Storage.CreateDirectory(GamePaths.ContentPackageCreationTemp);
         var path = Storage.CombinePaths(GamePaths.ContentPackageCreationTemp, $"{Guid.NewGuid():N}.scpkg.temp");

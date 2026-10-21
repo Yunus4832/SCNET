@@ -12,14 +12,19 @@ public class PlayScreen : Screen
 
     private enum WorldAction
     {
-        Play,
-        Create,
-        Settings,
-        Clone,
-        Delete
+        Play = 0,
+
+        Create = 1,
+
+        Settings = 2,
+
+        Clone = 3,
+
+        Delete = 4
     }
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly ListPanelWidget _worldsListWidget;
 
     public PlayScreen()
@@ -39,12 +44,13 @@ public class PlayScreen : Screen
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
             [WorldAction.Play, WorldAction.Create, WorldAction.Settings],
-            [3f, 2f, 2f, 0f]);
+            [3f, 2f, 2f, 0f]
+        );
         _actionPanel.SetSecondaryItems([WorldAction.Clone, WorldAction.Delete]);
         var worldsListWidget = _worldsListWidget;
         worldsListWidget.ItemWidgetFactory = (Func<object, Widget>)Delegate.Combine(
             worldsListWidget.ItemWidgetFactory,
-            (Func<object, Widget>)delegate (object item)
+            (Func<object, Widget>)delegate(object item)
             {
                 var worldInfo = (WorldInfo)item;
                 var node2 = ContentManager.Get<XElement>("Widgets/SavedWorldItem");
@@ -62,18 +68,20 @@ public class PlayScreen : Screen
                         worldInfo.WorldSettings.EnvironmentBehaviorMode.ToString())}";
                 if (worldInfo.ProjectFormatVersion != WorldVersions.ProjectFormatVersion)
                 {
-                    labelWidget2.Text = labelWidget2.Text + " | " +
+                    labelWidget2.Text = labelWidget2.Text +
+                                        " | " +
                                         (string.IsNullOrEmpty(worldInfo.ProjectFormatVersion)
                                             ? LanguageManager.Get("Usual", "unknown")
                                             : "(" + worldInfo.ProjectFormatVersion + ")");
                 }
 
                 return containerWidget;
-            });
+            }
+        );
 
         _worldsListWidget.ScrollPosition = 0f;
         _worldsListWidget.ScrollSpeed = 0f;
-        _worldsListWidget.ItemClicked += delegate (object item)
+        _worldsListWidget.ItemClicked += delegate(object item)
         {
             if (_worldsListWidget.SelectedItem == item)
             {
@@ -86,29 +94,33 @@ public class PlayScreen : Screen
     {
         var dialog = new BusyDialog(LanguageManager.GetContentWidgets(_typeName, 5), string.Empty);
         DialogsManager.ShowDialog(null, dialog);
-        Task.Run(delegate
-        {
-            var selectedItem = (WorldInfo?)_worldsListWidget.SelectedItem;
-            WorldsManager.UpdateWorldsList();
-            var worldInfos = new List<WorldInfo>(WorldsManager.WorldInfos);
-            worldInfos.Sort((w1, w2) => DateTime.Compare(w2.LastSaveTime, w1.LastSaveTime));
-            Dispatcher.Dispatch(delegate
+        Task.Run(
+            delegate
             {
-                _worldsListWidget.ClearItems();
-                foreach (var item in worldInfos)
-                {
-                    _worldsListWidget.AddItem(item);
-                }
+                var selectedItem = (WorldInfo?)_worldsListWidget.SelectedItem;
+                WorldsManager.UpdateWorldsList();
+                var worldInfos = new List<WorldInfo>(WorldsManager.WorldInfos);
+                worldInfos.Sort((w1, w2) => DateTime.Compare(w2.LastSaveTime, w1.LastSaveTime));
+                Dispatcher.Dispatch(
+                    delegate
+                    {
+                        _worldsListWidget.ClearItems();
+                        foreach (var item in worldInfos)
+                        {
+                            _worldsListWidget.AddItem(item);
+                        }
 
-                if (selectedItem != null)
-                {
-                    _worldsListWidget.SelectedItem =
-                        worldInfos.FirstOrDefault(wi => wi.DirectoryName == selectedItem.DirectoryName);
-                }
+                        if (selectedItem != null)
+                        {
+                            _worldsListWidget.SelectedItem =
+                                worldInfos.FirstOrDefault(wi => wi.DirectoryName == selectedItem.DirectoryName);
+                        }
 
-                DialogsManager.HideDialog(dialog);
-            });
-        });
+                        DialogsManager.HideDialog(dialog);
+                    }
+                );
+            }
+        );
     }
 
     public override void Leave()
@@ -126,7 +138,8 @@ public class PlayScreen : Screen
 
         Children.Find<LabelWidget>("TopBar.Label")!.Text = string.Format(
             LanguageManager.GetContentWidgets(_typeName, 6),
-            _worldsListWidget.Items.Count);
+            _worldsListWidget.Items.Count
+        );
         _actionPanel.Refresh();
         if (Input is { Back: false, Cancel: false } && !Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
@@ -204,12 +217,16 @@ public class PlayScreen : Screen
     private void ShowCloneDialog(WorldInfo worldInfo)
     {
         var defaultName = WorldsManager.GetUnusedWorldName();
-        DialogsManager.ShowDialog(null, new TextBoxDialog(
-            LanguageManager.GetContentWidgets(_typeName, "CloneTitle"),
-            defaultName,
-            128,
-            name => CloneWorld(worldInfo, string.IsNullOrWhiteSpace(name) ? defaultName : name.Trim()),
-            false));
+        DialogsManager.ShowDialog(
+            null,
+            new TextBoxDialog(
+                LanguageManager.GetContentWidgets(_typeName, "CloneTitle"),
+                defaultName,
+                128,
+                name => CloneWorld(worldInfo, string.IsNullOrWhiteSpace(name) ? defaultName : name.Trim()),
+                false
+            )
+        );
     }
 
     private void CloneWorld(WorldInfo source, string name)
@@ -223,48 +240,59 @@ public class PlayScreen : Screen
         var busyDialog = new BusyDialog(LanguageManager.GetContentWidgets(_typeName, "Cloning"), name);
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() =>
-        {
-            try
             {
-                var clone = WorldsManager.CloneWorld(source.DirectoryName, name);
-                WorldsManager.UpdateWorldsList();
-                Dispatcher.Dispatch(() =>
+                try
                 {
-                    DialogsManager.HideDialog(busyDialog);
-                    PopulateWorldsList(clone.DirectoryName);
-                });
-            }
-            catch (Exception exception)
-            {
-                Dispatcher.Dispatch(() =>
+                    var clone = WorldsManager.CloneWorld(source.DirectoryName, name);
+                    WorldsManager.UpdateWorldsList();
+                    Dispatcher.Dispatch(() =>
+                        {
+                            DialogsManager.HideDialog(busyDialog);
+                            PopulateWorldsList(clone.DirectoryName);
+                        }
+                    );
+                }
+                catch (Exception exception)
                 {
-                    DialogsManager.HideDialog(busyDialog);
-                    DialogsManager.Alert(
-                        LanguageManager.GetContentWidgets(_typeName, "CloneFailed"), exception.Message);
-                });
+                    Dispatcher.Dispatch(() =>
+                        {
+                            DialogsManager.HideDialog(busyDialog);
+                            DialogsManager.Alert(
+                                LanguageManager.GetContentWidgets(_typeName, "CloneFailed"),
+                                exception.Message
+                            );
+                        }
+                    );
+                }
             }
-        });
+        );
     }
 
     private void ConfirmDelete(WorldInfo worldInfo)
     {
-        DialogsManager.ShowDialog(null, new MessageDialog(
-            LanguageManager.GetContentWidgets(_typeName, "DeleteTitle"),
-            string.Format(LanguageManager.GetContentWidgets(_typeName, "DeleteQuestion"),
-                worldInfo.WorldSettings.Name),
-            LanguageManager.Get("Usual", "yes"),
-            LanguageManager.Get("Usual", "no"),
-            button =>
-            {
-                if (button != MessageDialogButton.Button1)
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                LanguageManager.GetContentWidgets(_typeName, "DeleteTitle"),
+                string.Format(
+                    LanguageManager.GetContentWidgets(_typeName, "DeleteQuestion"),
+                    worldInfo.WorldSettings.Name
+                ),
+                LanguageManager.Get("Usual", "yes"),
+                LanguageManager.Get("Usual", "no"),
+                button =>
                 {
-                    return;
-                }
+                    if (button != MessageDialogButton.Button1)
+                    {
+                        return;
+                    }
 
-                WorldsManager.DeleteWorld(worldInfo.DirectoryName);
-                WorldsManager.UpdateWorldsList();
-                PopulateWorldsList(null);
-            }));
+                    WorldsManager.DeleteWorld(worldInfo.DirectoryName);
+                    WorldsManager.UpdateWorldsList();
+                    PopulateWorldsList(null);
+                }
+            )
+        );
     }
 
     private void PopulateWorldsList(string? selectedDirectoryName)
@@ -294,38 +322,44 @@ public class PlayScreen : Screen
     {
         var busyDialog = new BusyDialog(
             LanguageManager.GetContentWidgets(_typeName, 12),
-            LanguageManager.GetContentWidgets(_typeName, 13));
+            LanguageManager.GetContentWidgets(_typeName, 13)
+        );
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() =>
-        {
-            try
             {
-                var result = ModRestartHelper.PrepareWorldSession(
-                    worldInfo,
-                    message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message));
-                Dispatcher.Dispatch(() =>
+                try
                 {
-                    DialogsManager.HideDialog(busyDialog);
-                    if (!result.RequiresRestart)
-                    {
-                        PlayPreparedWorld(worldInfo);
-                        return;
-                    }
+                    var result = ModRestartHelper.PrepareWorldSession(
+                        worldInfo,
+                        message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message)
+                    );
+                    Dispatcher.Dispatch(() =>
+                        {
+                            DialogsManager.HideDialog(busyDialog);
+                            if (!result.RequiresRestart)
+                            {
+                                PlayPreparedWorld(worldInfo);
+                                return;
+                            }
 
-                    ConfirmWorldModRestart(result);
-                });
-            }
-            catch (Exception ex)
-            {
-                Dispatcher.Dispatch(() =>
+                            ConfirmWorldModRestart(result);
+                        }
+                    );
+                }
+                catch (Exception ex)
                 {
-                    DialogsManager.HideDialog(busyDialog);
-                    DialogsManager.Alert(
-                        LanguageManager.GetContentWidgets(_typeName, 14),
-                        string.Format(LanguageManager.GetContentWidgets(_typeName, 15), ex.Message));
-                });
+                    Dispatcher.Dispatch(() =>
+                        {
+                            DialogsManager.HideDialog(busyDialog);
+                            DialogsManager.Alert(
+                                LanguageManager.GetContentWidgets(_typeName, 14),
+                                string.Format(LanguageManager.GetContentWidgets(_typeName, 15), ex.Message)
+                            );
+                        }
+                    );
+                }
             }
-        });
+        );
     }
 
     private static void ConfirmWorldModRestart(RemoteModSessionPreparation result)
@@ -345,7 +379,9 @@ public class PlayScreen : Screen
                     }
 
                     GameExitManager.RequestRestart(result.RemoteSession!, result.SessionProfile!);
-                }));
+                }
+            )
+        );
     }
 
     private void PlayPreparedWorld(WorldInfo worldInfo)

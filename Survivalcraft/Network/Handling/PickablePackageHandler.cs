@@ -50,8 +50,14 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                 }
                 else
                 {
-                    var created = subsystemPickable.CreatePickable(package.Id, package.Value, package.Count,
-                        package.Position, package.Velocity, package.StuckMatrix);
+                    var created = subsystemPickable.CreatePickable(
+                        package.Id,
+                        package.Value,
+                        package.Count,
+                        package.Position,
+                        package.Velocity,
+                        package.StuckMatrix
+                    );
                     if (created is not null)
                     {
                         created.LastStateTick = package.StateTick;
@@ -89,17 +95,20 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                 {
                     netNode.QueuePackage(
                         PickablePackageBuilder.Capture(requested, PickablePackage.PickType.Create),
-                        PackageAudience.To(context.Sender));
+                        PackageAudience.To(context.Sender)
+                    );
                     interest.Entities.AddObserved(
                         context.Sender,
                         EntityInterestGroup.Pickables,
-                        requested.Id);
+                        requested.Id
+                    );
                 }
                 else
                 {
                     netNode.QueuePackage(
                         new PickablePackage(package.Id),
-                        PackageAudience.To(context.Sender));
+                        PackageAudience.To(context.Sender)
+                    );
                 }
 
                 break;
@@ -111,8 +120,14 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
 
                 foreach (var pickable in package.Pickables)
                 {
-                    var created = subsystemPickable.CreatePickable(pickable.Id, pickable.Value, pickable.Count,
-                        pickable.Position, pickable.Velocity, pickable.StuckMatrix);
+                    var created = subsystemPickable.CreatePickable(
+                        pickable.Id,
+                        pickable.Value,
+                        pickable.Count,
+                        pickable.Position,
+                        pickable.Velocity,
+                        pickable.StuckMatrix
+                    );
                     if (created is not null)
                     {
                         created.LastStateTick = package.StateTick;
@@ -128,8 +143,11 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
 
                 foreach (var id in package.RemovedIds)
                 {
-                    subsystemPickable.PickableAction(id,
-                        pick => { subsystemPickable.RemovePickable(pick); }, false);
+                    subsystemPickable.PickableAction(
+                        id,
+                        pick => { subsystemPickable.RemovePickable(pick); },
+                        false
+                    );
                 }
 
                 break;

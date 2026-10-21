@@ -2,7 +2,15 @@ using Engine.Graphics;
 
 namespace Game.Blocks;
 
-public abstract class FenceGateBlock : Block, IElectricElementBlock, IPaintableBlock
+public abstract class FenceGateBlock(
+    string modelName,
+    float pivotDistance,
+    bool doubleSided,
+    bool useAlphaTest,
+    int coloredTextureSlot,
+    Color postColor,
+    Color unpaintedColor
+) : Block, IElectricElementBlock, IPaintableBlock
 {
     public BlockMesh[] BlockMeshes = new BlockMesh[16];
 
@@ -10,45 +18,45 @@ public abstract class FenceGateBlock : Block, IElectricElementBlock, IPaintableB
 
     public BlockMesh[] ColoredBlockMeshes = new BlockMesh[16];
 
-    public int ColoredTextureSlot;
+    public int ColoredTextureSlot = coloredTextureSlot;
 
-    public bool DoubleSided;
+    public bool DoubleSided = doubleSided;
 
-    public string ModelName;
+    public string ModelName = modelName;
 
-    public float PivotDistance;
+    public float PivotDistance = pivotDistance;
 
-    public Color PostColor;
+    public Color PostColor = postColor;
 
     public BlockMesh StandaloneBlockMesh = new();
 
     public BlockMesh StandaloneColoredBlockMesh = new();
 
-    public Color UnpaintedColor;
+    public Color UnpaintedColor = unpaintedColor;
 
-    public bool UseAlphaTest;
+    public bool UseAlphaTest = useAlphaTest;
 
-    public FenceGateBlock(string modelName, float pivotDistance, bool doubleSided, bool useAlphaTest,
-        int coloredTextureSlot, Color postColor, Color unpaintedColor)
-    {
-        ModelName = modelName;
-        PivotDistance = pivotDistance;
-        DoubleSided = doubleSided;
-        UseAlphaTest = useAlphaTest;
-        ColoredTextureSlot = coloredTextureSlot;
-        PostColor = postColor;
-        UnpaintedColor = unpaintedColor;
-    }
-
-    public ElectricElement CreateElectricElement(SubsystemElectricity subsystemElectricity, int value, int x, int y,
-        int z)
+    public ElectricElement CreateElectricElement(
+        SubsystemElectricity subsystemElectricity,
+        int value,
+        int x,
+        int y,
+        int z
+    )
     {
         var data = Terrain.ExtractData(value);
         return new FenceGateElectricElement(subsystemElectricity, new CellFace(x, y, z, GetHingeFace(data)));
     }
 
-    public ElectricConnectorType? GetConnectorType(SubsystemTerrain terrain, int value, int face, int connectorFace,
-        int x, int y, int z)
+    public ElectricConnectorType? GetConnectorType(
+        SubsystemTerrain terrain,
+        int value,
+        int face,
+        int connectorFace,
+        int x,
+        int y,
+        int z
+    )
     {
         var hingeFace = GetHingeFace(Terrain.ExtractData(value));
         if (face == hingeFace)
@@ -80,13 +88,11 @@ public abstract class FenceGateBlock : Block, IElectricElementBlock, IPaintableB
         var model = ContentManager.Get<Model>(ModelName);
         var postMesh = model.FindMesh("Post")!;
         var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            postMesh.ParentBone
-            ?? throw new InvalidOperationException("Required PostMesh.ParentBone is null")
+            postMesh.ParentBone ?? throw new InvalidOperationException("Required PostMesh.ParentBone is null")
         );
         var planksMesh = model.FindMesh("Planks")!;
         var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            planksMesh.ParentBone
-            ?? throw new InvalidOperationException("Required PlanksMesh.ParentBone is null")
+            planksMesh.ParentBone ?? throw new InvalidOperationException("Required PlanksMesh.ParentBone is null")
         );
         for (var i = 0; i < 16; i++)
         {
@@ -99,25 +105,53 @@ public abstract class FenceGateBlock : Block, IElectricElementBlock, IPaintableB
             identity *= Matrix.CreateTranslation((0.5f - PivotDistance) * num, 0f, 0f) *
                         Matrix.CreateRotationY(open ? num * (float)Math.PI / 2f : 0f) *
                         Matrix.CreateTranslation((0f - (0.5f - PivotDistance)) * num, 0f, 0f);
-            identity *= Matrix.CreateTranslation(0f, 0f, 0f) * Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
+            identity *= Matrix.CreateTranslation(0f, 0f, 0f) *
+                        Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
                         Matrix.CreateTranslation(0.5f, 0f, 0.5f);
             BlockMeshes[i] = new BlockMesh();
-            BlockMeshes[i].AppendModelMeshPart(postMesh.MeshParts[0], boneAbsoluteTransform * identity,
-                false, !rightHanded, false, false, PostColor);
-            BlockMeshes[i].AppendModelMeshPart(planksMesh.MeshParts[0],
-                boneAbsoluteTransform2 * identity, false, !rightHanded, false, false, Color.White);
+            BlockMeshes[i].AppendModelMeshPart(
+                postMesh.MeshParts[0],
+                boneAbsoluteTransform * identity,
+                false,
+                !rightHanded,
+                false,
+                false,
+                PostColor
+            );
+            BlockMeshes[i].AppendModelMeshPart(
+                planksMesh.MeshParts[0],
+                boneAbsoluteTransform2 * identity,
+                false,
+                !rightHanded,
+                false,
+                false,
+                Color.White
+            );
             if (DoubleSided)
             {
-                BlockMeshes[i].AppendModelMeshPart(planksMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * identity, false, rightHanded, false, true, Color.White);
+                BlockMeshes[i].AppendModelMeshPart(
+                    planksMesh.MeshParts[0],
+                    boneAbsoluteTransform2 * identity,
+                    false,
+                    rightHanded,
+                    false,
+                    true,
+                    Color.White
+                );
             }
 
             ColoredBlockMeshes[i] = new BlockMesh();
             ColoredBlockMeshes[i].AppendBlockMesh(BlockMeshes[i]);
-            BlockMeshes[i].TransformTextureCoordinates(Matrix.CreateTranslation(TextureSlot % 16 / 16f,
-                TextureSlot / 16 / 16f, 0f));
+            BlockMeshes[i].TransformTextureCoordinates(
+                Matrix.CreateTranslation(
+                    TextureSlot % 16 / 16f,
+                    TextureSlot / 16 / 16f,
+                    0f
+                )
+            );
             ColoredBlockMeshes[i].TransformTextureCoordinates(
-                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+            );
             var boundingBox = BlockMeshes[i].CalculateBoundingBox();
             var min = boundingBox.Min;
             var max = boundingBox.Max;
@@ -136,28 +170,54 @@ public abstract class FenceGateBlock : Block, IElectricElementBlock, IPaintableB
             boundingBox.Max = max;
 
             // 设置碰撞箱
-            CollisionBoxes[i] = new BoundingBox[1]
-            {
+            CollisionBoxes[i] =
+            [
                 boundingBox
-            };
+            ];
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(postMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, PostColor);
-        StandaloneBlockMesh.AppendModelMeshPart(planksMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            postMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            PostColor
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            planksMesh.MeshParts[0],
+            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         if (DoubleSided)
         {
-            StandaloneBlockMesh.AppendModelMeshPart(planksMesh.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f), false, true, false, true,
-                Color.White);
+            StandaloneBlockMesh.AppendModelMeshPart(
+                planksMesh.MeshParts[0],
+                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+                false,
+                true,
+                false,
+                true,
+                Color.White
+            );
         }
 
         StandaloneColoredBlockMesh.AppendBlockMesh(StandaloneBlockMesh);
-        StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(TextureSlot % 16 / 16f,
-            TextureSlot / 16 / 16f, 0f));
+        StandaloneBlockMesh.TransformTextureCoordinates(
+            Matrix.CreateTranslation(
+                TextureSlot % 16 / 16f,
+                TextureSlot / 16 / 16f,
+                0f
+            )
+        );
         StandaloneColoredBlockMesh.TransformTextureCoordinates(
-            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+        );
         base.Initialize();
     }
 
@@ -195,11 +255,13 @@ public abstract class FenceGateBlock : Block, IElectricElementBlock, IPaintableB
     {
         showDebris = true;
         var data = SetVariant(Terrain.ExtractData(oldValue), 0);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Count = 1
+            }
+        );
     }
 
     public override BlockPlacementData GetPlacementValue(
@@ -264,7 +326,8 @@ public abstract class FenceGateBlock : Block, IElectricElementBlock, IPaintableB
         var data3 = SetRightHanded(
             rightHanded: (block is FenceGateBlock && GetRotation(data) == num5) ||
                          ((block2 is not FenceGateBlock || GetRotation(data2) != num5) && !block.Collidable),
-            data: SetOpen(SetRotation(Terrain.ExtractData(value), num5), false));
+            data: SetOpen(SetRotation(Terrain.ExtractData(value), num5), false)
+        );
         BlockPlacementData result = default;
         result.Value = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), data3);
         result.CellFace = raycastResult.CellFace;
@@ -315,18 +378,41 @@ public abstract class FenceGateBlock : Block, IElectricElementBlock, IPaintableB
         var color = GetColor(data);
         if (color.HasValue)
         {
-            generator.GenerateMeshVertices(this, x, y, z, ColoredBlockMeshes[variant],
-                SubsystemPalette.GetColor(generator, color), null,
-                UseAlphaTest ? geometry.SubsetAlphaTest : geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                ColoredBlockMeshes[variant],
+                SubsystemPalette.GetColor(generator, color),
+                null,
+                UseAlphaTest ? geometry.SubsetAlphaTest : geometry.SubsetOpaque
+            );
         }
         else
         {
-            generator.GenerateMeshVertices(this, x, y, z, BlockMeshes[variant], UnpaintedColor, null,
-                UseAlphaTest ? geometry.SubsetAlphaTest : geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshes[variant],
+                UnpaintedColor,
+                null,
+                UseAlphaTest ? geometry.SubsetAlphaTest : geometry.SubsetOpaque
+            );
         }
 
-        generator.GenerateWireVertices(value, x, y, z, GetHingeFace(data), PivotDistance * 2f, Vector2.Zero,
-            geometry.SubsetOpaque);
+        generator.GenerateWireVertices(
+            value,
+            x,
+            y,
+            z,
+            GetHingeFace(data),
+            PivotDistance * 2f,
+            Vector2.Zero,
+            geometry.SubsetOpaque
+        );
     }
 
     public override void DrawBlock(

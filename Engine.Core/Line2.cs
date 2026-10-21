@@ -68,8 +68,10 @@ public struct Line2 : IEquatable<Line2>
         }
 
         var num2 = 1f / num;
-        return new Vector2((l2.Normal.Y * l1.D - l1.Normal.Y * l2.D) * num2,
-            (l1.Normal.X * l2.D - l2.Normal.X * l1.D) * num2);
+        return new Vector2(
+            (l2.Normal.Y * l1.D - l1.Normal.Y * l2.D) * num2,
+            (l1.Normal.X * l2.D - l2.Normal.X * l1.D) * num2
+        );
     }
 
     public static bool operator ==(Line2 l1, Line2 l2)

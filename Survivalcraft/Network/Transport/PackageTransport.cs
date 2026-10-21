@@ -6,16 +6,16 @@ namespace Game.Network.Transport;
 public enum TransportMode
 {
     /// <summary>可靠传输：不可丢、按序到达。</summary>
-    Reliable,
+    Reliable = 0,
 
     /// <summary>快照传输：可丢弃、单数据报，最新优先由传输层保证。</summary>
-    Snapshot,
+    Snapshot = 1,
 
     /// <summary>状态流传输：可丢弃、多数据报，最新优先由应用层 StateTick 保证。</summary>
-    StateStream,
+    StateStream = 2,
 
     /// <summary>尽力而为的一次性效果：瞬时事件，丢失即消失，无最新优先语义。</summary>
-    Effect
+    Effect = 3
 }
 
 public readonly record struct PackageTransport(

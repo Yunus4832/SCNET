@@ -24,12 +24,16 @@ public sealed class ServerConnectionPreparationTest
             cancellation.Cancel();
         };
         var preparing = ServerConnectionPreparation.PrepareAsync(
-            new AddressNetworkTarget("127.0.0.1", server.LocalPort), http, cancellation.Token);
+            new AddressNetworkTarget("127.0.0.1", server.LocalPort),
+            http,
+            cancellation.Token
+        );
         while (!preparing.IsCompleted)
         {
             server.DispatchEvents();
             await Task.Delay(2);
         }
+
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => preparing);
         Assert.NotNull(inspectedPort);
         await using var rebound = new NetworkHost(inspectedPort.Value);
@@ -50,11 +54,15 @@ public sealed class ServerConnectionPreparationTest
             var query = PackageManager.DecodePackage<ServerInfoPackage>(null, payload);
             Assert.True(query.Package.RequestInfo);
             inspectedPort = source.TransportEndpoint.Port;
-            source.Send(NetNode.CreateUnconnectedPayload(new ServerInfoPackage
-            {
-                ProtocolVersion = 1,
-                ClientCount = 3
-            }));
+            source.Send(
+                NetNode.CreateUnconnectedPayload(
+                    new ServerInfoPackage
+                    {
+                        ProtocolVersion = 1,
+                        ClientCount = 3
+                    }
+                )
+            );
         };
         server.ConnectionRequested += request =>
         {
@@ -63,17 +71,19 @@ public sealed class ServerConnectionPreparationTest
             request.Accept();
         };
         var polling = Task.Run(async () =>
-        {
-            while (!stop.IsCancellationRequested)
             {
-                server.DispatchEvents();
-                await Task.Delay(2, stop.Token);
+                while (!stop.IsCancellationRequested)
+                {
+                    server.DispatchEvents();
+                    await Task.Delay(2, stop.Token);
+                }
             }
-        });
+        );
         try
         {
             var target = new AddressNetworkTarget("localhost", server.LocalPort);
-            await using var prepared = await ServerConnectionPreparation.PrepareAsync(target, http, CancellationToken.None);
+            await using var prepared =
+                await ServerConnectionPreparation.PrepareAsync(target, http, CancellationToken.None);
             Assert.Equal(target, prepared.Target);
             Assert.Equal(1, prepared.Status.ProtocolVersion);
             Assert.Equal(3, prepared.Status.PlayerCount);
@@ -82,7 +92,8 @@ public sealed class ServerConnectionPreparationTest
             {
                 Assert.Throws<InvalidOperationException>(() => prepared.Consume());
                 await prepared.DisposeAsync();
-                var connection = await transport.Path.ConnectAsync("game-handshake"u8.ToArray(), CancellationToken.None);
+                var connection =
+                    await transport.Path.ConnectAsync("game-handshake"u8.ToArray(), CancellationToken.None);
                 Assert.True(connection.IsConnected);
                 Assert.Null(transport.Host.Failure);
             }
@@ -102,6 +113,7 @@ public sealed class ServerConnectionPreparationTest
             catch (OperationCanceledException)
             {
             }
+
             PackageManager.UnRegisterPackage(new ServerInfoPackage());
         }
     }

@@ -4,8 +4,9 @@ public partial class SubsystemPlayers
 {
     public enum PendingGroupOperationKind
     {
-        JoinRequest,
-        Invitation
+        JoinRequest = 0,
+
+        Invitation = 1
     }
 
     public sealed record PendingGroupOperation(
@@ -15,17 +16,20 @@ public partial class SubsystemPlayers
         Guid Responder,
         Guid JoiningPlayer,
         Guid GroupKey,
-        double ExpiresAt);
+        double ExpiresAt
+    );
 
     public sealed record GroupOperationMessage(
         string Key,
         string Fallback,
-        IReadOnlyList<string> Arguments)
+        IReadOnlyList<string> Arguments
+    )
     {
         public static GroupOperationMessage Create(
             string key,
             string fallback,
-            params string[] arguments)
+            params string[] arguments
+        )
         {
             return new GroupOperationMessage(key, fallback, arguments);
         }
@@ -41,7 +45,8 @@ public partial class SubsystemPlayers
 
     public bool TryStartGroupOperation(
         PlayerData actor,
-        out GroupOperationMessage? error)
+        out GroupOperationMessage? error
+    )
     {
         CleanupExpiredGroupOperations();
         var now = Time.RealTime;
@@ -50,7 +55,8 @@ public partial class SubsystemPlayers
         {
             error = GroupOperationMessage.Create(
                 "TeamRateLimited_Message",
-                "操作过于频繁，请稍后重试。");
+                "操作过于频繁，请稍后重试。"
+            );
             return false;
         }
 
@@ -62,14 +68,16 @@ public partial class SubsystemPlayers
     public bool TryCreateGroup(
         PlayerData actor,
         string requestedName,
-        out GroupOperationMessage message)
+        out GroupOperationMessage message
+    )
     {
         var name = requestedName.Trim();
         if (name.Length is < 1 or > 64 || name.Any(char.IsControl))
         {
             message = GroupOperationMessage.Create(
                 "TeamNameInvalid_Message",
-                "队伍名称必须为 1 到 64 个有效字符。");
+                "队伍名称必须为 1 到 64 个有效字符。"
+            );
             return false;
         }
 
@@ -77,7 +85,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamAlreadyMember_Message",
-                "你已经在队伍中。");
+                "你已经在队伍中。"
+            );
             return false;
         }
 
@@ -86,7 +95,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamDuplicate_Message",
-                "无法创建重复的队伍。");
+                "无法创建重复的队伍。"
+            );
             return false;
         }
 
@@ -97,7 +107,8 @@ public partial class SubsystemPlayers
         message = GroupOperationMessage.Create(
             "TeamCreated_Message",
             "已创建队伍“{0}”。",
-            name);
+            name
+        );
         return true;
     }
 
@@ -110,7 +121,8 @@ public partial class SubsystemPlayers
             actor.GroupKey = string.Empty;
             message = GroupOperationMessage.Create(
                 "TeamNotMember_Message",
-                "你当前不在队伍中。");
+                "你当前不在队伍中。"
+            );
             return false;
         }
 
@@ -126,7 +138,8 @@ public partial class SubsystemPlayers
             RemovePendingOperationsForGroup(actor.PlayerGUID);
             message = GroupOperationMessage.Create(
                 "TeamDisbanded_Message",
-                "队长退出，队伍已解散。");
+                "队长退出，队伍已解散。"
+            );
             return true;
         }
 
@@ -136,7 +149,8 @@ public partial class SubsystemPlayers
         message = GroupOperationMessage.Create(
             "TeamLeft_Message",
             "已退出队伍“{0}”。",
-            group.Name);
+            group.Name
+        );
         return true;
     }
 
@@ -145,7 +159,8 @@ public partial class SubsystemPlayers
         Guid groupKey,
         out PendingGroupOperation? operation,
         out PlayerData? responder,
-        out GroupOperationMessage message)
+        out GroupOperationMessage message
+    )
     {
         operation = null;
         responder = null;
@@ -158,7 +173,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamStateInvalid_Message",
-                "队伍状态无效，无法处理加入申请。");
+                "队伍状态无效，无法处理加入申请。"
+            );
             return false;
         }
 
@@ -166,7 +182,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamRequestPending_Message",
-                "你已经有一个待处理的队伍请求。");
+                "你已经有一个待处理的队伍请求。"
+            );
             return false;
         }
 
@@ -175,7 +192,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamLeaderOffline_Message",
-                "队长当前不在线，无法处理加入申请。");
+                "队长当前不在线，无法处理加入申请。"
+            );
             return false;
         }
 
@@ -184,11 +202,13 @@ public partial class SubsystemPlayers
             requester.PlayerGUID,
             responder.PlayerGUID,
             requester.PlayerGUID,
-            groupKey);
+            groupKey
+        );
         message = GroupOperationMessage.Create(
             "TeamJoinSent_Message",
             "已向队伍“{0}”发送加入申请。",
-            group!.Name);
+            group!.Name
+        );
         return true;
     }
 
@@ -198,7 +218,8 @@ public partial class SubsystemPlayers
         Guid targetPlayer,
         out PendingGroupOperation? operation,
         out PlayerData? responder,
-        out GroupOperationMessage message)
+        out GroupOperationMessage message
+    )
     {
         operation = null;
         responder = null;
@@ -207,7 +228,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamNotMember_Message",
-                "你不是该队伍的成员。");
+                "你不是该队伍的成员。"
+            );
             return false;
         }
 
@@ -216,7 +238,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamTargetOffline_Message",
-                "目标玩家当前不在线。");
+                "目标玩家当前不在线。"
+            );
             return false;
         }
 
@@ -224,7 +247,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamTargetAlreadyMember_Message",
-                "目标玩家已经在队伍中。");
+                "目标玩家已经在队伍中。"
+            );
             return false;
         }
 
@@ -232,7 +256,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamTargetPending_Message",
-                "目标玩家已经有一个待处理的队伍请求。");
+                "目标玩家已经有一个待处理的队伍请求。"
+            );
             return false;
         }
 
@@ -241,11 +266,13 @@ public partial class SubsystemPlayers
             inviter.PlayerGUID,
             responder.PlayerGUID,
             responder.PlayerGUID,
-            groupKey);
+            groupKey
+        );
         message = GroupOperationMessage.Create(
             "TeamInvitationSent_Message",
             "已向 {0} 发送队伍邀请。",
-            responder.Name);
+            responder.Name
+        );
         return true;
     }
 
@@ -254,7 +281,8 @@ public partial class SubsystemPlayers
         Guid operationId,
         bool accepted,
         out PendingGroupOperation? operation,
-        out GroupOperationMessage message)
+        out GroupOperationMessage message
+    )
     {
         CleanupExpiredGroupOperations();
         if (!_pendingGroupOperations.TryGetValue(operationId, out operation) ||
@@ -263,7 +291,8 @@ public partial class SubsystemPlayers
             operation = null;
             message = GroupOperationMessage.Create(
                 "TeamRequestExpired_Message",
-                "该队伍请求不存在或已经失效。");
+                "该队伍请求不存在或已经失效。"
+            );
             return false;
         }
 
@@ -272,7 +301,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamRequestRejected_Message",
-                "已拒绝队伍请求。");
+                "已拒绝队伍请求。"
+            );
             return true;
         }
 
@@ -285,14 +315,16 @@ public partial class SubsystemPlayers
 
         message = GroupOperationMessage.Create(
             "TeamJoiningPlayerOffline_Message",
-            "申请加入的玩家已经离线。");
+            "申请加入的玩家已经离线。"
+        );
         return false;
     }
 
     private bool TryJoinGroup(
         PlayerData player,
         Guid groupKey,
-        out GroupOperationMessage message)
+        out GroupOperationMessage message
+    )
     {
         if (!TryValidateCanJoin(player, groupKey, out var group, out message))
         {
@@ -305,7 +337,8 @@ public partial class SubsystemPlayers
         message = GroupOperationMessage.Create(
             "TeamJoined_Message",
             "已加入队伍“{0}”。",
-            group.Name);
+            group.Name
+        );
         return true;
     }
 
@@ -313,7 +346,8 @@ public partial class SubsystemPlayers
         PlayerData player,
         Guid groupKey,
         out Group? group,
-        out GroupOperationMessage message)
+        out GroupOperationMessage message
+    )
     {
         group = null;
         var currentGroup = GetPlayerGroupKey(player.PlayerGUID);
@@ -321,7 +355,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamPlayerAlreadyMember_Message",
-                "玩家已经在队伍中。");
+                "玩家已经在队伍中。"
+            );
             return false;
         }
 
@@ -329,7 +364,8 @@ public partial class SubsystemPlayers
         {
             message = GroupOperationMessage.Create(
                 "TeamMissing_Message",
-                "目标队伍不存在。");
+                "目标队伍不存在。"
+            );
             return false;
         }
 
@@ -342,7 +378,8 @@ public partial class SubsystemPlayers
         Guid initiator,
         Guid responder,
         Guid joiningPlayer,
-        Guid groupKey)
+        Guid groupKey
+    )
     {
         var operation = new PendingGroupOperation(
             Guid.NewGuid(),
@@ -351,7 +388,8 @@ public partial class SubsystemPlayers
             responder,
             joiningPlayer,
             groupKey,
-            Time.RealTime + _groupOperationLifetime);
+            Time.RealTime + _groupOperationLifetime
+        );
         _pendingGroupOperations.Add(operation.OperationId, operation);
         return operation;
     }
@@ -360,7 +398,8 @@ public partial class SubsystemPlayers
     {
         CleanupExpiredGroupOperations();
         return _pendingGroupOperations.Values.Any(operation =>
-            operation.JoiningPlayer == playerGuid);
+            operation.JoiningPlayer == playerGuid
+        );
     }
 
     private void CleanupExpiredGroupOperations()
@@ -380,7 +419,8 @@ public partial class SubsystemPlayers
                      .Where(pair =>
                          pair.Value.Initiator == playerGuid ||
                          pair.Value.Responder == playerGuid ||
-                         pair.Value.JoiningPlayer == playerGuid)
+                         pair.Value.JoiningPlayer == playerGuid
+                     )
                      .Select(pair => pair.Key)
                      .ToArray())
         {

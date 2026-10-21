@@ -53,7 +53,8 @@ public sealed class ContentPackageCacheTest : IDisposable
         await using var source = new MemoryStream(CreatePackage(), writable: false);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            cache.ImportAsync(source, cancellation.Token));
+            cache.ImportAsync(source, cancellation.Token)
+        );
 
         var temporaryDirectory = Path.Combine(_directory, ".temp");
         Assert.Empty(Directory.EnumerateFiles(temporaryDirectory));
@@ -80,7 +81,8 @@ public sealed class ContentPackageCacheTest : IDisposable
         await using var source = new MemoryStream(CreatePackage(), writable: false);
 
         await Assert.ThrowsAsync<ContentPackageException>(() =>
-            cache.ImportExpectedAsync(source, ContentPackageType.World));
+            cache.ImportExpectedAsync(source, ContentPackageType.World)
+        );
 
         Assert.Empty(cache.List());
         Assert.Empty(Directory.EnumerateFiles(Path.Combine(_directory, ".temp")));
@@ -92,11 +94,14 @@ public sealed class ContentPackageCacheTest : IDisposable
         var cache = new ContentPackageCache(_directory);
         await using var source = new MemoryStream(CreatePackage(), writable: false);
 
-        await Assert.ThrowsAsync<ContentPackageException>(() => cache.ImportAllowedAsync(source,
-        [
-            ContentPackageType.World, ContentPackageType.BlocksTexture, ContentPackageType.CharacterSkin,
-            ContentPackageType.FurniturePack
-        ]));
+        await Assert.ThrowsAsync<ContentPackageException>(() => cache.ImportAllowedAsync(
+                source,
+                [
+                    ContentPackageType.World, ContentPackageType.BlocksTexture, ContentPackageType.CharacterSkin,
+                    ContentPackageType.FurniturePack
+                ]
+            )
+        );
 
         Assert.Empty(cache.List());
         Assert.Empty(Directory.EnumerateFiles(Path.Combine(_directory, ".temp")));
@@ -112,10 +117,12 @@ public sealed class ContentPackageCacheTest : IDisposable
 
     private static byte[] CreatePackage()
     {
-        using var stream = ScpkgTestPackage.Create("""
-                                                   {"id":"cache.example","name":"Cache Example","version":"1.0.0"}
-                                                   """,
-            new Dictionary<string, string> { ["data/marker.txt"] = "cache" });
+        using var stream = ScpkgTestPackage.Create(
+            """
+            {"id":"cache.example","name":"Cache Example","version":"1.0.0"}
+            """,
+            new Dictionary<string, string> { ["data/marker.txt"] = "cache" }
+        );
         return stream.ToArray();
     }
 }

@@ -7,6 +7,7 @@ public class SRLatchElectricElement : RotateableElectricElement
     private bool _clockAllowed = true;
 
     private bool _resetAllowed = true;
+
     private bool _setAllowed = true;
 
     private float _voltage;
@@ -55,17 +56,20 @@ public class SRLatchElectricElement : RotateableElectricElement
                 if (connectorDirection == ElectricConnectorDirection.Right)
                 {
                     flag2 = IsSignalHigh(
-                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                    );
                 }
                 else if (connectorDirection == ElectricConnectorDirection.Left)
                 {
                     flag = IsSignalHigh(
-                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                    );
                 }
                 else if (connectorDirection == ElectricConnectorDirection.Bottom)
                 {
                     flag3 = IsSignalHigh(
-                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                        connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                    );
                     flag4 = true;
                 }
             }

@@ -15,14 +15,15 @@ public sealed record ReviewPublisherCommand(
 
 public enum ReviewPublisherResult
 {
-    Completed,
-    NotFound,
-    InvalidState
+    Completed = 0,
+
+    NotFound = 1,
+
+    InvalidState = 2
 }
 
-public sealed class ReviewPublisherCommandHandler(
-    PublisherRepository repository
-) : ICommandHandler<ReviewPublisherCommand, ReviewPublisherResult>
+public sealed class ReviewPublisherCommandHandler(PublisherRepository repository)
+    : ICommandHandler<ReviewPublisherCommand, ReviewPublisherResult>
 {
     public async Task<ReviewPublisherResult> Handle(ReviewPublisherCommand command, CancellationToken cancellationToken)
     {

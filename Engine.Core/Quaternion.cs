@@ -120,8 +120,12 @@ public struct Quaternion(float x, float y, float z, float w)
         var num4 = MathUtils.Cos(x2);
         var num5 = MathUtils.Sin(x3);
         var num6 = MathUtils.Cos(x3);
-        return new Quaternion(num6 * num3 * num2 + num5 * num4 * num, num5 * num4 * num2 - num6 * num3 * num,
-            num6 * num4 * num - num5 * num3 * num2, num6 * num4 * num2 + num5 * num3 * num);
+        return new Quaternion(
+            num6 * num3 * num2 + num5 * num4 * num,
+            num5 * num4 * num2 - num6 * num3 * num,
+            num6 * num4 * num - num5 * num3 * num2,
+            num6 * num4 * num2 + num5 * num3 * num
+        );
     }
 
     public static float Dot(Quaternion q1, Quaternion q2)

@@ -29,9 +29,13 @@ public sealed class AdminRevokeAllPublisherKeysEndpoint(
 
     private async Task<ResponseData> RevokeAllPublisherKeys(string publisherId, CancellationToken cancellationToken)
     {
-        var found = await mediator.Send(new RevokePublisherKeyCommand(
-                new PublisherId(ParseId(publisherId)), authenticationContext.RequireAdministratorId()),
-            cancellationToken);
+        var found = await mediator.Send(
+            new RevokePublisherKeyCommand(
+                new PublisherId(ParseId(publisherId)),
+                authenticationContext.RequireAdministratorId()
+            ),
+            cancellationToken
+        );
         EnsureFound(found, "publisher_or_key_not_found");
         return Success();
     }

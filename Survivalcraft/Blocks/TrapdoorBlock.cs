@@ -76,14 +76,28 @@ public abstract class TrapdoorBlock(string modelName) : Block, IElectricElementB
             identity *= Matrix.CreateRotationZ(upsideDown ? (float)Math.PI : 0f);
             identity *= Matrix.CreateRotationY(rotation * (float)Math.PI / 2f);
             identity *= Matrix.CreateTranslation(new Vector3(0.5f, upsideDown ? 1 : 0, 0.5f));
-            BlockMeshesByData[i].AppendModelMeshPart(trapdoorMesh.MeshParts[0],
-                boneAbsoluteTransform * identity, false, false, false, false, Color.White);
+            BlockMeshesByData[i].AppendModelMeshPart(
+                trapdoorMesh.MeshParts[0],
+                boneAbsoluteTransform * identity,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             BlockMeshesByData[i].GenerateSidesData();
             CollisionBoxesByData[i] = [BlockMeshesByData[i].CalculateBoundingBox()];
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(trapdoorMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            trapdoorMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 
@@ -99,8 +113,17 @@ public abstract class TrapdoorBlock(string modelName) : Block, IElectricElementB
         var num = Terrain.ExtractData(value);
         if (num < BlockMeshesByData.Length)
         {
-            generator.GenerateShadedMeshVertices(this, x, y, z, BlockMeshesByData[num], Color.White, null, [],
-                geometry.SubsetAlphaTest);
+            generator.GenerateShadedMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshesByData[num],
+                Color.White,
+                null,
+                [],
+                geometry.SubsetAlphaTest
+            );
         }
     }
 
@@ -212,8 +235,7 @@ public abstract class TrapdoorBlock(string modelName) : Block, IElectricElementB
     public override bool IsCollapseDestructibleBlock(int value)
     {
         var data = Terrain.ExtractData(value);
-        return !GetUpsideDown(data)
-               || !GetOpen(data);
+        return !GetUpsideDown(data) || !GetOpen(data);
     }
 
     public static int GetMountingFace(int data) => !GetUpsideDown(data) ? 4 : 5;

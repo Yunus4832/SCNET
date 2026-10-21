@@ -24,7 +24,8 @@ public sealed class GameMessageService(Project project)
     public void Publish(
         GameMessage message,
         IEnumerable<byte>? recipients = null,
-        bool includePublisher = true)
+        bool includePublisher = true
+    )
     {
         ArgumentNullException.ThrowIfNull(message);
         var normalizedMessage = Normalize(message);
@@ -51,7 +52,8 @@ public sealed class GameMessageService(Project project)
     internal void Relay(
         GameMessage message,
         IReadOnlyCollection<byte>? recipients,
-        Client? except = null)
+        Client? except = null
+    )
     {
         ArgumentNullException.ThrowIfNull(message);
         QueueMessage(message, recipients, except);
@@ -101,7 +103,8 @@ public sealed class GameMessageService(Project project)
     private static void QueueMessage(
         GameMessage message,
         IReadOnlyCollection<byte>? recipients,
-        Client? except = null)
+        Client? except = null
+    )
     {
         var netNode = CommonLib.Net;
         if (!netNode.IsServer || recipients is null)

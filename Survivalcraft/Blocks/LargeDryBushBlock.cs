@@ -11,11 +11,13 @@ public class LargeDryBushBlock : CrossBlock
         out bool showDebris
     )
     {
-        dropValues.Add(new BlockDropValue
-        {
-            Value = 23,
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = 23,
+                Count = 1
+            }
+        );
         showDebris = true;
     }
 }

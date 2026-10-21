@@ -8,19 +8,34 @@ using NetCorePal.Extensions.Primitives;
 
 namespace ContentServer.Application.Queries;
 
-public sealed record ServerSourceDto(ServerSourceRegistrationId Id, PublisherId PublisherId, string PublisherName,
-    string Name, string ApiUrl, string? Description, ServerSourceRegistrationStatus Status, string? ReviewMessage,
-    DateTimeOffset CreatedAt, DateTimeOffset? ReviewedAt);
+public sealed record ServerSourceDto(
+    ServerSourceRegistrationId Id,
+    PublisherId PublisherId,
+    string PublisherName,
+    string Name,
+    string ApiUrl,
+    string? Description,
+    ServerSourceRegistrationStatus Status,
+    string? ReviewMessage,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? ReviewedAt
+);
 
-public sealed record ListServerSourcesQuery(ServerSourceRegistrationStatus? Status = null, bool PublicOnly = false,
-    ServerSourceRegistrationId? Id = null, PublisherId? PublisherId = null)
+public sealed record ListServerSourcesQuery(
+    ServerSourceRegistrationStatus? Status = null,
+    bool PublicOnly = false,
+    ServerSourceRegistrationId? Id = null,
+    PublisherId? PublisherId = null
+)
     : IQuery<IReadOnlyList<ServerSourceDto>>;
 
 public sealed class ListServerSourcesQueryHandler(ContentServerDbContext db)
     : IQueryHandler<ListServerSourcesQuery, IReadOnlyList<ServerSourceDto>>
 {
-    public async Task<IReadOnlyList<ServerSourceDto>> Handle(ListServerSourcesQuery query,
-        CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ServerSourceDto>> Handle(
+        ListServerSourcesQuery query,
+        CancellationToken cancellationToken
+    )
     {
         var sources = db.ServerSources.AsNoTracking();
         if (query.Id is not null)
@@ -43,10 +58,23 @@ public sealed class ListServerSourcesQueryHandler(ContentServerDbContext db)
         }
 
         return await sources.OrderByDescending(source => source.Id)
-            .Join(db.Publishers.AsNoTracking(), source => source.PublisherId, publisher => publisher.Id,
-                (source, publisher) => new ServerSourceDto(source.Id, source.PublisherId, publisher.DisplayName,
-                    source.Name, source.ApiUrl, source.Description, source.Status, source.ReviewMessage,
-                    source.CreatedAt, source.ReviewedAt))
+            .Join(
+                db.Publishers.AsNoTracking(),
+                source => source.PublisherId,
+                publisher => publisher.Id,
+                (source, publisher) => new ServerSourceDto(
+                    source.Id,
+                    source.PublisherId,
+                    publisher.DisplayName,
+                    source.Name,
+                    source.ApiUrl,
+                    source.Description,
+                    source.Status,
+                    source.ReviewMessage,
+                    source.CreatedAt,
+                    source.ReviewedAt
+                )
+            )
             .ToArrayAsync(cancellationToken);
     }
 }

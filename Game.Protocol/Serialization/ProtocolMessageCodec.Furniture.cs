@@ -74,29 +74,51 @@ public static partial class ProtocolMessageCodec
         {
             case FurniturePackage.EventType.ImportFurnitureSet:
             case FurniturePackage.EventType.RenameFurnitureSet:
-                return new FurniturePackage { PackageEventType = type, AddXml = reader.ReadString(), FromName = reader.ReadString() };
+                return new FurniturePackage
+                    { PackageEventType = type, AddXml = reader.ReadString(), FromName = reader.ReadString() };
             case FurniturePackage.EventType.DesignChain:
             case FurniturePackage.EventType.DeleteFurnitureSet:
                 return new FurniturePackage { PackageEventType = type, AddXml = reader.ReadString() };
             case FurniturePackage.EventType.AddToFurnitureSet:
             case FurniturePackage.EventType.MoveFurnitureSet:
-                return new FurniturePackage { PackageEventType = type, AddXml = reader.ReadString(), FurnitureIndex = reader.ReadInt32() };
+                return new FurniturePackage
+                    { PackageEventType = type, AddXml = reader.ReadString(), FurnitureIndex = reader.ReadInt32() };
             case FurniturePackage.EventType.NewFurnitureSet:
                 var name = reader.ReadString();
-                return new FurniturePackage { PackageEventType = type, AddXml = name, FromName = reader.ReadBoolean() ? reader.ReadString() : string.Empty };
+                return new FurniturePackage
+                {
+                    PackageEventType = type, AddXml = name,
+                    FromName = reader.ReadBoolean() ? reader.ReadString() : string.Empty
+                };
             case FurniturePackage.EventType.RemoveFurnitureDesigns:
-                var length = reader.ReadCount(ProtocolFrameCodec.MaximumPayloadLength / 4); EnsureRemaining(reader, length * 4);
-                var ids = new int[length]; for (var i = 0; i < length; i++) { ids[i] = reader.ReadInt32(); }
+                var length = reader.ReadCount(ProtocolFrameCodec.MaximumPayloadLength / 4);
+                EnsureRemaining(reader, length * 4);
+                var ids = new int[length];
+                for (var i = 0; i < length; i++) { ids[i] = reader.ReadInt32(); }
+
                 return new FurniturePackage(ids);
             case FurniturePackage.EventType.Add:
-                return new FurniturePackage { PackageEventType = type, FurnitureIndex = reader.ReadInt32(), AddXml = reader.ReadString() };
+                return new FurniturePackage
+                    { PackageEventType = type, FurnitureIndex = reader.ReadInt32(), AddXml = reader.ReadString() };
             case FurniturePackage.EventType.RequestAdd:
-                var index = reader.ReadInt32(); var xml = reader.ReadString();
-                var count = reader.ReadCount(ProtocolFrameCodec.MaximumPayloadLength / 16); EnsureRemaining(reader, count * 16);
+                var index = reader.ReadInt32();
+                var xml = reader.ReadString();
+                var count = reader.ReadCount(ProtocolFrameCodec.MaximumPayloadLength / 16);
+                EnsureRemaining(reader, count * 16);
                 var cells = new Dictionary<Point3, int>();
                 for (var i = 0; i < count; i++)
-                { if (!cells.TryAdd(reader.ReadPoint3(), reader.ReadInt32())) { throw new InvalidDataException("Duplicate furniture cell."); } }
-                return new FurniturePackage { PackageEventType = type, FurnitureIndex = index, AddXml = xml, PointDict = cells, CellFace = reader.ReadCellFace(), StartValue = reader.ReadInt32() };
+                {
+                    if (!cells.TryAdd(reader.ReadPoint3(), reader.ReadInt32()))
+                    {
+                        throw new InvalidDataException("Duplicate furniture cell.");
+                    }
+                }
+
+                return new FurniturePackage
+                {
+                    PackageEventType = type, FurnitureIndex = index, AddXml = xml, PointDict = cells,
+                    CellFace = reader.ReadCellFace(), StartValue = reader.ReadInt32()
+                };
             default: throw new InvalidDataException("Unknown furniture mode.");
         }
     }

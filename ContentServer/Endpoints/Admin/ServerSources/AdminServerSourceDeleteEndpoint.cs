@@ -25,13 +25,14 @@ public sealed class AdminServerSourceDeleteEndpoint(IMediator mediator) : Conten
 
     private async Task<ResponseData> Delete(Guid id, CancellationToken cancellationToken)
     {
-        if (!await mediator.Send(new DeleteServerSourceCommand(new ServerSourceRegistrationId(id)),
-                cancellationToken))
+        if (!await mediator.Send(
+                new DeleteServerSourceCommand(new ServerSourceRegistrationId(id)),
+                cancellationToken
+            ))
         {
             throw new KnownException("server_source_not_found", StatusCodes.Status404NotFound);
         }
+
         return new ResponseData(true, "success", StatusCodes.Status200OK);
     }
-
-
 }

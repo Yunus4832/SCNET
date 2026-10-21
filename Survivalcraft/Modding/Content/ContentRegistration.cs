@@ -27,7 +27,8 @@ public static class ContentExtensions
         this IModExtensions extensions,
         ResourceId id,
         string relativePath,
-        byte[] bytes)
+        byte[] bytes
+    )
     {
         return extensions.Register(RegistryName, id, new ContentRegistration(relativePath, bytes));
     }

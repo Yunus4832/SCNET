@@ -8,7 +8,8 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
         sender is not null && sender.GUID != Guid.Empty && !existingPlayers.Contains(sender.GUID);
 
     internal static bool AcceptsDirection(PlayerDataPackage.DataType type, bool isServer) =>
-        isServer ? type is PlayerDataPackage.DataType.Create or PlayerDataPackage.DataType.SetUpdateLocation
+        isServer
+            ? type is PlayerDataPackage.DataType.Create or PlayerDataPackage.DataType.SetUpdateLocation
             : type is PlayerDataPackage.DataType.Modify;
 
     public override void Handle(PlayerDataPackage package, PackageReceiveContext context)
@@ -32,8 +33,12 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
         switch (package.Type)
         {
             case PlayerDataPackage.DataType.Create:
-                if (!CanCreatePlayer(context.Sender, subsystemPlayers.PlayersData.Select(player => player.PlayerGUID)) ||
-                    !ProtocolEnum.TryDecode(package.PlayerClass, out PlayerClass requestedClass) || string.IsNullOrWhiteSpace(package.SkinName))
+                if (!CanCreatePlayer(
+                        context.Sender,
+                        subsystemPlayers.PlayersData.Select(player => player.PlayerGUID)
+                    ) ||
+                    !ProtocolEnum.TryDecode(package.PlayerClass, out PlayerClass requestedClass) ||
+                    string.IsNullOrWhiteSpace(package.SkinName))
                 {
                     break;
                 }
@@ -75,16 +80,19 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                 {
                     Log.Warning(
                         $"Ignored terrain update location without matching player: " +
-                        $"client={context.Sender?.ID.ToString() ?? "null"}, center={package.UpdateLocation.Center}.");
+                        $"client={context.Sender?.ID.ToString() ?? "null"}, center={package.UpdateLocation.Center}."
+                    );
                     break;
                 }
 
-                if (context.Sender is null || !project.FindSubsystem<SubsystemNetworkInterest>(true)!
+                if (context.Sender is null ||
+                    !project.FindSubsystem<SubsystemNetworkInterest>(true)!
                         .SetRequestedLocation(context.Sender, player, package.UpdateLocation))
                 {
                     Log.Warning(
                         $"Rejected invalid terrain update location: client={context.Sender?.ID.ToString() ?? "null"}, " +
-                        $"center={package.UpdateLocation.Center}.");
+                        $"center={package.UpdateLocation.Center}."
+                    );
                 }
 
                 break;

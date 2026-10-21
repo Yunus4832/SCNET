@@ -26,12 +26,17 @@ public sealed class PublicContentVersionsEndpoint(IMediator mediator) : ContentE
     private async Task<ResponseData<PagedData<ContentVersionResponse>>> ContentVersions(
         string contentId,
         PaginationRequest page,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var items = await mediator.Send(new ListVersionsQuery(
-            VersionQueryScope.Public,
-            page.ToPageRequest(),
-            ContentId: ParseContentId(contentId)), cancellationToken);
+        var items = await mediator.Send(
+            new ListVersionsQuery(
+                VersionQueryScope.Public,
+                page.ToPageRequest(),
+                ContentId: ParseContentId(contentId)
+            ),
+            cancellationToken
+        );
         if (items.Total == 0)
         {
             throw new KnownException("content_not_found", StatusCodes.Status404NotFound);

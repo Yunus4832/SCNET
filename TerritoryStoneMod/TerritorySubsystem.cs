@@ -35,51 +35,73 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
     }
 
     private IModNetwork? _network;
+
     private NetNode? _node;
+
     private TerritoryBoundaryRenderer? _boundaryRenderer;
 
     public TerritoryAccessRequests AccessRequests { get; } = new();
+
     private readonly Dictionary<Guid, TerritoryAccessRequest> _incomingRequests = new();
+
     private double _nextRequestCleanup;
+
     private readonly Dictionary<Guid, double> _submittedRequests = new();
+
     private TerritoryPermissionsDialog? _approvalDialog;
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
     public string OwnerName(Guid owner) => Project.FindSubsystem<SubsystemPlayers>()?.PlayerList
-        .GetValueOrDefault(owner)?.Name ?? OnlinePlayer(owner)?.Name ?? owner.ToString("D");
+                                               .GetValueOrDefault(owner)?.Name ??
+                                           OnlinePlayer(owner)?.Name ?? owner.ToString("D");
 
     private PlayerData? OnlinePlayer(Guid id) => Project.FindSubsystem<SubsystemPlayers>()?.PlayersData
-        .FirstOrDefault(player => player.PlayerGUID == id && player.ComponentPlayer != null &&
-            (player.IsMainPlayer || player.Client?.IsConnected == true));
+        .FirstOrDefault(player => player.PlayerGUID == id &&
+                                  player.ComponentPlayer != null &&
+                                  (player.IsMainPlayer || player.Client?.IsConnected == true)
+        );
 
     public CommandResult RequestAccess(PlayerData player, string ownerName)
     {
         var matches = Store.Territories.Where(territory =>
-            Guid.TryParse(ownerName, out var id) ? territory.Owner == id :
-                string.Equals(OwnerName(territory.Owner), ownerName, StringComparison.OrdinalIgnoreCase)).ToArray();
+            Guid.TryParse(ownerName, out var id)
+                ? territory.Owner == id
+                : string.Equals(OwnerName(territory.Owner), ownerName, StringComparison.OrdinalIgnoreCase)
+        ).ToArray();
         if (matches.Length != 1)
         {
             return TerritoryCommands.Result("UnknownOwner", false);
         }
+
         var territory = matches[0];
         if (territory.Grants.ContainsKey(player.PlayerGUID))
         {
             return TerritoryCommands.Result("AlreadyGranted", false);
         }
+
         if (OnlinePlayer(territory.Owner) == null)
         {
             return TerritoryCommands.Result("OwnerOffline", false);
         }
+
         if (territory.Grants.Count >= 128)
         {
             return TerritoryCommands.Result("QueueFull", false);
         }
-        if (!AccessRequests.TryAdd(territory.Owner, player.PlayerGUID, player.Name, Time.RealTime,
-                out var request, out var error))
+
+        if (!AccessRequests.TryAdd(
+                territory.Owner,
+                player.PlayerGUID,
+                player.Name,
+                Time.RealTime,
+                out var request,
+                out var error
+            ))
         {
             return TerritoryCommands.Result(error, false);
         }
+
         SendRequest(request!, false);
         return TerritoryCommands.Result("Requested", true);
     }
@@ -90,30 +112,42 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
         {
             return TerritoryCommands.Result("InvalidPermissions", false);
         }
+
         var pending = AccessRequests.Pending.FirstOrDefault(request => request.Id == id);
-        if (pending == null || pending.Owner != owner.PlayerGUID ||
-            !Store.TryGet(owner.PlayerGUID, out var territory) || OnlinePlayer(pending.Player) == null)
+        if (pending == null ||
+            pending.Owner != owner.PlayerGUID ||
+            !Store.TryGet(owner.PlayerGUID, out var territory) ||
+            OnlinePlayer(pending.Player) == null)
         {
             return TerritoryCommands.Result("RequestExpired", false);
         }
-        if (permissions != TerritoryPermission.None && territory!.Grants.Count >= 128 &&
+
+        if (permissions != TerritoryPermission.None &&
+            territory!.Grants.Count >= 128 &&
             !territory.Grants.ContainsKey(pending.Player))
         {
             return TerritoryCommands.Result("QueueFull", false);
         }
+
         if (!AccessRequests.TryResolve(id, owner.PlayerGUID, permissions, Time.RealTime, out var resolved))
         {
             return TerritoryCommands.Result("RequestExpired", false);
         }
+
         if (permissions != TerritoryPermission.None)
         {
             var existing = territory!.PermissionsFor(resolved!.Player);
             territory.SetGrant(resolved.Player, resolved.PlayerName, existing | permissions);
             PublishUpdate(territory);
         }
+
         SendRequest(resolved!, true);
-        NotifyPlayer(resolved!.Player, permissions == TerritoryPermission.None ? "Rejected" : "Granted",
-            owner.Name, permissions.ToString().ToLowerInvariant().Replace(" ", ""));
+        NotifyPlayer(
+            resolved!.Player,
+            permissions == TerritoryPermission.None ? "Rejected" : "Granted",
+            owner.Name,
+            permissions.ToString().ToLowerInvariant().Replace(" ", "")
+        );
         return TerritoryCommands.Result("Processed", true);
     }
 
@@ -123,10 +157,12 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
         {
             return TerritoryCommands.Result("MissingGrant", false);
         }
+
         if (!TerritoryPermissions.TryParse(permissionText, out var permissions))
         {
             return TerritoryCommands.Result("InvalidPermissions", false);
         }
+
         territory.SetGrant(player, grant.Name, permissions);
         PublishUpdate(territory);
         NotifyPlayer(player, "GrantChanged", owner.Name);
@@ -141,6 +177,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
             _submittedRequests.Remove(request.Id);
             return;
         }
+
         if (_incomingRequests.Count < 8 && CommonLib.MainPlayer?.PlayerData.PlayerGUID == request.Owner)
         {
             _incomingRequests[request.Id] = request;
@@ -153,22 +190,28 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
         {
             return;
         }
+
         if (owner.IsMainPlayer && RunMode.Value == RunModeType.Gui)
         {
             ReceiveAccessRequest(request, removed);
         }
         else if (owner.Client is { } client)
         {
-            _network?.Send(removed ? TerritoryMessages.AccessRequestRemoved : TerritoryMessages.AccessRequest, writer =>
-            {
-                writer.Write(request.Id);
-                if (!removed)
+            _network?.Send(
+                removed ? TerritoryMessages.AccessRequestRemoved : TerritoryMessages.AccessRequest,
+                writer =>
                 {
-                    writer.Write(request.Owner);
-                    writer.Write(request.Player);
-                    writer.Write(request.PlayerName);
-                }
-            }, PackageAudience.To(client), ClientState.ProjectLoaded);
+                    writer.Write(request.Id);
+                    if (!removed)
+                    {
+                        writer.Write(request.Owner);
+                        writer.Write(request.Player);
+                        writer.Write(request.PlayerName);
+                    }
+                },
+                PackageAudience.To(client),
+                ClientState.ProjectLoaded
+            );
         }
     }
 
@@ -178,12 +221,14 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
         {
             return;
         }
-        var message = GameMessage.System(key, presentation: GameMessagePresentation.History | GameMessagePresentation.Toast) with
-        {
-            LocalizationSection = "TerritoryAccess",
-            LocalizationKey = key,
-            LocalizationArguments = arguments
-        };
+
+        var message =
+            GameMessage.System(key, presentation: GameMessagePresentation.History | GameMessagePresentation.Toast) with
+            {
+                LocalizationSection = "TerritoryAccess",
+                LocalizationKey = key,
+                LocalizationArguments = arguments
+            };
         var messages = Project.FindSubsystem<SubsystemGameWidgets>(true)!.Messages;
         if (player.IsMainPlayer && RunMode.Value == RunModeType.Gui)
         {
@@ -200,44 +245,68 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
         if (CommonLib.WorkType != WorkType.Client && Time.RealTime >= _nextRequestCleanup)
         {
             _nextRequestCleanup = Time.RealTime + 1;
-            foreach (var request in AccessRequests.Expire(Time.RealTime, request =>
-                         OnlinePlayer(request.Owner) == null || OnlinePlayer(request.Player) == null ||
-                         !Store.TryGet(request.Owner, out _)))
+            foreach (var request in AccessRequests.Expire(
+                         Time.RealTime,
+                         request =>
+                             OnlinePlayer(request.Owner) == null ||
+                             OnlinePlayer(request.Player) == null ||
+                             !Store.TryGet(request.Owner, out _)
+                     ))
             {
                 SendRequest(request, true);
                 NotifyPlayer(request.Player, "Expired");
             }
         }
-        if (RunMode.Value != RunModeType.Gui || CommonLib.MainPlayer is not { } player ||
+
+        if (RunMode.Value != RunModeType.Gui ||
+            CommonLib.MainPlayer is not { } player ||
             !ReferenceEquals(player.Project, Project))
         {
             return;
         }
+
         foreach (var request in _incomingRequests.Values.Where(request => request.ExpiresAt <= Time.RealTime).ToArray())
         {
             _incomingRequests.Remove(request.Id);
             _submittedRequests.Remove(request.Id);
         }
+
         if (_approvalDialog != null && !_incomingRequests.ContainsKey(_approvalDialog.RequestId))
         {
             DialogsManager.HideDialog(_approvalDialog);
             _approvalDialog = null;
         }
+
         if (_approvalDialog != null && !DialogsManager.ReadOnlyDialogs.Contains(_approvalDialog))
         {
             _approvalDialog = null;
         }
-        if (_approvalDialog == null && _incomingRequests.Values.FirstOrDefault(request =>
-                !_submittedRequests.TryGetValue(request.Id, out var retryAt) || retryAt <= Time.RealTime) is { } next &&
-            !DialogsManager.HasDialogs(null) && !DialogsManager.HasDialogs(player.GameWidget.GuiWidget) &&
+
+        if (_approvalDialog == null &&
+            _incomingRequests.Values.FirstOrDefault(request =>
+                !_submittedRequests.TryGetValue(request.Id, out var retryAt) || retryAt <= Time.RealTime
+            ) is { } next &&
+            !DialogsManager.HasDialogs(null) &&
+            !DialogsManager.HasDialogs(player.GameWidget.GuiWidget) &&
             player.ComponentGui.ModalPanelWidget == null)
         {
-            _approvalDialog = new TerritoryPermissionsDialog(next.PlayerName, TerritoryPermission.None, TerritoryPermission.All,
+            _approvalDialog = new TerritoryPermissionsDialog(
+                next.PlayerName,
+                TerritoryPermission.None,
+                TerritoryPermission.All,
                 selected =>
                 {
-                    CommandGateway.Submit(player.PlayerData, new DecideTerritoryAccessCommand(next.Id, selected.ToString().ToLowerInvariant().Replace(" ", "")));
+                    CommandGateway.Submit(
+                        player.PlayerData,
+                        new DecideTerritoryAccessCommand(
+                            next.Id,
+                            selected.ToString().ToLowerInvariant().Replace(" ", "")
+                        )
+                    );
                     _submittedRequests[next.Id] = Time.RealTime + 10;
-                }, next.Id);
+                },
+                next.Id
+            );
             DialogsManager.ShowDialog(player.GameWidget.GuiWidget, _approvalDialog);
         }
     }
@@ -254,6 +323,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
             {
                 continue;
             }
+
             var bounds = territory.Bounds;
             var dx = Math.Max(bounds.Min.X - camera.ViewPosition.X, Math.Max(0, camera.ViewPosition.X - bounds.Max.X));
             var dz = Math.Max(bounds.Min.Z - camera.ViewPosition.Z, Math.Max(0, camera.ViewPosition.Z - bounds.Max.Z));
@@ -261,6 +331,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
             {
                 continue;
             }
+
             _boundaryRenderer ??= new TerritoryBoundaryRenderer();
             _boundaryRenderer.Draw(territory, camera);
         }
@@ -319,6 +390,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
             DialogsManager.HideDialog(_approvalDialog);
             _approvalDialog = null;
         }
+
         _boundaryRenderer?.Dispose();
         _boundaryRenderer = null;
         Store.Load(new ValuesDictionary());
@@ -328,8 +400,12 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Server)
         {
-            _network?.Send(TerritoryMessages.Update, writer => TerritoryMessages.Write(writer, territory),
-                PackageAudience.Global, ClientState.ProjectLoaded);
+            _network?.Send(
+                TerritoryMessages.Update,
+                writer => TerritoryMessages.Write(writer, territory),
+                PackageAudience.Global,
+                ClientState.ProjectLoaded
+            );
         }
     }
 
@@ -337,8 +413,12 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Server)
         {
-            _network?.Send(TerritoryMessages.Remove, writer => writer.Write(owner),
-                PackageAudience.Global, ClientState.ProjectLoaded);
+            _network?.Send(
+                TerritoryMessages.Remove,
+                writer => writer.Write(owner),
+                PackageAudience.Global,
+                ClientState.ProjectLoaded
+            );
         }
     }
 
@@ -351,37 +431,56 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
             {
                 return "Unavailable";
             }
+
             SettingsRequestId = SettingsRequestId == int.MaxValue ? 1 : SettingsRequestId + 1;
             var requestId = SettingsRequestId;
-            _network.Send(TerritoryMessages.Settings, writer =>
-            {
-                writer.Write(requestId);
-                writer.Write(territory.Owner);
-                TerritoryMessages.WriteSettings(writer, settings);
-            }, PackageAudience.To(server), ClientState.ProjectLoaded);
+            _network.Send(
+                TerritoryMessages.Settings,
+                writer =>
+                {
+                    writer.Write(requestId);
+                    writer.Write(territory.Owner);
+                    TerritoryMessages.WriteSettings(writer, settings);
+                },
+                PackageAudience.To(server),
+                ClientState.ProjectLoaded
+            );
             return null;
         }
+
         if (!Store.TryChangeSettings(territory.Owner, settings, out var error))
         {
             return error;
         }
+
         PublishUpdate(territory);
         return null;
     }
 
-    public void ReceiveSettingsResponse(int requestId, Guid owner, bool accepted, TerritorySettings settings, string error)
+    public void ReceiveSettingsResponse(
+        int requestId,
+        Guid owner,
+        bool accepted,
+        TerritorySettings settings,
+        string error
+    )
     {
         if (!settings.IsValid)
         {
             throw new InvalidDataException("Invalid territory settings response.");
         }
+
         LastSettingsResponse = (requestId, owner, accepted, settings, error);
         SettingsResponseVersion++;
     }
 
     private void SendSnapshot(Client client)
     {
-        _network?.Send(TerritoryMessages.Snapshot, writer => TerritoryMessages.WriteSnapshot(writer, Store.Territories),
-            PackageAudience.To(client), ClientState.ProjectLoaded);
+        _network?.Send(
+            TerritoryMessages.Snapshot,
+            writer => TerritoryMessages.WriteSnapshot(writer, Store.Territories),
+            PackageAudience.To(client),
+            ClientState.ProjectLoaded
+        );
     }
 }

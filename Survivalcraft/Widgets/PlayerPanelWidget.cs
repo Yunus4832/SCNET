@@ -14,9 +14,11 @@ public sealed class PlayerPanelWidget : CanvasWidget
 
     private enum Tab
     {
-        OnlinePlayers,
-        Team,
-        BlackList
+        OnlinePlayers = 0,
+
+        Team = 1,
+
+        BlackList = 2
     }
 
     private readonly PlayerInformationOverlayWidget _observationWidget;
@@ -84,7 +86,8 @@ public sealed class PlayerPanelWidget : CanvasWidget
 
     public PlayerPanelWidget(
         PlayerData playerData,
-        PlayerInformationOverlayWidget observationWidget)
+        PlayerInformationOverlayWidget observationWidget
+    )
     {
         _playerData = playerData;
         _observationWidget = observationWidget;
@@ -97,20 +100,23 @@ public sealed class PlayerPanelWidget : CanvasWidget
             playerData,
             GetPlayerListKind(SettingsManager.Current.PlayerInformationFilter),
             false,
-            listSize);
+            listSize
+        );
         TeamListWidget = new TeamListWidget(playerData, listSize);
         BlackPlayerListWidget = new PlayerListWidget(
             playerData,
             PlayerListWidget.ListKind.BlackList,
             false,
-            listSize);
+            listSize
+        );
         _playerFilter = SettingsManager.Current.PlayerInformationFilter;
         _blackListSelectedButton.IsVisible = playerData.ServerManager;
         _onlineActions = CreateActionPanel(
             _inviteSelectedButton,
             _blackListSelectedButton,
             _playerFilterButton,
-            _observationButton);
+            _observationButton
+        );
         _teamJoinActions = CreateActionPanel(_teamCreateButton, _teamJoinButton);
         _teamMemberActions = CreateActionPanel(_teamLeaveButton);
         _blackListActions = CreateActionPanel(_removeBlackListButton);
@@ -163,9 +169,11 @@ public sealed class PlayerPanelWidget : CanvasWidget
 
         if (_playerFilterButton.IsClicked)
         {
-            SetPlayerFilter(_playerFilter == PlayerListFilter.All
-                ? PlayerListFilter.SameTeam
-                : PlayerListFilter.All);
+            SetPlayerFilter(
+                _playerFilter == PlayerListFilter.All
+                    ? PlayerListFilter.SameTeam
+                    : PlayerListFilter.All
+            );
         }
 
         if (_inviteSelectedButton.IsClicked)
@@ -276,8 +284,7 @@ public sealed class PlayerPanelWidget : CanvasWidget
         _blackListSelectedButton.IsEnabled =
             _playerData.ServerManager &&
             canManageOnlinePlayer &&
-            !_playerData.SubsystemPlayers.BlackPlayerGuidList.ContainsKey(
-                selectedOnlinePlayer!.PlayerGUID.ToString());
+            !_playerData.SubsystemPlayers.BlackPlayerGuidList.ContainsKey(selectedOnlinePlayer!.PlayerGUID.ToString());
 
         var canInvite = canManageOnlinePlayer &&
                         _playerData.GroupKey.Length > 0 &&
@@ -331,9 +338,12 @@ public sealed class PlayerPanelWidget : CanvasWidget
 
                     CommandGateway.Submit(
                         _playerData,
-                        new CreateTeamCommand(name.Trim()));
+                        new CreateTeamCommand(name.Trim())
+                    );
                 },
-                invokeHandlerOnCancel: false));
+                invokeHandlerOnCancel: false
+            )
+        );
     }
 
     private void JoinSelectedTeam()
@@ -363,9 +373,11 @@ public sealed class PlayerPanelWidget : CanvasWidget
 
                 CommandGateway.Submit(
                     _playerData,
-                    new RequestJoinTeamCommand(groupKey));
+                    new RequestJoinTeamCommand(groupKey)
+                );
             },
-            _playerData.GameWidget.GuiWidget);
+            _playerData.GameWidget.GuiWidget
+        );
     }
 
     private void SendGroupInvitation(PlayerData target)
@@ -387,9 +399,11 @@ public sealed class PlayerPanelWidget : CanvasWidget
 
                 CommandGateway.Submit(
                     _playerData,
-                    new InvitePlayerToTeamCommand(target.PlayerGUID));
+                    new InvitePlayerToTeamCommand(target.PlayerGUID)
+                );
             },
-            _playerData.GameWidget.GuiWidget);
+            _playerData.GameWidget.GuiWidget
+        );
     }
 
     private void RequestLeaveTeam()
@@ -412,7 +426,8 @@ public sealed class PlayerPanelWidget : CanvasWidget
 
                 CommandGateway.Submit(_playerData, new LeaveTeamCommand());
             },
-            _playerData.GameWidget.GuiWidget);
+            _playerData.GameWidget.GuiWidget
+        );
     }
 
     private bool TryStartGroupRequest()
@@ -422,7 +437,8 @@ public sealed class PlayerPanelWidget : CanvasWidget
         {
             ShowAlert(
                 "RetryAfterSeconds",
-                MathUtils.Ceiling(_groupRequestPeriod - (float)elapsed));
+                MathUtils.Ceiling(_groupRequestPeriod - (float)elapsed)
+            );
             return false;
         }
 
@@ -450,7 +466,8 @@ public sealed class PlayerPanelWidget : CanvasWidget
                 _playerData.SubsystemPlayers.AddBlackList(selectedPlayer);
                 RefreshView();
             },
-            _playerData.GameWidget.GuiWidget);
+            _playerData.GameWidget.GuiWidget
+        );
     }
 
     private void RemoveSelectedPlayerFromBlackList()
@@ -469,12 +486,12 @@ public sealed class PlayerPanelWidget : CanvasWidget
                     return;
                 }
 
-                _playerData.SubsystemPlayers.BlackPlayerGuidList.Remove(
-                    selectedPlayer.PlayerGUID.ToString());
+                _playerData.SubsystemPlayers.BlackPlayerGuidList.Remove(selectedPlayer.PlayerGUID.ToString());
                 BlackPlayerListWidget.RefreshList();
                 UpdateActionButtons();
             },
-            _playerData.GameWidget.GuiWidget);
+            _playerData.GameWidget.GuiWidget
+        );
     }
 
     private void ShowAlert(string key, params object[] args)
@@ -482,7 +499,8 @@ public sealed class PlayerPanelWidget : CanvasWidget
         DialogsManager.Alert(
             LanguageManager.Warning,
             FormatText(key, args),
-            _playerData.GameWidget.GuiWidget);
+            _playerData.GameWidget.GuiWidget
+        );
     }
 
     private static string FormatText(string key, params object[] args)

@@ -2,83 +2,161 @@ namespace Engine.Input;
 
 public enum Key
 {
-    Back,
-    Shift,
-    Control,
-    F1,
-    F2,
-    F3,
-    F4,
-    F5,
-    F6,
-    F7,
-    F8,
-    F9,
-    F10,
-    F11,
-    F12,
-    LeftArrow,
-    RightArrow,
-    UpArrow,
-    DownArrow,
-    Enter,
-    Escape,
-    Space,
-    Tab,
-    BackSpace,
-    Insert,
-    Delete,
-    PageUp,
-    PageDown,
-    Home,
-    End,
-    CapsLock,
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-    G,
-    H,
-    I,
-    J,
-    K,
-    L,
-    M,
-    N,
-    O,
-    P,
-    Q,
-    R,
-    S,
-    T,
-    U,
-    V,
-    W,
-    X,
-    Y,
-    Z,
-    Number0,
-    Number1,
-    Number2,
-    Number3,
-    Number4,
-    Number5,
-    Number6,
-    Number7,
-    Number8,
-    Number9,
-    Tilde,
-    Minus,
-    Plus,
-    LeftBracket,
-    RightBracket,
-    Semicolon,
-    Quote,
-    Comma,
-    Period,
-    Slash,
-    Alt,
-    BackSlash,
+    Back = 0,
+
+    Shift = 1,
+
+    Control = 2,
+
+    F1 = 3,
+
+    F2 = 4,
+
+    F3 = 5,
+
+    F4 = 6,
+
+    F5 = 7,
+
+    F6 = 8,
+
+    F7 = 9,
+
+    F8 = 10,
+
+    F9 = 11,
+
+    F10 = 12,
+
+    F11 = 13,
+
+    F12 = 14,
+
+    LeftArrow = 15,
+
+    RightArrow = 16,
+
+    UpArrow = 17,
+
+    DownArrow = 18,
+
+    Enter = 19,
+
+    Escape = 20,
+
+    Space = 21,
+
+    Tab = 22,
+
+    BackSpace = 23,
+
+    Insert = 24,
+
+    Delete = 25,
+
+    PageUp = 26,
+
+    PageDown = 27,
+
+    Home = 28,
+
+    End = 29,
+
+    CapsLock = 30,
+
+    A = 31,
+
+    B = 32,
+
+    C = 33,
+
+    D = 34,
+
+    E = 35,
+
+    F = 36,
+
+    G = 37,
+
+    H = 38,
+
+    I = 39,
+
+    J = 40,
+
+    K = 41,
+
+    L = 42,
+
+    M = 43,
+
+    N = 44,
+
+    O = 45,
+
+    P = 46,
+
+    Q = 47,
+
+    R = 48,
+
+    S = 49,
+
+    T = 50,
+
+    U = 51,
+
+    V = 52,
+
+    W = 53,
+
+    X = 54,
+
+    Y = 55,
+
+    Z = 56,
+
+    Number0 = 57,
+
+    Number1 = 58,
+
+    Number2 = 59,
+
+    Number3 = 60,
+
+    Number4 = 61,
+
+    Number5 = 62,
+
+    Number6 = 63,
+
+    Number7 = 64,
+
+    Number8 = 65,
+
+    Number9 = 66,
+
+    Tilde = 67,
+
+    Minus = 68,
+
+    Plus = 69,
+
+    LeftBracket = 70,
+
+    RightBracket = 71,
+
+    Semicolon = 72,
+
+    Quote = 73,
+
+    Comma = 74,
+
+    Period = 75,
+
+    Slash = 76,
+
+    Alt = 77,
+
+    BackSlash = 78,
 }

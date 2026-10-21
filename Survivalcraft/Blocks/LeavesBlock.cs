@@ -51,10 +51,21 @@ public abstract class LeavesBlock : AlphaTestCubeBlock
         float strength
     )
     {
-        var leavesBlockColor = GetLeavesBlockColor(value, subsystemTerrain.Terrain, Terrain.ToCell(position.X),
-            Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale,
-            leavesBlockColor, GetFaceTextureSlot(4, value));
+        var leavesBlockColor = GetLeavesBlockColor(
+            value,
+            subsystemTerrain.Terrain,
+            Terrain.ToCell(position.X),
+            Terrain.ToCell(position.Y),
+            Terrain.ToCell(position.Z)
+        );
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            leavesBlockColor,
+            GetFaceTextureSlot(4, value)
+        );
     }
 
     public override void GetDropValues(
@@ -68,11 +79,13 @@ public abstract class LeavesBlock : AlphaTestCubeBlock
     {
         if (SharedRandom.Bool(0.15f))
         {
-            dropValues.Add(new BlockDropValue
-            {
-                Value = 23,
-                Count = 1
-            });
+            dropValues.Add(
+                new BlockDropValue
+                {
+                    Value = 23,
+                    Count = 1
+                }
+            );
             showDebris = true;
         }
         else

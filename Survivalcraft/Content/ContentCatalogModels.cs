@@ -10,7 +10,8 @@ public sealed record ContentCatalogSource(
     bool IsSession,
     string ContentId,
     string VersionId,
-    string DownloadUrl);
+    string DownloadUrl
+);
 
 public sealed record AggregatedContentVersion(
     string Version,
@@ -18,7 +19,8 @@ public sealed record AggregatedContentVersion(
     long PackageSize,
     string FileName,
     bool HasHashConflict,
-    IReadOnlyList<ContentCatalogSource> Sources);
+    IReadOnlyList<ContentCatalogSource> Sources
+);
 
 public sealed record AggregatedContentEntry(
     ContentPackageType Type,
@@ -26,15 +28,18 @@ public sealed record AggregatedContentEntry(
     string Name,
     string? Summary,
     string? Description,
-    IReadOnlyList<AggregatedContentVersion> Versions);
+    IReadOnlyList<AggregatedContentVersion> Versions
+);
 
 public sealed record ContentCatalogRepositoryFailure(Guid RepositoryId, string RepositoryName, string Message);
 
 public sealed record AggregatedContentPage(
     IReadOnlyList<AggregatedContentEntry> Entries,
     IReadOnlyList<ContentCatalogRepositoryFailure> Failures,
-    bool HasMore);
+    bool HasMore
+);
 
 public sealed record AggregatedContentDetails(
     AggregatedContentEntry Entry,
-    IReadOnlyList<ContentCatalogRepositoryFailure> Failures);
+    IReadOnlyList<ContentCatalogRepositoryFailure> Failures
+);

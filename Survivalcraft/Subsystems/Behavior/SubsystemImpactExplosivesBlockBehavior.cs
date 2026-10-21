@@ -10,8 +10,12 @@ public class SubsystemImpactExplosivesBlockBehavior : SubsystemBlockBehavior
 
     public override bool OnHitAsProjectile(CellFace? cellFace, ComponentBody componentBody, WorldItem worldItem)
     {
-        return _subsystemExplosions.TryExplodeBlock(Terrain.ToCell(worldItem.Position.X),
-            Terrain.ToCell(worldItem.Position.Y), Terrain.ToCell(worldItem.Position.Z), worldItem.Value);
+        return _subsystemExplosions.TryExplodeBlock(
+            Terrain.ToCell(worldItem.Position.X),
+            Terrain.ToCell(worldItem.Position.Y),
+            Terrain.ToCell(worldItem.Position.Z),
+            worldItem.Value
+        );
     }
 
     public override void Load(ValuesDictionary valuesDictionary)

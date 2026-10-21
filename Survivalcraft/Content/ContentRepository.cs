@@ -3,9 +3,13 @@ namespace Game.Content;
 public sealed record ContentRepository
 {
     public Guid Id { get; init; } = Guid.NewGuid();
+
     public string Name { get; init; } = string.Empty;
+
     public string BaseUrl { get; init; } = string.Empty;
+
     public bool IsEnabled { get; init; } = true;
+
     public int Priority { get; init; }
 
     public ContentRepository Normalize()
@@ -19,10 +23,13 @@ public sealed record ContentRepository
         ArgumentException.ThrowIfNullOrWhiteSpace(BaseUrl);
         if (!Uri.TryCreate(BaseUrl.Trim(), UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
-            !string.IsNullOrEmpty(uri.UserInfo) || !string.IsNullOrEmpty(uri.Query) ||
+            !string.IsNullOrEmpty(uri.UserInfo) ||
+            !string.IsNullOrEmpty(uri.Query) ||
             !string.IsNullOrEmpty(uri.Fragment))
         {
-            throw new ArgumentException("Repository addresses must be absolute HTTP(S) URLs without credentials, queries or fragments.");
+            throw new ArgumentException(
+                "Repository addresses must be absolute HTTP(S) URLs without credentials, queries or fragments."
+            );
         }
 
         return this with

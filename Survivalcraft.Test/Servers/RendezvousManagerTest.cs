@@ -29,11 +29,14 @@ public sealed class RendezvousManagerTest
         var parsed = RendezvousManager.Read(XElement.Parse(RendezvousManager.Write(settings).ToString()));
         Assert.Equal(settings.Services, parsed.Services);
         var manager = new RendezvousManager(settings, _ => { });
-        Assert.Throws<ArgumentException>(() => manager.Add(new InstalledRendezvousService
-        {
-            Name = "Duplicate",
-            ControlUrl = "https://SIGNAL.example:443"
-        }));
+        Assert.Throws<ArgumentException>(() => manager.Add(
+                new InstalledRendezvousService
+                {
+                    Name = "Duplicate",
+                    ControlUrl = "https://SIGNAL.example:443"
+                }
+            )
+        );
         Assert.Equal(2, manager.Snapshot().Count);
     }
 
@@ -41,11 +44,14 @@ public sealed class RendezvousManagerTest
     public void FailedSaveDoesNotChangeInMemoryConfiguration()
     {
         var manager = new RendezvousManager(new RendezvousSettings(), _ => throw new IOException("No space"));
-        Assert.Throws<IOException>(() => manager.Add(new InstalledRendezvousService
-        {
-            Name = "Signal",
-            ControlUrl = "https://signal.example/"
-        }));
+        Assert.Throws<IOException>(() => manager.Add(
+                new InstalledRendezvousService
+                {
+                    Name = "Signal",
+                    ControlUrl = "https://signal.example/"
+                }
+            )
+        );
         Assert.Empty(manager.Snapshot());
     }
 

@@ -9,7 +9,9 @@ public sealed class ContentServerClient : IDisposable
     public const int MaximumJsonResponseBytes = 4 * 1024 * 1024;
 
     private const int _maximumCatalogPages = 100;
+
     private readonly HttpClient _httpClient;
+
     private readonly bool _disposeClient;
 
     public ContentServerClient(string serverUrl, HttpClient? httpClient = null)
@@ -28,13 +30,20 @@ public sealed class ContentServerClient : IDisposable
 
     public async Task<ContentServerHealth> CheckHealthAsync(CancellationToken cancellationToken = default)
     {
-        using var response = await _httpClient.GetAsync("api/v1/health", HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.GetAsync(
+            "api/v1/health",
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken
+        ).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
-        var result = await ReadJsonAsync<ContentServerResponse<ContentServerHealth>>(response,
-            cancellationToken).ConfigureAwait(false);
-        if (result?.Success != true || result.Data is null ||
-            string.IsNullOrWhiteSpace(result.Data.Name) || string.IsNullOrWhiteSpace(result.Data.Version))
+        var result = await ReadJsonAsync<ContentServerResponse<ContentServerHealth>>(
+            response,
+            cancellationToken
+        ).ConfigureAwait(false);
+        if (result?.Success != true ||
+            result.Data is null ||
+            string.IsNullOrWhiteSpace(result.Data.Name) ||
+            string.IsNullOrWhiteSpace(result.Data.Version))
         {
             throw new InvalidDataException("ContentServer returned an invalid health response.");
         }
@@ -43,10 +52,14 @@ public sealed class ContentServerClient : IDisposable
     }
 
     public async Task<IReadOnlyList<GameAnnouncement>> ListGameAnnouncementsAsync(
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        using var response = await _httpClient.GetAsync("api/v1/announcements",
-            HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.GetAsync(
+            "api/v1/announcements",
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken
+        ).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var result = await ReadJsonAsync<ContentServerResponse<GameAnnouncement[]>>(response, cancellationToken)
             .ConfigureAwait(false);
@@ -58,12 +71,17 @@ public sealed class ContentServerClient : IDisposable
         return result.Data;
     }
 
-    public async Task<GameRelease?> GetLatestGameReleaseAsync(string platform,
-        CancellationToken cancellationToken = default)
+    public async Task<GameRelease?> GetLatestGameReleaseAsync(
+        string platform,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(platform);
-        using var response = await _httpClient.GetAsync($"api/v1/game-releases/latest/{platform}",
-            HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.GetAsync(
+            $"api/v1/game-releases/latest/{platform}",
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken
+        ).ConfigureAwait(false);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             return null;
@@ -103,13 +121,19 @@ public sealed class ContentServerClient : IDisposable
     }
 
     public async Task<IReadOnlyList<ContentServerServerSource>> ListServerSourcesAsync(
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        using var response = await _httpClient.GetAsync("api/v1/server-sources",
-            HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.GetAsync(
+            "api/v1/server-sources",
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken
+        ).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
-        var result = await ReadJsonAsync<ContentServerResponse<ContentServerServerSource[]>>(response,
-            cancellationToken).ConfigureAwait(false);
+        var result = await ReadJsonAsync<ContentServerResponse<ContentServerServerSource[]>>(
+            response,
+            cancellationToken
+        ).ConfigureAwait(false);
         if (result?.Success != true || result.Data is null)
         {
             throw new InvalidDataException("ContentServer returned an invalid server source response.");
@@ -119,38 +143,57 @@ public sealed class ContentServerClient : IDisposable
     }
 
     public async Task<IReadOnlyList<ContentServerRendezvousService>> ListRendezvousServicesAsync(
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var services = new List<ContentServerRendezvousService>();
         var identities = new HashSet<string>(StringComparer.Ordinal);
         for (var pageIndex = 1; pageIndex <= 100; pageIndex++)
         {
             var page = await GetPageAsync<ContentServerRendezvousService>(
-                $"api/v1/rendezvous-services?pageIndex={pageIndex}&pageSize=100", cancellationToken).ConfigureAwait(false);
-            if (page.PageIndex != pageIndex || page.PageSize != 100 || page.Items.Count > 100 || page.Total > 10000 ||
-                page.Items.Any(service => service is null || string.IsNullOrWhiteSpace(service.Id) ||
-                    !identities.Add(service.Id) || string.IsNullOrWhiteSpace(service.Name) || service.Name.Length > 100 ||
-                    service.Description?.Length > 1000 ||
-                    !Uri.TryCreate(service.ControlUrl, UriKind.Absolute, out var url) || url.Scheme != Uri.UriSchemeHttps ||
-                    !string.IsNullOrEmpty(url.UserInfo) || !string.IsNullOrEmpty(url.Query) || !string.IsNullOrEmpty(url.Fragment)))
+                    $"api/v1/rendezvous-services?pageIndex={pageIndex}&pageSize=100",
+                    cancellationToken
+                )
+                .ConfigureAwait(false);
+            if (page.PageIndex != pageIndex ||
+                page.PageSize != 100 ||
+                page.Items.Count > 100 ||
+                page.Total > 10000 ||
+                page.Items.Any(service => service is null ||
+                                          string.IsNullOrWhiteSpace(service.Id) ||
+                                          !identities.Add(service.Id) ||
+                                          string.IsNullOrWhiteSpace(service.Name) ||
+                                          service.Name.Length > 100 ||
+                                          service.Description?.Length > 1000 ||
+                                          !Uri.TryCreate(service.ControlUrl, UriKind.Absolute, out var url) ||
+                                          url.Scheme != Uri.UriSchemeHttps ||
+                                          !string.IsNullOrEmpty(url.UserInfo) ||
+                                          !string.IsNullOrEmpty(url.Query) ||
+                                          !string.IsNullOrEmpty(url.Fragment)
+                ))
             {
                 throw new InvalidDataException("ContentServer returned an invalid signaling service response.");
             }
+
             services.AddRange(page.Items);
             if (pageIndex * page.PageSize >= page.Total)
             {
                 return services;
             }
+
             if (page.Items.Count == 0)
             {
                 throw new InvalidDataException("ContentServer returned an incomplete signaling service page.");
             }
         }
+
         throw new InvalidDataException("ContentServer signaling service directory exceeds its pagination limit.");
     }
 
-    public Task<ContentServerPageResult<ContentCatalogItem>> ListPageAsync(ContentCatalogQuery query,
-        CancellationToken cancellationToken = default)
+    public Task<ContentServerPageResult<ContentCatalogItem>> ListPageAsync(
+        ContentCatalogQuery query,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(query);
         query.Validate();
@@ -168,9 +211,12 @@ public sealed class ContentServerClient : IDisposable
         return GetPageAsync<ContentCatalogItem>(path, cancellationToken);
     }
 
-    public Task<ContentServerPageResult<ContentCatalogItem>> ListVersionsPageAsync(string contentId,
-        int pageIndex = 1, int pageSize = ContentCatalogQuery.DefaultPageSize,
-        CancellationToken cancellationToken = default)
+    public Task<ContentServerPageResult<ContentCatalogItem>> ListVersionsPageAsync(
+        string contentId,
+        int pageIndex = 1,
+        int pageSize = ContentCatalogQuery.DefaultPageSize,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(contentId);
         ContentCatalogQuery.ValidatePage(pageIndex, pageSize);
@@ -179,14 +225,20 @@ public sealed class ContentServerClient : IDisposable
         return GetPageAsync<ContentCatalogItem>(path, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<ContentCatalogItem>> ListVersionsAsync(string contentId,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<ContentCatalogItem>> ListVersionsAsync(
+        string contentId,
+        CancellationToken cancellationToken = default
+    )
     {
         var items = new List<ContentCatalogItem>();
         for (var pageIndex = 1; pageIndex <= _maximumCatalogPages; pageIndex++)
         {
-            var page = await ListVersionsPageAsync(contentId, pageIndex, ContentCatalogQuery.MaximumPageSize,
-                cancellationToken).ConfigureAwait(false);
+            var page = await ListVersionsPageAsync(
+                contentId,
+                pageIndex,
+                ContentCatalogQuery.MaximumPageSize,
+                cancellationToken
+            ).ConfigureAwait(false);
             items.AddRange(page.Items);
             if (page.Items.Count == 0 || items.Count >= page.Total)
             {
@@ -197,18 +249,27 @@ public sealed class ContentServerClient : IDisposable
         throw new InvalidDataException("ContentServer version history exceeds the client paging limit.");
     }
 
-    public async Task<ContentCatalogItem?> FindVersionAsync(string contentId, string version,
-        string packageHash, CancellationToken cancellationToken = default)
+    public async Task<ContentCatalogItem?> FindVersionAsync(
+        string contentId,
+        string version,
+        string packageHash,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
         ArgumentException.ThrowIfNullOrWhiteSpace(packageHash);
         for (var pageIndex = 1; pageIndex <= _maximumCatalogPages; pageIndex++)
         {
-            var page = await ListVersionsPageAsync(contentId, pageIndex, ContentCatalogQuery.MaximumPageSize,
-                cancellationToken).ConfigureAwait(false);
+            var page = await ListVersionsPageAsync(
+                contentId,
+                pageIndex,
+                ContentCatalogQuery.MaximumPageSize,
+                cancellationToken
+            ).ConfigureAwait(false);
             var match = page.Items.FirstOrDefault(item =>
                 string.Equals(item.Version, version, StringComparison.Ordinal) &&
-                string.Equals(item.PackageHash, packageHash, StringComparison.Ordinal));
+                string.Equals(item.PackageHash, packageHash, StringComparison.Ordinal)
+            );
             if (match is not null)
             {
                 return match;
@@ -223,29 +284,36 @@ public sealed class ContentServerClient : IDisposable
         throw new InvalidDataException("ContentServer version history exceeds the client paging limit.");
     }
 
-    public async Task<ContentServerModPackage?> FindModAsync(string modId, string version,
-        CancellationToken cancellationToken = default)
+    public async Task<ContentServerModPackage?> FindModAsync(
+        string modId,
+        string version,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(modId);
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
         using var response = await _httpClient.GetAsync(
             $"api/v1/mods/{Uri.EscapeDataString(modId)}/versions/{Uri.EscapeDataString(version)}",
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken
+        ).ConfigureAwait(false);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             return null;
         }
 
         response.EnsureSuccessStatusCode();
-        var result = await ReadJsonAsync<ContentServerResponse<ContentServerModPackage>>(response,
-            cancellationToken).ConfigureAwait(false);
+        var result = await ReadJsonAsync<ContentServerResponse<ContentServerModPackage>>(
+            response,
+            cancellationToken
+        ).ConfigureAwait(false);
         return result?.Data;
     }
 
     public async Task<ContentPackageCacheEntry> DownloadToCacheAsync(
         ContentCatalogItem item,
         IContentPackageCache cache,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(item);
         ArgumentNullException.ThrowIfNull(cache);
@@ -255,8 +323,11 @@ public sealed class ContentServerClient : IDisposable
             return existing;
         }
 
-        using var response = await _httpClient.GetAsync(item.DownloadUrl,
-            HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.GetAsync(
+            item.DownloadUrl,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken
+        ).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         EnsurePackageSize(response);
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -266,8 +337,14 @@ public sealed class ContentServerClient : IDisposable
             throw new InvalidDataException("ContentServer metadata contains an invalid package type.");
         }
 
-        return await cache.ImportExactAsync(stream, expectedType, item.Identifier, item.Version,
-            item.PackageHash, cancellationToken).ConfigureAwait(false);
+        return await cache.ImportExactAsync(
+            stream,
+            expectedType,
+            item.Identifier,
+            item.Version,
+            item.PackageHash,
+            cancellationToken
+        ).ConfigureAwait(false);
     }
 
     private static void EnsurePackageSize(HttpResponseMessage response)
@@ -286,26 +363,43 @@ public sealed class ContentServerClient : IDisposable
         }
     }
 
-    private async Task<ContentServerPageResult<T>> GetPageAsync<T>(string path,
-        CancellationToken cancellationToken)
+    private async Task<ContentServerPageResult<T>> GetPageAsync<T>(
+        string path,
+        CancellationToken cancellationToken
+    )
     {
-        using var httpResponse = await _httpClient.GetAsync(path, HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken).ConfigureAwait(false);
+        using var httpResponse = await _httpClient.GetAsync(
+            path,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken
+        ).ConfigureAwait(false);
         httpResponse.EnsureSuccessStatusCode();
-        var response = await ReadJsonAsync<ContentServerResponse<ContentServerPage<T>>>(httpResponse,
-            cancellationToken).ConfigureAwait(false);
-        if (response?.Success != true || response.Data is null || response.Data.Items is null ||
-            response.Data.Total < 0 || response.Data.PageIndex < 1 || response.Data.PageSize < 1)
+        var response = await ReadJsonAsync<ContentServerResponse<ContentServerPage<T>>>(
+            httpResponse,
+            cancellationToken
+        ).ConfigureAwait(false);
+        if (response?.Success != true ||
+            response.Data is null ||
+            response.Data.Items is null ||
+            response.Data.Total < 0 ||
+            response.Data.PageIndex < 1 ||
+            response.Data.PageSize < 1)
         {
             throw new InvalidDataException("ContentServer returned an invalid paged response.");
         }
 
-        return new ContentServerPageResult<T>(response.Data.Items, response.Data.Total,
-            response.Data.PageIndex, response.Data.PageSize);
+        return new ContentServerPageResult<T>(
+            response.Data.Items,
+            response.Data.Total,
+            response.Data.PageIndex,
+            response.Data.PageSize
+        );
     }
 
-    private static async Task<T?> ReadJsonAsync<T>(HttpResponseMessage response,
-        CancellationToken cancellationToken)
+    private static async Task<T?> ReadJsonAsync<T>(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken
+    )
     {
         if (response.Content.Headers.ContentLength > MaximumJsonResponseBytes)
         {
@@ -341,10 +435,15 @@ public sealed record ContentServerHealth(string Name, string Version);
 
 public sealed record ContentServerServerSource(string Id, string Name, string ApiUrl, string? Description);
 
-public sealed record ContentCatalogQuery(string? Type = null, string? Search = null, int PageIndex = 1,
-    int PageSize = ContentCatalogQuery.DefaultPageSize)
+public sealed record ContentCatalogQuery(
+    string? Type = null,
+    string? Search = null,
+    int PageIndex = 1,
+    int PageSize = ContentCatalogQuery.DefaultPageSize
+)
 {
     public const int DefaultPageSize = 20;
+
     public const int MaximumPageSize = 100;
 
     internal void Validate()
@@ -380,30 +479,51 @@ public sealed record ContentServerPageResult<T>(IReadOnlyList<T> Items, int Tota
 public sealed class ContentCatalogItem
 {
     public string ContentId { get; init; } = string.Empty;
+
     public string PublisherId { get; init; } = string.Empty;
+
     public string Type { get; init; } = string.Empty;
+
     public string Identifier { get; init; } = string.Empty;
+
     public string Name { get; init; } = string.Empty;
+
     public string? Summary { get; init; }
+
     public string? Description { get; init; }
+
     public string VersionId { get; init; } = string.Empty;
+
     public string Version { get; init; } = string.Empty;
+
     public string PackageHash { get; init; } = string.Empty;
+
     public long PackageSize { get; init; }
+
     public string FileName { get; init; } = string.Empty;
+
     public string DownloadUrl { get; init; } = string.Empty;
 }
 
 public sealed class ContentServerModPackage
 {
     public string ModId { get; init; } = string.Empty;
+
     public string Version { get; init; } = string.Empty;
+
     public string PackageHash { get; init; } = string.Empty;
+
     public string FileName { get; init; } = string.Empty;
+
     public long PackageSize { get; init; }
+
     public string Side { get; init; } = "common";
+
     public string? Summary { get; init; }
+
     public string? Description { get; init; }
+
     public DateTimeOffset UploadedAtUtc { get; init; }
+
     public string DownloadUrl { get; init; } = string.Empty;
 }

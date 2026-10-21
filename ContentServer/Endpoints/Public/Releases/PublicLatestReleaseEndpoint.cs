@@ -31,10 +31,20 @@ public sealed class PublicLatestReleaseEndpoint(IMediator mediator) : ContentEnd
         }
 
         var artifact = latest.Artifacts.Single(item => item.Platform == platform);
-        await Send.ResponseAsync(new LatestGameReleaseResponse(latest.Id.ToString(), latest.Version, artifact.Platform,
-            latest.Description, artifact.DownloadUrl, artifact.Sha256,
-            latest.Status.ToString().ToLowerInvariant(), latest.CreatedAt, latest.PublishedAt).AsResponseData(),
-            cancellation: cancellationToken);
+        await Send.ResponseAsync(
+            new LatestGameReleaseResponse(
+                latest.Id.ToString(),
+                latest.Version,
+                artifact.Platform,
+                latest.Description,
+                artifact.DownloadUrl,
+                artifact.Sha256,
+                latest.Status.ToString().ToLowerInvariant(),
+                latest.CreatedAt,
+                latest.PublishedAt
+            ).AsResponseData(),
+            cancellation: cancellationToken
+        );
     }
 }
 
@@ -47,4 +57,5 @@ public sealed record LatestGameReleaseResponse(
     string Sha256,
     string Status,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? PublishedAt);
+    DateTimeOffset? PublishedAt
+);

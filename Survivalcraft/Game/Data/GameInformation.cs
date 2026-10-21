@@ -6,7 +6,8 @@ public sealed record GameAnnouncement(
     string Body,
     string Status,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? PublishedAt);
+    DateTimeOffset? PublishedAt
+);
 
 public sealed record GameRelease(
     string Id,
@@ -17,4 +18,5 @@ public sealed record GameRelease(
     string Sha256,
     string Status,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? PublishedAt);
+    DateTimeOffset? PublishedAt
+);

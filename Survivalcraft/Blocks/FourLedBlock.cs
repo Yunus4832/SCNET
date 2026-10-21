@@ -25,18 +25,34 @@ public class FourLedBlock : MountedElectricElementBlock
                 ? i != 4
                     ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
                     : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                : Matrix.CreateRotationX((float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
+                  Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByFace[i] = new BlockMesh();
-            BlockMeshesByFace[i].AppendModelMeshPart(fourLedMesh.MeshParts[0], boneAbsoluteTransform * m, false, false,
-                false, false, Color.White);
+            BlockMeshesByFace[i].AppendModelMeshPart(
+                fourLedMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             CollisionBoxesByFace[i] = [BlockMeshesByFace[i].CalculateBoundingBox()];
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(fourLedMesh.MeshParts[0], boneAbsoluteTransform * m2, false, false,
-            false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            fourLedMesh.MeshParts[0],
+            boneAbsoluteTransform * m2,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
     }
 
     public override IEnumerable<CraftingRecipe> GetProceduralCraftingRecipes()
@@ -124,11 +140,13 @@ public class FourLedBlock : MountedElectricElementBlock
     )
     {
         var color = GetColor(Terrain.ExtractData(oldValue));
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
+                Count = 1
+            }
+        );
         showDebris = true;
     }
 
@@ -150,8 +168,16 @@ public class FourLedBlock : MountedElectricElementBlock
         var mountingFace = GetMountingFace(Terrain.ExtractData(value));
         if (mountingFace < BlockMeshesByFace.Length)
         {
-            generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByFace[mountingFace], Color.White, null,
-                geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshesByFace[mountingFace],
+                Color.White,
+                null,
+                geometry.SubsetOpaque
+            );
             generator.GenerateWireVertices(value, x, y, z, mountingFace, 1f, Vector2.Zero, geometry.SubsetOpaque);
         }
     }

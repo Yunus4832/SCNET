@@ -54,8 +54,15 @@ public static class BlocksManager
         v.Y *= num;
         v.Z *= num;
         var flag = v == Vector4.One;
-        var texturedBatch3D = primitivesRenderer.TexturedBatch(texture, true, 0, null,
-            RasterizerState.CullCounterClockwiseScissor, null, SamplerState.PointClamp);
+        var texturedBatch3D = primitivesRenderer.TexturedBatch(
+            texture,
+            true,
+            0,
+            null,
+            RasterizerState.CullCounterClockwiseScissor,
+            null,
+            SamplerState.PointClamp
+        );
         var flag2 = false;
         var m = !environmentData.ViewProjectionMatrix.HasValue
             ? matrix
@@ -100,15 +107,25 @@ public static class BlocksManager
 
             if (flag || blockMeshVertex.IsEmissive)
             {
-                triangleVertices.Array[count4++] = new VertexPositionColorTexture(blockMeshVertex.Position,
-                    blockMeshVertex.Color, blockMeshVertex.TextureCoordinates);
+                triangleVertices.Array[count4++] = new VertexPositionColorTexture(
+                    blockMeshVertex.Position,
+                    blockMeshVertex.Color,
+                    blockMeshVertex.TextureCoordinates
+                );
                 continue;
             }
 
-            var color2 = new Color((byte)(blockMeshVertex.Color.R * v.X), (byte)(blockMeshVertex.Color.G * v.Y),
-                (byte)(blockMeshVertex.Color.B * v.Z), (byte)(blockMeshVertex.Color.A * v.W));
-            triangleVertices.Array[count4++] = new VertexPositionColorTexture(blockMeshVertex.Position, color2,
-                blockMeshVertex.TextureCoordinates);
+            var color2 = new Color(
+                (byte)(blockMeshVertex.Color.R * v.X),
+                (byte)(blockMeshVertex.Color.G * v.Y),
+                (byte)(blockMeshVertex.Color.B * v.Z),
+                (byte)(blockMeshVertex.Color.A * v.W)
+            );
+            triangleVertices.Array[count4++] = new VertexPositionColorTexture(
+                blockMeshVertex.Position,
+                color2,
+                blockMeshVertex.TextureCoordinates
+            );
         }
 
         var triangleIndices = texturedBatch3D.TriangleIndices;
@@ -148,5 +165,4 @@ public static class BlocksManager
 
         return slotTexCoords;
     }
-
 }

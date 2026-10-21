@@ -2,8 +2,11 @@ namespace Engine.Media;
 
 public enum SoundFileFormat
 {
-    Wav,
-    Ogg,
-    Flac,
-    Mp3
+    Wav = 0,
+
+    Ogg = 1,
+
+    Flac = 2,
+
+    Mp3 = 3
 }

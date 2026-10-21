@@ -52,20 +52,35 @@ public abstract class RotatableMountedElectricElementBlock(
             {
                 var radians2 = -j * (float)Math.PI / 2f;
                 var num = (i << 2) + j;
-                var m = Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateRotationZ(radians2) *
+                var m = Matrix.CreateRotationX((float)Math.PI / 2f) *
+                        Matrix.CreateRotationZ(radians2) *
                         Matrix.CreateTranslation(0f, 0f, -0.5f) *
                         (flag ? Matrix.CreateRotationX(radians) : Matrix.CreateRotationY(radians)) *
                         Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 BlockMeshes[num] = new BlockMesh();
-                BlockMeshes[num].AppendModelMeshPart(modelMesh.MeshParts[0],
-                    boneAbsoluteTransform * m, false, false, false, false, Color.White);
+                BlockMeshes[num].AppendModelMeshPart(
+                    modelMesh.MeshParts[0],
+                    boneAbsoluteTransform * m,
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
                 CollisionBoxes[num] = [BlockMeshes[num].CalculateBoundingBox()];
             }
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBlockMesh.AppendModelMeshPart(modelMesh.MeshParts[0], boneAbsoluteTransform * m2,
-            false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            modelMesh.MeshParts[0],
+            boneAbsoluteTransform * m2,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
     }
 
     public override int GetFace(int value)
@@ -103,8 +118,16 @@ public abstract class RotatableMountedElectricElementBlock(
     {
         var num = Terrain.ExtractData(value) & 0x1F;
         generator.GenerateMeshVertices(this, x, y, z, BlockMeshes[num], Color.White, null, geometry.SubsetOpaque);
-        generator.GenerateWireVertices(value, x, y, z, GetFace(value), CenterBoxSize, Vector2.Zero,
-            geometry.SubsetOpaque);
+        generator.GenerateWireVertices(
+            value,
+            x,
+            y,
+            z,
+            GetFace(value),
+            CenterBoxSize,
+            Vector2.Zero,
+            geometry.SubsetOpaque
+        );
     }
 
     public override BlockPlacementData GetPlacementValue(

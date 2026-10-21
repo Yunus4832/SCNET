@@ -6,10 +6,13 @@ public class MusketBlock : Block
 {
     public enum LoadState
     {
-        Empty,
-        Gunpowder,
-        Wad,
-        Loaded
+        Empty = 0,
+
+        Gunpowder = 1,
+
+        Wad = 2,
+
+        Loaded = 3
     }
 
     public BlockMesh StandaloneBlockMeshLoaded = new();
@@ -30,15 +33,43 @@ public class MusketBlock : Block
             throw new InvalidOperationException("Required HammerMesh.ParentBone is null")
         );
         StandaloneBlockMeshUnloaded = new BlockMesh();
-        StandaloneBlockMeshUnloaded.AppendModelMeshPart(musketMesh.MeshParts[0], boneAbsoluteTransform,
-            false, false, false, false, Color.White);
-        StandaloneBlockMeshUnloaded.AppendModelMeshPart(hammerMesh.MeshParts[0], boneAbsoluteTransform2,
-            false, false, false, false, Color.White);
+        StandaloneBlockMeshUnloaded.AppendModelMeshPart(
+            musketMesh.MeshParts[0],
+            boneAbsoluteTransform,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMeshUnloaded.AppendModelMeshPart(
+            hammerMesh.MeshParts[0],
+            boneAbsoluteTransform2,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandaloneBlockMeshLoaded = new BlockMesh();
-        StandaloneBlockMeshLoaded.AppendModelMeshPart(musketMesh.MeshParts[0], boneAbsoluteTransform,
-            false, false, false, false, Color.White);
-        StandaloneBlockMeshLoaded.AppendModelMeshPart(hammerMesh.MeshParts[0],
-            Matrix.CreateRotationX(0.7f) * boneAbsoluteTransform2, false, false, false, false, Color.White);
+        StandaloneBlockMeshLoaded.AppendModelMeshPart(
+            musketMesh.MeshParts[0],
+            boneAbsoluteTransform,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMeshLoaded.AppendModelMeshPart(
+            hammerMesh.MeshParts[0],
+            Matrix.CreateRotationX(0.7f) * boneAbsoluteTransform2,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 
@@ -64,13 +95,25 @@ public class MusketBlock : Block
     {
         if (GetHammerState(Terrain.ExtractData(value)))
         {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMeshLoaded, color, 2f * size, ref matrix,
-                environmentData);
+            BlocksManager.DrawMeshBlock(
+                primitivesRenderer,
+                StandaloneBlockMeshLoaded,
+                color,
+                2f * size,
+                ref matrix,
+                environmentData
+            );
         }
         else
         {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMeshUnloaded, color, 2f * size, ref matrix,
-                environmentData);
+            BlocksManager.DrawMeshBlock(
+                primitivesRenderer,
+                StandaloneBlockMeshUnloaded,
+                color,
+                2f * size,
+                ref matrix,
+                environmentData
+            );
         }
     }
 

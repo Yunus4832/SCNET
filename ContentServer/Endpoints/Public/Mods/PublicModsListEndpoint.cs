@@ -24,7 +24,8 @@ public sealed class PublicModsListEndpoint(IMediator mediator) : ContentEndpoint
 
     private async Task<ResponseData<PagedData<ModPackageResponse>>> Mods(
         PaginationRequest page,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var items = await mediator.Send(
             new ListVersionsQuery(VersionQueryScope.Public, page.ToPageRequest(), Type: "Mod"),
@@ -45,4 +46,5 @@ public sealed record ModPackageResponse(
     string Summary,
     string Description,
     DateTimeOffset UploadedAtUtc,
-    string DownloadUrl);
+    string DownloadUrl
+);

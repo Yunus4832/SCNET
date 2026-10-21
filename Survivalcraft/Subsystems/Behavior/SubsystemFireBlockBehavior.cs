@@ -93,7 +93,8 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     if (CommonLib.WorkType != WorkType.Client && HasLoadedFuelNeighbors(x, z))
                     {
                         OnNeighborBlockChanged(x, y, z, x, y, z);
-                        if (SubsystemTerrain.Terrain.GetCellContents(x, y, z) != BuiltInBlockRegistry.GetIndex<FireBlock>())
+                        if (SubsystemTerrain.Terrain.GetCellContents(x, y, z) !=
+                            BuiltInBlockRegistry.GetIndex<FireBlock>())
                         {
                             _copyIndex++;
                             continue;
@@ -113,12 +114,17 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
                         foreach (var expansionProbability in _expansionProbabilities)
                         {
-                            if (_random.Float(0f, 1f) < expansionProbability.Value * _lastScanDuration *
+                            if (_random.Float(0f, 1f) <
+                                expansionProbability.Value *
+                                _lastScanDuration *
                                 value.FireExpandability)
                             {
                                 _toExpand[
-                                    new Point3(x + expansionProbability.Key.X, y + expansionProbability.Key.Y,
-                                        z + 1 + expansionProbability.Key.Z)] = value.FireExpandability * 0.85f;
+                                    new Point3(
+                                        x + expansionProbability.Key.X,
+                                        y + expansionProbability.Key.Y,
+                                        z + 1 + expansionProbability.Key.Z
+                                    )] = value.FireExpandability * 0.85f;
                             }
                         }
                     }
@@ -133,12 +139,17 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
                         foreach (var expansionProbability2 in _expansionProbabilities)
                         {
-                            if (_random.Float(0f, 1f) < expansionProbability2.Value * _lastScanDuration *
+                            if (_random.Float(0f, 1f) <
+                                expansionProbability2.Value *
+                                _lastScanDuration *
                                 value.FireExpandability)
                             {
                                 _toExpand[
-                                    new Point3(x + 1 + expansionProbability2.Key.X, y + expansionProbability2.Key.Y,
-                                        z + expansionProbability2.Key.Z)] = value.FireExpandability * 0.85f;
+                                    new Point3(
+                                        x + 1 + expansionProbability2.Key.X,
+                                        y + expansionProbability2.Key.Y,
+                                        z + expansionProbability2.Key.Z
+                                    )] = value.FireExpandability * 0.85f;
                             }
                         }
                     }
@@ -153,12 +164,17 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
                         foreach (var expansionProbability3 in _expansionProbabilities)
                         {
-                            if (_random.Float(0f, 1f) < expansionProbability3.Value * _lastScanDuration *
+                            if (_random.Float(0f, 1f) <
+                                expansionProbability3.Value *
+                                _lastScanDuration *
                                 value.FireExpandability)
                             {
                                 _toExpand[
-                                    new Point3(x + expansionProbability3.Key.X, y + expansionProbability3.Key.Y,
-                                        z - 1 + expansionProbability3.Key.Z)] = value.FireExpandability * 0.85f;
+                                    new Point3(
+                                        x + expansionProbability3.Key.X,
+                                        y + expansionProbability3.Key.Y,
+                                        z - 1 + expansionProbability3.Key.Z
+                                    )] = value.FireExpandability * 0.85f;
                             }
                         }
                     }
@@ -173,12 +189,17 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
                         foreach (var expansionProbability4 in _expansionProbabilities)
                         {
-                            if (_random.Float(0f, 1f) < expansionProbability4.Value * _lastScanDuration *
+                            if (_random.Float(0f, 1f) <
+                                expansionProbability4.Value *
+                                _lastScanDuration *
                                 value.FireExpandability)
                             {
                                 _toExpand[
-                                    new Point3(x - 1 + expansionProbability4.Key.X, y + expansionProbability4.Key.Y,
-                                        z + expansionProbability4.Key.Z)] = value.FireExpandability * 0.85f;
+                                    new Point3(
+                                        x - 1 + expansionProbability4.Key.X,
+                                        y + expansionProbability4.Key.Y,
+                                        z + expansionProbability4.Key.Z
+                                    )] = value.FireExpandability * 0.85f;
                             }
                         }
                     }
@@ -226,14 +247,21 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 if (num5 < 15 && num7 < 24f)
                 {
                     _subsystemParticles.AddParticleSystem(
-                        new BurntDebrisParticleSystem(SubsystemTerrain, key.X, key.Y, key.Z));
+                        new BurntDebrisParticleSystem(SubsystemTerrain, key.X, key.Y, key.Z)
+                    );
                     num5++;
                 }
 
                 if (num6 < 4 && num7 < 16f)
                 {
-                    _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.25f, 0.25f),
-                        new Vector3(key.X, key.Y, key.Z), 3f, true);
+                    _subsystemAudio.PlayRandomSound(
+                        "Audio/Sizzles",
+                        1f,
+                        _random.Float(-0.25f, 0.25f),
+                        new Vector3(key.X, key.Y, key.Z),
+                        3f,
+                        true
+                    );
                     num6++;
                 }
             }
@@ -318,25 +346,33 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         var num = Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
         if ((num & 1) != 0 &&
-            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z + 1)].FireDuration == 0f)
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z + 1)]
+                .FireDuration ==
+            0f)
         {
             num &= -2;
         }
 
         if ((num & 2) != 0 &&
-            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x + 1, y, z)].FireDuration == 0f)
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x + 1, y, z)]
+                .FireDuration ==
+            0f)
         {
             num &= -3;
         }
 
         if ((num & 4) != 0 &&
-            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z - 1)].FireDuration == 0f)
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z - 1)]
+                .FireDuration ==
+            0f)
         {
             num &= -5;
         }
 
         if ((num & 8) != 0 &&
-            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x - 1, y, z)].FireDuration == 0f)
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x - 1, y, z)]
+                .FireDuration ==
+            0f)
         {
             num &= -9;
         }
@@ -370,7 +406,9 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
 
         var contents = 104;
-        if (num == 0 && CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z)].FireDuration ==
+        if (num == 0 &&
+            CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z)].FireDuration ==
             0f)
         {
             contents = 0;
@@ -415,7 +453,9 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var list = new List<Point3>();
         foreach (var key in _fireData.Keys)
         {
-            if (key.X >= chunk.Origin.X && key.X < chunk.Origin.X + 16 && key.Z >= chunk.Origin.Y &&
+            if (key.X >= chunk.Origin.X &&
+                key.X < chunk.Origin.X + 16 &&
+                key.Z >= chunk.Origin.Y &&
                 key.Z < chunk.Origin.Y + 16)
             {
                 list.Add(key);
@@ -464,9 +504,13 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         {
             if (CommonLib.WorkType == WorkType.Server)
             {
-                NetworkSender.SendToChunkObservers(Project, new Point2(x >> 4, z >> 4),
-                    new ComponentOnFirePackage(x, y, z, expandability));
+                NetworkSender.SendToChunkObservers(
+                    Project,
+                    new Point2(x >> 4, z >> 4),
+                    new ComponentOnFirePackage(x, y, z, expandability)
+                );
             }
+
             AddFireNet(x, y, z, expandability);
         }
     }
@@ -491,7 +535,8 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
     public void ClearChunkState(Point2 chunk)
     {
         foreach (var point in _fireData.Keys.Where(point =>
-                     point.X >> 4 == chunk.X && point.Z >> 4 == chunk.Y).ToArray())
+                     point.X >> 4 == chunk.X && point.Z >> 4 == chunk.Y
+                 ).ToArray())
         {
             RemoveFireNet(point.X, point.Y, point.Z);
         }
@@ -500,10 +545,13 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
     private void SendChunkState(Client client, Point2 chunk)
     {
         foreach (var fire in _fireData.Values.Where(fire =>
-                     fire.Point.X >> 4 == chunk.X && fire.Point.Z >> 4 == chunk.Y))
+                     fire.Point.X >> 4 == chunk.X && fire.Point.Z >> 4 == chunk.Y
+                 ))
         {
-            NetworkSender.SendTo(client,
-                new ComponentOnFirePackage(fire.Point.X, fire.Point.Y, fire.Point.Z, fire.FireExpandability));
+            NetworkSender.SendTo(
+                client,
+                new ComponentOnFirePackage(fire.Point.X, fire.Point.Y, fire.Point.Z, fire.FireExpandability)
+            );
         }
     }
 
@@ -517,9 +565,13 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Server)
         {
-            NetworkSender.SendToChunkObservers(Project, new Point2(x >> 4, z >> 4),
-                new ComponentOnFirePackage(x, y, z));
+            NetworkSender.SendToChunkObservers(
+                Project,
+                new Point2(x >> 4, z >> 4),
+                new ComponentOnFirePackage(x, y, z)
+            );
         }
+
         RemoveFireNet(x, y, z);
     }
 

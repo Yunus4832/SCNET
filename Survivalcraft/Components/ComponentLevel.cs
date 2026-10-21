@@ -66,8 +66,10 @@ public class ComponentLevel : Component, IUpdateable
             }
         }
 
-        _componentPlayer.PlayerStats.HighestLevel = MathUtils.Max(_componentPlayer.PlayerStats.HighestLevel,
-            _componentPlayer.PlayerData.Level);
+        _componentPlayer.PlayerStats.HighestLevel = MathUtils.Max(
+            _componentPlayer.PlayerStats.HighestLevel,
+            _componentPlayer.PlayerData.Level
+        );
     }
 
     public void AddExperience(int count, bool playSound)
@@ -80,8 +82,15 @@ public class ComponentLevel : Component, IUpdateable
         NetAddExperience(count, playSound);
         if (CommonLib.WorkType == WorkType.Server && _componentPlayer.PlayerData.Client is { } owner)
         {
-            NetworkSender.SendTo(owner, PlayerPackageBuilder.Capture(_componentPlayer.PlayerData, count, playSound,
-                _componentPlayer.PlayerData.Level));
+            NetworkSender.SendTo(
+                owner,
+                PlayerPackageBuilder.Capture(
+                    _componentPlayer.PlayerData,
+                    count,
+                    playSound,
+                    _componentPlayer.PlayerData.Level
+                )
+            );
         }
     }
 
@@ -90,8 +99,14 @@ public class ComponentLevel : Component, IUpdateable
     {
         if (playSound)
         {
-            _subsystemAudio.PlaySound("Audio/ExperienceCollected", 0.2f, _random.Float(-0.1f, 0.4f),
-                _componentPlayer.ComponentBody.Position, 2f, false);
+            _subsystemAudio.PlaySound(
+                "Audio/ExperienceCollected",
+                0.2f,
+                _random.Float(-0.1f, 0.4f),
+                _componentPlayer.ComponentBody.Position,
+                2f,
+                false
+            );
         }
 
         for (var i = 0; i < count; i++)
@@ -100,48 +115,102 @@ public class ComponentLevel : Component, IUpdateable
             if (MathUtils.Floor(_componentPlayer.PlayerData.Level + num) >
                 MathUtils.Floor(_componentPlayer.PlayerData.Level))
             {
-                Time.QueueTimeDelayedExecution(Time.FrameStartTime + 0.5 + 0.0,
+                Time.QueueTimeDelayedExecution(
+                    Time.FrameStartTime + 0.5 + 0.0,
                     delegate
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(Name, 1), Color.White,
-                            true, false);
-                    });
-                Time.QueueTimeDelayedExecution(Time.FrameStartTime + 0.5 + 0.0,
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(Name, 1),
+                            Color.White,
+                            true,
+                            false
+                        );
+                    }
+                );
+                Time.QueueTimeDelayedExecution(
+                    Time.FrameStartTime + 0.5 + 0.0,
                     delegate
                     {
-                        _subsystemAudio.PlaySound("Audio/ExperienceCollected", 1f, -0.2f,
-                            _componentPlayer.ComponentBody.Position, 2f, false);
-                    });
-                Time.QueueTimeDelayedExecution(Time.FrameStartTime + 0.5 + 0.15000000596046448,
+                        _subsystemAudio.PlaySound(
+                            "Audio/ExperienceCollected",
+                            1f,
+                            -0.2f,
+                            _componentPlayer.ComponentBody.Position,
+                            2f,
+                            false
+                        );
+                    }
+                );
+                Time.QueueTimeDelayedExecution(
+                    Time.FrameStartTime + 0.5 + 0.15000000596046448,
                     delegate
                     {
-                        _subsystemAudio.PlaySound("Audio/ExperienceCollected", 1f, -0.03333333f,
-                            _componentPlayer.ComponentBody.Position, 2f, false);
-                    });
-                Time.QueueTimeDelayedExecution(Time.FrameStartTime + 0.5 + 0.30000001192092896,
+                        _subsystemAudio.PlaySound(
+                            "Audio/ExperienceCollected",
+                            1f,
+                            -0.03333333f,
+                            _componentPlayer.ComponentBody.Position,
+                            2f,
+                            false
+                        );
+                    }
+                );
+                Time.QueueTimeDelayedExecution(
+                    Time.FrameStartTime + 0.5 + 0.30000001192092896,
                     delegate
                     {
-                        _subsystemAudio.PlaySound("Audio/ExperienceCollected", 1f, 142f / (339f * (float)Math.PI),
-                            _componentPlayer.ComponentBody.Position, 2f, false);
-                    });
-                Time.QueueTimeDelayedExecution(Time.FrameStartTime + 0.5 + 0.45000001788139343,
+                        _subsystemAudio.PlaySound(
+                            "Audio/ExperienceCollected",
+                            1f,
+                            142f / (339f * (float)Math.PI),
+                            _componentPlayer.ComponentBody.Position,
+                            2f,
+                            false
+                        );
+                    }
+                );
+                Time.QueueTimeDelayedExecution(
+                    Time.FrameStartTime + 0.5 + 0.45000001788139343,
                     delegate
                     {
-                        _subsystemAudio.PlaySound("Audio/ExperienceCollected", 1f, 23f / 60f,
-                            _componentPlayer.ComponentBody.Position, 2f, false);
-                    });
-                Time.QueueTimeDelayedExecution(Time.FrameStartTime + 0.5 + 0.75,
+                        _subsystemAudio.PlaySound(
+                            "Audio/ExperienceCollected",
+                            1f,
+                            23f / 60f,
+                            _componentPlayer.ComponentBody.Position,
+                            2f,
+                            false
+                        );
+                    }
+                );
+                Time.QueueTimeDelayedExecution(
+                    Time.FrameStartTime + 0.5 + 0.75,
                     delegate
                     {
-                        _subsystemAudio.PlaySound("Audio/ExperienceCollected", 1f, -0.03333333f,
-                            _componentPlayer.ComponentBody.Position, 2f, false);
-                    });
-                Time.QueueTimeDelayedExecution(Time.FrameStartTime + 0.5 + 0.90000003576278687,
+                        _subsystemAudio.PlaySound(
+                            "Audio/ExperienceCollected",
+                            1f,
+                            -0.03333333f,
+                            _componentPlayer.ComponentBody.Position,
+                            2f,
+                            false
+                        );
+                    }
+                );
+                Time.QueueTimeDelayedExecution(
+                    Time.FrameStartTime + 0.5 + 0.90000003576278687,
                     delegate
                     {
-                        _subsystemAudio.PlaySound("Audio/ExperienceCollected", 1f, 23f / 60f,
-                            _componentPlayer.ComponentBody.Position, 2f, false);
-                    });
+                        _subsystemAudio.PlaySound(
+                            "Audio/ExperienceCollected",
+                            1f,
+                            23f / 60f,
+                            _componentPlayer.ComponentBody.Position,
+                            2f,
+                            false
+                        );
+                    }
+                );
             }
 
             _componentPlayer.PlayerData.Level += num;
@@ -171,8 +240,10 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageManager.Get(Name, 2),
-                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
+                Description = string.Format(
+                    LanguageManager.Get(Name, 2),
+                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture)
+                )
             };
             factors.Add(item);
         }
@@ -258,8 +329,10 @@ public class ComponentLevel : Component, IUpdateable
         item = new Factor
         {
             Value = num15,
-            Description = string.Format(LanguageManager.Get(Name, 12),
-                _subsystemGameInfo.WorldSettings.GameMode.ToString())
+            Description = string.Format(
+                LanguageManager.Get(Name, 12),
+                _subsystemGameInfo.WorldSettings.GameMode.ToString()
+            )
         };
         factors.Add(item);
 
@@ -289,8 +362,10 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageManager.Get(Name, 2),
-                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
+                Description = string.Format(
+                    LanguageManager.Get(Name, 2),
+                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture)
+                )
             };
             factors.Add(item);
         }
@@ -341,8 +416,10 @@ public class ComponentLevel : Component, IUpdateable
         item = new Factor
         {
             Value = num9,
-            Description = string.Format(LanguageManager.Get(Name, 12),
-                _subsystemGameInfo.WorldSettings.GameMode.ToString())
+            Description = string.Format(
+                LanguageManager.Get(Name, 12),
+                _subsystemGameInfo.WorldSettings.GameMode.ToString()
+            )
         };
         factors.Add(item);
 
@@ -373,8 +450,10 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageManager.Get(Name, 2),
-                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
+                Description = string.Format(
+                    LanguageManager.Get(Name, 2),
+                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture)
+                )
             };
             factors.Add(item);
         }
@@ -497,8 +576,10 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageManager.Get(Name, 2),
-                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
+                Description = string.Format(
+                    LanguageManager.Get(Name, 2),
+                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture)
+                )
             };
             factors.Add(item);
         }
@@ -520,8 +601,10 @@ public class ComponentLevel : Component, IUpdateable
         item = new Factor
         {
             Value = num5,
-            Description = string.Format(LanguageManager.Get(Name, 12),
-                _subsystemGameInfo.WorldSettings.GameMode.ToString())
+            Description = string.Format(
+                LanguageManager.Get(Name, 12),
+                _subsystemGameInfo.WorldSettings.GameMode.ToString()
+            )
         };
         factors.Add(item);
 
@@ -550,11 +633,13 @@ public class ComponentLevel : Component, IUpdateable
         }
 
         clothingFactor *= clothingData.MovementSpeedFactor;
-        factors.Add(new Factor
-        {
-            Value = clothingData.MovementSpeedFactor,
-            Description = clothingData.DisplayName
-        });
+        factors.Add(
+            new Factor
+            {
+                Value = clothingData.MovementSpeedFactor,
+                Description = clothingData.DisplayName
+            }
+        );
     }
 
     public struct Factor

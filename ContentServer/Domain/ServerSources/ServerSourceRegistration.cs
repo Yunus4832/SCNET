@@ -7,9 +7,11 @@ namespace ContentServer.Domain.ServerSources;
 
 public enum ServerSourceRegistrationStatus
 {
-    Pending,
-    Active,
-    Rejected
+    Pending = 0,
+
+    Active = 1,
+
+    Rejected = 2
 }
 
 public partial record ServerSourceRegistrationId : IGuidStronglyTypedId;
@@ -40,9 +42,13 @@ public sealed class ServerSourceRegistration : Entity<ServerSourceRegistrationId
 
     public DateTimeOffset? ReviewedAt { get; private set; }
 
-    public static ServerSourceRegistration Submit(PublisherId publisherId, string name, Uri apiUrl,
+    public static ServerSourceRegistration Submit(
+        PublisherId publisherId,
+        string name,
+        Uri apiUrl,
         string? description,
-        DateTimeOffset now)
+        DateTimeOffset now
+    )
     {
         ArgumentNullException.ThrowIfNull(publisherId);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -91,6 +97,10 @@ public sealed class ServerSourceRegistration : Entity<ServerSourceRegistrationId
     }
 }
 
-public sealed record ServerSourceReviewedDomainEvent(ServerSourceRegistration Source,
-    AdministratorId AdministratorId, ServerSourceRegistrationStatus Status, string? Message,
-    DateTimeOffset OccurredAt) : IDomainEvent;
+public sealed record ServerSourceReviewedDomainEvent(
+    ServerSourceRegistration Source,
+    AdministratorId AdministratorId,
+    ServerSourceRegistrationStatus Status,
+    string? Message,
+    DateTimeOffset OccurredAt
+) : IDomainEvent;

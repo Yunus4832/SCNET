@@ -15,13 +15,13 @@ public sealed record FindContentItemQuery(
     string Identifier
 ) : IQuery<ContentItemLookupDto?>;
 
-public sealed class FindContentItemQueryHandler(
-    ContentServerDbContext db
-) : IQueryHandler<FindContentItemQuery, ContentItemLookupDto?>
+public sealed class FindContentItemQueryHandler(ContentServerDbContext db)
+    : IQueryHandler<FindContentItemQuery, ContentItemLookupDto?>
 {
     public async Task<ContentItemLookupDto?> Handle(
         FindContentItemQuery query,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var normalizedIdentifier = query.Identifier.ToLowerInvariant();
         return await db.Contents.AsNoTracking()

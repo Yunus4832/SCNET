@@ -33,7 +33,8 @@ public sealed class WorldUpgradeToolPipelineTest
                 </Values>
               </Subsystems>
             </Project>
-            """);
+            """
+        );
 
         using var outputWorld = TempWorld.ReserveSibling(tempWorld.DirectoryPath, ".Upgraded");
         var upgradedWorldDirectory = WorldUpgradeManager.UpgradeWorld(tempWorld.StoragePath, outputWorld.StoragePath);
@@ -72,7 +73,8 @@ public sealed class WorldUpgradeToolPipelineTest
                 }
               }
             }
-            """);
+            """
+        );
 
         using var outputWorld = TempWorld.ReserveSibling(tempWorld.DirectoryPath, ".Upgraded");
         WorldUpgradeManager.UpgradeWorld(tempWorld.StoragePath, outputWorld.StoragePath);
@@ -98,7 +100,8 @@ public sealed class WorldUpgradeToolPipelineTest
                 </Values>
               </Subsystems>
             </Project>
-            """);
+            """
+        );
 
         var outputDirectoryPath = tempWorld.DirectoryPath + ".Upgraded";
         if (Directory.Exists(outputDirectoryPath))
@@ -112,8 +115,11 @@ public sealed class WorldUpgradeToolPipelineTest
 
             Assert.Equal(tempWorld.StoragePath + ".Upgraded", upgradedWorldDirectory);
             Assert.True(File.Exists(Path.Combine(outputDirectoryPath, "Project.xml")));
-            Assert.Equal("SCNET-1", (string?)XElement.Load(Path.Combine(outputDirectoryPath, "Project.xml"))
-                .Attribute("Version"));
+            Assert.Equal(
+                "SCNET-1",
+                (string?)XElement.Load(Path.Combine(outputDirectoryPath, "Project.xml"))
+                    .Attribute("Version")
+            );
         }
         finally
         {

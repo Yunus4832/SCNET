@@ -37,10 +37,12 @@ public sealed class StarterInstanceManagerTest : IDisposable
     {
         File.WriteAllText(
             Path.Combine(_directory, "Starter.xml"),
-            "<Starter CurrentInstance=\"default\" NextInstance=\"pending\" />");
+            "<Starter CurrentInstance=\"default\" NextInstance=\"pending\" />"
+        );
 
         var context = StarterInstanceManager.Initialize(
-            ["--server", "--instance", "debug_server", "--session", "smoke"]);
+            ["--server", "--instance", "debug_server", "--session", "smoke"]
+        );
 
         Assert.Equal("debug_server", context.Id);
         Assert.Equal("debug_server", StarterInstanceManager.Current.Id);
@@ -54,7 +56,8 @@ public sealed class StarterInstanceManagerTest : IDisposable
         Directory.CreateDirectory(Path.Combine(_directory, "Instances", "next"));
         File.WriteAllText(
             Path.Combine(_directory, "Starter.xml"),
-            "<Starter CurrentInstance=\"default\" NextInstance=\"next\" />");
+            "<Starter CurrentInstance=\"default\" NextInstance=\"next\" />"
+        );
 
         var context = StarterInstanceManager.Initialize([]);
 
@@ -83,7 +86,8 @@ public sealed class StarterInstanceManagerTest : IDisposable
         Directory.CreateDirectory(configDirectory);
         File.WriteAllText(
             Path.Combine(configDirectory, "RunningSetting.xml"),
-            "<RunningSetting RunMode=\"HeadlessServer\" />");
+            "<RunningSetting RunMode=\"HeadlessServer\" />"
+        );
 
         Assert.Equal(RunModeType.HeadlessServer, StarterInstanceManager.GetRunMode("server"));
         Assert.Equal(RunModeType.Gui, StarterInstanceManager.GetRunMode("default"));
@@ -138,7 +142,8 @@ public sealed class StarterInstanceManagerTest : IDisposable
 
         Assert.Equal(
             "current",
-            File.ReadAllText(Path.Combine(_directory, "Instances", "current-clone", "Data", "value.txt")));
+            File.ReadAllText(Path.Combine(_directory, "Instances", "current-clone", "Data", "value.txt"))
+        );
     }
 
     [Fact]
@@ -150,9 +155,11 @@ public sealed class StarterInstanceManagerTest : IDisposable
         Directory.CreateDirectory(runtimeDirectory);
         using var process = System.Diagnostics.Process.GetCurrentProcess();
         var startTime = process.StartTime.ToUniversalTime().Ticks;
-        new XElement("InstanceProcess",
-            new XAttribute("Pid", process.Id),
-            new XAttribute("StartTimeUtcTicks", startTime + 1000))
+        new XElement(
+                "InstanceProcess",
+                new XAttribute("Pid", process.Id),
+                new XAttribute("StartTimeUtcTicks", startTime + 1000)
+            )
             .Save(Path.Combine(runtimeDirectory, $"{process.Id}.xml"));
 
         Assert.True(StarterInstanceManager.IsInstanceRunning("secondary"));

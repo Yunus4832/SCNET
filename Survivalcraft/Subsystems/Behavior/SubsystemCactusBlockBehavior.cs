@@ -83,8 +83,17 @@ public class SubsystemCactusBlockBehavior : SubsystemPollableBlockBehavior, IUpd
         }
         else
         {
-            NetworkSender.SendToServer(EntityStatePackageBuilder.Capture(creature.ComponentHealth, null, amount, cuase,
-                false, true, ComponentHealthPackage.RequestInjureType.Cactus));
+            NetworkSender.SendToServer(
+                EntityStatePackageBuilder.Capture(
+                    creature.ComponentHealth,
+                    null,
+                    amount,
+                    cuase,
+                    false,
+                    true,
+                    ComponentHealthPackage.RequestInjureType.Cactus
+                )
+            );
         }
     }
 

@@ -3,6 +3,7 @@ namespace Game.Commands;
 public sealed class CommandRegistry
 {
     private readonly Dictionary<ResourceId, DefinitionEntry> _definitions = [];
+
     private readonly Dictionary<Type, DefinitionEntry> _definitionsByType = [];
 
     public bool IsFrozen { get; private set; }
@@ -24,7 +25,8 @@ public sealed class CommandRegistry
     internal IDisposable Register<TCommand>(
         ModId owner,
         ResourceId id,
-        CommandDefinition<TCommand> definition)
+        CommandDefinition<TCommand> definition
+    )
         where TCommand : IGameCommand
     {
         ArgumentNullException.ThrowIfNull(definition);
@@ -37,7 +39,8 @@ public sealed class CommandRegistry
         if (_definitionsByType.TryGetValue(typeof(TCommand), out var existing))
         {
             throw new InvalidOperationException(
-                $"Command type {typeof(TCommand).Name} is already registered as {existing.Id}.");
+                $"Command type {typeof(TCommand).Name} is already registered as {existing.Id}."
+            );
         }
 
         var entry = new DefinitionEntry(owner, id, definition);
@@ -61,7 +64,8 @@ public sealed class CommandRegistry
 
     public bool TryGetDefinition(
         ResourceId commandId,
-        out RegisteredGameCommand? registered)
+        out RegisteredGameCommand? registered
+    )
     {
         if (_definitions.TryGetValue(commandId, out var entry))
         {
@@ -83,7 +87,8 @@ public sealed class CommandRegistry
         IGameCommand command,
         out ResourceId commandId,
         out byte[] payload,
-        out string error)
+        out string error
+    )
     {
         ArgumentNullException.ThrowIfNull(command);
         if (!_definitionsByType.TryGetValue(command.GetType(), out var entry))
@@ -93,7 +98,8 @@ public sealed class CommandRegistry
             error = CommandText.Get(
                 "CommandTypeUnregistered_Message",
                 "未注册的命令类型：{0}。",
-                command.GetType().Name);
+                command.GetType().Name
+            );
             return false;
         }
 
@@ -104,7 +110,8 @@ public sealed class CommandRegistry
             error = CommandText.Get(
                 "CommandRemoteUnsupported_Message",
                 "命令 {0} 不支持远程调用。",
-                entry.Id.ToString());
+                entry.Id.ToString()
+            );
             return false;
         }
 
@@ -118,7 +125,8 @@ public sealed class CommandRegistry
         ResourceId commandId,
         byte[] payload,
         out IGameCommand? command,
-        out string error)
+        out string error
+    )
     {
         if (!_definitions.TryGetValue(commandId, out var entry))
         {
@@ -126,7 +134,8 @@ public sealed class CommandRegistry
             error = CommandText.Get(
                 "CommandIdentityUnknown_Message",
                 "未知命令：{0}。",
-                commandId.ToString());
+                commandId.ToString()
+            );
             return false;
         }
 
@@ -136,7 +145,8 @@ public sealed class CommandRegistry
             error = CommandText.Get(
                 "CommandRemoteUnsupported_Message",
                 "命令 {0} 不支持远程调用。",
-                commandId.ToString());
+                commandId.ToString()
+            );
             return false;
         }
 
@@ -153,14 +163,16 @@ public sealed class CommandRegistry
             error = CommandText.Get(
                 "CommandDataInvalid_Message",
                 "命令 {0} 的数据无效。",
-                commandId.ToString());
+                commandId.ToString()
+            );
             return false;
         }
     }
 
     public bool CanInvoke(
         Type commandType,
-        CommandPrincipal principal)
+        CommandPrincipal principal
+    )
     {
         ArgumentNullException.ThrowIfNull(commandType);
         ArgumentNullException.ThrowIfNull(principal);
@@ -168,12 +180,14 @@ public sealed class CommandRegistry
                entry.Definition.IsPotentiallyAuthorized(
                    Permissions,
                    principal,
-                   principal.Player?.Project ?? GameManager.Project);
+                   principal.Player?.Project ?? GameManager.Project
+               );
     }
 
     public bool CanInvoke(
         IGameCommand command,
-        CommandPrincipal principal)
+        CommandPrincipal principal
+    )
     {
         ArgumentNullException.ThrowIfNull(command);
         return CanInvoke(command.GetType(), principal);
@@ -214,14 +228,16 @@ public sealed class CommandRegistry
                 registered is null)
             {
                 throw new InvalidOperationException(
-                    $"Command {command.Id} references unregistered permission {permission}.");
+                    $"Command {command.Id} references unregistered permission {permission}."
+                );
             }
 
             if (registered.Definition.Domain != command.Definition.Domain)
             {
                 throw new InvalidOperationException(
                     $"Command {command.Id} belongs to {command.Definition.Domain}, " +
-                    $"but permission {permission} belongs to {registered.Definition.Domain}.");
+                    $"but permission {permission} belongs to {registered.Definition.Domain}."
+                );
             }
         }
     }
@@ -253,12 +269,14 @@ public sealed class CommandRegistry
     private sealed record DefinitionEntry(
         ModId Owner,
         ResourceId Id,
-        ICommandDefinition Definition);
+        ICommandDefinition Definition
+    );
 
     private sealed class Registration(
         CommandRegistry registry,
         ModId owner,
-        ResourceId id) : IDisposable
+        ResourceId id
+    ) : IDisposable
     {
         private CommandRegistry? _registry = registry;
 

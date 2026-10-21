@@ -20,7 +20,8 @@ public static class LightingManager
 
     public static float CalculateLighting(Vector3 normal)
     {
-        return LightAmbient + MathUtils.Max(Vector3.Dot(normal, DirectionToLight1), 0f) +
+        return LightAmbient +
+               MathUtils.Max(Vector3.Dot(normal, DirectionToLight1), 0f) +
                MathUtils.Max(Vector3.Dot(normal, DirectionToLight2), 0f);
     }
 

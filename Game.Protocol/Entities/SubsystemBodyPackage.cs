@@ -8,26 +8,39 @@ public sealed record SubsystemBodyPackage : IProtocolMessage
     public enum ChangeFlag : byte
     {
         None = 0,
+
         LookAnglesChange = 1,
+
         FlyOrderChange = 2,
+
         PositionChange = 4,
+
         RotationChange = 8,
+
         VelocityChange = 16
     }
 
     public enum EventType
     {
-        BodyUpdate,
-        ApplyImpulse,
-        HandleAxisCollision
+        BodyUpdate = 0,
+
+        ApplyImpulse = 1,
+
+        HandleAxisCollision = 2
     }
 
     public IReadOnlyList<BodyItem> BodyList { get; init; } = [];
+
     public int CreatureId { get; init; }
+
     public EventType PackageEventType { get; init; }
+
     public Vector3 Impulse { get; init; }
+
     public int TargetCreatureId { get; init; }
+
     public uint StateTick { get; init; }
+
     public byte ID => (byte)PackageType.SubsystemBody;
 
     public record struct BodyItem

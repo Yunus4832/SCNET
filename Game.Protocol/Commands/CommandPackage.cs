@@ -4,11 +4,15 @@ public sealed record CommandPackage : IProtocolMessage
 {
     public enum CommandPackageMode : byte
     {
-        Request,
-        Result,
-        PermissionSnapshot,
-        SuggestionRequest,
-        Suggestions
+        Request = 0,
+
+        Result = 1,
+
+        PermissionSnapshot = 2,
+
+        SuggestionRequest = 3,
+
+        Suggestions = 4
     }
 
     private const int _maximumPermissionCount = 256;
@@ -36,8 +40,13 @@ public sealed record CommandPackage : IProtocolMessage
     public static CommandPackage CreateSuggestionRequest(string input, string correlationId) =>
         new(CommandPackageMode.SuggestionRequest, correlationId) { Input = input };
 
-    public static CommandPackage CreateSuggestions(string input, string correlationId, IEnumerable<CommandSuggestion> suggestions) =>
-        new(CommandPackageMode.Suggestions, correlationId) { Input = input, Suggestions = suggestions.Take(64).ToArray() };
+    public static CommandPackage CreateSuggestions(
+        string input,
+        string correlationId,
+        IEnumerable<CommandSuggestion> suggestions
+    ) =>
+        new(CommandPackageMode.Suggestions, correlationId)
+            { Input = input, Suggestions = suggestions.Take(64).ToArray() };
 
     public CommandPackage()
     {
@@ -52,12 +61,14 @@ public sealed record CommandPackage : IProtocolMessage
     public static CommandPackage CreateRequest(
         ResourceId commandId,
         byte[] payload,
-        string? correlationId = null)
+        string? correlationId = null
+    )
     {
         ArgumentNullException.ThrowIfNull(payload);
         return new CommandPackage(
             CommandPackageMode.Request,
-            correlationId ?? Guid.NewGuid().ToString("N"))
+            correlationId ?? Guid.NewGuid().ToString("N")
+        )
         {
             CommandId = commandId,
             Payload = payload
@@ -66,7 +77,8 @@ public sealed record CommandPackage : IProtocolMessage
 
     public static CommandPackage CreatePermissionSnapshot(
         Guid playerGuid,
-        IEnumerable<CommandPermissionGrant> grants)
+        IEnumerable<CommandPermissionGrant> grants
+    )
     {
         ArgumentNullException.ThrowIfNull(grants);
         return new CommandPackage(CommandPackageMode.PermissionSnapshot, string.Empty)
@@ -78,7 +90,8 @@ public sealed record CommandPackage : IProtocolMessage
 
     public static CommandPackage CreateResult(
         CommandResponse result,
-        string correlationId)
+        string correlationId
+    )
     {
         ArgumentNullException.ThrowIfNull(result);
         return new CommandPackage(CommandPackageMode.Result, correlationId)
@@ -86,5 +99,4 @@ public sealed record CommandPackage : IProtocolMessage
             Result = result
         };
     }
-
 }

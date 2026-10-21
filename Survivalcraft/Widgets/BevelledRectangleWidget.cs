@@ -264,8 +264,11 @@ public class BevelledRectangleWidget : Widget
                     _flatBatch = dc.PrimitivesRenderer2D.FlatBatch(0, DepthStencilState.None);
                 }
 
-                _flatBatch.QueueBatch(_cachedShadowBatch,
-                    Matrix.CreateTranslation(ShadowSize, ShadowSize, 0f) * GlobalTransform, GlobalColorTransform);
+                _flatBatch.QueueBatch(
+                    _cachedShadowBatch,
+                    Matrix.CreateTranslation(ShadowSize, ShadowSize, 0f) * GlobalTransform,
+                    GlobalColorTransform
+                );
             }
 
             if (_texturedBatch == null)
@@ -323,8 +326,11 @@ public class BevelledRectangleWidget : Widget
 
         if (flag)
         {
-            _flatBatch.QueueBatch(_cachedShadowBatch,
-                Matrix.CreateTranslation(ShadowSize, ShadowSize, 0f) * GlobalTransform, GlobalColorTransform);
+            _flatBatch.QueueBatch(
+                _cachedShadowBatch,
+                Matrix.CreateTranslation(ShadowSize, ShadowSize, 0f) * GlobalTransform,
+                GlobalColorTransform
+            );
         }
 
         _flatBatch.QueueBatch(_cachedFlatBatch, GlobalTransform, GlobalColorTransform);
@@ -342,7 +348,9 @@ public class BevelledRectangleWidget : Widget
         var vector2 = new Vector2(ActualSize.X, 0f);
         var vector3 = new Vector2(ActualSize.X, ActualSize.Y);
         var vector4 = new Vector2(0f, ActualSize.Y);
-        if (vector != _points[0].Position || vector2 != _points[1].Position || vector3 != _points[2].Position ||
+        if (vector != _points[0].Position ||
+            vector2 != _points[1].Position ||
+            vector3 != _points[2].Position ||
             vector4 != _points[3].Position)
         {
             _points[0] = new BevelledShapeRenderer.Point
@@ -409,14 +417,30 @@ public class BevelledRectangleWidget : Widget
         var num4 = MathUtils.Saturate((bevelSize > 0f ? -0.375f : 0.5f) * directionalLight + ambientLight);
         var num5 = MathUtils.Saturate((bevelSize > 0f ? 0.5f : -0.375f) * directionalLight + ambientLight);
         var num6 = MathUtils.Saturate(0f * directionalLight + ambientLight);
-        var color2 = new Color((byte)(num4 * bevelColor.R), (byte)(num4 * bevelColor.G), (byte)(num4 * bevelColor.B),
-            bevelColor.A);
-        var color3 = new Color((byte)(num5 * bevelColor.R), (byte)(num5 * bevelColor.G), (byte)(num5 * bevelColor.B),
-            bevelColor.A);
-        var color4 = new Color((byte)(num2 * bevelColor.R), (byte)(num2 * bevelColor.G), (byte)(num2 * bevelColor.B),
-            bevelColor.A);
-        var color5 = new Color((byte)(num3 * bevelColor.R), (byte)(num3 * bevelColor.G), (byte)(num3 * bevelColor.B),
-            bevelColor.A);
+        var color2 = new Color(
+            (byte)(num4 * bevelColor.R),
+            (byte)(num4 * bevelColor.G),
+            (byte)(num4 * bevelColor.B),
+            bevelColor.A
+        );
+        var color3 = new Color(
+            (byte)(num5 * bevelColor.R),
+            (byte)(num5 * bevelColor.G),
+            (byte)(num5 * bevelColor.B),
+            bevelColor.A
+        );
+        var color4 = new Color(
+            (byte)(num2 * bevelColor.R),
+            (byte)(num2 * bevelColor.G),
+            (byte)(num2 * bevelColor.B),
+            bevelColor.A
+        );
+        var color5 = new Color(
+            (byte)(num3 * bevelColor.R),
+            (byte)(num3 * bevelColor.G),
+            (byte)(num3 * bevelColor.B),
+            bevelColor.A
+        );
         var color6 = new Color((byte)(num6 * color.R), (byte)(num6 * color.G), (byte)(num6 * color.B), color.A);
         if (texturedBatch != null)
         {
@@ -434,36 +458,104 @@ public class BevelledRectangleWidget : Widget
             var y9 = (y4 - y) * num8 + num10;
             if (bevelColor.A > 0)
             {
-                texturedBatch.QueueQuad(new Vector2(x, y), new Vector2(x2, y2), new Vector2(x3, y2), new Vector2(x4, y),
-                    depth, new Vector2(x6, y6), new Vector2(x7, y7), new Vector2(x8, y7), new Vector2(x9, y6), color4);
-                texturedBatch.QueueQuad(new Vector2(x3, y2), new Vector2(x3, y3), new Vector2(x4, y4),
-                    new Vector2(x4, y), depth, new Vector2(x8, y7), new Vector2(x8, y8), new Vector2(x9, y9),
-                    new Vector2(x9, y6), color3);
-                texturedBatch.QueueQuad(new Vector2(x, y4), new Vector2(x4, y4), new Vector2(x3, y3),
-                    new Vector2(x2, y3), depth, new Vector2(x6, y9), new Vector2(x9, y9), new Vector2(x8, y8),
-                    new Vector2(x7, y8), color5);
-                texturedBatch.QueueQuad(new Vector2(x, y), new Vector2(x, y4), new Vector2(x2, y3), new Vector2(x2, y2),
-                    depth, new Vector2(x6, y6), new Vector2(x6, y9), new Vector2(x7, y8), new Vector2(x7, y7), color2);
+                texturedBatch.QueueQuad(
+                    new Vector2(x, y),
+                    new Vector2(x2, y2),
+                    new Vector2(x3, y2),
+                    new Vector2(x4, y),
+                    depth,
+                    new Vector2(x6, y6),
+                    new Vector2(x7, y7),
+                    new Vector2(x8, y7),
+                    new Vector2(x9, y6),
+                    color4
+                );
+                texturedBatch.QueueQuad(
+                    new Vector2(x3, y2),
+                    new Vector2(x3, y3),
+                    new Vector2(x4, y4),
+                    new Vector2(x4, y),
+                    depth,
+                    new Vector2(x8, y7),
+                    new Vector2(x8, y8),
+                    new Vector2(x9, y9),
+                    new Vector2(x9, y6),
+                    color3
+                );
+                texturedBatch.QueueQuad(
+                    new Vector2(x, y4),
+                    new Vector2(x4, y4),
+                    new Vector2(x3, y3),
+                    new Vector2(x2, y3),
+                    depth,
+                    new Vector2(x6, y9),
+                    new Vector2(x9, y9),
+                    new Vector2(x8, y8),
+                    new Vector2(x7, y8),
+                    color5
+                );
+                texturedBatch.QueueQuad(
+                    new Vector2(x, y),
+                    new Vector2(x, y4),
+                    new Vector2(x2, y3),
+                    new Vector2(x2, y2),
+                    depth,
+                    new Vector2(x6, y6),
+                    new Vector2(x6, y9),
+                    new Vector2(x7, y8),
+                    new Vector2(x7, y7),
+                    color2
+                );
             }
 
             if (color6.A > 0)
             {
-                texturedBatch.QueueQuad(new Vector2(x2, y2), new Vector2(x3, y3), depth, new Vector2(x7, y7),
-                    new Vector2(x8, y8), color6);
+                texturedBatch.QueueQuad(
+                    new Vector2(x2, y2),
+                    new Vector2(x3, y3),
+                    depth,
+                    new Vector2(x7, y7),
+                    new Vector2(x8, y8),
+                    color6
+                );
             }
         }
         else if (flatBatch != null)
         {
             if (bevelColor.A > 0)
             {
-                flatBatch.QueueQuad(new Vector2(x, y), new Vector2(x2, y2), new Vector2(x3, y2), new Vector2(x4, y),
-                    depth, color4);
-                flatBatch.QueueQuad(new Vector2(x3, y2), new Vector2(x3, y3), new Vector2(x4, y4), new Vector2(x4, y),
-                    depth, color3);
-                flatBatch.QueueQuad(new Vector2(x, y4), new Vector2(x4, y4), new Vector2(x3, y3), new Vector2(x2, y3),
-                    depth, color5);
-                flatBatch.QueueQuad(new Vector2(x, y), new Vector2(x, y4), new Vector2(x2, y3), new Vector2(x2, y2),
-                    depth, color2);
+                flatBatch.QueueQuad(
+                    new Vector2(x, y),
+                    new Vector2(x2, y2),
+                    new Vector2(x3, y2),
+                    new Vector2(x4, y),
+                    depth,
+                    color4
+                );
+                flatBatch.QueueQuad(
+                    new Vector2(x3, y2),
+                    new Vector2(x3, y3),
+                    new Vector2(x4, y4),
+                    new Vector2(x4, y),
+                    depth,
+                    color3
+                );
+                flatBatch.QueueQuad(
+                    new Vector2(x, y4),
+                    new Vector2(x4, y4),
+                    new Vector2(x3, y3),
+                    new Vector2(x2, y3),
+                    depth,
+                    color5
+                );
+                flatBatch.QueueQuad(
+                    new Vector2(x, y),
+                    new Vector2(x, y4),
+                    new Vector2(x2, y3),
+                    new Vector2(x2, y2),
+                    depth,
+                    color2
+                );
             }
 
             if (color6.A > 0)
@@ -476,16 +568,55 @@ public class BevelledRectangleWidget : Widget
         {
             var color7 = shadowColor;
             var color8 = new Color(0, 0, 0, 0);
-            flatBatch.QueueTriangle(new Vector2(x, y4), new Vector2(x2, y5), new Vector2(x2, y4), depth, color8, color8,
-                color7);
-            flatBatch.QueueTriangle(new Vector2(x4, y), new Vector2(x4, y2), new Vector2(x5, y2), depth, color8, color7,
-                color8);
-            flatBatch.QueueTriangle(new Vector2(x4, y4), new Vector2(x4, y5), new Vector2(x5, y4), depth, color7,
-                color8, color8);
-            flatBatch.QueueQuad(new Vector2(x2, y4), new Vector2(x2, y5), new Vector2(x4, y5), new Vector2(x4, y4),
-                depth, color7, color8, color8, color7);
-            flatBatch.QueueQuad(new Vector2(x4, y2), new Vector2(x4, y4), new Vector2(x5, y4), new Vector2(x5, y2),
-                depth, color7, color7, color8, color8);
+            flatBatch.QueueTriangle(
+                new Vector2(x, y4),
+                new Vector2(x2, y5),
+                new Vector2(x2, y4),
+                depth,
+                color8,
+                color8,
+                color7
+            );
+            flatBatch.QueueTriangle(
+                new Vector2(x4, y),
+                new Vector2(x4, y2),
+                new Vector2(x5, y2),
+                depth,
+                color8,
+                color7,
+                color8
+            );
+            flatBatch.QueueTriangle(
+                new Vector2(x4, y4),
+                new Vector2(x4, y5),
+                new Vector2(x5, y4),
+                depth,
+                color7,
+                color8,
+                color8
+            );
+            flatBatch.QueueQuad(
+                new Vector2(x2, y4),
+                new Vector2(x2, y5),
+                new Vector2(x4, y5),
+                new Vector2(x4, y4),
+                depth,
+                color7,
+                color8,
+                color8,
+                color7
+            );
+            flatBatch.QueueQuad(
+                new Vector2(x4, y2),
+                new Vector2(x4, y4),
+                new Vector2(x5, y4),
+                new Vector2(x5, y2),
+                depth,
+                color7,
+                color7,
+                color8,
+                color8
+            );
         }
     }
 }

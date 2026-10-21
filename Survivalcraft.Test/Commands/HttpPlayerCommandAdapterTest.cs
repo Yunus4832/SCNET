@@ -15,7 +15,9 @@ namespace Survivalcraft.Test.Commands;
 public class HttpPlayerCommandAdapterTest
 {
     private static readonly ModId _owner = new("test.playerhttp");
+
     private static readonly ResourceId _permission = new(_owner, "world.change");
+
     private static readonly ResourceId _identity = new(_owner, "world/change");
 
     [Fact]
@@ -28,8 +30,12 @@ public class HttpPlayerCommandAdapterTest
             using var project = new TestProject();
             var player = Player(project);
             var registry = Registry();
-            var context = new CommandContext(CommandInvocationChannel.Network,
-                CommandPrincipal.FromPlayer(player), null, "catalog");
+            var context = new CommandContext(
+                CommandInvocationChannel.Network,
+                CommandPrincipal.FromPlayer(player),
+                null,
+                "catalog"
+            );
             Assert.True(HttpPlayerCommandAdapter.TryCreateCommand(registry, null, out var command, out _));
             Assert.IsType<GetCommandCatalogCommand>(command);
             Assert.True(CommandGateway.TryCreateRequest(registry, command!, "catalog", out var package, out _));
@@ -42,11 +48,18 @@ public class HttpPlayerCommandAdapterTest
             Assert.DoesNotContain(_identity.ToString(), ids);
             Assert.DoesNotContain("test.playerhttp:application/change", ids);
             player.CommandPermissions.Grant(_permission, false);
-            context = new CommandContext(CommandInvocationChannel.Network,
-                CommandPrincipal.FromPlayer(player), null, "catalog");
+            context = new CommandContext(
+                CommandInvocationChannel.Network,
+                CommandPrincipal.FromPlayer(player),
+                null,
+                "catalog"
+            );
             result = dispatcher.Execute(decoded!, context);
-            Assert.Contains(_identity.ToString(), result.Data!["commands"]!.AsArray()
-                .Select(value => value!.GetValue<string>()));
+            Assert.Contains(
+                _identity.ToString(),
+                result.Data!["commands"]!.AsArray()
+                    .Select(value => value!.GetValue<string>())
+            );
         }
         finally
         {
@@ -59,8 +72,10 @@ public class HttpPlayerCommandAdapterTest
     {
         var registry = new CommandRegistry();
         BuiltInCommands.Register(registry, new ModId("game"));
-        Assert.All(registry.Definitions.Where(entry => entry.Definition.Domain is not CommandDomain.Application),
-            entry => Assert.True(entry.Definition.SupportsRemoteInvocation, entry.Id.ToString()));
+        Assert.All(
+            registry.Definitions.Where(entry => entry.Definition.Domain is not CommandDomain.Application),
+            entry => Assert.True(entry.Definition.SupportsRemoteInvocation, entry.Id.ToString())
+        );
     }
 
     [Theory]
@@ -108,8 +123,16 @@ public class HttpPlayerCommandAdapterTest
         BuiltInCommands.Register(registry, new ModId("game"));
         var http = new HttpCommandAdapter(registry);
         var context = new CommandContext(CommandInvocationChannel.Text, CommandPrincipal.LocalOperator, null, "same");
-        Assert.True(http.TryCreate(new HttpCommandRequest(ResourceId.Parse("game:world/time/set"),
-            new JsonObject { ["preset"] = "night" }), out var httpCommand, out _));
+        Assert.True(
+            http.TryCreate(
+                new HttpCommandRequest(
+                    ResourceId.Parse("game:world/time/set"),
+                    new JsonObject { ["preset"] = "night" }
+                ),
+                out var httpCommand,
+                out _
+            )
+        );
         Assert.True(new TextCommandAdapter(registry).TryCreate("/time set night", context, out var textCommand, out _));
         Assert.Equal(new SetWorldTimeCommand("night"), httpCommand);
         Assert.Equal(textCommand, httpCommand);
@@ -133,10 +156,15 @@ public class HttpPlayerCommandAdapterTest
     {
         var registry = new CommandRegistry();
         BuiltInCommands.Register(registry, new ModId("game"));
-        var request = new HttpCommandRequest(ResourceId.Parse("game:world/time/set"),
-            new JsonObject { ["preset"] = string.Concat(Enumerable.Repeat(unit, count)) });
+        var request = new HttpCommandRequest(
+            ResourceId.Parse("game:world/time/set"),
+            new JsonObject { ["preset"] = string.Concat(Enumerable.Repeat(unit, count)) }
+        );
         Assert.True(new HttpCommandAdapter(registry).TryCreate(request, out var command, out _));
-        Assert.Equal(accepted, CommandGateway.TryCreateRequest(registry, command!, "bounded", out var package, out var error));
+        Assert.Equal(
+            accepted,
+            CommandGateway.TryCreateRequest(registry, command!, "bounded", out var package, out var error)
+        );
         if (accepted)
         {
             Assert.Null(error);
@@ -160,24 +188,50 @@ public class HttpPlayerCommandAdapterTest
             using var project = new TestProject();
             var player = Player(project);
             var registry = Registry();
-            Assert.True(HttpPlayerCommandAdapter.TryCreateCommand(registry,
-                new HttpCommandRequest(_identity, new JsonObject()), out var command, out _));
+            Assert.True(
+                HttpPlayerCommandAdapter.TryCreateCommand(
+                    registry,
+                    new HttpCommandRequest(_identity, new JsonObject()),
+                    out var command,
+                    out _
+                )
+            );
             Assert.True(CommandGateway.TryCreateRequest(registry, command!, "request", out var package, out _));
             var received = RoundTrip(package!);
             Assert.True(registry.TryDecode(received.CommandId, received.Payload, out var decoded, out _));
             var dispatcher = new CommandDispatcher(registry);
-            var context = new CommandContext(CommandInvocationChannel.Network,
-                CommandPrincipal.FromPlayer(player), project, "request");
-            Assert.True(new TextCommandAdapter(registry).TryCreate("/change", context,
-                out var textCommand, out _));
+            var context = new CommandContext(
+                CommandInvocationChannel.Network,
+                CommandPrincipal.FromPlayer(player),
+                project,
+                "request"
+            );
+            Assert.True(
+                new TextCommandAdapter(registry).TryCreate(
+                    "/change",
+                    context,
+                    out var textCommand,
+                    out _
+                )
+            );
             Assert.Equal(command, textCommand);
             Assert.Equal("command.forbidden", dispatcher.Execute(decoded!, context).Code);
             player.CommandPermissions.Grant(_permission, false);
-            context = new CommandContext(CommandInvocationChannel.Network,
-                CommandPrincipal.FromPlayer(player), project, "request");
+            context = new CommandContext(
+                CommandInvocationChannel.Network,
+                CommandPrincipal.FromPlayer(player),
+                project,
+                "request"
+            );
             Assert.True(dispatcher.Execute(decoded!, context).Success);
-            Assert.False(HttpPlayerCommandAdapter.TryCreateCommand(registry,
-                new HttpCommandRequest(new ResourceId(_owner, "application/change"), new JsonObject()), out _, out var error));
+            Assert.False(
+                HttpPlayerCommandAdapter.TryCreateCommand(
+                    registry,
+                    new HttpCommandRequest(new ResourceId(_owner, "application/change"), new JsonObject()),
+                    out _,
+                    out var error
+                )
+            );
             Assert.Equal("command.player_scope", error!.Code);
         }
         finally
@@ -200,16 +254,37 @@ public class HttpPlayerCommandAdapterTest
         var registry = new CommandRegistry();
         BuiltInCommands.Register(registry, new ModId("game"));
         registry.Permissions.Register(_owner, _permission, new CommandPermissionDefinition(CommandDomain.World));
-        registry.Register(_owner, _identity, new CommandDefinition<WorldCommand>(
-            (_, _) => CommandResult.Ok("changed"), CommandDomain.World, requiredPermission: _permission,
-            write: static (_, _) => { }, read: static _ => new WorldCommand()));
+        registry.Register(
+            _owner,
+            _identity,
+            new CommandDefinition<WorldCommand>(
+                (_, _) => CommandResult.Ok("changed"),
+                CommandDomain.World,
+                requiredPermission: _permission,
+                write: static (_, _) => { },
+                read: static _ => new WorldCommand()
+            )
+        );
         registry.Adapters.Register(_owner, _identity, HttpCommandBinding.Create(_ => new WorldCommand()));
         var application = new ResourceId(_owner, "application/change");
-        registry.Register(_owner, application, new CommandDefinition<ApplicationCommand>(
-            (_, _) => CommandResult.Ok("application"), CommandDomain.Application));
+        registry.Register(
+            _owner,
+            application,
+            new CommandDefinition<ApplicationCommand>(
+                (_, _) => CommandResult.Ok("application"),
+                CommandDomain.Application
+            )
+        );
         registry.Adapters.Register(_owner, application, HttpCommandBinding.Create(_ => new ApplicationCommand()));
-        registry.Adapters.Register(_owner, _identity, new TextCommand("change", LocalizedText.Empty,
-            [new CommandRoute([], typeof(WorldCommand), _ => new WorldCommand())]));
+        registry.Adapters.Register(
+            _owner,
+            _identity,
+            new TextCommand(
+                "change",
+                LocalizedText.Empty,
+                [new CommandRoute([], typeof(WorldCommand), _ => new WorldCommand())]
+            )
+        );
         registry.Freeze();
         return registry;
     }
@@ -218,8 +293,12 @@ public class HttpPlayerCommandAdapterTest
     {
         var player = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData));
         player.Name = "Test player";
-        typeof(PlayerData).GetField("<Project>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(player, project);
-        typeof(PlayerData).GetField("<CommandPermissions>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
+        typeof(PlayerData).GetField("<Project>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .SetValue(player, project);
+        typeof(PlayerData).GetField(
+                "<CommandPermissions>k__BackingField",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!
             .SetValue(player, new CommandPermissionSet());
         return player;
     }

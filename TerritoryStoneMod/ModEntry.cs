@@ -17,7 +17,9 @@ public sealed class ModEntry : IMod
     public const string ModId = "scnet.territory";
 
     private IModNetwork? _network;
+
     private TerritorySubsystem? _world;
+
     private TerritoryStore? _pendingClientStore;
 
     public void Configure(IModContext context)
@@ -26,135 +28,182 @@ public sealed class ModEntry : IMod
         {
             var path = $"lang/{culture}.json";
             using var stream = typeof(ModEntry).Assembly.GetManifestResourceStream(
-                $"TerritoryStoneMod.Resources.Lang.{culture}.json") ??
-                throw new InvalidOperationException($"Territory language resource {culture} is missing.");
+                                   $"TerritoryStoneMod.Resources.Lang.{culture}.json"
+                               ) ??
+                               throw new InvalidOperationException(
+                                   $"Territory language resource {culture} is missing."
+                               );
             using var bytes = new MemoryStream();
             stream.CopyTo(bytes);
             context.Extensions.RegisterContent(new ResourceId(context.Manifest.ModId, path), path, bytes.ToArray());
         }
 
-        context.Extensions.RegisterBlock<TerritoryBlock>(
-            TerritoryBlock.Id);
-        context.Extensions.RegisterBlockData(
-            new ResourceId(context.Manifest.ModId, "territory_stone"), ReadBlockData);
+        context.Extensions.RegisterBlock<TerritoryBlock>(TerritoryBlock.Id);
+        context.Extensions.RegisterBlockData(new ResourceId(context.Manifest.ModId, "territory_stone"), ReadBlockData);
         context.Extensions.RegisterXmlData(
             XmlDataExtensions.DatabaseRegistryName,
             new ResourceId(context.Manifest.ModId, "territory"),
             XmlContributionMode.Patch,
-            ReadDatabasePatch);
+            ReadDatabasePatch
+        );
         TerritoryProtection.Register(context);
         TerritoryCommands.Register(context);
-        context.Network.OnMessage(TerritoryMessages.AccessRequest, message =>
-        {
-            if (message.IsServer || ActiveWorld(message) is not { } world)
+        context.Network.OnMessage(
+            TerritoryMessages.AccessRequest,
+            message =>
             {
-                return;
-            }
-            var request = new TerritoryAccessRequest(message.Reader.ReadGuid(), message.Reader.ReadGuid(),
-                message.Reader.ReadGuid(), message.Reader.ReadString(),
-                Engine.Core.Time.RealTime + TerritoryAccessRequests.Lifetime);
-            world.ReceiveAccessRequest(request, false);
-        });
-        context.Network.OnMessage(TerritoryMessages.AccessRequestRemoved, message =>
-        {
-            if (!message.IsServer && ActiveWorld(message) is { } world)
-            {
-                world.ReceiveAccessRequest(new TerritoryAccessRequest(message.Reader.ReadGuid(), Guid.Empty,
-                    Guid.Empty, string.Empty, 0), true);
-            }
-        });
-        context.Network.OnMessage(TerritoryMessages.Snapshot, message =>
-        {
-            if (message.IsServer || !ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net))
-            {
-                return;
-            }
+                if (message.IsServer || ActiveWorld(message) is not { } world)
+                {
+                    return;
+                }
 
-            var snapshot = TerritoryMessages.ReadSnapshot(message.Reader);
-            if (ActiveWorld(message) is { } world)
-            {
-                world.Store.ApplySnapshot(snapshot);
+                var request = new TerritoryAccessRequest(
+                    message.Reader.ReadGuid(),
+                    message.Reader.ReadGuid(),
+                    message.Reader.ReadGuid(),
+                    message.Reader.ReadString(),
+                    Engine.Core.Time.RealTime + TerritoryAccessRequests.Lifetime
+                );
+                world.ReceiveAccessRequest(request, false);
             }
-            else
+        );
+        context.Network.OnMessage(
+            TerritoryMessages.AccessRequestRemoved,
+            message =>
             {
-                _pendingClientStore = new TerritoryStore();
-                _pendingClientStore.ApplySnapshot(snapshot);
+                if (!message.IsServer && ActiveWorld(message) is { } world)
+                {
+                    world.ReceiveAccessRequest(
+                        new TerritoryAccessRequest(
+                            message.Reader.ReadGuid(),
+                            Guid.Empty,
+                            Guid.Empty,
+                            string.Empty,
+                            0
+                        ),
+                        true
+                    );
+                }
             }
-        });
-        context.Network.OnMessage(TerritoryMessages.Update, message =>
-        {
-            if (!message.IsServer && ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net))
+        );
+        context.Network.OnMessage(
+            TerritoryMessages.Snapshot,
+            message =>
             {
-                var territory = TerritoryMessages.Read(message.Reader);
+                if (message.IsServer || !ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net))
+                {
+                    return;
+                }
+
+                var snapshot = TerritoryMessages.ReadSnapshot(message.Reader);
                 if (ActiveWorld(message) is { } world)
                 {
-                    world.Store.ApplyUpdate(territory);
+                    world.Store.ApplySnapshot(snapshot);
                 }
                 else
                 {
-                    _pendingClientStore?.ApplyUpdate(territory);
+                    _pendingClientStore = new TerritoryStore();
+                    _pendingClientStore.ApplySnapshot(snapshot);
                 }
             }
-        });
-        context.Network.OnMessage(TerritoryMessages.Remove, message =>
-        {
-            if (!message.IsServer && ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net))
+        );
+        context.Network.OnMessage(
+            TerritoryMessages.Update,
+            message =>
             {
+                if (!message.IsServer && ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net))
+                {
+                    var territory = TerritoryMessages.Read(message.Reader);
+                    if (ActiveWorld(message) is { } world)
+                    {
+                        world.Store.ApplyUpdate(territory);
+                    }
+                    else
+                    {
+                        _pendingClientStore?.ApplyUpdate(territory);
+                    }
+                }
+            }
+        );
+        context.Network.OnMessage(
+            TerritoryMessages.Remove,
+            message =>
+            {
+                if (!message.IsServer && ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net))
+                {
+                    var owner = message.Reader.ReadGuid();
+                    if (ActiveWorld(message) is { } world)
+                    {
+                        world.Store.Remove(owner);
+                    }
+                    else
+                    {
+                        _pendingClientStore?.Remove(owner);
+                    }
+                }
+            }
+        );
+        context.Network.OnMessage(
+            TerritoryMessages.Settings,
+            message =>
+            {
+                if (!message.IsServer || ActiveWorld(message) is not { } world)
+                {
+                    return;
+                }
+
+                var requestId = message.Reader.ReadInt32();
                 var owner = message.Reader.ReadGuid();
-                if (ActiveWorld(message) is { } world)
+                var settings = TerritoryMessages.ReadSettings(message.Reader);
+                var exists = world.Store.TryGet(owner, out var territory);
+                var error = "OwnerOnly";
+                var accepted = exists && TerritoryMessages.CanChangeSettings(message.From, owner);
+                if (accepted)
                 {
-                    world.Store.Remove(owner);
+                    error = world.ChangeSettings(territory!, settings) ?? string.Empty;
+                    accepted = error.Length == 0;
                 }
-                else
+
+                if (message.From != null)
                 {
-                    _pendingClientStore?.Remove(owner);
+                    context.Network.Send(
+                        TerritoryMessages.SettingsResult,
+                        writer =>
+                        {
+                            writer.Write(requestId);
+                            writer.Write(owner);
+                            writer.Write(accepted);
+                            writer.Write(error);
+                            TerritoryMessages.WriteSettings(writer, territory?.Settings ?? new TerritorySettings());
+                        },
+                        PackageAudience.To(message.From),
+                        ClientState.ProjectLoaded
+                    );
                 }
             }
-        });
-        context.Network.OnMessage(TerritoryMessages.Settings, message =>
-        {
-            if (!message.IsServer || ActiveWorld(message) is not { } world)
+        );
+        context.Network.OnMessage(
+            TerritoryMessages.SettingsResult,
+            message =>
             {
-                return;
-            }
-
-            var requestId = message.Reader.ReadInt32();
-            var owner = message.Reader.ReadGuid();
-            var settings = TerritoryMessages.ReadSettings(message.Reader);
-            var exists = world.Store.TryGet(owner, out var territory);
-            var error = "OwnerOnly";
-            var accepted = exists && TerritoryMessages.CanChangeSettings(message.From, owner);
-            if (accepted)
-            {
-                error = world.ChangeSettings(territory!, settings) ?? string.Empty;
-                accepted = error.Length == 0;
-            }
-
-            if (message.From != null)
-            {
-                context.Network.Send(TerritoryMessages.SettingsResult, writer =>
+                if (message.IsServer || ActiveWorld(message) is not { } world)
                 {
-                    writer.Write(requestId);
-                    writer.Write(owner);
-                    writer.Write(accepted);
-                    writer.Write(error);
-                    TerritoryMessages.WriteSettings(writer, territory?.Settings ?? new TerritorySettings());
-                }, PackageAudience.To(message.From), ClientState.ProjectLoaded);
-            }
-        });
-        context.Network.OnMessage(TerritoryMessages.SettingsResult, message =>
-        {
-            if (message.IsServer || ActiveWorld(message) is not { } world)
-            {
-                return;
-            }
+                    return;
+                }
 
-            var requestId = message.Reader.ReadInt32();
-            var owner = message.Reader.ReadGuid();
-            var accepted = message.Reader.ReadBoolean();
-            var error = message.Reader.ReadString();
-            world.ReceiveSettingsResponse(requestId, owner, accepted, TerritoryMessages.ReadSettings(message.Reader), error);
-        });
+                var requestId = message.Reader.ReadInt32();
+                var owner = message.Reader.ReadGuid();
+                var accepted = message.Reader.ReadBoolean();
+                var error = message.Reader.ReadString();
+                world.ReceiveSettingsResponse(
+                    requestId,
+                    owner,
+                    accepted,
+                    TerritoryMessages.ReadSettings(message.Reader),
+                    error
+                );
+            }
+        );
     }
 
     public void Start(IModContext context)
@@ -190,21 +239,25 @@ public sealed class ModEntry : IMod
 
     private TerritorySubsystem? ActiveWorld(ModNetworkMessageContext message) =>
         _world != null &&
-        ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net) ? _world : null;
+        ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net)
+            ? _world
+            : null;
 
     private static XElement ReadDatabasePatch()
     {
         using var stream = typeof(ModEntry).Assembly.GetManifestResourceStream(
-            "TerritoryStoneMod.Resources.TerritoryDatabase.xml") ??
-            throw new InvalidOperationException("Territory database resource is missing.");
+                               "TerritoryStoneMod.Resources.TerritoryDatabase.xml"
+                           ) ??
+                           throw new InvalidOperationException("Territory database resource is missing.");
         return XElement.Load(stream);
     }
 
     private static string ReadBlockData()
     {
         using var stream = typeof(ModEntry).Assembly.GetManifestResourceStream(
-            "TerritoryStoneMod.Resources.BlocksData.txt") ??
-            throw new InvalidOperationException("Territory block data resource is missing.");
+                               "TerritoryStoneMod.Resources.BlocksData.txt"
+                           ) ??
+                           throw new InvalidOperationException("Territory block data resource is missing.");
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }

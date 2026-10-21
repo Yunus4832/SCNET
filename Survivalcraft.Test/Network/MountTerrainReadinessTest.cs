@@ -23,9 +23,11 @@ public sealed class MountTerrainReadinessTest
     {
         var terrain = new Terrain();
         terrain.AllocateChunk(0, 0).MainThreadState = mountReady
-            ? TerrainChunkState.InvalidLight : TerrainChunkState.NotLoaded;
+            ? TerrainChunkState.InvalidLight
+            : TerrainChunkState.NotLoaded;
         terrain.AllocateChunk(2, 0).MainThreadState = riderReady
-            ? TerrainChunkState.InvalidLight : TerrainChunkState.NotLoaded;
+            ? TerrainChunkState.InvalidLight
+            : TerrainChunkState.NotLoaded;
         var subsystem = new SubsystemTerrain { Terrain = terrain };
         var mountBody = CreateBody(subsystem, Vector3.Zero);
         var riderBody = CreateBody(subsystem, new Vector3(32f, 0f, 0f));

@@ -20,7 +20,8 @@ public static class PagedInventoryExtensions
     public static int GetHotbarSlotIndex(this IPagedInventory inventory, int pageSlotIndex)
     {
         var slotIndex = inventory.GetHotbarPageIndex() * inventory.VisibleSlotsCount + pageSlotIndex;
-        return pageSlotIndex >= 0 && pageSlotIndex < inventory.VisibleSlotsCount &&
+        return pageSlotIndex >= 0 &&
+               pageSlotIndex < inventory.VisibleSlotsCount &&
                slotIndex < inventory.HotbarSlotsCount
             ? slotIndex
             : -1;
@@ -45,8 +46,10 @@ public static class PagedInventoryExtensions
             pageIndex += pagesCount;
         }
 
-        var pageSlotsCount = MathUtils.Min(inventory.VisibleSlotsCount,
-            inventory.HotbarSlotsCount - pageIndex * inventory.VisibleSlotsCount);
+        var pageSlotsCount = MathUtils.Min(
+            inventory.VisibleSlotsCount,
+            inventory.HotbarSlotsCount - pageIndex * inventory.VisibleSlotsCount
+        );
         inventory.ActiveSlotIndex = pageIndex * inventory.VisibleSlotsCount +
                                     MathUtils.Min(pageSlotIndex, pageSlotsCount - 1);
     }
@@ -56,8 +59,10 @@ public static class PagedInventoryExtensions
         if (pageIndex >= 0 && pageIndex < inventory.GetHotbarPagesCount())
         {
             var pageSlotIndex = inventory.ActiveSlotIndex % inventory.VisibleSlotsCount;
-            var pageSlotsCount = MathUtils.Min(inventory.VisibleSlotsCount,
-                inventory.HotbarSlotsCount - pageIndex * inventory.VisibleSlotsCount);
+            var pageSlotsCount = MathUtils.Min(
+                inventory.VisibleSlotsCount,
+                inventory.HotbarSlotsCount - pageIndex * inventory.VisibleSlotsCount
+            );
             inventory.ActiveSlotIndex = pageIndex * inventory.VisibleSlotsCount +
                                         MathUtils.Min(pageSlotIndex, pageSlotsCount - 1);
         }

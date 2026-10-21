@@ -20,42 +20,49 @@ internal static class NetworkDiagnosticCommandHandlers
             Encoding = statistics.GetEncoding(),
             Fanout = statistics.GetFanout().OrderBy(item => item.Channel)
                 .ThenBy(item => item.PackageType.FullName).Select(item => new
-                {
-                    Package = item.PackageType.FullName,
-                    Channel = item.Channel.ToString(),
-                    item.Messages,
-                    item.RecipientDeliveries,
-                    item.AverageFanout,
-                    item.MaximumFanout
-                }).ToArray(),
+                    {
+                        Package = item.PackageType.FullName,
+                        Channel = item.Channel.ToString(),
+                        item.Messages,
+                        item.RecipientDeliveries,
+                        item.AverageFanout,
+                        item.MaximumFanout
+                    }
+                ).ToArray(),
             PendingPackages = CommonLib.Net.PendingPackageCount,
             P2P = CommonLib.Net.GetP2PStatus(),
             ReliableQueues = CommonLib.Net.Clients.Values.Where(client => client.IsConnected && client.Peer != null)
                 .Select(client => new
-                {
-                    ClientId = client.ID,
-                    Path = client.Peer!.PathKind.ToString(),
-                    AddressFamily = client.Peer.TransportEndpoint.AddressFamily.ToString(),
-                    PendingBytes = client.Peer!.PendingReliableBytes
-                }).ToArray(),
+                    {
+                        ClientId = client.ID,
+                        Path = client.Peer!.PathKind.ToString(),
+                        AddressFamily = client.Peer.TransportEndpoint.AddressFamily.ToString(),
+                        PendingBytes = client.Peer!.PendingReliableBytes
+                    }
+                ).ToArray(),
             Channels = statistics.GetChannels().OrderBy(item => item.Key).Select(item => new
-            {
-                Channel = item.Key.ToString(),
-                item.Value.Batches,
-                item.Value.EncodedBytes
-            }).ToArray(),
+                {
+                    Channel = item.Key.ToString(),
+                    item.Value.Batches,
+                    item.Value.EncodedBytes
+                }
+            ).ToArray(),
             Packages = statistics.GetPackages().OrderBy(item => item.Channel)
                 .ThenBy(item => item.PackageType.FullName).Select(item => new
-                {
-                    Package = item.PackageType.FullName,
-                    Channel = item.Channel.ToString(),
-                    item.Deliveries,
-                    item.PayloadBytes
-                }).ToArray()
+                    {
+                        Package = item.PackageType.FullName,
+                        Channel = item.Channel.ToString(),
+                        item.Deliveries,
+                        item.PayloadBytes
+                    }
+                ).ToArray()
         };
-        return new CommandResult(true, "diagnostics.network.send_statistics",
+        return new CommandResult(
+            true,
+            "diagnostics.network.send_statistics",
             "Connection send totals captured; excludes transport overhead and retransmissions.",
-            Data: JsonSerializer.SerializeToNode(snapshot));
+            Data: JsonSerializer.SerializeToNode(snapshot)
+        );
     }
 
     private static object? CaptureTerrainBacklog(CommandContext context)
@@ -89,6 +96,7 @@ internal static class NetworkDiagnosticCommandHandlers
         {
             return null;
         }
+
         var locations = terrain.TerrainUpdater.UpdateLocations.Values.ToArray();
         return new
         {
@@ -98,18 +106,20 @@ internal static class NetworkDiagnosticCommandHandlers
             transport.FullChunkRequestsSent,
             transport.MissingFragmentRequestsSent,
             Chunks = terrain.Terrain.AllocatedChunks.Select(chunk => new
-            {
-                chunk.Coords.X,
-                Z = chunk.Coords.Y,
-                Visible = locations.Any(location => Vector2.DistanceSquared(chunk.Center, location.Center) <=
-                                                    location.VisibilityDistance * location.VisibilityDistance),
-                chunk.IsLoaded,
-                Drawable = ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk),
-                MainState = chunk.MainThreadState.ToString(),
-                WorkerState = chunk.WorkerState.ToString(),
-                chunk.NetworkContentVersion,
-                chunk.ClientGeometryContentVersion
-            }).ToArray()
+                {
+                    chunk.Coords.X,
+                    Z = chunk.Coords.Y,
+                    Visible = locations.Any(location => Vector2.DistanceSquared(chunk.Center, location.Center) <=
+                                                        location.VisibilityDistance * location.VisibilityDistance
+                    ),
+                    chunk.IsLoaded,
+                    Drawable = ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk),
+                    MainState = chunk.MainThreadState.ToString(),
+                    WorkerState = chunk.WorkerState.ToString(),
+                    chunk.NetworkContentVersion,
+                    chunk.ClientGeometryContentVersion
+                }
+            ).ToArray()
         };
     }
 }

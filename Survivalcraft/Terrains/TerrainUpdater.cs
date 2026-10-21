@@ -212,7 +212,8 @@ public class TerrainUpdater
             ServerChunkDistribution = new ServerChunkDistributionScheduler(
                 _subsystemTerrain.ChunkContentAuthority ??
                 throw new InvalidOperationException("Authoritative terrain requires a content authority."),
-                Math.Max(1, SettingsManager.Current.ServerChunkCountSendPer));
+                Math.Max(1, SettingsManager.Current.ServerChunkCountSendPer)
+            );
         }
 
         SettingsManager.BrightnessChanged += SettingsManagerBrightnessChanged;
@@ -221,7 +222,8 @@ public class TerrainUpdater
             ThreadUpdateFunction,
             CancellationToken.None,
             TaskCreationOptions.LongRunning,
-            TaskScheduler.Default);
+            TaskScheduler.Default
+        );
         UnpauseUpdateThread();
         UpdateEvent.Set();
     }
@@ -310,10 +312,14 @@ public class TerrainUpdater
         _pendingLocations[locationIndex] = null;
     }
 
-    internal static TerrainUpdateLocation ResolveUpdateLocation(int locationIndex,
+    internal static TerrainUpdateLocation ResolveUpdateLocation(
+        int locationIndex,
         IReadOnlyDictionary<int, TerrainUpdateLocation> current,
-        IReadOnlyDictionary<int, TerrainUpdateLocation?> pending) =>
-        pending.TryGetValue(locationIndex, out var queued) ? queued.GetValueOrDefault() : current.GetValueOrDefault(locationIndex);
+        IReadOnlyDictionary<int, TerrainUpdateLocation?> pending
+    ) =>
+        pending.TryGetValue(locationIndex, out var queued)
+            ? queued.GetValueOrDefault()
+            : current.GetValueOrDefault(locationIndex);
 
 
     /// <summary>
@@ -357,7 +363,8 @@ public class TerrainUpdater
                 var chunk = _terrain.GetChunkAtCoords(i, j);
                 var distanceSqrFromChunkToLocation = Vector2.DistanceSquared(
                     v2: new Vector2((i + 0.5f) * 16f, (j + 0.5f) * 16f),
-                    v1: location.Center);
+                    v1: location.Center
+                );
                 if (distanceSqrFromChunkToLocation <= visibilityDistanceSqr)
                 {
                     if (chunk == null || chunk.MainThreadState < TerrainChunkState.Valid)
@@ -498,7 +505,8 @@ public class TerrainUpdater
                 if (terrainChunk.WorkerState == TerrainChunkState.NotLoaded &&
                     IsChunkInRange(
                         terrainChunk.Center,
-                        activeLocations) &&
+                        activeLocations
+                    ) &&
                     ShouldRequestNetworkChunk(terrainChunk, now))
                 {
                     terrainChunk.IsRequested = true;
@@ -507,11 +515,15 @@ public class TerrainUpdater
 
                     lock (_requestSyncChunkList)
                     {
-                        _requestSyncChunkList.Add(new ChunkContentRequest(
-                            new ChunkAllocationId(
-                                terrainChunk.Coords,
-                                terrainChunk.AllocationGeneration),
-                            terrainChunk.NetworkContentVersion));
+                        _requestSyncChunkList.Add(
+                            new ChunkContentRequest(
+                                new ChunkAllocationId(
+                                    terrainChunk.Coords,
+                                    terrainChunk.AllocationGeneration
+                                ),
+                                terrainChunk.NetworkContentVersion
+                            )
+                        );
                     }
                 }
             }
@@ -536,7 +548,8 @@ public class TerrainUpdater
 
             var transport = _subsystemTerrain.ChunkContentTransport ??
                             throw new InvalidOperationException(
-                                "Client terrain requests require a chunk content transport.");
+                                "Client terrain requests require a chunk content transport."
+                            );
             transport.Request(_requestSyncChunkList);
             _requestSyncChunkList.Clear();
             UnpauseUpdateThread();
@@ -659,8 +672,12 @@ public class TerrainUpdater
     /// </remarks>
     public void PrepareForDrawing(Camera camera)
     {
-        SetUpdateLocation(camera.GameWidget.PlayerData.PlayerIndex, camera.ViewPosition.XZ,
-            SettingsManager.Current.VisibilityRange, 64f);
+        SetUpdateLocation(
+            camera.GameWidget.PlayerData.PlayerIndex,
+            camera.ViewPosition.XZ,
+            SettingsManager.Current.VisibilityRange,
+            64f
+        );
         if (_synchronousUpdateFrame != Time.FrameIndex)
         {
             return;
@@ -689,7 +706,8 @@ public class TerrainUpdater
                     var dependency = ClientDerivedTerrainPolicy.FindPendingLightingDependency(
                         _terrain,
                         _subsystemTerrain.ContentRole,
-                        item);
+                        item
+                    );
                     UpdateChunkSingleStep(dependency ?? item, _subsystemSky.SkyLightValue);
                 }
             }
@@ -715,8 +733,12 @@ public class TerrainUpdater
     /// <param name="radius">影响半径（区块数）</param>
     /// <param name="state">目标降级状态</param>
     /// <param name="forceGeometryRegeneration">是否强制重新生成几何体</param>
-    public void DowngradeChunkNeighborhoodState(Point2 coordinates, int radius, TerrainChunkState state,
-        bool forceGeometryRegeneration)
+    public void DowngradeChunkNeighborhoodState(
+        Point2 coordinates,
+        int radius,
+        TerrainChunkState state,
+        bool forceGeometryRegeneration
+    )
     {
         for (var i = -radius; i <= radius; i++)
         {
@@ -774,7 +796,8 @@ public class TerrainUpdater
     internal static bool IsChunkInRange(
         Vector2 chunkCenter,
         TerrainUpdateLocation[] locations,
-        float distanceMargin = 0f)
+        float distanceMargin = 0f
+    )
     {
         for (var i = 0; i < locations.Length; i++)
         {
@@ -804,7 +827,8 @@ public class TerrainUpdater
         {
             var access = ++_remoteChunkAccessClock;
             foreach (var chunk in allocatedChunks.Where(chunk =>
-                         IsChunkInRange(chunk.Center, locations)))
+                         IsChunkInRange(chunk.Center, locations)
+                     ))
             {
                 _remoteChunkLastAccess[chunk.Coords] = access;
             }
@@ -812,14 +836,17 @@ public class TerrainUpdater
             var retained = allocatedChunks
                 .Where(chunk => !IsChunkInRange(chunk.Center, locations))
                 .Where(chunk => IsChunkInRange(
-                    chunk.Center,
-                    locations,
-                    NetworkTerrainPolicy.ClientChunkRetentionMargin))
+                        chunk.Center,
+                        locations,
+                        NetworkTerrainPolicy.ClientChunkRetentionMargin
+                    )
+                )
                 .Select(chunk => (chunk.Coords, _remoteChunkLastAccess.GetValueOrDefault(chunk.Coords)))
                 .ToArray();
             retentionEvictions = SelectRetainedChunkCoordsToEvict(
                     retained,
-                    NetworkTerrainPolicy.ClientRetainedChunkCapacity)
+                    NetworkTerrainPolicy.ClientRetainedChunkCapacity
+                )
                 .ToHashSet();
         }
 
@@ -837,7 +864,8 @@ public class TerrainUpdater
             var saveCoordinator = _subsystemTerrain.ContentRole == TerrainContentRole.Authority
                 ? _subsystemTerrain.TerrainSaveCoordinator
                 : null;
-            if (saveCoordinator != null && TerrainSaveCoordinator.RequiresSave(terrainChunk) &&
+            if (saveCoordinator != null &&
+                TerrainSaveCoordinator.RequiresSave(terrainChunk) &&
                 !saveCoordinator.CanAcceptUnloadSnapshot)
             {
                 hasDeferredChunkDiscards = true;
@@ -850,14 +878,18 @@ public class TerrainUpdater
                 blockBehavior.OnChunkDiscarding(terrainChunk);
             }
 
-            CurrentModRuntime.Value?.Gameplay.Invoke(new TerrainChunkDiscardingContext(
-                _subsystemTerrain,
-                terrainChunk));
+            CurrentModRuntime.Value?.Gameplay.Invoke(
+                new TerrainChunkDiscardingContext(
+                    _subsystemTerrain,
+                    terrainChunk
+                )
+            );
 
             var localHost = _subsystemTerrain.LocalChunkHost;
             var localAuthorityChunk = localHost?.AuthorityTerrain.GetChunkAtCoords(
                 terrainChunk.Coords.X,
-                terrainChunk.Coords.Y);
+                terrainChunk.Coords.Y
+            );
             if (localAuthorityChunk != null && !localHost!.Release(terrainChunk.Coords))
             {
                 hasDeferredChunkDiscards = true;
@@ -934,7 +966,8 @@ public class TerrainUpdater
 
     internal static IReadOnlyList<Point2> SelectRetainedChunkCoordsToEvict(
         IEnumerable<(Point2 Coords, long LastAccess)> retainedChunks,
-        int capacity)
+        int capacity
+    )
     {
         ArgumentNullException.ThrowIfNull(retainedChunks);
         if (capacity < 0)
@@ -984,7 +1017,8 @@ public class TerrainUpdater
     internal static bool TryPauseUpdateThread(
         ManualResetEvent pauseEvent,
         AutoResetEvent updateEvent,
-        int millisecondsTimeout = 1)
+        int millisecondsTimeout = 1
+    )
     {
         pauseEvent.Reset();
         return updateEvent.WaitOne(millisecondsTimeout);
@@ -1092,7 +1126,8 @@ public class TerrainUpdater
             _threadUpdateParameters.Locations.Values,
             _subsystemTerrain.ContentRole,
             preferContent,
-            out desiredState);
+            out desiredState
+        );
 
         if (result == null)
         {
@@ -1119,7 +1154,8 @@ public class TerrainUpdater
         Dictionary<int, TerrainUpdateLocation>.ValueCollection locations,
         TerrainContentRole role,
         bool preferContent,
-        out TerrainChunkState desiredState)
+        out TerrainChunkState desiredState
+    )
     {
         // 初始的距离（平方，下面都用距离替代）的最大限制
         var maxDistanceSquared = 3.40282347E+38f;
@@ -1145,7 +1181,8 @@ public class TerrainUpdater
                 continue;
             }
 
-            var priority = preferContent && role == TerrainContentRole.Authority &&
+            var priority = preferContent &&
+                           role == TerrainContentRole.Authority &&
                            terrainChunk.WorkerState < TerrainChunkState.InvalidLight
                 ? 0
                 : 1;
@@ -1200,7 +1237,8 @@ public class TerrainUpdater
     {
         var derivation = _subsystemTerrain.ClientChunkDerivation ??
                          throw new InvalidOperationException(
-                             "Installed client contents require a derivation pipeline.");
+                             "Installed client contents require a derivation pipeline."
+                         );
         derivation.Begin(target);
         target.IsRequested = false;
         target.NetworkRequestTime = 0.0;
@@ -1259,7 +1297,8 @@ public class TerrainUpdater
             if (generation == null)
             {
                 throw new InvalidOperationException(
-                    $"Client attempted authoritative terrain generation at {chunk.Coords} ({chunk.WorkerState}).");
+                    $"Client attempted authoritative terrain generation at {chunk.Coords} ({chunk.WorkerState})."
+                );
             }
 
             generation.TryAdvance(chunk);
@@ -1269,88 +1308,90 @@ public class TerrainUpdater
         switch (chunk.WorkerState)
         {
             case TerrainChunkState.InvalidLight:
-                {
-                    GenerateChunkSunLightAndHeight(chunk, skylightValue);
-                    chunk.WorkerState = TerrainChunkState.InvalidPropagatedLight;
-                    break;
-                }
+            {
+                GenerateChunkSunLightAndHeight(chunk, skylightValue);
+                chunk.WorkerState = TerrainChunkState.InvalidPropagatedLight;
+                break;
+            }
             case TerrainChunkState.InvalidPropagatedLight:
+            {
+                var dependency = ClientDerivedTerrainPolicy.FindPendingLightingDependency(
+                    _terrain,
+                    _subsystemTerrain.ContentRole,
+                    chunk
+                );
+                if (dependency != null)
                 {
-                    var dependency = ClientDerivedTerrainPolicy.FindPendingLightingDependency(
-                        _terrain,
-                        _subsystemTerrain.ContentRole,
-                        chunk);
-                    if (dependency != null)
-                    {
-                        UpdateChunkSingleStep(dependency, skylightValue);
-                        break;
-                    }
-
-                    _lightSources.Clear();
-                    GenerateChunkLightSources(chunk);
-                    GenerateChunkEdgeLightSources(chunk, 0);
-                    GenerateChunkEdgeLightSources(chunk, 1);
-                    GenerateChunkEdgeLightSources(chunk, 2);
-                    GenerateChunkEdgeLightSources(chunk, 3);
-
-                    PropagateLight();
-                    chunk.WorkerState = TerrainChunkState.InvalidVertices1;
+                    UpdateChunkSingleStep(dependency, skylightValue);
                     break;
                 }
+
+                _lightSources.Clear();
+                GenerateChunkLightSources(chunk);
+                GenerateChunkEdgeLightSources(chunk, 0);
+                GenerateChunkEdgeLightSources(chunk, 1);
+                GenerateChunkEdgeLightSources(chunk, 2);
+                GenerateChunkEdgeLightSources(chunk, 3);
+
+                PropagateLight();
+                chunk.WorkerState = TerrainChunkState.InvalidVertices1;
+                break;
+            }
             case TerrainChunkState.InvalidVertices1:
+            {
+                if (RunMode.Value is RunModeType.HeadlessServer)
                 {
-                    if (RunMode.Value is RunModeType.HeadlessServer)
-                    {
-                        chunk.WorkerState = TerrainChunkState.Valid;
-                        break;
-                    }
-
-                    var dependency = ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
-                        _terrain,
-                        _subsystemTerrain.ContentRole,
-                        chunk);
-                    if (dependency != null)
-                    {
-                        UpdateChunkSingleStep(dependency, skylightValue);
-                        break;
-                    }
-
-                    CalculateChunkSliceContentsHash(chunk);
-                    lock (chunk.Geometry)
-                    {
-                        chunk.NewGeometryData = false;
-                        GenerateChunkVertices(chunk, true);
-                    }
-
-                    chunk.WorkerState = TerrainChunkState.InvalidVertices2;
-                    break;
-                }
-            case TerrainChunkState.InvalidVertices2:
-                {
-                    if (RunMode.Value is RunModeType.HeadlessServer)
-                    {
-                        chunk.WorkerState = TerrainChunkState.Valid;
-                        break;
-                    }
-
-                    lock (chunk.Geometry)
-                    {
-                        GenerateChunkVertices(chunk, false);
-                        if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica &&
-                            chunk.NetworkContentReceiveTime > 0.0)
-                        {
-                            ClientChunkDerivationPipeline.CompleteGeometry(chunk);
-                            chunk.NetworkGeometryReadyTime = Time.RealTime;
-                        }
-
-                        // Publish only after the geometry version and timing metadata describe
-                        // the buffers that the renderer is about to upload.
-                        chunk.NewGeometryData = true;
-                    }
-
                     chunk.WorkerState = TerrainChunkState.Valid;
                     break;
                 }
+
+                var dependency = ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
+                    _terrain,
+                    _subsystemTerrain.ContentRole,
+                    chunk
+                );
+                if (dependency != null)
+                {
+                    UpdateChunkSingleStep(dependency, skylightValue);
+                    break;
+                }
+
+                CalculateChunkSliceContentsHash(chunk);
+                lock (chunk.Geometry)
+                {
+                    chunk.NewGeometryData = false;
+                    GenerateChunkVertices(chunk, true);
+                }
+
+                chunk.WorkerState = TerrainChunkState.InvalidVertices2;
+                break;
+            }
+            case TerrainChunkState.InvalidVertices2:
+            {
+                if (RunMode.Value is RunModeType.HeadlessServer)
+                {
+                    chunk.WorkerState = TerrainChunkState.Valid;
+                    break;
+                }
+
+                lock (chunk.Geometry)
+                {
+                    GenerateChunkVertices(chunk, false);
+                    if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica &&
+                        chunk.NetworkContentReceiveTime > 0.0)
+                    {
+                        ClientChunkDerivationPipeline.CompleteGeometry(chunk);
+                        chunk.NetworkGeometryReadyTime = Time.RealTime;
+                    }
+
+                    // Publish only after the geometry version and timing metadata describe
+                    // the buffers that the renderer is about to upload.
+                    chunk.NewGeometryData = true;
+                }
+
+                chunk.WorkerState = TerrainChunkState.Valid;
+                break;
+            }
         }
     }
 
@@ -1506,7 +1547,8 @@ public class TerrainUpdater
                         var cellLightFast2 = chunkAtCell2.GetCellLightFast(x2, num4, z2);
                         var cellLightFast3 = chunkAtCell3.GetCellLightFast(x3, num4, z3);
                         var cellLightFast4 = chunkAtCell4.GetCellLightFast(x4, num4, z4);
-                        num6 = MathUtils.Max(cellLightFast, cellLightFast2, cellLightFast3, cellLightFast4) - 1 -
+                        num6 = MathUtils.Max(cellLightFast, cellLightFast2, cellLightFast3, cellLightFast4) -
+                               1 -
                                block.LightAttenuation;
                     }
 
@@ -1518,13 +1560,15 @@ public class TerrainUpdater
                     if (num6 > Terrain.ExtractLight(cellValueFast))
                     {
                         chunk.SetCellLightFast(num5, num6);
-                        _lightSources.Add(new LightSource
-                        {
-                            X = num,
-                            Y = num4,
-                            Z = num2,
-                            Light = num6
-                        });
+                        _lightSources.Add(
+                            new LightSource
+                            {
+                                X = num,
+                                Y = num4,
+                                Z = num2,
+                                Light = num6
+                            }
+                        );
                     }
 
                     num4++;
@@ -1614,13 +1658,15 @@ public class TerrainUpdater
                 chunk.SetCellLightFast(cellIndex + y, light);
                 if (light > 1)
                 {
-                    _lightSources.Add(new LightSource
-                    {
-                        X = worldX,
-                        Y = y,
-                        Z = worldZ,
-                        Light = light
-                    });
+                    _lightSources.Add(
+                        new LightSource
+                        {
+                            X = worldX,
+                            Y = y,
+                            Z = worldZ,
+                            Light = light
+                        }
+                    );
                 }
             }
         }
@@ -1656,13 +1702,15 @@ public class TerrainUpdater
             return;
         }
 
-        _lightSources.Add(new LightSource
-        {
-            X = x,
-            Y = y,
-            Z = z,
-            Light = num2
-        });
+        _lightSources.Add(
+            new LightSource
+            {
+                X = x,
+                Y = y,
+                Z = z,
+                Light = num2
+            }
+        );
         chunkAtCell.SetCellLightFast(index, num2);
     }
 
@@ -1812,8 +1860,10 @@ public class TerrainUpdater
                     var bottomHeight2 = _terrain.GetBottomHeight(num5 + 1, num6);
                     var bottomHeight3 = _terrain.GetBottomHeight(num5, num6 - 1);
                     var bottomHeight4 = _terrain.GetBottomHeight(num5, num6 + 1);
-                    var x = MathUtils.Min(bottomHeightFast - 1,
-                        MathUtils.Min(bottomHeight, bottomHeight2, bottomHeight3, bottomHeight4));
+                    var x = MathUtils.Min(
+                        bottomHeightFast - 1,
+                        MathUtils.Min(bottomHeight, bottomHeight2, bottomHeight3, bottomHeight4)
+                    );
                     var x2 = chunk.GetTopHeightFast(k, l) + 1;
                     var num7 = MathUtils.Max(16 * i, x, 1);
                     var num8 = MathUtils.Min(16 * (i + 1), x2, 256);
@@ -1824,8 +1874,14 @@ public class TerrainUpdater
                         var num10 = Terrain.ExtractContents(cellValueFast);
                         if (num10 != 0)
                         {
-                            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num10].GenerateTerrainVertices(_subsystemTerrain.BlockGeometryGenerator,
-                                terrainGeometry[i], cellValueFast, num5, m, num6);
+                            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num10].GenerateTerrainVertices(
+                                _subsystemTerrain.BlockGeometryGenerator,
+                                terrainGeometry[i],
+                                cellValueFast,
+                                num5,
+                                m,
+                                num6
+                            );
                         }
                     }
                 }
@@ -2011,9 +2067,12 @@ public class TerrainUpdater
             }
         }
 
-        CurrentModRuntime.Value?.Gameplay.Invoke(new TerrainChunkInitializedContext(
-            _subsystemTerrain,
-            chunk));
+        CurrentModRuntime.Value?.Gameplay.Invoke(
+            new TerrainChunkInitializedContext(
+                _subsystemTerrain,
+                chunk
+            )
+        );
     }
 
     /// <summary>
@@ -2032,7 +2091,6 @@ public class TerrainUpdater
     {
         DowngradeAllChunksState(TerrainChunkState.InvalidVertices1, true);
     }
-
 
 
     /// <summary>

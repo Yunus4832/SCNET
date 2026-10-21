@@ -6,7 +6,10 @@ namespace Game.Protocol.Players;
 public enum SyncAction : byte
 {
     None = 0,
+
     Start = 1,
+
     Cancel = 2,
+
     Complete = 3
 }

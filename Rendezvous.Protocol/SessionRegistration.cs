@@ -5,4 +5,5 @@ public sealed record SessionRegistration(
     Guid SessionId,
     string JoinCode,
     string HostCredential,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt
+);

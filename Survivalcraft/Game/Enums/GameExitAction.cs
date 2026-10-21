@@ -2,8 +2,11 @@ namespace Game;
 
 public enum GameExitAction
 {
-    Exit,
-    Restart,
-    SwitchInstance,
-    Update
+    Exit = 0,
+
+    Restart = 1,
+
+    SwitchInstance = 2,
+
+    Update = 3
 }

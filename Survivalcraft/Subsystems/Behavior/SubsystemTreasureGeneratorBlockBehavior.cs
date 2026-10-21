@@ -484,15 +484,25 @@ public class SubsystemTreasureGeneratorBlockBehavior : SubsystemBlockBehavior
 
         for (var j = 0; j < num2; j++)
         {
-            _subsystemPickables.AddPickable(num, 1,
-                new Vector3(x, y, z) + _random.Vector3(0.1f, 0.4f) + new Vector3(0.5f), Vector3.Zero, null);
+            _subsystemPickables.AddPickable(
+                num,
+                1,
+                new Vector3(x, y, z) + _random.Vector3(0.1f, 0.4f) + new Vector3(0.5f),
+                Vector3.Zero,
+                null
+            );
         }
 
         var num4 = _random.Int(3, 6);
         for (var k = 0; k < num4; k++)
         {
-            _subsystemPickables.AddPickable(248, 1,
-                new Vector3(x, y, z) + _random.Vector3(0.1f, 0.4f) + new Vector3(0.5f), Vector3.Zero, null);
+            _subsystemPickables.AddPickable(
+                248,
+                1,
+                new Vector3(x, y, z) + _random.Vector3(0.1f, 0.4f) + new Vector3(0.5f),
+                Vector3.Zero,
+                null
+            );
         }
     }
 

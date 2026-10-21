@@ -19,5 +19,6 @@ public struct TerrainVertex
     public static readonly VertexDeclaration VertexDeclaration = new(
         new VertexElement(0, VertexElementFormat.Vector3, VertexElementSemantic.Position),
         new VertexElement(12, VertexElementFormat.NormalizedShort2, VertexElementSemantic.TextureCoordinate),
-        new VertexElement(16, VertexElementFormat.NormalizedByte4, VertexElementSemantic.Color));
+        new VertexElement(16, VertexElementFormat.NormalizedByte4, VertexElementSemantic.Color)
+    );
 }

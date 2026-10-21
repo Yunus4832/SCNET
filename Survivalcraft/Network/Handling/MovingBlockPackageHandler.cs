@@ -15,8 +15,7 @@ public sealed class MovingBlockPackageHandler : PackageHandlerBase<MovingBlockPa
         var project = GameManager.Project;
         if (package.Type == MovingBlockPackage.EventType.PistonSound)
         {
-            project.FindSubsystem<SubsystemAudio>(true)!.PlaySound(
-                "Audio/Piston", 1f, 0f, package.Position, 2f, true);
+            project.FindSubsystem<SubsystemAudio>(true)!.PlaySound("Audio/Piston", 1f, 0f, package.Position, 2f, true);
             return;
         }
 

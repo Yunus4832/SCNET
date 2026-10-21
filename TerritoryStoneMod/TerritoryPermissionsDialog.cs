@@ -11,14 +11,22 @@ namespace TerritoryStoneMod;
 public sealed class TerritoryPermissionsDialog : Dialog
 {
     private readonly Dictionary<TerritoryPermission, CheckboxWidget> _options = new();
+
     private readonly BevelledButtonWidget _confirm;
+
     private readonly BevelledButtonWidget _reject;
+
     private readonly Action<TerritoryPermission> _complete;
 
     public Guid RequestId { get; }
 
-    public TerritoryPermissionsDialog(string playerName, TerritoryPermission selected, TerritoryPermission available,
-        Action<TerritoryPermission> complete, Guid requestId = default)
+    public TerritoryPermissionsDialog(
+        string playerName,
+        TerritoryPermission selected,
+        TerritoryPermission available,
+        Action<TerritoryPermission> complete,
+        Guid requestId = default
+    )
     {
         _complete = complete;
         RequestId = requestId;
@@ -27,17 +35,20 @@ public sealed class TerritoryPermissionsDialog : Dialog
         VerticalAlignment = WidgetAlignment.Center;
         ClampToBounds = true;
         Children.Add(new BevelledRectangleWidget { Style = ContentManager.Get<XElement>("Styles/DialogArea") });
-        Children.Add(new LabelWidget
-        {
-            Text = Text(requestId == Guid.Empty ? "EditGrant" : "RequestTitle"),
-            HorizontalAlignment = WidgetAlignment.Center,
-            Margin = new Vector2(0, 18)
-        });
+        Children.Add(
+            new LabelWidget
+            {
+                Text = Text(requestId == Guid.Empty ? "EditGrant" : "RequestTitle"),
+                HorizontalAlignment = WidgetAlignment.Center,
+                Margin = new Vector2(0, 18)
+            }
+        );
         var name = new LabelWidget { Text = playerName, Size = new Vector2(550, 32), Ellipsis = true };
         Children.Add(name);
         SetWidgetPosition(name, new Vector2(32, 58));
         var keys = new[] { "AllowEntry", "AllowExit", "AllowDigging", "AllowPlacing" };
-        var flags = new[] { TerritoryPermission.Enter, TerritoryPermission.Exit, TerritoryPermission.Dig, TerritoryPermission.Place };
+        var flags = new[]
+            { TerritoryPermission.Enter, TerritoryPermission.Exit, TerritoryPermission.Dig, TerritoryPermission.Place };
         for (var index = 0; index < flags.Length; index++)
         {
             var checkbox = new CheckboxWidget
@@ -55,6 +66,7 @@ public sealed class TerritoryPermissionsDialog : Dialog
             Children.Add(checkbox);
             SetWidgetPosition(checkbox, new Vector2(32 + index % 2 * 280, 108 + index / 2 * 44));
         }
+
         _confirm = new BevelledButtonWidget
         {
             Text = Text("Confirm"),
@@ -87,6 +99,7 @@ public sealed class TerritoryPermissionsDialog : Dialog
                     }
                 }
             }
+
             _complete(permissions);
             DialogsManager.HideDialog(this);
         }
@@ -96,6 +109,7 @@ public sealed class TerritoryPermissionsDialog : Dialog
             {
                 _complete(TerritoryPermission.None);
             }
+
             DialogsManager.HideDialog(this);
         }
     }

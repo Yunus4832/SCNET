@@ -16,11 +16,7 @@ public sealed class IndexBuffer : GraphicsResource
         AllocateBuffer();
     }
 
-    public string DebugName
-    {
-        get => string.Empty;
-        set { }
-    }
+    public string DebugName { get => string.Empty; set { } }
 
     public IndexFormat IndexFormat { get; set; }
 

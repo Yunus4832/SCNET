@@ -6,13 +6,17 @@ namespace Game.Terrains.Distribution;
 /// </summary>
 public sealed class ClientTerrainDeltaCoordinator(
     Terrain terrain,
-    Action<TerrainCellDelta> apply)
+    Action<TerrainCellDelta> apply
+)
 {
     public const int MaximumPendingDeltasPerChunk = 256;
 
     private readonly Terrain _terrain = terrain ?? throw new ArgumentNullException(nameof(terrain));
+
     private readonly Action<TerrainCellDelta> _apply = apply ?? throw new ArgumentNullException(nameof(apply));
+
     private readonly Dictionary<Point2, SortedDictionary<long, TerrainCellDelta>> _pending = [];
+
     private readonly Dictionary<Point2, long> _requiredVersions = [];
 
     public TerrainDeltaApplyResult Receive(TerrainCellDelta delta)
@@ -34,7 +38,8 @@ public sealed class ClientTerrainDeltaCoordinator(
         deltas[delta.BaseContentVersion] = delta;
         _requiredVersions[coords] = Math.Max(
             _requiredVersions.GetValueOrDefault(coords),
-            delta.ResultContentVersion);
+            delta.ResultContentVersion
+        );
 
         if (deltas.Count <= MaximumPendingDeltasPerChunk)
         {
@@ -89,7 +94,8 @@ public sealed class ClientTerrainDeltaCoordinator(
         {
             Log.Warning(
                 $"Terrain replica version gap at {coords}: installed={chunk.NetworkContentVersion}, " +
-                $"required={requiredVersion}, pending={deltas.Count}; requesting full snapshot.");
+                $"required={requiredVersion}, pending={deltas.Count}; requesting full snapshot."
+            );
             InvalidateForSnapshot(chunk);
             return TerrainDeltaApplyResult.ResyncRequired;
         }
@@ -126,8 +132,11 @@ public sealed class ClientTerrainDeltaCoordinator(
 
 public enum TerrainDeltaApplyResult
 {
-    Ignored,
-    Buffered,
-    Applied,
-    ResyncRequired
+    Ignored = 0,
+
+    Buffered = 1,
+
+    Applied = 2,
+
+    ResyncRequired = 3
 }

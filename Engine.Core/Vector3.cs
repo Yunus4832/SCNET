@@ -188,8 +188,11 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
 
     public static Vector3 Clamp(Vector3 v, float min, float max)
     {
-        return new Vector3(MathUtils.Clamp(v.X, min, max), MathUtils.Clamp(v.Y, min, max),
-            MathUtils.Clamp(v.Z, min, max));
+        return new Vector3(
+            MathUtils.Clamp(v.X, min, max),
+            MathUtils.Clamp(v.Y, min, max),
+            MathUtils.Clamp(v.Z, min, max)
+        );
     }
 
     public static Vector3 Saturate(Vector3 v)
@@ -204,8 +207,11 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
 
     public static Vector3 CatmullRom(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, float f)
     {
-        return new Vector3(MathUtils.CatmullRom(v1.X, v2.X, v3.X, v4.X, f),
-            MathUtils.CatmullRom(v1.Y, v2.Y, v3.Y, v4.Y, f), MathUtils.CatmullRom(v1.Z, v2.Z, v3.Z, v4.Z, f));
+        return new Vector3(
+            MathUtils.CatmullRom(v1.X, v2.X, v3.X, v4.X, f),
+            MathUtils.CatmullRom(v1.Y, v2.Y, v3.Y, v4.Y, f),
+            MathUtils.CatmullRom(v1.Z, v2.Z, v3.Z, v4.Z, f)
+        );
     }
 
     public static Vector3 Normalize(Vector3 v)
@@ -232,14 +238,20 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
 
     public static Vector3 Transform(Vector3 v, Matrix m)
     {
-        return new Vector3(v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31 + m.M41,
-            v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32 + m.M42, v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33 + m.M43);
+        return new Vector3(
+            v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31 + m.M41,
+            v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32 + m.M42,
+            v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33 + m.M43
+        );
     }
 
     public static void Transform(ref Vector3 v, ref Matrix m, out Vector3 result)
     {
-        result = new Vector3(v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31 + m.M41,
-            v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32 + m.M42, v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33 + m.M43);
+        result = new Vector3(
+            v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31 + m.M41,
+            v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32 + m.M42,
+            v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33 + m.M43
+        );
     }
 
     public static Vector3 Transform(Vector3 v, Quaternion q)
@@ -256,9 +268,11 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
         var num10 = q.Y * num2;
         var num11 = q.Y * num3;
         var num12 = q.Z * num3;
-        return new Vector3(v.X * (1f - num10 - num12) + v.Y * (num8 - num6) + v.Z * (num9 + num5),
+        return new Vector3(
+            v.X * (1f - num10 - num12) + v.Y * (num8 - num6) + v.Z * (num9 + num5),
             v.X * (num8 + num6) + v.Y * (1f - num7 - num12) + v.Z * (num11 - num4),
-            v.X * (num9 - num5) + v.Y * (num11 + num4) + v.Z * (1f - num7 - num10));
+            v.X * (num9 - num5) + v.Y * (num11 + num4) + v.Z * (1f - num7 - num10)
+        );
     }
 
     public static void Transform(ref Vector3 v, ref Quaternion q, out Vector3 result)
@@ -275,13 +289,21 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
         var num10 = q.Y * num2;
         var num11 = q.Y * num3;
         var num12 = q.Z * num3;
-        result = new Vector3(v.X * (1f - num10 - num12) + v.Y * (num8 - num6) + v.Z * (num9 + num5),
+        result = new Vector3(
+            v.X * (1f - num10 - num12) + v.Y * (num8 - num6) + v.Z * (num9 + num5),
             v.X * (num8 + num6) + v.Y * (1f - num7 - num12) + v.Z * (num11 - num4),
-            v.X * (num9 - num5) + v.Y * (num11 + num4) + v.Z * (1f - num7 - num10));
+            v.X * (num9 - num5) + v.Y * (num11 + num4) + v.Z * (1f - num7 - num10)
+        );
     }
 
-    public static void Transform(Vector3[] sourceArray, int sourceIndex, ref Matrix m, Vector3[] destinationArray,
-        int destinationIndex, int count)
+    public static void Transform(
+        Vector3[] sourceArray,
+        int sourceIndex,
+        ref Matrix m,
+        Vector3[] destinationArray,
+        int destinationIndex,
+        int count
+    )
     {
         if (Vector128.IsHardwareAccelerated)
         {
@@ -289,8 +311,10 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
             for (var i = 0; i < count; i++)
             {
                 var vector = sourceArray[sourceIndex + i];
-                var result = row1 * Vector128.Create(vector.X) + row2 * Vector128.Create(vector.Y) +
-                             row3 * Vector128.Create(vector.Z) + row4;
+                var result = row1 * Vector128.Create(vector.X) +
+                             row2 * Vector128.Create(vector.Y) +
+                             row3 * Vector128.Create(vector.Z) +
+                             row4;
                 destinationArray[destinationIndex + i] = new Vector3(result[0], result[1], result[2]);
             }
 
@@ -303,24 +327,37 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
             destinationArray[destinationIndex + i] = new Vector3(
                 vector.X * m.M11 + vector.Y * m.M21 + vector.Z * m.M31 + m.M41,
                 vector.X * m.M12 + vector.Y * m.M22 + vector.Z * m.M32 + m.M42,
-                vector.X * m.M13 + vector.Y * m.M23 + vector.Z * m.M33 + m.M43);
+                vector.X * m.M13 + vector.Y * m.M23 + vector.Z * m.M33 + m.M43
+            );
         }
     }
 
     public static Vector3 TransformNormal(Vector3 v, Matrix m)
     {
-        return new Vector3(v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31, v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32,
-            v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33);
+        return new Vector3(
+            v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31,
+            v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32,
+            v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33
+        );
     }
 
     public static void TransformNormal(ref Vector3 v, ref Matrix m, out Vector3 result)
     {
-        result = new Vector3(v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31, v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32,
-            v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33);
+        result = new Vector3(
+            v.X * m.M11 + v.Y * m.M21 + v.Z * m.M31,
+            v.X * m.M12 + v.Y * m.M22 + v.Z * m.M32,
+            v.X * m.M13 + v.Y * m.M23 + v.Z * m.M33
+        );
     }
 
-    public static void TransformNormal(Vector3[] sourceArray, int sourceIndex, ref Matrix m, Vector3[] destinationArray,
-        int destinationIndex, int count)
+    public static void TransformNormal(
+        Vector3[] sourceArray,
+        int sourceIndex,
+        ref Matrix m,
+        Vector3[] destinationArray,
+        int destinationIndex,
+        int count
+    )
     {
         if (Vector128.IsHardwareAccelerated)
         {
@@ -328,7 +365,8 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
             for (var i = 0; i < count; i++)
             {
                 var vector = sourceArray[sourceIndex + i];
-                var result = row1 * Vector128.Create(vector.X) + row2 * Vector128.Create(vector.Y) +
+                var result = row1 * Vector128.Create(vector.X) +
+                             row2 * Vector128.Create(vector.Y) +
                              row3 * Vector128.Create(vector.Z);
                 destinationArray[destinationIndex + i] = new Vector3(result[0], result[1], result[2]);
             }
@@ -339,14 +377,21 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
         for (var i = 0; i < count; i++)
         {
             var vector = sourceArray[sourceIndex + i];
-            destinationArray[destinationIndex + i] = new Vector3(vector.X * m.M11 + vector.Y * m.M21 + vector.Z * m.M31,
+            destinationArray[destinationIndex + i] = new Vector3(
+                vector.X * m.M11 + vector.Y * m.M21 + vector.Z * m.M31,
                 vector.X * m.M12 + vector.Y * m.M22 + vector.Z * m.M32,
-                vector.X * m.M13 + vector.Y * m.M23 + vector.Z * m.M33);
+                vector.X * m.M13 + vector.Y * m.M23 + vector.Z * m.M33
+            );
         }
     }
 
-    private static void CreateTransformRows(ref Matrix matrix, out Vector128<float> row1,
-        out Vector128<float> row2, out Vector128<float> row3, out Vector128<float> row4)
+    private static void CreateTransformRows(
+        ref Matrix matrix,
+        out Vector128<float> row1,
+        out Vector128<float> row2,
+        out Vector128<float> row3,
+        out Vector128<float> row4
+    )
     {
         row1 = Vector128.Create(matrix.M11, matrix.M12, matrix.M13, matrix.M14);
         row2 = Vector128.Create(matrix.M21, matrix.M22, matrix.M23, matrix.M24);

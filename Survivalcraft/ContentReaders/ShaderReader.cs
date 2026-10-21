@@ -20,7 +20,10 @@ public class ShaderReader : IContentReader
             shaderMacros = [];
         }
 
-        return new Shader(new StreamReader(contents[0].Duplicate()).ReadToEnd(),
-            new StreamReader(contents[1].Duplicate()).ReadToEnd(), shaderMacros);
+        return new Shader(
+            new StreamReader(contents[0].Duplicate()).ReadToEnd(),
+            new StreamReader(contents[1].Duplicate()).ReadToEnd(),
+            shaderMacros
+        );
     }
 }

@@ -12,7 +12,8 @@ public sealed class BuiltInContentMod : IMod
         "game",
         "Built-in Game Content",
         VersionsManager.Version,
-        Side: ModSide.Common);
+        Side: ModSide.Common
+    );
 
     public static ModDescriptor CreateDescriptor()
     {
@@ -28,7 +29,8 @@ public sealed class BuiltInContentMod : IMod
             context.Extensions.RegisterContent(
                 new ResourceId(context.Manifest.ModId, asset.RelativePath),
                 asset.RelativePath,
-                asset.CopyBytes());
+                asset.CopyBytes()
+            );
         }
 
         context.Extensions.RegisterBlockData(
@@ -38,22 +40,26 @@ public sealed class BuiltInContentMod : IMod
                 var data = ContentManager.Get<string>("BlocksData");
                 ContentManager.Dispose("BlocksData");
                 return data;
-            });
+            }
+        );
         context.Extensions.RegisterXmlData(
             XmlDataExtensions.DatabaseRegistryName,
             new ResourceId(context.Manifest.ModId, "base"),
             XmlContributionMode.Base,
-            static () => ReadBuiltInXml("Database"));
+            static () => ReadBuiltInXml("Database")
+        );
         context.Extensions.RegisterXmlData(
             XmlDataExtensions.RecipeRegistryName,
             new ResourceId(context.Manifest.ModId, "base"),
             XmlContributionMode.Base,
-            static () => ReadBuiltInXml("CraftingRecipes"));
+            static () => ReadBuiltInXml("CraftingRecipes")
+        );
         context.Extensions.RegisterXmlData(
             XmlDataExtensions.ClothingRegistryName,
             new ResourceId(context.Manifest.ModId, "base"),
             XmlContributionMode.Base,
-            static () => ReadBuiltInXml("Clothes"));
+            static () => ReadBuiltInXml("Clothes")
+        );
 
         BuiltInBlockRegistry.Register(context.Extensions);
     }

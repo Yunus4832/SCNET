@@ -16,15 +16,29 @@ public sealed class ListPublicRendezvousServicesQueryHandler(ContentServerDbCont
 {
     public Task<PagedData<RendezvousServiceDto>> Handle(
         ListPublicRendezvousServicesQuery query,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         return db.RendezvousServices.AsNoTracking()
             .Where(service => service.Status == RendezvousServiceRegistrationStatus.Active)
             .OrderByDescending(service => service.Id)
-            .Join(db.Publishers.AsNoTracking(), service => service.PublisherId, publisher => publisher.Id,
-                (service, publisher) => new RendezvousServiceDto(service.Id, service.PublisherId, publisher.DisplayName,
-                    service.Name, service.ControlUrl, service.Description, service.Status, service.ReviewMessage,
-                    service.CreatedAt, service.ReviewedAt))
+            .Join(
+                db.Publishers.AsNoTracking(),
+                service => service.PublisherId,
+                publisher => publisher.Id,
+                (service, publisher) => new RendezvousServiceDto(
+                    service.Id,
+                    service.PublisherId,
+                    publisher.DisplayName,
+                    service.Name,
+                    service.ControlUrl,
+                    service.Description,
+                    service.Status,
+                    service.ReviewMessage,
+                    service.CreatedAt,
+                    service.ReviewedAt
+                )
+            )
             .ToPagedDataAsync(query.Page, cancellationToken);
     }
 }

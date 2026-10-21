@@ -35,7 +35,8 @@ public class RealTimeClockElectricElementTest
 
         var electricity = new SubsystemElectricity();
         var clock = (RealTimeClockElectricElement)RuntimeHelpers.GetUninitializedObject(
-            typeof(RealTimeClockElectricElement));
+            typeof(RealTimeClockElectricElement)
+        );
         typeof(RealTimeClockElectricElement)
             .GetField("_subsystemTimeOfDay", BindingFlags.Instance | BindingFlags.NonPublic)!
             .SetValue(clock, timeOfDay);
@@ -45,7 +46,8 @@ public class RealTimeClockElectricElementTest
 
         var field = typeof(SubsystemElectricity).GetField(
             "_futureSimulateLists",
-            BindingFlags.Instance | BindingFlags.NonPublic);
+            BindingFlags.Instance | BindingFlags.NonPublic
+        );
         var lists = Assert.IsType<Dictionary<int, Dictionary<ElectricElement, bool>>>(field?.GetValue(electricity));
         return Assert.Single(lists.Keys);
     }

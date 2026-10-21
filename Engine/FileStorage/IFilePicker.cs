@@ -7,9 +7,11 @@ public interface IFilePicker
 {
     Task<IReadOnlyList<PickedFile>> PickFilesAsync(
         FilePickerRequest request,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     Task<PickedSaveTarget?> PickSaveTargetAsync(
         FileSaveRequest request,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 }

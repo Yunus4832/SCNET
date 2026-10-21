@@ -15,11 +15,17 @@ public static partial class ProtocolMessageCodec
                 EnsureRemaining(reader, count * 5);
                 var items = new SubsystemBodyPackage.BodyItem[count];
                 for (var i = 0; i < count; i++) { items[i] = ReadBodyItem(reader); }
+
                 return new SubsystemBodyPackage { PackageEventType = type, StateTick = tick, BodyList = items };
             case SubsystemBodyPackage.EventType.ApplyImpulse:
-                return new SubsystemBodyPackage { PackageEventType = type, CreatureId = reader.ReadInt32(), Impulse = reader.ReadVector3() };
+                return new SubsystemBodyPackage
+                    { PackageEventType = type, CreatureId = reader.ReadInt32(), Impulse = reader.ReadVector3() };
             case SubsystemBodyPackage.EventType.HandleAxisCollision:
-                return new SubsystemBodyPackage { PackageEventType = type, CreatureId = reader.ReadInt32(), TargetCreatureId = reader.ReadInt32(), Impulse = reader.ReadVector3() };
+                return new SubsystemBodyPackage
+                {
+                    PackageEventType = type, CreatureId = reader.ReadInt32(), TargetCreatureId = reader.ReadInt32(),
+                    Impulse = reader.ReadVector3()
+                };
             default: throw new InvalidDataException("Unknown body message mode.");
         }
     }
@@ -31,9 +37,11 @@ public static partial class ProtocolMessageCodec
         {
             case SubsystemBodyPackage.EventType.BodyUpdate:
                 if (message.BodyList.Count > ushort.MaxValue) { throw new ArgumentException("Too many bodies."); }
+
                 writer.Write(message.StateTick);
                 writer.Write((ushort)message.BodyList.Count);
                 foreach (var item in message.BodyList) { WriteBodyItem(writer, item); }
+
                 break;
             case SubsystemBodyPackage.EventType.HandleAxisCollision:
                 writer.Write(message.CreatureId);
@@ -113,5 +121,4 @@ public static partial class ProtocolMessageCodec
             writer.Write(bodyItem.FlyOrder);
         }
     }
-
 }

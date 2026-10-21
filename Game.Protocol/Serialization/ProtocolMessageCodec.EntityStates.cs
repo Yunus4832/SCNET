@@ -11,7 +11,7 @@ public static partial class ProtocolMessageCodec
     }
 
     private static ComponentSicknessPackage ReadComponentSicknessPackage(ProtocolReader reader) => new()
-    { EntityId = reader.ReadInt32(), SicknessDuration = reader.ReadSingle() };
+        { EntityId = reader.ReadInt32(), SicknessDuration = reader.ReadSingle() };
 
     private static void WriteComponentMountPackage(ComponentMountPackage message, ProtocolWriter writer)
     {
@@ -21,7 +21,10 @@ public static partial class ProtocolMessageCodec
     }
 
     private static ComponentMountPackage ReadComponentMountPackage(ProtocolReader reader) => new()
-    { Type = reader.ReadEnum<ComponentMountPackage.EventType>(), FromId = reader.ReadInt32(), TargetId = reader.ReadInt32() };
+    {
+        Type = reader.ReadEnum<ComponentMountPackage.EventType>(), FromId = reader.ReadInt32(),
+        TargetId = reader.ReadInt32()
+    };
 
     private static void WriteComponentSleepPackage(ComponentSleepPackage message, ProtocolWriter writer)
     {
@@ -33,7 +36,10 @@ public static partial class ProtocolMessageCodec
     }
 
     private static ComponentSleepPackage ReadComponentSleepPackage(ProtocolReader reader) => new()
-    { EntityId = reader.ReadInt32(), Type = reader.ReadEnum<ComponentSleepPackage.EventType>(), AllowManualWakeup = reader.ReadBoolean(), Result = reader.ReadBoolean(), Reason = reader.ReadString() };
+    {
+        EntityId = reader.ReadInt32(), Type = reader.ReadEnum<ComponentSleepPackage.EventType>(),
+        AllowManualWakeup = reader.ReadBoolean(), Result = reader.ReadBoolean(), Reason = reader.ReadString()
+    };
 
     private static void WriteComponentFluPackage(ComponentFluPackage message, ProtocolWriter writer)
     {
@@ -46,5 +52,9 @@ public static partial class ProtocolMessageCodec
     }
 
     private static ComponentFluPackage ReadComponentFluPackage(ProtocolReader reader) => new()
-    { EntityId = reader.ReadInt32(), PackageEventType = reader.ReadEnum<ComponentFluPackage.EventType>(), FluOnset = reader.ReadSingle(), FluDuration = reader.ReadSingle(), CoughDuration = reader.ReadSingle(), SneezeDuration = reader.ReadSingle() };
+    {
+        EntityId = reader.ReadInt32(), PackageEventType = reader.ReadEnum<ComponentFluPackage.EventType>(),
+        FluOnset = reader.ReadSingle(), FluDuration = reader.ReadSingle(), CoughDuration = reader.ReadSingle(),
+        SneezeDuration = reader.ReadSingle()
+    };
 }

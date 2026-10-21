@@ -84,8 +84,10 @@ public sealed class BodyInterestGroupTest
 
         foreach (var member in new[] { mount, rider, passenger, nested })
         {
-            Assert.Equal(new[] { mount, rider, nested, passenger },
-                SubsystemNetworkInterest.GetBodyGroup(member));
+            Assert.Equal(
+                new[] { mount, rider, nested, passenger },
+                SubsystemNetworkInterest.GetBodyGroup(member)
+            );
         }
     }
 

@@ -29,8 +29,10 @@ public sealed class FireBlockLifecycleTest
             var chunk = terrain.AllocateChunk(0, 0);
             terrain.AllocateChunk(2, 0);
             var subsystem = new SubsystemFireBlockBehavior();
-            typeof(SubsystemBlockBehavior).GetProperty("SubsystemTerrain",
-                BindingFlags.Instance | BindingFlags.NonPublic)!
+            typeof(SubsystemBlockBehavior).GetProperty(
+                    "SubsystemTerrain",
+                    BindingFlags.Instance | BindingFlags.NonPublic
+                )!
                 .SetValue(subsystem, new SubsystemTerrain { Terrain = terrain });
             var records = (IDictionary)typeof(SubsystemFireBlockBehavior)
                 .GetField("_fireData", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(subsystem)!;
@@ -50,7 +52,6 @@ public sealed class FireBlockLifecycleTest
         finally
         {
             CommonLib.WorkType = mode;
-
         }
     }
 }

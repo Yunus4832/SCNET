@@ -13,7 +13,11 @@ public static class PackageDispatcher
 
     internal static void Register(Type messageType, IPackageHandler handler)
     {
-        if (!handler.PackageType.IsAssignableFrom(messageType)) { throw new ArgumentException("Handler cannot accept this message type."); }
+        if (!handler.PackageType.IsAssignableFrom(messageType))
+        {
+            throw new ArgumentException("Handler cannot accept this message type.");
+        }
+
         _handlers[messageType] = handler;
     }
 

@@ -56,8 +56,11 @@ public class ComponentDiggingCracks : Component, IDrawable
         {
             if (_players.MainPlayer != null)
             {
-                if (Vector3.DistanceSquared(_players.MainPlayer.GameWidget.ActiveCamera.ViewPosition,
-                        new Vector3(point)) > MathUtils.Sqr(SettingsManager.Current.VisibilityRange))
+                if (Vector3.DistanceSquared(
+                        _players.MainPlayer.GameWidget.ActiveCamera.ViewPosition,
+                        new Vector3(point)
+                    ) >
+                    MathUtils.Sqr(SettingsManager.Current.VisibilityRange))
                 {
                     return;
                 }
@@ -84,8 +87,14 @@ public class ComponentDiggingCracks : Component, IDrawable
             }
 
             DisposeBuffers();
-            block.GenerateTerrainVertices(_subsystemTerrain.BlockGeometryGenerator,
-                _drawItem[_defaultTexture][_defaultSlice], cellValue, point.X, point.Y, point.Z);
+            block.GenerateTerrainVertices(
+                _subsystemTerrain.BlockGeometryGenerator,
+                _drawItem[_defaultTexture][_defaultSlice],
+                cellValue,
+                point.X,
+                point.Y,
+                point.Z
+            );
             _point = point;
             _value = cellValue;
             TerrainRenderer.CompileDrawSubsets(_drawItem, _buffers, block.SetDiggingCrackingTextureTransform);
@@ -93,7 +102,8 @@ public class ComponentDiggingCracks : Component, IDrawable
 
         var viewPosition = camera.ViewPosition;
         var v = new Vector3(MathUtils.Floor(viewPosition.X), 0f, MathUtils.Floor(viewPosition.Z));
-        var value = Matrix.CreateTranslation(v - viewPosition) * camera.ViewMatrix.OrientationMatrix *
+        var value = Matrix.CreateTranslation(v - viewPosition) *
+                    camera.ViewMatrix.OrientationMatrix *
                     camera.ProjectionMatrix;
         try
         {
@@ -107,17 +117,34 @@ public class ComponentDiggingCracks : Component, IDrawable
             _shader.GetParameter("u_fogColor").SetValue(new Vector3(_subsystemSky.ViewFogColor));
             //new
             _shader.GetParameter("u_fogYMultiplier").SetValue(_subsystemSky.VisibilityRangeYMultiplier);
-            _shader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
-                _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
+            _shader.GetParameter("u_fogBottomTopDensity").SetValue(
+                new Vector3(
+                    _subsystemSky.ViewFogBottom,
+                    _subsystemSky.ViewFogTop,
+                    _subsystemSky.ViewFogDensity
+                )
+            );
             _shader.GetParameter("u_hazeStartDensity")
                 .SetValue(new Vector2(_subsystemSky.ViewHazeStart, _subsystemSky.ViewHazeDensity));
             _shader.GetParameter("u_alphaThreshold").SetValue(0.5f);
             foreach (var buffer in _buffers)
             {
-                _shader.GetParameter("u_texture").SetValue(block.GetDiggingCrackingTexture(_componentMiner,
-                    _componentMiner.DigProgress, cellValue, _textures));
-                Display.DrawIndexed(PrimitiveType.TriangleList, _shader, buffer.VertexBuffer,
-                    buffer.IndexBuffer, 0, buffer.IndexBuffer.IndicesCount);
+                _shader.GetParameter("u_texture").SetValue(
+                    block.GetDiggingCrackingTexture(
+                        _componentMiner,
+                        _componentMiner.DigProgress,
+                        cellValue,
+                        _textures
+                    )
+                );
+                Display.DrawIndexed(
+                    PrimitiveType.TriangleList,
+                    _shader,
+                    buffer.VertexBuffer,
+                    buffer.IndexBuffer,
+                    0,
+                    buffer.IndexBuffer.IndicesCount
+                );
             }
         }
         catch

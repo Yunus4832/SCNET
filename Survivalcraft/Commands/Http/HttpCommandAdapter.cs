@@ -25,7 +25,8 @@ public static class HttpCommandProtocol
 
     public static JsonObject CreateEnvelope(
         ResourceId identity,
-        JsonObject? arguments = null)
+        JsonObject? arguments = null
+    )
     {
         return new JsonObject
         {
@@ -37,7 +38,8 @@ public static class HttpCommandProtocol
     public static bool TryParseEnvelope(
         JsonObject envelope,
         out HttpCommandRequest? request,
-        out string error)
+        out string error
+    )
     {
         ArgumentNullException.ThrowIfNull(envelope);
         try
@@ -56,7 +58,8 @@ public static class HttpCommandProtocol
 
             var identity = new ResourceId(
                 new ModId(identityValue[..separator]),
-                identityValue[(separator + 1)..]);
+                identityValue[(separator + 1)..]
+            );
             request = new HttpCommandRequest(identity, arguments);
             error = string.Empty;
             return true;
@@ -75,19 +78,22 @@ public static class HttpCommandProtocol
 
 public sealed record HttpCommandRequest(
     ResourceId Identity,
-    JsonObject Arguments);
+    JsonObject Arguments
+);
 
 /// <summary>One declared argument in the HTTP command envelope.</summary>
 public sealed record HttpCommandArgumentDefinition(
     string Name,
     string ValueType,
-    bool Required = true);
+    bool Required = true
+);
 
 /// <summary>One HTTP command available to the current authenticated principal.</summary>
 public sealed record HttpDiscoveredCommand(
     string Identity,
     string Description,
-    IReadOnlyList<HttpCommandArgumentDefinition> Arguments);
+    IReadOnlyList<HttpCommandArgumentDefinition> Arguments
+);
 
 public sealed class HttpCommandArguments(JsonObject values)
 {
@@ -105,13 +111,13 @@ public sealed class HttpCommandArguments(JsonObject values)
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         if (!Values.TryGetPropertyValue(name, out var node) || node is null)
         {
-            throw new InvalidDataException(
-                $"Required HTTP command argument \"{name}\" is missing.");
+            throw new InvalidDataException($"Required HTTP command argument \"{name}\" is missing.");
         }
 
-        return node.Deserialize<T>(_jsonOptions)
-               ?? throw new InvalidDataException(
-                   $"HTTP command argument \"{name}\" cannot be converted to {typeof(T).Name}.");
+        return node.Deserialize<T>(_jsonOptions) ??
+               throw new InvalidDataException(
+                   $"HTTP command argument \"{name}\" cannot be converted to {typeof(T).Name}."
+               );
     }
 
     public T GetOrDefault<T>(string name, T defaultValue)
@@ -122,9 +128,10 @@ public sealed class HttpCommandArguments(JsonObject values)
             return defaultValue;
         }
 
-        return node.Deserialize<T>(_jsonOptions)
-               ?? throw new InvalidDataException(
-                   $"HTTP command argument \"{name}\" cannot be converted to {typeof(T).Name}.");
+        return node.Deserialize<T>(_jsonOptions) ??
+               throw new InvalidDataException(
+                   $"HTTP command argument \"{name}\" cannot be converted to {typeof(T).Name}."
+               );
     }
 }
 
@@ -139,7 +146,8 @@ public sealed class HttpCommandBinding : ICommandAdapterBinding
     private HttpCommandBinding(
         Type commandType,
         Func<HttpCommandArguments, IGameCommand> createCommand,
-        IReadOnlyList<HttpCommandArgumentDefinition> arguments)
+        IReadOnlyList<HttpCommandArgumentDefinition> arguments
+    )
     {
         CommandType = commandType;
         _createCommand = createCommand;
@@ -148,14 +156,16 @@ public sealed class HttpCommandBinding : ICommandAdapterBinding
 
     public static HttpCommandBinding Create<TCommand>(
         Func<HttpCommandArguments, TCommand> createCommand,
-        params HttpCommandArgumentDefinition[] arguments)
+        params HttpCommandArgumentDefinition[] arguments
+    )
         where TCommand : IGameCommand
     {
         ArgumentNullException.ThrowIfNull(createCommand);
         return new HttpCommandBinding(
             typeof(TCommand),
             arguments => createCommand(arguments),
-            arguments ?? []);
+            arguments ?? []
+        );
     }
 
     internal IGameCommand CreateCommand(HttpCommandArguments arguments)
@@ -172,20 +182,26 @@ public sealed class HttpCommandAdapter(CommandRegistry registry)
 
     public IReadOnlyList<HttpDiscoveredCommand> Discover(
         CommandPrincipal principal,
-        Project? project)
+        Project? project
+    )
     {
         return _registry.Adapters.Get<HttpCommandBinding>()
             .Where(entry => _registry.TryGetDefinition(entry.Id, out var command) &&
                             command is not null &&
                             command.Definition.CanInvoke(principal, project) &&
                             command.Definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) &&
-                            command.Definition.IsPotentiallyAuthorized(_registry.Permissions, principal, project))
+                            command.Definition.IsPotentiallyAuthorized(_registry.Permissions, principal, project)
+            )
             .Select(entry =>
-            {
-                _registry.TryGetDefinition(entry.Id, out var command);
-                return new HttpDiscoveredCommand(entry.Id.ToString(),
-                    command!.Definition.Description.Resolve(), entry.Binding.Arguments);
-            }).ToArray();
+                {
+                    _registry.TryGetDefinition(entry.Id, out var command);
+                    return new HttpDiscoveredCommand(
+                        entry.Id.ToString(),
+                        command!.Definition.Description.Resolve(),
+                        entry.Binding.Arguments
+                    );
+                }
+            ).ToArray();
     }
 
     public CommandResult Execute(HttpCommandRequest request, CommandContext context)
@@ -198,21 +214,25 @@ public sealed class HttpCommandAdapter(CommandRegistry registry)
 
     public bool TryCreate(
         HttpCommandRequest request,
-        out IGameCommand? command, out CommandResult? error)
+        out IGameCommand? command,
+        out CommandResult? error
+    )
     {
         ArgumentNullException.ThrowIfNull(request);
         command = null;
         error = null;
         if (!_registry.Adapters.TryGet<HttpCommandBinding>(
                 request.Identity,
-                out var binding) ||
+                out var binding
+            ) ||
             binding is null)
         {
             error = CommandResult.LocalizedFail(
                 "command.http_not_exposed",
                 "HttpNotExposed_Message",
                 "命令 {0} 未向 HTTP 前端开放。",
-                request.Identity.ToString());
+                request.Identity.ToString()
+            );
             return false;
         }
 
@@ -225,11 +245,13 @@ public sealed class HttpCommandAdapter(CommandRegistry registry)
         {
             Log.Error(
                 $"HTTP command {request.Identity} binding failed, " +
-                $"{exception}");
+                $"{exception}"
+            );
             error = CommandResult.LocalizedFail(
                 "command.http_invalid_arguments",
                 "HttpInvalidArguments_Message",
-                "HTTP 命令参数无效。");
+                "HTTP 命令参数无效。"
+            );
             return false;
         }
     }

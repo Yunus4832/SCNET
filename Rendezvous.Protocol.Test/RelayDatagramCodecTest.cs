@@ -32,8 +32,15 @@ public sealed class RelayDatagramCodecTest
         {
             Assert.False(RelayDatagramCodec.TryDecode(new byte[size], key, out _));
         }
-        Assert.Throws<ArgumentException>(() => RelayDatagramCodec.Encode(Guid.NewGuid(), 0, 1, key,
-            new byte[RelayDatagramCodec.MaxPayloadSize + 1]));
+
+        Assert.Throws<ArgumentException>(() => RelayDatagramCodec.Encode(
+                Guid.NewGuid(),
+                0,
+                1,
+                key,
+                new byte[RelayDatagramCodec.MaxPayloadSize + 1]
+            )
+        );
         var encoded = RelayDatagramCodec.Encode(Guid.NewGuid(), 0, 1, key, new byte[RelayDatagramCodec.MaxPayloadSize]);
         Assert.True(RelayDatagramCodec.TryDecode(encoded, key, out _));
         encoded[4] = 2;

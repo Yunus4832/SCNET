@@ -23,8 +23,10 @@ public class PackageManager
     private static void RegisterBuiltInPackages()
     {
         RegisterProtocolPackage<ServerInfoPackage, ServerInfoPackageHandler>(PackageType.ServerInfo);
-        RegisterProtocolPackage<ConnectionRequestPackage, ConnectionRequestPackageHandler>(PackageType
-            .ConnectionRequest);
+        RegisterProtocolPackage<ConnectionRequestPackage, ConnectionRequestPackageHandler>(
+            PackageType
+                .ConnectionRequest
+        );
         RegisterProtocolPackage<ConnectionRejectPackage, ConnectionRejectPackageHandler>(PackageType.ConnectionReject);
         RegisterProtocolPackage<ClientPackage, ClientPackageHandler>(PackageType.Client);
         RegisterProtocolPackage<PickablePackage, PickablePackageHandler>(PackageType.Pickable);
@@ -33,21 +35,33 @@ public class PackageManager
         RegisterProtocolPackage<SubsystemTimePackage, SubsystemTimePackageHandler>(PackageType.SubsystemTime);
         RegisterProtocolPackage<SubsystemSkyPackage, SubsystemSkyPackageHandler>(PackageType.SubsystemSky);
         RegisterProtocolPackage<SubsystemWeatherPackage, SubsystemWeatherPackageHandler>(PackageType.SubsystemWeather);
-        RegisterProtocolPackage<SubsystemElectricityPackage, SubsystemElectricityPackageHandler>(PackageType
-            .SubsystemElectricity);
+        RegisterProtocolPackage<SubsystemElectricityPackage, SubsystemElectricityPackageHandler>(
+            PackageType
+                .SubsystemElectricity
+        );
         RegisterPlayerPackages();
-        RegisterProtocolPackage<ComponentInventoryPackage, ComponentInventoryPackageHandler>(PackageType
-            .ComponentInventory);
-        RegisterProtocolPackage<ComponentVitalStatPackage, ComponentVitalStatPackageHandler>(PackageType
-            .ComponentVitalStat);
-        RegisterProtocolPackage<ComponentClothingPackage, ComponentClothingPackageHandler>(PackageType
-            .ComponentClothing);
-        RegisterProtocolPackage<ComponentBehaviorPackage, ComponentBehaviorPackageHandler>(PackageType
-            .ComponentBehavior);
+        RegisterProtocolPackage<ComponentInventoryPackage, ComponentInventoryPackageHandler>(
+            PackageType
+                .ComponentInventory
+        );
+        RegisterProtocolPackage<ComponentVitalStatPackage, ComponentVitalStatPackageHandler>(
+            PackageType
+                .ComponentVitalStat
+        );
+        RegisterProtocolPackage<ComponentClothingPackage, ComponentClothingPackageHandler>(
+            PackageType
+                .ComponentClothing
+        );
+        RegisterProtocolPackage<ComponentBehaviorPackage, ComponentBehaviorPackageHandler>(
+            PackageType
+                .ComponentBehavior
+        );
         RegisterProtocolPackage<ComponentHealthPackage, ComponentHealthPackageHandler>(PackageType.ComponentHealth);
         RegisterProtocolPackage<ComponentMountPackage, ComponentMountPackageHandler>(PackageType.ComponentMount);
-        RegisterProtocolPackage<ComponentSicknessPackage, ComponentSicknessPackageHandler>(PackageType
-            .ComponentSickness);
+        RegisterProtocolPackage<ComponentSicknessPackage, ComponentSicknessPackageHandler>(
+            PackageType
+                .ComponentSickness
+        );
         RegisterProtocolPackage<ComponentFluPackage, ComponentFluPackageHandler>(PackageType.ComponentFlu);
         RegisterProtocolPackage<ComponentOnFirePackage, ComponentOnFirePackageHandler>(PackageType.ComponentOnFire);
         RegisterProtocolPackage<ComponentSleepPackage, ComponentSleepPackageHandler>(PackageType.ComponentSleep);
@@ -68,12 +82,15 @@ public class PackageManager
         RegisterProtocolPackage<CommandPackage, CommandPackageHandler>(PackageType.Command);
         RegisterProtocolPackage<PlayerListPackage, PlayerListPackageHandler>(PackageType.PlayerList);
         RegisterProtocolPackage<OnlinePlayerStatePackage, OnlinePlayerStatePackageHandler>(
-            PackageType.OnlinePlayerState);
+            PackageType.OnlinePlayerState
+        );
         RegisterProtocolPackage<BootstrapPackage, BootstrapPackageHandler>(PackageType.Bootstrap);
         RegisterProtocolPackage<ConnectionPhaseAckPackage, ConnectionPhaseAckPackageHandler>(
-            PackageType.ConnectionPhaseAck);
+            PackageType.ConnectionPhaseAck
+        );
         RegisterProtocolPackage<InitialWorldSnapshotPackage, InitialWorldSnapshotPackageHandler>(
-            PackageType.InitialWorldSnapshot);
+            PackageType.InitialWorldSnapshot
+        );
         RegisterProtocolPackage<ChunkStateResetPackage, ChunkStateResetPackageHandler>(PackageType.ChunkStateReset);
         RegisterProtocolPackage<ModEnvelopePackage, ModEnvelopePackageHandler>(PackageType.ModEnvelope);
     }
@@ -83,10 +100,17 @@ public class PackageManager
     {
         var message = factory();
         if (!ProtocolMessageCodec.IsDefined(message.ID) || handler.PackageType != typeof(TPackage))
-        { throw new ArgumentException("The handler must match a defined protocol message."); }
-        if (_packageRegistrations[message.ID] != null) { throw new InvalidOperationException("Duplicate protocol message ID."); }
+        {
+            throw new ArgumentException("The handler must match a defined protocol message.");
+        }
+
+        if (_packageRegistrations[message.ID] != null)
+        {
+            throw new InvalidOperationException("Duplicate protocol message ID.");
+        }
+
         _packageRegistrations[message.ID] = new PackageRegistration
-        { Name = typeof(TPackage).Name, Read = reader => ProtocolMessageCodec.Read(message.ID, reader) };
+            { Name = typeof(TPackage).Name, Read = reader => ProtocolMessageCodec.Read(message.ID, reader) };
         PackageDispatcher.Register(handler);
     }
 
@@ -99,6 +123,7 @@ public class PackageManager
         {
             throw new InvalidOperationException($"Duplicate protocol message ID: {key}.");
         }
+
         _packageRegistrations[key] = new PackageRegistration
         {
             Name = typeof(TPackage).Name,
@@ -111,7 +136,8 @@ public class PackageManager
 
     private static void RegisterPlayerPackages()
     {
-        var handler = RegisterProtocolPackage<ComponentPlayerPackage, ComponentPlayerPackageHandler>(PackageType.ComponentPlayer);
+        var handler =
+            RegisterProtocolPackage<ComponentPlayerPackage, ComponentPlayerPackageHandler>(PackageType.ComponentPlayer);
         PackageDispatcher.Register(typeof(PlayerStatePackage), handler);
         PackageDispatcher.Register(typeof(PlayerInteractionPackage), handler);
         PackageDispatcher.Register(typeof(PlayerAimPackage), handler);
@@ -127,7 +153,8 @@ public class PackageManager
         PackageDispatcher.Register(typeof(PlayerPositionPackage), handler);
     }
 
-    public static void WriteMessage(IProtocolMessage message, ProtocolWriter writer) => ProtocolMessageCodec.Write(message, writer);
+    public static void WriteMessage(IProtocolMessage message, ProtocolWriter writer) =>
+        ProtocolMessageCodec.Write(message, writer);
 
     public static ClientState MinimumState(IProtocolMessage message) => message switch
     {
@@ -140,12 +167,18 @@ public class PackageManager
         PlayerDataPackage => ClientState.Connected,
         MessagePackage or GroupManagePackage => ClientState.ProjectLoaded,
         ComponentBehaviorPackage => ClientState.Playing,
-        ComponentHealthPackage or ComponentOnFirePackage or MovingBlockPackage or ExplosionsPackage => ClientState.ProjectLoaded,
+        ComponentHealthPackage or ComponentOnFirePackage or MovingBlockPackage or ExplosionsPackage => ClientState
+            .ProjectLoaded,
         ComponentVitalStatPackage or SubsystemElectricityPackage => ClientState.Playing,
-        ComponentClothingPackage or ComponentFurnacePackage or SignBlockPackage or BlockEditPackage => ClientState.ProjectLoaded,
-        DispenserPackage or ComponentSicknessPackage or PlayerListPackage or OnlinePlayerStatePackage or ComponentMountPackage or ComponentSleepPackage or SubsystemWeatherPackage or ComponentFluPackage => ClientState.ProjectLoaded,
-        SubsystemTimePackage or SubsystemSkyPackage or ChunkStateResetPackage or SubsystemBodyPackage => ClientState.Playing,
-        SubsystemSeasonPackage or EntityPackage or ServerInfoPackage or SubsystemTerrainPackage or ComponentPlayerPackage => ClientState.ProjectLoaded,
+        ComponentClothingPackage or ComponentFurnacePackage or SignBlockPackage or BlockEditPackage => ClientState
+            .ProjectLoaded,
+        DispenserPackage or ComponentSicknessPackage or PlayerListPackage or OnlinePlayerStatePackage
+            or ComponentMountPackage or ComponentSleepPackage or SubsystemWeatherPackage
+            or ComponentFluPackage => ClientState.ProjectLoaded,
+        SubsystemTimePackage or SubsystemSkyPackage or ChunkStateResetPackage or SubsystemBodyPackage => ClientState
+            .Playing,
+        SubsystemSeasonPackage or EntityPackage or ServerInfoPackage or SubsystemTerrainPackage
+            or ComponentPlayerPackage => ClientState.ProjectLoaded,
         _ => ClientState.NotConnected
     };
 

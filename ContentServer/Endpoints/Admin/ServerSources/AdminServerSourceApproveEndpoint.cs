@@ -20,7 +20,8 @@ namespace ContentServer.Endpoints.Admin.ServerSources;
 public sealed class AdminServerSourceApproveEndpoint(
     IMediator mediator,
     IServerSourceInspectionService inspection,
-    ApiKeyAuthenticationContext authenticationContext) : ContentEndpoint
+    ApiKeyAuthenticationContext authenticationContext
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -48,16 +49,25 @@ public sealed class AdminServerSourceApproveEndpoint(
 
     private async Task<ServerSourceDto> Find(Guid id, CancellationToken cancellationToken)
     {
-        var sources = await mediator.Send(new ListServerSourcesQuery(Id: new ServerSourceRegistrationId(id)),
-            cancellationToken);
-        return sources.FirstOrDefault()
-               ?? throw new KnownException("server_source_not_found", StatusCodes.Status404NotFound);
+        var sources = await mediator.Send(
+            new ListServerSourcesQuery(Id: new ServerSourceRegistrationId(id)),
+            cancellationToken
+        );
+        return sources.FirstOrDefault() ??
+               throw new KnownException("server_source_not_found", StatusCodes.Status404NotFound);
     }
 
     private async Task Review(Guid id, bool approved, string? message, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new ReviewServerSourceCommand(new ServerSourceRegistrationId(id),
-            authenticationContext.RequireAdministratorId(), approved, message), cancellationToken);
+        var result = await mediator.Send(
+            new ReviewServerSourceCommand(
+                new ServerSourceRegistrationId(id),
+                authenticationContext.RequireAdministratorId(),
+                approved,
+                message
+            ),
+            cancellationToken
+        );
         if (result == ReviewServerSourceResult.NotFound)
         {
             throw new KnownException("server_source_not_found", StatusCodes.Status404NotFound);

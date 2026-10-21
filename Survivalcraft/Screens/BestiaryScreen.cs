@@ -19,23 +19,30 @@ public class BestiaryScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/BestiaryScreen");
         LoadContents(this, node);
         _creaturesList = Children.Find<ListPanelWidget>("CreaturesList")!;
-        _creaturesList.ItemWidgetFactory = delegate (object item)
+        _creaturesList.ItemWidgetFactory = delegate(object item)
         {
             var bestiaryCreatureInfo2 = (BestiaryCreatureInfo)item;
             var node2 = ContentManager.Get<XElement>("Widgets/BestiaryItem");
             var obj = (ContainerWidget)LoadWidget(this, node2, null);
             var modelWidget = obj.Children.Find<ModelWidget>("BestiaryItem.Model")!;
-            SetupBestiaryModelWidget(bestiaryCreatureInfo2, modelWidget,
+            SetupBestiaryModelWidget(
+                bestiaryCreatureInfo2,
+                modelWidget,
                 _creaturesList.Items.IndexOf(item) % 2 == 0 ? new Vector3(-1f, 0f, -1f) : new Vector3(1f, 0f, -1f),
-                false, false);
+                false,
+                false
+            );
             obj.Children.Find<LabelWidget>("BestiaryItem.Text")!.Text = bestiaryCreatureInfo2.DisplayName;
             obj.Children.Find<LabelWidget>("BestiaryItem.Details")!.Text = bestiaryCreatureInfo2.Description;
             return obj;
         };
-        _creaturesList.ItemClicked += delegate (object item)
+        _creaturesList.ItemClicked += delegate(object item)
         {
-            ScreensManager.SwitchScreen("BestiaryDescription", item,
-                _creaturesList.Items.Cast<BestiaryCreatureInfo>().ToList());
+            ScreensManager.SwitchScreen(
+                "BestiaryDescription",
+                item,
+                _creaturesList.Items.Cast<BestiaryCreatureInfo>().ToList()
+            );
         };
         var list = new List<BestiaryCreatureInfo>();
         foreach (var entitiesValuesDictionary in DatabaseManager.EntitiesValuesDictionaries)
@@ -82,29 +89,45 @@ public class BestiaryScreen : Screen
             }
 
             var valuesDictionary2 =
-                DatabaseManager.FindValuesDictionaryForComponent(entitiesValuesDictionary,
-                    typeof(ComponentCreatureModel));
+                DatabaseManager.FindValuesDictionaryForComponent(
+                    entitiesValuesDictionary,
+                    typeof(ComponentCreatureModel)
+                );
             var valuesDictionary3 =
-                DatabaseManager.FindValuesDictionaryForComponent(entitiesValuesDictionary,
-                    typeof(ComponentBody));
+                DatabaseManager.FindValuesDictionaryForComponent(
+                    entitiesValuesDictionary,
+                    typeof(ComponentBody)
+                );
             var valuesDictionary4 =
-                DatabaseManager.FindValuesDictionaryForComponent(entitiesValuesDictionary,
-                    typeof(ComponentHealth));
+                DatabaseManager.FindValuesDictionaryForComponent(
+                    entitiesValuesDictionary,
+                    typeof(ComponentHealth)
+                );
             var valuesDictionary5 =
-                DatabaseManager.FindValuesDictionaryForComponent(entitiesValuesDictionary,
-                    typeof(ComponentMiner));
+                DatabaseManager.FindValuesDictionaryForComponent(
+                    entitiesValuesDictionary,
+                    typeof(ComponentMiner)
+                );
             var valuesDictionary6 =
-                DatabaseManager.FindValuesDictionaryForComponent(entitiesValuesDictionary,
-                    typeof(ComponentLocomotion));
+                DatabaseManager.FindValuesDictionaryForComponent(
+                    entitiesValuesDictionary,
+                    typeof(ComponentLocomotion)
+                );
             var valuesDictionary7 =
-                DatabaseManager.FindValuesDictionaryForComponent(entitiesValuesDictionary,
-                    typeof(ComponentHerdBehavior));
+                DatabaseManager.FindValuesDictionaryForComponent(
+                    entitiesValuesDictionary,
+                    typeof(ComponentHerdBehavior)
+                );
             var valuesDictionary8 =
-                DatabaseManager.FindValuesDictionaryForComponent(entitiesValuesDictionary,
-                    typeof(ComponentMount));
+                DatabaseManager.FindValuesDictionaryForComponent(
+                    entitiesValuesDictionary,
+                    typeof(ComponentMount)
+                );
             var valuesDictionary9 =
-                DatabaseManager.FindValuesDictionaryForComponent(entitiesValuesDictionary,
-                    typeof(ComponentLoot));
+                DatabaseManager.FindValuesDictionaryForComponent(
+                    entitiesValuesDictionary,
+                    typeof(ComponentLoot)
+                );
             string? descriptionKey = null;
             var dy = valuesDictionary.GetValue<string>("Description");
             if (dy.StartsWith('[') && dy.EndsWith(']'))
@@ -127,15 +150,20 @@ public class BestiaryScreen : Screen
                 Mass = valuesDictionary3?.GetValue<float>("Mass") ?? 0,
                 AttackResilience = valuesDictionary4?.GetValue<float>("AttackResilience") ?? 0,
                 AttackPower = valuesDictionary5?.GetValue<float>("AttackPower") ?? 0f,
-                MovementSpeed = MathUtils.Max(valuesDictionary6?.GetValue<float>("WalkSpeed") ?? 0,
+                MovementSpeed = MathUtils.Max(
+                    valuesDictionary6?.GetValue<float>("WalkSpeed") ?? 0,
                     valuesDictionary6?.GetValue<float>("FlySpeed") ?? 0,
-                    valuesDictionary6?.GetValue<float>("SwimSpeed") ?? 0),
+                    valuesDictionary6?.GetValue<float>("SwimSpeed") ?? 0
+                ),
                 JumpHeight = MathUtils.Sqr(valuesDictionary6?.GetValue<float>("JumpSpeed") ?? 0) / 20f,
                 IsHerding = valuesDictionary7 != null,
                 CanBeRidden = valuesDictionary8 != null,
                 HasSpawnerEgg = value2?.GetValue<bool>("ShowEgg") ?? false,
                 Loot = valuesDictionary9 != null
-                    ? ComponentLoot.ParseLootList(valuesDictionary9.GetValue<ValuesDictionary>("Loot"), CurrentModRuntime.Value!.PreviewCatalog)
+                    ? ComponentLoot.ParseLootList(
+                        valuesDictionary9.GetValue<ValuesDictionary>("Loot"),
+                        CurrentModRuntime.Value!.PreviewCatalog
+                    )
                     : []
             };
 
@@ -197,8 +225,13 @@ public class BestiaryScreen : Screen
         }
     }
 
-    public static void SetupBestiaryModelWidget(BestiaryCreatureInfo info, ModelWidget modelWidget, Vector3 offset,
-        bool autoRotate, bool autoAspect)
+    public static void SetupBestiaryModelWidget(
+        BestiaryCreatureInfo info,
+        ModelWidget modelWidget,
+        Vector3 offset,
+        bool autoRotate,
+        bool autoAspect
+    )
     {
         modelWidget.Model = ContentManager.Get<Model>(info.ModelName);
         modelWidget.TextureOverride = ContentManager.Get<Texture2D>(info.TextureOverride);

@@ -24,7 +24,11 @@ public sealed class PublicPackageEndpoint(IMediator mediator, ContentPackageStor
             throw new KnownException("package_not_found", StatusCodes.Status404NotFound);
         }
 
-        await Results.File(packageStore.Open(blob.Hash), blob.MediaType, blob.FileName,
-            enableRangeProcessing: true).ExecuteAsync(HttpContext);
+        await Results.File(
+            packageStore.Open(blob.Hash),
+            blob.MediaType,
+            blob.FileName,
+            enableRangeProcessing: true
+        ).ExecuteAsync(HttpContext);
     }
 }

@@ -26,15 +26,19 @@ public sealed class ComponentSleepPackageHandler : PackageHandlerBase<ComponentS
         }
 
         var project = GameManager.Project;
-        if (context.IsServer && (context.Sender is null ||
-            !project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData.Any(player =>
-                ReferenceEquals(player.Client, context.Sender) &&
-                player.ComponentPlayer?.Entity.EntityId == package.EntityId)))
+        if (context.IsServer &&
+            (context.Sender is null ||
+             !project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData.Any(player =>
+                 ReferenceEquals(player.Client, context.Sender) &&
+                 player.ComponentPlayer?.Entity.EntityId == package.EntityId
+             )))
         {
             return;
         }
 
-        project.FindEntityById(package.EntityId, e =>
+        project.FindEntityById(
+            package.EntityId,
+            e =>
             {
                 var sleep = e.FindComponent<ComponentSleep>();
                 if (sleep == null)
@@ -51,12 +55,13 @@ public sealed class ComponentSleepPackageHandler : PackageHandlerBase<ComponentS
                         }
                         else
                         {
-                            var response = new ComponentSleepPackage(sleep.Entity.EntityId,
-                                    ComponentSleepPackage.EventType.Sleep,
-                                    package.AllowManualWakeup,
-                                    false,
-                                    reason2
-                                );
+                            var response = new ComponentSleepPackage(
+                                sleep.Entity.EntityId,
+                                ComponentSleepPackage.EventType.Sleep,
+                                package.AllowManualWakeup,
+                                false,
+                                reason2
+                            );
                             if (context.Sender is not null)
                             {
                                 netNode.QueuePackage(response, PackageAudience.To(context.Sender));

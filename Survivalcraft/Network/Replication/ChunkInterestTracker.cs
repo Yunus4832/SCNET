@@ -20,6 +20,7 @@ public sealed class ChunkInterestTracker
         {
             _chunks.Add(client, new HashSet<Point2>(current));
         }
+
         return new ChunkInterestChanges(entered, left);
     }
 

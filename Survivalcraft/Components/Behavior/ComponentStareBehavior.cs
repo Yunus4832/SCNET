@@ -79,8 +79,16 @@ public class ComponentStareBehavior : ComponentBehavior, IUpdateable
 
                 var position = _componentCreature.ComponentBody.Position;
                 var v = Vector3.Normalize(_target.ComponentBody.Position - position);
-                _componentPathfinding.SetDestination(position + 1.1f * v, _random.Float(0.3f, 0.4f), 1f, 0, false,
-                    true, false, null);
+                _componentPathfinding.SetDestination(
+                    position + 1.1f * v,
+                    _random.Float(0.3f, 0.4f),
+                    1f,
+                    0,
+                    false,
+                    true,
+                    false,
+                    null
+                );
                 if (_random.Float(0f, 1f) < 0.5f)
                 {
                     _componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
@@ -88,7 +96,9 @@ public class ComponentStareBehavior : ComponentBehavior, IUpdateable
             },
             delegate
             {
-                if (!IsActive || _target == null || _componentPathfinding.IsStuck ||
+                if (!IsActive ||
+                    _target == null ||
+                    _componentPathfinding.IsStuck ||
                     _subsystemTime.GameTime > _stareEndTime ||
                     _random.Float(0f, 1f) < 1f * _subsystemTime.GameTimeDelta && ScoreTarget(_target) <= 0f)
                 {
@@ -139,8 +149,10 @@ public class ComponentStareBehavior : ComponentBehavior, IUpdateable
             return 0f;
         }
 
-        var num = Vector3.Distance(_componentCreature.ComponentBody.Position,
-            componentCreature.ComponentBody.Position);
+        var num = Vector3.Distance(
+            _componentCreature.ComponentBody.Position,
+            componentCreature.ComponentBody.Position
+        );
         var num2 = _stareRange - num;
         if (_random.Float(0f, 1f) < 0.66f &&
             componentCreature.Entity.FindComponent<ComponentPlayer>() != null)
@@ -157,7 +169,8 @@ public class ComponentStareBehavior : ComponentBehavior, IUpdateable
             _componentCreature,
             componentCreature,
             CreatureTargetingKind.Stare,
-            num2);
+            num2
+        );
         CurrentModRuntime.Value?.Gameplay.Invoke(context);
         return context.Cancel ? 0f : context.Score;
     }

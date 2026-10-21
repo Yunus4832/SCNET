@@ -206,13 +206,21 @@ public class ListPanelWidget : ScrollPanelWidget
             {
                 if (Direction == LayoutDirection.Horizontal)
                 {
-                    child.Measure(new Vector2(ItemSize,
-                        MathUtils.Max(parentAvailableSize.Y - 2f * child.Margin.Y, 0f)));
+                    child.Measure(
+                        new Vector2(
+                            ItemSize,
+                            MathUtils.Max(parentAvailableSize.Y - 2f * child.Margin.Y, 0f)
+                        )
+                    );
                 }
                 else
                 {
-                    child.Measure(new Vector2(MathUtils.Max(parentAvailableSize.X - 2f * child.Margin.X, 0f),
-                        ItemSize));
+                    child.Measure(
+                        new Vector2(
+                            MathUtils.Max(parentAvailableSize.X - 2f * child.Margin.X, 0f),
+                            ItemSize
+                        )
+                    );
                 }
             }
         }
@@ -267,7 +275,9 @@ public class ListPanelWidget : ScrollPanelWidget
             _clickAllowed = !flag;
         }
 
-        if (!Input.Click.HasValue || !_clickAllowed || !HitTestPanel(Input.Click.Value.Start) ||
+        if (!Input.Click.HasValue ||
+            !_clickAllowed ||
+            !HitTestPanel(Input.Click.Value.Start) ||
             !HitTestPanel(Input.Click.Value.End))
         {
             return;
@@ -289,7 +299,8 @@ public class ListPanelWidget : ScrollPanelWidget
     public override void Draw(DrawContext dc)
     {
         if (IsSelectionEnabled &&
-            SelectedIndex.HasValue && SelectedIndex.Value >= _firstVisibleIndex &&
+            SelectedIndex.HasValue &&
+            SelectedIndex.Value >= _firstVisibleIndex &&
             SelectedIndex.Value <= _lastVisibleIndex)
         {
             var vector = Direction == LayoutDirection.Horizontal

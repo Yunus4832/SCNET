@@ -21,7 +21,8 @@ public class NotGateElectricElement(
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
                 num = (int)MathUtils.Round(
-                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) * 15f);
+                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) * 15f
+                );
                 break;
             }
         }

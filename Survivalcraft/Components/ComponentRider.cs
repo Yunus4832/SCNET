@@ -46,7 +46,8 @@ public class ComponentRider : Component, IUpdateable
                 Quaternion.Slerp(componentBody.ParentBodyRotationOffset, _targetRotationOffset, f);
             _animationTime += dt;
             if (Vector3.DistanceSquared(componentBody.ParentBodyPositionOffset, _targetPositionOffset) <
-                0.0100000007f || _animationTime > 0.75f)
+                0.0100000007f ||
+                _animationTime > 0.75f)
             {
                 _isAnimating = false;
                 if (_isDismounting)
@@ -83,7 +84,8 @@ public class ComponentRider : Component, IUpdateable
             Vector3.DistanceSquared(
                 parentBody.Position +
                 Vector3.Transform(componentBody2.ParentBodyPositionOffset, parentBody.Rotation),
-                componentBody2.Position);
+                componentBody2.Position
+            );
         // Terrain loading pauses body movement; it must not look like a broken mount constraint.
         if (componentBody2.IsTerrainReady && parentBody.IsTerrainReady && distance > 0.160000011f)
         {
@@ -98,7 +100,7 @@ public class ComponentRider : Component, IUpdateable
         if (_outOfMountTime > 0.1f ||
             componentHealth is { Health: <= 0f } ||
             ComponentCreature.ComponentHealth.Health <= 0f)
-        //服务器和客户端都由自己控制下马
+            //服务器和客户端都由自己控制下马
         {
             if (CommonLib.WorkType == WorkType.Local ||
                 ComponentCreature.ComponentBody.Player is not { PlayerData.IsMainPlayer: false })
@@ -125,10 +127,10 @@ public class ComponentRider : Component, IUpdateable
         var num = 0f;
         ComponentMount? result = null;
         foreach (var item in from b in _componentBodies
-                             select b.Entity.FindComponent<ComponentMount>()
+                 select b.Entity.FindComponent<ComponentMount>()
                  into m
-                             where m != null && m.Entity != Entity
-                             select m)
+                 where m != null && m.Entity != Entity
+                 select m)
         {
             var num2 = ScoreMount(item, 2.5f);
             if (!(num2 > num))
@@ -151,7 +153,8 @@ public class ComponentRider : Component, IUpdateable
         ComponentCreature.ComponentBody.ParentBody = componentMount.ComponentBody;
         ComponentCreature.ComponentBody.ParentBodyPositionOffset = Vector3.Transform(
             ComponentCreature.ComponentBody.Position - componentMount.ComponentBody.Position,
-            Quaternion.Conjugate(componentMount.ComponentBody.Rotation));
+            Quaternion.Conjugate(componentMount.ComponentBody.Rotation)
+        );
         ComponentCreature.ComponentBody.ParentBodyRotationOffset =
             Quaternion.Conjugate(componentMount.ComponentBody.Rotation) * ComponentCreature.ComponentBody.Rotation;
         _targetPositionOffset = componentMount.MountOffset + _riderOffset;
@@ -173,11 +176,20 @@ public class ComponentRider : Component, IUpdateable
             if (CommonLib.WorkType != WorkType.Client)
             {
                 StartNetMounting(componentMount);
-                NetworkSender.SendToObservers(Entity, new ComponentMountPackage(Entity.EntityId, componentMount.Entity.EntityId));
+                NetworkSender.SendToObservers(
+                    Entity,
+                    new ComponentMountPackage(Entity.EntityId, componentMount.Entity.EntityId)
+                );
             }
             else
             {
-                NetworkSender.SendToServer(new ComponentMountPackage(Entity.EntityId, componentMount.Entity.EntityId, true));
+                NetworkSender.SendToServer(
+                    new ComponentMountPackage(
+                        Entity.EntityId,
+                        componentMount.Entity.EntityId,
+                        true
+                    )
+                );
             }
         }
     }
@@ -194,12 +206,23 @@ public class ComponentRider : Component, IUpdateable
         if (Mount.DismountOffset.X > 0f)
         {
             var s = Mount.DismountOffset.X + 0.5f;
-            var vector = 0.5f * (ComponentCreature.ComponentBody.BoundingBox.Min +
-                                 ComponentCreature.ComponentBody.BoundingBox.Max);
-            var terrainRaycastResult = _subsystemTerrain.Raycast(vector,
-                vector - s * ComponentCreature.ComponentBody.Matrix.Right, false, true, null);
-            var terrainRaycastResult2 = _subsystemTerrain.Raycast(vector,
-                vector + s * ComponentCreature.ComponentBody.Matrix.Right, false, true, null);
+            var vector = 0.5f *
+                         (ComponentCreature.ComponentBody.BoundingBox.Min +
+                          ComponentCreature.ComponentBody.BoundingBox.Max);
+            var terrainRaycastResult = _subsystemTerrain.Raycast(
+                vector,
+                vector - s * ComponentCreature.ComponentBody.Matrix.Right,
+                false,
+                true,
+                null
+            );
+            var terrainRaycastResult2 = _subsystemTerrain.Raycast(
+                vector,
+                vector + s * ComponentCreature.ComponentBody.Matrix.Right,
+                false,
+                true,
+                null
+            );
             x = !terrainRaycastResult.HasValue
                 ? -Mount.DismountOffset.X
                 : !terrainRaycastResult2.HasValue
@@ -212,7 +235,8 @@ public class ComponentRider : Component, IUpdateable
         _isAnimating = true;
         _animationTime = 0f;
         _isDismounting = true;
-        _targetPositionOffset = Mount.MountOffset + _riderOffset +
+        _targetPositionOffset = Mount.MountOffset +
+                                _riderOffset +
                                 new Vector3(x, Mount.DismountOffset.Y, Mount.DismountOffset.Z);
         _targetRotationOffset =
             Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathUtils.Sign(x) * MathUtils.DegToRad(60f));

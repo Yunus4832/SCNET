@@ -12,11 +12,14 @@ public class GameDataCatalogTest
     {
         var reads = 0;
         var host = new ModHost();
-        host.LoadAndStart([
-            new ModDescriptor(
-                new ModManifest("example", "Example", "1.0.0"),
-                () => new DataMod(() => reads++))
-        ]);
+        host.LoadAndStart(
+            [
+                new ModDescriptor(
+                    new ModManifest("example", "Example", "1.0.0"),
+                    () => new DataMod(() => reads++)
+                )
+            ]
+        );
 
         var catalog = GameDataCatalog.Compile(host.Extensions);
 
@@ -40,7 +43,8 @@ public class GameDataCatalogTest
                 XmlDataExtensions.DatabaseRegistryName,
                 "database_base",
                 XmlContributionMode.Base,
-                () => new XElement("Database", new XElement("DatabaseObjects")));
+                () => new XElement("Database", new XElement("DatabaseObjects"))
+            );
             Register(
                 context,
                 XmlDataExtensions.DatabaseRegistryName,
@@ -50,13 +54,15 @@ public class GameDataCatalogTest
                 {
                     onRead();
                     return new XElement("Patch", new XElement("Entity", new XAttribute("Guid", Guid.NewGuid())));
-                });
+                }
+            );
             Register(
                 context,
                 XmlDataExtensions.RecipeRegistryName,
                 "recipes_base",
                 XmlContributionMode.Base,
-                () => new XElement("Recipes"));
+                () => new XElement("Recipes")
+            );
             Register(
                 context,
                 XmlDataExtensions.RecipeRegistryName,
@@ -67,14 +73,17 @@ public class GameDataCatalogTest
                     onRead();
                     return new XElement(
                         "Recipes",
-                        new XElement("Recipe", new XAttribute("Result", "AirBlock")));
-                });
+                        new XElement("Recipe", new XAttribute("Result", "AirBlock"))
+                    );
+                }
+            );
             Register(
                 context,
                 XmlDataExtensions.ClothingRegistryName,
                 "clothing_base",
                 XmlContributionMode.Base,
-                () => new XElement("Clothes"));
+                () => new XElement("Clothes")
+            );
         }
 
         public void Start(IModContext context)
@@ -90,13 +99,15 @@ public class GameDataCatalogTest
             string registry,
             string path,
             XmlContributionMode mode,
-            Func<XElement> read)
+            Func<XElement> read
+        )
         {
             context.Extensions.RegisterXmlData(
                 registry,
                 new ResourceId(context.Manifest.ModId, path),
                 mode,
-                read);
+                read
+            );
         }
     }
 }

@@ -2,7 +2,9 @@ namespace Engine.Network;
 
 public enum RelayPolicy
 {
-    Disabled,
-    Allowed,
-    Required
+    Disabled = 0,
+
+    Allowed = 1,
+
+    Required = 2
 }

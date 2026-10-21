@@ -15,11 +15,13 @@ public class PumpkinBlock() : BasePumpkinBlock(false)
         var data = Terrain.ExtractData(oldValue);
         if (GetSize(data) == 7 && !GetIsDead(data) && Random.Bool(0.5f))
         {
-            dropValues.Add(new BlockDropValue
-            {
-                Value = 248,
-                Count = 1
-            });
+            dropValues.Add(
+                new BlockDropValue
+                {
+                    Value = 248,
+                    Count = 1
+                }
+            );
         }
     }
 

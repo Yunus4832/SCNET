@@ -20,7 +20,8 @@ namespace ContentServer.Endpoints.Admin.RendezvousServices;
 public sealed class AdminRendezvousServiceApproveEndpoint(
     IMediator mediator,
     RendezvousInspectionClient inspection,
-    ApiKeyAuthenticationContext authenticationContext) : ContentEndpoint
+    ApiKeyAuthenticationContext authenticationContext
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -39,7 +40,10 @@ public sealed class AdminRendezvousServiceApproveEndpoint(
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or
                                               System.Text.Json.JsonException)
         {
-            throw new KnownException("rendezvous_service_unavailable_or_invalid", StatusCodes.Status422UnprocessableEntity);
+            throw new KnownException(
+                "rendezvous_service_unavailable_or_invalid",
+                StatusCodes.Status422UnprocessableEntity
+            );
         }
 
         await Review(id, true, null, cancellationToken);
@@ -48,16 +52,25 @@ public sealed class AdminRendezvousServiceApproveEndpoint(
 
     private async Task<RendezvousServiceDto> Find(Guid id, CancellationToken cancellationToken)
     {
-        var sources = await mediator.Send(new ListRendezvousServicesQuery(Id: new RendezvousServiceRegistrationId(id)),
-            cancellationToken);
-        return sources.FirstOrDefault()
-               ?? throw new KnownException("rendezvous_service_not_found", StatusCodes.Status404NotFound);
+        var sources = await mediator.Send(
+            new ListRendezvousServicesQuery(Id: new RendezvousServiceRegistrationId(id)),
+            cancellationToken
+        );
+        return sources.FirstOrDefault() ??
+               throw new KnownException("rendezvous_service_not_found", StatusCodes.Status404NotFound);
     }
 
     private async Task Review(Guid id, bool approved, string? message, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new ReviewRendezvousServiceCommand(new RendezvousServiceRegistrationId(id),
-            authenticationContext.RequireAdministratorId(), approved, message), cancellationToken);
+        var result = await mediator.Send(
+            new ReviewRendezvousServiceCommand(
+                new RendezvousServiceRegistrationId(id),
+                authenticationContext.RequireAdministratorId(),
+                approved,
+                message
+            ),
+            cancellationToken
+        );
         if (result == ReviewRendezvousServiceResult.NotFound)
         {
             throw new KnownException("rendezvous_service_not_found", StatusCodes.Status404NotFound);

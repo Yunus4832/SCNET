@@ -17,16 +17,26 @@ public sealed class ClientChunkContentCoordinatorTest
         coordinator.ContentInstalled += _ => installed++;
 
         Assert.False(coordinator.TryInstall(Snapshot(chunk.Coords, 2, 1, 10)));
-        Assert.True(coordinator.TryInstall(Snapshot(
-            chunk.Coords,
-            chunk.AllocationGeneration,
-            1,
-            20)));
-        Assert.False(coordinator.TryInstall(Snapshot(
-            chunk.Coords,
-            chunk.AllocationGeneration,
-            1,
-            30)));
+        Assert.True(
+            coordinator.TryInstall(
+                Snapshot(
+                    chunk.Coords,
+                    chunk.AllocationGeneration,
+                    1,
+                    20
+                )
+            )
+        );
+        Assert.False(
+            coordinator.TryInstall(
+                Snapshot(
+                    chunk.Coords,
+                    chunk.AllocationGeneration,
+                    1,
+                    30
+                )
+            )
+        );
 
         Assert.Equal(1, installed);
         Assert.True(chunk.IsLoaded);
@@ -38,7 +48,8 @@ public sealed class ClientChunkContentCoordinatorTest
         Point2 coords,
         ulong generation,
         long version,
-        int value)
+        int value
+    )
     {
         var cells = new int[AuthorityChunkSnapshot.CellCount];
         cells[0] = value;
@@ -46,6 +57,7 @@ public sealed class ClientChunkContentCoordinatorTest
             new ChunkAllocationId(coords, generation),
             version,
             cells,
-            new long[AuthorityChunkSnapshot.ShaftCount]);
+            new long[AuthorityChunkSnapshot.ShaftCount]
+        );
     }
 }

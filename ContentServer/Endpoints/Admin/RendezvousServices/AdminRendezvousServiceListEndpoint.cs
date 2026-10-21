@@ -19,7 +19,10 @@ public sealed class AdminRendezvousServiceListEndpoint(IMediator mediator) : Con
     {
         var status = Query<RendezvousServiceRegistrationStatus?>("status", isRequired: false);
         var items = await mediator.Send(new ListRendezvousServicesQuery(status), cancellationToken);
-        await Send.ResponseAsync(items.Select(EndpointMappings.RendezvousService).ToArray().AsResponseData(),
-            StatusCodes.Status200OK, cancellationToken);
+        await Send.ResponseAsync(
+            items.Select(EndpointMappings.RendezvousService).ToArray().AsResponseData(),
+            StatusCodes.Status200OK,
+            cancellationToken
+        );
     }
 }

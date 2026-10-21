@@ -2,6 +2,7 @@ namespace Game.Screens;
 
 public enum ScreenshotSize
 {
-    ScreenSize,
-    FullHD
+    ScreenSize = 0,
+
+    FullHD = 1
 }

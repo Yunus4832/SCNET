@@ -93,7 +93,8 @@ public class ComponentAvoidPlayerBehavior : ComponentBehavior, IUpdateable
                 {
                     stateMachine.TransitionTo("Inactive");
                 }
-                else if (_target == null || _componentPathfinding.IsStuck ||
+                else if (_target == null ||
+                         _componentPathfinding.IsStuck ||
                          !_componentPathfinding.Destination.HasValue)
                 {
                     _importanceLevel = 0f;
@@ -106,9 +107,16 @@ public class ComponentAvoidPlayerBehavior : ComponentBehavior, IUpdateable
                         Vector3.Normalize(_componentCreature.ComponentBody.Position - _target.ComponentBody.Position);
                     var value = _componentCreature.ComponentBody.Position +
                                 10f * Vector3.Normalize(new Vector3(vector.X, 0f, vector.Z));
-                    _componentPathfinding.SetDestination(value, MathUtils.Lerp(0.6f, 1f, num), 1f, 0, false, true,
+                    _componentPathfinding.SetDestination(
+                        value,
+                        MathUtils.Lerp(0.6f, 1f, num),
+                        1f,
+                        0,
                         false,
-                        null);
+                        true,
+                        false,
+                        null
+                    );
                     _componentCreature.ComponentCreatureModel.LookRandomOrder = true;
                     if (_random.Float(0f, 1f) < 0.1f * _dt)
                     {
@@ -132,8 +140,11 @@ public class ComponentAvoidPlayerBehavior : ComponentBehavior, IUpdateable
         ComponentCreature? result = null;
         var num = 0f;
         _componentBodies.Clear();
-        _subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z),
-            MathUtils.Max(_nightRange, _dayRange), _componentBodies);
+        _subsystemBodies.FindBodiesAroundPoint(
+            new Vector2(position.X, position.Z),
+            MathUtils.Max(_nightRange, _dayRange),
+            _componentBodies
+        );
         for (var i = 0; i < _componentBodies.Count; i++)
         {
             var componentCreature = _componentBodies.Array[i].Entity.FindComponent<ComponentCreature>();
@@ -164,7 +175,8 @@ public class ComponentAvoidPlayerBehavior : ComponentBehavior, IUpdateable
             return 0f;
         }
 
-        if (!target.IsAddedToProject || target.ComponentHealth.Health <= 0f ||
+        if (!target.IsAddedToProject ||
+            target.ComponentHealth.Health <= 0f ||
             target.Entity.FindComponent<ComponentPlayer>() == null)
         {
             return 0f;
@@ -181,7 +193,8 @@ public class ComponentAvoidPlayerBehavior : ComponentBehavior, IUpdateable
             _componentCreature,
             target,
             CreatureTargetingKind.AvoidPlayer,
-            score);
+            score
+        );
         CurrentModRuntime.Value?.Gameplay.Invoke(context);
         return context.Cancel ? 0f : context.Score;
     }

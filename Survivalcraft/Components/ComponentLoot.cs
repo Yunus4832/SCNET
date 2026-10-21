@@ -30,8 +30,9 @@ public class ComponentLoot : Component, IUpdateable
     {
         if (_lootDropped ||
             !_componentCreature.ComponentHealth.DeathTime.HasValue ||
-            !(_subsystemGameInfo.TotalElapsedGameTime >= _componentCreature.ComponentHealth.DeathTime.Value +
-                _componentCreature.ComponentHealth.CorpseDuration))
+            !(_subsystemGameInfo.TotalElapsedGameTime >=
+              _componentCreature.ComponentHealth.DeathTime.Value +
+              _componentCreature.ComponentHealth.CorpseDuration))
         {
             return;
         }
@@ -53,7 +54,8 @@ public class ComponentLoot : Component, IUpdateable
                 for (var i = 0; i < num2; i++)
                 {
                     var position = (_componentCreature.ComponentBody.BoundingBox.Min +
-                                    _componentCreature.ComponentBody.BoundingBox.Max) / 2f;
+                                    _componentCreature.ComponentBody.BoundingBox.Max) /
+                                   2f;
                     _subsystemPickables.AddPickable(item.Value, 1, position, null, null);
                 }
             }
@@ -73,8 +75,14 @@ public class ComponentLoot : Component, IUpdateable
         _subsystemPickables = Project.FindSubsystem<SubsystemPickables>(true)!;
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
         _lootDropped = valuesDictionary.GetValue<bool>("LootDropped");
-        _lootList = ParseLootList(valuesDictionary.GetValue<ValuesDictionary>("Loot"), CurrentModRuntime.Value!.RequireWorldCatalog());
-        _lootOnFireList = ParseLootList(valuesDictionary.GetValue<ValuesDictionary>("LootOnFire"), CurrentModRuntime.Value!.RequireWorldCatalog());
+        _lootList = ParseLootList(
+            valuesDictionary.GetValue<ValuesDictionary>("Loot"),
+            CurrentModRuntime.Value!.RequireWorldCatalog()
+        );
+        _lootOnFireList = ParseLootList(
+            valuesDictionary.GetValue<ValuesDictionary>("LootOnFire"),
+            CurrentModRuntime.Value!.RequireWorldCatalog()
+        );
     }
 
     public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)

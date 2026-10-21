@@ -60,14 +60,16 @@ public static class TextInputManager
         Action<string>? commitText = null,
         Action? backspace = null,
         Action<TextComposition>? updateComposition = null,
-        TextInputRectangle? initialRectangle = null)
+        TextInputRectangle? initialRectangle = null
+    )
     {
         _activeSession?.Dispose();
 
         var session = new TextInputSession(
             commitText ?? delegate { },
             backspace ?? delegate { },
-            updateComposition ?? delegate { });
+            updateComposition ?? delegate { }
+        );
         _activeSession = session;
         _cursorRectangle = initialRectangle;
 
@@ -130,7 +132,8 @@ public static class TextInputManager
             _backend.Initialize();
             _isInitialized = true;
             Log.Information(
-                $"Text input backend initialized: {_backend.GetType().Name}, available={_backend.IsAvailable}.");
+                $"Text input backend initialized: {_backend.GetType().Name}, available={_backend.IsAvailable}."
+            );
         }
         catch (Exception ex)
         {

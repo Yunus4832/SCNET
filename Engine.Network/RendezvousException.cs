@@ -7,7 +7,8 @@ public sealed class RendezvousException(
     RendezvousFailureKind kind,
     string errorCode,
     HttpStatusCode? statusCode = null,
-    Exception? innerException = null)
+    Exception? innerException = null
+)
     : IOException($"Rendezvous {operation} failed: {errorCode} ({kind}).", innerException)
 {
     public string Operation { get; } = operation;

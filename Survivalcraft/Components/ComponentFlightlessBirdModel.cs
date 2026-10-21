@@ -40,8 +40,11 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
     public override void Update(float dt)
     {
         var footstepsPhase = _footstepsPhase;
-        var num = ComponentCreature.ComponentLocomotion.SlipSpeed ?? Vector3.Dot(
-            ComponentCreature.ComponentBody.Velocity, ComponentCreature.ComponentBody.Matrix.Forward);
+        var num = ComponentCreature.ComponentLocomotion.SlipSpeed ??
+                  Vector3.Dot(
+                      ComponentCreature.ComponentBody.Velocity,
+                      ComponentCreature.ComponentBody.Matrix.Forward
+                  );
         if (MathUtils.Abs(num) > 0.2f)
         {
             MovementAnimationPhase += num * dt * _walkAnimationSpeed;
@@ -105,12 +108,15 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
             var num = 0f;
             var num2 = 0f;
             var num3 = 0f;
-            if (MovementAnimationPhase != 0f && (ComponentCreature.ComponentBody.StandingOnValue.HasValue ||
-                                                 ComponentCreature.ComponentBody.ImmersionFactor > 0f))
+            if (MovementAnimationPhase != 0f &&
+                (ComponentCreature.ComponentBody.StandingOnValue.HasValue ||
+                 ComponentCreature.ComponentBody.ImmersionFactor > 0f))
             {
                 var num4 =
-                    Vector3.Dot(ComponentCreature.ComponentBody.Velocity,
-                        ComponentCreature.ComponentBody.Matrix.Forward) >
+                    Vector3.Dot(
+                        ComponentCreature.ComponentBody.Velocity,
+                        ComponentCreature.ComponentBody.Matrix.Forward
+                    ) >
                     0.75f * ComponentCreature.ComponentLocomotion.WalkSpeed
                         ? 1.5f * _walkLegsAngle
                         : _walkLegsAngle;
@@ -135,9 +141,18 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
             vector2.Y += _headAngleY;
             if (_feedFactor > 0f)
             {
-                var y = 0f - MathUtils.DegToRad(35f +
-                                                55f * SimplexNoise.OctavedNoise((float)subsystemTime.GameTime, 3f, 2,
-                                                    2f, 0.75f));
+                var y = 0f -
+                        MathUtils.DegToRad(
+                            35f +
+                            55f *
+                            SimplexNoise.OctavedNoise(
+                                (float)subsystemTime.GameTime,
+                                3f,
+                                2,
+                                2f,
+                                0.75f
+                            )
+                        );
                 vector2 = Vector2.Lerp(v2: new Vector2(0f, y), v1: vector2, f: _feedFactor);
             }
 
@@ -150,14 +165,20 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
                 vector2 = 0.6f * vector2;
             }
 
-            SetBoneTransform(_bodyBone.Index,
-                Matrix.CreateRotationY(vector.X) * Matrix.CreateTranslation(position.X, position.Y + Bob, position.Z));
-            SetBoneTransform(_headBone.Index,
-                Matrix.CreateRotationX(vector2.Y) * Matrix.CreateRotationZ(0f - vector2.X));
+            SetBoneTransform(
+                _bodyBone.Index,
+                Matrix.CreateRotationY(vector.X) * Matrix.CreateTranslation(position.X, position.Y + Bob, position.Z)
+            );
+            SetBoneTransform(
+                _headBone.Index,
+                Matrix.CreateRotationX(vector2.Y) * Matrix.CreateRotationZ(0f - vector2.X)
+            );
             if (_neckBone != null)
             {
-                SetBoneTransform(_neckBone.Index,
-                    Matrix.CreateRotationX(vector3.Y) * Matrix.CreateRotationZ(0f - vector3.X));
+                SetBoneTransform(
+                    _neckBone.Index,
+                    Matrix.CreateRotationX(vector3.Y) * Matrix.CreateRotationZ(0f - vector3.X)
+                );
             }
 
             SetBoneTransform(_leg1Bone.Index, Matrix.CreateRotationX(_legAngle1));
@@ -169,11 +190,13 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
             float num9 = Vector3.Dot(componentFrame.Matrix.Right, DeathCauseOffset) > 0f ? 1 : -1;
             var num10 = ComponentCreature.ComponentBody.BoundingBox.Max.Y -
                         ComponentCreature.ComponentBody.BoundingBox.Min.Y;
-            SetBoneTransform(_bodyBone.Index,
+            SetBoneTransform(
+                _bodyBone.Index,
                 Matrix.CreateTranslation(-0.5f * num10 * DeathPhase * Vector3.UnitY) *
                 Matrix.CreateFromYawPitchRoll(vector.X, 0f, (float)Math.PI / 2f * DeathPhase * num9) *
                 Matrix.CreateTranslation(0.2f * num10 * DeathPhase * Vector3.UnitY) *
-                Matrix.CreateTranslation(position));
+                Matrix.CreateTranslation(position)
+            );
             SetBoneTransform(_headBone.Index, Matrix.Identity);
             if (_neckBone != null)
             {

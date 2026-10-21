@@ -22,7 +22,8 @@ public sealed class AdminSelfEndpoint(ApiKeyAuthenticationContext authentication
     {
         return new AdministratorSelfResponse(
             authenticationContext.RequireAdministratorId().ToString(),
-            "active").AsResponseData();
+            "active"
+        ).AsResponseData();
     }
 }
 

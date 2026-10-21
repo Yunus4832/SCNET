@@ -11,11 +11,14 @@ public sealed class InProcessChunkContentTransportTest
     {
         var cells = new int[AuthorityChunkSnapshot.CellCount];
         cells[0] = 42;
-        var authority = new FakeAuthority(new AuthorityChunkSnapshot(
-            new Point2(5, 6),
-            3,
-            cells,
-            new long[AuthorityChunkSnapshot.ShaftCount]));
+        var authority = new FakeAuthority(
+            new AuthorityChunkSnapshot(
+                new Point2(5, 6),
+                3,
+                cells,
+                new long[AuthorityChunkSnapshot.ShaftCount]
+            )
+        );
         var transport = new InProcessChunkContentTransport(authority);
         var allocation = new ChunkAllocationId(new Point2(5, 6), 9);
 
@@ -33,11 +36,14 @@ public sealed class InProcessChunkContentTransportTest
     public void LocalTransportDoesNotPublishKnownVersion()
     {
         var coords = new Point2(5, 6);
-        var authority = new FakeAuthority(new AuthorityChunkSnapshot(
-            coords,
-            3,
-            new int[AuthorityChunkSnapshot.CellCount],
-            new long[AuthorityChunkSnapshot.ShaftCount]));
+        var authority = new FakeAuthority(
+            new AuthorityChunkSnapshot(
+                coords,
+                3,
+                new int[AuthorityChunkSnapshot.CellCount],
+                new long[AuthorityChunkSnapshot.ShaftCount]
+            )
+        );
         var transport = new InProcessChunkContentTransport(authority);
 
         transport.Request([new ChunkContentRequest(new ChunkAllocationId(coords, 1), 3)]);
@@ -49,11 +55,14 @@ public sealed class InProcessChunkContentTransportTest
     public void NewRequestSupersedesQueuedSnapshotForSameCoordinates()
     {
         var coords = new Point2(5, 6);
-        var authority = new FakeAuthority(new AuthorityChunkSnapshot(
-            coords,
-            3,
-            new int[AuthorityChunkSnapshot.CellCount],
-            new long[AuthorityChunkSnapshot.ShaftCount]));
+        var authority = new FakeAuthority(
+            new AuthorityChunkSnapshot(
+                coords,
+                3,
+                new int[AuthorityChunkSnapshot.CellCount],
+                new long[AuthorityChunkSnapshot.ShaftCount]
+            )
+        );
         var transport = new InProcessChunkContentTransport(authority);
 
         transport.Request([new ChunkContentRequest(new ChunkAllocationId(coords, 1))]);
@@ -68,11 +77,14 @@ public sealed class InProcessChunkContentTransportTest
     public void DiscardRemovesQueuedSnapshot()
     {
         var coords = new Point2(5, 6);
-        var authority = new FakeAuthority(new AuthorityChunkSnapshot(
-            coords,
-            3,
-            new int[AuthorityChunkSnapshot.CellCount],
-            new long[AuthorityChunkSnapshot.ShaftCount]));
+        var authority = new FakeAuthority(
+            new AuthorityChunkSnapshot(
+                coords,
+                3,
+                new int[AuthorityChunkSnapshot.CellCount],
+                new long[AuthorityChunkSnapshot.ShaftCount]
+            )
+        );
         var transport = new InProcessChunkContentTransport(authority);
         transport.Request([new ChunkContentRequest(new ChunkAllocationId(coords, 1))]);
 

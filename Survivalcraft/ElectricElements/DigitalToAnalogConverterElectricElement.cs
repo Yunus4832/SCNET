@@ -19,7 +19,8 @@ public class DigitalToAnalogConverterElectricElement(
         var rotation = Rotation;
         foreach (var connection in Connections)
         {
-            if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0 &&
+            if (connection.ConnectorType != ElectricConnectorType.Output &&
+                connection.NeighborConnectorType != 0 &&
                 IsSignalHigh(connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)))
             {
                 var connectorDirection =

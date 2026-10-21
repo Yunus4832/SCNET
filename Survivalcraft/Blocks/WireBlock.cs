@@ -100,8 +100,15 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
             wireMesh.ParentBone ??
             throw new InvalidOperationException("Required WireMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(wireMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            wireMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(0.9375f, 0f, 0f));
         for (var i = 0; i < 6; i++)
         {
@@ -173,8 +180,14 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
         var color2 = paintColor.HasValue
             ? color * SubsystemPalette.GetColor(environmentData, paintColor)
             : 1.25f * WireColor * color;
-        BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMesh, color2, 2f * size, ref matrix,
-            environmentData);
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneBlockMesh,
+            color2,
+            2f * size,
+            ref matrix,
+            environmentData
+        );
     }
 
     public override BlockPlacementData GetPlacementValue(
@@ -185,8 +198,11 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
     )
     {
         var point = CellFace.FaceToPoint3(raycastResult.CellFace.Face);
-        var cellValue = subsystemTerrain.Terrain.GetCellValue(raycastResult.CellFace.X + point.X,
-            raycastResult.CellFace.Y + point.Y, raycastResult.CellFace.Z + point.Z);
+        var cellValue = subsystemTerrain.Terrain.GetCellValue(
+            raycastResult.CellFace.X + point.X,
+            raycastResult.CellFace.Y + point.Y,
+            raycastResult.CellFace.Z + point.Z
+        );
         var num = Terrain.ExtractContents(cellValue);
         var block = Catalog.Blocks[num];
         var wireFacesBitmask = GetWireFacesBitmask(cellValue);
@@ -234,11 +250,13 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
         {
             if (WireExistsOnFace(oldValue, i) && !WireExistsOnFace(newValue, i))
             {
-                dropValues.Add(new BlockDropValue
-                {
-                    Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, paintColor)),
-                    Count = 1
-                });
+                dropValues.Add(
+                    new BlockDropValue
+                    {
+                        Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, paintColor)),
+                        Count = 1
+                    }
+                );
             }
         }
 

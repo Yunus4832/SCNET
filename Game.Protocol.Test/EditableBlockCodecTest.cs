@@ -18,7 +18,11 @@ public sealed class EditableBlockCodecTest
 
     [Theory]
     [MemberData(nameof(Modes))]
-    public void EditablePayloadAndTargetRoundTripWithoutRuntimeEditors(BuiltInBlockEditKind item, bool inventory, bool definition)
+    public void EditablePayloadAndTargetRoundTripWithoutRuntimeEditors(
+        BuiltInBlockEditKind item,
+        bool inventory,
+        bool definition
+    )
     {
         var message = new EditableBlockPackage
         {
@@ -33,7 +37,8 @@ public sealed class EditableBlockCodecTest
             Delay = 10
         };
         Assert.True(ProtocolMessageCodec.IsDefined(message.ID));
-        using var writer = new ProtocolWriter(); ProtocolMessageCodec.Write(message, writer);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(message, writer);
         var bytes = writer.Data(CompressionPolicy.None);
         using var reader = new ProtocolReader(bytes);
         var restored = Assert.IsType<EditableBlockPackage>(ProtocolMessageCodec.Read(message.ID, reader));
@@ -41,11 +46,17 @@ public sealed class EditableBlockCodecTest
         Assert.Equal(inventory && !definition, restored.EditAsItem);
         Assert.Equal(definition, restored.SyncItem);
         if (!inventory && !definition) { Assert.Equal(message.CellFace, restored.CellFace); }
+
         if (item is BuiltInBlockEditKind.MemoryBank or BuiltInBlockEditKind.TruthTable)
-        { Assert.Equal(message.Data, restored.Data); Assert.Equal(message.Id, restored.Id); }
+        {
+            Assert.Equal(message.Data, restored.Data);
+            Assert.Equal(message.Id, restored.Id);
+        }
         else { Assert.Equal(message.Delay, restored.Delay); }
+
         Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
-        using var repeated = new ProtocolWriter(); ProtocolMessageCodec.Write(restored, repeated);
+        using var repeated = new ProtocolWriter();
+        ProtocolMessageCodec.Write(restored, repeated);
         Assert.Equal(bytes, repeated.Data(CompressionPolicy.None));
     }
 
@@ -61,7 +72,8 @@ public sealed class EditableBlockCodecTest
     public void CellFaceGeometryAndCodecAreOwnedBelowTheGame()
     {
         var face = new CellFace(-3, 64, 2, 1);
-        using var writer = new ProtocolWriter(); writer.Write(face);
+        using var writer = new ProtocolWriter();
+        writer.Write(face);
         using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
         Assert.Equal(face, reader.ReadCellFace());
         Assert.Equal(typeof(GameProtocol).Assembly, typeof(CellFace).Assembly);

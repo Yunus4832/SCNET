@@ -23,16 +23,29 @@ public sealed class AdminReleaseUpdateEndpoint(IMediator mediator) : ContentEndp
         {
             ArgumentNullException.ThrowIfNull(request.Artifacts);
             var artifacts = request.Artifacts.Select(artifact => new GameReleaseArtifactData(
-                artifact.Platform, artifact.DownloadUrl, artifact.Sha256)).ToArray();
-            var updated = await mediator.Send(new EditGameReleaseCommand(new GameReleaseId(Route<Guid>("id")),
-                request.Version, request.Description, artifacts), cancellationToken);
+                    artifact.Platform,
+                    artifact.DownloadUrl,
+                    artifact.Sha256
+                )
+            ).ToArray();
+            var updated = await mediator.Send(
+                new EditGameReleaseCommand(
+                    new GameReleaseId(Route<Guid>("id")),
+                    request.Version,
+                    request.Description,
+                    artifacts
+                ),
+                cancellationToken
+            );
             if (!updated)
             {
                 throw new KnownException("game_release_not_found", StatusCodes.Status404NotFound);
             }
 
-            await Send.ResponseAsync(new ResponseData(true, "success", StatusCodes.Status200OK),
-                cancellation: cancellationToken);
+            await Send.ResponseAsync(
+                new ResponseData(true, "success", StatusCodes.Status200OK),
+                cancellation: cancellationToken
+            );
         }
         catch (ArgumentException)
         {
@@ -43,5 +56,4 @@ public sealed class AdminReleaseUpdateEndpoint(IMediator mediator) : ContentEndp
             throw new KnownException("invalid_game_release_state", StatusCodes.Status409Conflict);
         }
     }
-
 }

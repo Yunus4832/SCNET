@@ -11,9 +11,13 @@ namespace WorldUpgradeTool;
 internal static class BlockEntityConsistencyRepair
 {
     private const int _craftingTableBlockIndex = 27;
+
     private const int _chestBlockIndex = 45;
+
     private const int _furnaceBlockIndex = 64;
+
     private const int _litFurnaceBlockIndex = 65;
+
     private const int _dispenserBlockIndex = 216;
 
     private static readonly Dictionary<int, BlockEntityTemplate> _templatesByBlockIndex = new()

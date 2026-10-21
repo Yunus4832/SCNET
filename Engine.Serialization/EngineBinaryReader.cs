@@ -73,9 +73,24 @@ public class EngineBinaryReader(Stream stream, bool leaveOpen = false) : BinaryR
 
     public virtual Matrix ReadMatrix()
     {
-        return new Matrix(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle(),
-            ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle(),
-            ReadSingle(), ReadSingle(), ReadSingle());
+        return new Matrix(
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle(),
+            ReadSingle()
+        );
     }
 
     public virtual T ReadStruct<T>() where T : struct

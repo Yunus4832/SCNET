@@ -33,11 +33,13 @@ public class GravelBlock : CubeBlock
         var num = Random.Int(1, 3);
         for (var i = 0; i < num; i++)
         {
-            dropValues.Add(new BlockDropValue
-            {
-                Value = Terrain.MakeBlockValue(79),
-                Count = 1
-            });
+            dropValues.Add(
+                new BlockDropValue
+                {
+                    Value = Terrain.MakeBlockValue(79),
+                    Count = 1
+                }
+            );
         }
     }
 }

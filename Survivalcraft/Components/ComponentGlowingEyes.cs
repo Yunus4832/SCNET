@@ -47,8 +47,11 @@ public class ComponentGlowingEyes : Component, IDrawable
         }
 
         var translation = matrix.Translation;
-        var cellLight = _subsystemTerrain.Terrain.GetCellLight(Terrain.ToCell(translation.X),
-            Terrain.ToCell(translation.Y), Terrain.ToCell(translation.Z));
+        var cellLight = _subsystemTerrain.Terrain.GetCellLight(
+            Terrain.ToCell(translation.X),
+            Terrain.ToCell(translation.Y),
+            Terrain.ToCell(translation.Z)
+        );
         var num2 = LightingManager.LightIntensityByLightValue[cellLight];
         float num3 = 0f - Vector3.Dot(vector, Vector3.Normalize(matrix.Translation - camera.ViewPosition)) > 0.7f
             ? 1
@@ -63,8 +66,10 @@ public class ComponentGlowingEyes : Component, IDrawable
         var vector2 = Vector3.Normalize(matrix.Right);
         var vector3 = -Vector3.Normalize(matrix.Forward);
         var color = GlowingEyesColor * num3;
-        _eyeGlowPoints[0].Position = translation + vector2 * GlowingEyesOffset.X +
-                                     vector3 * GlowingEyesOffset.Y + vector * GlowingEyesOffset.Z;
+        _eyeGlowPoints[0].Position = translation +
+                                     vector2 * GlowingEyesOffset.X +
+                                     vector3 * GlowingEyesOffset.Y +
+                                     vector * GlowingEyesOffset.Z;
         _eyeGlowPoints[0].Right = vector2;
         _eyeGlowPoints[0].Up = vector3;
         _eyeGlowPoints[0].Forward = vector;
@@ -72,8 +77,10 @@ public class ComponentGlowingEyes : Component, IDrawable
         _eyeGlowPoints[0].FarSize = 0.06f;
         _eyeGlowPoints[0].FarDistance = 14f;
         _eyeGlowPoints[0].Color = color;
-        _eyeGlowPoints[1].Position = translation - vector2 * GlowingEyesOffset.X +
-                                     vector3 * GlowingEyesOffset.Y + vector * GlowingEyesOffset.Z;
+        _eyeGlowPoints[1].Position = translation -
+                                     vector2 * GlowingEyesOffset.X +
+                                     vector3 * GlowingEyesOffset.Y +
+                                     vector * GlowingEyesOffset.Z;
         _eyeGlowPoints[1].Right = vector2;
         _eyeGlowPoints[1].Up = vector3;
         _eyeGlowPoints[1].Forward = vector;

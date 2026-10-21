@@ -180,7 +180,8 @@ public static partial class Window
         int width,
         int height,
         WindowMode windowMode,
-        string title)
+        string title
+    )
     {
         var api = new GraphicsAPI(ContextAPI.OpenGLES, new APIVersion(3, 0));
         var screenSize = ScreenSize;
@@ -258,6 +259,7 @@ public static partial class Window
                 pixelBytes[index * 4 + 2] = pixel.G;
                 pixelBytes[index * 4 + 3] = pixel.R;
             }
+
             GameWindow.SetWindowIcon([new RawImage(image.Width, image.Height, pixelBytes)]);
         }
 
@@ -323,7 +325,8 @@ public static partial class Window
         {
             Position = new Point2(
                 Math.Max((monitorSize.X - desiredWidth) / 2, 0),
-                Math.Max((monitorSize.Y - desiredHeight) / 2, 0));
+                Math.Max((monitorSize.Y - desiredHeight) / 2, 0)
+            );
         }
     }
 
@@ -343,8 +346,7 @@ public static partial class Window
             return;
         }
 
-        var windowHandle = View.Native?.Sdl
-                           ?? throw new InvalidOperationException("SDL window handle is unavailable.");
+        var windowHandle = View.Native?.Sdl ?? throw new InvalidOperationException("SDL window handle is unavailable.");
         var sdl = SdlProvider.SDL.Value;
         var flags = fullscreen ? (uint)WindowFlags.Fullscreen : 0u;
         if (sdl.SetWindowFullscreen((Silk.NET.SDL.Window*)windowHandle, flags) != 0)

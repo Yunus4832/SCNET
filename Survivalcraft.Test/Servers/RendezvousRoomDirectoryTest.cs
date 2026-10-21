@@ -23,7 +23,10 @@ public sealed class RendezvousRoomDirectoryTest
         Assert.Equal(2, rooms.Count);
         Assert.Equal(["/transport", "/rooms?limit=100", "/rooms?limit=100&cursor=next"], handler.Requests);
         var target = rooms[0].CreateTarget(RelayPolicy.Required);
-        Assert.Equal(new InvitationCodeNetworkTarget(new Uri(service.ControlUrl), "000123", RelayPolicy.Required), target);
+        Assert.Equal(
+            new InvitationCodeNetworkTarget(new Uri(service.ControlUrl), "000123", RelayPolicy.Required),
+            target
+        );
         Assert.Equal("Signal", rooms[0].ServiceName);
     }
 
@@ -36,17 +39,25 @@ public sealed class RendezvousRoomDirectoryTest
         var second = first with { Id = repeatedIdentity ? first.Id : Guid.NewGuid() };
         using var handler = new DirectoryHandler(new RoomPage([first], "next"), new RoomPage([second], "next"));
         using var http = new HttpClient(handler);
-        await Assert.ThrowsAsync<InvalidDataException>(() => RendezvousRoomDirectory.LoadAsync(http,
-            new InstalledRendezvousService { ControlUrl = "https://signal.example/" }, CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidDataException>(() => RendezvousRoomDirectory.LoadAsync(
+                http,
+                new InstalledRendezvousService { ControlUrl = "https://signal.example/" },
+                CancellationToken.None
+            )
+        );
         Assert.Equal(3, handler.Requests.Count);
     }
 
     private sealed class DirectoryHandler(params RoomPage[] pages) : HttpMessageHandler
     {
         private readonly Queue<RoomPage> _pages = new(pages);
+
         public List<string> Requests { get; } = [];
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             Assert.Equal(HttpMethod.Get, request.Method);
             Requests.Add(request.RequestUri!.PathAndQuery);

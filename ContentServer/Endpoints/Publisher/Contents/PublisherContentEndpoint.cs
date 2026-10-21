@@ -29,24 +29,29 @@ public sealed class PublisherContentEndpoint(IMediator mediator, ApiKeyAuthentic
     private async Task<ResponseData<PagedData<ContentItemResponse>>> Content(
         string? query,
         PaginationRequest page,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var items = await mediator.Send(
             new ListContentItemsQuery(
                 page.ToPageRequest(),
                 query,
-                authenticationContext.RequirePublisherId()),
-            cancellationToken);
+                authenticationContext.RequirePublisherId()
+            ),
+            cancellationToken
+        );
         return items.Map(item => new ContentItemResponse(
-            item.ContentId.ToString(),
-            item.PublisherId.ToString(),
-            item.Type,
-            item.Identifier,
-            item.Name,
-            item.Summary,
-            item.Description,
-            item.Status.ToString().ToLowerInvariant(),
-            item.CreatedAt,
-            item.UpdatedAt)).AsResponseData();
+                item.ContentId.ToString(),
+                item.PublisherId.ToString(),
+                item.Type,
+                item.Identifier,
+                item.Name,
+                item.Summary,
+                item.Description,
+                item.Status.ToString().ToLowerInvariant(),
+                item.CreatedAt,
+                item.UpdatedAt
+            )
+        ).AsResponseData();
     }
 }

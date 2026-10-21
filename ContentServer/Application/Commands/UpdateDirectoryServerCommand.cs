@@ -8,20 +8,31 @@ namespace ContentServer.Application.Commands;
 
 public enum UpdateDirectoryServerResult
 {
-    Success,
-    NotFound,
-    NotOwned,
-    AddressConflict
+    Success = 0,
+
+    NotFound = 1,
+
+    NotOwned = 2,
+
+    AddressConflict = 3
 }
 
-public sealed record UpdateDirectoryServerCommand(DirectoryServerId Id, PublisherId? PublisherId, string Name,
-    string Address, string? Description, IReadOnlyList<string> Tags) : ICommand<UpdateDirectoryServerResult>;
+public sealed record UpdateDirectoryServerCommand(
+    DirectoryServerId Id,
+    PublisherId? PublisherId,
+    string Name,
+    string Address,
+    string? Description,
+    IReadOnlyList<string> Tags
+) : ICommand<UpdateDirectoryServerResult>;
 
 public sealed class UpdateDirectoryServerCommandHandler(DirectoryServerRepository repository)
     : ICommandHandler<UpdateDirectoryServerCommand, UpdateDirectoryServerResult>
 {
-    public async Task<UpdateDirectoryServerResult> Handle(UpdateDirectoryServerCommand command,
-        CancellationToken cancellationToken)
+    public async Task<UpdateDirectoryServerResult> Handle(
+        UpdateDirectoryServerCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var server = await repository.FindAsync(command.Id, cancellationToken);
         if (server is null)
@@ -39,8 +50,14 @@ public sealed class UpdateDirectoryServerCommandHandler(DirectoryServerRepositor
             return UpdateDirectoryServerResult.AddressConflict;
         }
 
-        server.Update(command.Name, command.Address, command.Description, command.Tags,
-            requiresReview: command.PublisherId is not null, now: DateTimeOffset.UtcNow);
+        server.Update(
+            command.Name,
+            command.Address,
+            command.Description,
+            command.Tags,
+            requiresReview: command.PublisherId is not null,
+            now: DateTimeOffset.UtcNow
+        );
         return UpdateDirectoryServerResult.Success;
     }
 }

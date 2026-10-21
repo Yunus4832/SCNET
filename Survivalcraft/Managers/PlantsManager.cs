@@ -46,7 +46,7 @@ public static class PlantsManager
                 height4,
                 branchesCount,
                 3,
-                delegate (int y, int _)
+                delegate(int y, int _)
                 {
                     var num7 = 0.4f;
                     if (y < 0.2f * height4)
@@ -60,7 +60,7 @@ public static class PlantsManager
 
                     return num7;
                 },
-                delegate (int y)
+                delegate(int y)
                 {
                     if (y < height4 * 0.3f || y > height4 * 0.9f)
                     {
@@ -90,7 +90,7 @@ public static class PlantsManager
                 height3,
                 branchesCount2,
                 3,
-                delegate (int y, int _)
+                delegate(int y, int _)
                 {
                     var num5 = 0.66f;
                     if (y < height3 / 2 - 1)
@@ -125,7 +125,7 @@ public static class PlantsManager
                 height2,
                 branchesCount3,
                 3,
-                delegate (int y, int _)
+                delegate(int y, int _)
                 {
                     var num4 = MathUtils.Lerp(1.4f, 0.3f, y / (float)height2);
                     if (y < 3)
@@ -140,7 +140,7 @@ public static class PlantsManager
 
                     return num4;
                 },
-                delegate (int y)
+                delegate(int y)
                 {
                     if (y < 3 || y > height2 * 0.8f)
                     {
@@ -170,7 +170,7 @@ public static class PlantsManager
                 height,
                 branchesCount4,
                 3,
-                delegate (int y, int _)
+                delegate(int y, int _)
                 {
                     var num2 = MathUtils.Saturate(y / (float)height);
                     var num3 = MathUtils.Lerp(1.5f, 0f, MathUtils.Saturate((num2 - 0.6f) / 0.4f));
@@ -186,7 +186,7 @@ public static class PlantsManager
 
                     return num3;
                 },
-                delegate (int y)
+                delegate(int y)
                 {
                     var num = MathUtils.Saturate(y / (float)height);
                     if (y % 3 != 0)
@@ -224,7 +224,7 @@ public static class PlantsManager
                 height5,
                 branchesCount5,
                 2,
-                delegate (int y, int round)
+                delegate(int y, int round)
                 {
                     var num8 = height5 < 14 ? 1 : 2;
                     if (y < num8)
@@ -291,8 +291,11 @@ public static class PlantsManager
                         < 0.07f => Terrain.MakeBlockValue(24),
                         < 0.09f => Terrain.MakeBlockValue(25),
                         < 0.17f => Terrain.MakeBlockValue(174, 0, RyeBlock.SetIsWild(RyeBlock.SetSize(0, 7), true)),
-                        < 0.19f => Terrain.MakeBlockValue(204, 0,
-                            CottonBlock.SetIsWild(CottonBlock.SetSize(0, 2), true)),
+                        < 0.19f => Terrain.MakeBlockValue(
+                            204,
+                            0,
+                            CottonBlock.SetIsWild(CottonBlock.SetSize(0, 2), true)
+                        ),
                         _ => result
                     };
 
@@ -317,8 +320,13 @@ public static class PlantsManager
         return 0;
     }
 
-    public static TreeType? GenerateRandomTreeType(Random random, int temperature, int humidity, int y,
-        float densityMultiplier = 1f)
+    public static TreeType? GenerateRandomTreeType(
+        Random random,
+        int temperature,
+        int humidity,
+        int y,
+        float densityMultiplier = 1f
+    )
     {
         TreeType? result = null;
         var num = random.Float() * CalculateTreeProbability(TreeType.Oak, temperature, humidity, y);
@@ -380,7 +388,8 @@ public static class PlantsManager
             TreeType.TallSpruce => RangeProbability(humidity, 4f, 15f, 15f, 15f),
             TreeType.Mimosa => 0.04f,
             TreeType.Poplar => RangeProbability(temperature, 4f, 8f, 10f, 15f) *
-                               RangeProbability(humidity, 3f, 15f, 15f, 15f) * RangeProbability(y, 0f, 0f, 85f, 92f),
+                               RangeProbability(humidity, 3f, 15f, 15f, 15f) *
+                               RangeProbability(y, 0f, 0f, 85f, 92f),
             _ => 0f
         };
     }
@@ -390,18 +399,22 @@ public static class PlantsManager
         return treeType switch
         {
             TreeType.Oak => RangeProbability(temperature, 4f, 10f, 15f, 15f) *
-                            RangeProbability(humidity, 6f, 8f, 15f, 15f) * RangeProbability(y, 0f, 0f, 82f, 87f),
+                            RangeProbability(humidity, 6f, 8f, 15f, 15f) *
+                            RangeProbability(y, 0f, 0f, 82f, 87f),
             TreeType.Birch => RangeProbability(temperature, 5f, 9f, 11f, 15f) *
-                              RangeProbability(humidity, 3f, 15f, 15f, 15f) * RangeProbability(y, 0f, 0f, 82f, 87f),
+                              RangeProbability(humidity, 3f, 15f, 15f, 15f) *
+                              RangeProbability(y, 0f, 0f, 82f, 87f),
             TreeType.Spruce => RangeProbability(temperature, 0f, 0f, 6f, 10f) *
                                RangeProbability(humidity, 3f, 10f, 11f, 12f),
-            TreeType.TallSpruce => 0.25f * RangeProbability(temperature, -100f, -100f, 6f, 10f) *
+            TreeType.TallSpruce => 0.25f *
+                                   RangeProbability(temperature, -100f, -100f, 6f, 10f) *
                                    RangeProbability(humidity, 2f, 11f, 15f, 15f) *
                                    RangeProbability(y, 0f, 0f, 310f, 312f),
             TreeType.Mimosa => RangeProbability(temperature, 2f, 4f, 12f, 14f) *
                                RangeProbability(humidity, 0f, 0f, 4f, 6f),
             TreeType.Poplar => RangeProbability(temperature, 4f, 8f, 12f, 15f) *
-                               RangeProbability(humidity, 3f, 15f, 15f, 15f) * RangeProbability(y, 0f, 0f, 85f, 92f),
+                               RangeProbability(humidity, 3f, 15f, 15f, 15f) *
+                               RangeProbability(y, 0f, 0f, 85f, 92f),
             _ => 0f
         };
     }
@@ -457,22 +470,34 @@ public static class PlantsManager
             var y = num + (int)MathUtils.Round(vector.Y);
             var z2 = (int)MathUtils.Round(vector.Z);
             var cutFace = 0;
-            if (MathUtils.Abs(vector.X).CloseTo
-                    (MathUtils.Max(MathUtils.Abs(vector.X), MathUtils.Abs(vector.Y), MathUtils.Abs(vector.Z))))
+            if (MathUtils.Abs(vector.X).CloseTo(
+                    MathUtils.Max(MathUtils.Abs(vector.X), MathUtils.Abs(vector.Y), MathUtils.Abs(vector.Z))
+                ))
             {
                 cutFace = 1;
             }
             else if (MathUtils.Abs(vector.Y).CloseTo(
-                         MathUtils.Max(MathUtils.Abs(vector.X), MathUtils.Abs(vector.Y), MathUtils.Abs(vector.Z))))
+                         MathUtils.Max(MathUtils.Abs(vector.X), MathUtils.Abs(vector.Y), MathUtils.Abs(vector.Z))
+                     ))
             {
                 cutFace = 4;
             }
 
-            terrainBrush.AddRay(x, num, z, x2, y, z2, 1, 1, 1,
+            terrainBrush.AddRay(
+                x,
+                num,
+                z,
+                x2,
+                y,
+                z2,
+                1,
+                1,
+                1,
                 (Func<int?, int?>)(v =>
                     v.HasValue
                         ? null
-                        : new int?(Terrain.MakeBlockValue(woodIndex, 0, WoodBlock.SetCutFace(0, cutFace)))));
+                        : new int?(Terrain.MakeBlockValue(woodIndex, 0, WoodBlock.SetCutFace(0, cutFace))))
+            );
         }
 
         for (var j = 0; j < leavesRounds; j++)
@@ -485,10 +510,16 @@ public static class PlantsManager
                     for (var m = 1; m <= max.Y + 1; m++)
                     {
                         var num2 = leavesProbability(m, j);
-                        if (random.Float(0f, 1f) < num2 && !terrainBrush.GetValue(k, m, l).HasValue &&
+                        if (random.Float(0f, 1f) < num2 &&
+                            !terrainBrush.GetValue(k, m, l).HasValue &&
                             (terrainBrush.CountNonDiagonalNeighbors(k, m, l, leavesIndex) != 0 ||
-                             terrainBrush.CountNonDiagonalNeighbors(k, m, l,
-                                 (Func<int?, int>)(v => v.HasValue && Terrain.ExtractContents(v.Value) == woodIndex ? 1 : 0)) !=
+                             terrainBrush.CountNonDiagonalNeighbors(
+                                 k,
+                                 m,
+                                 l,
+                                 (Func<int?, int>)(v =>
+                                     v.HasValue && Terrain.ExtractContents(v.Value) == woodIndex ? 1 : 0)
+                             ) !=
                              0))
                         {
                             terrainBrush.AddCell(k, m, l, 0);
@@ -516,8 +547,10 @@ public static class PlantsManager
         for (var i = 0; i < 3; i++)
         {
             var radians = num + i * MathUtils.DegToRad(120f);
-            var v = Vector3.Transform(Vector3.Normalize(new Vector3(1f, random.Float(1f, 1.5f), 0f)),
-                Matrix.CreateRotationY(radians));
+            var v = Vector3.Transform(
+                Vector3.Normalize(new Vector3(1f, random.Float(1f, 1.5f), 0f)),
+                Matrix.CreateRotationY(radians)
+            );
             var num2 = random.Int((int)(0.7f * size), (int)size);
             var p = new Point3(0, 0, 0);
             var item = new Point3(Vector3.Round(new Vector3(p) + v * num2));
@@ -537,7 +570,8 @@ public static class PlantsManager
                     {
                         var num5 = Math.Abs(j - item2.X) + Math.Abs(k - item2.Y) + Math.Abs(l - item2.Z);
                         var num6 = ((new Vector3(j, k, l) - new Vector3(item2)) * new Vector3(1f, 1.7f, 1f)).Length();
-                        if (num6 <= num3 && (num3 - num6 > 1f || num5 <= 2 || random.Bool(0.7f)) &&
+                        if (num6 <= num3 &&
+                            (num3 - num6 > 1f || num5 <= 2 || random.Bool(0.7f)) &&
                             !terrainBrush.GetValue(j, k, l).HasValue)
                         {
                             terrainBrush.AddCell(j, k, l, value2);

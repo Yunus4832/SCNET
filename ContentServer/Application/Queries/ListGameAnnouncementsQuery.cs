@@ -12,8 +12,10 @@ public sealed record ListGameAnnouncementsQuery(bool PublicOnly) : IQuery<IReadO
 public sealed class ListGameAnnouncementsQueryHandler(ContentServerDbContext db)
     : IQueryHandler<ListGameAnnouncementsQuery, IReadOnlyList<GameAnnouncement>>
 {
-    public async Task<IReadOnlyList<GameAnnouncement>> Handle(ListGameAnnouncementsQuery request,
-        CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<GameAnnouncement>> Handle(
+        ListGameAnnouncementsQuery request,
+        CancellationToken cancellationToken
+    )
     {
         var query = db.GameAnnouncements.AsNoTracking();
         if (request.PublicOnly)

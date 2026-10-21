@@ -7,6 +7,7 @@ public static partial class ProtocolMessageCodec
     private static ServerInfoPackage ReadServerInfo(ProtocolReader reader)
     {
         if (reader.ReadBoolean()) { return new ServerInfoPackage(true); }
+
         var message = new ServerInfoPackage
         {
             ProtocolVersion = reader.ReadInt32(),
@@ -20,7 +21,10 @@ public static partial class ProtocolMessageCodec
             TimeOfSeason = reader.ReadSingle()
         };
         if (!float.IsFinite(message.TimeOfDay) || !float.IsFinite(message.TimeOfSeason))
-        { throw new InvalidDataException("Invalid server state."); }
+        {
+            throw new InvalidDataException("Invalid server state.");
+        }
+
         return message;
     }
 
@@ -28,6 +32,7 @@ public static partial class ProtocolMessageCodec
     {
         writer.Write(message.RequestInfo);
         if (message.RequestInfo) { return; }
+
         writer.Write(message.ProtocolVersion);
         writer.Write(message.ClientCount);
         writer.Write(message.MaxPlayerCount);
@@ -105,7 +110,8 @@ public static partial class ProtocolMessageCodec
             var idText = reader.ReadString();
             var baseUrl = reader.ReadString();
             var priority = reader.ReadInt32();
-            if (!Guid.TryParseExact(idText, "D", out var id) || baseUrl.Length > ProtocolLimits.MaximumRepositoryUrlLength)
+            if (!Guid.TryParseExact(idText, "D", out var id) ||
+                baseUrl.Length > ProtocolLimits.MaximumRepositoryUrlLength)
             {
                 throw new InvalidDataException("A temporary content repository descriptor is invalid.");
             }
@@ -116,8 +122,10 @@ public static partial class ProtocolMessageCodec
         return ValidateRepositories(repositories);
     }
 
-    private static void WriteTemporaryRepositories(ProtocolWriter writer,
-        IEnumerable<ContentRepositoryDescriptor> repositories)
+    private static void WriteTemporaryRepositories(
+        ProtocolWriter writer,
+        IEnumerable<ContentRepositoryDescriptor> repositories
+    )
     {
         var normalized = ValidateRepositories(repositories);
         writer.Write((ushort)normalized.Count);
@@ -131,33 +139,59 @@ public static partial class ProtocolMessageCodec
 
     private static void ValidateProfile(RequiredModProfile profile)
     {
-        if (string.IsNullOrWhiteSpace(profile.Id) || profile.Id.Length > ProtocolLimits.MaximumModProfileIdLength || profile.Packages.Count > ProtocolLimits.MaximumRequiredMods)
-        { throw new ArgumentException("Invalid required mod profile."); }
+        if (string.IsNullOrWhiteSpace(profile.Id) ||
+            profile.Id.Length > ProtocolLimits.MaximumModProfileIdLength ||
+            profile.Packages.Count > ProtocolLimits.MaximumRequiredMods)
+        {
+            throw new ArgumentException("Invalid required mod profile.");
+        }
+
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var package in profile.Packages)
         {
-            if (string.IsNullOrWhiteSpace(package.ModId) || package.ModId.Length > ProtocolLimits.MaximumModIdLength || !ids.Add(package.ModId) ||
-                string.IsNullOrWhiteSpace(package.Version) || package.Version.Length > ProtocolLimits.MaximumModVersionLength ||
-                package.PackageHash.Length != 64 || package.PackageHash.Any(c => c is not (>= '0' and <= '9') and not (>= 'a' and <= 'f')))
-            { throw new ArgumentException("Invalid required mod package."); }
+            if (string.IsNullOrWhiteSpace(package.ModId) ||
+                package.ModId.Length > ProtocolLimits.MaximumModIdLength ||
+                !ids.Add(package.ModId) ||
+                string.IsNullOrWhiteSpace(package.Version) ||
+                package.Version.Length > ProtocolLimits.MaximumModVersionLength ||
+                package.PackageHash.Length != 64 ||
+                package.PackageHash.Any(c => c is not (>= '0' and <= '9') and not (>= 'a' and <= 'f')))
+            {
+                throw new ArgumentException("Invalid required mod package.");
+            }
         }
     }
 
-    private static IReadOnlyList<ContentRepositoryDescriptor> ValidateRepositories(IEnumerable<ContentRepositoryDescriptor> repositories)
+    private static IReadOnlyList<ContentRepositoryDescriptor> ValidateRepositories(
+        IEnumerable<ContentRepositoryDescriptor> repositories
+    )
     {
         var values = repositories.ToArray();
-        if (values.Length > ProtocolLimits.MaximumTemporaryRepositories) { throw new InvalidDataException("Too many temporary repositories."); }
+        if (values.Length > ProtocolLimits.MaximumTemporaryRepositories)
+        {
+            throw new InvalidDataException("Too many temporary repositories.");
+        }
+
         var ids = new HashSet<Guid>();
         var addresses = new HashSet<string>(StringComparer.Ordinal);
         foreach (var value in values)
         {
-            if (value.Id == Guid.Empty || !ids.Add(value.Id) || value.BaseUrl.Length > ProtocolLimits.MaximumRepositoryUrlLength || value.Priority is < ProtocolLimits.MinimumRepositoryPriority or > ProtocolLimits.MaximumRepositoryPriority ||
+            if (value.Id == Guid.Empty ||
+                !ids.Add(value.Id) ||
+                value.BaseUrl.Length > ProtocolLimits.MaximumRepositoryUrlLength ||
+                value.Priority is < ProtocolLimits.MinimumRepositoryPriority
+                    or > ProtocolLimits.MaximumRepositoryPriority ||
                 !Uri.TryCreate(value.BaseUrl, UriKind.Absolute, out var uri) ||
                 (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
-                uri.UserInfo.Length != 0 || uri.Query.Length != 0 || uri.Fragment.Length != 0 ||
+                uri.UserInfo.Length != 0 ||
+                uri.Query.Length != 0 ||
+                uri.Fragment.Length != 0 ||
                 !addresses.Add(uri.AbsoluteUri.TrimEnd('/')))
-            { throw new InvalidDataException("Invalid temporary repository."); }
+            {
+                throw new InvalidDataException("Invalid temporary repository.");
+            }
         }
+
         return values;
     }
 }

@@ -72,8 +72,7 @@ public sealed class CommandSuggestionsWidget : CanvasWidget
         }
     }
 
-    internal static IReadOnlyList<CommandSuggestionTextPart> CreateTextParts(
-        CommandSuggestion suggestion)
+    internal static IReadOnlyList<CommandSuggestionTextPart> CreateTextParts(CommandSuggestion suggestion)
     {
         ArgumentNullException.ThrowIfNull(suggestion);
         var parts = new List<CommandSuggestionTextPart>
@@ -82,9 +81,12 @@ public sealed class CommandSuggestionsWidget : CanvasWidget
         };
         if (!string.IsNullOrWhiteSpace(suggestion.Description))
         {
-            parts.Add(new CommandSuggestionTextPart(
-                suggestion.Description,
-                MultiplayerUiStyle.SecondaryTextColor));
+            parts.Add(
+                new CommandSuggestionTextPart(
+                    suggestion.Description,
+                    MultiplayerUiStyle.SecondaryTextColor
+                )
+            );
         }
 
         return parts;
@@ -93,7 +95,8 @@ public sealed class CommandSuggestionsWidget : CanvasWidget
     public void Refresh(
         string input,
         TextCommandAdapter adapter,
-        CommandPrincipal principal)
+        CommandPrincipal principal
+    )
     {
         if (!input.StartsWith('/'))
         {

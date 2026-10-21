@@ -27,18 +27,26 @@ public static class RunningSettingManager
             }
 
             using var stream = Storage.OpenFile(RunningSettingPath, OpenFileMode.Create);
-            var root = new XElement("RunningSetting",
+            var root = new XElement(
+                "RunningSetting",
                 new XAttribute(nameof(RunningSetting.RunMode), runningSetting.RunMode),
                 new XAttribute(nameof(RunningSetting.LogLevel), runningSetting.LogLevel),
                 new XAttribute(nameof(RunningSetting.WindowMode), runningSetting.WindowMode),
                 new XAttribute(nameof(RunningSetting.WindowWidth), runningSetting.WindowWidth),
                 new XAttribute(nameof(RunningSetting.WindowHeight), runningSetting.WindowHeight),
-                new XAttribute(nameof(RunningSetting.DefaultSessionId),
-                    NormalizeDefaultSessionId(runningSetting.DefaultSessionId)),
-                new XAttribute(nameof(RunningSetting.PendingSessionId),
-                    NormalizePendingSessionId(runningSetting.PendingSessionId)),
-                new XElement(nameof(RunningSetting.RemainingArgs),
-                    runningSetting.RemainingArgs.Select(arg => new XElement("Arg", arg))));
+                new XAttribute(
+                    nameof(RunningSetting.DefaultSessionId),
+                    NormalizeDefaultSessionId(runningSetting.DefaultSessionId)
+                ),
+                new XAttribute(
+                    nameof(RunningSetting.PendingSessionId),
+                    NormalizePendingSessionId(runningSetting.PendingSessionId)
+                ),
+                new XElement(
+                    nameof(RunningSetting.RemainingArgs),
+                    runningSetting.RemainingArgs.Select(arg => new XElement("Arg", arg))
+                )
+            );
             root.Save(stream);
             Current = Clone(runningSetting);
         }
@@ -83,26 +91,28 @@ public static class RunningSettingManager
 
             using var stream = Storage.OpenFile(RunningSettingPath, OpenFileMode.Read);
             var root = XElement.Load(stream);
-            runningSetting.RunMode = ParseRunMode(
-                root.Attribute(nameof(RunningSetting.RunMode))?.Value);
+            runningSetting.RunMode = ParseRunMode(root.Attribute(nameof(RunningSetting.RunMode))?.Value);
             runningSetting.LogLevel = ParseLogLevel(
                 root.Attribute(nameof(RunningSetting.LogLevel))?.Value,
-                runningSetting.LogLevel);
+                runningSetting.LogLevel
+            );
             runningSetting.WindowMode = ParseWindowMode(
                 root.Attribute(nameof(RunningSetting.WindowMode))?.Value,
-                runningSetting.WindowMode);
-            runningSetting.WindowWidth = ParseWindowSize(
-                root.Attribute(nameof(RunningSetting.WindowWidth))?.Value);
-            runningSetting.WindowHeight = ParseWindowSize(
-                root.Attribute(nameof(RunningSetting.WindowHeight))?.Value);
+                runningSetting.WindowMode
+            );
+            runningSetting.WindowWidth = ParseWindowSize(root.Attribute(nameof(RunningSetting.WindowWidth))?.Value);
+            runningSetting.WindowHeight = ParseWindowSize(root.Attribute(nameof(RunningSetting.WindowHeight))?.Value);
             runningSetting.DefaultSessionId = NormalizeDefaultSessionId(
-                root.Attribute(nameof(RunningSetting.DefaultSessionId))?.Value);
+                root.Attribute(nameof(RunningSetting.DefaultSessionId))?.Value
+            );
             runningSetting.PendingSessionId = NormalizePendingSessionId(
-                root.Attribute(nameof(RunningSetting.PendingSessionId))?.Value);
+                root.Attribute(nameof(RunningSetting.PendingSessionId))?.Value
+            );
             runningSetting.RemainingArgs = root.Element(nameof(RunningSetting.RemainingArgs))?
-                .Elements("Arg")
-                .Select(element => element.Value)
-                .ToArray() ?? [];
+                                               .Elements("Arg")
+                                               .Select(element => element.Value)
+                                               .ToArray() ??
+                                           [];
         }
         catch (Exception ex)
         {
@@ -124,10 +134,8 @@ public static class RunningSettingManager
     {
         runningSetting.WindowWidth = Math.Max(runningSetting.WindowWidth, 0);
         runningSetting.WindowHeight = Math.Max(runningSetting.WindowHeight, 0);
-        runningSetting.DefaultSessionId = NormalizePersistedSessionReference(
-            runningSetting.DefaultSessionId);
-        runningSetting.PendingSessionId = NormalizePersistedSessionReference(
-            runningSetting.PendingSessionId);
+        runningSetting.DefaultSessionId = NormalizePersistedSessionReference(runningSetting.DefaultSessionId);
+        runningSetting.PendingSessionId = NormalizePersistedSessionReference(runningSetting.PendingSessionId);
     }
 
     private static RunningSetting Clone(RunningSetting runningSetting)

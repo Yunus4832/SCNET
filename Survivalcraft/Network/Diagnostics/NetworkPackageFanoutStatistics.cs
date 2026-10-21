@@ -5,7 +5,8 @@ public readonly record struct NetworkPackageFanoutStatistics(
     NetworkChannel Channel,
     long Messages,
     long RecipientDeliveries,
-    int MaximumFanout)
+    int MaximumFanout
+)
 {
     public double AverageFanout => Messages == 0 ? 0d : (double)RecipientDeliveries / Messages;
 }

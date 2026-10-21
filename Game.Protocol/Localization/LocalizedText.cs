@@ -39,5 +39,4 @@ public sealed record LocalizedText
             ? Empty
             : new LocalizedText(text);
     }
-
 }

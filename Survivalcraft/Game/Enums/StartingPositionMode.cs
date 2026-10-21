@@ -2,7 +2,9 @@ namespace Game;
 
 public enum StartingPositionMode
 {
-    Easy,
-    Medium,
-    Hard
+    Easy = 0,
+
+    Medium = 1,
+
+    Hard = 2
 }

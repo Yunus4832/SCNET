@@ -24,8 +24,11 @@ public sealed class ContentPackageReaderTest
     [InlineData("description")]
     public void ManifestRequiresBothDescriptions(string field)
     {
-        var manifest = _modManifest.Replace($"\"{field}\": ", $"\"missing{field}\": ",
-            StringComparison.Ordinal);
+        var manifest = _modManifest.Replace(
+            $"\"{field}\": ",
+            $"\"missing{field}\": ",
+            StringComparison.Ordinal
+        );
 
         Assert.Throws<ContentPackageException>(() => ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(manifest)));
     }
@@ -35,10 +38,12 @@ public sealed class ContentPackageReaderTest
     {
         var manifest = "{}"u8.ToArray();
         var payload = "hello"u8.ToArray();
-        var hash = ContentPackageHash.Compute([
-            HashEntry("payload/a.txt", payload),
-            HashEntry("manifest.json", manifest)
-        ]);
+        var hash = ContentPackageHash.Compute(
+            [
+                HashEntry("payload/a.txt", payload),
+                HashEntry("manifest.json", manifest)
+            ]
+        );
 
         Assert.Equal("5b41dca579cbbcf86944e71360af4baef1b5a480de07159a2bb51c519a963fb5", hash);
     }
@@ -51,9 +56,11 @@ public sealed class ContentPackageReaderTest
         var manifest = ContentPackageManifest.Parse(File.ReadAllBytes(Path.Combine(root, "manifest.json")));
         var entries = Directory.EnumerateFiles(payloadRoot, "*", SearchOption.AllDirectories)
             .Select(path => new ContentPackageWriteEntry(
-                $"payload/{Path.GetRelativePath(payloadRoot, path).Replace('\\', '/')}",
-                new FileInfo(path).Length,
-                () => File.OpenRead(path)))
+                    $"payload/{Path.GetRelativePath(payloadRoot, path).Replace('\\', '/')}",
+                    new FileInfo(path).Length,
+                    () => File.OpenRead(path)
+                )
+            )
             .ToArray();
         using var package = new MemoryStream();
 
@@ -65,10 +72,12 @@ public sealed class ContentPackageReaderTest
     [Fact]
     public void PackageHashSortsPathsByUtf8BytesRatherThanUtf16CodeUnits()
     {
-        var hash = ContentPackageHash.Compute([
-            HashEntry("payload/\U00010000.txt", "B"u8.ToArray()),
-            HashEntry("payload/\ue000.txt", "A"u8.ToArray())
-        ]);
+        var hash = ContentPackageHash.Compute(
+            [
+                HashEntry("payload/\U00010000.txt", "B"u8.ToArray()),
+                HashEntry("payload/\ue000.txt", "A"u8.ToArray())
+            ]
+        );
 
         Assert.Equal("7c759cd7448ef42962c80391449514052c26b91f5c7bb5687325a77291b42d56", hash);
     }
@@ -79,8 +88,10 @@ public sealed class ContentPackageReaderTest
         using var first = CreateModPackage(CompressionLevel.Optimal, false, "first");
         using var second = CreateModPackage(CompressionLevel.Optimal, false, "second");
 
-        Assert.NotEqual(ContentPackageReader.Inspect(first).PackageHash,
-            ContentPackageReader.Inspect(second).PackageHash);
+        Assert.NotEqual(
+            ContentPackageReader.Inspect(first).PackageHash,
+            ContentPackageReader.Inspect(second).PackageHash
+        );
     }
 
     [Fact]
@@ -189,8 +200,12 @@ public sealed class ContentPackageReaderTest
         var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(_modManifest));
         using var stream = new MemoryStream();
 
-        var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(stream, manifest,
-            [Entry("payload/mod.json", "{\"formatVersion\":1}"), Entry("payload/data/disguised.bin", nested)]));
+        var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(
+                stream,
+                manifest,
+                [Entry("payload/mod.json", "{\"formatVersion\":1}"), Entry("payload/data/disguised.bin", nested)]
+            )
+        );
 
         Assert.Contains("Nested archive", exception.Message);
     }
@@ -217,8 +232,11 @@ public sealed class ContentPackageReaderTest
     [Fact]
     public void RejectsUnknownManifestProperty()
     {
-        using var stream = CreateModPackage(CompressionLevel.Optimal, false,
-            manifest: _modManifest.Replace("\n}", ",\n  \"unexpected\": true\n}"));
+        using var stream = CreateModPackage(
+            CompressionLevel.Optimal,
+            false,
+            manifest: _modManifest.Replace("\n}", ",\n  \"unexpected\": true\n}")
+        );
 
         var exception = Assert.Throws<ContentPackageException>(() => ContentPackageReader.Inspect(stream));
         Assert.Contains("unknown property", exception.Message);
@@ -227,9 +245,14 @@ public sealed class ContentPackageReaderTest
     [Fact]
     public void RejectsDuplicateManifestProperty()
     {
-        using var stream = CreateModPackage(CompressionLevel.Optimal, false,
-            manifest: _modManifest.Replace("\"version\": \"1.0.0\",",
-                "\"version\": \"1.0.0\",\n  \"version\": \"2.0.0\","));
+        using var stream = CreateModPackage(
+            CompressionLevel.Optimal,
+            false,
+            manifest: _modManifest.Replace(
+                "\"version\": \"1.0.0\",",
+                "\"version\": \"1.0.0\",\n  \"version\": \"2.0.0\","
+            )
+        );
 
         var exception = Assert.Throws<ContentPackageException>(() => ContentPackageReader.Inspect(stream));
         Assert.Contains("duplicate property", exception.Message);
@@ -241,8 +264,12 @@ public sealed class ContentPackageReaderTest
         var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(_modManifest));
         using var stream = new MemoryStream();
 
-        var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(stream, manifest,
-            [Entry("payload/mod.json", "{"), Entry("payload/data/example.txt", "data")]));
+        var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(
+                stream,
+                manifest,
+                [Entry("payload/mod.json", "{"), Entry("payload/data/example.txt", "data")]
+            )
+        );
 
         Assert.Contains("invalid JSON", exception.Message);
     }
@@ -255,19 +282,22 @@ public sealed class ContentPackageReaderTest
         var mod = "{\"formatVersion\":1}"u8.ToArray();
         using var stream = new MemoryStream();
 
-        var writtenHash = ContentPackageWriter.Write(stream, manifest,
-        [
-            new ContentPackageWriteEntry(
-                "payload/mod.json",
-                mod.Length,
-                () => new MemoryStream(mod, writable: false)
-            ),
-            new ContentPackageWriteEntry(
-                "payload/data/example.txt",
-                data.Length,
-                () => new MemoryStream(data, writable: false)
-            )
-        ]);
+        var writtenHash = ContentPackageWriter.Write(
+            stream,
+            manifest,
+            [
+                new ContentPackageWriteEntry(
+                    "payload/mod.json",
+                    mod.Length,
+                    () => new MemoryStream(mod, writable: false)
+                ),
+                new ContentPackageWriteEntry(
+                    "payload/data/example.txt",
+                    data.Length,
+                    () => new MemoryStream(data, writable: false)
+                )
+            ]
+        );
 
         stream.Position = 0;
         var inspection = ContentPackageReader.Inspect(stream);
@@ -276,9 +306,12 @@ public sealed class ContentPackageReaderTest
 
     [Theory]
     [MemberData(nameof(GoldenPackages))]
-    public void GoldenPackageRoundTripsThroughWriterAndReader(string manifestJson, ContentPackageType type,
+    public void GoldenPackageRoundTripsThroughWriterAndReader(
+        string manifestJson,
+        ContentPackageType type,
         string expectedHash,
-        ContentPackageWriteEntry[] entries)
+        ContentPackageWriteEntry[] entries
+    )
     {
         var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(manifestJson));
         using var stream = new MemoryStream();
@@ -297,25 +330,41 @@ public sealed class ContentPackageReaderTest
     {
         var image = _onePixelPng.ToArray();
         image[^1] ^= 1;
-        var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(
-            ImageManifest("blocksTexture", "payload/texture.png", "scnet.blocks-texture.png-v1",
-                "d24bfcc2-5f12-4956-9d91-0cbe5d5b224a")));
+        var manifest = ContentPackageManifest.Parse(
+            Encoding.UTF8.GetBytes(
+                ImageManifest(
+                    "blocksTexture",
+                    "payload/texture.png",
+                    "scnet.blocks-texture.png-v1",
+                    "d24bfcc2-5f12-4956-9d91-0cbe5d5b224a"
+                )
+            )
+        );
         using var stream = new MemoryStream();
         var exception = Assert.Throws<ContentPackageException>(() =>
-            ContentPackageWriter.Write(stream, manifest, [Entry("payload/texture.png", image)]));
+            ContentPackageWriter.Write(stream, manifest, [Entry("payload/texture.png", image)])
+        );
         Assert.Contains("CRC", exception.Message);
     }
 
     [Fact]
     public void RejectsImageDimensionsThatDisagreeWithMetadata()
     {
-        var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(
-            ImageManifest("characterSkin", "payload/skin.png", "scnet.character-skin.png-v1",
-                "1a562cd5-d5f8-4bc7-ac74-c13a8017856f").Replace("\"width\": 1", "\"width\": 2")));
+        var manifest = ContentPackageManifest.Parse(
+            Encoding.UTF8.GetBytes(
+                ImageManifest(
+                    "characterSkin",
+                    "payload/skin.png",
+                    "scnet.character-skin.png-v1",
+                    "1a562cd5-d5f8-4bc7-ac74-c13a8017856f"
+                ).Replace("\"width\": 1", "\"width\": 2")
+            )
+        );
         using var stream = new MemoryStream();
 
         var exception = Assert.Throws<ContentPackageException>(() =>
-            ContentPackageWriter.Write(stream, manifest, [Entry("payload/skin.png", _onePixelPng)]));
+            ContentPackageWriter.Write(stream, manifest, [Entry("payload/skin.png", _onePixelPng)])
+        );
 
         Assert.Contains("dimensions", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -323,27 +372,37 @@ public sealed class ContentPackageReaderTest
     [Fact]
     public void RejectsWorldFilesOutsideCanonicalLayout()
     {
-        var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes("""
-                                                                           {
-                                                                             "formatVersion": 1,
-                                                                             "type": "world",
-                                                                             "identifier": "0f46af8f-134f-4b52-9397-c43ecbcd79d7",
-                                                                             "name": "World",
-                                                                             "summary": "Test summary",
-                                                                             "description": "Test package description",
-                                                                             "version": "1.0.0",
-                                                                             "payload": { "format": "scnet.world-v1", "entry": "payload/world/Project.xml", "mediaType": "application/xml" },
-                                                                             "metadata": { "projectFormat": "scnet-project-xml-v1", "regionsDirectory": "payload/world/Regions" }
-                                                                           }
-                                                                           """));
+        var manifest = ContentPackageManifest.Parse(
+            Encoding.UTF8.GetBytes(
+                """
+                {
+                  "formatVersion": 1,
+                  "type": "world",
+                  "identifier": "0f46af8f-134f-4b52-9397-c43ecbcd79d7",
+                  "name": "World",
+                  "summary": "Test summary",
+                  "description": "Test package description",
+                  "version": "1.0.0",
+                  "payload": { "format": "scnet.world-v1", "entry": "payload/world/Project.xml", "mediaType": "application/xml" },
+                  "metadata": { "projectFormat": "scnet-project-xml-v1", "regionsDirectory": "payload/world/Regions" }
+                }
+                """
+            )
+        );
         using var stream = new MemoryStream();
 
-        var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(stream, manifest,
-        [
-            Entry("payload/world/Project.xml",
-                "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>"),
-            Entry("payload/world/notes.txt", "not canonical")
-        ]));
+        var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(
+                stream,
+                manifest,
+                [
+                    Entry(
+                        "payload/world/Project.xml",
+                        "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>"
+                    ),
+                    Entry("payload/world/notes.txt", "not canonical")
+                ]
+            )
+        );
 
         Assert.Contains("World payload path", exception.Message);
     }
@@ -351,26 +410,36 @@ public sealed class ContentPackageReaderTest
     [Fact]
     public void RejectsFurnitureDesignWithoutCanonicalNumericIndex()
     {
-        var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes("""
-                                                                           {
-                                                                             "formatVersion": 1,
-                                                                             "type": "furniturePack",
-                                                                             "identifier": "1d5700c1-85da-41e2-b9f0-d0422e2f7937",
-                                                                             "name": "Furniture",
-                                                                             "summary": "Test summary",
-                                                                             "description": "Test package description",
-                                                                             "version": "1.0.0",
-                                                                             "payload": { "format": "scnet.furniture-designs-xml-v1", "entry": "payload/furniture/FurnitureDesigns.xml", "mediaType": "application/xml" },
-                                                                             "metadata": { "designCount": 1 }
-                                                                           }
-                                                                           """));
+        var manifest = ContentPackageManifest.Parse(
+            Encoding.UTF8.GetBytes(
+                """
+                {
+                  "formatVersion": 1,
+                  "type": "furniturePack",
+                  "identifier": "1d5700c1-85da-41e2-b9f0-d0422e2f7937",
+                  "name": "Furniture",
+                  "summary": "Test summary",
+                  "description": "Test package description",
+                  "version": "1.0.0",
+                  "payload": { "format": "scnet.furniture-designs-xml-v1", "entry": "payload/furniture/FurnitureDesigns.xml", "mediaType": "application/xml" },
+                  "metadata": { "designCount": 1 }
+                }
+                """
+            )
+        );
         using var stream = new MemoryStream();
 
-        var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(stream, manifest,
-        [
-            Entry("payload/furniture/FurnitureDesigns.xml",
-                "<FurnitureDesigns><Values Name=\"01\" /></FurnitureDesigns>")
-        ]));
+        var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(
+                stream,
+                manifest,
+                [
+                    Entry(
+                        "payload/furniture/FurnitureDesigns.xml",
+                        "<FurnitureDesigns><Values Name=\"01\" /></FurnitureDesigns>"
+                    )
+                ]
+            )
+        );
 
         Assert.Contains("invalid design", exception.Message);
     }
@@ -380,19 +449,25 @@ public sealed class ContentPackageReaderTest
     {
         var image = _onePixelPng.ToArray();
         var idatOffset = FindPngChunk(image, "IDAT"u8);
-        var dataLength = System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(
-            image.AsSpan(idatOffset, 4));
+        var dataLength = System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(image.AsSpan(idatOffset, 4));
         image[idatOffset + 8] ^= 0xff;
         var crc = ComputeCrc32(image.AsSpan(idatOffset + 4, 4 + dataLength));
-        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(
-            image.AsSpan(idatOffset + 8 + dataLength, 4), crc);
-        var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(
-            ImageManifest("blocksTexture", "payload/texture.png", "scnet.blocks-texture.png-v1",
-                "4a6e0ea4-c9eb-4916-9f30-844e17099323")));
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(image.AsSpan(idatOffset + 8 + dataLength, 4), crc);
+        var manifest = ContentPackageManifest.Parse(
+            Encoding.UTF8.GetBytes(
+                ImageManifest(
+                    "blocksTexture",
+                    "payload/texture.png",
+                    "scnet.blocks-texture.png-v1",
+                    "4a6e0ea4-c9eb-4916-9f30-844e17099323"
+                )
+            )
+        );
 
         using var stream = new MemoryStream();
         Assert.Throws<ContentPackageException>(() =>
-            ContentPackageWriter.Write(stream, manifest, [Entry("payload/texture.png", image)]));
+            ContentPackageWriter.Write(stream, manifest, [Entry("payload/texture.png", image)])
+        );
     }
 
     [Theory]
@@ -405,7 +480,8 @@ public sealed class ContentPackageReaderTest
     {
         var json = _modManifest.Replace("\"version\": \"1.0.0\"", $"\"version\": \"{version}\"");
         Assert.Throws<ContentPackageException>(() =>
-            ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(json)));
+            ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(json))
+        );
     }
 
     [Fact]
@@ -413,7 +489,8 @@ public sealed class ContentPackageReaderTest
     {
         var json = _modManifest.Replace("Example Test", "Cafe\u0301");
         Assert.Throws<ContentPackageException>(() =>
-            ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(json)));
+            ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(json))
+        );
     }
 
     [Theory]
@@ -454,21 +531,31 @@ public sealed class ContentPackageReaderTest
                 """,
                 ContentPackageType.World,
                 "0a53d7f7a3cc9e3da1b0d057a4766e0d6b8f4f15f97680cb2561ddd759e2c40f", [
-                    Entry("payload/world/Project.xml",
-                        "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>"),
+                    Entry(
+                        "payload/world/Project.xml",
+                        "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>"
+                    ),
                     Entry("payload/world/Regions/0,0.dat", "region")
                 ]
             },
             {
-                ImageManifest("blocksTexture", "payload/texture.png", "scnet.blocks-texture.png-v1",
-                    "1f8f7ff4-923e-45f5-9d0e-10b1ed44b0fa"),
+                ImageManifest(
+                    "blocksTexture",
+                    "payload/texture.png",
+                    "scnet.blocks-texture.png-v1",
+                    "1f8f7ff4-923e-45f5-9d0e-10b1ed44b0fa"
+                ),
                 ContentPackageType.BlocksTexture,
                 "b4b4f491cda69dbacf5042c17abbd51faf7f7aa5653189def41120659b8695e5",
                 [Entry("payload/texture.png", _onePixelPng)]
             },
             {
-                ImageManifest("characterSkin", "payload/skin.png", "scnet.character-skin.png-v1",
-                    "af7db01d-9225-4b90-83d5-967d57e58b7a"),
+                ImageManifest(
+                    "characterSkin",
+                    "payload/skin.png",
+                    "scnet.character-skin.png-v1",
+                    "af7db01d-9225-4b90-83d5-967d57e58b7a"
+                ),
                 ContentPackageType.CharacterSkin,
                 "723dd235c2714d955bfc70a57a2eafeaa0071c7ab2e7e4c41fdc30dac2e35849",
                 [Entry("payload/skin.png", _onePixelPng)]
@@ -489,16 +576,22 @@ public sealed class ContentPackageReaderTest
                 """,
                 ContentPackageType.FurniturePack,
                 "023a5fa845d72661cf55efdbc11ebe47d2b5701af716f2c5119ba87f69206907", [
-                    Entry("payload/furniture/FurnitureDesigns.xml",
-                        "<FurnitureDesigns><Values Name=\"0\" /></FurnitureDesigns>")
+                    Entry(
+                        "payload/furniture/FurnitureDesigns.xml",
+                        "<FurnitureDesigns><Values Name=\"0\" /></FurnitureDesigns>"
+                    )
                 ]
             }
         };
         return data;
     }
 
-    private static MemoryStream CreateModPackage(CompressionLevel compression, bool reverseOrder, string data = "value",
-        string manifest = _modManifest)
+    private static MemoryStream CreateModPackage(
+        CompressionLevel compression,
+        bool reverseOrder,
+        string data = "value",
+        string manifest = _modManifest
+    )
     {
         var stream = new MemoryStream();
         using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, true))
@@ -511,10 +604,15 @@ public sealed class ContentPackageReaderTest
             };
             foreach (var entry in reverseOrder ? entries.Reverse() : entries)
             {
-                WriteEntry(archive, entry.Path, entry.Contents, compression,
+                WriteEntry(
+                    archive,
+                    entry.Path,
+                    entry.Contents,
+                    compression,
                     reverseOrder
                         ? new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero)
-                        : new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
+                        : new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero)
+                );
             }
         }
 
@@ -522,9 +620,13 @@ public sealed class ContentPackageReaderTest
         return stream;
     }
 
-    private static void WriteEntry(ZipArchive archive, string path, string contents,
+    private static void WriteEntry(
+        ZipArchive archive,
+        string path,
+        string contents,
         CompressionLevel compression = CompressionLevel.Optimal,
-        DateTimeOffset? timestamp = null)
+        DateTimeOffset? timestamp = null
+    )
     {
         var entry = archive.CreateEntry(path, compression);
         if (timestamp is not null)
@@ -592,7 +694,8 @@ public sealed class ContentPackageReaderTest
           """;
 
     private static readonly byte[] _onePixelPng = Convert.FromBase64String(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII=");
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII="
+    );
 
     private const string _modManifest = """
                                         {

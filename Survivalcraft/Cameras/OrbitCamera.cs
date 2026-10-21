@@ -29,11 +29,16 @@ public class OrbitCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
         var cameraSneakMove = componentInput.PlayerInput.CameraSneakMove;
         var cameraLook = componentInput.PlayerInput.CameraLook;
         _angles.X = MathUtils.NormalizeAngle(_angles.X + 4f * cameraLook.X * dt + 0.5f * cameraSneakMove.X * dt);
-        _angles.Y = MathUtils.Clamp(MathUtils.NormalizeAngle(_angles.Y + 4f * cameraLook.Y * dt),
-            MathUtils.DegToRad(-20f), MathUtils.DegToRad(70f));
+        _angles.Y = MathUtils.Clamp(
+            MathUtils.NormalizeAngle(_angles.Y + 4f * cameraLook.Y * dt),
+            MathUtils.DegToRad(-20f),
+            MathUtils.DegToRad(70f)
+        );
         _distance = MathUtils.Clamp(_distance - 10f * cameraSneakMove.Z * dt, 2f, 16f);
-        var v = Vector3.Transform(new Vector3(_distance, 0f, 0f),
-            Matrix.CreateFromYawPitchRoll(_angles.X, 0f, _angles.Y));
+        var v = Vector3.Transform(
+            new Vector3(_distance, 0f, 0f),
+            Matrix.CreateFromYawPitchRoll(_angles.X, 0f, _angles.Y)
+        );
         var vector = GameWidget.Target.ComponentBody.BoundingBox.Center();
         var vector2 = vector + v;
         if (Vector3.Distance(vector2, _position) < 10f)
@@ -58,8 +63,14 @@ public class OrbitCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
                 var v4 = 0.5f * (vector4 * i + v3 * j);
                 var vector5 = vector + v4;
                 var end = vector5 + vector3 + Vector3.Normalize(vector3) * 0.5f;
-                var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(vector5, end, false,
-                    true, (value, _) => !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Transparent);
+                var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(
+                    vector5,
+                    end,
+                    false,
+                    true,
+                    (value, _) => !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
+                        .Transparent
+                );
                 if (terrainRaycastResult.HasValue)
                 {
                     num = num.HasValue

@@ -15,7 +15,8 @@ public static class LocalizationText
         string section,
         string key,
         string fallback,
-        params string[] arguments)
+        params string[] arguments
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(section);
         ArgumentException.ThrowIfNullOrWhiteSpace(key);

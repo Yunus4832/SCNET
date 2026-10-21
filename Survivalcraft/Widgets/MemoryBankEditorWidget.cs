@@ -9,9 +9,13 @@ namespace Game.Widgets;
 public sealed class MemoryBankEditorWidget : CanvasWidget, IGameInputCapturingWidget
 {
     private const int _cellsPerRow = 4;
+
     private const int _digitsPerCell = 4;
+
     private const int _digitsPerPage = 64;
+
     private const int _rowsPerPage = 4;
+
     private const string _languageSection = nameof(MemoryBankEditorWidget);
 
     private static readonly Key[] _digitKeys =
@@ -22,28 +26,50 @@ public sealed class MemoryBankEditorWidget : CanvasWidget, IGameInputCapturingWi
     ];
 
     private readonly StringBuilder _cellBuffer = new(_digitsPerCell);
+
     private readonly LabelWidget[,] _cellLabels = new LabelWidget[_rowsPerPage, _cellsPerRow];
+
     private readonly CanvasWidget[,] _inputFrames = new CanvasWidget[_rowsPerPage, _cellsPerRow];
+
     private readonly BevelledRectangleWidget[,] _inputBorders =
         new BevelledRectangleWidget[_rowsPerPage, _cellsPerRow];
+
     private readonly LabelWidget[,] _inputLabels = new LabelWidget[_rowsPerPage, _cellsPerRow];
+
     private readonly ButtonWidget[] _digitButtons = new ButtonWidget[16];
+
     private readonly Action<bool> _completed;
+
     private readonly Action _close;
+
     private readonly GridPanelWidget _keypad;
+
     private readonly ButtonWidget _nextButton;
+
     private readonly LabelWidget _pageLabel;
+
     private readonly ButtonWidget _previousButton;
+
     private readonly LabelWidget[] _rowLabels = new LabelWidget[_rowsPerPage];
+
     private readonly MemoryBankData _sourceData;
+
     private readonly StackPanelWidget _table;
+
     private ButtonWidget _backspaceButton = null!;
+
     private ButtonWidget _cancelButton = null!;
+
     private ButtonWidget _saveButton = null!;
+
     private ButtonWidget _tabButton = null!;
+
     private MemoryBankData _temporaryData;
+
     private bool _hasChanges;
+
     private int _page;
+
     private int _pageBufferLength;
 
     public MemoryBankEditorWidget(MemoryBankData data, Action<bool> completed, Action close)
@@ -121,7 +147,6 @@ public sealed class MemoryBankEditorWidget : CanvasWidget, IGameInputCapturingWi
             _completed(false);
             _close();
         }
-
     }
 
     private void CreateTable()
@@ -265,8 +290,10 @@ public sealed class MemoryBankEditorWidget : CanvasWidget, IGameInputCapturingWi
         var value = _cellBuffer.ToString().PadLeft(_digitsPerCell, '0');
         for (var offset = 0; offset < _digitsPerCell; offset++)
         {
-            _temporaryData.Write(addressRow * 16 + column * 4 + offset,
-                (byte)MemoryBankData.HexChars.IndexOf(value[offset]));
+            _temporaryData.Write(
+                addressRow * 16 + column * 4 + offset,
+                (byte)MemoryBankData.HexChars.IndexOf(value[offset])
+            );
         }
     }
 

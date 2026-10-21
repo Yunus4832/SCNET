@@ -13,6 +13,7 @@ public interface IServerSourceInspectionService
 public sealed class ServerSourceInspectionService : IServerSourceInspectionService, IDisposable
 {
     private readonly HttpClient _httpClient;
+
     private readonly ServerSourceProtocolClient _protocolClient;
 
     public ServerSourceInspectionService()
@@ -38,12 +39,14 @@ public sealed class ServerSourceInspectionService : IServerSourceInspectionServi
         _httpClient.Dispose();
     }
 
-    private static async ValueTask<Stream> ConnectPublicEndpointAsync(SocketsHttpConnectionContext context,
-        CancellationToken cancellationToken)
+    private static async ValueTask<Stream> ConnectPublicEndpointAsync(
+        SocketsHttpConnectionContext context,
+        CancellationToken cancellationToken
+    )
     {
         var addresses = await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host, cancellationToken);
-        var address = addresses.FirstOrDefault(PublicEndpointAddress.IsPublicAddress)
-                      ?? throw new HttpRequestException("Server source resolves only to a non-public address.");
+        var address = addresses.FirstOrDefault(PublicEndpointAddress.IsPublicAddress) ??
+                      throw new HttpRequestException("Server source resolves only to a non-public address.");
         var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
         try
         {
@@ -56,5 +59,4 @@ public sealed class ServerSourceInspectionService : IServerSourceInspectionServi
             throw;
         }
     }
-
 }

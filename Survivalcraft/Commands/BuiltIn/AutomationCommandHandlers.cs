@@ -14,9 +14,18 @@ internal static class AutomationCommandHandlers
         try
         {
             var player = FindLocalPlayer() ?? throw new InvalidOperationException("No local character is available.");
-            var id = player.ComponentInput.ViewControl.Start(player, command.Target, command.ToleranceDegrees, command.TimeoutSeconds);
-            return new CommandResult(true, "automation.view.started", "View control started.",
-                Data: JsonSerializer.SerializeToNode(new { Id = id }));
+            var id = player.ComponentInput.ViewControl.Start(
+                player,
+                command.Target,
+                command.ToleranceDegrees,
+                command.TimeoutSeconds
+            );
+            return new CommandResult(
+                true,
+                "automation.view.started",
+                "View control started.",
+                Data: JsonSerializer.SerializeToNode(new { Id = id })
+            );
         }
         catch (ArgumentException exception)
         {
@@ -29,18 +38,35 @@ internal static class AutomationCommandHandlers
     }
 
     public static CommandResult ViewStatus(CommandContext _, GetAutomationViewStatusCommand __) =>
-        new(true, "automation.view.status", "View control status captured.",
-            Data: JsonSerializer.SerializeToNode(FindLocalPlayer()?.ComponentInput.ViewControl.Capture() ?? new { Status = "unavailable" }));
+        new(
+            true,
+            "automation.view.status",
+            "View control status captured.",
+            Data: JsonSerializer.SerializeToNode(
+                FindLocalPlayer()?.ComponentInput.ViewControl.Capture() ??
+                new { Status = "unavailable" }
+            )
+        );
 
     public static CommandResult SetViewAngles(CommandContext _, SetAutomationViewAnglesCommand command)
     {
         try
         {
             var player = FindLocalPlayer() ?? throw new InvalidOperationException("No local character is available.");
-            var id = player.ComponentInput.ViewControl.StartAngles(player, command.YawDegrees, command.PitchDegrees,
-                command.Relative, command.ToleranceDegrees, command.TimeoutSeconds);
-            return new CommandResult(true, "automation.view.started", "View control started.",
-                Data: JsonSerializer.SerializeToNode(new { Id = id }));
+            var id = player.ComponentInput.ViewControl.StartAngles(
+                player,
+                command.YawDegrees,
+                command.PitchDegrees,
+                command.Relative,
+                command.ToleranceDegrees,
+                command.TimeoutSeconds
+            );
+            return new CommandResult(
+                true,
+                "automation.view.started",
+                "View control started.",
+                Data: JsonSerializer.SerializeToNode(new { Id = id })
+            );
         }
         catch (ArgumentException exception)
         {
@@ -63,8 +89,12 @@ internal static class AutomationCommandHandlers
         try
         {
             var id = GetNavigation().Start(command.Destination, command.Range, command.TimeoutSeconds);
-            return new CommandResult(true, "automation.navigation.started", "Navigation started.",
-                Data: JsonSerializer.SerializeToNode(new { Id = id }));
+            return new CommandResult(
+                true,
+                "automation.navigation.started",
+                "Navigation started.",
+                Data: JsonSerializer.SerializeToNode(new { Id = id })
+            );
         }
         catch (ArgumentException exception)
         {
@@ -79,8 +109,12 @@ internal static class AutomationCommandHandlers
     public static CommandResult NavigationStatus(CommandContext _, GetAutomationNavigationStatusCommand __)
     {
         var navigation = FindNavigation();
-        return new CommandResult(true, "automation.navigation.status", "Navigation status captured.",
-            Data: JsonSerializer.SerializeToNode(navigation?.Capture() ?? new { Status = "unavailable" }));
+        return new CommandResult(
+            true,
+            "automation.navigation.status",
+            "Navigation status captured.",
+            Data: JsonSerializer.SerializeToNode(navigation?.Capture() ?? new { Status = "unavailable" })
+        );
     }
 
     public static CommandResult CancelNavigation(CommandContext _, CancelAutomationNavigationCommand __)
@@ -94,27 +128,42 @@ internal static class AutomationCommandHandlers
         ?.ComponentInput.Navigation;
 
     private static AutomationNavigationController GetNavigation() => FindNavigation() ??
-        throw new InvalidOperationException("No local character is available.");
+                                                                     throw new InvalidOperationException(
+                                                                         "No local character is available."
+                                                                     );
 
     public static CommandResult GameplayContext(CommandContext _, GetAutomationGameplayContextCommand __) =>
-        new(true, "automation.gameplay.context", "Gameplay context captured.",
-            Data: JsonSerializer.SerializeToNode(AutomationGameplayContext.Capture()));
+        new(
+            true,
+            "automation.gameplay.context",
+            "Gameplay context captured.",
+            Data: JsonSerializer.SerializeToNode(AutomationGameplayContext.Capture())
+        );
 
     public static CommandResult RunInput(CommandContext _, RunAutomationInputCommand command)
     {
         var action = command.Action;
-        if (action.DurationFrames is < 1 or > 600 || action.Keys == null || action.MouseButtons == null ||
+        if (action.DurationFrames is < 1 or > 600 ||
+            action.Keys == null ||
+            action.MouseButtons == null ||
             action.Keys.Any(key => !Enum.IsDefined(key)) ||
             action.MouseButtons.Any(button => !Enum.IsDefined(button)))
         {
-            return CommandResult.Fail("automation.input.invalid_action", "Valid keys/buttons and 1–600 durationFrames are required.");
+            return CommandResult.Fail(
+                "automation.input.invalid_action",
+                "Valid keys/buttons and 1–600 durationFrames are required."
+            );
         }
 
         try
         {
             var id = AutomationInputController.StartAction(action);
-            return new CommandResult(true, "automation.input.started", "Input gesture started.",
-                Data: JsonSerializer.SerializeToNode(new { Id = id }));
+            return new CommandResult(
+                true,
+                "automation.input.started",
+                "Input gesture started.",
+                Data: JsonSerializer.SerializeToNode(new { Id = id })
+            );
         }
         catch (InvalidOperationException exception)
         {
@@ -122,13 +171,20 @@ internal static class AutomationCommandHandlers
         }
         catch (ArgumentOutOfRangeException)
         {
-            return CommandResult.Fail("automation.input.invalid_action", "The input gesture contains invalid or excessive values.");
+            return CommandResult.Fail(
+                "automation.input.invalid_action",
+                "The input gesture contains invalid or excessive values."
+            );
         }
     }
 
     public static CommandResult ActionStatus(CommandContext _, GetAutomationActionStatusCommand __) =>
-        new(true, "automation.input.status", "Input gesture status captured.",
-            Data: JsonSerializer.SerializeToNode(AutomationInputController.GetActionStatus()));
+        new(
+            true,
+            "automation.input.status",
+            "Input gesture status captured.",
+            Data: JsonSerializer.SerializeToNode(AutomationInputController.GetActionStatus())
+        );
 
     public static CommandResult CancelAction(CommandContext _, CancelAutomationActionCommand __)
     {
@@ -148,8 +204,12 @@ internal static class AutomationCommandHandlers
     }
 
     public static CommandResult GetContext(CommandContext _, GetAutomationUiContextCommand __) =>
-        new(true, "automation.ui.context", "UI context captured.",
-            Data: JsonSerializer.SerializeToNode(AutomationUiContext.Capture()));
+        new(
+            true,
+            "automation.ui.context",
+            "UI context captured.",
+            Data: JsonSerializer.SerializeToNode(AutomationUiContext.Capture())
+        );
 
     public static CommandResult Tap(CommandContext _, TapAutomationUiCommand command)
     {
@@ -167,26 +227,36 @@ internal static class AutomationCommandHandlers
         if (!AutomationUiContext.TryFindTarget(command.SourceSelector, out var source) ||
             !AutomationUiContext.TryFindTarget(command.TargetSelector, out var target))
         {
-            return CommandResult.Fail("automation.ui.target_not_found", "The drag source or destination is no longer available.");
+            return CommandResult.Fail(
+                "automation.ui.target_not_found",
+                "The drag source or destination is no longer available."
+            );
         }
 
-        if (!source.Actions.Contains("drag") || !double.IsFinite(command.DurationSeconds) ||
+        if (!source.Actions.Contains("drag") ||
+            !double.IsFinite(command.DurationSeconds) ||
             command.DurationSeconds is < 0.1 or > 3)
         {
-            return CommandResult.Fail("automation.ui.invalid_drag", "The source must support drag and durationSeconds must be 0.1–3.");
+            return CommandResult.Fail(
+                "automation.ui.invalid_drag",
+                "The source must support drag and durationSeconds must be 0.1–3."
+            );
         }
 
         try
         {
             var id = AutomationInputController.Drag(Center(source), Center(target), command.DurationSeconds);
-            return new CommandResult(true, "automation.ui.drag_queued", "UI drag queued.",
-                Data: JsonSerializer.SerializeToNode(new { Id = id }));
+            return new CommandResult(
+                true,
+                "automation.ui.drag_queued",
+                "UI drag queued.",
+                Data: JsonSerializer.SerializeToNode(new { Id = id })
+            );
         }
         catch (InvalidOperationException exception)
         {
             return CommandResult.Fail("automation.input.busy", exception.Message);
         }
-
     }
 
     public static CommandResult PressKey(CommandContext _, PressAutomationKeyCommand command)
@@ -217,12 +287,15 @@ internal static class AutomationCommandHandlers
             return failure;
         }
 
-        if (!float.IsFinite(command.DeltaX) || !float.IsFinite(command.DeltaY) ||
+        if (!float.IsFinite(command.DeltaX) ||
+            !float.IsFinite(command.DeltaY) ||
             command.DeltaX == 0f && command.DeltaY == 0f ||
             command.DurationFrames is < 1 or > 120)
         {
-            return CommandResult.Fail("automation.ui.invalid_swipe",
-                "Swipe delta must be finite and non-zero, and durationFrames must be between 1 and 120.");
+            return CommandResult.Fail(
+                "automation.ui.invalid_swipe",
+                "Swipe delta must be finite and non-zero, and durationFrames must be between 1 and 120."
+            );
         }
 
         var start = Center(target);
@@ -235,8 +308,10 @@ internal static class AutomationCommandHandlers
     {
         if (command.DeltaX == 0 && command.DeltaY == 0)
         {
-            return CommandResult.Fail("automation.input.invalid_mouse_movement",
-                "Mouse movement must be non-zero.");
+            return CommandResult.Fail(
+                "automation.input.invalid_mouse_movement",
+                "Mouse movement must be non-zero."
+            );
         }
 
         AutomationInputController.MoveMouse(new Point2(command.DeltaX, command.DeltaY));
@@ -246,8 +321,12 @@ internal static class AutomationCommandHandlers
     public static CommandResult Screenshot(CommandContext _, CaptureAutomationScreenshotCommand __)
     {
         var result = AutomationScreenshot.Capture();
-        return new CommandResult(true, "automation.ui.screenshot", "UI screenshot captured.",
-            Data: JsonSerializer.SerializeToNode(result));
+        return new CommandResult(
+            true,
+            "automation.ui.screenshot",
+            "UI screenshot captured.",
+            Data: JsonSerializer.SerializeToNode(result)
+        );
     }
 
     private static Vector2 Center(AutomationTarget target) =>
@@ -256,7 +335,8 @@ internal static class AutomationCommandHandlers
     private static bool TryGetScrollableTarget(
         string selector,
         out AutomationTarget target,
-        out CommandResult failure)
+        out CommandResult failure
+    )
     {
         if (!AutomationUiContext.TryFindTarget(selector, out target))
         {

@@ -25,7 +25,10 @@ public sealed class NetNodeLifecycleTest
             node.Server = client;
             node.StopImmediate();
             node.StopImmediate();
-            node.QueuePackage(new ConnectionPhaseAckPackage(Guid.Empty, ConnectionPhase.TransportConnected), PackageAudience.Global);
+            node.QueuePackage(
+                new ConnectionPhaseAckPackage(Guid.Empty, ConnectionPhase.TransportConnected),
+                PackageAudience.Global
+            );
             Assert.Equal(0, node.PendingPackageCount);
             Assert.Empty(node.Clients);
             Assert.Null(node.Self);

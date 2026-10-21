@@ -40,20 +40,29 @@ public class SubsystemWaterBlockBehavior() : SubsystemFluidBlockBehavior(
 
     public override bool OnFluidInteract(int interactValue, int x, int y, int z, int fluidValue)
     {
-        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(interactValue)] is not MagmaBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(interactValue)] is not
+            MagmaBlock)
         {
             return base.OnFluidInteract(interactValue, x, y, z, fluidValue);
         }
 
-        SubsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.1f, 0.1f), new Vector3(x, y, z), 5f,
-            true);
+        SubsystemAudio.PlayRandomSound(
+            "Audio/Sizzles",
+            1f,
+            _random.Float(-0.1f, 0.1f),
+            new Vector3(x, y, z),
+            5f,
+            true
+        );
         SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
         Set(x, y, z, 3);
         return true;
     }
 
     public override void OnItemHarvested(
-        int x, int y, int z,
+        int x,
+        int y,
+        int z,
         int blockValue,
         ref BlockDropValue dropValue,
         ref int newBlockValue

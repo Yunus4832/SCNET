@@ -70,6 +70,7 @@ public static partial class ProtocolMessageCodec
                     writer.Write(package.PlacementCell);
                     writer.Write(package.PlacementExpectedValue);
                 }
+
                 writer.Write(package.NetInteractRay);
                 WritePlayerHit(package.NetInteractRaycast, writer);
                 break;
@@ -126,23 +127,37 @@ public static partial class ProtocolMessageCodec
             ComponentPlayerPackage.PlayerAction.BodyUpdate => ReadPlayerMovement(reader, id),
             ComponentPlayerPackage.PlayerAction.InteractEvent => ReadPlayerInteraction(reader, id),
             ComponentPlayerPackage.PlayerAction.AimEvent => new PlayerAimPackage
-            { FromPlayerId = id, AimEvent = reader.ReadEnum<SyncAction>(), NetAimRay = reader.ReadRay3Nullable() },
+                { FromPlayerId = id, AimEvent = reader.ReadEnum<SyncAction>(), NetAimRay = reader.ReadRay3Nullable() },
             ComponentPlayerPackage.PlayerAction.DigEvent => new PlayerDigPackage
-            { FromPlayerId = id, DigEvent = reader.ReadEnum<SyncAction>(), DigRequestId = reader.ReadInt32(), DigExpectedValue = reader.ReadInt32(), NetDigRay = reader.ReadRay3Nullable(), NetDigRaycast = ReadPlayerHit(reader) },
+            {
+                FromPlayerId = id, DigEvent = reader.ReadEnum<SyncAction>(), DigRequestId = reader.ReadInt32(),
+                DigExpectedValue = reader.ReadInt32(), NetDigRay = reader.ReadRay3Nullable(),
+                NetDigRaycast = ReadPlayerHit(reader)
+            },
             ComponentPlayerPackage.PlayerAction.Hit => new PlayerHitPackage
-            { FromPlayerId = id, BodyId = reader.ReadInt32(), HitPosition = reader.ReadVector3(), HitDirection = reader.ReadVector3() },
+            {
+                FromPlayerId = id, BodyId = reader.ReadInt32(), HitPosition = reader.ReadVector3(),
+                HitDirection = reader.ReadVector3()
+            },
             ComponentPlayerPackage.PlayerAction.CreativeFlyChange => new PlayerFlightPackage
-            { FromPlayerId = id, IsCreativeFly = reader.ReadBoolean() },
+                { FromPlayerId = id, IsCreativeFly = reader.ReadBoolean() },
             ComponentPlayerPackage.PlayerAction.IntoPlaying => new PlayerReadyPackage { FromPlayerId = id },
             ComponentPlayerPackage.PlayerAction.Restart => new PlayerRestartPackage { FromPlayerId = id },
             ComponentPlayerPackage.PlayerAction.AddExperience => new PlayerExperiencePackage
-            { FromPlayerId = id, Count = reader.ReadInt32(), PlaySound = reader.ReadBoolean(), Level = reader.ReadSingle() },
+            {
+                FromPlayerId = id, Count = reader.ReadInt32(), PlaySound = reader.ReadBoolean(),
+                Level = reader.ReadSingle()
+            },
             ComponentPlayerPackage.PlayerAction.Drop => new PlayerDropPackage { FromPlayerId = id },
             ComponentPlayerPackage.PlayerAction.DragDrop => new PlayerDragDropPackage
-            { FromPlayerId = id, InventoryID = reader.ReadInt32(), ActiveSlot = reader.ReadInt32(), HitPosition = reader.ReadVector3(), Count = reader.ReadInt32() },
-            ComponentPlayerPackage.PlayerAction.SyncStat => new PlayerStatisticsPackage { FromPlayerId = id, Stat = reader.ReadBuff() },
+            {
+                FromPlayerId = id, InventoryID = reader.ReadInt32(), ActiveSlot = reader.ReadInt32(),
+                HitPosition = reader.ReadVector3(), Count = reader.ReadInt32()
+            },
+            ComponentPlayerPackage.PlayerAction.SyncStat => new PlayerStatisticsPackage
+                { FromPlayerId = id, Stat = reader.ReadBuff() },
             ComponentPlayerPackage.PlayerAction.PositionSet => new PlayerPositionPackage
-            { FromPlayerId = id, Position = reader.ReadVector3(), Velocity = reader.ReadVector3() },
+                { FromPlayerId = id, Position = reader.ReadVector3(), Velocity = reader.ReadVector3() },
             _ => throw new InvalidDataException("Unknown player action.")
         };
     }
@@ -151,21 +166,36 @@ public static partial class ProtocolMessageCodec
     {
         var action = reader.ReadEnum<InteractionMessageKind>();
         if (!Enum.IsDefined(action)) { throw new InvalidDataException("Unknown player interaction."); }
+
         var requestId = 0;
         var cell = default(Point3);
         var expected = 0;
         if (action == InteractionMessageKind.Place)
-        { requestId = reader.ReadInt32(); cell = reader.ReadPoint3(); expected = reader.ReadInt32(); }
+        {
+            requestId = reader.ReadInt32();
+            cell = reader.ReadPoint3();
+            expected = reader.ReadInt32();
+        }
+
         return new PlayerInteractionPackage
-        { FromPlayerId = id, InteractEvent = action, PlacementRequestId = requestId, PlacementCell = cell, PlacementExpectedValue = expected, NetInteractRay = reader.ReadRay3(), NetInteractRaycast = ReadPlayerHit(reader) };
+        {
+            FromPlayerId = id, InteractEvent = action, PlacementRequestId = requestId, PlacementCell = cell,
+            PlacementExpectedValue = expected, NetInteractRay = reader.ReadRay3(),
+            NetInteractRaycast = ReadPlayerHit(reader)
+        };
     }
 
     private static PlayerStatePackage ReadPlayerMovement(ProtocolReader reader, byte id)
     {
         var flags = reader.ReadEnum<ComponentPlayerPackage.ChangFlag>();
         var look = (flags & ComponentPlayerPackage.ChangFlag.LookAnglesChange) != 0 ? reader.ReadVector2() : default;
-        var child = (flags & (ComponentPlayerPackage.ChangFlag.ParentBodyChange | ComponentPlayerPackage.ChangFlag.ChildLookAnglesChange)) ==
-            (ComponentPlayerPackage.ChangFlag.ParentBodyChange | ComponentPlayerPackage.ChangFlag.ChildLookAnglesChange) ? reader.ReadVector2() : default;
+        var child = (flags &
+                     (ComponentPlayerPackage.ChangFlag.ParentBodyChange |
+                      ComponentPlayerPackage.ChangFlag.ChildLookAnglesChange)) ==
+                    (ComponentPlayerPackage.ChangFlag.ParentBodyChange |
+                     ComponentPlayerPackage.ChangFlag.ChildLookAnglesChange)
+            ? reader.ReadVector2()
+            : default;
         return new PlayerStatePackage
         {
             FromPlayerId = id,
@@ -173,7 +203,9 @@ public static partial class ProtocolMessageCodec
             LookAngles = look,
             ChildLookAngles = child,
             Position = (flags & ComponentPlayerPackage.ChangFlag.PositionChange) != 0 ? reader.ReadVector3() : default,
-            Rotation = (flags & ComponentPlayerPackage.ChangFlag.RotationChange) != 0 ? reader.ReadQuaternion() : default,
+            Rotation = (flags & ComponentPlayerPackage.ChangFlag.RotationChange) != 0
+                ? reader.ReadQuaternion()
+                : default,
             Velocity = (flags & ComponentPlayerPackage.ChangFlag.VelocityChange) != 0 ? reader.ReadVector3() : default,
             LadderValue = (flags & ComponentPlayerPackage.ChangFlag.LadderChange) != 0 ? reader.ReadInt32() : default,
             Sneaking = (flags & ComponentPlayerPackage.ChangFlag.SneakChange) != 0 && reader.ReadBoolean()
@@ -183,14 +215,27 @@ public static partial class ProtocolMessageCodec
     private static PlayerTerrainHit? ReadPlayerHit(ProtocolReader reader)
     {
         if (!reader.ReadBoolean()) { return null; }
-        return new PlayerTerrainHit(reader.ReadRay3(), reader.ReadInt32(), reader.ReadInt32(), reader.ReadSingle(), reader.ReadBlockPoint(), reader.ReadInt32());
+
+        return new PlayerTerrainHit(
+            reader.ReadRay3(),
+            reader.ReadInt32(),
+            reader.ReadInt32(),
+            reader.ReadSingle(),
+            reader.ReadBlockPoint(),
+            reader.ReadInt32()
+        );
     }
 
     private static void WritePlayerHit(PlayerTerrainHit? hit, ProtocolWriter writer)
     {
         writer.Write(hit.HasValue);
         if (hit is not { } value) { return; }
-        writer.Write(value.Ray); writer.Write(value.Value); writer.Write(value.CollisionBoxIndex); writer.Write(value.Distance);
-        writer.WriteBlockPoint(value.Cell); writer.Write(value.Face);
+
+        writer.Write(value.Ray);
+        writer.Write(value.Value);
+        writer.Write(value.CollisionBoxIndex);
+        writer.Write(value.Distance);
+        writer.WriteBlockPoint(value.Cell);
+        writer.Write(value.Face);
     }
 }

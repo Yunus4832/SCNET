@@ -36,7 +36,8 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
                                      (_islandSize.HasValue ? MathUtils.Min(4f * _islandSize.Value.X, 400f) : 400f);
         _shoreRoughnessAmplitude.Y = MathUtils.Pow(_worldSettings.ShoreRoughness, 2f) *
                                      (_islandSize.HasValue ? MathUtils.Min(4f * _islandSize.Value.Y, 400f) : 400f);
-        _shoreRoughnessFrequency = MathUtils.Lerp(0.5f, 1f, _worldSettings.ShoreRoughness) * new Vector2(1f) /
+        _shoreRoughnessFrequency = MathUtils.Lerp(0.5f, 1f, _worldSettings.ShoreRoughness) *
+                                   new Vector2(1f) /
                                    _shoreRoughnessAmplitude;
         _shoreRoughnessOctaves.X =
             (int)MathUtils.Clamp(MathUtils.Log(1f / _shoreRoughnessFrequency.X) / MathUtils.Log(2f) - 1f, 1f, 7f);
@@ -92,9 +93,11 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
                         }
                         else if (k < _worldSettings.TerrainLevel)
                         {
-                            value = Terrain.MakeBlockValue(_worldSettings.TerrainBlockIndex == 8
-                                ? 2
-                                : _worldSettings.TerrainBlockIndex);
+                            value = Terrain.MakeBlockValue(
+                                _worldSettings.TerrainBlockIndex == 8
+                                    ? 2
+                                    : _worldSettings.TerrainBlockIndex
+                            );
                         }
                         else if (k == _worldSettings.TerrainLevel)
                         {
@@ -141,22 +144,47 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
         var y2 = 0f;
         if (_shoreRoughnessAmplitude.X > 0f)
         {
-            x2 = _shoreRoughnessAmplitude.X * SimplexNoise.OctavedNoise(z + _shoreRoughnessOffset[0],
-                _shoreRoughnessFrequency.X, (int)_shoreRoughnessOctaves.X, 2f, 0.6f);
-            x3 = _shoreRoughnessAmplitude.X * SimplexNoise.OctavedNoise(z + _shoreRoughnessOffset[1],
-                _shoreRoughnessFrequency.X, (int)_shoreRoughnessOctaves.X, 2f, 0.6f);
+            x2 = _shoreRoughnessAmplitude.X *
+                 SimplexNoise.OctavedNoise(
+                     z + _shoreRoughnessOffset[0],
+                     _shoreRoughnessFrequency.X,
+                     (int)_shoreRoughnessOctaves.X,
+                     2f,
+                     0.6f
+                 );
+            x3 = _shoreRoughnessAmplitude.X *
+                 SimplexNoise.OctavedNoise(
+                     z + _shoreRoughnessOffset[1],
+                     _shoreRoughnessFrequency.X,
+                     (int)_shoreRoughnessOctaves.X,
+                     2f,
+                     0.6f
+                 );
         }
 
         if (_shoreRoughnessAmplitude.Y > 0f)
         {
-            y = _shoreRoughnessAmplitude.Y * SimplexNoise.OctavedNoise(x + _shoreRoughnessOffset[2],
-                _shoreRoughnessFrequency.Y, (int)_shoreRoughnessOctaves.Y, 2f, 0.6f);
-            y2 = _shoreRoughnessAmplitude.Y * SimplexNoise.OctavedNoise(x + _shoreRoughnessOffset[3],
-                _shoreRoughnessFrequency.Y, (int)_shoreRoughnessOctaves.Y, 2f, 0.6f);
+            y = _shoreRoughnessAmplitude.Y *
+                SimplexNoise.OctavedNoise(
+                    x + _shoreRoughnessOffset[2],
+                    _shoreRoughnessFrequency.Y,
+                    (int)_shoreRoughnessOctaves.Y,
+                    2f,
+                    0.6f
+                );
+            y2 = _shoreRoughnessAmplitude.Y *
+                 SimplexNoise.OctavedNoise(
+                     x + _shoreRoughnessOffset[3],
+                     _shoreRoughnessFrequency.Y,
+                     (int)_shoreRoughnessOctaves.Y,
+                     2f,
+                     0.6f
+                 );
         }
 
         var vector = _oceanCorner + new Vector2(x2, y);
-        var vector2 = _oceanCorner + (_islandSize ?? new Vector2(3.40282347E+38f)) +
+        var vector2 = _oceanCorner +
+                      (_islandSize ?? new Vector2(3.40282347E+38f)) +
                       new Vector2(x3, y2);
         return MathUtils.Min(x - vector.X, vector2.X - x, z - vector.Y, vector2.Y - z);
     }
@@ -195,7 +223,9 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
                 {
                     var cellValueFast = chunk.GetCellValueFast(num);
                     var num4 = Terrain.ExtractContents(cellValueFast);
-                    if (num4 != 0 && num4 != num2 && CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num4] is FluidBlock)
+                    if (num4 != 0 &&
+                        num4 != num2 &&
+                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num4] is FluidBlock)
                     {
                         var data = Terrain.ExtractData(cellValueFast);
                         chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, 0, FluidBlock.SetIsTop(data, true)));

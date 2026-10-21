@@ -14,8 +14,15 @@ public class RodBlock : Block
             ironRodMesh.ParentBone ??
             throw new InvalidOperationException("Required IronRodMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(ironRodMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            ironRodMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 

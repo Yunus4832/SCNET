@@ -55,13 +55,21 @@ public class ScrollPanelWidget : ContainerWidget
             {
                 if (Direction == LayoutDirection.Horizontal)
                 {
-                    child.Measure(new Vector2(float.MaxValue,
-                        MathUtils.Max(parentAvailableSize.Y - 2f * child.Margin.Y, 0f)));
+                    child.Measure(
+                        new Vector2(
+                            float.MaxValue,
+                            MathUtils.Max(parentAvailableSize.Y - 2f * child.Margin.Y, 0f)
+                        )
+                    );
                 }
                 else
                 {
-                    child.Measure(new Vector2(MathUtils.Max(parentAvailableSize.X - 2f * child.Margin.X, 0f),
-                        float.MaxValue));
+                    child.Measure(
+                        new Vector2(
+                            MathUtils.Max(parentAvailableSize.X - 2f * child.Margin.X, 0f),
+                            float.MaxValue
+                        )
+                    );
                 }
             }
         }
@@ -155,8 +163,10 @@ public class ScrollPanelWidget : ContainerWidget
         {
             if (!_lastDragPosition.HasValue)
             {
-                ScrollPosition = MathUtils.Min(ScrollPosition + 6f * Time.FrameDuration * (0f - ScrollPosition + 5f),
-                    0f);
+                ScrollPosition = MathUtils.Min(
+                    ScrollPosition + 6f * Time.FrameDuration * (0f - ScrollPosition + 5f),
+                    0f
+                );
             }
 
             ScrollPosition = MathUtils.Max(ScrollPosition, 0f - num);
@@ -167,8 +177,10 @@ public class ScrollPanelWidget : ContainerWidget
         {
             if (!_lastDragPosition.HasValue && !float.IsPositiveInfinity(ScrollPosition))
             {
-                ScrollPosition = MathUtils.Max(ScrollPosition + 6f * Time.FrameDuration * (num4 - ScrollPosition - 5f),
-                    num4);
+                ScrollPosition = MathUtils.Max(
+                    ScrollPosition + 6f * Time.FrameDuration * (num4 - ScrollPosition - 5f),
+                    num4
+                );
             }
 
             ScrollPosition = MathUtils.Min(ScrollPosition, num4 + num);
@@ -183,7 +195,8 @@ public class ScrollPanelWidget : ContainerWidget
 
     public override void Draw(DrawContext dc)
     {
-        var color = new Color((byte)128, (byte)128, (byte)128) * GlobalColorTransform *
+        var color = new Color((byte)128, (byte)128, (byte)128) *
+                    GlobalColorTransform *
                     MathUtils.Saturate(_scrollBarAlpha);
         var viewportLength = Direction == LayoutDirection.Horizontal
             ? ActualSize.X
@@ -218,11 +231,14 @@ public class ScrollPanelWidget : ContainerWidget
     public bool HitTestPanel(Vector2 position)
     {
         var found = false;
-        HitTestGlobal(position, delegate (Widget widget)
-        {
-            found = widget.IsChildWidgetOf(this) || widget == this;
-            return true;
-        });
+        HitTestGlobal(
+            position,
+            delegate(Widget widget)
+            {
+                found = widget.IsChildWidgetOf(this) || widget == this;
+                return true;
+            }
+        );
         return found;
     }
 }

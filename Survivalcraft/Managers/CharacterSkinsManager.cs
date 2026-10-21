@@ -8,6 +8,7 @@ namespace Game.Managers;
 public static class CharacterSkinsManager
 {
     private const string _assetExtension = ".png";
+
     private static readonly List<string> _characterSkinNames = [];
 
     private static readonly Dictionary<PlayerClass, Model> _playerModels = new();
@@ -203,13 +204,24 @@ public static class CharacterSkinsManager
             throw ex;
         }
 
-        return ContentAssetStore.Install(GamePaths.CharacterSkins, _assetExtension,
-            Storage.GetFileNameWithoutExtension(name), stream, ValidateCharacterSkin);
+        return ContentAssetStore.Install(
+            GamePaths.CharacterSkins,
+            _assetExtension,
+            Storage.GetFileNameWithoutExtension(name),
+            stream,
+            ValidateCharacterSkin
+        );
     }
 
     public static string ReplaceCharacterSkin(string assetKey, string displayName, Stream stream) =>
-        ContentAssetStore.Replace(GamePaths.CharacterSkins, _assetExtension, assetKey, displayName, stream,
-            ValidateCharacterSkin);
+        ContentAssetStore.Replace(
+            GamePaths.CharacterSkins,
+            _assetExtension,
+            assetKey,
+            displayName,
+            stream,
+            ValidateCharacterSkin
+        );
 
     public static void DeleteCharacterSkin(string name)
     {
@@ -263,8 +275,10 @@ public static class CharacterSkinsManager
             _ => throw new InvalidOperationException("Unknown player class.")
         };
 
-        value = ContentManager.Get<Model>(valuesDictionary.GetValue<ValuesDictionary>("HumanModel")
-            .GetValue<string>("ModelName"));
+        value = ContentManager.Get<Model>(
+            valuesDictionary.GetValue<ValuesDictionary>("HumanModel")
+                .GetValue<string>("ModelName")
+        );
         _playerModels.Add(playerClass, value);
 
         return value;
@@ -284,8 +298,10 @@ public static class CharacterSkinsManager
             _ => throw new InvalidOperationException("Unknown player class.")
         };
 
-        value = ContentManager.Get<Model>(valuesDictionary.GetValue<ValuesDictionary>("OuterClothingModel")
-            .GetValue<string>("ModelName"));
+        value = ContentManager.Get<Model>(
+            valuesDictionary.GetValue<ValuesDictionary>("OuterClothingModel")
+                .GetValue<string>("ModelName")
+        );
         _outerClothingModels.Add(playerClass, value);
 
         return value;
@@ -297,13 +313,15 @@ public static class CharacterSkinsManager
         if (image.Width > 1024 || image.Height > 1024)
         {
             throw new InvalidOperationException(
-                $"Character skin is larger than 1024x1024 pixels (size={image.Width}x{image.Height})");
+                $"Character skin is larger than 1024x1024 pixels (size={image.Width}x{image.Height})"
+            );
         }
 
         if (!MathUtils.IsPowerOf2(image.Width) || !MathUtils.IsPowerOf2(image.Height))
         {
             throw new InvalidOperationException(
-                $"Character skin does not have power-of-two size (size={image.Width}x{image.Height})");
+                $"Character skin does not have power-of-two size (size={image.Width}x{image.Height})"
+            );
         }
     }
 

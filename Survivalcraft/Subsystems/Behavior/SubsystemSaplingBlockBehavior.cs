@@ -59,12 +59,14 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var num = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
             ? _random.Float(8f, 12f)
             : _random.Float(480f, 600f);
-        AddSapling(new SaplingData
-        {
-            Point = new Point3(x, y, z),
-            Type = (TreeType)Terrain.ExtractData(value),
-            MatureTime = _subsystemGameInfo.TotalElapsedGameTime + num
-        });
+        AddSapling(
+            new SaplingData
+            {
+                Point = new Point3(x, y, z),
+                Type = (TreeType)Terrain.ExtractData(value),
+                MatureTime = _subsystemGameInfo.TotalElapsedGameTime + num
+            }
+        );
     }
 
     public override void OnBlockRemoved(int value, int newValue, int x, int y, int z)
@@ -225,7 +227,8 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 }
 
                 var cellContents = SubsystemTerrain.Terrain.GetCellContents(cell.X + x, cell.Y + y, cell.Z + z);
-                if (cellContents == 0 || CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents] is LeavesBlock)
+                if (cellContents == 0 ||
+                    CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents] is LeavesBlock)
                 {
                     continue;
                 }
@@ -261,6 +264,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
     public class SaplingData
     {
         public double MatureTime;
+
         public Point3 Point;
 
         public TreeType Type;

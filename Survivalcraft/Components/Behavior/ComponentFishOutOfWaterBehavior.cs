@@ -52,9 +52,18 @@ public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable
         {
             if (IsBend)
             {
-                _componentFishModel.BendOrder = 2f * (2f * MathUtils.Saturate(
-                    SimplexNoise.OctavedNoise((float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0),
-                        1.2f * _componentCreature.ComponentLocomotion.TurnSpeed, 1, 1f, 1f)) - 1f);
+                _componentFishModel.BendOrder = 2f *
+                                                (2f *
+                                                 MathUtils.Saturate(
+                                                     SimplexNoise.OctavedNoise(
+                                                         (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0),
+                                                         1.2f * _componentCreature.ComponentLocomotion.TurnSpeed,
+                                                         1,
+                                                         1f,
+                                                         1f
+                                                     )
+                                                 ) -
+                                                 1f);
             }
             else
             {
@@ -104,9 +113,18 @@ public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable
             delegate { IsBend = true; },
             delegate
             {
-                _componentFishModel.BendOrder = 2f * (2f * MathUtils.Saturate(SimplexNoise.OctavedNoise(
-                    (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0),
-                    1.2f * _componentCreature.ComponentLocomotion.TurnSpeed, 1, 1f, 1f)) - 1f);
+                _componentFishModel.BendOrder = 2f *
+                                                (2f *
+                                                 MathUtils.Saturate(
+                                                     SimplexNoise.OctavedNoise(
+                                                         (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0),
+                                                         1.2f * _componentCreature.ComponentLocomotion.TurnSpeed,
+                                                         1,
+                                                         1f,
+                                                         1f
+                                                     )
+                                                 ) -
+                                                 1f);
                 if (!IsActive)
                 {
                     stateMachine.TransitionTo("Inactive");
@@ -151,10 +169,11 @@ public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable
             var v = Vector3.Normalize(new Vector3(vector.X, y, vector.Y));
             var vector2 = _componentCreature.ComponentBody.Position + _random.Float(8f, 16f) * v;
             var terrainRaycastResult = _subsystemTerrain.Raycast(
-                _componentCreature.ComponentBody.Position, vector2,
+                _componentCreature.ComponentBody.Position,
+                vector2,
                 false,
                 false,
-                delegate (int value, float _)
+                delegate(int value, float _)
                 {
                     var num = Terrain.ExtractContents(value);
                     return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not WaterBlock;

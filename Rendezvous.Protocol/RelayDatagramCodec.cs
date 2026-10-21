@@ -9,18 +9,31 @@ public static class RelayDatagramCodec
     public const byte CurrentVersion = 1;
 
     private const int _headerSize = 30;
+
     private const int _tagSize = 16;
+
     public const int Overhead = _headerSize + _tagSize;
+
     public const int MaxPayloadSize = 1472 - Overhead;
 
-    public static byte[] Encode(Guid routeId, byte side, ulong sequence, ReadOnlySpan<byte> key,
-        ReadOnlySpan<byte> payload)
+    public static byte[] Encode(
+        Guid routeId,
+        byte side,
+        ulong sequence,
+        ReadOnlySpan<byte> key,
+        ReadOnlySpan<byte> payload
+    )
     {
-        if (routeId == Guid.Empty || side > 1 || sequence == 0 || key.Length != 32 ||
-            payload.IsEmpty || payload.Length > MaxPayloadSize)
+        if (routeId == Guid.Empty ||
+            side > 1 ||
+            sequence == 0 ||
+            key.Length != 32 ||
+            payload.IsEmpty ||
+            payload.Length > MaxPayloadSize)
         {
             throw new ArgumentException("Invalid relay datagram.");
         }
+
         var result = new byte[Overhead + payload.Length];
         "SCRL"u8.CopyTo(result);
         result[4] = CurrentVersion;
@@ -37,12 +50,16 @@ public static class RelayDatagramCodec
     {
         routeId = Guid.Empty;
         side = 0;
-        if (data.Length <= Overhead || data.Length > Overhead + MaxPayloadSize ||
-            !data[..4].SequenceEqual("SCRL"u8) || data[4] != CurrentVersion || data[21] > 1 ||
+        if (data.Length <= Overhead ||
+            data.Length > Overhead + MaxPayloadSize ||
+            !data[..4].SequenceEqual("SCRL"u8) ||
+            data[4] != CurrentVersion ||
+            data[21] > 1 ||
             BinaryPrimitives.ReadUInt64BigEndian(data.Slice(22, 8)) == 0)
         {
             return false;
         }
+
         routeId = new Guid(data.Slice(5, 16), bigEndian: true);
         side = data[21];
         return routeId != Guid.Empty;
@@ -55,13 +72,19 @@ public static class RelayDatagramCodec
         {
             return false;
         }
+
         var hash = HMACSHA256.HashData(key, data[..^_tagSize]);
         if (!CryptographicOperations.FixedTimeEquals(hash.AsSpan(0, _tagSize), data[^_tagSize..]))
         {
             return false;
         }
-        datagram = new RelayDatagram(routeId, side, BinaryPrimitives.ReadUInt64BigEndian(data.Slice(22, 8)),
-            data.Slice(_headerSize, data.Length - Overhead).ToArray());
+
+        datagram = new RelayDatagram(
+            routeId,
+            side,
+            BinaryPrimitives.ReadUInt64BigEndian(data.Slice(22, 8)),
+            data.Slice(_headerSize, data.Length - Overhead).ToArray()
+        );
         return true;
     }
 }

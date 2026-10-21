@@ -72,8 +72,10 @@ public struct Segment2(Vector2 start, Vector2 end)
             return s.Start;
         }
 
-        var num3 = MathUtils.Sqrt(v2.LengthSquared() -
-                                  MathUtils.Sqr(MathUtils.Abs(Vector2.Cross(p - s.Start, v)) / num2));
+        var num3 = MathUtils.Sqrt(
+            v2.LengthSquared() -
+            MathUtils.Sqr(MathUtils.Abs(Vector2.Cross(p - s.Start, v)) / num2)
+        );
         return Vector2.Lerp(s.Start, s.End, num3 / num2);
     }
 }

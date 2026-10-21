@@ -116,8 +116,11 @@ public class Model : IDisposable
             }
             else
             {
-                Matrix.MultiplyRestricted(ref modelBone.Transform, ref absoluteTransforms[modelBone.ParentBone.Index],
-                    out absoluteTransforms[i]);
+                Matrix.MultiplyRestricted(
+                    ref modelBone.Transform,
+                    ref absoluteTransforms[modelBone.ParentBone.Index],
+                    out absoluteTransforms[i]
+                );
             }
         }
     }
@@ -149,8 +152,11 @@ public class Model : IDisposable
             }
             else
             {
-                BoundingBox.Transform(ref mesh.BoundingBox, ref absoluteTransforms[mesh.ParentBone.Index],
-                    out result);
+                BoundingBox.Transform(
+                    ref mesh.BoundingBox,
+                    ref absoluteTransforms[mesh.ParentBone.Index],
+                    out result
+                );
                 flag = true;
             }
         }
@@ -174,8 +180,11 @@ public class Model : IDisposable
             }
             else
             {
-                Matrix.MultiplyRestricted(ref modelBone.Transform, ref absoluteTransforms[modelBone.ParentBone.Index],
-                    out absoluteTransforms[i]);
+                Matrix.MultiplyRestricted(
+                    ref modelBone.Transform,
+                    ref absoluteTransforms[modelBone.ParentBone.Index],
+                    out absoluteTransforms[i]
+                );
             }
         }
     }
@@ -206,8 +215,10 @@ public class Model : IDisposable
         for (var i = 0; i < modelData.Buffers.Count; i++)
         {
             var modelBuffersData = modelData.Buffers[i];
-            array[i] = new VertexBuffer(modelBuffersData.VertexDeclaration,
-                modelBuffersData.Vertices.Length / modelBuffersData.VertexDeclaration.VertexStride);
+            array[i] = new VertexBuffer(
+                modelBuffersData.VertexDeclaration,
+                modelBuffersData.Vertices.Length / modelBuffersData.VertexDeclaration.VertexStride
+            );
             array[i].SetData(modelBuffersData.Vertices, 0, modelBuffersData.Vertices.Length);
             array2[i] = new IndexBuffer(IndexFormat.SixteenBits, modelBuffersData.Indices.Length / 2);
             array2[i].SetData(modelBuffersData.Indices, 0, modelBuffersData.Indices.Length);
@@ -231,8 +242,13 @@ public class Model : IDisposable
             _meshes.Add(modelMesh);
             foreach (var meshPart in mesh.MeshParts)
             {
-                modelMesh.NewMeshPart(array[meshPart.BuffersDataIndex], array2[meshPart.BuffersDataIndex],
-                    meshPart.StartIndex, meshPart.IndicesCount, meshPart.BoundingBox);
+                modelMesh.NewMeshPart(
+                    array[meshPart.BuffersDataIndex],
+                    array2[meshPart.BuffersDataIndex],
+                    meshPart.StartIndex,
+                    meshPart.IndicesCount,
+                    meshPart.BoundingBox
+                );
             }
         }
     }

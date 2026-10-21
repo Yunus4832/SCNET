@@ -8,11 +8,19 @@ namespace Engine.Network;
 public sealed class NetworkConnectionRequest
 {
     private readonly ConnectionRequest _request;
+
     private readonly Func<NetPeer, NetworkConnection> _accepted;
+
     private readonly Lock _transportGate;
+
     private int _decided;
 
-    internal NetworkConnectionRequest(ConnectionRequest request, TimeSpan timeout, Func<NetPeer, NetworkConnection> accepted, Lock transportGate)
+    internal NetworkConnectionRequest(
+        ConnectionRequest request,
+        TimeSpan timeout,
+        Func<NetPeer, NetworkConnection> accepted,
+        Lock transportGate
+    )
     {
         _request = request;
         _accepted = accepted;
@@ -40,6 +48,7 @@ public sealed class NetworkConnectionRequest
             {
                 return null;
             }
+
             var peer = _request.Accept();
             return peer is null ? null : _accepted(peer);
         }
@@ -54,6 +63,7 @@ public sealed class NetworkConnectionRequest
             {
                 return false;
             }
+
             _request.Reject(reason.ToArray());
             return true;
         }

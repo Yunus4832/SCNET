@@ -26,7 +26,8 @@ public sealed class PublisherPackageCreationInspectEndpoint(
     IMediator mediator,
     ApiKeyAuthenticationContext authenticationContext,
     IOptions<ContentServerOptions> options,
-    ContentPackageStore packageStore) : ContentEndpoint
+    ContentPackageStore packageStore
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -42,8 +43,13 @@ public sealed class PublisherPackageCreationInspectEndpoint(
         try
         {
             await using var input = file.OpenReadStream();
-            staged = await packageStore.StageAsync(input, file.FileName,
-                "application/vnd.scnet.content-package", options.Value.MaximumPackageBytes, cancellationToken);
+            staged = await packageStore.StageAsync(
+                input,
+                file.FileName,
+                "application/vnd.scnet.content-package",
+                options.Value.MaximumPackageBytes,
+                cancellationToken
+            );
         }
         catch (ContentPackageException)
         {
@@ -52,9 +58,17 @@ public sealed class PublisherPackageCreationInspectEndpoint(
 
         packageStore.DeleteTemporary(staged);
         var manifest = staged.Inspection.Manifest;
-        return new PackagePreviewResponse(manifest.Type.ToString(), manifest.Identifier, manifest.Name,
-            manifest.Summary, manifest.Description, manifest.Version, staged.Inspection.PackageHash, staged.Size,
-            staged.Inspection.Entries).AsResponseData();
+        return new PackagePreviewResponse(
+            manifest.Type.ToString(),
+            manifest.Identifier,
+            manifest.Name,
+            manifest.Summary,
+            manifest.Description,
+            manifest.Version,
+            staged.Inspection.PackageHash,
+            staged.Size,
+            staged.Inspection.Entries
+        ).AsResponseData();
     }
 
     private async Task<IFormFile> RequireFormFileAsync(string name, CancellationToken cancellationToken)
@@ -77,8 +91,10 @@ public sealed class PublisherPackageCreationInspectEndpoint(
     private async Task<PublisherDto> RequireActivePublisherAsync(CancellationToken cancellationToken)
     {
         var publisher = await mediator.Send(
-                            new GetPublisherQuery(authenticationContext.RequirePublisherId()), cancellationToken)
-                        ?? throw new KnownException("publisher_not_found", 401);
+                            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                            cancellationToken
+                        ) ??
+                        throw new KnownException("publisher_not_found", 401);
         if (publisher.Status != PublisherStatus.Active)
         {
             throw new KnownException("publisher_not_active", 403);
@@ -97,4 +113,5 @@ public sealed record PackagePreviewResponse(
     string Version,
     string PackageHash,
     long PackageSize,
-    IReadOnlyList<ContentPackageEntry> Entries);
+    IReadOnlyList<ContentPackageEntry> Entries
+);

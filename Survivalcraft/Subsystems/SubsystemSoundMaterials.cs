@@ -18,7 +18,8 @@ public class SubsystemSoundMaterials : Subsystem
     public void PlayImpactSound(int value, Vector3 position, float loudnessMultiplier)
     {
         var num = Terrain.ExtractContents(value);
-        var soundMaterialName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].GetSoundMaterialName(_subsystemTerrain, value);
+        var soundMaterialName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num]
+            .GetSoundMaterialName(_subsystemTerrain, value);
         if (string.IsNullOrEmpty(soundMaterialName))
         {
             return;
@@ -31,8 +32,14 @@ public class SubsystemSoundMaterials : Subsystem
         }
 
         var pitch = _random.Float(-0.2f, 0.2f);
-        _subsystemAudio.PlayRandomSound(value2, 0.5f * loudnessMultiplier, pitch, position,
-            5f * loudnessMultiplier, true);
+        _subsystemAudio.PlayRandomSound(
+            value2,
+            0.5f * loudnessMultiplier,
+            pitch,
+            position,
+            5f * loudnessMultiplier,
+            true
+        );
     }
 
     public bool PlayFootstepSound(ComponentCreature componentCreature, float loudnessMultiplier)
@@ -56,12 +63,18 @@ public class SubsystemSoundMaterials : Subsystem
         }
 
         var pitch = _random.Float(-0.2f, 0.2f);
-        _subsystemAudio.PlayRandomSound(value, 0.75f * loudnessMultiplier, pitch,
-            componentCreature.ComponentBody.Position, 2f * loudnessMultiplier, true);
+        _subsystemAudio.PlayRandomSound(
+            value,
+            0.75f * loudnessMultiplier,
+            pitch,
+            componentCreature.ComponentBody.Position,
+            2f * loudnessMultiplier,
+            true
+        );
         if (componentCreature is not ComponentPlayer
-            {
-                ComponentVitalStats.Wetness: > 0f
-            }
+                {
+                    ComponentVitalStats.Wetness: > 0f
+                }
                 componentPlayer)
         {
             return true;
@@ -73,10 +86,17 @@ public class SubsystemSoundMaterials : Subsystem
             return true;
         }
 
-        var volume = 0.7f * loudnessMultiplier *
+        var volume = 0.7f *
+                     loudnessMultiplier *
                      MathUtils.Pow(componentPlayer.ComponentVitalStats.Wetness, 4f);
-        _subsystemAudio.PlayRandomSound(value2, volume, pitch,
-            componentCreature.ComponentBody.Position, 2f * loudnessMultiplier, true);
+        _subsystemAudio.PlayRandomSound(
+            value2,
+            volume,
+            pitch,
+            componentCreature.ComponentBody.Position,
+            2f * loudnessMultiplier,
+            true
+        );
 
         return true;
     }
@@ -97,13 +117,18 @@ public class SubsystemSoundMaterials : Subsystem
                 : "MetalLadder";
         }
 
-        var cellValue = _subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(position.X),
-            Terrain.ToCell(position.Y + 0.1f), Terrain.ToCell(position.Z));
+        var cellValue = _subsystemTerrain.Terrain.GetCellValue(
+            Terrain.ToCell(position.X),
+            Terrain.ToCell(position.Y + 0.1f),
+            Terrain.ToCell(position.Z)
+        );
         var num = Terrain.ExtractContents(cellValue);
-        var soundMaterialName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].GetSoundMaterialName(_subsystemTerrain, cellValue);
+        var soundMaterialName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num]
+            .GetSoundMaterialName(_subsystemTerrain, cellValue);
         if (string.IsNullOrEmpty(soundMaterialName) && componentCreature.ComponentBody.StandingOnValue.HasValue)
         {
-            soundMaterialName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(componentCreature.ComponentBody.StandingOnValue.Value)]
+            soundMaterialName = CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[Terrain.ExtractContents(componentCreature.ComponentBody.StandingOnValue.Value)]
                 .GetSoundMaterialName(_subsystemTerrain, componentCreature.ComponentBody.StandingOnValue.Value);
         }
 

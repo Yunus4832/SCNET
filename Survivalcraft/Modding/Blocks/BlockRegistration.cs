@@ -18,13 +18,15 @@ public static class BlockExtensions
         return extensions.Register(
             RegistryName,
             id,
-            new BlockRegistration(static () => new TBlock()));
+            new BlockRegistration(static () => new TBlock())
+        );
     }
 
     public static IDisposable RegisterBlockData(
         this IModExtensions extensions,
         ResourceId id,
-        Func<string> read)
+        Func<string> read
+    )
     {
         ArgumentNullException.ThrowIfNull(read);
         return extensions.Register(DataRegistryName, id, new BlockDataRegistration(read));

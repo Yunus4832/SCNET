@@ -8,9 +8,11 @@ namespace ContentServer.Application.Commands;
 
 public enum SetPublisherContentStatusResult
 {
-    Completed,
-    NotFound,
-    NotOwned
+    Completed = 0,
+
+    NotFound = 1,
+
+    NotOwned = 2
 }
 
 public sealed record SetPublisherContentStatusCommand(
@@ -19,13 +21,13 @@ public sealed record SetPublisherContentStatusCommand(
     ContentStatus Status
 ) : ICommand<SetPublisherContentStatusResult>;
 
-public sealed class SetPublisherContentStatusCommandHandler(
-    ContentRepository repository
-) : ICommandHandler<SetPublisherContentStatusCommand, SetPublisherContentStatusResult>
+public sealed class SetPublisherContentStatusCommandHandler(ContentRepository repository)
+    : ICommandHandler<SetPublisherContentStatusCommand, SetPublisherContentStatusResult>
 {
     public async Task<SetPublisherContentStatusResult> Handle(
         SetPublisherContentStatusCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var content = await repository.FindAsync(command.ContentId, cancellationToken);
         if (content is null)

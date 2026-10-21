@@ -9,13 +9,17 @@ public static class WorldSeedConverter
 
     public static string CreateRandomTextSeed()
     {
-        return string.Create(8, 0, static (characters, _) =>
-        {
-            for (var i = 0; i < characters.Length; i++)
+        return string.Create(
+            8,
+            0,
+            static (characters, _) =>
             {
-                characters[i] = _randomCharacters[RandomNumberGenerator.GetInt32(_randomCharacters.Length)];
+                for (var i = 0; i < characters.Length; i++)
+                {
+                    characters[i] = _randomCharacters[RandomNumberGenerator.GetInt32(_randomCharacters.Length)];
+                }
             }
-        });
+        );
     }
 
     public static int FromText(string seed)

@@ -16,8 +16,15 @@ public static partial class ProtocolMessageCodec
     private static ModEnvelopePackage ReadModEnvelopePackage(ProtocolReader reader)
     {
         var message = new ModEnvelopePackage
-        { ModId = reader.ReadString(), MessageType = reader.ReadString(), RequiredState = reader.ReadEnum<ClientState>(), Payload = reader.ReadBuff() };
-        if (!Enum.IsDefined(message.RequiredState)) { throw new InvalidDataException("Unknown mod message connection state."); }
+        {
+            ModId = reader.ReadString(), MessageType = reader.ReadString(),
+            RequiredState = reader.ReadEnum<ClientState>(), Payload = reader.ReadBuff()
+        };
+        if (!Enum.IsDefined(message.RequiredState))
+        {
+            throw new InvalidDataException("Unknown mod message connection state.");
+        }
+
         return message;
     }
 }

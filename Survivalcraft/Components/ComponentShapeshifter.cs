@@ -54,7 +54,8 @@ public class ComponentShapeshifter : Component, IUpdateable
                     ShapeshiftTo(_dayEntityTemplateName);
                 }
             }
-            else if (areSupernaturalCreaturesEnabled && _subsystemSky.SkyLightIntensity < 0.1f &&
+            else if (areSupernaturalCreaturesEnabled &&
+                     _subsystemSky.SkyLightIntensity < 0.1f &&
                      (_subsystemSky.MoonPhase == 0 || _subsystemSky.MoonPhase == 4) &&
                      !string.IsNullOrEmpty(_nightEntityTemplateName))
             {
@@ -120,7 +121,8 @@ public class ComponentShapeshifter : Component, IUpdateable
 
     public void ComponentSpawn_Despawned(ComponentSpawn componentSpawn)
     {
-        if (_componentHealth.Health > 0f && !string.IsNullOrEmpty(_spawnEntityTemplateName) &&
+        if (_componentHealth.Health > 0f &&
+            !string.IsNullOrEmpty(_spawnEntityTemplateName) &&
             CommonLib.WorkType != WorkType.Client)
         {
             var entity = DatabaseManager.CreateEntity(Project, _spawnEntityTemplateName, true)!;

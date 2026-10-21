@@ -14,11 +14,24 @@ public class LeatherBlock : Block
             leatherMesh.ParentBone ??
             throw new InvalidOperationException("Required LeatherMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(leatherMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(leatherMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f), false, true, false, false,
-            new Color(128, 128, 160));
+        StandaloneBlockMesh.AppendModelMeshPart(
+            leatherMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            leatherMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            true,
+            false,
+            false,
+            new Color(128, 128, 160)
+        );
         base.Initialize();
     }
 

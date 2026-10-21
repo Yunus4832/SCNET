@@ -11,7 +11,7 @@ public class SubsystemTorchBlockBehavior : SubsystemBlockBehavior
     private SubsystemParticles _subsystemParticles = null!;
 
     public override ResourceId[] HandledBlocks =>
-    [ResourceId.Parse("game:torch"), ResourceId.Parse("game:wicker_lamp"), ResourceId.Parse("game:jack_o_lantern")];
+        [ResourceId.Parse("game:torch"), ResourceId.Parse("game:wicker_lamp"), ResourceId.Parse("game:jack_o_lantern")];
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
@@ -19,29 +19,30 @@ public class SubsystemTorchBlockBehavior : SubsystemBlockBehavior
         switch (Terrain.ExtractContents(cellValueFast))
         {
             case var torchContents when torchContents == BuiltInBlockRegistry.GetIndex<TorchBlock>():
+            {
+                var point = CellFace.FaceToPoint3(Terrain.ExtractData(cellValueFast));
+                var x2 = x - point.X;
+                var y2 = y - point.Y;
+                var z2 = z - point.Z;
+                var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(x2, y2, z2);
+                if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents2].Collidable)
                 {
-                    var point = CellFace.FaceToPoint3(Terrain.ExtractData(cellValueFast));
-                    var x2 = x - point.X;
-                    var y2 = y - point.Y;
-                    var z2 = z - point.Z;
-                    var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(x2, y2, z2);
-                    if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents2].Collidable)
-                    {
-                        SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                    }
-
-                    break;
+                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
                 }
-            case var jackOLanternContents when jackOLanternContents == BuiltInBlockRegistry.GetIndex<JackOLanternBlock>():
+
+                break;
+            }
+            case var jackOLanternContents
+                when jackOLanternContents == BuiltInBlockRegistry.GetIndex<JackOLanternBlock>():
+            {
+                var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
+                if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Collidable)
                 {
-                    var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
-                    if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Collidable)
-                    {
-                        SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                    }
-
-                    break;
+                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
                 }
+
+                break;
+            }
         }
     }
 
@@ -71,7 +72,9 @@ public class SubsystemTorchBlockBehavior : SubsystemBlockBehavior
         var list = new List<Point3>();
         foreach (var key in _particleSystemsByCell.Keys)
         {
-            if (key.X >= chunk.Origin.X && key.X < chunk.Origin.X + 16 && key.Z >= chunk.Origin.Y &&
+            if (key.X >= chunk.Origin.X &&
+                key.X < chunk.Origin.X + 16 &&
+                key.Z >= chunk.Origin.Y &&
                 key.Z < chunk.Origin.Y + 16)
             {
                 list.Add(key);
@@ -113,7 +116,8 @@ public class SubsystemTorchBlockBehavior : SubsystemBlockBehavior
 
                 size = 0.15f;
                 break;
-            case var jackOLanternContents when jackOLanternContents == BuiltInBlockRegistry.GetIndex<JackOLanternBlock>():
+            case var jackOLanternContents
+                when jackOLanternContents == BuiltInBlockRegistry.GetIndex<JackOLanternBlock>():
                 v = new Vector3(0.5f, 0.1f, 0.5f);
                 size = 0.1f;
                 break;

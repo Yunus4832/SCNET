@@ -101,17 +101,21 @@ public class GameScreen : Screen
             new MessageDialog(
                 CommandText.Get(
                     "AuthDialogTitle",
-                    "服务器管理员尚未认领"),
+                    "服务器管理员尚未认领"
+                ),
                 CommandText.Get(
                     "AuthDialogBody",
                     "认领码：{0}\n\n认领只会授予标准权限的管理和再授权能力，不包含停服等控制台权限。",
-                    code),
+                    code
+                ),
                 CommandText.Get(
                     "AuthDialogClaim",
-                    "立即认领"),
+                    "立即认领"
+                ),
                 CommandText.Get(
                     "AuthDialogCopy",
-                    "复制命令"),
+                    "复制命令"
+                ),
                 new Vector2(680f, -1f),
                 MessageDialog.CancelBehavior.Dismiss,
                 button =>
@@ -124,28 +128,36 @@ public class GameScreen : Screen
                             CommandText.Get(
                                 "AuthDialogCopied",
                                 "已复制：{0}",
-                                claimCommand),
-                            success: true);
+                                claimCommand
+                            ),
+                            success: true
+                        );
                         return;
                     }
 
                     var result = CommandExecutor.ExecutePlayer(claimCommand, player.PlayerData);
                     CommandResultPublisher.DisplayLocal(
                         project,
-                        result with { Presentation = CommandResultPresentation.Toast });
-                }));
+                        result with { Presentation = CommandResultPresentation.Toast }
+                    );
+                }
+            )
+        );
     }
 
     private static void DisplayToast(
         Project project,
         string message,
-        bool success)
+        bool success
+    )
     {
         project.FindSubsystem<SubsystemGameWidgets>(true)!
             .Messages.DisplayLocal(
                 GameMessage.System(
                     message,
                     success ? GameMessageTone.Success : GameMessageTone.Error,
-                    GameMessagePresentation.Toast));
+                    GameMessagePresentation.Toast
+                )
+            );
     }
 }

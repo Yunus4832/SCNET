@@ -15,25 +15,33 @@ public sealed class SubsystemBodyPackageChunkingTest
         {
             PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
             StateTick = 12345u,
-            BodyList = [new SubsystemBodyPackage.BodyItem
-        {
-            CreatureId = 7,
-            ChangeFlag = SubsystemBodyPackage.ChangeFlag.PositionChange |
-                         SubsystemBodyPackage.ChangeFlag.RotationChange |
-                         SubsystemBodyPackage.ChangeFlag.VelocityChange |
-                         SubsystemBodyPackage.ChangeFlag.LookAnglesChange |
-                         SubsystemBodyPackage.ChangeFlag.FlyOrderChange,
-            Position = new Vector3(1f, 2f, 3f),
-            Rotation = Quaternion.Identity,
-            Velocity = new Vector3(4f, 5f, 6f),
-            LookAngles = new Vector2(0.1f, 0.2f),
-            FlyOrder = new Vector3(7f, 8f, 9f)
-            }]
+            BodyList =
+            [
+                new SubsystemBodyPackage.BodyItem
+                {
+                    CreatureId = 7,
+                    ChangeFlag = SubsystemBodyPackage.ChangeFlag.PositionChange |
+                                 SubsystemBodyPackage.ChangeFlag.RotationChange |
+                                 SubsystemBodyPackage.ChangeFlag.VelocityChange |
+                                 SubsystemBodyPackage.ChangeFlag.LookAnglesChange |
+                                 SubsystemBodyPackage.ChangeFlag.FlyOrderChange,
+                    Position = new Vector3(1f, 2f, 3f),
+                    Rotation = Quaternion.Identity,
+                    Velocity = new Vector3(4f, 5f, 6f),
+                    LookAngles = new Vector2(0.1f, 0.2f),
+                    FlyOrder = new Vector3(7f, 8f, 9f)
+                }
+            ]
         };
 
         var writer = new ProtocolWriter();
         PackageManager.WriteMessage(package, writer);
-        var clone = Assert.IsType<SubsystemBodyPackage>(ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data())));
+        var clone = Assert.IsType<SubsystemBodyPackage>(
+            ProtocolMessageCodec.Read(
+                package.ID,
+                new ProtocolReader(writer.Data())
+            )
+        );
 
         Assert.Equal(package.StateTick, clone.StateTick);
         var item = Assert.Single(clone.BodyList);
@@ -60,20 +68,22 @@ public sealed class SubsystemBodyPackageChunkingTest
         };
         for (var i = 0; i < 80; i++)
         {
-            items.Add(new SubsystemBodyPackage.BodyItem
-            {
-                CreatureId = i,
-                ChangeFlag = SubsystemBodyPackage.ChangeFlag.PositionChange |
-                             SubsystemBodyPackage.ChangeFlag.RotationChange |
-                             SubsystemBodyPackage.ChangeFlag.VelocityChange |
-                             SubsystemBodyPackage.ChangeFlag.LookAnglesChange |
-                             SubsystemBodyPackage.ChangeFlag.FlyOrderChange,
-                Position = new Vector3(i, 0, 0),
-                Rotation = Quaternion.Identity,
-                Velocity = Vector3.Zero,
-                LookAngles = Vector2.Zero,
-                FlyOrder = Vector3.Zero
-            });
+            items.Add(
+                new SubsystemBodyPackage.BodyItem
+                {
+                    CreatureId = i,
+                    ChangeFlag = SubsystemBodyPackage.ChangeFlag.PositionChange |
+                                 SubsystemBodyPackage.ChangeFlag.RotationChange |
+                                 SubsystemBodyPackage.ChangeFlag.VelocityChange |
+                                 SubsystemBodyPackage.ChangeFlag.LookAnglesChange |
+                                 SubsystemBodyPackage.ChangeFlag.FlyOrderChange,
+                    Position = new Vector3(i, 0, 0),
+                    Rotation = Quaternion.Identity,
+                    Velocity = Vector3.Zero,
+                    LookAngles = Vector2.Zero,
+                    FlyOrder = Vector3.Zero
+                }
+            );
         }
 
         Assert.True(SerializeSize([full]) > maxPacketSize);
@@ -82,12 +92,15 @@ public sealed class SubsystemBodyPackageChunkingTest
 
         Assert.True(chunks.Count > 1);
         Assert.Equal(80, chunks.Sum(chunk => chunk.BodyList.Count));
-        Assert.All(chunks, chunk =>
-        {
-            Assert.Equal(full.StateTick, chunk.StateTick);
-            Assert.True(SubsystemBodyPackageHandler.IsNewer(chunk.StateTick, 0));
-            Assert.True(SubsystemBodyPackageHandler.IsNewer(chunk.StateTick, full.StateTick - 1));
-        });
+        Assert.All(
+            chunks,
+            chunk =>
+            {
+                Assert.Equal(full.StateTick, chunk.StateTick);
+                Assert.True(SubsystemBodyPackageHandler.IsNewer(chunk.StateTick, 0));
+                Assert.True(SubsystemBodyPackageHandler.IsNewer(chunk.StateTick, full.StateTick - 1));
+            }
+        );
         Assert.All(chunks, chunk => Assert.True(SerializeSize([chunk]) <= maxPacketSize));
     }
 

@@ -52,8 +52,10 @@ public class SubsystemBodies : Subsystem, IUpdateable
             _toSendList.Clear();
             var eligibleClients = flag
                 ? _subsystemPlayers.PlayersData
-                    .Where(player => !player.IsMainPlayer && player.ComponentPlayer is not null &&
-                                     player.Client is { IsConnected: true })
+                    .Where(player => !player.IsMainPlayer &&
+                                     player.ComponentPlayer is not null &&
+                                     player.Client is { IsConnected: true }
+                    )
                     .Select(player => player.Client!)
                     .ToHashSet<Client>(ReferenceEqualityComparer.Instance)
                 : [];
@@ -99,7 +101,8 @@ public class SubsystemBodies : Subsystem, IUpdateable
                     var chunk = bodies.GetRange(i, count);
                     CommonLib.Net.QueuePackage(
                         BodySnapshotBuilder.Capture(chunk, _stateTick),
-                        PackageAudience.To(item.Key));
+                        PackageAudience.To(item.Key)
+                    );
                 }
             }
 
@@ -169,8 +172,12 @@ public class SubsystemBodies : Subsystem, IUpdateable
         }
     }
 
-    public BodyRaycastResult? Raycast(Vector3 start, Vector3 end, float inflateAmount,
-        Func<ComponentBody, float, bool> action)
+    public BodyRaycastResult? Raycast(
+        Vector3 start,
+        Vector3 end,
+        float inflateAmount,
+        Func<ComponentBody, float, bool> action
+    )
     {
         var num = Vector3.Distance(start, end);
         var ray = new Ray3(start, num > 0f ? (end - start) / num : Vector3.UnitX);
@@ -280,7 +287,8 @@ public class SubsystemBodies : Subsystem, IUpdateable
             {
                 CommonLib.Net.QueuePackage(
                     new EntityPackage(entity.EntityId),
-                    PackageAudience.To(observers));
+                    PackageAudience.To(observers)
+                );
             }
 
             _subsystemNetworkInterest.Entities.RemoveEntity(EntityInterestGroup.Creatures, entity.EntityId);
@@ -299,7 +307,9 @@ public class SubsystemBodies : Subsystem, IUpdateable
     {
         var clients = _subsystemPlayers.PlayersData
             .Where(player => !player.IsMainPlayer &&
-                             player.Client is { IsConnected: true } client && CanReceiveEntityBaseline(client.State))
+                             player.Client is { IsConnected: true } client &&
+                             CanReceiveEntityBaseline(client.State)
+            )
             .Select(player => player.Client!)
             .ToArray();
         foreach (var client in clients)
@@ -312,7 +322,8 @@ public class SubsystemBodies : Subsystem, IUpdateable
                 EntityInterestGroup.Creatures,
                 current,
                 IsTrackableCreature,
-                _outOfRangeRemoveTicks);
+                _outOfRangeRemoveTicks
+            );
             var entered = new List<Entity>();
             foreach (var creatureId in changes.Entered)
             {
@@ -334,7 +345,8 @@ public class SubsystemBodies : Subsystem, IUpdateable
             {
                 CommonLib.Net.QueuePackage(
                     new EntityPackage(creatureId),
-                    PackageAudience.To(client));
+                    PackageAudience.To(client)
+                );
             }
         }
     }

@@ -55,7 +55,8 @@ public class SettingsPerformanceScreen : Screen
         if (CommonLib.WorkType == WorkType.Client)
         {
             _visibilityRangeSlider.MaxValue = _visibilityRanges.FindLastIndex(range =>
-                range <= NetworkTerrainPolicy.DefaultMaxClientVisibilityRange);
+                range <= NetworkTerrainPolicy.DefaultMaxClientVisibilityRange
+            );
         }
     }
 
@@ -167,17 +168,23 @@ public class SettingsPerformanceScreen : Screen
         var flag = SettingsManager.Current.VisibilityRange > 128;
         if (SettingsManager.Current.VisibilityRange > _enterVisibilityRange && flag)
         {
-            DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Get(_typeName, 9),
-                LanguageManager.Get(_typeName, 10), LanguageManager.Ok, LanguageManager.Back,
-                delegate (MessageDialogButton button)
-                {
-                    if (button != MessageDialogButton.Button1)
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    LanguageManager.Get(_typeName, 9),
+                    LanguageManager.Get(_typeName, 10),
+                    LanguageManager.Ok,
+                    LanguageManager.Back,
+                    delegate(MessageDialogButton button)
                     {
-                        return;
-                    }
+                        if (button != MessageDialogButton.Button1)
+                        {
+                            return;
+                        }
 
-                    ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
-                })
+                        ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
+                    }
+                )
             );
         }
         else

@@ -62,11 +62,7 @@ public class CancellableBusyDialog : Dialog
         }
     }
 
-    public string SmallMessage
-    {
-        get => _smallLabelWidget.Text;
-        set => _smallLabelWidget.Text = value;
-    }
+    public string SmallMessage { get => _smallLabelWidget.Text; set => _smallLabelWidget.Text = value; }
 
     public bool IsCancelButtonEnabled
     {

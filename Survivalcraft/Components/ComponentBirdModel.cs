@@ -37,8 +37,10 @@ public class ComponentBirdModel : ComponentCreatureModel
 
     public override void Update(float dt)
     {
-        var num = Vector3.Dot(ComponentCreature.ComponentBody.Velocity,
-            ComponentCreature.ComponentBody.Matrix.Forward);
+        var num = Vector3.Dot(
+            ComponentCreature.ComponentBody.Velocity,
+            ComponentCreature.ComponentBody.Matrix.Forward
+        );
         if (MathUtils.Abs(num) > 0.1f)
         {
             MovementAnimationPhase += num * dt * _walkAnimationSpeed;
@@ -137,13 +139,20 @@ public class ComponentBirdModel : ComponentCreatureModel
             var num6 = MathUtils.Cos((float)Math.PI * 2f * _peckPhase);
             num4 -= 1.25f * (1f - (num6 >= 0f ? num6 : -0.5f * num6));
             num4 += ComponentCreature.ComponentLocomotion.LookAngles.Y;
-            SetBoneTransform(_bodyBone.Index,
+            SetBoneTransform(
+                _bodyBone.Index,
                 Matrix.CreateFromYawPitchRoll(vector.X, 0f, 0f) *
-                Matrix.CreateTranslation(ComponentCreature.ComponentBody.Position + new Vector3(0f, Bob, 0f)));
+                Matrix.CreateTranslation(ComponentCreature.ComponentBody.Position + new Vector3(0f, Bob, 0f))
+            );
             SetBoneTransform(_neckBone.Index, Matrix.CreateFromYawPitchRoll(yaw2, num4, 0f));
-            SetBoneTransform(_headBone.Index,
-                Matrix.CreateFromYawPitchRoll(yaw,
-                    num5 + MathUtils.Clamp(vector.Y, -(float)Math.PI / 4f, (float)Math.PI / 4f), vector.Z));
+            SetBoneTransform(
+                _headBone.Index,
+                Matrix.CreateFromYawPitchRoll(
+                    yaw,
+                    num5 + MathUtils.Clamp(vector.Y, -(float)Math.PI / 4f, (float)Math.PI / 4f),
+                    vector.Z
+                )
+            );
             if (_hasWings)
             {
                 SetBoneTransform(_wing1Bone!.Index, Matrix.CreateRotationY(num));
@@ -158,11 +167,15 @@ public class ComponentBirdModel : ComponentCreatureModel
             var num7 = 1f - DeathPhase;
             var num8 = ComponentCreature.ComponentBody.BoundingBox.Max.Y -
                        ComponentCreature.ComponentBody.BoundingBox.Min.Y;
-            var position = ComponentCreature.ComponentBody.Position + 0.5f * num8 *
-                Vector3.Normalize(ComponentCreature.ComponentBody.Matrix.Forward * new Vector3(1f, 0f, 1f));
-            SetBoneTransform(_bodyBone.Index,
+            var position = ComponentCreature.ComponentBody.Position +
+                           0.5f *
+                           num8 *
+                           Vector3.Normalize(ComponentCreature.ComponentBody.Matrix.Forward * new Vector3(1f, 0f, 1f));
+            SetBoneTransform(
+                _bodyBone.Index,
                 Matrix.CreateFromYawPitchRoll(vector.X, (float)Math.PI / 2f * DeathPhase, 0f) *
-                Matrix.CreateTranslation(position));
+                Matrix.CreateTranslation(position)
+            );
             SetBoneTransform(_neckBone.Index, Matrix.Identity);
             SetBoneTransform(_headBone.Index, Matrix.Identity);
             if (_hasWings)

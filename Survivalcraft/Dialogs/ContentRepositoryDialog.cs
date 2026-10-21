@@ -7,13 +7,25 @@ namespace Game.Dialogs;
 public sealed class ContentRepositoryDialog : Dialog
 {
     private readonly TextBoxWidget _addressTextBox;
+
     private readonly ButtonWidget _cancelButton;
+
     private readonly Func<string, string, bool> _handler;
+
     private readonly TextBoxWidget _nameTextBox;
+
     private readonly ButtonWidget _saveButton;
 
-    public ContentRepositoryDialog(string title, string nameLabel, string addressLabel, string saveButtonText,
-        string name, string address, Func<string, string, bool> handler, int nameMaximumLength = 64)
+    public ContentRepositoryDialog(
+        string title,
+        string nameLabel,
+        string addressLabel,
+        string saveButtonText,
+        string name,
+        string address,
+        Func<string, string, bool> handler,
+        int nameMaximumLength = 64
+    )
     {
         ArgumentNullException.ThrowIfNull(handler);
         _handler = handler;

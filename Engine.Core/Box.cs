@@ -51,7 +51,10 @@ public struct Box(int left, int top, int near, int width, int height, int depth)
 
     public bool Equals(Box other)
     {
-        if (Left == other.Left && Top == other.Top && Near == other.Near && Width == other.Width &&
+        if (Left == other.Left &&
+            Top == other.Top &&
+            Near == other.Near &&
+            Width == other.Width &&
             Height == other.Height)
         {
             return Depth == other.Depth;

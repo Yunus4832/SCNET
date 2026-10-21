@@ -6,10 +6,13 @@ namespace ContentServer.Domain.Publishers;
 
 public enum PublisherStatus
 {
-    Pending,
-    Active,
-    Rejected,
-    Suspended
+    Pending = 0,
+
+    Active = 1,
+
+    Rejected = 2,
+
+    Suspended = 3
 }
 
 public partial record PublisherId : IGuidStronglyTypedId;
@@ -98,8 +101,7 @@ public class Publisher : Entity<PublisherId>, IAggregateRoot
         Status = PublisherStatus.Suspended;
         ReviewMessage = NormalizeOptionalText(message);
         UpdatedAt = now;
-        AddDomainEvent(new PublisherStatusChangedDomainEvent(
-            this, administratorId, Status, ReviewMessage, now));
+        AddDomainEvent(new PublisherStatusChangedDomainEvent(this, administratorId, Status, ReviewMessage, now));
         return true;
     }
 
@@ -186,9 +188,7 @@ public class PublisherKey : Entity<PublisherKeyId>
     }
 }
 
-public sealed record PublisherAppliedDomainEvent(
-    Publisher Publisher
-) : IDomainEvent;
+public sealed record PublisherAppliedDomainEvent(Publisher Publisher) : IDomainEvent;
 
 public sealed record PublisherStatusChangedDomainEvent(
     Publisher Publisher,

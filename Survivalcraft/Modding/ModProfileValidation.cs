@@ -7,8 +7,11 @@ namespace Game.Modding;
 public static partial class ModProfileValidation
 {
     public const int MaximumRequirements = ProtocolLimits.MaximumRequiredMods;
+
     public const int MaximumProfileIdLength = ProtocolLimits.MaximumModProfileIdLength;
+
     public const int MaximumModIdLength = ProtocolLimits.MaximumModIdLength;
+
     public const int MaximumVersionLength = ProtocolLimits.MaximumModVersionLength;
 
     public static void Validate(ModProfile profile)
@@ -30,8 +33,10 @@ public static partial class ModProfileValidation
             Validate(requirement);
             if (!modIds.Add(requirement.ModId))
             {
-                throw new ArgumentException($"Mod profile contains duplicate requirement '{requirement.ModId}'.",
-                    nameof(profile));
+                throw new ArgumentException(
+                    $"Mod profile contains duplicate requirement '{requirement.ModId}'.",
+                    nameof(profile)
+                );
             }
         }
     }
@@ -47,15 +52,21 @@ public static partial class ModProfileValidation
         if (requirement.Version.Length > MaximumVersionLength ||
             !SemanticVersion.TryParse(requirement.Version, out _))
         {
-            throw new ArgumentException("A mod requirement contains an invalid semantic version.",
-                nameof(requirement));
+            throw new ArgumentException(
+                "A mod requirement contains an invalid semantic version.",
+                nameof(requirement)
+            );
         }
 
-        if (requirement.PackageHash.Length != 64 || requirement.PackageHash.Any(character =>
-                character is not (>= '0' and <= '9') and not (>= 'a' and <= 'f')))
+        if (requirement.PackageHash.Length != 64 ||
+            requirement.PackageHash.Any(character =>
+                character is not (>= '0' and <= '9') and not (>= 'a' and <= 'f')
+            ))
         {
-            throw new ArgumentException("A mod requirement requires a canonical SHA-256 PackageHash.",
-                nameof(requirement));
+            throw new ArgumentException(
+                "A mod requirement requires a canonical SHA-256 PackageHash.",
+                nameof(requirement)
+            );
         }
     }
 

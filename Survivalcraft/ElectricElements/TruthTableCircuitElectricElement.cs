@@ -34,7 +34,8 @@ public class TruthTableCircuitElectricElement(
                 if (connectorDirection == ElectricConnectorDirection.Top)
                 {
                     if (IsSignalHigh(
-                            connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)))
+                            connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                        ))
                     {
                         num |= 1;
                     }
@@ -42,7 +43,8 @@ public class TruthTableCircuitElectricElement(
                 else if (connectorDirection == ElectricConnectorDirection.Right)
                 {
                     if (IsSignalHigh(
-                            connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)))
+                            connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                        ))
                     {
                         num |= 2;
                     }
@@ -50,13 +52,16 @@ public class TruthTableCircuitElectricElement(
                 else if (connectorDirection == ElectricConnectorDirection.Bottom)
                 {
                     if (IsSignalHigh(
-                            connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)))
+                            connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                        ))
                     {
                         num |= 4;
                     }
                 }
-                else if (connectorDirection == ElectricConnectorDirection.Left && IsSignalHigh(
-                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)))
+                else if (connectorDirection == ElectricConnectorDirection.Left &&
+                         IsSignalHigh(
+                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                         ))
                 {
                     num |= 8;
                 }

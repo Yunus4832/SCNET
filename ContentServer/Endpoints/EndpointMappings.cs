@@ -16,27 +16,65 @@ namespace ContentServer.Endpoints;
 internal static class EndpointMappings
 {
     public static AdministratorResponse Administrator(AdministratorDto item) =>
-        new(item.AdministratorId.ToString(), item.Name, item.Contact, item.Description,
-            item.Status.ToString().ToLowerInvariant(), item.IsSuperAdministrator, item.HasActiveKey,
-            item.ReviewMessage, item.CreatedAt, item.ReviewedAt);
+        new(
+            item.AdministratorId.ToString(),
+            item.Name,
+            item.Contact,
+            item.Description,
+            item.Status.ToString().ToLowerInvariant(),
+            item.IsSuperAdministrator,
+            item.HasActiveKey,
+            item.ReviewMessage,
+            item.CreatedAt,
+            item.ReviewedAt
+        );
 
     public static DirectoryServerResponse DirectoryServer(DirectoryServerDto server) =>
-        new(server.Id.ToString(), server.PublisherId.ToString(), server.PublisherName,
-            server.Name, server.Address, server.Description,
+        new(
+            server.Id.ToString(),
+            server.PublisherId.ToString(),
+            server.PublisherName,
+            server.Name,
+            server.Address,
+            server.Description,
             JsonSerializer.Deserialize<string[]>(server.TagsJson) ?? [],
-            server.ReviewStatus.ToString().ToLowerInvariant(), server.ReviewMessage, server.IsEnabledByPublisher,
-            server.SuspendedAt is not null, server.SuspensionReason, server.CreatedAt, server.UpdatedAt,
-            server.ReviewedAt);
+            server.ReviewStatus.ToString().ToLowerInvariant(),
+            server.ReviewMessage,
+            server.IsEnabledByPublisher,
+            server.SuspendedAt is not null,
+            server.SuspensionReason,
+            server.CreatedAt,
+            server.UpdatedAt,
+            server.ReviewedAt
+        );
 
     public static ServerSourceRegistrationResponse ServerSource(ServerSourceDto source) =>
-        new(source.Id.ToString(), source.PublisherId.ToString(), source.PublisherName,
-            source.Name, source.ApiUrl, source.Description,
-            source.Status.ToString().ToLowerInvariant(), source.ReviewMessage, source.CreatedAt, source.ReviewedAt);
+        new(
+            source.Id.ToString(),
+            source.PublisherId.ToString(),
+            source.PublisherName,
+            source.Name,
+            source.ApiUrl,
+            source.Description,
+            source.Status.ToString().ToLowerInvariant(),
+            source.ReviewMessage,
+            source.CreatedAt,
+            source.ReviewedAt
+        );
 
     public static RendezvousServiceRegistrationResponse RendezvousService(RendezvousServiceDto source) =>
-        new(source.Id.ToString(), source.PublisherId.ToString(), source.PublisherName,
-            source.Name, source.ControlUrl, source.Description, source.Status.ToString().ToLowerInvariant(),
-            source.ReviewMessage, source.CreatedAt, source.ReviewedAt);
+        new(
+            source.Id.ToString(),
+            source.PublisherId.ToString(),
+            source.PublisherName,
+            source.Name,
+            source.ControlUrl,
+            source.Description,
+            source.Status.ToString().ToLowerInvariant(),
+            source.ReviewMessage,
+            source.CreatedAt,
+            source.ReviewedAt
+        );
 
     public static bool IsValidAddress(string value) => ServerSourceValidator.IsValidServerAddress(value);
 
@@ -51,7 +89,8 @@ internal static class EndpointMappings
 
     public static bool TryParsePublicHttpUrl(string value, out Uri uri) =>
         Uri.TryCreate(value?.Trim(), UriKind.Absolute, out uri!) &&
-        uri.Scheme is "http" or "https" && string.IsNullOrEmpty(uri.UserInfo) &&
+        uri.Scheme is "http" or "https" &&
+        string.IsNullOrEmpty(uri.UserInfo) &&
         string.IsNullOrEmpty(uri.Fragment);
 
     public static string GetBuiltInDirectoryUrl(ContentServerOptions options, HttpRequest request)
@@ -66,11 +105,14 @@ internal static class EndpointMappings
     }
 
     public static (string Address, string? Description, string[] Tags) ValidateServerUpdate(
-        UpdateDirectoryServerRequest request)
+        UpdateDirectoryServerRequest request
+    )
     {
         var tags = request.Tags ?? [];
-        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 100 ||
-            request.Description?.Length > 1024 || tags.Length > 16 ||
+        if (string.IsNullOrWhiteSpace(request.Name) ||
+            request.Name.Length > 100 ||
+            request.Description?.Length > 1024 ||
+            tags.Length > 16 ||
             tags.Any(tag => string.IsNullOrWhiteSpace(tag) || tag.Length > 32) ||
             !IsValidAddress(request.Address))
         {

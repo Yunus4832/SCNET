@@ -6,8 +6,9 @@ namespace Game.Widgets;
 
 public enum SelectionDrawerDirection
 {
-    Down,
-    Up
+    Down = 0,
+
+    Up = 1
 }
 
 public sealed class SelectionDrawerWidget : CanvasWidget
@@ -113,11 +114,7 @@ public sealed class SelectionDrawerWidget : CanvasWidget
         set => _headerLabel.HorizontalAlignment = value;
     }
 
-    public Vector2 HeaderContentMargin
-    {
-        get => _headerLabel.Margin;
-        set => _headerLabel.Margin = value;
-    }
+    public Vector2 HeaderContentMargin { get => _headerLabel.Margin; set => _headerLabel.Margin = value; }
 
     public float FontScale
     {
@@ -164,17 +161,9 @@ public sealed class SelectionDrawerWidget : CanvasWidget
 
     public ReadOnlyList<object> Items => new(_items);
 
-    public int? SelectedIndex
-    {
-        get => _list.SelectedIndex;
-        set => _list.SelectedIndex = value;
-    }
+    public int? SelectedIndex { get => _list.SelectedIndex; set => _list.SelectedIndex = value; }
 
-    public object? SelectedItem
-    {
-        get => _list.SelectedItem;
-        set => _list.SelectedItem = value;
-    }
+    public object? SelectedItem { get => _list.SelectedItem; set => _list.SelectedItem = value; }
 
     public bool IsOpen { get; private set; }
 
@@ -202,23 +191,11 @@ public sealed class SelectionDrawerWidget : CanvasWidget
         }
     }
 
-    public Color CenterColor
-    {
-        get => _background.CenterColor;
-        set => _background.CenterColor = value;
-    }
+    public Color CenterColor { get => _background.CenterColor; set => _background.CenterColor = value; }
 
-    public Color BevelColor
-    {
-        get => _background.BevelColor;
-        set => _background.BevelColor = value;
-    }
+    public Color BevelColor { get => _background.BevelColor; set => _background.BevelColor = value; }
 
-    public Color SelectionColor
-    {
-        get => _list.SelectionColor;
-        set => _list.SelectionColor = value;
-    }
+    public Color SelectionColor { get => _list.SelectionColor; set => _list.SelectionColor = value; }
 
     public void SetItems(IEnumerable<object> items)
     {
@@ -329,7 +306,8 @@ public sealed class SelectionDrawerWidget : CanvasWidget
             var globalPosition = Vector2.Transform(surfacePosition, GlobalTransform);
             _popupHost.SetWidgetPosition(
                 _surface,
-                Vector2.Transform(globalPosition, _popupHost.InvertedGlobalTransform));
+                Vector2.Transform(globalPosition, _popupHost.InvertedGlobalTransform)
+            );
         }
         else
         {
@@ -379,7 +357,8 @@ public sealed class SelectionDrawerWidget : CanvasWidget
             screen.Children.Add(_surface);
             screen.SetWidgetPosition(
                 _surface,
-                Vector2.Transform(globalPosition, screen.InvertedGlobalTransform));
+                Vector2.Transform(globalPosition, screen.InvertedGlobalTransform)
+            );
             _popupHost = screen;
             return;
         }
@@ -453,7 +432,8 @@ public sealed class SelectionDrawerWidget : CanvasWidget
         _header.Size = headerSize;
         _listViewport.Size = new Vector2(
             Math.Max(headerSize.X - 2f * _listPadding, 0f),
-            Math.Max(listHeight - 2f * _listPadding, 0f));
+            Math.Max(listHeight - 2f * _listPadding, 0f)
+        );
         _listViewport.IsVisible = IsOpen;
         _separator.Size = new Vector2(headerSize.X, _separatorThickness);
         _separator.IsVisible = IsOpen;

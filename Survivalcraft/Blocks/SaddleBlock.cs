@@ -14,12 +14,24 @@ public class SaddleBlock : Block
             saddleMesh.ParentBone ??
             throw new InvalidOperationException("Required SaddleMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(saddleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.2f, 0f), false, false, false, false,
-            new Color(224, 224, 224));
-        StandaloneBlockMesh.AppendModelMeshPart(saddleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.2f, 0f), false, true, false, false,
-            new Color(96, 96, 96));
+        StandaloneBlockMesh.AppendModelMeshPart(
+            saddleMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.2f, 0f),
+            false,
+            false,
+            false,
+            false,
+            new Color(224, 224, 224)
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            saddleMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.2f, 0f),
+            false,
+            true,
+            false,
+            false,
+            new Color(96, 96, 96)
+        );
         base.Initialize();
     }
 

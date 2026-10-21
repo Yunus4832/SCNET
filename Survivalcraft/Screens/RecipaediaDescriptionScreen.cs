@@ -87,54 +87,76 @@ public class RecipaediaDescriptionScreen : Screen
 
         if (block.FuelFireDuration > 0f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 2),
-                block.FuelFireDuration.ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 2),
+                block.FuelFireDuration.ToString(CultureInfo.InvariantCulture)
+            );
         }
 
-        dictionary.Add(LanguageManager.Get(_typeName, 3),
+        dictionary.Add(
+            LanguageManager.Get(_typeName, 3),
             block.MaxStacking > 1
                 ? string.Format(LanguageManager.Get(_typeName, 24), block.MaxStacking.ToString())
-                : LanguageManager.No);
-        dictionary.Add(LanguageManager.Get(_typeName, 4),
-            block.FireDuration > 0f ? LanguageManager.Yes : LanguageManager.No);
+                : LanguageManager.No
+        );
+        dictionary.Add(
+            LanguageManager.Get(_typeName, 4),
+            block.FireDuration > 0f ? LanguageManager.Yes : LanguageManager.No
+        );
         if (block.GetNutritionalValue(value) > 0f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 5),
-                block.GetNutritionalValue(value).ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 5),
+                block.GetNutritionalValue(value).ToString(CultureInfo.InvariantCulture)
+            );
         }
 
         if (block.GetRotPeriod(value) > 0)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 6),
-                string.Format(LanguageManager.Get(_typeName, 25),
-                    $"{2 * block.GetRotPeriod(value) * 60f / 1200f:0.0}"));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 6),
+                string.Format(
+                    LanguageManager.Get(_typeName, 25),
+                    $"{2 * block.GetRotPeriod(value) * 60f / 1200f:0.0}"
+                )
+            );
         }
 
         if (block.DigMethod != BlockDigMethod.None)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 7),
-                LanguageManager.Get("DigMethod", block.DigMethod.ToString()));
-            dictionary.Add(LanguageManager.Get(_typeName, 8),
-                block.DigResilience.ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 7),
+                LanguageManager.Get("DigMethod", block.DigMethod.ToString())
+            );
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 8),
+                block.DigResilience.ToString(CultureInfo.InvariantCulture)
+            );
         }
 
         if (block.ExplosionResilience > 0f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 9),
-                block.ExplosionResilience.ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 9),
+                block.ExplosionResilience.ToString(CultureInfo.InvariantCulture)
+            );
         }
 
         if (block.GetExplosionPressure(value) > 0f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 10),
-                block.GetExplosionPressure(value).ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 10),
+                block.GetExplosionPressure(value).ToString(CultureInfo.InvariantCulture)
+            );
         }
 
         var flag = false;
         if (block.GetMeleePower(value) > 1f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 11),
-                block.GetMeleePower(value).ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 11),
+                block.GetMeleePower(value).ToString(CultureInfo.InvariantCulture)
+            );
             flag = true;
         }
 
@@ -146,15 +168,19 @@ public class RecipaediaDescriptionScreen : Screen
 
         if (block.GetProjectilePower(value) > 1f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 13),
-                block.GetProjectilePower(value).ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 13),
+                block.GetProjectilePower(value).ToString(CultureInfo.InvariantCulture)
+            );
             flag = true;
         }
 
         if (block.ShovelPower > 1f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 14),
-                block.ShovelPower.ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 14),
+                block.ShovelPower.ToString(CultureInfo.InvariantCulture)
+            );
             flag = true;
         }
 
@@ -166,8 +192,10 @@ public class RecipaediaDescriptionScreen : Screen
 
         if (block.QuarryPower > 1f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 16),
-                block.QuarryPower.ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 16),
+                block.QuarryPower.ToString(CultureInfo.InvariantCulture)
+            );
             flag = true;
         }
 
@@ -178,19 +206,25 @@ public class RecipaediaDescriptionScreen : Screen
 
         if (block.ExperienceCount > 0f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 18),
-                block.ExperienceCount.ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 18),
+                block.ExperienceCount.ToString(CultureInfo.InvariantCulture)
+            );
         }
 
         if (block is ClothingBlock)
         {
             var clothingData = CurrentModRuntime.Value!.PreviewCatalog.Blocks[Terrain.ExtractContents(value)]
                 .GetClothingData(Terrain.ExtractData(value));
-            dictionary.Add(LanguageManager.Get(_typeName, 19),
-                clothingData.CanBeDyed ? LanguageManager.Yes : LanguageManager.No);
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 19),
+                clothingData.CanBeDyed ? LanguageManager.Yes : LanguageManager.No
+            );
             dictionary.Add(LanguageManager.Get(_typeName, 20), $"{(int)(clothingData.ArmorProtection * 100f)}%");
-            dictionary.Add(LanguageManager.Get(_typeName, 21),
-                clothingData.Sturdiness.ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(
+                LanguageManager.Get(_typeName, 21),
+                clothingData.Sturdiness.ToString(CultureInfo.InvariantCulture)
+            );
             dictionary.Add(LanguageManager.Get(_typeName, 22), $"{clothingData.Insulation:0.0} clo");
             dictionary.Add(LanguageManager.Get(_typeName, 23), $"{clothingData.MovementSpeedFactor * 100f:0}%");
         }

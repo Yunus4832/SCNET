@@ -42,8 +42,10 @@ public class ComponentCraftingTable : ComponentInventoryBase
                     if (slots[RemainsSlotIndex].Count == 0 ||
                         slots[RemainsSlotIndex].Value == _matchedRecipe.RemainsValue)
                     {
-                        var num2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(_matchedRecipe.RemainsValue)]
-                            .GetMaxStacking(_matchedRecipe.RemainsValue) - slots[RemainsSlotIndex].Count;
+                        var num2 = CurrentModRuntime.Value!.RequireWorldCatalog()
+                                       .Blocks[Terrain.ExtractContents(_matchedRecipe.RemainsValue)]
+                                       .GetMaxStacking(_matchedRecipe.RemainsValue) -
+                                   slots[RemainsSlotIndex].Count;
                         count = MathUtils.Min(count, num2 / _matchedRecipe.RemainsCount * _matchedRecipe.ResultCount);
                     }
                     else

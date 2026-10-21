@@ -6,7 +6,8 @@ public sealed class ComponentClothingPackageHandler : PackageHandlerBase<Compone
 {
     internal static bool IsValidResourceName(string name)
     {
-        return !string.IsNullOrWhiteSpace(name) && name is not ("." or "..") &&
+        return !string.IsNullOrWhiteSpace(name) &&
+               name is not ("." or "..") &&
                name.IndexOfAny(['/', '\\', ':', '\0']) < 0;
     }
 
@@ -26,7 +27,8 @@ public sealed class ComponentClothingPackageHandler : PackageHandlerBase<Compone
             return;
         }
 
-        if (!IsValidResourceName(package.SkinName) || !AcceptsDirection(package.Type, context.IsServer) ||
+        if (!IsValidResourceName(package.SkinName) ||
+            !AcceptsDirection(package.Type, context.IsServer) ||
             (context.IsServer && context.Sender is null))
         {
             return;
@@ -37,15 +39,25 @@ public sealed class ComponentClothingPackageHandler : PackageHandlerBase<Compone
             case ComponentClothingPackage.DataType.RequestSkin:
                 if (CharacterSkinsManager.HasSkinRes(package.SkinName))
                 {
-                    netNode.QueuePackage(ClothingPackageBuilder.Capture(package.SkinName,
-                        ComponentClothingPackage.DataType.ReplySkin), PackageAudience.To(context.Sender!));
+                    netNode.QueuePackage(
+                        ClothingPackageBuilder.Capture(
+                            package.SkinName,
+                            ComponentClothingPackage.DataType.ReplySkin
+                        ),
+                        PackageAudience.To(context.Sender!)
+                    );
                 }
                 else
                 {
                     if (!CharacterSkinsManager.WaitReplyList.Contains(package.SkinName))
                     {
-                        netNode.QueuePackage(ClothingPackageBuilder.Capture(package.SkinName,
-                            ComponentClothingPackage.DataType.WhoHas), PackageAudience.Global);
+                        netNode.QueuePackage(
+                            ClothingPackageBuilder.Capture(
+                                package.SkinName,
+                                ComponentClothingPackage.DataType.WhoHas
+                            ),
+                            PackageAudience.Global
+                        );
                         CharacterSkinsManager.WaitReplyList.Add(package.SkinName);
                     }
                 }
@@ -65,8 +77,12 @@ public sealed class ComponentClothingPackageHandler : PackageHandlerBase<Compone
             case ComponentClothingPackage.DataType.WhoHas:
                 if (CharacterSkinsManager.HasSkinRes(package.SkinName))
                 {
-                    NetworkSender.SendToServer(ClothingPackageBuilder.Capture(package.SkinName,
-                        ComponentClothingPackage.DataType.WhoHasReply));
+                    NetworkSender.SendToServer(
+                        ClothingPackageBuilder.Capture(
+                            package.SkinName,
+                            ComponentClothingPackage.DataType.WhoHasReply
+                        )
+                    );
                 }
 
                 break;

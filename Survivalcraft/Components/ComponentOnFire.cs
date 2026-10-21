@@ -58,8 +58,11 @@ public class ComponentOnFire : Component, IUpdateable
 
             var boundingBox = ComponentBody.BoundingBox;
             _onFireParticleSystem.Position = 0.5f * (boundingBox.Min + boundingBox.Max);
-            _onFireParticleSystem.Radius = 0.5f * MathUtils.Min(boundingBox.Max.X - boundingBox.Min.X,
-                boundingBox.Max.Z - boundingBox.Min.Z);
+            _onFireParticleSystem.Radius = 0.5f *
+                                           MathUtils.Min(
+                                               boundingBox.Max.X - boundingBox.Min.X,
+                                               boundingBox.Max.Z - boundingBox.Min.Z
+                                           );
             if (ComponentBody is { ImmersionFactor: > 0.5f, ImmersionFluidBlock: WaterBlock })
             {
                 Extinguish();
@@ -201,7 +204,10 @@ public class ComponentOnFire : Component, IUpdateable
 
                             if ((num8 & 1) != 0)
                             {
-                                var box3 = new BoundingBox(new Vector3(i, j, k + 0.5f), new Vector3(i + 1, j + 1, k + 1));
+                                var box3 = new BoundingBox(
+                                    new Vector3(i, j, k + 0.5f),
+                                    new Vector3(i + 1, j + 1, k + 1)
+                                );
                                 if (boundingBox.Intersection(box3))
                                 {
                                     return true;
@@ -210,7 +216,10 @@ public class ComponentOnFire : Component, IUpdateable
 
                             if ((num8 & 2) != 0)
                             {
-                                var box4 = new BoundingBox(new Vector3(i + 0.5f, j, k), new Vector3(i + 1, j + 1, k + 1));
+                                var box4 = new BoundingBox(
+                                    new Vector3(i + 0.5f, j, k),
+                                    new Vector3(i + 1, j + 1, k + 1)
+                                );
                                 if (boundingBox.Intersection(box4))
                                 {
                                     return true;
@@ -239,8 +248,10 @@ public class ComponentOnFire : Component, IUpdateable
                         case 209:
                             if (num8 > 0)
                             {
-                                var box = new BoundingBox(new Vector3(i, j, k) + new Vector3(0.2f),
-                                    new Vector3(i + 1, j + 1, k + 1) - new Vector3(0.2f));
+                                var box = new BoundingBox(
+                                    new Vector3(i, j, k) + new Vector3(0.2f),
+                                    new Vector3(i + 1, j + 1, k + 1) - new Vector3(0.2f)
+                                );
                                 if (boundingBox.Intersection(box))
                                 {
                                     return true;

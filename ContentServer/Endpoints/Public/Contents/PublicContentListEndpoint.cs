@@ -27,11 +27,17 @@ public sealed class PublicContentListEndpoint(IMediator mediator) : ContentEndpo
         string? type,
         string? query,
         PaginationRequest page,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var items = await mediator.Send(
-            new ListVersionsQuery(VersionQueryScope.Public, page.ToPageRequest(), Type: type, Search: query,
-                LatestOnly: true),
+            new ListVersionsQuery(
+                VersionQueryScope.Public,
+                page.ToPageRequest(),
+                Type: type,
+                Search: query,
+                LatestOnly: true
+            ),
             cancellationToken
         );
         return items.Map(item => item.ToResponse())
@@ -58,7 +64,8 @@ public sealed record ContentVersionResponse(
     string? ReviewMessage,
     DateTimeOffset CreatedAt,
     DateTimeOffset? PublishedAt,
-    string DownloadUrl);
+    string DownloadUrl
+);
 
 public sealed class PaginationRequest
 {

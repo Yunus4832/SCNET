@@ -8,7 +8,9 @@ public sealed class BootstrapPackageHandler : PackageHandlerBase<BootstrapPackag
         ProtocolEnum.TryDecode<GameMode>(package.World.Mode, out _) &&
         node.CurrentStage == NetNode.Stage.Bootstrapping &&
         node.CurrentConnectionPhase == ConnectionPhase.TransportConnected &&
-        node.ConnectionEpoch == Guid.Empty && package.Epoch != Guid.Empty && node.TokenId != Guid.Empty &&
+        node.ConnectionEpoch == Guid.Empty &&
+        package.Epoch != Guid.Empty &&
+        node.TokenId != Guid.Empty &&
         package.ClientList.PackageEventType == ClientPackage.EventType.SyncList &&
         package.ClientList.List.Any(client => client.ID != 0 && client.TokenId == node.TokenId);
 
@@ -25,6 +27,15 @@ public sealed class BootstrapPackageHandler : PackageHandlerBase<BootstrapPackag
         netNode.ConnectionEpoch = package.Epoch;
         netNode.CurrentConnectionPhase = ConnectionPhase.BootstrapSent;
         var loadingScreen = ScreensManager.FindScreen<GameLoadingScreen>("GameLoading", true)!;
-        loadingScreen.ReplyCall(package.TextureData.Length > 0, package.TextureData, package.ProjectData, new Game.Modding.Blocks.BlockIndexMapping(package.BlockMapping.Select(entry => new KeyValuePair<ResourceId, int>(entry.Id, entry.Index))));
+        loadingScreen.ReplyCall(
+            package.TextureData.Length > 0,
+            package.TextureData,
+            package.ProjectData,
+            new Game.Modding.Blocks.BlockIndexMapping(
+                package.BlockMapping.Select(entry =>
+                    new KeyValuePair<ResourceId, int>(entry.Id, entry.Index)
+                )
+            )
+        );
     }
 }

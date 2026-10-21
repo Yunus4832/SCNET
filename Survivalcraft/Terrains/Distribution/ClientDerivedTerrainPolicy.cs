@@ -13,7 +13,8 @@ public static class ClientDerivedTerrainPolicy
     public static TerrainChunk? FindPendingLightingDependency(
         Terrain terrain,
         TerrainContentRole role,
-        TerrainChunk target)
+        TerrainChunk target
+    )
     {
         ArgumentNullException.ThrowIfNull(terrain);
         ArgumentNullException.ThrowIfNull(target);
@@ -41,7 +42,8 @@ public static class ClientDerivedTerrainPolicy
     public static TerrainChunk? FindPendingGeometryDependency(
         Terrain terrain,
         TerrainContentRole role,
-        TerrainChunk target)
+        TerrainChunk target
+    )
     {
         ArgumentNullException.ThrowIfNull(terrain);
         ArgumentNullException.ThrowIfNull(target);

@@ -51,7 +51,8 @@ public static class NetworkSender
         if (body is null)
         {
             throw new InvalidOperationException(
-                $"Entity {entity.EntityId} has no body and cannot be routed by entity position.");
+                $"Entity {entity.EntityId} has no body and cannot be routed by entity position."
+            );
         }
 
         var interest = entity.Project.FindSubsystem<SubsystemNetworkInterest>(true)!;

@@ -58,7 +58,8 @@ public sealed class ServerSourceValidatorTest
             ServerSourceProtocol.CurrentVersion,
             new ServerSourceDescriptor("example-source", "Example Source"),
             [CreateEntry("server", "example.org:28887")],
-            null);
+            null
+        );
     }
 
     private static ServerSourceEntry CreateEntry(string id, string address)

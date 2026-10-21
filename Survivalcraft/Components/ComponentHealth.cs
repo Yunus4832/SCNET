@@ -123,8 +123,10 @@ public class ComponentHealth : Component, IUpdateable
             var cause = LanguageManager.Get(Name, 1);
             Injure(2f * _componentCreature.ComponentBody.ImmersionFactor * dt, null, false, cause);
             var num2 = 1.1f + 0.1f * (float)MathUtils.Sin(12.0 * _subsystemTime.GameTime);
-            RedScreenFactor = MathUtils.Max(RedScreenFactor,
-                num2 * 1.5f * _componentCreature.ComponentBody.ImmersionFactor);
+            RedScreenFactor = MathUtils.Max(
+                RedScreenFactor,
+                num2 * 1.5f * _componentCreature.ComponentBody.ImmersionFactor
+            );
         }
 
         var num3 = MathUtils.Abs(_componentCreature.ComponentBody.CollisionVelocityChange.Y);
@@ -140,7 +142,7 @@ public class ComponentHealth : Component, IUpdateable
             var cause = LanguageManager.Get(Name, 2);
             var flagMainRider = _componentCreature.ComponentBody.ChildBodies.Count > 0 &&
                                 _componentCreature.ComponentBody.ChildBodies[0].Player is
-                                { PlayerData.IsMainPlayer: true };
+                                    { PlayerData.IsMainPlayer: true };
             var flagMainPlayer = _componentPlayer is { PlayerData.IsMainPlayer: true };
             var flagNoRider = _componentCreature.ComponentBody.ChildBodies.Count == 0;
             if (CommonLib.WorkType == WorkType.Local)
@@ -161,8 +163,17 @@ public class ComponentHealth : Component, IUpdateable
                 //是(主玩家、被主玩家骑乘的生物)计算伤害，请求给服务器
                 if (flagMainPlayer || flagMainRider)
                 {
-                    NetworkSender.SendToServer(EntityStatePackageBuilder.Capture(this, null, num4, cause, false, true,
-                        ComponentHealthPackage.RequestInjureType.Fall));
+                    NetworkSender.SendToServer(
+                        EntityStatePackageBuilder.Capture(
+                            this,
+                            null,
+                            num4,
+                            cause,
+                            false,
+                            true,
+                            ComponentHealthPackage.RequestInjureType.Fall
+                        )
+                    );
                 }
             }
         }
@@ -173,8 +184,12 @@ public class ComponentHealth : Component, IUpdateable
         {
             //掉出世界伤害
             Injure(0.1f, null, true, LanguageManager.Get(Name, 3));
-            _componentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(Name, 4), Color.White, true,
-                false);
+            _componentPlayer?.ComponentGui.DisplaySmallMessage(
+                LanguageManager.Get(Name, 4),
+                Color.White,
+                true,
+                false
+            );
         }
 
         var num5 = _subsystemTime.PeriodicGameTimeEvent(1.0, 0.0);
@@ -194,7 +209,7 @@ public class ComponentHealth : Component, IUpdateable
         {
             var flagMainRider = _componentCreature.ComponentBody.ChildBodies.Count > 0 &&
                                 _componentCreature.ComponentBody.ChildBodies[0].Player is
-                                { PlayerData.IsMainPlayer: true };
+                                    { PlayerData.IsMainPlayer: true };
             var flagMainPlayer = _componentPlayer is { PlayerData.IsMainPlayer: true };
             var flagNoRider = _componentCreature.ComponentBody.ChildBodies.Count == 0;
             var num7 = 1f / FireResilience;
@@ -209,8 +224,17 @@ public class ComponentHealth : Component, IUpdateable
             {
                 if (flagMainPlayer || flagMainRider)
                 {
-                    NetworkSender.SendToServer(EntityStatePackageBuilder.Capture(this, null, num7, cause, false, true,
-                        ComponentHealthPackage.RequestInjureType.Fire));
+                    NetworkSender.SendToServer(
+                        EntityStatePackageBuilder.Capture(
+                            this,
+                            null,
+                            num7,
+                            cause,
+                            false,
+                            true,
+                            ComponentHealthPackage.RequestInjureType.Fire
+                        )
+                    );
                 }
             }
 
@@ -227,10 +251,12 @@ public class ComponentHealth : Component, IUpdateable
             }
         }
 
-        if (num5 && CanStrand && _componentCreature.ComponentBody.ImmersionFactor < 0.25f &&
+        if (num5 &&
+            CanStrand &&
+            _componentCreature.ComponentBody.ImmersionFactor < 0.25f &&
             (_componentCreature.ComponentBody.StandingOnValue != 0 ||
              _componentCreature.ComponentBody.StandingOnBody != null))
-        //搁浅伤害
+            //搁浅伤害
         {
             Injure(0.05f, null, false, LanguageManager.Get(Name, 6));
         }
@@ -280,7 +306,8 @@ public class ComponentHealth : Component, IUpdateable
             }
 
             var position3 = (_componentCreature.ComponentBody.BoundingBox.Min +
-                             _componentCreature.ComponentBody.BoundingBox.Max) / 2f;
+                             _componentCreature.ComponentBody.BoundingBox.Max) /
+                            2f;
             foreach (var item in Entity.FindComponents<IInventory>())
             {
                 item?.DropAllItems(position3);
@@ -289,7 +316,8 @@ public class ComponentHealth : Component, IUpdateable
             DeathTime = _subsystemGameInfo.TotalElapsedGameTime;
         }
 
-        if (Health <= 0f && CorpseDuration > 0f &&
+        if (Health <= 0f &&
+            CorpseDuration > 0f &&
             _subsystemGameInfo.TotalElapsedGameTime - DeathTime > CorpseDuration)
         {
             _componentCreature.ComponentSpawn.Despawn();
@@ -306,8 +334,9 @@ public class ComponentHealth : Component, IUpdateable
         }
 
         //开服后，睡觉恢复速度加快5倍
-        if (CommonLib.WorkType == WorkType.Server && _componentPlayer is
-            { ComponentSleep: { SubsystemUpdate.UpdatesPerFrame: 1, IsSleeping: true } })
+        if (CommonLib.WorkType == WorkType.Server &&
+            _componentPlayer is
+                { ComponentSleep: { SubsystemUpdate.UpdatesPerFrame: 1, IsSleeping: true } })
         {
             amount *= _subsystemGameInfo.WorldSettings.RecoverFactor;
         }
@@ -327,7 +356,8 @@ public class ComponentHealth : Component, IUpdateable
 
         var context = new CreatureInjuringContext(this, amount, attacker, ignoreInvulnerability, cause);
         CurrentModRuntime.Value?.Gameplay.Invoke(context);
-        if (context.Cancel || !(context.Amount > 0f) ||
+        if (context.Cancel ||
+            !(context.Amount > 0f) ||
             (!context.IgnoreInvulnerability && IsInvulnerable))
         {
             return;
@@ -341,7 +371,8 @@ public class ComponentHealth : Component, IUpdateable
         NetInjure(amount, attacker, cause);
         NetworkSender.SendToObservers(
             Entity,
-            EntityStatePackageBuilder.Capture(this, attacker, amount, cause, ignoreInvulnerability));
+            EntityStatePackageBuilder.Capture(this, attacker, amount, cause, ignoreInvulnerability)
+        );
     }
 
     public void NetInjure(float amount, ComponentCreature? attacker, string cause)
@@ -382,12 +413,14 @@ public class ComponentHealth : Component, IUpdateable
                     }
                 }
 
-                _componentCreature.PlayerStats?.AddDeathRecord(new PlayerStats.DeathRecord
-                {
-                    Day = _subsystemTimeOfDay.Day,
-                    Location = _componentCreature.ComponentBody.Position,
-                    Cause = cause
-                });
+                _componentCreature.PlayerStats?.AddDeathRecord(
+                    new PlayerStats.DeathRecord
+                    {
+                        Day = _subsystemTimeOfDay.Day,
+                        Location = _componentCreature.ComponentBody.Position,
+                        Cause = cause
+                    }
+                );
 
                 var componentPlayer = attacker?.Entity.FindComponent<ComponentPlayer>();
                 if (componentPlayer is not null)
@@ -415,8 +448,13 @@ public class ComponentHealth : Component, IUpdateable
                     for (var i = 0; i < num; i++)
                     {
                         var vector = _random.Vector2(2.5f, 3.5f);
-                        _subsystemPickables.AddPickable(248, 1, _componentCreature.ComponentBody.Position,
-                            new Vector3(vector.X, 6f, vector.Y), null);
+                        _subsystemPickables.AddPickable(
+                            248,
+                            1,
+                            _componentCreature.ComponentBody.Position,
+                            new Vector3(vector.X, 6f, vector.Y),
+                            null
+                        );
                     }
                 }
             }

@@ -58,7 +58,8 @@ internal static class ContentToolProgram
     private static int Pack(string manifestPath, string payloadDirectory, string outputPath)
     {
         if (!outputPath.EndsWith(ContentPackageReader.FileExtension, StringComparison.Ordinal) ||
-            !File.Exists(manifestPath) || !Directory.Exists(payloadDirectory))
+            !File.Exists(manifestPath) ||
+            !Directory.Exists(payloadDirectory))
         {
             WriteUsage();
             return 2;
@@ -73,11 +74,16 @@ internal static class ContentToolProgram
             var manifest = ContentPackageManifest.Parse(File.ReadAllBytes(manifestPath));
             var entries = Directory.EnumerateFiles(payloadDirectory, "*", SearchOption.AllDirectories)
                 .Select(path =>
-                {
-                    var relativePath = Path.GetRelativePath(payloadDirectory, path).Replace('\\', '/');
-                    var length = new FileInfo(path).Length;
-                    return new ContentPackageWriteEntry($"payload/{relativePath}", length, () => File.OpenRead(path));
-                })
+                    {
+                        var relativePath = Path.GetRelativePath(payloadDirectory, path).Replace('\\', '/');
+                        var length = new FileInfo(path).Length;
+                        return new ContentPackageWriteEntry(
+                            $"payload/{relativePath}",
+                            length,
+                            () => File.OpenRead(path)
+                        );
+                    }
+                )
                 .ToArray();
             string hash;
             using (var output = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None))

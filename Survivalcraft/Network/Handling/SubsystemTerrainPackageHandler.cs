@@ -31,7 +31,11 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
         switch (package.Type)
         {
             case SubsystemTerrainPackage.DataType.CellEditCompleted:
-                subsystemTerrain.CellPrediction?.Complete(package.EditRequestId, package.EditedCell, package.EditContentVersion);
+                subsystemTerrain.CellPrediction?.Complete(
+                    package.EditRequestId,
+                    package.EditedCell,
+                    package.EditContentVersion
+                );
                 break;
             case SubsystemTerrainPackage.DataType.RequestSyncChunks:
                 if (context.Sender is null)
@@ -41,7 +45,8 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
 
                 var scheduler = subsystemTerrain.TerrainUpdater.ServerChunkDistribution ??
                                 throw new InvalidOperationException(
-                                    "Terrain chunk requests require an authoritative server scheduler.");
+                                    "Terrain chunk requests require an authoritative server scheduler."
+                                );
                 scheduler.Enqueue(context.Sender, package.ChunkRequests);
                 break;
             case SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments:
@@ -52,20 +57,23 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
 
                 var fragmentScheduler = subsystemTerrain.TerrainUpdater.ServerChunkDistribution ??
                                         throw new InvalidOperationException(
-                                            "Terrain fragment requests require an authoritative server scheduler.");
+                                            "Terrain fragment requests require an authoritative server scheduler."
+                                        );
                 fragmentScheduler.EnqueueMissing(context.Sender, package.FragmentRequests);
                 break;
             case SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment:
                 var transport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
                                 throw new InvalidOperationException(
-                                    "Remote terrain snapshots require a network chunk transport.");
+                                    "Remote terrain snapshots require a network chunk transport."
+                                );
                 transport.Receive(package.ChunkFragment);
 
                 break;
             case SubsystemTerrainPackage.DataType.SyncTerrainCellDelta:
                 var deltaTransport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
                                      throw new InvalidOperationException(
-                                         "Remote terrain cell deltas require a network chunk transport.");
+                                         "Remote terrain cell deltas require a network chunk transport."
+                                     );
                 deltaTransport.Receive(package.CellDelta);
                 break;
         }

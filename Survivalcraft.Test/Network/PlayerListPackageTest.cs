@@ -12,14 +12,20 @@ public class PlayerListPackageTest
         var onlinePlayer = Guid.NewGuid();
         var offlinePlayer = Guid.NewGuid();
         var players = new List<PlayerListEntry>();
-        players.Add(new PlayerListEntry(
-            onlinePlayer,
-            "Online",
-            true));
-        players.Add(new PlayerListEntry(
-            offlinePlayer,
-            "Offline",
-            false));
+        players.Add(
+            new PlayerListEntry(
+                onlinePlayer,
+                "Online",
+                true
+            )
+        );
+        players.Add(
+            new PlayerListEntry(
+                offlinePlayer,
+                "Offline",
+                false
+            )
+        );
 
         var package = new PlayerListPackage(players);
         var clone = RoundTrip(package);
@@ -31,11 +37,16 @@ public class PlayerListPackageTest
     [Fact]
     public void OnlineStateSnapshotRoundTripsAndUsesAtomicReliableTransport()
     {
-        var package = new OnlinePlayerStatePackage([new OnlinePlayerState(
-            Guid.NewGuid(),
-            new Vector3(12.5f, 64f, -8f),
-            0.75f,
-            true)]);
+        var package = new OnlinePlayerStatePackage(
+            [
+                new OnlinePlayerState(
+                    Guid.NewGuid(),
+                    new Vector3(12.5f, 64f, -8f),
+                    0.75f,
+                    true
+                )
+            ]
+        );
 
         var clone = RoundTrip(package);
 

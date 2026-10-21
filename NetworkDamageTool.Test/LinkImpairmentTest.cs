@@ -14,18 +14,20 @@ public sealed class LinkImpairmentTest
         Assert.False(link.Decide(100, TimeSpan.FromSeconds(9.999)).Drop);
         Assert.True(link.Decide(100, TimeSpan.FromSeconds(10)).Drop);
         Assert.True(link.Decide(100, TimeSpan.FromSeconds(14.999)).Drop);
-        Assert.Equal(new ImpairmentDecision(false, TimeSpan.FromMilliseconds(100)),
-            link.Decide(100, TimeSpan.FromSeconds(15)));
+        Assert.Equal(
+            new ImpairmentDecision(false, TimeSpan.FromMilliseconds(100)),
+            link.Decide(100, TimeSpan.FromSeconds(15))
+        );
     }
 
     [Fact]
     public void OutageOptionsRequireDurationAndKeepDirectionsIndependent()
     {
         string[] args = ["run", "--listen", "127.0.0.1:28989", "--target", "127.0.0.1:28987"];
-        Assert.Throws<ArgumentException>(() => DamageProxyOptions.Parse(
-            [.. args, "--up-outage-start-seconds", "10"]));
+        Assert.Throws<ArgumentException>(() => DamageProxyOptions.Parse([.. args, "--up-outage-start-seconds", "10"]));
         var options = DamageProxyOptions.Parse(
-            [.. args, "--up-outage-start-seconds", "10", "--up-outage-duration-seconds", "5"]);
+            [.. args, "--up-outage-start-seconds", "10", "--up-outage-duration-seconds", "5"]
+        );
         Assert.Equal(TimeSpan.FromSeconds(10), options.Upstream.OutageStart);
         Assert.Equal(TimeSpan.FromSeconds(5), options.Upstream.OutageDuration);
         Assert.Equal(TimeSpan.Zero, options.Downstream.OutageDuration);
@@ -55,7 +57,8 @@ public sealed class LinkImpairmentTest
 
         Assert.All(
             Enumerable.Range(0, 20).Select(_ => impairment.Decide(100, TimeSpan.Zero)),
-            decision => Assert.True(decision.Drop));
+            decision => Assert.True(decision.Drop)
+        );
     }
 
     [Fact]

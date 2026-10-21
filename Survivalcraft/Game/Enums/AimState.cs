@@ -2,7 +2,9 @@ namespace Game;
 
 public enum AimState
 {
-    InProgress,
-    Cancelled,
-    Completed
+    InProgress = 0,
+
+    Cancelled = 1,
+
+    Completed = 2
 }

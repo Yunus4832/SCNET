@@ -89,10 +89,7 @@ public class Client
 
     public Guid ConnectionEpoch { get; set; }
 
-    public PlayerData PlayerData
-    {
-        get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID)!; }
-    }
+    public PlayerData PlayerData { get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID)!; } }
 
     public Entity? CachePlayerEntity { get; set; }
 

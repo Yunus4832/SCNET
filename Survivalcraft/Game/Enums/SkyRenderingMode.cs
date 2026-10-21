@@ -2,7 +2,9 @@ namespace Game;
 
 public enum SkyRenderingMode
 {
-    Full,
-    NoClouds,
-    Disabled
+    Full = 0,
+
+    NoClouds = 1,
+
+    Disabled = 2
 }

@@ -14,6 +14,7 @@ public sealed class GameExitManagerTest
         var packagePath = Path.Combine(Path.GetTempPath(), "verified-update.zip");
         const string downloadUrl = "https://example.com/release.zip";
         var requestedActions = new List<GameExitAction>();
+
         void OnExitRequested(GameExitAction action)
         {
             Assert.Equal(packagePath, GameExitManager.UpdatePackagePath);

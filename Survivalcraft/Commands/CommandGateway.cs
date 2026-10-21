@@ -14,7 +14,8 @@ public static class CommandGateway
     public static string SubmitLocal(
         Project project,
         IGameCommand command,
-        string? correlationId = null)
+        string? correlationId = null
+    )
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(command);
@@ -24,7 +25,8 @@ public static class CommandGateway
         var result = CommandExecutor.ExecuteLocal(
             command,
             project,
-            requestId);
+            requestId
+        );
         CommandResultPublisher.Publish(project, result);
         return requestId;
     }
@@ -32,7 +34,8 @@ public static class CommandGateway
     public static string Submit(
         PlayerData player,
         string input,
-        string? correlationId = null)
+        string? correlationId = null
+    )
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentException.ThrowIfNullOrWhiteSpace(input);
@@ -41,8 +44,11 @@ public static class CommandGateway
             : correlationId;
         if (CurrentModRuntime.Value is not { } runtime)
         {
-            CommandResultPublisher.DisplayLocal(player.Project,
-                CommandResult.Fail("command.unavailable", "Command system is not ready."), requestId);
+            CommandResultPublisher.DisplayLocal(
+                player.Project,
+                CommandResult.Fail("command.unavailable", "Command system is not ready."),
+                requestId
+            );
             return requestId;
         }
 
@@ -63,7 +69,8 @@ public static class CommandGateway
     public static string Submit(
         PlayerData player,
         IGameCommand command,
-        string? correlationId = null)
+        string? correlationId = null
+    )
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(command);
@@ -81,15 +88,20 @@ public static class CommandGateway
             }
             else
             {
-                CommandResultPublisher.Publish(player.Project, result, player.Client?.ID,
-                    includeServer: player.IsMainPlayer, correlationId: requestId);
+                CommandResultPublisher.Publish(
+                    player.Project,
+                    result,
+                    player.Client?.ID,
+                    includeServer: player.IsMainPlayer,
+                    correlationId: requestId
+                );
             }
         }
+
         return requestId;
     }
 
-    internal static CommandResult? ExecuteOrSend(
-        PlayerData player, IGameCommand command, string correlationId)
+    internal static CommandResult? ExecuteOrSend(PlayerData player, IGameCommand command, string correlationId)
     {
         if (CurrentModRuntime.Value is not { } runtime)
         {
@@ -116,8 +128,13 @@ public static class CommandGateway
         return null;
     }
 
-    internal static bool TryCreateRequest(CommandRegistry registry, IGameCommand command,
-        string correlationId, out CommandPackage? package, out CommandResult? error)
+    internal static bool TryCreateRequest(
+        CommandRegistry registry,
+        IGameCommand command,
+        string correlationId,
+        out CommandPackage? package,
+        out CommandResult? error
+    )
     {
         if (!registry.TryEncode(command, out var commandId, out var payload, out var reason))
         {

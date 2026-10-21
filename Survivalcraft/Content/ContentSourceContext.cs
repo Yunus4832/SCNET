@@ -4,8 +4,11 @@ public sealed class ContentSourceContext
 {
     private readonly IReadOnlyList<ScopedRepository> _candidates;
 
-    private ContentSourceContext(IReadOnlyList<ContentRepository> persistentRepositories, Guid? sessionScopeId,
-        IReadOnlyList<ContentRepository> sessionRepositories)
+    private ContentSourceContext(
+        IReadOnlyList<ContentRepository> persistentRepositories,
+        Guid? sessionScopeId,
+        IReadOnlyList<ContentRepository> sessionRepositories
+    )
     {
         PersistentRepositories = persistentRepositories;
         SessionScopeId = sessionScopeId;
@@ -36,7 +39,9 @@ public sealed class ContentSourceContext
     }
 
     public IReadOnlyList<ContentRepository> PersistentRepositories { get; }
+
     public Guid? SessionScopeId { get; }
+
     public IReadOnlyList<ContentRepository> SessionRepositories { get; }
 
     internal IReadOnlyList<ScopedRepository> Candidates => _candidates;
@@ -46,17 +51,22 @@ public sealed class ContentSourceContext
         return new ContentSourceContext(ContentRepository.NormalizeAll(repositories), null, []);
     }
 
-    public static ContentSourceContext Session(Guid sessionScopeId,
+    public static ContentSourceContext Session(
+        Guid sessionScopeId,
         IEnumerable<ContentRepository> sessionRepositories,
-        IEnumerable<ContentRepository> persistentRepositories)
+        IEnumerable<ContentRepository> persistentRepositories
+    )
     {
         if (sessionScopeId == Guid.Empty)
         {
             throw new ArgumentException("Session repository scopes require a nonempty ID.", nameof(sessionScopeId));
         }
 
-        return new ContentSourceContext(ContentRepository.NormalizeAll(persistentRepositories), sessionScopeId,
-            ContentRepository.NormalizeAll(sessionRepositories));
+        return new ContentSourceContext(
+            ContentRepository.NormalizeAll(persistentRepositories),
+            sessionScopeId,
+            ContentRepository.NormalizeAll(sessionRepositories)
+        );
     }
 
     internal void Configure(ContentServerClientPool pool)

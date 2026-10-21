@@ -17,8 +17,11 @@ public sealed class SemanticVersion : IComparable<SemanticVersion>
     }
 
     public BigInteger Major { get; }
+
     public BigInteger Minor { get; }
+
     public BigInteger Patch { get; }
+
     public string Value { get; }
 
     public static SemanticVersion Parse(string value)
@@ -41,8 +44,10 @@ public sealed class SemanticVersion : IComparable<SemanticVersion>
 
         var parts = value.Split('-', 2);
         var core = parts[0].Split('.');
-        if (core.Length != 3 || !TryParseCore(core[0], out var major) ||
-            !TryParseCore(core[1], out var minor) || !TryParseCore(core[2], out var patch))
+        if (core.Length != 3 ||
+            !TryParseCore(core[0], out var major) ||
+            !TryParseCore(core[1], out var minor) ||
+            !TryParseCore(core[2], out var patch))
         {
             return false;
         }
@@ -50,9 +55,12 @@ public sealed class SemanticVersion : IComparable<SemanticVersion>
         var prerelease = parts.Length == 1 ? [] : parts[1].Split('.');
         if (prerelease.Any(identifier => identifier.Length == 0 ||
                                          identifier.Any(character =>
-                                             !char.IsAsciiLetterOrDigit(character) && character != '-') ||
-                                         identifier.All(char.IsAsciiDigit) && identifier.Length > 1 &&
-                                         identifier[0] == '0'))
+                                             !char.IsAsciiLetterOrDigit(character) && character != '-'
+                                         ) ||
+                                         identifier.All(char.IsAsciiDigit) &&
+                                         identifier.Length > 1 &&
+                                         identifier[0] == '0'
+            ))
         {
             return false;
         }
@@ -111,7 +119,8 @@ public sealed class SemanticVersion : IComparable<SemanticVersion>
     private static bool TryParseCore(string value, out BigInteger result)
     {
         result = 0;
-        return value.Length > 0 && (value.Length == 1 || value[0] != '0') &&
+        return value.Length > 0 &&
+               (value.Length == 1 || value[0] != '0') &&
                value.All(char.IsAsciiDigit) &&
                BigInteger.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out result);
     }

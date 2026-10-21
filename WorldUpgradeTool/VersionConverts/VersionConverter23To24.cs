@@ -14,8 +14,8 @@ public class VersionConverter23To24 : VersionConverter
     {
         XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
         foreach (var item in from e in projectNode.Element("Subsystems")?.Elements()
-                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "GameInfo"
-                             select e)
+                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "GameInfo"
+                 select e)
         {
             var xElement = XmlUtils.AddElement(item, "Value");
             xElement.SetAttributeValue("Name", "AreSeasonsChanging");
@@ -24,8 +24,10 @@ public class VersionConverter23To24 : VersionConverter
             var xElement2 = XmlUtils.AddElement(item, "Value");
             xElement2.SetAttributeValue("Name", "TimeOfYear");
             xElement2.SetAttributeValue("Type", "float");
-            xElement2.SetAttributeValue("Value",
-                IntervalUtils.Midpoint(SubsystemSeasons.SummerStart, SubsystemSeasons.AutumnStart));
+            xElement2.SetAttributeValue(
+                "Value",
+                IntervalUtils.Midpoint(SubsystemSeasons.SummerStart, SubsystemSeasons.AutumnStart)
+            );
         }
     }
 

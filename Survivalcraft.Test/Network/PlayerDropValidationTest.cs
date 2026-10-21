@@ -15,8 +15,16 @@ public sealed class PlayerDropValidationTest
     [InlineData(0, 1, 1, true)]
     public void SlotAndCountMustMatchAvailableInventory(int slot, int count, int available, bool valid)
     {
-        Assert.Equal(valid, ComponentPlayerPackageHandler.AreDropParametersValid(slot, 10, count, available,
-            new Vector3(12f, 0f, 0f)));
+        Assert.Equal(
+            valid,
+            ComponentPlayerPackageHandler.AreDropParametersValid(
+                slot,
+                10,
+                count,
+                available,
+                new Vector3(12f, 0f, 0f)
+            )
+        );
     }
 
     [Theory]
@@ -25,7 +33,14 @@ public sealed class PlayerDropValidationTest
     [InlineData(13f)]
     public void DropRejectsNonFiniteOrExcessiveVelocity(float velocity)
     {
-        Assert.False(ComponentPlayerPackageHandler.AreDropParametersValid(0, 10, 1, 1,
-            new Vector3(velocity, 0f, 0f)));
+        Assert.False(
+            ComponentPlayerPackageHandler.AreDropParametersValid(
+                0,
+                10,
+                1,
+                1,
+                new Vector3(velocity, 0f, 0f)
+            )
+        );
     }
 }

@@ -84,13 +84,29 @@ public class CottonBlock : CrossBlock
         if (GetIsWild(Terrain.ExtractData(value)))
         {
             color *= BlockColorsMap.GrassColorsMap.Lookup(environmentData.Temperature, environmentData.Humidity);
-            Catalog.DrawFlatOrImageExtrusionBlock(primitivesRenderer, value, size, ref matrix, null, color, false,
-                environmentData);
+            Catalog.DrawFlatOrImageExtrusionBlock(
+                primitivesRenderer,
+                value,
+                size,
+                ref matrix,
+                null,
+                color,
+                false,
+                environmentData
+            );
         }
         else
         {
-            Catalog.DrawFlatOrImageExtrusionBlock(primitivesRenderer, value, size, ref matrix, null, color, false,
-                environmentData);
+            Catalog.DrawFlatOrImageExtrusionBlock(
+                primitivesRenderer,
+                value,
+                size,
+                ref matrix,
+                null,
+                color,
+                false,
+                environmentData
+            );
         }
     }
 
@@ -106,13 +122,29 @@ public class CottonBlock : CrossBlock
         if (GetIsWild(Terrain.ExtractData(value)))
         {
             var color = BlockColorsMap.GrassColorsMap.Lookup(generator.Terrain, x, y, z);
-            generator.GenerateCrossingFaceVertices(this, value, x, y, z, color, GetFaceTextureSlot(0, value),
-                geometry.SubsetAlphaTest);
+            generator.GenerateCrossingFaceVertices(
+                this,
+                value,
+                x,
+                y,
+                z,
+                color,
+                GetFaceTextureSlot(0, value),
+                geometry.SubsetAlphaTest
+            );
         }
         else
         {
-            generator.GenerateCrossingFaceVertices(this, value, x, y, z, Color.White, GetFaceTextureSlot(0, value),
-                geometry.SubsetAlphaTest);
+            generator.GenerateCrossingFaceVertices(
+                this,
+                value,
+                x,
+                y,
+                z,
+                Color.White,
+                GetFaceTextureSlot(0, value),
+                geometry.SubsetAlphaTest
+            );
         }
     }
 

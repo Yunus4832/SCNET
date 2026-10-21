@@ -50,9 +50,16 @@ public class ComponentDamage : Component, IUpdateable
                 NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
             }
 
-            _subsystemParticles.AddParticleSystem(new BlockDebrisParticleSystem(_subsystemTerrain,
-                position + _componentBody.StanceBoxSize.Y / 2f * Vector3.UnitY, _debrisStrength, _debrisScale,
-                Color.White, _debrisTextureSlot));
+            _subsystemParticles.AddParticleSystem(
+                new BlockDebrisParticleSystem(
+                    _subsystemTerrain,
+                    position + _componentBody.StanceBoxSize.Y / 2f * Vector3.UnitY,
+                    _debrisStrength,
+                    _debrisScale,
+                    Color.White,
+                    _debrisTextureSlot
+                )
+            );
             _subsystemAudio.PlayRandomSound(DamageSoundName, 1f, 0f, _componentBody.Position, 4f, true);
             Project.RemoveEntity(Entity, true);
         }

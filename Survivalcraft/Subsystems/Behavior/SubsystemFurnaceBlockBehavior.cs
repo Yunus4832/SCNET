@@ -14,7 +14,8 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private SubsystemParticles _subsystemParticles = null!;
 
-    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:furnace"), ResourceId.Parse("game:lit_furnace")];
+    public override ResourceId[] HandledBlocks =>
+        [ResourceId.Parse("game:furnace"), ResourceId.Parse("game:lit_furnace")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -33,7 +34,8 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
             if (furnace != null)
             {
                 foreach (var client in SubsystemInventories.GetObservers(furnace).Where(client =>
-                             client.IsConnected && client.State == ClientState.Playing))
+                             client.IsConnected && client.State == ClientState.Playing
+                         ))
                 {
                     if (!byClient.TryGetValue(client, out var furnaces))
                     {
@@ -122,7 +124,9 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var list = new List<Point3>();
         foreach (var key in _particleSystemsByCell.Keys)
         {
-            if (key.X >= chunk.Origin.X && key.X < chunk.Origin.X + 16 && key.Z >= chunk.Origin.Y &&
+            if (key.X >= chunk.Origin.X &&
+                key.X < chunk.Origin.X + 16 &&
+                key.Z >= chunk.Origin.Y &&
                 key.Z < chunk.Origin.Y + 16)
             {
                 list.Add(key);
@@ -142,7 +146,8 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
             IProtocolMessage package =
                 new BlockEditPackage(
                     new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z),
-                    BlockEditPackage.EventType.OpenInventoryByPoint);
+                    BlockEditPackage.EventType.OpenInventoryByPoint
+                );
             NetworkSender.SendToServer(package);
             return true;
         }

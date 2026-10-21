@@ -29,11 +29,12 @@ public sealed class TerrainSaveCoordinatorTest
         using var allowWriter = new ManualResetEventSlim();
         var savedValue = 0;
         using var coordinator = new TerrainSaveCoordinator((_, cells, _) =>
-        {
-            writerStarted.Set();
-            Assert.True(allowWriter.Wait(TimeSpan.FromSeconds(5)));
-            savedValue = cells[TerrainChunk.CalculateCellIndex(1, 20, 3)];
-        });
+            {
+                writerStarted.Set();
+                Assert.True(allowWriter.Wait(TimeSpan.FromSeconds(5)));
+                savedValue = cells[TerrainChunk.CalculateCellIndex(1, 20, 3)];
+            }
+        );
         using var terrain = new Terrain();
         using var chunk = CreateDirtyChunk(terrain, 0, 0, 71);
         chunk.SetCellValueFast(1, 20, 3, 2468);
@@ -57,10 +58,11 @@ public sealed class TerrainSaveCoordinatorTest
         using var writerStarted = new ManualResetEventSlim();
         using var allowWriter = new ManualResetEventSlim();
         using var coordinator = new TerrainSaveCoordinator((_, _, _) =>
-        {
-            writerStarted.Set();
-            Assert.True(allowWriter.Wait(TimeSpan.FromSeconds(5)));
-        });
+            {
+                writerStarted.Set();
+                Assert.True(allowWriter.Wait(TimeSpan.FromSeconds(5)));
+            }
+        );
         using var terrain = new Terrain();
         using var source = CreateDirtyChunk(terrain, 2, -3, 9753);
 
@@ -82,11 +84,14 @@ public sealed class TerrainSaveCoordinatorTest
     {
         using var writerStarted = new ManualResetEventSlim();
         using var allowWriter = new ManualResetEventSlim();
-        using var coordinator = new TerrainSaveCoordinator((_, _, _) =>
-        {
-            writerStarted.Set();
-            Assert.True(allowWriter.Wait(TimeSpan.FromSeconds(5)));
-        }, 2);
+        using var coordinator = new TerrainSaveCoordinator(
+            (_, _, _) =>
+            {
+                writerStarted.Set();
+                Assert.True(allowWriter.Wait(TimeSpan.FromSeconds(5)));
+            },
+            2
+        );
         using var terrain = new Terrain();
         using var first = CreateDirtyChunk(terrain, 0, 0, 1);
         using var second = CreateDirtyChunk(terrain, 1, 0, 2);
@@ -109,11 +114,12 @@ public sealed class TerrainSaveCoordinatorTest
         using var allowWriter = new ManualResetEventSlim();
         var writes = new ConcurrentQueue<int>();
         using var coordinator = new TerrainSaveCoordinator((_, cells, _) =>
-        {
-            writerStarted.Set();
-            Assert.True(allowWriter.Wait(TimeSpan.FromSeconds(5)));
-            writes.Enqueue(cells[0]);
-        });
+            {
+                writerStarted.Set();
+                Assert.True(allowWriter.Wait(TimeSpan.FromSeconds(5)));
+                writes.Enqueue(cells[0]);
+            }
+        );
         using var terrain = new Terrain();
         using var first = CreateDirtyChunk(terrain, 4, 5, 100);
         using var latest = CreateDirtyChunk(terrain, 4, 5, 200);
@@ -135,7 +141,8 @@ public sealed class TerrainSaveCoordinatorTest
     public void PermanentWriteFailureRemainsRecoverableAndFailsFlush()
     {
         var coordinator = new TerrainSaveCoordinator((_, _, _) =>
-            throw new IOException("Simulated storage failure."));
+            throw new IOException("Simulated storage failure.")
+        );
         using var terrain = new Terrain();
         using var source = CreateDirtyChunk(terrain, -1, 7, 4321);
 

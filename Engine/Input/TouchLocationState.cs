@@ -2,7 +2,9 @@ namespace Engine.Input;
 
 public enum TouchLocationState
 {
-    Pressed,
-    Moved,
-    Released
+    Pressed = 0,
+
+    Moved = 1,
+
+    Released = 2
 }

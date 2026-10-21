@@ -55,7 +55,8 @@ public class ComponentSwimAroundBehavior : ComponentBehavior, IUpdateable
                 {
                     stateMachine.TransitionTo("Swim");
                 }
-            }, Actions.Empty
+            },
+            Actions.Empty
         );
         stateMachine.AddState(
             "Stuck",
@@ -82,8 +83,16 @@ public class ComponentSwimAroundBehavior : ComponentBehavior, IUpdateable
                     var destination = FindDestination();
                     if (destination.HasValue)
                     {
-                        _componentPathfinding.SetDestination(destination, _random.Float(0.3f, 0.4f), 1f, 0, false, true,
-                            false, null);
+                        _componentPathfinding.SetDestination(
+                            destination,
+                            _random.Float(0.3f, 0.4f),
+                            1f,
+                            0,
+                            false,
+                            true,
+                            false,
+                            null
+                        );
                     }
                     else
                     {
@@ -101,8 +110,9 @@ public class ComponentSwimAroundBehavior : ComponentBehavior, IUpdateable
 
     public Vector3? FindDestination()
     {
-        var vector = 0.5f * (_componentCreature.ComponentBody.BoundingBox.Min +
-                             _componentCreature.ComponentBody.BoundingBox.Max);
+        var vector = 0.5f *
+                     (_componentCreature.ComponentBody.BoundingBox.Min +
+                      _componentCreature.ComponentBody.BoundingBox.Max);
         var num = 2f;
         Vector3? result = null;
         var num2 = _random.Float(10f, 16f);
@@ -112,12 +122,17 @@ public class ComponentSwimAroundBehavior : ComponentBehavior, IUpdateable
             var y = 0.3f * _random.Float(-0.9f, 1f);
             var v = Vector3.Normalize(new Vector3(vector2.X, y, vector2.Y));
             var vector3 = vector + num2 * v;
-            var terrainRaycastResult = _subsystemTerrain.Raycast(vector, vector3, false, false,
-                delegate (int value, float d)
+            var terrainRaycastResult = _subsystemTerrain.Raycast(
+                vector,
+                vector3,
+                false,
+                false,
+                delegate(int value, float d)
                 {
                     var num3 = Terrain.ExtractContents(value);
                     return !(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3] is WaterBlock);
-                });
+                }
+            );
             if (!terrainRaycastResult.HasValue)
             {
                 if (!(num2 > num))

@@ -96,8 +96,14 @@ public static class Display
 
     public static event Action? DeviceReset;
 
-    public static void DrawUser<T>(PrimitiveType primitiveType, Shader shader, VertexDeclaration vertexDeclaration,
-        T[] vertexData, int startVertex, int verticesCount) where T : struct
+    public static void DrawUser<T>(
+        PrimitiveType primitiveType,
+        Shader shader,
+        VertexDeclaration vertexDeclaration,
+        T[] vertexData,
+        int startVertex,
+        int verticesCount
+    ) where T : struct
     {
         VerifyParametersDrawUser(primitiveType, shader, vertexDeclaration, vertexData, startVertex, verticesCount);
         var gCHandle = GCHandle.Alloc(vertexData, GCHandleType.Pinned);
@@ -124,12 +130,29 @@ public static class Display
         }
     }
 
-    public static void DrawUserIndexed<T>(PrimitiveType primitiveType, Shader shader,
-        VertexDeclaration vertexDeclaration, T[] vertexData, int startVertex, int verticesCount, int[] indexData,
-        int startIndex, int indicesCount) where T : struct
+    public static void DrawUserIndexed<T>(
+        PrimitiveType primitiveType,
+        Shader shader,
+        VertexDeclaration vertexDeclaration,
+        T[] vertexData,
+        int startVertex,
+        int verticesCount,
+        int[] indexData,
+        int startIndex,
+        int indicesCount
+    ) where T : struct
     {
-        VerifyParametersDrawUserIndexed(primitiveType, shader, vertexDeclaration, vertexData, startVertex,
-            verticesCount, indexData, startIndex, indicesCount);
+        VerifyParametersDrawUserIndexed(
+            primitiveType,
+            shader,
+            vertexDeclaration,
+            vertexData,
+            startVertex,
+            verticesCount,
+            indexData,
+            startIndex,
+            indicesCount
+        );
         var gCHandle = GCHandle.Alloc(vertexData, GCHandleType.Pinned);
         var gCHandle2 = GCHandle.Alloc(indexData, GCHandleType.Pinned);
         try
@@ -159,14 +182,24 @@ public static class Display
         }
     }
 
-    public static void Draw(PrimitiveType primitiveType, Shader shader, VertexBuffer vertexBuffer, int startVertex,
-        int verticesCount)
+    public static void Draw(
+        PrimitiveType primitiveType,
+        Shader shader,
+        VertexBuffer vertexBuffer,
+        int startVertex,
+        int verticesCount
+    )
     {
         VerifyParametersDraw(primitiveType, shader, vertexBuffer, startVertex, verticesCount);
         GLWrapper.ApplyRenderTarget(RenderTarget);
         GLWrapper.ApplyViewportScissor(Viewport, ScissorRectangle, RasterizerState.ScissorTestEnable);
-        GLWrapper.ApplyShaderAndBuffers(shader, vertexBuffer.VertexDeclaration, IntPtr.Zero, vertexBuffer.buffer,
-            null);
+        GLWrapper.ApplyShaderAndBuffers(
+            shader,
+            vertexBuffer.VertexDeclaration,
+            IntPtr.Zero,
+            vertexBuffer.buffer,
+            null
+        );
         GLWrapper.ApplyRasterizerState(RasterizerState);
         GLWrapper.ApplyDepthStencilState(DepthStencilState);
         GLWrapper.ApplyBlendState(BlendState);
@@ -174,14 +207,25 @@ public static class Display
         GLWrapper.GL.DrawArrays(GLWrapper.TranslatePrimitiveType(primitiveType), startVertex, (uint)verticesCount);
     }
 
-    public static void DrawIndexed(PrimitiveType primitiveType, Shader shader, VertexBuffer vertexBuffer,
-        IndexBuffer indexBuffer, int startIndex, int indicesCount)
+    public static void DrawIndexed(
+        PrimitiveType primitiveType,
+        Shader shader,
+        VertexBuffer vertexBuffer,
+        IndexBuffer indexBuffer,
+        int startIndex,
+        int indicesCount
+    )
     {
         VerifyParametersDrawIndexed(primitiveType, shader, vertexBuffer, indexBuffer, startIndex, indicesCount);
         GLWrapper.ApplyRenderTarget(RenderTarget);
         GLWrapper.ApplyViewportScissor(Viewport, ScissorRectangle, RasterizerState.ScissorTestEnable);
-        GLWrapper.ApplyShaderAndBuffers(shader, vertexBuffer.VertexDeclaration, IntPtr.Zero, vertexBuffer.buffer,
-            indexBuffer.buffer);
+        GLWrapper.ApplyShaderAndBuffers(
+            shader,
+            vertexBuffer.VertexDeclaration,
+            IntPtr.Zero,
+            vertexBuffer.buffer,
+            indexBuffer.buffer
+        );
         GLWrapper.ApplyRasterizerState(RasterizerState);
         GLWrapper.ApplyDepthStencilState(DepthStencilState);
         GLWrapper.ApplyBlendState(BlendState);
@@ -267,7 +311,8 @@ public static class Display
         if (vertexDeclaration.VertexStride / num * num != vertexDeclaration.VertexStride)
         {
             throw new InvalidOperationException(
-                $"Vertex is not an integer multiple of array element, vertex stride is {vertexDeclaration.VertexStride}, array element is {num}.");
+                $"Vertex is not an integer multiple of array element, vertex stride is {vertexDeclaration.VertexStride}, array element is {num}."
+            );
         }
 
         if (startVertex < 0 || verticesCount < 0 || startVertex + verticesCount > vertexData.Length)
@@ -293,7 +338,8 @@ public static class Display
         if (vertexDeclaration.VertexStride / num * num != vertexDeclaration.VertexStride)
         {
             throw new InvalidOperationException(
-                $"Vertex is not an integer multiple of array element, vertex stride is {vertexDeclaration.VertexStride}, array element is {num}.");
+                $"Vertex is not an integer multiple of array element, vertex stride is {vertexDeclaration.VertexStride}, array element is {num}."
+            );
         }
 
         if (startVertex < 0 || verticesCount < 0 || startVertex + verticesCount > vertexData.Length)

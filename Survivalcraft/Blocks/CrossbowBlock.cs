@@ -27,26 +27,69 @@ public class CrossbowBlock : Block
         );
         var boneAbsoluteTransform4 = BlockMesh.GetBoneAbsoluteTransform(
             bowTensedMesh.ParentBone ??
-            throw new InvalidOperationException("Required BowTensedMesh.ParentBone is null"));
+            throw new InvalidOperationException("Required BowTensedMesh.ParentBone is null")
+        );
         var stringTensedMesh = model.FindMesh("StringTensed")!;
         var boneAbsoluteTransform5 = BlockMesh.GetBoneAbsoluteTransform(
             stringTensedMesh.ParentBone ??
             throw new InvalidOperationException("Required StringTensedMesh.ParentBone is null")
         );
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(bodyMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
-        blockMesh.AppendModelMeshPart(bowRelaxedMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
-        blockMesh.AppendModelMeshPart(stringRelaxedMesh.MeshParts[0],
-            boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
+        blockMesh.AppendModelMeshPart(
+            bodyMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        blockMesh.AppendModelMeshPart(
+            bowRelaxedMesh.MeshParts[0],
+            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        blockMesh.AppendModelMeshPart(
+            stringRelaxedMesh.MeshParts[0],
+            boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         var blockMesh2 = new BlockMesh();
-        blockMesh2.AppendModelMeshPart(bodyMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
-        blockMesh2.AppendModelMeshPart(bowTensedMesh.MeshParts[0],
-            boneAbsoluteTransform4 * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
-        blockMesh2.AppendModelMeshPart(stringTensedMesh.MeshParts[0],
-            boneAbsoluteTransform5 * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
+        blockMesh2.AppendModelMeshPart(
+            bodyMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        blockMesh2.AppendModelMeshPart(
+            bowTensedMesh.MeshParts[0],
+            boneAbsoluteTransform4 * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        blockMesh2.AppendModelMeshPart(
+            stringTensedMesh.MeshParts[0],
+            boneAbsoluteTransform5 * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         for (var i = 0; i < 16; i++)
         {
             var factor = i / 15f;
@@ -95,7 +138,8 @@ public class CrossbowBlock : Block
         }
 
         var matrix2 = Matrix.CreateRotationX(-(float)Math.PI / 2f) *
-                      Matrix.CreateTranslation(0f, 0.2f * size, -0.09f * size) * matrix;
+                      Matrix.CreateTranslation(0f, 0.2f * size, -0.09f * size) *
+                      matrix;
         var value2 = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, arrowType.Value));
         Catalog.Blocks[192].DrawBlock(primitivesRenderer, value2, color, size, ref matrix2, environmentData);
     }

@@ -2,8 +2,11 @@ namespace Engine.Network;
 
 public enum NetworkSendResult
 {
-    Accepted,
-    Closed,
-    TooLarge,
-    Backpressure
+    Accepted = 0,
+
+    Closed = 1,
+
+    TooLarge = 2,
+
+    Backpressure = 3
 }

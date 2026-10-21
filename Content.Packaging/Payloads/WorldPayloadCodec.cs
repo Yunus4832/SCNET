@@ -9,8 +9,14 @@ public sealed class WorldPayloadCodec : IContentPayloadCodec
 
     public void Validate(ContentPayloadValidationContext context)
     {
-        ContentPayloadValidation.ValidateEnvelope(context, "scnet.world-v1", "payload/world/Project.xml",
-            "application/xml", ["projectFormat", "regionsDirectory"], allowAdditionalPayload: true);
+        ContentPayloadValidation.ValidateEnvelope(
+            context,
+            "scnet.world-v1",
+            "payload/world/Project.xml",
+            "application/xml",
+            ["projectFormat", "regionsDirectory"],
+            allowAdditionalPayload: true
+        );
         if (context.Manifest.Metadata.GetProperty("projectFormat").GetString() != "scnet-project-xml-v1" ||
             context.Manifest.Metadata.GetProperty("regionsDirectory").GetString() != "payload/world/Regions")
         {
@@ -38,7 +44,8 @@ public sealed class WorldPayloadCodec : IContentPayloadCodec
                 XmlReader.Create(stream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit });
             var document = XDocument.Load(reader, LoadOptions.None);
             var root = document.Root;
-            if (root is null || root.Name != "Project" ||
+            if (root is null ||
+                root.Name != "Project" ||
                 root.Attributes().Count() != 3 ||
                 root.Attribute("Version")?.Value != "SCNET-1" ||
                 root.Attribute("Guid")?.Value != "9e9a67f8-79df-4d05-8cfa-61bd8095661e" ||
@@ -48,10 +55,13 @@ public sealed class WorldPayloadCodec : IContentPayloadCodec
                 root.Elements("BlockRegistry").Count() > 1 ||
                 root.Elements("ExtensionData").Count() > 1 ||
                 root.Elements().Any(element => element.Name.LocalName is not
-                    ("Subsystems" or "Entities" or "BlockRegistry" or "ExtensionData")) ||
+                    ("Subsystems" or "Entities" or "BlockRegistry" or "ExtensionData")
+                ) ||
                 root.DescendantsAndSelf().Any(element => element.Name.Namespace != XNamespace.None ||
                                                          element.Attributes().Any(attribute =>
-                                                             attribute.Name.Namespace != XNamespace.None)))
+                                                             attribute.Name.Namespace != XNamespace.None
+                                                         )
+                ))
             {
                 throw new ContentPackageException("World Project.xml does not match scnet-project-xml-v1.");
             }

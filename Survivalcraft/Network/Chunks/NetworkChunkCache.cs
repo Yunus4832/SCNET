@@ -7,12 +7,16 @@ public sealed class NetworkChunkCache(long capacityBytes = 64L * 1024 * 1024)
     private sealed class Entry
     {
         public required EncodedTerrainChunk Encoded;
+
         public long LastAccess;
     }
 
     private readonly Dictionary<Point2, Entry> _entries = [];
+
     private readonly Lock _lock = new();
+
     private long _accessCounter;
+
     private long _size;
 
     public EncodedTerrainChunk GetOrEncode(AuthorityChunkSnapshot snapshot)

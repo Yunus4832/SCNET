@@ -12,7 +12,8 @@ public sealed class TerrainChunkProtocolTest
     {
         var expected = new ChunkContentRequest(
             new ChunkAllocationId(new Point2(3, 4), 17),
-            23);
+            23
+        );
         var clone = RoundTrip(new SubsystemTerrainPackage([expected]));
 
         Assert.Equal(expected, Assert.Single(clone.ChunkRequests));
@@ -28,7 +29,8 @@ public sealed class TerrainChunkProtocolTest
         var allocation = new ChunkAllocationId(chunk.Coords, 99);
         var fragment = EncodedTerrainChunkFragmenter.Split(
             encoded,
-            allocation).First();
+            allocation
+        ).First();
         var clone = RoundTrip(new SubsystemTerrainPackage(fragment));
 
         Assert.Equal(fragment.Allocation, clone.ChunkFragment.Allocation);
@@ -46,7 +48,8 @@ public sealed class TerrainChunkProtocolTest
             new ChunkAllocationId(new Point2(11, 12), 13),
             14,
             6,
-            [1, 4, 5]);
+            [1, 4, 5]
+        );
 
         var clone = RoundTrip(SubsystemTerrainPackage.CreateFragmentRequest([expected]));
         var actual = Assert.Single(clone.FragmentRequests);

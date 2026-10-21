@@ -6,7 +6,8 @@ internal static class Program
     {
         if (args.Length == 0 || args.Contains("--help"))
         {
-            Console.WriteLine("""
+            Console.WriteLine(
+                """
                 ServerLoadTool — SCNET protocol load testing only. Use an isolated Creative test server.
                 --output DIR (required, empty) --host HOST --port PORT --clients 1..200
                 --workload idle|shared|explore --ramp SECONDS_PER_ARRIVAL (0..60)
@@ -15,12 +16,17 @@ internal static class Program
                 --server-pid PID (optional, local resource sampling)
                 --server-http-port PORT (optional, local diagnostics; SCNET_LOAD_TOKEN environment variable required)
                 No rendering, Agent control, client physics or compatibility adapters. No privileged commands.
-                """);
+                """
+            );
             return args.Contains("--help") ? 0 : 2;
         }
 
         using var cancellation = new CancellationTokenSource();
-        Console.CancelKeyPress += (_, e) => { e.Cancel = true; cancellation.Cancel(); };
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            cancellation.Cancel();
+        };
         try
         {
             return new LoadRun(LoadOptions.Parse(args)).Execute(cancellation.Token);

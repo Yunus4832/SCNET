@@ -65,8 +65,7 @@ public sealed class NetworkChunkContentTransport : IChunkContentTransport
             NetworkSender.SendToServer(new SubsystemTerrainPackage(fullRequests));
         }
 
-        foreach (var batch in fragmentRequests.Chunk(
-                     SubsystemTerrainPackage.MaximumFragmentRequestsPerPackage))
+        foreach (var batch in fragmentRequests.Chunk(SubsystemTerrainPackage.MaximumFragmentRequestsPerPackage))
         {
             Interlocked.Add(ref _missingFragmentRequestsSent, batch.Length);
             NetworkSender.SendToServer(SubsystemTerrainPackage.CreateFragmentRequest(batch));
@@ -82,10 +81,13 @@ public sealed class NetworkChunkContentTransport : IChunkContentTransport
         }
 
         Interlocked.Increment(ref _transfersCompleted);
-        _received.Enqueue(NetworkChunkCodec.DecodeSnapshot(
-            fragment.Allocation,
-            encoded.ContentVersion,
-            encoded.Payload));
+        _received.Enqueue(
+            NetworkChunkCodec.DecodeSnapshot(
+                fragment.Allocation,
+                encoded.ContentVersion,
+                encoded.Payload
+            )
+        );
     }
 
     public void Receive(TerrainCellDelta delta) => _deltas.Enqueue(delta);

@@ -15,6 +15,7 @@ public static partial class ProtocolMessageCodec
             writer.Write(message.Position);
             return;
         }
+
         if (message.Type == ProjectilePackage.EventType.Remove)
         {
             return;
@@ -38,15 +39,38 @@ public static partial class ProtocolMessageCodec
 
     private static ProjectilePackage ReadProjectilePackage(ProtocolReader reader)
     {
-        var type = reader.ReadEnum<ProjectilePackage.EventType>(); var id = reader.ReadInt32();
+        var type = reader.ReadEnum<ProjectilePackage.EventType>();
+        var id = reader.ReadInt32();
         if (type == ProjectilePackage.EventType.Remove) { return new ProjectilePackage(id); }
+
         if (type == ProjectilePackage.EventType.Effect)
-        { return new ProjectilePackage { Type = type, NetworkId = id, Effect = reader.ReadEnum<ProjectilePackage.EffectType>(), Value = reader.ReadInt32(), Position = reader.ReadVector3() }; }
-        if (type is not (ProjectilePackage.EventType.Add or ProjectilePackage.EventType.Update)) { throw new InvalidDataException("Unknown projectile mode."); }
-        var tick = reader.ReadUInt32(); var position = reader.ReadVector3(); var rotation = reader.ReadVector3();
-        var velocity = reader.ReadVector3(); var angular = reader.ReadVector3();
+        {
+            return new ProjectilePackage
+            {
+                Type = type, NetworkId = id, Effect = reader.ReadEnum<ProjectilePackage.EffectType>(),
+                Value = reader.ReadInt32(), Position = reader.ReadVector3()
+            };
+        }
+
+        if (type is not (ProjectilePackage.EventType.Add or ProjectilePackage.EventType.Update))
+        {
+            throw new InvalidDataException("Unknown projectile mode.");
+        }
+
+        var tick = reader.ReadUInt32();
+        var position = reader.ReadVector3();
+        var rotation = reader.ReadVector3();
+        var velocity = reader.ReadVector3();
+        var angular = reader.ReadVector3();
         if (type == ProjectilePackage.EventType.Update)
-        { return new ProjectilePackage { Type = type, NetworkId = id, StateTick = tick, Position = position, Rotation = rotation, Velocity = velocity, AngularVelocity = angular }; }
+        {
+            return new ProjectilePackage
+            {
+                Type = type, NetworkId = id, StateTick = tick, Position = position, Rotation = rotation,
+                Velocity = velocity, AngularVelocity = angular
+            };
+        }
+
         return new ProjectilePackage
         {
             Type = type,

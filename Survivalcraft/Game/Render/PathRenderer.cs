@@ -105,9 +105,11 @@ internal static class PathRenderer
                     var num = (i - 1 + positions.Count) % positions.Count;
                     var num2 = i;
                     var num3 = (i + 1) % positions.Count;
-                    normals.Add(array2[num] || array2[num2]
-                        ? Normal2(array[num2] - array[num], array[num3] - array[num2])
-                        : default);
+                    normals.Add(
+                        array2[num] || array2[num2]
+                            ? Normal2(array[num2] - array[num], array[num3] - array[num2])
+                            : default
+                    );
                 }
 
                 return;
@@ -116,16 +118,20 @@ internal static class PathRenderer
             normals.Add(array2[0] ? Normal1(array[1] - array[0]) : default);
             for (var j = 1; j < positions.Count - 1; j++)
             {
-                normals.Add(array2[j - 1] || array2[j]
-                    ? Normal2(array[j] - array[j - 1], array[j + 1] - array[j])
-                    : default);
+                normals.Add(
+                    array2[j - 1] || array2[j]
+                        ? Normal2(array[j] - array[j - 1], array[j + 1] - array[j])
+                        : default
+                );
             }
 
             if (positions.Count >= 2)
             {
-                normals.Add(array2[positions.Count - 2]
-                    ? Normal1(array[positions.Count - 1] - array[positions.Count - 2])
-                    : default);
+                normals.Add(
+                    array2[positions.Count - 2]
+                        ? Normal1(array[positions.Count - 1] - array[positions.Count - 2])
+                        : default
+                );
             }
         }
         else if (loop)
@@ -419,13 +425,31 @@ internal static class PathRenderer
                 var vector6 = vector2 * (0f - point2.OuterRadiusL);
                 if (flatShading)
                 {
-                    batch.QueueQuad(position + vector4, position + vector3, position2 + vector5, position2 + vector6,
-                        0f, point.OuterColorR, point.InnerColorR, point.InnerColorR, point.OuterColorR);
+                    batch.QueueQuad(
+                        position + vector4,
+                        position + vector3,
+                        position2 + vector5,
+                        position2 + vector6,
+                        0f,
+                        point.OuterColorR,
+                        point.InnerColorR,
+                        point.InnerColorR,
+                        point.OuterColorR
+                    );
                 }
                 else
                 {
-                    batch.QueueQuad(position + vector4, position + vector3, position2 + vector5, position2 + vector6,
-                        0f, point.OuterColorR, point.InnerColorR, point2.InnerColorR, point2.OuterColorR);
+                    batch.QueueQuad(
+                        position + vector4,
+                        position + vector3,
+                        position2 + vector5,
+                        position2 + vector6,
+                        0f,
+                        point.OuterColorR,
+                        point.InnerColorR,
+                        point2.InnerColorR,
+                        point2.OuterColorR
+                    );
                 }
             }
 
@@ -440,13 +464,31 @@ internal static class PathRenderer
             var vector10 = vector2 * point2.OuterRadiusR;
             if (flatShading)
             {
-                batch.QueueQuad(position + vector8, position + vector7, position2 + vector9, position2 + vector10,
-                    0f, point.OuterColorR, point.InnerColorR, point.InnerColorR, point.OuterColorR);
+                batch.QueueQuad(
+                    position + vector8,
+                    position + vector7,
+                    position2 + vector9,
+                    position2 + vector10,
+                    0f,
+                    point.OuterColorR,
+                    point.InnerColorR,
+                    point.InnerColorR,
+                    point.OuterColorR
+                );
             }
             else
             {
-                batch.QueueQuad(position + vector8, position + vector7, position2 + vector9, position2 + vector10,
-                    0f, point.OuterColorR, point.InnerColorR, point2.InnerColorR, point2.OuterColorR);
+                batch.QueueQuad(
+                    position + vector8,
+                    position + vector7,
+                    position2 + vector9,
+                    position2 + vector10,
+                    0f,
+                    point.OuterColorR,
+                    point.InnerColorR,
+                    point2.InnerColorR,
+                    point2.OuterColorR
+                );
             }
         }
     }
@@ -508,15 +550,39 @@ internal static class PathRenderer
                 var vector13 = new Vector2(Vector2.Dot(vector9, v), -0.5f);
                 if (flatShading)
                 {
-                    batch.QueueQuad(position + vector7, position + vector6, position2 + vector8, position2 + vector9,
-                        0f, vector4 + vector11, vector4 + vector10, vector5 + vector12, vector5 + vector13,
-                        point.OuterColorR, point.InnerColorR, point.InnerColorR, point.OuterColorR);
+                    batch.QueueQuad(
+                        position + vector7,
+                        position + vector6,
+                        position2 + vector8,
+                        position2 + vector9,
+                        0f,
+                        vector4 + vector11,
+                        vector4 + vector10,
+                        vector5 + vector12,
+                        vector5 + vector13,
+                        point.OuterColorR,
+                        point.InnerColorR,
+                        point.InnerColorR,
+                        point.OuterColorR
+                    );
                 }
                 else
                 {
-                    batch.QueueQuad(position + vector7, position + vector6, position2 + vector8, position2 + vector9,
-                        0f, vector4 + vector11, vector4 + vector10, vector5 + vector12, vector5 + vector13,
-                        point.OuterColorR, point.InnerColorR, point2.InnerColorR, point2.OuterColorR);
+                    batch.QueueQuad(
+                        position + vector7,
+                        position + vector6,
+                        position2 + vector8,
+                        position2 + vector9,
+                        0f,
+                        vector4 + vector11,
+                        vector4 + vector10,
+                        vector5 + vector12,
+                        vector5 + vector13,
+                        point.OuterColorR,
+                        point.InnerColorR,
+                        point2.InnerColorR,
+                        point2.OuterColorR
+                    );
                 }
             }
 
@@ -535,16 +601,39 @@ internal static class PathRenderer
             var vector21 = new Vector2(Vector2.Dot(vector17, v), 0.5f);
             if (flatShading)
             {
-                batch.QueueQuad(position + vector15, position + vector14, position2 + vector16,
-                    position2 + vector17, 0f, vector4 + vector19, vector4 + vector18, vector5 + vector20,
-                    vector5 + vector21, point.OuterColorR, point.InnerColorR, point.InnerColorR, point.OuterColorR);
+                batch.QueueQuad(
+                    position + vector15,
+                    position + vector14,
+                    position2 + vector16,
+                    position2 + vector17,
+                    0f,
+                    vector4 + vector19,
+                    vector4 + vector18,
+                    vector5 + vector20,
+                    vector5 + vector21,
+                    point.OuterColorR,
+                    point.InnerColorR,
+                    point.InnerColorR,
+                    point.OuterColorR
+                );
             }
             else
             {
-                batch.QueueQuad(position + vector15, position + vector14, position2 + vector16,
-                    position2 + vector17, 0f, vector4 + vector19, vector4 + vector18, vector5 + vector20,
-                    vector5 + vector21, point.OuterColorR, point.InnerColorR, point2.InnerColorR,
-                    point2.OuterColorR);
+                batch.QueueQuad(
+                    position + vector15,
+                    position + vector14,
+                    position2 + vector16,
+                    position2 + vector17,
+                    0f,
+                    vector4 + vector19,
+                    vector4 + vector18,
+                    vector5 + vector20,
+                    vector5 + vector21,
+                    point.OuterColorR,
+                    point.InnerColorR,
+                    point2.InnerColorR,
+                    point2.OuterColorR
+                );
             }
         }
     }
@@ -585,25 +674,13 @@ internal static class PathRenderer
 
         public float MiterLimit;
 
-        public float InnerRadius
-        {
-            set => InnerRadiusL = InnerRadiusR = value;
-        }
+        public float InnerRadius { set => InnerRadiusL = InnerRadiusR = value; }
 
-        public float OuterRadius
-        {
-            set => OuterRadiusL = OuterRadiusR = value;
-        }
+        public float OuterRadius { set => OuterRadiusL = OuterRadiusR = value; }
 
-        public Color InnerColor
-        {
-            set => InnerColorL = InnerColorR = value;
-        }
+        public Color InnerColor { set => InnerColorL = InnerColorR = value; }
 
-        public Color OuterColor
-        {
-            set => OuterColorL = OuterColorR = value;
-        }
+        public Color OuterColor { set => OuterColorL = OuterColorR = value; }
 
         public Color Color
         {

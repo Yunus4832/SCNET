@@ -24,9 +24,11 @@ public class SeagrassBlock : WaterPlantBlock
             size,
             ref matrix,
             null,
-            color * BlockColorsMap.SeagrassColorsMap.Lookup(
+            color *
+            BlockColorsMap.SeagrassColorsMap.Lookup(
                 environmentData.Temperature,
-                environmentData.Humidity),
+                environmentData.Humidity
+            ),
             false,
             environmentData
         );
@@ -42,8 +44,16 @@ public class SeagrassBlock : WaterPlantBlock
     )
     {
         var color = BlockColorsMap.SeagrassColorsMap.Lookup(generator.Terrain, x, y, z);
-        generator.GenerateCrossingFaceVertices(this, value, x, y, z, color, GetFaceTextureSlot(-1, value),
-            geometry.SubsetAlphaTest);
+        generator.GenerateCrossingFaceVertices(
+            this,
+            value,
+            x,
+            y,
+            z,
+            color,
+            GetFaceTextureSlot(-1, value),
+            geometry.SubsetAlphaTest
+        );
         base.GenerateTerrainVertices(generator, geometry, value, x, y, z);
     }
 
@@ -54,8 +64,18 @@ public class SeagrassBlock : WaterPlantBlock
         float strength
     )
     {
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, 0.75f * strength, DestructionDebrisScale,
-            BlockColorsMap.SeagrassColorsMap.Lookup(subsystemTerrain.Terrain, Terrain.ToCell(position.X),
-                Terrain.ToCell(position.Y), Terrain.ToCell(position.Z)), 104);
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            0.75f * strength,
+            DestructionDebrisScale,
+            BlockColorsMap.SeagrassColorsMap.Lookup(
+                subsystemTerrain.Terrain,
+                Terrain.ToCell(position.X),
+                Terrain.ToCell(position.Y),
+                Terrain.ToCell(position.Z)
+            ),
+            104
+        );
     }
 }

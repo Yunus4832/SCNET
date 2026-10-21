@@ -18,7 +18,8 @@ public class LedElectricElement(
         _glowPoint = _subsystemGlow.AddGlowPoint();
         var cellFace = CellFaces[0];
         var data = Terrain.ExtractData(
-            SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z));
+            SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z)
+        );
         var mountingFace = LedBlock.GetMountingFace(data);
         _color = LedBlock.LedColors[LedBlock.GetColor(data)];
         var v = new Vector3(cellFace.X + 0.5f, cellFace.Y + 0.5f, cellFace.Z + 0.5f);

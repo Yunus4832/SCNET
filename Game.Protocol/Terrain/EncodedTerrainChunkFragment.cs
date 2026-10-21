@@ -6,4 +6,5 @@ public readonly record struct EncodedTerrainChunkFragment(
     int TotalLength,
     ushort FragmentIndex,
     ushort FragmentCount,
-    byte[] Payload);
+    byte[] Payload
+);

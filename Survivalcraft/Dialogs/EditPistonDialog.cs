@@ -55,7 +55,9 @@ public class EditPistonDialog : Dialog
         _maxExtension = PistonBlock.GetMaxExtension(data);
         _pullCount = PistonBlock.GetPullCount(data);
         _speed = PistonBlock.GetSpeed(data);
-        _title.Text = "Edit " + CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[237].GetDisplayName(null, Terrain.MakeBlockValue(237, 0, data));
+        _title.Text = "Edit " +
+                      CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[237]
+                          .GetDisplayName(null, Terrain.MakeBlockValue(237, 0, data));
         _slider1.Granularity = 1f;
         _slider1.MinValue = 1f;
         _slider1.MaxValue = 8f;
@@ -89,7 +91,9 @@ public class EditPistonDialog : Dialog
         if (_okButton.IsClicked)
         {
             var value = PistonBlock.SetMaxExtension(
-                PistonBlock.SetPullCount(PistonBlock.SetSpeed(_data, _speed), _pullCount), _maxExtension);
+                PistonBlock.SetPullCount(PistonBlock.SetSpeed(_data, _speed), _pullCount),
+                _maxExtension
+            );
             Dismiss(value);
         }
 

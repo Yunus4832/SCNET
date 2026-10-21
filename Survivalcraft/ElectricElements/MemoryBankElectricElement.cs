@@ -51,19 +51,22 @@ public class MemoryBankElectricElement : RotateableElectricElement
                     {
                         num2 = (int)MathUtils.Round(
                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) *
-                            15f);
+                            15f
+                        );
                     }
                     else if (connectorDirection == ElectricConnectorDirection.Left)
                     {
                         num3 = (int)MathUtils.Round(
                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) *
-                            15f);
+                            15f
+                        );
                     }
                     else if (connectorDirection == ElectricConnectorDirection.Bottom)
                     {
                         var num4 = (int)MathUtils.Round(
                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) *
-                            15f);
+                            15f
+                        );
                         flag = num4 >= 8;
                         flag3 = num4 is > 0 and < 8;
                         flag2 = true;

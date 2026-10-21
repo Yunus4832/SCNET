@@ -12,10 +12,15 @@ namespace Game.Commands;
 public sealed class HttpCommandHost : IDisposable
 {
     private const int _maxBodyBytes = 64 * 1024;
+
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
+
     private readonly HttpListener _listener = new();
+
     private readonly string _token;
+
     private readonly CommandPrincipal _principal;
+
     private readonly CancellationTokenSource _stopping = new();
 
     public int Port { get; }
@@ -38,7 +43,8 @@ public sealed class HttpCommandHost : IDisposable
         var host = new HttpCommandHost(
             port,
             ValidateAccessToken(accessToken),
-            principal);
+            principal
+        );
         host._listener.Start();
         _ = host.AcceptLoopAsync(host._stopping.Token);
         Log.Information($"HTTP command host listening on 127.0.0.1:{port}.");
@@ -87,27 +93,44 @@ public sealed class HttpCommandHost : IDisposable
         {
             if (!IsAuthenticated(context.Request.Headers["Authorization"]))
             {
-                await WriteResponseAsync(context.Response, 401, new
-                {
-                    success = false,
-                    code = "http.unauthorized",
-                    message = "A valid Bearer token is required."
-                }, cancellationToken);
+                await WriteResponseAsync(
+                    context.Response,
+                    401,
+                    new
+                    {
+                        success = false,
+                        code = "http.unauthorized",
+                        message = "A valid Bearer token is required."
+                    },
+                    cancellationToken
+                );
                 return;
             }
 
-            var playerEndpoint = string.Equals(context.Request.Url?.AbsolutePath,
-                HttpCommandProtocol.PlayerEndpoint, StringComparison.Ordinal);
-            if ((!playerEndpoint && !string.Equals(context.Request.Url?.AbsolutePath, HttpCommandProtocol.Endpoint,
-                    StringComparison.Ordinal)) ||
+            var playerEndpoint = string.Equals(
+                context.Request.Url?.AbsolutePath,
+                HttpCommandProtocol.PlayerEndpoint,
+                StringComparison.Ordinal
+            );
+            if ((!playerEndpoint &&
+                 !string.Equals(
+                     context.Request.Url?.AbsolutePath,
+                     HttpCommandProtocol.Endpoint,
+                     StringComparison.Ordinal
+                 )) ||
                 (playerEndpoint && RunMode.Value is not RunModeType.Gui))
             {
-                await WriteResponseAsync(context.Response, 404, new
-                {
-                    success = false,
-                    code = "http.not_found",
-                    message = "Endpoint not found."
-                }, cancellationToken);
+                await WriteResponseAsync(
+                    context.Response,
+                    404,
+                    new
+                    {
+                        success = false,
+                        code = "http.not_found",
+                        message = "Endpoint not found."
+                    },
+                    cancellationToken
+                );
                 return;
             }
 
@@ -118,9 +141,14 @@ public sealed class HttpCommandHost : IDisposable
                 if (playerEndpoint)
                 {
                     var discovery = await HttpPlayerCommandAdapter.SubmitAsync(null, deadline.Token);
-                    await WriteResponseAsync(context.Response, 200, discovery.Success
-                        ? discovery.Data!
-                        : new { success = false, code = discovery.Code, message = CommandText.Resolve(discovery) }, CancellationToken.None);
+                    await WriteResponseAsync(
+                        context.Response,
+                        200,
+                        discovery.Success
+                            ? discovery.Data!
+                            : new { success = false, code = discovery.Code, message = CommandText.Resolve(discovery) },
+                        CancellationToken.None
+                    );
                     return;
                 }
 
@@ -132,12 +160,17 @@ public sealed class HttpCommandHost : IDisposable
 
             if (!string.Equals(context.Request.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
             {
-                await WriteResponseAsync(context.Response, 404, new
-                {
-                    success = false,
-                    code = "http.not_found",
-                    message = "Endpoint not found."
-                }, cancellationToken);
+                await WriteResponseAsync(
+                    context.Response,
+                    404,
+                    new
+                    {
+                        success = false,
+                        code = "http.not_found",
+                        message = "Endpoint not found."
+                    },
+                    cancellationToken
+                );
                 return;
             }
 
@@ -147,49 +180,69 @@ public sealed class HttpCommandHost : IDisposable
                 !HttpCommandProtocol.TryParseEnvelope(envelope, out var command, out error) ||
                 command is null)
             {
-                await WriteResponseAsync(context.Response, 400, new
-                {
-                    success = false,
-                    code = "http.invalid_request",
-                    message = error
-                }, cancellationToken);
+                await WriteResponseAsync(
+                    context.Response,
+                    400,
+                    new
+                    {
+                        success = false,
+                        code = "http.invalid_request",
+                        message = error
+                    },
+                    cancellationToken
+                );
                 return;
             }
 
-            var correlationId = context.Request.Headers["X-Correlation-Id"]
-                                ?? Guid.NewGuid().ToString("N");
+            var correlationId = context.Request.Headers["X-Correlation-Id"] ?? Guid.NewGuid().ToString("N");
             var result = playerEndpoint
                 ? await HttpPlayerCommandAdapter.SubmitAsync(command, deadline.Token)
                 : await HttpCommandExecutionQueue.SubmitAsync(command, _principal, correlationId)
                     .WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
-            await WriteResponseAsync(context.Response, 200, new
-            {
-                correlationId,
-                success = result.Success,
-                code = result.Code,
-                message = CommandText.Resolve(result),
-                state = result.State.ToString(),
-                data = result.Data
-            }, CancellationToken.None);
+            await WriteResponseAsync(
+                context.Response,
+                200,
+                new
+                {
+                    correlationId,
+                    success = result.Success,
+                    code = result.Code,
+                    message = CommandText.Resolve(result),
+                    state = result.State.ToString(),
+                    data = result.Data
+                },
+                CancellationToken.None
+            );
         }
         catch (Exception exception) when (exception is TimeoutException ||
-                                          exception is OperationCanceledException && !cancellationToken.IsCancellationRequested)
+                                          exception is OperationCanceledException &&
+                                          !cancellationToken.IsCancellationRequested)
         {
-            await WriteResponseAsync(context.Response, 504, new
-            {
-                success = false,
-                code = "http.timeout",
-                message = "Command execution timed out."
-            }, CancellationToken.None);
+            await WriteResponseAsync(
+                context.Response,
+                504,
+                new
+                {
+                    success = false,
+                    code = "http.timeout",
+                    message = "Command execution timed out."
+                },
+                CancellationToken.None
+            );
         }
         catch (InvalidDataException exception)
         {
-            await WriteResponseAsync(context.Response, 400, new
-            {
-                success = false,
-                code = "http.invalid_request",
-                message = exception.Message
-            }, CancellationToken.None);
+            await WriteResponseAsync(
+                context.Response,
+                400,
+                new
+                {
+                    success = false,
+                    code = "http.invalid_request",
+                    message = exception.Message
+                },
+                CancellationToken.None
+            );
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
@@ -214,7 +267,8 @@ public sealed class HttpCommandHost : IDisposable
 
     private static async Task<JsonObject?> ReadEnvelopeAsync(
         HttpListenerRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (request.ContentLength64 > _maxBodyBytes)
         {
@@ -253,7 +307,8 @@ public sealed class HttpCommandHost : IDisposable
         HttpListenerResponse response,
         int statusCode,
         object body,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var payload = JsonSerializer.SerializeToUtf8Bytes(body, _jsonOptions);
         response.StatusCode = statusCode;
@@ -269,8 +324,7 @@ public sealed class HttpCommandHost : IDisposable
         accessToken = accessToken?.Trim() ?? string.Empty;
         if (accessToken.Length < 32)
         {
-            throw new InvalidOperationException(
-                "HTTP command access token must contain at least 32 characters.");
+            throw new InvalidOperationException("HTTP command access token must contain at least 32 characters.");
         }
 
         return accessToken;
@@ -301,7 +355,8 @@ public static class HttpCommandHostManager
         {
             Log.Error(
                 $"HTTP command host is disabled because configured port {port} is invalid. " +
-                "Set HttpCommandPort in Settings.xml or provide --http-command-port with a value from 1 to 65535.");
+                "Set HttpCommandPort in Settings.xml or provide --http-command-port with a value from 1 to 65535."
+            );
             return;
         }
 
@@ -313,7 +368,8 @@ public static class HttpCommandHostManager
         {
             Log.Error(
                 $"HTTP command host could not listen on 127.0.0.1:{port}; " +
-                $"the game will continue without HTTP command access. {exception.Message}");
+                $"the game will continue without HTTP command access. {exception.Message}"
+            );
         }
     }
 

@@ -17,7 +17,8 @@ namespace ContentServer.Endpoints.Admin.Administrators;
 [AllowAnonymous]
 public sealed class AdminApproveAdministratorEndpoint(
     IMediator mediator,
-    ApiKeyAuthenticationContext authenticationContext) : ContentEndpoint
+    ApiKeyAuthenticationContext authenticationContext
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -30,13 +31,23 @@ public sealed class AdminApproveAdministratorEndpoint(
     private Task<ResponseData> ApproveAdministrator(string administratorId, CancellationToken ct) =>
         ReviewAdministrator(administratorId, AdministratorStatus.Active, null, ct);
 
-    private async Task<ResponseData> ReviewAdministrator(string id, AdministratorStatus status, string? message,
-        CancellationToken ct)
+    private async Task<ResponseData> ReviewAdministrator(
+        string id,
+        AdministratorStatus status,
+        string? message,
+        CancellationToken ct
+    )
     {
         var result =
             await mediator.Send(
-                new ReviewAdministratorCommand(new AdministratorId(ParseId(id)),
-                    authenticationContext.RequireAdministratorId(), status, message), ct);
+                new ReviewAdministratorCommand(
+                    new AdministratorId(ParseId(id)),
+                    authenticationContext.RequireAdministratorId(),
+                    status,
+                    message
+                ),
+                ct
+            );
         if (result == ReviewAdministratorResult.NotFound)
         {
             throw new KnownException("administrator_not_found", 404);

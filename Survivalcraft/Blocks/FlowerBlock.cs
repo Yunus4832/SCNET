@@ -19,11 +19,13 @@ public abstract class FlowerBlock : CrossBlock
         var data = Terrain.ExtractData(oldValue);
         if (!GetIsSmall(data))
         {
-            dropValues.Add(new BlockDropValue
-            {
-                Value = Terrain.MakeBlockValue(Terrain.ExtractContents(oldValue), 0, data),
-                Count = 1
-            });
+            dropValues.Add(
+                new BlockDropValue
+                {
+                    Value = Terrain.MakeBlockValue(Terrain.ExtractContents(oldValue), 0, data),
+                    Count = 1
+                }
+            );
         }
 
         showDebris = true;

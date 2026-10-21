@@ -22,8 +22,11 @@ public sealed class SkinPackageDirectionTest
     [InlineData(ComponentClothingPackage.DataType.WhoHasReply, true, false)]
     [InlineData(ComponentClothingPackage.DataType.ReplySkin, false, true)]
     [InlineData(ComponentClothingPackage.DataType.WhoHas, false, true)]
-    public void AssetRequestsAndRepliesHaveExplicitDirections(ComponentClothingPackage.DataType type,
-        bool server, bool client)
+    public void AssetRequestsAndRepliesHaveExplicitDirections(
+        ComponentClothingPackage.DataType type,
+        bool server,
+        bool client
+    )
     {
         Assert.Equal(server, ComponentClothingPackageHandler.AcceptsDirection(type, true));
         Assert.Equal(client, ComponentClothingPackageHandler.AcceptsDirection(type, false));

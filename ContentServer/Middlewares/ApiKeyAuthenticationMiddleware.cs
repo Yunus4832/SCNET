@@ -58,7 +58,8 @@ public sealed class ApiKeyAuthenticationMiddleware(
 
     private async Task<PublisherId?> AuthenticatePublisherAsync(
         HttpRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var hash = GetKeyHash(request);
         if (hash is null)
@@ -67,7 +68,9 @@ public sealed class ApiKeyAuthenticationMiddleware(
         }
 
         var key = await db.PublisherKeys.FirstOrDefaultAsync(
-            item => item.KeyHash == hash && item.RevokedAt == null, cancellationToken);
+            item => item.KeyHash == hash && item.RevokedAt == null,
+            cancellationToken
+        );
         if (key is null)
         {
             return null;
@@ -96,7 +99,9 @@ public sealed class ApiKeyAuthenticationMiddleware(
         }
 
         var key = await db.AdministratorKeys.FirstOrDefaultAsync(
-            item => item.KeyHash == hash && item.RevokedAt == null, cancellationToken);
+            item => item.KeyHash == hash && item.RevokedAt == null,
+            cancellationToken
+        );
         if (key is null)
         {
             return null;
@@ -127,5 +132,6 @@ public sealed class ApiKeyAuthenticationMiddleware(
 
     private readonly record struct AuthenticatedAdministrator(
         AdministratorId Id,
-        AdministratorStatus Status);
+        AdministratorStatus Status
+    );
 }

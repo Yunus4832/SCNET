@@ -106,8 +106,15 @@ public sealed class FlatBatch2D : BaseFlatBatch
         LineIndices.Add((ushort)count);
     }
 
-    public void QueueEllipse(Vector2 center, Vector2 radius, float depth, Color color, int sides = 32,
-        float startAngle = 0f, float endAngle = (float)Math.PI * 2f)
+    public void QueueEllipse(
+        Vector2 center,
+        Vector2 radius,
+        float depth,
+        Color color,
+        int sides = 32,
+        float startAngle = 0f,
+        float endAngle = (float)Math.PI * 2f
+    )
     {
         var p = Vector2.Zero;
         for (var i = 0; i <= sides; i++)
@@ -123,8 +130,15 @@ public sealed class FlatBatch2D : BaseFlatBatch
         }
     }
 
-    public void QueueDisc(Vector2 center, Vector2 radius, float depth, Color color, int sides = 32,
-        float startAngle = 0f, float endAngle = (float)Math.PI * 2f)
+    public void QueueDisc(
+        Vector2 center,
+        Vector2 radius,
+        float depth,
+        Color color,
+        int sides = 32,
+        float startAngle = 0f,
+        float endAngle = (float)Math.PI * 2f
+    )
     {
         var p = Vector2.Zero;
         for (var i = 0; i <= sides; i++)
@@ -140,8 +154,17 @@ public sealed class FlatBatch2D : BaseFlatBatch
         }
     }
 
-    public void QueueDisc(Vector2 center, Vector2 outerRadius, Vector2 innerRadius, float depth, Color outerColor,
-        Color innerColor, int sides = 32, float startAngle = 0f, float endAngle = (float)Math.PI * 2f)
+    public void QueueDisc(
+        Vector2 center,
+        Vector2 outerRadius,
+        Vector2 innerRadius,
+        float depth,
+        Color outerColor,
+        Color innerColor,
+        int sides = 32,
+        float startAngle = 0f,
+        float endAngle = (float)Math.PI * 2f
+    )
     {
         var p = Vector2.Zero;
         var p2 = Vector2.Zero;
@@ -217,8 +240,17 @@ public sealed class FlatBatch2D : BaseFlatBatch
         TriangleIndices.Array[count2 + 5] = (ushort)count;
     }
 
-    public void QueueQuad(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float depth, Color color1, Color color2,
-        Color color3, Color color4)
+    public void QueueQuad(
+        Vector2 p1,
+        Vector2 p2,
+        Vector2 p3,
+        Vector2 p4,
+        float depth,
+        Color color1,
+        Color color2,
+        Color color3,
+        Color color4
+    )
     {
         var count = TriangleVertices.Count;
         TriangleVertices.Count += 4;

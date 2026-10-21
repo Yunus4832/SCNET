@@ -17,7 +17,8 @@ public class CampfireBlock : Block
         var ashesMesh = model.FindMesh("Ashes")!;
         var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
             woodMesh.ParentBone ??
-            throw new InvalidOperationException("Required WoodMesh.ParentBone is null"));
+            throw new InvalidOperationException("Required WoodMesh.ParentBone is null")
+        );
         var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
             ashesMesh.ParentBone ??
             throw new InvalidOperationException("Required AshesMesh.ParentBone is null")
@@ -27,20 +28,44 @@ public class CampfireBlock : Block
             MeshesByData[i] = new BlockMesh();
             if (i == 0)
             {
-                MeshesByData[i].AppendModelMeshPart(ashesMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f), false,
-                    false, false, false, Color.White);
+                MeshesByData[i].AppendModelMeshPart(
+                    ashesMesh.MeshParts[0],
+                    boneAbsoluteTransform2 * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
             }
             else
             {
                 var scale = MathUtils.Lerp(1.5f, 4f, i / 15f);
                 var radians = i * (float)Math.PI / 2f;
-                MeshesByData[i].AppendModelMeshPart(woodMesh.MeshParts[0],
-                    boneAbsoluteTransform * Matrix.CreateScale(scale) * Matrix.CreateRotationY(radians) *
-                    Matrix.CreateTranslation(0.5f, 0f, 0.5f), false, false, false, false, Color.White);
-                MeshesByData[i].AppendModelMeshPart(ashesMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * Matrix.CreateScale(scale) * Matrix.CreateRotationY(radians) *
-                    Matrix.CreateTranslation(0.5f, 0f, 0.5f), false, false, false, false, Color.White);
+                MeshesByData[i].AppendModelMeshPart(
+                    woodMesh.MeshParts[0],
+                    boneAbsoluteTransform *
+                    Matrix.CreateScale(scale) *
+                    Matrix.CreateRotationY(radians) *
+                    Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
+                MeshesByData[i].AppendModelMeshPart(
+                    ashesMesh.MeshParts[0],
+                    boneAbsoluteTransform2 *
+                    Matrix.CreateScale(scale) *
+                    Matrix.CreateRotationY(radians) *
+                    Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
             }
 
             var boundingBox = MeshesByData[i].CalculateBoundingBox();
@@ -62,12 +87,24 @@ public class CampfireBlock : Block
             ];
         }
 
-        StandaloneMesh.AppendModelMeshPart(woodMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0f, 0f, 0f), false, false, true,
-            false, Color.White);
-        StandaloneMesh.AppendModelMeshPart(ashesMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0f, 0f, 0f), false, false, true,
-            false, Color.White);
+        StandaloneMesh.AppendModelMeshPart(
+            woodMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            true,
+            false,
+            Color.White
+        );
+        StandaloneMesh.AppendModelMeshPart(
+            ashesMesh.MeshParts[0],
+            boneAbsoluteTransform2 * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            true,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 
@@ -89,8 +126,16 @@ public class CampfireBlock : Block
         var num = Terrain.ExtractData(value);
         if (num < MeshesByData.Length)
         {
-            generator.GenerateMeshVertices(this, x, y, z, MeshesByData[num], Color.White, null,
-                geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                MeshesByData[num],
+                Color.White,
+                null,
+                geometry.SubsetOpaque
+            );
         }
     }
 

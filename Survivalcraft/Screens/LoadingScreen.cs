@@ -62,85 +62,100 @@ public class LoadingScreen : Screen
 
     private void InitActions()
     {
-        AddLoadAction(delegate
-        {
-            var startupSession = StartupManager.Current.Session;
-            if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
+        AddLoadAction(
+            delegate
+            {
+                var startupSession = StartupManager.Current.Session;
+                if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
+                        StartupManager.Current.Session.SessionId,
+                        startupSession,
+                        Storage.GetSystemPath(GamePaths.ContentPackageCache),
+                        Log.Information
+                    ))
+                {
+                    return;
+                }
+
+                Log.Information("初始化模组运行时");
+                ContentManager.Initialize();
+                var profile = ModProfileManager.LoadEffectiveProfile(
                     StartupManager.Current.Session.SessionId,
-                    startupSession,
-                    Storage.GetSystemPath(GamePaths.ContentPackageCache),
-                    Log.Information))
-            {
-                return;
+                    startupSession
+                );
+                GameEntry.SetModRuntime(
+                    GameModRuntime.StartFromProfile(
+                        profile,
+                        Storage.GetSystemPath(GamePaths.ContentPackageCache),
+                        ModSide.Client,
+                        Log.Information
+                    )
+                );
+                CurrentModRuntime.Value!.InitializeAssets();
+                LabelWidget.BitmapFont = ContentManager.Get<BitmapFont>("Fonts/Pericles");
             }
-
-            Log.Information("初始化模组运行时");
-            ContentManager.Initialize();
-            var profile = ModProfileManager.LoadEffectiveProfile(
-                StartupManager.Current.Session.SessionId,
-                startupSession
-            );
-            GameEntry.SetModRuntime(GameModRuntime.StartFromProfile(
-                    profile,
-                    Storage.GetSystemPath(GamePaths.ContentPackageCache),
-                    ModSide.Client,
-                    Log.Information
-                )
-            );
-            CurrentModRuntime.Value!.InitializeAssets();
-            LabelWidget.BitmapFont = ContentManager.Get<BitmapFont>("Fonts/Pericles");
-        });
+        );
         AddLoadAction(ContentLoaded);
-        AddLoadAction(delegate
-        {
-            Log.Information("初始化语言资源");
-            CurrentModRuntime.Value!.InitializeLanguage(
-                AppConfigStore.Values.TryGetValue("Language", out var language) ? language : "zh-CN");
-        });
+        AddLoadAction(
+            delegate
+            {
+                Log.Information("初始化语言资源");
+                CurrentModRuntime.Value!.InitializeLanguage(
+                    AppConfigStore.Values.TryGetValue("Language", out var language) ? language : "zh-CN"
+                );
+            }
+        );
         AddLoadAction(PackageManager.Initialize);
-        AddLoadAction(delegate
-        {
-            // 初始化TextureAtlas
-            Log.Information("初始化纹理地图");
-            TextureAtlasManager.Initialize();
-        });
-        AddLoadAction(delegate
-        {
-            Log.Information("初始化内置内容数据");
-            try
+        AddLoadAction(
+            delegate
             {
-                CurrentModRuntime.Value!.InitializeContentData();
+                // 初始化TextureAtlas
+                Log.Information("初始化纹理地图");
+                TextureAtlasManager.Initialize();
             }
-            catch (Exception e)
+        );
+        AddLoadAction(
+            delegate
             {
-                Log.Warning(e.Message);
+                Log.Information("初始化内置内容数据");
+                try
+                {
+                    CurrentModRuntime.Value!.InitializeContentData();
+                }
+                catch (Exception e)
+                {
+                    Log.Warning(e.Message);
+                }
             }
-        });
+        );
         InitScreens();
-        AddLoadAction(delegate
-        {
-            BlocksTexturesManager.Initialize();
-            CharacterSkinsManager.Initialize();
-            FurniturePacksManager.Initialize();
-            LightingManager.Initialize();
-            WorldsManager.Initialize();
-        });
-        AddLoadAction(delegate
-        {
-            if (!SessionInfoManager.TryRestoreGuiSession())
+        AddLoadAction(
+            delegate
             {
-                ScreensManager.SwitchScreen("MainMenu");
+                BlocksTexturesManager.Initialize();
+                CharacterSkinsManager.Initialize();
+                FurniturePacksManager.Initialize();
+                LightingManager.Initialize();
+                WorldsManager.Initialize();
             }
-
-            // 如果音频库加载失败，则禁止声音播放
-            if (!Mixer.IsAudioInitialized)
+        );
+        AddLoadAction(
+            delegate
             {
-                DialogsManager.Alert("音频系统加载失败，设备播放声音可能出现问题");
-            }
+                if (!SessionInfoManager.TryRestoreGuiSession())
+                {
+                    ScreensManager.SwitchScreen("MainMenu");
+                }
 
-            MusicManager.CurrentMix = MusicManager.Mix.Menu;
-            GameInformationManager.StartAutomaticCheck();
-        });
+                // 如果音频库加载失败，则禁止声音播放
+                if (!Mixer.IsAudioInitialized)
+                {
+                    DialogsManager.Alert("音频系统加载失败，设备播放声音可能出现问题");
+                }
+
+                MusicManager.CurrentMix = MusicManager.Mix.Menu;
+                GameInformationManager.StartAutomaticCheck();
+            }
+        );
     }
 
     private void InitScreens()
@@ -227,18 +242,26 @@ public class LoadingScreen : Screen
     {
         if (Input.Back || Input.Cancel)
         {
-            DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Warning, "Quit?", LanguageManager.Ok,
-                LanguageManager.No, vt =>
-                {
-                    if (vt == MessageDialogButton.Button1)
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    LanguageManager.Warning,
+                    "Quit?",
+                    LanguageManager.Ok,
+                    LanguageManager.No,
+                    vt =>
                     {
-                        Window.Close();
+                        if (vt == MessageDialogButton.Button1)
+                        {
+                            Window.Close();
+                        }
+                        else
+                        {
+                            DialogsManager.HideAllDialogs();
+                        }
                     }
-                    else
-                    {
-                        DialogsManager.HideAllDialogs();
-                    }
-                }));
+                )
+            );
         }
 
         if (_loadingActions.Count <= 0)

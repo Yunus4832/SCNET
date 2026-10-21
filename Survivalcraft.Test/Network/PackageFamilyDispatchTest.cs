@@ -30,11 +30,15 @@ public sealed class PackageFamilyDispatchTest
     {
         public byte ID => 250;
     }
+
     private sealed record First : Message;
+
     private sealed record Second : Message;
+
     private sealed class Handler : PackageHandlerBase<Message>
     {
         public List<Message> Received { get; } = [];
+
         public override void Handle(Message package, PackageReceiveContext context) => Received.Add(package);
     }
 }

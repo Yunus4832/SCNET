@@ -302,10 +302,16 @@ public class SubsystemElectricity : Subsystem, IUpdateable
             {
                 var interest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
                 var clients = CommonLib.Net.Clients.Values.Where(client => client != CommonLib.Net.Self &&
-                    client.IsConnected && client.State == ClientState.Playing).ToArray();
+                                                                           client.IsConnected &&
+                                                                           client.State == ClientState.Playing
+                    )
+                    .ToArray();
                 _replication.RetainClients(clients);
-                var voltagesByClient = BuildNetworkVoltages(clients, _persistentElementsVoltages,
-                    interest.GetChunkObservers);
+                var voltagesByClient = BuildNetworkVoltages(
+                    clients,
+                    _persistentElementsVoltages,
+                    interest.GetChunkObservers
+                );
                 foreach (var (client, voltages) in voltagesByClient)
                 {
                     var changes = _replication.Capture(client, voltages);
@@ -396,8 +402,11 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         }
     }
 
-    internal static Dictionary<Client, Dictionary<Point3, float>> BuildNetworkVoltages(IEnumerable<Client> clients,
-        IReadOnlyDictionary<Point3, float> voltages, Func<Point2, IEnumerable<Client>> getChunkObservers)
+    internal static Dictionary<Client, Dictionary<Point3, float>> BuildNetworkVoltages(
+        IEnumerable<Client> clients,
+        IReadOnlyDictionary<Point3, float> voltages,
+        Func<Point2, IEnumerable<Client>> getChunkObservers
+    )
     {
         var snapshots = new Dictionary<Client, Dictionary<Point3, float>>(ReferenceEqualityComparer.Instance);
         foreach (var client in clients)
@@ -448,7 +457,9 @@ public class SubsystemElectricity : Subsystem, IUpdateable
     {
         foreach (var key in _electricElementsByCellFace.Keys)
         {
-            if (key.X >= chunk.Origin.X && key.X < chunk.Origin.X + 16 && key.Z >= chunk.Origin.Y &&
+            if (key.X >= chunk.Origin.X &&
+                key.X < chunk.Origin.X + 16 &&
+                key.Z >= chunk.Origin.Y &&
                 key.Z < chunk.Origin.Y + 16)
             {
                 _pointsToUpdate[new Point3(key.X, key.Y, key.Z)] = false;
@@ -472,11 +483,17 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         return _connectorFacesTable[(int)(5 * mountingFace + connectionDirection)];
     }
 
-    public void GetAllConnectedNeighbors(int x, int y, int z, int mountingFace,
-        DynamicArray<ElectricConnectionPath> list)
+    public void GetAllConnectedNeighbors(
+        int x,
+        int y,
+        int z,
+        int mountingFace,
+        DynamicArray<ElectricConnectionPath> list
+    )
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)] is not IElectricElementBlock electricElementBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)] is not
+            IElectricElementBlock electricElementBlock)
         {
             return;
         }
@@ -494,8 +511,15 @@ public class SubsystemElectricity : Subsystem, IUpdateable
                     break;
                 }
 
-                var connectorType = electricElementBlock.GetConnectorType(SubsystemTerrain, cellValue, mountingFace,
-                    electricConnectionPath.ConnectorFace, x, y, z);
+                var connectorType = electricElementBlock.GetConnectorType(
+                    SubsystemTerrain,
+                    cellValue,
+                    mountingFace,
+                    electricConnectionPath.ConnectorFace,
+                    x,
+                    y,
+                    z
+                );
                 if (!connectorType.HasValue)
                 {
                     break;
@@ -506,9 +530,17 @@ public class SubsystemElectricity : Subsystem, IUpdateable
                 var z2 = z + electricConnectionPath.NeighborOffsetZ;
                 var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
                 var electricElementBlock2 =
-                    CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue2)] as IElectricElementBlock;
-                var connectorType2 = electricElementBlock2?.GetConnectorType(SubsystemTerrain, cellValue2,
-                    electricConnectionPath.NeighborFace, electricConnectionPath.NeighborConnectorFace, x2, y2, z2);
+                    CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue2)] as
+                        IElectricElementBlock;
+                var connectorType2 = electricElementBlock2?.GetConnectorType(
+                    SubsystemTerrain,
+                    cellValue2,
+                    electricConnectionPath.NeighborFace,
+                    electricConnectionPath.NeighborConnectorFace,
+                    x2,
+                    y2,
+                    z2
+                );
                 if (!connectorType2.HasValue ||
                     ((connectorType.Value == 0 || connectorType2.Value == ElectricConnectorType.Output) &&
                      (connectorType.Value == ElectricConnectorType.Output || connectorType2.Value == 0)))
@@ -680,9 +712,12 @@ public class SubsystemElectricity : Subsystem, IUpdateable
             GetAllConnectedNeighbors(cellFace2.X, cellFace2.Y, cellFace2.Z, cellFace2.Face, _tmpConnectionPaths);
             foreach (var tmpConnectionPath in _tmpConnectionPaths)
             {
-                var cellFace = new CellFace(cellFace2.X + tmpConnectionPath.NeighborOffsetX,
-                    cellFace2.Y + tmpConnectionPath.NeighborOffsetY, cellFace2.Z + tmpConnectionPath.NeighborOffsetZ,
-                    tmpConnectionPath.NeighborFace);
+                var cellFace = new CellFace(
+                    cellFace2.X + tmpConnectionPath.NeighborOffsetX,
+                    cellFace2.Y + tmpConnectionPath.NeighborOffsetY,
+                    cellFace2.Z + tmpConnectionPath.NeighborOffsetZ,
+                    tmpConnectionPath.NeighborFace
+                );
                 if (!_electricElementsByCellFace.TryGetValue(cellFace, out var value) ||
                     value == electricElement)
                 {
@@ -691,46 +726,52 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
                 var cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
                 var num = Terrain.ExtractContents(cellValue);
-                var value2 = ((IElectricElementBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num]).GetConnectorType(
-                    SubsystemTerrain,
-                    cellValue,
-                    cellFace2.Face,
-                    tmpConnectionPath.ConnectorFace,
-                    cellFace2.X,
-                    cellFace2.Y,
-                    cellFace2.Z
-                );
+                var value2 = ((IElectricElementBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num])
+                    .GetConnectorType(
+                        SubsystemTerrain,
+                        cellValue,
+                        cellFace2.Face,
+                        tmpConnectionPath.ConnectorFace,
+                        cellFace2.X,
+                        cellFace2.Y,
+                        cellFace2.Z
+                    );
                 var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
                 var num2 = Terrain.ExtractContents(cellValue2);
-                var value3 = ((IElectricElementBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2]).GetConnectorType(
-                    SubsystemTerrain,
-                    cellValue2,
-                    cellFace.Face,
-                    tmpConnectionPath.NeighborConnectorFace,
-                    cellFace.X,
-                    cellFace.Y,
-                    cellFace.Z
+                var value3 = ((IElectricElementBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2])
+                    .GetConnectorType(
+                        SubsystemTerrain,
+                        cellValue2,
+                        cellFace.Face,
+                        tmpConnectionPath.NeighborConnectorFace,
+                        cellFace.X,
+                        cellFace.Y,
+                        cellFace.Z
+                    );
+                electricElement.Connections.Add(
+                    new ElectricConnection
+                    {
+                        CellFace = cellFace2,
+                        ConnectorFace = tmpConnectionPath.ConnectorFace,
+                        ConnectorType = value2 ?? ElectricConnectorType.None,
+                        NeighborElectricElement = value,
+                        NeighborCellFace = cellFace,
+                        NeighborConnectorFace = tmpConnectionPath.NeighborConnectorFace,
+                        NeighborConnectorType = value3 ?? ElectricConnectorType.None,
+                    }
                 );
-                electricElement.Connections.Add(new ElectricConnection
-                {
-                    CellFace = cellFace2,
-                    ConnectorFace = tmpConnectionPath.ConnectorFace,
-                    ConnectorType = value2 ?? ElectricConnectorType.None,
-                    NeighborElectricElement = value,
-                    NeighborCellFace = cellFace,
-                    NeighborConnectorFace = tmpConnectionPath.NeighborConnectorFace,
-                    NeighborConnectorType = value3 ?? ElectricConnectorType.None,
-                });
-                value.Connections.Add(new ElectricConnection
-                {
-                    CellFace = cellFace,
-                    ConnectorFace = tmpConnectionPath.NeighborConnectorFace,
-                    ConnectorType = value3 ?? ElectricConnectorType.None,
-                    NeighborElectricElement = electricElement,
-                    NeighborCellFace = cellFace2,
-                    NeighborConnectorFace = tmpConnectionPath.ConnectorFace,
-                    NeighborConnectorType = value2 ?? ElectricConnectorType.None,
-                });
+                value.Connections.Add(
+                    new ElectricConnection
+                    {
+                        CellFace = cellFace,
+                        ConnectorFace = tmpConnectionPath.NeighborConnectorFace,
+                        ConnectorType = value3 ?? ElectricConnectorType.None,
+                        NeighborElectricElement = electricElement,
+                        NeighborCellFace = cellFace2,
+                        NeighborConnectorFace = tmpConnectionPath.ConnectorFace,
+                        NeighborConnectorType = value2 ?? ElectricConnectorType.None,
+                    }
+                );
             }
         }
 
@@ -752,7 +793,8 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         foreach (var connection in electricElement.Connections)
         {
             var num = connection.NeighborElectricElement.Connections.FirstIndex(c =>
-                c.NeighborElectricElement == electricElement);
+                c.NeighborElectricElement == electricElement
+            );
             if (num >= 0)
             {
                 connection.NeighborElectricElement.Connections.RemoveAt(num);
@@ -794,7 +836,8 @@ public class SubsystemElectricity : Subsystem, IUpdateable
             }
             else
             {
-                var electricElementBlock = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] as IElectricElementBlock;
+                var electricElementBlock =
+                    CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] as IElectricElementBlock;
                 if (electricElementBlock != null)
                 {
                     var electricElement2 =
@@ -876,8 +919,11 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         }
     }
 
-    private void ScanWireDomain(CellFace startCellFace, Dictionary<CellFace, bool> visited,
-        Dictionary<CellFace, bool> result)
+    private void ScanWireDomain(
+        CellFace startCellFace,
+        Dictionary<CellFace, bool> visited,
+        Dictionary<CellFace, bool> result
+    )
     {
         var dynamicArray = new DynamicArray<CellFace>();
         dynamicArray.Add(startCellFace);
@@ -897,7 +943,8 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
             var cellValue = SubsystemTerrain.Terrain.GetCellValue(key.X, key.Y, key.Z);
             var num = Terrain.ExtractContents(cellValue);
-            var electricWireElementBlock = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] as IElectricWireElementBlock;
+            var electricWireElementBlock =
+                CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] as IElectricWireElementBlock;
             if (electricWireElementBlock == null)
             {
                 continue;

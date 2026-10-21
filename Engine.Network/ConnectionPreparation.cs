@@ -6,21 +6,39 @@ namespace Engine.Network;
 public sealed class ConnectionPreparation : IAsyncDisposable
 {
     private readonly NetworkHost _host;
+
     private readonly IPEndPoint _endpoint;
+
     private readonly CancellationTokenSource _lifetime = new();
+
     private readonly SemaphoreSlim _gate = new(1, 1);
+
     private readonly TaskCompletionSource _closed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     private readonly Action? _releasePath;
+
     private readonly TimeProvider _clock;
+
     private Func<CancellationToken, Task>? _releaseRegistration;
+
     private Func<TimeSpan, CancellationToken, Task<DateTimeOffset>>? _renewLease;
+
     private long _expiresAtTicks;
+
     private int _started;
+
     private int _disposed;
+
     private bool _transferred;
 
-    internal ConnectionPreparation(NetworkHost host, IPEndPoint endpoint, NetworkPathKind pathKind,
-        DateTimeOffset expiresAt, Action? releasePath, TimeProvider clock)
+    internal ConnectionPreparation(
+        NetworkHost host,
+        IPEndPoint endpoint,
+        NetworkPathKind pathKind,
+        DateTimeOffset expiresAt,
+        Action? releasePath,
+        TimeProvider clock
+    )
     {
         _host = host;
         _endpoint = endpoint;
@@ -46,10 +64,12 @@ public sealed class ConnectionPreparation : IAsyncDisposable
         {
             throw new TimeoutException("Connection preparation expired.");
         }
+
         if (Volatile.Read(ref _started) != 0)
         {
             throw new InvalidOperationException("Preparation has already been consumed.");
         }
+
         _host.SendDatagram(_endpoint, payload);
     }
 
@@ -61,7 +81,10 @@ public sealed class ConnectionPreparation : IAsyncDisposable
         }
     }
 
-    public async Task<NetworkConnection> ConnectAsync(ReadOnlyMemory<byte> handshake, CancellationToken cancellationToken)
+    public async Task<NetworkConnection> ConnectAsync(
+        ReadOnlyMemory<byte> handshake,
+        CancellationToken cancellationToken
+    )
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         var remaining = ExpiresAt - _clock.GetUtcNow();
@@ -69,6 +92,7 @@ public sealed class ConnectionPreparation : IAsyncDisposable
         {
             throw new TimeoutException("Connection preparation expired.");
         }
+
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _lifetime.Token);
         deadline.CancelAfter(remaining);
         try
@@ -80,12 +104,14 @@ public sealed class ConnectionPreparation : IAsyncDisposable
                 {
                     throw new InvalidOperationException("Preparation has already been consumed.");
                 }
+
                 var connection = await _host.ConnectAsync(_endpoint, handshake, deadline.Token).ConfigureAwait(false);
                 if (deadline.IsCancellationRequested)
                 {
                     connection.Disconnect();
                     deadline.Token.ThrowIfCancellationRequested();
                 }
+
                 connection.PathKind = PathKind;
                 _host.DatagramReceived -= OnDatagram;
                 _transferred = true;
@@ -93,6 +119,7 @@ public sealed class ConnectionPreparation : IAsyncDisposable
                 {
                     _releasePath?.Invoke();
                 }
+
                 return connection;
             }
             finally
@@ -100,7 +127,8 @@ public sealed class ConnectionPreparation : IAsyncDisposable
                 _gate.Release();
             }
         }
-        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested && !_lifetime.IsCancellationRequested)
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested &&
+                                                           !_lifetime.IsCancellationRequested)
         {
             throw new TimeoutException("The prepared connection handshake timed out.", exception);
         }
@@ -112,6 +140,7 @@ public sealed class ConnectionPreparation : IAsyncDisposable
         {
             throw new ArgumentOutOfRangeException(nameof(duration));
         }
+
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _lifetime.Token);
         deadline.CancelAfter(TimeSpan.FromSeconds(5));
@@ -122,10 +151,12 @@ public sealed class ConnectionPreparation : IAsyncDisposable
             {
                 throw new InvalidOperationException("Preparation has already been consumed.");
             }
+
             if (_clock.GetUtcNow() >= ExpiresAt)
             {
                 throw new TimeoutException("Connection preparation expired.");
             }
+
             var expiresAt = _renewLease is null
                 ? _clock.GetUtcNow() + duration
                 : await _renewLease(duration, deadline.Token).ConfigureAwait(false);
@@ -134,6 +165,7 @@ public sealed class ConnectionPreparation : IAsyncDisposable
             {
                 throw new TimeoutException("Connection preparation renewal expired.");
             }
+
             Interlocked.Exchange(ref _expiresAtTicks, expiresAt.UtcTicks);
         }
         finally
@@ -153,6 +185,7 @@ public sealed class ConnectionPreparation : IAsyncDisposable
             await _closed.Task.ConfigureAwait(false);
             return;
         }
+
         try
         {
             _host.DatagramReceived -= OnDatagram;
@@ -164,6 +197,7 @@ public sealed class ConnectionPreparation : IAsyncDisposable
                 {
                     _releasePath?.Invoke();
                 }
+
                 if (_releaseRegistration is not null)
                 {
                     using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(3));
@@ -176,6 +210,7 @@ public sealed class ConnectionPreparation : IAsyncDisposable
                 // The connected transport belongs to NetworkHost and survives disposal of the preparation.
                 _lifetime.Dispose();
             }
+
             _closed.TrySetResult();
         }
         catch (Exception exception)

@@ -50,18 +50,22 @@ public class CreativeInventoryWidget : CanvasWidget
         _panelContainer.Children.Add(FurnitureInventoryPanel);
         foreach (var category in CurrentModRuntime.Value!.RequireWorldCatalog().ReadOnlyCategories)
         {
-            _categories.Add(new Category
-            {
-                Name = category,
-                Panel = _creativeInventoryPanel
-            });
+            _categories.Add(
+                new Category
+                {
+                    Name = category,
+                    Panel = _creativeInventoryPanel
+                }
+            );
         }
 
-        _categories.Add(new Category
-        {
-            Name = LanguageManager.Get(_typeName, 1),
-            Panel = FurnitureInventoryPanel
-        });
+        _categories.Add(
+            new Category
+            {
+                Name = LanguageManager.Get(_typeName, 1),
+                Panel = FurnitureInventoryPanel
+            }
+        );
         foreach (var category in _categories)
         {
             if (category.Name == "Electrics")
@@ -124,7 +128,7 @@ public class CreativeInventoryWidget : CanvasWidget
                             HorizontalAlignment = WidgetAlignment.Center,
                             VerticalAlignment = WidgetAlignment.Center
                         },
-                        delegate (object c)
+                        delegate(object c)
                         {
                             _componentCreativeInventory.CategoryIndex = _categories.IndexOf((Category)c);
                         }

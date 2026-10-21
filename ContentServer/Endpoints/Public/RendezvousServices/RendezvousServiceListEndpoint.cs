@@ -22,9 +22,19 @@ public sealed class RendezvousServiceListEndpoint(IMediator mediator) : ContentE
         {
             throw new KnownException("invalid_pagination", StatusCodes.Status400BadRequest);
         }
+
         var services = await mediator.Send(new ListPublicRendezvousServicesQuery(page), cancellationToken);
-        await Send.ResponseAsync(services.Map(service => new RendezvousServiceResponse(service.Id.ToString(),
-            service.Name, service.ControlUrl, service.Description)).AsResponseData(), StatusCodes.Status200OK, cancellationToken);
+        await Send.ResponseAsync(
+            services.Map(service => new RendezvousServiceResponse(
+                    service.Id.ToString(),
+                    service.Name,
+                    service.ControlUrl,
+                    service.Description
+                )
+            ).AsResponseData(),
+            StatusCodes.Status200OK,
+            cancellationToken
+        );
     }
 }
 
@@ -40,4 +50,5 @@ public sealed record RendezvousServiceRegistrationResponse(
     string Status,
     string? ReviewMessage,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? ReviewedAt);
+    DateTimeOffset? ReviewedAt
+);

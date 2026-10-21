@@ -17,20 +17,36 @@ internal sealed class LinuxFilePicker : IFilePicker
         _portal = portal;
     }
 
-    public async Task<IReadOnlyList<PickedFile>> PickFilesAsync(FilePickerRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<PickedFile>> PickFilesAsync(
+        FilePickerRequest request,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(request);
         var uris = await _portal.OpenFilesAsync(request, cancellationToken).ConfigureAwait(false);
         return uris.Select(ToLocalPath)
-            .Select(path => new PickedFile(Path.GetFileName(path), null,
-                _ => Task.FromResult<Stream>(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
-                    64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))))
+            .Select(path => new PickedFile(
+                    Path.GetFileName(path),
+                    null,
+                    _ => Task.FromResult<Stream>(
+                        new FileStream(
+                            path,
+                            FileMode.Open,
+                            FileAccess.Read,
+                            FileShare.Read,
+                            64 * 1024,
+                            FileOptions.Asynchronous | FileOptions.SequentialScan
+                        )
+                    )
+                )
+            )
             .ToArray();
     }
 
-    public async Task<PickedSaveTarget?> PickSaveTargetAsync(FileSaveRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<PickedSaveTarget?> PickSaveTargetAsync(
+        FileSaveRequest request,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(request);
         var uri = await _portal.SaveFileAsync(request, cancellationToken).ConfigureAwait(false);
@@ -40,9 +56,19 @@ internal sealed class LinuxFilePicker : IFilePicker
         }
 
         var path = ToLocalPath(uri);
-        return new PickedSaveTarget(Path.GetFileName(path),
-            _ => Task.FromResult<Stream>(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None,
-                64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan)));
+        return new PickedSaveTarget(
+            Path.GetFileName(path),
+            _ => Task.FromResult<Stream>(
+                new FileStream(
+                    path,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None,
+                    64 * 1024,
+                    FileOptions.Asynchronous | FileOptions.SequentialScan
+                )
+            )
+        );
     }
 
     internal static string ToLocalPath(string uriText)
@@ -65,50 +91,67 @@ internal interface ILinuxFileChooserPortal
 internal sealed class XdgFileChooserPortal : ILinuxFileChooserPortal
 {
     private const string _service = "org.freedesktop.portal.Desktop";
+
     private static readonly ObjectPath _desktopPath = new("/org/freedesktop/portal/desktop");
+
     private readonly SemaphoreSlim _requestLock = new(1, 1);
 
-    public Task<IReadOnlyList<string>> OpenFilesAsync(FilePickerRequest request,
-        CancellationToken cancellationToken) => RunAsync(
+    public Task<IReadOnlyList<string>> OpenFilesAsync(
+        FilePickerRequest request,
+        CancellationToken cancellationToken
+    ) => RunAsync(
         request.Title ?? "Open File",
         new Dictionary<string, object>
         {
             ["multiple"] = request.AllowMultiple,
             ["filters"] = CreateFilters(request.Extensions)
-        }, true, cancellationToken);
+        },
+        true,
+        cancellationToken
+    );
 
     public async Task<string?> SaveFileAsync(FileSaveRequest request, CancellationToken cancellationToken)
     {
-        var uris = await RunAsync(request.Title ?? "Save File",
+        var uris = await RunAsync(
+            request.Title ?? "Save File",
             new Dictionary<string, object> { ["current_name"] = request.SuggestedFileName },
-            false, cancellationToken).ConfigureAwait(false);
+            false,
+            cancellationToken
+        ).ConfigureAwait(false);
         return uris.Count == 0 ? null : uris[0];
     }
 
-    private async Task<IReadOnlyList<string>> RunAsync(string title, Dictionary<string, object> options,
-        bool open, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<string>> RunAsync(
+        string title,
+        Dictionary<string, object> options,
+        bool open,
+        CancellationToken cancellationToken
+    )
     {
         await _requestLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var address = Address.Session
-                          ?? throw new InvalidOperationException("The D-Bus session address is unavailable.");
+            var address = Address.Session ??
+                          throw new InvalidOperationException("The D-Bus session address is unavailable.");
             using var connection = new Connection(address);
             var connectionInfo = await connection.ConnectAsync().ConfigureAwait(false);
             var token = $"scnet_{Guid.NewGuid():N}";
             options["handle_token"] = token;
             var sender = connectionInfo.LocalName.TrimStart(':').Replace('.', '_');
             var expectedPath = new ObjectPath($"/org/freedesktop/portal/desktop/request/{sender}/{token}");
-            var completion = new TaskCompletionSource<PortalResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var completion =
+                new TaskCompletionSource<PortalResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
             var requestProxy = connection.CreateProxy<IPortalRequest>(_service, expectedPath);
             using var subscription = await requestProxy.WatchResponseAsync(
                 response => completion.TrySetResult(new PortalResponse(response.response, response.results)),
-                exception => completion.TrySetException(exception)).ConfigureAwait(false);
+                exception => completion.TrySetException(exception)
+            ).ConfigureAwait(false);
             await using var cancellation = cancellationToken.Register(() =>
-            {
-                _ = CloseRequestAsync(requestProxy);
-                completion.TrySetCanceled(cancellationToken);
-            });
+                {
+                    _ = CloseRequestAsync(requestProxy);
+                    completion.TrySetCanceled(cancellationToken);
+                }
+            );
 
             var chooser = connection.CreateProxy<IPortalFileChooser>(_service, _desktopPath);
             var returnedPath = open
@@ -131,7 +174,8 @@ internal sealed class XdgFileChooserPortal : ILinuxFileChooserPortal
         {
             throw new InvalidOperationException(
                 "The XDG desktop portal file chooser is unavailable. Ensure xdg-desktop-portal and a desktop backend are running.",
-                exception);
+                exception
+            );
         }
         finally
         {
@@ -139,8 +183,7 @@ internal sealed class XdgFileChooserPortal : ILinuxFileChooserPortal
         }
     }
 
-    private static (string name, (uint kind, string value)[] rules)[] CreateFilters(
-        IReadOnlyList<string> extensions)
+    private static (string name, (uint kind, string value)[] rules)[] CreateFilters(IReadOnlyList<string> extensions)
     {
         if (extensions.Count == 0)
         {
@@ -150,7 +193,8 @@ internal sealed class XdgFileChooserPortal : ILinuxFileChooserPortal
         return
         [
             ("Supported files", extensions.Select(extension =>
-                (0u, $"*{(extension.StartsWith('.') ? extension : "." + extension)}")).ToArray())
+                (0u, $"*{(extension.StartsWith('.') ? extension : "." + extension)}")
+            ).ToArray())
         ];
     }
 
@@ -190,7 +234,9 @@ public interface IPortalFileChooser : IDBusObject
 public interface IPortalRequest : IDBusObject
 {
     Task CloseAsync();
+
     Task<IDisposable> WatchResponseAsync(
         Action<(uint response, IDictionary<string, object> results)> handler,
-        Action<Exception>? onError = null);
+        Action<Exception>? onError = null
+    );
 }

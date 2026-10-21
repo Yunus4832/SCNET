@@ -18,11 +18,15 @@ public class SubsystemHammerBlockBehavior : SubsystemBlockBehavior
             return false;
         }
 
-        if (componentMiner.ComponentPlayer != null && (CommonLib.WorkType == WorkType.Local ||
-                                                       componentMiner.ComponentPlayer.PlayerData.IsMainPlayer))
+        if (componentMiner.ComponentPlayer != null &&
+            (CommonLib.WorkType == WorkType.Local ||
+             componentMiner.ComponentPlayer.PlayerData.IsMainPlayer))
         {
-            _subsystemFurnitureBlockBehavior.ScanDesign(terrainRaycastResult.Value.CellFace, ray.Direction,
-                componentMiner);
+            _subsystemFurnitureBlockBehavior.ScanDesign(
+                terrainRaycastResult.Value.CellFace,
+                ray.Direction,
+                componentMiner
+            );
         }
 
         return true;

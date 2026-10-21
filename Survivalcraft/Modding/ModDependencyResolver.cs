@@ -59,12 +59,15 @@ public static class ModDependencyResolver
                 }
 
                 if (dependency.MinimumVersion is not null &&
-                    (!global::Content.Packaging.SemanticVersion.TryParse(dependency.MinimumVersion,
-                         out var minimumVersion) ||
+                    (!global::Content.Packaging.SemanticVersion.TryParse(
+                         dependency.MinimumVersion,
+                         out var minimumVersion
+                     ) ||
                      dependencyMod.Manifest.ParsedVersion < minimumVersion))
                 {
                     throw new ModDependencyException(
-                        $"Mod {id} requires {dependencyId} version {dependency.MinimumVersion} or newer.");
+                        $"Mod {id} requires {dependencyId} version {dependency.MinimumVersion} or newer."
+                    );
                 }
 
                 Visit(dependencyId);
@@ -78,8 +81,9 @@ public static class ModDependencyResolver
 
     private enum VisitState
     {
-        Visiting,
-        Visited
+        Visiting = 0,
+
+        Visited = 1
     }
 }
 

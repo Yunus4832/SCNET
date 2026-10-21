@@ -26,14 +26,23 @@ public interface IModBlockBehaviorHooks
 public sealed class BlockBehaviorHooks
 {
     private readonly ModHook<BlockAddedContext> _blockAdded = new();
+
     private readonly ModHook<BlockRemovedContext> _blockRemoved = new();
+
     private readonly ModHook<BlockModifiedContext> _blockModified = new();
+
     private readonly ModHook<NeighborBlockChangedContext> _neighborBlockChanged = new();
+
     private readonly ModHook<BlockUseContext> _blockUse = new();
+
     private readonly ModHook<BlockInteractContext> _blockInteract = new();
+
     private readonly ModHook<BlockPlacedContext> _blockPlaced = new();
+
     private readonly ModHook<BlockEditContext> _blockEdit = new();
+
     private readonly ModHook<BlockEditInventoryItemContext> _blockEditInventoryItem = new();
+
     private readonly ModHook<ItemHarvestedContext> _itemHarvested = new();
 
     public void Invoke(BlockAddedContext context) => _blockAdded.Invoke(context);
@@ -127,15 +136,23 @@ public sealed class BlockAddedContext(
     int z,
     int value,
     int oldValue,
-    ComponentMiner? miner)
+    ComponentMiner? miner
+)
 {
     public SubsystemTerrain Terrain { get; } = terrain;
+
     public int X { get; } = x;
+
     public int Y { get; } = y;
+
     public int Z { get; } = z;
+
     public int Value { get; } = value;
+
     public int OldValue { get; } = oldValue;
+
     public ComponentMiner? Miner { get; } = miner;
+
     public bool Cancel { get; set; }
 }
 
@@ -146,15 +163,23 @@ public sealed class BlockRemovedContext(
     int z,
     int value,
     int newValue,
-    ComponentMiner? miner)
+    ComponentMiner? miner
+)
 {
     public SubsystemTerrain Terrain { get; } = terrain;
+
     public int X { get; } = x;
+
     public int Y { get; } = y;
+
     public int Z { get; } = z;
+
     public int Value { get; } = value;
+
     public int NewValue { get; } = newValue;
+
     public ComponentMiner? Miner { get; } = miner;
+
     public bool Cancel { get; set; }
 }
 
@@ -165,15 +190,23 @@ public sealed class BlockModifiedContext(
     int z,
     int value,
     int oldValue,
-    ComponentMiner? miner)
+    ComponentMiner? miner
+)
 {
     public SubsystemTerrain Terrain { get; } = terrain;
+
     public int X { get; } = x;
+
     public int Y { get; } = y;
+
     public int Z { get; } = z;
+
     public int Value { get; } = value;
+
     public int OldValue { get; } = oldValue;
+
     public ComponentMiner? Miner { get; } = miner;
+
     public bool Cancel { get; set; }
 }
 
@@ -185,42 +218,63 @@ public sealed class NeighborBlockChangedContext(
     int neighborX,
     int neighborY,
     int neighborZ,
-    ComponentMiner? miner)
+    ComponentMiner? miner
+)
 {
     public SubsystemTerrain Terrain { get; } = terrain;
+
     public int X { get; } = x;
+
     public int Y { get; } = y;
+
     public int Z { get; } = z;
+
     public int NeighborX { get; } = neighborX;
+
     public int NeighborY { get; } = neighborY;
+
     public int NeighborZ { get; } = neighborZ;
+
     public ComponentMiner? Miner { get; } = miner;
+
     public int Value { get; set; } = terrain.Terrain.GetCellValue(x, y, z);
+
     public int NeighborValue { get; set; } = terrain.Terrain.GetCellValue(neighborX, neighborY, neighborZ);
+
     public bool Cancel { get; set; }
 }
 
 public sealed class BlockUseContext(
     Ray3 ray,
     ComponentMiner componentMiner,
-    int blockValue)
+    int blockValue
+)
 {
     public Ray3 Ray { get; } = ray;
+
     public ComponentMiner Miner { get; } = componentMiner;
+
     public int BlockValue { get; } = blockValue;
+
     public bool Cancel { get; set; }
+
     public bool Handled { get; set; }
 }
 
 public sealed class BlockInteractContext(
     TerrainRaycastResult raycastResult,
     ComponentMiner componentMiner,
-    int cellValue)
+    int cellValue
+)
 {
     public TerrainRaycastResult RaycastResult { get; } = raycastResult;
+
     public ComponentMiner Miner { get; } = componentMiner;
+
     public int CellValue { get; } = cellValue;
+
     public bool Cancel { get; set; }
+
     public bool Handled { get; set; }
 }
 
@@ -230,14 +284,21 @@ public sealed class BlockPlacedContext(
     int y,
     int z,
     BlockPlacementData placementData,
-    int value)
+    int value
+)
 {
     public ComponentMiner Miner { get; } = miner;
+
     public int X { get; } = x;
+
     public int Y { get; } = y;
+
     public int Z { get; } = z;
+
     public BlockPlacementData PlacementData { get; set; } = placementData;
+
     public int Value { get; set; } = value;
+
     public bool Cancel { get; set; }
 }
 
@@ -246,26 +307,38 @@ public sealed class BlockEditContext(
     int y,
     int z,
     int value,
-    ComponentPlayer componentPlayer)
+    ComponentPlayer componentPlayer
+)
 {
     public int X { get; } = x;
+
     public int Y { get; } = y;
+
     public int Z { get; } = z;
+
     public int Value { get; } = value;
+
     public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+
     public bool Cancel { get; set; }
+
     public bool Handled { get; set; }
 }
 
 public sealed class BlockEditInventoryItemContext(
     IInventory inventory,
     int slotIndex,
-    ComponentPlayer componentPlayer)
+    ComponentPlayer componentPlayer
+)
 {
     public IInventory Inventory { get; } = inventory;
+
     public int SlotIndex { get; } = slotIndex;
+
     public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+
     public bool Cancel { get; set; }
+
     public bool Handled { get; set; }
 }
 
@@ -276,14 +349,22 @@ public sealed class ItemHarvestedContext(
     int z,
     int blockValue,
     BlockDropValue dropValue,
-    int newBlockValue)
+    int newBlockValue
+)
 {
     public SubsystemTerrain Terrain { get; } = terrain;
+
     public int X { get; } = x;
+
     public int Y { get; } = y;
+
     public int Z { get; } = z;
+
     public int BlockValue { get; } = blockValue;
+
     public BlockDropValue DropValue { get; set; } = dropValue;
+
     public int NewBlockValue { get; set; } = newBlockValue;
+
     public bool Cancel { get; set; }
 }

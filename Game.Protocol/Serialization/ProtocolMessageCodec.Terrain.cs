@@ -35,7 +35,8 @@ public static partial class ProtocolMessageCodec
                 writer.Write(message.ChunkFragment.Payload);
                 break;
             case SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments:
-                if (message.FragmentRequests.Count is <= 0 or > SubsystemTerrainPackage.MaximumFragmentRequestsPerPackage)
+                if (message.FragmentRequests.Count is <= 0
+                    or > SubsystemTerrainPackage.MaximumFragmentRequestsPerPackage)
                 {
                     throw new InvalidDataException("Invalid terrain fragment request count.");
                 }
@@ -81,13 +82,24 @@ public static partial class ProtocolMessageCodec
         switch (type)
         {
             case SubsystemTerrainPackage.DataType.CellEditCompleted:
-                return new SubsystemTerrainPackage { Type = type, EditRequestId = reader.ReadInt32(), EditedCell = reader.ReadPoint3(), EditContentVersion = reader.ReadInt64() };
+                return new SubsystemTerrainPackage
+                {
+                    Type = type, EditRequestId = reader.ReadInt32(), EditedCell = reader.ReadPoint3(),
+                    EditContentVersion = reader.ReadInt64()
+                };
             case SubsystemTerrainPackage.DataType.RequestSyncChunks:
                 var count = reader.ReadCount(ProtocolFrameCodec.MaximumPayloadLength / 24);
                 EnsureRemaining(reader, count * 24);
                 var requests = new ChunkContentRequest[count];
                 for (var i = 0; i < count; i++)
-                { requests[i] = new ChunkContentRequest(new ChunkAllocationId(reader.ReadPoint2(), reader.ReadUInt64()), reader.ReadInt64()); }
+                {
+                    requests[i] =
+                        new ChunkContentRequest(
+                            new ChunkAllocationId(reader.ReadPoint2(), reader.ReadUInt64()),
+                            reader.ReadInt64()
+                        );
+                }
+
                 return new SubsystemTerrainPackage(requests);
             case SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment:
                 var allocation = new ChunkAllocationId(reader.ReadPoint2(), reader.ReadUInt64());
@@ -96,13 +108,32 @@ public static partial class ProtocolMessageCodec
                 var index = reader.ReadUInt16();
                 var fragments = reader.ReadUInt16();
                 var length = reader.ReadUInt16();
-                return new SubsystemTerrainPackage(new EncodedTerrainChunkFragment(allocation, version, total, index, fragments, reader.ReadBytes(length)));
+                return new SubsystemTerrainPackage(
+                    new EncodedTerrainChunkFragment(
+                        allocation,
+                        version,
+                        total,
+                        index,
+                        fragments,
+                        reader.ReadBytes(length)
+                    )
+                );
             case SubsystemTerrainPackage.DataType.SyncTerrainCellDelta:
-                return new SubsystemTerrainPackage(new TerrainCellDelta(reader.ReadPoint3(), reader.ReadInt32(), reader.ReadInt64(), reader.ReadInt64()));
+                return new SubsystemTerrainPackage(
+                    new TerrainCellDelta(
+                        reader.ReadPoint3(),
+                        reader.ReadInt32(),
+                        reader.ReadInt64(),
+                        reader.ReadInt64()
+                    )
+                );
             case SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments:
                 var requestCount = reader.ReadUInt16();
                 if (requestCount is 0 or > SubsystemTerrainPackage.MaximumFragmentRequestsPerPackage)
-                { throw new InvalidDataException("Invalid terrain fragment request count."); }
+                {
+                    throw new InvalidDataException("Invalid terrain fragment request count.");
+                }
+
                 var values = new TerrainChunkFragmentRequest[requestCount];
                 for (var i = 0; i < requestCount; i++)
                 {
@@ -110,15 +141,32 @@ public static partial class ProtocolMessageCodec
                     var contentVersion = reader.ReadInt64();
                     var fragmentCount = reader.ReadUInt16();
                     var bitmapLength = reader.ReadUInt16();
-                    if (fragmentCount is 0 or > SubsystemTerrainPackage.MaximumRequestedFragmentCount || bitmapLength != (fragmentCount + 7) / 8)
-                    { throw new InvalidDataException("Invalid missing terrain fragment bitmap."); }
+                    if (fragmentCount is 0 or > SubsystemTerrainPackage.MaximumRequestedFragmentCount ||
+                        bitmapLength != (fragmentCount + 7) / 8)
+                    {
+                        throw new InvalidDataException("Invalid missing terrain fragment bitmap.");
+                    }
+
                     var bitmap = reader.ReadBytes(bitmapLength);
                     var missing = new List<ushort>();
                     for (var j = 0; j < fragmentCount; j++)
-                    { if ((bitmap[j / 8] & (1 << (j % 8))) != 0) { missing.Add((ushort)j); } }
-                    if (missing.Count == 0) { throw new InvalidDataException("Missing terrain fragment bitmap is empty."); }
-                    values[i] = new TerrainChunkFragmentRequest(requestedAllocation, contentVersion, fragmentCount, missing.ToArray());
+                    {
+                        if ((bitmap[j / 8] & (1 << (j % 8))) != 0) { missing.Add((ushort)j); }
+                    }
+
+                    if (missing.Count == 0)
+                    {
+                        throw new InvalidDataException("Missing terrain fragment bitmap is empty.");
+                    }
+
+                    values[i] = new TerrainChunkFragmentRequest(
+                        requestedAllocation,
+                        contentVersion,
+                        fragmentCount,
+                        missing.ToArray()
+                    );
                 }
+
                 return new SubsystemTerrainPackage { Type = type, FragmentRequests = values };
             default: throw new InvalidDataException("Unknown terrain message mode.");
         }

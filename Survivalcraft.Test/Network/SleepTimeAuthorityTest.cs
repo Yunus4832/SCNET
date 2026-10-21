@@ -19,8 +19,11 @@ public sealed class SleepTimeAuthorityTest
     [InlineData(WorkType.Server, true, false)]
     [InlineData(WorkType.Local, false, true)]
     [InlineData(WorkType.Local, true, false)]
-    public void ClientNeverAcceleratesSleepFromItsPartialPlayerSet(WorkType mode, bool includeAwakePlayer,
-        bool accelerated)
+    public void ClientNeverAcceleratesSleepFromItsPartialPlayerSet(
+        WorkType mode,
+        bool includeAwakePlayer,
+        bool accelerated
+    )
     {
         var previous = CommonLib.WorkType;
         CommonLib.WorkType = mode;
@@ -33,20 +36,24 @@ public sealed class SleepTimeAuthorityTest
             var sleeper = new ComponentSleep();
             typeof(ComponentSleep).GetField("_sleepFactor", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .SetValue(sleeper, 1f);
-            list.Add(new ComponentPlayer
-            {
-                ComponentHealth = new ComponentHealth { Health = 1f },
-                ComponentSleep = sleeper,
-                ComponentGui = (ComponentGui)RuntimeHelpers.GetUninitializedObject(typeof(ComponentGui))
-            });
-            if (includeAwakePlayer)
-            {
-                list.Add(new ComponentPlayer
+            list.Add(
+                new ComponentPlayer
                 {
                     ComponentHealth = new ComponentHealth { Health = 1f },
-                    ComponentSleep = new ComponentSleep(),
+                    ComponentSleep = sleeper,
                     ComponentGui = (ComponentGui)RuntimeHelpers.GetUninitializedObject(typeof(ComponentGui))
-                });
+                }
+            );
+            if (includeAwakePlayer)
+            {
+                list.Add(
+                    new ComponentPlayer
+                    {
+                        ComponentHealth = new ComponentHealth { Health = 1f },
+                        ComponentSleep = new ComponentSleep(),
+                        ComponentGui = (ComponentGui)RuntimeHelpers.GetUninitializedObject(typeof(ComponentGui))
+                    }
+                );
             }
 
             var updates = new SubsystemUpdate { UpdatesPerFrame = 20 };

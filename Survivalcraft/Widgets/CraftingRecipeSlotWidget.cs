@@ -51,6 +51,7 @@ public class CraftingRecipeSlotWidget : CanvasWidget
         {
             _blockIconWidget.Catalog = Catalog;
         }
+
         _labelWidget.IsVisible = false;
         if (!string.IsNullOrEmpty(_ingredient))
         {

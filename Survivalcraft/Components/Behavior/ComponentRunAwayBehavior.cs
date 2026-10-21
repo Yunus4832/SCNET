@@ -64,7 +64,7 @@ public class ComponentRunAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
         _componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true)!;
         _componentHerdBehavior = Entity.FindComponent<ComponentHerdBehavior>();
-        _componentCreature.ComponentHealth.Attacked += delegate (ComponentCreature attacker)
+        _componentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
         {
             RunAwayFrom(attacker.ComponentBody);
         };
@@ -86,13 +86,19 @@ public class ComponentRunAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
                     }
                 }
 
-                if (_componentCreature.ComponentHealth.HealthChange < 0f || (_attacker != null &&
-                                                                             Vector3.DistanceSquared(_attacker.Position,
-                                                                                 _componentCreature.ComponentBody
-                                                                                     .Position) < 36f))
+                if (_componentCreature.ComponentHealth.HealthChange < 0f ||
+                    (_attacker != null &&
+                     Vector3.DistanceSquared(
+                         _attacker.Position,
+                         _componentCreature.ComponentBody
+                             .Position
+                     ) <
+                     36f))
                 {
-                    _importanceLevel = MathUtils.Max(_importanceLevel,
-                        _componentCreature.ComponentHealth.Health < 0.33f ? 300 : 100);
+                    _importanceLevel = MathUtils.Max(
+                        _importanceLevel,
+                        _componentCreature.ComponentHealth.Health < 0.33f ? 300 : 100
+                    );
                 }
                 else if (_heardNoise)
                 {
@@ -110,13 +116,16 @@ public class ComponentRunAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
             },
             Actions.Empty
         );
-        stateMachine.AddState("RunningAway", delegate
+        stateMachine.AddState(
+            "RunningAway",
+            delegate
             {
                 var value = FindSafePlace();
                 _componentPathfinding.SetDestination(value, 1f, 1f, 0, false, true, false, null);
                 _componentCreature.ComponentCreatureSounds.PlayPainSound();
                 _subsystemNoise.MakeNoise(_componentCreature.ComponentBody, 0.25f, 6f);
-            }, delegate
+            },
+            delegate
             {
                 if (!IsActive)
                 {
@@ -167,7 +176,8 @@ public class ComponentRunAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
             for (var num4 = 255; num4 >= 0; num4--)
             {
                 var cellContents = _subsystemTerrain.Terrain.GetCellContents(num2, num4, num3);
-                if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Collidable || cellContents == 18)
+                if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Collidable ||
+                    cellContents == 18)
                 {
                     var vector = new Vector3(num2 + 0.5f, num4 + 1.1f, num3 + 0.5f);
                     var num5 = ScoreSafePlace(position, vector, herdPosition, _lastNoiseSourcePosition, cellContents);
@@ -185,8 +195,13 @@ public class ComponentRunAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
         return result;
     }
 
-    public float ScoreSafePlace(Vector3 currentPosition, Vector3 safePosition, Vector3? herdPosition,
-        Vector3? noiseSourcePosition, int contents)
+    public float ScoreSafePlace(
+        Vector3 currentPosition,
+        Vector3 safePosition,
+        Vector3? herdPosition,
+        Vector3? noiseSourcePosition,
+        int contents
+    )
     {
         var num = 0f;
         var vector = new Vector2(currentPosition.X, currentPosition.Z);

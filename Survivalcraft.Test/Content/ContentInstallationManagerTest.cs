@@ -17,16 +17,20 @@ namespace Survivalcraft.Test.Content;
 public sealed class ContentInstallationManagerTest : IDisposable
 {
     private readonly List<string> _installedWorlds = [];
+
     private readonly List<string> _temporaryDirectories = [];
+
     private readonly List<(ContentType Type, string Name)> _installedAssets = [];
 
     [Fact]
     public void ModInstallOnlyAcknowledgesValidatedCachedPackage()
     {
-        using var package = ScpkgTestPackage.Create("""
-                                                    {"id":"installer.example","name":"Installer Example","version":"1.0.0"}
-                                                    """,
-            new Dictionary<string, string> { ["data/marker.txt"] = "installed" });
+        using var package = ScpkgTestPackage.Create(
+            """
+            {"id":"installer.example","name":"Installer Example","version":"1.0.0"}
+            """,
+            new Dictionary<string, string> { ["data/marker.txt"] = "installed" }
+        );
 
         var result = ContentInstallationManager.Install(package);
 
@@ -83,9 +87,12 @@ public sealed class ContentInstallationManagerTest : IDisposable
             Assert.EndsWith(".png", skinPath, StringComparison.Ordinal);
         }
 
-        Assert.Equal("Installed Image", type == ContentPackageType.BlocksTexture
-            ? BlocksTexturesManager.GetDisplayName(firstName)
-            : CharacterSkinsManager.GetDisplayName(firstName));
+        Assert.Equal(
+            "Installed Image",
+            type == ContentPackageType.BlocksTexture
+                ? BlocksTexturesManager.GetDisplayName(firstName)
+                : CharacterSkinsManager.GetDisplayName(firstName)
+        );
     }
 
     [Fact]
@@ -170,14 +177,20 @@ public sealed class ContentInstallationManagerTest : IDisposable
     public void ImageCreationProducesTemporaryValidatedPackageAndBaselineVersionKeepsIdentifier()
     {
         using var source = new MemoryStream(OnePixelPng(), writable: false);
-        using var first = ContentPackageCreationManager.CreateImage(ContentPackageType.BlocksTexture,
-            new ContentCreationIdentity("Created Texture", "Summary", "Description", "1.0.0"), source);
+        using var first = ContentPackageCreationManager.CreateImage(
+            ContentPackageType.BlocksTexture,
+            new ContentCreationIdentity("Created Texture", "Summary", "Description", "1.0.0"),
+            source
+        );
         using var firstPackage = first.OpenRead();
         var firstInspection = ContentPackageReader.Inspect(firstPackage);
         firstPackage.Position = 0;
         using var nextSource = new MemoryStream(OnePixelPng(), writable: false);
-        using var next = ContentPackageCreationManager.CreateImage(ContentPackageType.BlocksTexture,
-            new ContentCreationIdentity("Created Texture v2", "Summary", "Description", "2.0.0", firstPackage), nextSource);
+        using var next = ContentPackageCreationManager.CreateImage(
+            ContentPackageType.BlocksTexture,
+            new ContentCreationIdentity("Created Texture v2", "Summary", "Description", "2.0.0", firstPackage),
+            nextSource
+        );
         using var nextPackage = next.OpenRead();
         var nextInspection = ContentPackageReader.Inspect(nextPackage);
 
@@ -200,10 +213,17 @@ public sealed class ContentInstallationManagerTest : IDisposable
         using var gif = new MemoryStream("GIF89a"u8.ToArray(), writable: false);
 
         Assert.ThrowsAny<Exception>(() => ContentPackageCreationManager.CreateImage(
-            ContentPackageType.CharacterSkin, new ContentCreationIdentity("Not PNG", "Summary", "Description", "1.0.0"), gif));
+                ContentPackageType.CharacterSkin,
+                new ContentCreationIdentity("Not PNG", "Summary", "Description", "1.0.0"),
+                gif
+            )
+        );
 
-        Assert.Equal(before, Storage.ListFileNames(GamePaths.ContentPackageCreationTemp)
-            .ToHashSet(StringComparer.Ordinal));
+        Assert.Equal(
+            before,
+            Storage.ListFileNames(GamePaths.ContentPackageCreationTemp)
+                .ToHashSet(StringComparer.Ordinal)
+        );
     }
 
     [Fact]
@@ -218,7 +238,8 @@ public sealed class ContentInstallationManagerTest : IDisposable
             "<Subsystems /><Entities /><BlockRegistry><Block Id=\"example.mod:stone\" Index=\"300\" /></BlockRegistry>" +
             "<ExtensionData><Values Name=\"example.mod\"><Values Name=\"state\">" +
             "<Value Name=\"marker\" Type=\"string\" Value=\"preserved\" />" +
-            "</Values></Values></ExtensionData></Project>");
+            "</Values></Values></ExtensionData></Project>"
+        );
         using (var output = Storage.OpenFile(Storage.CombinePaths(sourceDirectory, "Project.xml"), OpenFileMode.Create))
         {
             output.Write(project);
@@ -226,7 +247,8 @@ public sealed class ContentInstallationManagerTest : IDisposable
 
         using var artifact = ContentPackageCreationManager.CreateWorld(
             new ContentCreationIdentity("Mapped World", "Summary", "Description", "1.0.0"),
-            Storage.GetFileName(sourceDirectory));
+            Storage.GetFileName(sourceDirectory)
+        );
         using var package = artifact.OpenRead();
         var installed = ContentInstallationManager.Install(package);
         var installedDirectory = Storage.CombinePaths(GamePaths.Worlds, installed.AssetKey!);
@@ -254,7 +276,8 @@ public sealed class ContentInstallationManagerTest : IDisposable
         using (var writer = new StreamWriter(output))
         {
             writer.Write(
-                "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /><BlockRegistry /></Project>");
+                "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /><BlockRegistry /></Project>"
+            );
         }
 
         var random = new Random(42);
@@ -269,7 +292,9 @@ public sealed class ContentInstallationManagerTest : IDisposable
         }
 
         using var artifact = ContentPackageCreationManager.CreateWorld(
-            new ContentCreationIdentity("Large World", "Summary", "Description", "1.0.0"), Storage.GetFileName(sourceDirectory));
+            new ContentCreationIdentity("Large World", "Summary", "Description", "1.0.0"),
+            Storage.GetFileName(sourceDirectory)
+        );
         var cacheDirectory = Path.Combine(Path.GetTempPath(), $"scnet-large-cache-{Guid.NewGuid():N}");
         _temporaryDirectories.Add(cacheDirectory);
         var cache = new ContentPackageCache(cacheDirectory);
@@ -340,25 +365,45 @@ public sealed class ContentInstallationManagerTest : IDisposable
 
     private static MemoryStream CreateWorldPackage(string regionMarker = "region")
     {
-        var metadata = JsonSerializer.SerializeToElement(new Dictionary<string, object>
-        {
-            ["projectFormat"] = "scnet-project-xml-v1",
-            ["regionsDirectory"] = "payload/world/Regions"
-        });
-        var manifest = new ContentPackageManifest(ContentPackageManifest.CurrentFormatVersion, ContentPackageType.World,
-            "9e9a67f8-79df-4d05-8cfa-61bd8095661e", "Installed World", "Summary", "Description", "1.0.0",
-            new ContentPackagePayload("scnet.world-v1", "payload/world/Project.xml", "application/xml"), metadata);
+        var metadata = JsonSerializer.SerializeToElement(
+            new Dictionary<string, object>
+            {
+                ["projectFormat"] = "scnet-project-xml-v1",
+                ["regionsDirectory"] = "payload/world/Regions"
+            }
+        );
+        var manifest = new ContentPackageManifest(
+            ContentPackageManifest.CurrentFormatVersion,
+            ContentPackageType.World,
+            "9e9a67f8-79df-4d05-8cfa-61bd8095661e",
+            "Installed World",
+            "Summary",
+            "Description",
+            "1.0.0",
+            new ContentPackagePayload("scnet.world-v1", "payload/world/Project.xml", "application/xml"),
+            metadata
+        );
         var project = Encoding.UTF8.GetBytes(
-            "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /><BlockRegistry /></Project>");
+            "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /><BlockRegistry /></Project>"
+        );
         var region = Encoding.UTF8.GetBytes(regionMarker);
         var output = new MemoryStream();
-        ContentPackageWriter.Write(output, manifest,
-        [
-            new ContentPackageWriteEntry("payload/world/Project.xml", project.Length,
-                () => new MemoryStream(project, writable: false)),
-            new ContentPackageWriteEntry("payload/world/Regions/0,0.dat", region.Length,
-                () => new MemoryStream(region, writable: false))
-        ]);
+        ContentPackageWriter.Write(
+            output,
+            manifest,
+            [
+                new ContentPackageWriteEntry(
+                    "payload/world/Project.xml",
+                    project.Length,
+                    () => new MemoryStream(project, writable: false)
+                ),
+                new ContentPackageWriteEntry(
+                    "payload/world/Regions/0,0.dat",
+                    region.Length,
+                    () => new MemoryStream(region, writable: false)
+                )
+            ]
+        );
         output.Position = 0;
         return output;
     }
@@ -368,33 +413,48 @@ public sealed class ContentInstallationManagerTest : IDisposable
         var bytes = OnePixelPng();
         var isTexture = type == ContentPackageType.BlocksTexture;
         var entry = isTexture ? "payload/texture.png" : "payload/skin.png";
-        var manifest = new ContentPackageManifest(ContentPackageManifest.CurrentFormatVersion, type, Guid.NewGuid().ToString(), displayName, "Summary", "Description", "1.0.0",
-            new ContentPackagePayload(isTexture ? "scnet.blocks-texture.png-v1" : "scnet.character-skin.png-v1",
-                entry, "image/png"),
-            JsonSerializer.SerializeToElement(new Dictionary<string, object> { ["width"] = 1, ["height"] = 1 }));
+        var manifest = new ContentPackageManifest(
+            ContentPackageManifest.CurrentFormatVersion,
+            type,
+            Guid.NewGuid().ToString(),
+            displayName,
+            "Summary",
+            "Description",
+            "1.0.0",
+            new ContentPackagePayload(
+                isTexture ? "scnet.blocks-texture.png-v1" : "scnet.character-skin.png-v1",
+                entry,
+                "image/png"
+            ),
+            JsonSerializer.SerializeToElement(new Dictionary<string, object> { ["width"] = 1, ["height"] = 1 })
+        );
         var output = new MemoryStream();
-        ContentPackageWriter.Write(output, manifest,
-            [new ContentPackageWriteEntry(entry, bytes.Length, () => new MemoryStream(bytes, writable: false))]);
+        ContentPackageWriter.Write(
+            output,
+            manifest,
+            [new ContentPackageWriteEntry(entry, bytes.Length, () => new MemoryStream(bytes, writable: false))]
+        );
         output.Position = 0;
         return output;
     }
 
     private static byte[] OnePixelPng() => Convert.FromBase64String(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII=");
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII="
+    );
 
     private sealed class ReadTrackingStream(Stream inner) : Stream
     {
         public int MaximumReadSize { get; private set; }
+
         public override bool CanRead => inner.CanRead;
+
         public override bool CanSeek => inner.CanSeek;
+
         public override bool CanWrite => false;
+
         public override long Length => inner.Length;
 
-        public override long Position
-        {
-            get => inner.Position;
-            set => inner.Position = value;
-        }
+        public override long Position { get => inner.Position; set => inner.Position = value; }
 
         public override void Flush() => inner.Flush();
 

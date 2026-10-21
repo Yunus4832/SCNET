@@ -21,10 +21,24 @@ public class CompassBlock : Block
             pointerMesh.ParentBone ??
             throw new InvalidOperationException("Required PointerMesh.ParentBone is null")
         );
-        CaseMesh.AppendModelMeshPart(caseMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.01f, 0f), false, false, true, false, Color.White);
-        PointerMesh.AppendModelMeshPart(pointerMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.01f, 0f), false, false, false, false, Color.White);
+        CaseMesh.AppendModelMeshPart(
+            caseMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.01f, 0f),
+            false,
+            false,
+            true,
+            false,
+            Color.White
+        );
+        PointerMesh.AppendModelMeshPart(
+            pointerMesh.MeshParts[0],
+            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.01f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         base.Initialize();
     }
 

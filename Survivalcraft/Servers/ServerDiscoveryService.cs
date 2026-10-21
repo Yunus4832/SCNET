@@ -9,20 +9,28 @@ namespace Game.Servers;
 
 public sealed class ServerDiscoveryService
 {
-    public Task<ServerRuntimeStatus> ProbeAsync(string address, TimeSpan timeout,
-        CancellationToken cancellationToken)
+    public Task<ServerRuntimeStatus> ProbeAsync(
+        string address,
+        TimeSpan timeout,
+        CancellationToken cancellationToken
+    )
     {
         return Task.Run(() => Probe(address, timeout, cancellationToken), cancellationToken);
     }
 
-    public Task<IReadOnlyList<ServerItem>> DiscoverLanAsync(TimeSpan timeout,
-        CancellationToken cancellationToken)
+    public Task<IReadOnlyList<ServerItem>> DiscoverLanAsync(
+        TimeSpan timeout,
+        CancellationToken cancellationToken
+    )
     {
         return Task.Run(() => DiscoverLan(timeout, cancellationToken), cancellationToken);
     }
 
-    private static async Task<ServerRuntimeStatus> Probe(string address, TimeSpan timeout,
-        CancellationToken cancellationToken)
+    private static async Task<ServerRuntimeStatus> Probe(
+        string address,
+        TimeSpan timeout,
+        CancellationToken cancellationToken
+    )
     {
         if (!CommonLib.Resolve(address, out var endpoint))
         {
@@ -45,9 +53,13 @@ public sealed class ServerDiscoveryService
                 var package = PackageManager.DecodePackage<ServerInfoPackage>(null, payload, new Client(remote));
                 status = ServerRuntimeStatus.FromPackage(package.Package, stopwatch.ElapsedMilliseconds);
             };
-            void SendProbe() => network.SendDatagram(endpoint!, NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true)));
+
+            void SendProbe() =>
+                network.SendDatagram(endpoint!, NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true)));
+
             SendProbe();
-            await PollAsync(network, timeout, cancellationToken, () => status is not null, SendProbe).ConfigureAwait(false);
+            await PollAsync(network, timeout, cancellationToken, () => status is not null, SendProbe)
+                .ConfigureAwait(false);
             return status ?? new ServerRuntimeStatus { Availability = ServerAvailability.Unavailable };
         }
         catch (OperationCanceledException)
@@ -61,7 +73,10 @@ public sealed class ServerDiscoveryService
         }
     }
 
-    private static async Task<IReadOnlyList<ServerItem>> DiscoverLan(TimeSpan timeout, CancellationToken cancellationToken)
+    private static async Task<IReadOnlyList<ServerItem>> DiscoverLan(
+        TimeSpan timeout,
+        CancellationToken cancellationToken
+    )
     {
         await using var network = new NetworkHost(options: new NetworkHostOptions { ReuseAddress = true });
         var items = new Dictionary<string, ServerItem>(StringComparer.Ordinal);
@@ -97,7 +112,10 @@ public sealed class ServerDiscoveryService
                     Log.Warning($"Ignored invalid LAN discovery response from '{remote}': {exception.Message}");
                 }
             };
-            network.BroadcastDatagram(NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true)), SettingsManager.Current.BroadcastPort);
+            network.BroadcastDatagram(
+                NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true)),
+                SettingsManager.Current.BroadcastPort
+            );
             await PollAsync(network, timeout, cancellationToken, () => false).ConfigureAwait(false);
             return items.Values.ToArray();
         }
@@ -112,8 +130,13 @@ public sealed class ServerDiscoveryService
         }
     }
 
-    internal static async Task PollAsync(NetworkHost network, TimeSpan timeout, CancellationToken cancellationToken,
-        Func<bool> completed, Action? retry = null)
+    internal static async Task PollAsync(
+        NetworkHost network,
+        TimeSpan timeout,
+        CancellationToken cancellationToken,
+        Func<bool> completed,
+        Action? retry = null
+    )
     {
         var stopwatch = Stopwatch.StartNew();
         var nextRetry = TimeSpan.FromMilliseconds(250);
@@ -131,5 +154,4 @@ public sealed class ServerDiscoveryService
             await Task.Delay(2, cancellationToken).ConfigureAwait(false);
         }
     }
-
 }

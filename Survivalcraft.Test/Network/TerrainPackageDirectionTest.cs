@@ -10,7 +10,9 @@ public sealed class TerrainPackageDirectionTest
     [InlineData(SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment, false)]
     [InlineData(SubsystemTerrainPackage.DataType.SyncTerrainCellDelta, false)]
     public void TerrainMessagesRequireTheirAuthoritativeDirection(
-        SubsystemTerrainPackage.DataType type, bool serverReceives)
+        SubsystemTerrainPackage.DataType type,
+        bool serverReceives
+    )
     {
         Assert.True(SubsystemTerrainPackageHandler.AcceptsDirection(type, serverReceives));
         Assert.False(SubsystemTerrainPackageHandler.AcceptsDirection(type, !serverReceives));

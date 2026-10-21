@@ -14,17 +14,9 @@ public class BitmapButtonWidget : ButtonWidget
 
     public readonly RectangleWidget RectangleWidget;
 
-    public override bool IsClicked
-    {
-        get => ClickableWidget.IsClicked;
-        set => ClickableWidget.IsClicked = value;
-    }
+    public override bool IsClicked { get => ClickableWidget.IsClicked; set => ClickableWidget.IsClicked = value; }
 
-    public override bool IsChecked
-    {
-        get => ClickableWidget.IsChecked;
-        set => ClickableWidget.IsChecked = value;
-    }
+    public override bool IsChecked { get => ClickableWidget.IsChecked; set => ClickableWidget.IsChecked = value; }
 
     public override bool IsAutoCheckingEnabled
     {
@@ -32,17 +24,9 @@ public class BitmapButtonWidget : ButtonWidget
         set => ClickableWidget.IsAutoCheckingEnabled = value;
     }
 
-    public override string Text
-    {
-        get => _labelWidget.Text;
-        set => _labelWidget.Text = value;
-    }
+    public override string Text { get => _labelWidget.Text; set => _labelWidget.Text = value; }
 
-    public override BitmapFont Font
-    {
-        get => _labelWidget.Font;
-        set => _labelWidget.Font = value;
-    }
+    public override BitmapFont Font { get => _labelWidget.Font; set => _labelWidget.Font = value; }
 
     public required Subtexture NormalSubtexture { get; set; }
 

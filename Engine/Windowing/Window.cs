@@ -98,7 +98,7 @@ public static partial class Window
         ArgumentOutOfRangeException.ThrowIfNegative(width);
         ArgumentOutOfRangeException.ThrowIfNegative(height);
 
-        AppDomain.CurrentDomain.UnhandledException += delegate (object _, UnhandledExceptionEventArgs args)
+        AppDomain.CurrentDomain.UnhandledException += delegate(object _, UnhandledExceptionEventArgs args)
         {
             var ex = args.ExceptionObject as Exception ??
                      new Exception($"Unknown exception. Additional information: {args.ExceptionObject}");
@@ -312,7 +312,8 @@ public static partial class Window
         int width,
         int height,
         WindowMode windowMode,
-        string title);
+        string title
+    );
 
     private static partial void DisposePlatformView();
 
@@ -330,8 +331,10 @@ public static partial class Window
 
     private enum State
     {
-        Uncreated,
-        Inactive,
-        Active
+        Uncreated = 0,
+
+        Inactive = 1,
+
+        Active = 2
     }
 }

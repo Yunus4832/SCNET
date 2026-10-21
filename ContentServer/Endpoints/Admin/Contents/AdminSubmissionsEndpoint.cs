@@ -29,11 +29,13 @@ public sealed class AdminSubmissionsEndpoint(IMediator mediator) : ContentEndpoi
         ContentVersionStatus? status,
         string? query,
         PaginationRequest page,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var items = await mediator.Send(
             new ListVersionsQuery(VersionQueryScope.All, page.ToPageRequest(), Search: query, Status: status),
-            cancellationToken);
+            cancellationToken
+        );
         return items.Map(item => item.ToResponse())
             .AsResponseData();
     }

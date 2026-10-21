@@ -2,6 +2,7 @@ namespace Engine.Input;
 
 public enum GamePadStick
 {
-    Left,
-    Right
+    Left = 0,
+
+    Right = 1
 }

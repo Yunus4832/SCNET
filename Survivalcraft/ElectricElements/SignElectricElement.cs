@@ -17,8 +17,10 @@ public class SignElectricElement(
     public override bool Simulate()
     {
         var flag = CalculateHighInputsCount() > 0;
-        if (flag && _isMessageAllowed && (!_lastMessageTime.HasValue ||
-                                          SubsystemElectricity.SubsystemTime.GameTime - _lastMessageTime.Value > 0.5))
+        if (flag &&
+            _isMessageAllowed &&
+            (!_lastMessageTime.HasValue ||
+             SubsystemElectricity.SubsystemTime.GameTime - _lastMessageTime.Value > 0.5))
         {
             _isMessageAllowed = false;
             _lastMessageTime = SubsystemElectricity.SubsystemTime.GameTime;
@@ -61,9 +63,12 @@ public class SignElectricElement(
 
             if (line.Length > 0)
             {
-                segments.Add(new MessageSegment(
-                    line,
-                    Color: NormalizeMessageColor(signData.Colors[index])));
+                segments.Add(
+                    new MessageSegment(
+                        line,
+                        Color: NormalizeMessageColor(signData.Colors[index])
+                    )
+                );
             }
 
             if (!joinsNextLine && index < lastLine)

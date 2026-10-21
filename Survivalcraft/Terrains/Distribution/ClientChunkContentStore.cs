@@ -58,7 +58,8 @@ public sealed class ClientChunkContentStore
                 allocation,
                 entry.ContentVersion,
                 entry.Cells,
-                entry.Shafts);
+                entry.Shafts
+            );
             return true;
         }
 
@@ -82,4 +83,5 @@ public readonly record struct ClientChunkContent(
     ChunkAllocationId Allocation,
     long ContentVersion,
     ReadOnlyMemory<int> Cells,
-    ReadOnlyMemory<long> Shafts);
+    ReadOnlyMemory<long> Shafts
+);

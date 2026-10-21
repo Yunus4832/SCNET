@@ -48,8 +48,14 @@ public class TppCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidget
                 var v4 = 0.5f * (vector3 * i + v3 * j);
                 var vector4 = matrix.Translation + v4;
                 var end = vector4 + vector2 + Vector3.Normalize(vector2) * 0.5f;
-                var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(vector4, end, false,
-                    true, (value, _) => !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Transparent);
+                var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(
+                    vector4,
+                    end,
+                    false,
+                    true,
+                    (value, _) => !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
+                        .Transparent
+                );
                 if (terrainRaycastResult.HasValue)
                 {
                     num = num.HasValue

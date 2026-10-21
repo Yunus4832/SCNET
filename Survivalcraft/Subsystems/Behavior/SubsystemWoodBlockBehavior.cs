@@ -41,7 +41,8 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override void OnBlockRemoved(int value, int newValue, int x, int y, int z)
     {
-        if (_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != 0 || _leavesToCheck.Count >= 5000 ||
+        if (_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != 0 ||
+            _leavesToCheck.Count >= 5000 ||
             CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)] is not WoodBlock)
         {
             return;
@@ -120,7 +121,8 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
     private void DecayLeavesIfNeeded(Point3 p)
     {
         _leavesToCheck.Remove(p);
-        if (!(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(p.X, p.Y, p.Z)] is LeavesBlock))
+        if (!(CurrentModRuntime.Value!.RequireWorldCatalog()
+                .Blocks[SubsystemTerrain.Terrain.GetCellContents(p.X, p.Y, p.Z)] is LeavesBlock))
         {
             return;
         }
@@ -158,7 +160,7 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
             }
 
             continue;
-        IL_00e8:
+            IL_00e8:
             flag = true;
             break;
         }

@@ -36,12 +36,14 @@ public sealed class MessagePanelWidget : CanvasWidget
     private readonly BevelledButtonWidget _channelButton =
         MultiplayerUiStyle.CreateButton(
             MultiplayerUiStyle.Text("Global"),
-            new Vector2(88f, 54f));
+            new Vector2(88f, 54f)
+        );
 
     private readonly BevelledButtonWidget _sendMessageButton =
         MultiplayerUiStyle.CreateButton(
             MultiplayerUiStyle.Text("Send"),
-            new Vector2(88f, 54f));
+            new Vector2(88f, 54f)
+        );
 
     private readonly BevelledButtonWidget _commandButton =
         MultiplayerUiStyle.CreateButton("/", new Vector2(54f));
@@ -65,9 +67,13 @@ public sealed class MessagePanelWidget : CanvasWidget
     private GameMessageChannel _messageChannel;
 
     private string? _suggestionRequestId;
+
     private string? _commandRequestId;
+
     private double _suggestionSendAt;
+
     private bool _suggestionPending;
+
     private IReadOnlyList<CommandSuggestion>? _remoteSuggestions;
 
     public override WidgetAlignment HorizontalAlignment { get; set; } = WidgetAlignment.Center;
@@ -81,7 +87,8 @@ public sealed class MessagePanelWidget : CanvasWidget
     public MessagePanelWidget(
         PlayerData playerData,
         MessageHistoryOverlayWidget? historyOverlayWidget,
-        bool messagingEnabled = true)
+        bool messagingEnabled = true
+    )
     {
         PlayerData = playerData;
         _historyOverlayWidget = historyOverlayWidget;
@@ -175,7 +182,9 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     public override void Update()
     {
-        if (_suggestionPending && Time.RealTime >= _suggestionSendAt && IsCommandInput &&
+        if (_suggestionPending &&
+            Time.RealTime >= _suggestionSendAt &&
+            IsCommandInput &&
             PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget == this)
         {
             _suggestionPending = false;
@@ -191,7 +200,8 @@ public sealed class MessagePanelWidget : CanvasWidget
                 {
                     GameMessageChannel.Team => MultiplayerUiStyle.Text("Team"),
                     _ => MultiplayerUiStyle.Text("Global")
-                });
+                }
+            );
         }
 
         if (_commandButton.IsClicked)
@@ -263,7 +273,8 @@ public sealed class MessagePanelWidget : CanvasWidget
 
         CommandGateway.Submit(
             PlayerData,
-            new SendChatMessageCommand(_messageChannel, input));
+            new SendChatMessageCommand(_messageChannel, input)
+        );
         EditText.Text = string.Empty;
     }
 
@@ -363,7 +374,8 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     internal void ReceiveSuggestions(string input, string correlationId, IReadOnlyList<CommandSuggestion> suggestions)
     {
-        if (input != EditText.Text || correlationId != _suggestionRequestId ||
+        if (input != EditText.Text ||
+            correlationId != _suggestionRequestId ||
             PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget != this)
         {
             return;
@@ -384,13 +396,17 @@ public sealed class MessagePanelWidget : CanvasWidget
         var textAdapter = new TextCommandAdapter(runtime.Commands);
         _commandSuggestions.SetSuggestions(
             (_remoteSuggestions ?? textAdapter.Suggest(EditText.Text, principal))
-                .Concat(textAdapter.Suggest(
+            .Concat(
+                textAdapter.Suggest(
                     EditText.Text,
                     CommandPrincipal.LocalOperator,
-                    domain: CommandDomain.Application))
-                .GroupBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
-                .Select(group => group.First())
-                .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase));
+                    domain: CommandDomain.Application
+                )
+            )
+            .GroupBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
+        );
     }
 
     private void ApplyCommandSuggestion(CommandSuggestion suggestion)
@@ -415,7 +431,8 @@ public sealed class MessagePanelWidget : CanvasWidget
                  adapter.CanExecute(
                      EditText.Text,
                      CommandPrincipal.LocalOperator,
-                     domain: CommandDomain.Application)) &&
+                     domain: CommandDomain.Application
+                 )) &&
                 !_commandSuggestions.HasSuggestions)
             {
                 var input = EditText.Text;
@@ -445,13 +462,13 @@ public sealed class MessagePanelWidget : CanvasWidget
             _historyOverlayButton,
             _historyOverlayWidget.DisplayEnabled
                 ? MultiplayerUiStyle.Text("OverlayOn")
-                : MultiplayerUiStyle.Text("OverlayOff"));
+                : MultiplayerUiStyle.Text("OverlayOff")
+        );
         _historyOverlayButton.IsChecked = _historyOverlayWidget.DisplayEnabled;
     }
 
     private void DisplayInputError(string message)
     {
-        _messageService.DisplayLocal(
-            GameMessage.System(message, GameMessageTone.Error));
+        _messageService.DisplayLocal(GameMessage.System(message, GameMessageTone.Error));
     }
 }

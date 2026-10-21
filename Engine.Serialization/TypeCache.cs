@@ -146,8 +146,7 @@ public static class TypeCache
             {
                 if (throwIfNotFound)
                 {
-                    throw new InvalidOperationException(
-                        $"Type \"{longTypeName}\" not found in any loaded assembly.");
+                    throw new InvalidOperationException($"Type \"{longTypeName}\" not found in any loaded assembly.");
                 }
 
                 return null;

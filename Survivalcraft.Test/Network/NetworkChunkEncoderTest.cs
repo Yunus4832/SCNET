@@ -23,8 +23,12 @@ public sealed class NetworkChunkEncoderTest
 
         Assert.True(cache.TryGet(snapshot.Coords, snapshot.ContentVersion, out var cached));
         Assert.Same(encoded, cached);
-        Assert.Equal(7, Terrain.ExtractContents(
-            NetworkChunkCodec.Decode(snapshot.Coords, encoded.Payload).GetCellValueFast(1, 20, 3)));
+        Assert.Equal(
+            7,
+            Terrain.ExtractContents(
+                NetworkChunkCodec.Decode(snapshot.Coords, encoded.Payload).GetCellValueFast(1, 20, 3)
+            )
+        );
         Assert.Equal(0, encoder.OutstandingCount);
         Assert.True(encoder.CanSchedule(new AuthorityChunkDescriptor(snapshot.Coords, snapshot.ContentVersion)));
     }
@@ -38,15 +42,19 @@ public sealed class NetworkChunkEncoderTest
             chunk.Coords,
             1,
             chunk.Cells.ToArray(),
-            chunk.Shafts.ToArray());
+            chunk.Shafts.ToArray()
+        );
         using var encodeStarted = new ManualResetEventSlim();
         using var allowEncode = new ManualResetEventSlim();
-        using var encoder = new NetworkChunkEncoder(1, value =>
-        {
-            encodeStarted.Set();
-            Assert.True(allowEncode.Wait(TimeSpan.FromSeconds(5)));
-            return NetworkChunkCodec.Encode(value);
-        });
+        using var encoder = new NetworkChunkEncoder(
+            1,
+            value =>
+            {
+                encodeStarted.Set();
+                Assert.True(allowEncode.Wait(TimeSpan.FromSeconds(5)));
+                return NetworkChunkCodec.Encode(value);
+            }
+        );
 
         Assert.True(encoder.TrySchedule(snapshot));
         Assert.True(encodeStarted.Wait(TimeSpan.FromSeconds(5)));
@@ -54,8 +62,12 @@ public sealed class NetworkChunkEncoderTest
         allowEncode.Set();
 
         var encoded = Assert.Single(WaitForCompletion(encoder, new NetworkChunkCache()));
-        Assert.Equal(7, Terrain.ExtractContents(
-            NetworkChunkCodec.Decode(snapshot.Coords, encoded.Payload).GetCellValueFast(1, 20, 3)));
+        Assert.Equal(
+            7,
+            Terrain.ExtractContents(
+                NetworkChunkCodec.Decode(snapshot.Coords, encoded.Payload).GetCellValueFast(1, 20, 3)
+            )
+        );
     }
 
     [Fact]
@@ -82,7 +94,8 @@ public sealed class NetworkChunkEncoderTest
         using var encoder = BlockingEncoder(
             NetworkTerrainPolicy.DefaultServerChunkCountSendPer,
             encodeStarted,
-            allowEncode);
+            allowEncode
+        );
 
         Assert.True(encoder.TrySchedule(Snapshot(new Point2(0, 0), 1)));
         Assert.True(encodeStarted.Wait(TimeSpan.FromSeconds(5)));
@@ -91,9 +104,14 @@ public sealed class NetworkChunkEncoderTest
             Assert.True(encoder.TrySchedule(Snapshot(new Point2(i, 0), 1)));
         }
 
-        Assert.False(encoder.TrySchedule(Snapshot(
-            new Point2(NetworkTerrainPolicy.DefaultServerChunkCountSendPer, 0),
-            1)));
+        Assert.False(
+            encoder.TrySchedule(
+                Snapshot(
+                    new Point2(NetworkTerrainPolicy.DefaultServerChunkCountSendPer, 0),
+                    1
+                )
+            )
+        );
         allowEncode.Set();
     }
 
@@ -107,9 +125,14 @@ public sealed class NetworkChunkEncoderTest
 
         Assert.True(encoder.TrySchedule(snapshot));
         Assert.True(encodeStarted.Wait(TimeSpan.FromSeconds(5)));
-        Assert.False(encoder.CanSchedule(new AuthorityChunkDescriptor(
-            snapshot.Coords,
-            snapshot.ContentVersion)));
+        Assert.False(
+            encoder.CanSchedule(
+                new AuthorityChunkDescriptor(
+                    snapshot.Coords,
+                    snapshot.ContentVersion
+                )
+            )
+        );
         Assert.True(encoder.TrySchedule(Snapshot(snapshot.Coords, snapshot.ContentVersion)));
         Assert.Equal(1, encoder.OutstandingCount);
         allowEncode.Set();
@@ -118,12 +141,16 @@ public sealed class NetworkChunkEncoderTest
     private static NetworkChunkEncoder BlockingEncoder(
         int capacity,
         ManualResetEventSlim started,
-        ManualResetEventSlim allow) => new(capacity, snapshot =>
-    {
-        started.Set();
-        Assert.True(allow.Wait(TimeSpan.FromSeconds(5)));
-        return NetworkChunkCodec.Encode(snapshot);
-    });
+        ManualResetEventSlim allow
+    ) => new(
+        capacity,
+        snapshot =>
+        {
+            started.Set();
+            Assert.True(allow.Wait(TimeSpan.FromSeconds(5)));
+            return NetworkChunkCodec.Encode(snapshot);
+        }
+    );
 
     private static AuthorityChunkSnapshot Snapshot(Point2 coords, long version, int contents = 0)
     {
@@ -134,7 +161,8 @@ public sealed class NetworkChunkEncoderTest
 
     private static IReadOnlyList<EncodedTerrainChunk> WaitForCompletion(
         NetworkChunkEncoder encoder,
-        NetworkChunkCache cache)
+        NetworkChunkCache cache
+    )
     {
         var stopwatch = Stopwatch.StartNew();
         while (stopwatch.Elapsed < TimeSpan.FromSeconds(5))

@@ -34,8 +34,11 @@ public sealed class AboutHelpTopicTest
         var topic = HelpTopic.Create("50", new JsonObject { ["Name"] = "About" });
         var text = topic.Text;
         Assert.Contains(AboutHelpTopic.ShortBuildVersion(VersionsManager.BuildVersion), text);
-        Assert.Contains(typeof(Texture2D).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
-            .InformationalVersion.Split('+', 2)[0], text);
+        Assert.Contains(
+            typeof(Texture2D).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+                .InformationalVersion.Split('+', 2)[0],
+            text
+        );
         foreach (var (key, value) in new[]
                  {
                      ("GameProtocol", VersionsManager.ProtocolVersion.ToString()),
@@ -47,6 +50,7 @@ public sealed class AboutHelpTopicTest
         {
             Assert.Contains($"{LanguageManager.Get("About", key)}: {value}", text);
         }
+
         Assert.Contains(RuntimeInformation.ProcessArchitecture.ToString(), text);
         Assert.Contains(AboutHelpTopic.SourceUrl, text);
         Assert.DoesNotContain("[Help:", text);
@@ -85,5 +89,4 @@ public sealed class AboutHelpTopicTest
         bytes[4]++;
         Assert.False(RelayDatagramCodec.TryDecode(bytes, key, out _));
     }
-
 }

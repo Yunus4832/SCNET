@@ -38,8 +38,10 @@ public class ShaderCodeManager
             string shaderTextTemp;
             if (external)
             {
-                var stream = Storage.OpenFile(Storage.CombinePaths(RunPath.ExternalPath, includedFileName),
-                    OpenFileMode.Read);
+                var stream = Storage.OpenFile(
+                    Storage.CombinePaths(RunPath.ExternalPath, includedFileName),
+                    OpenFileMode.Read
+                );
                 var streamReader = new StreamReader(stream);
                 shaderTextTemp = streamReader.ReadToEnd();
             }

@@ -18,29 +18,92 @@ public sealed class EndpointRegistrationsTest
         var hostEndpoint = new IPEndPoint(IPAddress.Loopback, 30000);
         var participantEndpoint = new IPEndPoint(IPAddress.Loopback, 30001);
         var hostTicket = registry.IssueTicket(invitation.SessionId, Guid.Empty, invitation.HostCredential);
-        var participantTicket = registry.IssueTicket(invitation.SessionId, participant.ParticipantId,
-            participant.Credential);
+        var participantTicket = registry.IssueTicket(
+            invitation.SessionId,
+            participant.ParticipantId,
+            participant.Credential
+        );
         var hostChallenge = registrations.Challenge(invitation.SessionId, Guid.Empty, hostTicket.Token, hostEndpoint);
-        var participantChallenge = registrations.Challenge(invitation.SessionId, participant.ParticipantId,
-            participantTicket.Token, participantEndpoint);
-        Assert.True(registrations.Confirm(invitation.SessionId, Guid.Empty, hostTicket.Token, hostChallenge, hostEndpoint));
-        Assert.True(registrations.Confirm(invitation.SessionId, participant.ParticipantId, participantTicket.Token,
-            participantChallenge, participantEndpoint));
+        var participantChallenge = registrations.Challenge(
+            invitation.SessionId,
+            participant.ParticipantId,
+            participantTicket.Token,
+            participantEndpoint
+        );
+        Assert.True(
+            registrations.Confirm(
+                invitation.SessionId,
+                Guid.Empty,
+                hostTicket.Token,
+                hostChallenge,
+                hostEndpoint
+            )
+        );
+        Assert.True(
+            registrations.Confirm(
+                invitation.SessionId,
+                participant.ParticipantId,
+                participantTicket.Token,
+                participantChallenge,
+                participantEndpoint
+            )
+        );
         var attempt = Guid.NewGuid();
-        var challenge = registrations.ExchangeChallenge(invitation.SessionId, participant.ParticipantId,
-            attempt, participantEndpoint, hostEndpoint);
-        Assert.Equal(challenge, registrations.ExchangeChallenge(invitation.SessionId, participant.ParticipantId,
-            attempt, participantEndpoint, hostEndpoint));
-        Assert.NotEqual(challenge, registrations.ExchangeChallenge(invitation.SessionId, participant.ParticipantId,
-            Guid.NewGuid(), participantEndpoint, hostEndpoint));
-        Assert.Throws<InvalidOperationException>(() => registrations.ExchangeChallenge(invitation.SessionId,
-            participant.ParticipantId, attempt, hostEndpoint, hostEndpoint));
+        var challenge = registrations.ExchangeChallenge(
+            invitation.SessionId,
+            participant.ParticipantId,
+            attempt,
+            participantEndpoint,
+            hostEndpoint
+        );
+        Assert.Equal(
+            challenge,
+            registrations.ExchangeChallenge(
+                invitation.SessionId,
+                participant.ParticipantId,
+                attempt,
+                participantEndpoint,
+                hostEndpoint
+            )
+        );
+        Assert.NotEqual(
+            challenge,
+            registrations.ExchangeChallenge(
+                invitation.SessionId,
+                participant.ParticipantId,
+                Guid.NewGuid(),
+                participantEndpoint,
+                hostEndpoint
+            )
+        );
+        Assert.Throws<InvalidOperationException>(() => registrations.ExchangeChallenge(
+                invitation.SessionId,
+                participant.ParticipantId,
+                attempt,
+                hostEndpoint,
+                hostEndpoint
+            )
+        );
         clock.Advance(TimeSpan.FromSeconds(10));
-        Assert.NotEqual(challenge, registrations.ExchangeChallenge(invitation.SessionId, participant.ParticipantId,
-            attempt, participantEndpoint, hostEndpoint));
+        Assert.NotEqual(
+            challenge,
+            registrations.ExchangeChallenge(
+                invitation.SessionId,
+                participant.ParticipantId,
+                attempt,
+                participantEndpoint,
+                hostEndpoint
+            )
+        );
         registry.Close(invitation.SessionId, invitation.HostCredential);
-        Assert.Throws<InvalidOperationException>(() => registrations.ExchangeChallenge(invitation.SessionId,
-            participant.ParticipantId, attempt, participantEndpoint, hostEndpoint));
+        Assert.Throws<InvalidOperationException>(() => registrations.ExchangeChallenge(
+                invitation.SessionId,
+                participant.ParticipantId,
+                attempt,
+                participantEndpoint,
+                hostEndpoint
+            )
+        );
     }
 
     [Fact]
@@ -92,13 +155,15 @@ public sealed class EndpointRegistrationsTest
         Assert.False(registrations.Confirm(invitation.SessionId, Guid.Empty, ticket.Token, "wrong", endpoint));
         Assert.False(registrations.Confirm(invitation.SessionId, Guid.Empty, ticket.Token, challenge, other));
         Assert.Throws<InvalidOperationException>(() =>
-            registrations.Challenge(invitation.SessionId, Guid.Empty, ticket.Token, other));
+            registrations.Challenge(invitation.SessionId, Guid.Empty, ticket.Token, other)
+        );
         Assert.Equal(challenge, registrations.Challenge(invitation.SessionId, Guid.Empty, ticket.Token, endpoint));
         Assert.True(registrations.Confirm(invitation.SessionId, Guid.Empty, ticket.Token, challenge, endpoint));
         Assert.Equal(endpoint, registrations.Find(invitation.SessionId, Guid.Empty, AddressFamily.InterNetwork));
         registry.Close(invitation.SessionId, invitation.HostCredential);
         Assert.Null(registrations.Find(invitation.SessionId, Guid.Empty, AddressFamily.InterNetwork));
     }
+
     [Fact]
     public void DualStackRegistrationsRetainBothFamiliesAndBindChallengesToTheirEndpoints()
     {
@@ -139,13 +204,18 @@ public sealed class EndpointRegistrationsTest
         var challenge = registrations.Challenge(invitation.SessionId, Guid.Empty, ticket.Token, endpoint, local);
         local[0] = "192.168.1.3:30000";
         Assert.Throws<InvalidOperationException>(() =>
-            registrations.Challenge(invitation.SessionId, Guid.Empty, ticket.Token, endpoint, local));
+            registrations.Challenge(invitation.SessionId, Guid.Empty, ticket.Token, endpoint, local)
+        );
         Assert.True(registrations.Confirm(invitation.SessionId, Guid.Empty, ticket.Token, challenge, endpoint));
         var published = registrations.FindLocalEndpoints(invitation.SessionId, Guid.Empty, AddressFamily.InterNetwork);
         Assert.Equal("[240e:1234::2]:30000", Assert.Single(published));
         published[0] = "192.168.1.4:30000";
-        Assert.Equal("[240e:1234::2]:30000", Assert.Single(
-            registrations.FindLocalEndpoints(invitation.SessionId, Guid.Empty, AddressFamily.InterNetwork)));
+        Assert.Equal(
+            "[240e:1234::2]:30000",
+            Assert.Single(
+                registrations.FindLocalEndpoints(invitation.SessionId, Guid.Empty, AddressFamily.InterNetwork)
+            )
+        );
         clock.Advance(TimeSpan.FromSeconds(61));
         Assert.NotEmpty(registrations.FindLocalEndpoints(invitation.SessionId, Guid.Empty, AddressFamily.InterNetwork));
         clock.Advance(TimeSpan.FromSeconds(59));

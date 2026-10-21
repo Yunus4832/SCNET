@@ -28,11 +28,16 @@ public static class WebBrowserManager
         }
         catch (Exception ex)
         {
-            Log.Error(string.Format("Error launching web browser with URL \"{0}\". Reason: {1}", new object[]
-            {
-                url,
-                ex.Message
-            }));
+            Log.Error(
+                string.Format(
+                    "Error launching web browser with URL \"{0}\". Reason: {1}",
+                    new object[]
+                    {
+                        url,
+                        ex.Message
+                    }
+                )
+            );
         }
     }
 }

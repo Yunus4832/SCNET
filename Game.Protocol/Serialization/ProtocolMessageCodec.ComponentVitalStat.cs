@@ -36,7 +36,8 @@ public static partial class ProtocolMessageCodec
                 Temperature = reader.ReadSingle(),
                 Stamina = reader.ReadSingle()
             },
-            ComponentVitalStatPackage.EventType.RequestEat => new ComponentVitalStatPackage { EntityId = entity, PackageEventType = type },
+            ComponentVitalStatPackage.EventType.RequestEat => new ComponentVitalStatPackage
+                { EntityId = entity, PackageEventType = type },
             _ => throw new InvalidDataException("Unknown vital state message mode.")
         };
     }

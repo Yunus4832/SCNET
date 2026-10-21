@@ -11,18 +11,23 @@ public sealed class PendingChunkRequestQueueTest
     {
         var queue = new PendingChunkRequestQueue();
 
-        var added = queue.EnqueueRange([
-            Request(1, 2),
-            Request(3, 4),
-            Request(1, 2),
-            Request(5, 6)
-        ]);
+        var added = queue.EnqueueRange(
+            [
+                Request(1, 2),
+                Request(3, 4),
+                Request(1, 2),
+                Request(5, 6)
+            ]
+        );
 
         Assert.Equal(3, added);
         Assert.Equal(3, queue.Count);
-        Assert.Equal([
-            new Point2(1, 2), new Point2(3, 4), new Point2(5, 6)
-        ], queue.Select(request => request.Allocation.Coords).ToArray());
+        Assert.Equal(
+            [
+                new Point2(1, 2), new Point2(3, 4), new Point2(5, 6)
+            ],
+            queue.Select(request => request.Allocation.Coords).ToArray()
+        );
     }
 
     [Fact]
@@ -63,9 +68,12 @@ public sealed class PendingChunkRequestQueueTest
         var nearest = queue.TakeNearest(Vector2.Zero, 3).ToArray();
 
         Assert.Equal(1, removed);
-        Assert.Equal([
-            new Point2(0, 0), new Point2(1, 0), new Point2(2, 0)
-        ], nearest.Select(request => request.Allocation.Coords).ToArray());
+        Assert.Equal(
+            [
+                new Point2(0, 0), new Point2(1, 0), new Point2(2, 0)
+            ],
+            nearest.Select(request => request.Allocation.Coords).ToArray()
+        );
     }
 
     private static ChunkContentRequest Request(int x, int y, ulong generation = 1) =>

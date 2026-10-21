@@ -14,12 +14,24 @@ public class WhistleBlock : Block
             whistleMesh.ParentBone ??
             throw new InvalidOperationException("Required WhistleMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(whistleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.04f, 0f), false, false, false, false,
-            new Color(255, 255, 255));
-        StandaloneBlockMesh.AppendModelMeshPart(whistleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.04f, 0f), false, true, false, false,
-            new Color(64, 64, 64));
+        StandaloneBlockMesh.AppendModelMeshPart(
+            whistleMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.04f, 0f),
+            false,
+            false,
+            false,
+            false,
+            new Color(255, 255, 255)
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            whistleMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.04f, 0f),
+            false,
+            true,
+            false,
+            false,
+            new Color(64, 64, 64)
+        );
         base.Initialize();
     }
 

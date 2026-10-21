@@ -27,7 +27,8 @@ public sealed class PublisherSubmitEndpoint(
     IOptions<ContentServerOptions> options,
     ApiKeyAuthenticationContext authenticationContext,
     ContentPackageStore packageStore,
-    ContentSubmissionLock submissionLock) : ContentEndpoint
+    ContentSubmissionLock submissionLock
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -59,16 +60,20 @@ public sealed class PublisherSubmitEndpoint(
         try
         {
             await using var input = file.OpenReadStream();
-            staged = await packageStore.StageAsync(input, file.FileName,
-                "application/vnd.scnet.content-package", options.Value.MaximumPackageBytes, cancellationToken);
+            staged = await packageStore.StageAsync(
+                input,
+                file.FileName,
+                "application/vnd.scnet.content-package",
+                options.Value.MaximumPackageBytes,
+                cancellationToken
+            );
         }
         catch (ContentPackageException)
         {
             throw new KnownException("invalid_content_package", StatusCodes.Status400BadRequest);
         }
 
-        var result = await SubmitStagedPackageAsync(
-            publisher.PublisherId, staged, cancellationToken);
+        var result = await SubmitStagedPackageAsync(publisher.PublisherId, staged, cancellationToken);
         HttpContext.Response.StatusCode = result.Created ? StatusCodes.Status201Created : StatusCodes.Status200OK;
         return result.Version
             .ToResponse()
@@ -78,13 +83,17 @@ public sealed class PublisherSubmitEndpoint(
     private async Task<PublisherDto> RequirePublisherAsync(CancellationToken cancellationToken)
     {
         return await mediator.Send(
-            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
-            cancellationToken
-        ) ?? throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
+                   new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                   cancellationToken
+               ) ??
+               throw new KnownException("publisher_not_found", StatusCodes.Status401Unauthorized);
     }
 
     private async Task<(ContentVersionDto Version, bool Created)> SubmitStagedPackageAsync(
-        PublisherId publisherId, StagedContentPackage staged, CancellationToken cancellationToken)
+        PublisherId publisherId,
+        StagedContentPackage staged,
+        CancellationToken cancellationToken
+    )
     {
         IDisposable lease;
         try
@@ -102,7 +111,9 @@ public sealed class PublisherSubmitEndpoint(
             var manifest = staged.Inspection.Manifest;
             var type = manifest.Type.ToString();
             var existingContent = await mediator.Send(
-                new FindContentItemQuery(publisherId, manifest.Identifier), cancellationToken);
+                new FindContentItemQuery(publisherId, manifest.Identifier),
+                cancellationToken
+            );
             if (existingContent is not null && existingContent.PublisherId != publisherId)
             {
                 packageStore.DeleteTemporary(staged);
@@ -116,7 +127,9 @@ public sealed class PublisherSubmitEndpoint(
             }
 
             var existingVersion = await mediator.Send(
-                new GetContentVersionQuery(publisherId, manifest.Identifier, manifest.Version), cancellationToken);
+                new GetContentVersionQuery(publisherId, manifest.Identifier, manifest.Version),
+                cancellationToken
+            );
             if (existingVersion is not null)
             {
                 packageStore.DeleteTemporary(staged);
@@ -129,15 +142,30 @@ public sealed class PublisherSubmitEndpoint(
             }
 
             packageStore.Commit(staged);
-            await mediator.Send(new SubmitContentPackageCommand(
-                publisherId, type, manifest.Identifier, manifest.Name, manifest.Summary, manifest.Description,
-                manifest.Version, manifest.Metadata.GetRawText(), staged.Inspection.PackageHash, staged.BlobHash,
-                staged.Size, staged.FileName, staged.MediaType), cancellationToken);
+            await mediator.Send(
+                new SubmitContentPackageCommand(
+                    publisherId,
+                    type,
+                    manifest.Identifier,
+                    manifest.Name,
+                    manifest.Summary,
+                    manifest.Description,
+                    manifest.Version,
+                    manifest.Metadata.GetRawText(),
+                    staged.Inspection.PackageHash,
+                    staged.BlobHash,
+                    staged.Size,
+                    staged.FileName,
+                    staged.MediaType
+                ),
+                cancellationToken
+            );
 
             var submitted = await mediator.Send(
                                 new GetContentVersionQuery(publisherId, manifest.Identifier, manifest.Version),
-                                cancellationToken)
-                            ?? throw new KnownException("content_version_not_found", 500);
+                                cancellationToken
+                            ) ??
+                            throw new KnownException("content_version_not_found", 500);
             return (submitted, true);
         }
     }

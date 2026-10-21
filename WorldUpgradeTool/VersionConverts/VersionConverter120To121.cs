@@ -16,13 +16,13 @@ public class VersionConverter120To121 : VersionConverter
         foreach (var item in projectNode.Element("Entities")?.Elements() ?? [])
         {
             foreach (var item2 in from e in item.Elements("Values")
-                                  where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Body" ||
-                                        XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Frame"
-                                  select e)
+                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Body" ||
+                           XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Frame"
+                     select e)
             {
                 using var enumerator3 = (from e in item2.Elements("Value")
-                                         where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "LocalMatrix"
-                                         select e).GetEnumerator();
+                    where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "LocalMatrix"
+                    select e).GetEnumerator();
                 if (!enumerator3.MoveNext())
                 {
                     continue;

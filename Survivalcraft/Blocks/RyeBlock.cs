@@ -63,13 +63,29 @@ public class RyeBlock : CrossBlock
         if (GetIsWild(Terrain.ExtractData(value)))
         {
             var color = BlockColorsMap.GrassColorsMap.Lookup(generator.Terrain, x, y, z);
-            generator.GenerateCrossingFaceVertices(this, value, x, y, z, color, GetFaceTextureSlot(0, value),
-                geometry.SubsetAlphaTest);
+            generator.GenerateCrossingFaceVertices(
+                this,
+                value,
+                x,
+                y,
+                z,
+                color,
+                GetFaceTextureSlot(0, value),
+                geometry.SubsetAlphaTest
+            );
         }
         else
         {
-            generator.GenerateCrossingFaceVertices(this, value, x, y, z, Color.White, GetFaceTextureSlot(0, value),
-                geometry.SubsetAlphaTest);
+            generator.GenerateCrossingFaceVertices(
+                this,
+                value,
+                x,
+                y,
+                z,
+                Color.White,
+                GetFaceTextureSlot(0, value),
+                geometry.SubsetAlphaTest
+            );
         }
     }
 
@@ -87,15 +103,30 @@ public class RyeBlock : CrossBlock
     {
         if (!GetIsWild(Terrain.ExtractData(value)))
         {
-            return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale,
+            return new BlockDebrisParticleSystem(
+                subsystemTerrain,
+                position,
+                strength,
+                DestructionDebrisScale,
                 Color.White,
-                GetFaceTextureSlot(4, value));
+                GetFaceTextureSlot(4, value)
+            );
         }
 
-        var color = BlockColorsMap.GrassColorsMap.Lookup(subsystemTerrain.Terrain, Terrain.ToCell(position.X),
-            Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
-        return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, color,
-            GetFaceTextureSlot(4, value));
+        var color = BlockColorsMap.GrassColorsMap.Lookup(
+            subsystemTerrain.Terrain,
+            Terrain.ToCell(position.X),
+            Terrain.ToCell(position.Y),
+            Terrain.ToCell(position.Z)
+        );
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            strength,
+            DestructionDebrisScale,
+            color,
+            GetFaceTextureSlot(4, value)
+        );
     }
 
     public override int GetFaceTextureSlot(int face, int value)

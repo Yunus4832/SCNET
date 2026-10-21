@@ -8,6 +8,7 @@ namespace Game.Modding;
 public sealed class GameModRuntime : IDisposable
 {
     private bool _disposed;
+
     private bool _assetsInitialized;
 
     private GameModRuntime(
@@ -17,7 +18,8 @@ public sealed class GameModRuntime : IDisposable
         GameDataCatalog data,
         ContentCatalog content,
         ModProfile effectiveProfile,
-        IReadOnlyList<LoadedModInfo> loadedMods)
+        IReadOnlyList<LoadedModInfo> loadedMods
+    )
     {
         Host = host;
         _blockRegistry = blockRegistry;
@@ -32,16 +34,20 @@ public sealed class GameModRuntime : IDisposable
     public ModHost Host { get; }
 
     private readonly NamespacedRegistry<BlockRegistration> _blockRegistry;
+
     private readonly NamespacedRegistry<BlockDataRegistration> _blockDataRegistry;
+
     private BlockContentCatalog? _previewCatalog;
 
-    public BlockContentCatalog PreviewCatalog => _previewCatalog
-        ?? throw new InvalidOperationException("Preview content has not been initialized.");
+    public BlockContentCatalog PreviewCatalog => _previewCatalog ??
+                                                 throw new InvalidOperationException(
+                                                     "Preview content has not been initialized."
+                                                 );
 
     public BlockContentCatalog? WorldCatalog { get; private set; }
 
-    public BlockContentCatalog RequireWorldCatalog() => WorldCatalog
-        ?? throw new InvalidOperationException("No world block catalog is available.");
+    public BlockContentCatalog RequireWorldCatalog() =>
+        WorldCatalog ?? throw new InvalidOperationException("No world block catalog is available.");
 
     public BlockContentCatalog CreateWorldCatalog(BlockIndexMapping mapping, bool requireExactMapping = false)
     {
@@ -104,11 +110,12 @@ public sealed class GameModRuntime : IDisposable
     {
         var packages = EffectiveProfile.Packages
             .Select(package => new ModPackageRequirement
-            {
-                ModId = package.ModId,
-                Version = package.Version,
-                PackageHash = package.PackageHash
-            })
+                {
+                    ModId = package.ModId,
+                    Version = package.Version,
+                    PackageHash = package.PackageHash
+                }
+            )
             .ToList();
         var profile = new ModProfile
         {
@@ -128,7 +135,8 @@ public sealed class GameModRuntime : IDisposable
         ModProfile profile,
         string localRepositoryPath,
         ModSide hostSide,
-        Action<string>? log = null)
+        Action<string>? log = null
+    )
     {
         var sources = ModProfileResolver.ResolveRequiredPackages(profile, localRepositoryPath, log);
         var externalMods = ModPackageCatalog.CreateLoadPlan(sources, hostSide);
@@ -201,11 +209,14 @@ public sealed class GameModRuntime : IDisposable
             descriptor.Manifest.Id,
             descriptor.Manifest.Version,
             fingerprint,
-            descriptor.PackageHash);
+            descriptor.PackageHash
+        );
     }
 
-    private static GameModRuntime StartFromDescriptors(IEnumerable<ModDescriptor> descriptors,
-        ModProfile? effectiveProfile)
+    private static GameModRuntime StartFromDescriptors(
+        IEnumerable<ModDescriptor> descriptors,
+        ModProfile? effectiveProfile
+    )
     {
         var allDescriptors = new List<ModDescriptor> { BuiltInContentMod.CreateDescriptor() };
         allDescriptors.AddRange(descriptors);
@@ -227,7 +238,8 @@ public sealed class GameModRuntime : IDisposable
                 data,
                 content,
                 CreateEffectiveProfile(loadedMods, effectiveProfile),
-                loadedMods);
+                loadedMods
+            );
         }
         catch
         {
@@ -247,16 +259,19 @@ public sealed class GameModRuntime : IDisposable
 
         return host.Runtimes
             .Select(runtime => CreateLoadedModInfo(
-                runtime.Descriptor,
-                BuildFingerprint(
                     runtime.Descriptor,
-                    blockRegistry,
-                    blockDataRegistry,
-                    databaseRegistry,
-                    recipeRegistry,
-                    clothingRegistry,
-                    contentRegistry,
-                    host.Network)))
+                    BuildFingerprint(
+                        runtime.Descriptor,
+                        blockRegistry,
+                        blockDataRegistry,
+                        databaseRegistry,
+                        recipeRegistry,
+                        clothingRegistry,
+                        contentRegistry,
+                        host.Network
+                    )
+                )
+            )
             .ToArray();
     }
 
@@ -269,11 +284,12 @@ public sealed class GameModRuntime : IDisposable
                 Id = profile.Id,
                 Packages = profile.Packages
                     .Select(package => new ModPackageRequirement
-                    {
-                        ModId = package.ModId,
-                        Version = package.Version,
-                        PackageHash = package.PackageHash
-                    })
+                        {
+                            ModId = package.ModId,
+                            Version = package.Version,
+                            PackageHash = package.PackageHash
+                        }
+                    )
                     .ToList()
             };
         }
@@ -284,11 +300,12 @@ public sealed class GameModRuntime : IDisposable
             Packages = loadedMods
                 .Where(mod => !string.IsNullOrWhiteSpace(mod.PackageHash))
                 .Select(mod => new ModPackageRequirement
-                {
-                    ModId = mod.PackageName,
-                    Version = mod.Version,
-                    PackageHash = mod.PackageHash!
-                })
+                    {
+                        ModId = mod.PackageName,
+                        Version = mod.Version,
+                        PackageHash = mod.PackageHash!
+                    }
+                )
                 .ToList()
         };
     }
@@ -301,7 +318,8 @@ public sealed class GameModRuntime : IDisposable
         NamespacedRegistry<XmlDataRegistration> recipes,
         NamespacedRegistry<XmlDataRegistration> clothing,
         NamespacedRegistry<ContentRegistration> content,
-        ModNetworkHooks network)
+        ModNetworkHooks network
+    )
     {
         var owner = descriptor.Manifest.ModId;
         var lines = new List<string> { $"owner:{owner}" };
@@ -310,34 +328,48 @@ public sealed class GameModRuntime : IDisposable
             lines.Add($"package:{descriptor.PackageHash}");
         }
 
-        lines.AddRange(blocks.Entries
-            .Where(entry => entry.Key.Namespace == owner)
-            .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
-            .Select(entry => $"block:{entry.Key}"));
-        lines.AddRange(blockData.Entries
-            .Where(entry => entry.Key.Namespace == owner)
-            .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
-            .Select(entry => $"block_data:{entry.Key}"));
-        lines.AddRange(database.Entries
-            .Where(entry => entry.Key.Namespace == owner)
-            .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
-            .Select(entry => $"database:{entry.Key}:{entry.Value.Mode}"));
-        lines.AddRange(recipes.Entries
-            .Where(entry => entry.Key.Namespace == owner)
-            .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
-            .Select(entry => $"recipes:{entry.Key}:{entry.Value.Mode}"));
-        lines.AddRange(clothing.Entries
-            .Where(entry => entry.Key.Namespace == owner)
-            .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
-            .Select(entry => $"clothing:{entry.Key}:{entry.Value.Mode}"));
-        lines.AddRange(content.Entries
-            .Where(entry => entry.Key.Namespace == owner)
-            .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
-            .Select(entry => $"content:{entry.Key}:{entry.Value.RelativePath}"));
-        lines.AddRange(network.Registrations
-            .Where(entry => entry.Owner == owner)
-            .OrderBy(entry => entry.MessageType, StringComparer.Ordinal)
-            .Select(entry => $"network:{entry.Owner}:{entry.MessageType}"));
+        lines.AddRange(
+            blocks.Entries
+                .Where(entry => entry.Key.Namespace == owner)
+                .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
+                .Select(entry => $"block:{entry.Key}")
+        );
+        lines.AddRange(
+            blockData.Entries
+                .Where(entry => entry.Key.Namespace == owner)
+                .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
+                .Select(entry => $"block_data:{entry.Key}")
+        );
+        lines.AddRange(
+            database.Entries
+                .Where(entry => entry.Key.Namespace == owner)
+                .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
+                .Select(entry => $"database:{entry.Key}:{entry.Value.Mode}")
+        );
+        lines.AddRange(
+            recipes.Entries
+                .Where(entry => entry.Key.Namespace == owner)
+                .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
+                .Select(entry => $"recipes:{entry.Key}:{entry.Value.Mode}")
+        );
+        lines.AddRange(
+            clothing.Entries
+                .Where(entry => entry.Key.Namespace == owner)
+                .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
+                .Select(entry => $"clothing:{entry.Key}:{entry.Value.Mode}")
+        );
+        lines.AddRange(
+            content.Entries
+                .Where(entry => entry.Key.Namespace == owner)
+                .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
+                .Select(entry => $"content:{entry.Key}:{entry.Value.RelativePath}")
+        );
+        lines.AddRange(
+            network.Registrations
+                .Where(entry => entry.Owner == owner)
+                .OrderBy(entry => entry.MessageType, StringComparer.Ordinal)
+                .Select(entry => $"network:{entry.Owner}:{entry.MessageType}")
+        );
         return HashUtils.ComputeMd5(string.Join('\n', lines));
     }
 }

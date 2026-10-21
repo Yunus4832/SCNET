@@ -7,7 +7,12 @@ public sealed class ModPackageReferenceTrackerTest
     private const string _hash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     private static readonly LocalModPackageEntry _entry = new(
-        "cache.scpkg", "cache.scpkg", "example.mod", "1.0.0", _hash);
+        "cache.scpkg",
+        "cache.scpkg",
+        "example.mod",
+        "1.0.0",
+        _hash
+    );
 
     [Fact]
     public void ExactProfileRequirementProtectsPackage()

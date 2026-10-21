@@ -116,13 +116,17 @@ public class ResizableListWidget : ScrollPanelWidget
     {
         _items.Add(item);
         var w = ItemWidgetFactory.Invoke(item);
-        w.Measure(Direction == LayoutDirection.Horizontal
-            ? new Vector2(0f, ActualSize.Y)
-            : new Vector2(ActualSize.X, 0f));
+        w.Measure(
+            Direction == LayoutDirection.Horizontal
+                ? new Vector2(0f, ActualSize.Y)
+                : new Vector2(ActualSize.X, 0f)
+        );
 
         var previous = _itemWidgetSize.Count == 0 ? 0f : _itemWidgetSize[^1];
-        _itemWidgetSize.Add(previous +
-                            (Direction == LayoutDirection.Horizontal ? w.ParentDesiredSize.X : w.ParentDesiredSize.Y));
+        _itemWidgetSize.Add(
+            previous +
+            (Direction == LayoutDirection.Horizontal ? w.ParentDesiredSize.X : w.ParentDesiredSize.Y)
+        );
         _widgetsDirty = true;
     }
 
@@ -279,14 +283,19 @@ public class ResizableListWidget : ScrollPanelWidget
                 w.Measure(Vector2.Zero);
             }
 
-            w.Measure(Direction == LayoutDirection.Horizontal
-                ? new Vector2(0f, ActualSize.Y)
-                : new Vector2(ActualSize.X, 0f));
+            w.Measure(
+                Direction == LayoutDirection.Horizontal
+                    ? new Vector2(0f, ActualSize.Y)
+                    : new Vector2(ActualSize.X, 0f)
+            );
 
             var previous = _itemWidgetSize.Count == 0 ? 0f : _itemWidgetSize[^1];
-            _itemWidgetSize.Add(previous + (Direction == LayoutDirection.Horizontal
-                ? w.ParentDesiredSize.X
-                : w.ParentDesiredSize.Y));
+            _itemWidgetSize.Add(
+                previous +
+                (Direction == LayoutDirection.Horizontal
+                    ? w.ParentDesiredSize.X
+                    : w.ParentDesiredSize.Y)
+            );
         }
 
         CreateListWidgets(Direction == LayoutDirection.Horizontal ? ActualSize.X : ActualSize.Y);
@@ -352,7 +361,8 @@ public class ResizableListWidget : ScrollPanelWidget
 
     public override void Draw(DrawContext dc)
     {
-        if (SelectedIndex.HasValue && SelectedIndex.Value >= _firstVisibleIndex &&
+        if (SelectedIndex.HasValue &&
+            SelectedIndex.Value >= _firstVisibleIndex &&
             SelectedIndex.Value <= _lastVisibleIndex)
         {
             var itemSize = GetItemSize(SelectedIndex.Value);

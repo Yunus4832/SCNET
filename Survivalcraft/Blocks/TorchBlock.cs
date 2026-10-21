@@ -30,37 +30,118 @@ public class TorchBlock : Block
             flameMesh.ParentBone ??
             throw new InvalidOperationException("Required FlameMesh.ParentBone is null")
         );
-        var m = Matrix.CreateRotationX(0.6f) * Matrix.CreateRotationY(0f) *
+        var m = Matrix.CreateRotationX(0.6f) *
+                Matrix.CreateRotationY(0f) *
                 Matrix.CreateTranslation(0.5f, 0.15f, -0.05f);
-        BlockMeshesByVariant[0].AppendModelMeshPart(torchMesh.MeshParts[0], boneAbsoluteTransform * m,
-            false, false, false, false, Color.White);
-        BlockMeshesByVariant[0].AppendModelMeshPart(flameMesh.MeshParts[0], boneAbsoluteTransform2 * m,
-            true, false, false, false, Color.White);
-        m = Matrix.CreateRotationX(0.6f) * Matrix.CreateRotationY((float)Math.PI / 2f) *
+        BlockMeshesByVariant[0].AppendModelMeshPart(
+            torchMesh.MeshParts[0],
+            boneAbsoluteTransform * m,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        BlockMeshesByVariant[0].AppendModelMeshPart(
+            flameMesh.MeshParts[0],
+            boneAbsoluteTransform2 * m,
+            true,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        m = Matrix.CreateRotationX(0.6f) *
+            Matrix.CreateRotationY((float)Math.PI / 2f) *
             Matrix.CreateTranslation(-0.05f, 0.15f, 0.5f);
-        BlockMeshesByVariant[1].AppendModelMeshPart(torchMesh.MeshParts[0], boneAbsoluteTransform * m,
-            false, false, false, false, Color.White);
-        BlockMeshesByVariant[1].AppendModelMeshPart(flameMesh.MeshParts[0], boneAbsoluteTransform2 * m,
-            true, false, false, false, Color.White);
-        m = Matrix.CreateRotationX(0.6f) * Matrix.CreateRotationY((float)Math.PI) *
+        BlockMeshesByVariant[1].AppendModelMeshPart(
+            torchMesh.MeshParts[0],
+            boneAbsoluteTransform * m,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        BlockMeshesByVariant[1].AppendModelMeshPart(
+            flameMesh.MeshParts[0],
+            boneAbsoluteTransform2 * m,
+            true,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        m = Matrix.CreateRotationX(0.6f) *
+            Matrix.CreateRotationY((float)Math.PI) *
             Matrix.CreateTranslation(0.5f, 0.15f, 1.05f);
-        BlockMeshesByVariant[2].AppendModelMeshPart(torchMesh.MeshParts[0], boneAbsoluteTransform * m,
-            false, false, false, false, Color.White);
-        BlockMeshesByVariant[2].AppendModelMeshPart(flameMesh.MeshParts[0], boneAbsoluteTransform2 * m,
-            true, false, false, false, Color.White);
-        m = Matrix.CreateRotationX(0.6f) * Matrix.CreateRotationY(4.712389f) *
+        BlockMeshesByVariant[2].AppendModelMeshPart(
+            torchMesh.MeshParts[0],
+            boneAbsoluteTransform * m,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        BlockMeshesByVariant[2].AppendModelMeshPart(
+            flameMesh.MeshParts[0],
+            boneAbsoluteTransform2 * m,
+            true,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        m = Matrix.CreateRotationX(0.6f) *
+            Matrix.CreateRotationY(4.712389f) *
             Matrix.CreateTranslation(1.05f, 0.15f, 0.5f);
-        BlockMeshesByVariant[3].AppendModelMeshPart(torchMesh.MeshParts[0], boneAbsoluteTransform * m,
-            false, false, false, false, Color.White);
-        BlockMeshesByVariant[3].AppendModelMeshPart(flameMesh.MeshParts[0], boneAbsoluteTransform2 * m,
-            true, false, false, false, Color.White);
+        BlockMeshesByVariant[3].AppendModelMeshPart(
+            torchMesh.MeshParts[0],
+            boneAbsoluteTransform * m,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        BlockMeshesByVariant[3].AppendModelMeshPart(
+            flameMesh.MeshParts[0],
+            boneAbsoluteTransform2 * m,
+            true,
+            false,
+            false,
+            false,
+            Color.White
+        );
         m = Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-        BlockMeshesByVariant[4].AppendModelMeshPart(torchMesh.MeshParts[0], boneAbsoluteTransform * m,
-            false, false, false, false, Color.White);
-        BlockMeshesByVariant[4].AppendModelMeshPart(flameMesh.MeshParts[0], boneAbsoluteTransform2 * m,
-            true, false, false, false, Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(torchMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.25f, 0f), false, false, false, false, Color.White);
+        BlockMeshesByVariant[4].AppendModelMeshPart(
+            torchMesh.MeshParts[0],
+            boneAbsoluteTransform * m,
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        BlockMeshesByVariant[4].AppendModelMeshPart(
+            flameMesh.MeshParts[0],
+            boneAbsoluteTransform2 * m,
+            true,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            torchMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.25f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         for (var j = 0; j < 5; j++)
         {
             CollisionBoxes[j] = new BoundingBox[1]
@@ -84,8 +165,16 @@ public class TorchBlock : Block
         var num = Terrain.ExtractData(value);
         if (num < BlockMeshesByVariant.Length)
         {
-            generator.GenerateMeshVertices(this, x, y, z, BlockMeshesByVariant[num], Color.White, null,
-                geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshesByVariant[num],
+                Color.White,
+                null,
+                geometry.SubsetOpaque
+            );
         }
     }
 

@@ -68,8 +68,11 @@ public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
             return;
         }
 
-        var p = Terrain.ToCell(MathUtils.Round(movingBlockSet.Position.X),
-            MathUtils.Round(movingBlockSet.Position.Y), MathUtils.Round(movingBlockSet.Position.Z));
+        var p = Terrain.ToCell(
+            MathUtils.Round(movingBlockSet.Position.X),
+            MathUtils.Round(movingBlockSet.Position.Y),
+            MathUtils.Round(movingBlockSet.Position.Z)
+        );
         foreach (var block in movingBlockSet.Blocks)
         {
             var point = p + block.Offset;
@@ -110,11 +113,13 @@ public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
                 break;
             }
 
-            list.Add(new MovingBlock
-            {
-                Value = cellValue2,
-                Offset = new Point3(0, i - p.Y, 0)
-            });
+            list.Add(
+                new MovingBlock
+                {
+                    Value = cellValue2,
+                    Offset = new Point3(0, i - p.Y, 0)
+                }
+            );
         }
 
         if (list.Count == 0 ||
@@ -125,9 +130,12 @@ public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
                 10f,
                 0.7f,
                 new Vector2(0f),
-                list, IdString,
+                list,
+                IdString,
                 new object(),
-                true) == null)
+                true
+            ) ==
+            null)
         {
             return;
         }

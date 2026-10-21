@@ -27,6 +27,7 @@ public class RestartActivity : BlackActivity
     internal const string mainProcessIdExtra = "Survivalcraft.Android.MainProcessId";
 
     private const int _mainProcessExitDelayMilliseconds = 100;
+
     private const int _restartProcessExitDelayMilliseconds = 500;
 
     private bool _restartStarted;

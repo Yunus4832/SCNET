@@ -16,11 +16,13 @@ public class ProtocolReader : BinaryReader
 
     public override byte[] ReadBytes(int count)
     {
-        if (count < 0 || count > ProtocolFrameCodec.MaximumPayloadLength ||
+        if (count < 0 ||
+            count > ProtocolFrameCodec.MaximumPayloadLength ||
             (BaseStream.CanSeek && count > BaseStream.Length - BaseStream.Position))
         {
             throw new InvalidDataException("Invalid or truncated protocol buffer.");
         }
+
         var bytes = base.ReadBytes(count);
         return bytes.Length == count ? bytes : throw new EndOfStreamException("Truncated protocol buffer.");
     }
@@ -28,7 +30,9 @@ public class ProtocolReader : BinaryReader
     public int ReadCount(int maximum)
     {
         var count = ReadInt32();
-        return count >= 0 && count <= maximum ? count : throw new InvalidDataException("Invalid protocol collection count.");
+        return count >= 0 && count <= maximum
+            ? count
+            : throw new InvalidDataException("Invalid protocol collection count.");
     }
 
     public float? ReadSingleNullable()
@@ -103,6 +107,7 @@ public class ProtocolReader : BinaryReader
         {
             throw new InvalidDataException("A protocol GUID must contain exactly 16 bytes.");
         }
+
         return new Guid(ReadBytes(len));
     }
 
@@ -191,10 +196,10 @@ public class ProtocolReader : BinaryReader
 
         return null;
     }
+
     public CellFace ReadCellFace()
     {
         var point = ReadBlockPoint();
         return new CellFace(point.X, point.Y, point.Z, ReadInt32());
     }
-
 }

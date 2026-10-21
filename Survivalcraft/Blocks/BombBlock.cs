@@ -14,9 +14,15 @@ public class BombBlock : Block
             bombMesh.ParentBone ??
             throw new InvalidOperationException("Required BombMesh.ParentBone is null")
         );
-        StandaloneBlockMesh.AppendModelMeshPart(bombMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.25f, 0f), false, false, false, false,
-            new Color(0.3f, 0.3f, 0.3f));
+        StandaloneBlockMesh.AppendModelMeshPart(
+            bombMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.25f, 0f),
+            false,
+            false,
+            false,
+            false,
+            new Color(0.3f, 0.3f, 0.3f)
+        );
         base.Initialize();
     }
 

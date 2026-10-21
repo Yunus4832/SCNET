@@ -108,8 +108,16 @@ public class ComponentFindPlayerBehavior : ComponentBehavior, IUpdateable
             {
                 if (_target != null)
                 {
-                    _componentPathfinding.SetDestination(_target.ComponentBody.Position, _random.Float(0.5f, 0.7f),
-                        _minRange, 500, true, true, false, null);
+                    _componentPathfinding.SetDestination(
+                        _target.ComponentBody.Position,
+                        _random.Float(0.5f, 0.7f),
+                        _minRange,
+                        500,
+                        true,
+                        true,
+                        false,
+                        null
+                    );
                 }
             },
             delegate
@@ -118,7 +126,8 @@ public class ComponentFindPlayerBehavior : ComponentBehavior, IUpdateable
                 {
                     stateMachine.TransitionTo("Inactive");
                 }
-                else if (_target == null || _componentPathfinding.IsStuck ||
+                else if (_target == null ||
+                         _componentPathfinding.IsStuck ||
                          !_componentPathfinding.Destination.HasValue ||
                          ScoreTarget(_target) <= 0f)
                 {
@@ -143,8 +152,11 @@ public class ComponentFindPlayerBehavior : ComponentBehavior, IUpdateable
         ComponentCreature? result = null;
         var num = 0f;
         _componentBodies.Clear();
-        _subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z),
-            MathUtils.Max(_nightRange, _dayRange), _componentBodies);
+        _subsystemBodies.FindBodiesAroundPoint(
+            new Vector2(position.X, position.Z),
+            MathUtils.Max(_nightRange, _dayRange),
+            _componentBodies
+        );
         for (var i = 0; i < _componentBodies.Count; i++)
         {
             var componentCreature = _componentBodies.Array[i].Entity.FindComponent<ComponentCreature>();
@@ -169,7 +181,8 @@ public class ComponentFindPlayerBehavior : ComponentBehavior, IUpdateable
     public float ScoreTarget(ComponentCreature target)
     {
         var num = _subsystemSky.SkyLightIntensity > 0.2f ? _dayRange : _nightRange;
-        if (!target.IsAddedToProject || target.ComponentHealth.Health <= 0f ||
+        if (!target.IsAddedToProject ||
+            target.ComponentHealth.Health <= 0f ||
             target.Entity.FindComponent<ComponentPlayer>() == null)
         {
             return 0f;
@@ -191,7 +204,8 @@ public class ComponentFindPlayerBehavior : ComponentBehavior, IUpdateable
             _componentCreature,
             target,
             CreatureTargetingKind.FindPlayer,
-            score);
+            score
+        );
         CurrentModRuntime.Value?.Gameplay.Invoke(context);
         return context.Cancel ? 0f : context.Score;
     }

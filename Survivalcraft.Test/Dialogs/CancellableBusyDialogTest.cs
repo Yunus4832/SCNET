@@ -65,10 +65,15 @@ public sealed class CancellableBusyDialogTest
     private sealed class TestButton : ButtonWidget
     {
         public override bool IsClicked { get; set; }
+
         public override bool IsChecked { get; set; }
+
         public override bool IsAutoCheckingEnabled { get; set; }
+
         public override string Text { get; set; } = string.Empty;
+
         public override BitmapFont Font { get; set; } = null!;
+
         public override Color Color { get; set; }
     }
 }

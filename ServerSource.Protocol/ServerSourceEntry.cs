@@ -5,4 +5,5 @@ public sealed record ServerSourceEntry(
     string Name,
     string Address,
     string? Description,
-    IReadOnlyList<string> Tags);
+    IReadOnlyList<string> Tags
+);

@@ -26,9 +26,13 @@ public class TerrainBrush
 
     public int CountNonDiagonalNeighbors(int x, int y, int z, Counter counter)
     {
-        return 0 + counter.Count(this, new Point3(x - 1, y, z)) + counter.Count(this, new Point3(x + 1, y, z)) +
-               counter.Count(this, new Point3(x, y - 1, z)) + counter.Count(this, new Point3(x, y + 1, z)) +
-               counter.Count(this, new Point3(x, y, z - 1)) + counter.Count(this, new Point3(x, y, z + 1));
+        return 0 +
+               counter.Count(this, new Point3(x - 1, y, z)) +
+               counter.Count(this, new Point3(x + 1, y, z)) +
+               counter.Count(this, new Point3(x, y - 1, z)) +
+               counter.Count(this, new Point3(x, y + 1, z)) +
+               counter.Count(this, new Point3(x, y, z - 1)) +
+               counter.Count(this, new Point3(x, y, z + 1));
     }
 
     public int CountBox(int x, int y, int z, int sizeX, int sizeY, int sizeZ, Counter counter)
@@ -182,8 +186,19 @@ public class TerrainBrush
         }
     }
 
-    public void PaintFastSelective(Terrain terrain, int x, int y, int z, int minX, int maxX, int minY, int maxY,
-        int minZ, int maxZ, int onlyInValue)
+    public void PaintFastSelective(
+        Terrain terrain,
+        int x,
+        int y,
+        int z,
+        int minX,
+        int maxX,
+        int minY,
+        int maxY,
+        int minZ,
+        int maxZ,
+        int onlyInValue
+    )
     {
         var cells = Cells;
         foreach (var cell in cells)
@@ -234,8 +249,18 @@ public class TerrainBrush
         }
     }
 
-    public void PaintFastAvoidWater(Terrain terrain, int x, int y, int z, int minX, int maxX, int minY, int maxY,
-        int minZ, int maxZ)
+    public void PaintFastAvoidWater(
+        Terrain terrain,
+        int x,
+        int y,
+        int z,
+        int minX,
+        int maxX,
+        int minY,
+        int maxY,
+        int minZ,
+        int maxZ
+    )
     {
         var cells = Cells;
         foreach (var cell in cells)
@@ -243,7 +268,12 @@ public class TerrainBrush
             var num = cell.X + x;
             var num2 = cell.Y + y;
             var num3 = cell.Z + z;
-            if (num >= minX && num < maxX && num2 >= minY && num2 < maxY && num3 >= minZ && num3 < maxZ &&
+            if (num >= minX &&
+                num < maxX &&
+                num2 >= minY &&
+                num2 < maxY &&
+                num3 >= minZ &&
+                num3 < maxZ &&
                 terrain.GetCellContentsFast(num, num2, num3) != 18 &&
                 terrain.GetCellContents(num - 1, num2, num3) != 18 &&
                 terrain.GetCellContents(num + 1, num2, num3) != 18 &&
@@ -280,8 +310,18 @@ public class TerrainBrush
         }
     }
 
-    public void PaintFast(Terrain terrain, int x, int y, int z, int minX, int maxX, int minY, int maxY, int minZ,
-        int maxZ)
+    public void PaintFast(
+        Terrain terrain,
+        int x,
+        int y,
+        int z,
+        int minX,
+        int maxX,
+        int minY,
+        int maxY,
+        int minZ,
+        int maxZ
+    )
     {
         var cells = Cells;
         foreach (var cell in cells)
@@ -289,7 +329,11 @@ public class TerrainBrush
             var xPosition = cell.X + x;
             var yPosition = cell.Y + y;
             var zPosition = cell.Z + z;
-            if (xPosition >= minX && xPosition < maxX && yPosition >= minY && yPosition < maxY && zPosition >= minZ &&
+            if (xPosition >= minX &&
+                xPosition < maxX &&
+                yPosition >= minY &&
+                yPosition < maxY &&
+                zPosition >= minZ &&
                 zPosition < maxZ)
             {
                 terrain.SetCellValueFast(xPosition, yPosition, zPosition, cell.Value);

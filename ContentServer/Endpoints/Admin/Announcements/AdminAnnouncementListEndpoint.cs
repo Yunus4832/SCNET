@@ -18,8 +18,10 @@ public sealed class AdminAnnouncementListEndpoint(IMediator mediator) : ContentE
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
         var items = await mediator.Send(new ListGameAnnouncementsQuery(false), cancellationToken);
-        await Send.ResponseAsync(items.Select(AnnouncementResponse.From).ToArray().AsResponseData(),
-            cancellation: cancellationToken);
+        await Send.ResponseAsync(
+            items.Select(AnnouncementResponse.From).ToArray().AsResponseData(),
+            cancellation: cancellationToken
+        );
     }
 }
 
@@ -29,8 +31,15 @@ public sealed record AnnouncementResponse(
     string Body,
     string Status,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? PublishedAt)
+    DateTimeOffset? PublishedAt
+)
 {
-    public static AnnouncementResponse From(GameAnnouncement item) => new(item.Id.ToString(), item.Title,
-        item.Body, item.Status.ToString().ToLowerInvariant(), item.CreatedAt, item.PublishedAt);
+    public static AnnouncementResponse From(GameAnnouncement item) => new(
+        item.Id.ToString(),
+        item.Title,
+        item.Body,
+        item.Status.ToString().ToLowerInvariant(),
+        item.CreatedAt,
+        item.PublishedAt
+    );
 }

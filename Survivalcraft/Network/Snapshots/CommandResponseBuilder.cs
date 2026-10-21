@@ -15,7 +15,8 @@ internal static class CommandResponseBuilder
         MessageArguments: result.MessageArguments?.ToArray(),
         Data: result.Data?.DeepClone(),
         Presentation: CommandResultPublisher.ToGameMessagePresentation(result.Presentation),
-        CloseInputOnSuccess: result.PanelBehavior == CommandPanelBehavior.CloseOnSuccess);
+        CloseInputOnSuccess: result.PanelBehavior == CommandPanelBehavior.CloseOnSuccess
+    );
 
     public static CommandResult Restore(CommandResponse response) => new(
         response.Success,
@@ -28,7 +29,8 @@ internal static class CommandResponseBuilder
         Data: response.Data,
         PanelBehavior: response.CloseInputOnSuccess
             ? CommandPanelBehavior.CloseOnSuccess
-            : CommandPanelBehavior.ReturnToMessage);
+            : CommandPanelBehavior.ReturnToMessage
+    );
 
     private static CommandResultPresentation RestorePresentation(GameMessagePresentation presentation)
     {
@@ -37,14 +39,17 @@ internal static class CommandResponseBuilder
         {
             result |= CommandResultPresentation.History;
         }
+
         if ((presentation & GameMessagePresentation.Overlay) != 0)
         {
             result |= CommandResultPresentation.Overlay;
         }
+
         if ((presentation & GameMessagePresentation.Toast) != 0)
         {
             result |= CommandResultPresentation.Toast;
         }
+
         return result;
     }
 }

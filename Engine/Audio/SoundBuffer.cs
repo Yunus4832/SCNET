@@ -100,8 +100,13 @@ public sealed class SoundBuffer : IDisposable
 
     public static SoundBuffer Load(SoundData soundData)
     {
-        return new SoundBuffer(soundData.Data, 0, soundData.Data.Length, soundData.ChannelsCount,
-            soundData.SamplingFrequency);
+        return new SoundBuffer(
+            soundData.Data,
+            0,
+            soundData.Data.Length,
+            soundData.ChannelsCount,
+            soundData.SamplingFrequency
+        );
     }
 
     public static SoundBuffer Load(Stream stream, SoundFileFormat format)

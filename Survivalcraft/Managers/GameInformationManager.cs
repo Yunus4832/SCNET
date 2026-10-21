@@ -16,9 +16,13 @@ public static class GameInformationManager
     private static Guid _loadedSourceId;
 
     private static readonly Lock _updateGate = new();
+
     private static ContentRepositoryManager? _sourceManager;
+
     private static UpdateOperation? _updateOperation;
+
     private static readonly TimeSpan _informationTimeout = TimeSpan.FromSeconds(30);
+
     private static readonly TimeSpan _downloadTimeout = TimeSpan.FromMinutes(10);
 
     public static event Action? AnnouncementsChanged;
@@ -86,15 +90,22 @@ public static class GameInformationManager
             return true;
         }
 
-        DialogsManager.ShowDialog(null, new MessageDialog(Text("NoInformationSourceTitle"),
-            Text("NoInformationSourceBody"),
-            Text("Configure"), LanguageManager.Get("Usual", "no"), button =>
-            {
-                if (button == MessageDialogButton.Button1)
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                Text("NoInformationSourceTitle"),
+                Text("NoInformationSourceBody"),
+                Text("Configure"),
+                LanguageManager.Get("Usual", "no"),
+                button =>
                 {
-                    ScreensManager.SwitchScreen("ContentRepositories", "MainMenu");
+                    if (button == MessageDialogButton.Button1)
+                    {
+                        ScreensManager.SwitchScreen("ContentRepositories", "MainMenu");
+                    }
                 }
-            }));
+            )
+        );
         return false;
     }
 
@@ -105,28 +116,32 @@ public static class GameInformationManager
         using var timeout = new CancellationTokenSource(_informationTimeout);
         try
         {
-            ContentServerClientPool.Shared.Update(Guid.Empty,
-                ContentRepositoryManager.Current.Snapshot());
+            ContentServerClientPool.Shared.Update(
+                Guid.Empty,
+                ContentRepositoryManager.Current.Snapshot()
+            );
             using var lease = ContentServerClientPool.Shared.Acquire(Guid.Empty, source.Id);
             var announcements = await lease.Client.ListGameAnnouncementsAsync(timeout.Token);
             Dispatcher.Dispatch(() =>
-            {
-                if (!ReferenceEquals(manager, ContentRepositoryManager.Current) ||
-                    manager.GameInformationSourceRevision != revision)
                 {
-                    return;
-                }
+                    if (!ReferenceEquals(manager, ContentRepositoryManager.Current) ||
+                        manager.GameInformationSourceRevision != revision)
+                    {
+                        return;
+                    }
 
-                _loadedSourceId = source.Id;
-                _announcements = announcements;
-                AnnouncementsChanged?.Invoke();
-            });
+                    _loadedSourceId = source.Id;
+                    _announcements = announcements;
+                    AnnouncementsChanged?.Invoke();
+                }
+            );
         }
         catch (Exception exception) when (exception is HttpRequestException or OperationCanceledException or
                                               InvalidDataException or System.Text.Json.JsonException)
         {
             Log.Warning(
-                $"Could not load game announcements from '{source.Name}' ({source.BaseUrl}): {exception.Message}");
+                $"Could not load game announcements from '{source.Name}' ({source.BaseUrl}): {exception.Message}"
+            );
         }
         catch (Exception exception)
         {
@@ -143,8 +158,11 @@ public static class GameInformationManager
         }
     }
 
-    internal static UpdateOperation? TryBeginUpdate(ContentRepositoryManager manager, ContentRepository source,
-        bool manual)
+    internal static UpdateOperation? TryBeginUpdate(
+        ContentRepositoryManager manager,
+        ContentRepository source,
+        bool manual
+    )
     {
         ObserveSourceManager(manager);
         lock (_updateGate)
@@ -202,7 +220,8 @@ public static class GameInformationManager
         {
             return ReferenceEquals(_updateOperation, operation) &&
                    ReferenceEquals(_sourceManager, operation.Manager) &&
-                   revision == operation.SourceRevision && !operation.Token.IsCancellationRequested;
+                   revision == operation.SourceRevision &&
+                   !operation.Token.IsCancellationRequested;
         }
     }
 
@@ -235,8 +254,11 @@ public static class GameInformationManager
         var source = operation.Source;
         try
         {
-            var platform = GetReleasePlatform(PlatformManager.Platform, RuntimeInformation.ProcessArchitecture,
-                OperatingSystem.IsWindows());
+            var platform = GetReleasePlatform(
+                PlatformManager.Platform,
+                RuntimeInformation.ProcessArchitecture,
+                OperatingSystem.IsWindows()
+            );
             if (platform is null)
             {
                 Dispatcher.Dispatch(() => ShowCheckResult(operation, "UnsupportedPlatform"));
@@ -248,23 +270,26 @@ public static class GameInformationManager
             var release = await FetchReleaseAsync(lease.Client, platform, operation.Token, _informationTimeout);
             var result = EvaluateRelease(release, platform, VersionsManager.Version);
             Dispatcher.Dispatch(() =>
-            {
-                if (!IsCurrent(operation))
                 {
-                    EndUpdate(operation);
-                    return;
-                }
+                    if (!IsCurrent(operation))
+                    {
+                        EndUpdate(operation);
+                        return;
+                    }
 
-                if (result == ReleaseCheckResult.Available)
-                {
-                    ShowRelease(operation, release!);
+                    if (result == ReleaseCheckResult.Available)
+                    {
+                        ShowRelease(operation, release!);
+                    }
+                    else
+                    {
+                        ShowCheckResult(
+                            operation,
+                            result == ReleaseCheckResult.NotPublished ? "NoPublishedRelease" : "UpToDate"
+                        );
+                    }
                 }
-                else
-                {
-                    ShowCheckResult(operation,
-                        result == ReleaseCheckResult.NotPublished ? "NoPublishedRelease" : "UpToDate");
-                }
-            });
+            );
         }
         catch (OperationCanceledException) when (operation.Token.IsCancellationRequested)
         {
@@ -275,7 +300,9 @@ public static class GameInformationManager
             if (exception is HttpRequestException or OperationCanceledException or TimeoutException or
                 InvalidDataException or System.Text.Json.JsonException)
             {
-                Log.Warning($"Could not check game release from '{source.Name}' ({source.BaseUrl}): {exception.Message}");
+                Log.Warning(
+                    $"Could not check game release from '{source.Name}' ({source.BaseUrl}): {exception.Message}"
+                );
             }
             else
             {
@@ -286,8 +313,12 @@ public static class GameInformationManager
         }
     }
 
-    internal static async Task<GameRelease?> FetchReleaseAsync(ContentServerClient client, string platform,
-        CancellationToken cancellationToken, TimeSpan timeout)
+    internal static async Task<GameRelease?> FetchReleaseAsync(
+        ContentServerClient client,
+        string platform,
+        CancellationToken cancellationToken,
+        TimeSpan timeout
+    )
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(timeout);
@@ -308,12 +339,15 @@ public static class GameInformationManager
             return ReleaseCheckResult.NotPublished;
         }
 
-        if (release.Platform != platform || release.Status != "published" ||
-            string.IsNullOrWhiteSpace(release.Id) || !SemanticVersion.TryParse(release.Version, out var version) ||
+        if (release.Platform != platform ||
+            release.Status != "published" ||
+            string.IsNullOrWhiteSpace(release.Id) ||
+            !SemanticVersion.TryParse(release.Version, out var version) ||
             !SemanticVersion.TryParse(currentVersion, out var current) ||
             !Uri.TryCreate(release.DownloadUrl, UriKind.Absolute, out var uri) ||
             uri.Scheme is not ("http" or "https") ||
-            release.Sha256 is not { Length: 64 } || !release.Sha256.All(Uri.IsHexDigit))
+            release.Sha256 is not { Length: 64 } ||
+            !release.Sha256.All(Uri.IsHexDigit))
         {
             throw new InvalidDataException("Content server returned invalid game release metadata.");
         }
@@ -329,8 +363,16 @@ public static class GameInformationManager
             return;
         }
 
-        ShowUpdateDialog(operation, new MessageDialog(Text("Updates"), string.Format(Text(key), arguments),
-            LanguageManager.Get("Usual", "ok"), string.Empty, _ => EndUpdate(operation)));
+        ShowUpdateDialog(
+            operation,
+            new MessageDialog(
+                Text("Updates"),
+                string.Format(Text(key), arguments),
+                LanguageManager.Get("Usual", "ok"),
+                string.Empty,
+                _ => EndUpdate(operation)
+            )
+        );
     }
 
     private static void ShowUpdateDialog(UpdateOperation operation, Dialog dialog)
@@ -347,45 +389,64 @@ public static class GameInformationManager
 
     private static void ShowRelease(UpdateOperation operation, GameRelease release)
     {
-        var message = string.Format(Text("ReleaseDetails"), operation.Source.Name, release.Version,
-            release.Description, new Uri(release.DownloadUrl).Host);
-        ShowUpdateDialog(operation, new MessageDialog(Text("Updates"), message,
-            PlatformManager.CanRequestUpdate ? Text("Download") : Text("OpenLink"),
-            LanguageManager.Get("Usual", "no"), button =>
-            {
-                if (!IsCurrent(operation) || button != MessageDialogButton.Button1)
+        var message = string.Format(
+            Text("ReleaseDetails"),
+            operation.Source.Name,
+            release.Version,
+            release.Description,
+            new Uri(release.DownloadUrl).Host
+        );
+        ShowUpdateDialog(
+            operation,
+            new MessageDialog(
+                Text("Updates"),
+                message,
+                PlatformManager.CanRequestUpdate ? Text("Download") : Text("OpenLink"),
+                LanguageManager.Get("Usual", "no"),
+                button =>
                 {
-                    EndUpdate(operation);
-                    return;
-                }
+                    if (!IsCurrent(operation) || button != MessageDialogButton.Button1)
+                    {
+                        EndUpdate(operation);
+                        return;
+                    }
 
-                if (PlatformManager.CanRequestUpdate)
-                {
-                    ConfirmDownload(operation, release);
+                    if (PlatformManager.CanRequestUpdate)
+                    {
+                        ConfirmDownload(operation, release);
+                    }
+                    else
+                    {
+                        WebBrowserManager.LaunchBrowser(release.DownloadUrl);
+                        EndUpdate(operation);
+                    }
                 }
-                else
-                {
-                    WebBrowserManager.LaunchBrowser(release.DownloadUrl);
-                    EndUpdate(operation);
-                }
-            }));
+            )
+        );
     }
 
     private static void ConfirmDownload(UpdateOperation operation, GameRelease release)
     {
-        ShowUpdateDialog(operation, new MessageDialog(Text("Download"),
-            string.Format(Text("ConfirmDownload"), operation.Source.Name, release.Version),
-            LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"), button =>
-            {
-                if (IsCurrent(operation) && button == MessageDialogButton.Button1)
+        ShowUpdateDialog(
+            operation,
+            new MessageDialog(
+                Text("Download"),
+                string.Format(Text("ConfirmDownload"), operation.Source.Name, release.Version),
+                LanguageManager.Get("Usual", "yes"),
+                LanguageManager.Get("Usual", "no"),
+                button =>
                 {
-                    StartDownload(operation, release);
+                    if (IsCurrent(operation) && button == MessageDialogButton.Button1)
+                    {
+                        StartDownload(operation, release);
+                    }
+                    else
+                    {
+                        EndUpdate(operation);
+                    }
                 }
-                else
-                {
-                    EndUpdate(operation);
-                }
-            }));
+            )
+        );
     }
 
     private static void StartDownload(UpdateOperation operation, GameRelease release)
@@ -396,58 +457,83 @@ public static class GameInformationManager
         _ = DownloadAsync(operation, release, dialog);
     }
 
-    private static async Task DownloadAsync(UpdateOperation operation, GameRelease release,
-        CancellableBusyDialog dialog)
+    private static async Task DownloadAsync(
+        UpdateOperation operation,
+        GameRelease release,
+        CancellableBusyDialog dialog
+    )
     {
-        var path = Path.Combine(PlatformManager.UpdateDownloadDirectory,
-            $"{Guid.NewGuid():N}{PlatformManager.UpdateDownloadExtension}");
+        var path = Path.Combine(
+            PlatformManager.UpdateDownloadDirectory,
+            $"{Guid.NewGuid():N}{PlatformManager.UpdateDownloadExtension}"
+        );
         try
         {
             using var client = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
             var lastPercentage = -2;
-            await DownloadPackageAsync(client, release, path, (completed, total) =>
-            {
-                var percentage = total is > 0
-                    ? (int)Math.Clamp((double)completed / total.Value * 100d, 0d, 100d)
-                    : -1;
-                if (percentage == lastPercentage)
+            await DownloadPackageAsync(
+                client,
+                release,
+                path,
+                (completed, total) =>
                 {
-                    return;
-                }
-
-                lastPercentage = percentage;
-                Dispatcher.Dispatch(() =>
-                {
-                    if (IsCurrent(operation) && !operation.Token.IsCancellationRequested)
+                    var percentage = total is > 0
+                        ? (int)Math.Clamp((double)completed / total.Value * 100d, 0d, 100d)
+                        : -1;
+                    if (percentage == lastPercentage)
                     {
-                        dialog.SetProgress(completed, total);
+                        return;
                     }
-                });
-            }, operation.Token, _downloadTimeout);
-            Dispatcher.Dispatch(() =>
-            {
-                if (!IsCurrent(operation) || operation.Token.IsCancellationRequested)
-                {
-                    DeleteDownload(path);
-                    EndUpdate(operation);
-                    return;
-                }
 
-                operation.PackagePath = path;
-                DialogsManager.HideDialog(dialog);
-                ShowUpdateDialog(operation, new MessageDialog(Text("Install"),
-                    string.Format(Text(PlatformManager.UpdateConfirmationKey), operation.Source.Name, release.Version),
-                    LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"), button =>
-                    {
-                        if (IsCurrent(operation) && button == MessageDialogButton.Button1)
+                    lastPercentage = percentage;
+                    Dispatcher.Dispatch(() =>
                         {
-                            operation.PackagePath = null;
-                            GameExitManager.RequestUpdate(path, release.DownloadUrl);
+                            if (IsCurrent(operation) && !operation.Token.IsCancellationRequested)
+                            {
+                                dialog.SetProgress(completed, total);
+                            }
                         }
-
+                    );
+                },
+                operation.Token,
+                _downloadTimeout
+            );
+            Dispatcher.Dispatch(() =>
+                {
+                    if (!IsCurrent(operation) || operation.Token.IsCancellationRequested)
+                    {
+                        DeleteDownload(path);
                         EndUpdate(operation);
-                    }));
-            });
+                        return;
+                    }
+
+                    operation.PackagePath = path;
+                    DialogsManager.HideDialog(dialog);
+                    ShowUpdateDialog(
+                        operation,
+                        new MessageDialog(
+                            Text("Install"),
+                            string.Format(
+                                Text(PlatformManager.UpdateConfirmationKey),
+                                operation.Source.Name,
+                                release.Version
+                            ),
+                            LanguageManager.Get("Usual", "yes"),
+                            LanguageManager.Get("Usual", "no"),
+                            button =>
+                            {
+                                if (IsCurrent(operation) && button == MessageDialogButton.Button1)
+                                {
+                                    operation.PackagePath = null;
+                                    GameExitManager.RequestUpdate(path, release.DownloadUrl);
+                                }
+
+                                EndUpdate(operation);
+                            }
+                        )
+                    );
+                }
+            );
         }
         catch (OperationCanceledException) when (operation.Token.IsCancellationRequested)
         {
@@ -457,18 +543,27 @@ public static class GameInformationManager
         {
             Log.Warning($"Game release download failed: {exception.Message}");
             Dispatcher.Dispatch(() =>
-            {
-                if (IsCurrent(operation) && !operation.Token.IsCancellationRequested)
                 {
-                    DialogsManager.HideDialog(dialog);
-                    ShowUpdateDialog(operation, new MessageDialog(Text("Download"), Text("DownloadFailed"),
-                        LanguageManager.Get("Usual", "ok"), string.Empty, _ => EndUpdate(operation)));
+                    if (IsCurrent(operation) && !operation.Token.IsCancellationRequested)
+                    {
+                        DialogsManager.HideDialog(dialog);
+                        ShowUpdateDialog(
+                            operation,
+                            new MessageDialog(
+                                Text("Download"),
+                                Text("DownloadFailed"),
+                                LanguageManager.Get("Usual", "ok"),
+                                string.Empty,
+                                _ => EndUpdate(operation)
+                            )
+                        );
+                    }
+                    else
+                    {
+                        EndUpdate(operation);
+                    }
                 }
-                else
-                {
-                    EndUpdate(operation);
-                }
-            });
+            );
         }
         finally
         {
@@ -476,8 +571,14 @@ public static class GameInformationManager
         }
     }
 
-    internal static async Task DownloadPackageAsync(HttpClient client, GameRelease release, string path,
-        Action<long, long?> progress, CancellationToken cancellationToken, TimeSpan timeout)
+    internal static async Task DownloadPackageAsync(
+        HttpClient client,
+        GameRelease release,
+        string path,
+        Action<long, long?> progress,
+        CancellationToken cancellationToken,
+        TimeSpan timeout
+    )
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(timeout);
@@ -486,8 +587,11 @@ public static class GameInformationManager
         {
             const long maximumDownloadSize = 1024L * 1024 * 1024;
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            using var response = await client.GetAsync(release.DownloadUrl, HttpCompletionOption.ResponseHeadersRead,
-                token).ConfigureAwait(false);
+            using var response = await client.GetAsync(
+                release.DownloadUrl,
+                HttpCompletionOption.ResponseHeadersRead,
+                token
+            ).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             var contentLength = response.Content.Headers.ContentLength;
             if (contentLength > maximumDownloadSize)
@@ -555,19 +659,25 @@ public static class GameInformationManager
                 Architecture.Arm64 => "android-arm64",
                 _ => null
             }
-            : architecture == Architecture.X64 ? windows ? "windows-x64" : "linux-x64" : null;
+            : architecture == Architecture.X64
+                ? windows ? "windows-x64" : "linux-x64"
+                : null;
 
     internal enum ReleaseCheckResult
     {
-        NotPublished,
-        UpToDate,
-        Available
+        NotPublished = 0,
+
+        UpToDate = 1,
+
+        Available = 2
     }
 
     internal sealed class UpdateOperation : IDisposable
     {
         private readonly CancellationTokenSource _cancellation = new();
+
         private readonly Lock _gate = new();
+
         private bool _disposed;
 
         internal UpdateOperation(ContentRepositoryManager manager, ContentRepository source, bool manual)
@@ -580,11 +690,17 @@ public static class GameInformationManager
         }
 
         internal ContentRepositoryManager Manager { get; }
+
         internal ContentRepository Source { get; }
+
         internal long SourceRevision { get; }
+
         internal bool ManualRequested { get; set; }
+
         internal Dialog? Dialog { get; set; }
+
         internal string? PackagePath { get; set; }
+
         internal CancellationToken Token { get; }
 
         internal void Cancel()

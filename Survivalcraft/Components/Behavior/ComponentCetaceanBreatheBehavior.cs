@@ -47,8 +47,11 @@ public class ComponentCetaceanBreatheBehavior : ComponentBehavior, IUpdateable
             Actions.Empty,
             delegate
             {
-                _importanceLevel = MathUtils.Lerp(0f, 400f,
-                    MathUtils.Saturate((0.75f - _componentCreature.ComponentHealth.Air) / 0.75f));
+                _importanceLevel = MathUtils.Lerp(
+                    0f,
+                    400f,
+                    MathUtils.Saturate((0.75f - _componentCreature.ComponentHealth.Air) / 0.75f)
+                );
                 if (IsActive)
                 {
                     stateMachine.TransitionTo("Surface");
@@ -89,14 +92,24 @@ public class ComponentCetaceanBreatheBehavior : ComponentBehavior, IUpdateable
             delegate
             {
                 var forward = _componentCreature.ComponentBody.Matrix.Forward;
-                var value = _componentCreature.ComponentBody.Matrix.Translation + 10f * forward +
+                var value = _componentCreature.ComponentBody.Matrix.Translation +
+                            10f * forward +
                             new Vector3(0f, 2f, 0f);
                 _componentPathfinding.SetDestination(value, 0.6f, 1f, 0, false, false, false, null);
-                _particleSystem = new WhalePlumeParticleSystem(_subsystemTerrain, _random.Float(0.8f, 1.1f),
-                    _random.Float(1f, 1.3f));
+                _particleSystem = new WhalePlumeParticleSystem(
+                    _subsystemTerrain,
+                    _random.Float(0.8f, 1.1f),
+                    _random.Float(1f, 1.3f)
+                );
                 _subsystemParticles.AddParticleSystem(_particleSystem);
-                _subsystemAudio.PlayRandomSound("Audio/Creatures/WhaleBlow", 1f, _random.Float(-0.2f, 0.2f),
-                    _componentCreature.ComponentBody.Position, 10f, true);
+                _subsystemAudio.PlayRandomSound(
+                    "Audio/Creatures/WhaleBlow",
+                    1f,
+                    _random.Float(-0.2f, 0.2f),
+                    _componentCreature.ComponentBody.Position,
+                    10f,
+                    true
+                );
             },
             delegate
             {
@@ -117,8 +130,9 @@ public class ComponentCetaceanBreatheBehavior : ComponentBehavior, IUpdateable
 
     public Vector3? FindSurfaceDestination()
     {
-        var vector = 0.5f * (_componentCreature.ComponentBody.BoundingBox.Min +
-                             _componentCreature.ComponentBody.BoundingBox.Max);
+        var vector = 0.5f *
+                     (_componentCreature.ComponentBody.BoundingBox.Min +
+                      _componentCreature.ComponentBody.BoundingBox.Max);
         var forward = _componentCreature.ComponentBody.Matrix.Forward;
         var s = 2f * _componentCreature.ComponentBody.ImmersionDepth;
         for (var i = 0; i < 16; i++)
@@ -128,12 +142,20 @@ public class ComponentCetaceanBreatheBehavior : ComponentBehavior, IUpdateable
                 : _random.Vector2(0.5f, 1f);
             var v = Vector3.Normalize(new Vector3(vector2.X, 1f, vector2.Y));
             var end = vector + s * v;
-            var terrainRaycastResult = _subsystemTerrain.Raycast(vector, end, false, false,
-                (value, _) => Terrain.ExtractContents(value) != 18);
+            var terrainRaycastResult = _subsystemTerrain.Raycast(
+                vector,
+                end,
+                false,
+                false,
+                (value, _) => Terrain.ExtractContents(value) != 18
+            );
             if (terrainRaycastResult.HasValue && Terrain.ExtractContents(terrainRaycastResult.Value.Value) == 0)
             {
-                return new Vector3(terrainRaycastResult.Value.CellFace.X + 0.5f, terrainRaycastResult.Value.CellFace.Y,
-                    terrainRaycastResult.Value.CellFace.Z + 0.5f);
+                return new Vector3(
+                    terrainRaycastResult.Value.CellFace.X + 0.5f,
+                    terrainRaycastResult.Value.CellFace.Y,
+                    terrainRaycastResult.Value.CellFace.Z + 0.5f
+                );
             }
         }
 

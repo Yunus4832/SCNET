@@ -5,9 +5,13 @@ namespace Game.Widgets;
 public sealed class SignViewerWidget : CanvasWidget
 {
     private readonly Action _close;
+
     private readonly ButtonWidget _closeButton;
+
     private readonly LabelWidget _emptyLabel;
+
     private readonly ButtonWidget _openLinkButton;
+
     private readonly Uri? _url;
 
     public SignViewerWidget(SignData? signData, Action close)

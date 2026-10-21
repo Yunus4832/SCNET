@@ -180,8 +180,10 @@ internal sealed class SpatialInterestIndex
 
     private static bool Intersects(Location location, Vector2 min, int size)
     {
-        var closest = new Vector2(MathUtils.Clamp(location.Center.X, min.X, min.X + size),
-            MathUtils.Clamp(location.Center.Y, min.Y, min.Y + size));
+        var closest = new Vector2(
+            MathUtils.Clamp(location.Center.X, min.X, min.X + size),
+            MathUtils.Clamp(location.Center.Y, min.Y, min.Y + size)
+        );
         return Vector2.DistanceSquared(location.Center, closest) <= location.Distance * location.Distance;
     }
 

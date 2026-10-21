@@ -27,25 +27,49 @@ public class GravestoneBlock : Block
                 throw new InvalidOperationException("Required ModelMesh.ParentBone is null")
             );
             BlockMeshes[i] = new BlockMesh();
-            BlockMeshes[i].AppendModelMeshPart(modelMesh.MeshParts[0],
+            BlockMeshes[i].AppendModelMeshPart(
+                modelMesh.MeshParts[0],
                 boneAbsoluteTransform * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
-                false, false, false, false, Color.White);
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             StandaloneBlockMeshes[i] = new BlockMesh();
-            StandaloneBlockMeshes[i].AppendModelMeshPart(modelMesh.MeshParts[0],
-                boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false,
-                Color.White);
+            StandaloneBlockMeshes[i].AppendModelMeshPart(
+                modelMesh.MeshParts[0],
+                boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             if (num)
             {
                 var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
                     model.FindMesh("Plinth")!.ParentBone ??
                     throw new InvalidOperationException("Required PlinthMesh.ParentBone is null")
                 );
-                BlockMeshes[i].AppendModelMeshPart(model.FindMesh("Plinth")!.MeshParts[0],
+                BlockMeshes[i].AppendModelMeshPart(
+                    model.FindMesh("Plinth")!.MeshParts[0],
                     boneAbsoluteTransform2 * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
-                    false, false, false, false, Color.White);
-                StandaloneBlockMeshes[i].AppendModelMeshPart(model.FindMesh("Plinth")!.MeshParts[0],
-                    boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false,
-                    Color.White);
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
+                StandaloneBlockMeshes[i].AppendModelMeshPart(
+                    model.FindMesh("Plinth")!.MeshParts[0],
+                    boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
             }
 
             CollisionBoxes[i] = [BlockMeshes[i].CalculateBoundingBox()];
@@ -80,18 +104,29 @@ public class GravestoneBlock : Block
             var radians = 0.2f * (num4 % 16 / 7.5f - 1f);
             var radians2 = 0.1f * ((num4 >> 4) % 16 / 7.5f - 1f);
             value2 = GetRotation(num) != 0
-                ? Matrix.CreateTranslation(-0.5f, 0f, -0.5f) * Matrix.CreateRotationZ(radians) *
-                  Matrix.CreateRotationY(radians2) * Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                : Matrix.CreateTranslation(-0.5f, 0f, -0.5f) * Matrix.CreateRotationX(radians) *
-                  Matrix.CreateRotationY(radians2) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
+                ? Matrix.CreateTranslation(-0.5f, 0f, -0.5f) *
+                  Matrix.CreateRotationZ(radians) *
+                  Matrix.CreateRotationY(radians2) *
+                  Matrix.CreateTranslation(0.5f, 0f, 0.5f)
+                : Matrix.CreateTranslation(-0.5f, 0f, -0.5f) *
+                  Matrix.CreateRotationX(radians) *
+                  Matrix.CreateRotationY(radians2) *
+                  Matrix.CreateTranslation(0.5f, 0f, 0.5f);
         }
 
         var f = num3 ? 0f : MathUtils.Sqr((num4 >> 8) % 16 / 15f);
         generator.GenerateMeshVertices(
             color: !flag
                 ? Color.Lerp(Color.White, new Color(255, 233, 199), f)
-                : Color.Lerp(new Color(217, 206, 123), new Color(229, 206, 123), f), block: this, x: x, y: y, z: z,
-            blockMesh: BlockMeshes[num], matrix: value2, subset: geometry.SubsetOpaque);
+                : Color.Lerp(new Color(217, 206, 123), new Color(229, 206, 123), f),
+            block: this,
+            x: x,
+            y: y,
+            z: z,
+            blockMesh: BlockMeshes[num],
+            matrix: value2,
+            subset: geometry.SubsetOpaque
+        );
     }
 
     public override void DrawBlock(
@@ -106,8 +141,14 @@ public class GravestoneBlock : Block
         var num = Terrain.ExtractData(value);
         if (num < BlockMeshes.Length)
         {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, StandaloneBlockMeshes[num], color, size, ref matrix,
-                environmentData);
+            BlocksManager.DrawMeshBlock(
+                primitivesRenderer,
+                StandaloneBlockMeshes[num],
+                color,
+                size,
+                ref matrix,
+                environmentData
+            );
         }
     }
 
@@ -160,15 +201,23 @@ public class GravestoneBlock : Block
         }
     }
 
-    public override void GetDropValues(SubsystemTerrain subsystemTerrain, int oldValue, int newValue, int toolLevel,
-        List<BlockDropValue> dropValues, out bool showDebris)
+    public override void GetDropValues(
+        SubsystemTerrain subsystemTerrain,
+        int oldValue,
+        int newValue,
+        int toolLevel,
+        List<BlockDropValue> dropValues,
+        out bool showDebris
+    )
     {
         showDebris = true;
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, Terrain.ExtractData(oldValue)),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, Terrain.ExtractData(oldValue)),
+                Count = 1
+            }
+        );
     }
 
     public static int GetRotation(int data)

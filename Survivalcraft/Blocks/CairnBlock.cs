@@ -17,24 +17,59 @@ public class CairnBlock : Block
         var woodMesh = model.FindMesh("Wood")!;
         var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
             cairnMesh.ParentBone ??
-            throw new InvalidOperationException("Required CairnMesh.ParentBone is null"));
+            throw new InvalidOperationException("Required CairnMesh.ParentBone is null")
+        );
         var white = Color.White;
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(cairnMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateRotationX(-(float)Math.PI / 2f) *
-            Matrix.CreateTranslation(0.5f, 0f, 0.5f), false, false, false, false, white);
+        blockMesh.AppendModelMeshPart(
+            cairnMesh.MeshParts[0],
+            boneAbsoluteTransform *
+            Matrix.CreateRotationX(-(float)Math.PI / 2f) *
+            Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+            false,
+            false,
+            false,
+            false,
+            white
+        );
         var blockMesh2 = new BlockMesh();
-        blockMesh2.AppendModelMeshPart(woodMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateRotationX(-(float)Math.PI / 2f) *
-            Matrix.CreateTranslation(0.5f, 0f, 0.5f), false, false, false, false, white);
+        blockMesh2.AppendModelMeshPart(
+            woodMesh.MeshParts[0],
+            boneAbsoluteTransform *
+            Matrix.CreateRotationX(-(float)Math.PI / 2f) *
+            Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+            false,
+            false,
+            false,
+            false,
+            white
+        );
         _blockMesh.AppendBlockMesh(blockMesh);
         _blockMesh.AppendBlockMesh(blockMesh2);
-        _standaloneMesh.AppendModelMeshPart(cairnMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateScale(1.3f) * Matrix.CreateRotationX(-(float)Math.PI / 2f) *
-            Matrix.CreateTranslation(0f, 0f, 0f), false, false, true, false, white);
-        _standaloneMesh.AppendModelMeshPart(woodMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateScale(1.3f) * Matrix.CreateRotationX(-(float)Math.PI / 2f) *
-            Matrix.CreateTranslation(0f, 0f, 0f), false, false, true, false, white);
+        _standaloneMesh.AppendModelMeshPart(
+            cairnMesh.MeshParts[0],
+            boneAbsoluteTransform *
+            Matrix.CreateScale(1.3f) *
+            Matrix.CreateRotationX(-(float)Math.PI / 2f) *
+            Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            true,
+            false,
+            white
+        );
+        _standaloneMesh.AppendModelMeshPart(
+            woodMesh.MeshParts[0],
+            boneAbsoluteTransform *
+            Matrix.CreateScale(1.3f) *
+            Matrix.CreateRotationX(-(float)Math.PI / 2f) *
+            Matrix.CreateTranslation(0f, 0f, 0f),
+            false,
+            false,
+            true,
+            false,
+            white
+        );
         _collisionBoxes[0] = blockMesh.CalculateBoundingBox();
         base.Initialize();
     }

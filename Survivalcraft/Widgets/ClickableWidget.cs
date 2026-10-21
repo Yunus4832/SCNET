@@ -44,7 +44,8 @@ public class ClickableWidget : Widget
             IsTapped = true;
         }
 
-        if (!input.Click.HasValue || HitTestGlobal(input.Click.Value.Start) != this ||
+        if (!input.Click.HasValue ||
+            HitTestGlobal(input.Click.Value.Start) != this ||
             HitTestGlobal(input.Click.Value.End) != this)
         {
             return;

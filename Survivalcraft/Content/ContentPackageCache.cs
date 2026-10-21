@@ -11,7 +11,8 @@ public sealed record ContentPackageCacheEntry(
     string Summary,
     string Description,
     string Version,
-    long Size);
+    long Size
+);
 
 public interface IContentPackageCache
 {
@@ -19,15 +20,26 @@ public interface IContentPackageCache
     ContentPackageCacheEntry? Find(string packageHash);
     Task<ContentPackageCacheEntry> ImportAsync(Stream source, CancellationToken cancellationToken = default);
 
-    Task<ContentPackageCacheEntry> ImportExpectedAsync(Stream source, ContentPackageType expectedType,
-        CancellationToken cancellationToken = default);
+    Task<ContentPackageCacheEntry> ImportExpectedAsync(
+        Stream source,
+        ContentPackageType expectedType,
+        CancellationToken cancellationToken = default
+    );
 
-    Task<ContentPackageCacheEntry> ImportAllowedAsync(Stream source,
-        IReadOnlyCollection<ContentPackageType> allowedTypes, CancellationToken cancellationToken = default);
+    Task<ContentPackageCacheEntry> ImportAllowedAsync(
+        Stream source,
+        IReadOnlyCollection<ContentPackageType> allowedTypes,
+        CancellationToken cancellationToken = default
+    );
 
-    Task<ContentPackageCacheEntry> ImportExactAsync(Stream source, ContentPackageType expectedType,
-        string expectedIdentifier, string expectedVersion, string expectedPackageHash,
-        CancellationToken cancellationToken = default);
+    Task<ContentPackageCacheEntry> ImportExactAsync(
+        Stream source,
+        ContentPackageType expectedType,
+        string expectedIdentifier,
+        string expectedVersion,
+        string expectedPackageHash,
+        CancellationToken cancellationToken = default
+    );
 
     Stream OpenValidated(string packageHash);
     Task ExportAsync(string packageHash, Stream destination, CancellationToken cancellationToken = default);
@@ -38,7 +50,9 @@ public interface IContentPackageCache
 public sealed class ContentPackageCache(string directoryPath) : IContentPackageCache
 {
     public const long MaximumPhysicalBytes = 256L * 1024 * 1024;
+
     private IReadOnlyList<ContentPackageCacheEntry>? _index;
+
     private string TemporaryDirectory => Path.Combine(directoryPath, ".temp");
 
     public IReadOnlyList<ContentPackageCacheEntry> List()
@@ -51,24 +65,32 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(packageHash);
         return List().FirstOrDefault(entry =>
-            string.Equals(entry.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase));
+            string.Equals(entry.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     public async Task<ContentPackageCacheEntry> ImportAsync(
         Stream source,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         return await ImportCoreAsync(source, null, null, null, null, cancellationToken);
     }
 
-    public async Task<ContentPackageCacheEntry> ImportExpectedAsync(Stream source, ContentPackageType expectedType,
-        CancellationToken cancellationToken = default)
+    public async Task<ContentPackageCacheEntry> ImportExpectedAsync(
+        Stream source,
+        ContentPackageType expectedType,
+        CancellationToken cancellationToken = default
+    )
     {
         return await ImportCoreAsync(source, [expectedType], null, null, null, cancellationToken);
     }
 
-    public async Task<ContentPackageCacheEntry> ImportAllowedAsync(Stream source,
-        IReadOnlyCollection<ContentPackageType> allowedTypes, CancellationToken cancellationToken = default)
+    public async Task<ContentPackageCacheEntry> ImportAllowedAsync(
+        Stream source,
+        IReadOnlyCollection<ContentPackageType> allowedTypes,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(allowedTypes);
         if (allowedTypes.Count == 0)
@@ -79,23 +101,36 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
         return await ImportCoreAsync(source, allowedTypes, null, null, null, cancellationToken);
     }
 
-    public async Task<ContentPackageCacheEntry> ImportExactAsync(Stream source, ContentPackageType expectedType,
-        string expectedIdentifier, string expectedVersion, string expectedPackageHash,
-        CancellationToken cancellationToken = default)
+    public async Task<ContentPackageCacheEntry> ImportExactAsync(
+        Stream source,
+        ContentPackageType expectedType,
+        string expectedIdentifier,
+        string expectedVersion,
+        string expectedPackageHash,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(expectedIdentifier);
         ArgumentException.ThrowIfNullOrWhiteSpace(expectedVersion);
         ArgumentException.ThrowIfNullOrWhiteSpace(expectedPackageHash);
-        return await ImportCoreAsync(source, [expectedType], expectedIdentifier, expectedVersion,
-            expectedPackageHash, cancellationToken);
+        return await ImportCoreAsync(
+            source,
+            [expectedType],
+            expectedIdentifier,
+            expectedVersion,
+            expectedPackageHash,
+            cancellationToken
+        );
     }
 
-    private async Task<ContentPackageCacheEntry> ImportCoreAsync(Stream source,
+    private async Task<ContentPackageCacheEntry> ImportCoreAsync(
+        Stream source,
         IReadOnlyCollection<ContentPackageType>? allowedTypes,
         string? expectedIdentifier,
         string? expectedVersion,
         string? expectedPackageHash,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(source);
         Directory.CreateDirectory(directoryPath);
@@ -103,8 +138,14 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
         var temporaryPath = Path.Combine(TemporaryDirectory, $"{Guid.NewGuid():N}.upload");
         try
         {
-            await using (var output = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write,
-                             FileShare.None, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
+            await using (var output = new FileStream(
+                             temporaryPath,
+                             FileMode.CreateNew,
+                             FileAccess.Write,
+                             FileShare.None,
+                             64 * 1024,
+                             FileOptions.Asynchronous | FileOptions.SequentialScan
+                         ))
             {
                 var buffer = new byte[64 * 1024];
                 long total = 0;
@@ -172,8 +213,14 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
     public Stream OpenValidated(string packageHash)
     {
         var path = GetPath(packageHash);
-        var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
-            64 * 1024, FileOptions.SequentialScan);
+        var stream = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            64 * 1024,
+            FileOptions.SequentialScan
+        );
         try
         {
             var inspection = ContentPackageReader.Inspect(stream);
@@ -195,7 +242,8 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
     public async Task ExportAsync(
         string packageHash,
         Stream destination,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(destination);
         await using var source = OpenValidated(packageHash);
@@ -238,8 +286,11 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
             {
                 using var stream = File.OpenRead(path);
                 var inspection = ContentPackageReader.Inspect(stream);
-                if (!string.Equals(Path.GetFileNameWithoutExtension(path), inspection.PackageHash,
-                        StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(
+                        Path.GetFileNameWithoutExtension(path),
+                        inspection.PackageHash,
+                        StringComparison.OrdinalIgnoreCase
+                    ))
                 {
                     continue;
                 }
@@ -259,7 +310,14 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
         Path.Combine(directoryPath, packageHash.ToLowerInvariant() + ContentPackageReader.FileExtension);
 
     private static ContentPackageCacheEntry ToEntry(string path, ContentPackageInspection inspection) => new(
-        path, inspection.PackageHash, inspection.Manifest.Type, inspection.Manifest.Identifier,
-        inspection.Manifest.Name, inspection.Manifest.Summary, inspection.Manifest.Description,
-        inspection.Manifest.Version, new FileInfo(path).Length);
+        path,
+        inspection.PackageHash,
+        inspection.Manifest.Type,
+        inspection.Manifest.Identifier,
+        inspection.Manifest.Name,
+        inspection.Manifest.Summary,
+        inspection.Manifest.Description,
+        inspection.Manifest.Version,
+        new FileInfo(path).Length
+    );
 }

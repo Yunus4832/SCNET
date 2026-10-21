@@ -114,7 +114,9 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                 {
                     var inventory = subsystemInventories.GetInventoryById(package.InventoryId);
 
-                    if (inventory != null && package.SlotIndex >= 0 && package.SlotIndex < inventory.SlotsCount &&
+                    if (inventory != null &&
+                        package.SlotIndex >= 0 &&
+                        package.SlotIndex < inventory.SlotsCount &&
                         SubsystemInventories.CanClientAccess(inventory, context.Sender))
                     {
                         var theItemValue = inventory.GetSlotValue(package.SlotIndex);

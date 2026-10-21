@@ -49,7 +49,10 @@ public sealed class ChunkStateResetPackageTest
     public void ResetRemovesStaleSignButNotNeighboringChunk()
     {
         var behavior = new SubsystemSignBlockBehavior();
-        typeof(SubsystemSignBlockBehavior).GetField("_subsystemGameInfo", BindingFlags.Instance | BindingFlags.NonPublic)!
+        typeof(SubsystemSignBlockBehavior).GetField(
+                "_subsystemGameInfo",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            )!
             .SetValue(behavior, new SubsystemGameInfo { WorldSettings = new WorldSettings { KeywordBlocking = "" } });
         var stale = new Point3(15, 10, 15);
         var other = new Point3(16, 10, 15);

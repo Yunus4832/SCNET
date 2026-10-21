@@ -30,8 +30,14 @@ public sealed class UdpRelayRouteTest
         var connecting = client.ConnectAsync(route.Endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
         await PumpUntilAsync([server, client], () => connecting.IsCompleted && oldServerConnection is not null);
         var oldConnection = await connecting;
-        var fakeOffer = new RelayAllocation(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), route.Endpoint.ToString(),
-            new RelayRouteCredentials(Guid.NewGuid(), 0, RandomNumberGenerator.GetBytes(32)), DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1));
+        var fakeOffer = new RelayAllocation(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            route.Endpoint.ToString(),
+            new RelayRouteCredentials(Guid.NewGuid(), 0, RandomNumberGenerator.GetBytes(32)),
+            DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1)
+        );
         Assert.Null(server.TryInstallRelay(fakeOffer));
         var oldEcho = false;
         client.Received += (_, message) => oldEcho = message.Payload.Span.SequenceEqual("old-route-still-works"u8);
@@ -50,8 +56,12 @@ public sealed class UdpRelayRouteTest
         newClient.SendDatagram(replacement.Endpoint, "register"u8);
         NetworkConnection? newServerConnection = null;
         server.Connected += connection => newServerConnection = connection;
-        var newConnecting = newClient.ConnectAsync(replacement.Endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
-        await PumpUntilAsync(new[] { server, newClient }, () => newConnecting.IsCompleted && newServerConnection is not null);
+        var newConnecting =
+            newClient.ConnectAsync(replacement.Endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        await PumpUntilAsync(
+            new[] { server, newClient },
+            () => newConnecting.IsCompleted && newServerConnection is not null
+        );
         var newEcho = false;
         newClient.Received += (_, message) => newEcho = message.Payload.Span.SequenceEqual("fresh-route"u8);
         (await newConnecting).Send("fresh-route"u8);
@@ -70,8 +80,16 @@ public sealed class UdpRelayRouteTest
         await using var client = new NetworkHost();
         var session = Guid.NewGuid();
         var otherSession = Guid.NewGuid();
-        RelayAllocation Offer(UdpRelayRoute route, Guid room) => new(room, Guid.NewGuid(), Guid.NewGuid(),
-            route.Endpoint.ToString(), route.GetCredentials(0), DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1));
+
+        RelayAllocation Offer(UdpRelayRoute route, Guid room) => new(
+            room,
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            route.Endpoint.ToString(),
+            route.GetCredentials(0),
+            DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1)
+        );
+
         Assert.NotNull(server.TryInstallRelay(Offer(active, session)));
         client.RegisterRelayRoute(active.Endpoint, active.GetCredentials(1));
         client.SendDatagram(active.Endpoint, "register"u8);
@@ -114,7 +132,8 @@ public sealed class UdpRelayRouteTest
         client.Received += (_, message) => echoed = message.Payload.Span.SequenceEqual("relay-family"u8);
         var receipt = (await connecting).SendWithReceipt("relay-family"u8);
         await PumpUntilAsync(new[] { server, client }, () => echoed && receipt.Completion.IsCompletedSuccessfully);
-        var closed = new TaskCompletionSource<NetworkDisconnectInfo>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var closed =
+            new TaskCompletionSource<NetworkDisconnectInfo>(TaskCreationOptions.RunContinuationsAsynchronously);
         client.Disconnected += (_, information) => closed.TrySetResult(information);
         Assert.Equal(1, server.Resources.RelayRoutes);
         await server.DisposeAsync();
@@ -131,8 +150,20 @@ public sealed class UdpRelayRouteTest
         var invitations = new InvitationRegistry(TimeProvider.System, TimeSpan.FromMinutes(5), 1);
         var invitation = invitations.Create(1);
         var participant = invitations.Join(invitation.JoinCode, Guid.NewGuid());
-        await using var routes = new RelayRouteRegistry(invitations, TimeProvider.System, IPAddress.Loopback, IPAddress.Loopback, 0, 1);
-        var allocated = routes.Allocate(invitation.SessionId, participant.ParticipantId, Guid.NewGuid(), participant.Credential);
+        await using var routes = new RelayRouteRegistry(
+            invitations,
+            TimeProvider.System,
+            IPAddress.Loopback,
+            IPAddress.Loopback,
+            0,
+            1
+        );
+        var allocated = routes.Allocate(
+            invitation.SessionId,
+            participant.ParticipantId,
+            Guid.NewGuid(),
+            participant.Credential
+        );
         var offer = Assert.Single(routes.GetHostOffers(invitation.SessionId, invitation.HostCredential));
         var endpoint = IPEndPoint.Parse(allocated.Endpoint);
         await using var server = new NetworkHost();
@@ -165,8 +196,13 @@ public sealed class UdpRelayRouteTest
         var control = SignalCodec.Encode(new SignalMessage("relay-close", Guid.NewGuid()));
         var payload = new byte[control.Length + 1];
         control.CopyTo(payload, 1);
-        var invalid = RelayDatagramCodec.Encode(credentials.RouteId, credentials.Side, 1,
-            RandomNumberGenerator.GetBytes(32), payload);
+        var invalid = RelayDatagramCodec.Encode(
+            credentials.RouteId,
+            credentials.Side,
+            1,
+            RandomNumberGenerator.GetBytes(32),
+            payload
+        );
         await sender.SendAsync(invalid, route.Endpoint);
         var valid = RelayDatagramCodec.Encode(credentials.RouteId, credentials.Side, 1, credentials.Key, payload);
         await sender.SendAsync(valid, route.Endpoint);
@@ -230,10 +266,16 @@ public sealed class UdpRelayRouteTest
         var firstCredentials = route.GetCredentials(0);
         var secondCredentials = route.GetCredentials(1);
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        await first.SendAsync(RelayDatagramCodec.Encode(route.Id, 0, 1, firstCredentials.Key, new byte[] { 1 }),
-            route.Endpoint, deadline.Token);
-        await second.SendAsync(RelayDatagramCodec.Encode(route.Id, 1, 1, secondCredentials.Key, new byte[] { 2 }),
-            route.Endpoint, deadline.Token);
+        await first.SendAsync(
+            RelayDatagramCodec.Encode(route.Id, 0, 1, firstCredentials.Key, new byte[] { 1 }),
+            route.Endpoint,
+            deadline.Token
+        );
+        await second.SendAsync(
+            RelayDatagramCodec.Encode(route.Id, 1, 1, secondCredentials.Key, new byte[] { 2 }),
+            route.Endpoint,
+            deadline.Token
+        );
         var registration = await first.ReceiveAsync(deadline.Token);
         Assert.True(RelayDatagramCodec.TryDecode(registration.Buffer, firstCredentials.Key, out _));
         var valid = RelayDatagramCodec.Encode(route.Id, 0, 2, firstCredentials.Key, new byte[] { 3 });
@@ -242,8 +284,17 @@ public sealed class UdpRelayRouteTest
         Assert.True(RelayDatagramCodec.TryDecode(received.Buffer, secondCredentials.Key, out var decoded));
         Assert.Equal(new byte[] { 3 }, decoded!.Payload);
         await first.SendAsync(valid, route.Endpoint, deadline.Token);
-        await first.SendAsync(RelayDatagramCodec.Encode(route.Id, 0, 3, RandomNumberGenerator.GetBytes(32),
-            new byte[] { 4 }), route.Endpoint, deadline.Token);
+        await first.SendAsync(
+            RelayDatagramCodec.Encode(
+                route.Id,
+                0,
+                3,
+                RandomNumberGenerator.GetBytes(32),
+                new byte[] { 4 }
+            ),
+            route.Endpoint,
+            deadline.Token
+        );
         using var absent = new CancellationTokenSource(TimeSpan.FromMilliseconds(150));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await second.ReceiveAsync(absent.Token));
     }
@@ -268,11 +319,18 @@ public sealed class UdpRelayRouteTest
         first.SendDatagram(firstRoute.Endpoint, "register"u8);
         second.SendDatagram(secondRoute.Endpoint, "register"u8);
         var firstConnect = first.ConnectAsync(firstRoute.Endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
-        var secondConnect = second.ConnectAsync(secondRoute.Endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
-        var directConnect = direct.ConnectAsync(new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-            ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var secondConnect =
+            second.ConnectAsync(secondRoute.Endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        var directConnect = direct.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ReadOnlyMemory<byte>.Empty,
+            CancellationToken.None
+        );
         var hosts = new[] { server, first, second, direct };
-        await PumpUntilAsync(hosts, () => firstConnect.IsCompleted && secondConnect.IsCompleted && directConnect.IsCompleted);
+        await PumpUntilAsync(
+            hosts,
+            () => firstConnect.IsCompleted && secondConnect.IsCompleted && directConnect.IsCompleted
+        );
         var connections = await Task.WhenAll(firstConnect, secondConnect, directConnect);
         var echoed = new Dictionary<int, byte[]>();
         first.Received += (_, payload) => echoed[0] = payload.Payload.ToArray();
@@ -282,11 +340,13 @@ public sealed class UdpRelayRouteTest
         {
             connections[index].Send(Enumerable.Repeat((byte)(index + 1), 4096).ToArray());
         }
+
         await PumpUntilAsync(hosts, () => echoed.Count == 3);
         for (var index = 0; index < connections.Length; index++)
         {
             Assert.Equal(Enumerable.Repeat((byte)(index + 1), 4096), echoed[index]);
         }
+
         Assert.True(firstRoute.ForwardedBytes > 0);
         Assert.True(secondRoute.ForwardedBytes > 0);
         await firstRoute.DisposeAsync();
@@ -327,6 +387,7 @@ public sealed class UdpRelayRouteTest
             {
                 host.DispatchEvents();
             }
+
             await Task.Delay(5, deadline.Token);
         }
     }

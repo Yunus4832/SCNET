@@ -172,7 +172,8 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
         _statusHost.IsVisible = isSleeping || showRelativePosition;
         _name.Size = new Vector2(
             _statusHost.IsVisible ? MathUtils.Max(Size.X - _statusHost.Size.X, 40f) : Size.X,
-            19f);
+            19f
+        );
         if (!showRelativePosition)
         {
             return;
@@ -185,7 +186,8 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
         _direction.RotateAngle = GetAngle(
             _main.GameWidget.ActiveCamera.ViewDirection,
             mainPosition,
-            playerPosition);
+            playerPosition
+        );
     }
 
     private static float GetAngle(Vector3 direction, Vector3 start, Vector3 destination)

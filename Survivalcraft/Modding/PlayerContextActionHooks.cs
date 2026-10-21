@@ -4,14 +4,18 @@ public interface IModPlayerContextActionHooks
 {
     IDisposable ProvideNearbyAction(
         Func<PlayerContextActionQueryContext, PlayerContextAction?> provider,
-        int priority = 0);
+        int priority = 0
+    );
 }
 
 public sealed class PlayerContextActionHooks
 {
     private readonly List<Registration> _registrations = [];
+
     private Registration[] _providers = [];
+
     private bool _isFrozen;
+
     private long _sequence;
 
     public PlayerContextAction? Resolve(PlayerContextActionQueryContext context)
@@ -52,7 +56,8 @@ public sealed class PlayerContextActionHooks
     private IDisposable Register(
         ModId owner,
         Func<PlayerContextActionQueryContext, PlayerContextAction?> provider,
-        int priority)
+        int priority
+    )
     {
         ArgumentNullException.ThrowIfNull(provider);
         if (_isFrozen)
@@ -84,7 +89,8 @@ public sealed class PlayerContextActionHooks
     {
         public IDisposable ProvideNearbyAction(
             Func<PlayerContextActionQueryContext, PlayerContextAction?> provider,
-            int priority = 0) => hooks.Register(owner, provider, priority);
+            int priority = 0
+        ) => hooks.Register(owner, provider, priority);
     }
 
     private sealed class Registration(
@@ -92,7 +98,8 @@ public sealed class PlayerContextActionHooks
         ModId owner,
         Func<PlayerContextActionQueryContext, PlayerContextAction?> provider,
         int priority,
-        long sequence) : IDisposable
+        long sequence
+    ) : IDisposable
     {
         private PlayerContextActionHooks? _hooks = hooks;
 

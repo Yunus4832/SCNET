@@ -166,8 +166,12 @@ public class TerrainSerializer22 : IDisposable
         }
         catch (Exception e)
         {
-            Log.Error(ExceptionManager.MakeFullErrorMessage(
-                string.Format("Error loading data for chunk ({0},{1}).", new object[] { num, num2 }), e));
+            Log.Error(
+                ExceptionManager.MakeFullErrorMessage(
+                    string.Format("Error loading data for chunk ({0},{1}).", new object[] { num, num2 }),
+                    e
+                )
+            );
             return result;
         }
     }
@@ -241,8 +245,12 @@ public class TerrainSerializer22 : IDisposable
         }
         catch (Exception e)
         {
-            Log.Error(ExceptionManager.MakeFullErrorMessage(
-                string.Format("Error writing data for chunk ({0},{1}).", new object[] { num, num2 }), e));
+            Log.Error(
+                ExceptionManager.MakeFullErrorMessage(
+                    string.Format("Error writing data for chunk ({0},{1}).", new object[] { num, num2 }),
+                    e
+                )
+            );
         }
 
         _ = Time.RealTime;

@@ -60,8 +60,11 @@ public class HitValueParticleSystem : ParticleSystem<HitValueParticleSystem.Part
             throw new InvalidOperationException("SubsystemParticles is null");
         }
 
-        _batch ??= SubsystemParticles.PrimitivesRenderer.FontBatch(ContentManager.Get<BitmapFont>("Fonts/Pericles"),
-            0, DepthStencilState.None);
+        _batch ??= SubsystemParticles.PrimitivesRenderer.FontBatch(
+            ContentManager.Get<BitmapFont>("Fonts/Pericles"),
+            0,
+            DepthStencilState.None
+        );
         var viewDirection = camera.ViewDirection;
         var vector = Vector3.Normalize(Vector3.Cross(viewDirection, Vector3.UnitY));
         var v = -Vector3.Normalize(Vector3.Cross(vector, viewDirection));
@@ -83,8 +86,15 @@ public class HitValueParticleSystem : ParticleSystem<HitValueParticleSystem.Part
 
             var s = 0.006f * MathUtils.Sqrt(num);
             var color = particle.Color * num4;
-            _batch.QueueText(particle.Text, particle.Position, vector * s, v * s, color,
-                TextAnchor.HorizontalCenter | TextAnchor.VerticalCenter, Vector2.Zero);
+            _batch.QueueText(
+                particle.Text,
+                particle.Position,
+                vector * s,
+                v * s,
+                color,
+                TextAnchor.HorizontalCenter | TextAnchor.VerticalCenter,
+                Vector2.Zero
+            );
         }
     }
 

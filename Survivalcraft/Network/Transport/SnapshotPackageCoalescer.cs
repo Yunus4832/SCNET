@@ -12,7 +12,8 @@ public static class SnapshotPackageCoalescer
         for (var i = pendingPackages.Count - 1; i >= 0; i--)
         {
             if (!TryGetKey(pendingPackages[i].Package, pendingPackages[i].Audience, out var pendingKey) ||
-                pendingKey.Type != key.Type || pendingKey.EntityId != key.EntityId ||
+                pendingKey.Type != key.Type ||
+                pendingKey.EntityId != key.EntityId ||
                 !pendingKey.Audience.HasSameRecipients(key.Audience))
             {
                 continue;
@@ -34,7 +35,8 @@ public static class SnapshotPackageCoalescer
                 key = new SnapshotKey(
                     typeof(ComponentPlayerPackage),
                     playerPackage.FromPlayerId,
-                    audience);
+                    audience
+                );
                 return true;
             case OnlinePlayerStatePackage:
                 key = new SnapshotKey(typeof(OnlinePlayerStatePackage), 0, audience);

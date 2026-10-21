@@ -45,9 +45,11 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
             obj.Color = Color.MultiplyColorOnly(color, _random.Float(0.7f, 1f));
             obj.Size = num5 * scale * new Vector2(_random.Float(0.05f, 0.06f));
             obj.TimeToLive = num5 * _random.Float(1f, 3f);
-            obj.Velocity = num5 * 2f *
+            obj.Velocity = num5 *
+                           2f *
                            (vector + new Vector3(_random.Float(-0.2f, 0.2f), 0.6f, _random.Float(-0.2f, 0.2f)));
-            obj.TextureSlot = textureSlot % 16 * 2 + _random.Int(0, 1) +
+            obj.TextureSlot = textureSlot % 16 * 2 +
+                              _random.Int(0, 1) +
                               32 * (textureSlot / 16 * 2 + _random.Int(0, 1));
         }
     }
@@ -70,8 +72,14 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
             {
                 var position = particle.Position;
                 var vector = position + particle.Velocity * dt;
-                var terrainRaycastResult = _subsystemTerrain.Raycast(position, vector, false, true,
-                    (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable);
+                var terrainRaycastResult = _subsystemTerrain.Raycast(
+                    position,
+                    vector,
+                    false,
+                    true,
+                    (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
+                        .Collidable
+                );
                 if (terrainRaycastResult.HasValue)
                 {
                     var plane = terrainRaycastResult.Value.CellFace.CalculatePlane();
@@ -109,6 +117,7 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
     public class Particle : Game.Particle
     {
         public float TimeToLive;
+
         public Vector3 Velocity;
     }
 }

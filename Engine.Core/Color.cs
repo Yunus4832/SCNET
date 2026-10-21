@@ -78,15 +78,15 @@ public struct Color : IEquatable<Color>
 
     public static Color LerpNotSaturated(Color c1, Color c2, float f)
     {
-        return new Color((byte)MathUtils.Lerp(c1.R, c2.R, f), (byte)MathUtils.Lerp(c1.G, c2.G, f),
-            (byte)MathUtils.Lerp(c1.B, c2.B, f), (byte)MathUtils.Lerp(c1.A, c2.A, f));
+        return new Color(
+            (byte)MathUtils.Lerp(c1.R, c2.R, f),
+            (byte)MathUtils.Lerp(c1.G, c2.G, f),
+            (byte)MathUtils.Lerp(c1.B, c2.B, f),
+            (byte)MathUtils.Lerp(c1.A, c2.A, f)
+        );
     }
 
-    public byte R
-    {
-        get => (byte)PackedValue;
-        set => PackedValue = (uint)(((int)PackedValue & -256) | value);
-    }
+    public byte R { get => (byte)PackedValue; set => PackedValue = (uint)(((int)PackedValue & -256) | value); }
 
     public byte G
     {
@@ -129,8 +129,12 @@ public struct Color : IEquatable<Color>
 
     public Color(int r, int g, int b, int a)
     {
-        this = new Color((byte)MathUtils.Clamp(r, 0, 255), (byte)MathUtils.Clamp(g, 0, 255),
-            (byte)MathUtils.Clamp(b, 0, 255), (byte)MathUtils.Clamp(a, 0, 255));
+        this = new Color(
+            (byte)MathUtils.Clamp(r, 0, 255),
+            (byte)MathUtils.Clamp(g, 0, 255),
+            (byte)MathUtils.Clamp(b, 0, 255),
+            (byte)MathUtils.Clamp(a, 0, 255)
+        );
     }
 
     public Color(int r, int g, int b)
@@ -140,14 +144,22 @@ public struct Color : IEquatable<Color>
 
     public Color(float r, float g, float b, float a)
     {
-        this = new Color((byte)(MathUtils.Saturate(r) * 255f), (byte)(MathUtils.Saturate(g) * 255f),
-            (byte)(MathUtils.Saturate(b) * 255f), (byte)(MathUtils.Saturate(a) * 255f));
+        this = new Color(
+            (byte)(MathUtils.Saturate(r) * 255f),
+            (byte)(MathUtils.Saturate(g) * 255f),
+            (byte)(MathUtils.Saturate(b) * 255f),
+            (byte)(MathUtils.Saturate(a) * 255f)
+        );
     }
 
     public Color(float r, float g, float b)
     {
-        this = new Color((byte)(MathUtils.Saturate(r) * 255f), (byte)(MathUtils.Saturate(g) * 255f),
-            (byte)(MathUtils.Saturate(b) * 255f), byte.MaxValue);
+        this = new Color(
+            (byte)(MathUtils.Saturate(r) * 255f),
+            (byte)(MathUtils.Saturate(g) * 255f),
+            (byte)(MathUtils.Saturate(b) * 255f),
+            byte.MaxValue
+        );
     }
 
     public Color(Color rgb, byte a)
@@ -228,8 +240,12 @@ public struct Color : IEquatable<Color>
 
     public static Color Lerp(Color c1, Color c2, float f)
     {
-        return new Color((int)MathUtils.Lerp(c1.R, c2.R, f), (int)MathUtils.Lerp(c1.G, c2.G, f),
-            (int)MathUtils.Lerp(c1.B, c2.B, f), (int)MathUtils.Lerp(c1.A, c2.A, f));
+        return new Color(
+            (int)MathUtils.Lerp(c1.R, c2.R, f),
+            (int)MathUtils.Lerp(c1.G, c2.G, f),
+            (int)MathUtils.Lerp(c1.B, c2.B, f),
+            (int)MathUtils.Lerp(c1.A, c2.A, f)
+        );
     }
 
     public static Color PremultiplyAlpha(Color c)
@@ -254,8 +270,12 @@ public struct Color : IEquatable<Color>
 
     public static Color MultiplyColorOnly(Color c, float s)
     {
-        return new Color((byte)MathUtils.Clamp(c.R * s, 0f, 255f), (byte)MathUtils.Clamp(c.G * s, 0f, 255f),
-            (byte)MathUtils.Clamp(c.B * s, 0f, 255f), c.A);
+        return new Color(
+            (byte)MathUtils.Clamp(c.R * s, 0f, 255f),
+            (byte)MathUtils.Clamp(c.G * s, 0f, 255f),
+            (byte)MathUtils.Clamp(c.B * s, 0f, 255f),
+            c.A
+        );
     }
 
     public static Color MultiplyColorOnlyNotSaturated(Color c, float s)
@@ -371,58 +391,93 @@ public struct Color : IEquatable<Color>
 
     public static Color operator *(Color c, float s)
     {
-        return new Color((byte)MathUtils.Clamp(c.R * s, 0f, 255f), (byte)MathUtils.Clamp(c.G * s, 0f, 255f),
-            (byte)MathUtils.Clamp(c.B * s, 0f, 255f), (byte)MathUtils.Clamp(c.A * s, 0f, 255f));
+        return new Color(
+            (byte)MathUtils.Clamp(c.R * s, 0f, 255f),
+            (byte)MathUtils.Clamp(c.G * s, 0f, 255f),
+            (byte)MathUtils.Clamp(c.B * s, 0f, 255f),
+            (byte)MathUtils.Clamp(c.A * s, 0f, 255f)
+        );
     }
 
     public static Color operator *(float s, Color c)
     {
-        return new Color((byte)MathUtils.Clamp(c.R * s, 0f, 255f), (byte)MathUtils.Clamp(c.G * s, 0f, 255f),
-            (byte)MathUtils.Clamp(c.B * s, 0f, 255f), (byte)MathUtils.Clamp(c.A * s, 0f, 255f));
+        return new Color(
+            (byte)MathUtils.Clamp(c.R * s, 0f, 255f),
+            (byte)MathUtils.Clamp(c.G * s, 0f, 255f),
+            (byte)MathUtils.Clamp(c.B * s, 0f, 255f),
+            (byte)MathUtils.Clamp(c.A * s, 0f, 255f)
+        );
     }
 
     public static Color operator *(Color c, Vector4 s)
     {
-        return new Color((byte)MathUtils.Clamp(c.R * s.X, 0f, 255f), (byte)MathUtils.Clamp(c.G * s.Y, 0f, 255f),
-            (byte)MathUtils.Clamp(c.B * s.Z, 0f, 255f), (byte)MathUtils.Clamp(c.A * s.W, 0f, 255f));
+        return new Color(
+            (byte)MathUtils.Clamp(c.R * s.X, 0f, 255f),
+            (byte)MathUtils.Clamp(c.G * s.Y, 0f, 255f),
+            (byte)MathUtils.Clamp(c.B * s.Z, 0f, 255f),
+            (byte)MathUtils.Clamp(c.A * s.W, 0f, 255f)
+        );
     }
 
     public static Color operator *(Vector4 s, Color c)
     {
-        return new Color((byte)MathUtils.Clamp(c.R * s.X, 0f, 255f), (byte)MathUtils.Clamp(c.G * s.Y, 0f, 255f),
-            (byte)MathUtils.Clamp(c.B * s.Z, 0f, 255f), (byte)MathUtils.Clamp(c.A * s.W, 0f, 255f));
+        return new Color(
+            (byte)MathUtils.Clamp(c.R * s.X, 0f, 255f),
+            (byte)MathUtils.Clamp(c.G * s.Y, 0f, 255f),
+            (byte)MathUtils.Clamp(c.B * s.Z, 0f, 255f),
+            (byte)MathUtils.Clamp(c.A * s.W, 0f, 255f)
+        );
     }
 
     public static Color operator /(Color c, float s)
     {
         var num = 1f / s;
-        return new Color((byte)MathUtils.Clamp(c.R * num, 0f, 255f), (byte)MathUtils.Clamp(c.G * num, 0f, 255f),
-            (byte)MathUtils.Clamp(c.B * num, 0f, 255f), (byte)MathUtils.Clamp(c.A * num, 0f, 255f));
+        return new Color(
+            (byte)MathUtils.Clamp(c.R * num, 0f, 255f),
+            (byte)MathUtils.Clamp(c.G * num, 0f, 255f),
+            (byte)MathUtils.Clamp(c.B * num, 0f, 255f),
+            (byte)MathUtils.Clamp(c.A * num, 0f, 255f)
+        );
     }
 
     public static Color operator /(Color c, Vector4 s)
     {
         var vector = new Vector4(1f) / s;
-        return new Color((byte)MathUtils.Clamp(c.R * vector.X, 0f, 255f),
-            (byte)MathUtils.Clamp(c.G * vector.Y, 0f, 255f), (byte)MathUtils.Clamp(c.B * vector.Z, 0f, 255f),
-            (byte)MathUtils.Clamp(c.A * vector.W, 0f, 255f));
+        return new Color(
+            (byte)MathUtils.Clamp(c.R * vector.X, 0f, 255f),
+            (byte)MathUtils.Clamp(c.G * vector.Y, 0f, 255f),
+            (byte)MathUtils.Clamp(c.B * vector.Z, 0f, 255f),
+            (byte)MathUtils.Clamp(c.A * vector.W, 0f, 255f)
+        );
     }
 
     public static Color operator +(Color c1, Color c2)
     {
-        return new Color((byte)MathUtils.Min(c1.R + c2.R, 255), (byte)MathUtils.Min(c1.G + c2.G, 255),
-            (byte)MathUtils.Min(c1.B + c2.B, 255), (byte)MathUtils.Min(c1.A + c2.A, 255));
+        return new Color(
+            (byte)MathUtils.Min(c1.R + c2.R, 255),
+            (byte)MathUtils.Min(c1.G + c2.G, 255),
+            (byte)MathUtils.Min(c1.B + c2.B, 255),
+            (byte)MathUtils.Min(c1.A + c2.A, 255)
+        );
     }
 
     public static Color operator -(Color c1, Color c2)
     {
-        return new Color((byte)MathUtils.Max(c1.R - c2.R, 0), (byte)MathUtils.Max(c1.G - c2.G, 0),
-            (byte)MathUtils.Max(c1.B - c2.B, 0), (byte)MathUtils.Max(c1.A - c2.A, 0));
+        return new Color(
+            (byte)MathUtils.Max(c1.R - c2.R, 0),
+            (byte)MathUtils.Max(c1.G - c2.G, 0),
+            (byte)MathUtils.Max(c1.B - c2.B, 0),
+            (byte)MathUtils.Max(c1.A - c2.A, 0)
+        );
     }
 
     public static Color operator *(Color c1, Color c2)
     {
-        return new Color((byte)(c1.R * c2.R / 255), (byte)(c1.G * c2.G / 255), (byte)(c1.B * c2.B / 255),
-            (byte)(c1.A * c2.A / 255));
+        return new Color(
+            (byte)(c1.R * c2.R / 255),
+            (byte)(c1.G * c2.G / 255),
+            (byte)(c1.B * c2.B / 255),
+            (byte)(c1.A * c2.A / 255)
+        );
     }
 }

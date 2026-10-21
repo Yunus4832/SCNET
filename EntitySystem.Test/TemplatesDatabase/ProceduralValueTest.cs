@@ -9,8 +9,11 @@ namespace EntitySystem.Test.TemplatesDatabase;
 public class ProceduralValueTest
 {
     private readonly DatabaseObjectType _containerType;
+
     private readonly DatabaseObjectType _valueType;
+
     private readonly Database _database;
+
     private readonly DatabaseObject _rootObject;
 
     /// <summary>
@@ -19,12 +22,9 @@ public class ProceduralValueTest
     public ProceduralValueTest()
     {
         // 创建数据库对象类型
-        _valueType = new DatabaseObjectType(
-            "Value", "Value", "Value", 0, true, false, 64, false);
-        _containerType = new DatabaseObjectType(
-            "Container", "Container", "Container", 1, false, false, 64, false);
-        var rootType = new DatabaseObjectType(
-            "Root", "Root", "Root", 2, false, false, 64, false);
+        _valueType = new DatabaseObjectType("Value", "Value", "Value", 0, true, false, 64, false);
+        _containerType = new DatabaseObjectType("Container", "Container", "Container", 1, false, false, 64, false);
+        var rootType = new DatabaseObjectType("Root", "Root", "Root", 2, false, false, 64, false);
 
         // 初始化类型关系：
         // - Value 可以嵌套在 Container 和 Root 中

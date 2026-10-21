@@ -13,9 +13,11 @@ namespace ContentServer.Application.Queries;
 
 public enum VersionQueryScope
 {
-    Public,
-    All,
-    Publisher
+    Public = 0,
+
+    All = 1,
+
+    Publisher = 2
 }
 
 public sealed record ContentVersionDto(
@@ -36,7 +38,8 @@ public sealed record ContentVersionDto(
     ContentVersionStatus Status,
     string? ReviewMessage,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? PublishedAt)
+    DateTimeOffset? PublishedAt
+)
 {
     public static ContentVersionDto From(ContentItem content, ContentVersion version, PackageBlob blob)
     {
@@ -73,15 +76,16 @@ public sealed record ListVersionsQuery(
     PublisherId? PublisherId = null,
     ContentVersionStatus? Status = null,
     ContentId? ContentId = null,
-    bool LatestOnly = false) : IQuery<PagedData<ContentVersionDto>>;
+    bool LatestOnly = false
+) : IQuery<PagedData<ContentVersionDto>>;
 
-public sealed class ListVersionsQueryHandler(
-    ContentServerDbContext db
-) : IQueryHandler<ListVersionsQuery, PagedData<ContentVersionDto>>
+public sealed class ListVersionsQueryHandler(ContentServerDbContext db)
+    : IQueryHandler<ListVersionsQuery, PagedData<ContentVersionDto>>
 {
     public async Task<PagedData<ContentVersionDto>> Handle(
         ListVersionsQuery request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var normalizedIdentifier = request.Identifier?.ToLowerInvariant();
         var search = string.IsNullOrWhiteSpace(request.Search) ? null : request.Search.Trim();
@@ -89,46 +93,58 @@ public sealed class ListVersionsQueryHandler(
             .AsNoTracking()
             .WhereIf(
                 request.Scope == VersionQueryScope.Public,
-                content => content.Status == ContentStatus.Active)
+                content => content.Status == ContentStatus.Active
+            )
             .WhereIf(
                 request.Scope == VersionQueryScope.Publisher,
-                content => content.PublisherId == request.PublisherId)
+                content => content.PublisherId == request.PublisherId
+            )
             .WhereIf(
                 request.ContentId is not null,
-                content => content.Id == request.ContentId)
+                content => content.Id == request.ContentId
+            )
             .WhereIf(
                 !string.IsNullOrWhiteSpace(request.Type),
-                content => content.Type == request.Type)
+                content => content.Type == request.Type
+            )
             .WhereIf(
                 !string.IsNullOrWhiteSpace(normalizedIdentifier),
-                content => content.NormalizedIdentifier == normalizedIdentifier)
+                content => content.NormalizedIdentifier == normalizedIdentifier
+            )
             .WhereIf(
                 search is not null,
                 content => content.Name.Contains(search!) ||
                            content.Identifier.Contains(search!) ||
                            content.Summary.Contains(search!) ||
-                           content.Description.Contains(search!));
+                           content.Description.Contains(search!)
+            );
 
         var contentIds = await contents.Select(content => content.Id).ToListAsync(cancellationToken);
         var versions = db.ContentVersions.AsNoTracking()
             .WhereIf(
                 request.Scope == VersionQueryScope.Public,
-                version => version.Status == ContentVersionStatus.Published)
+                version => version.Status == ContentVersionStatus.Published
+            )
             .WhereIf(
                 request.Status is not null,
-                version => version.Status == request.Status)
+                version => version.Status == request.Status
+            )
             .WhereIf(
                 !string.IsNullOrWhiteSpace(request.Version),
-                version => version.Version == request.Version)
+                version => version.Version == request.Version
+            )
             .Where(version => contentIds.Contains(version.ContentId))
             .WhereIf(
                 request.LatestOnly,
-                version => version.Id == db.ContentVersions
-                    .Where(other => other.ContentId == version.ContentId &&
-                                    other.Status == ContentVersionStatus.Published)
-                    .OrderByDescending(other => other.Id)
-                    .Select(other => other.Id)
-                    .First());
+                version => version.Id ==
+                           db.ContentVersions
+                               .Where(other => other.ContentId == version.ContentId &&
+                                               other.Status == ContentVersionStatus.Published
+                               )
+                               .OrderByDescending(other => other.Id)
+                               .Select(other => other.Id)
+                               .First()
+            );
 
         var page = await versions
             .OrderByDescending(version => version.Id)
@@ -155,9 +171,11 @@ public sealed class ListVersionsQueryHandler(
             .ToDictionaryAsync(package => package.Id, cancellationToken);
 
         var items = page.Items.Select(version => ContentVersionDto.From(
-                contentById[version.ContentId],
-                version,
-                packageById[version.PackageBlobId]))
+                    contentById[version.ContentId],
+                    version,
+                    packageById[version.PackageBlobId]
+                )
+            )
             .ToArray();
 
         return new PagedData<ContentVersionDto>(items, page.Total, page.PageIndex, page.PageSize);

@@ -6,6 +6,7 @@ namespace Game.Managers;
 public static class BlocksTexturesManager
 {
     private const string _assetExtension = ".png";
+
     private static readonly List<string> _blockTextureNames = [];
 
     public static Texture2D DefaultBlocksTexture { get; set; } = null!;
@@ -82,13 +83,15 @@ public static class BlocksTexturesManager
         if (image.Width > 8192 || image.Height > 8192)
         {
             throw new InvalidOperationException(
-                $"Blocks texture is larger than 8192x8192 pixels (size={image.Width}x{image.Height})");
+                $"Blocks texture is larger than 8192x8192 pixels (size={image.Width}x{image.Height})"
+            );
         }
 
         if (!MathUtils.IsPowerOf2(image.Width) || !MathUtils.IsPowerOf2(image.Height))
         {
             throw new InvalidOperationException(
-                $"Blocks texture does not have power-of-two size (size={image.Width}x{image.Height})");
+                $"Blocks texture does not have power-of-two size (size={image.Width}x{image.Height})"
+            );
         }
     }
 
@@ -100,13 +103,24 @@ public static class BlocksTexturesManager
             throw ex;
         }
 
-        return ContentAssetStore.Install(GamePaths.BlockTextures, _assetExtension,
-            Storage.GetFileNameWithoutExtension(name), stream, ValidateBlocksTexture);
+        return ContentAssetStore.Install(
+            GamePaths.BlockTextures,
+            _assetExtension,
+            Storage.GetFileNameWithoutExtension(name),
+            stream,
+            ValidateBlocksTexture
+        );
     }
 
     public static string ReplaceBlocksTexture(string assetKey, string displayName, Stream stream) =>
-        ContentAssetStore.Replace(GamePaths.BlockTextures, _assetExtension, assetKey, displayName, stream,
-            ValidateBlocksTexture);
+        ContentAssetStore.Replace(
+            GamePaths.BlockTextures,
+            _assetExtension,
+            assetKey,
+            displayName,
+            stream,
+            ValidateBlocksTexture
+        );
 
     public static void DeleteBlocksTexture(string name)
     {
@@ -146,13 +160,15 @@ public static class BlocksTexturesManager
         if (image.Width > 8192 || image.Height > 8192)
         {
             throw new InvalidOperationException(
-                $"Blocks texture is larger than 8192x8192 pixels (size={image.Width}x{image.Height})");
+                $"Blocks texture is larger than 8192x8192 pixels (size={image.Width}x{image.Height})"
+            );
         }
 
         if (!MathUtils.IsPowerOf2(image.Width) || !MathUtils.IsPowerOf2(image.Height))
         {
             throw new InvalidOperationException(
-                $"Blocks texture does not have power-of-two size (size={image.Width}x{image.Height})");
+                $"Blocks texture does not have power-of-two size (size={image.Width}x{image.Height})"
+            );
         }
     }
 }

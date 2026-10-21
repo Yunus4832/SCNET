@@ -9,8 +9,11 @@ public sealed record LoadWorldInfo(string Name, int Seed, string Mode, ushort Ma
     {
         if (world.Mode != _creativeMode)
         {
-            throw new InvalidOperationException("Load clients require a Creative test world; other game modes are not supported.");
+            throw new InvalidOperationException(
+                "Load clients require a Creative test world; other game modes are not supported."
+            );
         }
+
         return new LoadWorldInfo(world.Name, world.Seed, "Creative", world.MaximumPlayers);
     }
 }

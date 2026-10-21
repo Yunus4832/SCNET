@@ -8,14 +8,21 @@ public class FireworksBlock : Block
 {
     public enum Shape
     {
-        SmallBurst,
-        LargeBurst,
-        Circle,
-        Disc,
-        Ball,
-        ShortTrails,
-        LongTrails,
-        FlatTrails
+        SmallBurst = 0,
+
+        LargeBurst = 1,
+
+        Circle = 2,
+
+        Disc = 3,
+
+        Ball = 4,
+
+        ShortTrails = 5,
+
+        LongTrails = 6,
+
+        FlatTrails = 7
     }
 
     public static readonly string[] HeadNames =
@@ -71,10 +78,18 @@ public class FireworksBlock : Block
             var headNameMesh = model.FindMesh(HeadNames[num])!;
             var boneAbsoluteTransform3 = BlockMesh.GetBoneAbsoluteTransform(
                 headNameMesh.ParentBone ??
-                throw new InvalidOperationException("Required HeadNameMesh.ParentBone is null"));
+                throw new InvalidOperationException("Required HeadNameMesh.ParentBone is null")
+            );
             HeadBlockMeshes[i] = new BlockMesh();
-            HeadBlockMeshes[i].AppendModelMeshPart(headNameMesh.MeshParts[0],
-                boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, -0.25f, 0f), false, false, false, false, color);
+            HeadBlockMeshes[i].AppendModelMeshPart(
+                headNameMesh.MeshParts[0],
+                boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, -0.25f, 0f),
+                false,
+                false,
+                false,
+                false,
+                color
+            );
         }
 
         for (var j = 0; j < 2; j++)
@@ -82,17 +97,29 @@ public class FireworksBlock : Block
             var num3 = 0.5f + j * 0.5f;
             var m = Matrix.CreateScale(new Vector3(num3, 1f, num3));
             BodyBlockMeshes[j] = new BlockMesh();
-            BodyBlockMeshes[j].AppendModelMeshPart(bodyMesh.MeshParts[0],
-                boneAbsoluteTransform * m * Matrix.CreateTranslation(0f, -0.25f, 0f), false, false, false, false,
-                Color.White);
+            BodyBlockMeshes[j].AppendModelMeshPart(
+                bodyMesh.MeshParts[0],
+                boneAbsoluteTransform * m * Matrix.CreateTranslation(0f, -0.25f, 0f),
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
         }
 
         for (var k = 0; k < 2; k++)
         {
             FinsBlockMeshes[k] = new BlockMesh();
-            FinsBlockMeshes[k].AppendModelMeshPart(finsMesh.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.25f, 0f), false, false, false, false,
-                k == 0 ? Color.White : new Color(224, 0, 0));
+            FinsBlockMeshes[k].AppendModelMeshPart(
+                finsMesh.MeshParts[0],
+                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.25f, 0f),
+                false,
+                false,
+                false,
+                false,
+                k == 0 ? Color.White : new Color(224, 0, 0)
+            );
         }
 
         base.Initialize();
@@ -156,11 +183,13 @@ public class FireworksBlock : Block
         var shape = GetShape(data);
         var altitude = GetAltitude(data);
         var flickering = GetFlickering(data);
-        return string.Format(LanguageManager.GetFireworks("Other", "1"),
+        return string.Format(
+            LanguageManager.GetFireworks("Other", "1"),
             LanguageManager.GetFireworks("FireworksColorDisplayNames", color.ToString()),
             flickering ? LanguageManager.GetFireworks("Other", "2") : null,
             LanguageManager.GetFireworks("ShapeDisplayNames", ((int)shape).ToString()),
-            altitude == 0 ? LanguageManager.GetFireworks("Other", "3") : LanguageManager.GetFireworks("Other", "4"));
+            altitude == 0 ? LanguageManager.GetFireworks("Other", "3") : LanguageManager.GetFireworks("Other", "4")
+        );
     }
 
     public override IEnumerable<int> GetCreativeValues()
@@ -175,9 +204,14 @@ public class FireworksBlock : Block
                 {
                     for (var shape = 0; shape < 8; shape = num)
                     {
-                        yield return Terrain.MakeBlockValue(BlockIndex, 0,
-                            SetColor(SetAltitude(SetShape(SetFlickering(0, flickering != 0), (Shape)shape), altitude),
-                                color));
+                        yield return Terrain.MakeBlockValue(
+                            BlockIndex,
+                            0,
+                            SetColor(
+                                SetAltitude(SetShape(SetFlickering(0, flickering != 0), (Shape)shape), altitude),
+                                color
+                            )
+                        );
                         num = shape + 1;
                     }
 
@@ -207,10 +241,14 @@ public class FireworksBlock : Block
                         var craftingRecipe = new CraftingRecipe
                         {
                             ResultCount = 20,
-                            ResultValue = Terrain.MakeBlockValue(BlockIndex, 0,
+                            ResultValue = Terrain.MakeBlockValue(
+                                BlockIndex,
+                                0,
                                 SetColor(
                                     SetAltitude(SetShape(SetFlickering(0, flickering != 0), (Shape)shape), altitude),
-                                    color)),
+                                    color
+                                )
+                            ),
                             RemainsCount = 1,
                             RemainsValue = Terrain.MakeBlockValue(90),
                             RequiredHeatLevel = 0f,

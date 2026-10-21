@@ -10,22 +10,35 @@ public sealed class ManageRendezvousScreen : Screen
 {
     private enum SourceAction
     {
-        AddOrEdit,
-        Delete,
-        Toggle,
-        MoveUp,
-        MoveDown,
-        Test
+        AddOrEdit = 0,
+
+        Delete = 1,
+
+        Toggle = 2,
+
+        MoveUp = 3,
+
+        MoveDown = 4,
+
+        Test = 5
     }
 
     private readonly ActionPanelWidget _actionPanel;
+
     private readonly ListPanelWidget _sourceList;
+
     private readonly LabelWidget _statusLabel;
+
     private bool _busy;
+
     private string _returnScreen = "Content";
+
     private object[] _returnParameters = [];
+
     private CancellableBusyDialog? _busyDialog;
+
     private ContentRepositoryDialog? _editor;
+
     private CancellationTokenSource? _testCancellation;
 
     public ManageRendezvousScreen()
@@ -40,7 +53,8 @@ public sealed class ManageRendezvousScreen : Screen
         _actionPanel.ItemColorProvider = item => item is SourceAction.Delete ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
-            [SourceAction.AddOrEdit, SourceAction.MoveUp, SourceAction.MoveDown, SourceAction.Test]);
+            [SourceAction.AddOrEdit, SourceAction.MoveUp, SourceAction.MoveDown, SourceAction.Test]
+        );
         _actionPanel.SetSecondaryItems([SourceAction.Toggle, SourceAction.Delete]);
     }
 
@@ -60,11 +74,13 @@ public sealed class ManageRendezvousScreen : Screen
             DialogsManager.HideDialog(_busyDialog);
             _busyDialog = null;
         }
+
         if (_editor is not null)
         {
             DialogsManager.HideDialog(_editor);
             _editor = null;
         }
+
         _busy = false;
         _actionPanel.ShowPrimaryItems();
         _sourceList.SelectedItem = null;
@@ -111,10 +127,14 @@ public sealed class ManageRendezvousScreen : Screen
     {
         _editor = new ContentRepositoryDialog(
             source is null ? Text("AddTitle") : Text("EditTitle"),
-            CommonText("NameLabel"), CommonText("AddressLabel"),
+            CommonText("NameLabel"),
+            CommonText("AddressLabel"),
             source is null ? CommonText("Add") : CommonText("Save"),
-            source?.Name ?? string.Empty, source?.ControlUrl ?? string.Empty,
-            (name, address) => SaveEditor(source, name, address), nameMaximumLength: 100);
+            source?.Name ?? string.Empty,
+            source?.ControlUrl ?? string.Empty,
+            (name, address) => SaveEditor(source, name, address),
+            nameMaximumLength: 100
+        );
         DialogsManager.ShowDialog(null, _editor);
     }
 
@@ -129,29 +149,39 @@ public sealed class ManageRendezvousScreen : Screen
         try
         {
             var addressUri = RendezvousAddress.Normalize(new Uri(address));
-            var normalized = (source ?? new InstalledRendezvousService()) with { Name = name, ControlUrl = addressUri.AbsoluteUri };
-            if (RendezvousManager.Current.Snapshot().Any(item => item.Id != normalized.Id && item.ControlUrl == normalized.ControlUrl))
+            var normalized = (source ?? new InstalledRendezvousService()) with
+            {
+                Name = name, ControlUrl = addressUri.AbsoluteUri
+            };
+            if (RendezvousManager.Current.Snapshot()
+                .Any(item => item.Id != normalized.Id && item.ControlUrl == normalized.ControlUrl))
             {
                 ShowError(Text("DuplicateAddress"));
                 return false;
             }
-            RunProbe(normalized, () =>
-            {
-                if (source is null)
+
+            RunProbe(
+                normalized,
+                () =>
                 {
-                    RendezvousManager.Current.Add(normalized);
+                    if (source is null)
+                    {
+                        RendezvousManager.Current.Add(normalized);
+                    }
+                    else
+                    {
+                        RendezvousManager.Current.Edit(normalized);
+                    }
+
+                    if (_editor is not null)
+                    {
+                        DialogsManager.HideDialog(_editor);
+                        _editor = null;
+                    }
+
+                    Refresh(normalized.Id);
                 }
-                else
-                {
-                    RendezvousManager.Current.Edit(normalized);
-                }
-                if (_editor is not null)
-                {
-                    DialogsManager.HideDialog(_editor);
-                    _editor = null;
-                }
-                Refresh(normalized.Id);
-            });
+            );
             return false;
         }
         catch (Exception exception) when (exception is ArgumentException or UriFormatException)
@@ -207,10 +237,15 @@ public sealed class ManageRendezvousScreen : Screen
                 ConfirmDelete(selected);
                 break;
             case SourceAction.Toggle when selected is not null:
-                Execute(() => RendezvousManager.Current.Edit(selected with
-                {
-                    IsEnabled = !selected.IsEnabled
-                }), selected.Id);
+                Execute(
+                    () => RendezvousManager.Current.Edit(
+                        selected with
+                        {
+                            IsEnabled = !selected.IsEnabled
+                        }
+                    ),
+                    selected.Id
+                );
                 break;
             case SourceAction.MoveUp:
                 Move(sources, index, index - 1);
@@ -226,13 +261,16 @@ public sealed class ManageRendezvousScreen : Screen
 
     private void ConfirmDelete(InstalledRendezvousService source)
     {
-        DialogsManager.Confirm(string.Format(Text("ConfirmDelete"), source.Name), button =>
-        {
-            if (button == MessageDialogButton.Button1)
+        DialogsManager.Confirm(
+            string.Format(Text("ConfirmDelete"), source.Name),
+            button =>
             {
-                Execute(() => RendezvousManager.Current.Delete(source.Id));
+                if (button == MessageDialogButton.Button1)
+                {
+                    Execute(() => RendezvousManager.Current.Delete(source.Id));
+                }
             }
-        });
+        );
     }
 
     private void Move(IReadOnlyList<InstalledRendezvousService> sources, int sourceIndex, int targetIndex)
@@ -251,6 +289,7 @@ public sealed class ManageRendezvousScreen : Screen
         {
             return;
         }
+
         var dialog = new CancellableBusyDialog(Text("Testing"), true);
         var cancellation = new CancellationTokenSource();
         dialog.CancelRequested += cancellation.Cancel;
@@ -260,32 +299,39 @@ public sealed class ManageRendezvousScreen : Screen
         DialogsManager.ShowDialog(null, dialog);
         Task.Run(() => RendezvousServiceProbe.TestAsync(source.ControlUrl, cancellation.Token), cancellation.Token)
             .ContinueWith(task => Dispatcher.Dispatch(() =>
-            {
-                if (!ReferenceEquals(_testCancellation, cancellation))
-                {
-                    _ = task.Exception;
-                    dialog.CancelRequested -= cancellation.Cancel;
-                    cancellation.Dispose();
-                    return;
-                }
-                _testCancellation = null;
-                _busyDialog = null;
-                _busy = false;
-                DialogsManager.HideDialog(dialog);
-                dialog.CancelRequested -= cancellation.Cancel;
-                cancellation.Dispose();
-                if (task.IsCanceled)
-                {
-                    return;
-                }
-                if (!task.IsCompletedSuccessfully)
-                {
-                    Log.Warning($"Signaling service validation failed: {task.Exception?.GetBaseException().Message}");
-                    ShowError(Text("TestFailed"));
-                    return;
-                }
-                Execute(success, source.Id);
-            }));
+                    {
+                        if (!ReferenceEquals(_testCancellation, cancellation))
+                        {
+                            _ = task.Exception;
+                            dialog.CancelRequested -= cancellation.Cancel;
+                            cancellation.Dispose();
+                            return;
+                        }
+
+                        _testCancellation = null;
+                        _busyDialog = null;
+                        _busy = false;
+                        DialogsManager.HideDialog(dialog);
+                        dialog.CancelRequested -= cancellation.Cancel;
+                        cancellation.Dispose();
+                        if (task.IsCanceled)
+                        {
+                            return;
+                        }
+
+                        if (!task.IsCompletedSuccessfully)
+                        {
+                            Log.Warning(
+                                $"Signaling service validation failed: {task.Exception?.GetBaseException().Message}"
+                            );
+                            ShowError(Text("TestFailed"));
+                            return;
+                        }
+
+                        Execute(success, source.Id);
+                    }
+                )
+            );
     }
 
     private string GetActionText(object item)

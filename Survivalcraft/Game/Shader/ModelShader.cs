@@ -78,81 +78,36 @@ public class ModelShader : Shader
         Transforms = new ShaderTransforms(maxInstancesCount);
     }
 
-    public Texture2D Texture
-    {
-        set => _textureParameter.SetValue(value);
-    }
+    public Texture2D Texture { set => _textureParameter.SetValue(value); }
 
-    public SamplerState SamplerState
-    {
-        set => _samplerStateParameter.SetValue(value);
-    }
+    public SamplerState SamplerState { set => _samplerStateParameter.SetValue(value); }
 
-    public Vector4 MaterialColor
-    {
-        set => _materialColorParameter.SetValue(value);
-    }
+    public Vector4 MaterialColor { set => _materialColorParameter.SetValue(value); }
 
-    public Vector4 EmissionColor
-    {
-        set => _emissionColorParameter.SetValue(value);
-    }
+    public Vector4 EmissionColor { set => _emissionColorParameter.SetValue(value); }
 
-    public float AlphaThreshold
-    {
-        set => _alphaThresholdParameter?.SetValue(value);
-    }
+    public float AlphaThreshold { set => _alphaThresholdParameter?.SetValue(value); }
 
-    public Vector3 AmbientLightColor
-    {
-        set => _ambientLightColorParameter.SetValue(value);
-    }
+    public Vector3 AmbientLightColor { set => _ambientLightColorParameter.SetValue(value); }
 
-    public Vector3 DiffuseLightColor1
-    {
-        set => _diffuseLightColor1Parameter.SetValue(value);
-    }
+    public Vector3 DiffuseLightColor1 { set => _diffuseLightColor1Parameter.SetValue(value); }
 
-    public Vector3 DiffuseLightColor2
-    {
-        set => _diffuseLightColor2Parameter.SetValue(value);
-    }
+    public Vector3 DiffuseLightColor2 { set => _diffuseLightColor2Parameter.SetValue(value); }
 
-    public Vector3 LightDirection1
-    {
-        set => _directionToLight1Parameter.SetValue(-value);
-    }
+    public Vector3 LightDirection1 { set => _directionToLight1Parameter.SetValue(-value); }
 
-    public Vector3 LightDirection2
-    {
-        set => _directionToLight2Parameter.SetValue(-value);
-    }
+    public Vector3 LightDirection2 { set => _directionToLight2Parameter.SetValue(-value); }
 
-    public Vector3 FogColor
-    {
-        set => _fogColorParameter.SetValue(value);
-    }
+    public Vector3 FogColor { set => _fogColorParameter.SetValue(value); }
 
     //new
-    public Vector3 FogBottomTopDensity
-    {
-        set => _fogBottomTopDensityParameter.SetValue(value);
-    }
+    public Vector3 FogBottomTopDensity { set => _fogBottomTopDensityParameter.SetValue(value); }
 
-    public Vector2 HazeStartDensity
-    {
-        set => _hazeStartDensityParameter.SetValue(value);
-    }
+    public Vector2 HazeStartDensity { set => _hazeStartDensityParameter.SetValue(value); }
 
-    public float FogYMultiplier
-    {
-        set => _fogYMultiplierParameter.SetValue(value);
-    }
+    public float FogYMultiplier { set => _fogYMultiplierParameter.SetValue(value); }
 
-    public Vector3 WorldUp
-    {
-        set => _worldUpParameter.SetValue(value);
-    }
+    public Vector3 WorldUp { set => _worldUpParameter.SetValue(value); }
 
     public int InstancesCount
     {

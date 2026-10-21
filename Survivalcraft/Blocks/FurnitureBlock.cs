@@ -44,10 +44,15 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
         {
             FurnitureInteractionMode.Multistate or FurnitureInteractionMode.ConnectedMultistate =>
                 new MultistateFurnitureElectricElement(subsystemElectricity, new Point3(x, y, z)),
-            FurnitureInteractionMode.ElectricButton => new ButtonFurnitureElectricElement(subsystemElectricity,
-                new Point3(x, y, z)),
-            FurnitureInteractionMode.ElectricSwitch => new SwitchFurnitureElectricElement(subsystemElectricity,
-                new Point3(x, y, z), value),
+            FurnitureInteractionMode.ElectricButton => new ButtonFurnitureElectricElement(
+                subsystemElectricity,
+                new Point3(x, y, z)
+            ),
+            FurnitureInteractionMode.ElectricSwitch => new SwitchFurnitureElectricElement(
+                subsystemElectricity,
+                new Point3(x, y, z),
+                value
+            ),
             _ => null
         };
     }
@@ -130,8 +135,12 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
         var furnitureDesign = terrain.SubsystemFurnitureBlockBehavior.TryAddDesignChain(list[0], true);
         if (furnitureDesign != null)
         {
-            var data2 = SetDesignIndex(data, furnitureDesign.Index, furnitureDesign.ShadowStrengthFactor,
-                furnitureDesign.IsLightEmitter);
+            var data2 = SetDesignIndex(
+                data,
+                furnitureDesign.Index,
+                furnitureDesign.ShadowStrengthFactor,
+                furnitureDesign.IsLightEmitter
+            );
             return Terrain.ReplaceData(value, data2);
         }
 
@@ -178,10 +187,28 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
             var num = CellFace.OppositeFace(i < 4 ? (i + rotation) % 4 : i);
             var b = (byte)(LightingManager.LightIntensityByLightValueAndFace[15 + 16 * num] * 255f);
             var color = new Color(b, b, b);
-            generator.GenerateShadedMeshVertices(this, x, y, z, geometry2.SubsetOpaqueByFace[i], color,
-                Matrices[rotation], FacesMaps[rotation], geometry.OpaqueSubsetsByFace[num]);
-            generator.GenerateShadedMeshVertices(this, x, y, z, geometry2.SubsetAlphaTestByFace[i], color,
-                Matrices[rotation], FacesMaps[rotation], geometry.AlphaTestSubsetsByFace[num]);
+            generator.GenerateShadedMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                geometry2.SubsetOpaqueByFace[i],
+                color,
+                Matrices[rotation],
+                FacesMaps[rotation],
+                geometry.OpaqueSubsetsByFace[num]
+            );
+            generator.GenerateShadedMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                geometry2.SubsetAlphaTestByFace[i],
+                color,
+                Matrices[rotation],
+                FacesMaps[rotation],
+                geometry.AlphaTestSubsetsByFace[num]
+            );
             var num2 = CellFace.OppositeFace(i < 4 ? (i - rotation + 4) % 4 : i);
             if ((mountingFacesMask & (1 << num2)) != 0)
             {
@@ -428,11 +455,13 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
         showDebris = true;
         var data = Terrain.ExtractData(oldValue);
         data = SetRotation(data, 0);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Count = 1
+            }
+        );
     }
 
     public override float GetIconViewScale(int value, DrawBlockEnvironmentData environmentData)
@@ -521,9 +550,16 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
             return new CraftingRecipe
             {
-                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0,
-                    SetDesignIndex(0, furnitureDesign2.Index, furnitureDesign2.ShadowStrengthFactor,
-                        furnitureDesign2.IsLightEmitter)),
+                ResultValue = Terrain.MakeBlockValue(
+                    BlockIndex,
+                    0,
+                    SetDesignIndex(
+                        0,
+                        furnitureDesign2.Index,
+                        furnitureDesign2.ShadowStrengthFactor,
+                        furnitureDesign2.IsLightEmitter
+                    )
+                ),
                 ResultCount = 1,
                 Description = LanguageManager.Get(GetType().Name, 0),
                 Ingredients = (string[])ingredients.Clone()
@@ -548,9 +584,16 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
             return new CraftingRecipe
             {
-                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0,
-                    SetDesignIndex(0, furnitureDesign3.Index, furnitureDesign3.ShadowStrengthFactor,
-                        furnitureDesign3.IsLightEmitter)),
+                ResultValue = Terrain.MakeBlockValue(
+                    BlockIndex,
+                    0,
+                    SetDesignIndex(
+                        0,
+                        furnitureDesign3.Index,
+                        furnitureDesign3.ShadowStrengthFactor,
+                        furnitureDesign3.IsLightEmitter
+                    )
+                ),
                 ResultCount = 1,
                 Description = LanguageManager.Get(GetType().Name, 0),
                 Ingredients = (string[])ingredients.Clone()
@@ -577,9 +620,16 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
             return new CraftingRecipe
             {
-                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0,
-                    SetDesignIndex(0, furnitureDesign4.Index, furnitureDesign4.ShadowStrengthFactor,
-                        furnitureDesign4.IsLightEmitter)),
+                ResultValue = Terrain.MakeBlockValue(
+                    BlockIndex,
+                    0,
+                    SetDesignIndex(
+                        0,
+                        furnitureDesign4.Index,
+                        furnitureDesign4.ShadowStrengthFactor,
+                        furnitureDesign4.IsLightEmitter
+                    )
+                ),
                 ResultCount = 1,
                 Description = LanguageManager.Get(GetType().Name, 0),
                 Ingredients = (string[])ingredients.Clone()

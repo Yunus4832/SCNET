@@ -9,15 +9,21 @@ namespace Content.Packaging;
 public static class ContentPackageReader
 {
     public const string FileExtension = ".scpkg";
+
     public const int MaxManifestBytes = 64 * 1024;
+
     public const int MaxFileCount = 10_000;
+
     public const long MaxEntryBytes = 128L * 1024 * 1024;
+
     public const long MaxTotalBytes = 200L * 1024 * 1024;
+
     private const int _copyBufferSize = 64 * 1024;
 
     public static ContentPackageInspection Inspect(
         Stream stream,
-        ContentPayloadCodecRegistry? payloadCodecs = null)
+        ContentPayloadCodecRegistry? payloadCodecs = null
+    )
     {
         ArgumentNullException.ThrowIfNull(stream);
 
@@ -25,24 +31,32 @@ public static class ContentPackageReader
         {
             using var archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
             var entries = ReadEntries(archive);
-            var manifestEntry = entries.SingleOrDefault(entry => entry.Path == "manifest.json")
-                                ?? throw new ContentPackageException("Package does not contain manifest.json.");
+            var manifestEntry = entries.SingleOrDefault(entry => entry.Path == "manifest.json") ??
+                                throw new ContentPackageException("Package does not contain manifest.json.");
             var manifestBytes = ReadManifest(manifestEntry.Entry);
             var manifest = ContentPackageManifest.Parse(manifestBytes);
             var entriesByPath = entries.ToDictionary(entry => entry.Path, StringComparer.Ordinal);
             var context = new ContentPayloadValidationContext(
                 manifest,
                 entriesByPath.Keys.ToHashSet(StringComparer.Ordinal),
-                path => entriesByPath[path].Entry.Open());
+                path => entriesByPath[path].Entry.Open()
+            );
             (payloadCodecs ?? ContentPayloadCodecRegistry.Default).Get(manifest.Type).Validate(context);
-            var hash = ContentPackageHash.Compute(entries.Select(entry => new ContentPackageHashEntry(
-                entry.Path,
-                entry.Length,
-                entry.Path == "manifest.json"
-                    ? () => new MemoryStream(manifestBytes, writable: false)
-                    : entry.Entry.Open)));
-            return new ContentPackageInspection(manifest, hash,
-                entries.Select(entry => new ContentPackageEntry(entry.Path, entry.Length)).ToArray());
+            var hash = ContentPackageHash.Compute(
+                entries.Select(entry => new ContentPackageHashEntry(
+                        entry.Path,
+                        entry.Length,
+                        entry.Path == "manifest.json"
+                            ? () => new MemoryStream(manifestBytes, writable: false)
+                            : entry.Entry.Open
+                    )
+                )
+            );
+            return new ContentPackageInspection(
+                manifest,
+                hash,
+                entries.Select(entry => new ContentPackageEntry(entry.Path, entry.Length)).ToArray()
+            );
         }
         catch (InvalidDataException exception)
         {
@@ -162,8 +176,12 @@ public static class ContentPackageReader
 
     private static string ValidatePath(string path)
     {
-        if (string.IsNullOrEmpty(path) || path.Contains('\\') || path.StartsWith("/", StringComparison.Ordinal) ||
-            path.Contains('\0') || Encoding.UTF8.GetByteCount(path) > 240 || !path.IsNormalized())
+        if (string.IsNullOrEmpty(path) ||
+            path.Contains('\\') ||
+            path.StartsWith("/", StringComparison.Ordinal) ||
+            path.Contains('\0') ||
+            Encoding.UTF8.GetByteCount(path) > 240 ||
+            !path.IsNormalized())
         {
             throw new ContentPackageException($"Package path '{path}' is invalid.");
         }

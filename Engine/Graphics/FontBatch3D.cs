@@ -12,14 +12,27 @@ public class FontBatch3D : BaseFontBatch
         SamplerState = SamplerState.LinearClamp;
     }
 
-    public void QueueText(string text, Vector3 position, Vector3 right, Vector3 down, Color color,
-        TextAnchor anchor = TextAnchor.Default)
+    public void QueueText(
+        string text,
+        Vector3 position,
+        Vector3 right,
+        Vector3 down,
+        Color color,
+        TextAnchor anchor = TextAnchor.Default
+    )
     {
         QueueText(text, position, right, down, color, anchor, Vector2.Zero);
     }
 
-    public void QueueText(string text, Vector3 position, Vector3 right, Vector3 down, Color color, TextAnchor anchor,
-        Vector2 spacing)
+    public void QueueText(
+        string text,
+        Vector3 position,
+        Vector3 right,
+        Vector3 down,
+        Color color,
+        TextAnchor anchor,
+        Vector2 spacing
+    )
     {
         var scale = new Vector2(right.Length(), down.Length());
         var vector = CalculateTextOffset(text, 0, text.Length, anchor, scale, spacing);
@@ -57,17 +70,26 @@ public class FontBatch3D : BaseFontBatch
                 var vector5 = v5 + v2 + v3;
                 var count = TriangleVertices.Count;
                 TriangleVertices.Count += 4;
-                TriangleVertices.Array[count] = new VertexPositionColorTexture(new Vector3(v5.X, v5.Y, v5.Z), color,
-                    new Vector2(glyph.TexCoord1.X, glyph.TexCoord1.Y));
+                TriangleVertices.Array[count] = new VertexPositionColorTexture(
+                    new Vector3(v5.X, v5.Y, v5.Z),
+                    color,
+                    new Vector2(glyph.TexCoord1.X, glyph.TexCoord1.Y)
+                );
                 TriangleVertices.Array[count + 1] = new VertexPositionColorTexture(
-                    new Vector3(vector3.X, vector3.Y, vector3.Z), color,
-                    new Vector2(glyph.TexCoord2.X, glyph.TexCoord1.Y));
+                    new Vector3(vector3.X, vector3.Y, vector3.Z),
+                    color,
+                    new Vector2(glyph.TexCoord2.X, glyph.TexCoord1.Y)
+                );
                 TriangleVertices.Array[count + 2] = new VertexPositionColorTexture(
-                    new Vector3(vector5.X, vector5.Y, vector5.Z), color,
-                    new Vector2(glyph.TexCoord2.X, glyph.TexCoord2.Y));
+                    new Vector3(vector5.X, vector5.Y, vector5.Z),
+                    color,
+                    new Vector2(glyph.TexCoord2.X, glyph.TexCoord2.Y)
+                );
                 TriangleVertices.Array[count + 3] = new VertexPositionColorTexture(
-                    new Vector3(vector4.X, vector4.Y, vector4.Z), color,
-                    new Vector2(glyph.TexCoord1.X, glyph.TexCoord2.Y));
+                    new Vector3(vector4.X, vector4.Y, vector4.Z),
+                    color,
+                    new Vector2(glyph.TexCoord1.X, glyph.TexCoord2.Y)
+                );
                 var count2 = TriangleIndices.Count;
                 TriangleIndices.Count += 6;
                 TriangleIndices.Array[count2] = (ushort)count;

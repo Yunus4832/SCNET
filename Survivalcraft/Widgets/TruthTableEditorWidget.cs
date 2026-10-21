@@ -7,15 +7,25 @@ namespace Game.Widgets;
 public sealed class TruthTableEditorWidget : CanvasWidget
 {
     private readonly ButtonWidget _cancelButton;
+
     private readonly CheckboxWidget[] _checkboxes = new CheckboxWidget[16];
+
     private readonly ButtonWidget _clearButton;
+
     private readonly Action<bool> _completed;
+
     private readonly Action _close;
+
     private readonly GridPanelWidget _grid;
+
     private readonly ButtonWidget _invertButton;
+
     private readonly ButtonWidget _saveButton;
+
     private readonly TruthTableData _sourceData;
+
     private TruthTableData _temporaryData;
+
     private bool _hasChanges;
 
     public TruthTableEditorWidget(TruthTableData data, Action<bool> completed, Action close)
@@ -89,15 +99,17 @@ public sealed class TruthTableEditorWidget : CanvasWidget
                 HorizontalAlignment = WidgetAlignment.Center,
                 Margin = new Vector2(3f, 2f)
             };
-            cell.Children.Add(new LabelWidget
-            {
-                Text = Convert.ToString(index, 2).PadLeft(4, '0'),
-                Size = new Vector2(62f, 30f),
-                FontScale = 0.7f,
-                Color = Color.White,
-                HorizontalAlignment = WidgetAlignment.Center,
-                TextAnchor = TextAnchor.HorizontalCenter
-            });
+            cell.Children.Add(
+                new LabelWidget
+                {
+                    Text = Convert.ToString(index, 2).PadLeft(4, '0'),
+                    Size = new Vector2(62f, 30f),
+                    FontScale = 0.7f,
+                    Color = Color.White,
+                    HorizontalAlignment = WidgetAlignment.Center,
+                    TextAnchor = TextAnchor.HorizontalCenter
+                }
+            );
             var checkbox = new CheckboxWidget
             {
                 CheckboxSize = new Vector2(32f),

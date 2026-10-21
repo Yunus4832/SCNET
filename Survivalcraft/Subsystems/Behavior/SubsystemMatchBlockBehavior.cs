@@ -23,8 +23,12 @@ public class SubsystemMatchBlockBehavior : SubsystemBlockBehavior
         {
             var cellFace = result.CellFace;
             //爆炸
-            if (_subsystemExplosivesBlockBehavior.IgniteFuse(cellFace.X, cellFace.Y, cellFace.Z,
-                    componentMiner.ComponentPlayer?.PlayerData))
+            if (_subsystemExplosivesBlockBehavior.IgniteFuse(
+                    cellFace.X,
+                    cellFace.Y,
+                    cellFace.Z,
+                    componentMiner.ComponentPlayer?.PlayerData
+                ))
             {
                 _subsystemAudio.PlaySound("Audio/Match", 1f, _random.Float(-0.1f, 0.1f), ray.Position, 1f, true);
                 componentMiner.RemoveActiveTool(1);

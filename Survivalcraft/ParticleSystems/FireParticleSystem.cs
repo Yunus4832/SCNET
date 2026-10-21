@@ -61,8 +61,13 @@ public class FireParticleSystem : ParticleSystem<FireParticleSystem.Particle>
                 {
                     particle.IsActive = true;
                     particle.Position = _position +
-                                        0.25f * _size * new Vector3(_random.Float(-1f, 1f), 0f,
-                                            _random.Float(-1f, 1f));
+                                        0.25f *
+                                        _size *
+                                        new Vector3(
+                                            _random.Float(-1f, 1f),
+                                            0f,
+                                            _random.Float(-1f, 1f)
+                                        );
                     particle.Color = Color.White;
                     particle.Size = new Vector2(_size);
                     particle.Speed = _random.Float(0.45f, 0.55f) * _size / 0.15f;

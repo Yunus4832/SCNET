@@ -40,7 +40,12 @@ public sealed class EntityInterestTrackerTest
 
         tracker.RetainClients([replacement]);
         var changes = tracker.Synchronize(
-            replacement, EntityInterestGroup.Creatures, new HashSet<int> { 10 }, _ => true, 1);
+            replacement,
+            EntityInterestGroup.Creatures,
+            new HashSet<int> { 10 },
+            _ => true,
+            1
+        );
 
         Assert.Equal([10], changes.Entered);
         Assert.Same(replacement, Assert.Single(tracker.GetObservers(EntityInterestGroup.Creatures, 10)));
@@ -78,13 +83,15 @@ public sealed class EntityInterestTrackerTest
             EntityInterestGroup.Creatures,
             new HashSet<int> { 10 },
             _ => true,
-            3);
+            3
+        );
         var second = tracker.Synchronize(
             _client,
             EntityInterestGroup.Creatures,
             new HashSet<int> { 10 },
             _ => true,
-            3);
+            3
+        );
 
         Assert.Equal([10], first.Entered);
         Assert.Empty(first.Left);
@@ -105,7 +112,8 @@ public sealed class EntityInterestTrackerTest
                 EntityInterestGroup.Creatures,
                 new HashSet<int>(),
                 _ => true,
-                3);
+                3
+            );
             Assert.Empty(pending.Left);
         }
 
@@ -114,7 +122,8 @@ public sealed class EntityInterestTrackerTest
             EntityInterestGroup.Creatures,
             new HashSet<int>(),
             _ => true,
-            3);
+            3
+        );
 
         Assert.Equal([10], left.Left);
     }
@@ -129,14 +138,16 @@ public sealed class EntityInterestTrackerTest
             EntityInterestGroup.Creatures,
             new HashSet<int>(),
             _ => true,
-            3);
+            3
+        );
 
         var current = tracker.Synchronize(
             _client,
             EntityInterestGroup.Creatures,
             new HashSet<int> { 10 },
             _ => true,
-            3);
+            3
+        );
 
         Assert.Empty(current.Entered);
         Assert.Empty(current.Left);
@@ -153,7 +164,8 @@ public sealed class EntityInterestTrackerTest
             EntityInterestGroup.Creatures,
             new HashSet<int>(),
             _ => false,
-            3);
+            3
+        );
 
         Assert.Empty(changes.Entered);
         Assert.Empty(changes.Left);
@@ -169,13 +181,15 @@ public sealed class EntityInterestTrackerTest
             EntityInterestGroup.Creatures,
             new HashSet<int> { 10 },
             _ => true,
-            1);
+            1
+        );
         var pickables = tracker.Synchronize(
             _client,
             EntityInterestGroup.Pickables,
             new HashSet<int> { 10 },
             _ => true,
-            1);
+            1
+        );
 
         Assert.Equal([10], creatures.Entered);
         Assert.Equal([10], pickables.Entered);

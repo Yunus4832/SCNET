@@ -21,15 +21,19 @@ public sealed class AdminAnnouncementUpdateEndpoint(IMediator mediator) : Conten
         var request = await ReadBodyAsync<CreateAnnouncementRequest>(cancellationToken);
         try
         {
-            var updated = await mediator.Send(new EditGameAnnouncementCommand(
-                new GameAnnouncementId(Route<Guid>("id")), request.Title, request.Body), cancellationToken);
+            var updated = await mediator.Send(
+                new EditGameAnnouncementCommand(new GameAnnouncementId(Route<Guid>("id")), request.Title, request.Body),
+                cancellationToken
+            );
             if (!updated)
             {
                 throw new KnownException("announcement_not_found", StatusCodes.Status404NotFound);
             }
 
-            await Send.ResponseAsync(new ResponseData(true, "success", StatusCodes.Status200OK),
-                cancellation: cancellationToken);
+            await Send.ResponseAsync(
+                new ResponseData(true, "success", StatusCodes.Status200OK),
+                cancellation: cancellationToken
+            );
         }
         catch (ArgumentException)
         {

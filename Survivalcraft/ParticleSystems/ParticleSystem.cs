@@ -47,10 +47,24 @@ public class ParticleSystem<T> : ParticleSystemBase where T : Particle, new()
 
         if (_additiveBatch == null || _alphaBlendedBatch == null)
         {
-            _additiveBatch = SubsystemParticles.PrimitivesRenderer.TexturedBatch(Texture, true, 0,
-                DepthStencilState.DepthRead, null, BlendState.Additive, SamplerState.PointClamp);
-            _alphaBlendedBatch = SubsystemParticles.PrimitivesRenderer.TexturedBatch(Texture, true, 0,
-                DepthStencilState.Default, null, BlendState.AlphaBlend, SamplerState.PointClamp);
+            _additiveBatch = SubsystemParticles.PrimitivesRenderer.TexturedBatch(
+                Texture,
+                true,
+                0,
+                DepthStencilState.DepthRead,
+                null,
+                BlendState.Additive,
+                SamplerState.PointClamp
+            );
+            _alphaBlendedBatch = SubsystemParticles.PrimitivesRenderer.TexturedBatch(
+                Texture,
+                true,
+                0,
+                DepthStencilState.Default,
+                null,
+                BlendState.AlphaBlend,
+                SamplerState.PointClamp
+            );
         }
 
         _front[0] = camera.ViewDirection;

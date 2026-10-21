@@ -40,8 +40,15 @@ public class SubsystemPathfinding : Subsystem
         return Math.Clamp((Math.Max(processorCount, 1) + 3) / 4, 1, maximum);
     }
 
-    public void QueuePathSearch(Vector3 start, Vector3 end, float minDistance, Vector3 boxSize, bool ignoreDoors,
-        int maxPositionsToCheck, PathfindingResult result)
+    public void QueuePathSearch(
+        Vector3 start,
+        Vector3 end,
+        float minDistance,
+        Vector3 boxSize,
+        bool ignoreDoors,
+        int maxPositionsToCheck,
+        PathfindingResult result
+    )
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -51,16 +58,18 @@ public class SubsystemPathfinding : Subsystem
             {
                 result.IsCompleted = false;
                 result.IsInProgress = true;
-                _requests.Enqueue(new Request
-                {
-                    Start = start,
-                    End = end,
-                    MinDistance = minDistance,
-                    BoxSize = boxSize,
-                    IgnoreDoors = ignoreDoors,
-                    MaxPositionsToCheck = maxPositionsToCheck,
-                    PathfindingResult = result
-                });
+                _requests.Enqueue(
+                    new Request
+                    {
+                        Start = start,
+                        End = end,
+                        MinDistance = minDistance,
+                        BoxSize = boxSize,
+                        IgnoreDoors = ignoreDoors,
+                        MaxPositionsToCheck = maxPositionsToCheck,
+                        PathfindingResult = result
+                    }
+                );
                 Monitor.Pulse(_requests);
             }
             else
@@ -84,11 +93,14 @@ public class SubsystemPathfinding : Subsystem
         {
             var workerIndex = i;
             var context = new WorkerContext(_subsystemTerrain);
-            _workers.Add(Task.Factory.StartNew(
-                () => ThreadFunction(context, workerIndex),
-                CancellationToken.None,
-                TaskCreationOptions.LongRunning,
-                TaskScheduler.Default));
+            _workers.Add(
+                Task.Factory.StartNew(
+                    () => ThreadFunction(context, workerIndex),
+                    CancellationToken.None,
+                    TaskCreationOptions.LongRunning,
+                    TaskScheduler.Default
+                )
+            );
         }
     }
 
@@ -144,8 +156,7 @@ public class SubsystemPathfinding : Subsystem
             catch (Exception e)
             {
                 CompleteFailedRequest(request.PathfindingResult);
-                Log.Error(ExceptionManager.MakeFullErrorMessage(
-                    $"Pathfinding worker {workerIndex} failed.", e));
+                Log.Error(ExceptionManager.MakeFullErrorMessage($"Pathfinding worker {workerIndex} failed.", e));
             }
         }
     }
@@ -212,20 +223,35 @@ public class SubsystemPathfinding : Subsystem
             return false;
         }
 
-        if (_subsystemTerrain.Raycast(vector + new Vector3(0f, -1f, 0f), vector2 + new Vector3(0f, -1f, 0f), false,
-                false, SmoothingRaycastFunction_Support).HasValue)
+        if (_subsystemTerrain.Raycast(
+                vector + new Vector3(0f, -1f, 0f),
+                vector2 + new Vector3(0f, -1f, 0f),
+                false,
+                false,
+                SmoothingRaycastFunction_Support
+            ).HasValue)
         {
             return false;
         }
 
-        if (_subsystemTerrain.Raycast(vector + new Vector3(0f, -1f, 0f) - v, vector2 + new Vector3(0f, -1f, 0f) - v,
-                false, false, SmoothingRaycastFunction_Support).HasValue)
+        if (_subsystemTerrain.Raycast(
+                vector + new Vector3(0f, -1f, 0f) - v,
+                vector2 + new Vector3(0f, -1f, 0f) - v,
+                false,
+                false,
+                SmoothingRaycastFunction_Support
+            ).HasValue)
         {
             return false;
         }
 
-        if (_subsystemTerrain.Raycast(vector + new Vector3(0f, -1f, 0f) + v, vector2 + new Vector3(0f, -1f, 0f) + v,
-                false, false, SmoothingRaycastFunction_Support).HasValue)
+        if (_subsystemTerrain.Raycast(
+                vector + new Vector3(0f, -1f, 0f) + v,
+                vector2 + new Vector3(0f, -1f, 0f) + v,
+                false,
+                false,
+                SmoothingRaycastFunction_Support
+            ).HasValue)
         {
             return false;
         }
@@ -413,8 +439,13 @@ public class SubsystemPathfinding : Subsystem
                 var v3 = vector + i * v2;
                 var box = new BoundingBox(
                     v3 - new Vector3(Request.BoxSize.X / 2f + 0.01f, 0f, Request.BoxSize.Z / 2f + 0.01f),
-                    v3 + new Vector3(Request.BoxSize.X / 2f - 0.01f, Request.BoxSize.Y,
-                        Request.BoxSize.Z / 2f - 0.01f));
+                    v3 +
+                    new Vector3(
+                        Request.BoxSize.X / 2f - 0.01f,
+                        Request.BoxSize.Y,
+                        Request.BoxSize.Z / 2f - 0.01f
+                    )
+                );
                 if (IsBlocked(box))
                 {
                     return;
@@ -477,7 +508,8 @@ public class SubsystemPathfinding : Subsystem
                                 (!Request.IgnoreDoors || (block is not DoorBlock && block is not TrapdoorBlock)))
                             {
                                 var v = new Vector3(i, num8, j);
-                                var customCollisionBoxes = block.GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
+                                var customCollisionBoxes =
+                                    block.GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
                                 foreach (var boundingBox in customCollisionBoxes)
                                 {
                                     if (box.Intersection(new BoundingBox(v + boundingBox.Min, v + boundingBox.Max)))

@@ -35,8 +35,10 @@ public sealed class SubsystemPlayersOfflineTest
             var subsystem = new SubsystemPlayers();
             var updater = (TerrainUpdater)RuntimeHelpers.GetUninitializedObject(typeof(TerrainUpdater));
             SetField(updater, "_pendingLocations", new Dictionary<int, TerrainUpdateLocation?>());
-            var parametersField = typeof(TerrainUpdater).GetField("_updateParameters",
-                BindingFlags.Instance | BindingFlags.NonPublic)!;
+            var parametersField = typeof(TerrainUpdater).GetField(
+                "_updateParameters",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            )!;
             var parameters = Activator.CreateInstance(parametersField.FieldType)!;
             parametersField.FieldType.GetField("Locations")!
                 .SetValue(parameters, new Dictionary<int, TerrainUpdateLocation>());
@@ -55,14 +57,19 @@ public sealed class SubsystemPlayersOfflineTest
                 player.Name = $"Player {id}";
                 typeof(PlayerData).GetProperty(nameof(PlayerData.IsMainPlayer))!.SetValue(player, id == 1);
                 var machine = new StateMachine();
-                machine.AddState("RequestOffline", Actions.Empty, () =>
-                {
-                    updated++;
-                    subsystem.QueuePlayerOffline(player);
-                    subsystem.QueuePlayerOffline(player);
-                    Assert.Equal(2, subsystem.PlayersData.Count);
-                    Assert.Equal(0, removed);
-                }, Actions.Empty);
+                machine.AddState(
+                    "RequestOffline",
+                    Actions.Empty,
+                    () =>
+                    {
+                        updated++;
+                        subsystem.QueuePlayerOffline(player);
+                        subsystem.QueuePlayerOffline(player);
+                        Assert.Equal(2, subsystem.PlayersData.Count);
+                        Assert.Equal(0, removed);
+                    },
+                    Actions.Empty
+                );
                 machine.TransitionTo("RequestOffline");
                 SetField(player, "_stateMachine", machine);
                 records.Add(player);

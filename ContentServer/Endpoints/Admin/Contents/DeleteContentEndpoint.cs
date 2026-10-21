@@ -21,7 +21,8 @@ public sealed class DeleteContentEndpoint(
     IMediator mediator,
     ApiKeyAuthenticationContext authenticationContext,
     ContentSubmissionLock submissionLock,
-    ContentPackageStore packageStore) : EndpointWithoutRequest
+    ContentPackageStore packageStore
+) : EndpointWithoutRequest
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {

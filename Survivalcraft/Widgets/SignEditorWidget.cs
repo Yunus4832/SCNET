@@ -17,12 +17,19 @@ public sealed class SignEditorWidget : CanvasWidget, IGameInputCapturingWidget
     ];
 
     private readonly ButtonWidget _cancelButton;
+
     private readonly Action _close;
+
     private readonly ButtonWidget[] _colorButtons = new ButtonWidget[4];
+
     private readonly Action<SignData> _save;
+
     private readonly ButtonWidget _saveButton;
+
     private readonly TextBoxWidget[] _textBoxes = new TextBoxWidget[4];
+
     private readonly TextBoxWidget _urlTextBox;
+
     private bool _hasChanges;
 
     public SignEditorWidget(SignData? signData, Action<SignData> save, Action close)
@@ -64,12 +71,14 @@ public sealed class SignEditorWidget : CanvasWidget, IGameInputCapturingWidget
 
         if (_saveButton.IsClicked)
         {
-            _save(new SignData
-            {
-                Lines = _textBoxes.Select(textBox => textBox.Text).ToArray(),
-                Colors = _colorButtons.Select(button => button.Color).ToArray(),
-                Url = _urlTextBox.Text.Trim()
-            });
+            _save(
+                new SignData
+                {
+                    Lines = _textBoxes.Select(textBox => textBox.Text).ToArray(),
+                    Colors = _colorButtons.Select(button => button.Color).ToArray(),
+                    Url = _urlTextBox.Text.Trim()
+                }
+            );
             _close();
         }
 
@@ -78,5 +87,4 @@ public sealed class SignEditorWidget : CanvasWidget, IGameInputCapturingWidget
             _close();
         }
     }
-
 }

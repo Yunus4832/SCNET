@@ -51,8 +51,10 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
 
         if (CommonLib.WorkType == WorkType.Server && _subsystemTime.PeriodicGameTimeEvent(1.0, 0.0))
         {
-            CommonLib.Net.QueuePackage(new SubsystemTimePackage(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset),
-                PackageAudience.Global);
+            CommonLib.Net.QueuePackage(
+                new SubsystemTimePackage(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset),
+                PackageAudience.Global
+            );
         }
     }
 

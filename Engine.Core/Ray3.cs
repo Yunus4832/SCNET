@@ -33,8 +33,12 @@ public struct Ray3(Vector3 position, Vector3 direction) : IEquatable<Ray3>
 
     public float? Intersection(BoundingBox box)
     {
-        if (Position.X >= box.Min.X && Position.X <= box.Max.X && Position.Y >= box.Min.Y && Position.Y <= box.Max.Y &&
-            Position.Z >= box.Min.Z && Position.Z <= box.Max.Z)
+        if (Position.X >= box.Min.X &&
+            Position.X <= box.Max.X &&
+            Position.Y >= box.Min.Y &&
+            Position.Y <= box.Max.Y &&
+            Position.Z >= box.Min.Z &&
+            Position.Z <= box.Max.Z)
         {
             return 0f;
         }

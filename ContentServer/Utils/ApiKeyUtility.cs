@@ -24,7 +24,8 @@ public static class ApiKeyUtility
 
     public static bool IsValid(string? key)
     {
-        return key is not null && key.Length is >= MinimumLength and <= MaximumLength &&
+        return key is not null &&
+               key.Length is >= MinimumLength and <= MaximumLength &&
                key.All(character => char.IsAsciiLetterOrDigit(character) || character is '.' or '_' or '~' or '-');
     }
 }

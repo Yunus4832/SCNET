@@ -26,7 +26,9 @@ public sealed class PublicReleaseListEndpoint(IMediator mediator) : ContentEndpo
         }
 
         var items = await mediator.Send(new ListGameReleasesQuery(true, platform), cancellationToken);
-        await Send.ResponseAsync(items.Select(GameReleaseResponse.From).ToArray().AsResponseData(),
-            cancellation: cancellationToken);
+        await Send.ResponseAsync(
+            items.Select(GameReleaseResponse.From).ToArray().AsResponseData(),
+            cancellation: cancellationToken
+        );
     }
 }

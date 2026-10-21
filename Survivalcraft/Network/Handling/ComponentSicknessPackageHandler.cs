@@ -12,19 +12,22 @@ public sealed class ComponentSicknessPackageHandler : PackageHandlerBase<Compone
         }
 
         var project = GameManager.Project;
-        project.FindEntityById(package.EntityId, entity =>
-        {
-            var sickness = entity.FindComponent<ComponentSickness>();
-            if (sickness == null)
+        project.FindEntityById(
+            package.EntityId,
+            entity =>
             {
-                return;
-            }
+                var sickness = entity.FindComponent<ComponentSickness>();
+                if (sickness == null)
+                {
+                    return;
+                }
 
-            sickness.SicknessDuration = package.SicknessDuration;
-            if (package.SicknessDuration > 0f)
-            {
-                sickness.NauseaEffect();
+                sickness.SicknessDuration = package.SicknessDuration;
+                if (package.SicknessDuration > 0f)
+                {
+                    sickness.NauseaEffect();
+                }
             }
-        });
+        );
     }
 }

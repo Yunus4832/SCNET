@@ -123,7 +123,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                     point.X,
                     point.Y,
                     point.Z,
-                    null);
+                    null
+                );
                 CurrentModRuntime.Value?.BlockBehaviors.Invoke(neighborChangedContext);
                 if (neighborChangedContext.Cancel)
                 {
@@ -134,8 +135,14 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                 var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(cellContents);
                 foreach (var behavior in blockBehaviors)
                 {
-                    behavior.OnNeighborBlockChanged(point.X + point2.X, point.Y + point2.Y, point.Z + point2.Z,
-                        point.X, point.Y, point.Z);
+                    behavior.OnNeighborBlockChanged(
+                        point.X + point2.X,
+                        point.Y + point2.Y,
+                        point.Z + point2.Z,
+                        point.X,
+                        point.Y,
+                        point.Z
+                    );
                 }
             }
         }
@@ -199,12 +206,19 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                     cellValue = predictedValue;
                 }
             }
+
             var num24 = Terrain.ExtractContents(cellValue);
             if (num24 != 0 || !skipAirBlocks)
             {
                 var ray2 = new Ray3(ray.Position - new Vector3(num2, num3, num4), ray.Direction);
-                var num25 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num24].Raycast(ray2, this, cellValue, useInteractionBoxes,
-                    out var nearestBoxIndex, out var nearestBox);
+                var num25 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num24].Raycast(
+                    ray2,
+                    this,
+                    cellValue,
+                    useInteractionBoxes,
+                    out var nearestBoxIndex,
+                    out var nearestBox
+                );
                 if (num25.HasValue && (!num23.HasValue || num25.Value < num23.Value))
                 {
                     num23 = num25;
@@ -340,7 +354,9 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
     }
 
     public void ChangeCellNet(
-        int x, int y, int z,
+        int x,
+        int y,
+        int z,
         int value,
         bool updateModificationCounter = true,
         ComponentMiner? miner = null
@@ -367,7 +383,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                 x,
                 y,
                 z,
-                value);
+                value
+            );
             return;
         }
 
@@ -378,7 +395,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             x,
             y,
             z,
-            value);
+            value
+        );
         var chunkAtCell = Terrain.GetChunkAtCell(x, z, false);
         if (chunkAtCell != null)
         {
@@ -387,8 +405,12 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                 chunkAtCell.ModificationCounter++;
             }
 
-            TerrainUpdater.DowngradeChunkNeighborhoodState(chunkAtCell.Coords, 1, TerrainChunkState.InvalidLight,
-                false);
+            TerrainUpdater.DowngradeChunkNeighborhoodState(
+                chunkAtCell.Coords,
+                1,
+                TerrainChunkState.InvalidLight,
+                false
+            );
         }
 
         _modifiedCells[new Point3(x, y, z)] = true;
@@ -449,7 +471,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         int x,
         int y,
         int z,
-        int value)
+        int value
+    )
     {
         if (authorityChunk == null)
         {
@@ -466,7 +489,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             new Point3(x, y, z),
             value,
             baseContentVersion,
-            resultContentVersion);
+            resultContentVersion
+        );
         ClientTerrainDeltas?.Receive(delta);
         if (CommonLib.WorkType == WorkType.Server)
         {
@@ -475,7 +499,9 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
     }
 
     public void ChangeCell(
-        int x, int y, int z,
+        int x,
+        int y,
+        int z,
         int value,
         bool updateModificationCounter = true,
         ComponentMiner? miner = null
@@ -501,7 +527,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             z,
             CellAuthority.GetCellValue(x, y, z),
             value,
-            miner);
+            miner
+        );
         CurrentModRuntime.Value?.Gameplay.Invoke(changingContext);
         if (changingContext.Cancel)
         {
@@ -514,7 +541,9 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public void DestroyCell(
         int toolLevel,
-        int x, int y, int z,
+        int x,
+        int y,
+        int z,
         int newValue,
         bool noDrop,
         bool noParticleSystem,
@@ -577,11 +606,18 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                 }
             }
 
-            if (showDebris && !noParticleSystem &&
+            if (showDebris &&
+                !noParticleSystem &&
                 _subsystemViews.CalculateDistanceFromNearestView(new Vector3(x, y, z)) < 16f)
             {
-                _subsystemParticles.AddParticleSystem(block.CreateDebrisParticleSystem(this,
-                    new Vector3(x + 0.5f, y + 0.5f, z + 0.5f), cellValue, 1f));
+                _subsystemParticles.AddParticleSystem(
+                    block.CreateDebrisParticleSystem(
+                        this,
+                        new Vector3(x + 0.5f, y + 0.5f, z + 0.5f),
+                        cellValue,
+                        1f
+                    )
+                );
             }
         }
 
@@ -652,9 +688,14 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             TerrainSaveCoordinator = new TerrainSaveCoordinator(TerrainSerializer.SaveSnapshot);
         }
 
-        BlockGeometryGenerator = new BlockGeometryGenerator(Terrain, this,
-            Project.FindSubsystem<SubsystemElectricity>(true)!, SubsystemFurnitureBlockBehavior,
-            Project.FindSubsystem<SubsystemMetersBlockBehavior>(true)!, SubsystemPalette);
+        BlockGeometryGenerator = new BlockGeometryGenerator(
+            Terrain,
+            this,
+            Project.FindSubsystem<SubsystemElectricity>(true)!,
+            SubsystemFurnitureBlockBehavior,
+            Project.FindSubsystem<SubsystemMetersBlockBehavior>(true)!,
+            SubsystemPalette
+        );
         TerrainContentsGenerator = CreateTerrainContentsGenerator(Terrain);
 
         if (CommonLib.WorkType == WorkType.Local)
@@ -665,12 +706,13 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                 TerrainContentsGenerator,
                 chunk => TerrainSaveCoordinator?.TryRestorePendingSnapshot(chunk) == true,
                 TerrainSerializer.LoadChunk,
-                chunk => CurrentModRuntime.Value?.Gameplay.Invoke(
-                    new TerrainChunkGeneratedContext(this, chunk)));
+                chunk => CurrentModRuntime.Value?.Gameplay.Invoke(new TerrainChunkGeneratedContext(this, chunk))
+            );
             LocalChunkHost = new LocalChunkContentHost(
                 authorityTerrain,
                 generation,
-                chunk => TerrainSaveCoordinator?.TryQueueChunkForUnload(chunk) ?? true);
+                chunk => TerrainSaveCoordinator?.TryQueueChunkForUnload(chunk) ?? true
+            );
             CellAuthority = LocalChunkHost.CellAuthority;
             ClientChunkContents = new ClientChunkContentCoordinator(Terrain);
             ChunkContentTransport = LocalChunkHost;
@@ -686,10 +728,14 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         TerrainUpdater = new TerrainUpdater(this);
         if (CommonLib.WorkType == WorkType.Client)
         {
-            CellPrediction = new ClientTerrainPrediction(Terrain, coords =>
-                TerrainUpdater.DowngradeChunkNeighborhoodState(coords, 1, TerrainChunkState.InvalidLight, false));
+            CellPrediction = new ClientTerrainPrediction(
+                Terrain,
+                coords =>
+                    TerrainUpdater.DowngradeChunkNeighborhoodState(coords, 1, TerrainChunkState.InvalidLight, false)
+            );
             ClientChunkContents!.ContentInstalled += CellPrediction.OnContentInstalled;
         }
+
         if (ClientChunkContents != null)
         {
             ClientTerrainDeltas = new ClientTerrainDeltaCoordinator(
@@ -698,7 +744,9 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                     delta.Cell.X,
                     delta.Cell.Y,
                     delta.Cell.Z,
-                    delta.Value));
+                    delta.Value
+                )
+            );
             ClientChunkContents.ContentInstalled += TerrainUpdater.OnNetworkChunkContentInstalled;
             // Replay deltas after the ordinary snapshot derivation reset. A detected version gap
             // must be the final state transition so it can leave the replica at NotLoaded.
@@ -777,8 +825,12 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             }
             catch (Exception e)
             {
-                Log.Error(ExceptionManager.MakeFullErrorMessage(
-                    "Failed to flush background terrain saves while disposing the world.", e));
+                Log.Error(
+                    ExceptionManager.MakeFullErrorMessage(
+                        "Failed to flush background terrain saves while disposing the world.",
+                        e
+                    )
+                );
             }
 
             TerrainSaveCoordinator = null;

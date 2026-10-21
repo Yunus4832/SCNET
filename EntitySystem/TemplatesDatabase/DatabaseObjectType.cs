@@ -10,7 +10,8 @@ public class DatabaseObjectType(
     bool supportsValue,
     bool mustInherit,
     int nameLengthLimit,
-    bool saveStandalone)
+    bool saveStandalone
+)
 {
     private readonly List<DatabaseObjectType> _allowedInheritanceChildren = [];
 

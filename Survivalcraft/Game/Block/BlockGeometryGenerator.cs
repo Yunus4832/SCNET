@@ -146,19 +146,51 @@ public class BlockGeometryGenerator
         if ((x & 1) == 0)
         {
             SetupLitCornerVertex(x, y, z, color2, textureSlot, textureSlotCount, 0, ref vertices.Array[count]);
-            SetupLitCornerVertex(x + 1, y, z + 1, color2, textureSlot, textureSlotCount, 1,
-                ref vertices.Array[count + 1]);
-            SetupLitCornerVertex(x + 1, y + 1, z + 1, color2, textureSlot, textureSlotCount, 2,
-                ref vertices.Array[count + 2]);
+            SetupLitCornerVertex(
+                x + 1,
+                y,
+                z + 1,
+                color2,
+                textureSlot,
+                textureSlotCount,
+                1,
+                ref vertices.Array[count + 1]
+            );
+            SetupLitCornerVertex(
+                x + 1,
+                y + 1,
+                z + 1,
+                color2,
+                textureSlot,
+                textureSlotCount,
+                2,
+                ref vertices.Array[count + 2]
+            );
             SetupLitCornerVertex(x, y + 1, z, color2, textureSlot, textureSlotCount, 3, ref vertices.Array[count + 3]);
         }
         else
         {
             SetupLitCornerVertex(x, y, z, color2, textureSlot, textureSlotCount, 1, ref vertices.Array[count]);
-            SetupLitCornerVertex(x + 1, y, z + 1, color2, textureSlot, textureSlotCount, 0,
-                ref vertices.Array[count + 1]);
-            SetupLitCornerVertex(x + 1, y + 1, z + 1, color2, textureSlot, textureSlotCount, 3,
-                ref vertices.Array[count + 2]);
+            SetupLitCornerVertex(
+                x + 1,
+                y,
+                z + 1,
+                color2,
+                textureSlot,
+                textureSlotCount,
+                0,
+                ref vertices.Array[count + 1]
+            );
+            SetupLitCornerVertex(
+                x + 1,
+                y + 1,
+                z + 1,
+                color2,
+                textureSlot,
+                textureSlotCount,
+                3,
+                ref vertices.Array[count + 2]
+            );
             SetupLitCornerVertex(x, y + 1, z, color2, textureSlot, textureSlotCount, 2, ref vertices.Array[count + 3]);
         }
 
@@ -166,19 +198,51 @@ public class BlockGeometryGenerator
         {
             SetupLitCornerVertex(x, y, z + 1, color2, textureSlot, textureSlotCount, 0, ref vertices.Array[count + 4]);
             SetupLitCornerVertex(x + 1, y, z, color2, textureSlot, textureSlotCount, 1, ref vertices.Array[count + 5]);
-            SetupLitCornerVertex(x + 1, y + 1, z, color2, textureSlot, textureSlotCount, 2,
-                ref vertices.Array[count + 6]);
-            SetupLitCornerVertex(x, y + 1, z + 1, color2, textureSlot, textureSlotCount, 3,
-                ref vertices.Array[count + 7]);
+            SetupLitCornerVertex(
+                x + 1,
+                y + 1,
+                z,
+                color2,
+                textureSlot,
+                textureSlotCount,
+                2,
+                ref vertices.Array[count + 6]
+            );
+            SetupLitCornerVertex(
+                x,
+                y + 1,
+                z + 1,
+                color2,
+                textureSlot,
+                textureSlotCount,
+                3,
+                ref vertices.Array[count + 7]
+            );
         }
         else
         {
             SetupLitCornerVertex(x, y, z + 1, color2, textureSlot, textureSlotCount, 1, ref vertices.Array[count + 4]);
             SetupLitCornerVertex(x + 1, y, z, color2, textureSlot, textureSlotCount, 0, ref vertices.Array[count + 5]);
-            SetupLitCornerVertex(x + 1, y + 1, z, color2, textureSlot, textureSlotCount, 3,
-                ref vertices.Array[count + 6]);
-            SetupLitCornerVertex(x, y + 1, z + 1, color2, textureSlot, textureSlotCount, 2,
-                ref vertices.Array[count + 7]);
+            SetupLitCornerVertex(
+                x + 1,
+                y + 1,
+                z,
+                color2,
+                textureSlot,
+                textureSlotCount,
+                3,
+                ref vertices.Array[count + 6]
+            );
+            SetupLitCornerVertex(
+                x,
+                y + 1,
+                z + 1,
+                color2,
+                textureSlot,
+                textureSlotCount,
+                2,
+                ref vertices.Array[count + 7]
+            );
         }
 
         var count2 = indices.Count;
@@ -209,8 +273,15 @@ public class BlockGeometryGenerator
         indices.Array[count2 + 23] = count + 6;
     }
 
-    public void GenerateCubeVertices(Block block, int value, int x, int y, int z, Color color,
-        TerrainGeometrySubset[] subsetsByFace)
+    public void GenerateCubeVertices(
+        Block block,
+        int value,
+        int x,
+        int y,
+        int z,
+        Color color,
+        TerrainGeometrySubset[] subsetsByFace
+    )
     {
         var chunkAtCell = Terrain.GetChunkAtCell(x, z)!;
         var chunkAtCell2 = Terrain.GetChunkAtCell(x, z + 1)!;
@@ -226,14 +297,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot = block.GetFaceTextureSlot(0, value);
             var count = vertices.Count;
             vertices.Count += 4;
-            SetupCubeVertexFace0(x, y, z + 1, 1f, 0, faceTextureSlot, textureSlotCount, color,
-                ref vertices.Array[count]); //A
-            SetupCubeVertexFace0(x + 1, y, z + 1, 1f, 1, faceTextureSlot, textureSlotCount, color,
-                ref vertices.Array[count + 1]); //B
-            SetupCubeVertexFace0(x + 1, y + 1, z + 1, 1f, 2, faceTextureSlot, textureSlotCount, color,
-                ref vertices.Array[count + 2]); //C
-            SetupCubeVertexFace0(x, y + 1, z + 1, 1f, 3, faceTextureSlot, textureSlotCount, color,
-                ref vertices.Array[count + 3]); //D
+            SetupCubeVertexFace0(
+                x,
+                y,
+                z + 1,
+                1f,
+                0,
+                faceTextureSlot,
+                textureSlotCount,
+                color,
+                ref vertices.Array[count]
+            ); //A
+            SetupCubeVertexFace0(
+                x + 1,
+                y,
+                z + 1,
+                1f,
+                1,
+                faceTextureSlot,
+                textureSlotCount,
+                color,
+                ref vertices.Array[count + 1]
+            ); //B
+            SetupCubeVertexFace0(
+                x + 1,
+                y + 1,
+                z + 1,
+                1f,
+                2,
+                faceTextureSlot,
+                textureSlotCount,
+                color,
+                ref vertices.Array[count + 2]
+            ); //C
+            SetupCubeVertexFace0(
+                x,
+                y + 1,
+                z + 1,
+                1f,
+                3,
+                faceTextureSlot,
+                textureSlotCount,
+                color,
+                ref vertices.Array[count + 3]
+            ); //D
             var count2 = indices.Count;
             indices.Count += 6;
             indices.Array[count2] = count; //A
@@ -252,14 +359,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot2 = block.GetFaceTextureSlot(1, value);
             var count3 = vertices2.Count;
             vertices2.Count += 4;
-            SetupCubeVertexFace1(x + 1, y, z, 1f, 1, faceTextureSlot2, textureSlotCount, color,
-                ref vertices2.Array[count3]);
-            SetupCubeVertexFace1(x + 1, y + 1, z, 1f, 2, faceTextureSlot2, textureSlotCount, color,
-                ref vertices2.Array[count3 + 1]);
-            SetupCubeVertexFace1(x + 1, y + 1, z + 1, 1f, 3, faceTextureSlot2, textureSlotCount, color,
-                ref vertices2.Array[count3 + 2]);
-            SetupCubeVertexFace1(x + 1, y, z + 1, 1f, 0, faceTextureSlot2, textureSlotCount, color,
-                ref vertices2.Array[count3 + 3]);
+            SetupCubeVertexFace1(
+                x + 1,
+                y,
+                z,
+                1f,
+                1,
+                faceTextureSlot2,
+                textureSlotCount,
+                color,
+                ref vertices2.Array[count3]
+            );
+            SetupCubeVertexFace1(
+                x + 1,
+                y + 1,
+                z,
+                1f,
+                2,
+                faceTextureSlot2,
+                textureSlotCount,
+                color,
+                ref vertices2.Array[count3 + 1]
+            );
+            SetupCubeVertexFace1(
+                x + 1,
+                y + 1,
+                z + 1,
+                1f,
+                3,
+                faceTextureSlot2,
+                textureSlotCount,
+                color,
+                ref vertices2.Array[count3 + 2]
+            );
+            SetupCubeVertexFace1(
+                x + 1,
+                y,
+                z + 1,
+                1f,
+                0,
+                faceTextureSlot2,
+                textureSlotCount,
+                color,
+                ref vertices2.Array[count3 + 3]
+            );
             var count4 = indices2.Count;
             indices2.Count += 6;
             indices2.Array[count4] = count3;
@@ -278,14 +421,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot3 = block.GetFaceTextureSlot(2, value);
             var count5 = vertices3.Count;
             vertices3.Count += 4;
-            SetupCubeVertexFace2(x, y, z, 1f, 1, faceTextureSlot3, textureSlotCount, color,
-                ref vertices3.Array[count5]);
-            SetupCubeVertexFace2(x + 1, y, z, 1f, 0, faceTextureSlot3, textureSlotCount, color,
-                ref vertices3.Array[count5 + 1]);
-            SetupCubeVertexFace2(x + 1, y + 1, z, 1f, 3, faceTextureSlot3, textureSlotCount, color,
-                ref vertices3.Array[count5 + 2]);
-            SetupCubeVertexFace2(x, y + 1, z, 1f, 2, faceTextureSlot3, textureSlotCount, color,
-                ref vertices3.Array[count5 + 3]);
+            SetupCubeVertexFace2(
+                x,
+                y,
+                z,
+                1f,
+                1,
+                faceTextureSlot3,
+                textureSlotCount,
+                color,
+                ref vertices3.Array[count5]
+            );
+            SetupCubeVertexFace2(
+                x + 1,
+                y,
+                z,
+                1f,
+                0,
+                faceTextureSlot3,
+                textureSlotCount,
+                color,
+                ref vertices3.Array[count5 + 1]
+            );
+            SetupCubeVertexFace2(
+                x + 1,
+                y + 1,
+                z,
+                1f,
+                3,
+                faceTextureSlot3,
+                textureSlotCount,
+                color,
+                ref vertices3.Array[count5 + 2]
+            );
+            SetupCubeVertexFace2(
+                x,
+                y + 1,
+                z,
+                1f,
+                2,
+                faceTextureSlot3,
+                textureSlotCount,
+                color,
+                ref vertices3.Array[count5 + 3]
+            );
             var count6 = indices3.Count;
             indices3.Count += 6;
             indices3.Array[count6] = count5;
@@ -304,14 +483,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot4 = block.GetFaceTextureSlot(3, value);
             var count7 = vertices4.Count;
             vertices4.Count += 4;
-            SetupCubeVertexFace3(x, y, z, 1f, 0, faceTextureSlot4, textureSlotCount, color,
-                ref vertices4.Array[count7]);
-            SetupCubeVertexFace3(x, y + 1, z, 1f, 3, faceTextureSlot4, textureSlotCount, color,
-                ref vertices4.Array[count7 + 1]);
-            SetupCubeVertexFace3(x, y + 1, z + 1, 1f, 2, faceTextureSlot4, textureSlotCount, color,
-                ref vertices4.Array[count7 + 2]);
-            SetupCubeVertexFace3(x, y, z + 1, 1f, 1, faceTextureSlot4, textureSlotCount, color,
-                ref vertices4.Array[count7 + 3]);
+            SetupCubeVertexFace3(
+                x,
+                y,
+                z,
+                1f,
+                0,
+                faceTextureSlot4,
+                textureSlotCount,
+                color,
+                ref vertices4.Array[count7]
+            );
+            SetupCubeVertexFace3(
+                x,
+                y + 1,
+                z,
+                1f,
+                3,
+                faceTextureSlot4,
+                textureSlotCount,
+                color,
+                ref vertices4.Array[count7 + 1]
+            );
+            SetupCubeVertexFace3(
+                x,
+                y + 1,
+                z + 1,
+                1f,
+                2,
+                faceTextureSlot4,
+                textureSlotCount,
+                color,
+                ref vertices4.Array[count7 + 2]
+            );
+            SetupCubeVertexFace3(
+                x,
+                y,
+                z + 1,
+                1f,
+                1,
+                faceTextureSlot4,
+                textureSlotCount,
+                color,
+                ref vertices4.Array[count7 + 3]
+            );
             var count8 = indices4.Count;
             indices4.Count += 6;
             indices4.Array[count8] = count7;
@@ -330,14 +545,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot5 = block.GetFaceTextureSlot(4, value);
             var count9 = vertices5.Count;
             vertices5.Count += 4;
-            SetupCubeVertexFace4(x, y + 1, z, 1f, 3, faceTextureSlot5, textureSlotCount, color,
-                ref vertices5.Array[count9]);
-            SetupCubeVertexFace4(x + 1, y + 1, z, 1f, 2, faceTextureSlot5, textureSlotCount, color,
-                ref vertices5.Array[count9 + 1]);
-            SetupCubeVertexFace4(x + 1, y + 1, z + 1, 1f, 1, faceTextureSlot5, textureSlotCount, color,
-                ref vertices5.Array[count9 + 2]);
-            SetupCubeVertexFace4(x, y + 1, z + 1, 1f, 0, faceTextureSlot5, textureSlotCount, color,
-                ref vertices5.Array[count9 + 3]);
+            SetupCubeVertexFace4(
+                x,
+                y + 1,
+                z,
+                1f,
+                3,
+                faceTextureSlot5,
+                textureSlotCount,
+                color,
+                ref vertices5.Array[count9]
+            );
+            SetupCubeVertexFace4(
+                x + 1,
+                y + 1,
+                z,
+                1f,
+                2,
+                faceTextureSlot5,
+                textureSlotCount,
+                color,
+                ref vertices5.Array[count9 + 1]
+            );
+            SetupCubeVertexFace4(
+                x + 1,
+                y + 1,
+                z + 1,
+                1f,
+                1,
+                faceTextureSlot5,
+                textureSlotCount,
+                color,
+                ref vertices5.Array[count9 + 2]
+            );
+            SetupCubeVertexFace4(
+                x,
+                y + 1,
+                z + 1,
+                1f,
+                0,
+                faceTextureSlot5,
+                textureSlotCount,
+                color,
+                ref vertices5.Array[count9 + 3]
+            );
             var count10 = indices5.Count;
             indices5.Count += 6;
             indices5.Array[count10] = count9;
@@ -356,14 +607,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot6 = block.GetFaceTextureSlot(5, value);
             var count11 = vertices6.Count;
             vertices6.Count += 4;
-            SetupCubeVertexFace5(x, y, z, 1f, 0, faceTextureSlot6, textureSlotCount, color,
-                ref vertices6.Array[count11]);
-            SetupCubeVertexFace5(x + 1, y, z, 1f, 1, faceTextureSlot6, textureSlotCount, color,
-                ref vertices6.Array[count11 + 1]);
-            SetupCubeVertexFace5(x + 1, y, z + 1, 1f, 2, faceTextureSlot6, textureSlotCount, color,
-                ref vertices6.Array[count11 + 2]);
-            SetupCubeVertexFace5(x, y, z + 1, 1f, 3, faceTextureSlot6, textureSlotCount, color,
-                ref vertices6.Array[count11 + 3]);
+            SetupCubeVertexFace5(
+                x,
+                y,
+                z,
+                1f,
+                0,
+                faceTextureSlot6,
+                textureSlotCount,
+                color,
+                ref vertices6.Array[count11]
+            );
+            SetupCubeVertexFace5(
+                x + 1,
+                y,
+                z,
+                1f,
+                1,
+                faceTextureSlot6,
+                textureSlotCount,
+                color,
+                ref vertices6.Array[count11 + 1]
+            );
+            SetupCubeVertexFace5(
+                x + 1,
+                y,
+                z + 1,
+                1f,
+                2,
+                faceTextureSlot6,
+                textureSlotCount,
+                color,
+                ref vertices6.Array[count11 + 2]
+            );
+            SetupCubeVertexFace5(
+                x,
+                y,
+                z + 1,
+                1f,
+                3,
+                faceTextureSlot6,
+                textureSlotCount,
+                color,
+                ref vertices6.Array[count11 + 3]
+            );
             var count12 = indices6.Count;
             indices6.Count += 6;
             indices6.Array[count12] = count11;
@@ -375,9 +662,24 @@ public class BlockGeometryGenerator
         }
     }
 
-    public void GenerateCubeVertices(Block block, int value, int x, int y, int z, float height11, float height21,
-        float height22, float height12, Color sideColor, Color topColor11, Color topColor21, Color topColor22,
-        Color topColor12, int overrideTopTextureSlot, TerrainGeometrySubset[] subsetsByFace)
+    public void GenerateCubeVertices(
+        Block block,
+        int value,
+        int x,
+        int y,
+        int z,
+        float height11,
+        float height21,
+        float height22,
+        float height12,
+        Color sideColor,
+        Color topColor11,
+        Color topColor21,
+        Color topColor22,
+        Color topColor12,
+        int overrideTopTextureSlot,
+        TerrainGeometrySubset[] subsetsByFace
+    )
     {
         var chunkAtCell = Terrain.GetChunkAtCell(x, z)!;
         var chunkAtCell2 = Terrain.GetChunkAtCell(x, z + 1)!;
@@ -393,14 +695,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot = block.GetFaceTextureSlot(0, value);
             var count = vertices.Count;
             vertices.Count += 4;
-            SetupCubeVertexFace0(x, y, z + 1, 1f, 0, faceTextureSlot, textureSlotCount, sideColor,
-                ref vertices.Array[count]);
-            SetupCubeVertexFace0(x + 1, y, z + 1, 1f, 1, faceTextureSlot, textureSlotCount, sideColor,
-                ref vertices.Array[count + 1]);
-            SetupCubeVertexFace0(x + 1, y + 1, z + 1, height22, 2, faceTextureSlot, textureSlotCount, sideColor,
-                ref vertices.Array[count + 2]);
-            SetupCubeVertexFace0(x, y + 1, z + 1, height12, 3, faceTextureSlot, textureSlotCount, sideColor,
-                ref vertices.Array[count + 3]);
+            SetupCubeVertexFace0(
+                x,
+                y,
+                z + 1,
+                1f,
+                0,
+                faceTextureSlot,
+                textureSlotCount,
+                sideColor,
+                ref vertices.Array[count]
+            );
+            SetupCubeVertexFace0(
+                x + 1,
+                y,
+                z + 1,
+                1f,
+                1,
+                faceTextureSlot,
+                textureSlotCount,
+                sideColor,
+                ref vertices.Array[count + 1]
+            );
+            SetupCubeVertexFace0(
+                x + 1,
+                y + 1,
+                z + 1,
+                height22,
+                2,
+                faceTextureSlot,
+                textureSlotCount,
+                sideColor,
+                ref vertices.Array[count + 2]
+            );
+            SetupCubeVertexFace0(
+                x,
+                y + 1,
+                z + 1,
+                height12,
+                3,
+                faceTextureSlot,
+                textureSlotCount,
+                sideColor,
+                ref vertices.Array[count + 3]
+            );
             var count2 = indices.Count;
             indices.Count += 6;
             indices.Array[count2] = count;
@@ -419,14 +757,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot2 = block.GetFaceTextureSlot(1, value);
             var count3 = vertices2.Count;
             vertices2.Count += 4;
-            SetupCubeVertexFace1(x + 1, y, z, 1f, 1, faceTextureSlot2, textureSlotCount, sideColor,
-                ref vertices2.Array[count3]);
-            SetupCubeVertexFace1(x + 1, y + 1, z, height21, 2, faceTextureSlot2, textureSlotCount, sideColor,
-                ref vertices2.Array[count3 + 1]);
-            SetupCubeVertexFace1(x + 1, y + 1, z + 1, height22, 3, faceTextureSlot2, textureSlotCount, sideColor,
-                ref vertices2.Array[count3 + 2]);
-            SetupCubeVertexFace1(x + 1, y, z + 1, 1f, 0, faceTextureSlot2, textureSlotCount, sideColor,
-                ref vertices2.Array[count3 + 3]);
+            SetupCubeVertexFace1(
+                x + 1,
+                y,
+                z,
+                1f,
+                1,
+                faceTextureSlot2,
+                textureSlotCount,
+                sideColor,
+                ref vertices2.Array[count3]
+            );
+            SetupCubeVertexFace1(
+                x + 1,
+                y + 1,
+                z,
+                height21,
+                2,
+                faceTextureSlot2,
+                textureSlotCount,
+                sideColor,
+                ref vertices2.Array[count3 + 1]
+            );
+            SetupCubeVertexFace1(
+                x + 1,
+                y + 1,
+                z + 1,
+                height22,
+                3,
+                faceTextureSlot2,
+                textureSlotCount,
+                sideColor,
+                ref vertices2.Array[count3 + 2]
+            );
+            SetupCubeVertexFace1(
+                x + 1,
+                y,
+                z + 1,
+                1f,
+                0,
+                faceTextureSlot2,
+                textureSlotCount,
+                sideColor,
+                ref vertices2.Array[count3 + 3]
+            );
             var count4 = indices2.Count;
             indices2.Count += 6;
             indices2.Array[count4] = count3;
@@ -445,14 +819,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot3 = block.GetFaceTextureSlot(2, value);
             var count5 = vertices3.Count;
             vertices3.Count += 4;
-            SetupCubeVertexFace2(x, y, z, 1f, 1, faceTextureSlot3, textureSlotCount, sideColor,
-                ref vertices3.Array[count5]);
-            SetupCubeVertexFace2(x + 1, y, z, 1f, 0, faceTextureSlot3, textureSlotCount, sideColor,
-                ref vertices3.Array[count5 + 1]);
-            SetupCubeVertexFace2(x + 1, y + 1, z, height21, 3, faceTextureSlot3, textureSlotCount, sideColor,
-                ref vertices3.Array[count5 + 2]);
-            SetupCubeVertexFace2(x, y + 1, z, height11, 2, faceTextureSlot3, textureSlotCount, sideColor,
-                ref vertices3.Array[count5 + 3]);
+            SetupCubeVertexFace2(
+                x,
+                y,
+                z,
+                1f,
+                1,
+                faceTextureSlot3,
+                textureSlotCount,
+                sideColor,
+                ref vertices3.Array[count5]
+            );
+            SetupCubeVertexFace2(
+                x + 1,
+                y,
+                z,
+                1f,
+                0,
+                faceTextureSlot3,
+                textureSlotCount,
+                sideColor,
+                ref vertices3.Array[count5 + 1]
+            );
+            SetupCubeVertexFace2(
+                x + 1,
+                y + 1,
+                z,
+                height21,
+                3,
+                faceTextureSlot3,
+                textureSlotCount,
+                sideColor,
+                ref vertices3.Array[count5 + 2]
+            );
+            SetupCubeVertexFace2(
+                x,
+                y + 1,
+                z,
+                height11,
+                2,
+                faceTextureSlot3,
+                textureSlotCount,
+                sideColor,
+                ref vertices3.Array[count5 + 3]
+            );
             var count6 = indices3.Count;
             indices3.Count += 6;
             indices3.Array[count6] = count5;
@@ -471,14 +881,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot4 = block.GetFaceTextureSlot(3, value);
             var count7 = vertices4.Count;
             vertices4.Count += 4;
-            SetupCubeVertexFace3(x, y, z, 1f, 0, faceTextureSlot4, textureSlotCount, sideColor,
-                ref vertices4.Array[count7]);
-            SetupCubeVertexFace3(x, y + 1, z, height11, 3, faceTextureSlot4, textureSlotCount, sideColor,
-                ref vertices4.Array[count7 + 1]);
-            SetupCubeVertexFace3(x, y + 1, z + 1, height12, 2, faceTextureSlot4, textureSlotCount, sideColor,
-                ref vertices4.Array[count7 + 2]);
-            SetupCubeVertexFace3(x, y, z + 1, 1f, 1, faceTextureSlot4, textureSlotCount, sideColor,
-                ref vertices4.Array[count7 + 3]);
+            SetupCubeVertexFace3(
+                x,
+                y,
+                z,
+                1f,
+                0,
+                faceTextureSlot4,
+                textureSlotCount,
+                sideColor,
+                ref vertices4.Array[count7]
+            );
+            SetupCubeVertexFace3(
+                x,
+                y + 1,
+                z,
+                height11,
+                3,
+                faceTextureSlot4,
+                textureSlotCount,
+                sideColor,
+                ref vertices4.Array[count7 + 1]
+            );
+            SetupCubeVertexFace3(
+                x,
+                y + 1,
+                z + 1,
+                height12,
+                2,
+                faceTextureSlot4,
+                textureSlotCount,
+                sideColor,
+                ref vertices4.Array[count7 + 2]
+            );
+            SetupCubeVertexFace3(
+                x,
+                y,
+                z + 1,
+                1f,
+                1,
+                faceTextureSlot4,
+                textureSlotCount,
+                sideColor,
+                ref vertices4.Array[count7 + 3]
+            );
             var count8 = indices4.Count;
             indices4.Count += 6;
             indices4.Array[count8] = count7;
@@ -490,22 +936,61 @@ public class BlockGeometryGenerator
         }
 
         cellValueFast = chunkAtCell.GetCellValueForGeometry(x & 0xF, y + 1, z & 0xF);
-        if (block.ShouldGenerateFace(_subsystemTerrain, 4, value, cellValueFast) || height11 < 1f || height12 < 1f ||
-            height21 < 1f || height22 < 1f)
+        if (block.ShouldGenerateFace(_subsystemTerrain, 4, value, cellValueFast) ||
+            height11 < 1f ||
+            height12 < 1f ||
+            height21 < 1f ||
+            height22 < 1f)
         {
             var vertices5 = subsetsByFace[4].Vertices;
             var indices5 = subsetsByFace[4].Indices;
             var textureSlot = overrideTopTextureSlot >= 0 ? overrideTopTextureSlot : block.GetFaceTextureSlot(4, value);
             var count9 = vertices5.Count;
             vertices5.Count += 4;
-            SetupCubeVertexFace4(x, y + 1, z, height11, 3, textureSlot, textureSlotCount, topColor11,
-                ref vertices5.Array[count9]);
-            SetupCubeVertexFace4(x + 1, y + 1, z, height21, 2, textureSlot, textureSlotCount, topColor21,
-                ref vertices5.Array[count9 + 1]);
-            SetupCubeVertexFace4(x + 1, y + 1, z + 1, height22, 1, textureSlot, textureSlotCount, topColor22,
-                ref vertices5.Array[count9 + 2]);
-            SetupCubeVertexFace4(x, y + 1, z + 1, height12, 0, textureSlot, textureSlotCount, topColor12,
-                ref vertices5.Array[count9 + 3]);
+            SetupCubeVertexFace4(
+                x,
+                y + 1,
+                z,
+                height11,
+                3,
+                textureSlot,
+                textureSlotCount,
+                topColor11,
+                ref vertices5.Array[count9]
+            );
+            SetupCubeVertexFace4(
+                x + 1,
+                y + 1,
+                z,
+                height21,
+                2,
+                textureSlot,
+                textureSlotCount,
+                topColor21,
+                ref vertices5.Array[count9 + 1]
+            );
+            SetupCubeVertexFace4(
+                x + 1,
+                y + 1,
+                z + 1,
+                height22,
+                1,
+                textureSlot,
+                textureSlotCount,
+                topColor22,
+                ref vertices5.Array[count9 + 2]
+            );
+            SetupCubeVertexFace4(
+                x,
+                y + 1,
+                z + 1,
+                height12,
+                0,
+                textureSlot,
+                textureSlotCount,
+                topColor12,
+                ref vertices5.Array[count9 + 3]
+            );
             var count10 = indices5.Count;
             indices5.Count += 6;
             indices5.Array[count10] = count9;
@@ -524,14 +1009,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot5 = block.GetFaceTextureSlot(5, value);
             var count11 = vertices6.Count;
             vertices6.Count += 4;
-            SetupCubeVertexFace5(x, y, z, 1f, 0, faceTextureSlot5, textureSlotCount, sideColor,
-                ref vertices6.Array[count11]);
-            SetupCubeVertexFace5(x + 1, y, z, 1f, 1, faceTextureSlot5, textureSlotCount, sideColor,
-                ref vertices6.Array[count11 + 1]);
-            SetupCubeVertexFace5(x + 1, y, z + 1, 1f, 2, faceTextureSlot5, textureSlotCount, sideColor,
-                ref vertices6.Array[count11 + 2]);
-            SetupCubeVertexFace5(x, y, z + 1, 1f, 3, faceTextureSlot5, textureSlotCount, sideColor,
-                ref vertices6.Array[count11 + 3]);
+            SetupCubeVertexFace5(
+                x,
+                y,
+                z,
+                1f,
+                0,
+                faceTextureSlot5,
+                textureSlotCount,
+                sideColor,
+                ref vertices6.Array[count11]
+            );
+            SetupCubeVertexFace5(
+                x + 1,
+                y,
+                z,
+                1f,
+                1,
+                faceTextureSlot5,
+                textureSlotCount,
+                sideColor,
+                ref vertices6.Array[count11 + 1]
+            );
+            SetupCubeVertexFace5(
+                x + 1,
+                y,
+                z + 1,
+                1f,
+                2,
+                faceTextureSlot5,
+                textureSlotCount,
+                sideColor,
+                ref vertices6.Array[count11 + 2]
+            );
+            SetupCubeVertexFace5(
+                x,
+                y,
+                z + 1,
+                1f,
+                3,
+                faceTextureSlot5,
+                textureSlotCount,
+                sideColor,
+                ref vertices6.Array[count11 + 3]
+            );
             var count12 = indices6.Count;
             indices6.Count += 6;
             indices6.Array[count12] = count11;
@@ -543,8 +1064,18 @@ public class BlockGeometryGenerator
         }
     }
 
-    public void GenerateCubeVertices(Block block, int value, int x, int y, int z, int rotationX, int rotationY,
-        int rotationZ, Color color, TerrainGeometrySubset[] subsetsByFace)
+    public void GenerateCubeVertices(
+        Block block,
+        int value,
+        int x,
+        int y,
+        int z,
+        int rotationX,
+        int rotationY,
+        int rotationZ,
+        Color color,
+        TerrainGeometrySubset[] subsetsByFace
+    )
     {
         var chunkAtCell = Terrain.GetChunkAtCell(x, z)!;
         var chunkAtCell2 = Terrain.GetChunkAtCell(x, z + 1)!;
@@ -560,14 +1091,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot = block.GetFaceTextureSlot(0, value);
             var count = vertices.Count;
             vertices.Count += 4;
-            SetupCubeVertexFace0(x, y, z + 1, 1f, rotationZ, faceTextureSlot, textureSlotCount, color,
-                ref vertices.Array[count]);
-            SetupCubeVertexFace0(x + 1, y, z + 1, 1f, 1 + rotationZ, faceTextureSlot, textureSlotCount, color,
-                ref vertices.Array[count + 1]);
-            SetupCubeVertexFace0(x + 1, y + 1, z + 1, 1f, 2 + rotationZ, faceTextureSlot, textureSlotCount, color,
-                ref vertices.Array[count + 2]);
-            SetupCubeVertexFace0(x, y + 1, z + 1, 1f, 3 + rotationZ, faceTextureSlot, textureSlotCount, color,
-                ref vertices.Array[count + 3]);
+            SetupCubeVertexFace0(
+                x,
+                y,
+                z + 1,
+                1f,
+                rotationZ,
+                faceTextureSlot,
+                textureSlotCount,
+                color,
+                ref vertices.Array[count]
+            );
+            SetupCubeVertexFace0(
+                x + 1,
+                y,
+                z + 1,
+                1f,
+                1 + rotationZ,
+                faceTextureSlot,
+                textureSlotCount,
+                color,
+                ref vertices.Array[count + 1]
+            );
+            SetupCubeVertexFace0(
+                x + 1,
+                y + 1,
+                z + 1,
+                1f,
+                2 + rotationZ,
+                faceTextureSlot,
+                textureSlotCount,
+                color,
+                ref vertices.Array[count + 2]
+            );
+            SetupCubeVertexFace0(
+                x,
+                y + 1,
+                z + 1,
+                1f,
+                3 + rotationZ,
+                faceTextureSlot,
+                textureSlotCount,
+                color,
+                ref vertices.Array[count + 3]
+            );
             var count2 = indices.Count;
             indices.Count += 6;
             indices.Array[count2] = count;
@@ -586,14 +1153,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot2 = block.GetFaceTextureSlot(1, value);
             var count3 = vertices2.Count;
             vertices2.Count += 4;
-            SetupCubeVertexFace1(x + 1, y, z, 1f, 1 + rotationX, faceTextureSlot2, textureSlotCount, color,
-                ref vertices2.Array[count3]);
-            SetupCubeVertexFace1(x + 1, y + 1, z, 1f, 2 + rotationX, faceTextureSlot2, textureSlotCount, color,
-                ref vertices2.Array[count3 + 1]);
-            SetupCubeVertexFace1(x + 1, y + 1, z + 1, 1f, 3 + rotationX, faceTextureSlot2, textureSlotCount, color,
-                ref vertices2.Array[count3 + 2]);
-            SetupCubeVertexFace1(x + 1, y, z + 1, 1f, rotationX, faceTextureSlot2, textureSlotCount, color,
-                ref vertices2.Array[count3 + 3]);
+            SetupCubeVertexFace1(
+                x + 1,
+                y,
+                z,
+                1f,
+                1 + rotationX,
+                faceTextureSlot2,
+                textureSlotCount,
+                color,
+                ref vertices2.Array[count3]
+            );
+            SetupCubeVertexFace1(
+                x + 1,
+                y + 1,
+                z,
+                1f,
+                2 + rotationX,
+                faceTextureSlot2,
+                textureSlotCount,
+                color,
+                ref vertices2.Array[count3 + 1]
+            );
+            SetupCubeVertexFace1(
+                x + 1,
+                y + 1,
+                z + 1,
+                1f,
+                3 + rotationX,
+                faceTextureSlot2,
+                textureSlotCount,
+                color,
+                ref vertices2.Array[count3 + 2]
+            );
+            SetupCubeVertexFace1(
+                x + 1,
+                y,
+                z + 1,
+                1f,
+                rotationX,
+                faceTextureSlot2,
+                textureSlotCount,
+                color,
+                ref vertices2.Array[count3 + 3]
+            );
             var count4 = indices2.Count;
             indices2.Count += 6;
             indices2.Array[count4] = count3;
@@ -612,14 +1215,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot3 = block.GetFaceTextureSlot(2, value);
             var count5 = vertices3.Count;
             vertices3.Count += 4;
-            SetupCubeVertexFace2(x, y, z, 1f, 1 + rotationZ, faceTextureSlot3, textureSlotCount, color,
-                ref vertices3.Array[count5]);
-            SetupCubeVertexFace2(x + 1, y, z, 1f, rotationZ, faceTextureSlot3, textureSlotCount, color,
-                ref vertices3.Array[count5 + 1]);
-            SetupCubeVertexFace2(x + 1, y + 1, z, 1f, 3 + rotationZ, faceTextureSlot3, textureSlotCount, color,
-                ref vertices3.Array[count5 + 2]);
-            SetupCubeVertexFace2(x, y + 1, z, 1f, 2 + rotationZ, faceTextureSlot3, textureSlotCount, color,
-                ref vertices3.Array[count5 + 3]);
+            SetupCubeVertexFace2(
+                x,
+                y,
+                z,
+                1f,
+                1 + rotationZ,
+                faceTextureSlot3,
+                textureSlotCount,
+                color,
+                ref vertices3.Array[count5]
+            );
+            SetupCubeVertexFace2(
+                x + 1,
+                y,
+                z,
+                1f,
+                rotationZ,
+                faceTextureSlot3,
+                textureSlotCount,
+                color,
+                ref vertices3.Array[count5 + 1]
+            );
+            SetupCubeVertexFace2(
+                x + 1,
+                y + 1,
+                z,
+                1f,
+                3 + rotationZ,
+                faceTextureSlot3,
+                textureSlotCount,
+                color,
+                ref vertices3.Array[count5 + 2]
+            );
+            SetupCubeVertexFace2(
+                x,
+                y + 1,
+                z,
+                1f,
+                2 + rotationZ,
+                faceTextureSlot3,
+                textureSlotCount,
+                color,
+                ref vertices3.Array[count5 + 3]
+            );
             var count6 = indices3.Count;
             indices3.Count += 6;
             indices3.Array[count6] = count5;
@@ -638,14 +1277,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot4 = block.GetFaceTextureSlot(3, value);
             var count7 = vertices4.Count;
             vertices4.Count += 4;
-            SetupCubeVertexFace3(x, y, z, 1f, rotationX, faceTextureSlot4, textureSlotCount, color,
-                ref vertices4.Array[count7]);
-            SetupCubeVertexFace3(x, y + 1, z, 1f, 3 + rotationX, faceTextureSlot4, textureSlotCount, color,
-                ref vertices4.Array[count7 + 1]);
-            SetupCubeVertexFace3(x, y + 1, z + 1, 1f, 2 + rotationX, faceTextureSlot4, textureSlotCount, color,
-                ref vertices4.Array[count7 + 2]);
-            SetupCubeVertexFace3(x, y, z + 1, 1f, 1 + rotationX, faceTextureSlot4, textureSlotCount, color,
-                ref vertices4.Array[count7 + 3]);
+            SetupCubeVertexFace3(
+                x,
+                y,
+                z,
+                1f,
+                rotationX,
+                faceTextureSlot4,
+                textureSlotCount,
+                color,
+                ref vertices4.Array[count7]
+            );
+            SetupCubeVertexFace3(
+                x,
+                y + 1,
+                z,
+                1f,
+                3 + rotationX,
+                faceTextureSlot4,
+                textureSlotCount,
+                color,
+                ref vertices4.Array[count7 + 1]
+            );
+            SetupCubeVertexFace3(
+                x,
+                y + 1,
+                z + 1,
+                1f,
+                2 + rotationX,
+                faceTextureSlot4,
+                textureSlotCount,
+                color,
+                ref vertices4.Array[count7 + 2]
+            );
+            SetupCubeVertexFace3(
+                x,
+                y,
+                z + 1,
+                1f,
+                1 + rotationX,
+                faceTextureSlot4,
+                textureSlotCount,
+                color,
+                ref vertices4.Array[count7 + 3]
+            );
             var count8 = indices4.Count;
             indices4.Count += 6;
             indices4.Array[count8] = count7;
@@ -664,14 +1339,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot5 = block.GetFaceTextureSlot(4, value);
             var count9 = vertices5.Count;
             vertices5.Count += 4;
-            SetupCubeVertexFace4(x, y + 1, z, 1f, 3 + rotationY, faceTextureSlot5, textureSlotCount, color,
-                ref vertices5.Array[count9]);
-            SetupCubeVertexFace4(x + 1, y + 1, z, 1f, 2 + rotationY, faceTextureSlot5, textureSlotCount, color,
-                ref vertices5.Array[count9 + 1]);
-            SetupCubeVertexFace4(x + 1, y + 1, z + 1, 1f, 1 + rotationY, faceTextureSlot5, textureSlotCount, color,
-                ref vertices5.Array[count9 + 2]);
-            SetupCubeVertexFace4(x, y + 1, z + 1, 1f, rotationY, faceTextureSlot5, textureSlotCount, color,
-                ref vertices5.Array[count9 + 3]);
+            SetupCubeVertexFace4(
+                x,
+                y + 1,
+                z,
+                1f,
+                3 + rotationY,
+                faceTextureSlot5,
+                textureSlotCount,
+                color,
+                ref vertices5.Array[count9]
+            );
+            SetupCubeVertexFace4(
+                x + 1,
+                y + 1,
+                z,
+                1f,
+                2 + rotationY,
+                faceTextureSlot5,
+                textureSlotCount,
+                color,
+                ref vertices5.Array[count9 + 1]
+            );
+            SetupCubeVertexFace4(
+                x + 1,
+                y + 1,
+                z + 1,
+                1f,
+                1 + rotationY,
+                faceTextureSlot5,
+                textureSlotCount,
+                color,
+                ref vertices5.Array[count9 + 2]
+            );
+            SetupCubeVertexFace4(
+                x,
+                y + 1,
+                z + 1,
+                1f,
+                rotationY,
+                faceTextureSlot5,
+                textureSlotCount,
+                color,
+                ref vertices5.Array[count9 + 3]
+            );
             var count10 = indices5.Count;
             indices5.Count += 6;
             indices5.Array[count10] = count9;
@@ -690,14 +1401,50 @@ public class BlockGeometryGenerator
             var faceTextureSlot6 = block.GetFaceTextureSlot(5, value);
             var count11 = vertices6.Count;
             vertices6.Count += 4;
-            SetupCubeVertexFace5(x, y, z, 1f, rotationY, faceTextureSlot6, textureSlotCount, color,
-                ref vertices6.Array[count11]);
-            SetupCubeVertexFace5(x + 1, y, z, 1f, 1 + rotationY, faceTextureSlot6, textureSlotCount, color,
-                ref vertices6.Array[count11 + 1]);
-            SetupCubeVertexFace5(x + 1, y, z + 1, 1f, 2 + rotationY, faceTextureSlot6, textureSlotCount, color,
-                ref vertices6.Array[count11 + 2]);
-            SetupCubeVertexFace5(x, y, z + 1, 1f, 3 + rotationY, faceTextureSlot6, textureSlotCount, color,
-                ref vertices6.Array[count11 + 3]);
+            SetupCubeVertexFace5(
+                x,
+                y,
+                z,
+                1f,
+                rotationY,
+                faceTextureSlot6,
+                textureSlotCount,
+                color,
+                ref vertices6.Array[count11]
+            );
+            SetupCubeVertexFace5(
+                x + 1,
+                y,
+                z,
+                1f,
+                1 + rotationY,
+                faceTextureSlot6,
+                textureSlotCount,
+                color,
+                ref vertices6.Array[count11 + 1]
+            );
+            SetupCubeVertexFace5(
+                x + 1,
+                y,
+                z + 1,
+                1f,
+                2 + rotationY,
+                faceTextureSlot6,
+                textureSlotCount,
+                color,
+                ref vertices6.Array[count11 + 2]
+            );
+            SetupCubeVertexFace5(
+                x,
+                y,
+                z + 1,
+                1f,
+                3 + rotationY,
+                faceTextureSlot6,
+                textureSlotCount,
+                color,
+                ref vertices6.Array[count11 + 3]
+            );
             var count12 = indices6.Count;
             indices6.Count += 6;
             indices6.Array[count12] = count11;
@@ -709,8 +1456,16 @@ public class BlockGeometryGenerator
         }
     }
 
-    public void GenerateMeshVertices(Block block, int x, int y, int z, BlockMesh blockMesh, Color color, Matrix? matrix,
-        TerrainGeometrySubset subset)
+    public void GenerateMeshVertices(
+        Block block,
+        int x,
+        int y,
+        int z,
+        BlockMesh blockMesh,
+        Color color,
+        Matrix? matrix,
+        TerrainGeometrySubset subset
+    )
     {
         var vertices = subset.Vertices;
         var indices = subset.Indices;
@@ -730,18 +1485,31 @@ public class BlockGeometryGenerator
             Color color2;
             if (blockMeshVertex.IsEmissive)
             {
-                color2 = new Color((byte)(color.R * blockMeshVertex.Color.R / 255),
-                    (byte)(color.G * blockMeshVertex.Color.G / 255), (byte)(color.B * blockMeshVertex.Color.B / 255));
+                color2 = new Color(
+                    (byte)(color.R * blockMeshVertex.Color.R / 255),
+                    (byte)(color.G * blockMeshVertex.Color.G / 255),
+                    (byte)(color.B * blockMeshVertex.Color.B / 255)
+                );
             }
             else
             {
                 var num2 = num / 255f;
-                color2 = new Color((byte)(color.R * blockMeshVertex.Color.R * num2),
-                    (byte)(color.G * blockMeshVertex.Color.G * num2), (byte)(color.B * blockMeshVertex.Color.B * num2));
+                color2 = new Color(
+                    (byte)(color.R * blockMeshVertex.Color.R * num2),
+                    (byte)(color.G * blockMeshVertex.Color.G * num2),
+                    (byte)(color.B * blockMeshVertex.Color.B * num2)
+                );
             }
 
-            SetupVertex(x + vector.X, y + vector.Y, z + vector.Z, color2, blockMeshVertex.TextureCoordinates.X,
-                blockMeshVertex.TextureCoordinates.Y, ref vertices.Array[count + i]);
+            SetupVertex(
+                x + vector.X,
+                y + vector.Y,
+                z + vector.Z,
+                color2,
+                blockMeshVertex.TextureCoordinates.X,
+                blockMeshVertex.TextureCoordinates.Y,
+                ref vertices.Array[count + i]
+            );
         }
 
         if (blockMesh.Sides.Count != 0)
@@ -751,7 +1519,8 @@ public class BlockGeometryGenerator
                 var point = CellFace.FaceToPoint3(j);
                 var cellValueFastChunkExists =
                     Terrain.GetCellValueForGeometry(x + point.X, y + point.Y, z + point.Z);
-                _visibleSides[j] = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValueFastChunkExists)]
+                _visibleSides[j] = CurrentModRuntime.Value!.RequireWorldCatalog()
+                    .Blocks[Terrain.ExtractContents(cellValueFastChunkExists)]
                     .IsFaceTransparent(_subsystemTerrain, CellFace.OppositeFace(j), cellValueFastChunkExists);
             }
 
@@ -811,19 +1580,32 @@ public class BlockGeometryGenerator
             Color color2;
             if (blockMeshVertex.IsEmissive)
             {
-                color2 = new Color((byte)(color.R * blockMeshVertex.Color.R / 255),
-                    (byte)(color.G * blockMeshVertex.Color.G / 255), (byte)(color.B * blockMeshVertex.Color.B / 255));
+                color2 = new Color(
+                    (byte)(color.R * blockMeshVertex.Color.R / 255),
+                    (byte)(color.G * blockMeshVertex.Color.G / 255),
+                    (byte)(color.B * blockMeshVertex.Color.B / 255)
+                );
             }
             else
             {
                 var face = facesMap.Length != 0 ? facesMap[blockMeshVertex.Face] : blockMeshVertex.Face;
                 var num = InterpolateCornerLights(face, vector) / 255f;
-                color2 = new Color((byte)(color.R * blockMeshVertex.Color.R * num),
-                    (byte)(color.G * blockMeshVertex.Color.G * num), (byte)(color.B * blockMeshVertex.Color.B * num));
+                color2 = new Color(
+                    (byte)(color.R * blockMeshVertex.Color.R * num),
+                    (byte)(color.G * blockMeshVertex.Color.G * num),
+                    (byte)(color.B * blockMeshVertex.Color.B * num)
+                );
             }
 
-            SetupVertex(x + vector.X, y + vector.Y, z + vector.Z, color2, blockMeshVertex.TextureCoordinates.X,
-                blockMeshVertex.TextureCoordinates.Y, ref vertices.Array[count + i]);
+            SetupVertex(
+                x + vector.X,
+                y + vector.Y,
+                z + vector.Z,
+                color2,
+                blockMeshVertex.TextureCoordinates.X,
+                blockMeshVertex.TextureCoordinates.Y,
+                ref vertices.Array[count + i]
+            );
         }
 
         if (blockMesh.Sides.Count != 0)
@@ -833,7 +1615,8 @@ public class BlockGeometryGenerator
                 var point = CellFace.FaceToPoint3(j);
                 var cellValueFastChunkExists =
                     Terrain.GetCellValueForGeometry(x + point.X, y + point.Y, z + point.Z);
-                _visibleSides[j] = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValueFastChunkExists)]
+                _visibleSides[j] = CurrentModRuntime.Value!.RequireWorldCatalog()
+                    .Blocks[Terrain.ExtractContents(cellValueFastChunkExists)]
                     .IsFaceTransparent(_subsystemTerrain, CellFace.OppositeFace(j), cellValueFastChunkExists);
             }
 
@@ -857,8 +1640,16 @@ public class BlockGeometryGenerator
         }
     }
 
-    public void GenerateWireVertices(int value, int x, int y, int z, int mountingFace, float centerBoxSize,
-        Vector2 centerOffset, TerrainGeometrySubset subset)
+    public void GenerateWireVertices(
+        int value,
+        int x,
+        int y,
+        int z,
+        int mountingFace,
+        float centerBoxSize,
+        Vector2 centerOffset,
+        TerrainGeometrySubset subset
+    )
     {
         var color = WireBlock.WireColor;
         var num = Terrain.ExtractContents(value);
@@ -879,13 +1670,20 @@ public class BlockGeometryGenerator
         var v3 = new Vector2(0.03125f, 0.00550781237f);
         var point = CellFace.FaceToPoint3(mountingFace);
         var cellContents = Terrain.GetCellContents(x - point.X, y - point.Y, z - point.Z);
-        var flag = cellContents == 2 || cellContents == 7 || cellContents == 8 || cellContents == 6 ||
-                   cellContents == 62 || cellContents == 72;
+        var flag = cellContents == 2 ||
+                   cellContents == 7 ||
+                   cellContents == 8 ||
+                   cellContents == 6 ||
+                   cellContents == 62 ||
+                   cellContents == 72;
         var v4 = CellFace.FaceToVector3(
-            SubsystemElectricity.GetConnectorFace(mountingFace, ElectricConnectorDirection.Top));
+            SubsystemElectricity.GetConnectorFace(mountingFace, ElectricConnectorDirection.Top)
+        );
         var vector2 =
             CellFace.FaceToVector3(
-                SubsystemElectricity.GetConnectorFace(mountingFace, ElectricConnectorDirection.Left)) * centerOffset.X +
+                SubsystemElectricity.GetConnectorFace(mountingFace, ElectricConnectorDirection.Left)
+            ) *
+            centerOffset.X +
             v4 * centerOffset.Y;
         var num4 = 0;
         _tmpConnectionPaths.Clear();
@@ -902,8 +1700,11 @@ public class BlockGeometryGenerator
                     var color3 = color;
                     if (num != 133)
                     {
-                        var cellValue = Terrain.GetCellValue(x + tmpConnectionPath.NeighborOffsetX,
-                            y + tmpConnectionPath.NeighborOffsetY, z + tmpConnectionPath.NeighborOffsetZ);
+                        var cellValue = Terrain.GetCellValue(
+                            x + tmpConnectionPath.NeighborOffsetX,
+                            y + tmpConnectionPath.NeighborOffsetY,
+                            z + tmpConnectionPath.NeighborOffsetZ
+                        );
                         if (Terrain.ExtractContents(cellValue) == 133)
                         {
                             var color4 = WireBlock.GetColor(Terrain.ExtractData(cellValue));
@@ -947,8 +1748,13 @@ public class BlockGeometryGenerator
                     var vector13 = v2 + v3 * new Vector2(MathUtils.Max(0.0625f, centerBoxSize), 1f);
                     var vector14 = v2 + v3 * new Vector2(centerBoxSize, 0.5f);
                     var vector15 = v2 + v3 * new Vector2(num6 * 2f, 0.5f);
-                    var num7 = Terrain.ExtractLight(Terrain.GetCellValue(x + tmpConnectionPath.NeighborOffsetX,
-                        y + tmpConnectionPath.NeighborOffsetY, z + tmpConnectionPath.NeighborOffsetZ));
+                    var num7 = Terrain.ExtractLight(
+                        Terrain.GetCellValue(
+                            x + tmpConnectionPath.NeighborOffsetX,
+                            y + tmpConnectionPath.NeighborOffsetY,
+                            z + tmpConnectionPath.NeighborOffsetZ
+                        )
+                    );
                     var num8 = LightingManager.LightIntensityByLightValue[num7];
                     var num9 = 0.5f * (num3 + num8);
                     var num10 = LightingManager.CalculateLighting(-vector4);
@@ -960,18 +1766,36 @@ public class BlockGeometryGenerator
                     var num16 = num11 * num3;
                     var num17 = num12 * num3;
                     var num18 = num12 * num9;
-                    var color5 = new Color((byte)(color3.R * num13), (byte)(color3.G * num13),
-                        (byte)(color3.B * num13));
-                    var color6 = new Color((byte)(color3.R * num14), (byte)(color3.G * num14),
-                        (byte)(color3.B * num14));
-                    var color7 = new Color((byte)(color3.R * num15), (byte)(color3.G * num15),
-                        (byte)(color3.B * num15));
-                    var color8 = new Color((byte)(color3.R * num16), (byte)(color3.G * num16),
-                        (byte)(color3.B * num16));
-                    var color9 = new Color((byte)(color3.R * num17), (byte)(color3.G * num17),
-                        (byte)(color3.B * num17));
-                    var color10 = new Color((byte)(color3.R * num18), (byte)(color3.G * num18),
-                        (byte)(color3.B * num18));
+                    var color5 = new Color(
+                        (byte)(color3.R * num13),
+                        (byte)(color3.G * num13),
+                        (byte)(color3.B * num13)
+                    );
+                    var color6 = new Color(
+                        (byte)(color3.R * num14),
+                        (byte)(color3.G * num14),
+                        (byte)(color3.B * num14)
+                    );
+                    var color7 = new Color(
+                        (byte)(color3.R * num15),
+                        (byte)(color3.G * num15),
+                        (byte)(color3.B * num15)
+                    );
+                    var color8 = new Color(
+                        (byte)(color3.R * num16),
+                        (byte)(color3.G * num16),
+                        (byte)(color3.B * num16)
+                    );
+                    var color9 = new Color(
+                        (byte)(color3.R * num17),
+                        (byte)(color3.G * num17),
+                        (byte)(color3.B * num17)
+                    );
+                    var color10 = new Color(
+                        (byte)(color3.R * num18),
+                        (byte)(color3.G * num18),
+                        (byte)(color3.B * num18)
+                    );
                     var count = subset.Vertices.Count;
                     subset.Vertices.Count += 6;
                     var array = subset.Vertices.Array;
@@ -1040,8 +1864,15 @@ public class BlockGeometryGenerator
                 var array3 = subset.Vertices.Array;
                 SetupVertex(v8.X, v8.Y, v8.Z, color11, vector19.X, vector19.Y, ref array3[count3]);
                 SetupVertex(v9.X, v9.Y, v9.Z, color11, vector20.X, vector20.Y, ref array3[count3 + 1]);
-                SetupVertex(vector17.X, vector17.Y, vector17.Z, color12, vector21.X, vector21.Y,
-                    ref array3[count3 + 2]);
+                SetupVertex(
+                    vector17.X,
+                    vector17.Y,
+                    vector17.Z,
+                    color12,
+                    vector21.X,
+                    vector21.Y,
+                    ref array3[count3 + 2]
+                );
                 var count4 = subset.Indices.Count;
                 subset.Indices.Count += 3;
                 var array4 = subset.Indices.Array;
@@ -1168,48 +1999,102 @@ public class BlockGeometryGenerator
         return CombineLightAndShadow(light, shadow);
     }
 
-    private void SetupCubeVertexFace0(int x, int y, int z, float height, int corner, int textureSlot,
-        int textureSlotCount, Color color, ref TerrainVertex vertex)
+    private void SetupCubeVertexFace0(
+        int x,
+        int y,
+        int z,
+        float height,
+        int corner,
+        int textureSlot,
+        int textureSlotCount,
+        Color color,
+        ref TerrainVertex vertex
+    )
     {
         var y2 = y + height - 1f;
         var light = CalculateVertexLightFace0(x, y, z);
         SetupCornerVertex(x, y2, z, color, light, 0, textureSlot, textureSlotCount, corner, ref vertex);
     }
 
-    private void SetupCubeVertexFace1(int x, int y, int z, float height, int corner, int textureSlot,
-        int textureSlotCount, Color color, ref TerrainVertex vertex)
+    private void SetupCubeVertexFace1(
+        int x,
+        int y,
+        int z,
+        float height,
+        int corner,
+        int textureSlot,
+        int textureSlotCount,
+        Color color,
+        ref TerrainVertex vertex
+    )
     {
         var y2 = y + height - 1f;
         var light = CalculateVertexLightFace1(x, y, z);
         SetupCornerVertex(x, y2, z, color, light, 1, textureSlot, textureSlotCount, corner, ref vertex);
     }
 
-    private void SetupCubeVertexFace2(int x, int y, int z, float height, int corner, int textureSlot,
-        int textureSlotCount, Color color, ref TerrainVertex vertex)
+    private void SetupCubeVertexFace2(
+        int x,
+        int y,
+        int z,
+        float height,
+        int corner,
+        int textureSlot,
+        int textureSlotCount,
+        Color color,
+        ref TerrainVertex vertex
+    )
     {
         var y2 = y + height - 1f;
         var light = CalculateVertexLightFace2(x, y, z);
         SetupCornerVertex(x, y2, z, color, light, 2, textureSlot, textureSlotCount, corner, ref vertex);
     }
 
-    private void SetupCubeVertexFace3(int x, int y, int z, float height, int corner, int textureSlot,
-        int textureSlotCount, Color color, ref TerrainVertex vertex)
+    private void SetupCubeVertexFace3(
+        int x,
+        int y,
+        int z,
+        float height,
+        int corner,
+        int textureSlot,
+        int textureSlotCount,
+        Color color,
+        ref TerrainVertex vertex
+    )
     {
         var y2 = y + height - 1f;
         var light = CalculateVertexLightFace3(x, y, z);
         SetupCornerVertex(x, y2, z, color, light, 3, textureSlot, textureSlotCount, corner, ref vertex);
     }
 
-    private void SetupCubeVertexFace4(int x, int y, int z, float height, int corner, int textureSlot,
-        int textureSlotCount, Color color, ref TerrainVertex vertex)
+    private void SetupCubeVertexFace4(
+        int x,
+        int y,
+        int z,
+        float height,
+        int corner,
+        int textureSlot,
+        int textureSlotCount,
+        Color color,
+        ref TerrainVertex vertex
+    )
     {
         var y2 = y + height - 1f;
         var light = CalculateVertexLightFace4(x, y, z);
         SetupCornerVertex(x, y2, z, color, light, 4, textureSlot, textureSlotCount, corner, ref vertex);
     }
 
-    private void SetupCubeVertexFace5(int x, int y, int z, float height, int corner, int textureSlot,
-        int textureSlotCount, Color color, ref TerrainVertex vertex)
+    private void SetupCubeVertexFace5(
+        int x,
+        int y,
+        int z,
+        float height,
+        int corner,
+        int textureSlot,
+        int textureSlotCount,
+        Color color,
+        ref TerrainVertex vertex
+    )
     {
         var y2 = y + height - 1f;
         var light = CalculateVertexLightFace5(x, y, z);
@@ -1338,10 +2223,14 @@ public class BlockGeometryGenerator
         var num = 1f - x;
         var num2 = 1f - y;
         var num3 = 1f - z;
-        return _cornerLightsByFace[face].L000 * num * num2 * num3 + _cornerLightsByFace[face].L001 * num * num2 * z +
-               _cornerLightsByFace[face].L010 * num * y * num3 + _cornerLightsByFace[face].L011 * num * y * z +
-               _cornerLightsByFace[face].L100 * x * num2 * num3 + _cornerLightsByFace[face].L101 * x * num2 * z +
-               _cornerLightsByFace[face].L110 * x * y * num3 + _cornerLightsByFace[face].L111 * x * y * z;
+        return _cornerLightsByFace[face].L000 * num * num2 * num3 +
+               _cornerLightsByFace[face].L001 * num * num2 * z +
+               _cornerLightsByFace[face].L010 * num * y * num3 +
+               _cornerLightsByFace[face].L011 * num * y * z +
+               _cornerLightsByFace[face].L100 * x * num2 * num3 +
+               _cornerLightsByFace[face].L101 * x * num2 * z +
+               _cornerLightsByFace[face].L110 * x * y * num3 +
+               _cornerLightsByFace[face].L111 * x * y * z;
     }
 
     private struct CornerLights

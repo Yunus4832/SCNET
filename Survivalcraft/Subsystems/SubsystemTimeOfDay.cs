@@ -99,7 +99,8 @@ public class SubsystemTimeOfDay : Subsystem
     {
         return (float)MathUtils.Remainder(
                    SubsystemGameInfo.TotalElapsedGameTime + (TimeOfDayOffset + _offsetFix) * DayDuration,
-                   DayDuration) /
+                   DayDuration
+               ) /
                DayDuration;
     }
 

@@ -10,8 +10,10 @@ public sealed class PlayerMovementTargetTest
     [InlineData(false, true)]
     [InlineData(true, false)]
     [InlineData(true, true)]
-    public void DelayedSnapshotsCannotTargetTheWrongBodyAcrossMountTransitions(bool currentlyMounted,
-        bool packetMounted)
+    public void DelayedSnapshotsCannotTargetTheWrongBodyAcrossMountTransitions(
+        bool currentlyMounted,
+        bool packetMounted
+    )
     {
         var mount = new ComponentBody();
         var player = new ComponentBody { ParentBody = currentlyMounted ? mount : null };

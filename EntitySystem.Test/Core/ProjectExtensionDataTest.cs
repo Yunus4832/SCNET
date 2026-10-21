@@ -70,8 +70,11 @@ public class ProjectExtensionDataTest
         project.SendToClientMode = true;
         Assert.Empty(RoundTrip(database, project.Save(), messagePack).ExtensionData);
         project.SendToClientMode = false;
-        Assert.Equal("server-only", RoundTrip(database, project.Save(), messagePack).ExtensionData
-            .GetValue<ValuesDictionary>("example").GetValue<ValuesDictionary>("secret").GetValue<string>("value"));
+        Assert.Equal(
+            "server-only",
+            RoundTrip(database, project.Save(), messagePack).ExtensionData
+                .GetValue<ValuesDictionary>("example").GetValue<ValuesDictionary>("secret").GetValue<string>("value")
+        );
     }
 
     [Fact]
@@ -118,7 +121,9 @@ public class ProjectExtensionDataTest
             "Folder", "ProjectTemplate", "MemberSubsystemTemplate", "SubsystemTemplate", "EntityTemplate",
             "MemberComponentTemplate", "ComponentTemplate", "ParameterSet", "Parameter"
         };
-        var types = names.Select(name => new DatabaseObjectType(name, name, name, 0, name == "Parameter", false, 64, false)).ToArray();
+        var types = names
+            .Select(name => new DatabaseObjectType(name, name, name, 0, name == "Parameter", false, 64, false))
+            .ToArray();
         foreach (var type in types)
         {
             type.InitializeRelations([types[0]], null, types[^1]);

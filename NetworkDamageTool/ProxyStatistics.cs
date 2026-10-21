@@ -9,14 +9,23 @@ public sealed class ProxyStatistics : IAsyncDisposable
     private readonly StreamWriter? _writer;
 
     private long _downDropped;
+
     private long _downForwarded;
+
     private long _downReceived;
+
     private long _downReceivedBytes;
+
     private long _downScheduled;
+
     private long _upDropped;
+
     private long _upForwarded;
+
     private long _upReceived;
+
     private long _upReceivedBytes;
+
     private long _upScheduled;
 
     public ProxyStatistics(string? path)

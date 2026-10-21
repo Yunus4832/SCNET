@@ -11,11 +11,13 @@ public static class TerritoryPermissions
         {
             return true;
         }
+
         if (text == "all")
         {
             permissions = TerritoryPermission.All;
             return true;
         }
+
         foreach (var token in text.Split(','))
         {
             var value = token switch
@@ -31,8 +33,10 @@ public static class TerritoryPermissions
                 permissions = TerritoryPermission.None;
                 return false;
             }
+
             permissions |= value;
         }
+
         return permissions != TerritoryPermission.None;
     }
 }

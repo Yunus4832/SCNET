@@ -98,8 +98,12 @@ public class TerrainSerializer24 : IDisposable
             }
             catch (Exception e)
             {
-                Log.Error(ExceptionManager.MakeFullErrorMessage(
-                    $"Error loading chunk ({chunk.Coords.X},{chunk.Coords.Y},{chunk.Origin.X},{chunk.Origin.Y}).", e));
+                Log.Error(
+                    ExceptionManager.MakeFullErrorMessage(
+                        $"Error loading chunk ({chunk.Coords.X},{chunk.Coords.Y},{chunk.Origin.X},{chunk.Origin.Y}).",
+                        e
+                    )
+                );
                 return false;
             }
 
@@ -122,8 +126,12 @@ public class TerrainSerializer24 : IDisposable
         }
         catch (Exception e)
         {
-            Log.Error(ExceptionManager.MakeFullErrorMessage(
-                $"Error saving chunk ({chunk.Coords.X},{chunk.Coords.Y},{chunk.Origin.X},{chunk.Origin.Y}).", e));
+            Log.Error(
+                ExceptionManager.MakeFullErrorMessage(
+                    $"Error saving chunk ({chunk.Coords.X},{chunk.Coords.Y},{chunk.Origin.X},{chunk.Origin.Y}).",
+                    e
+                )
+            );
             return false;
         }
     }
@@ -240,8 +248,10 @@ public class TerrainSerializer24 : IDisposable
             for (var j = 0; j < 16; j++)
             {
                 var shaftValueByte = _loadCompressBuffer[bufferIndex++];
-                var shaftValue = Terrain.ReplaceTemperature(Terrain.ReplaceHumidity(0, shaftValueByte & 0xF),
-                    shaftValueByte >> 4);
+                var shaftValue = Terrain.ReplaceTemperature(
+                    Terrain.ReplaceHumidity(0, shaftValueByte & 0xF),
+                    shaftValueByte >> 4
+                );
                 chunk.SetShaftValueFast(i, j, shaftValue);
             }
         }
@@ -272,8 +282,13 @@ public class TerrainSerializer24 : IDisposable
         while (bufferIndex < decompressSize)
         {
             // 读取经过 RLE 压缩的 Cell 数据
-            bufferIndex = ReadRleValueFromBuffer(_loadCompressBuffer, bufferIndex, decompressSize, out var cellValue,
-                out var count);
+            bufferIndex = ReadRleValueFromBuffer(
+                _loadCompressBuffer,
+                bufferIndex,
+                decompressSize,
+                out var cellValue,
+                out var count
+            );
             // 将获取到的 ValueCountPair 逐层 (16 x 16 x 256) 的填充到 TerrainChunk 的 Cells 中
             for (var k = 0; k < count; k++)
             {
@@ -655,7 +670,7 @@ public class TerrainSerializer24 : IDisposable
                             // Region 文件 Chunk 数据块默认的最小偏移
                             var localRegionDataOffset = _regionDataOffset;
                             for (var i = 0; i < entries.Length; i++)
-                            // 索引 i 等于当前 chunkIndex，更新当前的 Chunk 数据块映射条目的偏移和大小
+                                // 索引 i 等于当前 chunkIndex，更新当前的 Chunk 数据块映射条目的偏移和大小
                             {
                                 if (i == chunkIndex)
                                 {
@@ -682,7 +697,7 @@ public class TerrainSerializer24 : IDisposable
 
                             var buffer2 = new byte[entries.Max(e => e.Size)];
                             for (var j = 0; j < entries.Length; j++)
-                            // 索引 i 等于当前 chunkIndex，根据 Chunk 数据块映射条目的偏移和大小更新数据块
+                                // 索引 i 等于当前 chunkIndex，根据 Chunk 数据块映射条目的偏移和大小更新数据块
                             {
                                 if (j == chunkIndex)
                                 {
@@ -856,7 +871,8 @@ public class TerrainSerializer24 : IDisposable
             if (result.Size < 0 || result.Size > 2097152)
             {
                 throw new InvalidOperationException(
-                    "Region file entry size out of bounds, likely corrupt region file.");
+                    "Region file entry size out of bounds, likely corrupt region file."
+                );
             }
 
             return result;

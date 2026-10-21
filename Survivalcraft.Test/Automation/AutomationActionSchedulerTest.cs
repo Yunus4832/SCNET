@@ -52,9 +52,11 @@ public sealed class AutomationActionSchedulerTest
     {
         var scheduler = new AutomationActionScheduler();
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            scheduler.Start(new AutomationInputAction([(Key)999], [], 1)));
+            scheduler.Start(new AutomationInputAction([(Key)999], [], 1))
+        );
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            scheduler.Start(new AutomationInputAction([], [], 1, int.MinValue)));
+            scheduler.Start(new AutomationInputAction([], [], 1, int.MinValue))
+        );
     }
 
     [Fact]
@@ -80,7 +82,8 @@ public sealed class AutomationActionSchedulerTest
     {
         var scheduler = new AutomationActionScheduler();
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            scheduler.Start(new AutomationInputAction([], [], frames)));
+            scheduler.Start(new AutomationInputAction([], [], frames))
+        );
         Assert.Equal("idle", scheduler.Status);
     }
 }

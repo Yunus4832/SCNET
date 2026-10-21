@@ -16,7 +16,8 @@ public static class ContentPackageWriter
     public static string Write(
         Stream destination,
         ContentPackageManifest manifest,
-        IEnumerable<ContentPackageWriteEntry> payloadEntries)
+        IEnumerable<ContentPackageWriteEntry> payloadEntries
+    )
     {
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentNullException.ThrowIfNull(manifest);
@@ -24,8 +25,10 @@ public static class ContentPackageWriter
 
         if (!destination.CanRead || !destination.CanWrite || !destination.CanSeek)
         {
-            throw new ArgumentException("Content package destination must be readable, writable and seekable.",
-                nameof(destination));
+            throw new ArgumentException(
+                "Content package destination must be readable, writable and seekable.",
+                nameof(destination)
+            );
         }
 
         destination.Position = 0;
@@ -109,12 +112,17 @@ public static class ContentPackageWriter
 
         foreach (var entry in entries)
         {
-            if (string.IsNullOrEmpty(entry.Path) || !entry.Path.StartsWith("payload/", StringComparison.Ordinal) ||
-                entry.Path.Contains('\\') || entry.Path.Split('/').Any(part => part is "" or "." or "..") ||
-                !entry.Path.IsNormalized() || Encoding.UTF8.GetByteCount(entry.Path) > 240 ||
+            if (string.IsNullOrEmpty(entry.Path) ||
+                !entry.Path.StartsWith("payload/", StringComparison.Ordinal) ||
+                entry.Path.Contains('\\') ||
+                entry.Path.Split('/').Any(part => part is "" or "." or "..") ||
+                !entry.Path.IsNormalized() ||
+                Encoding.UTF8.GetByteCount(entry.Path) > 240 ||
                 entry.Path.Any(char.IsControl) ||
-                entry.Length is < 0 or > ContentPackageReader.MaxEntryBytes || entry.OpenRead is null ||
-                !paths.Add(entry.Path) || !caseInsensitivePaths.Add(entry.Path))
+                entry.Length is < 0 or > ContentPackageReader.MaxEntryBytes ||
+                entry.OpenRead is null ||
+                !paths.Add(entry.Path) ||
+                !caseInsensitivePaths.Add(entry.Path))
             {
                 throw new ContentPackageException($"Payload write entry '{entry.Path}' is invalid.");
             }
@@ -155,8 +163,13 @@ public static class ContentPackageWriter
         hash.AppendData(contentLength);
     }
 
-    private static void CopyAndHash(Stream source, Stream target, IncrementalHash hash, long expectedLength,
-        string path)
+    private static void CopyAndHash(
+        Stream source,
+        Stream target,
+        IncrementalHash hash,
+        long expectedLength,
+        string path
+    )
     {
         var buffer = ArrayPool<byte>.Shared.Rent(_copyBufferSize);
         try

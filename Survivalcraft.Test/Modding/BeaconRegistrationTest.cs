@@ -34,7 +34,6 @@ public sealed class BeaconRegistrationTest
         var block = new BeaconBlock();
         Assert.Equal(name, block.GetDisplayName(null, Terrain.MakeBlockValue(300)));
         Assert.False(string.IsNullOrWhiteSpace(block.GetDescription(0)));
-
     }
 
     [Fact]
@@ -44,25 +43,38 @@ public sealed class BeaconRegistrationTest
         host.LoadAndStart([Descriptor()]);
         try
         {
-            var block = Assert.Single(host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName).Entries);
+            var block = Assert.Single(
+                host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName)
+                    .Entries
+            );
             Assert.Equal(BeaconBlock.Id, block.Key);
             Assert.IsType<BeaconBlock>(block.Value.Factory());
-            var contribution = Assert.Single(host.Extensions.GetRegistry<XmlDataRegistration>(XmlDataExtensions.DatabaseRegistryName).Entries);
+            var contribution = Assert.Single(
+                host.Extensions
+                    .GetRegistry<XmlDataRegistration>(XmlDataExtensions.DatabaseRegistryName).Entries
+            );
             var document = XElement.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Database.xml"));
             foreach (var folder in contribution.Value.Read().Elements())
             {
                 ModXmlPatcher.Modify(document.Element("DatabaseObjects")!, folder);
             }
+
             var database = XmlDatabaseSerializer.LoadDatabase(document);
-            var member = database.FindDatabaseObject(Guid.Parse("80697f2d-8b78-4c61-9b7c-38da5aaaced1"),
-                database.FindDatabaseObjectType("MemberSubsystemTemplate", true), true)!;
+            var member = database.FindDatabaseObject(
+                Guid.Parse("80697f2d-8b78-4c61-9b7c-38da5aaaced1"),
+                database.FindDatabaseObjectType("MemberSubsystemTemplate", true),
+                true
+            )!;
             var values = new ValuesDictionary();
             values.PopulateFromDatabaseObject(member);
             Assert.Equal("BeaconMod.BeaconBlockBehavior", values.GetValue<string>("Class"));
             Assert.Equal("Terrain", values.GetValue<string>("Dependencies"));
 
             Assert.Empty(host.Commands.Definitions);
-            var dataContribution = Assert.Single(host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName).Entries);
+            var dataContribution = Assert.Single(
+                host.Extensions
+                    .GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName).Entries
+            );
             Assert.Contains(";Electrics;ElectricBlockBehavior;", dataContribution.Value.Read());
             var beacon = Assert.IsAssignableFrom<IElectricElementBlock>(block.Value.Factory());
             for (var connector = 0; connector < 4; connector++)
@@ -70,6 +82,7 @@ public sealed class BeaconRegistrationTest
                 Assert.Equal(ElectricConnectorType.Input, beacon.GetConnectorType(null!, 0, 4, connector, 0, 0, 0));
                 Assert.Null(beacon.GetConnectorType(null!, 0, 0, connector, 0, 0, 0));
             }
+
             Assert.IsType<BeaconElectricElement>(beacon.CreateElectricElement(new SubsystemElectricity(), 0, 0, 1, 0));
             Assert.Equal(int.MaxValue, beacon.GetConnectionMask(0));
         }
@@ -77,6 +90,7 @@ public sealed class BeaconRegistrationTest
         {
             host.StopAll();
         }
+
         Assert.Empty(host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName).Entries);
     }
 
@@ -85,7 +99,10 @@ public sealed class BeaconRegistrationTest
     {
         ContentManager.Initialize();
         using var runtime = GameModRuntime.Start([Descriptor()]);
-        var registry = BlockRuntimeCatalog.Compile(runtime.Host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName));
+        var registry =
+            BlockRuntimeCatalog.Compile(
+                runtime.Host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName)
+            );
         var block = (BeaconBlock)registry.ById[BeaconBlock.Id].Block;
         for (var intensity = 0; intensity <= 15; intensity++)
         {
@@ -102,6 +119,7 @@ public sealed class BeaconRegistrationTest
                 Assert.False(block.IsEditable(0));
             }
         }
+
         foreach (var entry in registry.ById.Values)
         {
             entry.Block.Dispose();
@@ -120,6 +138,7 @@ public sealed class BeaconRegistrationTest
             Assert.Equal(step > 0, BeaconBlock.IsEnabled(BeaconBlock.SetIntensity(4, intensity)));
             previous = intensity;
         }
+
         Assert.Equal(0, BeaconElectricElement.IntensityFromVoltage(-1));
         Assert.Equal(15, BeaconElectricElement.IntensityFromVoltage(2));
     }
@@ -131,13 +150,19 @@ public sealed class BeaconRegistrationTest
         var previousRuntime = CurrentModRuntime.Value;
         var previousWorkType = CommonLib.WorkType;
         int? changed = null;
-        using var runtime = GameModRuntime.Start([Descriptor(), new ModDescriptor(
-            new ModManifest("test.beacon", "Capture", "0.1.0"),
-            () => new CaptureChanges(context =>
-            {
-                changed = context.NewValue;
-                context.Cancel = true;
-            }))]);
+        using var runtime = GameModRuntime.Start(
+            [
+                Descriptor(), new ModDescriptor(
+                    new ModManifest("test.beacon", "Capture", "0.1.0"),
+                    () => new CaptureChanges(context =>
+                        {
+                            changed = context.NewValue;
+                            context.Cancel = true;
+                        }
+                    )
+                )
+            ]
+        );
         try
         {
             CurrentModRuntime.Set(runtime);
@@ -155,19 +180,24 @@ public sealed class BeaconRegistrationTest
             var beacon = new BeaconElectricElement(electricity, new CellFace(0, 4, 0, 4));
             foreach (var voltage in new[] { 0.2f, 0.8f })
             {
-                beacon.Connections.Add(new ElectricConnection
+                beacon.Connections.Add(
+                    new ElectricConnection
+                    {
+                        ConnectorType = ElectricConnectorType.Input,
+                        NeighborConnectorType = ElectricConnectorType.Output,
+                        NeighborElectricElement = new VoltageSource(electricity, voltage)
+                    }
+                );
+            }
+
+            beacon.Connections.Add(
+                new ElectricConnection
                 {
                     ConnectorType = ElectricConnectorType.Input,
-                    NeighborConnectorType = ElectricConnectorType.Output,
-                    NeighborElectricElement = new VoltageSource(electricity, voltage)
-                });
-            }
-            beacon.Connections.Add(new ElectricConnection
-            {
-                ConnectorType = ElectricConnectorType.Input,
-                NeighborConnectorType = ElectricConnectorType.Input,
-                NeighborElectricElement = new VoltageSource(electricity, 1)
-            });
+                    NeighborConnectorType = ElectricConnectorType.Input,
+                    NeighborElectricElement = new VoltageSource(electricity, 1)
+                }
+            );
             beacon.Simulate();
             Assert.NotNull(changed);
             Assert.Equal(12, BeaconBlock.GetIntensity(Terrain.ExtractData(changed.Value)));
@@ -189,8 +219,14 @@ public sealed class BeaconRegistrationTest
     private sealed class CaptureChanges(Action<TerrainCellChangingContext> capture) : IMod
     {
         public void Configure(IModContext context) => context.Gameplay.OnTerrainCellChanging(capture);
-        public void Start(IModContext context) { }
-        public void Stop() { }
+
+        public void Start(IModContext context)
+        {
+        }
+
+        public void Stop()
+        {
+        }
     }
 
     private sealed class VoltageSource(SubsystemElectricity electricity, float voltage)
@@ -206,7 +242,10 @@ public sealed class BeaconRegistrationTest
         host.LoadAndStart([Descriptor()]);
         try
         {
-            var contribution = Assert.Single(host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName).Entries);
+            var contribution = Assert.Single(
+                host.Extensions
+                    .GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName).Entries
+            );
             var lines = contribution.Value.Read().Split('\n', StringSplitOptions.RemoveEmptyEntries);
             var fields = lines[0].Split(';');
             var values = lines[1].Split(';');
@@ -227,5 +266,6 @@ public sealed class BeaconRegistrationTest
         }
     }
 
-    private static ModDescriptor Descriptor() => new(new ModManifest(ModEntry.ModId, "Beacon", "0.1.0"), () => new ModEntry());
+    private static ModDescriptor Descriptor() =>
+        new(new ModManifest(ModEntry.ModId, "Beacon", "0.1.0"), () => new ModEntry());
 }

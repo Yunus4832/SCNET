@@ -60,12 +60,20 @@ public abstract class GunpowderKegBlock(string modelName, bool isIncendiary) : B
         );
         var fuseMesh = model.FindMesh("Fuse")!;
         FuseOffset = BlockMesh.GetBoneAbsoluteTransform(
-            fuseMesh.ParentBone ??
-            throw new InvalidOperationException("Required FuseMesh.ParentBone is null")
-        ).Translation + new Vector3(0.5f, 0f, 0.5f);
+                         fuseMesh.ParentBone ??
+                         throw new InvalidOperationException("Required FuseMesh.ParentBone is null")
+                     ).Translation +
+                     new Vector3(0.5f, 0f, 0.5f);
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(kegMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f), false, false, false, false, Color.White);
+        blockMesh.AppendModelMeshPart(
+            kegMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         BlockMesh.AppendBlockMesh(blockMesh);
         if (IsIncendiary)
         {
@@ -73,8 +81,15 @@ public abstract class GunpowderKegBlock(string modelName, bool isIncendiary) : B
         }
 
         CollisionBoxes = [blockMesh.CalculateBoundingBox()];
-        StandaloneBlockMesh.AppendModelMeshPart(kegMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            kegMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         if (IsIncendiary)
         {
             StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(-0.25f, 0f, 0f));

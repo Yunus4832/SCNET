@@ -66,8 +66,15 @@ public abstract class FenceBlock(
             var list = new List<BoundingBox>();
             var m = Matrix.CreateTranslation(0.5f, 0f, 0.5f);
             var blockMesh = new BlockMesh();
-            blockMesh.AppendModelMeshPart(postMesh.MeshParts[0], boneAbsoluteTransform * m, false, false,
-                false, false, Color.White);
+            blockMesh.AppendModelMeshPart(
+                postMesh.MeshParts[0],
+                boneAbsoluteTransform * m,
+                false,
+                false,
+                false,
+                false,
+                Color.White
+            );
             var item = blockMesh.CalculateBoundingBox();
             var min = item.Min;
             var max = item.Max;
@@ -85,12 +92,26 @@ public abstract class FenceBlock(
             {
                 var blockMesh3 = new BlockMesh();
                 var m2 = Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-                blockMesh3.AppendModelMeshPart(planksMesh.MeshParts[0], boneAbsoluteTransform2 * m2,
-                    false, false, false, false, Color.White);
+                blockMesh3.AppendModelMeshPart(
+                    planksMesh.MeshParts[0],
+                    boneAbsoluteTransform2 * m2,
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
                 if (DoubleSidedPlanks)
                 {
-                    blockMesh3.AppendModelMeshPart(planksMesh.MeshParts[0], boneAbsoluteTransform2 * m2,
-                        false, true, false, true, Color.White);
+                    blockMesh3.AppendModelMeshPart(
+                        planksMesh.MeshParts[0],
+                        boneAbsoluteTransform2 * m2,
+                        false,
+                        true,
+                        false,
+                        true,
+                        Color.White
+                    );
                 }
 
                 blockMesh2.AppendBlockMesh(blockMesh3);
@@ -102,12 +123,26 @@ public abstract class FenceBlock(
             {
                 var blockMesh4 = new BlockMesh();
                 var m3 = Matrix.CreateRotationY((float)Math.PI) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-                blockMesh4.AppendModelMeshPart(planksMesh.MeshParts[0], boneAbsoluteTransform2 * m3,
-                    false, false, false, false, Color.White);
+                blockMesh4.AppendModelMeshPart(
+                    planksMesh.MeshParts[0],
+                    boneAbsoluteTransform2 * m3,
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
                 if (DoubleSidedPlanks)
                 {
-                    blockMesh4.AppendModelMeshPart(planksMesh.MeshParts[0], boneAbsoluteTransform2 * m3,
-                        false, true, false, true, Color.White);
+                    blockMesh4.AppendModelMeshPart(
+                        planksMesh.MeshParts[0],
+                        boneAbsoluteTransform2 * m3,
+                        false,
+                        true,
+                        false,
+                        true,
+                        Color.White
+                    );
                 }
 
                 blockMesh2.AppendBlockMesh(blockMesh4);
@@ -119,12 +154,26 @@ public abstract class FenceBlock(
             {
                 var blockMesh5 = new BlockMesh();
                 var m4 = Matrix.CreateRotationY(4.712389f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-                blockMesh5.AppendModelMeshPart(planksMesh.MeshParts[0], boneAbsoluteTransform2 * m4,
-                    false, false, false, false, Color.White);
+                blockMesh5.AppendModelMeshPart(
+                    planksMesh.MeshParts[0],
+                    boneAbsoluteTransform2 * m4,
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
                 if (DoubleSidedPlanks)
                 {
-                    blockMesh5.AppendModelMeshPart(planksMesh.MeshParts[0], boneAbsoluteTransform2 * m4,
-                        false, true, false, true, Color.White);
+                    blockMesh5.AppendModelMeshPart(
+                        planksMesh.MeshParts[0],
+                        boneAbsoluteTransform2 * m4,
+                        false,
+                        true,
+                        false,
+                        true,
+                        Color.White
+                    );
                 }
 
                 blockMesh2.AppendBlockMesh(blockMesh5);
@@ -136,12 +185,26 @@ public abstract class FenceBlock(
             {
                 var blockMesh6 = new BlockMesh();
                 var m5 = Matrix.CreateRotationY((float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-                blockMesh6.AppendModelMeshPart(planksMesh.MeshParts[0], boneAbsoluteTransform2 * m5,
-                    false, false, false, false, Color.White);
+                blockMesh6.AppendModelMeshPart(
+                    planksMesh.MeshParts[0],
+                    boneAbsoluteTransform2 * m5,
+                    false,
+                    false,
+                    false,
+                    false,
+                    Color.White
+                );
                 if (DoubleSidedPlanks)
                 {
-                    blockMesh6.AppendModelMeshPart(planksMesh.MeshParts[0], boneAbsoluteTransform2 * m5,
-                        false, true, false, true, Color.White);
+                    blockMesh6.AppendModelMeshPart(
+                        planksMesh.MeshParts[0],
+                        boneAbsoluteTransform2 * m5,
+                        false,
+                        true,
+                        false,
+                        true,
+                        Color.White
+                    );
                 }
 
                 blockMesh2.AppendBlockMesh(blockMesh6);
@@ -153,48 +216,99 @@ public abstract class FenceBlock(
             BlockMeshes[i] = new BlockMesh();
             BlockMeshes[i].AppendBlockMesh(blockMesh);
             BlockMeshes[i].AppendBlockMesh(blockMesh2);
-            BlockMeshes[i].TransformTextureCoordinates(Matrix.CreateTranslation(TextureSlot % 16 / 16f,
-                TextureSlot / 16 / 16f, 0f));
+            BlockMeshes[i].TransformTextureCoordinates(
+                Matrix.CreateTranslation(
+                    TextureSlot % 16 / 16f,
+                    TextureSlot / 16 / 16f,
+                    0f
+                )
+            );
             BlockMeshes[i].GenerateSidesData();
             ColoredBlockMeshes[i] = new BlockMesh();
             ColoredBlockMeshes[i].AppendBlockMesh(blockMesh);
             ColoredBlockMeshes[i].AppendBlockMesh(blockMesh2);
             ColoredBlockMeshes[i].TransformTextureCoordinates(
-                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+                Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+            );
             ColoredBlockMeshes[i].GenerateSidesData();
             CollisionBoxes[i] = list.ToArray();
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(postMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(-0.5f, -0.5f, 0f), false, false, false, false,
-            Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(postMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, -0.5f, 0f), false, false, false, false, Color.White);
-        StandaloneBlockMesh.AppendModelMeshPart(planksMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(-0.5f, -0.5f, 0f), false,
-            false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(
+            postMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(-0.5f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            postMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        StandaloneBlockMesh.AppendModelMeshPart(
+            planksMesh.MeshParts[0],
+            boneAbsoluteTransform2 * Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(-0.5f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         if (DoubleSidedPlanks)
         {
-            StandaloneBlockMesh.AppendModelMeshPart(planksMesh.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(-0.5f, -0.5f, 0f), false,
-                true, false, true, Color.White);
+            StandaloneBlockMesh.AppendModelMeshPart(
+                planksMesh.MeshParts[0],
+                boneAbsoluteTransform2 * Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(-0.5f, -0.5f, 0f),
+                false,
+                true,
+                false,
+                true,
+                Color.White
+            );
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(planksMesh.MeshParts[0],
+        StandaloneBlockMesh.AppendModelMeshPart(
+            planksMesh.MeshParts[0],
             boneAbsoluteTransform2 * Matrix.CreateRotationY((float)Math.PI) * Matrix.CreateTranslation(0.5f, -0.5f, 0f),
-            false, false, false, false, Color.White);
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
         if (DoubleSidedPlanks)
         {
-            StandaloneBlockMesh.AppendModelMeshPart(planksMesh.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateRotationY((float)Math.PI) *
-                Matrix.CreateTranslation(0.5f, -0.5f, 0f), false, true, false, true, Color.White);
+            StandaloneBlockMesh.AppendModelMeshPart(
+                planksMesh.MeshParts[0],
+                boneAbsoluteTransform2 *
+                Matrix.CreateRotationY((float)Math.PI) *
+                Matrix.CreateTranslation(0.5f, -0.5f, 0f),
+                false,
+                true,
+                false,
+                true,
+                Color.White
+            );
         }
 
         StandaloneColoredBlockMesh.AppendBlockMesh(StandaloneBlockMesh);
-        StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(TextureSlot % 16 / 16f,
-            TextureSlot / 16 / 16f, 0f));
+        StandaloneBlockMesh.TransformTextureCoordinates(
+            Matrix.CreateTranslation(
+                TextureSlot % 16 / 16f,
+                TextureSlot / 16 / 16f,
+                0f
+            )
+        );
         StandaloneColoredBlockMesh.TransformTextureCoordinates(
-            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f));
+            Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
+        );
         base.Initialize();
     }
 
@@ -237,11 +351,13 @@ public abstract class FenceBlock(
     {
         showDebris = true;
         var data = SetVariant(Terrain.ExtractData(oldValue), 0);
-        dropValues.Add(new BlockDropValue
-        {
-            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
-            Count = 1
-        });
+        dropValues.Add(
+            new BlockDropValue
+            {
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Count = 1
+            }
+        );
     }
 
     public override BlockDebrisParticleSystem CreateDebrisParticleSystem(
@@ -288,14 +404,29 @@ public abstract class FenceBlock(
         var color = GetColor(data);
         if (color.HasValue)
         {
-            generator.GenerateMeshVertices(this, x, y, z, ColoredBlockMeshes[variant],
-                SubsystemPalette.GetColor(generator, color), null,
-                UseAlphaTest ? geometry.SubsetAlphaTest : geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                ColoredBlockMeshes[variant],
+                SubsystemPalette.GetColor(generator, color),
+                null,
+                UseAlphaTest ? geometry.SubsetAlphaTest : geometry.SubsetOpaque
+            );
         }
         else
         {
-            generator.GenerateMeshVertices(this, x, y, z, BlockMeshes[variant], UnpaintedColor, null,
-                UseAlphaTest ? geometry.SubsetAlphaTest : geometry.SubsetOpaque);
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BlockMeshes[variant],
+                UnpaintedColor,
+                null,
+                UseAlphaTest ? geometry.SubsetAlphaTest : geometry.SubsetOpaque
+            );
         }
     }
 

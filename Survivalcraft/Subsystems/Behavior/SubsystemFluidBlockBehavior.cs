@@ -76,8 +76,14 @@ public abstract class SubsystemFluidBlockBehavior(
         }
     }
 
-    public override void OnItemHarvested(int x, int y, int z, int blockValue, ref BlockDropValue dropValue,
-        ref int newBlockValue)
+    public override void OnItemHarvested(
+        int x,
+        int y,
+        int z,
+        int blockValue,
+        ref BlockDropValue dropValue,
+        ref int newBlockValue
+    )
     {
         newBlockValue = Terrain.MakeBlockValue(fluidBlock.BlockIndex);
         dropValue.Value = 0;
@@ -166,10 +172,27 @@ public abstract class SubsystemFluidBlockBehavior(
         if (!_fluidRandomFlowDirections.TryGetValue(new Point3(x, y, z), out var value))
         {
             value.X = 0.05f *
-                      (2f * SimplexNoise.OctavedNoise(x + 0.2f * (float)SubsystemTime.GameTime, z, 0.1f, 1, 1f,
-                          1f) - 1f);
-            value.Y = 0.05f * (2f * SimplexNoise.OctavedNoise(x + 0.2f * (float)SubsystemTime.GameTime + 100f,
-                z, 0.1f, 1, 1f, 1f) - 1f);
+                      (2f *
+                       SimplexNoise.OctavedNoise(
+                           x + 0.2f * (float)SubsystemTime.GameTime,
+                           z,
+                           0.1f,
+                           1,
+                           1f,
+                           1f
+                       ) -
+                       1f);
+            value.Y = 0.05f *
+                      (2f *
+                       SimplexNoise.OctavedNoise(
+                           x + 0.2f * (float)SubsystemTime.GameTime + 100f,
+                           z,
+                           0.1f,
+                           1,
+                           1f,
+                           1f
+                       ) -
+                       1f);
             if (_fluidRandomFlowDirections.Count < 1000)
             {
                 _fluidRandomFlowDirections[new Point3(x, y, z)] = value;
@@ -221,8 +244,11 @@ public abstract class SubsystemFluidBlockBehavior(
                     for (var j = 0; j < 4; j++)
                     {
                         var cellValue3 =
-                            SubsystemTerrain.Terrain.GetCellValue(x + _sideNeighbors[j].X, y,
-                                z + _sideNeighbors[j].Y);
+                            SubsystemTerrain.Terrain.GetCellValue(
+                                x + _sideNeighbors[j].X,
+                                y,
+                                z + _sideNeighbors[j].Y
+                            );
                         var contents3 = Terrain.ExtractContents(cellValue3);
                         if (fluidBlock.IsTheSameFluid(contents3))
                         {
@@ -264,8 +290,13 @@ public abstract class SubsystemFluidBlockBehavior(
                             Set(x, y - 1, z, Terrain.MakeBlockValue(contents2, 0, FluidBlock.SetLevel(data2, 1)));
                         }
                     }
-                    else if (!OnFluidInteract(cellValue2, x, y - 1, z,
-                                 Terrain.MakeBlockValue(fluidBlock.BlockIndex, 0, FluidBlock.SetLevel(0, 1))) &&
+                    else if (!OnFluidInteract(
+                                 cellValue2,
+                                 x,
+                                 y - 1,
+                                 z,
+                                 Terrain.MakeBlockValue(fluidBlock.BlockIndex, 0, FluidBlock.SetLevel(0, 1))
+                             ) &&
                              level < fluidBlock.MaxLevel)
                     {
                         _visited.Clear();
@@ -432,8 +463,13 @@ public abstract class SubsystemFluidBlockBehavior(
         }
         else
         {
-            OnFluidInteract(cellValue, x, y, z,
-                Terrain.MakeBlockValue(fluidBlock.BlockIndex, 0, FluidBlock.SetLevel(0, level)));
+            OnFluidInteract(
+                cellValue,
+                x,
+                y,
+                z,
+                Terrain.MakeBlockValue(fluidBlock.BlockIndex, 0, FluidBlock.SetLevel(0, level))
+            );
         }
     }
 

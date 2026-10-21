@@ -23,8 +23,12 @@ public abstract class BasePrimitivesRenderer<T1, T2, T3>
 
     public IEnumerable<T3> FontBatches => _fontBatches;
 
-    public T1 FindFlatBatch(int layer, DepthStencilState depthStencilState, RasterizerState rasterizerState,
-        BlendState blendState)
+    public T1 FindFlatBatch(
+        int layer,
+        DepthStencilState depthStencilState,
+        RasterizerState rasterizerState,
+        BlendState blendState
+    )
     {
         for (var linkedListNode = _flatBatches.First; linkedListNode != null; linkedListNode = linkedListNode.Next)
         {
@@ -115,8 +119,14 @@ public abstract class BasePrimitivesRenderer<T1, T2, T3>
 
     protected abstract T3 CreateFontBatch(BitmapFont font);
 
-    public T3 FindFontBatch(BitmapFont font, int layer, DepthStencilState depthStencilState,
-        RasterizerState rasterizerState, BlendState blendState, SamplerState samplerState)
+    public T3 FindFontBatch(
+        BitmapFont font,
+        int layer,
+        DepthStencilState depthStencilState,
+        RasterizerState rasterizerState,
+        BlendState blendState,
+        SamplerState samplerState
+    )
     {
         ArgumentNullException.ThrowIfNull(font);
         for (var linkedListNode = _fontBatches.First; linkedListNode != null; linkedListNode = linkedListNode.Next)
@@ -165,15 +175,17 @@ public abstract class BasePrimitivesRenderer<T1, T2, T3>
         if (SortNeeded)
         {
             SortNeeded = false;
-            AllBatches.Sort(delegate (BaseBatch b1, BaseBatch b2)
-            {
-                if (b1.Layer < b2.Layer)
+            AllBatches.Sort(
+                delegate(BaseBatch b1, BaseBatch b2)
                 {
-                    return -1;
-                }
+                    if (b1.Layer < b2.Layer)
+                    {
+                        return -1;
+                    }
 
-                return b1.Layer > b2.Layer ? 1 : 0;
-            });
+                    return b1.Layer > b2.Layer ? 1 : 0;
+                }
+            );
         }
 
         foreach (var allBatch in AllBatches)

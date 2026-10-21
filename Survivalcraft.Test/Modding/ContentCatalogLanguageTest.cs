@@ -35,8 +35,11 @@ public sealed class ContentCatalogLanguageTest
             registry.Register(modId.Namespace, modId, new ContentRegistration("lang/en-US.json", modBytes));
         }
 
-        registry.Register(modOnlyLanguageId.Namespace, modOnlyLanguageId,
-            new ContentRegistration("lang/fr-FR.json", """{"Language":{"Name":"Français"}}"""u8.ToArray()));
+        registry.Register(
+            modOnlyLanguageId.Namespace,
+            modOnlyLanguageId,
+            new ContentRegistration("lang/fr-FR.json", """{"Language":{"Name":"Français"}}"""u8.ToArray())
+        );
 
         var catalog = ContentCatalog.Compile(extensions);
         Assert.Equal(["en-US"], catalog.LanguageTypes);

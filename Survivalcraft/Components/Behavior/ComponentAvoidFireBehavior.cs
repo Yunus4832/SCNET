@@ -101,11 +101,21 @@ public class ComponentAvoidFireBehavior : ComponentBehavior, IUpdateable
                 var vector2 =
                     Vector3.Normalize(
                         Vector3.Normalize(_componentCreature.ComponentBody.Position - _target.Value) +
-                        _random.Vector3(0.5f));
-                var value2 = _componentCreature.ComponentBody.Position + _random.Float(6f, 8f) *
-                    Vector3.Normalize(new Vector3(vector2.X, 0f, vector2.Z));
-                _componentPathfinding.SetDestination(value2, _random.Float(0.6f, 0.8f), 1f, 0, false, true, false,
-                    null);
+                        _random.Vector3(0.5f)
+                    );
+                var value2 = _componentCreature.ComponentBody.Position +
+                             _random.Float(6f, 8f) *
+                             Vector3.Normalize(new Vector3(vector2.X, 0f, vector2.Z));
+                _componentPathfinding.SetDestination(
+                    value2,
+                    _random.Float(0.6f, 0.8f),
+                    1f,
+                    0,
+                    false,
+                    true,
+                    false,
+                    null
+                );
             },
             delegate
             {
@@ -113,7 +123,8 @@ public class ComponentAvoidFireBehavior : ComponentBehavior, IUpdateable
                 {
                     stateMachine.TransitionTo("Inactive");
                 }
-                else if (!_target.HasValue || _componentPathfinding.IsStuck ||
+                else if (!_target.HasValue ||
+                         _componentPathfinding.IsStuck ||
                          !_componentPathfinding.Destination.HasValue ||
                          ScoreTarget(_target.Value) <= 0f)
                 {
@@ -139,8 +150,11 @@ public class ComponentAvoidFireBehavior : ComponentBehavior, IUpdateable
                 }
 
                 var vector =
-                    Vector3.Cross(Vector3.Normalize(_componentCreature.ComponentBody.Position - _target.Value),
-                        Vector3.UnitY) * _circlingDirection;
+                    Vector3.Cross(
+                        Vector3.Normalize(_componentCreature.ComponentBody.Position - _target.Value),
+                        Vector3.UnitY
+                    ) *
+                    _circlingDirection;
                 var value = _componentCreature.ComponentBody.Position +
                             _random.Float(6f, 8f) * Vector3.Normalize(new Vector3(vector.X, 0f, vector.Z));
                 _componentPathfinding.SetDestination(value, _random.Float(0.4f, 0.9f), 1f, 0, false, true, false, null);
@@ -156,7 +170,8 @@ public class ComponentAvoidFireBehavior : ComponentBehavior, IUpdateable
                     _circlingDirection = 0f - _circlingDirection;
                     _importanceLevel = 0f;
                 }
-                else if (!_target.HasValue || !_componentPathfinding.Destination.HasValue ||
+                else if (!_target.HasValue ||
+                         !_componentPathfinding.Destination.HasValue ||
                          ScoreTarget(_target.Value) <= 0f)
                 {
                     _importanceLevel = 0f;

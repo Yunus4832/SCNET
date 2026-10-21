@@ -12,21 +12,37 @@ namespace RendezvousServer.Relay;
 public sealed class UdpRelayRoute : IAsyncDisposable
 {
     private readonly UdpClient _socket;
+
     private readonly CancellationTokenSource _stop = new();
+
     private readonly byte[][] _keys = [RandomNumberGenerator.GetBytes(32), RandomNumberGenerator.GetBytes(32)];
+
     private readonly ReplayWindow[] _replay = [new(), new()];
+
     private readonly IPEndPoint?[] _endpoints = new IPEndPoint?[2];
+
     private readonly ulong[] _outboundSequences = new ulong[2];
+
     private readonly Task _worker;
+
     private int _disposed;
+
     private long _forwardedBytes;
+
     private readonly TimeProvider _clock;
+
     private readonly int _bytesPerSecond;
+
     private long _lastActivityTicks;
+
     private readonly ILogger<UdpRelayRoute> _logger;
 
-    public UdpRelayRoute(IPEndPoint bindEndpoint, TimeProvider? clock = null, int bytesPerSecond = 1024 * 1024,
-        ILogger<UdpRelayRoute>? logger = null)
+    public UdpRelayRoute(
+        IPEndPoint bindEndpoint,
+        TimeProvider? clock = null,
+        int bytesPerSecond = 1024 * 1024,
+        ILogger<UdpRelayRoute>? logger = null
+    )
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(bytesPerSecond, 1);
         _bytesPerSecond = bytesPerSecond;
@@ -69,29 +85,37 @@ public sealed class UdpRelayRoute : IAsyncDisposable
                     traffic = 0;
                     resetAt = _clock.GetUtcNow() + TimeSpan.FromSeconds(1);
                 }
+
                 if (received.Buffer.Length > RelayDatagramCodec.Overhead + RelayDatagramCodec.MaxPayloadSize ||
                     received.Buffer.Length > _bytesPerSecond - traffic)
                 {
                     continue;
                 }
+
                 traffic += received.Buffer.Length;
-                if (!RelayDatagramCodec.TryReadRoute(received.Buffer, out var routeId, out var side) || routeId != Id ||
-                    !RelayDatagramCodec.TryDecode(received.Buffer, _keys[side], out var packet) || packet is null ||
+                if (!RelayDatagramCodec.TryReadRoute(received.Buffer, out var routeId, out var side) ||
+                    routeId != Id ||
+                    !RelayDatagramCodec.TryDecode(received.Buffer, _keys[side], out var packet) ||
+                    packet is null ||
                     !_replay[side].TryAccept(packet.Sequence))
                 {
                     continue;
                 }
+
                 // Lock the first authenticated source. Rebinding requires a new route negotiation.
                 _endpoints[side] ??= received.RemoteEndPoint;
                 if (!_endpoints[side]!.Equals(received.RemoteEndPoint))
                 {
                     continue;
                 }
-                if (packet.Payload.Length > 1 && SignalCodec.TryDecode(packet.Payload.AsSpan(1), out var control) &&
+
+                if (packet.Payload.Length > 1 &&
+                    SignalCodec.TryDecode(packet.Payload.AsSpan(1), out var control) &&
                     control?.Operation == "relay-close")
                 {
                     break;
                 }
+
                 Interlocked.Exchange(ref _lastActivityTicks, _clock.GetUtcNow().UtcTicks);
                 var destinationSide = (byte)(1 - side);
                 var destination = _endpoints[destinationSide];
@@ -99,8 +123,14 @@ public sealed class UdpRelayRoute : IAsyncDisposable
                 {
                     continue;
                 }
-                var forwarded = RelayDatagramCodec.Encode(Id, destinationSide, ++_outboundSequences[destinationSide],
-                    _keys[destinationSide], packet.Payload);
+
+                var forwarded = RelayDatagramCodec.Encode(
+                    Id,
+                    destinationSide,
+                    ++_outboundSequences[destinationSide],
+                    _keys[destinationSide],
+                    packet.Payload
+                );
                 await _socket.SendAsync(forwarded, destination, _stop.Token);
                 Interlocked.Add(ref _forwardedBytes, forwarded.Length);
             }
@@ -110,8 +140,12 @@ public sealed class UdpRelayRoute : IAsyncDisposable
         }
         catch (SocketException exception)
         {
-            _logger.LogWarning("Relay route {RouteId} at {Endpoint} stopped: {SocketError}", Id, Endpoint,
-                exception.SocketErrorCode);
+            _logger.LogWarning(
+                "Relay route {RouteId} at {Endpoint} stopped: {SocketError}",
+                Id,
+                Endpoint,
+                exception.SocketErrorCode
+            );
         }
         catch (Exception exception)
         {
@@ -130,6 +164,7 @@ public sealed class UdpRelayRoute : IAsyncDisposable
             await _worker;
             return;
         }
+
         await _stop.CancelAsync();
         try
         {

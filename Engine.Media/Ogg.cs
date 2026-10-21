@@ -37,8 +37,11 @@ public static class Ogg
 
         var array = new byte[(int)streamingSource.BytesCount];
         streamingSource.Read(array, 0, array.Length);
-        var soundData = new SoundData(streamingSource.ChannelsCount, streamingSource.SamplingFrequency,
-            array.Length);
+        var soundData = new SoundData(
+            streamingSource.ChannelsCount,
+            streamingSource.SamplingFrequency,
+            array.Length
+        );
         Buffer.BlockCopy(array, 0, soundData.Data, 0, array.Length);
         return soundData;
     }

@@ -29,7 +29,8 @@ public sealed class PublisherPackageCreationSubmitImagePackageEndpoint(
     IOptions<ContentServerOptions> options,
     ImageContentPackageBuilder imageBuilder,
     ContentSubmissionLock submissionLock,
-    ContentPackageStore packageStore) : ContentEndpoint
+    ContentPackageStore packageStore
+) : ContentEndpoint
 {
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
@@ -37,14 +38,12 @@ public sealed class PublisherPackageCreationSubmitImagePackageEndpoint(
         await Send.ResponseAsync(result, HttpContext.Response.StatusCode, cancellationToken);
     }
 
-    private async Task<ResponseData<ContentVersionResponse>> SubmitImagePackage(
-        CancellationToken cancellationToken)
+    private async Task<ResponseData<ContentVersionResponse>> SubmitImagePackage(CancellationToken cancellationToken)
     {
         var publisher = await RequireActivePublisherAsync(cancellationToken);
         var (form, file) = await RequireImageBuildFormAsync(cancellationToken);
         var staged = await BuildImagePackageAsync(form, file, cancellationToken);
-        var result = await SubmitStagedPackageAsync(
-            publisher.PublisherId, staged, cancellationToken);
+        var result = await SubmitStagedPackageAsync(publisher.PublisherId, staged, cancellationToken);
         HttpContext.Response.StatusCode = result.Created ? 201 : 200;
         return result.Version.ToResponse().AsResponseData(code: HttpContext.Response.StatusCode);
     }
@@ -52,15 +51,23 @@ public sealed class PublisherPackageCreationSubmitImagePackageEndpoint(
     private async Task<StagedContentPackage> BuildImagePackageAsync(
         IFormCollection form,
         IFormFile file,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         try
         {
             await using var input = file.OpenReadStream();
-            return await imageBuilder.BuildAsync(input, ParseImageType(form["type"].ToString()),
-                form["identifier"].ToString(), form["name"].ToString(),
-                form["summary"].ToString(), form["description"].ToString(), form["version"].ToString(),
-                options.Value.MaximumPackageBytes, cancellationToken);
+            return await imageBuilder.BuildAsync(
+                input,
+                ParseImageType(form["type"].ToString()),
+                form["identifier"].ToString(),
+                form["name"].ToString(),
+                form["summary"].ToString(),
+                form["description"].ToString(),
+                form["version"].ToString(),
+                options.Value.MaximumPackageBytes,
+                cancellationToken
+            );
         }
         catch (ContentPackageException)
         {
@@ -69,7 +76,8 @@ public sealed class PublisherPackageCreationSubmitImagePackageEndpoint(
     }
 
     private async Task<(IFormCollection Form, IFormFile File)> RequireImageBuildFormAsync(
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (!HttpContext.Request.HasFormContentType)
         {
@@ -78,8 +86,11 @@ public sealed class PublisherPackageCreationSubmitImagePackageEndpoint(
 
         var form = await HttpContext.Request.ReadFormAsync(cancellationToken);
         var file = form.Files.GetFile("source");
-        if (file is null || file.Length == 0 || string.IsNullOrWhiteSpace(form["type"]) ||
-            string.IsNullOrWhiteSpace(form["identifier"]) || string.IsNullOrWhiteSpace(form["name"]) ||
+        if (file is null ||
+            file.Length == 0 ||
+            string.IsNullOrWhiteSpace(form["type"]) ||
+            string.IsNullOrWhiteSpace(form["identifier"]) ||
+            string.IsNullOrWhiteSpace(form["name"]) ||
             string.IsNullOrWhiteSpace(form["version"]))
         {
             throw new KnownException("invalid_image_creation_request", 400);
@@ -91,8 +102,10 @@ public sealed class PublisherPackageCreationSubmitImagePackageEndpoint(
     private async Task<PublisherDto> RequireActivePublisherAsync(CancellationToken cancellationToken)
     {
         var publisher = await mediator.Send(
-                            new GetPublisherQuery(authenticationContext.RequirePublisherId()), cancellationToken)
-                        ?? throw new KnownException("publisher_not_found", 401);
+                            new GetPublisherQuery(authenticationContext.RequirePublisherId()),
+                            cancellationToken
+                        ) ??
+                        throw new KnownException("publisher_not_found", 401);
         if (publisher.Status != PublisherStatus.Active)
         {
             throw new KnownException("publisher_not_active", 403);
@@ -109,7 +122,10 @@ public sealed class PublisherPackageCreationSubmitImagePackageEndpoint(
     };
 
     private async Task<(ContentVersionDto Version, bool Created)> SubmitStagedPackageAsync(
-        PublisherId publisherId, StagedContentPackage staged, CancellationToken cancellationToken)
+        PublisherId publisherId,
+        StagedContentPackage staged,
+        CancellationToken cancellationToken
+    )
     {
         IDisposable lease;
         try
@@ -127,7 +143,9 @@ public sealed class PublisherPackageCreationSubmitImagePackageEndpoint(
             var manifest = staged.Inspection.Manifest;
             var type = manifest.Type.ToString();
             var existingContent = await mediator.Send(
-                new FindContentItemQuery(publisherId, manifest.Identifier), cancellationToken);
+                new FindContentItemQuery(publisherId, manifest.Identifier),
+                cancellationToken
+            );
             if (existingContent is not null && existingContent.PublisherId != publisherId)
             {
                 packageStore.DeleteTemporary(staged);
@@ -141,7 +159,9 @@ public sealed class PublisherPackageCreationSubmitImagePackageEndpoint(
             }
 
             var existingVersion = await mediator.Send(
-                new GetContentVersionQuery(publisherId, manifest.Identifier, manifest.Version), cancellationToken);
+                new GetContentVersionQuery(publisherId, manifest.Identifier, manifest.Version),
+                cancellationToken
+            );
             if (existingVersion is not null)
             {
                 packageStore.DeleteTemporary(staged);
@@ -154,15 +174,30 @@ public sealed class PublisherPackageCreationSubmitImagePackageEndpoint(
             }
 
             packageStore.Commit(staged);
-            await mediator.Send(new SubmitContentPackageCommand(
-                publisherId, type, manifest.Identifier, manifest.Name, manifest.Summary, manifest.Description,
-                manifest.Version, manifest.Metadata.GetRawText(), staged.Inspection.PackageHash, staged.BlobHash,
-                staged.Size, staged.FileName, staged.MediaType), cancellationToken);
+            await mediator.Send(
+                new SubmitContentPackageCommand(
+                    publisherId,
+                    type,
+                    manifest.Identifier,
+                    manifest.Name,
+                    manifest.Summary,
+                    manifest.Description,
+                    manifest.Version,
+                    manifest.Metadata.GetRawText(),
+                    staged.Inspection.PackageHash,
+                    staged.BlobHash,
+                    staged.Size,
+                    staged.FileName,
+                    staged.MediaType
+                ),
+                cancellationToken
+            );
 
             var submitted = await mediator.Send(
                                 new GetContentVersionQuery(publisherId, manifest.Identifier, manifest.Version),
-                                cancellationToken)
-                            ?? throw new KnownException("content_version_not_found", 500);
+                                cancellationToken
+                            ) ??
+                            throw new KnownException("content_version_not_found", 500);
             return (submitted, true);
         }
     }

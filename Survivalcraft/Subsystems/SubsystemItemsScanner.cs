@@ -148,13 +148,15 @@ public class SubsystemItemsScanner : Subsystem, IUpdateable
             var slotValue = inventory.GetSlotValue(i);
             if (slotValue != 0)
             {
-                items.Add(new ScannedItemData
-                {
-                    Container = inventory,
-                    IndexInContainer = i,
-                    Value = slotValue,
-                    Count = slotCount
-                });
+                items.Add(
+                    new ScannedItemData
+                    {
+                        Container = inventory,
+                        IndexInContainer = i,
+                        Value = slotValue,
+                        Count = slotCount
+                    }
+                );
             }
         }
     }

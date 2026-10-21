@@ -36,11 +36,7 @@ public class Shader : GraphicsResource
         Construct(vertexShaderCode, pixelShaderCode, shaderMacros);
     }
 
-    public string DebugName
-    {
-        get => string.Empty;
-        set { }
-    }
+    public string DebugName { get => string.Empty; set { } }
 
     public object? Tag { get; set; }
 
@@ -101,7 +97,8 @@ public class Shader : GraphicsResource
             if (vertexElement is null)
             {
                 throw new InvalidOperationException(
-                    $"VertexElement not found for shader attribute \"{shaderAttributeDatum.Semantic}\".");
+                    $"VertexElement not found for shader attribute \"{shaderAttributeDatum.Semantic}\"."
+                );
             }
 
             value[shaderAttributeDatum.Location] = new VertexAttributeData
@@ -151,8 +148,7 @@ public class Shader : GraphicsResource
                 {
                     if (xElement.Attribute("Attribute") == null)
                     {
-                        throw new InvalidOperationException(
-                            "Missing \"Attribute\" attribute in shader metadata.");
+                        throw new InvalidOperationException("Missing \"Attribute\" attribute in shader metadata.");
                     }
 
                     if (xElement.Attribute("Name") == null)
@@ -174,8 +170,7 @@ public class Shader : GraphicsResource
 
                     if (xElement.Attribute("Texture") == null)
                     {
-                        throw new InvalidOperationException(
-                            "Missing \"Texture\" attribute in shader metadata.");
+                        throw new InvalidOperationException("Missing \"Texture\" attribute in shader metadata.");
                     }
 
                     if (xElement.Attribute("Name") == null)
@@ -223,9 +218,11 @@ public class Shader : GraphicsResource
             str = str + "uniform float u_glymul;" + Environment.NewLine;
         }
 
-        str = shaderMacros.Aggregate(str,
+        str = shaderMacros.Aggregate(
+            str,
             (current, shaderMacro) =>
-                current + "#define " + shaderMacro.Name + " " + shaderMacro.Value + Environment.NewLine);
+                current + "#define " + shaderMacro.Name + " " + shaderMacro.Value + Environment.NewLine
+        );
 
         str = str + "#line 1" + Environment.NewLine;
         return str + shaderCode;
@@ -305,14 +302,17 @@ public class Shader : GraphicsResource
             if (!dictionary.TryGetValue(name, out var value))
             {
                 throw new InvalidOperationException(
-                    $"Attribute \"{name}\" has no semantic defined in shader metadata.");
+                    $"Attribute \"{name}\" has no semantic defined in shader metadata."
+                );
             }
 
-            ShaderAttributeDataList.Add(new ShaderAttributeData
-            {
-                Location = attribLocation,
-                Semantic = value
-            });
+            ShaderAttributeDataList.Add(
+                new ShaderAttributeData
+                {
+                    Location = attribLocation,
+                    Semantic = value
+                }
+            );
         }
 
         GLWrapper.GL.GetProgram(uProgram, ProgramPropertyARB.ActiveUniforms, out var params5);
@@ -352,7 +352,8 @@ public class Shader : GraphicsResource
             if (!dictionary2.TryGetValue(shaderParameter.Name, out var value2))
             {
                 throw new InvalidOperationException(
-                    $"Texture \"{shaderParameter.Name}\" has no sampler defined in shader metadata.");
+                    $"Texture \"{shaderParameter.Name}\" has no sampler defined in shader metadata."
+                );
             }
 
             var shaderParameter2 = new ShaderParameter(this, value2, ShaderParameterType.Sampler2D, 1)

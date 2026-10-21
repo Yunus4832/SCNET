@@ -13,7 +13,8 @@ public class PistonElectricElement(
         new(point.X, point.Y, point.Z, 3),
         new(point.X, point.Y, point.Z, 4),
         new(point.X, point.Y, point.Z, 5)
-    })
+    }
+)
 {
     private int _lastLength = -1;
 
@@ -24,8 +25,10 @@ public class PistonElectricElement(
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                num = MathUtils.Max(num,
-                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                num = MathUtils.Max(
+                    num,
+                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                );
             }
         }
 

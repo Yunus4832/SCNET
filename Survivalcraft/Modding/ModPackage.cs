@@ -14,9 +14,13 @@ namespace Game.Modding;
 public sealed class ModPackage
 {
     public const string FileExtension = ContentPackageReader.FileExtension;
+
     public const string SearchPattern = "*.scpkg";
+
     private readonly IReadOnlyDictionary<string, byte[]> _assemblies;
+
     private readonly IReadOnlyDictionary<string, byte[]> _dataFiles;
+
     private readonly IReadOnlyDictionary<string, byte[]> _assetFiles;
 
     private ModPackage(
@@ -25,7 +29,8 @@ public sealed class ModPackage
         IReadOnlyDictionary<string, byte[]> assemblies,
         IReadOnlyDictionary<string, byte[]> dataFiles,
         IReadOnlyDictionary<string, byte[]> assetFiles,
-        string packageHash)
+        string packageHash
+    )
     {
         Source = source;
         Manifest = manifest;
@@ -99,15 +104,24 @@ public sealed class ModPackage
         var entrypoints = new ModEntrypoints(
             GetOptionalString(entrypointsElement, "common"),
             GetOptionalString(entrypointsElement, "client"),
-            GetOptionalString(entrypointsElement, "server"));
+            GetOptionalString(entrypointsElement, "server")
+        );
         var dependencies = metadata.GetProperty("dependencies").EnumerateArray()
             .Select(dependency => new ModDependency(
-                dependency.GetProperty("identifier").GetString()!,
-                dependency.GetProperty("minimumVersion").GetString(),
-                dependency.GetProperty("optional").GetBoolean()))
+                    dependency.GetProperty("identifier").GetString()!,
+                    dependency.GetProperty("minimumVersion").GetString(),
+                    dependency.GetProperty("optional").GetBoolean()
+                )
+            )
             .ToArray();
-        return new ModManifest(packageManifest.Identifier, packageManifest.Name, packageManifest.Version,
-            dependencies, side, entrypoints);
+        return new ModManifest(
+            packageManifest.Identifier,
+            packageManifest.Name,
+            packageManifest.Version,
+            dependencies,
+            side,
+            entrypoints
+        );
     }
 
     private static string? GetOptionalString(JsonElement element, string name) =>
@@ -131,8 +145,10 @@ public sealed class ModPackage
         var entrypoint = Manifest.Entrypoints?.GetFor(hostSide);
         if (string.IsNullOrWhiteSpace(entrypoint) && _dataFiles.Count == 0 && _assetFiles.Count == 0)
         {
-            throw new ModPackageException(Source,
-                $"Mod does not define an entrypoint or data contributions for {hostSide}.");
+            throw new ModPackageException(
+                Source,
+                $"Mod does not define an entrypoint or data contributions for {hostSide}."
+            );
         }
 
         ModAssemblyLoadScope? lifetime = null;
@@ -147,7 +163,8 @@ public sealed class ModPackage
             Manifest,
             () => new PackageMod(Manifest.ModId, _dataFiles, _assetFiles, codeFactory?.Invoke()),
             lifetime,
-            PackageHash);
+            PackageHash
+        );
     }
 }
 
@@ -155,7 +172,8 @@ internal sealed class PackageMod(
     ModId owner,
     IReadOnlyDictionary<string, byte[]> dataFiles,
     IReadOnlyDictionary<string, byte[]> assetFiles,
-    IMod? codeMod) : IMod
+    IMod? codeMod
+) : IMod
 {
     public void Configure(IModContext context)
     {
@@ -174,7 +192,8 @@ internal sealed class PackageMod(
                     XmlDataExtensions.DatabaseRegistryName,
                     id,
                     XmlContributionMode.Patch,
-                    () => XmlDataExtensions.ParseUtf8(bytes));
+                    () => XmlDataExtensions.ParseUtf8(bytes)
+                );
             }
             else if (path.StartsWith("data/recipes/", StringComparison.Ordinal) &&
                      path.EndsWith(".cr", StringComparison.OrdinalIgnoreCase))
@@ -183,7 +202,8 @@ internal sealed class PackageMod(
                     XmlDataExtensions.RecipeRegistryName,
                     id,
                     XmlContributionMode.Patch,
-                    () => XmlDataExtensions.ParseUtf8(bytes));
+                    () => XmlDataExtensions.ParseUtf8(bytes)
+                );
             }
             else if (path.StartsWith("data/clothing/", StringComparison.Ordinal) &&
                      path.EndsWith(".clo", StringComparison.OrdinalIgnoreCase))
@@ -192,7 +212,8 @@ internal sealed class PackageMod(
                     XmlDataExtensions.ClothingRegistryName,
                     id,
                     XmlContributionMode.Patch,
-                    () => XmlDataExtensions.ParseUtf8(bytes));
+                    () => XmlDataExtensions.ParseUtf8(bytes)
+                );
             }
         }
 
@@ -201,7 +222,8 @@ internal sealed class PackageMod(
             context.Extensions.RegisterContent(
                 new ResourceId(owner, relativePath),
                 relativePath,
-                bytes);
+                bytes
+            );
         }
 
         codeMod?.Configure(context);
@@ -260,14 +282,16 @@ public static class ModPackageCatalog
 
     public static IReadOnlyList<ModDescriptor> CreateLoadPlan(
         IEnumerable<ModPackageSource> sources,
-        ModSide hostSide)
+        ModSide hostSide
+    )
     {
         return CreateLoadPlan(Discover(sources), hostSide);
     }
 
     private static IReadOnlyList<ModDescriptor> CreateLoadPlan(
         IEnumerable<ModPackage> packages,
-        ModSide hostSide)
+        ModSide hostSide
+    )
     {
         var descriptors = packages
             .Select(package => package.CreateDescriptor(hostSide))
@@ -290,25 +314,22 @@ public static class ModPackageCatalog
 
 public sealed record ModPackageSource(string Name, Func<Stream> OpenRead);
 
-public sealed class ModPackageException : Exception
+public sealed class ModPackageException(string source, string message, Exception? innerException = null)
+    : Exception($"Mod package {source}: {message}", innerException)
 {
-    public ModPackageException(string source, string message, Exception? innerException = null)
-        : base($"Mod package {source}: {message}", innerException)
-    {
-    }
 }
 
-internal sealed class ModAssemblyLoadScope : IDisposable
+internal sealed class ModAssemblyLoadScope(
+    string source,
+    IReadOnlyDictionary<string, byte[]> assemblies,
+    string entrypoint
+) : IDisposable
 {
-    private readonly string _entrypoint;
-    private ModAssemblyLoadContext? _loadContext;
-    private bool _created;
+    private readonly string _entrypoint = entrypoint;
 
-    public ModAssemblyLoadScope(string source, IReadOnlyDictionary<string, byte[]> assemblies, string entrypoint)
-    {
-        _entrypoint = entrypoint;
-        _loadContext = new ModAssemblyLoadContext(source, assemblies);
-    }
+    private ModAssemblyLoadContext? _loadContext = new(source, assemblies);
+
+    private bool _created;
 
     public IMod CreateMod()
     {
@@ -322,7 +343,8 @@ internal sealed class ModAssemblyLoadScope : IDisposable
         if (separator <= 0 || separator == _entrypoint.Length - 1)
         {
             throw new InvalidOperationException(
-                $"Entrypoint \"{_entrypoint}\" must use the format \"Namespace.Type, AssemblyName\".");
+                $"Entrypoint \"{_entrypoint}\" must use the format \"Namespace.Type, AssemblyName\"."
+            );
         }
 
         var typeName = _entrypoint[..separator].Trim();
@@ -335,8 +357,8 @@ internal sealed class ModAssemblyLoadScope : IDisposable
         }
 
         _created = true;
-        return (IMod)(Activator.CreateInstance(type)
-                      ?? throw new InvalidOperationException($"Could not create mod entrypoint {type.FullName}."));
+        return (IMod)(Activator.CreateInstance(type) ??
+                      throw new InvalidOperationException($"Could not create mod entrypoint {type.FullName}."));
     }
 
     public void Dispose()
@@ -354,15 +376,17 @@ internal sealed class ModAssemblyLoadContext(
     public Assembly LoadModAssembly(string assemblyName)
     {
         return Assemblies.FirstOrDefault(assembly =>
-                   string.Equals(assembly.GetName().Name, assemblyName, StringComparison.OrdinalIgnoreCase))
-               ?? LoadFromPackage(assemblyName)
-               ?? throw new FileNotFoundException($"Assembly {assemblyName} was not found in the mod package.");
+                   string.Equals(assembly.GetName().Name, assemblyName, StringComparison.OrdinalIgnoreCase)
+               ) ??
+               LoadFromPackage(assemblyName) ??
+               throw new FileNotFoundException($"Assembly {assemblyName} was not found in the mod package.");
     }
 
     protected override Assembly? Load(AssemblyName assemblyName)
     {
         var sharedAssembly = Default.Assemblies.FirstOrDefault(assembly =>
-            string.Equals(assembly.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase));
+            string.Equals(assembly.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase)
+        );
         if (sharedAssembly is not null)
         {
             return sharedAssembly;

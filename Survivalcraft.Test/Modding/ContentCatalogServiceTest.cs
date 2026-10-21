@@ -19,17 +19,22 @@ public sealed class ContentCatalogServiceTest
         var responses = new Dictionary<Guid, HttpResponseMessage>
         {
             [first.Id] = Page(Item("content-a", "version-a", "1.0.0", hashA), 1),
-            [second.Id] = Page([
-                Item("content-b", "version-b1", "1.0.0", hashA),
-                Item("content-b", "version-b2", "1.0.0", hashB)
-            ], 2),
+            [second.Id] = Page(
+                [
+                    Item("content-b", "version-b1", "1.0.0", hashA),
+                    Item("content-b", "version-b2", "1.0.0", hashB)
+                ],
+                2
+            ),
             [broken.Id] = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
         };
         using var pool = new ContentServerClientPool(new ResponseFactory(responses));
         var service = new ContentCatalogService(pool);
 
-        var result = await service.QueryAsync(ContentSourceContext.Persistent([first, second, broken]),
-            new ContentCatalogQuery(PageSize: 2));
+        var result = await service.QueryAsync(
+            ContentSourceContext.Persistent([first, second, broken]),
+            new ContentCatalogQuery(PageSize: 2)
+        );
 
         var entry = Assert.Single(result.Entries);
         Assert.Equal("example.mod", entry.Identifier);
@@ -48,21 +53,28 @@ public sealed class ContentCatalogServiceTest
         var invalid = Repository("B", "https://b.example", 1);
         var responses = new Dictionary<Guid, HttpResponseMessage>
         {
-            [first.Id] = Page([
-                Item("a", "v1", "1.0.0", new string('a', 64)),
-                Item("a", "v2", "2.0.0-beta.1", new string('b', 64)),
-                Item("a", "v3", "2.0.0", new string('c', 64))
-            ], 4),
+            [first.Id] = Page(
+                [
+                    Item("a", "v1", "1.0.0", new string('a', 64)),
+                    Item("a", "v2", "2.0.0-beta.1", new string('b', 64)),
+                    Item("a", "v3", "2.0.0", new string('c', 64))
+                ],
+                4
+            ),
             [invalid.Id] = Page(Item("b", "bad", "not-semver", new string('d', 64)), 1)
         };
         using var pool = new ContentServerClientPool(new ResponseFactory(responses));
         var service = new ContentCatalogService(pool);
 
-        var result = await service.QueryAsync(ContentSourceContext.Persistent([first, invalid]),
-            new ContentCatalogQuery(Type: "Mod", Search: "example value", PageSize: 3));
+        var result = await service.QueryAsync(
+            ContentSourceContext.Persistent([first, invalid]),
+            new ContentCatalogQuery(Type: "Mod", Search: "example value", PageSize: 3)
+        );
 
-        Assert.Equal(["2.0.0", "2.0.0-beta.1", "1.0.0"],
-            Assert.Single(result.Entries).Versions.Select(version => version.Version));
+        Assert.Equal(
+            ["2.0.0", "2.0.0-beta.1", "1.0.0"],
+            Assert.Single(result.Entries).Versions.Select(version => version.Version)
+        );
         Assert.Equal(invalid.Id, Assert.Single(result.Failures).RepositoryId);
         Assert.True(result.HasMore);
     }
@@ -76,8 +88,10 @@ public sealed class ContentCatalogServiceTest
         using var pool = new ContentServerClientPool(new DelayedFactory(concurrency));
         var service = new ContentCatalogService(pool, maximumConcurrency: 2);
 
-        var result = await service.QueryAsync(ContentSourceContext.Persistent(repositories),
-            new ContentCatalogQuery());
+        var result = await service.QueryAsync(
+            ContentSourceContext.Persistent(repositories),
+            new ContentCatalogQuery()
+        );
 
         Assert.Empty(result.Failures);
         Assert.Equal(2, concurrency.Maximum);
@@ -90,21 +104,34 @@ public sealed class ContentCatalogServiceTest
         var hashB = new string('b', 64);
         var first = Repository("A", "https://a.example", 0);
         var second = Repository("B", "https://b.example", 1);
-        using var pool = new ContentServerClientPool(new RoutingFactory((repository, request) =>
-        {
-            if (!request.RequestUri!.AbsolutePath.EndsWith("/versions", StringComparison.Ordinal))
-            {
-                return Page(Item(repository.Id == first.Id ? "content-a" : "content-b",
-                    "latest", "2.0.0", hashB), 1);
-            }
+        using var pool = new ContentServerClientPool(
+            new RoutingFactory((repository, request) =>
+                {
+                    if (!request.RequestUri!.AbsolutePath.EndsWith("/versions", StringComparison.Ordinal))
+                    {
+                        return Page(
+                            Item(
+                                repository.Id == first.Id ? "content-a" : "content-b",
+                                "latest",
+                                "2.0.0",
+                                hashB
+                            ),
+                            1
+                        );
+                    }
 
-            return repository.Id == first.Id
-                ? Page([
-                    Item("content-a", "v2", "2.0.0", hashB),
-                    Item("content-a", "v1", "1.0.0", hashA)
-                ], 2)
-                : new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
-        }));
+                    return repository.Id == first.Id
+                        ? Page(
+                            [
+                                Item("content-a", "v2", "2.0.0", hashB),
+                                Item("content-a", "v1", "1.0.0", hashA)
+                            ],
+                            2
+                        )
+                        : new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+                }
+            )
+        );
         var service = new ContentCatalogService(pool);
         var context = ContentSourceContext.Persistent([first, second]);
         var content = Assert.Single((await service.QueryAsync(context, new ContentCatalogQuery())).Entries);
@@ -169,8 +196,8 @@ public sealed class ContentCatalogServiceTest
         }
     }
 
-    private sealed class RoutingFactory(
-        Func<ContentRepository, HttpRequestMessage, HttpResponseMessage> response) : ContentServerClientFactory
+    private sealed class RoutingFactory(Func<ContentRepository, HttpRequestMessage, HttpResponseMessage> response)
+        : ContentServerClientFactory
     {
         public override ContentServerClient Create(ContentRepository repository)
         {
@@ -181,8 +208,10 @@ public sealed class ContentCatalogServiceTest
 
     private sealed class StubHttpMessageHandler(Func<HttpResponseMessage> response) : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-            CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             return Task.FromResult(response());
         }
@@ -191,8 +220,10 @@ public sealed class ContentCatalogServiceTest
     private sealed class RequestStubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> response)
         : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-            CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             return Task.FromResult(response(request));
         }
@@ -202,15 +233,20 @@ public sealed class ContentCatalogServiceTest
     {
         public override ContentServerClient Create(ContentRepository repository)
         {
-            return new ContentServerClient(repository.BaseUrl,
-                new HttpClient(new DelayedHandler(counter)), true);
+            return new ContentServerClient(
+                repository.BaseUrl,
+                new HttpClient(new DelayedHandler(counter)),
+                true
+            );
         }
     }
 
     private sealed class DelayedHandler(ConcurrencyCounter counter) : HttpMessageHandler
     {
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-            CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             counter.Enter();
             try
@@ -228,6 +264,7 @@ public sealed class ContentCatalogServiceTest
     private sealed class ConcurrencyCounter
     {
         private int _current;
+
         private int _maximum;
 
         public int Maximum => _maximum;

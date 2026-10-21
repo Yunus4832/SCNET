@@ -25,13 +25,14 @@ public sealed class AdminRendezvousServiceDisableEndpoint(IMediator mediator) : 
 
     private async Task<ResponseData> Delete(Guid id, CancellationToken cancellationToken)
     {
-        if (!await mediator.Send(new DisableRendezvousServiceCommand(new RendezvousServiceRegistrationId(id)),
-                cancellationToken))
+        if (!await mediator.Send(
+                new DisableRendezvousServiceCommand(new RendezvousServiceRegistrationId(id)),
+                cancellationToken
+            ))
         {
             throw new KnownException("rendezvous_service_not_active", StatusCodes.Status404NotFound);
         }
+
         return new ResponseData(true, "success", StatusCodes.Status200OK);
     }
-
-
 }

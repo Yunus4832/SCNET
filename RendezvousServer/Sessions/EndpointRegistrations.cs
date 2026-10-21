@@ -15,11 +15,17 @@ public sealed class EndpointRegistrations(InvitationRegistry registry, TimeProvi
 
     private readonly Dictionary<(Guid Session, Guid Participant, Guid Attempt), CandidateExchange> _exchanges = new();
 
-    public string ExchangeChallenge(Guid sessionId, Guid participantId, Guid attemptId,
-        IPEndPoint participantEndpoint, IPEndPoint hostEndpoint)
+    public string ExchangeChallenge(
+        Guid sessionId,
+        Guid participantId,
+        Guid attemptId,
+        IPEndPoint participantEndpoint,
+        IPEndPoint hostEndpoint
+    )
     {
         CleanExpired();
-        if (participantId == Guid.Empty || attemptId == Guid.Empty ||
+        if (participantId == Guid.Empty ||
+            attemptId == Guid.Empty ||
             participantEndpoint.AddressFamily != hostEndpoint.AddressFamily ||
             !Equals(Find(sessionId, participantId, participantEndpoint.AddressFamily), participantEndpoint) ||
             !Equals(Find(sessionId, Guid.Empty, hostEndpoint.AddressFamily), hostEndpoint))
@@ -35,6 +41,7 @@ public sealed class EndpointRegistrations(InvitationRegistry registry, TimeProvi
             {
                 throw new InvalidOperationException("candidate_endpoint_changed");
             }
+
             return existing.Challenge;
         }
 
@@ -44,12 +51,25 @@ public sealed class EndpointRegistrations(InvitationRegistry registry, TimeProvi
         }
 
         var challenge = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
-        _exchanges.Add(key, new CandidateExchange(participantEndpoint, hostEndpoint, challenge,
-            clock.GetUtcNow() + TimeSpan.FromSeconds(10)));
+        _exchanges.Add(
+            key,
+            new CandidateExchange(
+                participantEndpoint,
+                hostEndpoint,
+                challenge,
+                clock.GetUtcNow() + TimeSpan.FromSeconds(10)
+            )
+        );
         return challenge;
     }
 
-    public string Challenge(Guid sessionId, Guid participantId, string ticket, IPEndPoint endpoint, IReadOnlyList<string>? localEndpoints = null)
+    public string Challenge(
+        Guid sessionId,
+        Guid participantId,
+        string ticket,
+        IPEndPoint endpoint,
+        IReadOnlyList<string>? localEndpoints = null
+    )
     {
         CleanExpired();
         if (!registry.AuthenticateTicket(sessionId, participantId, ticket))
@@ -61,6 +81,7 @@ public sealed class EndpointRegistrations(InvitationRegistry registry, TimeProvi
         {
             throw new InvalidOperationException("invalid_local_candidates");
         }
+
         if (_registrations.TryGetValue((ticket, endpoint.AddressFamily), out var existing))
         {
             if (!existing.Endpoint.Equals(endpoint) || !existing.LocalEndpoints.SequenceEqual(candidates))
@@ -72,8 +93,17 @@ public sealed class EndpointRegistrations(InvitationRegistry registry, TimeProvi
         }
 
         var challenge = Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
-        _registrations.Add((ticket, endpoint.AddressFamily), new Registration(sessionId, participantId, endpoint, candidates, challenge,
-            clock.GetUtcNow() + TimeSpan.FromSeconds(10)));
+        _registrations.Add(
+            (ticket, endpoint.AddressFamily),
+            new Registration(
+                sessionId,
+                participantId,
+                endpoint,
+                candidates,
+                challenge,
+                clock.GetUtcNow() + TimeSpan.FromSeconds(10)
+            )
+        );
         return challenge;
     }
 
@@ -82,7 +112,8 @@ public sealed class EndpointRegistrations(InvitationRegistry registry, TimeProvi
         CleanExpired();
         if (!registry.AuthenticateTicket(sessionId, participantId, ticket) ||
             !_registrations.TryGetValue((ticket, endpoint.AddressFamily), out var registration) ||
-            !registration.Endpoint.Equals(endpoint) || registration.Challenge != challenge)
+            !registration.Endpoint.Equals(endpoint) ||
+            registration.Challenge != challenge)
         {
             return false;
         }
@@ -90,12 +121,17 @@ public sealed class EndpointRegistrations(InvitationRegistry registry, TimeProvi
         if (!registration.Confirmed)
         {
             registration.Confirmed = true;
-            _leases[(sessionId, participantId, endpoint.AddressFamily)] = new Lease(endpoint, registration.LocalEndpoints, clock.GetUtcNow() + TimeSpan.FromSeconds(lifetimeSeconds));
+            _leases[(sessionId, participantId, endpoint.AddressFamily)] = new Lease(
+                endpoint,
+                registration.LocalEndpoints,
+                clock.GetUtcNow() + TimeSpan.FromSeconds(lifetimeSeconds)
+            );
             if (participantId == Guid.Empty)
             {
                 registry.ConfirmHostEndpoint(sessionId, clock.GetUtcNow() + TimeSpan.FromSeconds(lifetimeSeconds));
             }
         }
+
         return true;
     }
 
@@ -116,22 +152,30 @@ public sealed class EndpointRegistrations(InvitationRegistry registry, TimeProvi
     public void CleanExpired()
     {
         foreach (var key in _exchanges.Where(item => item.Value.ExpiresAt <= clock.GetUtcNow() ||
-                     !registry.IsActive(item.Key.Session, item.Key.Participant))
-                 .Select(item => item.Key).ToArray())
+                                                     !registry.IsActive(item.Key.Session, item.Key.Participant)
+                     )
+                     .Select(item => item.Key).ToArray())
         {
             _exchanges.Remove(key);
         }
 
         foreach (var key in _leases.Where(item => item.Value.ExpiresAt <= clock.GetUtcNow() ||
-                     !registry.IsActive(item.Key.Session, item.Key.Participant)).Select(item => item.Key).ToArray())
+                                                  !registry.IsActive(item.Key.Session, item.Key.Participant)
+                     )
+                     .Select(item => item.Key).ToArray())
         {
             _leases.Remove(key);
         }
 
         foreach (var key in _registrations.Where(item =>
-                     !registry.AuthenticateTicket(item.Value.SessionId, item.Value.ParticipantId, item.Key.Ticket) ||
-                     (!item.Value.Confirmed && item.Value.Deadline <= clock.GetUtcNow()))
-                 .Select(item => item.Key).ToArray())
+                         !registry.AuthenticateTicket(
+                             item.Value.SessionId,
+                             item.Value.ParticipantId,
+                             item.Key.Ticket
+                         ) ||
+                         (!item.Value.Confirmed && item.Value.Deadline <= clock.GetUtcNow())
+                     )
+                     .Select(item => item.Key).ToArray())
         {
             _registrations.Remove(key);
         }
@@ -139,11 +183,21 @@ public sealed class EndpointRegistrations(InvitationRegistry registry, TimeProvi
 
     private sealed record Lease(IPEndPoint Endpoint, IPEndPoint[] LocalEndpoints, DateTimeOffset ExpiresAt);
 
-    private sealed record CandidateExchange(IPEndPoint ParticipantEndpoint, IPEndPoint HostEndpoint,
-        string Challenge, DateTimeOffset ExpiresAt);
+    private sealed record CandidateExchange(
+        IPEndPoint ParticipantEndpoint,
+        IPEndPoint HostEndpoint,
+        string Challenge,
+        DateTimeOffset ExpiresAt
+    );
 
-    private sealed class Registration(Guid sessionId, Guid participantId, IPEndPoint endpoint, IPEndPoint[] localEndpoints, string challenge,
-        DateTimeOffset deadline)
+    private sealed class Registration(
+        Guid sessionId,
+        Guid participantId,
+        IPEndPoint endpoint,
+        IPEndPoint[] localEndpoints,
+        string challenge,
+        DateTimeOffset deadline
+    )
     {
         public Guid SessionId { get; } = sessionId;
 

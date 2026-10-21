@@ -10,8 +10,13 @@ public sealed class RendezvousServiceRegistrationTest
     public void EditingPublishedServiceRequiresReviewAndDeletionIsExplicit()
     {
         var now = DateTimeOffset.UtcNow;
-        var registration = RendezvousServiceRegistration.Submit(new PublisherId(Guid.NewGuid()), "Signal",
-            new Uri("https://signal.example/"), null, now);
+        var registration = RendezvousServiceRegistration.Submit(
+            new PublisherId(Guid.NewGuid()),
+            "Signal",
+            new Uri("https://signal.example/"),
+            null,
+            now
+        );
         Assert.Equal(RendezvousServiceRegistrationStatus.Pending, registration.Status);
         Assert.True(registration.Review(true, new AdministratorId(Guid.NewGuid()), null, now));
         Assert.False(registration.Review(true, new AdministratorId(Guid.NewGuid()), null, now));

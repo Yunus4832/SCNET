@@ -41,7 +41,9 @@ public static partial class Keyboard
                 TranslateKey(keyEvent.KeyCode),
                 keyEvent.Action == KeyEventActions.Down,
                 unicodeChar > 0 ? unicodeChar : null,
-                keyEvent.ScanCode));
+                keyEvent.ScanCode
+            )
+        );
     }
 
     public static Key? TranslateKey(Keycode keyCode) => keyCode switch

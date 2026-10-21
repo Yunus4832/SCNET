@@ -17,6 +17,7 @@ public static partial class ProtocolMessageCodec
         {
             throw new InvalidDataException("Too many block mappings.");
         }
+
         var entries = new BlockIndexEntry[count];
         var ids = new HashSet<ResourceId>();
         var indices = new HashSet<ushort>();
@@ -27,16 +28,23 @@ public static partial class ProtocolMessageCodec
             {
                 throw new InvalidDataException("Block resource ID is too long.");
             }
+
             ResourceId resource;
             try { resource = ResourceId.Parse(id); }
-            catch (ArgumentException exception) { throw new InvalidDataException("Invalid block resource ID.", exception); }
+            catch (ArgumentException exception)
+            {
+                throw new InvalidDataException("Invalid block resource ID.", exception);
+            }
+
             var index = reader.ReadUInt16();
             if (index >= ProtocolLimits.BlockCapacity || !ids.Add(resource) || !indices.Add(index))
             {
                 throw new InvalidDataException("Invalid or duplicate block mapping.");
             }
+
             entries[i] = new BlockIndexEntry(resource, index);
         }
+
         return new BootstrapPackage
         {
             Epoch = epoch,
@@ -54,18 +62,22 @@ public static partial class ProtocolMessageCodec
         {
             throw new ArgumentException("Too many block mappings.");
         }
+
         writer.Write(message.Epoch);
         WriteClient(message.ClientList, writer);
         writer.Write((ushort)message.BlockMapping.Count);
         foreach (var entry in message.BlockMapping.OrderBy(item => item.Id.ToString(), StringComparer.Ordinal))
         {
-            if (entry.Id.ToString().Length > ProtocolLimits.MaximumResourceIdLength || entry.Index >= ProtocolLimits.BlockCapacity)
+            if (entry.Id.ToString().Length > ProtocolLimits.MaximumResourceIdLength ||
+                entry.Index >= ProtocolLimits.BlockCapacity)
             {
                 throw new ArgumentException("Invalid block mapping.");
             }
+
             writer.Write(entry.Id.ToString());
             writer.Write(entry.Index);
         }
+
         WriteWorld(message.World, writer);
         writer.WriteBuff(message.TextureData);
         writer.WriteBuff(message.ProjectData);
@@ -81,6 +93,7 @@ public static partial class ProtocolMessageCodec
         {
             throw new InvalidDataException("Invalid bootstrap world metadata.");
         }
+
         return new WorldMetadata(name, seed, mode, maximumPlayers);
     }
 
@@ -90,6 +103,7 @@ public static partial class ProtocolMessageCodec
         {
             throw new ArgumentException("Invalid bootstrap world metadata.");
         }
+
         writer.Write(world.Name);
         writer.Write(world.Seed);
         writer.Write(world.Mode);
@@ -104,6 +118,7 @@ public static partial class ProtocolMessageCodec
         EnsureRemaining(reader, count * sizeof(int));
         var players = new byte[count][];
         for (var i = 0; i < count; i++) { players[i] = reader.ReadBuff(); }
+
         var summaries = ReadPlayerEntities(reader);
         var entities = reader.ReadBuff();
         return new InitialWorldSnapshotPackage
@@ -119,10 +134,12 @@ public static partial class ProtocolMessageCodec
     private static void WriteInitialSnapshot(InitialWorldSnapshotPackage message, ProtocolWriter writer)
     {
         if (message.Players.Count > ushort.MaxValue) { throw new ArgumentException("Too many player snapshots."); }
+
         writer.Write(message.Epoch);
         WriteClient(message.ClientList, writer);
         writer.Write((ushort)message.Players.Count);
         foreach (var player in message.Players) { writer.WriteBuff(player); }
+
         WritePlayerEntities(message.PlayerEntities, writer);
         writer.WriteBuff(message.EntityData);
     }
@@ -142,6 +159,7 @@ public static partial class ProtocolMessageCodec
                     var client = reader.ReadBoolean() ? ReadClient(reader).Client : null;
                     players[i] = new PlayerSnapshot(reader.ReadBuff(), client);
                 }
+
                 var summaries = ReadPlayerEntities(reader);
                 var data = reader.ReadBuff();
                 return new EntityPackage
@@ -158,6 +176,7 @@ public static partial class ProtocolMessageCodec
                 EnsureRemaining(reader, idsCount * sizeof(int));
                 var ids = new int[idsCount];
                 for (var i = 0; i < ids.Length; i++) { ids[i] = reader.ReadInt32(); }
+
                 return new EntityPackage(ids);
             default:
                 throw new InvalidDataException("Unknown entity message mode.");
@@ -171,7 +190,11 @@ public static partial class ProtocolMessageCodec
         {
             case EntityPackage.EventType.LoadOne:
             case EntityPackage.EventType.LoadList:
-                if (message.Players.Count > ushort.MaxValue) { throw new ArgumentException("Too many entity player snapshots."); }
+                if (message.Players.Count > ushort.MaxValue)
+                {
+                    throw new ArgumentException("Too many entity player snapshots.");
+                }
+
                 writer.Write(message.Players.Count);
                 foreach (var player in message.Players)
                 {
@@ -181,8 +204,10 @@ public static partial class ProtocolMessageCodec
                         writer.WriteEnum(ClientPackage.EventType.Add);
                         WriteClientIdentity(player.Client, writer);
                     }
+
                     writer.WriteBuff(player.Data);
                 }
+
                 WritePlayerEntities(message.PlayerEntities, writer);
                 writer.WriteBuff(message.EntityData);
                 break;
@@ -190,9 +215,14 @@ public static partial class ProtocolMessageCodec
                 writer.Write(message.EntityId);
                 break;
             case EntityPackage.EventType.RequestSync:
-                if (message.EntityIdList.Count > ushort.MaxValue) { throw new ArgumentException("Too many requested entity IDs."); }
+                if (message.EntityIdList.Count > ushort.MaxValue)
+                {
+                    throw new ArgumentException("Too many requested entity IDs.");
+                }
+
                 writer.Write((ushort)message.EntityIdList.Count);
                 foreach (var id in message.EntityIdList) { writer.Write(id); }
+
                 break;
             default:
                 throw new ArgumentException("Unknown entity message mode.");
@@ -202,28 +232,48 @@ public static partial class ProtocolMessageCodec
     private static PlayerEntitySnapshot[] ReadPlayerEntities(ProtocolReader reader)
     {
         var count = reader.ReadUInt16();
-        if (count > ProtocolLimits.MaximumPlayerEntitySnapshots) { throw new InvalidDataException("Too many player entity summaries."); }
+        if (count > ProtocolLimits.MaximumPlayerEntitySnapshots)
+        {
+            throw new InvalidDataException("Too many player entity summaries.");
+        }
+
         EnsureRemaining(reader, count * 37);
         var values = new PlayerEntitySnapshot[count];
         var identities = new HashSet<Guid>();
         var entities = new HashSet<int>();
         for (var i = 0; i < count; i++)
         {
-            var value = new PlayerEntitySnapshot(reader.ReadGuid(), reader.ReadInt32(), reader.ReadVector3(), reader.ReadInt32());
-            if (value.PlayerGuid == Guid.Empty || value.EntityId <= 0 || value.ParentBodyId < 0 ||
-                !identities.Add(value.PlayerGuid) || !entities.Add(value.EntityId) ||
-                !float.IsFinite(value.Position.X) || !float.IsFinite(value.Position.Y) || !float.IsFinite(value.Position.Z))
+            var value = new PlayerEntitySnapshot(
+                reader.ReadGuid(),
+                reader.ReadInt32(),
+                reader.ReadVector3(),
+                reader.ReadInt32()
+            );
+            if (value.PlayerGuid == Guid.Empty ||
+                value.EntityId <= 0 ||
+                value.ParentBodyId < 0 ||
+                !identities.Add(value.PlayerGuid) ||
+                !entities.Add(value.EntityId) ||
+                !float.IsFinite(value.Position.X) ||
+                !float.IsFinite(value.Position.Y) ||
+                !float.IsFinite(value.Position.Z))
             {
                 throw new InvalidDataException("Invalid player entity summary.");
             }
+
             values[i] = value;
         }
+
         return values;
     }
 
     private static void WritePlayerEntities(IReadOnlyList<PlayerEntitySnapshot> values, ProtocolWriter writer)
     {
-        if (values.Count > ProtocolLimits.MaximumPlayerEntitySnapshots) { throw new ArgumentException("Too many player entity summaries."); }
+        if (values.Count > ProtocolLimits.MaximumPlayerEntitySnapshots)
+        {
+            throw new ArgumentException("Too many player entity summaries.");
+        }
+
         writer.Write((ushort)values.Count);
         foreach (var value in values)
         {

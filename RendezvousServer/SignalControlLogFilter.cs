@@ -43,6 +43,7 @@ internal sealed class SignalControlLogFilter(ILogger<SignalControlLogFilter> log
                     break;
             }
         }
+
         var result = await next(context);
         var value = (result as IValueHttpResult)?.Value;
         switch (value)
@@ -55,11 +56,17 @@ internal sealed class SignalControlLogFilter(ILogger<SignalControlLogFilter> log
                 participant = registration.ParticipantId;
                 break;
         }
+
         logger.LogDebug(
             "Control signaling {Operation}: trace {TraceId}, session {SessionId}, participant {ParticipantId}, attempt {AttemptId}, status {StatusCode}, error {ErrorCode}",
-            context.HttpContext.Request.Path.Value, context.HttpContext.TraceIdentifier,
-            session, participant, attempt, (result as IStatusCodeHttpResult)?.StatusCode ?? 200,
-            (value as RendezvousErrorResponse)?.Error);
+            context.HttpContext.Request.Path.Value,
+            context.HttpContext.TraceIdentifier,
+            session,
+            participant,
+            attempt,
+            (result as IStatusCodeHttpResult)?.StatusCode ?? 200,
+            (value as RendezvousErrorResponse)?.Error
+        );
         return result;
     }
 }

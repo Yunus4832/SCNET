@@ -17,7 +17,8 @@ public class OneLedElectricElement(
     {
         var cellFace = CellFaces[0];
         var data = Terrain.ExtractData(
-            SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z));
+            SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z)
+        );
         var mountingFace = FourLedBlock.GetMountingFace(data);
         _color = LedBlock.LedColors[FourLedBlock.GetColor(data)];
         var v = new Vector3(cellFace.X + 0.5f, cellFace.Y + 0.5f, cellFace.Z + 0.5f);
@@ -49,8 +50,10 @@ public class OneLedElectricElement(
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                _voltage = MathUtils.Max(_voltage,
-                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace));
+                _voltage = MathUtils.Max(
+                    _voltage,
+                    connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
+                );
             }
         }
 

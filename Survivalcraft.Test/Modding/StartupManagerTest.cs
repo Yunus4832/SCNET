@@ -12,6 +12,7 @@ namespace Survivalcraft.Test.Modding;
 public sealed class StartupManagerTest : IDisposable
 {
     private readonly FileBackup _runningSettingBackup = FileBackup.Create(RunningSettingManager.RunningSettingPath);
+
     private readonly FileBackup _sessionInfoBackup = FileBackup.Create(SessionInfoManager.SessionInfoPath);
 
     public StartupManagerTest()
@@ -58,11 +59,13 @@ public sealed class StartupManagerTest : IDisposable
     {
         var defaultSession = SaveSession("default-session");
         var pendingSession = SaveSession("pending-session");
-        RunningSettingManager.Save(new RunningSetting
-        {
-            DefaultSessionId = defaultSession.SessionId,
-            PendingSessionId = pendingSession.SessionId
-        });
+        RunningSettingManager.Save(
+            new RunningSetting
+            {
+                DefaultSessionId = defaultSession.SessionId,
+                PendingSessionId = pendingSession.SessionId
+            }
+        );
 
         var startup = StartupManager.Load([]);
 
@@ -106,12 +109,14 @@ public sealed class StartupManagerTest : IDisposable
         RunningSettingManager.Save(new RunningSetting { DefaultSessionId = defaultSession.SessionId });
         var alpha = SaveSession("alpha", SessionTarget.World, "AlphaWorld");
 
-        var startup = StartupManager.Load([
-            "--session", "alpha",
-            "--world", "CustomWorld",
-            "--seed", "42",
-            "--game-mode", "Creative"
-        ]);
+        var startup = StartupManager.Load(
+            [
+                "--session", "alpha",
+                "--world", "CustomWorld",
+                "--seed", "42",
+                "--game-mode", "Creative"
+            ]
+        );
 
         Assert.Equal(defaultSession.SessionId, startup.Settings.DefaultSessionId);
         Assert.Equal(alpha.SessionId, startup.Session.SessionId);
@@ -127,13 +132,15 @@ public sealed class StartupManagerTest : IDisposable
     [Fact]
     public void ConnectAndPlayerOverridesAreTransientWithoutSave()
     {
-        var startup = StartupManager.Load([
-            "--session", "client-smoke",
-            "--connect", "127.0.0.1:28987",
-            "--player", "DebugPlayer",
-            "--server-port", "28987",
-            "--broadcast-port", "28988"
-        ]);
+        var startup = StartupManager.Load(
+            [
+                "--session", "client-smoke",
+                "--connect", "127.0.0.1:28987",
+                "--player", "DebugPlayer",
+                "--server-port", "28987",
+                "--broadcast-port", "28988"
+            ]
+        );
 
         Assert.Equal(SessionTarget.RemoteServer, startup.Session.Target);
         Assert.Equal("127.0.0.1", Assert.IsType<AddressNetworkTarget>(startup.Session.RemoteTarget).Host);
@@ -148,11 +155,13 @@ public sealed class StartupManagerTest : IDisposable
     [Fact]
     public void SessionOverridesRequireExplicitSession()
     {
-        var startup = StartupManager.Load([
-            "--world", "IgnoredWorld",
-            "--seed", "42",
-            "--game-mode", "Creative"
-        ]);
+        var startup = StartupManager.Load(
+            [
+                "--world", "IgnoredWorld",
+                "--seed", "42",
+                "--game-mode", "Creative"
+            ]
+        );
 
         Assert.Null(startup.Request.World);
         Assert.Null(startup.Request.Seed);
@@ -166,12 +175,14 @@ public sealed class StartupManagerTest : IDisposable
         var defaultSession = SaveSession("default-session");
         RunningSettingManager.Save(new RunningSetting { DefaultSessionId = defaultSession.SessionId });
 
-        var startup = StartupManager.Load([
-            "--session", "saved-session",
-            "--connect", "localhost:29987",
-            "--game-mode", "Challenging",
-            "--save"
-        ]);
+        var startup = StartupManager.Load(
+            [
+                "--session", "saved-session",
+                "--connect", "localhost:29987",
+                "--game-mode", "Challenging",
+                "--save"
+            ]
+        );
 
         var persistedSettings = RunningSettingManager.Load();
         var saved = SessionInfoManager.LoadByName("saved-session");
@@ -188,14 +199,16 @@ public sealed class StartupManagerTest : IDisposable
     [Fact]
     public void GuiHostUsesTransientRequestAndEffectiveSessionPorts()
     {
-        var startup = StartupManager.Load([
-            "--gui", "--host",
-            "--session", "gui-server",
-            "--world", "GuiServerWorld",
-            "--player", "HostPlayer",
-            "--server-port", "30987",
-            "--broadcast-port", "30988"
-        ]);
+        var startup = StartupManager.Load(
+            [
+                "--gui", "--host",
+                "--session", "gui-server",
+                "--world", "GuiServerWorld",
+                "--player", "HostPlayer",
+                "--server-port", "30987",
+                "--broadcast-port", "30988"
+            ]
+        );
 
         Assert.Equal(RunModeType.Gui, startup.Settings.RunMode);
         Assert.True(startup.Request.ForceWorldRunServer);
@@ -211,11 +224,13 @@ public sealed class StartupManagerTest : IDisposable
     [Fact]
     public void ConnectTakesPriorityOverHost()
     {
-        var startup = StartupManager.Load([
-            "--gui", "--host",
-            "--session", "remote-client",
-            "--connect", "127.0.0.1:31987"
-        ]);
+        var startup = StartupManager.Load(
+            [
+                "--gui", "--host",
+                "--session", "remote-client",
+                "--connect", "127.0.0.1:31987"
+            ]
+        );
 
         Assert.False(startup.Request.ForceWorldRunServer);
         Assert.Equal(SessionTarget.RemoteServer, startup.Session.Target);
@@ -283,8 +298,13 @@ public sealed class StartupManagerTest : IDisposable
 
             var result = new CommandDispatcher(registry).Execute(
                 new SetRunModeCommand(RunModeType.Gui),
-                new CommandContext(CommandInvocationChannel.UserInterface,
-                    CommandPrincipal.LocalOperator, null, "run-mode-test"));
+                new CommandContext(
+                    CommandInvocationChannel.UserInterface,
+                    CommandPrincipal.LocalOperator,
+                    null,
+                    "run-mode-test"
+                )
+            );
 
             var settings = RunningSettingManager.Load();
             Assert.True(result.Success, result.Message);
@@ -319,9 +339,15 @@ public sealed class StartupManagerTest : IDisposable
                     {
                         Target = SessionTarget.World,
                         World = "HeadlessWorld"
-                    }),
-                new CommandContext(CommandInvocationChannel.UserInterface,
-                    CommandPrincipal.LocalOperator, null, "run-mode-session-test"));
+                    }
+                ),
+                new CommandContext(
+                    CommandInvocationChannel.UserInterface,
+                    CommandPrincipal.LocalOperator,
+                    null,
+                    "run-mode-session-test"
+                )
+            );
 
             var settings = RunningSettingManager.Load();
             var pendingSession = SessionInfoManager.Load(settings.PendingSessionId);
@@ -341,11 +367,13 @@ public sealed class StartupManagerTest : IDisposable
     [Fact]
     public void LoadClearsInvalidOrMissingPersistedSessionReferences()
     {
-        RunningSettingManager.Save(new RunningSetting
-        {
-            DefaultSessionId = "not-a-guid",
-            PendingSessionId = Guid.NewGuid().ToString("N")
-        });
+        RunningSettingManager.Save(
+            new RunningSetting
+            {
+                DefaultSessionId = "not-a-guid",
+                PendingSessionId = Guid.NewGuid().ToString("N")
+            }
+        );
 
         var startup = StartupManager.Load([]);
 
@@ -360,8 +388,11 @@ public sealed class StartupManagerTest : IDisposable
         _sessionInfoBackup.Dispose();
     }
 
-    private static SessionInfo SaveSession(string name,
-        SessionTarget target = SessionTarget.MainMenu, string world = "")
+    private static SessionInfo SaveSession(
+        string name,
+        SessionTarget target = SessionTarget.MainMenu,
+        string world = ""
+    )
     {
         var session = new SessionInfo
         {
@@ -385,7 +416,9 @@ public sealed class StartupManagerTest : IDisposable
     private sealed class FileBackup : IDisposable
     {
         private readonly string _path;
+
         private readonly string _backupPath;
+
         private readonly bool _hadOriginal;
 
         private FileBackup(string path, string backupPath, bool hadOriginal)

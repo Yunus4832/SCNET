@@ -75,10 +75,17 @@ public sealed class SpatialBootstrapStateTest
     {
         var behavior = new SubsystemSignBlockBehavior();
         Attach(behavior, network);
-        typeof(SubsystemSignBlockBehavior).GetField("_subsystemGameInfo", BindingFlags.Instance | BindingFlags.NonPublic)!
+        typeof(SubsystemSignBlockBehavior).GetField(
+                "_subsystemGameInfo",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            )!
             .SetValue(behavior, new SubsystemGameInfo { WorldSettings = new WorldSettings { KeywordBlocking = "" } });
-        behavior.SetSignData(new Point3(1, 2, 3), ["one", "two", "three", "four"],
-            [Color.White, Color.White, Color.White, Color.White], "");
+        behavior.SetSignData(
+            new Point3(1, 2, 3),
+            ["one", "two", "three", "four"],
+            [Color.White, Color.White, Color.White, Color.White],
+            ""
+        );
         var values = new ValuesDictionary();
 
         behavior.Save(values);

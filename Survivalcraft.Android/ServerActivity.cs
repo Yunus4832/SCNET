@@ -59,7 +59,8 @@ public class ServerActivity : BlackActivity
     private static readonly LocalizedText _guiConfirmMessageText =
         UiText(
             "GuiConfirmMessage",
-            "The run mode will be saved and restarted in the graphical interface.");
+            "The run mode will be saved and restarted in the graphical interface."
+        );
 
     private static readonly LocalizedText _confirmText =
         UiText("Confirm", "Confirm");
@@ -136,7 +137,8 @@ public class ServerActivity : BlackActivity
         _stopButton.Click += (_, _) => ConfirmAction(
             _stopConfirmTitleText.Resolve(),
             _stopConfirmMessageText.Resolve(),
-            () => _ = ExecuteOperationCommandAsync("stop"));
+            () => _ = ExecuteOperationCommandAsync("stop")
+        );
 
         _guiButton = new Button(this)
         {
@@ -145,7 +147,8 @@ public class ServerActivity : BlackActivity
         _guiButton.Click += (_, _) => ConfirmAction(
             _guiConfirmTitleText.Resolve(),
             _guiConfirmMessageText.Resolve(),
-            () => _ = ExecuteOperationCommandAsync("runmode gui"));
+            () => _ = ExecuteOperationCommandAsync("runmode gui")
+        );
 
         buttonsLayout.AddView(
             _stopButton,
@@ -172,7 +175,8 @@ public class ServerActivity : BlackActivity
             _suggestionsContainer,
             new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MatchParent,
-                ViewGroup.LayoutParams.WrapContent)
+                ViewGroup.LayoutParams.WrapContent
+            )
         );
         _commandInput = new EditText(this)
         {
@@ -220,7 +224,8 @@ public class ServerActivity : BlackActivity
             _commandButton,
             new LinearLayout.LayoutParams(
                 Dp(54),
-                ViewGroup.LayoutParams.WrapContent)
+                ViewGroup.LayoutParams.WrapContent
+            )
         );
         commandLayout.AddView(
             _commandInput,
@@ -230,7 +235,8 @@ public class ServerActivity : BlackActivity
             _executeButton,
             new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WrapContent,
-                ViewGroup.LayoutParams.WrapContent)
+                ViewGroup.LayoutParams.WrapContent
+            )
         );
 
         _scrollView = new ScrollView(this);
@@ -306,10 +312,11 @@ public class ServerActivity : BlackActivity
     private void InitializeAndroidId()
     {
         GetMachineID.AndroidID = AndroidProviderSettings.Secure
-            .GetString(
-                ContentResolver,
-                AndroidProviderSettings.Secure.AndroidId
-            ) ?? string.Empty;
+                                     .GetString(
+                                         ContentResolver,
+                                         AndroidProviderSettings.Secure.AndroidId
+                                     ) ??
+                                 string.Empty;
     }
 
     protected override void OnDestroy()
@@ -337,7 +344,8 @@ public class ServerActivity : BlackActivity
         ConfirmAction(
             _stopConfirmTitleText.Resolve(),
             _stopConfirmMessageText.Resolve(),
-            () => _ = ExecuteOperationCommandAsync("stop"));
+            () => _ = ExecuteOperationCommandAsync("stop")
+        );
     }
 
     private async Task CompleteServerRunAsync(Task<int> serverTask)
@@ -349,35 +357,37 @@ public class ServerActivity : BlackActivity
         }
 
         RunOnUiThread(() =>
-        {
-            if (GameExitManager.ExitAction is GameExitAction.Restart)
             {
-                SetResult((Result)MainActivity.restartResultCode);
-            }
-            else if (GameExitManager.ExitAction is GameExitAction.SwitchInstance)
-            {
-                SetResult((Result)MainActivity.switchInstanceResultCode);
-            }
-            else
-            {
-                SetResult((Result)MainActivity.exitResultCode);
-            }
+                if (GameExitManager.ExitAction is GameExitAction.Restart)
+                {
+                    SetResult((Result)MainActivity.restartResultCode);
+                }
+                else if (GameExitManager.ExitAction is GameExitAction.SwitchInstance)
+                {
+                    SetResult((Result)MainActivity.switchInstanceResultCode);
+                }
+                else
+                {
+                    SetResult((Result)MainActivity.exitResultCode);
+                }
 
-            Finish();
-        });
+                Finish();
+            }
+        );
     }
 
     private void ConfirmAction(string title, string message, Action onConfirmed)
     {
         RunOnUiThread(() =>
-        {
-            new AndroidAlertDialog.Builder(this)
-                .SetTitle(title)?
-                .SetMessage(message)?
-                .SetPositiveButton(_confirmText.Resolve(), (_, _) => onConfirmed())?
-                .SetNegativeButton(_cancelText.Resolve(), (_, _) => { })?
-                .Show();
-        });
+            {
+                new AndroidAlertDialog.Builder(this)
+                    .SetTitle(title)?
+                    .SetMessage(message)?
+                    .SetPositiveButton(_confirmText.Resolve(), (_, _) => onConfirmed())?
+                    .SetNegativeButton(_cancelText.Resolve(), (_, _) => { })?
+                    .Show();
+            }
+        );
     }
 
     private async Task ExecuteInputCommandAsync()
@@ -408,7 +418,8 @@ public class ServerActivity : BlackActivity
             return CommandResult.LocalizedFail(
                 "command.busy",
                 "CommandRateLimited_Message",
-                "The previous command is still running.");
+                "The previous command is still running."
+            );
         }
 
         _commandExecuting = true;
@@ -432,11 +443,12 @@ public class ServerActivity : BlackActivity
         if (!_destroyed)
         {
             RunOnUiThread(() =>
-            {
-                var level = result.Success ? "OK" : "ERROR";
-                AppendLogLine($"COMMAND {level} [{result.Code}] {CommandText.Resolve(result)}");
-                UpdateCommandControls();
-            });
+                {
+                    var level = result.Success ? "OK" : "ERROR";
+                    AppendLogLine($"COMMAND {level} [{result.Code}] {CommandText.Resolve(result)}");
+                    UpdateCommandControls();
+                }
+            );
         }
 
         return result;
@@ -452,7 +464,8 @@ public class ServerActivity : BlackActivity
     private async Task RefreshSuggestionsAsync(
         string input,
         int version,
-        bool executeWhenComplete)
+        bool executeWhenComplete
+    )
     {
         await Task.Delay(_suggestionDebounceMs);
         if (_destroyed ||
@@ -469,22 +482,23 @@ public class ServerActivity : BlackActivity
         }
 
         RunOnUiThread(() =>
-        {
-            if (_destroyed ||
-                version != _suggestionRequestVersion ||
-                !string.Equals(_commandInput.Text, input, StringComparison.Ordinal))
             {
-                return;
-            }
+                if (_destroyed ||
+                    version != _suggestionRequestVersion ||
+                    !string.Equals(_commandInput.Text, input, StringComparison.Ordinal))
+                {
+                    return;
+                }
 
-            if (executeWhenComplete && result.CanExecute && result.Items.Count == 0)
-            {
-                _ = ExecuteInputCommandAsync();
-                return;
-            }
+                if (executeWhenComplete && result.CanExecute && result.Items.Count == 0)
+                {
+                    _ = ExecuteInputCommandAsync();
+                    return;
+                }
 
-            ShowSuggestions(result.Items);
-        });
+                ShowSuggestions(result.Items);
+            }
+        );
     }
 
     private void ShowSuggestions(IReadOnlyList<CommandSuggestion> suggestions)
@@ -504,7 +518,8 @@ public class ServerActivity : BlackActivity
         var visibleRows = Math.Min(_suggestionsContainer.ChildCount, 4);
         _suggestionsScrollView.LayoutParameters = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MatchParent,
-            Dp(visibleRows * 54));
+            Dp(visibleRows * 54)
+        );
         _suggestionsScrollView.Visibility = ViewStates.Visible;
     }
 
@@ -539,14 +554,17 @@ public class ServerActivity : BlackActivity
 
         row.AddView(
             value,
-            new LinearLayout.LayoutParams(0, Dp(44), 0.42f));
+            new LinearLayout.LayoutParams(0, Dp(44), 0.42f)
+        );
         row.AddView(
             description,
-            new LinearLayout.LayoutParams(0, Dp(44), 0.58f));
+            new LinearLayout.LayoutParams(0, Dp(44), 0.58f)
+        );
 
         var layoutParameters = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MatchParent,
-            ViewGroup.LayoutParams.WrapContent);
+            ViewGroup.LayoutParams.WrapContent
+        );
         layoutParameters.SetMargins(0, 0, 0, Dp(1));
         row.LayoutParameters = layoutParameters;
         return row;
@@ -565,8 +583,10 @@ public class ServerActivity : BlackActivity
             ? CommandLineTokenizer.FormatToken(suggestion.Value)
             : suggestion.Value;
         var text = CommandLineTokenizer.ReplaceCurrentToken(
-            _commandInput.Text ?? string.Empty,
-            value) + " ";
+                       _commandInput.Text ?? string.Empty,
+                       value
+                   ) +
+                   " ";
         _suppressSuggestionRefresh = true;
         _commandInput.Text = text;
         _commandInput.SetSelection(text.Length);
@@ -627,12 +647,13 @@ public class ServerActivity : BlackActivity
     private void ShowKeyboard()
     {
         _commandInput.Post(() =>
-        {
-            if (GetSystemService(InputMethodService) is InputMethodManager inputMethodManager)
             {
-                inputMethodManager.ShowSoftInput(_commandInput, ShowFlags.Implicit);
+                if (GetSystemService(InputMethodService) is InputMethodManager inputMethodManager)
+                {
+                    inputMethodManager.ShowSoftInput(_commandInput, ShowFlags.Implicit);
+                }
             }
-        });
+        );
     }
 
     private void CancelCommandBrowse()
@@ -658,7 +679,8 @@ public class ServerActivity : BlackActivity
         {
             inputMethodManager.HideSoftInputFromWindow(
                 _commandInput.WindowToken,
-                HideSoftInputFlags.None);
+                HideSoftInputFlags.None
+            );
         }
     }
 
@@ -685,8 +707,7 @@ public class ServerActivity : BlackActivity
         _commandButton.Enabled = enabled;
         _commandInput.Enabled = enabled;
         _executeButton.Enabled = enabled &&
-                                 !string.IsNullOrWhiteSpace(
-                                     (_commandInput.Text ?? string.Empty).Trim('/', ' '));
+                                 !string.IsNullOrWhiteSpace((_commandInput.Text ?? string.Empty).Trim('/', ' '));
         _stopButton.Enabled = enabled;
         _guiButton.Enabled = enabled;
         var currentLanguage = LanguageManager.CurrentLanguage;

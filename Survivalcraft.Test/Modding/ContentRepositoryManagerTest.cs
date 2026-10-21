@@ -66,9 +66,14 @@ public sealed class ContentRepositoryManagerTest
         Assert.Equal(repository, Assert.Single(service.Snapshot()));
     }
 
-    private static ContentRepositoryManager CreateManager(IEnumerable<ContentRepository> repositories,
-        Action<ContentRepositorySettings>? save = null) => new(new ContentRepositorySettings
+    private static ContentRepositoryManager CreateManager(
+        IEnumerable<ContentRepository> repositories,
+        Action<ContentRepositorySettings>? save = null
+    ) => new(
+        new ContentRepositorySettings
         {
             Repositories = repositories.ToArray()
-        }, save ?? (_ => { }));
+        },
+        save ?? (_ => { })
+    );
 }

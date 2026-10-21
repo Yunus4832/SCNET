@@ -12,17 +12,26 @@ public sealed record ApplyAdministratorCommand(string Name, string Contact, stri
 public sealed record AdministratorApplicationDto(
     AdministratorId AdministratorId,
     AdministratorStatus Status,
-    string ApiKey);
+    string ApiKey
+);
 
 public sealed class ApplyAdministratorCommandHandler(AdministratorRepository repository)
     : ICommandHandler<ApplyAdministratorCommand, AdministratorApplicationDto>
 {
-    public async Task<AdministratorApplicationDto> Handle(ApplyAdministratorCommand command,
-        CancellationToken cancellationToken)
+    public async Task<AdministratorApplicationDto> Handle(
+        ApplyAdministratorCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var key = ApiKeyUtility.GenerateAdministratorKey();
-        var item = Administrator.Apply(command.Name, command.Contact, command.Description,
-            ApiKeyUtility.GetPrefix(key), ApiKeyUtility.Hash(key), DateTimeOffset.UtcNow);
+        var item = Administrator.Apply(
+            command.Name,
+            command.Contact,
+            command.Description,
+            ApiKeyUtility.GetPrefix(key),
+            ApiKeyUtility.Hash(key),
+            DateTimeOffset.UtcNow
+        );
         await repository.AddAsync(item, cancellationToken);
         return new(item.Id, item.Status, key);
     }
