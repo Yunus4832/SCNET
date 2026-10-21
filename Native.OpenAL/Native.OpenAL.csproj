@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <Version>$(OpenALAndroidVersion)</Version>
+        <Version>$(OpenALVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <IsPackable>true</IsPackable>
-        <PackageId>SCNET.Native.OpenAL.Android</PackageId>
-        <Description>Android-only OpenAL Soft native libraries for the four supported ABIs.</Description>
+        <PackageId>SCNET.Native.OpenAL</PackageId>
+        <Description>OpenAL Soft native libraries for Windows, Linux and Android.</Description>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
         <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -16,5 +16,7 @@
         <None Update="runtimes/android-arm64/native/libopenal.so" Pack="true" PackagePath="runtimes/android-arm64/native/libopenal.so"/>
         <None Update="runtimes/android-x86/native/libopenal.so" Pack="true" PackagePath="runtimes/android-x86/native/libopenal.so"/>
         <None Update="runtimes/android-x64/native/libopenal.so" Pack="true" PackagePath="runtimes/android-x64/native/libopenal.so"/>
+        <None Update="runtimes/linux-x64/native/libopenal.so" Pack="true" PackagePath="runtimes/linux-x64/native/libopenal.so"/>
+        <None Update="runtimes/win-x64/native/soft_oal.dll" Pack="true" PackagePath="runtimes/win-x64/native/soft_oal.dll"/>
     </ItemGroup>
 </Project>

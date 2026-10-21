@@ -8,7 +8,7 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 
 | 包 | 项目 | 用途 |
 | --- | --- | --- |
-| `SCNET.Native.OpenAL.Android` | `Native.OpenAL.Android` | 仅 Android 四种 ABI 的 OpenAL，由 Engine 的 Android 目标依赖。 |
+| `SCNET.Native.OpenAL` | `Native.OpenAL` | Windows、Linux 和 Android 四种 ABI 的 OpenAL，由 Engine 统一依赖。 |
 | `SCNET.Native.ImageCodecs` | `Native.ImageCodecs` | PNG、WebP 的标准 RID 原生资产；由 Media 依赖。 |
 | `SCNET.Engine.Core` | `Engine.Core` | 不依赖引擎的基础工具。 |
 | `SCNET.Engine.Media` | `Engine.Media` | 图像、音频、Collada 模型数据与编解码；公共命名空间为 Engine.Media，无窗口、GPU、音频设备及文件存储依赖。 |
@@ -72,7 +72,7 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 仅需准备或更新原生包时，可选择两个原生资产项目：
 
 ```bash
-./Scripts/pack-nuget.sh --project Native.ImageCodecs --project Native.OpenAL.Android
+./Scripts/pack-nuget.sh --project Native.ImageCodecs --project Native.OpenAL
 ```
 
 这两个项目只将现有原生文件打包，不编译 C/C++，位于解决方案的 `01 NativeLibraries` 逻辑文件夹。
@@ -81,7 +81,7 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 本地包并还原解决方案。SDK 源码或原生资产改变后使用 `--refresh`（PowerShell 为 `-Refresh`），
 清除这些包当前版本的缓存并重新打包。它只负责依赖准备，完成后照常使用 `dotnet build`。
 
-从仓库根目录运行统一打包脚本。脚本先生成图像和 Android OpenAL 原生资产包，再按依赖顺序逐个执行可打包项目，任一项目失败时立即停止：
+从仓库根目录运行统一打包脚本。脚本先生成图像和 OpenAL 原生资产包，再按依赖顺序逐个执行可打包项目，任一项目失败时立即停止：
 
 ```bash
 ./Scripts/pack-nuget.sh
@@ -96,12 +96,12 @@ PowerShell：
 默认打包全部项目；可按项目名称选择一个或多个项目，执行顺序仍按脚本中的依赖顺序：
 
 ```bash
-./Scripts/pack-nuget.sh --project Native.ImageCodecs --project Native.OpenAL.Android
+./Scripts/pack-nuget.sh --project Native.ImageCodecs --project Native.OpenAL
 ./Scripts/pack-nuget.sh --project ContentTool -- --no-restore
 ```
 
 ```powershell
-./Scripts/pack-nuget.ps1 -Project Native.ImageCodecs,Native.OpenAL.Android
+./Scripts/pack-nuget.ps1 -Project Native.ImageCodecs,Native.OpenAL
 ```
 
 选择参数使用项目名称（例如 `Survivalcraft.ModTemplates`），不是 NuGet 包名。

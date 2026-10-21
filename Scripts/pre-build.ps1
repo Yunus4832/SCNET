@@ -9,7 +9,7 @@ Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
     $packages = @(
         @{ Id = "SCNET.Native.ImageCodecs"; Project = "Native.ImageCodecs/Native.ImageCodecs.csproj" },
-        @{ Id = "SCNET.Native.OpenAL.Android"; Project = "Native.OpenAL.Android/Native.OpenAL.Android.csproj" },
+        @{ Id = "SCNET.Native.OpenAL"; Project = "Native.OpenAL/Native.OpenAL.csproj" },
         @{ Id = "SCNET.Engine.Core"; Project = "Engine.Core/Engine.Core.csproj" },
         @{ Id = "SCNET.Engine.Media"; Project = "Engine.Media/Engine.Media.csproj" },
         @{ Id = "SCNET.Engine.Serialization"; Project = "Engine.Serialization/Engine.Serialization.csproj" },

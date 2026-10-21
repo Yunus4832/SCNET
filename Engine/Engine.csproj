@@ -23,6 +23,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="SCNET.Native.OpenAL" Version="$(OpenALVersion)"/>
         <PackageReference Include="Silk.NET.OpenAL" Version="2.23.0"/>
         <PackageReference Include="Silk.NET.OpenGLES" Version="2.23.0"/>
         <PackageReference Include="Silk.NET.SDL" Version="2.23.0"/>
@@ -33,13 +34,11 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
-        <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1"/>
         <PackageReference Include="Silk.NET.Input.Sdl" Version="2.23.0"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
         <Compile Remove="**\*.Desktop.cs"/>
-        <PackageReference Include="SCNET.Native.OpenAL.Android" Version="$(OpenALAndroidVersion)"/>
         <PackageReference Include="Xamarin.AndroidX.Core" Version="1.17.0.1"/>
     </ItemGroup>
 

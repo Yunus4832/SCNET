@@ -13,7 +13,7 @@ done
 cd "$repository_root"
 packages=(
     "SCNET.Native.ImageCodecs|Native.ImageCodecs/Native.ImageCodecs.csproj"
-    "SCNET.Native.OpenAL.Android|Native.OpenAL.Android/Native.OpenAL.Android.csproj"
+    "SCNET.Native.OpenAL|Native.OpenAL/Native.OpenAL.csproj"
     "SCNET.Engine.Core|Engine.Core/Engine.Core.csproj"
     "SCNET.Engine.Media|Engine.Media/Engine.Media.csproj"
     "SCNET.Engine.Serialization|Engine.Serialization/Engine.Serialization.csproj"

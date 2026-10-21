@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [ValidateSet("Native.ImageCodecs", "Native.OpenAL.Android", "Engine.Core", "Engine.Serialization", "Engine.Media", "Rendezvous.Protocol", "Engine.Network", "Engine", "EntitySystem", "Content.Packaging", "ServerSource.Protocol", "ContentTool", "Game.Protocol", "Survivalcraft", "Survivalcraft.ModTemplates")]
+    [ValidateSet("Native.ImageCodecs", "Native.OpenAL", "Engine.Core", "Engine.Serialization", "Engine.Media", "Rendezvous.Protocol", "Engine.Network", "Engine", "EntitySystem", "Content.Packaging", "ServerSource.Protocol", "ContentTool", "Game.Protocol", "Survivalcraft", "Survivalcraft.ModTemplates")]
     [string[]]$Project = @(),
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$AdditionalArguments
@@ -17,10 +17,10 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Native.ImageCodecs failed with exit code $LASTEXITCODE." }
     }
 
-    if ($Project.Count -eq 0 -or $Project -contains "Native.OpenAL.Android") {
-        Write-Host "[SCNET Pack] Packing SCNET.Native.OpenAL.Android"
-        & dotnet pack "Native.OpenAL.Android/Native.OpenAL.Android.csproj" --configuration $Configuration @AdditionalArguments
-        if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Native.OpenAL.Android failed with exit code $LASTEXITCODE." }
+    if ($Project.Count -eq 0 -or $Project -contains "Native.OpenAL") {
+        Write-Host "[SCNET Pack] Packing SCNET.Native.OpenAL"
+        & dotnet pack "Native.OpenAL/Native.OpenAL.csproj" --configuration $Configuration @AdditionalArguments
+        if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Native.OpenAL failed with exit code $LASTEXITCODE." }
     }
 
     if ($Project.Count -eq 0 -or $Project -contains "Engine.Core") {

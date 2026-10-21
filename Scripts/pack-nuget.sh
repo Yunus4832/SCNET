@@ -7,7 +7,7 @@ configuration="${CONFIGURATION:-Release}"
 
 selected=false
 pack_native_imagecodecs=false
-pack_native_openal_android=false
+pack_native_openal=false
 pack_engine_core=false
 pack_engine_serialization=false
 pack_engine_media=false
@@ -27,7 +27,7 @@ select_project() {
     selected=true
     case "$1" in
         Native.ImageCodecs) pack_native_imagecodecs=true ;;
-        Native.OpenAL.Android) pack_native_openal_android=true ;;
+        Native.OpenAL) pack_native_openal=true ;;
         Engine.Core) pack_engine_core=true ;;
         Engine.Serialization) pack_engine_serialization=true ;;
         Engine.Media) pack_engine_media=true ;;
@@ -72,9 +72,9 @@ if ! $selected || $pack_native_imagecodecs; then
     dotnet pack "Native.ImageCodecs/Native.ImageCodecs.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
-if ! $selected || $pack_native_openal_android; then
-    echo "[SCNET Pack] Packing SCNET.Native.OpenAL.Android"
-    dotnet pack "Native.OpenAL.Android/Native.OpenAL.Android.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+if ! $selected || $pack_native_openal; then
+    echo "[SCNET Pack] Packing SCNET.Native.OpenAL"
+    dotnet pack "Native.OpenAL/Native.OpenAL.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $pack_engine_core; then

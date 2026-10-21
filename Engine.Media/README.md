@@ -22,7 +22,7 @@ Engine.Serialization、NAudio、NLayer 和 NVorbis；图像原生库由独立的
 都能传递原生依赖，应用无需导入复制 props。
 
 ContentTool 将完整运行输出打入工具目录，包含托管依赖、原生库和 `.deps.json`，可独立执行。
-Android 图像库通过原生包依赖进入 APK；OpenAL 则通过 Engine 的 Android 专用包依赖提供。
+Android 图像库通过原生包依赖进入 APK；OpenAL 则通过 Engine 的统一 OpenAL 原生包依赖提供。
 
 许可声明统一维护在根目录的 `ThirdPartyNotices.txt`，随 NuGet、桌面发布包和 APK 分发；
 更新依赖时需同步更新。

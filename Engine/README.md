@@ -7,8 +7,8 @@ SCNET 的跨平台引擎运行时，提供图形、窗口、输入、音频、�
 独立的 `SCNET.Engine.Media` 负责图像、音频和模型编解码，工具或模组可直接使用其流接口。
 
 - 图像原生库由 `SCNET.Engine.Media` 的包依赖提供。
-- Android OpenAL 由 `SCNET.Native.OpenAL.Android` 提供。
-- 桌面 OpenAL、SDL 继续由对应第三方包提供。
+- 各平台 OpenAL 原生库由 `SCNET.Native.OpenAL` 提供。
+- OpenAL 托管绑定与 SDL 继续由对应 Silk.NET 包提供。
 - 消费应用无需声明这些原生文件的复制路径或 ABI 映射。
 
 本包不包含游戏规则或模组构建工具。编写游戏模组通常引用 `SCNET.Survivalcraft` 即可。

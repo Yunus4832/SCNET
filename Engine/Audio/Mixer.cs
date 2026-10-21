@@ -102,6 +102,8 @@ public static class Mixer
         }
 
         IsAudioInitialized = false;
+        AL?.Dispose();
+        audioContext.Dispose();
         AL = null;
         audioContext = null;
     }

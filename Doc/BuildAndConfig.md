@@ -314,16 +314,17 @@ dotnet test Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.cspr
 
 `Engine.Media` 提供图像、音频和模型数据的读取与编解码，供游戏、模组与内容工具共同使用。
 媒体 API 使用流，文件路径和游戏存储由调用方处理；字体纹理、GPU 缓冲和音频播放仍由 Engine 负责。
-图像原生库位于 `Native.ImageCodecs/runtimes/<rid>/native`，Android OpenAL 位于
-`Native.OpenAL.Android/runtimes/<rid>/native`。`Native.ImageCodecs.csproj` 将图像库打包为
+图像原生库位于 `Native.ImageCodecs/runtimes/<rid>/native`，OpenAL 位于
+`Native.OpenAL/runtimes/<rid>/native`。`Native.ImageCodecs.csproj` 将图像库打包为
 `SCNET.Native.ImageCodecs`，Media 引用该包，由 SDK 按 RID 选择并复制或打包原生资产。
 应用、服务和测试无需导入图像原生库 props；首次构建需先准备本地原生包，见 [NuGet](NuGet.md#本地打包)。
-Android OpenAL 由 Engine 的 Android 目标引用 `SCNET.Native.OpenAL.Android`，
-与图像库一样通过标准 RID 原生资产自动进入 APK；启动器无需文件引用或 ABI 映射。
+各平台 OpenAL 由 Engine 统一引用 `SCNET.Native.OpenAL`，
+与图像库一样通过标准 RID 选择原生资产，复制到桌面输出或进入 APK；启动器无需文件引用或 ABI 映射。
 ContentTool 将完整运行输出打入工具目录，独立运行时不依赖模组项目的资产。
 许可声明统一维护在根目录的 `ThirdPartyNotices.txt`；桌面应用发布时携带，Android 加入 APK assets。
 
-原生库版本、许可证和重编译方法见 [Native.ImageCodecs](../Native.ImageCodecs/README.md)。
+原生库版本、许可证和重编译方法见 [Native.ImageCodecs](../Native.ImageCodecs/README.md)
+和 [Native.OpenAL](../Native.OpenAL/README.md)。
 仓库已包含稳定、验证可用的预编译原生库，日常开发、首次构建和发布均直接复用；
 准备本地 NuGet 包只是打包这些现有文件，不需要重新编译。只有升级版本或明确需要修复、
 补充原生产物时，才执行原生库构建脚本，并在替换前验证对应平台或 ABI。

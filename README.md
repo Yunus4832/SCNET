@@ -33,7 +33,7 @@
 | `Engine.Core/` | 基础类型和运行模式，给各项目共用 |
 | `Engine.Media/` | 独立的图像、音频、模型数据与编解码，使用流接口，无窗口和设备依赖 |
 | `Native.ImageCodecs/` | 图像原生资产 NuGet 包，按 RID 提供依赖 |
-| `Native.OpenAL.Android/` | Android 专用 OpenAL 原生资产 NuGet 包 |
+| `Native.OpenAL/` | Windows、Linux 和 Android 的 OpenAL 原生资产 NuGet 包 |
 | `Engine.Serialization/` | 序列化与数据支持 |
 | `EntitySystem/` | 实体、组件和模板数据库 |
 | `Survivalcraft.Windows/` | Windows 启动器，支持客户端和服务器模式 |

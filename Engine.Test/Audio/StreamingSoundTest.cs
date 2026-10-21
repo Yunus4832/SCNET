@@ -48,6 +48,21 @@ public class StreamingSoundTest : IDisposable
         // Cleanup if needed
     }
 
+    [Fact]
+    public void Mixer_AfterDisposal_ShouldReinitializeAudio()
+    {
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            Mixer.Dispose();
+            Assert.False(Mixer.IsAudioInitialized);
+            Assert.Null(Mixer.AL);
+
+            Mixer.Initialize();
+            Assert.True(Mixer.IsAudioInitialized);
+            Assert.NotNull(Mixer.AL);
+        }
+    }
+
     /// <summary>
     ///     测试：使用有效的 OGG 音频流创建 StreamingSound 实例。
     /// </summary>

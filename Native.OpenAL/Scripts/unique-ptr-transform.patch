@@ -1,0 +1,5 @@
+--- a/alc/alc.cpp
++++ b/alc/alc.cpp
+@@ -1784 +1784 @@
+-            | std::views::transform(&ContextBase::EffectSlotCluster::operator*)
++            | std::views::transform([](const ContextBase::EffectSlotCluster &cluster) -> auto& { return *cluster; })

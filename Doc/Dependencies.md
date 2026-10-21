@@ -16,8 +16,7 @@
 - `MessagePack`：实体系统相关序列化
 - `NAudio.Core`、`NAudio.Flac.Unknown`、`NLayer.NAudioSupport`、`NVorbis`：Engine.Media 音频解码；设备播放由 Engine 的 OpenAL 实现
 - `Silk.NET.OpenAL`、`Silk.NET.OpenGLES`、`Silk.NET.OpenGL`、`Silk.NET.Input.Common`、`Silk.NET.Input.Sdl`、`Silk.NET.Windowing.Common`、`Silk.NET.Windowing.Sdl`：窗口、输入与图形抽象
-- `Silk.NET.OpenAL.Soft.Native`：桌面端音频补充
-- `SCNET.Native.OpenAL.Android`：Android 四种 ABI 的 OpenAL Soft 原生资产，仅由 Engine 的 Android 目标引用
+- `SCNET.Native.OpenAL`：Windows、Linux 和 Android 四种 ABI 的 OpenAL Soft 原生资产，由 Engine 统一引用
 - `Silk.NET.SDL`：桌面与 Android 的 SDL 平台适配
 - 图像编解码采用项目内的 P/Invoke 薄绑定；`Engine.Media` 使用 libpng 与 libwebp 编解码图像，公共 API 位于 `Engine.Media`。内容服务器图片上传在解析元数据前限定为 PNG；游戏支持 PNG、WebP 和 BMP，不提供 TIFF 入口。
 - 原生图像库的版本、来源和构建说明见 [Native.ImageCodecs](../Native.ImageCodecs/README.md)。
