@@ -8,9 +8,7 @@ public class ModelWidget : Widget
 
     private static LitShader? _shaderAlpha;
 
-    private Matrix[] _absoluteBoneTransforms = [];
-
-    private Matrix?[] _boneTransforms = [];
+    private ModelPose? _pose;
 
     public override bool IsHitTestVisible { get; set; } = false;
 
@@ -46,8 +44,7 @@ public class ModelWidget : Widget
             }
 
             field = value;
-            _boneTransforms = new Matrix?[field.Bones.Count];
-            _absoluteBoneTransforms = new Matrix[field.Bones.Count];
+            _pose = new ModelPose(field);
         }
     } = null!;
 
@@ -57,14 +54,16 @@ public class ModelWidget : Widget
         set;
     } = null!;
 
-    public Matrix? GetBoneTransform(int boneIndex)
+    public ModelPose Pose => _pose ?? throw new InvalidOperationException("Model pose is not initialized.");
+
+    public Matrix? GetNodeTransform(int nodeIndex)
     {
-        return _boneTransforms[boneIndex];
+        return Pose.GetAnimationTransform(nodeIndex);
     }
 
-    public void SetBoneTransform(int boneIndex, Matrix? transformation)
+    public void SetNodeTransform(int nodeIndex, Matrix? transformation)
     {
-        _boneTransforms[boneIndex] = transformation;
+        Pose.SetAnimationTransform(nodeIndex, transformation);
     }
 
 
@@ -148,19 +147,15 @@ public class ModelWidget : Widget
         Display.DepthStencilState = DepthStencilState.Default;
         Display.BlendState = BlendState.AlphaBlend;
         Display.RasterizerState = RasterizerState.CullNoneScissor;
-        ProcessBoneHierarchy(Model.RootBone, Matrix.Identity, _absoluteBoneTransforms);
+        Pose.CalculateAbsoluteTransforms(Matrix.Identity);
         var num2 = (float)Time.RealTime + GetHashCode() % 1000 / 100f;
         var m = AutoRotationVector.LengthSquared() > 0f
             ? Matrix.CreateFromAxisAngle(Vector3.Normalize(AutoRotationVector), AutoRotationVector.Length() * num2)
             : Matrix.Identity;
-        foreach (var mesh in Model.Meshes)
+        foreach (var node in Model.MeshNodes)
         {
-            if (mesh.ParentBone != null)
-            {
-                litShader.Transforms.World[0] = _absoluteBoneTransforms[mesh.ParentBone.Index] * ModelMatrix * m;
-            }
-
-            foreach (var meshPart in mesh.MeshParts)
+            litShader.Transforms.World[0] = Pose.AbsoluteTransforms[node.Index] * ModelMatrix * m;
+            foreach (var meshPart in node.RequireMesh().Primitives)
             {
                 if (meshPart.IndicesCount <= 0)
                 {
@@ -183,24 +178,5 @@ public class ModelWidget : Widget
     {
         IsDrawRequired = true;
         DesiredSize = Size;
-    }
-
-    public void ProcessBoneHierarchy(ModelBone modelBone, Matrix currentTransform, Matrix[] transforms)
-    {
-        var m = modelBone.Transform;
-        if (_boneTransforms[modelBone.Index].HasValue)
-        {
-            var translation = m.Translation;
-            m.Translation = Vector3.Zero;
-            m *= _boneTransforms[modelBone.Index]!.Value;
-            m.Translation += translation;
-        }
-
-        Matrix.MultiplyRestricted(ref m, ref currentTransform, out transforms[modelBone.Index]);
-
-        foreach (var childBone in modelBone.ReadOnlyChildBones)
-        {
-            ProcessBoneHierarchy(childBone, transforms[modelBone.Index], transforms);
-        }
     }
 }

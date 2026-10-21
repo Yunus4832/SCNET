@@ -33,10 +33,7 @@ public class ComponentSimpleModel : ComponentModel
             }
         }
 
-        if (Model.RootBone != null)
-        {
-            SetBoneTransform(Model.RootBone.Index, componentFrame.Matrix);
-        }
+        Pose.WorldTransform = componentFrame.Matrix;
 
         base.Animate();
     }

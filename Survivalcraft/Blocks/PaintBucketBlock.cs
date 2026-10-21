@@ -13,19 +13,13 @@ public class PaintBucketBlock : BucketBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/FullBucket");
-        var bucketMesh = model.FindMesh("Bucket")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            bucketMesh.ParentBone ??
-            throw new InvalidOperationException("Required BucketMesh.ParentBone is null")
-        );
-        var contentsMesh = model.FindMesh("Contents")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            contentsMesh.ParentBone ??
-            throw new InvalidOperationException("Required ContentsMesh.ParentBone is null")
-        );
-        StandaloneBucketBlockMesh.AppendModelMeshPart(
-            bucketMesh.MeshParts[0],
-            boneAbsoluteTransform *
+        var bucketNode = model.FindNode("Bucket")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bucketNode);
+        var contentsNode = model.FindNode("Contents")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(contentsNode);
+        StandaloneBucketBlockMesh.AppendModelPrimitive(
+            bucketNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform *
             Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
             Matrix.CreateTranslation(0f, -0.3f, 0f),
             false,
@@ -34,9 +28,9 @@ public class PaintBucketBlock : BucketBlock
             false,
             Color.White
         );
-        StandalonePaintBlockMesh.AppendModelMeshPart(
-            contentsMesh.MeshParts[0],
-            boneAbsoluteTransform2 *
+        StandalonePaintBlockMesh.AppendModelPrimitive(
+            contentsNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 *
             Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
             Matrix.CreateTranslation(0f, -0.3f, 0f),
             false,

@@ -1,5 +1,6 @@
 using Engine.Audio;
-using Engine.Media;
+using Engine.Media.Audio;
+using Engine.Media.Audio.Formats;
 
 namespace Engine.Test.Audio;
 

@@ -1,4 +1,4 @@
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using Game.Network.Handling;
 using Game.Subsystems;

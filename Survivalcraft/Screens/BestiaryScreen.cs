@@ -235,8 +235,8 @@ public class BestiaryScreen : Screen
     {
         modelWidget.Model = ContentManager.Get<Model>(info.ModelName);
         modelWidget.TextureOverride = ContentManager.Get<Texture2D>(info.TextureOverride);
-        var absoluteTransforms = new Matrix[modelWidget.Model.Bones.Count];
-        modelWidget.Model.CopyAbsoluteBoneTransformsTo(absoluteTransforms);
+        var absoluteTransforms = new Matrix[modelWidget.Model.Nodes.Count];
+        modelWidget.Model.CopyAbsoluteNodeTransformsTo(absoluteTransforms);
         var boundingBox = modelWidget.Model.CalculateAbsoluteBoundingBox(absoluteTransforms);
         var x = MathUtils.Max(boundingBox.Size().X, 1.4f * boundingBox.Size().Y, boundingBox.Size().Z);
         modelWidget.ViewPosition = new Vector3(boundingBox.Center().X, 1.5f, boundingBox.Center().Z) +

@@ -53,21 +53,15 @@ public abstract class GunpowderKegBlock(string modelName, bool isIncendiary) : B
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>(ModelName);
-        var kegMesh = model.FindMesh("Keg")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            kegMesh.ParentBone ??
-            throw new InvalidOperationException("Required KegMesh.ParentBone is null")
-        );
-        var fuseMesh = model.FindMesh("Fuse")!;
-        FuseOffset = BlockMesh.GetBoneAbsoluteTransform(
-                         fuseMesh.ParentBone ??
-                         throw new InvalidOperationException("Required FuseMesh.ParentBone is null")
-                     ).Translation +
+        var kegNode = model.FindNode("Keg")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(kegNode);
+        var fuseNode = model.FindNode("Fuse")!;
+        FuseOffset = BlockMesh.GetNodeAbsoluteTransform(fuseNode).Translation +
                      new Vector3(0.5f, 0f, 0.5f);
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(
-            kegMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+        blockMesh.AppendModelPrimitive(
+            kegNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
             false,
             false,
             false,
@@ -81,9 +75,9 @@ public abstract class GunpowderKegBlock(string modelName, bool isIncendiary) : B
         }
 
         CollisionBoxes = [blockMesh.CalculateBoundingBox()];
-        StandaloneBlockMesh.AppendModelMeshPart(
-            kegMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            kegNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

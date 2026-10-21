@@ -1,4 +1,5 @@
-using Engine.Core;
+using Engine.Core.Collections;
+using Engine.Core.Mathematics;
 
 namespace Engine.Graphics;
 

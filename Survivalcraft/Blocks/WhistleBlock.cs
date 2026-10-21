@@ -9,23 +9,20 @@ public class WhistleBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Whistle");
-        var whistleMesh = model.FindMesh("Whistle")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            whistleMesh.ParentBone ??
-            throw new InvalidOperationException("Required WhistleMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            whistleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.04f, 0f),
+        var whistleNode = model.FindNode("Whistle")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(whistleNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            whistleNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.04f, 0f),
             false,
             false,
             false,
             false,
             new Color(255, 255, 255)
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            whistleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.04f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            whistleNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.04f, 0f),
             false,
             true,
             false,

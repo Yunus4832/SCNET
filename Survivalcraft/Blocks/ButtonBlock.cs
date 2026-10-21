@@ -13,11 +13,8 @@ public class ButtonBlock : MountedElectricElementBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Button");
-        var buttonMesh = model.FindMesh("Button")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            buttonMesh.ParentBone ??
-            throw new InvalidOperationException("Required ButtonMesh.ParentBone is null")
-        );
+        var buttonNode = model.FindNode("Button")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(buttonNode);
         for (var i = 0; i < 6; i++)
         {
             var matrix = i >= 4
@@ -29,9 +26,9 @@ public class ButtonBlock : MountedElectricElementBlock
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByFace[i] = new BlockMesh();
-            BlockMeshesByFace[i].AppendModelMeshPart(
-                buttonMesh.MeshParts[0],
-                boneAbsoluteTransform * matrix,
+            BlockMeshesByFace[i].AppendModelPrimitive(
+                buttonNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * matrix,
                 false,
                 false,
                 false,
@@ -42,9 +39,9 @@ public class ButtonBlock : MountedElectricElementBlock
         }
 
         var matrix2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBlockMesh.AppendModelMeshPart(
-            buttonMesh.MeshParts[0],
-            boneAbsoluteTransform * matrix2,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            buttonNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * matrix2,
             false,
             false,
             false,

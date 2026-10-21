@@ -21,11 +21,8 @@ public class SpikedPlankBlock : MountedElectricElementBlock
         for (var i = 0; i < 2; i++)
         {
             var name = array[i];
-            var modelMesh = model.FindMesh(name)!;
-            var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-                modelMesh.ParentBone ??
-                throw new InvalidOperationException("Required ModelMesh.Parent is null")
-            );
+            var modelNode = model.FindNode(name)!;
+            var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(modelNode);
             for (var j = 0; j < 6; j++)
             {
                 var num = SetMountingFace(SetSpikesState(0, i != 0), j);
@@ -38,9 +35,9 @@ public class SpikedPlankBlock : MountedElectricElementBlock
                       Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 BlockMeshesByData[num] = new BlockMesh();
-                BlockMeshesByData[num].AppendModelMeshPart(
-                    modelMesh.MeshParts[0],
-                    boneAbsoluteTransform * m,
+                BlockMeshesByData[num].AppendModelPrimitive(
+                    modelNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform * m,
                     false,
                     false,
                     false,
@@ -51,9 +48,9 @@ public class SpikedPlankBlock : MountedElectricElementBlock
             }
 
             var identity = Matrix.Identity;
-            StandaloneBlockMesh.AppendModelMeshPart(
-                modelMesh.MeshParts[0],
-                boneAbsoluteTransform * identity,
+            StandaloneBlockMesh.AppendModelPrimitive(
+                modelNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * identity,
                 false,
                 false,
                 false,

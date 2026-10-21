@@ -209,7 +209,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
                 LitShader.Transforms.World[0] = matrix2;
                 LitShader.Transforms.View = Matrix.Identity;
                 LitShader.Transforms.Projection = camera.ProjectionMatrix;
-                foreach (var meshPart in _handModel.Meshes.SelectMany(mesh => mesh.MeshParts))
+                foreach (var meshPart in _handModel.MeshNodes.SelectMany(node => node.RequireMesh().Primitives))
                 {
                     Display.DrawIndexed(
                         PrimitiveType.TriangleList,

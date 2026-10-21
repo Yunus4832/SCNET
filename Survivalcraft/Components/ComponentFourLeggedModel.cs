@@ -18,7 +18,7 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
 
     public float LastMove;
 
-    private ModelBone _bodyBone = null!;
+    private ModelNode _bodyNode = null!;
 
     private float _buttFactor;
 
@@ -38,15 +38,15 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
 
     private float _headAngleY;
 
-    private ModelBone _headBone = null!;
+    private ModelNode _headNode = null!;
 
-    private ModelBone _leg1Bone = null!;
+    private ModelNode _leg1Node = null!;
 
-    private ModelBone _leg2Bone = null!;
+    private ModelNode _leg2Node = null!;
 
-    private ModelBone _leg3Bone = null!;
+    private ModelNode _leg3Node = null!;
 
-    private ModelBone _leg4Bone = null!;
+    private ModelNode _leg4Node = null!;
 
     private float _legAngle1;
 
@@ -58,7 +58,7 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
 
     private bool _moveLegWhenFeeding;
 
-    private ModelBone? _neckBone;
+    private ModelNode? _neckNode;
 
     private SubsystemAudio _subsystemAudio = null!;
 
@@ -252,7 +252,7 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
             vector2.X = MathUtils.Clamp(vector2.X, 0f - MathUtils.DegToRad(65f), MathUtils.DegToRad(65f));
             vector2.Y = MathUtils.Clamp(vector2.Y, 0f - MathUtils.DegToRad(55f), MathUtils.DegToRad(55f));
             var vector3 = Vector2.Zero;
-            if (_neckBone != null)
+            if (_neckNode != null)
             {
                 vector3 = 0.6f * vector2;
                 vector2 = 0.4f * vector2;
@@ -294,26 +294,26 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
                 vector2 = Vector2.Lerp(v2: new Vector2(0f, y2), v1: vector2, f: _buttFactor);
             }
 
-            SetBoneTransform(
-                _bodyBone.Index,
+            SetNodeTransform(
+                _bodyNode.Index,
                 Matrix.CreateRotationY(vector.X) * Matrix.CreateTranslation(position.X, position.Y + Bob, position.Z)
             );
-            SetBoneTransform(
-                _headBone.Index,
+            SetNodeTransform(
+                _headNode.Index,
                 Matrix.CreateRotationX(vector2.Y) * Matrix.CreateRotationZ(0f - vector2.X)
             );
-            if (_neckBone != null)
+            if (_neckNode != null)
             {
-                SetBoneTransform(
-                    _neckBone.Index,
+                SetNodeTransform(
+                    _neckNode.Index,
                     Matrix.CreateRotationX(vector3.Y) * Matrix.CreateRotationZ(0f - vector3.X)
                 );
             }
 
-            SetBoneTransform(_leg1Bone.Index, Matrix.CreateRotationX(_legAngle1));
-            SetBoneTransform(_leg2Bone.Index, Matrix.CreateRotationX(_legAngle2));
-            SetBoneTransform(_leg3Bone.Index, Matrix.CreateRotationX(_legAngle3));
-            SetBoneTransform(_leg4Bone.Index, Matrix.CreateRotationX(_legAngle4));
+            SetNodeTransform(_leg1Node.Index, Matrix.CreateRotationX(_legAngle1));
+            SetNodeTransform(_leg2Node.Index, Matrix.CreateRotationX(_legAngle2));
+            SetNodeTransform(_leg3Node.Index, Matrix.CreateRotationX(_legAngle3));
+            SetNodeTransform(_leg4Node.Index, Matrix.CreateRotationX(_legAngle4));
         }
         else
         {
@@ -321,23 +321,23 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
             float num20 = Vector3.Dot(componentFrame.Matrix.Right, DeathCauseOffset) > 0f ? 1 : -1;
             var num21 = ComponentCreature.ComponentBody.BoundingBox.Max.Y -
                         ComponentCreature.ComponentBody.BoundingBox.Min.Y;
-            SetBoneTransform(
-                _bodyBone.Index,
+            SetNodeTransform(
+                _bodyNode.Index,
                 Matrix.CreateTranslation(-0.5f * num21 * Vector3.UnitY * DeathPhase) *
                 Matrix.CreateFromYawPitchRoll(vector.X, 0f, (float)Math.PI / 2f * DeathPhase * num20) *
                 Matrix.CreateTranslation(0.2f * num21 * Vector3.UnitY * DeathPhase) *
                 Matrix.CreateTranslation(position)
             );
-            SetBoneTransform(_headBone.Index, Matrix.CreateRotationX(MathUtils.DegToRad(50f) * DeathPhase));
-            if (_neckBone != null)
+            SetNodeTransform(_headNode.Index, Matrix.CreateRotationX(MathUtils.DegToRad(50f) * DeathPhase));
+            if (_neckNode != null)
             {
-                SetBoneTransform(_neckBone.Index, Matrix.Identity);
+                SetNodeTransform(_neckNode.Index, Matrix.Identity);
             }
 
-            SetBoneTransform(_leg1Bone.Index, Matrix.CreateRotationX(_legAngle1 * num19));
-            SetBoneTransform(_leg2Bone.Index, Matrix.CreateRotationX(_legAngle2 * num19));
-            SetBoneTransform(_leg3Bone.Index, Matrix.CreateRotationX(_legAngle3 * num19));
-            SetBoneTransform(_leg4Bone.Index, Matrix.CreateRotationX(_legAngle4 * num19));
+            SetNodeTransform(_leg1Node.Index, Matrix.CreateRotationX(_legAngle1 * num19));
+            SetNodeTransform(_leg2Node.Index, Matrix.CreateRotationX(_legAngle2 * num19));
+            SetNodeTransform(_leg3Node.Index, Matrix.CreateRotationX(_legAngle3 * num19));
+            SetNodeTransform(_leg4Node.Index, Matrix.CreateRotationX(_legAngle4 * num19));
         }
 
         base.Animate();
@@ -362,12 +362,12 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
     public override void SetModel(Model model)
     {
         base.SetModel(model);
-        _bodyBone = Model.FindBone("Body")!;
-        _neckBone = Model.FindBone("Neck", false);
-        _headBone = Model.FindBone("Head")!;
-        _leg1Bone = Model.FindBone("Leg1")!;
-        _leg2Bone = Model.FindBone("Leg2")!;
-        _leg3Bone = Model.FindBone("Leg3")!;
-        _leg4Bone = Model.FindBone("Leg4")!;
+        _bodyNode = Model.FindNode("Body")!;
+        _neckNode = Model.FindNode("Neck", false);
+        _headNode = Model.FindNode("Head")!;
+        _leg1Node = Model.FindNode("Leg1")!;
+        _leg2Node = Model.FindNode("Leg2")!;
+        _leg3Node = Model.FindNode("Leg3")!;
+        _leg4Node = Model.FindNode("Leg4")!;
     }
 }

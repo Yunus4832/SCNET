@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-using Engine.Core;
+using Engine.Core.Runtime;
 
 using Game;
 using Game.Components;

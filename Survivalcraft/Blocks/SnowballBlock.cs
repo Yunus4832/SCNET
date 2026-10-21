@@ -9,14 +9,11 @@ public class SnowballBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Snowball");
-        var snowballMesh = model.FindMesh("Snowball")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            snowballMesh.ParentBone ??
-            throw new InvalidOperationException("Required SnowballMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            snowballMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+        var snowballNode = model.FindNode("Snowball")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(snowballNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            snowballNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,

@@ -1,6 +1,7 @@
 using System.Reflection;
 
-using Engine.Core;
+using Engine.Core.Collections;
+using Engine.Core.Mathematics;
 
 using Game.Components;
 using Game.Modding;

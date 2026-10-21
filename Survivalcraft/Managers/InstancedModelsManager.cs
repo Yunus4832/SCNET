@@ -1,52 +1,73 @@
 using Engine.Graphics;
-using Engine.Media;
 
 namespace Game.Managers;
 
 public static class InstancedModelsManager
 {
-    private static readonly Dictionary<Model, InstancedModelData> _cache;
+    private static readonly Dictionary<Model, List<CacheEntry>> _cache = new();
 
     static InstancedModelsManager()
     {
-        _cache = new Dictionary<Model, InstancedModelData>();
-        Display.DeviceReset += delegate
+        Display.DeviceReset += () =>
         {
-            foreach (var value in _cache.Values)
+            foreach (var model in _cache.Keys.ToArray())
             {
-                value.VertexBuffer.Dispose();
-                value.IndexBuffer.Dispose();
+                ReleaseModel(model);
             }
-
-            _cache.Clear();
         };
     }
 
-    public static InstancedModelData GetInstancedModelData(Model model, int[] meshDrawOrders)
+    public static InstancedModelData GetInstancedModelData(Model model, int[] drawNodeIndices)
     {
-        if (_cache.TryGetValue(model, out var value))
+        ObjectDisposedException.ThrowIf(model.IsDisposed, model);
+        if (!_cache.TryGetValue(model, out var entries))
         {
-            return value;
+            entries = [];
+            _cache.Add(model, entries);
+            model.Disposed += ReleaseModel;
         }
 
-        value = CreateInstancedModelData(model, meshDrawOrders);
-        _cache.Add(model, value);
+        var entry = entries.FirstOrDefault(e => e.DrawNodeIndices.SequenceEqual(drawNodeIndices));
+        if (entry != null)
+        {
+            return entry.Data;
+        }
 
-        return value;
+        var data = CreateInstancedModelData(model, drawNodeIndices);
+        entries.Add(new CacheEntry(drawNodeIndices.ToArray(), data));
+        return data;
     }
 
-    private static InstancedModelData CreateInstancedModelData(Model model, int[] meshDrawOrders)
+    private static void ReleaseModel(Model model)
+    {
+        model.Disposed -= ReleaseModel;
+        if (_cache.Remove(model, out var entries))
+        {
+            foreach (var entry in entries)
+            {
+                entry.Data.VertexBuffer.Dispose();
+                entry.Data.IndexBuffer.Dispose();
+            }
+        }
+    }
+
+    private static InstancedModelData CreateInstancedModelData(Model model, int[] drawNodeIndices)
     {
         var dynamicArray = new DynamicArray<InstancedVertex>();
         var dynamicArray2 = new DynamicArray<ushort>();
-        foreach (var order in meshDrawOrders)
+        foreach (var order in drawNodeIndices)
         {
-            var modelMesh = model.Meshes[order];
-            foreach (var meshPart in modelMesh.MeshParts)
+            var node = model.Nodes[order];
+            foreach (var meshPart in node.RequireMesh().Primitives)
             {
                 _ = dynamicArray.Count;
                 var vertexBuffer = meshPart.VertexBuffer;
                 var indexBuffer = meshPart.IndexBuffer;
+                if (indexBuffer.IndexFormat != IndexFormat.SixteenBits)
+                {
+                    throw new NotSupportedException("Procedural creature rendering requires 16-bit mesh batches.");
+                }
+
                 var vertexElements = vertexBuffer.VertexDeclaration.VertexElements;
                 var indexData = BlockMesh.GetIndexData<ushort>(indexBuffer);
                 var dictionary = new Dictionary<ushort, ushort>();
@@ -70,7 +91,7 @@ public static class InstancedModelsManager
                         continue;
                     }
 
-                    dictionary.Add(num, (ushort)dynamicArray.Count);
+                    dictionary.Add(num, checked((ushort)dynamicArray.Count));
                     var sourceModelVertex = vertexData[num];
                     var item = new InstancedVertex
                     {
@@ -82,7 +103,7 @@ public static class InstancedModelsManager
                         Nz = sourceModelVertex.Nz,
                         Tx = sourceModelVertex.Tx,
                         Ty = sourceModelVertex.Ty,
-                        Instance = modelMesh.ParentBone?.Index ?? 0f
+                        Instance = node.Index
                     };
                     dynamicArray.Add(item);
                 }
@@ -125,6 +146,8 @@ public static class InstancedModelsManager
 
         public float Ty;
     }
+
+    private sealed record CacheEntry(int[] DrawNodeIndices, InstancedModelData Data);
 
     private struct InstancedVertex
     {

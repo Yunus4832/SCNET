@@ -9,7 +9,7 @@ internal static class BuiltInContentReaders
     public static void Register()
     {
         ContentManager.RegisterReader(new BitmapFontReader());
-        ContentManager.RegisterReader(new DaeModelReader());
+        ContentManager.RegisterReader(new GltfModelReader());
         ContentManager.RegisterReader(new ImageReader());
         ContentManager.RegisterReader(new JsonArrayReader());
         ContentManager.RegisterReader(new JsonObjectReader());

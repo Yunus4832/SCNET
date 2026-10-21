@@ -14,6 +14,7 @@
         <PackageReference Include="NAudio.Flac.Unknown" Version="1.0.4"/>
         <PackageReference Include="NLayer.NAudioSupport" Version="1.4.0"/>
         <PackageReference Include="NVorbis" Version="0.10.5"/>
+        <PackageReference Include="SharpGLTF.Core" Version="1.0.6"/>
         <PackageReference Include="SCNET.Native.ImageCodecs" Version="$(ImageCodecsVersion)"/>
     </ItemGroup>
     <ItemGroup>

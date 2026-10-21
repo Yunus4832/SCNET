@@ -36,9 +36,9 @@ public class ComponentIntroShip : Component, IUpdateable
         matrix.Translation += s * matrix.Forward * new Vector3(1f, 0f, 1f) * dt;
         _componentFrame.Position = matrix.Translation;
         _componentFrame.Rotation = Quaternion.CreateFromRotationMatrix(matrix);
-        if (_componentModel?.Model?.RootBone != null)
+        if (_componentModel?.Model != null)
         {
-            _componentModel.SetBoneTransform(_componentModel.Model.RootBone.Index, matrix);
+            _componentModel.Pose.WorldTransform = matrix;
         }
 
         if (_subsystemTime.GameTime - _creationTime > 10.0 &&

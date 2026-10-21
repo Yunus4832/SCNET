@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 using Engine.Network;
 
 using Game.Network;

@@ -9,22 +9,20 @@ public class FurBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Fur");
-        var furMesh = model.FindMesh("Fur")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            furMesh.ParentBone ?? throw new InvalidOperationException("Required FurMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            furMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+        var furNode = model.FindNode("Fur")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(furNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            furNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            furMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            furNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             true,
             false,

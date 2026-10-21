@@ -1,4 +1,5 @@
-using Engine.Core;
+using Engine.Core.Logging;
+using Engine.Core.Mathematics;
 
 using Silk.NET.OpenAL;
 

@@ -1,7 +1,6 @@
 using System.Globalization;
 
 using Engine.Graphics;
-using Engine.Media;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;

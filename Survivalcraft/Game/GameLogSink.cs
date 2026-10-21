@@ -57,7 +57,7 @@ public class GameLogSink : ILogSink
         }
         catch (Exception ex)
         {
-            Engine.Core.Log.Error("Error creating GameLogSink. Reason: {0}", ex.Message);
+            Engine.Core.Logging.Log.Error("Error creating GameLogSink. Reason: {0}", ex.Message);
         }
     }
 
@@ -172,7 +172,7 @@ public class GameLogSink : ILogSink
 
             try
             {
-                Engine.Core.Log.AddLogMsg(line);
+                Engine.Core.Logging.Log.AddLogMsg(line);
             }
             catch
             {

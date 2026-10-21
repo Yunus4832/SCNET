@@ -13,20 +13,14 @@ public abstract class SpearBlock(int handleTextureSlot, int headTextureSlot) : B
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Spear");
-        var handleMesh = model.FindMesh("Handle")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            handleMesh.ParentBone ??
-            throw new InvalidOperationException("Required HandleMesh.ParentBone is null")
-        );
-        var headMesh = model.FindMesh("Head")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            headMesh.ParentBone ??
-            throw new InvalidOperationException("Required HeadMesh.ParentBone is null")
-        );
+        var handleNode = model.FindNode("Handle")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
+        var headNode = model.FindNode("Head")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(headNode);
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(
-            handleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        blockMesh.AppendModelPrimitive(
+            handleNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,
@@ -41,9 +35,9 @@ public abstract class SpearBlock(int handleTextureSlot, int headTextureSlot) : B
             )
         );
         var blockMesh2 = new BlockMesh();
-        blockMesh2.AppendModelMeshPart(
-            headMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        blockMesh2.AppendModelPrimitive(
+            headNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

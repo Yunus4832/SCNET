@@ -11,23 +11,20 @@ public class CraftingTableBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/CraftingTable");
-        var craftingTableMesh = model.FindMesh("CraftingTable")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            craftingTableMesh.ParentBone ??
-            throw new InvalidOperationException("Required CraftingTableMesh.ParentBone is null")
-        );
-        BlockMesh.AppendModelMeshPart(
-            craftingTableMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+        var craftingTableNode = model.FindNode("CraftingTable")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(craftingTableNode);
+        BlockMesh.AppendModelPrimitive(
+            craftingTableNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            craftingTableMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            craftingTableNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

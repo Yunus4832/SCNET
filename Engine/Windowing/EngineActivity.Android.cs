@@ -6,7 +6,7 @@ using Android.Views;
 
 using AndroidX.Core.View;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 using Engine.Input;
 
 using Silk.NET.Windowing.Sdl.Android;

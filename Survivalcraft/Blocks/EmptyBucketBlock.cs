@@ -9,14 +9,11 @@ public class EmptyBucketBlock : BucketBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/EmptyBucket");
-        var bucketMesh = model.FindMesh("Bucket")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            bucketMesh.ParentBone ??
-            throw new InvalidOperationException("Required BucketMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            bucketMesh.MeshParts[0],
-            boneAbsoluteTransform *
+        var bucketNode = model.FindNode("Bucket")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bucketNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            bucketNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform *
             Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
             Matrix.CreateTranslation(0f, -0.3f, 0f),
             false,

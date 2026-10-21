@@ -16,8 +16,11 @@
         <Using Include="Game.Protocol.Serialization"/>
         <Using Include="System.Reflection"/>
         <Using Include="System.Diagnostics"/>
-        <Using Include="Engine.Core"/>
-        <Using Include="Engine.Core.Random" Alias="Random"/>
+        <Using Include="Engine.Core.Mathematics"/>
+        <Using Include="Engine.Core.Collections"/>
+        <Using Include="Engine.Core.Logging"/>
+        <Using Include="Engine.Core.Runtime"/>
+        <Using Include="Engine.Core.Mathematics.Random" Alias="Random"/>
         <Using Include="Engine.FileStorage"/>
         <Using Include="Engine.Windowing"/>
         <Using Include="Game.Utils"/>

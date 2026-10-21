@@ -38,21 +38,12 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Stairs");
-        var stairsMesh = model.FindMesh("Stairs")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            stairsMesh.ParentBone ??
-            throw new InvalidOperationException("Required StairsMesh.ParentBone is null")
-        );
-        var stairsOuterCornerMesh = model.FindMesh("StairsOuterCorner")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            stairsOuterCornerMesh.ParentBone ??
-            throw new InvalidOperationException("Required StairsOuterCornerMesh.ParentBone is null")
-        );
-        var stairsInnerCornerMesh = model.FindMesh("StairsInnerCorner")!;
-        var boneAbsoluteTransform3 = BlockMesh.GetBoneAbsoluteTransform(
-            stairsInnerCornerMesh.ParentBone ??
-            throw new InvalidOperationException("Required StairsInnerCornerMesh.ParentBone is null")
-        );
+        var stairsNode = model.FindNode("Stairs")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(stairsNode);
+        var stairsOuterCornerNode = model.FindNode("StairsOuterCorner")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(stairsOuterCornerNode);
+        var stairsInnerCornerNode = model.FindNode("StairsInnerCorner")!;
+        var nodeAbsoluteTransform3 = BlockMesh.GetNodeAbsoluteTransform(stairsInnerCornerNode);
         for (var i = 0; i < 24; i++)
         {
             var rotation = GetRotation(i);
@@ -68,9 +59,9 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
             switch (cornerType)
             {
                 case CornerType.None:
-                    blockMesh.AppendModelMeshPart(
-                        stairsMesh.MeshParts[0],
-                        boneAbsoluteTransform * m,
+                    blockMesh.AppendModelPrimitive(
+                        stairsNode.RequireMesh().Primitives[0],
+                        nodeAbsoluteTransform * m,
                         false,
                         isUpsideDown,
                         false,
@@ -79,9 +70,9 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
                     );
                     break;
                 case CornerType.OneQuarter:
-                    blockMesh.AppendModelMeshPart(
-                        stairsOuterCornerMesh.MeshParts[0],
-                        boneAbsoluteTransform2 * m,
+                    blockMesh.AppendModelPrimitive(
+                        stairsOuterCornerNode.RequireMesh().Primitives[0],
+                        nodeAbsoluteTransform2 * m,
                         false,
                         isUpsideDown,
                         false,
@@ -90,9 +81,9 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
                     );
                     break;
                 case CornerType.ThreeQuarters:
-                    blockMesh.AppendModelMeshPart(
-                        stairsInnerCornerMesh.MeshParts[0],
-                        boneAbsoluteTransform3 * m,
+                    blockMesh.AppendModelPrimitive(
+                        stairsInnerCornerNode.RequireMesh().Primitives[0],
+                        nodeAbsoluteTransform3 * m,
                         false,
                         isUpsideDown,
                         false,
@@ -143,9 +134,9 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
             UncoloredBlockMeshes[i].GenerateSidesData();
         }
 
-        StandaloneUncoloredBlockMesh.AppendModelMeshPart(
-            stairsMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        StandaloneUncoloredBlockMesh.AppendModelPrimitive(
+            stairsNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,
@@ -155,9 +146,9 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
         StandaloneUncoloredBlockMesh.TransformTextureCoordinates(
             Matrix.CreateTranslation(TextureSlot % 16 / 16f, TextureSlot / 16 / 16f, 0f)
         );
-        StandaloneColoredBlockMesh.AppendModelMeshPart(
-            stairsMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        StandaloneColoredBlockMesh.AppendModelPrimitive(
+            stairsNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

@@ -109,7 +109,7 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
             Shader.Transforms.View = Matrix.Identity;
             Shader.Transforms.Projection = camera.ProjectionMatrix;
             Shader.Transforms.World[0] = Matrix.CreateScale(0.01f) * identity * controllerMatrix * m;
-            foreach (var meshPart in _vrHandModel.Meshes.SelectMany(mesh => mesh.MeshParts))
+            foreach (var meshPart in _vrHandModel.MeshNodes.SelectMany(node => node.RequireMesh().Primitives))
             {
                 Display.DrawIndexed(
                     PrimitiveType.TriangleList,

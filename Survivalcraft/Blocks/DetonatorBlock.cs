@@ -13,11 +13,8 @@ public class DetonatorBlock : MountedElectricElementBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Detonator");
-        var detonatorMesh = model.FindMesh("Detonator")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            detonatorMesh.ParentBone ??
-            throw new InvalidOperationException("Required DetonatorMesh.ParentBone is null")
-        );
+        var detonatorNode = model.FindNode("Detonator")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(detonatorNode);
         for (var i = 0; i < 6; i++)
         {
             var m = i >= 4
@@ -29,9 +26,9 @@ public class DetonatorBlock : MountedElectricElementBlock
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByData[i] = new BlockMesh();
-            BlockMeshesByData[i].AppendModelMeshPart(
-                detonatorMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            BlockMeshesByData[i].AppendModelPrimitive(
+                detonatorNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 false,
                 false,
                 false,
@@ -42,9 +39,9 @@ public class DetonatorBlock : MountedElectricElementBlock
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBlockMesh.AppendModelMeshPart(
-            detonatorMesh.MeshParts[0],
-            boneAbsoluteTransform * m2,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            detonatorNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m2,
             false,
             false,
             false,

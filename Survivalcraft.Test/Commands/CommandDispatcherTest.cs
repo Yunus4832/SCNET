@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using Game;
 using Game.Commands;

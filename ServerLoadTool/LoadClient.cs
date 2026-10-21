@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 using Engine.Network;
 
 namespace ServerLoadTool;

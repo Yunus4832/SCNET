@@ -22,29 +22,23 @@ public class MusketBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Musket");
-        var musketMesh = model.FindMesh("Musket")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            musketMesh.ParentBone ??
-            throw new InvalidOperationException("Required MusketMesh.ParentBone is null")
-        );
-        var hammerMesh = model.FindMesh("Hammer")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            hammerMesh.ParentBone ??
-            throw new InvalidOperationException("Required HammerMesh.ParentBone is null")
-        );
+        var musketNode = model.FindNode("Musket")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(musketNode);
+        var hammerNode = model.FindNode("Hammer")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(hammerNode);
         StandaloneBlockMeshUnloaded = new BlockMesh();
-        StandaloneBlockMeshUnloaded.AppendModelMeshPart(
-            musketMesh.MeshParts[0],
-            boneAbsoluteTransform,
+        StandaloneBlockMeshUnloaded.AppendModelPrimitive(
+            musketNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform,
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMeshUnloaded.AppendModelMeshPart(
-            hammerMesh.MeshParts[0],
-            boneAbsoluteTransform2,
+        StandaloneBlockMeshUnloaded.AppendModelPrimitive(
+            hammerNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2,
             false,
             false,
             false,
@@ -52,18 +46,18 @@ public class MusketBlock : Block
             Color.White
         );
         StandaloneBlockMeshLoaded = new BlockMesh();
-        StandaloneBlockMeshLoaded.AppendModelMeshPart(
-            musketMesh.MeshParts[0],
-            boneAbsoluteTransform,
+        StandaloneBlockMeshLoaded.AppendModelPrimitive(
+            musketNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform,
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMeshLoaded.AppendModelMeshPart(
-            hammerMesh.MeshParts[0],
-            Matrix.CreateRotationX(0.7f) * boneAbsoluteTransform2,
+        StandaloneBlockMeshLoaded.AppendModelPrimitive(
+            hammerNode.RequireMesh().Primitives[0],
+            Matrix.CreateRotationX(0.7f) * nodeAbsoluteTransform2,
             false,
             false,
             false,

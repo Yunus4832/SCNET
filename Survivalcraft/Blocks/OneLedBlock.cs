@@ -12,11 +12,8 @@ public class OneLedBlock : MountedElectricElementBlock
 
     public override void Initialize()
     {
-        var ledMesh = ContentManager.Get<Model>("Models/Leds").FindMesh("OneLed")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            ledMesh.ParentBone ??
-            throw new InvalidOperationException("Required LedMesh.ParentBone is null")
-        );
+        var ledNode = ContentManager.Get<Model>("Models/Leds").FindNode("OneLed")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(ledNode);
         for (var i = 0; i < 6; i++)
         {
             var m = i >= 4
@@ -28,9 +25,9 @@ public class OneLedBlock : MountedElectricElementBlock
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByFace[i] = new BlockMesh();
-            BlockMeshesByFace[i].AppendModelMeshPart(
-                ledMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            BlockMeshesByFace[i].AppendModelPrimitive(
+                ledNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 false,
                 false,
                 false,
@@ -42,9 +39,9 @@ public class OneLedBlock : MountedElectricElementBlock
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(
-            ledMesh.MeshParts[0],
-            boneAbsoluteTransform * m2,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            ledNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m2,
             false,
             false,
             false,

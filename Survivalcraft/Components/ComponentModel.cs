@@ -7,7 +7,7 @@ namespace Game.Components;
 
 public class ComponentModel : Component
 {
-    private Matrix?[] _boneTransforms = [];
+    private ModelPose? _pose;
 
     private float _boundingSphereRadius;
 
@@ -33,34 +33,27 @@ public class ComponentModel : Component
 
     public virtual ModelRenderingMode RenderingMode { get; set; }
 
-    public int[] MeshDrawOrders { get; set; } = [];
+    public int[] DrawNodeIndices { get; set; } = [];
 
     public bool IsVisibleForCamera { get; set; }
 
-    public Matrix[] AbsoluteBoneTransformsForCamera { get; set; } = [];
+    public ModelPose Pose => _pose ?? throw new InvalidOperationException("Model pose is not initialized.");
 
-    public Matrix? GetBoneTransform(int boneIndex)
+    public Matrix[] AbsoluteNodeTransformsForCamera => _pose?.AbsoluteTransforms ?? [];
+
+    public Matrix? GetNodeTransform(int nodeIndex)
     {
-        return _boneTransforms[boneIndex];
+        return Pose.GetAnimationTransform(nodeIndex);
     }
 
-    public void SetBoneTransform(int boneIndex, Matrix? transformation)
+    public void SetNodeTransform(int nodeIndex, Matrix? transformation)
     {
-        _boneTransforms[boneIndex] = transformation;
+        Pose.SetAnimationTransform(nodeIndex, transformation);
     }
 
-    public void CalculateAbsoluteBonesTransforms(Camera camera)
+    public void CalculateAbsoluteNodeTransforms(Camera camera)
     {
-        if (_model == null)
-        {
-            return;
-        }
-
-        ProcessBoneHierarchy(
-            Model.RootBone ?? throw new InvalidOperationException("Required Model.RootBone is null"),
-            camera.ViewMatrix,
-            AbsoluteBoneTransformsForCamera
-        );
+        _pose?.CalculateAbsoluteTransforms(camera.ViewMatrix);
     }
 
     public virtual void CalculateIsVisible(Camera camera)
@@ -118,27 +111,7 @@ public class ComponentModel : Component
     public virtual void SetModel(Model model)
     {
         _model = model;
-        _boneTransforms = new Matrix?[_model.Bones.Count];
-        AbsoluteBoneTransformsForCamera = new Matrix[_model.Bones.Count];
-        MeshDrawOrders = Enumerable.Range(0, _model.Meshes.Count).ToArray();
-    }
-
-    public void ProcessBoneHierarchy(ModelBone modelBone, Matrix currentTransform, Matrix[] transforms)
-    {
-        var m = modelBone.Transform;
-        if (_boneTransforms[modelBone.Index].HasValue)
-        {
-            var translation = m.Translation;
-            m.Translation = Vector3.Zero;
-            m *= _boneTransforms[modelBone.Index]!.Value;
-            m.Translation += translation;
-        }
-
-        Matrix.MultiplyRestricted(ref m, ref currentTransform, out transforms[modelBone.Index]);
-
-        foreach (var childBone in modelBone.ReadOnlyChildBones)
-        {
-            ProcessBoneHierarchy(childBone, transforms[modelBone.Index], transforms);
-        }
+        _pose = new ModelPose(model);
+        DrawNodeIndices = model.MeshNodes.Select(n => n.Index).ToArray();
     }
 }

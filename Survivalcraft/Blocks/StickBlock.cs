@@ -9,14 +9,11 @@ public class StickBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Stick");
-        var stickMesh = model.FindMesh("Stick")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            stickMesh.ParentBone ??
-            throw new InvalidOperationException("Required StickMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            stickMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        var stickNode = model.FindNode("Stick")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(stickNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            stickNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

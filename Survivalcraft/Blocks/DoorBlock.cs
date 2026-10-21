@@ -66,11 +66,8 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>(ModelName);
-        var doorMesh = model.FindMesh("Door")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            doorMesh.ParentBone ??
-            throw new InvalidOperationException("Required DoorMesh.ParentBone is null")
-        );
+        var doorNode = model.FindNode("Door")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(doorNode);
         for (var i = 0; i < 16; i++)
         {
             var rotation = GetRotation(i);
@@ -86,9 +83,9 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
             identity *= Matrix.CreateTranslation(0f, 0f, 0.5f - PivotDistance) *
                         Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
                         Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-            BlockMeshesByData[i].AppendModelMeshPart(
-                doorMesh.MeshParts[0],
-                boneAbsoluteTransform * identity,
+            BlockMeshesByData[i].AppendModelPrimitive(
+                doorNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * identity,
                 false,
                 !rightHanded,
                 false,
@@ -109,9 +106,9 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
             CollisionBoxesByData[i] = [boundingBox];
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(
-            doorMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -1f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            doorNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -1f, 0f),
             false,
             false,
             false,

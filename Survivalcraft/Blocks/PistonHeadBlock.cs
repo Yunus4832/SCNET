@@ -12,11 +12,8 @@ public class PistonHeadBlock : Block
         for (var i = 0; i < 2; i++)
         {
             var name = i == 0 ? "PistonHead" : "PistonShaft";
-            var modelMesh = model.FindMesh(name)!;
-            var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-                modelMesh.ParentBone ??
-                throw new InvalidOperationException("Required ModelMesh.ParentBone is null")
-            );
+            var modelNode = model.FindNode(name)!;
+            var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(modelNode);
             for (var pistonMode = PistonMode.Pushing; pistonMode <= PistonMode.StrictPulling; pistonMode++)
             {
                 for (var j = 0; j < 6; j++)
@@ -34,9 +31,9 @@ public class PistonHeadBlock : Block
                               Matrix.CreateRotationX((float)Math.PI / 2f) *
                               Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                     BlockMeshesByData[num] = new BlockMesh();
-                    BlockMeshesByData[num].AppendModelMeshPart(
-                        modelMesh.MeshParts[0],
-                        boneAbsoluteTransform * m,
+                    BlockMeshesByData[num].AppendModelPrimitive(
+                        modelNode.RequireMesh().Primitives[0],
+                        nodeAbsoluteTransform * m,
                         false,
                         false,
                         false,

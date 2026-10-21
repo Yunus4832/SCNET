@@ -9,14 +9,11 @@ public class DiamondChunkBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Diamond");
-        var diamondMesh = model.FindMesh("Diamond")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            diamondMesh.ParentBone ??
-            throw new InvalidOperationException("Require DiamondMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            diamondMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+        var diamondNode = model.FindNode("Diamond")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(diamondNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            diamondNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,

@@ -17,20 +17,17 @@ public abstract class LadderBlock(string modelName, float offset) : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>(ModelName);
-        var ladderMesh = model.FindMesh("Ladder")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            ladderMesh.ParentBone ??
-            throw new InvalidOperationException("Required LadderMesh.ParentBone is null")
-        );
+        var ladderNode = model.FindNode("Ladder")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(ladderNode);
         for (var i = 0; i < 4; i++)
         {
             BlockMeshesByData[i] = new BlockMesh();
             var m = Matrix.CreateTranslation(0f, 0f, 0f - (0.5f - Offset)) *
                     Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                     Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-            BlockMeshesByData[i].AppendModelMeshPart(
-                ladderMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            BlockMeshesByData[i].AppendModelPrimitive(
+                ladderNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 false,
                 false,
                 false,
@@ -41,9 +38,9 @@ public abstract class LadderBlock(string modelName, float offset) : Block
             CollisionBoxesByData[i] = [BlockMeshesByData[i].CalculateBoundingBox()];
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(
-            ladderMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            ladderNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

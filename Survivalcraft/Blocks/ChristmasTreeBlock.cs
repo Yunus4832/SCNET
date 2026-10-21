@@ -51,79 +51,70 @@ public class ChristmasTreeBlock : Block, IElectricElementBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/ChristmasTree");
-        var standTrunkMesh = model.FindMesh("StandTrunk")!;
-        var leavesMesh = model.FindMesh("Leaves")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            standTrunkMesh.ParentBone ??
-            throw new InvalidOperationException("Required StandTrunkMesh.ParentBone is null")
-        );
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            leavesMesh.ParentBone ??
-            throw new InvalidOperationException("Required LeavesMesh.ParentBone is null")
-        );
-        var decorationsMesh = model.FindMesh("Decorations")!;
-        var boneAbsoluteTransform3 = BlockMesh.GetBoneAbsoluteTransform(
-            decorationsMesh.ParentBone ??
-            throw new InvalidOperationException("Required DecorationsMesh.ParentBone is null")
-        );
+        var standTrunkNode = model.FindNode("StandTrunk")!;
+        var leavesNode = model.FindNode("Leaves")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(standTrunkNode);
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(leavesNode);
+        var decorationsNode = model.FindNode("Decorations")!;
+        var nodeAbsoluteTransform3 = BlockMesh.GetNodeAbsoluteTransform(decorationsNode);
         var color = BlockColorsMap.SpruceLeavesColorsMap.Lookup(4, 15);
-        LeavesBlockMesh.AppendModelMeshPart(
-            leavesMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+        LeavesBlockMesh.AppendModelPrimitive(
+            leavesNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
             false,
             false,
             true,
             false,
             Color.White
         );
-        StandTrunkBlockMesh.AppendModelMeshPart(
-            standTrunkMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+        StandTrunkBlockMesh.AppendModelPrimitive(
+            standTrunkNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        DecorationsBlockMesh.AppendModelMeshPart(
-            decorationsMesh.MeshParts[0],
-            boneAbsoluteTransform3 * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+        DecorationsBlockMesh.AppendModelPrimitive(
+            decorationsNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform3 * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        LitDecorationsBlockMesh.AppendModelMeshPart(
-            decorationsMesh.MeshParts[0],
-            boneAbsoluteTransform3 * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+        LitDecorationsBlockMesh.AppendModelPrimitive(
+            decorationsNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform3 * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
             true,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            standTrunkMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -1f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            standTrunkNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -1f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            leavesMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -1f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            leavesNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -1f, 0f),
             false,
             false,
             true,
             false,
             color
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            decorationsMesh.MeshParts[0],
-            boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, -1f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            decorationsNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform3 * Matrix.CreateTranslation(0f, -1f, 0f),
             false,
             false,
             false,

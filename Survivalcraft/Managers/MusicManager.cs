@@ -1,5 +1,5 @@
 using Engine.Audio;
-using Engine.Media;
+using Engine.Media.Audio;
 
 namespace Game.Managers;
 

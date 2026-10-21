@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using Game.Network.Chunks;
 using Game.Terrains;

@@ -28,13 +28,10 @@ public abstract class FoodBlock(
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>(ModelName);
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            model.Meshes[0].ParentBone ??
-            throw new InvalidOperationException("Required ModelMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            model.Meshes[0].MeshParts[0],
-            boneAbsoluteTransform,
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(model.MeshNodes[0]);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            model.MeshNodes[0].RequireMesh().Primitives[0],
+            nodeAbsoluteTransform,
             false,
             false,
             false,

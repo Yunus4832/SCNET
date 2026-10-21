@@ -1,4 +1,4 @@
-using Engine.Media;
+using Engine.Media.Images;
 
 namespace Content.Packaging.Payloads;
 

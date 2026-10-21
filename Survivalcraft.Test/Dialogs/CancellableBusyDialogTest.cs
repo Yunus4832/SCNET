@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 using Engine.Graphics;
 
 using Game.Dialogs;

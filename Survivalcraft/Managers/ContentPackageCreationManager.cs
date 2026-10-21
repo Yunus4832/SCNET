@@ -3,7 +3,7 @@ using System.Xml.Linq;
 
 using Content.Packaging;
 
-using Engine.Media;
+using Engine.Media.Images;
 
 namespace Game.Managers;
 

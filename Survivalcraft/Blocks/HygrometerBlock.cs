@@ -54,28 +54,22 @@ public class HygrometerBlock : Block, IElectricElementBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Hygrometer");
-        var caseMesh = model.FindMesh("Case")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            caseMesh.ParentBone ??
-            throw new InvalidOperationException("Required CaseMesh.ParentBone is null")
-        );
-        var pointerMesh = model.FindMesh("Pointer")!;
-        var matrix = PointerMatrix = BlockMesh.GetBoneAbsoluteTransform(
-            pointerMesh.ParentBone ??
-            throw new InvalidOperationException("Required PointerMesh.ParentBone is null")
-        );
+        var caseNode = model.FindNode("Case")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(caseNode);
+        var pointerNode = model.FindNode("Pointer")!;
+        var matrix = PointerMatrix = BlockMesh.GetNodeAbsoluteTransform(pointerNode);
         InvPointerMatrix = Matrix.Invert(PointerMatrix);
-        CaseMesh.AppendModelMeshPart(
-            caseMesh.MeshParts[0],
-            boneAbsoluteTransform,
+        CaseMesh.AppendModelPrimitive(
+            caseNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform,
             false,
             false,
             true,
             false,
             Color.White
         );
-        PointerMesh.AppendModelMeshPart(
-            pointerMesh.MeshParts[0],
+        PointerMesh.AppendModelPrimitive(
+            pointerNode.RequireMesh().Primitives[0],
             matrix,
             false,
             false,

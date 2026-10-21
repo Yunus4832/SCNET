@@ -1,4 +1,4 @@
-using Engine.Core;
+using Engine.Core.Mathematics;
 using Engine.Graphics;
 
 using Game;
@@ -62,7 +62,7 @@ public sealed class BeaconBlock : Block, IElectricElementBlock
     public override void Initialize()
     {
         base.Initialize();
-        using var stream = ModEntry.OpenResource("Models.Beacon.dae");
+        using var stream = ModEntry.OpenResource("Models.Beacon.glb");
         using var model = Model.Load(stream, true);
         var clay = (ClayBlock)Catalog.GetBlock(ResourceId.Parse("game:clay"));
         var baseSlot = clay.GetFaceTextureSlot(0, 0);
@@ -103,12 +103,12 @@ public sealed class BeaconBlock : Block, IElectricElementBlock
         bool glass
     )
     {
-        var mesh = model.FindMesh(name)!;
-        foreach (var part in mesh.MeshParts)
+        var node = model.FindNode(name)!;
+        foreach (var part in node.RequireMesh().Primitives)
         {
-            target.AppendModelMeshPart(
+            target.AppendModelPrimitive(
                 part,
-                BlockMesh.GetBoneAbsoluteTransform(mesh.ParentBone!),
+                BlockMesh.GetNodeAbsoluteTransform(node),
                 emissive,
                 false,
                 glass,

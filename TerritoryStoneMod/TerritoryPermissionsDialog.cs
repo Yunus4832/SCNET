@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using Game.Dialogs;
 using Game.Managers;

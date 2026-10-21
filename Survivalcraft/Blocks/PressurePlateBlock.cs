@@ -27,11 +27,8 @@ public class PressurePlateBlock : MountedElectricElementBlock
         var model = ContentManager.Get<Model>("Models/PressurePlate");
         for (var i = 0; i < 2; i++)
         {
-            var pressurePlateMesh = model.FindMesh("PressurePlate")!;
-            var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-                pressurePlateMesh.ParentBone ??
-                throw new InvalidOperationException("Required PressurePlateMesh.ParentBone is null")
-            );
+            var pressurePlateNode = model.FindNode("PressurePlate")!;
+            var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(pressurePlateNode);
             var num = TextureSlotsByMaterial[i];
             for (var j = 0; j < 6; j++)
             {
@@ -45,9 +42,9 @@ public class PressurePlateBlock : MountedElectricElementBlock
                       Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 BlockMeshesByData[num2] = new BlockMesh();
-                BlockMeshesByData[num2].AppendModelMeshPart(
-                    pressurePlateMesh.MeshParts[0],
-                    boneAbsoluteTransform * matrix,
+                BlockMeshesByData[num2].AppendModelPrimitive(
+                    pressurePlateNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform * matrix,
                     false,
                     false,
                     false,
@@ -84,9 +81,9 @@ public class PressurePlateBlock : MountedElectricElementBlock
 
             var identity = Matrix.Identity;
             StandaloneBlockMeshesByMaterial[i] = new BlockMesh();
-            StandaloneBlockMeshesByMaterial[i].AppendModelMeshPart(
-                pressurePlateMesh.MeshParts[0],
-                boneAbsoluteTransform * identity,
+            StandaloneBlockMeshesByMaterial[i].AppendModelPrimitive(
+                pressurePlateNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * identity,
                 false,
                 false,
                 false,

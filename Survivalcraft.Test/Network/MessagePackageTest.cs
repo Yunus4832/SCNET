@@ -1,4 +1,4 @@
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 namespace Survivalcraft.Test.Network;
 

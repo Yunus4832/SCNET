@@ -11,14 +11,11 @@ public abstract class IngotBlock(string meshName) : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Ingots");
-        var modelMesh = model.FindMesh(MeshName)!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            modelMesh.ParentBone ??
-            throw new InvalidOperationException("Required ModelMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            modelMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f),
+        var modelNode = model.FindNode(MeshName)!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(modelNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            modelNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f),
             false,
             false,
             false,

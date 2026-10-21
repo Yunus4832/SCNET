@@ -1,6 +1,6 @@
 using System.Reflection;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;

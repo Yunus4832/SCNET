@@ -5,7 +5,7 @@ using Content.Packaging;
 
 using ContentServer.Infrastructure;
 
-using Engine.Media;
+using Engine.Media.Images;
 
 namespace ContentServer.Application;
 

@@ -11,19 +11,16 @@ public class FurnaceBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Furnace");
-        var furnaceMesh = model.FindMesh("Furnace")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            furnaceMesh.ParentBone ??
-            throw new InvalidOperationException("Required FurnaceMesh.ParentBone is null")
-        );
+        var furnaceNode = model.FindNode("Furnace")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(furnaceNode);
         for (var i = 0; i < 4; i++)
         {
             BlockMeshesByData[i] = new BlockMesh();
             var identity = Matrix.Identity;
             identity *= Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-            BlockMeshesByData[i].AppendModelMeshPart(
-                furnaceMesh.MeshParts[0],
-                boneAbsoluteTransform * identity,
+            BlockMeshesByData[i].AppendModelPrimitive(
+                furnaceNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * identity,
                 false,
                 false,
                 false,
@@ -32,9 +29,9 @@ public class FurnaceBlock : Block
             );
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(
-            furnaceMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            furnaceNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

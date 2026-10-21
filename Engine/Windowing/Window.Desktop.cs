@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 
-using Engine.Core;
+using Engine.Core.Logging;
+using Engine.Core.Mathematics;
 
 using Silk.NET.Core;
 using Silk.NET.Input;
@@ -249,7 +250,7 @@ public static partial class Window
         if (IconStream != null)
         {
             // Silk.NET 2.23's SDL backend creates the icon surface with masks that expect ABGR bytes.
-            using var image = Media.Image.Load(IconStream);
+            using var image = Media.Images.Image.Load(IconStream);
             var pixelBytes = new byte[image.Width * image.Height * 4];
             for (var index = 0; index < image.Pixels.Length; index++)
             {

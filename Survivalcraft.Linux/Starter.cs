@@ -1,7 +1,8 @@
 using System.Diagnostics;
 using System.Reflection;
 
-using Engine.Core;
+using Engine.Core.Logging;
+using Engine.Core.Runtime;
 using Engine.FileStorage;
 using Engine.Input;
 using Engine.Windowing;

@@ -45,11 +45,8 @@ public class PistonBlock : Block, IElectricElementBlock
             for (var i = 0; i < 2; i++)
             {
                 var name = i == 0 ? "PistonRetracted" : "PistonExtended";
-                var modelMesh = model.FindMesh(name)!;
-                var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-                    modelMesh.ParentBone ??
-                    throw new InvalidOperationException("Required ModelMesh.ParentBone is null")
-                );
+                var modelNode = model.FindNode(name)!;
+                var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(modelNode);
                 for (var j = 0; j < 6; j++)
                 {
                     var num = SetFace(SetIsExtended(SetMode(0, pistonMode), i != 0), j);
@@ -65,9 +62,9 @@ public class PistonBlock : Block, IElectricElementBlock
                               Matrix.CreateRotationX((float)Math.PI / 2f) *
                               Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                     BlockMeshesByData[num] = new BlockMesh();
-                    BlockMeshesByData[num].AppendModelMeshPart(
-                        modelMesh.MeshParts[0],
-                        boneAbsoluteTransform * m,
+                    BlockMeshesByData[num].AppendModelPrimitive(
+                        modelNode.RequireMesh().Primitives[0],
+                        nodeAbsoluteTransform * m,
                         false,
                         false,
                         false,
@@ -91,15 +88,12 @@ public class PistonBlock : Block, IElectricElementBlock
                 }
             }
 
-            var boneAbsoluteTransform2 =
-                BlockMesh.GetBoneAbsoluteTransform(
-                    model.FindMesh("PistonRetracted")!.ParentBone ??
-                    throw new InvalidOperationException("Required PistonRetractedMesh.ParentBone is null")
-                );
+            var nodeAbsoluteTransform2 =
+                BlockMesh.GetNodeAbsoluteTransform(model.FindNode("PistonRetracted")!);
             StandaloneBlockMeshes[(int)pistonMode] = new BlockMesh();
-            StandaloneBlockMeshes[(int)pistonMode].AppendModelMeshPart(
-                model.FindMesh("PistonRetracted")!.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            StandaloneBlockMeshes[(int)pistonMode].AppendModelPrimitive(
+                model.FindNode("PistonRetracted")!.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
                 false,
                 false,
                 false,

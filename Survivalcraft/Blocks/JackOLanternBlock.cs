@@ -13,27 +13,24 @@ public class JackOLanternBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Pumpkins");
-        var jackOLanternMesh = model.FindMesh("JackOLantern")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            jackOLanternMesh.ParentBone ??
-            throw new InvalidOperationException("Required JackOLanternMesh.ParentBone is null")
-        );
+        var jackOLanternNode = model.FindNode("JackOLantern")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(jackOLanternNode);
         for (var i = 0; i < 4; i++)
         {
             var radians = i * (float)Math.PI / 2f;
             var blockMesh = new BlockMesh();
-            blockMesh.AppendModelMeshPart(
-                jackOLanternMesh.MeshParts[0],
-                boneAbsoluteTransform * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+            blockMesh.AppendModelPrimitive(
+                jackOLanternNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
                 false,
                 false,
                 false,
                 false,
                 new Color(232, 232, 232)
             );
-            blockMesh.AppendModelMeshPart(
-                jackOLanternMesh.MeshParts[0],
-                boneAbsoluteTransform * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+            blockMesh.AppendModelPrimitive(
+                jackOLanternNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
                 true,
                 true,
                 false,
@@ -43,18 +40,18 @@ public class JackOLanternBlock : Block
             BlockMeshesByData[i] = blockMesh;
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(
-            jackOLanternMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.23f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            jackOLanternNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.23f, 0f),
             false,
             false,
             false,
             false,
             new Color(232, 232, 232)
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            jackOLanternMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.23f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            jackOLanternNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.23f, 0f),
             true,
             true,
             false,

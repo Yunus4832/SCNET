@@ -1,11 +1,12 @@
 using System.Runtime.InteropServices;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
+using Engine.Core.Runtime;
 using Engine.FileStorage;
 
 using Silk.NET.OpenGLES;
 
-using Image = Engine.Media.Image;
+using Image = Engine.Media.Images.Image;
 
 namespace Engine.Graphics;
 

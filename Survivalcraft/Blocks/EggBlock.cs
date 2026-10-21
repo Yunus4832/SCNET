@@ -68,16 +68,13 @@ public class EggBlock : Block
         }
 
         var model = ContentManager.Get<Model>("Models/Egg");
-        var eggMesh = model.FindMesh("Egg")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            eggMesh.ParentBone ??
-            throw new InvalidOperationException("Required EggMesh.ParentBone is null")
-        );
+        var eggNode = model.FindNode("Egg")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(eggNode);
         foreach (var eggType in EggTypes.OfType<EggType>())
         {
-            eggType.BlockMesh.AppendModelMeshPart(
-                eggMesh.MeshParts[0],
-                boneAbsoluteTransform,
+            eggType.BlockMesh.AppendModelPrimitive(
+                eggNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform,
                 false,
                 false,
                 false,

@@ -79,16 +79,10 @@ public abstract class AttachedSignBlock(
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>(ModelName);
-        var signMesh = model.FindMesh("Sign")!;
-        var surfaceMesh = model.FindMesh("Surface")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            signMesh.ParentBone ??
-            throw new InvalidOperationException("Required SignMesh.ParentBone is null")
-        );
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            surfaceMesh.ParentBone ??
-            throw new InvalidOperationException("Required SurfaceMesh.ParentBone is null")
-        );
+        var signNode = model.FindNode("Sign")!;
+        var surfaceNode = model.FindNode("Surface")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(signNode);
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(surfaceNode);
         for (var i = 0; i < 4; i++)
         {
             var radians = (float)Math.PI / 2f * i;
@@ -96,9 +90,9 @@ public abstract class AttachedSignBlock(
                     Matrix.CreateRotationY(radians) *
                     Matrix.CreateTranslation(0.5f, -0.3125f, 0.5f);
             var blockMesh = new BlockMesh();
-            blockMesh.AppendModelMeshPart(
-                signMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            blockMesh.AppendModelPrimitive(
+                signNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 false,
                 false,
                 false,
@@ -122,9 +116,9 @@ public abstract class AttachedSignBlock(
             CollisionBoxes[i] = new BoundingBox[1];
             CollisionBoxes[i][0] = blockMesh.CalculateBoundingBox();
             SurfaceMeshes[i] = new BlockMesh();
-            SurfaceMeshes[i].AppendModelMeshPart(
-                surfaceMesh.MeshParts[0],
-                boneAbsoluteTransform2 * m,
+            SurfaceMeshes[i].AppendModelPrimitive(
+                surfaceNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 * m,
                 false,
                 false,
                 false,
@@ -134,9 +128,9 @@ public abstract class AttachedSignBlock(
             SurfaceNormals[i] = -m.Forward;
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(
-            signMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.6f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            signNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.6f, 0f),
             false,
             false,
             false,

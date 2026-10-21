@@ -13,17 +13,14 @@ public class CairnBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Cairn");
-        var cairnMesh = model.FindMesh("Cairn")!;
-        var woodMesh = model.FindMesh("Wood")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            cairnMesh.ParentBone ??
-            throw new InvalidOperationException("Required CairnMesh.ParentBone is null")
-        );
+        var cairnNode = model.FindNode("Cairn")!;
+        var woodNode = model.FindNode("Wood")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(cairnNode);
         var white = Color.White;
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(
-            cairnMesh.MeshParts[0],
-            boneAbsoluteTransform *
+        blockMesh.AppendModelPrimitive(
+            cairnNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform *
             Matrix.CreateRotationX(-(float)Math.PI / 2f) *
             Matrix.CreateTranslation(0.5f, 0f, 0.5f),
             false,
@@ -33,9 +30,9 @@ public class CairnBlock : Block
             white
         );
         var blockMesh2 = new BlockMesh();
-        blockMesh2.AppendModelMeshPart(
-            woodMesh.MeshParts[0],
-            boneAbsoluteTransform *
+        blockMesh2.AppendModelPrimitive(
+            woodNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform *
             Matrix.CreateRotationX(-(float)Math.PI / 2f) *
             Matrix.CreateTranslation(0.5f, 0f, 0.5f),
             false,
@@ -46,9 +43,9 @@ public class CairnBlock : Block
         );
         _blockMesh.AppendBlockMesh(blockMesh);
         _blockMesh.AppendBlockMesh(blockMesh2);
-        _standaloneMesh.AppendModelMeshPart(
-            cairnMesh.MeshParts[0],
-            boneAbsoluteTransform *
+        _standaloneMesh.AppendModelPrimitive(
+            cairnNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform *
             Matrix.CreateScale(1.3f) *
             Matrix.CreateRotationX(-(float)Math.PI / 2f) *
             Matrix.CreateTranslation(0f, 0f, 0f),
@@ -58,9 +55,9 @@ public class CairnBlock : Block
             false,
             white
         );
-        _standaloneMesh.AppendModelMeshPart(
-            woodMesh.MeshParts[0],
-            boneAbsoluteTransform *
+        _standaloneMesh.AppendModelPrimitive(
+            woodNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform *
             Matrix.CreateScale(1.3f) *
             Matrix.CreateRotationX(-(float)Math.PI / 2f) *
             Matrix.CreateTranslation(0f, 0f, 0f),

@@ -13,24 +13,18 @@ public class CampfireBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Campfire");
-        var woodMesh = model.FindMesh("Wood")!;
-        var ashesMesh = model.FindMesh("Ashes")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            woodMesh.ParentBone ??
-            throw new InvalidOperationException("Required WoodMesh.ParentBone is null")
-        );
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            ashesMesh.ParentBone ??
-            throw new InvalidOperationException("Required AshesMesh.ParentBone is null")
-        );
+        var woodNode = model.FindNode("Wood")!;
+        var ashesNode = model.FindNode("Ashes")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(woodNode);
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(ashesNode);
         for (var i = 0; i < 16; i++)
         {
             MeshesByData[i] = new BlockMesh();
             if (i == 0)
             {
-                MeshesByData[i].AppendModelMeshPart(
-                    ashesMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+                MeshesByData[i].AppendModelPrimitive(
+                    ashesNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform2 * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
                     false,
                     false,
                     false,
@@ -42,9 +36,9 @@ public class CampfireBlock : Block
             {
                 var scale = MathUtils.Lerp(1.5f, 4f, i / 15f);
                 var radians = i * (float)Math.PI / 2f;
-                MeshesByData[i].AppendModelMeshPart(
-                    woodMesh.MeshParts[0],
-                    boneAbsoluteTransform *
+                MeshesByData[i].AppendModelPrimitive(
+                    woodNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform *
                     Matrix.CreateScale(scale) *
                     Matrix.CreateRotationY(radians) *
                     Matrix.CreateTranslation(0.5f, 0f, 0.5f),
@@ -54,9 +48,9 @@ public class CampfireBlock : Block
                     false,
                     Color.White
                 );
-                MeshesByData[i].AppendModelMeshPart(
-                    ashesMesh.MeshParts[0],
-                    boneAbsoluteTransform2 *
+                MeshesByData[i].AppendModelPrimitive(
+                    ashesNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform2 *
                     Matrix.CreateScale(scale) *
                     Matrix.CreateRotationY(radians) *
                     Matrix.CreateTranslation(0.5f, 0f, 0.5f),
@@ -87,18 +81,18 @@ public class CampfireBlock : Block
             ];
         }
 
-        StandaloneMesh.AppendModelMeshPart(
-            woodMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0f, 0f, 0f),
+        StandaloneMesh.AppendModelPrimitive(
+            woodNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             true,
             false,
             Color.White
         );
-        StandaloneMesh.AppendModelMeshPart(
-            ashesMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0f, 0f, 0f),
+        StandaloneMesh.AppendModelPrimitive(
+            ashesNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateScale(3f) * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             true,

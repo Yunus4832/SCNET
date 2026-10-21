@@ -95,14 +95,11 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Wire");
-        var wireMesh = model.FindMesh("Wire")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            wireMesh.ParentBone ??
-            throw new InvalidOperationException("Required WireMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            wireMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        var wireNode = model.FindNode("Wire")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(wireNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            wireNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

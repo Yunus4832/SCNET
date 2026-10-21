@@ -1,199 +1,123 @@
-using Engine.Core;
+using Engine.Core.Collections;
+using Engine.Core.Mathematics;
 using Engine.FileStorage;
-using Engine.Media;
+using Engine.Media.Models;
 
 namespace Engine.Graphics;
 
-public class Model : IDisposable
+/// <summary>A shared, static scene resource. Nodes reference mesh resources; poses own instance state.</summary>
+public sealed class Model : IDisposable
 {
-    private readonly List<ModelBone> _bones = [];
+    private readonly List<ModelNode> _nodes = [];
+
+    private readonly List<ModelNode> _roots = [];
+
+    private readonly List<ModelNode> _meshNodes = [];
 
     private readonly List<ModelMesh> _meshes = [];
 
-    public ModelBone RootBone
+    private Model(ModelData data, bool keepSource)
     {
-        get => field is not null ? field : throw new InvalidOperationException("RootBone not initialized");
-        private set;
-    } = null!;
+        SourceData = data;
+        if (data.Scenes.Count == 0)
+        {
+            throw new InvalidDataException("Model has no renderable scene.");
+        }
 
-    public ReadOnlyList<ModelBone> Bones => new(_bones);
+        SceneIndex = data.DefaultSceneIndex < 0 ? 0 : data.DefaultSceneIndex;
+        var scene = data.Scenes[SceneIndex];
+        if (scene.RootNodes.Count == 0)
+        {
+            throw new InvalidDataException("Selected model scene has no nodes to render.");
+        }
 
+        try
+        {
+            var visited = new HashSet<int>();
+            foreach (var root in scene.RootNodes)
+            {
+                _roots.Add(InitializeNode(root, null, keepSource, visited));
+            }
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
+    }
+
+    public ModelData SourceData { get; }
+
+    public int SceneIndex { get; }
+
+    public bool IsDisposed { get; private set; }
+
+    public ReadOnlyList<ModelNode> Nodes => new(_nodes);
+
+    public ReadOnlyList<ModelNode> RootNodes => new(_roots);
+
+    /// <summary>Renderable nodes in default draw order; a mesh may occur on more than one node.</summary>
+    public ReadOnlyList<ModelNode> MeshNodes => new(_meshNodes);
+
+    /// <summary>Unique prepared mesh resources, including distinct default morph-weight variants.</summary>
     public ReadOnlyList<ModelMesh> Meshes => new(_meshes);
 
-    public void Dispose()
+    public event Action<Model>? Disposed;
+
+    public ModelNode? FindNode(string name, bool throwIfNotFound = true)
     {
-        InternalDispose();
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
+        var matches = _nodes.Where(n => n.Name == name).Take(2).ToArray();
+        if (matches.Length > 1)
+        {
+            throw new InvalidOperationException(
+                $"Model node name '{name}' is ambiguous; use SourceNodeIndex to identify the node."
+            );
+        }
+
+        return matches.Length == 1 ? matches[0] :
+            throwIfNotFound ? throw new InvalidOperationException($"Model node '{name}' was not found.") : null;
     }
 
-    public ModelBone? FindBone(string name, bool throwIfNotFound = true)
+    public void CopyAbsoluteNodeTransformsTo(Matrix[] transforms)
     {
-        foreach (var bone in _bones.Where(bone => bone.Name == name))
-        {
-            return bone;
-        }
-
-        return throwIfNotFound ? throw new InvalidOperationException("ModelBone not found.") : null;
+        CopyAbsoluteNodeTransformsTo(transforms, Matrix.Identity);
     }
 
-    public ModelMesh? FindMesh(string name, bool throwIfNotFound = true)
+    public void CopyAbsoluteNodeTransformsTo(Matrix[] transforms, Matrix worldTransform)
     {
-        foreach (var mesh in _meshes.Where(mesh => mesh.Name == name))
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
+        if (transforms.Length < _nodes.Count)
         {
-            return mesh;
+            throw new ArgumentException("Transform array is smaller than the node count.", nameof(transforms));
         }
 
-        return throwIfNotFound ? throw new InvalidOperationException("ModelMesh not found.") : null;
-    }
-
-    public ModelBone NewBone(string name, Matrix transform, ModelBone? parentBone)
-    {
-        if (parentBone == null && _bones.Count > 0)
+        foreach (var node in _nodes)
         {
-            throw new InvalidOperationException("There can be only one root bone.");
-        }
-
-        if (parentBone != null && parentBone.Model != this)
-        {
-            throw new InvalidOperationException("Parent bone must belong to the same model.");
-        }
-
-        var modelBone = new ModelBone
-        {
-            Name = name,
-            Model = this,
-            Index = _bones.Count,
-            ParentBone = parentBone,
-            Transform = transform,
-        };
-
-        _bones.Add(modelBone);
-
-        if (parentBone != null)
-        {
-            parentBone.ChildBones.Add(modelBone);
-        }
-        else
-        {
-            RootBone = modelBone;
-        }
-
-        return modelBone;
-    }
-
-    public void AddMesh(ModelMesh mesh)
-    {
-        _meshes.Add(mesh);
-    }
-
-    public ModelMesh NewMesh(string name, ModelBone parentBone, BoundingBox boundingBox)
-    {
-        if (parentBone.Model != this)
-        {
-            throw new InvalidOperationException("Parent bone must belong to the same model.");
-        }
-
-        return new ModelMesh
-        {
-            Name = name,
-            ParentBone = parentBone,
-            BoundingBox = boundingBox
-        };
-    }
-
-    public void CopyAbsoluteBoneTransformsTo(Matrix[] absoluteTransforms)
-    {
-        if (absoluteTransforms.Length < _bones.Count)
-        {
-            throw new ArgumentOutOfRangeException(nameof(absoluteTransforms));
-        }
-
-        for (var i = 0; i < _bones.Count; i++)
-        {
-            var modelBone = _bones[i];
-            if (modelBone.ParentBone is null)
-            {
-                absoluteTransforms[i] = modelBone.Transform;
-            }
-            else
-            {
-                Matrix.MultiplyRestricted(
-                    ref modelBone.Transform,
-                    ref absoluteTransforms[modelBone.ParentBone.Index],
-                    out absoluteTransforms[i]
-                );
-            }
+            transforms[node.Index] = node.LocalTransform *
+                                     (node.Parent == null ? worldTransform : transforms[node.Parent.Index]);
         }
     }
 
-    public BoundingBox CalculateAbsoluteBoundingBox(Matrix[] absoluteTransforms)
+    public BoundingBox CalculateAbsoluteBoundingBox(Matrix[] transforms)
     {
-        if (absoluteTransforms.Length < _bones.Count)
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
+        var bounds = default(BoundingBox);
+        var first = true;
+        foreach (var node in _meshNodes)
         {
-            throw new ArgumentOutOfRangeException(nameof(absoluteTransforms));
+            var local = node.RequireMesh().BoundingBox;
+            BoundingBox.Transform(ref local, ref transforms[node.Index], out var box);
+            bounds = first ? box : BoundingBox.Union(bounds, box);
+            first = false;
         }
 
-        var result = default(BoundingBox);
-        var flag = false;
-        foreach (var mesh in Meshes)
-        {
-            if (mesh.ParentBone is null)
-            {
-                continue;
-            }
-
-            if (flag)
-            {
-                BoundingBox.Transform(
-                    ref mesh.BoundingBox,
-                    ref absoluteTransforms[mesh.ParentBone.Index],
-                    out var result2
-                );
-                result = BoundingBox.Union(result, result2);
-            }
-            else
-            {
-                BoundingBox.Transform(
-                    ref mesh.BoundingBox,
-                    ref absoluteTransforms[mesh.ParentBone.Index],
-                    out result
-                );
-                flag = true;
-            }
-        }
-
-        return result;
+        return bounds;
     }
 
-    public void CopyAbsoluteBoneTransformsTo(Matrix[] absoluteTransforms, Matrix matrix)
+    public static Model Load(ModelData data, bool keepSourceVertexDataInTags = false)
     {
-        if (absoluteTransforms.Length < _bones.Count)
-        {
-            throw new ArgumentOutOfRangeException(nameof(absoluteTransforms));
-        }
-
-        for (var i = 0; i < _bones.Count; i++)
-        {
-            var modelBone = _bones[i];
-            if (modelBone.ParentBone == null)
-            {
-                Matrix.MultiplyRestricted(ref modelBone.Transform, ref matrix, out absoluteTransforms[i]);
-            }
-            else
-            {
-                Matrix.MultiplyRestricted(
-                    ref modelBone.Transform,
-                    ref absoluteTransforms[modelBone.ParentBone.Index],
-                    out absoluteTransforms[i]
-                );
-            }
-        }
-    }
-
-    public static Model Load(ModelData modelData, bool keepSourceVertexDataInTags = false)
-    {
-        var model = new Model();
-        model.Initialize(modelData, keepSourceVertexDataInTags);
-        return model;
+        return new Model(data, keepSourceVertexDataInTags);
     }
 
     public static Model Load(Stream stream, bool keepSourceVertexDataInTags = false)
@@ -204,59 +128,88 @@ public class Model : IDisposable
     public static Model Load(string fileName, bool keepSourceVertexDataInTags = false)
     {
         using var stream = Storage.OpenFile(fileName, OpenFileMode.Read);
-        return Load(ModelData.Load(stream), keepSourceVertexDataInTags);
+        return Load(
+            ModelData.Load(
+                stream,
+                uri => Storage.OpenFile(
+                    Path.Combine(Path.GetDirectoryName(fileName) ?? string.Empty, uri),
+                    OpenFileMode.Read
+                )
+            ),
+            keepSourceVertexDataInTags
+        );
     }
 
-    public void Initialize(ModelData modelData, bool keepSourceVertexDataInTags)
+    public void Dispose()
     {
-        InternalDispose();
-        var array = new VertexBuffer[modelData.Buffers.Count];
-        var array2 = new IndexBuffer[modelData.Buffers.Count];
-        for (var i = 0; i < modelData.Buffers.Count; i++)
+        if (IsDisposed)
         {
-            var modelBuffersData = modelData.Buffers[i];
-            array[i] = new VertexBuffer(
-                modelBuffersData.VertexDeclaration,
-                modelBuffersData.Vertices.Length / modelBuffersData.VertexDeclaration.VertexStride
+            return;
+        }
+
+        IsDisposed = true;
+        try
+        {
+            Disposed?.Invoke(this);
+        }
+        finally
+        {
+            Disposed = null;
+            foreach (var mesh in _meshes)
+            {
+                mesh.ReleaseBuffers();
+            }
+
+            _meshes.Clear();
+        }
+    }
+
+    private ModelNode InitializeNode(int index, ModelNode? parent, bool keepSource, HashSet<int> visited)
+    {
+        if (!visited.Add(index))
+        {
+            throw new InvalidDataException("A scene node cannot have multiple parents or form a cycle.");
+        }
+
+        var data = SourceData.Nodes[index];
+        if (data.SkinIndex >= 0)
+        {
+            throw new NotSupportedException(
+                $"Node '{data.Name}' requires skinned rendering; the rigid Model renderer cannot evaluate skins."
             );
-            array[i].SetData(modelBuffersData.Vertices, 0, modelBuffersData.Vertices.Length);
-            array2[i] = new IndexBuffer(IndexFormat.SixteenBits, modelBuffersData.Indices.Length / 2);
-            array2[i].SetData(modelBuffersData.Indices, 0, modelBuffersData.Indices.Length);
-            if (!keepSourceVertexDataInTags)
+        }
+
+        var node = new ModelNode(this, _nodes.Count, index, data.Name, data.Transform, parent);
+        _nodes.Add(node);
+        foreach (var child in data.Children)
+        {
+            node.AddChild(InitializeNode(child, node, keepSource, visited));
+        }
+
+        if (data.MeshIndex >= 0)
+        {
+            var mesh = SourceData.Meshes[data.MeshIndex];
+            var targets = mesh.MeshParts.Count == 0 ? 0 : mesh.MeshParts[0].MorphTargets.Count;
+            var sourceWeights = data.MorphWeights ?? mesh.MorphWeights;
+            if (sourceWeights.Length > targets || mesh.MeshParts.Any(p => p.MorphTargets.Count != targets))
             {
-                continue;
+                throw new InvalidDataException("Mesh morph target and default weight counts are inconsistent.");
             }
 
-            array[i].Tag = modelBuffersData.Vertices;
-            array2[i].Tag = modelBuffersData.Indices;
-        }
-
-        foreach (var bone in modelData.Bones)
-        {
-            NewBone(bone.Name, bone.Transform, bone.ParentBoneIndex >= 0 ? _bones[bone.ParentBoneIndex] : null);
-        }
-
-        foreach (var mesh in modelData.Meshes)
-        {
-            var modelMesh = NewMesh(mesh.Name, _bones[mesh.ParentBoneIndex], mesh.BoundingBox);
-            _meshes.Add(modelMesh);
-            foreach (var meshPart in mesh.MeshParts)
+            var weights = new float[targets];
+            sourceWeights.CopyTo(weights, 0);
+            node.Mesh = _meshes.FirstOrDefault(m =>
+                m.SourceMeshIndex == data.MeshIndex && m.MorphWeights.SequenceEqual(weights)
+            );
+            if (node.Mesh == null)
             {
-                modelMesh.NewMeshPart(
-                    array[meshPart.BuffersDataIndex],
-                    array2[meshPart.BuffersDataIndex],
-                    meshPart.StartIndex,
-                    meshPart.IndicesCount,
-                    meshPart.BoundingBox
-                );
+                node.Mesh = new ModelMesh(SourceData, data.MeshIndex, weights, keepSource);
+                _meshes.Add(node.Mesh);
             }
-        }
-    }
 
-    private void InternalDispose()
-    {
-        RootBone = null!;
-        _bones.Clear();
-        Utilities.DisposeCollection(_meshes);
+            _meshNodes.Add(node);
+        }
+
+        return node;
     }
 }

@@ -13,20 +13,14 @@ public abstract class AxeBlock(int handleTextureSlot, int headTextureSlot) : Blo
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Axe");
-        var handleMesh = model.FindMesh("Handle")!;
-        var headMesh = model.FindMesh("Head")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            handleMesh.ParentBone ??
-            throw new InvalidOperationException("Required AxeHandleMesh.ParentBone is null")
-        );
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            headMesh.ParentBone ??
-            throw new InvalidOperationException("Required AxeHeadMesh.ParentBone is null")
-        );
+        var handleNode = model.FindNode("Handle")!;
+        var headNode = model.FindNode("Head")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(headNode);
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(
-            handleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        blockMesh.AppendModelPrimitive(
+            handleNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,
@@ -41,9 +35,9 @@ public abstract class AxeBlock(int handleTextureSlot, int headTextureSlot) : Blo
             )
         );
         var blockMesh2 = new BlockMesh();
-        blockMesh2.AppendModelMeshPart(
-            headMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        blockMesh2.AppendModelPrimitive(
+            headNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

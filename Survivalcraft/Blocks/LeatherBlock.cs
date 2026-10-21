@@ -9,23 +9,20 @@ public class LeatherBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Leather");
-        var leatherMesh = model.FindMesh("Leather")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            leatherMesh.ParentBone ??
-            throw new InvalidOperationException("Required LeatherMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            leatherMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+        var leatherNode = model.FindNode("Leather")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(leatherNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            leatherNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            leatherMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            leatherNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             true,
             false,

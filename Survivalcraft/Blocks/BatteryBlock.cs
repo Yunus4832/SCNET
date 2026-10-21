@@ -47,23 +47,20 @@ public class BatteryBlock : Block, IElectricElementBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Battery");
-        var batteryMesh = model.FindMesh("Battery")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            batteryMesh.ParentBone ??
-            throw new InvalidOperationException("Required BatteryMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            batteryMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        var batteryNode = model.FindNode("Battery")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(batteryNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            batteryNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        BlockMesh.AppendModelMeshPart(
-            batteryMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+        BlockMesh.AppendModelPrimitive(
+            batteryNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
             false,
             false,
             false,

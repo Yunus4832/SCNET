@@ -32,17 +32,14 @@ public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Bl
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Slab");
-        var slabMesh = model.FindMesh("Slab")!;
-        var meshPart = slabMesh.MeshParts[0];
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            slabMesh.ParentBone ??
-            throw new InvalidOperationException("Required SlabMesh.ParentBone is null")
-        );
+        var slabNode = model.FindNode("Slab")!;
+        var meshPart = slabNode.RequireMesh().Primitives[0];
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(slabNode);
         for (var i = 0; i < 2; i++)
         {
-            var matrix = boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, i == 0 ? 0f : 0.5f, 0.5f);
+            var matrix = nodeAbsoluteTransform * Matrix.CreateTranslation(0.5f, i == 0 ? 0f : 0.5f, 0.5f);
             UncoloredBlockMeshes[i] = new BlockMesh();
-            UncoloredBlockMeshes[i].AppendModelMeshPart(meshPart, matrix, false, false, false, false, Color.White);
+            UncoloredBlockMeshes[i].AppendModelPrimitive(meshPart, matrix, false, false, false, false, Color.White);
             UncoloredBlockMeshes[i]
                 .TransformTextureCoordinates(
                     Matrix.CreateTranslation(
@@ -53,16 +50,16 @@ public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Bl
                 );
             UncoloredBlockMeshes[i].GenerateSidesData();
             ColoredBlockMeshes[i] = new BlockMesh();
-            ColoredBlockMeshes[i].AppendModelMeshPart(meshPart, matrix, false, false, false, false, Color.White);
+            ColoredBlockMeshes[i].AppendModelPrimitive(meshPart, matrix, false, false, false, false, Color.White);
             ColoredBlockMeshes[i].TransformTextureCoordinates(
                 Matrix.CreateTranslation(ColoredTextureSlot % 16 / 16f, ColoredTextureSlot / 16 / 16f, 0f)
             );
             ColoredBlockMeshes[i].GenerateSidesData();
         }
 
-        StandaloneUncoloredBlockMesh.AppendModelMeshPart(
+        StandaloneUncoloredBlockMesh.AppendModelPrimitive(
             meshPart,
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,
@@ -72,9 +69,9 @@ public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Bl
         StandaloneUncoloredBlockMesh.TransformTextureCoordinates(
             Matrix.CreateTranslation(TextureSlot % 16 / 16f, TextureSlot / 16 / 16f, 0f)
         );
-        StandaloneColoredBlockMesh.AppendModelMeshPart(
+        StandaloneColoredBlockMesh.AppendModelPrimitive(
             meshPart,
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

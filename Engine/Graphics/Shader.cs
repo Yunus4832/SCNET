@@ -1,7 +1,6 @@
 using System.Xml.Linq;
 
-using Engine.Core;
-using Engine.Media;
+using Engine.Core.Collections;
 
 using Silk.NET.OpenGLES;
 

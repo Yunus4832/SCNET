@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
@@ -18,7 +18,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Engine\Engine.csproj"/>
-        <None Include="..\Content\Assets\Models\StoneClub.dae" Link="TestAssets/StoneClub.dae"
+        <None Update="TestAssets/Models/*.glb" CopyToOutputDirectory="PreserveNewest"/>
+        <None Include="..\Content\Assets\Models\StoneClub.glb" Link="TestAssets/StoneClub.glb"
               CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 

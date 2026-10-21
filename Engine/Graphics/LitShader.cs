@@ -1,6 +1,6 @@
 using System.Globalization;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 namespace Engine.Graphics;
 

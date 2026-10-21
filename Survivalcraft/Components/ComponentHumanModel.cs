@@ -14,7 +14,7 @@ public class ComponentHumanModel : ComponentCreatureModel
 
     private float _aimHandAngle;
 
-    private ModelBone _bodyBone = null!;
+    private ModelNode _bodyNode = null!;
 
     private ComponentMiner? _componentMiner;
 
@@ -28,9 +28,9 @@ public class ComponentHumanModel : ComponentCreatureModel
 
     private float _footstepsPhase;
 
-    private ModelBone _hand1Bone = null!;
+    private ModelNode _hand1Node = null!;
 
-    private ModelBone _hand2Bone = null!;
+    private ModelNode _hand2Node = null!;
 
     private Vector2 _handAngles1;
 
@@ -38,7 +38,7 @@ public class ComponentHumanModel : ComponentCreatureModel
 
     private Vector2 _headAngles;
 
-    private ModelBone _headBone = null!;
+    private ModelNode _headNode = null!;
 
     private float _headingOffset;
 
@@ -46,9 +46,9 @@ public class ComponentHumanModel : ComponentCreatureModel
 
     private Vector3 _inHandItemRotation;
 
-    private ModelBone _leg1Bone = null!;
+    private ModelNode _leg1Node = null!;
 
-    private ModelBone _leg2Bone = null!;
+    private ModelNode _leg2Node = null!;
 
     private Vector2 _legAngles1;
 
@@ -410,28 +410,28 @@ public class ComponentHumanModel : ComponentCreatureModel
             var position3 = new Vector3(position.X, position.Y - MathUtils.Lerp(0f, 0.7f, f), position.Z);
             var position4 = new Vector3(0f, MathUtils.Lerp(0f, 7f, f), MathUtils.Lerp(0f, 28f, f));
             var scale = new Vector3(1f, 1f, MathUtils.Lerp(1f, 0.5f, f));
-            SetBoneTransform(_bodyBone.Index, Matrix.CreateRotationY(vector.X) * Matrix.CreateTranslation(position3));
-            SetBoneTransform(
-                _headBone.Index,
+            SetNodeTransform(_bodyNode.Index, Matrix.CreateRotationY(vector.X) * Matrix.CreateTranslation(position3));
+            SetNodeTransform(
+                _headNode.Index,
                 Matrix.CreateRotationX(_headAngles.Y) * Matrix.CreateRotationZ(0f - _headAngles.X)
             );
-            SetBoneTransform(
-                _hand1Bone.Index,
+            SetNodeTransform(
+                _hand1Node.Index,
                 Matrix.CreateRotationY(_handAngles1.Y) * Matrix.CreateRotationX(_handAngles1.X)
             );
-            SetBoneTransform(
-                _hand2Bone.Index,
+            SetNodeTransform(
+                _hand2Node.Index,
                 Matrix.CreateRotationY(_handAngles2.Y) * Matrix.CreateRotationX(_handAngles2.X)
             );
-            SetBoneTransform(
-                _leg1Bone.Index,
+            SetNodeTransform(
+                _leg1Node.Index,
                 Matrix.CreateRotationY(_legAngles1.Y) *
                 Matrix.CreateRotationX(_legAngles1.X) *
                 Matrix.CreateTranslation(position4) *
                 Matrix.CreateScale(scale)
             );
-            SetBoneTransform(
-                _leg2Bone.Index,
+            SetNodeTransform(
+                _leg2Node.Index,
                 Matrix.CreateRotationY(_legAngles2.Y) *
                 Matrix.CreateRotationX(_legAngles2.X) *
                 Matrix.CreateTranslation(position4) *
@@ -450,26 +450,26 @@ public class ComponentHumanModel : ComponentCreatureModel
                                 ComponentCreature.ComponentBody.Matrix.Forward * new Vector3(1f, 0f, 1f)
                             ) +
                             num25 * Vector3.UnitY * ComponentCreature.ComponentBody.BoxSize.Z * 0.1f;
-            SetBoneTransform(
-                _bodyBone.Index,
+            SetNodeTransform(
+                _bodyNode.Index,
                 Matrix.CreateFromYawPitchRoll(vector.X, (float)Math.PI / 2f * num25, 0f) *
                 Matrix.CreateTranslation(position2)
             );
-            SetBoneTransform(_headBone.Index, Matrix.Identity);
-            SetBoneTransform(
-                _hand1Bone.Index,
+            SetNodeTransform(_headNode.Index, Matrix.Identity);
+            SetNodeTransform(
+                _hand1Node.Index,
                 Matrix.CreateRotationY(_handAngles1.Y * num26) * Matrix.CreateRotationX(_handAngles1.X * num26)
             );
-            SetBoneTransform(
-                _hand2Bone.Index,
+            SetNodeTransform(
+                _hand2Node.Index,
                 Matrix.CreateRotationY(_handAngles2.Y * num26) * Matrix.CreateRotationX(_handAngles2.X * num26)
             );
-            SetBoneTransform(
-                _leg1Bone.Index,
+            SetNodeTransform(
+                _leg1Node.Index,
                 Matrix.CreateRotationY(_legAngles1.Y * num26) * Matrix.CreateRotationX(_legAngles1.X * num26)
             );
-            SetBoneTransform(
-                _leg2Bone.Index,
+            SetNodeTransform(
+                _leg2Node.Index,
                 Matrix.CreateRotationY(_legAngles2.Y * num26) * Matrix.CreateRotationX(_legAngles2.X * num26)
             );
         }
@@ -485,7 +485,7 @@ public class ComponentHumanModel : ComponentCreatureModel
         {
             var num = Terrain.ExtractContents(_componentMiner.ActiveBlockValue);
             var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
-            var m = AbsoluteBoneTransformsForCamera[_hand2Bone.Index];
+            var m = AbsoluteNodeTransformsForCamera[_hand2Node.Index];
             m *= camera.InvertedViewMatrix;
             m.Right = Vector3.Normalize(m.Right);
             m.Up = Vector3.Normalize(m.Up);
@@ -587,12 +587,12 @@ public class ComponentHumanModel : ComponentCreatureModel
     public override void SetModel(Model model)
     {
         base.SetModel(model);
-        _bodyBone = Model.FindBone("Body")!;
-        _headBone = Model.FindBone("Head")!;
-        _leg1Bone = Model.FindBone("Leg1")!;
-        _leg2Bone = Model.FindBone("Leg2")!;
-        _hand1Bone = Model.FindBone("Hand1")!;
-        _hand2Bone = Model.FindBone("Hand2")!;
+        _bodyNode = Model.FindNode("Body")!;
+        _headNode = Model.FindNode("Head")!;
+        _leg1Node = Model.FindNode("Leg1")!;
+        _leg2Node = Model.FindNode("Leg2")!;
+        _hand1Node = Model.FindNode("Hand1")!;
+        _hand2Node = Model.FindNode("Hand2")!;
     }
 
     public override Vector3 CalculateEyePosition()

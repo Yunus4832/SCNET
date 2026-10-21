@@ -24,13 +24,10 @@ public abstract class ChunkBlock(
         var model = Smooth
             ? ContentManager.Get<Model>("Models/ChunkSmooth")
             : ContentManager.Get<Model>("Models/Chunk");
-        var matrix = BlockMesh.GetBoneAbsoluteTransform(
-                         model.Meshes[0].ParentBone ??
-                         throw new InvalidOperationException("Required Model.ParentBone is null")
-                     ) *
+        var matrix = BlockMesh.GetNodeAbsoluteTransform(model.MeshNodes[0]) *
                      Transform;
-        StandaloneBlockMesh.AppendModelMeshPart(
-            model.Meshes[0].MeshParts[0],
+        StandaloneBlockMesh.AppendModelPrimitive(
+            model.MeshNodes[0].RequireMesh().Primitives[0],
             matrix,
             false,
             false,

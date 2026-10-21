@@ -1,6 +1,6 @@
 using System.Collections;
 
-using Engine.Core;
+using Engine.Core.Collections;
 using Engine.Serialization;
 
 using EntitySystem.TemplatesDatabase;

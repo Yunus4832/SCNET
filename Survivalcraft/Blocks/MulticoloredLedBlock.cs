@@ -13,30 +13,24 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Leds");
-        var ledMesh = model.FindMesh("Led")!;
-        var ledBulbMesh = model.FindMesh("LedBulb")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            ledMesh.ParentBone ??
-            throw new InvalidOperationException("Required LedMesh.ParentBone is null")
-        );
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            ledBulbMesh.ParentBone ??
-            throw new InvalidOperationException("Required BulbMesh.ParentBone is null")
-        );
+        var ledNode = model.FindNode("Led")!;
+        var ledBulbNode = model.FindNode("LedBulb")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(ledNode);
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(ledBulbNode);
         var m = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(
-            ledMesh.MeshParts[0],
-            boneAbsoluteTransform * m,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            ledNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m,
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            ledBulbMesh.MeshParts[0],
-            boneAbsoluteTransform2 * m,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            ledBulbNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * m,
             false,
             false,
             false,
@@ -55,18 +49,18 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByData[num] = new BlockMesh();
-            BlockMeshesByData[num].AppendModelMeshPart(
-                ledMesh.MeshParts[0],
-                boneAbsoluteTransform * m2,
+            BlockMeshesByData[num].AppendModelPrimitive(
+                ledNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m2,
                 false,
                 false,
                 false,
                 false,
                 Color.White
             );
-            BlockMeshesByData[num].AppendModelMeshPart(
-                ledBulbMesh.MeshParts[0],
-                boneAbsoluteTransform2 * m2,
+            BlockMeshesByData[num].AppendModelPrimitive(
+                ledBulbNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 * m2,
                 false,
                 false,
                 false,

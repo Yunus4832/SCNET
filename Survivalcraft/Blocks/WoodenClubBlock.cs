@@ -10,15 +10,12 @@ public class WoodenClubBlock : Block
     {
         var num = 47;
         var model = ContentManager.Get<Model>("Models/WoodenClub");
-        var handleMesh = model.FindMesh("Handle")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            handleMesh.ParentBone ??
-            throw new InvalidOperationException("Required HandleMesh.ParentBone is null")
-        );
+        var handleNode = model.FindNode("Handle")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(
-            handleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        blockMesh.AppendModelPrimitive(
+            handleNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

@@ -58,11 +58,8 @@ public abstract class TrapdoorBlock(string modelName) : Block, IElectricElementB
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>(ModelName);
-        var trapdoorMesh = model.FindMesh("Trapdoor")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            trapdoorMesh.ParentBone ??
-            throw new InvalidOperationException("Required TrapdoorMesh.ParentBone is null")
-        );
+        var trapdoorNode = model.FindNode("Trapdoor")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(trapdoorNode);
         for (var i = 0; i < 16; i++)
         {
             var rotation = GetRotation(i);
@@ -76,9 +73,9 @@ public abstract class TrapdoorBlock(string modelName) : Block, IElectricElementB
             identity *= Matrix.CreateRotationZ(upsideDown ? (float)Math.PI : 0f);
             identity *= Matrix.CreateRotationY(rotation * (float)Math.PI / 2f);
             identity *= Matrix.CreateTranslation(new Vector3(0.5f, upsideDown ? 1 : 0, 0.5f));
-            BlockMeshesByData[i].AppendModelMeshPart(
-                trapdoorMesh.MeshParts[0],
-                boneAbsoluteTransform * identity,
+            BlockMeshesByData[i].AppendModelPrimitive(
+                trapdoorNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * identity,
                 false,
                 false,
                 false,
@@ -89,9 +86,9 @@ public abstract class TrapdoorBlock(string modelName) : Block, IElectricElementB
             CollisionBoxesByData[i] = [BlockMeshesByData[i].CalculateBoundingBox()];
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(
-            trapdoorMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            trapdoorNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,

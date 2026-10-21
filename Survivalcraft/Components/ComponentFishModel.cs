@@ -13,7 +13,7 @@ public class ComponentFishModel : ComponentCreatureModel
 
     private float _bitingPhase;
 
-    private ModelBone _bodyBone = null!;
+    private ModelNode _bodyNode = null!;
 
     private float _digInDepth;
 
@@ -21,13 +21,13 @@ public class ComponentFishModel : ComponentCreatureModel
 
     private bool _hasVerticalTail;
 
-    private ModelBone? _jawBone;
+    private ModelNode? _jawNode;
 
     private float _swimAnimationSpeed;
 
-    private ModelBone _tail1Bone = null!;
+    private ModelNode _tail1Node = null!;
 
-    private ModelBone _tail2Bone = null!;
+    private ModelNode _tail2Node = null!;
 
     private Vector2 _tailTurn;
 
@@ -194,7 +194,7 @@ public class ComponentFishModel : ComponentCreatureModel
                             ComponentCreature.ComponentBody.Position +
                             new Vector3(0f, 0f - _digInDepth, 0f)
                         );
-            SetBoneTransform(_bodyBone.Index, value);
+            SetNodeTransform(_bodyNode.Index, value);
             var identity = Matrix.Identity;
             if (num2 != 0f)
             {
@@ -217,11 +217,11 @@ public class ComponentFishModel : ComponentCreatureModel
                 identity2 *= Matrix.CreateRotationX(num5);
             }
 
-            SetBoneTransform(_tail1Bone.Index, identity);
-            SetBoneTransform(_tail2Bone.Index, identity2);
-            if (_jawBone != null)
+            SetNodeTransform(_tail1Node.Index, identity);
+            SetNodeTransform(_tail2Node.Index, identity2);
+            if (_jawNode != null)
             {
-                SetBoneTransform(_jawBone.Index, Matrix.CreateRotationX(radians));
+                SetNodeTransform(_jawNode.Index, Matrix.CreateRotationX(radians));
             }
         }
         else
@@ -229,16 +229,16 @@ public class ComponentFishModel : ComponentCreatureModel
             var num6 = ComponentCreature.ComponentBody.BoundingBox.Max.Y -
                        ComponentCreature.ComponentBody.BoundingBox.Min.Y;
             var position = ComponentCreature.ComponentBody.Position + 1f * num6 * DeathPhase * Vector3.UnitY;
-            SetBoneTransform(
-                _bodyBone.Index,
+            SetNodeTransform(
+                _bodyNode.Index,
                 Matrix.CreateFromYawPitchRoll(vector.X, 0f, (float)Math.PI * DeathPhase) *
                 Matrix.CreateTranslation(position)
             );
-            SetBoneTransform(_tail1Bone.Index, Matrix.Identity);
-            SetBoneTransform(_tail2Bone.Index, Matrix.Identity);
-            if (_jawBone != null)
+            SetNodeTransform(_tail1Node.Index, Matrix.Identity);
+            SetNodeTransform(_tail2Node.Index, Matrix.Identity);
+            if (_jawNode != null)
             {
-                SetBoneTransform(_jawBone.Index, Matrix.Identity);
+                SetNodeTransform(_jawNode.Index, Matrix.Identity);
             }
         }
 
@@ -255,10 +255,10 @@ public class ComponentFishModel : ComponentCreatureModel
     public override void SetModel(Model model)
     {
         base.SetModel(model);
-        _bodyBone = Model.FindBone("Body")!;
-        _tail1Bone = Model.FindBone("Tail1")!;
-        _tail2Bone = Model.FindBone("Tail2")!;
-        _jawBone = Model.FindBone("Jaw", false);
+        _bodyNode = Model.FindNode("Body")!;
+        _tail1Node = Model.FindNode("Tail1")!;
+        _tail2Node = Model.FindNode("Tail2")!;
+        _jawNode = Model.FindNode("Jaw", false);
     }
 
     public override Vector3 CalculateEyePosition()

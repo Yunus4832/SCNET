@@ -14,8 +14,8 @@ using ContentServer.Domain.RendezvousServices;
 using ContentServer.Domain.ServerSources;
 using ContentServer.Infrastructure;
 
-using Engine.Core;
-using Engine.Media;
+using Engine.Core.Mathematics;
+using Engine.Media.Images;
 
 using Game;
 using Game.Content;

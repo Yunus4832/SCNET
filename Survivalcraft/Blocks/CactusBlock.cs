@@ -11,23 +11,20 @@ public class CactusBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Cactus");
-        var cactusMesh = model.FindMesh("Cactus")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            cactusMesh.ParentBone ??
-            throw new InvalidOperationException("Required CactusMesh.ParentBone is null")
-        );
-        BlockMesh.AppendModelMeshPart(
-            cactusMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+        var cactusNode = model.FindNode("Cactus")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(cactusNode);
+        BlockMesh.AppendModelPrimitive(
+            cactusNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            cactusMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            cactusNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

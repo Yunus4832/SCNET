@@ -1,5 +1,7 @@
 using Engine.Audio;
-using Engine.Core;
+using Engine.Core.Logging;
+using Engine.Core.Mathematics;
+using Engine.Core.Runtime;
 using Engine.Graphics;
 using Engine.Input;
 

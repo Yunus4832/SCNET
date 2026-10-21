@@ -86,14 +86,10 @@ public abstract class FenceGateBlock(
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>(ModelName);
-        var postMesh = model.FindMesh("Post")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            postMesh.ParentBone ?? throw new InvalidOperationException("Required PostMesh.ParentBone is null")
-        );
-        var planksMesh = model.FindMesh("Planks")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            planksMesh.ParentBone ?? throw new InvalidOperationException("Required PlanksMesh.ParentBone is null")
-        );
+        var postNode = model.FindNode("Post")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(postNode);
+        var planksNode = model.FindNode("Planks")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(planksNode);
         for (var i = 0; i < 16; i++)
         {
             var rotation = GetRotation(i);
@@ -109,18 +105,18 @@ public abstract class FenceGateBlock(
                         Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
                         Matrix.CreateTranslation(0.5f, 0f, 0.5f);
             BlockMeshes[i] = new BlockMesh();
-            BlockMeshes[i].AppendModelMeshPart(
-                postMesh.MeshParts[0],
-                boneAbsoluteTransform * identity,
+            BlockMeshes[i].AppendModelPrimitive(
+                postNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * identity,
                 false,
                 !rightHanded,
                 false,
                 false,
                 PostColor
             );
-            BlockMeshes[i].AppendModelMeshPart(
-                planksMesh.MeshParts[0],
-                boneAbsoluteTransform2 * identity,
+            BlockMeshes[i].AppendModelPrimitive(
+                planksNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 * identity,
                 false,
                 !rightHanded,
                 false,
@@ -129,9 +125,9 @@ public abstract class FenceGateBlock(
             );
             if (DoubleSided)
             {
-                BlockMeshes[i].AppendModelMeshPart(
-                    planksMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * identity,
+                BlockMeshes[i].AppendModelPrimitive(
+                    planksNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform2 * identity,
                     false,
                     rightHanded,
                     false,
@@ -176,18 +172,18 @@ public abstract class FenceGateBlock(
             ];
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(
-            postMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            postNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,
             false,
             PostColor
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            planksMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            planksNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,
@@ -196,9 +192,9 @@ public abstract class FenceGateBlock(
         );
         if (DoubleSided)
         {
-            StandaloneBlockMesh.AppendModelMeshPart(
-                planksMesh.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            StandaloneBlockMesh.AppendModelPrimitive(
+                planksNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
                 false,
                 true,
                 false,

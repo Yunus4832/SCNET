@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 
 using Engine.Graphics;
-using Engine.Media;
+using Engine.Media.Images;
 
 namespace Game;
 
@@ -23,14 +23,14 @@ public class BlockMesh
         return new BoundingBox(Vertices.Select(v => Vector3.Transform(v.Position, matrix)));
     }
 
-    public static Matrix GetBoneAbsoluteTransform(ModelBone modelBone)
+    public static Matrix GetNodeAbsoluteTransform(ModelNode modelNode)
     {
-        if (modelBone.ParentBone != null)
+        if (modelNode.Parent != null)
         {
-            return GetBoneAbsoluteTransform(modelBone.ParentBone) * modelBone.Transform;
+            return modelNode.LocalTransform * GetNodeAbsoluteTransform(modelNode.Parent);
         }
 
-        return modelBone.Transform;
+        return modelNode.LocalTransform;
     }
 
     public void AppendImageExtrusion(Image image, Rectangle bounds, Vector3 size, Color color)
@@ -318,8 +318,8 @@ public class BlockMesh
         AppendBlockMesh(blockMesh);
     }
 
-    public void AppendModelMeshPart(
-        ModelMeshPart meshPart,
+    public void AppendModelPrimitive(
+        ModelPrimitive meshPart,
         Matrix matrix,
         bool makeEmissive,
         bool flipWindingOrder,
@@ -330,6 +330,13 @@ public class BlockMesh
     {
         var vertexBuffer = meshPart.VertexBuffer;
         var indexBuffer = meshPart.IndexBuffer;
+        if (indexBuffer.IndexFormat != IndexFormat.SixteenBits)
+        {
+            throw new NotSupportedException(
+                "Block geometry requires a mesh with 16-bit indices; split larger meshes before block conversion."
+            );
+        }
+
         var vertexElements = vertexBuffer.VertexDeclaration.VertexElements;
         if (vertexElements.Count != 3 ||
             vertexElements[0].Offset != 0 ||
@@ -350,7 +357,7 @@ public class BlockMesh
             var num = indexData[i];
             if (!dictionary.ContainsKey(num))
             {
-                dictionary.Add(num, (ushort)Vertices.Count);
+                dictionary.Add(num, checked((ushort)Vertices.Count));
                 BlockMeshVertex item = default;
                 item.Position = Vector3.Transform(vertexData[num].Position, matrix);
                 item.TextureCoordinates = vertexData[num].TextureCoordinate;
@@ -415,7 +422,7 @@ public class BlockMesh
 
         for (var j = 0; j < blockMesh.Indices.Count; j++)
         {
-            Indices.Add((ushort)(blockMesh.Indices.Array[j] + count));
+            Indices.Add(checked((ushort)(blockMesh.Indices.Array[j] + count)));
         }
 
         Trim();

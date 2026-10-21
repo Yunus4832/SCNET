@@ -105,25 +105,16 @@ public class ArrowBlock : Block
                 throw new InvalidOperationException("Too many arrow types.");
             }
 
-            var shaftNameMesh = model.FindMesh(ShaftNames[enumValue])!;
-            var stabilizerNameMesh = model.FindMesh(StabilizerNames[enumValue])!;
-            var tipNameMesh = model.FindMesh(TipNames[enumValue])!;
-            var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-                shaftNameMesh.ParentBone ??
-                throw new InvalidOperationException("Required ShaftNameMesh.ParentBone is null")
-            );
-            var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-                stabilizerNameMesh.ParentBone ??
-                throw new InvalidOperationException("Required StabilizerNameMesh.ParentBone is null")
-            );
-            var boneAbsoluteTransform3 = BlockMesh.GetBoneAbsoluteTransform(
-                tipNameMesh.ParentBone ??
-                throw new InvalidOperationException("Required TipNameMesh.ParentBone is null")
-            );
+            var shaftNameNode = model.FindNode(ShaftNames[enumValue])!;
+            var stabilizerNameNode = model.FindNode(StabilizerNames[enumValue])!;
+            var tipNameNode = model.FindNode(TipNames[enumValue])!;
+            var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(shaftNameNode);
+            var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(stabilizerNameNode);
+            var nodeAbsoluteTransform3 = BlockMesh.GetNodeAbsoluteTransform(tipNameNode);
             var blockMesh = new BlockMesh();
-            blockMesh.AppendModelMeshPart(
-                tipNameMesh.MeshParts[0],
-                boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f),
+            blockMesh.AppendModelPrimitive(
+                tipNameNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform3 * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f),
                 false,
                 false,
                 false,
@@ -138,9 +129,9 @@ public class ArrowBlock : Block
                 )
             );
             var blockMesh2 = new BlockMesh();
-            blockMesh2.AppendModelMeshPart(
-                shaftNameMesh.MeshParts[0],
-                boneAbsoluteTransform * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f),
+            blockMesh2.AppendModelPrimitive(
+                shaftNameNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f),
                 false,
                 false,
                 false,
@@ -155,9 +146,9 @@ public class ArrowBlock : Block
                 )
             );
             var blockMesh3 = new BlockMesh();
-            blockMesh3.AppendModelMeshPart(
-                stabilizerNameMesh.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f),
+            blockMesh3.AppendModelPrimitive(
+                stabilizerNameNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, Offsets[enumValue], 0f),
                 false,
                 false,
                 true,

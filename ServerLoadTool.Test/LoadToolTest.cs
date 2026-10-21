@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 namespace ServerLoadTool.Test;
 

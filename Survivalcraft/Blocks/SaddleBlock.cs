@@ -9,23 +9,20 @@ public class SaddleBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Saddle");
-        var saddleMesh = model.FindMesh("Saddle")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            saddleMesh.ParentBone ??
-            throw new InvalidOperationException("Required SaddleMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            saddleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.2f, 0f),
+        var saddleNode = model.FindNode("Saddle")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(saddleNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            saddleNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.2f, 0f),
             false,
             false,
             false,
             false,
             new Color(224, 224, 224)
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            saddleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.2f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            saddleNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.2f, 0f),
             false,
             true,
             false,

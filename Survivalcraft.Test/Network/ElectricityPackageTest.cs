@@ -1,4 +1,4 @@
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using Game.Network;
 using Game.Network.Replication;

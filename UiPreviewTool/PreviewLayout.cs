@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Xml.Linq;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using Game.Widgets;
 

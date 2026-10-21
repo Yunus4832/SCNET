@@ -52,28 +52,22 @@ public class ThermometerBlock : Block, IElectricElementBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Thermometer");
-        var caseMesh = model.FindMesh("Case")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            caseMesh.ParentBone ??
-            throw new InvalidOperationException("Required CaseMesh.ParentBone is null")
-        );
-        var fluidMesh = model.FindMesh("Fluid")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            fluidMesh.ParentBone ??
-            throw new InvalidOperationException("Required FluidMesh.ParentBone is null")
-        );
-        CaseMesh.AppendModelMeshPart(
-            caseMesh.MeshParts[0],
-            boneAbsoluteTransform,
+        var caseNode = model.FindNode("Case")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(caseNode);
+        var fluidNode = model.FindNode("Fluid")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(fluidNode);
+        CaseMesh.AppendModelPrimitive(
+            caseNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform,
             false,
             false,
             true,
             false,
             Color.White
         );
-        FluidMesh.AppendModelMeshPart(
-            fluidMesh.MeshParts[0],
-            boneAbsoluteTransform2,
+        FluidMesh.AppendModelPrimitive(
+            fluidNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2,
             false,
             false,
             false,

@@ -20,31 +20,25 @@ public class TorchBlock : Block
         }
 
         var model = ContentManager.Get<Model>("Models/Torch");
-        var torchMesh = model.FindMesh("Torch")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            torchMesh.ParentBone ??
-            throw new InvalidOperationException("Required TorchMesh.ParentBone is null")
-        );
-        var flameMesh = model.FindMesh("Flame")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            flameMesh.ParentBone ??
-            throw new InvalidOperationException("Required FlameMesh.ParentBone is null")
-        );
+        var torchNode = model.FindNode("Torch")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(torchNode);
+        var flameNode = model.FindNode("Flame")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(flameNode);
         var m = Matrix.CreateRotationX(0.6f) *
                 Matrix.CreateRotationY(0f) *
                 Matrix.CreateTranslation(0.5f, 0.15f, -0.05f);
-        BlockMeshesByVariant[0].AppendModelMeshPart(
-            torchMesh.MeshParts[0],
-            boneAbsoluteTransform * m,
+        BlockMeshesByVariant[0].AppendModelPrimitive(
+            torchNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m,
             false,
             false,
             false,
             false,
             Color.White
         );
-        BlockMeshesByVariant[0].AppendModelMeshPart(
-            flameMesh.MeshParts[0],
-            boneAbsoluteTransform2 * m,
+        BlockMeshesByVariant[0].AppendModelPrimitive(
+            flameNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * m,
             true,
             false,
             false,
@@ -54,18 +48,18 @@ public class TorchBlock : Block
         m = Matrix.CreateRotationX(0.6f) *
             Matrix.CreateRotationY((float)Math.PI / 2f) *
             Matrix.CreateTranslation(-0.05f, 0.15f, 0.5f);
-        BlockMeshesByVariant[1].AppendModelMeshPart(
-            torchMesh.MeshParts[0],
-            boneAbsoluteTransform * m,
+        BlockMeshesByVariant[1].AppendModelPrimitive(
+            torchNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m,
             false,
             false,
             false,
             false,
             Color.White
         );
-        BlockMeshesByVariant[1].AppendModelMeshPart(
-            flameMesh.MeshParts[0],
-            boneAbsoluteTransform2 * m,
+        BlockMeshesByVariant[1].AppendModelPrimitive(
+            flameNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * m,
             true,
             false,
             false,
@@ -75,18 +69,18 @@ public class TorchBlock : Block
         m = Matrix.CreateRotationX(0.6f) *
             Matrix.CreateRotationY((float)Math.PI) *
             Matrix.CreateTranslation(0.5f, 0.15f, 1.05f);
-        BlockMeshesByVariant[2].AppendModelMeshPart(
-            torchMesh.MeshParts[0],
-            boneAbsoluteTransform * m,
+        BlockMeshesByVariant[2].AppendModelPrimitive(
+            torchNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m,
             false,
             false,
             false,
             false,
             Color.White
         );
-        BlockMeshesByVariant[2].AppendModelMeshPart(
-            flameMesh.MeshParts[0],
-            boneAbsoluteTransform2 * m,
+        BlockMeshesByVariant[2].AppendModelPrimitive(
+            flameNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * m,
             true,
             false,
             false,
@@ -96,18 +90,18 @@ public class TorchBlock : Block
         m = Matrix.CreateRotationX(0.6f) *
             Matrix.CreateRotationY(4.712389f) *
             Matrix.CreateTranslation(1.05f, 0.15f, 0.5f);
-        BlockMeshesByVariant[3].AppendModelMeshPart(
-            torchMesh.MeshParts[0],
-            boneAbsoluteTransform * m,
+        BlockMeshesByVariant[3].AppendModelPrimitive(
+            torchNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m,
             false,
             false,
             false,
             false,
             Color.White
         );
-        BlockMeshesByVariant[3].AppendModelMeshPart(
-            flameMesh.MeshParts[0],
-            boneAbsoluteTransform2 * m,
+        BlockMeshesByVariant[3].AppendModelPrimitive(
+            flameNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * m,
             true,
             false,
             false,
@@ -115,27 +109,27 @@ public class TorchBlock : Block
             Color.White
         );
         m = Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-        BlockMeshesByVariant[4].AppendModelMeshPart(
-            torchMesh.MeshParts[0],
-            boneAbsoluteTransform * m,
+        BlockMeshesByVariant[4].AppendModelPrimitive(
+            torchNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m,
             false,
             false,
             false,
             false,
             Color.White
         );
-        BlockMeshesByVariant[4].AppendModelMeshPart(
-            flameMesh.MeshParts[0],
-            boneAbsoluteTransform2 * m,
+        BlockMeshesByVariant[4].AppendModelPrimitive(
+            flameNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * m,
             true,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            torchMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.25f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            torchNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.25f, 0f),
             false,
             false,
             false,

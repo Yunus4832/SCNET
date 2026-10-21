@@ -62,7 +62,7 @@ public sealed class ModEntry : IMod
                     message.Reader.ReadGuid(),
                     message.Reader.ReadGuid(),
                     message.Reader.ReadString(),
-                    Engine.Core.Time.RealTime + TerritoryAccessRequests.Lifetime
+                    Engine.Core.Runtime.Time.RealTime + TerritoryAccessRequests.Lifetime
                 );
                 world.ReceiveAccessRequest(request, false);
             }

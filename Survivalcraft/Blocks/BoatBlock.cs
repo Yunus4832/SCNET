@@ -9,23 +9,20 @@ public class BoatBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/BoatItem");
-        var boatMesh = model.FindMesh("Boat")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            boatMesh.ParentBone ??
-            throw new InvalidOperationException("Required BoatMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            boatMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.4f, 0f),
+        var boatNode = model.FindNode("Boat")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(boatNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            boatNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.4f, 0f),
             false,
             false,
             false,
             false,
             new Color(96, 96, 96)
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            boatMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.4f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            boatNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.4f, 0f),
             false,
             true,
             false,

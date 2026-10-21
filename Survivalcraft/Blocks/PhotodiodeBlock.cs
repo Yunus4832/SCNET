@@ -13,11 +13,8 @@ public class PhotodiodeBlock : MountedElectricElementBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Photodiode");
-        var photodiodeMesh = model.FindMesh("Photodiode")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            photodiodeMesh.ParentBone ??
-            throw new InvalidOperationException("Required PhotodiodeMesh.ParentBone is null")
-        );
+        var photodiodeNode = model.FindNode("Photodiode")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(photodiodeNode);
         for (var i = 0; i < 6; i++)
         {
             var num = i;
@@ -30,9 +27,9 @@ public class PhotodiodeBlock : MountedElectricElementBlock
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByData[num] = new BlockMesh();
-            BlockMeshesByData[num].AppendModelMeshPart(
-                photodiodeMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            BlockMeshesByData[num].AppendModelPrimitive(
+                photodiodeNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 false,
                 false,
                 false,
@@ -43,9 +40,9 @@ public class PhotodiodeBlock : MountedElectricElementBlock
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBlockMesh.AppendModelMeshPart(
-            photodiodeMesh.MeshParts[0],
-            boneAbsoluteTransform * m2,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            photodiodeNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m2,
             false,
             false,
             false,

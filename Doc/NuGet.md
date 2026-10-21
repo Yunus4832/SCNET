@@ -10,8 +10,8 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 | --- | --- | --- |
 | `SCNET.Native.OpenAL` | `Native.OpenAL` | Windows、Linux 和 Android 四种 ABI 的 OpenAL，由 Engine 统一依赖。 |
 | `SCNET.Native.ImageCodecs` | `Native.ImageCodecs` | PNG、WebP 的标准 RID 原生资产；由 Media 依赖。 |
-| `SCNET.Engine.Core` | `Engine.Core` | 不依赖引擎的基础工具。 |
-| `SCNET.Engine.Media` | `Engine.Media` | 图像、音频、Collada 模型数据与编解码；公共命名空间为 Engine.Media，无窗口、GPU、音频设备及文件存储依赖。 |
+| `SCNET.Engine.Core` | `Engine.Core` | 数学、集合、日志和运行支持；命名空间为 Engine.Core 下的 Mathematics、Collections、Logging、Runtime，不依赖窗口或图形层。 |
+| `SCNET.Engine.Media` | `Engine.Media` | 图像、音频、glTF 2.0 场景数据与编解码；公共命名空间按 Images、Audio、Models 划分于 Engine.Media 下，无窗口、GPU、音频设备及文件存储依赖。 |
 | `SCNET.Engine.Serialization` | `Engine.Serialization` | 基于 Engine.Core 构建的序列化支持。 |
 | `SCNET.Rendezvous.Protocol` | `Rendezvous.Protocol` | 邀请信令契约及认证中继报文编码。 |
 | `SCNET.Engine.Network` | `Engine.Network` | 独立传输宿主、连接生命周期与邀请路径；内部使用 LiteNetLib。 |

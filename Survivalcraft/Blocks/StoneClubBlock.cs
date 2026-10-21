@@ -11,20 +11,14 @@ public class StoneClubBlock : Block
         var num = 47;
         var num2 = 1;
         var model = ContentManager.Get<Model>("Models/StoneClub");
-        var handleMesh = model.FindMesh("Handle")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            handleMesh.ParentBone ??
-            throw new InvalidOperationException("Required HandleMesh.ParentBone is null")
-        );
-        var spikesMesh = model.FindMesh("Spikes")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            spikesMesh.ParentBone ??
-            throw new InvalidOperationException("Required SpikesMesh.ParentBone is null")
-        );
+        var handleNode = model.FindNode("Handle")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
+        var spikesNode = model.FindNode("Spikes")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(spikesNode);
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(
-            handleMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        blockMesh.AppendModelPrimitive(
+            handleNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,
@@ -33,9 +27,9 @@ public class StoneClubBlock : Block
         );
         blockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
         var blockMesh2 = new BlockMesh();
-        blockMesh2.AppendModelMeshPart(
-            spikesMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        blockMesh2.AppendModelPrimitive(
+            spikesNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

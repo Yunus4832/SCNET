@@ -89,21 +89,12 @@ public abstract class PostedSignBlock(
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>(ModelName);
-        var signMesh = model.FindMesh("Sign")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            signMesh.ParentBone ??
-            throw new InvalidOperationException("Required SignMesh.ParentBone is null")
-        );
-        var postMesh = model.FindMesh("Post")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            postMesh.ParentBone ??
-            throw new InvalidOperationException("Required PostMesh.ParentBone is null")
-        );
-        var surfaceMesh = model.FindMesh("Surface")!;
-        var boneAbsoluteTransform3 = BlockMesh.GetBoneAbsoluteTransform(
-            surfaceMesh.ParentBone ??
-            throw new InvalidOperationException("Required SurfaceMesh.ParentBone is null")
-        );
+        var signNode = model.FindNode("Sign")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(signNode);
+        var postNode = model.FindNode("Post")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(postNode);
+        var surfaceNode = model.FindNode("Surface")!;
+        var nodeAbsoluteTransform3 = BlockMesh.GetNodeAbsoluteTransform(surfaceNode);
         for (var i = 0; i < 16; i++)
         {
             var hanging = GetHanging(i);
@@ -116,9 +107,9 @@ public abstract class PostedSignBlock(
 
             Directions[i] = m.Forward;
             var blockMesh = new BlockMesh();
-            blockMesh.AppendModelMeshPart(
-                signMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            blockMesh.AppendModelPrimitive(
+                signNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 false,
                 hanging,
                 false,
@@ -126,9 +117,9 @@ public abstract class PostedSignBlock(
                 Color.White
             );
             var blockMesh2 = new BlockMesh();
-            blockMesh2.AppendModelMeshPart(
-                postMesh.MeshParts[0],
-                boneAbsoluteTransform2 * m,
+            blockMesh2.AppendModelPrimitive(
+                postNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 * m,
                 false,
                 hanging,
                 false,
@@ -154,9 +145,9 @@ public abstract class PostedSignBlock(
             CollisionBoxes[i][0] = blockMesh.CalculateBoundingBox();
             CollisionBoxes[i][1] = blockMesh2.CalculateBoundingBox();
             SurfaceMeshes[i] = new BlockMesh();
-            SurfaceMeshes[i].AppendModelMeshPart(
-                surfaceMesh.MeshParts[0],
-                boneAbsoluteTransform3 * m,
+            SurfaceMeshes[i].AppendModelPrimitive(
+                surfaceNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform3 * m,
                 false,
                 hanging,
                 false,
@@ -175,18 +166,18 @@ public abstract class PostedSignBlock(
             }
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(
-            signMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.6f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            signNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.6f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            postMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.6f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            postNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.6f, 0f),
             false,
             false,
             false,

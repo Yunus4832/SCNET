@@ -1090,7 +1090,7 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
         {
             for (var j = y2; j <= y2; j++)
             {
-                var random = new Engine.Core.Random(_seed + i + 3943 * j);
+                var random = new Engine.Core.Mathematics.Random(_seed + i + 3943 * j);
                 var humidity = CalculateHumidity(i * 16, j * 16);
                 var temperature = CalculateTemperature(i * 16, j * 16);
                 var num4 = MathUtils.Saturate(
@@ -1344,7 +1344,7 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
             return;
         }
 
-        var random = new Engine.Core.Random(_seed + chunk.Coords.X + 3943 * chunk.Coords.Y);
+        var random = new Engine.Core.Mathematics.Random(_seed + chunk.Coords.X + 3943 * chunk.Coords.Y);
         for (var i = 0; i < 16; i++)
         {
             for (var j = 0; j < 16; j++)
@@ -3157,18 +3157,23 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
 
         public Vector2 Vector2(float length)
         {
-            return Engine.Core.Vector2.Normalize(new Vector2(UniformFloat(-1f, 1f), UniformFloat(-1f, 1f))) * length;
+            return Engine.Core.Mathematics.Vector2.Normalize(
+                       new Vector2(UniformFloat(-1f, 1f), UniformFloat(-1f, 1f))
+                   ) *
+                   length;
         }
 
         public Vector2 UniformVector2(float minLength, float maxLength)
         {
-            return Engine.Core.Vector2.Normalize(new Vector2(UniformFloat(-1f, 1f), UniformFloat(-1f, 1f))) *
+            return Engine.Core.Mathematics.Vector2.Normalize(
+                       new Vector2(UniformFloat(-1f, 1f), UniformFloat(-1f, 1f))
+                   ) *
                    UniformFloat(minLength, maxLength);
         }
 
         public Vector3 Vector3(float length)
         {
-            return Engine.Core.Vector3.Normalize(
+            return Engine.Core.Mathematics.Vector3.Normalize(
                        new Vector3(
                            UniformFloat(-1f, 1f),
                            UniformFloat(-1f, 1f),
@@ -3180,7 +3185,7 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
 
         public Vector3 UniformVector3(float minLength, float maxLength)
         {
-            return Engine.Core.Vector3.Normalize(
+            return Engine.Core.Mathematics.Vector3.Normalize(
                        new Vector3(
                            UniformFloat(-1f, 1f),
                            UniformFloat(-1f, 1f),

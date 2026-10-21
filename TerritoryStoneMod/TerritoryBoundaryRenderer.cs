@@ -1,4 +1,4 @@
-using Engine.Core;
+using Engine.Core.Mathematics;
 using Engine.Graphics;
 
 using Game.Cameras;

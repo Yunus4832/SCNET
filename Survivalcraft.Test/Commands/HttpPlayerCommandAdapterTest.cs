@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 
-using Engine.Core;
+using Engine.Core.Runtime;
 
 using EntitySystem.Core;
 

@@ -9,53 +9,38 @@ public class CrossbowBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Crossbows");
-        var bodyMesh = model.FindMesh("Body")!;
-        var bowRelaxedMesh = model.FindMesh("BowRelaxed")!;
-        var stringRelaxedMesh = model.FindMesh("StringRelaxed")!;
-        var bowTensedMesh = model.FindMesh("BowTensed")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            bodyMesh.ParentBone ??
-            throw new InvalidOperationException("Required BodyMesh.ParentBone is null")
-        );
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            bowRelaxedMesh.ParentBone ??
-            throw new InvalidOperationException("Required BowRelaxedMesh.ParentBone is null")
-        );
-        var boneAbsoluteTransform3 = BlockMesh.GetBoneAbsoluteTransform(
-            stringRelaxedMesh.ParentBone ??
-            throw new InvalidOperationException("Required StringRelaxedMesh.ParentBone is null")
-        );
-        var boneAbsoluteTransform4 = BlockMesh.GetBoneAbsoluteTransform(
-            bowTensedMesh.ParentBone ??
-            throw new InvalidOperationException("Required BowTensedMesh.ParentBone is null")
-        );
-        var stringTensedMesh = model.FindMesh("StringTensed")!;
-        var boneAbsoluteTransform5 = BlockMesh.GetBoneAbsoluteTransform(
-            stringTensedMesh.ParentBone ??
-            throw new InvalidOperationException("Required StringTensedMesh.ParentBone is null")
-        );
+        var bodyNode = model.FindNode("Body")!;
+        var bowRelaxedNode = model.FindNode("BowRelaxed")!;
+        var stringRelaxedNode = model.FindNode("StringRelaxed")!;
+        var bowTensedNode = model.FindNode("BowTensed")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bodyNode);
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(bowRelaxedNode);
+        var nodeAbsoluteTransform3 = BlockMesh.GetNodeAbsoluteTransform(stringRelaxedNode);
+        var nodeAbsoluteTransform4 = BlockMesh.GetNodeAbsoluteTransform(bowTensedNode);
+        var stringTensedNode = model.FindNode("StringTensed")!;
+        var nodeAbsoluteTransform5 = BlockMesh.GetNodeAbsoluteTransform(stringTensedNode);
         var blockMesh = new BlockMesh();
-        blockMesh.AppendModelMeshPart(
-            bodyMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+        blockMesh.AppendModelPrimitive(
+            bodyNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        blockMesh.AppendModelMeshPart(
-            bowRelaxedMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, 0f, 0f),
+        blockMesh.AppendModelPrimitive(
+            bowRelaxedNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        blockMesh.AppendModelMeshPart(
-            stringRelaxedMesh.MeshParts[0],
-            boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, 0f, 0f),
+        blockMesh.AppendModelPrimitive(
+            stringRelaxedNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform3 * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,
@@ -63,27 +48,27 @@ public class CrossbowBlock : Block
             Color.White
         );
         var blockMesh2 = new BlockMesh();
-        blockMesh2.AppendModelMeshPart(
-            bodyMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
+        blockMesh2.AppendModelPrimitive(
+            bodyNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        blockMesh2.AppendModelMeshPart(
-            bowTensedMesh.MeshParts[0],
-            boneAbsoluteTransform4 * Matrix.CreateTranslation(0f, 0f, 0f),
+        blockMesh2.AppendModelPrimitive(
+            bowTensedNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform4 * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        blockMesh2.AppendModelMeshPart(
-            stringTensedMesh.MeshParts[0],
-            boneAbsoluteTransform5 * Matrix.CreateTranslation(0f, 0f, 0f),
+        blockMesh2.AppendModelPrimitive(
+            stringTensedNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform5 * Matrix.CreateTranslation(0f, 0f, 0f),
             false,
             false,
             false,

@@ -21,15 +21,12 @@ public class GravestoneBlock : Block
             var radians = GetRotation(i) == 0 ? 0f : (float)Math.PI / 2f;
             var name = "Grave" + (variant % 4 + 1).ToString(CultureInfo.InvariantCulture);
             var num = variant >= 4;
-            var modelMesh = model.FindMesh(name)!;
-            var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-                modelMesh.ParentBone ??
-                throw new InvalidOperationException("Required ModelMesh.ParentBone is null")
-            );
+            var modelNode = model.FindNode(name)!;
+            var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(modelNode);
             BlockMeshes[i] = new BlockMesh();
-            BlockMeshes[i].AppendModelMeshPart(
-                modelMesh.MeshParts[0],
-                boneAbsoluteTransform * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+            BlockMeshes[i].AppendModelPrimitive(
+                modelNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
                 false,
                 false,
                 false,
@@ -37,9 +34,9 @@ public class GravestoneBlock : Block
                 Color.White
             );
             StandaloneBlockMeshes[i] = new BlockMesh();
-            StandaloneBlockMeshes[i].AppendModelMeshPart(
-                modelMesh.MeshParts[0],
-                boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            StandaloneBlockMeshes[i].AppendModelPrimitive(
+                modelNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
                 false,
                 false,
                 false,
@@ -48,22 +45,19 @@ public class GravestoneBlock : Block
             );
             if (num)
             {
-                var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-                    model.FindMesh("Plinth")!.ParentBone ??
-                    throw new InvalidOperationException("Required PlinthMesh.ParentBone is null")
-                );
-                BlockMeshes[i].AppendModelMeshPart(
-                    model.FindMesh("Plinth")!.MeshParts[0],
-                    boneAbsoluteTransform2 * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+                var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(model.FindNode("Plinth")!);
+                BlockMeshes[i].AppendModelPrimitive(
+                    model.FindNode("Plinth")!.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform2 * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f),
                     false,
                     false,
                     false,
                     false,
                     Color.White
                 );
-                StandaloneBlockMeshes[i].AppendModelMeshPart(
-                    model.FindMesh("Plinth")!.MeshParts[0],
-                    boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
+                StandaloneBlockMeshes[i].AppendModelPrimitive(
+                    model.FindNode("Plinth")!.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.5f, 0f),
                     false,
                     false,
                     false,

@@ -13,16 +13,10 @@ public class SwitchBlock : MountedElectricElementBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Switch");
-        var bodyMesh = model.FindMesh("Body")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            bodyMesh.ParentBone ??
-            throw new InvalidOperationException("Required BodyMesh.ParentBone is null")
-        );
-        var leverMesh = model.FindMesh("Lever")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            leverMesh.ParentBone ??
-            throw new InvalidOperationException("Required LeverMesh.ParentBone is null")
-        );
+        var bodyNode = model.FindNode("Body")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bodyNode);
+        var leverNode = model.FindNode("Lever")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(leverNode);
         for (var i = 0; i < 6; i++)
         {
             for (var j = 0; j < 2; j++)
@@ -38,18 +32,18 @@ public class SwitchBlock : MountedElectricElementBlock
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 var matrix2 = Matrix.CreateRotationX(j == 0 ? MathUtils.DegToRad(30f) : MathUtils.DegToRad(-30f));
                 BlockMeshesByIndex[num] = new BlockMesh();
-                BlockMeshesByIndex[num].AppendModelMeshPart(
-                    bodyMesh.MeshParts[0],
-                    boneAbsoluteTransform * matrix,
+                BlockMeshesByIndex[num].AppendModelPrimitive(
+                    bodyNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform * matrix,
                     false,
                     false,
                     false,
                     false,
                     Color.White
                 );
-                BlockMeshesByIndex[num].AppendModelMeshPart(
-                    leverMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * matrix2 * matrix,
+                BlockMeshesByIndex[num].AppendModelPrimitive(
+                    leverNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform2 * matrix2 * matrix,
                     false,
                     false,
                     false,
@@ -61,18 +55,18 @@ public class SwitchBlock : MountedElectricElementBlock
         }
 
         var matrix3 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBlockMesh.AppendModelMeshPart(
-            bodyMesh.MeshParts[0],
-            boneAbsoluteTransform * matrix3,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            bodyNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * matrix3,
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            leverMesh.MeshParts[0],
-            boneAbsoluteTransform2 * matrix3,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            leverNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * matrix3,
             false,
             false,
             false,

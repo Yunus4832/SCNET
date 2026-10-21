@@ -1,5 +1,5 @@
-using Engine.Core;
-using Engine.Media;
+using Engine.Core.Logging;
+using Engine.Core.Mathematics;
 using Engine.Windowing;
 
 using Silk.NET.OpenGLES;

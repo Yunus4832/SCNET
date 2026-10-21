@@ -32,7 +32,7 @@ dotnet build BeaconMod/BeaconMod.csproj
 模组使用 `SCNET.Survivalcraft` 与 `SCNET.ContentTool` NuGet 包，构建生成
 `bin/Debug/net10.0/packages/scnet.beacon.scpkg`。通过游戏文件导入后加入全局或世界模组配置；联机双方须加载相同的包。
 
-`Resources/Models/Beacon.scad` 为建模源文件，DAE 为游戏模型。
-模型由薄底座、玻璃罩和半球光源组成；修改后重新导出 DAE，保留部件名称 `base`、`glass`、`core` 和纹理坐标。
+`Resources/Models/Beacon.scad` 为建模源文件，GLB 为游戏模型。
+模型由薄底座、玻璃罩和半球光源组成；修改后使用标准 glTF 2.0 导出器重新导出 GLB，保留部件名称 `base`、`glass`、`core` 和纹理坐标。
 电路通过内置 `IElectricElementBlock` 与 `ElectricBlockBehavior` 接入，交互、仿真和同步沿用游戏现有流程。
 颜色和亮度保存在放置方块的数据位中，物品数据统一为零。

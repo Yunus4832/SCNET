@@ -11,14 +11,11 @@ public class BrickBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Brick");
-        var brickMesh = model.FindMesh("Brick")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            brickMesh.ParentBone ??
-            throw new InvalidOperationException("Required BrickMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            brickMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.075f, 0f),
+        var brickNode = model.FindNode("Brick")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(brickNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            brickNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.075f, 0f),
             false,
             false,
             false,

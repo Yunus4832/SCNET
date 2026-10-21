@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 
-using Engine.Core;
-using Engine.Media;
+using Engine.Core.Mathematics;
+using Engine.Core.Runtime;
 using Engine.Windowing;
 
 using Silk.NET.OpenGLES;

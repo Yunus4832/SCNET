@@ -23,11 +23,8 @@ public abstract class RotatableMountedElectricElementBlock(
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>(ModelName);
-        var modelMesh = model.FindMesh(MeshName)!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            modelMesh.ParentBone ??
-            throw new InvalidOperationException("Required ModelMesh.ParentBone is null")
-        );
+        var modelNode = model.FindNode(MeshName)!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(modelNode);
         for (var i = 0; i < 6; i++)
         {
             float radians;
@@ -58,9 +55,9 @@ public abstract class RotatableMountedElectricElementBlock(
                         (flag ? Matrix.CreateRotationX(radians) : Matrix.CreateRotationY(radians)) *
                         Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 BlockMeshes[num] = new BlockMesh();
-                BlockMeshes[num].AppendModelMeshPart(
-                    modelMesh.MeshParts[0],
-                    boneAbsoluteTransform * m,
+                BlockMeshes[num].AppendModelPrimitive(
+                    modelNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform * m,
                     false,
                     false,
                     false,
@@ -72,9 +69,9 @@ public abstract class RotatableMountedElectricElementBlock(
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBlockMesh.AppendModelMeshPart(
-            modelMesh.MeshParts[0],
-            boneAbsoluteTransform * m2,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            modelNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m2,
             false,
             false,
             false,

@@ -30,16 +30,10 @@ public class StarfishBlock : BottomSuckerBlock
     {
         var num = 63;
         var model = ContentManager.Get<Model>("Models/Starfish");
-        var starfishMesh = model.FindMesh("Starfish")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            starfishMesh.ParentBone ??
-            throw new InvalidOperationException("Required StarfishMesh.ParentBone is null")
-        );
-        var bottomMesh = model.FindMesh("Bottom")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            bottomMesh.ParentBone ??
-            throw new InvalidOperationException("Required BottomMesh.ParentBone is null")
-        );
+        var starfishNode = model.FindNode("Starfish")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(starfishNode);
+        var bottomNode = model.FindNode("Bottom")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(bottomNode);
         for (var i = 0; i < 6; i++)
         {
             for (var j = 0; j < 4; j++)
@@ -62,9 +56,9 @@ public class StarfishBlock : BottomSuckerBlock
                         Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 var num2 = 4 * i + j;
                 BlockMeshes[num2] = new BlockMesh();
-                BlockMeshes[num2].AppendModelMeshPart(
-                    starfishMesh.MeshParts[0],
-                    boneAbsoluteTransform * m,
+                BlockMeshes[num2].AppendModelPrimitive(
+                    starfishNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform * m,
                     false,
                     false,
                     false,
@@ -78,18 +72,18 @@ public class StarfishBlock : BottomSuckerBlock
         }
 
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(
-            starfishMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            starfishNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            bottomMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.1f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            bottomNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.1f, 0f),
             false,
             false,
             false,

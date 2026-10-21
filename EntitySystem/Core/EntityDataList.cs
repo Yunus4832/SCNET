@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-using Engine.Core;
+using Engine.Core.Logging;
 
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;

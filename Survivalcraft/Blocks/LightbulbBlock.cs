@@ -34,16 +34,10 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Lightbulbs");
-        var topMesh = model.FindMesh("Top")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            topMesh.ParentBone ??
-            throw new InvalidOperationException("Required TopMesh.ParentBone is null")
-        );
-        var sidesMesh = model.FindMesh("Sides")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            sidesMesh.ParentBone ??
-            throw new InvalidOperationException("Required SidesMesh.ParentBone is null")
-        );
+        var topNode = model.FindNode("Top")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(topNode);
+        var sidesNode = model.FindNode("Sides")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(sidesNode);
         for (var i = 0; i < 6; i++)
         {
             var m = i >= 4
@@ -55,9 +49,9 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BulbBlockMeshes[i] = new BlockMesh();
-            BulbBlockMeshes[i].AppendModelMeshPart(
-                topMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            BulbBlockMeshes[i].AppendModelPrimitive(
+                topNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 false,
                 false,
                 false,
@@ -66,9 +60,9 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
             );
             BulbBlockMeshes[i].TransformTextureCoordinates(Matrix.CreateTranslation(0.1875f, 0.25f, 0f));
             BulbBlockMeshesLit[i] = new BlockMesh();
-            BulbBlockMeshesLit[i].AppendModelMeshPart(
-                topMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            BulbBlockMeshesLit[i].AppendModelPrimitive(
+                topNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 true,
                 false,
                 false,
@@ -77,9 +71,9 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
             );
             BulbBlockMeshesLit[i].TransformTextureCoordinates(Matrix.CreateTranslation(0.9375f, 0f, 0f));
             SidesBlockMeshes[i] = new BlockMesh();
-            SidesBlockMeshes[i].AppendModelMeshPart(
-                sidesMesh.MeshParts[0],
-                boneAbsoluteTransform2 * m,
+            SidesBlockMeshes[i].AppendModelPrimitive(
+                sidesNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 * m,
                 false,
                 false,
                 true,
@@ -91,9 +85,9 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
         }
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
-        StandaloneBulbBlockMesh.AppendModelMeshPart(
-            topMesh.MeshParts[0],
-            boneAbsoluteTransform * m2,
+        StandaloneBulbBlockMesh.AppendModelPrimitive(
+            topNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m2,
             false,
             false,
             true,
@@ -101,9 +95,9 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
             Color.White
         );
         StandaloneBulbBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(0.1875f, 0.25f, 0f));
-        StandaloneSidesBlockMesh.AppendModelMeshPart(
-            sidesMesh.MeshParts[0],
-            boneAbsoluteTransform2 * m2,
+        StandaloneSidesBlockMesh.AppendModelPrimitive(
+            sidesNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * m2,
             false,
             false,
             true,

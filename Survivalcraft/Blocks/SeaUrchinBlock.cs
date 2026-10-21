@@ -29,16 +29,10 @@ public class SeaUrchinBlock : BottomSuckerBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/SeaUrchin");
-        var urchinMesh = model.FindMesh("Urchin")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            urchinMesh.ParentBone ??
-            throw new InvalidOperationException("Required UrchinMesh.ParentBone is null")
-        );
-        var bottomMesh = model.FindMesh("Bottom")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            bottomMesh.ParentBone ??
-            throw new InvalidOperationException("Required BottomMesh.ParentBone is null")
-        );
+        var urchinNode = model.FindNode("Urchin")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(urchinNode);
+        var bottomNode = model.FindNode("Bottom")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(bottomNode);
         for (var i = 0; i < 6; i++)
         {
             for (var j = 0; j < 4; j++)
@@ -61,9 +55,9 @@ public class SeaUrchinBlock : BottomSuckerBlock
                         Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 var num = 4 * i + j;
                 BlockMeshes[num] = new BlockMesh();
-                BlockMeshes[num].AppendModelMeshPart(
-                    urchinMesh.MeshParts[0],
-                    boneAbsoluteTransform * m,
+                BlockMeshes[num].AppendModelPrimitive(
+                    urchinNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform * m,
                     false,
                     false,
                     false,
@@ -75,18 +69,18 @@ public class SeaUrchinBlock : BottomSuckerBlock
         }
 
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(
-            urchinMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            urchinNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            bottomMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.1f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            bottomNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.1f, 0f),
             false,
             false,
             false,

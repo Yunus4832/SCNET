@@ -11,19 +11,13 @@ public class PumpkinSoupBucketBlock : BucketBlock
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/FullBucket");
-        var bucketMesh = model.FindMesh("Bucket")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            bucketMesh.ParentBone ??
-            throw new InvalidOperationException("Required BucketMesh.ParentBone is null")
-        );
-        var contentsMesh = model.FindMesh("Contents")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            contentsMesh.ParentBone ??
-            throw new InvalidOperationException("Required ContentsMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            contentsMesh.MeshParts[0],
-            boneAbsoluteTransform2 *
+        var bucketNode = model.FindNode("Bucket")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bucketNode);
+        var contentsNode = model.FindNode("Contents")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(contentsNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            contentsNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 *
             Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
             Matrix.CreateTranslation(0f, -0.3f, 0f),
             false,
@@ -33,9 +27,9 @@ public class PumpkinSoupBucketBlock : BucketBlock
             new Color(200, 130, 35)
         );
         StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(0.0625f, 0.4375f, 0f));
-        StandaloneBlockMesh.AppendModelMeshPart(
-            bucketMesh.MeshParts[0],
-            boneAbsoluteTransform *
+        StandaloneBlockMesh.AppendModelPrimitive(
+            bucketNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform *
             Matrix.CreateRotationY(MathUtils.DegToRad(180f)) *
             Matrix.CreateTranslation(0f, -0.3f, 0f),
             false,

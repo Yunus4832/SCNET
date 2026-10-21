@@ -9,14 +9,11 @@ public class IncendiaryBombBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Bomb");
-        var bombMesh = model.FindMesh("Bomb")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            bombMesh.ParentBone ??
-            throw new InvalidOperationException("Required BombMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            bombMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.25f, 0f),
+        var bombNode = model.FindNode("Bomb")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bombNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            bombNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.25f, 0f),
             false,
             false,
             false,

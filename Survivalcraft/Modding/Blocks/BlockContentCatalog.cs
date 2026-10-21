@@ -1,7 +1,7 @@
 using System.Xml.Linq;
 
 using Engine.Graphics;
-using Engine.Media;
+using Engine.Media.Images;
 using Engine.Serialization;
 
 using static Game.Managers.BlocksManager;

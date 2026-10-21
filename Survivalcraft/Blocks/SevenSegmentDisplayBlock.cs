@@ -14,11 +14,8 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
 
     public override void Initialize()
     {
-        var sevenSegmentDisplayMesh = ContentManager.Get<Model>("Models/Gates").FindMesh("SevenSegmentDisplay")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            sevenSegmentDisplayMesh.ParentBone ??
-            throw new InvalidOperationException("Required SeventSegmentDisplayMesh.Parent is null")
-        );
+        var sevenSegmentDisplayNode = ContentManager.Get<Model>("Models/Gates").FindNode("SevenSegmentDisplay")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(sevenSegmentDisplayNode);
         for (var i = 0; i < 4; i++)
         {
             var m = Matrix.CreateRotationX((float)Math.PI / 2f) *
@@ -26,9 +23,9 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
                     Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                     Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByFace[i] = new BlockMesh();
-            BlockMeshesByFace[i].AppendModelMeshPart(
-                sevenSegmentDisplayMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            BlockMeshesByFace[i].AppendModelPrimitive(
+                sevenSegmentDisplayNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 false,
                 false,
                 false,
@@ -40,9 +37,9 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(
-            sevenSegmentDisplayMesh.MeshParts[0],
-            boneAbsoluteTransform * m2,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            sevenSegmentDisplayNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m2,
             false,
             false,
             false,

@@ -22,10 +22,10 @@ public class ComponentOuterClothingModel : ComponentModel
     public override void Animate()
     {
         Opacity = _componentHumanModel.Opacity;
-        foreach (var bone in Model.Bones)
+        foreach (var node in Model.Nodes)
         {
-            var modelBone = _componentHumanModel.Model.FindBone(bone.Name)!;
-            SetBoneTransform(bone.Index, _componentHumanModel.GetBoneTransform(modelBone.Index));
+            var modelNode = _componentHumanModel.Model.FindNode(node.Name)!;
+            SetNodeTransform(node.Index, _componentHumanModel.GetNodeTransform(modelNode.Index));
         }
 
         if (Opacity is < 1f)
@@ -47,14 +47,14 @@ public class ComponentOuterClothingModel : ComponentModel
     public override void SetModel(Model model)
     {
         base.SetModel(model);
-        if (MeshDrawOrders.Length != 4)
+        if (DrawNodeIndices.Length != 4)
         {
             throw new InvalidOperationException("Invalid number of meshes in OuterClothing model.");
         }
 
-        MeshDrawOrders[0] = model.Meshes.IndexOf(model.FindMesh("Leg1")!);
-        MeshDrawOrders[1] = model.Meshes.IndexOf(model.FindMesh("Leg2")!);
-        MeshDrawOrders[2] = model.Meshes.IndexOf(model.FindMesh("Body")!);
-        MeshDrawOrders[3] = model.Meshes.IndexOf(model.FindMesh("Head")!);
+        DrawNodeIndices[0] = model.FindNode("Leg1")!.Index;
+        DrawNodeIndices[1] = model.FindNode("Leg2")!.Index;
+        DrawNodeIndices[2] = model.FindNode("Body")!.Index;
+        DrawNodeIndices[3] = model.FindNode("Head")!.Index;
     }
 }

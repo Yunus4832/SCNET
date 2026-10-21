@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 const int matrixCount = 4096;
 const int vectorCount = 16384;

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-using Engine.Core;
+using Engine.Core.Runtime;
 using Engine.FileStorage;
 using Engine.Input;
 using Engine.Windowing;

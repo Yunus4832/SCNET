@@ -47,16 +47,10 @@ public abstract class FenceBlock(
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>(ModelName);
-        var postMesh = model.FindMesh("Post")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            postMesh.ParentBone ??
-            throw new InvalidOperationException("Required PostMesh.ParentBone is null")
-        );
-        var planksMesh = model.FindMesh("Planks")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            planksMesh.ParentBone ??
-            throw new InvalidOperationException("Required PlanksMesh.ParentBone is null")
-        );
+        var postNode = model.FindNode("Post")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(postNode);
+        var planksNode = model.FindNode("Planks")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(planksNode);
         for (var i = 0; i < 16; i++)
         {
             var num = (i & 1) != 0;
@@ -66,9 +60,9 @@ public abstract class FenceBlock(
             var list = new List<BoundingBox>();
             var m = Matrix.CreateTranslation(0.5f, 0f, 0.5f);
             var blockMesh = new BlockMesh();
-            blockMesh.AppendModelMeshPart(
-                postMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            blockMesh.AppendModelPrimitive(
+                postNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 false,
                 false,
                 false,
@@ -92,9 +86,9 @@ public abstract class FenceBlock(
             {
                 var blockMesh3 = new BlockMesh();
                 var m2 = Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-                blockMesh3.AppendModelMeshPart(
-                    planksMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * m2,
+                blockMesh3.AppendModelPrimitive(
+                    planksNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform2 * m2,
                     false,
                     false,
                     false,
@@ -103,9 +97,9 @@ public abstract class FenceBlock(
                 );
                 if (DoubleSidedPlanks)
                 {
-                    blockMesh3.AppendModelMeshPart(
-                        planksMesh.MeshParts[0],
-                        boneAbsoluteTransform2 * m2,
+                    blockMesh3.AppendModelPrimitive(
+                        planksNode.RequireMesh().Primitives[0],
+                        nodeAbsoluteTransform2 * m2,
                         false,
                         true,
                         false,
@@ -123,9 +117,9 @@ public abstract class FenceBlock(
             {
                 var blockMesh4 = new BlockMesh();
                 var m3 = Matrix.CreateRotationY((float)Math.PI) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-                blockMesh4.AppendModelMeshPart(
-                    planksMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * m3,
+                blockMesh4.AppendModelPrimitive(
+                    planksNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform2 * m3,
                     false,
                     false,
                     false,
@@ -134,9 +128,9 @@ public abstract class FenceBlock(
                 );
                 if (DoubleSidedPlanks)
                 {
-                    blockMesh4.AppendModelMeshPart(
-                        planksMesh.MeshParts[0],
-                        boneAbsoluteTransform2 * m3,
+                    blockMesh4.AppendModelPrimitive(
+                        planksNode.RequireMesh().Primitives[0],
+                        nodeAbsoluteTransform2 * m3,
                         false,
                         true,
                         false,
@@ -154,9 +148,9 @@ public abstract class FenceBlock(
             {
                 var blockMesh5 = new BlockMesh();
                 var m4 = Matrix.CreateRotationY(4.712389f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-                blockMesh5.AppendModelMeshPart(
-                    planksMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * m4,
+                blockMesh5.AppendModelPrimitive(
+                    planksNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform2 * m4,
                     false,
                     false,
                     false,
@@ -165,9 +159,9 @@ public abstract class FenceBlock(
                 );
                 if (DoubleSidedPlanks)
                 {
-                    blockMesh5.AppendModelMeshPart(
-                        planksMesh.MeshParts[0],
-                        boneAbsoluteTransform2 * m4,
+                    blockMesh5.AppendModelPrimitive(
+                        planksNode.RequireMesh().Primitives[0],
+                        nodeAbsoluteTransform2 * m4,
                         false,
                         true,
                         false,
@@ -185,9 +179,9 @@ public abstract class FenceBlock(
             {
                 var blockMesh6 = new BlockMesh();
                 var m5 = Matrix.CreateRotationY((float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-                blockMesh6.AppendModelMeshPart(
-                    planksMesh.MeshParts[0],
-                    boneAbsoluteTransform2 * m5,
+                blockMesh6.AppendModelPrimitive(
+                    planksNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform2 * m5,
                     false,
                     false,
                     false,
@@ -196,9 +190,9 @@ public abstract class FenceBlock(
                 );
                 if (DoubleSidedPlanks)
                 {
-                    blockMesh6.AppendModelMeshPart(
-                        planksMesh.MeshParts[0],
-                        boneAbsoluteTransform2 * m5,
+                    blockMesh6.AppendModelPrimitive(
+                        planksNode.RequireMesh().Primitives[0],
+                        nodeAbsoluteTransform2 * m5,
                         false,
                         true,
                         false,
@@ -234,27 +228,27 @@ public abstract class FenceBlock(
             CollisionBoxes[i] = list.ToArray();
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(
-            postMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(-0.5f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            postNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(-0.5f, -0.5f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            postMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            postNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0.5f, -0.5f, 0f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            planksMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(-0.5f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            planksNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(-0.5f, -0.5f, 0f),
             false,
             false,
             false,
@@ -263,9 +257,9 @@ public abstract class FenceBlock(
         );
         if (DoubleSidedPlanks)
         {
-            StandaloneBlockMesh.AppendModelMeshPart(
-                planksMesh.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(-0.5f, -0.5f, 0f),
+            StandaloneBlockMesh.AppendModelPrimitive(
+                planksNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 * Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(-0.5f, -0.5f, 0f),
                 false,
                 true,
                 false,
@@ -274,9 +268,9 @@ public abstract class FenceBlock(
             );
         }
 
-        StandaloneBlockMesh.AppendModelMeshPart(
-            planksMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateRotationY((float)Math.PI) * Matrix.CreateTranslation(0.5f, -0.5f, 0f),
+        StandaloneBlockMesh.AppendModelPrimitive(
+            planksNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateRotationY((float)Math.PI) * Matrix.CreateTranslation(0.5f, -0.5f, 0f),
             false,
             false,
             false,
@@ -285,9 +279,9 @@ public abstract class FenceBlock(
         );
         if (DoubleSidedPlanks)
         {
-            StandaloneBlockMesh.AppendModelMeshPart(
-                planksMesh.MeshParts[0],
-                boneAbsoluteTransform2 *
+            StandaloneBlockMesh.AppendModelPrimitive(
+                planksNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 *
                 Matrix.CreateRotationY((float)Math.PI) *
                 Matrix.CreateTranslation(0.5f, -0.5f, 0f),
                 false,

@@ -2,7 +2,7 @@ using System.Text;
 using System.Xml.Linq;
 
 using Engine.Graphics;
-using Engine.Media;
+using Engine.Media.Images;
 using Engine.Network;
 
 using Game.Modding.Blocks;

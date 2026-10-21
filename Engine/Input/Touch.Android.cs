@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 
 using Android.Views;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 namespace Engine.Input;
 

@@ -1,5 +1,4 @@
-using Engine.Core;
-using Engine.Media;
+using Engine.Core.Mathematics;
 
 namespace Engine.Graphics;
 

@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using Game.Protocol.Terrain;
 

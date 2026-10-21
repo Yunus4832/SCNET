@@ -11,28 +11,22 @@ public class CompassBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Compass");
-        var caseMesh = model.FindMesh("Case")!;
-        var pointerMesh = model.FindMesh("Pointer")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            caseMesh.ParentBone ??
-            throw new InvalidOperationException("Required CaseMesh.ParentBone is null")
-        );
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            pointerMesh.ParentBone ??
-            throw new InvalidOperationException("Required PointerMesh.ParentBone is null")
-        );
-        CaseMesh.AppendModelMeshPart(
-            caseMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.01f, 0f),
+        var caseNode = model.FindNode("Case")!;
+        var pointerNode = model.FindNode("Pointer")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(caseNode);
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(pointerNode);
+        CaseMesh.AppendModelPrimitive(
+            caseNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.01f, 0f),
             false,
             false,
             true,
             false,
             Color.White
         );
-        PointerMesh.AppendModelMeshPart(
-            pointerMesh.MeshParts[0],
-            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.01f, 0f),
+        PointerMesh.AppendModelPrimitive(
+            pointerNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.01f, 0f),
             false,
             false,
             false,

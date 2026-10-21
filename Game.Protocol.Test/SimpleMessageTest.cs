@@ -1,4 +1,4 @@
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using Game.Protocol.Connection;
 using Game.Protocol.Serialization;

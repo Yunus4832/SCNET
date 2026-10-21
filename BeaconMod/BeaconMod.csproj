@@ -12,7 +12,7 @@
         <PackageReference Include="SCNET.ContentTool" Version="$(ContentToolVersion)" PrivateAssets="all"/>
         <EmbeddedResource Include="Resources\BeaconDatabase.xml"/>
         <EmbeddedResource Include="Resources\BlocksData.txt"/>
-        <EmbeddedResource Include="Resources\Models\*.dae"/>
+        <EmbeddedResource Include="Resources\Models\*.glb"/>
         <EmbeddedResource Include="Resources\Lang\*.json" WithCulture="false"/>
     </ItemGroup>
     <Target Name="GenerateBeaconManifest" BeforeTargets="PackSurvivalcraftMod">

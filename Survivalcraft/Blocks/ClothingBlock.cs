@@ -90,42 +90,42 @@ public class ClothingBlock : Block
         }
 
         var playerModel = CharacterSkinsManager.GetPlayerModel(PlayerClass.Male);
-        var array = new Matrix[playerModel.Bones.Count];
-        playerModel.CopyAbsoluteBoneTransformsTo(array);
-        var index = playerModel.FindBone("Hand1")!.Index;
-        var index2 = playerModel.FindBone("Hand2")!.Index;
+        var array = new Matrix[playerModel.Nodes.Count];
+        playerModel.CopyAbsoluteNodeTransformsTo(array);
+        var index = playerModel.FindNode("Hand1")!.Index;
+        var index2 = playerModel.FindNode("Hand2")!.Index;
         array[index] = Matrix.CreateRotationY(0.1f) * array[index];
         array[index2] = Matrix.CreateRotationY(-0.1f) * array[index2];
         _innerMesh = new BlockMesh();
-        foreach (var mesh in playerModel.Meshes)
+        foreach (var node in playerModel.MeshNodes)
         {
-            var matrix = array[mesh.ParentBone!.Index];
-            foreach (var meshPart in mesh.MeshParts)
+            var matrix = array[node.Index];
+            foreach (var meshPart in node.RequireMesh().Primitives)
             {
                 var color = Color.White * 0.8f;
                 color.A = byte.MaxValue;
-                _innerMesh.AppendModelMeshPart(meshPart, matrix, false, false, false, false, Color.White);
-                _innerMesh.AppendModelMeshPart(meshPart, matrix, false, true, false, true, color);
+                _innerMesh.AppendModelPrimitive(meshPart, matrix, false, false, false, false, Color.White);
+                _innerMesh.AppendModelPrimitive(meshPart, matrix, false, true, false, true, color);
             }
         }
 
         var outerClothingModel = CharacterSkinsManager.GetOuterClothingModel(PlayerClass.Male);
-        var array2 = new Matrix[outerClothingModel.Bones.Count];
-        outerClothingModel.CopyAbsoluteBoneTransformsTo(array2);
-        var index3 = outerClothingModel.FindBone("Leg1")!.Index;
-        var index4 = outerClothingModel.FindBone("Leg2")!.Index;
+        var array2 = new Matrix[outerClothingModel.Nodes.Count];
+        outerClothingModel.CopyAbsoluteNodeTransformsTo(array2);
+        var index3 = outerClothingModel.FindNode("Leg1")!.Index;
+        var index4 = outerClothingModel.FindNode("Leg2")!.Index;
         array2[index3] = Matrix.CreateTranslation(-0.02f, 0f, 0f) * array2[index3];
         array2[index4] = Matrix.CreateTranslation(0.02f, 0f, 0f) * array2[index4];
         _outerMesh = new BlockMesh();
-        foreach (var mesh2 in outerClothingModel.Meshes)
+        foreach (var node2 in outerClothingModel.MeshNodes)
         {
-            var matrix2 = array2[mesh2.ParentBone!.Index];
-            foreach (var meshPart2 in mesh2.MeshParts)
+            var matrix2 = array2[node2.Index];
+            foreach (var meshPart2 in node2.RequireMesh().Primitives)
             {
                 var color2 = Color.White * 0.8f;
                 color2.A = byte.MaxValue;
-                _outerMesh.AppendModelMeshPart(meshPart2, matrix2, false, false, false, false, Color.White);
-                _outerMesh.AppendModelMeshPart(meshPart2, matrix2, false, true, false, true, color2);
+                _outerMesh.AppendModelPrimitive(meshPart2, matrix2, false, false, false, false, Color.White);
+                _outerMesh.AppendModelPrimitive(meshPart2, matrix2, false, true, false, true, color2);
             }
         }
 

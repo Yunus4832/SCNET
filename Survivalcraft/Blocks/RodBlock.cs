@@ -9,14 +9,11 @@ public class RodBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Rod");
-        var ironRodMesh = model.FindMesh("IronRod")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            ironRodMesh.ParentBone ??
-            throw new InvalidOperationException("Required IronRodMesh.ParentBone is null")
-        );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            ironRodMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+        var ironRodNode = model.FindNode("IronRod")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(ironRodNode);
+        StandaloneBlockMesh.AppendModelPrimitive(
+            ironRodNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
             false,
             false,
             false,

@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using Game;
 using Game.Network;

@@ -1,6 +1,7 @@
 using System.Text;
 
-using Engine.Core;
+using Engine.Core.Logging;
+using Engine.Core.Mathematics;
 
 using Silk.NET.Maths;
 using Silk.NET.SDL;

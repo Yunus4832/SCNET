@@ -1,4 +1,4 @@
-using Engine.Core;
+using Engine.Core.Runtime;
 
 namespace Engine.Graphics;
 
@@ -17,6 +17,7 @@ public abstract class GraphicsResource : IDisposable
     {
         isDisposed = true;
         resources.Remove(this);
+        GC.SuppressFinalize(this);
     }
 
     ~GraphicsResource()

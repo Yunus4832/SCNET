@@ -148,7 +148,7 @@ public class PlayerModelWidget : CanvasWidget
             vector.X = MathUtils.Lerp(-0.75f, 0.75f, SimplexNoise.OctavedNoise(num2 + 100f, 0.2f, 1, 2f, 0.5f));
             vector.Y = MathUtils.Lerp(-0.5f, 0.5f, SimplexNoise.OctavedNoise(num2 + 200f, 0.17f, 1, 2f, 0.5f));
             var value = Matrix.CreateRotationX(vector.Y) * Matrix.CreateRotationZ(vector.X);
-            _modelWidget.SetBoneTransform(_modelWidget.Model.FindBone("Head")!.Index, value);
+            _modelWidget.SetNodeTransform(_modelWidget.Model.FindNode("Head")!.Index, value);
         }
 
         if (!OuterClothing && AnimateHandsSeed != 0)
@@ -163,8 +163,8 @@ public class PlayerModelWidget : CanvasWidget
             vector3.Y = MathUtils.Lerp(-0.3f, 0.3f, SimplexNoise.OctavedNoise(num4 + 400f, 0.7f, 1, 2f, 0.5f));
             var value2 = Matrix.CreateRotationX(vector2.Y) * Matrix.CreateRotationY(vector2.X);
             var value3 = Matrix.CreateRotationX(vector3.Y) * Matrix.CreateRotationY(vector3.X);
-            _modelWidget.SetBoneTransform(_modelWidget.Model.FindBone("Hand1")!.Index, value2);
-            _modelWidget.SetBoneTransform(_modelWidget.Model.FindBone("Hand2")!.Index, value3);
+            _modelWidget.SetNodeTransform(_modelWidget.Model.FindNode("Hand1")!.Index, value2);
+            _modelWidget.SetNodeTransform(_modelWidget.Model.FindNode("Hand2")!.Index, value3);
         }
 
         base.MeasureOverride(parentAvailableSize);

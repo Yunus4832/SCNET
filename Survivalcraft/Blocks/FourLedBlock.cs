@@ -14,11 +14,8 @@ public class FourLedBlock : MountedElectricElementBlock
 
     public override void Initialize()
     {
-        var fourLedMesh = ContentManager.Get<Model>("Models/Leds").FindMesh("FourLed")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            fourLedMesh.ParentBone ??
-            throw new InvalidOperationException("Required FourLedMesh.ParentBone is null")
-        );
+        var fourLedNode = ContentManager.Get<Model>("Models/Leds").FindNode("FourLed")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(fourLedNode);
         for (var i = 0; i < 6; i++)
         {
             var m = i >= 4
@@ -30,9 +27,9 @@ public class FourLedBlock : MountedElectricElementBlock
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
             BlockMeshesByFace[i] = new BlockMesh();
-            BlockMeshesByFace[i].AppendModelMeshPart(
-                fourLedMesh.MeshParts[0],
-                boneAbsoluteTransform * m,
+            BlockMeshesByFace[i].AppendModelPrimitive(
+                fourLedNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m,
                 false,
                 false,
                 false,
@@ -44,9 +41,9 @@ public class FourLedBlock : MountedElectricElementBlock
 
         var m2 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);
         StandaloneBlockMesh = new BlockMesh();
-        StandaloneBlockMesh.AppendModelMeshPart(
-            fourLedMesh.MeshParts[0],
-            boneAbsoluteTransform * m2,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            fourLedNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * m2,
             false,
             false,
             false,

@@ -1,4 +1,4 @@
-using Engine.Media;
+using Engine.Graphics;
 
 namespace Game.Terrains;
 

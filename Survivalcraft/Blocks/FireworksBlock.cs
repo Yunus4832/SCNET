@@ -58,16 +58,10 @@ public class FireworksBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Fireworks");
-        var bodyMesh = model.FindMesh("Body")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            bodyMesh.ParentBone ??
-            throw new InvalidOperationException("Required BodyMesh.ParentBone is null")
-        );
-        var finsMesh = model.FindMesh("Fins")!;
-        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
-            finsMesh.ParentBone ??
-            throw new InvalidOperationException("Required FinsMesh.ParentBone is null")
-        );
+        var bodyNode = model.FindNode("Body")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bodyNode);
+        var finsNode = model.FindNode("Fins")!;
+        var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(finsNode);
         for (var i = 0; i < 64; i++)
         {
             var num = i / 8;
@@ -75,15 +69,12 @@ public class FireworksBlock : Block
             var color = FireworksColors[num2];
             color *= 0.75f;
             color.A = byte.MaxValue;
-            var headNameMesh = model.FindMesh(HeadNames[num])!;
-            var boneAbsoluteTransform3 = BlockMesh.GetBoneAbsoluteTransform(
-                headNameMesh.ParentBone ??
-                throw new InvalidOperationException("Required HeadNameMesh.ParentBone is null")
-            );
+            var headNameNode = model.FindNode(HeadNames[num])!;
+            var nodeAbsoluteTransform3 = BlockMesh.GetNodeAbsoluteTransform(headNameNode);
             HeadBlockMeshes[i] = new BlockMesh();
-            HeadBlockMeshes[i].AppendModelMeshPart(
-                headNameMesh.MeshParts[0],
-                boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, -0.25f, 0f),
+            HeadBlockMeshes[i].AppendModelPrimitive(
+                headNameNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform3 * Matrix.CreateTranslation(0f, -0.25f, 0f),
                 false,
                 false,
                 false,
@@ -97,9 +88,9 @@ public class FireworksBlock : Block
             var num3 = 0.5f + j * 0.5f;
             var m = Matrix.CreateScale(new Vector3(num3, 1f, num3));
             BodyBlockMeshes[j] = new BlockMesh();
-            BodyBlockMeshes[j].AppendModelMeshPart(
-                bodyMesh.MeshParts[0],
-                boneAbsoluteTransform * m * Matrix.CreateTranslation(0f, -0.25f, 0f),
+            BodyBlockMeshes[j].AppendModelPrimitive(
+                bodyNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * m * Matrix.CreateTranslation(0f, -0.25f, 0f),
                 false,
                 false,
                 false,
@@ -111,9 +102,9 @@ public class FireworksBlock : Block
         for (var k = 0; k < 2; k++)
         {
             FinsBlockMeshes[k] = new BlockMesh();
-            FinsBlockMeshes[k].AppendModelMeshPart(
-                finsMesh.MeshParts[0],
-                boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.25f, 0f),
+            FinsBlockMeshes[k].AppendModelPrimitive(
+                finsNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.25f, 0f),
                 false,
                 false,
                 false,

@@ -1,5 +1,5 @@
 using Engine.Graphics;
-using Engine.Media;
+using Engine.Media.Images;
 
 namespace Game.Screens;
 

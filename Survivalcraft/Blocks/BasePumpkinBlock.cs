@@ -15,11 +15,8 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Pumpkins");
-        var pumpkinMesh = model.FindMesh("Pumpkin")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            pumpkinMesh.ParentBone ??
-            throw new InvalidOperationException("Required PumpkinMesh.ParentBone is null")
-        );
+        var pumpkinNode = model.FindNode("Pumpkin")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(pumpkinNode);
         for (var i = 0; i < 8; i++)
         {
             var num = MathUtils.Lerp(0.2f, 1f, i / 7f);
@@ -41,9 +38,9 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
             BlockMeshesBySize[i] = new BlockMesh();
             if (i >= 1)
             {
-                BlockMeshesBySize[i].AppendModelMeshPart(
-                    pumpkinMesh.MeshParts[0],
-                    boneAbsoluteTransform *
+                BlockMeshesBySize[i].AppendModelPrimitive(
+                    pumpkinNode.RequireMesh().Primitives[0],
+                    nodeAbsoluteTransform *
                     Matrix.CreateScale(num) *
                     Matrix.CreateTranslation(0.5f + num2, 0f, 0.5f + num2),
                     false,
@@ -60,9 +57,9 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
             }
 
             StandaloneBlockMeshesBySize[i] = new BlockMesh();
-            StandaloneBlockMeshesBySize[i].AppendModelMeshPart(
-                pumpkinMesh.MeshParts[0],
-                boneAbsoluteTransform * Matrix.CreateScale(num) * Matrix.CreateTranslation(0f, -0.23f, 0f),
+            StandaloneBlockMeshesBySize[i].AppendModelPrimitive(
+                pumpkinNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform * Matrix.CreateScale(num) * Matrix.CreateTranslation(0f, -0.23f, 0f),
                 false,
                 false,
                 false,

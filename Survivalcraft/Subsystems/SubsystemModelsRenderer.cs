@@ -207,7 +207,7 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
             modelData.NextLightTime = Time.FrameStartTime + 0.1;
         }
 
-        modelData.ComponentModel?.CalculateAbsoluteBonesTransforms(camera);
+        modelData.ComponentModel?.CalculateAbsoluteNodeTransforms(camera);
     }
 
     public void DrawModels(Camera camera, List<ModelData> modelsData, float? alphaThreshold)
@@ -257,7 +257,14 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
 
             var v = componentModel.DiffuseColor ?? Vector3.One;
             var num = componentModel.Opacity ?? 1f;
-            modelShader.InstancesCount = componentModel.AbsoluteBoneTransformsForCamera.Length;
+            if (componentModel.AbsoluteNodeTransformsForCamera.Length > _maxInstancesCount)
+            {
+                throw new NotSupportedException(
+                    $"Procedural creature rendering supports at most {_maxInstancesCount} node transforms per model."
+                );
+            }
+
+            modelShader.InstancesCount = componentModel.AbsoluteNodeTransformsForCamera.Length;
             modelShader.MaterialColor = new Vector4(v * num, num);
             modelShader.EmissionColor = componentModel.EmissionColor ?? Vector4.Zero;
             modelShader.AmbientLightColor = new Vector3(LightingManager.LightAmbient * modelsDatum.Light);
@@ -269,12 +276,12 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
             }
 
             Array.Copy(
-                componentModel.AbsoluteBoneTransformsForCamera,
+                componentModel.AbsoluteNodeTransformsForCamera,
                 modelShader.Transforms.World,
-                componentModel.AbsoluteBoneTransformsForCamera.Length
+                componentModel.AbsoluteNodeTransformsForCamera.Length
             );
             var instancedModelData =
-                InstancedModelsManager.GetInstancedModelData(componentModel.Model, componentModel.MeshDrawOrders);
+                InstancedModelsManager.GetInstancedModelData(componentModel.Model, componentModel.DrawNodeIndices);
             Display.DrawIndexed(
                 PrimitiveType.TriangleList,
                 modelShader,
@@ -393,9 +400,7 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
                 return LightingManager.CalculateSmoothLight(_subsystemTerrain, p);
             }
 
-            var boneTransform =
-                modelData.ComponentModel.GetBoneTransform(modelData.ComponentModel.Model.RootBone.Index);
-            p = !boneTransform.HasValue ? Vector3.Zero : boneTransform.Value.Translation + new Vector3(0f, 0.9f, 0f);
+            p = modelData.ComponentModel.Pose.WorldTransform.Translation + new Vector3(0f, 0.9f, 0f);
         }
 
         return LightingManager.CalculateSmoothLight(_subsystemTerrain, p);

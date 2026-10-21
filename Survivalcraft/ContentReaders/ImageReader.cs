@@ -1,10 +1,10 @@
-using Engine.Media;
+using Engine.Media.Images;
 
 namespace Game.ContentReaders;
 
 public class ImageReader : IContentReader
 {
-    public override string Type => "Engine.Media.Image";
+    public override string Type => "Engine.Media.Images.Image";
 
     public override string[] DefaultSuffix => ["png"];
 

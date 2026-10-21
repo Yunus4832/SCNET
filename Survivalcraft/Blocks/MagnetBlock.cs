@@ -13,17 +13,14 @@ public class MagnetBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/Magnet");
-        var magnetMesh = model.FindMesh("Magnet")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            magnetMesh.ParentBone ??
-            throw new InvalidOperationException("Required MagnetMesh.ParentBone is null")
-        );
+        var magnetNode = model.FindNode("Magnet")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(magnetNode);
         for (var i = 0; i < 2; i++)
         {
             MeshesByData[i] = new BlockMesh();
-            MeshesByData[i].AppendModelMeshPart(
-                magnetMesh.MeshParts[0],
-                boneAbsoluteTransform *
+            MeshesByData[i].AppendModelPrimitive(
+                magnetNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform *
                 Matrix.CreateRotationY((float)Math.PI / 2f * i) *
                 Matrix.CreateTranslation(0.5f, 0f, 0.5f),
                 false,
@@ -35,9 +32,9 @@ public class MagnetBlock : Block
             CollisionBoxesByData[i] = [MeshesByData[i].CalculateBoundingBox()];
         }
 
-        StandaloneMesh.AppendModelMeshPart(
-            magnetMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateScale(1.5f) * Matrix.CreateTranslation(0f, -0.25f, 0f),
+        StandaloneMesh.AppendModelPrimitive(
+            magnetNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateScale(1.5f) * Matrix.CreateTranslation(0f, -0.25f, 0f),
             false,
             false,
             true,

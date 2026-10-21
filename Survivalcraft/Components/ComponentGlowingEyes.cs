@@ -31,13 +31,13 @@ public class ComponentGlowingEyes : Component, IDrawable
 
         _eyeGlowPoints[0]!.Color = Color.Transparent;
         _eyeGlowPoints[1]!.Color = Color.Transparent;
-        var modelBone = _componentCreatureModel.Model.FindBone("Head", false);
-        if (modelBone == null)
+        var modelNode = _componentCreatureModel.Model.FindNode("Head", false);
+        if (modelNode == null)
         {
             return;
         }
 
-        var matrix = _componentCreatureModel.AbsoluteBoneTransformsForCamera[modelBone.Index];
+        var matrix = _componentCreatureModel.AbsoluteNodeTransformsForCamera[modelNode.Index];
         matrix *= camera.InvertedViewMatrix;
         var vector = Vector3.Normalize(matrix.Up);
         var num = Vector3.Dot(matrix.Translation - camera.ViewPosition, camera.ViewDirection);

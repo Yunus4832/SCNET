@@ -1,9 +1,9 @@
 using System.Xml.Linq;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 using Engine.FileStorage;
 using Engine.Graphics;
-using Engine.Media;
+using Engine.Media.Images;
 using Engine.Windowing;
 
 using Game.Managers;

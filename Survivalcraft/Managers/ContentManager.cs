@@ -3,7 +3,8 @@ using System.Xml.Linq;
 
 using Engine.Audio;
 using Engine.Graphics;
-using Engine.Media;
+using Engine.Media.Audio;
+using Engine.Media.Images;
 
 using Game.ContentReaders;
 
@@ -114,6 +115,47 @@ public static class ContentManager
         return (T)Get(typeof(T), name, suffix);
     }
 
+    internal static Stream OpenRelativeResource(ContentInfo owner, string resource)
+    {
+        if (Uri.TryCreate(resource, UriKind.Absolute, out _) || resource.Contains('\\'))
+        {
+            throw new InvalidDataException("Model dependencies must use relative asset paths.");
+        }
+
+        var directory = owner.AbsolutePath.LastIndexOf('/');
+        var components = new List<string>();
+        var combined = (directory < 0 ? string.Empty : owner.AbsolutePath[..(directory + 1)]) + resource;
+        foreach (var component in combined.Split('/'))
+        {
+            if (component is "" or ".")
+            {
+                continue;
+            }
+
+            if (component == "..")
+            {
+                if (components.Count == 0)
+                {
+                    throw new InvalidDataException("Model dependency escapes the content root.");
+                }
+
+                components.RemoveAt(components.Count - 1);
+            }
+            else
+            {
+                components.Add(component);
+            }
+        }
+
+        lock (_syncObj)
+        {
+            var path = string.Join('/', components);
+            return _resources.TryGetValue(path, out var content)
+                ? content.Duplicate()
+                : throw new FileNotFoundException($"Model dependency '{path}' was not found.", path);
+        }
+    }
+
     public static object Get(Type type, string name, string suffix = "")
     {
         lock (_syncObj)
@@ -192,11 +234,11 @@ public static class ContentManager
         {
             "JsonObject" => JsonSerializer.Deserialize<object>(new StreamReader(stream).ReadToEnd()) ??
                             throw new InvalidOperationException("JsonString deserialize failed"),
-            "Engine.Media.StreamingSource" => SoundData.Stream(stream),
+            "Engine.Media.Audio.StreamingSource" => SoundData.Stream(stream),
             "Engine.Audio.SoundBuffer" => SoundBuffer.Load(stream),
             "Engine.Graphics.Texture2D" => Texture2D.Load(stream),
             "System.String" => new StreamReader(stream).ReadToEnd(),
-            "Engine.Media.Image" => Image.Load(stream),
+            "Engine.Media.Images.Image" => Image.Load(stream),
             "System.Xml.Linq.XElement" => XElement.Load(stream),
             "Engine.Graphics.Model" => Model.Load(stream, true),
             _ => throw new InvalidOperationException("Unknown type stream")

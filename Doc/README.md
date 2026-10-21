@@ -26,6 +26,7 @@
 
 - [模组使用](Mods.md)：缓存、配置范围、内容来源和联机准备。
 - [模组开发](Modding.md)：模板、生命周期、方块目录及构建。
+- [模型与 glTF](Models.md)：标准场景数据、资源解析、Blender 导出和渲染能力边界。
 - [内容包协议](Protocol/ContentPackageProtocol.md)：`.scpkg` 格式、清单与载荷。
 - [内容创建协议](Protocol/ContentCreationProtocol.md)：游戏内创建内容包的流程。
 - [服务器源协议](Protocol/ServerSourceProtocol.md)：只读目录契约，与临时 P2P 房间发现分离。

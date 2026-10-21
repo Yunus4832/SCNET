@@ -13,24 +13,21 @@ public class GrassTrapBlock : Block
     public override void Initialize()
     {
         var model = ContentManager.Get<Model>("Models/GrassTrap");
-        var grassTrapMesh = model.FindMesh("GrassTrap")!;
-        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
-            grassTrapMesh.ParentBone ??
-            throw new InvalidOperationException("Required GrassTrapMesh.ParentBone is null")
-        );
+        var grassTrapNode = model.FindNode("GrassTrap")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(grassTrapNode);
         var color = BlockColorsMap.GrassColorsMap.Lookup(8, 15);
-        BlockMesh.AppendModelMeshPart(
-            grassTrapMesh.MeshParts[0],
-            boneAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0.75f, 0.5f),
+        BlockMesh.AppendModelPrimitive(
+            grassTrapNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0.5f, 0.75f, 0.5f),
             false,
             false,
             false,
             false,
             Color.White
         );
-        StandaloneBlockMesh.AppendModelMeshPart(
-            grassTrapMesh.MeshParts[0],
-            boneAbsoluteTransform,
+        StandaloneBlockMesh.AppendModelPrimitive(
+            grassTrapNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform,
             false,
             false,
             false,

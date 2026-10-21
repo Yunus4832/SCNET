@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 
-using Engine.Core;
+using Engine.Core.Logging;
+using Engine.Core.Mathematics;
 
 namespace Engine.Input;
 

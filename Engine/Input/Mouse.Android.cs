@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using Android.OS;
 using Android.Views;
 
-using Engine.Core;
+using Engine.Core.Mathematics;
 
 using Window = Engine.Windowing.Window;
 
