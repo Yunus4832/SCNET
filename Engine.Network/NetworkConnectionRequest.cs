@@ -1,5 +1,7 @@
 using System.Net;
 
+using Engine.Network.Security;
+
 using LiteNetLib;
 
 namespace Engine.Network;
@@ -19,10 +21,13 @@ public sealed class NetworkConnectionRequest
         ConnectionRequest request,
         TimeSpan timeout,
         Func<NetPeer, NetworkConnection> accepted,
-        Lock transportGate
+        Lock transportGate,
+        SecureSession security
     )
     {
         _request = request;
+        PeerIdentity = security.PeerIdentity;
+        ChannelBinding = security.ChannelBinding.ToArray();
         _accepted = accepted;
         _transportGate = transportGate;
         ExpiresAt = DateTimeOffset.UtcNow + timeout;
@@ -30,6 +35,10 @@ public sealed class NetworkConnectionRequest
     }
 
     public Guid Id { get; } = Guid.NewGuid();
+
+    public NetworkPeerIdentity PeerIdentity { get; }
+
+    public ReadOnlyMemory<byte> ChannelBinding { get; }
 
     public IPEndPoint TransportEndpoint => new(_request.RemoteEndPoint.Address, _request.RemoteEndPoint.Port);
 

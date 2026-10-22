@@ -12,7 +12,8 @@
 
 代码库当前显式引用的主要外部包包括：
 
-- `LiteNetLib`：网络通信
+- `LiteNetLib`：可靠 UDP 网络通信
+- `BouncyCastle.Cryptography`：Engine.Network 的 DTLS 1.2 握手与 ChaCha20-Poly1305 记录保护
 - `MessagePack`：实体系统相关序列化
 - `SharpGLTF.Core`：标准 glTF 2.0 / GLB 解析与格式验证；场景数据及渲染边界见 [模型与 glTF](Models.md)
 - `NAudio.Core`、`NAudio.Flac.Unknown`、`NLayer.NAudioSupport`、`NVorbis`：Engine.Media 音频解码；设备播放由 Engine 的 OpenAL 实现

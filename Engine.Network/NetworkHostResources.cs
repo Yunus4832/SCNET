@@ -10,5 +10,7 @@ public readonly record struct NetworkHostResources(
     int RoomRegistrations,
     int RelayPreparations,
     int RelayRoutes,
-    int Notifications
+    int Notifications,
+    int SecureSessions,
+    int PendingSecureHandshakes
 );

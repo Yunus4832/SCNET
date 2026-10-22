@@ -2,7 +2,7 @@ namespace Game.Network.Chunks;
 
 public static class EncodedTerrainChunkFragmenter
 {
-    // 完整包还包含分片元数据、包标识和帧头，必须适配 Engine 预留中继头部后的安全 MTU（461 字节）。
+    // 完整包还包含分片元数据、包标识和帧头，必须适配 Engine 预留中继头部后的安全 MTU（419 字节，含 DTLS 与中继预留）。
     public const int DefaultFragmentPayloadSize = ProtocolLimits.TerrainFragmentPayloadSize;
 
     public const int MaximumPayloadLength = ProtocolLimits.MaximumTerrainPayloadLength;

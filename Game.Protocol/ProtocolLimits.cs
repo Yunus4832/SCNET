@@ -18,7 +18,7 @@ public static class ProtocolLimits
 
     public const int MaximumModVersionLength = 64;
 
-    public const int TerrainFragmentPayloadSize = 400;
+    public const int TerrainFragmentPayloadSize = 352;
 
     public const int MaximumTerrainPayloadLength = 2 * 1024 * 1024;
 

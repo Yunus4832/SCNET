@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
+using Engine.Network.Security;
+
 using LiteNetLib;
 
 using Rendezvous.Protocol;
@@ -27,6 +29,8 @@ public sealed class NetworkHost : IAsyncDisposable
     private readonly IPAddress _localIPv6Address;
 
     private readonly RelayPacketLayer _relayLayer = new();
+
+    private readonly SecurePacketLayer _security;
 
     private readonly CancellationTokenSource _stop = new();
 
@@ -121,6 +125,7 @@ public sealed class NetworkHost : IAsyncDisposable
             throw new ArgumentOutOfRangeException(nameof(options));
         }
 
+        _security = new SecurePacketLayer(_relayLayer, options);
         var listener = new EventBasedNetListener();
         listener.NetworkReceiveUnconnectedEvent += (endpoint, reader, messageType) =>
         {
@@ -201,7 +206,13 @@ public sealed class NetworkHost : IAsyncDisposable
             NetworkConnectionRequest incoming;
             lock (_relayGate)
             {
-                incoming = new NetworkConnectionRequest(request, timeout, GetConnection, _relayGate);
+                incoming = new NetworkConnectionRequest(
+                    request,
+                    timeout,
+                    GetConnection,
+                    _relayGate,
+                    _security.GetReady(request.RemoteEndPoint)
+                );
                 _incoming.TryAdd(incoming.Id, incoming);
             }
 
@@ -276,6 +287,7 @@ public sealed class NetworkHost : IAsyncDisposable
                 ? reader.GetRemainingBytes().Take(256).ToArray()
                 : Array.Empty<byte>();
             var information = new NetworkDisconnectInfo(reason, data, (int)disconnectInfo.SocketErrorCode);
+            _security.Remove(peer.EndPoint);
             lock (_relayGate)
             {
                 if (_peerRelays.TryRemove(peer, out var routeId))
@@ -338,7 +350,7 @@ public sealed class NetworkHost : IAsyncDisposable
                 reader.Recycle();
             }
         };
-        _network = new NetManager(listener, _relayLayer)
+        _network = new NetManager(listener, _security)
         {
             UnconnectedMessagesEnabled = true,
             ChannelsCount = options.ChannelCount,
@@ -348,8 +360,11 @@ public sealed class NetworkHost : IAsyncDisposable
             BroadcastReceiveEnabled = options.ReceiveBroadcasts,
             DisconnectTimeout = (int)options.DisconnectTimeout.TotalMilliseconds
         };
+        _security.send = (endpoint, record) => _network.SendUnconnectedMessage(record, endpoint);
         if (!_network.Start(options.LocalIPv4Address, options.LocalIPv6Address, port))
         {
+            _network.Stop();
+            _security.Dispose();
             throw new InvalidOperationException("Unable to bind network host.");
         }
 
@@ -361,9 +376,11 @@ public sealed class NetworkHost : IAsyncDisposable
         lock (_relayGate)
         {
             TrackRelayPeer(peer);
+            var security = _security.GetReady(peer.EndPoint);
+            security.attached = true;
             return _connections.GetOrAdd(
                 peer,
-                _ => new NetworkConnection(peer, _maxPendingReliableBytes, _channelCount)
+                _ => new NetworkConnection(peer, _maxPendingReliableBytes, _channelCount, security)
                 {
                     PathKind = _relayLayer.Contains(peer.EndPoint) ? NetworkPathKind.Relay : NetworkPathKind.Direct
                 }
@@ -388,6 +405,10 @@ public sealed class NetworkHost : IAsyncDisposable
 
     public int LocalPort => _network.LocalPort;
 
+    public NetworkPeerIdentity LocalIdentity => _security.LocalIdentity;
+
+    public int SecureSessionCount => _security.SessionCount;
+
     public Exception? Failure => Volatile.Read(ref _failure);
 
     public Task Completion => _pump;
@@ -398,14 +419,16 @@ public sealed class NetworkHost : IAsyncDisposable
 
     public NetworkHostResources Resources => new(
         _connections.Count,
-        _connects.Count,
+        _connects.Count + _security.PendingCount,
         _requests.Count,
         _probes.Count,
         _registrations.Count,
         _roomRegistrations.Count,
         _relayPreparations.Count,
         _installedRelays.Count,
-        _notifications.Count
+        _notifications.Count,
+        _security.SessionCount,
+        _security.PendingCount
     );
 
     public async Task<NetworkRoomRegistration> RegisterRoomAsync(
@@ -1349,6 +1372,7 @@ public sealed class NetworkHost : IAsyncDisposable
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         cancellationToken.ThrowIfCancellationRequested();
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _stop.Token);
+        await _security.EstablishAsync(endpoint, deadline.Token).ConfigureAwait(false);
         var writer = new LiteNetLib.Utils.NetDataWriter();
         writer.Put(handshake.ToArray());
         NetPeer peer;
@@ -1414,6 +1438,7 @@ public sealed class NetworkHost : IAsyncDisposable
             while (!_stop.IsCancellationRequested)
             {
                 _network.PollEvents();
+                _security.Sweep();
                 foreach (var pair in _registrations)
                 {
                     if (pair.Value.ExpiresAt <= DateTimeOffset.UtcNow)
@@ -1502,6 +1527,7 @@ public sealed class NetworkHost : IAsyncDisposable
                 connection.Disconnect();
             }
 
+            _security.Dispose();
             foreach (var pair in _installedRelays)
             {
                 ReleaseRelay(pair.Key, pair.Value);

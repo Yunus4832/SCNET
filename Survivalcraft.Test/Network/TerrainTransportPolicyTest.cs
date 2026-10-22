@@ -38,7 +38,7 @@ public sealed class TerrainTransportPolicyTest
 
         var datagram = CommonLib.GetWriter(writer, out _, CompressionPolicy.None);
 
-        Assert.InRange(datagram.Length, 1, 461);
+        Assert.InRange(datagram.Length, 1, 419);
     }
 
     [Fact]

@@ -1,9 +1,19 @@
 using System.Net;
 
+using Engine.Network.Security;
+
 namespace Engine.Network;
 
 public sealed record NetworkHostOptions
 {
+    public NetworkIdentity? Identity { get; init; }
+
+    public Func<NetworkPeerIdentity, bool>? ValidatePeerIdentity { get; init; }
+
+    public int MaxSecureSessions { get; init; } = 512;
+
+    public int MaxPendingSecureHandshakes { get; init; } = 32;
+
     public IPAddress LocalIPv4Address { get; init; } = IPAddress.Any;
 
     public IPAddress LocalIPv6Address { get; init; } = IPAddress.IPv6Any;

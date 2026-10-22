@@ -1,5 +1,7 @@
 using System.Net;
 
+using Engine.Network.Security;
+
 using LiteNetLib;
 
 namespace Engine.Network;
@@ -19,14 +21,20 @@ public sealed class NetworkConnection
 
     private int _pendingBytes;
 
-    internal NetworkConnection(NetPeer peer, int maxPendingBytes, byte channelCount)
+    internal NetworkConnection(NetPeer peer, int maxPendingBytes, byte channelCount, SecureSession security)
     {
         _peer = peer;
         _maxPendingBytes = maxPendingBytes;
         _channelCount = channelCount;
+        PeerIdentity = security.PeerIdentity;
+        ChannelBinding = security.ChannelBinding.ToArray();
     }
 
     public Guid Id { get; } = Guid.NewGuid();
+
+    public NetworkPeerIdentity PeerIdentity { get; }
+
+    public ReadOnlyMemory<byte> ChannelBinding { get; }
 
     public IPEndPoint TransportEndpoint => new(_peer.EndPoint.Address, _peer.EndPoint.Port);
 

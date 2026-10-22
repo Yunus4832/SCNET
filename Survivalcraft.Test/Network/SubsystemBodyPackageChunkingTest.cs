@@ -55,6 +55,7 @@ public sealed class SubsystemBodyPackageChunkingTest
 
     [Theory]
     [InlineData(461)]
+    [InlineData(419)]
     [InlineData(508)]
     [InlineData(1428)]
     public void FullBodySnapshotExceedingMtuCanBeSplitIntoFittingChunks(int maxPacketSize)

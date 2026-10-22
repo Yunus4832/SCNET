@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
 
+using Engine.Network.Security;
+
 using LiteNetLib;
 
 using Rendezvous.Protocol;
@@ -260,12 +262,18 @@ public sealed class NetworkHostTest
         var closed = false;
         listener.PeerConnectedEvent += peer => peer.Send(new byte[] { 1 }, DeliveryMethod.ReliableSequenced);
         listener.PeerDisconnectedEvent += (_, _) => closed = true;
-        var offender = new NetManager(listener);
+        using var security = new SecurePacketLayer(new RelayPacketLayer(), new NetworkHostOptions());
+        var offender = new NetManager(listener, security);
+        security.send = (target, payload) => offender.SendUnconnectedMessage(payload, target);
         Assert.True(offender.Start());
         try
         {
+            var endpoint = new IPEndPoint(IPAddress.Loopback, server.LocalPort);
+            var securing = security.EstablishAsync(endpoint, CancellationToken.None);
+            await PumpUntilAsync(server, client, () => securing.IsCompleted);
+            await securing;
             offender.Connect(
-                new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+                endpoint,
                 new LiteNetLib.Utils.NetDataWriter()
             );
             using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
