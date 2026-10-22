@@ -225,6 +225,12 @@ internal sealed class SecurePacketLayer : PacketLayerBase, IDisposable
     public override void ProcessOutBoundPacket(IPEndPoint endpoint, ref byte[] data, ref int offset, ref int length)
     {
         var packet = data.AsSpan(offset, length);
+        // BroadcastDatagram uses the length-aware unconnected send path on the existing socket.
+        if (endpoint.Address.Equals(IPAddress.Broadcast) && !packet.IsEmpty && packet[0] == _unconnectedProperty)
+        {
+            data[offset] = _broadcastProperty;
+        }
+
         if (!IsPublic(packet))
         {
             if (!_sessions.TryGetValue(endpoint, out var session) || !session.IsReady || session.IsFailed)

@@ -1357,7 +1357,13 @@ public sealed class NetworkHost : IAsyncDisposable
             throw new ArgumentException("Invalid application broadcast payload.", nameof(payload));
         }
 
-        _network.SendBroadcast(payload.ToArray(), port);
+        // LiteNetLib 0.9.5.2's SendBroadcast passes a null endpoint to packet layers and
+        // sends their reserved buffer space instead of the processed length. Use the regular
+        // socket send path; the packet layer marks this IPv4 destination as a broadcast.
+        if (!_network.SendUnconnectedMessage(payload.ToArray(), new IPEndPoint(IPAddress.Broadcast, port)))
+        {
+            throw new IOException("Broadcast datagram could not be sent.");
+        }
     }
 
     private void SendSignal(SignalMessage message, IPEndPoint endpoint) =>

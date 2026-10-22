@@ -12,6 +12,32 @@ namespace Engine.Network.Test;
 public sealed class NetworkHostTest
 {
     [Fact]
+    public async Task BroadcastDiscoveryPreservesPayloadAndReceivesReplyWithoutSecureSession()
+    {
+        await using var server = new NetworkHost(options: new NetworkHostOptions { ReceiveBroadcasts = true });
+        await using var client = new NetworkHost();
+        byte[]? request = null;
+        byte[]? reply = null;
+        var broadcast = false;
+        server.DatagramReceived += (source, payload) =>
+        {
+            request = payload;
+            broadcast = source.IsBroadcast;
+            source.Send("discovery-reply"u8);
+        };
+        client.DatagramReceived += (_, payload) => reply = payload;
+
+        client.BroadcastDatagram("discovery-request"u8, server.LocalPort);
+        await PumpUntilAsync(server, client, () => reply is not null);
+
+        Assert.Equal("discovery-request"u8.ToArray(), request);
+        Assert.Equal("discovery-reply"u8.ToArray(), reply);
+        Assert.True(broadcast);
+        Assert.Equal(0, server.SecureSessionCount);
+        Assert.Equal(0, client.SecureSessionCount);
+    }
+
+    [Fact]
     public async Task ConfiguredChannelCountSupportsAdditionalChannelsAndRejectsOverflow()
     {
         var options = new NetworkHostOptions { ChannelCount = 9 };
