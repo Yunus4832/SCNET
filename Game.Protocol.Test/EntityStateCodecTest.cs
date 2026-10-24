@@ -1,10 +1,13 @@
 using Engine.Core.Mathematics;
+using Engine.Core.Security;
 
 using Game.Protocol.Blocks;
+using Game.Protocol.Characters;
 using Game.Protocol.Entities;
+using Game.Protocol.Identity;
 using Game.Protocol.Mods;
-using Game.Protocol.Players;
 using Game.Protocol.Serialization;
+using Game.Protocol.Teams;
 using Game.Protocol.World;
 
 namespace Game.Protocol.Test;
@@ -18,8 +21,21 @@ public sealed class EntityStateCodecTest
         new DispenserPackage(new Point3(-2, 64, 3), 4),
         new ComponentSicknessPackage { EntityId = 3, SicknessDuration = 4.5f },
         new ModEnvelopePackage("test.example", "update", [1, 2, 3, 4]),
-        new PlayerListPackage([new PlayerListEntry(_id, "Test", true)]),
-        new OnlinePlayerStatePackage([new OnlinePlayerState(_id, Vector3.One, 0.5f, true)]),
+        new CharacterListPackage(
+            [
+                new CharacterListEntry(
+                    _id,
+                    new PlayerAddress(
+                        IdentityAddress.Encode(
+                            Convert.FromHexString("0000000000000000000000000000000000000000000000000000000000000000")
+                        )
+                    ),
+                    "Test",
+                    true
+                )
+            ]
+        ),
+        new OnlineCharacterStatePackage([new OnlineCharacterState(_id, Vector3.One, 0.5f, true)]),
         new ComponentMountPackage(3, 4, true),
         new ComponentSleepPackage(3, ComponentSleepPackage.EventType.Sleep, true, false, "Reason"),
         new SubsystemWeatherPackage
@@ -66,8 +82,8 @@ public sealed class EntityStateCodecTest
     }
 
     [Theory]
-    [InlineData(PackageType.PlayerList)]
-    [InlineData(PackageType.OnlinePlayerState)]
+    [InlineData(PackageType.CharacterList)]
+    [InlineData(PackageType.OnlineCharacterState)]
     public void TruncatedListsAreRejectedBeforeAllocatingEntries(PackageType type)
     {
         using var writer = new ProtocolWriter();

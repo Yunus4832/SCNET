@@ -74,13 +74,13 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
     }
 
-    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
+    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentCharacter componentCharacter)
     {
         var value = inventory.GetSlotValue(slotIndex);
         inventory.GetSlotCount(slotIndex);
         var data = Terrain.ExtractData(value);
         DialogsManager.ShowDialog(
-            componentPlayer.GuiWidget,
+            componentCharacter.GuiWidget,
             new EditPistonDialog(
                 data,
                 delegate(int newData)
@@ -106,12 +106,12 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         return true;
     }
 
-    public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer componentPlayer)
+    public override bool OnEditBlock(int x, int y, int z, int value, ComponentCharacter componentCharacter)
     {
         var contents = Terrain.ExtractContents(value);
         var data = Terrain.ExtractData(value);
         DialogsManager.ShowDialog(
-            componentPlayer.GuiWidget,
+            componentCharacter.GuiWidget,
             new EditPistonDialog(
                 data,
                 delegate(int newData)

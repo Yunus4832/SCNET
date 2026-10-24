@@ -28,13 +28,13 @@ public class GameWidget : CanvasWidget
 
     public readonly MessagePanelWidget? MessagePanel;
 
-    public readonly PlayerInformationOverlayWidget? PlayerInformationOverlay;
+    public readonly CharacterInformationOverlayWidget? CharacterInformationOverlay;
 
-    public readonly PlayerPanelWidget? PlayerPanel;
+    public readonly MultiplayerPanelWidget? PlayerPanel;
 
     public readonly MessageHistoryOverlayWidget? MessageHistoryOverlay;
 
-    public readonly BitmapButtonWidget NetPlayerListButton;
+    public readonly BitmapButtonWidget NetCharacterListButton;
 
     public SubsystemTime? SubsystemTime;
 
@@ -46,7 +46,7 @@ public class GameWidget : CanvasWidget
 
     public SubsystemGameWidgets SubsystemGameWidgets { get; set; }
 
-    public PlayerData PlayerData { get; set; }
+    public CharacterData CharacterData { get; set; }
 
     public ReadOnlyList<Camera> Cameras => new(_cameras);
 
@@ -79,36 +79,37 @@ public class GameWidget : CanvasWidget
     public ComponentCreature? Target { get; set; }
 
 
-    public GameWidget(PlayerData playerData, int gameViewIndex)
+    public GameWidget(CharacterData characterData, int gameViewIndex)
     {
-        PlayerData = playerData;
+        CharacterData = characterData;
         GameWidgetIndex = gameViewIndex;
-        SubsystemGameWidgets = playerData.SubsystemGameWidgets;
+        SubsystemGameWidgets = characterData.SubsystemGameWidgets;
         SubsystemTime = SubsystemGameWidgets.Project.FindSubsystem<SubsystemTime>();
         LoadContents(this, ContentManager.Get<XElement>("Widgets/GameWidget"));
         _messageButton = Children.Find<BitmapButtonWidget>("MsgButton")!;
-        NetPlayerListButton = Children.Find<BitmapButtonWidget>("PlayerListButton")!;
-        NetPlayerListButton.NormalSubtexture = TextureAtlasManager.GetSubtexture("Textures/Atlas/PlayerList");
-        NetPlayerListButton.ClickedSubtexture = TextureAtlasManager.GetSubtexture("Textures/Atlas/PlayerList_Pressed");
+        NetCharacterListButton = Children.Find<BitmapButtonWidget>("CharacterListButton")!;
+        NetCharacterListButton.NormalSubtexture = TextureAtlasManager.GetSubtexture("Textures/Atlas/CharacterList");
+        NetCharacterListButton.ClickedSubtexture =
+            TextureAtlasManager.GetSubtexture("Textures/Atlas/CharacterList_Pressed");
         _messageButton.Text = "";
         _messageButton.IsVisible = false;
-        NetPlayerListButton.IsVisible = false;
+        NetCharacterListButton.IsVisible = false;
         ViewWidget = Children.Find<ViewWidget>("View")!;
         GuiWidget = Children.Find<ContainerWidget>("Gui")!;
         _controlsWidget = GuiWidget.Children.Find<CanvasWidget>("ControlsContainer")!;
         var hasMultiplayerMessaging =
             CommonLib.WorkType is not WorkType.Local &&
             CommonLib.Net.IsConnected;
-        if (playerData.IsMainPlayer)
+        if (characterData.IsLocalCharacter)
         {
             _messageService = SubsystemGameWidgets.Messages;
             _messageService.ToastRequested += DisplayToast;
         }
 
-        if (hasMultiplayerMessaging && playerData.IsMainPlayer)
+        if (hasMultiplayerMessaging && characterData.IsLocalCharacter)
         {
-            PlayerInformationOverlay = new PlayerInformationOverlayWidget(this);
-            PlayerPanel = new PlayerPanelWidget(playerData, PlayerInformationOverlay);
+            CharacterInformationOverlay = new CharacterInformationOverlayWidget(this);
+            PlayerPanel = new MultiplayerPanelWidget(characterData, CharacterInformationOverlay);
             MessageHistoryOverlay = new MessageHistoryOverlayWidget(SubsystemGameWidgets.Messages)
             {
                 HorizontalAlignment = WidgetAlignment.Near,
@@ -128,18 +129,18 @@ public class GameWidget : CanvasWidget
                 Margin = new Vector2(12f, 8f),
                 IsHitTestVisible = false
             };
-            _informationOverlaysContainer.Children.Add(PlayerInformationOverlay);
+            _informationOverlaysContainer.Children.Add(CharacterInformationOverlay);
             _informationOverlaysContainer.Children.Add(_informationOverlaysSpacer);
             _informationOverlaysContainer.Children.Add(MessageHistoryOverlay);
-            NetPlayerListButton.IsVisible = true;
+            NetCharacterListButton.IsVisible = true;
             _messageButton.IsVisible = true;
             _controlsWidget.Children.Insert(0, _informationOverlaysContainer);
         }
 
-        if (playerData.IsMainPlayer)
+        if (characterData.IsLocalCharacter)
         {
             MessagePanel = new MessagePanelWidget(
-                playerData,
+                characterData,
                 MessageHistoryOverlay,
                 hasMultiplayerMessaging
             );
@@ -193,7 +194,7 @@ public class GameWidget : CanvasWidget
     {
         if (CommonLib.WorkType != WorkType.Local)
         {
-            IsVisible = PlayerData.IsMainPlayer;
+            IsVisible = CharacterData.IsLocalCharacter;
         }
 
         base.MeasureOverride(parentAvailableSize);
@@ -201,7 +202,7 @@ public class GameWidget : CanvasWidget
 
     public override void Update()
     {
-        var player = PlayerData.ComponentPlayer;
+        var player = CharacterData.ComponentCharacter;
         if (player != null)
         {
             if (_informationOverlaysContainer != null)
@@ -217,7 +218,7 @@ public class GameWidget : CanvasWidget
                 }
             }
 
-            _informationOverlaysSpacer?.IsVisible = PlayerInformationOverlay?.IsVisible == true &&
+            _informationOverlaysSpacer?.IsVisible = CharacterInformationOverlay?.IsVisible == true &&
                                                     MessageHistoryOverlay?.IsVisible == true;
 
             if (player.ComponentSleep.IsSleeping &&
@@ -237,7 +238,7 @@ public class GameWidget : CanvasWidget
             }
         }
 
-        if (NetPlayerListButton.IsClicked)
+        if (NetCharacterListButton.IsClicked)
         {
             TogglePlayerPanel();
         }
@@ -247,10 +248,10 @@ public class GameWidget : CanvasWidget
             ToggleMessagePanel(false);
         }
 
-        var modalPanel = PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
-        var isGameInputCaptured = PlayerData.ComponentPlayer?.ComponentGui.IsGameInputCaptured == true;
+        var modalPanel = CharacterData.ComponentCharacter?.ComponentGui.ModalPanelWidget;
+        var isGameInputCaptured = CharacterData.ComponentCharacter?.ComponentGui.IsGameInputCaptured == true;
         if (Window.IsActive &&
-            PlayerData.IsReadyForPlaying &&
+            CharacterData.IsReadyForPlaying &&
             player?.ComponentHealth.Health > 0f &&
             !isGameInputCaptured &&
             modalPanel == null &&
@@ -258,12 +259,12 @@ public class GameWidget : CanvasWidget
         {
             if (Input.IsKeyDownOnce(Key.M))
             {
-                CommandGateway.Submit(PlayerData, new MarkPrivatePositionCommand("previous"));
+                CommandGateway.Submit(CharacterData, new MarkPrivatePositionCommand("previous"));
             }
 
             if (Input.IsKeyDownOnce(Key.F6))
             {
-                CommandGateway.Submit(PlayerData, new TeleportMarkCommand("previous", false));
+                CommandGateway.Submit(CharacterData, new TeleportMarkCommand("previous", false));
             }
         }
 
@@ -271,7 +272,7 @@ public class GameWidget : CanvasWidget
             Input.IsKeyDownOnce(Key.Enter) &&
             MessagePanel is { EditText.HasFocus: false } enterMessagePanel)
         {
-            if (PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget ==
+            if (CharacterData.ComponentCharacter?.ComponentGui.ModalPanelWidget ==
                 enterMessagePanel)
             {
                 ToggleMessagePanel(false);
@@ -292,7 +293,7 @@ public class GameWidget : CanvasWidget
             MessagePanel is not null)
         {
             var currentModalPanel =
-                PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
+                CharacterData.ComponentCharacter?.ComponentGui.ModalPanelWidget;
             if (currentModalPanel == MessagePanel && MessagePanel.IsCommandInput)
             {
                 ToggleMessagePanel(false);
@@ -311,7 +312,7 @@ public class GameWidget : CanvasWidget
         }
 
         _messageButton.IsChecked = modalPanel == MessagePanel;
-        NetPlayerListButton.IsChecked = modalPanel == PlayerPanel;
+        NetCharacterListButton.IsChecked = modalPanel == PlayerPanel;
 
         var widgetInputDevice = DetermineInputDevices();
         if (WidgetsHierarchyInput == null || WidgetsHierarchyInput.Devices != widgetInputDevice)
@@ -327,25 +328,25 @@ public class GameWidget : CanvasWidget
 
     private WidgetInputDevice DetermineInputDevices()
     {
-        if ((PlayerData.SubsystemPlayers.PlayersData.Count > 0 && PlayerData.IsMainPlayer) ||
-            (CommonLib.WorkType == WorkType.Local && PlayerData == PlayerData.SubsystemPlayers.PlayersData[0]))
+        if ((CharacterData.SubsystemCharacters.Characters.Count > 0 && CharacterData.IsLocalCharacter) ||
+            (CommonLib.WorkType == WorkType.Local && CharacterData == CharacterData.SubsystemCharacters.Characters[0]))
         {
             var widgetInputDevice = WidgetInputDevice.None;
-            foreach (var playersDatum in PlayerData.SubsystemPlayers.PlayersData)
+            foreach (var playersDatum in CharacterData.SubsystemCharacters.Characters)
             {
-                if (playersDatum != PlayerData)
+                if (playersDatum != CharacterData)
                 {
                     widgetInputDevice |= playersDatum.InputDevice;
                 }
             }
 
-            return (WidgetInputDevice.All & ~widgetInputDevice) | WidgetInputDevice.Touch | PlayerData.InputDevice;
+            return (WidgetInputDevice.All & ~widgetInputDevice) | WidgetInputDevice.Touch | CharacterData.InputDevice;
         }
 
         var widgetInputDevice2 = WidgetInputDevice.None;
-        foreach (var playersDatum2 in PlayerData.SubsystemPlayers.PlayersData)
+        foreach (var playersDatum2 in CharacterData.SubsystemCharacters.Characters)
         {
-            if (playersDatum2 == PlayerData)
+            if (playersDatum2 == CharacterData)
             {
                 break;
             }
@@ -353,12 +354,12 @@ public class GameWidget : CanvasWidget
             widgetInputDevice2 |= playersDatum2.InputDevice;
         }
 
-        return (PlayerData.InputDevice & ~widgetInputDevice2) | WidgetInputDevice.Touch;
+        return (CharacterData.InputDevice & ~widgetInputDevice2) | WidgetInputDevice.Touch;
     }
 
     public void TogglePlayerPanel()
     {
-        if (PlayerPanel is null || PlayerData.ComponentPlayer?.ComponentGui is not { } gui)
+        if (PlayerPanel is null || CharacterData.ComponentCharacter?.ComponentGui is not { } gui)
         {
             return;
         }
@@ -375,13 +376,13 @@ public class GameWidget : CanvasWidget
 
     public void RefreshPlayerViews()
     {
-        PlayerInformationOverlay?.RefreshView();
+        CharacterInformationOverlay?.RefreshView();
         PlayerPanel?.RefreshView();
     }
 
     public void ToggleMessagePanel(bool focusInput)
     {
-        if (MessagePanel is null || PlayerData.ComponentPlayer?.ComponentGui is not { } gui)
+        if (MessagePanel is null || CharacterData.ComponentCharacter?.ComponentGui is not { } gui)
         {
             return;
         }
@@ -398,7 +399,7 @@ public class GameWidget : CanvasWidget
 
     public void OpenMessagePanel(bool focusInput, bool commandInput)
     {
-        if (MessagePanel is null || PlayerData.ComponentPlayer?.ComponentGui is not { } gui)
+        if (MessagePanel is null || CharacterData.ComponentCharacter?.ComponentGui is not { } gui)
         {
             return;
         }
@@ -425,7 +426,7 @@ public class GameWidget : CanvasWidget
 
         var messageWidget = MessagePanel;
         var playerPanelWidget = PlayerPanel;
-        if (PlayerData.ComponentPlayer?.ComponentGui is { } gui &&
+        if (CharacterData.ComponentCharacter?.ComponentGui is { } gui &&
             (gui.ModalPanelWidget == messageWidget ||
              gui.ModalPanelWidget == playerPanelWidget))
         {
@@ -448,7 +449,7 @@ public class GameWidget : CanvasWidget
 
     private void DisplayToast(GameMessage message)
     {
-        if (PlayerData.ComponentPlayer?.ComponentGui is not { } gui)
+        if (CharacterData.ComponentCharacter?.ComponentGui is not { } gui)
         {
             return;
         }
@@ -472,7 +473,7 @@ public class GameWidget : CanvasWidget
 
     private bool IsCameraAllowed(Camera camera)
     {
-        if (!(PlayerData.ComponentPlayer?.ComponentInput.IsControlledByVr ?? false))
+        if (!(CharacterData.ComponentCharacter?.ComponentInput.IsControlledByVr ?? false))
         {
             return true;
         }

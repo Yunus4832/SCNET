@@ -27,7 +27,7 @@ public class SubsystemMatchBlockBehavior : SubsystemBlockBehavior
                     cellFace.X,
                     cellFace.Y,
                     cellFace.Z,
-                    componentMiner.ComponentPlayer?.PlayerData
+                    componentMiner.ComponentCharacter?.CharacterData
                 ))
             {
                 _subsystemAudio.PlaySound("Audio/Match", 1f, _random.Float(-0.1f, 0.1f), ray.Position, 1f, true);

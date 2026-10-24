@@ -197,25 +197,25 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
     public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
     {
         var point = new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z);
-        var componentPlayer = componentMiner.ComponentPlayer;
-        if (componentPlayer is not { PlayerData.IsMainPlayer: true })
+        var componentCharacter = componentMiner.ComponentCharacter;
+        if (componentCharacter is not { CharacterData.IsLocalCharacter: true })
         {
             return true;
         }
 
-        componentPlayer.ComponentGui.ModalPanelWidget = new SignViewerWidget(
+        componentCharacter.ComponentGui.ModalPanelWidget = new SignViewerWidget(
             GetSignData(point),
-            () => componentPlayer.ComponentGui.ModalPanelWidget = null
+            () => componentCharacter.ComponentGui.ModalPanelWidget = null
         );
         AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
         return true;
     }
 
-    public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer componentPlayer)
+    public override bool OnEditBlock(int x, int y, int z, int value, ComponentCharacter componentCharacter)
     {
         if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure)
         {
-            componentPlayer.ComponentGui.DisplaySmallMessage(
+            componentCharacter.ComponentGui.DisplaySmallMessage(
                 LanguageManager.GetContentWidgets(nameof(SignEditorWidget), "ReadOnly"),
                 Color.White,
                 false,
@@ -225,31 +225,31 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         }
 
         var point = new Point3(x, y, z);
-        if (CommonLib.WorkType == WorkType.Client && componentPlayer == CommonLib.MainPlayer)
+        if (CommonLib.WorkType == WorkType.Client && componentCharacter == CommonLib.LocalCharacter)
         {
             NetworkSender.SendToServer(new BlockEditPackage(point, BlockEditPackage.EventType.EditSign));
             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
             return true;
         }
 
-        if (!componentPlayer.PlayerData.IsMainPlayer)
+        if (!componentCharacter.CharacterData.IsLocalCharacter)
         {
             return true;
         }
 
-        OpenEditor(componentPlayer, point);
+        OpenEditor(componentCharacter, point);
         AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
         return true;
     }
 
-    public void OpenEditor(ComponentPlayer componentPlayer, Point3 point)
+    public void OpenEditor(ComponentCharacter componentCharacter, Point3 point)
     {
         if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure)
         {
             return;
         }
 
-        componentPlayer.ComponentGui.ModalPanelWidget = new SignEditorWidget(
+        componentCharacter.ComponentGui.ModalPanelWidget = new SignEditorWidget(
             GetSignData(point),
             signData =>
             {
@@ -264,7 +264,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
                     NetworkSender.SendToServer(package);
                 }
             },
-            () => componentPlayer.ComponentGui.ModalPanelWidget = null
+            () => componentCharacter.ComponentGui.ModalPanelWidget = null
         );
     }
 

@@ -35,7 +35,7 @@ public class SubsystemCraftingTableBlockBehavior : SubsystemBlockBehavior
 
     public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
     {
-        if (CommonLib.WorkType == WorkType.Client && CommonLib.MainPlayer == componentMiner.ComponentPlayer)
+        if (CommonLib.WorkType == WorkType.Client && CommonLib.LocalCharacter == componentMiner.ComponentCharacter)
         {
             IProtocolMessage package =
                 new BlockEditPackage(
@@ -53,13 +53,13 @@ public class SubsystemCraftingTableBlockBehavior : SubsystemBlockBehavior
             return false;
         }
 
-        if (componentMiner.ComponentPlayer is { PlayerData.IsMainPlayer: false })
+        if (componentMiner.ComponentCharacter is { CharacterData.IsLocalCharacter: false })
         {
             return true;
         }
 
         var componentCraftingTable = blockEntity.Entity.FindComponent<ComponentCraftingTable>(true)!;
-        componentMiner.ComponentPlayer?.ComponentGui.ModalPanelWidget =
+        componentMiner.ComponentCharacter?.ComponentGui.ModalPanelWidget =
             new CraftingTableWidget(componentMiner.Inventory, componentCraftingTable);
         AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
 

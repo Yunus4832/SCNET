@@ -141,7 +141,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
     {
-        if (CommonLib.WorkType == WorkType.Client && CommonLib.MainPlayer == componentMiner.ComponentPlayer)
+        if (CommonLib.WorkType == WorkType.Client && CommonLib.LocalCharacter == componentMiner.ComponentCharacter)
         {
             IProtocolMessage package =
                 new BlockEditPackage(
@@ -159,13 +159,13 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return false;
         }
 
-        if (componentMiner.ComponentPlayer is { PlayerData.IsMainPlayer: false })
+        if (componentMiner.ComponentCharacter is { CharacterData.IsLocalCharacter: false })
         {
             return true;
         }
 
         var componentFurnace = blockEntity.Entity.FindComponent<ComponentFurnace>(true)!;
-        componentMiner.ComponentPlayer?.ComponentGui.ModalPanelWidget =
+        componentMiner.ComponentCharacter?.ComponentGui.ModalPanelWidget =
             new FurnaceWidget(componentMiner.Inventory, componentFurnace);
         AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
 

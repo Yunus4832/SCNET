@@ -6,20 +6,20 @@ namespace Survivalcraft.Test.Network;
 public sealed class PlayerPackageSenderTest
 {
     [Theory]
-    [InlineData(ComponentPlayerPackage.PlayerAction.AddExperience, false)]
-    [InlineData(ComponentPlayerPackage.PlayerAction.SyncStat, false)]
-    [InlineData(ComponentPlayerPackage.PlayerAction.PositionSet, false)]
-    [InlineData(ComponentPlayerPackage.PlayerAction.IntoPlaying, true)]
-    [InlineData(ComponentPlayerPackage.PlayerAction.Restart, true)]
-    [InlineData(ComponentPlayerPackage.PlayerAction.Drop, true)]
-    [InlineData(ComponentPlayerPackage.PlayerAction.DragDrop, true)]
+    [InlineData(ComponentCharacterPackage.CharacterAction.AddExperience, false)]
+    [InlineData(ComponentCharacterPackage.CharacterAction.SyncStat, false)]
+    [InlineData(ComponentCharacterPackage.CharacterAction.PositionSet, false)]
+    [InlineData(ComponentCharacterPackage.CharacterAction.IntoPlaying, true)]
+    [InlineData(ComponentCharacterPackage.CharacterAction.Restart, true)]
+    [InlineData(ComponentCharacterPackage.CharacterAction.Drop, true)]
+    [InlineData(ComponentCharacterPackage.CharacterAction.DragDrop, true)]
     public void RequestsAndAuthoritativeResultsHaveDistinctDirections(
-        ComponentPlayerPackage.PlayerAction action,
+        ComponentCharacterPackage.CharacterAction action,
         bool server
     )
     {
-        Assert.Equal(server, ComponentPlayerPackageHandler.AcceptsDirection(action, true));
-        Assert.Equal(!server, ComponentPlayerPackageHandler.AcceptsDirection(action, false));
+        Assert.Equal(server, ComponentCharacterPackageHandler.AcceptsDirection(action, true));
+        Assert.Equal(!server, ComponentCharacterPackageHandler.AcceptsDirection(action, false));
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public sealed class PlayerPackageSenderTest
     {
         var server = new Client(null, 0, Guid.NewGuid(), Guid.NewGuid(), null);
 
-        Assert.True(ComponentPlayerPackageHandler.AcceptsSender(false, server, null));
+        Assert.True(ComponentCharacterPackageHandler.AcceptsSender(false, server, null));
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public sealed class PlayerPackageSenderTest
     {
         var sender = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
 
-        Assert.False(ComponentPlayerPackageHandler.AcceptsSender(true, sender, null));
-        Assert.False(ComponentPlayerPackageHandler.AcceptsSender(true, null, null));
+        Assert.False(ComponentCharacterPackageHandler.AcceptsSender(true, sender, null));
+        Assert.False(ComponentCharacterPackageHandler.AcceptsSender(true, null, null));
     }
 }

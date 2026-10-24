@@ -8,6 +8,7 @@ world_name=""
 player_name=""
 server_port=""
 broadcast_port=""
+http_command_port=""
 game_mode=""
 skip_build=false
 keep_instance=false
@@ -15,7 +16,7 @@ instance_dir=""
 instance_created=false
 
 usage() {
-    echo "Usage: $0 --instance NAME --session NAME --world NAME --player NAME [--game-mode MODE] [--server-port PORT] [--broadcast-port PORT] [--no-build] [--keep-instance]"
+    echo "Usage: $0 --instance NAME --session NAME --world NAME --player NAME [--game-mode MODE] [--server-port PORT] [--broadcast-port PORT] [--http-command-port PORT] [--no-build] [--keep-instance]"
 }
 
 while (($# > 0)); do
@@ -27,6 +28,7 @@ while (($# > 0)); do
         --game-mode) game_mode="${2:-}"; shift 2 ;;
         --server-port) server_port="${2:-}"; shift 2 ;;
         --broadcast-port) broadcast_port="${2:-}"; shift 2 ;;
+        --http-command-port) http_command_port="${2:-}"; shift 2 ;;
         --no-build) skip_build=true; shift ;;
         --keep-instance) keep_instance=true; shift ;;
         -h|--help) usage; exit 0 ;;
@@ -44,7 +46,7 @@ if ! [[ "$instance_name" =~ ^[A-Za-z0-9_-]+$ ]]; then
     exit 2
 fi
 
-for port_value in "$server_port" "$broadcast_port"; do
+for port_value in "$server_port" "$broadcast_port" "$http_command_port"; do
     if [[ -n "$port_value" ]] && (! [[ "$port_value" =~ ^[0-9]+$ ]] || ((port_value < 1 || port_value > 65535))); then
         echo "Port values must be integers from 1 to 65535." >&2
         exit 2
@@ -82,6 +84,9 @@ if [[ -n "$server_port" ]]; then
 fi
 if [[ -n "$broadcast_port" ]]; then
     args+=(--broadcast-port "$broadcast_port")
+fi
+if [[ -n "$http_command_port" ]]; then
+    args+=(--http-command --http-command-port "$http_command_port")
 fi
 if [[ -n "$game_mode" ]]; then
     args+=(--game-mode "$game_mode")

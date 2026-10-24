@@ -178,7 +178,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             furnitureDesign = GetDesign(designIndex);
             if (furnitureDesign == null)
             {
-                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                componentMiner.ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                     LanguageManager.Get(_typeName, 0),
                     Color.White,
                     true,
@@ -207,7 +207,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 var cellValue = SubsystemTerrain.Terrain.GetCellValue(key.X, key.Y, key.Z);
                 if (IsValueDisallowed(cellValue))
                 {
-                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                    componentMiner.ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                         LanguageManager.Get(_typeName, 1),
                         Color.White,
                         true,
@@ -255,7 +255,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                     MathUtils.Abs(point.Y - point2.Y) >= 16 ||
                     MathUtils.Abs(point.Z - point2.Z) >= 16)
                 {
-                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                    componentMiner.ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                         LanguageManager.Get(_typeName, 2),
                         Color.White,
                         true,
@@ -275,7 +275,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
             if (valuesDictionary.Count == 0)
             {
-                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                componentMiner.ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                     LanguageManager.Get(_typeName, 0),
                     Color.White,
                     true,
@@ -335,7 +335,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 }
             }
         );
-        DialogsManager.ShowDialog(componentMiner.ComponentPlayer?.GuiWidget, dialog);
+        DialogsManager.ShowDialog(componentMiner.ComponentCharacter?.GuiWidget, dialog);
     }
 
     public FurnitureDesign CreateDesign(
@@ -373,9 +373,9 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             }
         }
 
-        if (componentMiner.ComponentPlayer is not null)
+        if (componentMiner.ComponentCharacter is not null)
         {
-            var num3 = AddPickable(componentMiner.ComponentPlayer, design);
+            var num3 = AddPickable(componentMiner.ComponentCharacter, design);
             for (var i = 0; i < 3; i++)
             {
                 Time.QueueTimeDelayedExecution(
@@ -384,14 +384,14 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 );
             }
 
-            componentMiner.ComponentCreature.PlayerStats?.FurnitureItemsMade += num3;
+            componentMiner.ComponentCreature.CharacterStats?.FurnitureItemsMade += num3;
         }
 
         Log.Debug("创建家具：Index" + design.Index);
         return design;
     }
 
-    private int AddPickable(ComponentPlayer player, FurnitureDesign design)
+    private int AddPickable(ComponentCharacter player, FurnitureDesign design)
     {
         var componentMiner = player.ComponentMiner;
         var value = Terrain.MakeBlockValue(
@@ -776,7 +776,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
         }
 
         var inventoryValues = allExistingItems.Select(item => item.Value)
-            .Concat(Project.FindSubsystem<SubsystemPlayers>(true)!.GetOfflineInventoryValues());
+            .Concat(Project.FindSubsystem<SubsystemCharacters>(true)!.GetOfflineInventoryValues());
         foreach (var value in inventoryValues)
         {
             if (Terrain.ExtractContents(value) == BuiltInBlockRegistry.GetIndex<FurnitureBlock>())

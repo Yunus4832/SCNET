@@ -9,7 +9,7 @@ public class ComponentCreature : Component
 {
     private string[] _killVerbs = [];
 
-    protected SubsystemPlayerStats subsystemPlayerStats = null!;
+    protected SubsystemCharacterStats subsystemCharacterStats = null!;
 
     public ComponentBody ComponentBody { get; set; } = null!;
 
@@ -23,7 +23,7 @@ public class ComponentCreature : Component
 
     public ComponentLocomotion ComponentLocomotion { get; set; } = null!;
 
-    public virtual PlayerStats? PlayerStats => null;
+    public virtual CharacterStats? CharacterStats => null;
 
     public bool ConstantSpawn { get; set; }
 
@@ -41,7 +41,7 @@ public class ComponentCreature : Component
         ComponentCreatureSounds = Entity.FindComponent<ComponentCreatureSounds>(true)!;
         ComponentCreatureModel = Entity.FindComponent<ComponentCreatureModel>(true)!;
         ComponentLocomotion = Entity.FindComponent<ComponentLocomotion>(true)!;
-        subsystemPlayerStats = Project.FindSubsystem<SubsystemPlayerStats>(true)!;
+        subsystemCharacterStats = Project.FindSubsystem<SubsystemCharacterStats>(true)!;
         ConstantSpawn = valuesDictionary.GetValue<bool>("ConstantSpawn");
         Category = valuesDictionary.GetValue<CreatureCategory>("Category");
         DisplayName = valuesDictionary.GetValue<string>("DisplayName");

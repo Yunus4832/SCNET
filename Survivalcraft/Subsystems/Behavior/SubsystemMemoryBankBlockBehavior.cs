@@ -11,7 +11,7 @@ public class SubsystemMemoryBankBlockBehavior() : SubsystemEditableItemBehavior<
         return EditableBlockPackageBuilder.Capture(new CellFace(point.X, point.Y, point.Z, 0), false, 0, 0, data);
     }
 
-    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
+    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentCharacter componentCharacter)
     {
         var value = inventory.GetSlotValue(slotIndex);
         inventory.GetSlotCount(slotIndex);
@@ -30,13 +30,13 @@ public class SubsystemMemoryBankBlockBehavior() : SubsystemEditableItemBehavior<
                 var p = EditableBlockPackageBuilder.Capture(default, true, inventory.Id, slotIndex, memoryBankData);
                 EditableBlockPackageHandler.Submit(p);
             },
-            () => componentPlayer.ComponentGui.ModalPanelWidget = null
+            () => componentCharacter.ComponentGui.ModalPanelWidget = null
         );
-        componentPlayer.ComponentGui.ModalPanelWidget = editor;
+        componentCharacter.ComponentGui.ModalPanelWidget = editor;
         return true;
     }
 
-    public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer componentPlayer)
+    public override bool OnEditBlock(int x, int y, int z, int value, ComponentCharacter componentCharacter)
     {
         var memoryBankData = GetBlockData(new Point3(x, y, z)) ?? new MemoryBankData();
         var editor = new MemoryBankEditorWidget(
@@ -53,9 +53,9 @@ public class SubsystemMemoryBankBlockBehavior() : SubsystemEditableItemBehavior<
                 var p = EditableBlockPackageBuilder.Capture(cell, false, 0, 0, memoryBankData);
                 EditableBlockPackageHandler.Submit(p);
             },
-            () => componentPlayer.ComponentGui.ModalPanelWidget = null
+            () => componentCharacter.ComponentGui.ModalPanelWidget = null
         );
-        componentPlayer.ComponentGui.ModalPanelWidget = editor;
+        componentCharacter.ComponentGui.ModalPanelWidget = editor;
         return true;
     }
 }

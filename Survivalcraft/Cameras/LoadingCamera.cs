@@ -13,6 +13,6 @@ public class LoadingCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWi
 
     public override void Update(float dt)
     {
-        SetupPerspectiveCamera(GameWidget.PlayerData.SpawnPosition, Vector3.UnitX, Vector3.UnitY);
+        SetupPerspectiveCamera(GameWidget.CharacterData.SpawnPosition, Vector3.UnitX, Vector3.UnitY);
     }
 }

@@ -112,11 +112,11 @@ public class CreativeInventoryWidget : CanvasWidget
 
         if (_categoryButton.IsClicked)
         {
-            var componentPlayer = Entity.FindComponent<ComponentPlayer>();
-            if (componentPlayer != null)
+            var componentCharacter = Entity.FindComponent<ComponentCharacter>();
+            if (componentCharacter != null)
             {
                 DialogsManager.ShowDialog(
-                    componentPlayer.GuiWidget,
+                    componentCharacter.GuiWidget,
                     new ListSelectionDialog(
                         string.Empty,
                         _categories,

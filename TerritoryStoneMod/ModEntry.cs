@@ -9,6 +9,7 @@ using Game.Modding.Data;
 using Game.Network.Transport;
 using Game.Protocol;
 using Game.Protocol.Connection;
+using Game.Protocol.Serialization;
 
 namespace TerritoryStoneMod;
 
@@ -59,12 +60,12 @@ public sealed class ModEntry : IMod
 
                 var request = new TerritoryAccessRequest(
                     message.Reader.ReadGuid(),
-                    message.Reader.ReadGuid(),
-                    message.Reader.ReadGuid(),
+                    PlayerAddressCodec.Read(message.Reader),
+                    PlayerAddressCodec.Read(message.Reader),
                     message.Reader.ReadString(),
                     Engine.Core.Runtime.Time.RealTime + TerritoryAccessRequests.Lifetime
                 );
-                world.ReceiveAccessRequest(request, false);
+                world.ReceiveAccessRequest(request);
             }
         );
         context.Network.OnMessage(
@@ -73,16 +74,7 @@ public sealed class ModEntry : IMod
             {
                 if (!message.IsServer && ActiveWorld(message) is { } world)
                 {
-                    world.ReceiveAccessRequest(
-                        new TerritoryAccessRequest(
-                            message.Reader.ReadGuid(),
-                            Guid.Empty,
-                            Guid.Empty,
-                            string.Empty,
-                            0
-                        ),
-                        true
-                    );
+                    world.RemoveAccessRequest(message.Reader.ReadGuid());
                 }
             }
         );
@@ -131,7 +123,7 @@ public sealed class ModEntry : IMod
             {
                 if (!message.IsServer && ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net))
                 {
-                    var owner = message.Reader.ReadGuid();
+                    var owner = PlayerAddressCodec.Read(message.Reader);
                     if (ActiveWorld(message) is { } world)
                     {
                         world.Store.Remove(owner);
@@ -153,14 +145,14 @@ public sealed class ModEntry : IMod
                 }
 
                 var requestId = message.Reader.ReadInt32();
-                var owner = message.Reader.ReadGuid();
+                var owner = PlayerAddressCodec.Read(message.Reader);
                 var settings = TerritoryMessages.ReadSettings(message.Reader);
                 var exists = world.Store.TryGet(owner, out var territory);
                 var error = "OwnerOnly";
                 var accepted = exists && TerritoryMessages.CanChangeSettings(message.From, owner);
                 if (accepted)
                 {
-                    error = world.ChangeSettings(territory!, settings) ?? string.Empty;
+                    error = world.ChangeSettings(message.From!, territory!, settings) ?? string.Empty;
                     accepted = error.Length == 0;
                 }
 
@@ -171,7 +163,7 @@ public sealed class ModEntry : IMod
                         writer =>
                         {
                             writer.Write(requestId);
-                            writer.Write(owner);
+                            PlayerAddressCodec.Write(writer, owner);
                             writer.Write(accepted);
                             writer.Write(error);
                             TerritoryMessages.WriteSettings(writer, territory?.Settings ?? new TerritorySettings());
@@ -192,7 +184,7 @@ public sealed class ModEntry : IMod
                 }
 
                 var requestId = message.Reader.ReadInt32();
-                var owner = message.Reader.ReadGuid();
+                var owner = PlayerAddressCodec.Read(message.Reader);
                 var accepted = message.Reader.ReadBoolean();
                 var error = message.Reader.ReadString();
                 world.ReceiveSettingsResponse(

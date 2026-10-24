@@ -13,7 +13,7 @@ public class GamesWidget : ContainerWidget
         foreach (var child in Children)
         {
             var gameWidget = (GameWidget)child;
-            gameWidget.IsVisible = gameWidget.PlayerData.IsMainPlayer;
+            gameWidget.IsVisible = gameWidget.CharacterData.IsLocalCharacter;
             if (!gameWidget.IsVisible)
             {
                 continue;

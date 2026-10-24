@@ -5,17 +5,17 @@ namespace Game.Components;
 
 public class ComponentBlockEntity : Component
 {
-    private SubsystemPlayers _subPlayers = null!;
+    private SubsystemCharacters _subPlayers = null!;
 
     public Point3 Coordinates { get; set; }
 
     public Guid Owner { get; set; }
 
-    public PlayerData? OwnPlayerData => _subPlayers.PlayersData.Find(x => x.PlayerGUID == Owner);
+    public CharacterData? OwnCharacterData => _subPlayers.Characters.Find(x => x.CharacterId == Owner);
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
-        _subPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subPlayers = Project.FindSubsystem<SubsystemCharacters>(true)!;
         Coordinates = valuesDictionary.GetValue("Coordinates", Coordinates);
         Owner = valuesDictionary.GetValue("Owner", Owner);
     }

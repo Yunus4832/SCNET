@@ -13,7 +13,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
 
     private ComponentMiner _componentMiner = null!;
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private ComponentRider _componentRider = null!;
 
@@ -68,7 +68,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
             return;
         }
 
-        if (!(_componentPlayer.ComponentHealth.Health > 0f) ||
+        if (!(_componentCharacter.ComponentHealth.Health > 0f) ||
             !camera.GameWidget.IsEntityFirstPersonTarget(Entity))
         {
             return;
@@ -117,7 +117,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
             }
             else
             {
-                var num4 = _componentPlayer.ComponentCreatureModel.MovementAnimationPhase * (float)Math.PI * 2f;
+                var num4 = _componentCharacter.ComponentCreatureModel.MovementAnimationPhase * (float)Math.PI * 2f;
                 Vector3 position2 = default;
                 position2.X = 0.03f * MathUtils.Sin(num4 * 1f);
                 position2.Y = 0.02f * MathUtils.Sin(num4 * 2f);
@@ -125,12 +125,12 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
                 identity *= Matrix.CreateRotationZ(1f * position2.X) * Matrix.CreateTranslation(position2);
             }
 
-            var eyePosition = _componentPlayer.ComponentCreatureModel.EyePosition;
+            var eyePosition = _componentCharacter.ComponentCreatureModel.EyePosition;
             var x = Terrain.ToCell(eyePosition.X);
             var num5 = Terrain.ToCell(eyePosition.Y);
             var z = Terrain.ToCell(eyePosition.Z);
-            var m = Matrix.CreateFromQuaternion(_componentPlayer.ComponentCreatureModel.EyeRotation);
-            m.Translation = _componentPlayer.ComponentCreatureModel.EyePosition;
+            var m = Matrix.CreateFromQuaternion(_componentCharacter.ComponentCreatureModel.EyeRotation);
+            m.Translation = _componentCharacter.ComponentCreatureModel.EyePosition;
             if (_value != 0)
             {
                 if (num5 is >= 0 and <= 255)
@@ -192,9 +192,9 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
                               camera.ViewMatrix;
                 Display.DepthStencilState = DepthStencilState.Default;
                 Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
-                if (_componentPlayer.ComponentCreatureModel.TextureOverride != null)
+                if (_componentCharacter.ComponentCreatureModel.TextureOverride != null)
                 {
-                    LitShader.Texture = _componentPlayer.ComponentCreatureModel.TextureOverride;
+                    LitShader.Texture = _componentCharacter.ComponentCreatureModel.TextureOverride;
                 }
 
                 LitShader.SamplerState = SamplerState.PointClamp;
@@ -237,7 +237,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
             return;
         }
 
-        var vector = _componentPlayer.ComponentCreatureModel.EyeRotation.ToYawPitchRoll();
+        var vector = _componentCharacter.ComponentCreatureModel.EyeRotation.ToYawPitchRoll();
         _lagAngles *= MathUtils.Pow(0.2f, dt);
         if (_lastYpr.HasValue)
         {
@@ -291,7 +291,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
         }
 
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         _componentRider = Entity.FindComponent<ComponentRider>(true)!;
         _componentMiner = Entity.FindComponent<ComponentMiner>(true)!;
         _handModel = ContentManager.Get<Model>(valuesDictionary.GetValue<string>("HandModelName"));

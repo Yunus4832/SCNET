@@ -31,17 +31,17 @@ public sealed class NetworkMessageFanoutTest
     public void ReplacingOneDeferredRecipientDoesNotCompleteOtherRecipients()
     {
         var statistics = new NetworkSendStatistics();
-        var message = new NetworkMessageFanout(statistics, typeof(OnlinePlayerStatePackage), NetworkChannel.Bulk);
+        var message = new NetworkMessageFanout(statistics, typeof(OnlineCharacterStatePackage), NetworkChannel.Bulk);
         var first = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
         var second = new Client(null, 2, Guid.NewGuid(), Guid.NewGuid(), null);
         message.Advance(1, 2);
         var pending = new List<OutboundPackage>
         {
-            new(new OnlinePlayerStatePackage(), PackageAudience.To(first))
+            new(new OnlineCharacterStatePackage(), PackageAudience.To(first))
             {
                 Fanout = message
             },
-            new(new OnlinePlayerStatePackage(), PackageAudience.To(second))
+            new(new OnlineCharacterStatePackage(), PackageAudience.To(second))
             {
                 Fanout = message
             }
@@ -49,7 +49,7 @@ public sealed class NetworkMessageFanoutTest
         Assert.True(
             SnapshotPackageCoalescer.TryCoalesce(
                 pending,
-                new OutboundPackage(new OnlinePlayerStatePackage(), PackageAudience.To(first))
+                new OutboundPackage(new OnlineCharacterStatePackage(), PackageAudience.To(first))
             )
         );
         Assert.Empty(statistics.GetFanout());
@@ -138,11 +138,11 @@ public sealed class NetworkMessageFanoutTest
     public void CoalescingEndsReplacedContinuationWithoutTransferringItsRecipients()
     {
         var statistics = new NetworkSendStatistics();
-        var message = new NetworkMessageFanout(statistics, typeof(OnlinePlayerStatePackage), NetworkChannel.Bulk);
+        var message = new NetworkMessageFanout(statistics, typeof(OnlineCharacterStatePackage), NetworkChannel.Bulk);
         message.DeliveredTo(new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null));
         var pending = new List<OutboundPackage>
         {
-            new(new OnlinePlayerStatePackage(), PackageAudience.Global)
+            new(new OnlineCharacterStatePackage(), PackageAudience.Global)
             {
                 Fanout = message
             }
@@ -150,7 +150,7 @@ public sealed class NetworkMessageFanoutTest
         Assert.True(
             SnapshotPackageCoalescer.TryCoalesce(
                 pending,
-                new OutboundPackage(new OnlinePlayerStatePackage(), PackageAudience.Global)
+                new OutboundPackage(new OnlineCharacterStatePackage(), PackageAudience.Global)
             )
         );
         Assert.Null(Assert.Single(pending).Fanout);

@@ -11,6 +11,7 @@
         <PackageReference Include="LiteNetLib" Version="0.9.5.2"/>
         <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0"/>
         <ProjectReference Include="../Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
+        <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
         <InternalsVisibleTo Include="Engine.Network.Test"/>
         <InternalsVisibleTo Include="Survivalcraft.Test"/>
         <InternalsVisibleTo Include="RendezvousServer.Test"/>

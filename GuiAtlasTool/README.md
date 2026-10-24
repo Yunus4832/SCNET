@@ -13,8 +13,8 @@ SVG 以两倍尺寸栅格化，在预乘 Alpha 状态下使用 SkiaSharp 线性�
 - SVG 根元素使用整数像素声明 `width` 和 `height`，并提供与画布对应的 `viewBox`；
 - PNG 使用未预乘 Alpha 的 RGBA 数据，生成器会在输出图集时统一预乘一次；
 - 不包含编辑器背景、隐藏设计图层或页面底色；
-- 同一条目不能同时提供 SVG 和 PNG；普通和按下状态分别保存，例如 `PlayerList.svg` 与
-  `PlayerList_Pressed.svg`。
+- 同一条目不能同时提供 SVG 和 PNG；普通和按下状态分别保存，例如 `CharacterList.svg` 与
+  `CharacterList_Pressed.svg`。
 
 新增 GUI 资产默认优先使用 SVG，以便保持几何结构可编辑并获得可控的缩放效果。只有小尺寸图标
 在最终尺寸下经过视觉比较，确认 PNG 的像素对齐、线宽或抗锯齿效果更好时，才优先保留 PNG。

@@ -56,12 +56,12 @@ public abstract class SubsystemBlockBehavior : Subsystem
         return false;
     }
 
-    public virtual bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer componentPlayer)
+    public virtual bool OnEditBlock(int x, int y, int z, int value, ComponentCharacter componentCharacter)
     {
         return false;
     }
 
-    public virtual bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
+    public virtual bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentCharacter componentCharacter)
     {
         return false;
     }

@@ -1,4 +1,5 @@
 using Game.Network;
+using Game.Protocol.Identity;
 using Game.Protocol.Serialization;
 
 namespace TerritoryStoneMod;
@@ -19,18 +20,21 @@ public static class TerritoryMessages
 
     public const string SettingsResult = "settings-result";
 
-    public static bool CanChangeSettings(Client? sender, Guid owner) =>
-        sender != null && owner != Guid.Empty && sender.GUID == owner;
+    public static bool CanChangeSettings(Client? sender, PlayerAddress owner) =>
+        sender is { Subject: { Ban: null } } &&
+        owner != default &&
+        sender.PlayerAddress == owner &&
+        ReferenceEquals(CommonLib.Net.Clients.GetValueOrDefault(sender.ID), sender);
 
     public static void Write(ProtocolWriter writer, Territory territory)
     {
-        writer.Write(territory.Owner);
+        PlayerAddressCodec.Write(writer, territory.Owner);
         writer.Write(territory.StonePoint);
         WriteSettings(writer, territory.Settings);
         writer.Write(territory.Grants.Count);
         foreach (var (player, grant) in territory.Grants)
         {
-            writer.Write(player);
+            PlayerAddressCodec.Write(writer, player);
             writer.Write(grant.Name);
             writer.Write((int)grant.Permissions);
         }
@@ -38,9 +42,9 @@ public static class TerritoryMessages
 
     public static Territory Read(ProtocolReader reader)
     {
-        var owner = reader.ReadGuid();
+        var owner = PlayerAddressCodec.Read(reader);
         var point = reader.ReadPoint3();
-        if (owner == Guid.Empty || point.Y is < 0 or > 255)
+        if (owner == default || point.Y is < 0 or > 255)
         {
             throw new InvalidDataException("Invalid territory identity or stone height.");
         }
@@ -54,7 +58,7 @@ public static class TerritoryMessages
 
         for (var index = 0; index < count; index++)
         {
-            var player = reader.ReadGuid();
+            var player = PlayerAddressCodec.Read(reader);
             if (territory.Grants.ContainsKey(player))
             {
                 throw new InvalidDataException("Duplicate territory grant.");

@@ -31,15 +31,15 @@ public static class SnapshotPackageCoalescer
     {
         switch (package)
         {
-            case PlayerStatePackage playerPackage:
+            case CharacterStatePackage playerPackage:
                 key = new SnapshotKey(
-                    typeof(ComponentPlayerPackage),
-                    playerPackage.FromPlayerId,
+                    typeof(ComponentCharacterPackage),
+                    playerPackage.ControllerSessionId,
                     audience
                 );
                 return true;
-            case OnlinePlayerStatePackage:
-                key = new SnapshotKey(typeof(OnlinePlayerStatePackage), 0, audience);
+            case OnlineCharacterStatePackage:
+                key = new SnapshotKey(typeof(OnlineCharacterStatePackage), 0, audience);
                 return true;
             default:
                 key = default;

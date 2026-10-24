@@ -19,13 +19,13 @@ public class OrbitCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
 
     public override void Update(float dt)
     {
-        var componentPlayer = GameWidget.PlayerData.ComponentPlayer;
-        if (componentPlayer == null || GameWidget.Target == null)
+        var componentCharacter = GameWidget.CharacterData.ComponentCharacter;
+        if (componentCharacter == null || GameWidget.Target == null)
         {
             return;
         }
 
-        var componentInput = componentPlayer.ComponentInput;
+        var componentInput = componentCharacter.ComponentInput;
         var cameraSneakMove = componentInput.PlayerInput.CameraSneakMove;
         var cameraLook = componentInput.PlayerInput.CameraLook;
         _angles.X = MathUtils.NormalizeAngle(_angles.X + 4f * cameraLook.X * dt + 0.5f * cameraSneakMove.X * dt);

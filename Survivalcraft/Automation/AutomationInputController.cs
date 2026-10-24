@@ -34,7 +34,7 @@ public static class AutomationInputController
 
     private static double _actionDeadline;
 
-    private static ComponentPlayer? _actionPlayer;
+    private static ComponentCharacter? _actionPlayer;
 
     private static PendingMouseDrag? _mouseDrag;
 
@@ -146,8 +146,8 @@ public static class AutomationInputController
         _actionPlayer = null;
     }
 
-    private static ComponentPlayer? GetLocalPlayer() => GameManager.Project?
-        .FindSubsystem<SubsystemPlayers>()?.ComponentPlayers.FirstOrDefault(player => player.IsLocallyControlled);
+    private static ComponentCharacter? GetLocalPlayer() => GameManager.Project?
+        .FindSubsystem<SubsystemCharacters>()?.ComponentCharacters.FirstOrDefault(player => player.IsLocallyControlled);
 
     public static void Tap(Vector2 position)
     {

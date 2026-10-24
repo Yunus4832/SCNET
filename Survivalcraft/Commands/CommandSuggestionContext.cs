@@ -17,5 +17,5 @@ public sealed class CommandSuggestionContext(
 
     public IReadOnlyList<string> CompletedTokens { get; } = completedTokens;
 
-    public Project? Project => Principal.Player?.Project ?? GameManager.Project;
+    public Project? Project => Principal.Character?.Project ?? GameManager.Project;
 }

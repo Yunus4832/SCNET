@@ -7,14 +7,14 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
 {
     public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:adjustable_delay_gate")];
 
-    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
+    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentCharacter componentCharacter)
     {
         var value = inventory.GetSlotValue(slotIndex);
         inventory.GetSlotCount(slotIndex);
         var data = Terrain.ExtractData(value);
         var delay = AdjustableDelayGateBlock.GetDelay(data);
         DialogsManager.ShowDialog(
-            componentPlayer.GuiWidget,
+            componentCharacter.GuiWidget,
             new EditAdjustableDelayGateDialog(
                 delay,
                 delegate(int newDelay)
@@ -39,12 +39,12 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
         return true;
     }
 
-    public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer componentPlayer)
+    public override bool OnEditBlock(int x, int y, int z, int value, ComponentCharacter componentCharacter)
     {
         var data = Terrain.ExtractData(value);
         var delay = AdjustableDelayGateBlock.GetDelay(data);
         DialogsManager.ShowDialog(
-            componentPlayer.GuiWidget,
+            componentCharacter.GuiWidget,
             new EditAdjustableDelayGateDialog(
                 delay,
                 delegate(int newDelay)

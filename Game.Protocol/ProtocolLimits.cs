@@ -29,7 +29,7 @@ public static class ProtocolLimits
 
     public const int MaximumResourceIdLength = 256;
 
-    public const int MaximumPlayerEntitySnapshots = 1024;
+    public const int MaximumCharacterEntitySnapshots = 1024;
 
     public const int MaximumCommandPayloadLength = 4096;
 }

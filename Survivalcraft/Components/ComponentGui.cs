@@ -17,7 +17,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     private ButtonWidget _clothingButtonWidget = null!;
 
-    public ComponentPlayer ComponentPlayer = null!;
+    public ComponentCharacter ComponentCharacter = null!;
 
     private ButtonWidget _creativeFlyButtonWidget = null!;
 
@@ -140,11 +140,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public float TouchControlsHorizontalInset =>
         SettingsManager.Current.HudSafeAreaEnabled
-            ? HudSafeAreaManager.GetEffectivePadding(ComponentPlayer.GameWidget.GlobalScale) + 76f
+            ? HudSafeAreaManager.GetEffectivePadding(ComponentCharacter.GameWidget.GlobalScale) + 76f
             : 64f;
 
     public bool IsGameInputCaptured =>
-        ModalPanelWidget is IGameInputCapturingWidget || DialogsManager.HasDialogs(ComponentPlayer.GuiWidget);
+        ModalPanelWidget is IGameInputCapturingWidget || DialogsManager.HasDialogs(ComponentCharacter.GuiWidget);
 
     public Widget? ModalPanelWidget
     {
@@ -174,8 +174,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             }
 
             UpdateModalPanelAnimation();
-            ComponentPlayer.GameWidget.Input.Clear();
-            ComponentPlayer.ComponentInput.SetSplitSourceInventoryAndSlot(null, -1);
+            ComponentCharacter.GameWidget.Input.Clear();
+            ComponentCharacter.ComponentInput.SetSplitSourceInventoryAndSlot(null, -1);
         }
     }
 
@@ -189,7 +189,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public void Update(float dt)
     {
-        if (ComponentPlayer is not { IsLocallyControlled: true })
+        if (ComponentCharacter is not { IsLocallyControlled: true })
         {
             return;
         }
@@ -234,12 +234,12 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     {
         if (CommonLib.WorkType != WorkType.Local)
         {
-            playNotificationSound = ComponentPlayer.PlayerData.IsMainPlayer;
+            playNotificationSound = ComponentCharacter.CharacterData.IsLocalCharacter;
         }
 
         if (playNotificationSound)
         {
-            _subsystemAudio.PlaySound("Audio/UI/Message", 1f, 0f, ComponentPlayer.ComponentBody.Position, 2f, false);
+            _subsystemAudio.PlaySound("Audio/UI/Message", 1f, 0f, ComponentCharacter.ComponentBody.Position, 2f, false);
         }
     }
 
@@ -252,7 +252,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
         SubsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
-        ComponentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        ComponentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
             return;
@@ -266,7 +266,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemWeather = Project.FindSubsystem<SubsystemWeather>(true)!;
-        var guiWidget = ComponentPlayer.GuiWidget;
+        var guiWidget = ComponentCharacter.GuiWidget;
         _backButtonWidget = guiWidget.Children.Find<ButtonWidget>("BackButton")!;
         _inventoryButtonWidget = guiWidget.Children.Find<ButtonWidget>("InventoryButton")!;
         _clothingButtonWidget = guiWidget.Children.Find<ButtonWidget>("ClothingButton")!;
@@ -287,7 +287,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         MoveWidget = guiWidget.Children.Find<TouchInputWidget>("Move")!;
         MoveRoseWidget = guiWidget.Children.Find<MoveRoseWidget>("MoveRose")!;
         LookWidget = guiWidget.Children.Find<TouchInputWidget>("Look")!;
-        ViewWidget = ComponentPlayer.ViewWidget;
+        ViewWidget = ComponentCharacter.ViewWidget;
         HealthBarWidget = guiWidget.Children.Find<ValueBarWidget>("HealthBar")!;
         FoodBarWidget = guiWidget.Children.Find<ValueBarWidget>("FoodBar")!;
         TemperatureBarWidget = guiWidget.Children.Find<ValueBarWidget>("TemperatureBar")!;
@@ -314,8 +314,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                     "ClothingButtonFloating"),
                 (guiWidget.Children.Find<BitmapButtonWidget>("InventoryButton")!, "InventoryButton",
                     "InventoryButtonFloating"),
-                (guiWidget.Children.Find<BitmapButtonWidget>("PlayerListButton")!, "PlayerList",
-                    "PlayerListFloating"),
+                (guiWidget.Children.Find<BitmapButtonWidget>("CharacterListButton")!, "CharacterList",
+                    "CharacterListFloating"),
                 (guiWidget.Children.Find<BitmapButtonWidget>("MoreButton")!, "MoreButton", "MoreButtonFloating"),
                 (guiWidget.Children.Find<BitmapButtonWidget>("CreativeFlyButton")!, "CreativeFlyButton",
                     "CreativeFlyButtonFloating"),
@@ -348,7 +348,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             return;
         }
 
-        ShortInventoryWidget.AssignComponents(ComponentPlayer.ComponentMiner.Inventory);
+        ShortInventoryWidget.AssignComponents(ComponentCharacter.ComponentMiner.Inventory);
     }
 
     public override void OnEntityRemoved()
@@ -391,7 +391,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             _sidePanelsFactor = num2;
         }
 
-        var safeAreaPadding = HudSafeAreaManager.GetEffectivePadding(ComponentPlayer.GameWidget.GlobalScale);
+        var safeAreaPadding = HudSafeAreaManager.GetEffectivePadding(ComponentCharacter.GameWidget.GlobalScale);
         _leftControlsContainerWidget.RenderTransform = Matrix.CreateTranslation(
             (0f - (_leftControlsContainerWidget.ActualSize.X + safeAreaPadding)) * _sidePanelsFactor,
             0f,
@@ -461,8 +461,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public void UpdateWidgets()
     {
-        var componentRider = ComponentPlayer.ComponentRider;
-        var componentSleep = ComponentPlayer.ComponentSleep;
+        var componentRider = ComponentCharacter.ComponentRider;
+        var componentSleep = ComponentCharacter.ComponentSleep;
         var worldSettings = SubsystemGameInfo.WorldSettings;
         var gameMode = worldSettings.GameMode;
         UpdateHudSafeArea();
@@ -498,8 +498,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             _largeMessageWidget.IsVisible = false;
         }
 
-        ControlsContainerWidget.IsVisible = ComponentPlayer.PlayerData.IsReadyForPlaying &&
-                                            ComponentPlayer.GameWidget.ActiveCamera.IsEntityControlEnabled &&
+        ControlsContainerWidget.IsVisible = ComponentCharacter.CharacterData.IsReadyForPlaying &&
+                                            ComponentCharacter.GameWidget.ActiveCamera.IsEntityControlEnabled &&
                                             componentSleep.SleepFactor <= 0f;
         _moveRectangleContainerWidget.IsVisible = AreTouchControlsVisible;
         _lookRectangleContainerWidget.IsVisible = AreTouchControlsVisible &&
@@ -537,11 +537,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
         _precipitationButtonWidget.IsChecked = _subsystemWeather.IsPrecipitationStarted;
         _fogButtonWidget.IsChecked = _subsystemWeather.IsFogStarted;
-        _crouchButtonWidget.IsChecked = ComponentPlayer.ComponentBody.TargetCrouchFactor > 0f;
-        _creativeFlyButtonWidget.IsChecked = ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled;
+        _crouchButtonWidget.IsChecked = ComponentCharacter.ComponentBody.TargetCrouchFactor > 0f;
+        _creativeFlyButtonWidget.IsChecked = ComponentCharacter.ComponentLocomotion.IsCreativeFlyEnabled;
         _inventoryButtonWidget.IsChecked = IsInventoryVisible();
         _clothingButtonWidget.IsChecked = IsClothingVisible();
-        if (IsActiveSlotEditable() || ComponentPlayer.ComponentBlockHighlight.NearbyEditableCell.HasValue)
+        if (IsActiveSlotEditable() || ComponentCharacter.ComponentBlockHighlight.NearbyEditableCell.HasValue)
         {
             _crouchButtonWidget.IsVisible = false;
             _mountButtonWidget.IsVisible = false;
@@ -565,7 +565,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             {
                 _lastMountableCreatureSearchTime = Time.FrameStartTime;
                 _lastResolvedContextAction = CurrentModRuntime.Value?.ContextActions.Resolve(
-                    new PlayerContextActionQueryContext(ComponentPlayer, this)
+                    new PlayerContextActionQueryContext(ComponentCharacter, this)
                 );
                 if (_lastResolvedContextAction != null)
                 {
@@ -592,21 +592,21 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             }
         }
 
-        if (!ComponentPlayer.IsAddedToProject ||
-            ComponentPlayer.ComponentHealth.Health == 0f ||
+        if (!ComponentCharacter.IsAddedToProject ||
+            ComponentCharacter.ComponentHealth.Health == 0f ||
             componentSleep.IsSleeping ||
-            ComponentPlayer.ComponentSickness.IsPuking)
+            ComponentCharacter.ComponentSickness.IsPuking)
         {
             ModalPanelWidget = null;
         }
 
-        if (ComponentPlayer.ComponentSickness.IsSick)
+        if (ComponentCharacter.ComponentSickness.IsSick)
         {
-            ComponentPlayer.ComponentGui.HealthBarWidget.LitBarColor = new Color(166, 175, 103);
+            ComponentCharacter.ComponentGui.HealthBarWidget.LitBarColor = new Color(166, 175, 103);
         }
         else
         {
-            ComponentPlayer.ComponentGui.HealthBarWidget.LitBarColor = ComponentPlayer.ComponentFlu.HasFlu
+            ComponentCharacter.ComponentGui.HealthBarWidget.LitBarColor = ComponentCharacter.ComponentFlu.HasFlu
                 ? new Color(0, 48, 255)
                 : new Color(224, 24, 0);
         }
@@ -615,7 +615,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     private void UpdateHudSafeArea()
     {
         var enabled = SettingsManager.Current.HudSafeAreaEnabled;
-        var padding = HudSafeAreaManager.GetEffectivePadding(ComponentPlayer.GameWidget.GlobalScale);
+        var padding = HudSafeAreaManager.GetEffectivePadding(ComponentCharacter.GameWidget.GlobalScale);
         var sideMargin = new Vector2(padding, 0f);
         _leftControlsContainerWidget.Margin = sideMargin;
         _rightControlsContainerWidget.Margin = sideMargin;
@@ -647,9 +647,9 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public void HandleInput()
     {
-        var input = ComponentPlayer.GameWidget.Input;
-        var playerInput = ComponentPlayer.ComponentInput.PlayerInput;
-        var componentRider = ComponentPlayer.ComponentRider;
+        var input = ComponentCharacter.GameWidget.Input;
+        var playerInput = ComponentCharacter.ComponentInput.PlayerInput;
+        var componentRider = ComponentCharacter.ComponentRider;
 
         if (playerInput.ToggleTouchControls)
         {
@@ -660,17 +660,17 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             }
         }
 
-        if (ComponentPlayer.GameWidget.ActiveCamera.IsEntityControlEnabled)
+        if (ComponentCharacter.GameWidget.ActiveCamera.IsEntityControlEnabled)
         {
             if (!_keyboardHelpMessageShown &&
-                (ComponentPlayer.PlayerData.InputDevice & WidgetInputDevice.Keyboard) != 0 &&
+                (ComponentCharacter.CharacterData.InputDevice & WidgetInputDevice.Keyboard) != 0 &&
                 Time.PeriodicEvent(7.0, 0.0))
             {
                 _keyboardHelpMessageShown = true;
                 DisplaySmallMessage(LanguageManager.Get(TypeName, 1), Color.White, true, true);
             }
             else if (!_gamepadHelpMessageShown &&
-                     (ComponentPlayer.PlayerData.InputDevice & WidgetInputDevice.Gamepads) != 0 &&
+                     (ComponentCharacter.CharacterData.InputDevice & WidgetInputDevice.Gamepads) != 0 &&
                      Time.PeriodicEvent(7.0, 0.0))
             {
                 _gamepadHelpMessageShown = true;
@@ -687,13 +687,13 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             }
             else
             {
-                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, _keyboardHelpDialog);
+                DialogsManager.ShowDialog(ComponentCharacter.GuiWidget, _keyboardHelpDialog);
             }
         }
 
         if (playerInput.TogglePlayerPanel)
         {
-            ComponentPlayer.GameWidget.TogglePlayerPanel();
+            ComponentCharacter.GameWidget.TogglePlayerPanel();
         }
 
         if (playerInput.GamepadHelp)
@@ -709,7 +709,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             }
             else
             {
-                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, _gamepadHelpDialog);
+                DialogsManager.ShowDialog(ComponentCharacter.GuiWidget, _gamepadHelpDialog);
             }
         }
 
@@ -726,34 +726,34 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             }
             else
             {
-                ModalPanelWidget = ComponentPlayer.ComponentMiner.Inventory is ComponentCreativeInventory
-                    ? new CreativeInventoryWidget(ComponentPlayer.Entity)
+                ModalPanelWidget = ComponentCharacter.ComponentMiner.Inventory is ComponentCreativeInventory
+                    ? new CreativeInventoryWidget(ComponentCharacter.Entity)
                     : new FullInventoryWidget(
-                        ComponentPlayer.ComponentMiner.Inventory,
-                        ComponentPlayer.Entity.FindComponent<ComponentCraftingTable>(true)!
+                        ComponentCharacter.ComponentMiner.Inventory,
+                        ComponentCharacter.Entity.FindComponent<ComponentCraftingTable>(true)!
                     );
             }
         }
 
         if (playerInput.ToggleClothing || _clothingButtonWidget.IsClicked)
         {
-            var clothing = new ClothingWidget(ComponentPlayer);
+            var clothing = new ClothingWidget(ComponentCharacter);
             ModalPanelWidget = IsClothingVisible() ? null : clothing;
         }
 
         if (_crouchButtonWidget.IsClicked || playerInput.ToggleSneak)
         {
-            if (ComponentPlayer.ComponentBody.TargetCrouchFactor == 0f)
+            if (ComponentCharacter.ComponentBody.TargetCrouchFactor == 0f)
             {
-                if (ComponentPlayer.ComponentBody.StandingOnValue.HasValue)
+                if (ComponentCharacter.ComponentBody.StandingOnValue.HasValue)
                 {
-                    ComponentPlayer.ComponentBody.TargetCrouchFactor = 1f;
+                    ComponentCharacter.ComponentBody.TargetCrouchFactor = 1f;
                     DisplaySmallMessage(LanguageManager.Get(TypeName, 4), Color.White, false, false);
                 }
             }
             else
             {
-                ComponentPlayer.ComponentBody.TargetCrouchFactor = 0f;
+                ComponentCharacter.ComponentBody.TargetCrouchFactor = 0f;
                 DisplaySmallMessage(LanguageManager.Get(TypeName, 3), Color.White, false, false);
             }
         }
@@ -765,7 +765,9 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             {
                 try
                 {
-                    _lastResolvedContextAction.Execute(new PlayerContextActionExecutionContext(ComponentPlayer, this));
+                    _lastResolvedContextAction.Execute(
+                        new PlayerContextActionExecutionContext(ComponentCharacter, this)
+                    );
                 }
                 catch (Exception exception)
                 {
@@ -799,12 +801,12 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         }
 
         if ((_editItemButton.IsClicked || playerInput.EditItem) &&
-            ComponentPlayer.ComponentBlockHighlight.NearbyEditableCell.HasValue)
+            ComponentCharacter.ComponentBlockHighlight.NearbyEditableCell.HasValue)
         {
-            var value = ComponentPlayer.ComponentBlockHighlight.NearbyEditableCell.Value;
+            var value = ComponentCharacter.ComponentBlockHighlight.NearbyEditableCell.Value;
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(value.X, value.Y, value.Z);
             var contents = Terrain.ExtractContents(cellValue);
-            var editBlockContext = new BlockEditContext(value.X, value.Y, value.Z, cellValue, ComponentPlayer);
+            var editBlockContext = new BlockEditContext(value.X, value.Y, value.Z, cellValue, ComponentCharacter);
             CurrentModRuntime.Value?.BlockBehaviors.Invoke(editBlockContext);
             if (editBlockContext is { Cancel: false, Handled: false })
             {
@@ -813,7 +815,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 for (var i = 0;
                      i < blockBehaviors.Length &&
                      !blockBehaviors[i]
-                         .OnEditBlock(value.X, value.Y, value.Z, cellValue, ComponentPlayer);
+                         .OnEditBlock(value.X, value.Y, value.Z, cellValue, ComponentCharacter);
                      i++)
                 {
                 }
@@ -821,13 +823,13 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         }
         else if ((_editItemButton.IsClicked || playerInput.EditItem) && IsActiveSlotEditable())
         {
-            var inventory = ComponentPlayer.ComponentMiner.Inventory;
+            var inventory = ComponentCharacter.ComponentMiner.Inventory;
             var activeSlotIndex = inventory.ActiveSlotIndex;
             var num = Terrain.ExtractContents(inventory.GetSlotValue(activeSlotIndex));
             if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].Editable)
             {
                 var editInventoryContext =
-                    new BlockEditInventoryItemContext(inventory, activeSlotIndex, ComponentPlayer);
+                    new BlockEditInventoryItemContext(inventory, activeSlotIndex, ComponentCharacter);
                 CurrentModRuntime.Value?.BlockBehaviors.Invoke(editInventoryContext);
                 if (!editInventoryContext.Cancel && !editInventoryContext.Handled)
                 {
@@ -835,7 +837,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                     for (var i = 0;
                          i < blockBehaviors.Length &&
                          !blockBehaviors[i]
-                             .OnEditInventoryItem(inventory, activeSlotIndex, ComponentPlayer);
+                             .OnEditInventoryItem(inventory, activeSlotIndex, ComponentCharacter);
                          i++)
                     {
                     }
@@ -847,13 +849,13 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             (_creativeFlyButtonWidget.IsClicked || playerInput.ToggleCreativeFly) &&
             componentRider.Mount == null)
         {
-            var isCreativeFlyEnabled = ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled;
-            ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled = !isCreativeFlyEnabled;
-            if (ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled != isCreativeFlyEnabled)
+            var isCreativeFlyEnabled = ComponentCharacter.ComponentLocomotion.IsCreativeFlyEnabled;
+            ComponentCharacter.ComponentLocomotion.IsCreativeFlyEnabled = !isCreativeFlyEnabled;
+            if (ComponentCharacter.ComponentLocomotion.IsCreativeFlyEnabled != isCreativeFlyEnabled)
             {
-                if (ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled)
+                if (ComponentCharacter.ComponentLocomotion.IsCreativeFlyEnabled)
                 {
-                    ComponentPlayer.ComponentLocomotion.JumpOrder = 1f;
+                    ComponentCharacter.ComponentLocomotion.JumpOrder = 1f;
                     DisplaySmallMessage(LanguageManager.Get(TypeName, 7), Color.White, false, false);
                 }
                 else
@@ -865,26 +867,26 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             if (CommonLib.WorkType == WorkType.Server)
             {
                 NetworkSender.SendToObservers(
-                    ComponentPlayer.Entity,
-                    PlayerPackageBuilder.Capture(
-                        ComponentPlayer,
-                        ComponentPlayerPackage.PlayerAction.CreativeFlyChange
+                    ComponentCharacter.Entity,
+                    CharacterPackageBuilder.Capture(
+                        ComponentCharacter,
+                        ComponentCharacterPackage.CharacterAction.CreativeFlyChange
                     ),
-                    ComponentPlayer.PlayerData.Client
+                    ComponentCharacter.CharacterData.Client
                 );
             }
             else if (CommonLib.WorkType == WorkType.Client)
             {
                 NetworkSender.SendToServer(
-                    PlayerPackageBuilder.Capture(
-                        ComponentPlayer,
-                        ComponentPlayerPackage.PlayerAction.CreativeFlyChange
+                    CharacterPackageBuilder.Capture(
+                        ComponentCharacter,
+                        ComponentCharacterPackage.CharacterAction.CreativeFlyChange
                     )
                 );
             }
         }
 
-        if (!ComponentPlayer.ComponentInput.IsControlledByVr &&
+        if (!ComponentCharacter.ComponentInput.IsControlledByVr &&
             (_cameraButtonWidget.IsClicked || playerInput.SwitchCameraMode))
         {
             ChangeCameraMode();
@@ -902,7 +904,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             (_lightningButtonWidget.IsClicked || playerInput.Lighting))
         {
             CommandGateway.Submit(
-                ComponentPlayer.PlayerData,
+                ComponentCharacter.CharacterData,
                 new TriggerPlayerLightningCommand()
             );
         }
@@ -911,7 +913,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             (_precipitationButtonWidget.IsClicked || playerInput.Precipitation))
         {
             CommandGateway.Submit(
-                ComponentPlayer.PlayerData,
+                ComponentCharacter.CharacterData,
                 new SetPrecipitationCommand(!_subsystemWeather.IsPrecipitationStarted)
             );
         }
@@ -920,7 +922,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             (_fogButtonWidget.IsClicked || playerInput.Fog))
         {
             CommandGateway.Submit(
-                ComponentPlayer.PlayerData,
+                ComponentCharacter.CharacterData,
                 new SetFogCommand(!_subsystemWeather.IsFogStarted)
             );
         }
@@ -929,7 +931,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             (_timeOfDayButtonWidget.IsClicked || playerInput.TimeOfDay))
         {
             CommandGateway.Submit(
-                ComponentPlayer.PlayerData,
+                ComponentCharacter.CharacterData,
                 new AdvanceWorldTimeCommand()
             );
         }
@@ -944,7 +946,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         }
         else if (input.Back || _backButtonWidget.IsClicked)
         {
-            DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new GameMenuDialog(ComponentPlayer));
+            DialogsManager.ShowDialog(ComponentCharacter.GuiWidget, new GameMenuDialog(ComponentCharacter));
         }
     }
 
@@ -960,7 +962,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public bool IsActiveSlotEditable()
     {
-        var inventory = ComponentPlayer.ComponentMiner.Inventory;
+        var inventory = ComponentCharacter.ComponentMiner.Inventory;
         var activeSlotIndex = inventory.ActiveSlotIndex;
         var num = Terrain.ExtractContents(inventory.GetSlotValue(activeSlotIndex));
         return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].Editable;
@@ -988,7 +990,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     private void ChangeCameraMode()
     {
-        var gameWidget = ComponentPlayer.GameWidget;
+        var gameWidget = ComponentCharacter.GameWidget;
         if (gameWidget.ActiveCamera is FppCamera)
         {
             gameWidget.ActiveCamera = gameWidget.FindCamera<TppCamera>()!;

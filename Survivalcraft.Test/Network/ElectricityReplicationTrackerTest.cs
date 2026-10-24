@@ -35,7 +35,7 @@ public sealed class ElectricityReplicationTrackerTest
     {
         var tracker = new ElectricityReplicationTracker();
         var first = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var reconnected = new Client(null, 1, Guid.NewGuid(), first.GUID, null);
+        var reconnected = new Client(null, 1, Guid.NewGuid(), first.CharacterId, null);
         tracker.Capture(first, new Dictionary<Point3, float>());
 
         Assert.True(tracker.Capture(reconnected, new Dictionary<Point3, float>()).IsBaseline);

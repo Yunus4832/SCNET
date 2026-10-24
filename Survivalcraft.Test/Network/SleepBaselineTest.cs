@@ -24,7 +24,7 @@ public sealed class SleepBaselineTest
         var entity = (Entity)RuntimeHelpers.GetUninitializedObject(typeof(Entity));
         typeof(Entity).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
             .SetValue(entity, project);
-        var player = new ComponentPlayer { ComponentHealth = new ComponentHealth() };
+        var player = new ComponentCharacter { ComponentHealth = new ComponentHealth() };
         typeof(Entity).GetField("_components", BindingFlags.Instance | BindingFlags.NonPublic)!
             .SetValue(entity, new List<Component> { player });
         var sleep = new ComponentSleep();
@@ -51,7 +51,7 @@ public sealed class SleepBaselineTest
         {
             subsystems.AddRange(
                 [
-                    new SubsystemPlayers(), new SubsystemTime(), new SubsystemUpdate(),
+                    new SubsystemCharacters(), new SubsystemTime(), new SubsystemUpdate(),
                     new SubsystemGameInfo(), new SubsystemTimeOfDay(), new SubsystemTerrain()
                 ]
             );

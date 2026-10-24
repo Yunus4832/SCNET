@@ -34,7 +34,7 @@ public class SubsystemEggBlockBehavior : SubsystemBlockBehavior
         }
         else
         {
-            ((worldItem as Projectile)?.Owner as ComponentPlayer)?.ComponentGui.DisplaySmallMessage(
+            ((worldItem as Projectile)?.Owner as ComponentCharacter)?.ComponentGui.DisplaySmallMessage(
                 "太多生物了",
                 Color.White,
                 true,

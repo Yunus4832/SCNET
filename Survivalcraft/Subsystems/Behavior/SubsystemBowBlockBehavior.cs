@@ -30,9 +30,9 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
 
     public override ResourceId[] HandledBlocks => [];
 
-    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
+    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentCharacter componentCharacter)
     {
-        componentPlayer.ComponentGui.ModalPanelWidget = componentPlayer.ComponentGui.ModalPanelWidget == null
+        componentCharacter.ComponentGui.ModalPanelWidget = componentCharacter.ComponentGui.ModalPanelWidget == null
             ? new BowWidget(inventory, slotIndex)
             : null;
         return true;
@@ -92,7 +92,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                     componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
                 if (componentFirstPersonModel != null)
                 {
-                    componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(
+                    componentMiner.ComponentCharacter?.ComponentAimingSights.ShowAimingSights(
                         aim.Position,
                         aim.Direction
                     );
@@ -145,9 +145,9 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                                  componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
                     var vector2 = Vector3.Normalize(vector + aim.Direction * 10f - vector);
                     var num4 = MathUtils.Lerp(0f, 28f, MathUtils.Pow(draw / 15f, 0.75f));
-                    if (componentMiner.ComponentPlayer != null)
+                    if (componentMiner.ComponentCharacter != null)
                     {
-                        num4 *= 0.5f * (componentMiner.ComponentPlayer.ComponentLevel.StrengthFactor - 1f) +
+                        num4 *= 0.5f * (componentMiner.ComponentCharacter.ComponentLevel.StrengthFactor - 1f) +
                                 1f;
                     }
 
@@ -194,7 +194,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                 }
                 else
                 {
-                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                    componentMiner.ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                         LanguageManager.Get(_typeName, 0),
                         Color.White,
                         true,

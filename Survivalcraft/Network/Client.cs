@@ -4,14 +4,17 @@ using Engine.Network;
 
 using EntitySystem.Core;
 
+using Game.Players;
+using Game.Protocol.Identity;
+
 namespace Game.Network;
 
 public class Client
 {
-    // 服务器本身构造
-    public Client(Guid guid, Project project)
+    // 本地节点的会话记录；尚未控制角色时使用 Guid.Empty。
+    public Client(Guid characterId, Project project)
     {
-        GUID = guid;
+        CharacterId = characterId;
         Project = project;
         State = ClientState.Connected;
         TokenId = Guid.NewGuid();
@@ -23,21 +26,22 @@ public class Client
     /// <param name="netPeer">peer</param>
     /// <param name="id">客户端ID</param>
     /// <param name="tokenId">客户端tokenId</param>
-    /// <param name="guid">客户端Guid</param>
+    /// <param name="characterId">当前控制的角色 ID；尚无角色时为 Guid.Empty。</param>
     /// <param name="project">Project</param>
     public Client(
         NetworkConnection? netPeer,
         byte id,
         Guid tokenId,
-        Guid guid,
+        Guid characterId,
         Project? project
     )
     {
         ID = id;
-        GUID = guid;
+        CharacterId = characterId;
         TokenId = tokenId;
         Project = project;
         Peer = netPeer;
+        PlayerAddress = netPeer is null ? null : new PlayerAddress(netPeer.PeerIdentity.Address);
         IsAddedToNetNode = true;
     }
 
@@ -50,6 +54,7 @@ public class Client
     public Client(NetworkConnectionRequest request)
     {
         Request = request;
+        PlayerAddress = new PlayerAddress(request.PeerIdentity.Address);
         IPPoint = request.TransportEndpoint;
         State = ClientState.NotConnected;
     }
@@ -57,15 +62,20 @@ public class Client
     public Client(NetworkConnection peer)
     {
         Peer = peer;
+        PlayerAddress = new PlayerAddress(peer.PeerIdentity.Address);
         State = ClientState.NotConnected;
         TokenId = Guid.NewGuid();
     }
 
     public bool IsLocalRemote { get; set; }
 
+    public Guid SessionId { get; } = Guid.NewGuid();
+
     public byte ID { get; internal set; }
 
-    public Guid GUID { get; }
+    public Guid CharacterId { get; internal set; }
+
+    public PlayerAddress? PlayerAddress { get; internal set; }
 
     public Guid TokenId { get; internal set; }
 
@@ -79,8 +89,6 @@ public class Client
 
     private Project? Project { get; set; }
 
-    private SubsystemPlayers SubsystemPlayers { get; set; } = null!;
-
     public bool IsConnected => Peer != null && Peer.IsConnected;
 
     public ClientState State { get; set; }
@@ -89,7 +97,14 @@ public class Client
 
     public Guid ConnectionEpoch { get; set; }
 
-    public PlayerData PlayerData { get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID)!; } }
+    public WorldPlayer? Subject => PlayerAddress is { } address
+        ? Project?.FindSubsystem<SubsystemPlayers>(false)?.Store.Find(address)
+        : null;
+
+    public CharacterData? CharacterData => CharacterId == Guid.Empty
+        ? null
+        : Project?.FindSubsystem<SubsystemCharacters>(false)
+            ?.FindCharacterData(player => player.CharacterId == CharacterId);
 
     public Entity? CachePlayerEntity { get; set; }
 
@@ -101,22 +116,21 @@ public class Client
     public void SetProject(Project project)
     {
         Project = project;
-        SubsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
     }
 
     public override bool Equals(object? obj)
     {
-        return obj is Client c && c.ID == ID;
+        return obj is Client c && c.SessionId == SessionId;
     }
 
     public override int GetHashCode()
     {
-        return GUID.GetHashCode();
+        return SessionId.GetHashCode();
     }
 
     public static bool operator ==(Client? a, Client? b)
     {
-        return (a is null && b is null) || (a is not null && b is not null && a.ID == b.ID);
+        return a is null ? b is null : a.Equals(b);
     }
 
     public static bool operator !=(Client? a, Client? b)
@@ -126,6 +140,6 @@ public class Client
 
     public override string ToString()
     {
-        return $"Client : {{ID : {ID}, GUID : {GUID}}}";
+        return $"Client : {{ID : {ID}, CharacterId : {CharacterId}}}";
     }
 }

@@ -66,7 +66,7 @@ public class PackageManager
         RegisterProtocolPackage<ComponentOnFirePackage, ComponentOnFirePackageHandler>(PackageType.ComponentOnFire);
         RegisterProtocolPackage<ComponentSleepPackage, ComponentSleepPackageHandler>(PackageType.ComponentSleep);
         RegisterProtocolPackage<ComponentFurnacePackage, ComponentFurnacePackageHandler>(PackageType.ComponentFurnace);
-        RegisterProtocolPackage<PlayerDataPackage, PlayerDataPackageHandler>(PackageType.PlayerData);
+        RegisterProtocolPackage<CharacterDataPackage, CharacterDataPackageHandler>(PackageType.CharacterData);
         RegisterProtocolPackage<MessagePackage, MessagePackageHandler>(PackageType.Message);
         RegisterProtocolPackage<EntityPackage, EntityPackageHandler>(PackageType.Entity);
         RegisterProtocolPackage<ProjectilePackage, ProjectilePackageHandler>(PackageType.Projectile);
@@ -77,12 +77,12 @@ public class PackageManager
         RegisterProtocolPackage<SignBlockPackage, SignBlockPackageHandler>(PackageType.SignBlock);
         RegisterProtocolPackage<DispenserPackage, DispenserPackageHandler>(PackageType.Dispenser);
         RegisterProtocolPackage<EditableBlockPackage, EditableBlockPackageHandler>(PackageType.EditableBlock);
-        RegisterProtocolPackage<GroupManagePackage, GroupManagePackageHandler>(PackageType.GroupManage);
+        RegisterProtocolPackage<TeamManagePackage, TeamManagePackageHandler>(PackageType.TeamManage);
         RegisterProtocolPackage<SubsystemSeasonPackage, SubsystemSeasonPackageHandler>(PackageType.SubsystemSeason);
         RegisterProtocolPackage<CommandPackage, CommandPackageHandler>(PackageType.Command);
-        RegisterProtocolPackage<PlayerListPackage, PlayerListPackageHandler>(PackageType.PlayerList);
-        RegisterProtocolPackage<OnlinePlayerStatePackage, OnlinePlayerStatePackageHandler>(
-            PackageType.OnlinePlayerState
+        RegisterProtocolPackage<CharacterListPackage, CharacterListPackageHandler>(PackageType.CharacterList);
+        RegisterProtocolPackage<OnlineCharacterStatePackage, OnlineCharacterStatePackageHandler>(
+            PackageType.OnlineCharacterState
         );
         RegisterProtocolPackage<BootstrapPackage, BootstrapPackageHandler>(PackageType.Bootstrap);
         RegisterProtocolPackage<ConnectionPhaseAckPackage, ConnectionPhaseAckPackageHandler>(
@@ -137,20 +137,22 @@ public class PackageManager
     private static void RegisterPlayerPackages()
     {
         var handler =
-            RegisterProtocolPackage<ComponentPlayerPackage, ComponentPlayerPackageHandler>(PackageType.ComponentPlayer);
-        PackageDispatcher.Register(typeof(PlayerStatePackage), handler);
-        PackageDispatcher.Register(typeof(PlayerInteractionPackage), handler);
-        PackageDispatcher.Register(typeof(PlayerAimPackage), handler);
-        PackageDispatcher.Register(typeof(PlayerDigPackage), handler);
-        PackageDispatcher.Register(typeof(PlayerHitPackage), handler);
-        PackageDispatcher.Register(typeof(PlayerFlightPackage), handler);
-        PackageDispatcher.Register(typeof(PlayerReadyPackage), handler);
-        PackageDispatcher.Register(typeof(PlayerRestartPackage), handler);
-        PackageDispatcher.Register(typeof(PlayerExperiencePackage), handler);
-        PackageDispatcher.Register(typeof(PlayerDropPackage), handler);
-        PackageDispatcher.Register(typeof(PlayerDragDropPackage), handler);
-        PackageDispatcher.Register(typeof(PlayerStatisticsPackage), handler);
-        PackageDispatcher.Register(typeof(PlayerPositionPackage), handler);
+            RegisterProtocolPackage<ComponentCharacterPackage, ComponentCharacterPackageHandler>(
+                PackageType.ComponentCharacter
+            );
+        PackageDispatcher.Register(typeof(CharacterStatePackage), handler);
+        PackageDispatcher.Register(typeof(CharacterInteractionPackage), handler);
+        PackageDispatcher.Register(typeof(CharacterAimPackage), handler);
+        PackageDispatcher.Register(typeof(CharacterDigPackage), handler);
+        PackageDispatcher.Register(typeof(CharacterHitPackage), handler);
+        PackageDispatcher.Register(typeof(CharacterFlightPackage), handler);
+        PackageDispatcher.Register(typeof(CharacterReadyPackage), handler);
+        PackageDispatcher.Register(typeof(CharacterRestartPackage), handler);
+        PackageDispatcher.Register(typeof(CharacterExperiencePackage), handler);
+        PackageDispatcher.Register(typeof(CharacterDropPackage), handler);
+        PackageDispatcher.Register(typeof(CharacterDragDropPackage), handler);
+        PackageDispatcher.Register(typeof(CharacterStatisticsPackage), handler);
+        PackageDispatcher.Register(typeof(CharacterPositionPackage), handler);
     }
 
     public static void WriteMessage(IProtocolMessage message, ProtocolWriter writer) =>
@@ -164,21 +166,21 @@ public class PackageManager
         FurniturePackage => ClientState.ProjectLoaded,
         EditableBlockPackage => ClientState.ProjectLoaded,
         PickablePackage or ProjectilePackage => ClientState.ProjectLoaded,
-        PlayerDataPackage => ClientState.Connected,
-        MessagePackage or GroupManagePackage => ClientState.ProjectLoaded,
+        CharacterDataPackage => ClientState.Connected,
+        MessagePackage or TeamManagePackage => ClientState.ProjectLoaded,
         ComponentBehaviorPackage => ClientState.Playing,
         ComponentHealthPackage or ComponentOnFirePackage or MovingBlockPackage or ExplosionsPackage => ClientState
             .ProjectLoaded,
         ComponentVitalStatPackage or SubsystemElectricityPackage => ClientState.Playing,
         ComponentClothingPackage or ComponentFurnacePackage or SignBlockPackage or BlockEditPackage => ClientState
             .ProjectLoaded,
-        DispenserPackage or ComponentSicknessPackage or PlayerListPackage or OnlinePlayerStatePackage
+        DispenserPackage or ComponentSicknessPackage or CharacterListPackage or OnlineCharacterStatePackage
             or ComponentMountPackage or ComponentSleepPackage or SubsystemWeatherPackage
             or ComponentFluPackage => ClientState.ProjectLoaded,
         SubsystemTimePackage or SubsystemSkyPackage or ChunkStateResetPackage or SubsystemBodyPackage => ClientState
             .Playing,
         SubsystemSeasonPackage or EntityPackage or ServerInfoPackage or SubsystemTerrainPackage
-            or ComponentPlayerPackage => ClientState.ProjectLoaded,
+            or ComponentCharacterPackage => ClientState.ProjectLoaded,
         _ => ClientState.NotConnected
     };
 

@@ -145,24 +145,24 @@ public class ConnectionBootstrapPackageTest
     }
 
     [Fact]
-    public void InitialWorldSnapshotKeepsPlayerDataBeforeEntityPayload()
+    public void InitialWorldSnapshotKeepsCharacterDataBeforeEntityPayload()
     {
         var playerGuid = Guid.NewGuid();
         var player = new ValuesDictionary();
-        player.SetValue("PlayerGUID", playerGuid);
+        player.SetValue("CharacterId", playerGuid);
         var package = new InitialWorldSnapshotPackage
         {
             Epoch = Guid.NewGuid(),
             ClientList = new ClientPackage([]),
             EntityData = [7, 8, 9],
-            Players = [player.ToMessagePack()]
+            Characters = [player.ToMessagePack()]
         };
 
         var clone = RoundTrip(package);
 
         var restored = new ValuesDictionary();
-        restored.ApplyOverridesUseMessagePack(clone.Players.Single());
-        Assert.Equal(playerGuid, restored.GetValue<Guid>("PlayerGUID"));
+        restored.ApplyOverridesUseMessagePack(clone.Characters.Single());
+        Assert.Equal(playerGuid, restored.GetValue<Guid>("CharacterId"));
         Assert.Equal(package.EntityData, clone.EntityData);
     }
 

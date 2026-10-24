@@ -71,11 +71,11 @@ public class SubsystemSoundMaterials : Subsystem
             2f * loudnessMultiplier,
             true
         );
-        if (componentCreature is not ComponentPlayer
+        if (componentCreature is not ComponentCharacter
                 {
                     ComponentVitalStats.Wetness: > 0f
                 }
-                componentPlayer)
+                componentCharacter)
         {
             return true;
         }
@@ -88,7 +88,7 @@ public class SubsystemSoundMaterials : Subsystem
 
         var volume = 0.7f *
                      loudnessMultiplier *
-                     MathUtils.Pow(componentPlayer.ComponentVitalStats.Wetness, 4f);
+                     MathUtils.Pow(componentCharacter.ComponentVitalStats.Wetness, 4f);
         _subsystemAudio.PlayRandomSound(
             value2,
             volume,

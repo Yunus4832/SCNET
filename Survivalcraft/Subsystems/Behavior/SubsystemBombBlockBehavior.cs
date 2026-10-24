@@ -31,10 +31,10 @@ public class SubsystemBombBlockBehavior : SubsystemBlockBehavior, IUpdateable
         {
             if (_subsystemGameInfo.TotalElapsedGameTime - key.CreationTime > 5.0)
             {
-                ComponentPlayer? player = null;
+                ComponentCharacter? player = null;
                 if (key.Owner != null)
                 {
-                    player = key.Owner.Entity.FindComponent<ComponentPlayer>();
+                    player = key.Owner.Entity.FindComponent<ComponentCharacter>();
                 }
 
                 _subsystemExplosions.TryExplodeBlock(
@@ -42,7 +42,7 @@ public class SubsystemBombBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     Terrain.ToCell(key.Position.Y),
                     Terrain.ToCell(key.Position.Z),
                     key.Value,
-                    player?.PlayerData
+                    player?.CharacterData
                 );
                 key.ToRemove = true;
             }

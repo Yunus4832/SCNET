@@ -49,7 +49,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
 
     private ComponentOuterClothingModel _componentOuterClothingModel = null!;
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private ComponentVitalStats _componentVitalStats = null!;
 
@@ -284,7 +284,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                     var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog()
                         .Blocks[Terrain.ExtractContents(value)]
                         .GetClothingData(Terrain.ExtractData(value));
-                    if (clothingData.PlayerLevelRequired > _componentPlayer.PlayerData.Level)
+                    if (clothingData.PlayerLevelRequired > _componentCharacter.CharacterData.Level)
                     {
                         _componentGui.DisplaySmallMessage(
                             string.Format(
@@ -619,7 +619,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         _componentOuterClothingModel = Entity.FindComponent<ComponentOuterClothingModel>(true)!;
         _componentVitalStats = Entity.FindComponent<ComponentVitalStats>(true)!;
         _componentLocomotion = Entity.FindComponent<ComponentLocomotion>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         SteedMovementSpeedFactor = 1f;
         Insulation = 0f;
         LeastInsulatedSlot = ClothingSlot.Feet;
@@ -720,12 +720,12 @@ public class ComponentClothing : Component, IUpdateable, IInventory
 
     public virtual void UpdateRenderTargets()
     {
-        if (_skinTexture == null || _componentPlayer.PlayerData.CharacterSkinName != _skinTextureName)
+        if (_skinTexture == null || _componentCharacter.CharacterData.CharacterSkinName != _skinTextureName)
         {
-            if (CharacterSkinsManager.HasSkinRes(_componentPlayer.PlayerData.CharacterSkinName))
+            if (CharacterSkinsManager.HasSkinRes(_componentCharacter.CharacterData.CharacterSkinName))
             {
-                _skinTexture = CharacterSkinsManager.LoadTexture(_componentPlayer.PlayerData.CharacterSkinName);
-                _skinTextureName = _componentPlayer.PlayerData.CharacterSkinName;
+                _skinTexture = CharacterSkinsManager.LoadTexture(_componentCharacter.CharacterData.CharacterSkinName);
+                _skinTextureName = _componentCharacter.CharacterData.CharacterSkinName;
                 Utilities.Dispose(ref _innerClothedTexture);
                 Utilities.Dispose(ref _outerClothedTexture);
             }
@@ -737,7 +737,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                     {
                         NetworkSender.SendToServer(
                             ClothingPackageBuilder.Capture(
-                                _componentPlayer.PlayerData.CharacterSkinName,
+                                _componentCharacter.CharacterData.CharacterSkinName,
                                 ComponentClothingPackage.DataType.RequestSkin
                             )
                         );
@@ -746,7 +746,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                     {
                         CommonLib.Net.QueuePackage(
                             ClothingPackageBuilder.Capture(
-                                _componentPlayer.PlayerData.CharacterSkinName,
+                                _componentCharacter.CharacterData.CharacterSkinName,
                                 ComponentClothingPackage.DataType.WhoHas
                             ),
                             PackageAudience.Global

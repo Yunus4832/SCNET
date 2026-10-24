@@ -40,7 +40,7 @@ public sealed class SessionInfo
     public int BroadcastPort { get; set; }
 
     /// <summary>Optional player name used to automatically enter a world after startup.</summary>
-    public string? AutoJoinPlayerName { get; set; }
+    public string? AutoJoinCharacterName { get; set; }
 
     public P2PRoomOverrides P2POverrides { get; set; } = new();
 

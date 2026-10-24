@@ -99,7 +99,7 @@ public class ComponentDispenser : ComponentInventoryBase
                     position,
                     s2 * (vector + sharedRandom.Vector3(0.025f) + new Vector3(0f, 0.05f, 0f)),
                     Vector3.Zero,
-                    _componentBlockEntity.OwnPlayerData?.ComponentPlayer
+                    _componentBlockEntity.OwnCharacterData?.ComponentCharacter
                 ) !=
                 null)
             {

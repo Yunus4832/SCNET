@@ -8,7 +8,7 @@ public class WorldInfo
 
     public DateTime LastSaveTime;
 
-    public readonly List<PlayerInfo> PlayerInfos = [];
+    public readonly List<CharacterInfo> CharacterInfos = [];
 
     public string ProjectFormatVersion = string.Empty;
 

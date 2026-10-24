@@ -1,6 +1,9 @@
+using Engine.Core.Security;
+
 using Game.Commands;
 using Game.Localization;
 using Game.Network.Transport;
+using Game.Protocol.Identity;
 
 namespace Survivalcraft.Test.Network;
 
@@ -68,10 +71,10 @@ public class CommandPackageTest
     [Fact]
     public void PermissionSnapshotRoundTrips()
     {
-        var playerGuid = Guid.NewGuid();
+        var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
         var owner = new ModId("game");
         var package = CommandPackage.CreatePermissionSnapshot(
-            playerGuid,
+            address,
             [
                 new CommandPermissionGrant(
                     new ResourceId(owner, "server.stop"),
@@ -87,7 +90,7 @@ public class CommandPackageTest
         var clone = RoundTrip(package);
 
         Assert.Equal(CommandPackage.CommandPackageMode.PermissionSnapshot, clone.Mode);
-        Assert.Equal(playerGuid, clone.PlayerGuid);
+        Assert.Equal(address, clone.PlayerAddress);
         Assert.Equal(
             [
                 new CommandPermissionGrant(

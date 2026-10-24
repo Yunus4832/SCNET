@@ -17,7 +17,7 @@
 | `Game.Network.Diagnostics` | 网络路由、发送、编码与兴趣统计 |
 | `Game.Network.Interpolation` | 远端位置、旋转和速度的插值 |
 
-协议契约与线格式仍由 `Game.Protocol` 提供。玩家离线请求由 `SubsystemPlayers` 收集，在玩家遍历结束后统一处理。
+协议契约与线格式仍由 `Game.Protocol` 提供。玩家离线请求由 `SubsystemCharacters` 收集，在玩家遍历结束后统一处理。
 
 ## 包、受众与接收上下文
 

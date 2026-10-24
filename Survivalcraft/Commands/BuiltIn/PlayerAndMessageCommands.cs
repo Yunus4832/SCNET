@@ -3,14 +3,14 @@ namespace Game.Commands;
 public sealed record UpdateOwnPlayerProfileCommand(
     string Name,
     string SkinName,
-    PlayerClass PlayerClass
+    CharacterSex CharacterSex
 ) : IGameCommand;
 
 public sealed record UpdatePlayerProfileCommand(
     Guid PlayerId,
     string Name,
     string SkinName,
-    PlayerClass PlayerClass
+    CharacterSex CharacterSex
 ) : IGameCommand;
 
 public sealed record SendChatMessageCommand(

@@ -130,7 +130,7 @@ public static class DebugOverlayManager
             }
         }
 
-        var player = GetMainPlayer();
+        var player = GetLocalCharacter();
         if (player?.ComponentGui.ModalPanelWidget is { } panel)
         {
             lines.Add($"HUD Panel   {panel.GetType().Name}");
@@ -238,7 +238,7 @@ public static class DebugOverlayManager
 
     private static string BuildWorldText()
     {
-        if (GameManager.Project is not { } project || GetMainPlayer() is not { } player)
+        if (GameManager.Project is not { } project || GetLocalCharacter() is not { } player)
         {
             return string.Empty;
         }
@@ -264,7 +264,7 @@ public static class DebugOverlayManager
         return string.Join(
             '\n',
             "PLAYER",
-            $"Name        {player.PlayerData.Name}",
+            $"Name        {player.CharacterData.Name}",
             $"Position    {position.X:0.00}, {position.Y:0.00}, {position.Z:0.00}",
             $"Cell        {cell.X}, {cell.Y}, {cell.Z}",
             $"Chunk       {chunk.X}, {chunk.Y}",
@@ -280,9 +280,9 @@ public static class DebugOverlayManager
         );
     }
 
-    private static ComponentPlayer? GetMainPlayer()
+    private static ComponentCharacter? GetLocalCharacter()
     {
-        return GameManager.Project?.FindSubsystem<SubsystemPlayers>(false)?.MainPlayer;
+        return GameManager.Project?.FindSubsystem<SubsystemCharacters>(false)?.LocalCharacter;
     }
 
     private static Vector2 MeasurePanel(string text, Vector2 scale)

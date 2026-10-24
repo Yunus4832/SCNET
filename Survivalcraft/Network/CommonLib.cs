@@ -39,7 +39,7 @@ public static class CommonLib
         return Net.CurrentStage == NetNode.Stage.Connected ? WorkType.Client : WorkType.Local;
     }
 
-    public static ComponentPlayer? MainPlayer
+    public static ComponentCharacter? LocalCharacter
     {
         get
         {
@@ -49,8 +49,8 @@ public static class CommonLib
             }
 
             var project = GameManager.Project;
-            return project?.FindSubsystem<SubsystemPlayers>(true)?.ComponentPlayers
-                .FirstOrDefault(p => p.PlayerData.PlayerGUID == Net.Self.GUID);
+            return project?.FindSubsystem<SubsystemCharacters>(true)?.ComponentCharacters
+                .FirstOrDefault(p => p.CharacterData.CharacterId == Net.Self.CharacterId);
         }
     }
 

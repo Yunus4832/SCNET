@@ -10,7 +10,7 @@ public class SubsystemMagnetBlockBehavior : SubsystemBlockBehavior
 
     private DynamicArray<Vector3> _magnets = [];
 
-    private SubsystemPlayers _subsystemPlayers = null!;
+    private SubsystemCharacters _subsystemCharacters = null!;
 
     public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:magnet")];
 
@@ -40,7 +40,7 @@ public class SubsystemMagnetBlockBehavior : SubsystemBlockBehavior
 
         var num3 = float.MaxValue;
         var v2 = Vector3.Zero;
-        foreach (var playersDatum in _subsystemPlayers.PlayersData)
+        foreach (var playersDatum in _subsystemCharacters.Characters)
         {
             var spawnPosition = playersDatum.SpawnPosition;
             var num4 = Vector3.DistanceSquared(compassPosition, spawnPosition);
@@ -59,7 +59,7 @@ public class SubsystemMagnetBlockBehavior : SubsystemBlockBehavior
     public override void Load(ValuesDictionary valuesDictionary)
     {
         base.Load(valuesDictionary);
-        _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemCharacters = Project.FindSubsystem<SubsystemCharacters>(true)!;
         var value = valuesDictionary.GetValue<string>("Magnets");
         _magnets = new DynamicArray<Vector3>(HumanReadableConverter.ValuesListFromString<Vector3>(';', value));
     }

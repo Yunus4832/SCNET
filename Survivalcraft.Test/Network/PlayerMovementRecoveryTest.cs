@@ -22,24 +22,24 @@ public sealed class PlayerMovementRecoveryTest
             Velocity = Vector3.Zero,
             Locomotion = locomotion
         };
-        var player = new ComponentPlayer
+        var player = new ComponentCharacter
         {
-            PlayerData = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData)),
+            CharacterData = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData)),
             ComponentBody = mounted ? new ComponentBody { ParentBody = body } : body,
             ComponentLocomotion = locomotion
         };
         // Discard the first packet just as a lost datagram would be discarded.
-        _ = PlayerPackageBuilder.Capture(player, ComponentPlayerPackage.PlayerAction.BodyUpdate);
-        var retry = PlayerPackageBuilder.Capture(player, ComponentPlayerPackage.PlayerAction.BodyUpdate);
+        _ = CharacterPackageBuilder.Capture(player, ComponentCharacterPackage.CharacterAction.BodyUpdate);
+        var retry = CharacterPackageBuilder.Capture(player, ComponentCharacterPackage.CharacterAction.BodyUpdate);
         using var writer = new ProtocolWriter();
         ProtocolMessageCodec.Write(retry, writer);
         using var reader = new ProtocolReader(writer.Data());
-        var received = Assert.IsType<PlayerStatePackage>(ProtocolMessageCodec.Read(retry.ID, reader));
+        var received = Assert.IsType<CharacterStatePackage>(ProtocolMessageCodec.Read(retry.ID, reader));
 
-        Assert.True(received.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.PositionChange));
-        Assert.True(received.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.RotationChange));
-        Assert.True(received.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.VelocityChange));
-        Assert.Equal(mounted, received.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.ParentBodyChange));
+        Assert.True(received.PackageChangeFlag.HasFlag(ComponentCharacterPackage.ChangFlag.PositionChange));
+        Assert.True(received.PackageChangeFlag.HasFlag(ComponentCharacterPackage.ChangFlag.RotationChange));
+        Assert.True(received.PackageChangeFlag.HasFlag(ComponentCharacterPackage.ChangFlag.VelocityChange));
+        Assert.Equal(mounted, received.PackageChangeFlag.HasFlag(ComponentCharacterPackage.ChangFlag.ParentBodyChange));
         Assert.Equal(body.Position, received.Position);
         Assert.Equal(body.Rotation, received.Rotation);
         Assert.Equal(Vector3.Zero, received.Velocity);

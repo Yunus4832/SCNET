@@ -14,7 +14,7 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
 
     private SubsystemParticles _subsystemParticles = null!;
 
-    private SubsystemPlayers _subsystemPlayers = null!;
+    private SubsystemCharacters _subsystemCharacters = null!;
 
     private SubsystemProjectiles _subsystemProjectiles = null!;
 
@@ -30,10 +30,10 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
 
     public void Update(float dt)
     {
-        var componentPlayer = _subsystemPlayers.ComponentPlayers.Count > 0
-            ? _subsystemPlayers.ComponentPlayers[0]
+        var componentCharacter = _subsystemCharacters.ComponentCharacters.Count > 0
+            ? _subsystemCharacters.ComponentCharacters[0]
             : null;
-        if (componentPlayer == null)
+        if (componentCharacter == null)
         {
             return;
         }
@@ -41,7 +41,7 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
         if (_newYearCelebrationTimeRemaining <= 0f &&
             Time.PeriodicEvent(5.0, 0.0) &&
             _subsystemSky.SkyLightIntensity == 0f &&
-            !componentPlayer.ComponentSleep.IsSleeping)
+            !componentCharacter.ComponentSleep.IsSleeping)
         {
             var now = DateTime.Now;
             if (now.Year > SettingsManager.Current.NewYearCelebrationLastYear &&
@@ -52,7 +52,7 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
             {
                 SettingsManager.Current.NewYearCelebrationLastYear = now.Year;
                 _newYearCelebrationTimeRemaining = 180f;
-                componentPlayer.ComponentGui.DisplayLargeMessage(
+                componentCharacter.ComponentGui.DisplayLargeMessage(
                     "Happy New Year!",
                     "--- Enjoy the fireworks ---",
                     15f,
@@ -73,7 +73,7 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
         if (_random.Float(0f, 1f) < num * dt)
         {
             var vector = _random.Vector2(35f, 50f);
-            var vector2 = componentPlayer.ComponentBody.Position + new Vector3(vector.X, 0f, vector.Y);
+            var vector2 = componentCharacter.ComponentBody.Position + new Vector3(vector.X, 0f, vector.Y);
             var terrainRaycastResult = _subsystemTerrain.Raycast(
                 new Vector3(vector2.X, 120f, vector2.Z),
                 new Vector3(vector2.X, 40f, vector2.Z),
@@ -177,6 +177,6 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
         _subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true)!;
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
-        _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemCharacters = Project.FindSubsystem<SubsystemCharacters>(true)!;
     }
 }

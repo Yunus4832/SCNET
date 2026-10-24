@@ -82,7 +82,7 @@ public sealed class ServerChunkDistributionSchedulerTest
     {
         using var scheduler = new ServerChunkDistributionScheduler(new EmptyAuthority(), 1);
         var old = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var current = new Client(null, old.ID, Guid.NewGuid(), old.GUID, null);
+        var current = new Client(null, old.ID, Guid.NewGuid(), old.CharacterId, null);
         var request = new ChunkContentRequest(new ChunkAllocationId(new Point2(0, 0), 1));
         scheduler.UpdateClientLocation(old, Vector2.Zero, 64f);
         scheduler.UpdateClientLocation(current, Vector2.Zero, 64f);

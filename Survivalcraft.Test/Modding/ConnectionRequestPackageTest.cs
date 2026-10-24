@@ -17,7 +17,6 @@ public class ConnectionRequestPackageTest
         var package = new ConnectionRequestPackage(
             Guid.NewGuid(),
             1,
-            Guid.NewGuid(),
             "mod-data-hash"
         );
 
@@ -31,7 +30,7 @@ public class ConnectionRequestPackageTest
 
         Assert.Equal(package.ModDataHash, clone.ModDataHash);
         Assert.Equal(package.ProtocolVersion, clone.ProtocolVersion);
-        Assert.Equal(package.MultiplayerClientId, clone.MultiplayerClientId);
+        Assert.Equal(package.TmpToken, clone.TmpToken);
     }
 
     [Fact]

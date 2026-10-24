@@ -80,19 +80,19 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     public override WidgetAlignment VerticalAlignment { get; set; } = WidgetAlignment.Center;
 
-    private PlayerData PlayerData { get; }
+    private CharacterData CharacterData { get; }
 
     public bool IsCommandInput => EditText.Text.StartsWith('/');
 
     public MessagePanelWidget(
-        PlayerData playerData,
+        CharacterData characterData,
         MessageHistoryOverlayWidget? historyOverlayWidget,
         bool messagingEnabled = true
     )
     {
-        PlayerData = playerData;
+        CharacterData = characterData;
         _historyOverlayWidget = historyOverlayWidget;
-        _messageService = playerData.SubsystemGameWidgets.Messages;
+        _messageService = characterData.SubsystemGameWidgets.Messages;
         _messagingEnabled = messagingEnabled;
 
         LoadContents(this, ContentManager.Get<XElement>("Widgets/MessagePanelWidget"));
@@ -166,9 +166,9 @@ public sealed class MessagePanelWidget : CanvasWidget
     {
         ResetInput();
         if (!_messagingEnabled &&
-            PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget == this)
+            CharacterData.ComponentCharacter?.ComponentGui.ModalPanelWidget == this)
         {
-            PlayerData.ComponentPlayer.ComponentGui.ModalPanelWidget = null;
+            CharacterData.ComponentCharacter.ComponentGui.ModalPanelWidget = null;
         }
     }
 
@@ -185,7 +185,7 @@ public sealed class MessagePanelWidget : CanvasWidget
         if (_suggestionPending &&
             Time.RealTime >= _suggestionSendAt &&
             IsCommandInput &&
-            PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget == this)
+            CharacterData.ComponentCharacter?.ComponentGui.ModalPanelWidget == this)
         {
             _suggestionPending = false;
             NetworkSender.SendToServer(CommandPackage.CreateSuggestionRequest(EditText.Text, _suggestionRequestId!));
@@ -272,7 +272,7 @@ public sealed class MessagePanelWidget : CanvasWidget
         }
 
         CommandGateway.Submit(
-            PlayerData,
+            CharacterData,
             new SendChatMessageCommand(_messageChannel, input)
         );
         EditText.Text = string.Empty;
@@ -296,9 +296,9 @@ public sealed class MessagePanelWidget : CanvasWidget
         EditText.Text = string.Empty;
         EditText.HasFocus = false;
         _commandSuggestions.Hide();
-        if (PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget == this)
+        if (CharacterData.ComponentCharacter?.ComponentGui.ModalPanelWidget == this)
         {
-            PlayerData.ComponentPlayer.ComponentGui.ModalPanelWidget = null;
+            CharacterData.ComponentCharacter.ComponentGui.ModalPanelWidget = null;
         }
     }
 
@@ -310,13 +310,13 @@ public sealed class MessagePanelWidget : CanvasWidget
     private void ExecuteCommand(string input)
     {
         _commandRequestId = Guid.NewGuid().ToString("N");
-        CommandGateway.Submit(PlayerData, input, _commandRequestId);
+        CommandGateway.Submit(CharacterData, input, _commandRequestId);
     }
 
     internal void ReceiveCommandResult(CommandResult result, string correlationId)
     {
         if (correlationId != _commandRequestId ||
-            PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget != this)
+            CharacterData.ComponentCharacter?.ComponentGui.ModalPanelWidget != this)
         {
             return;
         }
@@ -335,7 +335,7 @@ public sealed class MessagePanelWidget : CanvasWidget
         if (result.Success && result.PanelBehavior == CommandPanelBehavior.CloseOnSuccess)
         {
             ResetInput();
-            PlayerData.ComponentPlayer.ComponentGui.ModalPanelWidget = null;
+            CharacterData.ComponentCharacter.ComponentGui.ModalPanelWidget = null;
         }
         else
         {
@@ -376,7 +376,7 @@ public sealed class MessagePanelWidget : CanvasWidget
     {
         if (input != EditText.Text ||
             correlationId != _suggestionRequestId ||
-            PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget != this)
+            CharacterData.ComponentCharacter?.ComponentGui.ModalPanelWidget != this)
         {
             return;
         }
@@ -392,7 +392,7 @@ public sealed class MessagePanelWidget : CanvasWidget
             return;
         }
 
-        var principal = CommandPrincipal.FromPlayer(PlayerData);
+        var principal = CommandPrincipal.ForInput(CharacterData);
         var textAdapter = new TextCommandAdapter(runtime.Commands);
         _commandSuggestions.SetSuggestions(
             (_remoteSuggestions ?? textAdapter.Suggest(EditText.Text, principal))
@@ -425,7 +425,7 @@ public sealed class MessagePanelWidget : CanvasWidget
 
         if (CurrentModRuntime.Value is { } runtime)
         {
-            var principal = CommandPrincipal.FromPlayer(PlayerData);
+            var principal = CommandPrincipal.ForInput(CharacterData);
             var adapter = new TextCommandAdapter(runtime.Commands);
             if ((adapter.CanExecute(EditText.Text, principal) ||
                  adapter.CanExecute(

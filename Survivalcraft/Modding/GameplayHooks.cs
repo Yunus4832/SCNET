@@ -426,30 +426,30 @@ public sealed class WorldUpdatingContext(Project project, float deltaTime)
     public float DeltaTime { get; } = deltaTime;
 }
 
-public sealed class PlayerDyingContext(PlayerData player, ComponentPlayer componentPlayer)
+public sealed class PlayerDyingContext(CharacterData player, ComponentCharacter componentCharacter)
 {
-    public PlayerData Player { get; } = player;
+    public CharacterData Player { get; } = player;
 
-    public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+    public ComponentCharacter ComponentCharacter { get; } = componentCharacter;
 
-    public float Health { get; set; } = componentPlayer.ComponentHealth.Health;
+    public float Health { get; set; } = componentCharacter.ComponentHealth.Health;
 
-    public string CauseOfDeath { get; set; } = componentPlayer.ComponentHealth.CauseOfDeath;
+    public string CauseOfDeath { get; set; } = componentCharacter.ComponentHealth.CauseOfDeath;
 
     public bool Cancel { get; set; }
 }
 
 public sealed class PlayerSpawnedContext(
-    PlayerData player,
-    ComponentPlayer componentPlayer,
-    PlayerData.SpawnMode spawnMode
+    CharacterData player,
+    ComponentCharacter componentCharacter,
+    CharacterData.SpawnMode spawnMode
 )
 {
-    public PlayerData Player { get; } = player;
+    public CharacterData Player { get; } = player;
 
-    public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+    public ComponentCharacter ComponentCharacter { get; } = componentCharacter;
 
-    public PlayerData.SpawnMode SpawnMode { get; } = spawnMode;
+    public CharacterData.SpawnMode SpawnMode { get; } = spawnMode;
 }
 
 public enum PlayerRespawnRequestKind
@@ -464,14 +464,14 @@ public enum PlayerRespawnRequestKind
 }
 
 public sealed class PlayerRespawnRequestedContext(
-    PlayerData player,
-    ComponentPlayer componentPlayer,
+    CharacterData player,
+    ComponentCharacter componentCharacter,
     PlayerRespawnRequestKind requestKind
 )
 {
-    public PlayerData Player { get; } = player;
+    public CharacterData Player { get; } = player;
 
-    public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+    public ComponentCharacter ComponentCharacter { get; } = componentCharacter;
 
     public PlayerRespawnRequestKind RequestKind { get; } = requestKind;
 
@@ -480,9 +480,9 @@ public sealed class PlayerRespawnRequestedContext(
 
 public enum CreatureTargetingKind
 {
-    FindPlayer = 0,
+    FindCharacter = 0,
 
-    AvoidPlayer = 1,
+    AvoidCharacter = 1,
 
     Chase = 2,
 
@@ -502,7 +502,7 @@ public sealed class CreatureTargetScoringContext(
 
     public CreatureTargetingKind TargetingKind { get; } = targetingKind;
 
-    public ComponentPlayer? TargetPlayer => Target.Entity.FindComponent<ComponentPlayer>();
+    public ComponentCharacter? TargetPlayer => Target.Entity.FindComponent<ComponentCharacter>();
 
     public float Score { get; set; } = score;
 

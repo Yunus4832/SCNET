@@ -199,7 +199,7 @@ public class ComponentSteedBehavior : ComponentBehavior, IUpdateable
             {
                 //被骑乘
                 var body = _componentCreature.ComponentBody.ChildBodies[0];
-                if (body.Player is { PlayerData.IsMainPlayer: false })
+                if (body.Character is { CharacterData.IsLocalCharacter: false })
                 {
                     return;
                 }

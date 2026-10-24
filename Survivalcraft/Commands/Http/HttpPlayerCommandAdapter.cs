@@ -17,7 +17,7 @@ public static class HttpPlayerCommandAdapter
     );
 
     private sealed record Pending(
-        PlayerData Player,
+        CharacterData Character,
         Client Server,
         CommandRegistry Registry,
         Request Request
@@ -129,7 +129,7 @@ public static class HttpPlayerCommandAdapter
             }
 
             if (RunMode.Value is not RunModeType.Gui ||
-                CommonLib.MainPlayer?.PlayerData is not { } player ||
+                CommonLib.LocalCharacter?.CharacterData is not { } player ||
                 !ReferenceEquals(player.Project, GameManager.Project))
             {
                 request.Completion.TrySetResult(
@@ -214,8 +214,8 @@ public static class HttpPlayerCommandAdapter
     private static bool IsCurrent(Pending pending)
     {
         return RunMode.Value is RunModeType.Gui &&
-               ReferenceEquals(CommonLib.MainPlayer?.PlayerData, pending.Player) &&
-               ReferenceEquals(GameManager.Project, pending.Player.Project) &&
+               ReferenceEquals(CommonLib.LocalCharacter?.CharacterData, pending.Character) &&
+               ReferenceEquals(GameManager.Project, pending.Character.Project) &&
                CommonLib.WorkType is WorkType.Client &&
                ReferenceEquals(CommonLib.Net.Server, pending.Server) &&
                pending.Server.IsConnected;

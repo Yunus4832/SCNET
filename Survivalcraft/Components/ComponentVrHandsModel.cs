@@ -13,7 +13,7 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
 
     private ComponentMiner _componentMiner = null!;
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private readonly DrawBlockEnvironmentData _drawBlockEnvironmentData = new();
 
@@ -45,14 +45,14 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
-        if (!(_componentPlayer.ComponentHealth.Health > 0f) ||
+        if (!(_componentCharacter.ComponentHealth.Health > 0f) ||
             !camera.GameWidget.IsEntityFirstPersonTarget(Entity) ||
-            !_componentPlayer.ComponentInput.IsControlledByVr)
+            !_componentCharacter.ComponentInput.IsControlledByVr)
         {
             return;
         }
 
-        var eyePosition = _componentPlayer.ComponentCreatureModel.EyePosition;
+        var eyePosition = _componentCharacter.ComponentCreatureModel.EyePosition;
         var x = Terrain.ToCell(eyePosition.X);
         var num = Terrain.ToCell(eyePosition.Y);
         var z = Terrain.ToCell(eyePosition.Z);
@@ -94,9 +94,9 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
         {
             Display.DepthStencilState = DepthStencilState.Default;
             Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
-            if (_componentPlayer.ComponentCreatureModel.TextureOverride != null)
+            if (_componentCharacter.ComponentCreatureModel.TextureOverride != null)
             {
-                Shader.Texture = _componentPlayer.ComponentCreatureModel.TextureOverride;
+                Shader.Texture = _componentCharacter.ComponentCreatureModel.TextureOverride;
             }
 
             Shader.SamplerState = SamplerState.PointClamp;
@@ -174,7 +174,7 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         _componentMiner = Entity.FindComponent<ComponentMiner>(true)!;
         _vrHandModel = ContentManager.Get<Model>(valuesDictionary.GetValue<string>("VrHandModelName"));
     }

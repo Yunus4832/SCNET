@@ -176,6 +176,7 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("SettingsDiagnostics", new SettingsDiagnosticsScreen()); });
         AddLoadAction(delegate { AddScreen("SettingsAudio", new SettingsAudioScreen()); });
         AddLoadAction(delegate { AddScreen("SettingsControls", new SettingsControlsScreen()); });
+        AddLoadAction(delegate { AddScreen("SettingsIdentity", new SettingsIdentityScreen()); });
         AddLoadAction(delegate { AddScreen("Play", new PlayScreen()); });
         AddLoadAction(delegate { AddScreen("NewWorld", new NewWorldScreen()); });
         AddLoadAction(delegate { AddScreen("WorldServerSettings", new WorldServerSettingsScreen()); });
@@ -193,8 +194,7 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("ContentPackages", new ContentPackageScreen()); });
         AddLoadAction(delegate { AddScreen("ModManagement", new ModManagementScreen()); });
         AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });
-        AddLoadAction(delegate { AddScreen("Players", new PlayersScreen()); });
-        AddLoadAction(delegate { AddScreen("Player", new PlayerScreen()); });
+        AddLoadAction(delegate { AddScreen("Character", new CharacterScreen()); });
         AddLoadAction(delegate { AddScreen("NetPlay", new NetPlayScreen()); });
     }
 

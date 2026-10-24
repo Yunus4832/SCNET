@@ -34,6 +34,11 @@ public sealed class CommandDispatcher(CommandRegistry registry)
             );
         }
 
+        if (definition.Domain != CommandDomain.Application && context.Principal.Subject is { Ban: not null })
+        {
+            return CommandResult.LocalizedFail("command.subject_banned", "PlayerBannedCommand_Message", "当前主体已被此存档封禁。");
+        }
+
         if (!definition.IsAuthorized(context, command))
         {
             return CommandResult.LocalizedFail(

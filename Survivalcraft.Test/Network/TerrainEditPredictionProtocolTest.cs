@@ -11,7 +11,7 @@ public sealed class TerrainEditPredictionProtocolTest
     [InlineData(InteractionMessageKind.Place)]
     public void InteractionRoundTripPreservesPlacementCorrelationWithoutChangingUseEvents(InteractionMessageKind action)
     {
-        var package = new PlayerInteractionPackage
+        var package = new CharacterInteractionPackage
         {
             InteractEvent = action,
             PlacementRequestId = 42,
@@ -22,7 +22,7 @@ public sealed class TerrainEditPredictionProtocolTest
         using var writer = new ProtocolWriter();
         ProtocolMessageCodec.Write(package, writer);
         using var reader = new ProtocolReader(writer.Data());
-        var restored = Assert.IsType<PlayerInteractionPackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var restored = Assert.IsType<CharacterInteractionPackage>(ProtocolMessageCodec.Read(package.ID, reader));
         Assert.Equal(action, restored.InteractEvent);
         Assert.Equal(package.NetInteractRay.Position, restored.NetInteractRay.Position);
         Assert.Equal(package.NetInteractRay.Direction, restored.NetInteractRay.Direction);

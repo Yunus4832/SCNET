@@ -52,7 +52,7 @@ public class ComponentStareBehavior : ComponentBehavior, IUpdateable
                     _target = FindTarget();
                     if (_target != null)
                     {
-                        var probability = _target.Entity.FindComponent<ComponentPlayer>() != null ? 1f : 0.25f;
+                        var probability = _target.Entity.FindComponent<ComponentCharacter>() != null ? 1f : 0.25f;
                         if (_random.Bool(probability))
                         {
                             _importanceLevel = _random.Float(3f, 5f);
@@ -155,7 +155,7 @@ public class ComponentStareBehavior : ComponentBehavior, IUpdateable
         );
         var num2 = _stareRange - num;
         if (_random.Float(0f, 1f) < 0.66f &&
-            componentCreature.Entity.FindComponent<ComponentPlayer>() != null)
+            componentCreature.Entity.FindComponent<ComponentCharacter>() != null)
         {
             num2 *= 100f;
         }

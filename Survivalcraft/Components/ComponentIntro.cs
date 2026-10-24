@@ -9,7 +9,7 @@ public class ComponentIntro : Component, IUpdateable
 {
     private const string _typeName = nameof(ComponentIntro);
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private bool _playIntro;
 
@@ -60,7 +60,7 @@ public class ComponentIntro : Component, IUpdateable
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         _playIntro = valuesDictionary.GetValue<bool>("PlayIntro");
         _stateMachine.AddState(
             "ShipView",
@@ -77,10 +77,10 @@ public class ComponentIntro : Component, IUpdateable
 
     public void ShipViewEnter()
     {
-        var componentBody = _componentPlayer.Entity.FindComponent<ComponentBody>(true)!;
+        var componentBody = _componentCharacter.Entity.FindComponent<ComponentBody>(true)!;
         var vector = FindOceanDirection(_subsystemTerrain.TerrainContentsGenerator, componentBody.Position.XZ);
         var vector2 = componentBody.Position.XZ + 25f * vector;
-        var isPlayerMounted = _componentPlayer.ComponentRider.Mount != null;
+        var isPlayerMounted = _componentCharacter.ComponentRider.Mount != null;
         var vector3 = vector2;
         var num = float.MinValue;
         for (var i = Terrain.ToCell(vector2.Y) - 15; i < Terrain.ToCell(vector2.Y) + 15; i++)
@@ -114,7 +114,7 @@ public class ComponentIntro : Component, IUpdateable
             2.0,
             delegate
             {
-                _componentPlayer.ComponentGui.DisplayLargeMessage(
+                _componentCharacter.ComponentGui.DisplayLargeMessage(
                     string.Empty,
                     LanguageManager.Get(_typeName, 1),
                     5f,
@@ -126,7 +126,7 @@ public class ComponentIntro : Component, IUpdateable
             7.0,
             delegate
             {
-                _componentPlayer.ComponentGui.DisplayLargeMessage(
+                _componentCharacter.ComponentGui.DisplayLargeMessage(
                     string.Empty,
                     isPlayerMounted
                         ? LanguageManager.Get(_typeName, 2)
@@ -140,7 +140,7 @@ public class ComponentIntro : Component, IUpdateable
             12.0,
             delegate
             {
-                _componentPlayer.ComponentGui.DisplayLargeMessage(
+                _componentCharacter.ComponentGui.DisplayLargeMessage(
                     string.Empty,
                     LanguageManager.Get(_typeName, 4),
                     5f,
@@ -148,20 +148,20 @@ public class ComponentIntro : Component, IUpdateable
                 );
             }
         );
-        var introCamera = _componentPlayer.GameWidget.FindCamera<IntroCamera>()!;
-        _componentPlayer.GameWidget.ActiveCamera = introCamera;
+        var introCamera = _componentCharacter.GameWidget.FindCamera<IntroCamera>()!;
+        _componentCharacter.GameWidget.ActiveCamera = introCamera;
         introCamera.CameraPosition = vector4 +
                                      new Vector3(12f * vector.X, 8f, 12f * vector.Y) +
                                      new Vector3(-5f * vector.Y, 0f, 5f * vector.X);
-        introCamera.TargetPosition = _componentPlayer.ComponentCreatureModel.EyePosition +
+        introCamera.TargetPosition = _componentCharacter.ComponentCreatureModel.EyePosition +
                                      2.5f * new Vector3(vector.X, 0f, vector.Y);
         introCamera.Speed = 0f;
-        introCamera.TargetCameraPosition = _componentPlayer.ComponentCreatureModel.EyePosition;
+        introCamera.TargetCameraPosition = _componentCharacter.ComponentCreatureModel.EyePosition;
     }
 
     public void ShipViewUpdate()
     {
-        var introCamera = _componentPlayer.GameWidget.FindCamera<IntroCamera>()!;
+        var introCamera = _componentCharacter.GameWidget.FindCamera<IntroCamera>()!;
         introCamera.Speed = MathUtils.Lerp(
             0f,
             8f,
@@ -172,7 +172,7 @@ public class ComponentIntro : Component, IUpdateable
             return;
         }
 
-        _componentPlayer.GameWidget.ActiveCamera = _componentPlayer.GameWidget.FindCamera<FppCamera>()!;
+        _componentCharacter.GameWidget.ActiveCamera = _componentCharacter.GameWidget.FindCamera<FppCamera>()!;
         _stateMachine.TransitionTo(string.Empty);
     }
 

@@ -266,24 +266,24 @@ public abstract class ComponentInventoryBase : Component, IInventory
         return 0;
     }
 
-    protected ComponentPlayer? FindInteractingPlayer()
+    protected ComponentCharacter? FindInteractingPlayer()
     {
-        var componentPlayer = Entity.FindComponent<ComponentPlayer>();
-        if (componentPlayer != null)
+        var componentCharacter = Entity.FindComponent<ComponentCharacter>();
+        if (componentCharacter != null)
         {
-            return componentPlayer;
+            return componentCharacter;
         }
 
         var componentBlockEntity = Entity.FindComponent<ComponentBlockEntity>();
         if (componentBlockEntity == null)
         {
-            return componentPlayer;
+            return componentCharacter;
         }
 
         var position = new Vector3(componentBlockEntity.Coordinates);
-        componentPlayer = Project.FindSubsystem<SubsystemPlayers>(true)!.FindNearestPlayer(position);
+        componentCharacter = Project.FindSubsystem<SubsystemCharacters>(true)!.FindNearestCharacter(position);
 
-        return componentPlayer;
+        return componentCharacter;
     }
 
 

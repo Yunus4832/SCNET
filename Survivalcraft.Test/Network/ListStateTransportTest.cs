@@ -45,9 +45,9 @@ public sealed class ListStateTransportTest
     [Fact]
     public void LargeAtomicPlayerListUsesFragmentableCoalescedReliableTransport()
     {
-        var package = new OnlinePlayerStatePackage(
+        var package = new OnlineCharacterStatePackage(
             Enumerable.Range(1, 100)
-                .Select(id => new OnlinePlayerState(Guid.NewGuid(), new Vector3(id, -id, id * 3), 1f, false))
+                .Select(id => new OnlineCharacterState(Guid.NewGuid(), new Vector3(id, -id, id * 3), 1f, false))
         );
         using var writer = new ProtocolWriter();
         writer.Write((byte)0);

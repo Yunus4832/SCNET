@@ -13,7 +13,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
 {
     private const float _fallbackContentDistance = 64f;
 
-    private SubsystemPlayers _subsystemPlayers = null!;
+    private SubsystemCharacters _subsystemCharacters = null!;
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
@@ -54,7 +54,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
 
         foreach (var (client, requested) in _requestedLocations)
         {
-            if (_subsystemPlayers.PlayersData.Find(player => ReferenceEquals(player.Client, client)) is { } player)
+            if (_subsystemCharacters.Characters.Find(player => ReferenceEquals(player.Client, client)) is { } player)
             {
                 ApplyRequestedLocation(client, player, requested);
             }
@@ -115,12 +115,12 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
-        _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemCharacters = Project.FindSubsystem<SubsystemCharacters>(true)!;
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>(true)!;
     }
 
-    public bool SetRequestedLocation(Client client, PlayerData player, TerrainUpdateLocation requested)
+    public bool SetRequestedLocation(Client client, CharacterData player, TerrainUpdateLocation requested)
     {
         if (!ApplyRequestedLocation(client, player, requested))
         {
@@ -131,12 +131,12 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
         return true;
     }
 
-    private bool ApplyRequestedLocation(Client client, PlayerData player, TerrainUpdateLocation requested)
+    private bool ApplyRequestedLocation(Client client, CharacterData player, TerrainUpdateLocation requested)
     {
         if (!NetworkTerrainPolicy.TryClampClientUpdateLocation(
                 requested,
                 SettingsManager.Current.MaxClientVisibilityRange,
-                player.ComponentPlayer?.ComponentBody.Position.XZ ?? player.SpawnPosition.XZ,
+                player.ComponentCharacter?.ComponentBody.Position.XZ ?? player.SpawnPosition.XZ,
                 out var approved
             ))
         {
@@ -147,7 +147,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
         // Reconcile the original camera request after movement arrives on another channel.
         // LastChunksUpdateCenter remains owned by the server updater.
         updater.SetUpdateLocation(
-            player.PlayerIndex,
+            player.CharacterIndex,
             approved.Center,
             approved.VisibilityDistance,
             approved.ContentDistance
@@ -307,7 +307,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
     public bool IsBodyRelevant(Client client, ComponentBody body)
     {
         return GetBodyGroup(body).Any(member =>
-            ReferenceEquals(member.Player?.PlayerData.Client, client) ||
+            ReferenceEquals(member.Character?.CharacterData.Client, client) ||
             IsPositionRelevant(client, member.Position.XZ)
         );
     }
@@ -318,7 +318,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
         foreach (var member in GetBodyGroup(body))
         {
             candidates.UnionWith(_spatial.GetObservers(member.Position.XZ));
-            if (member.Player?.PlayerData.Client is { } owner)
+            if (member.Character?.CharacterData.Client is { } owner)
             {
                 candidates.Add(owner);
             }
@@ -378,8 +378,8 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
             return true;
         }
 
-        var playerData = _subsystemPlayers.PlayersData.Find(player => ReferenceEquals(player.Client, client));
-        if (playerData is null)
+        var characterData = _subsystemCharacters.Characters.Find(player => ReferenceEquals(player.Client, client));
+        if (characterData is null)
         {
             center = default;
             contentDistance = 0f;
@@ -387,7 +387,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
         }
 
         if (_subsystemTerrain.TerrainUpdater.UpdateLocations.TryGetValue(
-                playerData.PlayerIndex,
+                characterData.CharacterIndex,
                 out var updateLocation
             ))
         {
@@ -396,7 +396,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
             return true;
         }
 
-        if (playerData.ComponentPlayer is not { } player)
+        if (characterData.ComponentCharacter is not { } player)
         {
             center = default;
             contentDistance = 0f;

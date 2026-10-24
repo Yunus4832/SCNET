@@ -180,7 +180,7 @@ public sealed class CommandRegistry
                entry.Definition.IsPotentiallyAuthorized(
                    Permissions,
                    principal,
-                   principal.Player?.Project ?? GameManager.Project
+                   principal.Character?.Project ?? GameManager.Project
                );
     }
 

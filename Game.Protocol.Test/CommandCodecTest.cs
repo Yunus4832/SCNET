@@ -1,6 +1,9 @@
 using System.Text.Json.Nodes;
 
+using Engine.Core.Security;
+
 using Game.Protocol.Commands;
+using Game.Protocol.Identity;
 using Game.Protocol.Localization;
 using Game.Protocol.Messaging;
 using Game.Protocol.Serialization;
@@ -23,7 +26,7 @@ public sealed class CommandCodecTest
         yield return
         [
             CommandPackage.CreatePermissionSnapshot(
-                Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                new PlayerAddress(IdentityAddress.Encode(new byte[32])),
                 [new CommandPermissionGrant(ResourceId.Parse("game:time"), true)]
             )
         ];

@@ -37,10 +37,10 @@ public sealed class SnapshotBudgetTransportTest
             {
                 Assert.Equal(0x88, reader.ReadByte());
                 var id = reader.ReadByte();
-                if (id == (byte)PackageType.ComponentPlayer)
+                if (id == (byte)PackageType.ComponentCharacter)
                 {
-                    var package = Assert.IsType<PlayerStatePackage>(ProtocolMessageCodec.Read(id, reader));
-                    receivedPlayers.Add(package.FromPlayerId);
+                    var package = Assert.IsType<CharacterStatePackage>(ProtocolMessageCodec.Read(id, reader));
+                    receivedPlayers.Add(package.ControllerSessionId);
                 }
                 else
                 {
@@ -90,11 +90,11 @@ public sealed class SnapshotBudgetTransportTest
                 var identity = new Client(null, id, Guid.NewGuid(), Guid.NewGuid(), null);
                 CommonLib.Net.Clients.Add(id, identity);
                 node.QueuePackage(
-                    new PlayerStatePackage
+                    new CharacterStatePackage
                     {
-                        FromPlayerId = id,
+                        ControllerSessionId = id,
 
-                        PackageChangeFlag = (ComponentPlayerPackage.ChangFlag)byte.MaxValue,
+                        PackageChangeFlag = (ComponentCharacterPackage.ChangFlag)byte.MaxValue,
                         Position = new Vector3(id, 70f, -id),
                         Rotation = Quaternion.Identity,
                         Velocity = new Vector3(id, 1f, 2f),
@@ -129,7 +129,7 @@ public sealed class SnapshotBudgetTransportTest
             PumpUntil(() => receivedPlayers.SetEquals(expectedPlayers));
             Assert.True(receivedDatagrams > 2);
             var fanout = node.SendStatistics.GetFanout()
-                .Single(statistic => statistic.PackageType == typeof(PlayerStatePackage));
+                .Single(statistic => statistic.PackageType == typeof(CharacterStatePackage));
             Assert.Equal(expectedPlayers.Count, fanout.Messages);
             Assert.Equal(expectedPlayers.Count, fanout.RecipientDeliveries);
             Assert.Equal(1, fanout.MaximumFanout);

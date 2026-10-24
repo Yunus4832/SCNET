@@ -28,7 +28,7 @@ public sealed class OfflineInventoryReferencesTest
         var entity = new ValuesDictionary();
         entity.SetValue("Overrides", overrides);
 
-        var values = SubsystemPlayers.GetSavedInventoryValues(entity).ToArray();
+        var values = SubsystemCharacters.GetSavedInventoryValues(entity).ToArray();
 
         Assert.Equal(expected, values.Length);
         Assert.All(values, value => Assert.Equal(67109091, value));
@@ -37,6 +37,6 @@ public sealed class OfflineInventoryReferencesTest
     [Fact]
     public void ComponentsWithoutSlotsHaveNoInventoryReferences()
     {
-        Assert.Empty(SubsystemPlayers.GetSavedInventoryValues(new ValuesDictionary()));
+        Assert.Empty(SubsystemCharacters.GetSavedInventoryValues(new ValuesDictionary()));
     }
 }

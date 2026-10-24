@@ -22,8 +22,8 @@ public sealed class ComponentHealthPackageHandler : PackageHandlerBase<Component
         var project = GameManager.Project;
         if (context.IsServer)
         {
-            var player = project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData
-                .FirstOrDefault(data => ReferenceEquals(data.Client, context.Sender))?.ComponentPlayer;
+            var player = project.FindSubsystem<SubsystemCharacters>(true)!.Characters
+                .FirstOrDefault(data => ReferenceEquals(data.Client, context.Sender))?.ComponentCharacter;
             var mount = player?.Entity.FindComponent<ComponentRider>()?.Mount;
             if (context.Sender is null ||
                 player is null ||

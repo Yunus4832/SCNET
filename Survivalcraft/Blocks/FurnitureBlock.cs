@@ -487,7 +487,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
         SubsystemTerrain terrain,
         string[] ingredients,
         float heatLevel,
-        ComponentPlayer? player
+        ComponentCharacter? player
     )
     {
         if (heatLevel != 0f)

@@ -103,7 +103,7 @@ public class ComponentRider : Component, IUpdateable
             //服务器和客户端都由自己控制下马
         {
             if (CommonLib.WorkType == WorkType.Local ||
-                ComponentCreature.ComponentBody.Player is not { PlayerData.IsMainPlayer: false })
+                ComponentCreature.ComponentBody.Character is not { CharacterData.IsLocalCharacter: false })
             {
                 StartDismounting();
             }

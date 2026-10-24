@@ -26,9 +26,9 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
 
     public override ResourceId[] HandledBlocks => [];
 
-    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
+    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentCharacter componentCharacter)
     {
-        componentPlayer.ComponentGui.ModalPanelWidget = componentPlayer.ComponentGui.ModalPanelWidget == null
+        componentCharacter.ComponentGui.ModalPanelWidget = componentCharacter.ComponentGui.ModalPanelWidget == null
             ? new MusketWidget(inventory, slotIndex)
             : null;
         return true;
@@ -88,13 +88,13 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                         0,
                         MusketBlock.SetHammerState(Terrain.ExtractData(num2), true)
                     );
-                    if (componentMiner.ComponentPlayer != null)
+                    if (componentMiner.ComponentCharacter != null)
                     {
                         _subsystemAudio.PlaySound(
                             "Audio/HammerCock",
                             1f,
                             _random.Float(-0.1f, 0.1f),
-                            componentMiner.ComponentPlayer.ComponentCreatureModel.EyePosition,
+                            componentMiner.ComponentCharacter.ComponentCreatureModel.EyePosition,
                             64f,
                             false
                         );
@@ -105,7 +105,7 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                     componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
                 if (componentFirstPersonModel != null)
                 {
-                    componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(
+                    componentMiner.ComponentCharacter?.ComponentAimingSights.ShowAimingSights(
                         aim.Position,
                         aim.Direction
                     );
@@ -128,13 +128,13 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                         0,
                         MusketBlock.SetHammerState(Terrain.ExtractData(num2), false)
                     );
-                    if (componentMiner.ComponentPlayer != null)
+                    if (componentMiner.ComponentCharacter != null)
                     {
                         _subsystemAudio.PlaySound(
                             "Audio/HammerUncock",
                             1f,
                             _random.Float(-0.1f, 0.1f),
-                            componentMiner.ComponentPlayer.ComponentCreatureModel.EyePosition,
+                            componentMiner.ComponentCharacter.ComponentCreatureModel.EyePosition,
                             64f,
                             false
                         );
@@ -157,7 +157,7 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                     switch (loadState)
                     {
                         case MusketBlock.LoadState.Empty:
-                            componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                            componentMiner.ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 0),
                                 Color.White,
                                 true,
@@ -167,7 +167,7 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                         case MusketBlock.LoadState.Gunpowder:
                         case MusketBlock.LoadState.Wad:
                             flag = true;
-                            componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                            componentMiner.ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 1),
                                 Color.White,
                                 true,

@@ -1,4 +1,5 @@
 using Engine.Network;
+using Engine.Network.Security;
 
 using Game.Network;
 using Game.Network.Handling;
@@ -42,12 +43,14 @@ public sealed class ServerConnectionPreparation : IAsyncDisposable
     public static async Task<ServerConnectionPreparation> PrepareAsync(
         NetworkTarget target,
         HttpClient http,
+        NetworkIdentity identity,
         CancellationToken cancellationToken
     )
     {
         var host = new NetworkHost(
             options: new NetworkHostOptions
             {
+                Identity = identity,
                 DisconnectTimeout = TimeSpan.FromMilliseconds(CommonLib.DisconnectTimeout)
             }
         );

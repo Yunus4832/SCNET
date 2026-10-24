@@ -322,7 +322,7 @@ public static class WorldsManager
             }
             else
             {
-                var players = activeProject.FindSubsystem<SubsystemPlayers>()?.PlayersData;
+                var players = activeProject.FindSubsystem<SubsystemCharacters>()?.Characters;
                 if (players is not null)
                 {
                     foreach (var player in players)
@@ -386,24 +386,24 @@ public static class WorldsManager
             var valuesDictionary = new ValuesDictionary();
             valuesDictionary.ApplyOverrides(gameInfoNode);
             worldInfo.WorldSettings.Load(valuesDictionary);
-            var playersNode = GetPlayersNode(xElement);
+            var playersNode = GetCharactersNode(xElement);
             var playersValues = playersNode == null
                 ? null
                 : (from e in playersNode.Elements()
-                    where XmlUtils.GetAttributeValue<string>(e, "Name") == "Players"
+                    where XmlUtils.GetAttributeValue<string>(e, "Name") == "Characters"
                     select e).FirstOrDefault();
             if (playersValues != null)
             {
                 foreach (var item2 in playersValues.Elements())
                 {
-                    var playerInfo = new PlayerInfo();
-                    worldInfo.PlayerInfos.Add(playerInfo);
+                    var characterInfo = new CharacterInfo();
+                    worldInfo.CharacterInfos.Add(characterInfo);
                     var xElement2 = (from e in item2.Elements()
                         where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CharacterSkinName"
                         select e).FirstOrDefault();
                     if (xElement2 != null)
                     {
-                        playerInfo.CharacterSkinName =
+                        characterInfo.CharacterSkinName =
                             XmlUtils.GetAttributeValue(xElement2, "Value", string.Empty);
                     }
                 }
@@ -647,10 +647,10 @@ public static class WorldsManager
         return xElement ?? throw new InvalidOperationException("GameInfo node not found in project.");
     }
 
-    private static XElement? GetPlayersNode(XElement projectNode)
+    private static XElement? GetCharactersNode(XElement projectNode)
     {
         var xElement = (from n in projectNode.Element("Subsystems")?.Elements("Values")
-            where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "Players"
+            where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "Characters"
             select n).FirstOrDefault();
         return xElement;
     }

@@ -97,7 +97,7 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
                     package.CreatureId,
                     from =>
                     {
-                        if (isServer && !OwnsCollisionSource(context.Sender, from.Player?.PlayerData.Client))
+                        if (isServer && !OwnsCollisionSource(context.Sender, from.Character?.CharacterData.Client))
                         {
                             return;
                         }

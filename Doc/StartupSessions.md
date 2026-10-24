@@ -108,6 +108,27 @@ Windows 和 Linux 只在 `RunMode.Gui` 分支注册；Linux 实现通过会话 D
 
 所有平台能力通过 `PlatformManager` 这一入口注册。GUI 同时注册 SDL2 文本输入、SDL2 文本剪贴板和平台 FilePicker；Windows/Linux Headless 与 Android ServerActivity 不注册这些交互能力。
 
+### 实例身份
+
+`LocalIdentityManager` 在实例 Storage 就绪后的 GUI/Headless 初始化阶段读取
+`config:LocalIdentities.xml`，在界面、会话恢复和网络启动之前准备玩家及服务器身份。
+每个实例分别持有一份玩家密钥和服务器密钥，两种用途互相独立；首次缺失的身份自动生成并一次保存。
+游戏和联网代码只读取已初始化的身份，不在进入存档或开启服务器时创建密钥。
+已有身份缺少私钥、地址与私钥不匹配或配置损坏时启动报错，不生成另一身份顶替。
+
+文件直接保存公开地址与 Base64 编码的未加密 PKCS#8 私钥，不使用平台秘密存储、密钥环、DPAPI 或
+Android Keystore，也不写入 `Settings`、session 或 `.runtime`。项目的安全边界是信任玩家设备和实例目录访问权限；
+Unix 新建文件限制为 `0600`，保存使用临时文件、刷盘和同目录原子替换。
+复制或克隆整个实例会同时复制身份，删除实例会同时删除其私钥。实例配置属于敏感数据，不能作为普通诊断附件分享。
+旧的外部秘密引用配置不再支持，不自动迁移。
+
+身份地址保留完整 32 字节公钥指纹，统一使用 `scnet` 前缀的 64 字符 Bech32m；规范输出为小写，输入允许全大写并归一化，拒绝大小写混用、错误校验和及非零填充位。旧 Base64URL 地址不再接受。
+
+设置中的“本地身份”页面分别管理玩家和服务器身份。导出仍使用至少八字符的密码加密 PKCS#8 备份，密码不保存。
+导入先校验备份并展示新旧地址，确认后原子替换所选身份；必须退出世界并停止网络连接。
+导入只恢复持钥身份，不转移角色、权限或其他存档资产；另一用途的身份不受影响。
+
+
 ## SessionInfo
 
 路径：`config:SessionInfo.xml`
@@ -125,7 +146,7 @@ Windows 和 Linux 只在 `RunMode.Gui` 分支注册；Linux 实现通过会话 D
 - `RemoteTarget`（远程地址或邀请会话的逻辑目标）
 - `ServerPort`
 - `BroadcastPort`
-- `AutoJoinPlayerName`（可选的自动进入角色名）
+- `AutoJoinCharacterName`（可选的自动进入角色名）
 
 `HttpCommandEnabled`、`HttpCommandPort` 和 `HttpCommandAccessToken` 是可选的 session 覆盖。未设置时回退到当前实例的 `Settings.xml`；使用 `--save` 保存后，可以通过同名 session 恢复。
 

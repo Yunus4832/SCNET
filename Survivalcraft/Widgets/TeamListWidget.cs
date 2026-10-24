@@ -3,7 +3,7 @@ namespace Game.Widgets;
 public sealed class TeamListWidget : CanvasWidget
 {
     public sealed record TeamItem(
-        string GroupKey,
+        Guid TeamId,
         string Name,
         int MemberCount,
         bool IsCurrent
@@ -16,13 +16,16 @@ public sealed class TeamListWidget : CanvasWidget
         SelectionColor = MultiplayerUiStyle.ListSelectionColor
     };
 
-    private readonly PlayerData _playerData;
+    private readonly CharacterData _characterData;
+
+    private Guid CurrentTeamId =>
+        CharacterTeamQuery.GetTeamId(_characterData.Project, _characterData.CharacterId);
 
     public TeamItem? SelectedTeam => Teams.SelectedItem as TeamItem;
 
-    public TeamListWidget(PlayerData playerData, Vector2 size)
+    public TeamListWidget(CharacterData characterData, Vector2 size)
     {
-        _playerData = playerData;
+        _characterData = characterData;
         Size = size;
         var itemWidth = MathUtils.Max(size.X - 32f, 0f);
         Teams.HorizontalAlignment = WidgetAlignment.Center;
@@ -33,14 +36,14 @@ public sealed class TeamListWidget : CanvasWidget
 
     public void RefreshList()
     {
-        var selectedGroupKey = SelectedTeam?.GroupKey;
-        if (selectedGroupKey is null && _playerData.GroupKey.Length > 0)
+        var selectedTeamId = SelectedTeam?.TeamId;
+        if (selectedTeamId is null && CurrentTeamId != Guid.Empty)
         {
-            selectedGroupKey = _playerData.GroupKey;
+            selectedTeamId = CurrentTeamId;
         }
 
         Teams.ClearItems();
-        foreach (var pair in _playerData.SubsystemPlayers.ServerGroups
+        foreach (var pair in _characterData.Project.FindSubsystem<SubsystemTeams>(true)!.Store.Teams
                      .OrderBy(pair => pair.Value.Name, StringComparer.OrdinalIgnoreCase))
         {
             Teams.AddItem(
@@ -48,19 +51,19 @@ public sealed class TeamListWidget : CanvasWidget
                     pair.Key,
                     pair.Value.Name,
                     pair.Value.Members.Count,
-                    pair.Key == _playerData.GroupKey
+                    pair.Key == CurrentTeamId
                 )
             );
         }
 
-        if (selectedGroupKey is null)
+        if (selectedTeamId is null)
         {
             return;
         }
 
         Teams.SelectedItem = Teams.Items
             .OfType<TeamItem>()
-            .FirstOrDefault(team => team.GroupKey == selectedGroupKey);
+            .FirstOrDefault(team => team.TeamId == selectedTeamId);
     }
 
     private sealed class TeamItemWidget : CanvasWidget

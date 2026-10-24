@@ -1,0 +1,25 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+    <PanoramaWidget/>
+    <StackPanelWidget Direction="Horizontal">
+        <CanvasWidget Style="{Widgets/TopBarContents}"><LabelWidget Name="TopBar.Label" Text="[SettingsIdentityScreen:Title]"/></CanvasWidget>
+        <CanvasWidget Style="{Styles/ScreenContentArea}" ClampToBounds="true">
+            <BevelledRectangleWidget Style="{Styles/Area}"/>
+            <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <SelectionDrawerWidget Name="Purpose" Size="350, 60" HorizontalAlignment="Center"/>
+                <LabelWidget Text="[SettingsIdentityScreen:Address]" Margin="0, 14" HorizontalAlignment="Center"/>
+                <CanvasWidget Size="640, 60">
+                    <LabelWidget Name="Address" FontScale="0.75" WordWrap="true" TextAnchor="HorizontalCenter, VerticalCenter" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                </CanvasWidget>
+                <BevelledButtonWidget Name="Copy" Text="[SettingsIdentityScreen:Copy]" Style="{Styles/ButtonStyle_310x60}" HorizontalAlignment="Center"/>
+                <CanvasWidget Size="590, 100">
+                    <LabelWidget Name="Hint" FontScale="0.75" WordWrap="true" TextAnchor="HorizontalCenter, VerticalCenter" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                </CanvasWidget>
+                <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+                    <BevelledButtonWidget Name="Export" Text="[SettingsIdentityScreen:Export]" Style="{Styles/ButtonStyle_310x60}"/>
+                    <CanvasWidget Size="20, 0"/>
+                    <BevelledButtonWidget Name="Import" Text="[SettingsIdentityScreen:Import]" Style="{Styles/ButtonStyle_310x60}"/>
+                </StackPanelWidget>
+            </StackPanelWidget>
+        </CanvasWidget>
+    </StackPanelWidget>
+</Screen>

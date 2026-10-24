@@ -3,7 +3,7 @@ namespace Game.Automation;
 /// <summary>Reuses terrain path search but drives the local player through its normal input stage.</summary>
 public sealed class AutomationNavigationController
 {
-    private ComponentPlayer? _player;
+    private ComponentCharacter? _player;
 
     private PathfindingResult? _search;
 
@@ -57,7 +57,7 @@ public sealed class AutomationNavigationController
             throw new ArgumentException("A finite destination, range 0.5–4 and timeoutSeconds 1–120 are required.");
         }
 
-        var player = GameManager.Project?.FindSubsystem<SubsystemPlayers>()?.ComponentPlayers
+        var player = GameManager.Project?.FindSubsystem<SubsystemCharacters>()?.ComponentCharacters
             .FirstOrDefault(candidate => candidate.IsLocallyControlled);
         if (player == null || !CanControl(player) || ScreensManager.IsAnimating)
         {
@@ -120,11 +120,11 @@ public sealed class AutomationNavigationController
         // A queued worker owns its result until completion; never reuse or clear it here.
     }
 
-    private static bool CanControl(ComponentPlayer player) =>
+    private static bool CanControl(ComponentCharacter player) =>
         Window.IsActive &&
         ScreensManager.GetCurrentScreenName() == "Game" &&
         player.Entity.IsAddedToProject &&
-        player.PlayerData.IsReadyForPlaying &&
+        player.CharacterData.IsReadyForPlaying &&
         player.ComponentHealth.Health > 0f &&
         player.ComponentSleep.SleepFactor == 0f &&
         player.ComponentGui.ModalPanelWidget == null &&
@@ -146,7 +146,7 @@ public sealed class AutomationNavigationController
         }
     }
 
-    public void ApplyInput(ComponentPlayer player, ref PlayerInput input)
+    public void ApplyInput(ComponentCharacter player, ref PlayerInput input)
     {
         if (_player != player)
         {

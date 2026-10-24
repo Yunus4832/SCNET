@@ -6,8 +6,8 @@ namespace Game.Commands;
 
 internal static class AutomationCommandHandlers
 {
-    private static ComponentPlayer? FindLocalPlayer() => GameManager.Project?
-        .FindSubsystem<SubsystemPlayers>()?.ComponentPlayers.FirstOrDefault(player => player.IsLocallyControlled);
+    private static ComponentCharacter? FindLocalPlayer() => GameManager.Project?
+        .FindSubsystem<SubsystemCharacters>()?.ComponentCharacters.FirstOrDefault(player => player.IsLocallyControlled);
 
     public static CommandResult LookAt(CommandContext _, LookAtAutomationTargetCommand command)
     {
@@ -124,7 +124,7 @@ internal static class AutomationCommandHandlers
     }
 
     private static AutomationNavigationController? FindNavigation() => GameManager.Project?
-        .FindSubsystem<SubsystemPlayers>()?.ComponentPlayers.FirstOrDefault(player => player.IsLocallyControlled)
+        .FindSubsystem<SubsystemCharacters>()?.ComponentCharacters.FirstOrDefault(player => player.IsLocallyControlled)
         ?.ComponentInput.Navigation;
 
     private static AutomationNavigationController GetNavigation() => FindNavigation() ??

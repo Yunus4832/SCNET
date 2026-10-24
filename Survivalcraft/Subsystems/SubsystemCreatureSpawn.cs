@@ -45,7 +45,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
 
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
-    private SubsystemPlayers _subsystemPlayers = null!;
+    private SubsystemCharacters _subsystemCharacters = null!;
 
     private SubsystemSky _subsystemSky = null!;
 
@@ -115,7 +115,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true)!;
         _subsystemViews = Project.FindSubsystem<SubsystemGameWidgets>(true)!;
-        _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemCharacters = Project.FindSubsystem<SubsystemCharacters>(true)!;
         InitializeCreatureTypes();
 
         _subsystemSpawn.SpawningChunk += delegate(SpawnChunk chunk)
@@ -1599,9 +1599,9 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
         }
 
         var centers = new List<Vector3>();
-        foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
+        foreach (var componentCharacter in _subsystemCharacters.ComponentCharacters)
         {
-            centers.Add(componentPlayer.ComponentBody.Position);
+            centers.Add(componentCharacter.ComponentBody.Position);
         }
 
         foreach (var center in centers)
@@ -1992,7 +1992,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
 
     private int GetSpawnFactorByPlayerCount()
     {
-        var count = _subsystemPlayers.ComponentPlayers.Count;
+        var count = _subsystemCharacters.ComponentCharacters.Count;
         if (count > 10)
         {
             count = 10;

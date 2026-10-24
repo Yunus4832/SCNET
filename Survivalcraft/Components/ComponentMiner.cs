@@ -60,7 +60,7 @@ public class ComponentMiner : Component, IUpdateable
 
     public ComponentCreature ComponentCreature { get; private set; } = null!;
 
-    public ComponentPlayer? ComponentPlayer { get; private set; }
+    public ComponentCharacter? ComponentCharacter { get; private set; }
 
     public float AutoInteractRate { get; private set; }
 
@@ -150,7 +150,7 @@ public class ComponentMiner : Component, IUpdateable
         var result = false;
         _lastDigFrameIndex = Time.FrameIndex;
         var cellFace = raycastResult.CellFace;
-        if (ComponentPlayer is { PlayerData.IsMainPlayer: true } &&
+        if (ComponentCharacter is { CharacterData.IsLocalCharacter: true } &&
             _subsystemTerrain.CellPrediction?.IsPending(cellFace.Point) == true)
         {
             DigCellFace = null;
@@ -188,7 +188,7 @@ public class ComponentMiner : Component, IUpdateable
             _digProgress = 0f;
             if (_subsystemTime.PeriodicGameTimeEvent(5.0, _digStartTime + 1.0))
             {
-                ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                     string.Format(
                         LanguageManager.Get(Name, 1),
                         block2.PlayerLevelRequired,
@@ -201,10 +201,10 @@ public class ComponentMiner : Component, IUpdateable
             }
         }
 
-        var flag = ComponentPlayer is { ComponentInput.IsTouchInputActive: false } &&
+        var flag = ComponentCharacter is { ComponentInput.IsTouchInputActive: false } &&
                    _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative;
         var flag2 = flag || (_lastPokingPhase <= 0.5f && PokingPhase > 0.5f);
-        if (ComponentPlayer is { PlayerData.IsMainPlayer: false })
+        if (ComponentCharacter is { CharacterData.IsLocalCharacter: false })
         {
             flag2 = isEnd;
             _digProgress += 0.2f;
@@ -221,7 +221,7 @@ public class ComponentMiner : Component, IUpdateable
             {
                 if (num2 != 23 && flag3)
                 {
-                    ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                    ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                         LanguageManager.Get(Name, "11"),
                         Color.White,
                         true,
@@ -234,7 +234,7 @@ public class ComponentMiner : Component, IUpdateable
             {
                 var displayName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(num4)]
                     .GetDisplayName(_subsystemTerrain, num4);
-                ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                     "使用:" + displayName + "更快挖掘",
                     Color.White,
                     true,
@@ -260,7 +260,7 @@ public class ComponentMiner : Component, IUpdateable
             var digValue = block.GetDigValue(_subsystemTerrain, this, cellValue, activeBlockValue, raycastResult);
 
             if (CommonLib.WorkType == WorkType.Client &&
-                ComponentPlayer is { PlayerData.IsMainPlayer: true } &&
+                ComponentCharacter is { CharacterData.IsLocalCharacter: true } &&
                 digValue.CellFace.Point == cellFace.Point)
             {
                 DigExpectedValue = cellValue;
@@ -288,9 +288,9 @@ public class ComponentMiner : Component, IUpdateable
                 2f
             );
             DamageActiveTool(1);
-            if (ComponentCreature.PlayerStats != null)
+            if (ComponentCreature.CharacterStats != null)
             {
-                ComponentCreature.PlayerStats.BlocksDug++;
+                ComponentCreature.CharacterStats.BlocksDug++;
             }
 
             result = true;
@@ -351,7 +351,7 @@ public class ComponentMiner : Component, IUpdateable
         var num = Terrain.ExtractContents(value);
         if (_subsystemGameInfo.WorldSettings.IsBlockDiable(value))
         {
-            ComponentPlayer?.ComponentGui.DisplaySmallMessage("此物品已被禁用", Color.Red, false, true);
+            ComponentCharacter?.ComponentGui.DisplaySmallMessage("此物品已被禁用", Color.Red, false, true);
             return false;
         }
 
@@ -428,7 +428,7 @@ public class ComponentMiner : Component, IUpdateable
             behavior.OnBlockPlaced(this, num2, num3, num4, ref placementData, value);
         }
 
-        if (CommonLib.WorkType == WorkType.Client && ComponentPlayer is { PlayerData.IsMainPlayer: true })
+        if (CommonLib.WorkType == WorkType.Client && ComponentCharacter is { CharacterData.IsLocalCharacter: true })
         {
             PlacementCell = new Point3(num2, num3, num4);
             PlacementExpectedValue = _subsystemTerrain.Terrain.GetCellValue(num2, num3, num4);
@@ -451,9 +451,9 @@ public class ComponentMiner : Component, IUpdateable
             false
         );
         Poke(false);
-        if (ComponentCreature.PlayerStats != null)
+        if (ComponentCreature.CharacterStats != null)
         {
-            ComponentCreature.PlayerStats.BlocksPlaced++;
+            ComponentCreature.CharacterStats.BlocksPlaced++;
         }
 
         return true;
@@ -473,7 +473,7 @@ public class ComponentMiner : Component, IUpdateable
 
         if (!CanUseTool(ActiveBlockValue))
         {
-            ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+            ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                 string.Format(
                     LanguageManager.Get(Name, 1),
                     block.PlayerLevelRequired,
@@ -519,9 +519,9 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
-        if (ComponentCreature.PlayerStats != null)
+        if (ComponentCreature.CharacterStats != null)
         {
-            ComponentCreature.PlayerStats.BlocksInteracted++;
+            ComponentCreature.CharacterStats.BlocksInteracted++;
         }
 
         Poke(false);
@@ -539,7 +539,7 @@ public class ComponentMiner : Component, IUpdateable
         var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(ActiveBlockValue)];
         if (!CanUseTool(ActiveBlockValue))
         {
-            ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+            ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                 string.Format(
                     LanguageManager.Get(Name, 1),
                     block.PlayerLevelRequired,
@@ -575,10 +575,10 @@ public class ComponentMiner : Component, IUpdateable
             3f,
             false
         );
-        var flag = _random.Bool(ComponentPlayer != null ? playerHitRate : creatureHitRate);
-        if (ComponentPlayer != null)
+        var flag = _random.Bool(ComponentCharacter != null ? playerHitRate : creatureHitRate);
+        if (ComponentCharacter != null)
         {
-            damage *= ComponentPlayer.ComponentLevel.StrengthFactor;
+            damage *= ComponentCharacter.ComponentLevel.StrengthFactor;
         }
 
         if (flag)
@@ -586,7 +586,7 @@ public class ComponentMiner : Component, IUpdateable
             AttackBody(componentBody, ComponentCreature, hitPoint, hitDirection, damage, true);
             DamageActiveTool(1);
         }
-        else if (ComponentCreature is ComponentPlayer)
+        else if (ComponentCreature is ComponentCharacter)
         {
             var position = hitPoint + 0.75f * hitDirection;
             var velocity = 1f * hitDirection + ComponentCreature.ComponentBody.Velocity;
@@ -604,12 +604,12 @@ public class ComponentMiner : Component, IUpdateable
             }
         }
 
-        if (ComponentCreature.PlayerStats != null)
+        if (ComponentCreature.CharacterStats != null)
         {
-            ComponentCreature.PlayerStats.MeleeAttacks++;
+            ComponentCreature.CharacterStats.MeleeAttacks++;
             if (flag)
             {
-                ComponentCreature.PlayerStats.MeleeHits++;
+                ComponentCreature.CharacterStats.MeleeHits++;
             }
         }
 
@@ -627,7 +627,7 @@ public class ComponentMiner : Component, IUpdateable
 
         if (!CanUseTool(ActiveBlockValue))
         {
-            ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+            ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                 string.Format(
                     LanguageManager.Get(Name, 1),
                     block.PlayerLevelRequired,
@@ -702,7 +702,7 @@ public class ComponentMiner : Component, IUpdateable
                 };
             },
             includePredictedBlocks: mode == RaycastMode.Digging &&
-                                    ComponentPlayer is { PlayerData.IsMainPlayer: true }
+                                    ComponentCharacter is { CharacterData.IsLocalCharacter: true }
         );
         var num = bodyRaycastResult?.Distance ?? float.PositiveInfinity;
         var num2 = movingBlocksRaycastResult?.Distance ?? float.PositiveInfinity;
@@ -788,7 +788,7 @@ public class ComponentMiner : Component, IUpdateable
         bool isMeleeAttack
     )
     {
-        if (attacker is ComponentPlayer && target.Player != null)
+        if (attacker is ComponentCharacter && target.Character != null)
         {
             if (!target.Project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.IsFriendlyFireEnabled)
             {
@@ -849,7 +849,7 @@ public class ComponentMiner : Component, IUpdateable
                         false
                     );
                     var num2 = (health - componentHealth.Health) * componentHealth.AttackResilience;
-                    if (attacker is ComponentPlayer && num2 > 0f)
+                    if (attacker is ComponentCharacter && num2 > 0f)
                     {
                         var text2 = (0f - num2).ToString("0", CultureInfo.InvariantCulture);
                         var position = hitPoint + 0.75f * hitDirection;
@@ -939,7 +939,7 @@ public class ComponentMiner : Component, IUpdateable
         _subsystemSoundMaterials = Project.FindSubsystem<SubsystemSoundMaterials>(true)!;
         _subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true)!;
         ComponentCreature = Entity.FindComponent<ComponentCreature>(true)!;
-        ComponentPlayer = Entity.FindComponent<ComponentPlayer>();
+        ComponentCharacter = Entity.FindComponent<ComponentCharacter>();
         _componentHealth = Entity.FindComponent<ComponentHealth>(true)!;
         if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative)
         {
@@ -1009,9 +1009,9 @@ public class ComponentMiner : Component, IUpdateable
                 BlockDigMethod.Hack when block.HackPower >= 2f => block.HackPower,
                 _ => 0f
             };
-            if (ComponentPlayer != null)
+            if (ComponentCharacter != null)
             {
-                num *= ComponentPlayer.ComponentLevel.StrengthFactor;
+                num *= ComponentCharacter.ComponentLevel.StrengthFactor;
             }
 
             return !(num > 0f) ? float.PositiveInfinity : MathUtils.Max(digResilience / num, 0f);
@@ -1024,9 +1024,9 @@ public class ComponentMiner : Component, IUpdateable
             BlockDigMethod.Hack => block.HackPower,
             _ => 0f
         };
-        if (ComponentPlayer != null)
+        if (ComponentCharacter != null)
         {
-            num2 *= ComponentPlayer.ComponentLevel.StrengthFactor;
+            num2 *= ComponentCharacter.ComponentLevel.StrengthFactor;
         }
 
         return !(num2 > 0f) ? float.PositiveInfinity : MathUtils.Max(digResilience / num2, 0f);
@@ -1040,13 +1040,13 @@ public class ComponentMiner : Component, IUpdateable
             return true;
         }
 
-        if (ComponentPlayer == null)
+        if (ComponentCharacter == null)
         {
             return true;
         }
 
         var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(toolValue)];
-        return !(ComponentPlayer.PlayerData.Level < block.PlayerLevelRequired);
+        return !(ComponentCharacter.CharacterData.Level < block.PlayerLevelRequired);
     }
 
     private int FindBestInventoryToolForDigging(int digValue)

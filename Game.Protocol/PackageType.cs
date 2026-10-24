@@ -17,14 +17,14 @@ public enum PackageType : byte
 
     InitialWorldSnapshot = 6,
 
-    // 玩家与实体目录
+    // 角色与实体目录
     Entity = 7,
 
-    PlayerData = 8,
+    CharacterData = 8,
 
-    PlayerList = 9,
+    CharacterList = 9,
 
-    OnlinePlayerState = 10,
+    OnlineCharacterState = 10,
 
     // 区块与方块变更
     SubsystemTerrain = 11,
@@ -56,7 +56,7 @@ public enum PackageType : byte
     Explosion = 23,
 
     // 玩家组件状态
-    ComponentPlayer = 24,
+    ComponentCharacter = 24,
 
     ComponentBehavior = 25,
 
@@ -92,7 +92,7 @@ public enum PackageType : byte
     // 消息与命令
     Message = 40,
 
-    GroupManage = 41,
+    TeamManage = 41,
 
     Command = 42,
 

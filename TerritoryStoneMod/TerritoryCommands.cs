@@ -2,9 +2,13 @@ using Game;
 using Game.Commands;
 using Game.Localization;
 using Game.Modding;
+using Game.Network;
+using Game.Players;
 using Game.Protocol;
 using Game.Protocol.Commands;
+using Game.Protocol.Identity;
 using Game.Protocol.Localization;
+using Game.Protocol.Serialization;
 using Game.Subsystems;
 
 namespace TerritoryStoneMod;
@@ -13,7 +17,7 @@ public sealed record RequestTerritoryAccessCommand(string Owner) : IGameCommand;
 
 public sealed record DecideTerritoryAccessCommand(Guid Request, string Permissions) : IGameCommand;
 
-public sealed record SetTerritoryGrantCommand(Guid Player, string Permissions) : IGameCommand;
+public sealed record SetTerritoryGrantCommand(PlayerAddress User, string Permissions) : IGameCommand;
 
 public static class TerritoryCommands
 {
@@ -22,9 +26,9 @@ public static class TerritoryCommands
         context.Commands.Register(
             new ResourceId(context.Manifest.ModId, "access/request"),
             new CommandDefinition<RequestTerritoryAccessCommand>(
-                (commandContext, command) => WithPlayer(
+                (commandContext, command) => WithSubject(
                     commandContext,
-                    (world, player) => world.RequestAccess(player, command.Owner)
+                    (world, user) => world.RequestAccess(user, command.Owner)
                 ),
                 CommandDomain.World,
                 Description("RequestDescription"),
@@ -36,9 +40,9 @@ public static class TerritoryCommands
         context.Commands.Register(
             new ResourceId(context.Manifest.ModId, "access/decide"),
             new CommandDefinition<DecideTerritoryAccessCommand>(
-                (commandContext, command) => WithPlayer(
+                (commandContext, command) => WithSubject(
                     commandContext,
-                    (world, player) => world.DecideAccess(player, command.Request, command.Permissions)
+                    (world, user) => world.DecideAccess(user, command.Request, command.Permissions)
                 ),
                 CommandDomain.World,
                 Description("DecideDescription"),
@@ -54,19 +58,19 @@ public static class TerritoryCommands
         context.Commands.Register(
             new ResourceId(context.Manifest.ModId, "access/set"),
             new CommandDefinition<SetTerritoryGrantCommand>(
-                (commandContext, command) => WithPlayer(
+                (commandContext, command) => WithSubject(
                     commandContext,
-                    (world, player) => world.ChangeGrant(player, command.Player, command.Permissions)
+                    (world, user) => world.ChangeGrant(user, command.User, command.Permissions)
                 ),
                 CommandDomain.World,
                 Description("GrantDescription"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
                 write: (writer, command) =>
                 {
-                    writer.Write(command.Player);
+                    PlayerAddressCodec.Write(writer, command.User);
                     writer.Write(command.Permissions);
                 },
-                read: reader => new SetTerritoryGrantCommand(reader.ReadGuid(), reader.ReadString())
+                read: reader => new SetTerritoryGrantCommand(PlayerAddressCodec.Read(reader), reader.ReadString())
             )
         );
         context.Commands.Adapters.Register(
@@ -92,29 +96,21 @@ public static class TerritoryCommands
     private static IEnumerable<CommandArgumentSuggestion> SuggestOwners(CommandSuggestionContext context)
     {
         if (context.Project?.FindSubsystem<TerritorySubsystem>() is not { } world ||
-            context.Project.FindSubsystem<SubsystemPlayers>() is not { } players)
+            context.Project.FindSubsystem<SubsystemCharacters>() is not { } players)
         {
             return [];
         }
 
-        var owners = world.Store.Territories.Where(territory =>
-                territory.Owner != context.Principal.Player?.PlayerGUID &&
-                (context.Principal.Player is not { } applicant || !territory.Grants.ContainsKey(applicant.PlayerGUID))
+        return world.Store.Territories.Where(territory =>
+                territory.Owner != context.Principal.Subject?.Address &&
+                (context.Principal.Subject is not { } applicant || !territory.Grants.ContainsKey(applicant.Address)) &&
+                PlayerSessionQuery.Find(territory.Owner) is not null
             )
-            .Where(territory => players.PlayersData.Any(player => player.PlayerGUID == territory.Owner &&
-                                                                  player.ComponentPlayer != null &&
-                                                                  (player.IsMainPlayer ||
-                                                                   player.Client?.IsConnected == true)
+            .Select(territory => new CommandArgumentSuggestion(
+                    territory.Owner.Value,
+                    LocalizedText.Literal(world.OwnerName(territory.Owner))
                 )
-            )
-            .Select(territory => (territory.Owner, Name: world.OwnerName(territory.Owner))).ToArray();
-        return owners.Select(owner => new CommandArgumentSuggestion(
-                owners.Count(other => string.Equals(other.Name, owner.Name, StringComparison.OrdinalIgnoreCase)) > 1
-                    ? owner.Owner.ToString("D")
-                    : owner.Name,
-                LocalizedText.Literal(owner.Name)
-            )
-        );
+            );
     }
 
     public static CommandResult Result(string key, bool success, params string[] arguments)
@@ -127,14 +123,19 @@ public static class TerritoryCommands
 
     private static LocalizedText Description(string key) => new("Commands", "Territory_" + key, key);
 
-    private static CommandResult WithPlayer(
+    private static CommandResult WithSubject(
         CommandContext context,
-        Func<TerritorySubsystem, PlayerData, CommandResult> action
+        Func<TerritorySubsystem, WorldPlayer, CommandResult> action
     )
     {
-        return context.Principal.Player is { } player &&
-               context.Project?.FindSubsystem<TerritorySubsystem>() is { } world
-            ? action(world, player)
+        return context.Principal.Subject is { Ban: null } user &&
+               context.Project?.FindSubsystem<TerritorySubsystem>() is { } world &&
+               ReferenceEquals(
+                   context.Project.FindSubsystem<SubsystemPlayers>()?.Store.Find(user.Address),
+                   user
+               ) &&
+               PlayerSessionQuery.Find(user.Address) is not null
+            ? action(world, user)
             : Result("Unavailable", false);
     }
 }

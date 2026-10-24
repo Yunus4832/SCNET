@@ -7,6 +7,7 @@ using Game.Components;
 using Game.Dialogs;
 using Game.Managers;
 using Game.Network;
+using Game.Protocol.Identity;
 using Game.Widgets;
 
 namespace TerritoryStoneMod;
@@ -15,9 +16,9 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
 {
     private readonly TerritorySubsystem _subsystem;
 
-    private readonly ComponentPlayer _player;
+    private readonly ComponentCharacter _player;
 
-    private readonly Guid _owner;
+    private readonly PlayerAddress _owner;
 
     private readonly Action _close;
 
@@ -51,7 +52,7 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
 
     private readonly LabelWidget _emptyGrants;
 
-    private KeyValuePair<Guid, TerritoryGrant>[] _grantSnapshot = [];
+    private KeyValuePair<PlayerAddress, TerritoryGrant>[] _grantSnapshot = [];
 
     private readonly CheckboxWidget _show;
 
@@ -66,7 +67,7 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
     public TerritorySettingsWidget(
         TerritorySubsystem subsystem,
         Territory territory,
-        ComponentPlayer player,
+        ComponentCharacter player,
         Action close
     )
     {
@@ -200,7 +201,7 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
         }
 
         RefreshGrants(territory!);
-        var selected = _grantList.SelectedItem as KeyValuePair<Guid, TerritoryGrant>?;
+        var selected = _grantList.SelectedItem as KeyValuePair<PlayerAddress, TerritoryGrant>?;
         _editGrant.IsEnabled = selected.HasValue;
         _revokeGrant.IsEnabled = selected.HasValue;
         if (_editGrant.IsClicked && selected is { } edit)
@@ -264,7 +265,7 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
                 _placing.IsChecked,
                 _show.IsChecked
             );
-            var error = _subsystem.ChangeSettings(territory!, settings);
+            var error = _subsystem.ChangeSettings(_player.CharacterData.Client, territory!, settings);
             if (error != null)
             {
                 ShowSettings(territory!.Settings);
@@ -311,10 +312,10 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
     private void RefreshGrants(Territory territory)
     {
         var grants = territory.Grants.OrderBy(grant => grant.Value.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ThenBy(grant => grant.Key).ToArray();
+            .ThenBy(grant => grant.Key.Value, StringComparer.Ordinal).ToArray();
         if (!grants.SequenceEqual(_grantSnapshot))
         {
-            var selected = (_grantList.SelectedItem as KeyValuePair<Guid, TerritoryGrant>?)?.Key;
+            var selected = (_grantList.SelectedItem as KeyValuePair<PlayerAddress, TerritoryGrant>?)?.Key;
             var scroll = _grantList.ScrollPosition;
             _grantSnapshot = grants;
             _grantList.ClearItems();
@@ -336,7 +337,7 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
 
     private static Widget CreateGrantRow(object item)
     {
-        var grant = ((KeyValuePair<Guid, TerritoryGrant>)item).Value;
+        var grant = ((KeyValuePair<PlayerAddress, TerritoryGrant>)item).Value;
         var row = new CanvasWidget { Size = new Vector2(554, 60) };
         var name = new LabelWidget
         {
@@ -367,7 +368,7 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
         return row;
     }
 
-    private void EditGrant(KeyValuePair<Guid, TerritoryGrant> grant) =>
+    private void EditGrant(KeyValuePair<PlayerAddress, TerritoryGrant> grant) =>
         DialogsManager.ShowDialog(
             _player.GameWidget.GuiWidget,
             new TerritoryPermissionsDialog(
@@ -378,9 +379,9 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
             )
         );
 
-    private void SetGrant(Guid player, TerritoryPermission permissions) =>
+    private void SetGrant(PlayerAddress player, TerritoryPermission permissions) =>
         CommandGateway.Submit(
-            _player.PlayerData,
+            _player.CharacterData,
             new SetTerritoryGrantCommand(player, permissions.ToString().ToLowerInvariant().Replace(" ", ""))
         );
 

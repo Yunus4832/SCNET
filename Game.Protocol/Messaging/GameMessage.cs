@@ -3,7 +3,7 @@ namespace Game.Protocol.Messaging;
 public sealed record GameMessage(
     GameMessageKind Kind,
     GameMessageChannel Channel,
-    string SenderName,
+    MessageSender? Sender,
     MessageContent Content,
     GameMessageTone Tone = GameMessageTone.Normal,
     GameMessagePresentation Presentation = GameMessagePresentation.Default
@@ -17,10 +17,10 @@ public sealed record GameMessage(
 
     public static GameMessage Chat(
         GameMessageChannel channel,
-        string senderName,
+        MessageSender sender,
         string text
     ) =>
-        new(GameMessageKind.Chat, channel, senderName, MessageContent.Plain(text));
+        new(GameMessageKind.Chat, channel, sender, MessageContent.Plain(text));
 
     public static GameMessage System(
         string text,
@@ -30,7 +30,7 @@ public sealed record GameMessage(
         new(
             GameMessageKind.System,
             GameMessageChannel.Global,
-            string.Empty,
+            null,
             MessageContent.Plain(text),
             tone,
             presentation
@@ -40,7 +40,7 @@ public sealed record GameMessage(
         new(
             GameMessageKind.Sign,
             GameMessageChannel.Global,
-            string.Empty,
+            null,
             new MessageContent(segments),
             Presentation: GameMessagePresentation.Toast
         );
@@ -53,7 +53,7 @@ public sealed record GameMessage(
         new(
             GameMessageKind.System,
             GameMessageChannel.Global,
-            string.Empty,
+            null,
             new MessageContent(segments),
             tone,
             presentation
@@ -63,7 +63,7 @@ public sealed record GameMessage(
         new(
             GameMessageKind.Command,
             GameMessageChannel.Global,
-            string.Empty,
+            null,
             MessageContent.Plain(text),
             success ? GameMessageTone.Success : GameMessageTone.Error
         );

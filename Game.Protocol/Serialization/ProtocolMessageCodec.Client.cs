@@ -1,17 +1,39 @@
 using Game.Protocol.Connection;
+using Game.Protocol.Identity;
 
 namespace Game.Protocol.Serialization;
 
 public static partial class ProtocolMessageCodec
 {
-    private static ClientIdentity ReadClientIdentity(ProtocolReader reader) =>
-        new(reader.ReadByte(), reader.ReadGuid(), reader.ReadGuid());
+    private static ClientIdentity ReadClientIdentity(ProtocolReader reader)
+    {
+        var id = reader.ReadByte();
+        var token = reader.ReadGuid();
+        var character = reader.ReadGuid();
+        var address = id == 0 ? PlayerAddressCodec.ReadOptional(reader) : PlayerAddressCodec.Read(reader);
+        var state = reader.ReadEnum<ClientState>();
+        if (!Enum.IsDefined(state)) { throw new InvalidDataException("Unknown client connection state."); }
+
+        return new ClientIdentity(id, token, character, address, state);
+    }
 
     private static void WriteClientIdentity(ClientIdentity client, ProtocolWriter writer)
     {
         writer.Write(client.ID);
         writer.Write(client.TokenId);
-        writer.Write(client.GUID);
+        writer.Write(client.CharacterId);
+        if (client.ID == 0) { PlayerAddressCodec.WriteOptional(writer, client.PlayerAddress); }
+        else
+        {
+            PlayerAddressCodec.Write(
+                writer,
+                client.PlayerAddress ?? throw new ArgumentException("A subject address is required.")
+            );
+        }
+
+        if (!Enum.IsDefined(client.State)) { throw new ArgumentException("Unknown client connection state."); }
+
+        writer.WriteEnum(client.State);
     }
 
     private static ClientPackage ReadClient(ProtocolReader reader)
@@ -36,12 +58,18 @@ public static partial class ProtocolMessageCodec
                 var count = reader.ReadByte();
                 var clients = new ClientIdentity[count];
                 var ids = new HashSet<byte>();
+                var subjects = new HashSet<PlayerAddress>();
                 for (var i = 0; i < count; i++)
                 {
                     clients[i] = ReadClientIdentity(reader);
                     if (!ids.Add(clients[i].ID))
                     {
                         throw new InvalidDataException("Duplicate client ID.");
+                    }
+
+                    if (clients[i].PlayerAddress is { } address && !subjects.Add(address))
+                    {
+                        throw new InvalidDataException("Duplicate subject session.");
                     }
                 }
 
@@ -74,7 +102,9 @@ public static partial class ProtocolMessageCodec
                 break;
             case ClientPackage.EventType.SyncList:
                 if (message.List.Count > byte.MaxValue ||
-                    message.List.Select(item => item.ID).Distinct().Count() != message.List.Count)
+                    message.List.Select(item => item.ID).Distinct().Count() != message.List.Count ||
+                    message.List.Where(item => item.PlayerAddress is not null).GroupBy(item => item.PlayerAddress)
+                        .Any(group => group.Count() > 1))
                 {
                     throw new ArgumentException("Invalid client identity list.");
                 }

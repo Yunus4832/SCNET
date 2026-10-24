@@ -1,11 +1,14 @@
 using Engine.Core.Mathematics;
 
+using Game.Protocol.Identity;
+
 namespace TerritoryStoneMod;
 
 public sealed class Territory
 {
-    public Territory(Guid owner, Point3 stonePoint, TerritorySettings? settings = null)
+    public Territory(PlayerAddress owner, Point3 stonePoint, TerritorySettings? settings = null)
     {
+        _ = owner.Value;
         Owner = owner;
         StonePoint = stonePoint;
         Settings = settings ?? new TerritorySettings();
@@ -20,35 +23,35 @@ public sealed class Territory
         }
     }
 
-    private readonly Dictionary<Guid, TerritoryGrant> _grants = new();
+    private readonly Dictionary<PlayerAddress, TerritoryGrant> _grants = new();
 
-    public IReadOnlyDictionary<Guid, TerritoryGrant> Grants => _grants;
+    public IReadOnlyDictionary<PlayerAddress, TerritoryGrant> Grants => _grants;
 
-    public TerritoryPermission PermissionsFor(Guid player) =>
-        _grants.TryGetValue(player, out var grant) ? grant.Permissions : TerritoryPermission.None;
+    public TerritoryPermission PermissionsFor(PlayerAddress user) =>
+        _grants.TryGetValue(user, out var grant) ? grant.Permissions : TerritoryPermission.None;
 
-    public void SetGrant(Guid player, string name, TerritoryPermission permissions)
+    public void SetGrant(PlayerAddress user, string name, TerritoryPermission permissions)
     {
-        if (player == Guid.Empty || player == Owner || !TerritoryPermissions.IsValid(permissions))
+        if (user == default || user == Owner || !TerritoryPermissions.IsValid(permissions))
         {
             throw new InvalidDataException("Invalid territory grant.");
         }
 
         if (permissions == TerritoryPermission.None)
         {
-            _grants.Remove(player);
+            _grants.Remove(user);
             return;
         }
 
-        if (!_grants.ContainsKey(player) && _grants.Count >= 128)
+        if (!_grants.ContainsKey(user) && _grants.Count >= 128)
         {
             throw new InvalidDataException("Too many territory grants.");
         }
 
-        _grants[player] = new TerritoryGrant(name, permissions);
+        _grants[user] = new TerritoryGrant(name, permissions);
     }
 
-    public Guid Owner { get; }
+    public PlayerAddress Owner { get; }
 
     public Point3 StonePoint { get; }
 

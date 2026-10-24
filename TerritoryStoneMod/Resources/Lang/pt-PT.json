@@ -1,85 +1,86 @@
 {
-    "Blocks": {
-        "TerritoryBlock:0": {
-            "DisplayName": "Pedra de Território",
-            "Description": "Define um raio centrado na pedra, configura permissões gerais de passagem e construção e autoriza jogadores individualmente. Abrange toda a altura; um território por jogador.",
-            "CRDescription:0": "Cria uma Pedra de Território com lingotes de cobre, diamante, lingotes de ferro e granito"
-        }
-    },
-    "TerritoryBlock": {
-        "1": "Precisas do nível {0} ou superior para criar {1}. Nível atual: {2}"
-    },
-    "SubsystemTerritoryBlockBehavior": {
-        "5": "ID de bloco desativado {0}"
-    },
-    "Help": {
-        "48": {
-            "Name": "TerritoryStone",
-            "Title": "Pedra de Território",
-            "value": "A pedra fica sempre no centro, sem depender dos chunks. O raio pode ser de 4–32 blocos; o valor inicial 16 abrange 33×33 blocos e toda a altura do mundo. Territórios não podem sobrepor-se. Cada jogador pode ter um território.\\n\\nAs permissões gerais de entrada, saída, escavação e construção são independentes; também podes autorizar cada jogador. Inicialmente a entrada é proibida, a saída permitida e a escavação e construção proibidas. O proprietário e administradores estão isentos. As equipas não alteram permissões. Só o proprietário ou um administrador pode remover a pedra; só o proprietário altera definições.\\n\\nAponta à pedra e usa G ou o botão de edição; confirma em Aplicar. O servidor recusa uma ampliação sobreposta e restaura as definições. O limite é uma grelha discreta de altura completa, visível perto do observador e atenuada à distância. Mostrar o limite não altera permissões.\\n\\nA pedra limita apenas movimento de jogadores, escavação e colocação de blocos. Não bloqueia animais; o comando privilegiado tp ignora os limites. Não oferece proteção completa contra PvP, projéteis, fogo, explosões ou pistões.\\n\\nQuando uma ação é bloqueada, aparece o proprietário e como pedir acesso. Usa territory request <nome ou UUID>, sem indicar permissões. Coloca nomes com espaços entre aspas ou seleciona o proprietário nas sugestões. Ambos devem estar online; um pedido pendente por jogador, intervalo de 30 segundos e validade de dois minutos ou até alguém sair. O proprietário escolhe livremente entrada, saída, escavação e construção ou recusa. O requerente recebe o resultado e repete a ação. A autorização acrescenta direitos, não remove os existentes nem proíbe regras gerais já permitidas, e nunca permite remover a pedra. É guardada com o mundo; altera ou revoga no painel G.\\n\\nQuem já tem autorização não pode repetir o pedido; contacta o proprietário para alterar os direitos."
-        }
-    },
-    "TerritorySettings": {
-        "Title": "Definições do território",
-        "Size": "Raio de {0} blocos ({1}×{1})",
-        "AllowEntry": "Permitir entrada",
-        "AllowExit": "Permitir saída",
-        "AllowDigging": "Permitir escavação",
-        "AllowPlacing": "Permitir colocar",
-        "ShowBoundary": "Mostrar limite",
-        "Apply": "Aplicar",
-        "Close": "Fechar",
-        "OwnerOnly": "Só o proprietário pode alterar definições",
-        "InvalidSize": "O raio deve estar entre 4 e 32",
-        "Overlaps": "A área sobrepõe-se a outro território",
-        "MissingTerritory": "Este território já não existe",
-        "Unavailable": "Não foi possível confirmar; tenta novamente",
-        "VisitorPermissions": "Permissões gerais",
-        "SettingsTab": "Definições"
-    },
-    "TerritoryProtection": {
-        "EntryRestricted": "Não tens permissão para entrar neste território.",
-        "StoneOwnerOnly": "Só o proprietário ou um administrador pode escavar esta Pedra de Território.",
-        "ClaimUnavailable": "Já tens um território ou esta área sobrepõe-se a outro território.",
-        "ExitRestricted": "Não tens permissão para sair deste território.",
-        "DiggingRestricted": "Não tens permissão para escavar neste território.",
-        "PlacingRestricted": "Não tens permissão para colocar blocos neste território."
-    },
-    "TerritoryAccess": {
-        "ManageGrants": "Autorizações",
-        "NoGrants": "Ainda não há autorizações.",
-        "EditGrant": "Editar autorização",
-        "RequestTitle": "Pedido de acesso",
-        "Confirm": "Confirmar",
-        "Reject": "Recusar",
-        "Revoke": "Revogar",
-        "RequestHint": "Proprietário: {0}. Usa o comando de pedido de território para pedir acesso.",
-        "OwnedBy": "Proprietário: {0}.",
-        "Granted": "{0} aprovou o teu acesso: {1}.",
-        "Rejected": "{0} recusou o pedido. Tenta novamente mais tarde ou contacta o proprietário.",
-        "GrantChanged": "{0} alterou ou revogou o teu acesso.",
-        "Expired": "O pedido expirou. Repete quando ambos estiverem online.",
-        "AuthorizedHint": "Proprietário: {0}. Contacta o proprietário.",
-        "EditAction": "Editar direitos",
-        "ConfirmRevoke": "Revogar todas as permissões de {0}?"
-    },
-    "Commands": {
-        "Territory_Description": "Pedir acesso ao território",
-        "Territory_RequestDescription": "Pedir acesso; o proprietário escolhe os direitos",
-        "Territory_DecideDescription": "Aprovar ou recusar um pedido de acesso",
-        "Territory_GrantDescription": "Alterar ou revogar o acesso de um jogador",
-        "Territory_Unavailable": "Acesso ao território indisponível.",
-        "Territory_InvalidPermissions": "Usa enter,exit,dig,place, all ou none.",
-        "Territory_UnknownOwner": "Proprietário não identificado. Usa o UUID.",
-        "Territory_OwnerOffline": "O proprietário está offline.",
-        "Territory_InvalidRequest": "Pedido inválido ou dirigido a ti próprio.",
-        "Territory_AlreadyPending": "Já tens um pedido pendente.",
-        "Territory_RateLimited": "Aguarda 30 segundos desde o último pedido.",
-        "Territory_QueueFull": "Limite de pedidos ou autorizações atingido.",
-        "Territory_Requested": "Pedido enviado; expira em dois minutos.",
-        "Territory_RequestExpired": "Pedido expirado ou não és o proprietário.",
-        "Territory_Processed": "Acesso atualizado.",
-        "Territory_MissingGrant": "Não tens território ou o jogador não tem autorização.",
-        "Territory_AlreadyGranted": "Já tens autorização e não podes repetir o pedido. Contacta o proprietário."
+  "Blocks": {
+    "TerritoryBlock:0": {
+      "DisplayName": "Pedra de Território",
+      "Description": "Define um raio centrado na pedra, configura permissões gerais de passagem e construção e autoriza jogadores individualmente. Abrange toda a altura; um território por jogador.",
+      "CRDescription:0": "Cria uma Pedra de Território com lingotes de cobre, diamante, lingotes de ferro e granito"
     }
+  },
+  "TerritoryBlock": {
+    "1": "Precisas do nível {0} ou superior para criar {1}. Nível atual: {2}"
+  },
+  "SubsystemTerritoryBlockBehavior": {
+    "5": "ID de bloco desativado {0}"
+  },
+  "Help": {
+    "48": {
+      "Name": "TerritoryStone",
+      "Title": "Pedra de Território",
+      "value": "A pedra fica sempre no centro, sem depender dos chunks. O raio pode ser de 4–32 blocos; o valor inicial 16 abrange 33×33 blocos e toda a altura do mundo. Territórios não podem sobrepor-se. Cada jogador pode ter um território.\\n\\nAs permissões gerais de entrada, saída, escavação e construção são independentes; também podes autorizar cada jogador. Inicialmente a entrada é proibida, a saída permitida e a escavação e construção proibidas. O proprietário e administradores estão isentos. As equipas não alteram permissões. Só o proprietário ou um administrador pode remover a pedra; só o proprietário altera definições.\\n\\nAponta à pedra e usa G ou o botão de edição; confirma em Aplicar. O servidor recusa uma ampliação sobreposta e restaura as definições. O limite é uma grelha discreta de altura completa, visível perto do observador e atenuada à distância. Mostrar o limite não altera permissões.\\n\\nA pedra limita apenas movimento de jogadores, escavação e colocação de blocos. Não bloqueia animais; o comando privilegiado tp ignora os limites. Não oferece proteção completa contra PvP, projéteis, fogo, explosões ou pistões.\\n\\nQuando uma ação é bloqueada, aparece o proprietário e como pedir acesso. Usa territory request <nome ou UUID>, sem indicar permissões. Coloca nomes com espaços entre aspas ou seleciona o proprietário nas sugestões. Ambos devem estar online; um pedido pendente por jogador, intervalo de 30 segundos e validade de dois minutos ou até alguém sair. O proprietário escolhe livremente entrada, saída, escavação e construção ou recusa. O requerente recebe o resultado e repete a ação. A autorização acrescenta direitos, não remove os existentes nem proíbe regras gerais já permitidas, e nunca permite remover a pedra. É guardada com o mundo; altera ou revoga no painel G.\\n\\nQuem já tem autorização não pode repetir o pedido; contacta o proprietário para alterar os direitos."
+    }
+  },
+  "TerritorySettings": {
+    "Title": "Definições do território",
+    "Size": "Raio de {0} blocos ({1}×{1})",
+    "AllowEntry": "Permitir entrada",
+    "AllowExit": "Permitir saída",
+    "AllowDigging": "Permitir escavação",
+    "AllowPlacing": "Permitir colocar",
+    "ShowBoundary": "Mostrar limite",
+    "Apply": "Aplicar",
+    "Close": "Fechar",
+    "OwnerOnly": "Só o proprietário pode alterar definições",
+    "InvalidSize": "O raio deve estar entre 4 e 32",
+    "Overlaps": "A área sobrepõe-se a outro território",
+    "MissingTerritory": "Este território já não existe",
+    "Unavailable": "Não foi possível confirmar; tenta novamente",
+    "VisitorPermissions": "Permissões gerais",
+    "SettingsTab": "Definições"
+  },
+  "TerritoryProtection": {
+    "EntryRestricted": "Não tens permissão para entrar neste território.",
+    "StoneOwnerOnly": "Só o proprietário ou um administrador pode escavar esta Pedra de Território.",
+    "ClaimUnavailable": "Já tens um território ou esta área sobrepõe-se a outro território.",
+    "ExitRestricted": "Não tens permissão para sair deste território.",
+    "DiggingRestricted": "Não tens permissão para escavar neste território.",
+    "PlacingRestricted": "Não tens permissão para colocar blocos neste território."
+  },
+  "TerritoryAccess": {
+    "ManageGrants": "Autorizações",
+    "NoGrants": "Nenhum sujeito autorizado",
+    "EditGrant": "Editar autorização de sujeito",
+    "RequestTitle": "Pedido de acesso",
+    "Confirm": "Confirmar",
+    "Reject": "Recusar",
+    "Revoke": "Revogar",
+    "RequestHint": "Proprietário: {0}. Usa o comando de pedido de território para pedir acesso.",
+    "OwnedBy": "Proprietário: {0}.",
+    "Granted": "{0} aprovou o teu acesso: {1}.",
+    "Rejected": "{0} recusou o pedido. Tenta novamente mais tarde ou contacta o proprietário.",
+    "GrantChanged": "{0} alterou ou revogou o teu acesso.",
+    "Expired": "O pedido expirou. Repete quando ambos estiverem online.",
+    "AuthorizedHint": "Proprietário: {0}. Contacta o proprietário.",
+    "EditAction": "Editar direitos",
+    "ConfirmRevoke": "Revogar todas as permissões de {0}?"
+  },
+  "Commands": {
+    "Territory_Description": "Pedir acesso ao território",
+    "Territory_RequestDescription": "Pedir acesso; o proprietário escolhe os direitos",
+    "Territory_DecideDescription": "Aprovar ou recusar um pedido de acesso",
+    "Territory_GrantDescription": "Alterar ou revogar uma autorização de sujeito",
+    "Territory_Unavailable": "Acesso ao território indisponível.",
+    "Territory_InvalidPermissions": "Usa enter,exit,dig,place, all ou none.",
+    "Territory_UnknownOwner": "Território do sujeito não encontrado. Use o endereço completo do sujeito.",
+    "Territory_OwnerOffline": "O proprietário está offline.",
+    "Territory_InvalidRequest": "Pedido inválido ou dirigido a ti próprio.",
+    "Territory_AlreadyPending": "Já tens um pedido pendente.",
+    "Territory_RateLimited": "Aguarda 30 segundos desde o último pedido.",
+    "Territory_QueueFull": "Limite de pedidos ou autorizações atingido.",
+    "Territory_Requested": "Pedido enviado; expira em dois minutos.",
+    "Territory_RequestExpired": "Pedido expirado ou não és o proprietário.",
+    "Territory_Processed": "Acesso atualizado.",
+    "Territory_MissingGrant": "Não tens território ou este sujeito não tem autorização.",
+    "Territory_AlreadyGranted": "Já tens autorização e não podes repetir o pedido. Contacta o proprietário.",
+    "Territory_AdminDescription": "Ignorar a proteção e remover pedras de território"
+  }
 }

@@ -8,7 +8,8 @@
 | --- | --- |
 | `Game.Protocol` | 协议版本、消息接口、包类型、通道、通用标识和限制 |
 | `.Connection` | 连接握手、准备阶段、服务端信息及模组准备描述 |
-| `.Players` | 玩家操作、玩家状态、玩家列表与队伍消息 |
+| `.Characters` | 角色操作、状态与列表 |
+| `.Teams` | 服务器队伍提示与快照 |
 | `.Entities` | 实体、身体、生命状态、库存与衣物、掉落物和投射物同步 |
 | `.Blocks` | 方块编辑、方块映射、电路及可编辑方块状态 |
 | `.World` | 世界快照、时间、季节、天气和爆炸 |
@@ -28,16 +29,16 @@
 
 ## 数据边界
 
-- `WorldMetadata` 和 `PlayerEntitySnapshot` 提供薄客户端需要的世界、玩家实体摘要；游戏自己的世界与实体序列化内容以字节快照传输，由游戏解释。
+- `WorldMetadata` 和 `CharacterEntitySnapshot` 提供薄客户端需要的世界、玩家实体摘要；游戏自己的世界与实体序列化内容以字节快照传输，由游戏解释。
 - `ContentRepositoryDescriptor` 与 `RequiredModProfile` 只描述服务器公布的下载来源和模组要求，不携带游戏配置对象、启用状态或客户端本地配置。编解码器限制载荷结构；游戏在使用前仍执行模组语义版本和配置规则校验。
-- 游戏概念 `GameMode`、`PlayerClass`、`Season` 和库存拖拽方式 `DragMode` 定义在游戏的 `Game/Enums` 中，名称空间为 `Game`。协议不定义这些枚举或副本，对应字段使用 `byte`。游戏边界负责验证数值并转换，未知值不能直接应用或当作默认值。
+- 游戏概念 `GameMode`、`CharacterSex`、`Season` 和库存拖拽方式 `DragMode` 定义在游戏的 `Game/Enums` 中，名称空间为 `Game`。协议不定义这些枚举或副本，对应字段使用 `byte`。游戏边界负责验证数值并转换，未知值不能直接应用或当作默认值。
 - 消息种类、连接阶段、持续动作同步阶段（`SyncAction`）与单次交互种类（`InteractionMessageKind`）和内置编辑载荷标签（`BuiltInBlockEditKind`）等通信语义仍使用协议枚举。协议只处理结构与传输约束，不验证游戏枚举的业务取值。
 
 | 协议字段 | 传输类型 | 游戏含义 |
 |---|---|---|
 | `ServerInfoPackage.GameMode`、`WorldMetadata.Mode` | `byte` | 游戏模式，当前 `0` 为创造模式 |
 | `ServerInfoPackage.Season` | `byte` | 季节 |
-| `PlayerDataPackage.PlayerClass` | `byte` | 玩家外观类别，当前 `0` 为男性、`1` 为女性 |
+| `CharacterDataPackage.CharacterSex` | `byte` | 角色性别类别，当前 `0` 为男性、`1` 为女性 |
 | `ComponentInventoryPackage.DragMode` | `byte` | 库存拖拽方式，当前 `0` 为全部、`1` 为单件 |
 
 薄客户端独立消费这些数值，只声明其工作负载确实支持的值，不引用游戏枚举。`Season` 同样使用单字节，不提供旧四字节格式解析。
@@ -48,7 +49,7 @@
 
 `Terrain` 目录包含区块分配轮次、内容版本、分片与单元格增量等值类型。协议负责其线格式，游戏继续负责分片生成、缓存、背压、预测以及重组结果的应用；纯分片重组器由协议库共用。实体状态批次中的 `BodyItem` 保持值类型；游戏为每轮采集完整状态，并按状态轮次忽略旧快照。
 
-玩家消息使用 `ComponentPlayerPackage` 作为身份和动作标签的基类，位置、挖掘、交互、瞄准等分别使用具体记录。它们共用既有消息编号和动作标签，不共用一组可任意混填的载荷字段。身份字节始终由编解码器处理；游戏在处理器中解析玩家并验证发送者。主玩家过滤属于游戏的快照应用策略，不是协议数据。
+玩家消息使用 `ComponentCharacterPackage` 作为身份和动作标签的基类，位置、挖掘、交互、瞄准等分别使用具体记录。它们共用既有消息编号和动作标签，不共用一组可任意混填的载荷字段。身份字节始终由编解码器处理；游戏在处理器中解析玩家并验证发送者。主玩家过滤属于游戏的快照应用策略，不是协议数据。
 
 `PackageType` 使用唯一的显式 `byte` 编号。新增消息在当前最大编号之后追加；不要求编号连续，不按类别预留区间，也不因插入或删除重排其他消息。分类注释仅用于阅读，不参与编号或分发。模组消息统一命名为 `ModEnvelope`，不使用特殊尾部编号或旧编号解析。移动方块新增消息携带游戏侧预先编码的数据，协议层不处理运行时字典。
 
@@ -71,3 +72,18 @@
 `ProtocolPacketCodec` 提供完整数据报的批量封装与解析（包含外层长度），可直接供不引用游戏的工具使用。`TerrainChunkFragmentReassembler` 共用结构校验和缺片状态；游戏仍决定分配代际、兴趣范围和内容应用。通道编号由 `NetworkChannel` 共用，可靠性和发送调度由游戏或工具选择。
 
 世界与实体快照先编码小型元数据，再写大载荷。该顺序避免在写入大缓冲后因少量尾部元数据触发流容量翻倍；这是本次未发布协议中的明确线格式调整，不提供旧顺序解析。
+
+## 玩家身份与角色数据
+
+`PlayerAddress` 使用引擎基础层的统一身份编码：32 字节公钥指纹编码为 `scnet` 前缀的 64 字符 Bech32m，保存和输出采用小写。所有主体地址均校验前缀、校验和和填充位；不接受旧 Base64URL 地址。账户、角色 GUID 和会话编号分别建模。
+
+
+角色状态和操作消息归属 `Game.Protocol.Characters`，队伍控制消息归属 `Game.Protocol.Teams`。
+`CharacterDataPackage`、`CharacterListPackage`、`OnlineCharacterStatePackage` 和角色实体快照使用角色名称；
+其集合字段统一为 `Characters`，不再使用指代玩家身份的 `Players`。
+`ComponentCharacterPackage.ControllerSessionId` 是控制该角色的临时 byte 连接编号，用于路由和归属校验，
+不是 `PlayerAddress`、`CharacterId` 或持久会话 GUID。改名不改变包编号和编码整数；未发布的协议兼容整数保持 `1`。
+
+
+`TeamManagePackage` 只含服务器提示和 `SyncTeams` 快照，包编号仍为 `41`；队伍修改通过已验证会话中的游戏命令执行。
+`TeamState` 使用独立 `TeamId`、队长地址与成员地址，不携带角色成员列表。客户端不能通过提交快照修改服务器队伍。

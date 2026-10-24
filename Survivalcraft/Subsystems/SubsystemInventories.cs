@@ -147,7 +147,7 @@ public class SubsystemInventories : Subsystem, IUpdateable
         }
 
         var observers = interest.Entities.GetObservers(EntityInterestGroup.Creatures, component.Entity.EntityId);
-        return body.Player?.PlayerData.Client is { IsConnected: true } owner
+        return body.Character?.CharacterData.Client is { IsConnected: true } owner
             ? observers.Append(owner).Distinct<Client>(ReferenceEqualityComparer.Instance)
             : observers;
     }
@@ -165,8 +165,8 @@ public class SubsystemInventories : Subsystem, IUpdateable
                 .IsPositionRelevant(client, new Vector2(block.Coordinates.X, block.Coordinates.Z));
         }
 
-        return component.Entity.FindComponent<ComponentPlayer>() is { } player &&
-               ReferenceEquals(player.PlayerData.Client, client);
+        return component.Entity.FindComponent<ComponentCharacter>() is { } player &&
+               ReferenceEquals(player.CharacterData.Client, client);
     }
 
     public static void PushSyncItem(IInventory inventory, int slotIndex)

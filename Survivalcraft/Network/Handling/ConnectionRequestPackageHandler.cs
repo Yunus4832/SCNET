@@ -1,8 +1,7 @@
-using System.Text;
-
 using EntitySystem.Core;
 
 using Game.Network.Transport;
+using Game.Protocol.Identity;
 
 namespace Game.Network.Handling;
 
@@ -10,142 +9,81 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
 {
     public override void Handle(ConnectionRequestPackage package, PackageReceiveContext context)
     {
-        var netNode = context.Node;
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{nameof(ConnectionRequestPackage)}");
-            return;
-        }
-
-        var connectionError = new StringBuilder();
-        if (package.MultiplayerClientId == Guid.Empty)
-        {
-            if (context.Sender == null)
-            {
-                return;
-            }
-
-            if (context.Sender.Request != null)
-            {
-                netNode.SendWriterFromPackage(
-                    new ConnectionRejectPackage("联机客户端 ID 无效"),
-                    context.Sender.Request,
-                    true
-                );
-            }
-
-            return;
-        }
-
-        if (GameManager.Project is null)
+        if (context.Node is not { } node ||
+            context.Sender?.Request is not { } request ||
+            GameManager.Project is not { } project)
         {
             return;
         }
 
-        AcceptClient(package, GameManager.Project, netNode, connectionError, context);
+        if (!context.IsServer)
+        {
+            request.Reject(NetNode.CreateUnconnectedPayload(new ConnectionRejectPackage("当前节点不是游戏服务器")));
+            return;
+        }
+
+        // The subject comes exclusively from the completed DTLS proof, never from application payloads.
+        var address = new PlayerAddress(request.PeerIdentity.Address);
+        var users = project.FindSubsystem<SubsystemPlayers>(true)!.Store;
+        var error = AdmissionError(package, project, node, address);
+        if (error is not null)
+        {
+            request.Reject(NetNode.CreateUnconnectedPayload(new ConnectionRejectPackage(error)));
+            Log.Information($"Rejected connection request from {request.TransportEndpoint}: {error}");
+            return;
+        }
+
+        var user = users.GetOrCreate(address);
+        node.PendingPeer = request.Accept();
+        if (node.PendingPeer is null) { return; }
+
+        // A newly admitted subject may not own a character yet.
+        var characterId = user.CharacterId;
+        var client = node.CreateClient(node.PendingPeer, package.TmpToken, characterId);
+        var notification = new ClientPackage(client.ID, client.TokenId, client.CharacterId, client.PlayerAddress);
+        foreach (var other in node.Peers)
+        {
+            node.AgreeOnPendingPeer.Add(other.ID);
+            node.SendWriterFromPackage(notification, other.Peer, true);
+        }
+
+        Log.Information($"Accepted connection request from {request.TransportEndpoint}");
+        node.DeliveryEvent(null);
     }
 
-    private static void AcceptClient(
+    private static string? AdmissionError(
         ConnectionRequestPackage package,
         Project project,
-        NetNode netNode,
-        StringBuilder connectionError,
-        PackageReceiveContext context
+        NetNode node,
+        PlayerAddress address
     )
     {
-        var multiplayerClientId = package.MultiplayerClientId;
-        var serverModDataHash = CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash;
+        if (package.Magic != GameProtocol.ConnectionMagic) { return "无法识别的数据包头"; }
 
-        if (package.Magic == GameProtocol.ConnectionMagic)
+        if (package.ProtocolVersion != VersionsManager.ProtocolVersion) { return "客户端和服务器协议版本不一致"; }
+
+        var hash = CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash;
+        if (!string.Equals(package.ModDataHash, hash, StringComparison.OrdinalIgnoreCase))
         {
-            if (multiplayerClientId == Guid.Empty)
-            {
-                connectionError.AppendLine("联机客户端 ID 无效");
-            }
-            else if (CommonLib.Net.Self?.GUID == multiplayerClientId)
-            {
-                connectionError.AppendLine("客户端和服务器使用了相同的联机客户端 ID");
-            }
-            else if (netNode.Peers.FirstOrDefault(c =>
-                         !ReferenceEquals(c, context.Sender) &&
-                         (c.GUID == multiplayerClientId || c.TokenId == package.TmpToken)
-                     ) !=
-                     null)
-            {
-                connectionError.AppendLine("你的ID与服务器中某个在线玩家的ID相同");
-            }
-            else if (package.ProtocolVersion != VersionsManager.ProtocolVersion)
-            {
-                connectionError.AppendLine("客户端和服务器协议版本不一致");
-            }
-            else if (!string.Equals(package.ModDataHash, serverModDataHash, StringComparison.OrdinalIgnoreCase))
-            {
-                connectionError.AppendLine("客户端模组与服务器不一致，请刷新服务器信息后重试");
-            }
-            else if (netNode.ClientCount >=
-                     project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.MaxOnlinePlayerCount)
-            {
-                connectionError.AppendLine("在线人数达到最大，拒绝加入");
-            }
-
-            if (connectionError.Length > 0)
-            {
-                if (context.Sender == null || context.Sender.Request == null)
-                {
-                    return;
-                }
-
-                netNode.SendWriterFromPackage(
-                    new ConnectionRejectPackage(connectionError.ToString()),
-                    context.Sender.Request,
-                    true
-                );
-                Log.Information(
-                    "Received connection request from " +
-                    context.Sender.IPPoint +
-                    ", rejected -- " +
-                    connectionError
-                );
-            }
-            else
-            {
-                if (context.Sender == null || context.Sender.Request == null)
-                {
-                    return;
-                }
-
-                netNode.PendingPeer = context.Sender.Request.Accept();
-                if (netNode.PendingPeer is null)
-                {
-                    return;
-                }
-
-                var addClient = netNode.CreateClient(
-                    netNode.PendingPeer,
-                    package.TmpToken,
-                    multiplayerClientId
-                );
-                var clientPackage = new ClientPackage(addClient.ID, addClient.TokenId, addClient.GUID);
-                foreach (var c in netNode.Peers)
-                {
-                    netNode.AgreeOnPendingPeer.Add(c.ID);
-                    netNode.SendWriterFromPackage(clientPackage, c.Peer, true);
-                }
-
-                Log.Information("Received connection request from " + context.Sender.IPPoint + ", accepted");
-
-                netNode.DeliveryEvent(null);
-            }
+            return "客户端模组与服务器不一致，请刷新服务器信息后重试";
         }
-        else
+
+        if (package.TmpToken == Guid.Empty) { return "连接关联标识无效"; }
+
+        if (node.Clients.Values.Any(client => client.PlayerAddress == address)) { return "该用户已经在线"; }
+
+        if (node.Clients.Values.Any(client => client.TokenId == package.TmpToken)) { return "连接关联标识已被占用"; }
+
+        if (project.FindSubsystem<SubsystemPlayers>(true)!.Store.Find(address)?.Ban is not null)
         {
-            if (context.Sender == null || context.Sender.Request == null)
-            {
-                return;
-            }
-
-            netNode.SendWriterFromPackage(new ConnectionRejectPackage("无法识别的数据包头"), context.Sender.Request, true);
-            Log.Information("无法识别的数据包头");
+            return "你被禁止加入该服务器";
         }
+
+        if (node.ClientCount >= project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.MaxOnlinePlayerCount)
+        {
+            return "在线人数达到最大，拒绝加入";
+        }
+
+        return null;
     }
 }

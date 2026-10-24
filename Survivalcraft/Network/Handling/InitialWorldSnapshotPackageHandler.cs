@@ -15,20 +15,20 @@ public sealed class InitialWorldSnapshotPackageHandler : PackageHandlerBase<Init
 
         var project = GameManager.Project;
         PackageDispatcher.Handle(package.ClientList, context);
-        var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
-        foreach (var data in package.Players)
+        var subsystemCharacters = project.FindSubsystem<SubsystemCharacters>(true)!;
+        foreach (var data in package.Characters)
         {
             var values = new EntitySystem.TemplatesDatabase.ValuesDictionary();
             values.ApplyOverridesUseMessagePack(data);
-            var guid = values.GetValue("PlayerGUID", Guid.Empty);
-            if (subsystemPlayers.PlayersData.Any(player => player.PlayerGUID == guid))
+            var guid = values.GetValue("CharacterId", Guid.Empty);
+            if (subsystemCharacters.Characters.Any(player => player.CharacterId == guid))
             {
                 continue;
             }
 
-            var playerData = new PlayerData(project);
-            playerData.Load(values);
-            subsystemPlayers.AddPlayerData(playerData);
+            var characterData = new CharacterData(project);
+            characterData.Load(values);
+            subsystemCharacters.AddCharacterData(characterData);
         }
 
         project.AddEntities(EntitySnapshotSerializer.Deserialize(project, package.EntityData));

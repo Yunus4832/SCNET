@@ -66,7 +66,7 @@ public static class AutomationUiContext
             var text = widget switch
             {
                 ButtonWidget button => button.Text,
-                TextBoxWidget textBox => textBox.Text,
+                TextBoxWidget textBox => textBox.IsPassword ? string.Empty : textBox.Text,
                 _ => widget.Title
             };
             var slot = widget is InventorySlotWidget { InventoryId: { } inventoryId } inventorySlot

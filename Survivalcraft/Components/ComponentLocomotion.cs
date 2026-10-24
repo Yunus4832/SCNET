@@ -21,7 +21,7 @@ public class ComponentLocomotion : Component, IUpdateable
 
     private ComponentMount? _componentMount;
 
-    private ComponentPlayer? _componentPlayer;
+    private ComponentCharacter? _componentCharacter;
 
     private ComponentRider? _componentRider;
 
@@ -185,7 +185,7 @@ public class ComponentLocomotion : Component, IUpdateable
         if (CommonLib.WorkType == WorkType.Client)
         {
             //非玩家
-            if (_componentPlayer == null)
+            if (_componentCharacter == null)
             {
                 //没有被骑乘
                 if (_componentCreature.ComponentBody.ChildBodies.Count == 0)
@@ -197,14 +197,14 @@ public class ComponentLocomotion : Component, IUpdateable
 
                 var pb = _componentCreature.ComponentBody.ChildBodies[0];
                 //骑乘者不是主玩家
-                if (pb.Player is { PlayerData.IsMainPlayer: false })
+                if (pb.Character is { CharacterData.IsLocalCharacter: false })
                 {
                     LookAngles = NetLookAngles.Get(dt);
                     return;
                 }
             }
 
-            if (_componentPlayer is { PlayerData.IsMainPlayer: false })
+            if (_componentCharacter is { CharacterData.IsLocalCharacter: false })
             {
                 LookAngles = NetLookAngles.Get(dt);
                 NormalMovement(dt);
@@ -214,14 +214,14 @@ public class ComponentLocomotion : Component, IUpdateable
         else if (CommonLib.WorkType == WorkType.Server)
         {
             //非玩家
-            if (_componentPlayer == null)
+            if (_componentCharacter == null)
                 //被骑乘
             {
                 if (_componentCreature.ComponentBody.ChildBodies.Count > 0)
                 {
                     var pb = _componentCreature.ComponentBody.ChildBodies[0];
                     //骑乘者不是主玩家
-                    if (pb.Player is { PlayerData.IsMainPlayer: false })
+                    if (pb.Character is { CharacterData.IsLocalCharacter: false })
                     {
                         LookAngles = NetLookAngles.Get(dt);
                         return;
@@ -230,7 +230,7 @@ public class ComponentLocomotion : Component, IUpdateable
             }
 
             //玩家且不是主玩家
-            if (_componentPlayer is { PlayerData.IsMainPlayer: false })
+            if (_componentCharacter is { CharacterData.IsLocalCharacter: false })
             {
                 LookAngles = NetLookAngles.Get(dt);
                 NormalMovement(dt);
@@ -248,64 +248,64 @@ public class ComponentLocomotion : Component, IUpdateable
         if (_componentCreature.ComponentHealth.Health > 0f && StunTime <= 0f)
         {
             var position = _componentCreature.ComponentBody.Position;
-            var playerStats = _componentCreature.PlayerStats;
-            if (playerStats != null)
+            var characterStats = _componentCreature.CharacterStats;
+            if (characterStats != null)
             {
                 var x = _lastPosition.HasValue ? Vector3.Distance(position, _lastPosition.Value) : 0f;
                 x = MathUtils.Min(x, 25f * _subsystemTime.PreviousGameTimeDelta);
-                playerStats.DistanceTravelled += x;
+                characterStats.DistanceTravelled += x;
                 if (_componentRider is { Mount: not null })
                 {
-                    playerStats.DistanceRidden += x;
+                    characterStats.DistanceRidden += x;
                 }
                 else
                 {
                     if (_walking)
                     {
-                        playerStats.DistanceWalked += x;
+                        characterStats.DistanceWalked += x;
                         _walking = false;
                     }
 
                     if (_falling)
                     {
-                        playerStats.DistanceFallen += x;
+                        characterStats.DistanceFallen += x;
                         _falling = false;
                     }
 
                     if (_climbing)
                     {
-                        playerStats.DistanceClimbed += x;
+                        characterStats.DistanceClimbed += x;
                         _climbing = false;
                     }
 
                     if (_jumping)
                     {
-                        playerStats.Jumps++;
+                        characterStats.Jumps++;
                         _jumping = false;
                     }
 
                     if (_swimming)
                     {
-                        playerStats.DistanceSwam += x;
+                        characterStats.DistanceSwam += x;
                         _swimming = false;
                     }
 
                     if (_flying)
                     {
-                        playerStats.DistanceFlown += x;
+                        characterStats.DistanceFlown += x;
                         _flying = false;
                     }
                 }
 
-                playerStats.DeepestDive = MathUtils.Max(
-                    playerStats.DeepestDive,
+                characterStats.DeepestDive = MathUtils.Max(
+                    characterStats.DeepestDive,
                     _componentCreature.ComponentBody.ImmersionDepth
                 );
-                playerStats.LowestAltitude = MathUtils.Min(playerStats.LowestAltitude, position.Y);
-                playerStats.HighestAltitude = MathUtils.Max(playerStats.HighestAltitude, position.Y);
-                playerStats.EasiestModeUsed = (GameMode)MathUtils.Min(
+                characterStats.LowestAltitude = MathUtils.Min(characterStats.LowestAltitude, position.Y);
+                characterStats.HighestAltitude = MathUtils.Max(characterStats.HighestAltitude, position.Y);
+                characterStats.EasiestModeUsed = (GameMode)MathUtils.Min(
                     (int)_subsystemGameInfo.WorldSettings.GameMode,
-                    (int)playerStats.EasiestModeUsed
+                    (int)characterStats.EasiestModeUsed
                 );
             }
 
@@ -384,7 +384,7 @@ public class ComponentLocomotion : Component, IUpdateable
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>();
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>();
         _componentLevel = Entity.FindComponent<ComponentLevel>();
         _componentMount = Entity.FindComponent<ComponentMount>();
         _componentRider = Entity.FindComponent<ComponentRider>();
@@ -403,7 +403,7 @@ public class ComponentLocomotion : Component, IUpdateable
         _minFrictionFactor = valuesDictionary.GetValue<float>("MinFrictionFactor");
         _lookAutoLevelX = valuesDictionary.GetValue<bool>("LookAutoLevelX");
         _lookAutoLevelY = valuesDictionary.GetValue<bool>("LookAutoLevelY");
-        if (_componentPlayer is null)
+        if (_componentCharacter is null)
         {
             WalkSpeed *= _random.Float(0.85f, 1f);
             FlySpeed *= _random.Float(0.85f, 1f);
@@ -443,7 +443,7 @@ public class ComponentLocomotion : Component, IUpdateable
                     v += FlyOrder.Value;
                 }
 
-                var v2 = _componentPlayer == null || _componentPlayer.ComponentInput.IsTouchInputActive
+                var v2 = _componentCharacter == null || _componentCharacter.ComponentInput.IsTouchInputActive
                     ? Vector3.Normalize(vector + 0.1f * Vector3.UnitY)
                     : Vector3.Normalize(vector * new Vector3(1f, 0f, 1f));
                 var v3 = CreativeFlySpeed * (right * v.X + Vector3.UnitY * v.Y + v2 * v.Z);
@@ -541,13 +541,13 @@ public class ComponentLocomotion : Component, IUpdateable
                               _componentCreature.ComponentBody.ImmersionFactor *
                               dt;
                 _componentCreature.ComponentBody.IsGroundDragEnabled = false;
-                if (_componentPlayer != null &&
+                if (_componentCharacter != null &&
                     Time.PeriodicEvent(10.0, 0.0) &&
                     (_shoesWarningTime == 0.0 || Time.FrameStartTime - _shoesWarningTime > 300.0) &&
                     _componentCreature.ComponentBody is { StandingOnValue: not null, ImmersionFactor: < 0.1f })
                 {
                     var flag = false;
-                    var value2 = _componentPlayer.ComponentClothing.GetClothes(ClothingSlot.Feet).LastOrDefault();
+                    var value2 = _componentCharacter.ComponentClothing.GetClothes(ClothingSlot.Feet).LastOrDefault();
                     if (Terrain.ExtractContents(value2) == BuiltInBlockRegistry.GetIndex<ClothingBlock>())
                     {
                         flag = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value2)]
@@ -559,7 +559,7 @@ public class ComponentLocomotion : Component, IUpdateable
                         vector2.LengthSquared() / velocity.LengthSquared() > 0.99f &&
                         WalkOrder.Value.LengthSquared() > 0.99f)
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(
                             LanguageManager.Get(GetType().Name, 0),
                             Color.White,
                             true,

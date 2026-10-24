@@ -77,8 +77,8 @@ public class ComponentCraftingTable : ComponentInventoryBase
                         OnSlotChange(RemainsSlotIndex);
                     }
 
-                    var componentPlayer = FindInteractingPlayer();
-                    componentPlayer?.PlayerStats?.ItemsCrafted += num;
+                    var componentCharacter = FindInteractingPlayer();
+                    componentCharacter?.CharacterStats?.ItemsCrafted += num;
                 }
             }
         }
@@ -128,12 +128,12 @@ public class ComponentCraftingTable : ComponentInventoryBase
             }
         }
 
-        var componentPlayer = FindInteractingPlayer();
+        var componentCharacter = FindInteractingPlayer();
         var craftingRecipe = CurrentModRuntime.Value!.RequireWorldCatalog().Recipes.FindMatchingRecipe(
             Project.FindSubsystem<SubsystemTerrain>(true)!,
             _matchedIngredients,
             0f,
-            componentPlayer
+            componentCharacter
         );
         if (craftingRecipe != null && craftingRecipe.ResultValue != 0)
         {
@@ -151,7 +151,7 @@ public class ComponentCraftingTable : ComponentInventoryBase
         OnSlotChange(ResultSlotIndex);
         if (craftingRecipe != null && !string.IsNullOrEmpty(craftingRecipe.Message))
         {
-            componentPlayer?.ComponentGui.DisplaySmallMessage(craftingRecipe.Message, Color.White, true, true);
+            componentCharacter?.ComponentGui.DisplaySmallMessage(craftingRecipe.Message, Color.White, true, true);
         }
     }
 }

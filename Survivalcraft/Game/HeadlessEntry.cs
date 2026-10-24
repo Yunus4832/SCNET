@@ -403,6 +403,7 @@ public static class HeadlessEntry
     private static bool InitializeHeadless()
     {
         SettingsManager.Initialize();
+        LocalIdentityManager.Initialize();
         ContentRepositoryManager.Initialize();
         RendezvousManager.Initialize();
         ServerDirectoryManager.Initialize();

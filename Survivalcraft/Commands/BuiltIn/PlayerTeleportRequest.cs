@@ -9,9 +9,9 @@ internal sealed class PlayerTeleportRequest : IDisposable
 
     private readonly IGameCommand _command;
 
-    private readonly PlayerData _target;
+    private readonly CharacterData _target;
 
-    private readonly ComponentPlayer _character;
+    private readonly ComponentCharacter _character;
 
     private readonly Client? _requesterClient;
 
@@ -25,18 +25,20 @@ internal sealed class PlayerTeleportRequest : IDisposable
 
     private bool _disposed;
 
-    public PlayerTeleportRequest(CommandContext context, PlayerData target, IGameCommand command, Vector3 position)
+    public PlayerTeleportRequest(CommandContext context, CharacterData target, IGameCommand command, Vector3 position)
     {
         _context = context;
         _command = command;
         _target = target;
-        _character = target.ComponentPlayer!;
-        _requesterClient = context.Principal.Player is { IsMainPlayer: false } requester ? requester.Client : null;
+        _character = target.ComponentCharacter!;
+        _requesterClient = context.Principal.Character is { IsLocalCharacter: false } requester
+            ? requester.Client
+            : null;
         _updater = context.Project!.FindSubsystem<SubsystemTerrain>(true)!.TerrainUpdater;
         _position = position;
         _deadline = Time.RealTime + 30;
         // Player indices are nonnegative; -1 is the updater's bootstrap location.
-        _locationIndex = -2 - target.PlayerIndex;
+        _locationIndex = -2 - target.CharacterIndex;
         _updater.SetUpdateLocation(_locationIndex, position.XZ, 0f, 16f);
     }
 
@@ -49,7 +51,7 @@ internal sealed class PlayerTeleportRequest : IDisposable
 
         try
         {
-            if (!ReferenceEquals(_target.ComponentPlayer, _character) ||
+            if (!ReferenceEquals(_target.ComponentCharacter, _character) ||
                 TeleportCommandHandlers.ValidateTarget(_context, _target) is { })
             {
                 Cancel();
@@ -57,9 +59,9 @@ internal sealed class PlayerTeleportRequest : IDisposable
             }
 
             var principal = _context.Principal;
-            if (principal.Player is { } requester)
+            if (principal.Character is { } requester)
             {
-                if (!_target.SubsystemPlayers.PlayersData.Contains(requester) ||
+                if (!_target.SubsystemCharacters.Characters.Contains(requester) ||
                     (_requesterClient != null &&
                      (!ReferenceEquals(requester.Client, _requesterClient) || !_requesterClient.IsConnected)))
                 {
@@ -74,7 +76,8 @@ internal sealed class PlayerTeleportRequest : IDisposable
             {
                 Registry = _context.Registry
             };
-            if (!context.Registry.TryGetDefinition(_command.GetType(), out var registered) ||
+            if (principal.Subject is { Ban: not null } ||
+                !context.Registry.TryGetDefinition(_command.GetType(), out var registered) ||
                 registered == null ||
                 !registered.Definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) ||
                 !registered.Definition.CanInvoke(principal, context.Project) ||
@@ -155,7 +158,7 @@ internal sealed class PlayerTeleportRequest : IDisposable
             CommandResultPublisher.Publish(
                 _context.Project!,
                 result,
-                includeServer: _context.Principal.Player is null or { IsMainPlayer: true },
+                includeServer: _context.Principal.Character is null or { IsLocalCharacter: true },
                 correlationId: _context.CorrelationId
             );
         }

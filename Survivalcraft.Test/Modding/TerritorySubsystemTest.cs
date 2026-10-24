@@ -9,6 +9,8 @@ using Game.Network;
 
 using TerritoryStoneMod;
 
+using static Survivalcraft.Test.Modding.TerritoryTestIdentity;
+
 namespace Survivalcraft.Test.Modding;
 
 [Collection(ConfigFileCollection.Name)]
@@ -22,7 +24,7 @@ public class TerritorySubsystemTest
         try
         {
             var (database, template) = CreateDatabase();
-            var owner = Guid.NewGuid();
+            var owner = Address();
             ProjectData saved;
             TerritorySubsystem subsystem;
             using (var project = new Project(database, new ProjectData(database, template, null)))

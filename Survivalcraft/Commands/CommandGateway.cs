@@ -32,7 +32,7 @@ public static class CommandGateway
     }
 
     public static string Submit(
-        PlayerData player,
+        CharacterData player,
         string input,
         string? correlationId = null
     )
@@ -55,7 +55,7 @@ public static class CommandGateway
         var adapter = new TextCommandAdapter(runtime.Commands);
         var principal = adapter.SupportsDomain(input, CommandDomain.Application)
             ? CommandPrincipal.LocalOperator
-            : CommandPrincipal.FromPlayer(player);
+            : CommandPrincipal.ForInput(player);
         var context = new CommandContext(CommandInvocationChannel.Text, principal, player.Project, requestId);
         if (!adapter.TryCreate(input, context, out var command, out var error))
         {
@@ -67,7 +67,7 @@ public static class CommandGateway
     }
 
     public static string Submit(
-        PlayerData player,
+        CharacterData player,
         IGameCommand command,
         string? correlationId = null
     )
@@ -92,7 +92,7 @@ public static class CommandGateway
                     player.Project,
                     result,
                     player.Client?.ID,
-                    includeServer: player.IsMainPlayer,
+                    includeServer: player.IsLocalCharacter,
                     correlationId: requestId
                 );
             }
@@ -101,7 +101,66 @@ public static class CommandGateway
         return requestId;
     }
 
-    internal static CommandResult? ExecuteOrSend(PlayerData player, IGameCommand command, string correlationId)
+    public static string SubmitSession(Client session, Project project, IGameCommand command)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(project);
+        ArgumentNullException.ThrowIfNull(command);
+        var requestId = Guid.NewGuid().ToString("N");
+        if (CurrentModRuntime.Value is not { } runtime ||
+            !runtime.Commands.TryGetDefinition(command.GetType(), out var registered) ||
+            registered?.Definition.Domain is CommandDomain.Application)
+        {
+            throw new InvalidOperationException("Session commands require a registered world or server command.");
+        }
+
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            if (!ReferenceEquals(session, CommonLib.Net.Self))
+            {
+                throw new InvalidOperationException("Only the local session can submit commands.");
+            }
+
+            if (TryCreateRequest(runtime.Commands, command, requestId, out var package, out var error))
+            {
+                NetworkSender.SendToServer(package!);
+            }
+            else { CommandResultPublisher.DisplayLocal(project, error!, requestId); }
+        }
+        else
+        {
+            if (session.PlayerAddress is not { } address ||
+                !ReferenceEquals(CommonLib.Net.Clients.GetValueOrDefault(session.ID), session) ||
+                !ReferenceEquals(
+                    project.FindSubsystem<SubsystemPlayers>(true)!.Store.Find(address),
+                    session.Subject
+                ))
+            {
+                throw new InvalidOperationException("The session is no longer admitted to this world.");
+            }
+
+            var result = new CommandDispatcher(runtime.Commands).Execute(
+                command,
+                new CommandContext(
+                    CommandInvocationChannel.UserInterface,
+                    CommandPrincipal.FromSession(session),
+                    project,
+                    requestId
+                )
+            );
+            CommandResultPublisher.Publish(
+                project,
+                result,
+                session.ID,
+                includeServer: ReferenceEquals(session, CommonLib.Net.Self),
+                correlationId: requestId
+            );
+        }
+
+        return requestId;
+    }
+
+    internal static CommandResult? ExecuteOrSend(CharacterData player, IGameCommand command, string correlationId)
     {
         if (CurrentModRuntime.Value is not { } runtime)
         {

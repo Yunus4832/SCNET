@@ -18,7 +18,7 @@ public sealed class PlayerMovementTargetTest
         var mount = new ComponentBody();
         var player = new ComponentBody { ParentBody = currentlyMounted ? mount : null };
 
-        var target = ComponentPlayerPackageHandler.ResolveMovementBody(player, packetMounted);
+        var target = ComponentCharacterPackageHandler.ResolveMovementBody(player, packetMounted);
 
         if (currentlyMounted != packetMounted)
         {

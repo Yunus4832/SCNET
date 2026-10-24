@@ -12,11 +12,11 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
 
     private GameMessageService? _messages;
 
-    private SubsystemPlayers _subsystemPlayers = null!;
+    private SubsystemCharacters _subsystemCharacters = null!;
 
-    public PlayerData? MainPlayerData;
+    public CharacterData? MainCharacterData;
 
-    public GameWidget? MainPlayerWidget;
+    public GameWidget? LocalCharacterWidget;
 
     public GamesWidget GamesWidget { get; set; } = null!;
 
@@ -58,20 +58,20 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
-        _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemCharacters = Project.FindSubsystem<SubsystemCharacters>(true)!;
         SubsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         if (RunMode.Value is RunModeType.Gui)
         {
-            _subsystemPlayers.PlayerAdded += AddGameWidgetForPlayer;
-            _subsystemPlayers.PlayerRemoved += delegate(PlayerData playerData)
+            _subsystemCharacters.CharacterAdded += AddGameWidgetForPlayer;
+            _subsystemCharacters.CharacterRemoved += delegate(CharacterData characterData)
             {
-                RemoveGameWidget(playerData.GameWidget);
+                RemoveGameWidget(characterData.GameWidget);
             };
         }
 
-        if (CommonLib.MainPlayer != null)
+        if (CommonLib.LocalCharacter != null)
         {
-            MainPlayerData = CommonLib.MainPlayer.PlayerData;
+            MainCharacterData = CommonLib.LocalCharacter.CharacterData;
         }
 
         GamesWidget = valuesDictionary.GetValue<GamesWidget>("GamesWidget");
@@ -81,7 +81,7 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
             return;
         }
 
-        foreach (var playersDatum in _subsystemPlayers.PlayersData)
+        foreach (var playersDatum in _subsystemCharacters.Characters)
         {
             Log.Debug($"Widget load: {playersDatum.Name}");
             AddGameWidgetForPlayer(playersDatum);
@@ -98,16 +98,16 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
         }
     }
 
-    private void AddGameWidgetForPlayer(PlayerData playerData)
+    private void AddGameWidgetForPlayer(CharacterData characterData)
     {
-        var gameWidget = new GameWidget(playerData, playerData.PlayerIndex);
+        var gameWidget = new GameWidget(characterData, characterData.CharacterIndex);
         _gameWidgets.Add(gameWidget);
         GamesWidget.Children.Add(gameWidget);
-        playerData.GameWidget = gameWidget;
-        if (playerData.IsMainPlayer)
+        characterData.GameWidget = gameWidget;
+        if (characterData.IsLocalCharacter)
         {
-            MainPlayerData = playerData;
-            MainPlayerWidget = gameWidget;
+            MainCharacterData = characterData;
+            LocalCharacterWidget = gameWidget;
         }
     }
 
@@ -115,10 +115,10 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
     {
         _gameWidgets.Remove(gameWidget);
         GamesWidget.Children.Remove(gameWidget);
-        if (ReferenceEquals(MainPlayerWidget, gameWidget))
+        if (ReferenceEquals(LocalCharacterWidget, gameWidget))
         {
-            MainPlayerData = null;
-            MainPlayerWidget = null;
+            MainCharacterData = null;
+            LocalCharacterWidget = null;
         }
     }
 }

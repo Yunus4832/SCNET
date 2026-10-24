@@ -34,7 +34,7 @@ public class SubsystemAudio : Subsystem, IUpdateable
         _listenerPositions.Clear();
         foreach (var gameWidget in _subsystemViews.GameWidgets)
         {
-            if (gameWidget.PlayerData.IsMainPlayer)
+            if (gameWidget.CharacterData.IsLocalCharacter)
             {
                 _listenerPositions.Add(gameWidget.ActiveCamera.ViewPosition);
             }

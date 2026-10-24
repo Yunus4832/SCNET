@@ -6,7 +6,7 @@ public static class CommandExecutor
 {
     public static CommandResult ExecutePlayer(
         string input,
-        PlayerData player,
+        CharacterData player,
         string? correlationId = null
     )
     {
@@ -37,7 +37,7 @@ public static class CommandExecutor
 
     public static CommandResult ExecutePlayer(
         IGameCommand command,
-        PlayerData player,
+        CharacterData player,
         string? correlationId = null
     )
     {

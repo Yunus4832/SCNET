@@ -73,7 +73,10 @@ public static partial class ProtocolMessageCodec
                 writer.Write(result.Data?.ToJsonString() ?? string.Empty);
                 break;
             case CommandPackage.CommandPackageMode.PermissionSnapshot:
-                writer.Write(message.PlayerGuid);
+                PlayerAddressCodec.Write(
+                    writer,
+                    message.PlayerAddress ?? throw new ArgumentException("A subject address is required.")
+                );
                 if (message.PermissionGrants.Count > _maximumPermissionCount)
                 {
                     throw new ArgumentException("Too many command permissions.");
@@ -97,7 +100,7 @@ public static partial class ProtocolMessageCodec
         string CorrelationId = string.Empty, Input = string.Empty;
         ResourceId CommandId = default;
         byte[] Payload = [];
-        Guid PlayerGuid = default;
+        Game.Protocol.Identity.PlayerAddress? PlayerAddress = null;
         CommandResponse? Result = null;
         IReadOnlyList<CommandPermissionGrant> PermissionGrants = [];
         IReadOnlyList<CommandSuggestion> Suggestions = [];
@@ -187,7 +190,7 @@ public static partial class ProtocolMessageCodec
                 );
                 break;
             case CommandPackage.CommandPackageMode.PermissionSnapshot:
-                PlayerGuid = reader.ReadGuid();
+                PlayerAddress = PlayerAddressCodec.Read(reader);
                 var count = reader.ReadUInt16();
                 if (count > _maximumPermissionCount)
                 {
@@ -214,7 +217,7 @@ public static partial class ProtocolMessageCodec
 
         return new CommandPackage(Mode, CorrelationId)
         {
-            Input = Input, CommandId = CommandId, Payload = Payload, PlayerGuid = PlayerGuid, Result = Result,
+            Input = Input, CommandId = CommandId, Payload = Payload, PlayerAddress = PlayerAddress, Result = Result,
             PermissionGrants = PermissionGrants, Suggestions = Suggestions
         };
     }

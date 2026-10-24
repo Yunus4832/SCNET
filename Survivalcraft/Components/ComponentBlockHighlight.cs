@@ -9,7 +9,7 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
 {
     private static readonly int[] _drawOrders = [1, 2000];
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private object? _highlightRaycastResult;
 
@@ -34,7 +34,7 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
             return;
         }
 
-        if (camera.GameWidget.PlayerData != _componentPlayer.PlayerData)
+        if (camera.GameWidget.CharacterData != _componentCharacter.CharacterData)
         {
             return;
         }
@@ -60,10 +60,10 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
             return;
         }
 
-        var activeCamera = _componentPlayer.GameWidget.ActiveCamera;
+        var activeCamera = _componentCharacter.GameWidget.ActiveCamera;
         var ray = new Ray3(activeCamera.ViewPosition, activeCamera.ViewDirection);
         NearbyEditableCell = null;
-        _highlightRaycastResult = _componentPlayer.ComponentMiner.Raycast(ray, RaycastMode.Digging);
+        _highlightRaycastResult = _componentCharacter.ComponentMiner.Raycast(ray, RaycastMode.Digging);
         if (_highlightRaycastResult is not TerrainRaycastResult terrainRaycastResult)
         {
             return;
@@ -99,7 +99,7 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemAnimatedTextures = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         _shader = new Shader(
             ContentManager.Get<string>("Shaders/Highlight", ".vsh"),
             ContentManager.Get<string>("Shaders/Highlight", ".psh"),
@@ -156,15 +156,15 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
     public void DrawOutlineHighlight(Camera camera)
     {
         if (camera.UsesMovementControls ||
-            !(_componentPlayer.ComponentHealth.Health > 0f) ||
-            !_componentPlayer.ComponentGui.ControlsContainerWidget.IsVisible)
+            !(_componentCharacter.ComponentHealth.Health > 0f) ||
+            !_componentCharacter.ComponentGui.ControlsContainerWidget.IsVisible)
         {
             return;
         }
 
-        if (_componentPlayer.ComponentMiner.DigCellFace.HasValue)
+        if (_componentCharacter.ComponentMiner.DigCellFace.HasValue)
         {
-            var value = _componentPlayer.ComponentMiner.DigCellFace.Value;
+            var value = _componentCharacter.ComponentMiner.DigCellFace.Value;
             var cellFaceBoundingBox = GetCellFaceBoundingBox(value.Point);
             var num = _subsystemSky.CalculateFog(camera.ViewPosition, cellFaceBoundingBox.Center());
             var color = Color.MultiplyNotSaturated(Color.Black, 1f - num);
@@ -178,9 +178,9 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
         }
         else
         {
-            if (!_componentPlayer.ComponentAimingSights.IsSightsVisible &&
+            if (!_componentCharacter.ComponentAimingSights.IsSightsVisible &&
                 (SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch ||
-                 !_componentPlayer.ComponentInput.IsTouchInputActive) &&
+                 !_componentCharacter.ComponentInput.IsTouchInputActive) &&
                 _highlightRaycastResult is TerrainRaycastResult result)
             {
                 var cellFace = result.CellFace;

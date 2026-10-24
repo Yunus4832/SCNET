@@ -4,7 +4,7 @@ public enum UpdateOrder
 {
     Reset = -100,
 
-    SubsystemPlayers = -20,
+    SubsystemCharacters = -20,
 
     Input = -10,
 

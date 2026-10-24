@@ -50,10 +50,10 @@ public sealed class AudioListenerTest
 
     private static GameWidget CreateView(bool local, Vector3 position)
     {
-        var player = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData));
-        typeof(PlayerData).GetProperty(nameof(PlayerData.IsMainPlayer))!.SetValue(player, local);
+        var player = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
+        typeof(CharacterData).GetProperty(nameof(CharacterData.IsLocalCharacter))!.SetValue(player, local);
         var widget = (GameWidget)RuntimeHelpers.GetUninitializedObject(typeof(GameWidget));
-        widget.PlayerData = player;
+        widget.CharacterData = player;
         var camera = new FppCamera(widget);
         typeof(BasePerspectiveCamera).GetField("_viewPosition", BindingFlags.Instance | BindingFlags.NonPublic)!
             .SetValue(camera, position);

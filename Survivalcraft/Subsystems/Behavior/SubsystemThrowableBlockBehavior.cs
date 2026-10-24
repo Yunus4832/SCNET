@@ -26,7 +26,10 @@ public class SubsystemThrowableBlockBehavior : SubsystemBlockBehavior
                 var componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
                 if (componentFirstPersonModel != null)
                 {
-                    componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position, aim.Direction);
+                    componentMiner.ComponentCharacter?.ComponentAimingSights.ShowAimingSights(
+                        aim.Position,
+                        aim.Direction
+                    );
                     componentFirstPersonModel.ItemOffsetOrder = new Vector3(0f, 0.35f, 0.17f);
                     if (block2 is SpearBlock)
                     {
@@ -60,9 +63,9 @@ public class SubsystemThrowableBlockBehavior : SubsystemBlockBehavior
                 }
 
                 var num2 = block.ProjectileSpeed;
-                if (componentMiner.ComponentPlayer != null)
+                if (componentMiner.ComponentCharacter != null)
                 {
-                    num2 *= 0.5f * (componentMiner.ComponentPlayer.ComponentLevel.StrengthFactor - 1f) + 1f;
+                    num2 *= 0.5f * (componentMiner.ComponentCharacter.ComponentLevel.StrengthFactor - 1f) + 1f;
                 }
 
                 if (_subsystemProjectiles.FireProjectile(

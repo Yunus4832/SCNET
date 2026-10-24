@@ -26,11 +26,11 @@ public static class EntitySnapshotSerializer
         return project.LoadEntitiesAll(entityData);
     }
 
-    public static PlayerEntitySnapshot[] CapturePlayerEntities(IEnumerable<Entity> entities) => entities
-        .Select(entity => entity.FindComponent<ComponentPlayer>())
-        .OfType<ComponentPlayer>()
-        .Select(player => new PlayerEntitySnapshot(
-                player.PlayerData.PlayerGUID,
+    public static CharacterEntitySnapshot[] CaptureCharacterEntities(IEnumerable<Entity> entities) => entities
+        .Select(entity => entity.FindComponent<ComponentCharacter>())
+        .OfType<ComponentCharacter>()
+        .Select(player => new CharacterEntitySnapshot(
+                player.CharacterData.CharacterId,
                 player.Entity.EntityId,
                 player.ComponentBody.Position,
                 player.ComponentBody.ParentBody?.Entity.EntityId ?? 0

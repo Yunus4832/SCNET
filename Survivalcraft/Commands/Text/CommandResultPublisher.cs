@@ -91,9 +91,9 @@ public static class CommandResultPublisher
 
     private static void NotifyPanel(Project project, CommandResult result, string? correlationId)
     {
-        if (correlationId != null && CommonLib.MainPlayer?.PlayerData.Project == project)
+        if (correlationId != null && CommonLib.LocalCharacter?.CharacterData.Project == project)
         {
-            CommonLib.MainPlayer.GameWidget.MessagePanel?.ReceiveCommandResult(result, correlationId);
+            CommonLib.LocalCharacter.GameWidget.MessagePanel?.ReceiveCommandResult(result, correlationId);
         }
     }
 

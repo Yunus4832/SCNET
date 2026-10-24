@@ -13,7 +13,7 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
 
     private ComponentGui _componentGui = null!;
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private Vector2[] _iceVertices = [];
 
@@ -55,7 +55,7 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
-        if (_componentPlayer.GameWidget != camera.GameWidget)
+        if (_componentCharacter.GameWidget != camera.GameWidget)
         {
             return;
         }
@@ -138,7 +138,7 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _componentGui = Entity.FindComponent<ComponentGui>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
     }
 
     public void DrawOverlay(Camera camera, Color color, float innerFactor, float outerFactor)

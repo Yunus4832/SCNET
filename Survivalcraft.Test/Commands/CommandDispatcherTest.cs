@@ -1,10 +1,12 @@
 using System.Text.Json.Nodes;
 
 using Engine.Core.Mathematics;
+using Engine.Core.Security;
 
 using Game;
 using Game.Commands;
 using Game.Managers;
+using Game.Protocol.Identity;
 
 namespace Survivalcraft.Test.Commands;
 
@@ -495,7 +497,7 @@ public class CommandDispatcherTest
         Assert.Equal(PermissionGrantPolicy.Standard, teleportPermission!.Definition.GrantPolicy);
         AssertDomain<CreateTeamCommand>(registry, CommandDomain.World);
         AssertDomain<StopServerCommand>(registry, CommandDomain.Server);
-        AssertDomain<GrantPlayerPermissionCommand>(registry, CommandDomain.Server);
+        AssertDomain<GrantUserPermissionCommand>(registry, CommandDomain.Server);
 
         Assert.True(registry.TryGetDefinition<StopServerCommand>(out var stop));
         var stopPermission = Assert.IsType<ResourceId>(stop!.Definition.RequiredPermission);
@@ -645,7 +647,13 @@ public class CommandDispatcherTest
             new SetSeasonCommand(Season.Winter, 0.5f),
             new CreateTeamCommand("Builders"),
             new RequestJoinTeamCommand(Guid.NewGuid()),
-            new InvitePlayerToTeamCommand(Guid.NewGuid()),
+            new InvitePlayerToTeamCommand(
+                new PlayerAddress(
+                    IdentityAddress.Encode(
+                        Convert.FromHexString("0000000000000000000000000000000000000000000000000000000000000000")
+                    )
+                )
+            ),
             new RespondTeamRequestCommand(Guid.NewGuid(), true),
             new LeaveTeamCommand()
         ];
@@ -683,7 +691,7 @@ public class CommandDispatcherTest
             new UpdateOwnPlayerProfileCommand(
                 "Player",
                 "$Male1",
-                PlayerClass.Male
+                CharacterSex.Male
             ),
             new SendChatMessageCommand(
                 GameMessageChannel.Team,

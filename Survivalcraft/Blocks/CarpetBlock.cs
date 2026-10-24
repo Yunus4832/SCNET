@@ -127,7 +127,7 @@ public class CarpetBlock : CubeBlock
         SubsystemTerrain subsystemTerrain,
         string[] ingredients,
         float heatLevel,
-        ComponentPlayer? player
+        ComponentCharacter? player
     )
     {
         if (heatLevel < 1f)

@@ -6,7 +6,7 @@ public static class AutomationGameplayContext
     public static object Capture()
     {
         var project = GameManager.Project;
-        var player = project?.FindSubsystem<SubsystemPlayers>()?.ComponentPlayers
+        var player = project?.FindSubsystem<SubsystemCharacters>()?.ComponentCharacters
             .FirstOrDefault(candidate => candidate.IsLocallyControlled);
         if (player == null)
         {
@@ -38,7 +38,7 @@ public static class AutomationGameplayContext
             : null;
         return new
         {
-            Ready = player.PlayerData.IsReadyForPlaying,
+            Ready = player.CharacterData.IsReadyForPlaying,
             WindowActive = Window.IsActive,
             Screen = ScreensManager.GetCurrentScreenName(),
             Transitioning = ScreensManager.IsAnimating,

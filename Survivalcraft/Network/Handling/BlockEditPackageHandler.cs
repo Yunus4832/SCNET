@@ -51,7 +51,7 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                     var inventory = subsystemInventories.GetInventoryById(package.InventoryId);
                     if (inventory != null)
                     {
-                        var player = CommonLib.MainPlayer;
+                        var player = CommonLib.LocalCharacter;
                         if (player is null)
                         {
                             return;
@@ -74,14 +74,14 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                         // 发射器
                         else if (inventory is ComponentDispenser componentDispenser)
                         {
-                            player.ComponentMiner.ComponentPlayer?.ComponentGui.ModalPanelWidget =
+                            player.ComponentMiner.ComponentCharacter?.ComponentGui.ModalPanelWidget =
                                 new DispenserWidget(player.ComponentMiner.Inventory, componentDispenser);
                             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
                         }
                         // 工具台
                         else if (inventory is ComponentCraftingTable componentCraftingTable)
                         {
-                            player.ComponentMiner.ComponentPlayer?.ComponentGui.ModalPanelWidget =
+                            player.ComponentMiner.ComponentCharacter?.ComponentGui.ModalPanelWidget =
                                 new CraftingTableWidget(player.ComponentMiner.Inventory, componentCraftingTable);
                             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
                         }
@@ -144,10 +144,10 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                 }
                 else
                 {
-                    if (CommonLib.MainPlayer != null)
+                    if (CommonLib.LocalCharacter != null)
                     {
                         project.FindSubsystem<SubsystemSignBlockBehavior>(true)!
-                            .OpenEditor(CommonLib.MainPlayer, package.Point3);
+                            .OpenEditor(CommonLib.LocalCharacter, package.Point3);
                     }
                 }
 

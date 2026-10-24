@@ -117,7 +117,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         int y,
         int z,
         int value,
-        PlayerData? miner = null
+        CharacterData? miner = null
     )
     {
         return CommonLib.WorkType != WorkType.Client && TryNetExplodeBlock(x, y, z, value, miner);
@@ -128,7 +128,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         int y,
         int z,
         int value,
-        PlayerData? miner = null
+        CharacterData? miner = null
     )
     {
         var num = Terrain.ExtractContents(value);
@@ -151,7 +151,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         float pressure,
         bool isIncendiary,
         bool noExplosionSound,
-        PlayerData? miner = null
+        CharacterData? miner = null
     )
     {
         if (CommonLib.WorkType == WorkType.Client)
@@ -202,7 +202,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         int z,
         float pressure,
         bool isIncendiary,
-        PlayerData? miner = null
+        CharacterData? miner = null
     )
     {
         var explosionPointValue = _subsystemTerrain.Terrain.GetCellValue(x, y, z);
@@ -288,7 +288,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         bool isIncendiary,
         List<ProcessPoint> toProcess,
         SparseSpatialArray<bool> processed,
-        PlayerData? playerData = null
+        CharacterData? characterData = null
     )
     {
         if (processed.Get(x, y, z))
@@ -299,7 +299,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         var gameplay = CurrentModRuntime.Value?.Gameplay;
         if (gameplay is { HasExplosionPointProcessingHandlers: true })
         {
-            var processing = new ExplosionPointProcessingContext(this, new Point3(x, y, z), playerData);
+            var processing = new ExplosionPointProcessingContext(this, new Point3(x, y, z), characterData);
             gameplay.Invoke(processing);
             if (processing.Cancel)
             {
@@ -338,7 +338,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                     newValue,
                     true,
                     true,
-                    playerData?.ComponentPlayer?.ComponentMiner
+                    characterData?.ComponentCharacter?.ComponentMiner
                 );
                 var flag = false;
                 var probability = num6 > 5f ? 0.95f : 0.75f;
@@ -985,7 +985,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
 
         public bool NoExplosionSound;
 
-        public PlayerData? Miner;
+        public CharacterData? Miner;
     }
 
     public struct ProcessPoint

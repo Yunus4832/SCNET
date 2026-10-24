@@ -57,7 +57,7 @@ public static class NetworkSender
 
         var interest = entity.Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
         var candidates = interest.Entities.GetObservers(EntityInterestGroup.Creatures, entity.EntityId);
-        if (body.Player?.PlayerData.Client is { IsConnected: true } owner)
+        if (body.Character?.CharacterData.Client is { IsConnected: true } owner)
         {
             candidates = candidates.Append(owner);
         }

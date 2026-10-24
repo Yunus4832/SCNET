@@ -30,6 +30,8 @@ public static class GamePaths
 
     public static string SettingsFile => "config:Settings.xml";
 
+    public static string LocalIdentitiesFile => "config:LocalIdentities.xml";
+
     public static string ContentRepositoriesFile => "config:ContentRepositories.xml";
 
     public static string ServerDirectoryFile => "config:ServerDirectory.xml";

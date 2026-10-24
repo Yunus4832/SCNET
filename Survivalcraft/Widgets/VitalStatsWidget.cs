@@ -12,7 +12,7 @@ public class VitalStatsWidget : CanvasWidget
 
     private readonly ButtonWidget _chokeButton;
 
-    private readonly ComponentPlayer _componentPlayer;
+    private readonly ComponentCharacter _componentCharacter;
 
     private readonly LinkWidget _experienceLink;
 
@@ -64,9 +64,9 @@ public class VitalStatsWidget : CanvasWidget
 
     private readonly ValueBarWidget _wetnessValueBar;
 
-    public VitalStatsWidget(ComponentPlayer componentPlayer)
+    public VitalStatsWidget(ComponentCharacter componentCharacter)
     {
-        _componentPlayer = componentPlayer;
+        _componentCharacter = componentCharacter;
         var node = ContentManager.Get<XElement>("Widgets/VitalStatsWidget");
         LoadContents(this, node);
         _titleLabel = Children.Find<LabelWidget>("TitleLabel")!;
@@ -100,46 +100,46 @@ public class VitalStatsWidget : CanvasWidget
     public override void Update()
     {
         _titleLabel.Text =
-            $"{_componentPlayer.PlayerData.Name}, Level {MathUtils.Floor(_componentPlayer.PlayerData.Level)} {_componentPlayer.PlayerData.PlayerClass.ToString()}";
-        _healthValueBar.Value = _componentPlayer.ComponentHealth.Health;
-        _staminaValueBar.Value = _componentPlayer.ComponentVitalStats.Stamina;
-        _foodValueBar.Value = _componentPlayer.ComponentVitalStats.Food;
-        _sleepValueBar.Value = _componentPlayer.ComponentVitalStats.Sleep;
-        _temperatureValueBar.Value = _componentPlayer.ComponentVitalStats.Temperature / 24f;
-        _wetnessValueBar.Value = _componentPlayer.ComponentVitalStats.Wetness;
+            $"{_componentCharacter.CharacterData.Name}, Level {MathUtils.Floor(_componentCharacter.CharacterData.Level)} {_componentCharacter.CharacterData.CharacterSex.ToString()}";
+        _healthValueBar.Value = _componentCharacter.ComponentHealth.Health;
+        _staminaValueBar.Value = _componentCharacter.ComponentVitalStats.Stamina;
+        _foodValueBar.Value = _componentCharacter.ComponentVitalStats.Food;
+        _sleepValueBar.Value = _componentCharacter.ComponentVitalStats.Sleep;
+        _temperatureValueBar.Value = _componentCharacter.ComponentVitalStats.Temperature / 24f;
+        _wetnessValueBar.Value = _componentCharacter.ComponentVitalStats.Wetness;
         _experienceValueBar.Value =
-            _componentPlayer.PlayerData.Level - MathUtils.Floor(_componentPlayer.PlayerData.Level);
+            _componentCharacter.CharacterData.Level - MathUtils.Floor(_componentCharacter.CharacterData.Level);
         _strengthLabel.Text = string.Format(
             CultureInfo.InvariantCulture,
             "x {0:0.00}",
-            _componentPlayer.ComponentLevel.StrengthFactor
+            _componentCharacter.ComponentLevel.StrengthFactor
         );
         _resilienceLabel.Text = string.Format(
             CultureInfo.InvariantCulture,
             "x {0:0.00}",
-            _componentPlayer.ComponentLevel.ResilienceFactor
+            _componentCharacter.ComponentLevel.ResilienceFactor
         );
         _speedLabel.Text = string.Format(
             CultureInfo.InvariantCulture,
             "x {0:0.00}",
-            _componentPlayer.ComponentLevel.SpeedFactor
+            _componentCharacter.ComponentLevel.SpeedFactor
         );
         _hungerLabel.Text = string.Format(
             CultureInfo.InvariantCulture,
             "x {0:0.00}",
-            _componentPlayer.ComponentLevel.HungerFactor
+            _componentCharacter.ComponentLevel.HungerFactor
         );
         _insulationLabel.Text = string.Format(
             CultureInfo.InvariantCulture,
             "{0:0.00} clo",
-            _componentPlayer.ComponentClothing.Insulation
+            _componentCharacter.ComponentClothing.Insulation
         );
         var helpScreen = ScreensManager.FindScreen<HelpScreen>("Help", true)!;
         if (_healthLink.IsClicked)
         {
             var topic = helpScreen.GetTopic("Health");
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new MessageDialog(
                     topic.Title,
                     topic.Text,
@@ -156,7 +156,7 @@ public class VitalStatsWidget : CanvasWidget
         {
             var topic2 = helpScreen.GetTopic("Stamina");
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new MessageDialog(
                     topic2.Title,
                     topic2.Text,
@@ -173,7 +173,7 @@ public class VitalStatsWidget : CanvasWidget
         {
             var topic3 = helpScreen.GetTopic("Hunger");
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new MessageDialog(
                     topic3.Title,
                     topic3.Text,
@@ -190,7 +190,7 @@ public class VitalStatsWidget : CanvasWidget
         {
             var topic4 = helpScreen.GetTopic("Sleep");
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new MessageDialog(
                     topic4.Title,
                     topic4.Text,
@@ -207,7 +207,7 @@ public class VitalStatsWidget : CanvasWidget
         {
             var topic5 = helpScreen.GetTopic("Temperature");
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new MessageDialog(
                     topic5.Title,
                     topic5.Text,
@@ -224,7 +224,7 @@ public class VitalStatsWidget : CanvasWidget
         {
             var topic6 = helpScreen.GetTopic("Wetness");
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new MessageDialog(
                     topic6.Title,
                     topic6.Text,
@@ -240,9 +240,9 @@ public class VitalStatsWidget : CanvasWidget
         if (_strengthLink.IsClicked)
         {
             var factors = new List<ComponentLevel.Factor>();
-            var total = _componentPlayer.ComponentLevel.CalculateStrengthFactor(factors);
+            var total = _componentCharacter.ComponentLevel.CalculateStrengthFactor(factors);
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new LevelFactorDialog(
                     LanguageManager.GetContentWidgets(_typeName, "Strength"),
                     LanguageManager.GetContentWidgets(_typeName, 16),
@@ -255,9 +255,9 @@ public class VitalStatsWidget : CanvasWidget
         if (_resilienceLink.IsClicked)
         {
             var factors2 = new List<ComponentLevel.Factor>();
-            var total2 = _componentPlayer.ComponentLevel.CalculateResilienceFactor(factors2);
+            var total2 = _componentCharacter.ComponentLevel.CalculateResilienceFactor(factors2);
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new LevelFactorDialog(
                     LanguageManager.GetContentWidgets(_typeName, "Resilience"),
                     LanguageManager.GetContentWidgets(_typeName, 17),
@@ -270,9 +270,9 @@ public class VitalStatsWidget : CanvasWidget
         if (_speedLink.IsClicked)
         {
             var factors3 = new List<ComponentLevel.Factor>();
-            var total3 = _componentPlayer.ComponentLevel.CalculateSpeedFactor(factors3);
+            var total3 = _componentCharacter.ComponentLevel.CalculateSpeedFactor(factors3);
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new LevelFactorDialog(
                     LanguageManager.GetContentWidgets(_typeName, "Speed"),
                     LanguageManager.GetContentWidgets(_typeName, 18),
@@ -285,9 +285,9 @@ public class VitalStatsWidget : CanvasWidget
         if (_hungerLink.IsClicked)
         {
             var factors4 = new List<ComponentLevel.Factor>();
-            var total4 = _componentPlayer.ComponentLevel.CalculateHungerFactor(factors4);
+            var total4 = _componentCharacter.ComponentLevel.CalculateHungerFactor(factors4);
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new LevelFactorDialog(
                     LanguageManager.GetContentWidgets(_typeName, "Hunger"),
                     LanguageManager.GetContentWidgets(_typeName, 19),
@@ -301,7 +301,7 @@ public class VitalStatsWidget : CanvasWidget
         {
             var topic7 = helpScreen.GetTopic("Levels");
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new MessageDialog(
                     topic7.Title,
                     topic7.Text,
@@ -318,7 +318,7 @@ public class VitalStatsWidget : CanvasWidget
         {
             var topic8 = helpScreen.GetTopic("Clothing");
             DialogsManager.ShowDialog(
-                _componentPlayer.GuiWidget,
+                _componentCharacter.GuiWidget,
                 new MessageDialog(
                     topic8.Title,
                     topic8.Text,
@@ -337,7 +337,7 @@ public class VitalStatsWidget : CanvasWidget
             {
                 NetworkSender.SendToServer(
                     EntityStatePackageBuilder.Capture(
-                        _componentPlayer.ComponentHealth,
+                        _componentCharacter.ComponentHealth,
                         null,
                         0.1f,
                         LanguageManager.GetContentWidgets(_typeName, "Choked"),
@@ -349,7 +349,7 @@ public class VitalStatsWidget : CanvasWidget
             }
             else
             {
-                _componentPlayer.ComponentHealth.Injure(
+                _componentCharacter.ComponentHealth.Injure(
                     0.1f,
                     null,
                     true,

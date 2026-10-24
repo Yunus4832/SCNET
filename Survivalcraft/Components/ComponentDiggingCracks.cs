@@ -21,7 +21,7 @@ public class ComponentDiggingCracks : Component, IDrawable
 
     public TerrainGeometry? TerrainGeometry;
 
-    private SubsystemPlayers _players = null!;
+    private SubsystemCharacters _players = null!;
 
     private Point3 _point;
 
@@ -54,10 +54,10 @@ public class ComponentDiggingCracks : Component, IDrawable
         var point = _componentMiner.DigCellFace.Value.Point;
         if (CommonLib.WorkType == WorkType.Client)
         {
-            if (_players.MainPlayer != null)
+            if (_players.LocalCharacter != null)
             {
                 if (Vector3.DistanceSquared(
-                        _players.MainPlayer.GameWidget.ActiveCamera.ViewPosition,
+                        _players.LocalCharacter.GameWidget.ActiveCamera.ViewPosition,
                         new Vector3(point)
                     ) >
                     MathUtils.Sqr(SettingsManager.Current.VisibilityRange))
@@ -170,7 +170,7 @@ public class ComponentDiggingCracks : Component, IDrawable
             return;
         }
 
-        _players = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _players = Project.FindSubsystem<SubsystemCharacters>(true)!;
         _defaultTexture = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!.AnimatedBlocksTexture;
         _drawItem = new Dictionary<Texture2D, TerrainGeometry[]>();
         var list = new TerrainGeometry[TerrainChunk.SlicesCount];

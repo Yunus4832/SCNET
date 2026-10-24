@@ -10,11 +10,8 @@ internal sealed class WorldMaintenancePlanner
         new TerrainVersionUpgradeStep(),
         new ProjectMetadataRepairStep(),
         new TerritoryStoneMigrationRepairStep(),
-        // TODO: Add a player-persistence migration step before project schema cleanup.
-        // It must reconcile legacy Players/Entities, OfflinePlayerEntities, and external
-        // PlayerEntities JSON/DAT records into the authoritative Players/OfflinePlayers
-        // project structure. Do not implement this until the historical layouts and
-        // deterministic conflict-resolution rules have been catalogued.
+        // Historical world maintenance does not migrate identities, character ownership,
+        // permissions or social data into the current subject model.
         new ProjectSubsystemSchemaRepairStep(),
         new BlockEntityConsistencyRepairStep(),
         new BasicWorldValidationStep()

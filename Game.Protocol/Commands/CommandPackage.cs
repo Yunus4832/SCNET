@@ -1,3 +1,5 @@
+using Game.Protocol.Identity;
+
 namespace Game.Protocol.Commands;
 
 public sealed record CommandPackage : IProtocolMessage
@@ -29,7 +31,7 @@ public sealed record CommandPackage : IProtocolMessage
 
     public byte[] Payload { get; init; } = [];
 
-    public Guid PlayerGuid { get; init; }
+    public PlayerAddress? PlayerAddress { get; init; }
 
     public CommandResponse? Result { get; init; }
 
@@ -76,14 +78,14 @@ public sealed record CommandPackage : IProtocolMessage
     }
 
     public static CommandPackage CreatePermissionSnapshot(
-        Guid playerGuid,
+        PlayerAddress address,
         IEnumerable<CommandPermissionGrant> grants
     )
     {
         ArgumentNullException.ThrowIfNull(grants);
         return new CommandPackage(CommandPackageMode.PermissionSnapshot, string.Empty)
         {
-            PlayerGuid = playerGuid,
+            PlayerAddress = address,
             PermissionGrants = grants.Take(_maximumPermissionCount).ToArray()
         };
     }

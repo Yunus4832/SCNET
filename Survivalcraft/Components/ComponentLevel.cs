@@ -20,7 +20,7 @@ public class ComponentLevel : Component, IUpdateable
 
     public const string Name = "ComponentLevel";
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private readonly List<Factor> _factors = [];
 
@@ -58,17 +58,17 @@ public class ComponentLevel : Component, IUpdateable
         if (RunMode.Value is RunModeType.Gui)
         {
             if (!_lastLevelTextValue.HasValue ||
-                _lastLevelTextValue.Value.UncloseTo(MathUtils.Floor(_componentPlayer.PlayerData.Level)))
+                _lastLevelTextValue.Value.UncloseTo(MathUtils.Floor(_componentCharacter.CharacterData.Level)))
             {
-                _componentPlayer.ComponentGui.LevelLabelWidget.Text =
-                    "等级 " + MathUtils.Floor(_componentPlayer.PlayerData.Level);
-                _lastLevelTextValue = MathUtils.Floor(_componentPlayer.PlayerData.Level);
+                _componentCharacter.ComponentGui.LevelLabelWidget.Text =
+                    "等级 " + MathUtils.Floor(_componentCharacter.CharacterData.Level);
+                _lastLevelTextValue = MathUtils.Floor(_componentCharacter.CharacterData.Level);
             }
         }
 
-        _componentPlayer.PlayerStats.HighestLevel = MathUtils.Max(
-            _componentPlayer.PlayerStats.HighestLevel,
-            _componentPlayer.PlayerData.Level
+        _componentCharacter.CharacterStats.HighestLevel = MathUtils.Max(
+            _componentCharacter.CharacterStats.HighestLevel,
+            _componentCharacter.CharacterData.Level
         );
     }
 
@@ -80,15 +80,15 @@ public class ComponentLevel : Component, IUpdateable
         }
 
         NetAddExperience(count, playSound);
-        if (CommonLib.WorkType == WorkType.Server && _componentPlayer.PlayerData.Client is { } owner)
+        if (CommonLib.WorkType == WorkType.Server && _componentCharacter.CharacterData.Client is { } owner)
         {
             NetworkSender.SendTo(
                 owner,
-                PlayerPackageBuilder.Capture(
-                    _componentPlayer.PlayerData,
+                CharacterPackageBuilder.Capture(
+                    _componentCharacter.CharacterData,
                     count,
                     playSound,
-                    _componentPlayer.PlayerData.Level
+                    _componentCharacter.CharacterData.Level
                 )
             );
         }
@@ -103,7 +103,7 @@ public class ComponentLevel : Component, IUpdateable
                 "Audio/ExperienceCollected",
                 0.2f,
                 _random.Float(-0.1f, 0.4f),
-                _componentPlayer.ComponentBody.Position,
+                _componentCharacter.ComponentBody.Position,
                 2f,
                 false
             );
@@ -111,15 +111,15 @@ public class ComponentLevel : Component, IUpdateable
 
         for (var i = 0; i < count; i++)
         {
-            var num = 0.012f / MathUtils.Pow(1.08f, MathUtils.Floor(_componentPlayer.PlayerData.Level - 1f));
-            if (MathUtils.Floor(_componentPlayer.PlayerData.Level + num) >
-                MathUtils.Floor(_componentPlayer.PlayerData.Level))
+            var num = 0.012f / MathUtils.Pow(1.08f, MathUtils.Floor(_componentCharacter.CharacterData.Level - 1f));
+            if (MathUtils.Floor(_componentCharacter.CharacterData.Level + num) >
+                MathUtils.Floor(_componentCharacter.CharacterData.Level))
             {
                 Time.QueueTimeDelayedExecution(
                     Time.FrameStartTime + 0.5 + 0.0,
                     delegate
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(
                             LanguageManager.Get(Name, 1),
                             Color.White,
                             true,
@@ -135,7 +135,7 @@ public class ComponentLevel : Component, IUpdateable
                             "Audio/ExperienceCollected",
                             1f,
                             -0.2f,
-                            _componentPlayer.ComponentBody.Position,
+                            _componentCharacter.ComponentBody.Position,
                             2f,
                             false
                         );
@@ -149,7 +149,7 @@ public class ComponentLevel : Component, IUpdateable
                             "Audio/ExperienceCollected",
                             1f,
                             -0.03333333f,
-                            _componentPlayer.ComponentBody.Position,
+                            _componentCharacter.ComponentBody.Position,
                             2f,
                             false
                         );
@@ -163,7 +163,7 @@ public class ComponentLevel : Component, IUpdateable
                             "Audio/ExperienceCollected",
                             1f,
                             142f / (339f * (float)Math.PI),
-                            _componentPlayer.ComponentBody.Position,
+                            _componentCharacter.ComponentBody.Position,
                             2f,
                             false
                         );
@@ -177,7 +177,7 @@ public class ComponentLevel : Component, IUpdateable
                             "Audio/ExperienceCollected",
                             1f,
                             23f / 60f,
-                            _componentPlayer.ComponentBody.Position,
+                            _componentCharacter.ComponentBody.Position,
                             2f,
                             false
                         );
@@ -191,7 +191,7 @@ public class ComponentLevel : Component, IUpdateable
                             "Audio/ExperienceCollected",
                             1f,
                             -0.03333333f,
-                            _componentPlayer.ComponentBody.Position,
+                            _componentCharacter.ComponentBody.Position,
                             2f,
                             false
                         );
@@ -205,7 +205,7 @@ public class ComponentLevel : Component, IUpdateable
                             "Audio/ExperienceCollected",
                             1f,
                             23f / 60f,
-                            _componentPlayer.ComponentBody.Position,
+                            _componentCharacter.ComponentBody.Position,
                             2f,
                             false
                         );
@@ -213,13 +213,13 @@ public class ComponentLevel : Component, IUpdateable
                 );
             }
 
-            _componentPlayer.PlayerData.Level += num;
+            _componentCharacter.CharacterData.Level += num;
         }
     }
 
     public float CalculateStrengthFactor(ICollection<Factor> factors)
     {
-        var num = _componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 0.8f : 1f;
+        var num = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 0.8f : 1f;
         var num2 = 1f * num;
         Factor item;
         if (factors.Count > 0)
@@ -227,12 +227,12 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num,
-                Description = _componentPlayer.PlayerData.PlayerClass.ToString()
+                Description = _componentCharacter.CharacterData.CharacterSex.ToString()
             };
             factors.Add(item);
         }
 
-        var level = _componentPlayer.PlayerData.Level;
+        var level = _componentCharacter.CharacterData.Level;
         var num3 = 1f + 0.05f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
         var num4 = num2 * num3;
         if (factors.Count > 0)
@@ -248,7 +248,7 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        var stamina = _componentPlayer.ComponentVitalStats.Stamina;
+        var stamina = _componentCharacter.ComponentVitalStats.Stamina;
         var num5 = MathUtils.Lerp(0.5f, 1f, MathUtils.Saturate(4f * stamina)) *
                    MathUtils.Lerp(0.9f, 1f, MathUtils.Saturate(stamina));
         var num6 = num4 * num5;
@@ -262,56 +262,56 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        var num7 = _componentPlayer.ComponentSickness.IsSick ? 0.75f : 1f;
+        var num7 = _componentCharacter.ComponentSickness.IsSick ? 0.75f : 1f;
         var num8 = num6 * num7;
         if (factors.Count > 0)
         {
             item = new Factor
             {
                 Value = num7,
-                Description = _componentPlayer.ComponentSickness.IsSick
+                Description = _componentCharacter.ComponentSickness.IsSick
                     ? LanguageManager.Get(Name, 4)
                     : LanguageManager.Get(Name, 5)
             };
             factors.Add(item);
         }
 
-        float num9 = !_componentPlayer.ComponentSickness.IsPuking ? 1 : 0;
+        float num9 = !_componentCharacter.ComponentSickness.IsPuking ? 1 : 0;
         var num10 = num8 * num9;
         if (factors.Count > 0)
         {
             item = new Factor
             {
                 Value = num9,
-                Description = _componentPlayer.ComponentSickness.IsPuking
+                Description = _componentCharacter.ComponentSickness.IsPuking
                     ? LanguageManager.Get(Name, 6)
                     : LanguageManager.Get(Name, 7)
             };
             factors.Add(item);
         }
 
-        var num11 = _componentPlayer.ComponentFlu.HasFlu ? 0.75f : 1f;
+        var num11 = _componentCharacter.ComponentFlu.HasFlu ? 0.75f : 1f;
         var num12 = num10 * num11;
         if (factors.Count > 0)
         {
             item = new Factor
             {
                 Value = num11,
-                Description = _componentPlayer.ComponentFlu.HasFlu
+                Description = _componentCharacter.ComponentFlu.HasFlu
                     ? LanguageManager.Get(Name, 8)
                     : LanguageManager.Get(Name, 9)
             };
             factors.Add(item);
         }
 
-        float num13 = !_componentPlayer.ComponentFlu.IsCoughing ? 1 : 0;
+        float num13 = !_componentCharacter.ComponentFlu.IsCoughing ? 1 : 0;
         var num14 = num12 * num13;
         if (factors.Count > 0)
         {
             item = new Factor
             {
                 Value = num13,
-                Description = _componentPlayer.ComponentFlu.IsCoughing
+                Description = _componentCharacter.ComponentFlu.IsCoughing
                     ? LanguageManager.Get(Name, 10)
                     : LanguageManager.Get(Name, 11)
             };
@@ -341,7 +341,7 @@ public class ComponentLevel : Component, IUpdateable
 
     public float CalculateResilienceFactor(ICollection<Factor> factors)
     {
-        var num = _componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 0.8f : 1f;
+        var num = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 0.8f : 1f;
         var num2 = 1f * num;
         Factor item;
         if (factors.Count > 0)
@@ -349,12 +349,12 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num,
-                Description = _componentPlayer.PlayerData.PlayerClass.ToString()
+                Description = _componentCharacter.CharacterData.CharacterSex.ToString()
             };
             factors.Add(item);
         }
 
-        var level = _componentPlayer.PlayerData.Level;
+        var level = _componentCharacter.CharacterData.Level;
         var num3 = 1f + 0.05f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
         var num4 = num2 * num3;
         if (factors.Count > 0)
@@ -370,28 +370,28 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        var num5 = _componentPlayer.ComponentSickness.IsSick ? 0.75f : 1f;
+        var num5 = _componentCharacter.ComponentSickness.IsSick ? 0.75f : 1f;
         var num6 = num4 * num5;
         if (factors.Count > 0)
         {
             item = new Factor
             {
                 Value = num5,
-                Description = _componentPlayer.ComponentSickness.IsSick
+                Description = _componentCharacter.ComponentSickness.IsSick
                     ? LanguageManager.Get(Name, 4)
                     : LanguageManager.Get(Name, 5)
             };
             factors.Add(item);
         }
 
-        var num7 = _componentPlayer.ComponentFlu.HasFlu ? 0.75f : 1f;
+        var num7 = _componentCharacter.ComponentFlu.HasFlu ? 0.75f : 1f;
         var num8 = num6 * num7;
         if (factors.Count > 0)
         {
             item = new Factor
             {
                 Value = num7,
-                Description = _componentPlayer.ComponentFlu.HasFlu
+                Description = _componentCharacter.ComponentFlu.HasFlu
                     ? LanguageManager.Get(Name, 8)
                     : LanguageManager.Get(Name, 9)
             };
@@ -429,7 +429,7 @@ public class ComponentLevel : Component, IUpdateable
     public float CalculateSpeedFactor(ICollection<Factor> factors)
     {
         var num = 1f;
-        var num2 = _componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 1.03f : 1f;
+        var num2 = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 1.03f : 1f;
         num *= num2;
         Factor item;
         if (factors.Count > 0)
@@ -437,12 +437,12 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num2,
-                Description = _componentPlayer.PlayerData.PlayerClass.ToString()
+                Description = _componentCharacter.CharacterData.CharacterSex.ToString()
             };
             factors.Add(item);
         }
 
-        var level = _componentPlayer.PlayerData.Level;
+        var level = _componentCharacter.CharacterData.Level;
         var num3 = 1f + 0.02f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
         num *= num3;
         if (factors.Count > 0)
@@ -459,28 +459,28 @@ public class ComponentLevel : Component, IUpdateable
         }
 
         var clothingFactor = 1f;
-        foreach (var clothe in _componentPlayer.ComponentClothing.GetClothes(ClothingSlot.Head))
+        foreach (var clothe in _componentCharacter.ComponentClothing.GetClothes(ClothingSlot.Head))
         {
             AddClothingFactor(clothe, ref clothingFactor, factors);
         }
 
-        foreach (var clothe2 in _componentPlayer.ComponentClothing.GetClothes(ClothingSlot.Torso))
+        foreach (var clothe2 in _componentCharacter.ComponentClothing.GetClothes(ClothingSlot.Torso))
         {
             AddClothingFactor(clothe2, ref clothingFactor, factors);
         }
 
-        foreach (var clothe3 in _componentPlayer.ComponentClothing.GetClothes(ClothingSlot.Legs))
+        foreach (var clothe3 in _componentCharacter.ComponentClothing.GetClothes(ClothingSlot.Legs))
         {
             AddClothingFactor(clothe3, ref clothingFactor, factors);
         }
 
-        foreach (var clothe4 in _componentPlayer.ComponentClothing.GetClothes(ClothingSlot.Feet))
+        foreach (var clothe4 in _componentCharacter.ComponentClothing.GetClothes(ClothingSlot.Feet))
         {
             AddClothingFactor(clothe4, ref clothingFactor, factors);
         }
 
         num *= clothingFactor;
-        var stamina = _componentPlayer.ComponentVitalStats.Stamina;
+        var stamina = _componentCharacter.ComponentVitalStats.Stamina;
         var num4 = MathUtils.Lerp(0.5f, 1f, MathUtils.Saturate(4f * stamina)) *
                    MathUtils.Lerp(0.9f, 1f, MathUtils.Saturate(stamina));
         num *= num4;
@@ -494,56 +494,56 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        var num5 = _componentPlayer.ComponentSickness.IsSick ? 0.75f : 1f;
+        var num5 = _componentCharacter.ComponentSickness.IsSick ? 0.75f : 1f;
         num *= num5;
         if (factors.Count > 0)
         {
             item = new Factor
             {
                 Value = num5,
-                Description = _componentPlayer.ComponentSickness.IsSick
+                Description = _componentCharacter.ComponentSickness.IsSick
                     ? LanguageManager.Get(Name, 4)
                     : LanguageManager.Get(Name, 5)
             };
             factors.Add(item);
         }
 
-        float num6 = !_componentPlayer.ComponentSickness.IsPuking ? 1 : 0;
+        float num6 = !_componentCharacter.ComponentSickness.IsPuking ? 1 : 0;
         num *= num6;
         if (factors.Count > 0)
         {
             item = new Factor
             {
                 Value = num6,
-                Description = _componentPlayer.ComponentSickness.IsPuking
+                Description = _componentCharacter.ComponentSickness.IsPuking
                     ? LanguageManager.Get(Name, 6)
                     : LanguageManager.Get(Name, 7)
             };
             factors.Add(item);
         }
 
-        var num7 = _componentPlayer.ComponentFlu.HasFlu ? 0.75f : 1f;
+        var num7 = _componentCharacter.ComponentFlu.HasFlu ? 0.75f : 1f;
         num *= num7;
         if (factors.Count > 0)
         {
             item = new Factor
             {
                 Value = num7,
-                Description = _componentPlayer.ComponentFlu.HasFlu
+                Description = _componentCharacter.ComponentFlu.HasFlu
                     ? LanguageManager.Get(Name, 8)
                     : LanguageManager.Get(Name, 9)
             };
             factors.Add(item);
         }
 
-        float num8 = !_componentPlayer.ComponentFlu.IsCoughing ? 1 : 0;
+        float num8 = !_componentCharacter.ComponentFlu.IsCoughing ? 1 : 0;
         num *= num8;
         if (factors.Count > 0)
         {
             item = new Factor
             {
                 Value = num8,
-                Description = _componentPlayer.ComponentFlu.IsCoughing
+                Description = _componentCharacter.ComponentFlu.IsCoughing
                     ? LanguageManager.Get(Name, 10)
                     : LanguageManager.Get(Name, 11)
             };
@@ -555,7 +555,7 @@ public class ComponentLevel : Component, IUpdateable
 
     public float CalculateHungerFactor(ICollection<Factor> factors)
     {
-        var num = _componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 0.7f : 1f;
+        var num = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 0.7f : 1f;
         var num2 = 1f * num;
         Factor item;
         if (factors.Count > 0)
@@ -563,12 +563,12 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num,
-                Description = _componentPlayer.PlayerData.PlayerClass.ToString()
+                Description = _componentCharacter.CharacterData.CharacterSex.ToString()
             };
             factors.Add(item);
         }
 
-        var level = _componentPlayer.PlayerData.Level;
+        var level = _componentCharacter.CharacterData.Level;
         var num3 = 1f - 0.01f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
         var num4 = num2 * num3;
         if (factors.Count > 0)
@@ -616,7 +616,7 @@ public class ComponentLevel : Component, IUpdateable
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         StrengthFactor = 1f;
         SpeedFactor = 1f;
         HungerFactor = 1f;

@@ -1,85 +1,86 @@
 {
-    "Blocks": {
-        "TerritoryBlock:0": {
-            "DisplayName": "领地石",
-            "Description": "以领地石为中心设置水平范围和默认通行、挖掘、放置权限，也可为玩家单独授权。保护覆盖整个高度，每位玩家可拥有一个领地。",
-            "CRDescription:0": "用铜锭、钻石、铁锭和花岗岩制作领地石"
-        }
-    },
-    "TerritoryBlock": {
-        "1": "需要等级大于或等于 {0} 级才能制作{1}，当前等级 {2} 级"
-    },
-    "SubsystemTerritoryBlockBehavior": {
-        "5": "禁用方块ID {0}"
-    },
-    "Help": {
-        "48": {
-            "Name": "TerritoryStone",
-            "Title": "领地石",
-            "value": "领地石始终位于领地中心，不依赖区块边界。范围半径为 4–32 格，默认 16 格，即 33×33 格。保护覆盖世界整个高度，领地不能重叠，每位玩家只能拥有一个领地。\\n\\n领主可分别设置进入、离开、挖掘和放置的默认权限，并为玩家单独授权；默认禁止进入、允许离开、禁止挖掘和放置。领主与管理员不受限制，队伍关系不影响领地权限。领地石自身只允许领主或管理员拆除，设置只允许领主修改。允许离开不代表允许进入，反之亦然。\\n\\n对准领地石按 G 或编辑按钮，调整半径和选项后点击应用。扩大范围与其他领地冲突时，服务端拒绝并恢复原设置。显示边界只控制外观：靠近边界时显示全高度结界上的淡网格，远处渐隐，不代表额外的碰撞墙。\\n\\n领地石仅控制玩家通行、挖掘和放置。动物不受通行限制，tp 等特权传送绕过行走边界。领地不提供 PvP、投射物、火灾、爆炸或活塞等环境破坏的全面保护。\\n\\n越权时会提示领主和申请方式。输入 territory request <领主名称或 UUID> 申请授权，不需要填写权限；名称含空格时加双引号，也可以点击命令补全中的领主名称。申请要求双方在线；同一玩家只能有一个待处理申请，间隔至少 30 秒，两分钟后或一方离线时失效。领主收到审批窗口，自行选择允许进入、离开、挖掘和放置中的任意权限，或拒绝。申请人收到结果通知后重新操作。授权只追加允许，不覆盖原有授权或禁止默认已允许的行为，不能授予拆除领地石的权利。授权随世界保存，可在 G 面板的玩家授权中修改或撤销。\\n\\n已有授权记录时不能再次申请；缺少某项权限时，请联系领主。"
-        }
-    },
-    "TerritorySettings": {
-        "Title": "领地设置",
-        "Size": "范围半径 {0} 格（{1}×{1}）",
-        "AllowEntry": "允许进入",
-        "AllowExit": "允许离开",
-        "AllowDigging": "允许挖掘",
-        "AllowPlacing": "允许放置",
-        "ShowBoundary": "显示边界",
-        "Apply": "应用",
-        "Close": "关闭",
-        "OwnerOnly": "只有领主可以修改设置",
-        "InvalidSize": "半径必须在 4–32 格之间",
-        "Overlaps": "调整后的范围与其他领地重叠",
-        "MissingTerritory": "领地已不存在",
-        "Unavailable": "未能确认设置，请稍后重试",
-        "VisitorPermissions": "默认通行与操作权限",
-        "SettingsTab": "设置"
-    },
-    "TerritoryProtection": {
-        "EntryRestricted": "你没有进入此领地的权限",
-        "StoneOwnerOnly": "只有领主或管理员可以挖掘领地石",
-        "ClaimUnavailable": "你已有领地，或此范围与其他领地重叠",
-        "ExitRestricted": "你没有离开此领地的权限",
-        "DiggingRestricted": "你没有在此领地挖掘的权限",
-        "PlacingRestricted": "你没有在此领地放置方块的权限"
-    },
-    "TerritoryAccess": {
-        "ManageGrants": "玩家授权",
-        "NoGrants": "尚未授权任何玩家",
-        "EditGrant": "编辑玩家授权",
-        "RequestTitle": "领地授权申请",
-        "Confirm": "确认授权",
-        "Reject": "拒绝申请",
-        "Revoke": "撤销授权",
-        "RequestHint": "领主：{0}。可通过领地申请命令向领主申请授权。",
-        "OwnedBy": "领主：{0}。",
-        "Granted": "{0} 已批准你的领地授权申请：{1}。",
-        "Rejected": "{0} 拒绝了你的领地授权申请。可稍后重新申请，或联系领主。",
-        "GrantChanged": "{0} 已修改或撤销你的领地授权。",
-        "Expired": "领地授权申请已失效，请在双方在线时重新申请。",
-        "AuthorizedHint": "领主：{0}。请联系领主。",
-        "EditAction": "编辑权限",
-        "ConfirmRevoke": "撤销 {0} 的全部领地授权？"
-    },
-    "Commands": {
-        "Territory_Description": "申请领地授权",
-        "Territory_RequestDescription": "向指定领主申请授权，权限由领主决定",
-        "Territory_DecideDescription": "审批领地授权申请",
-        "Territory_GrantDescription": "修改或撤销已有玩家授权",
-        "Territory_Unavailable": "当前无法操作领地授权。",
-        "Territory_InvalidPermissions": "权限格式无效，请使用 enter,exit,dig,place（逗号分隔）、all 或 none。",
-        "Territory_UnknownOwner": "未找到唯一匹配的领主，请使用领主 UUID。",
-        "Territory_OwnerOffline": "领主不在线，暂时无法申请。",
-        "Territory_InvalidRequest": "不能向自己申请，或申请数据无效。",
-        "Territory_AlreadyPending": "你已有待处理申请，请等待领主处理。",
-        "Territory_RateLimited": "申请过于频繁，请在上次申请 30 秒后重试。",
-        "Territory_QueueFull": "待处理申请或领地授权数量已达上限，请稍后重试或清理授权。",
-        "Territory_Requested": "申请已发送，等待领主审批；两分钟后失效。",
-        "Territory_RequestExpired": "申请已失效，或你不是该领主。",
-        "Territory_Processed": "领地授权已更新。",
-        "Territory_MissingGrant": "你没有领地，或该玩家尚未获授权。",
-        "Territory_AlreadyGranted": "你已有授权，不能重复申请。请联系领主。"
+  "Blocks": {
+    "TerritoryBlock:0": {
+      "DisplayName": "领地石",
+      "Description": "以领地石为中心设置水平范围和默认通行、挖掘、放置权限，也可为玩家单独授权。保护覆盖整个高度，每位玩家可拥有一个领地。",
+      "CRDescription:0": "用铜锭、钻石、铁锭和花岗岩制作领地石"
     }
+  },
+  "TerritoryBlock": {
+    "1": "需要等级大于或等于 {0} 级才能制作{1}，当前等级 {2} 级"
+  },
+  "SubsystemTerritoryBlockBehavior": {
+    "5": "禁用方块ID {0}"
+  },
+  "Help": {
+    "48": {
+      "Name": "TerritoryStone",
+      "Title": "领地石",
+      "value": "领地石始终位于领地中心，不依赖区块边界。范围半径为 4–32 格，默认 16 格，即 33×33 格。保护覆盖世界整个高度，领地不能重叠，每位玩家只能拥有一个领地。\\n\\n领主可分别设置进入、离开、挖掘和放置的默认权限，并为玩家单独授权；默认禁止进入、允许离开、禁止挖掘和放置。领主与管理员不受限制，队伍关系不影响领地权限。领地石自身只允许领主或管理员拆除，设置只允许领主修改。允许离开不代表允许进入，反之亦然。\\n\\n对准领地石按 G 或编辑按钮，调整半径和选项后点击应用。扩大范围与其他领地冲突时，服务端拒绝并恢复原设置。显示边界只控制外观：靠近边界时显示全高度结界上的淡网格，远处渐隐，不代表额外的碰撞墙。\\n\\n领地石仅控制玩家通行、挖掘和放置。动物不受通行限制，tp 等特权传送绕过行走边界。领地不提供 PvP、投射物、火灾、爆炸或活塞等环境破坏的全面保护。\\n\\n越权时会提示领主和申请方式。输入 territory request <领主名称或 UUID> 申请授权，不需要填写权限；名称含空格时加双引号，也可以点击命令补全中的领主名称。申请要求双方在线；同一玩家只能有一个待处理申请，间隔至少 30 秒，两分钟后或一方离线时失效。领主收到审批窗口，自行选择允许进入、离开、挖掘和放置中的任意权限，或拒绝。申请人收到结果通知后重新操作。授权只追加允许，不覆盖原有授权或禁止默认已允许的行为，不能授予拆除领地石的权利。授权随世界保存，可在 G 面板的玩家授权中修改或撤销。\\n\\n已有授权记录时不能再次申请；缺少某项权限时，请联系领主。"
+    }
+  },
+  "TerritorySettings": {
+    "Title": "领地设置",
+    "Size": "范围半径 {0} 格（{1}×{1}）",
+    "AllowEntry": "允许进入",
+    "AllowExit": "允许离开",
+    "AllowDigging": "允许挖掘",
+    "AllowPlacing": "允许放置",
+    "ShowBoundary": "显示边界",
+    "Apply": "应用",
+    "Close": "关闭",
+    "OwnerOnly": "只有领主可以修改设置",
+    "InvalidSize": "半径必须在 4–32 格之间",
+    "Overlaps": "调整后的范围与其他领地重叠",
+    "MissingTerritory": "领地已不存在",
+    "Unavailable": "未能确认设置，请稍后重试",
+    "VisitorPermissions": "默认通行与操作权限",
+    "SettingsTab": "设置"
+  },
+  "TerritoryProtection": {
+    "EntryRestricted": "你没有进入此领地的权限",
+    "StoneOwnerOnly": "只有领主或管理员可以挖掘领地石",
+    "ClaimUnavailable": "你已有领地，或此范围与其他领地重叠",
+    "ExitRestricted": "你没有离开此领地的权限",
+    "DiggingRestricted": "你没有在此领地挖掘的权限",
+    "PlacingRestricted": "你没有在此领地放置方块的权限"
+  },
+  "TerritoryAccess": {
+    "ManageGrants": "主体授权",
+    "NoGrants": "尚未授权任何主体",
+    "EditGrant": "编辑主体授权",
+    "RequestTitle": "领地授权申请",
+    "Confirm": "确认授权",
+    "Reject": "拒绝申请",
+    "Revoke": "撤销授权",
+    "RequestHint": "领主：{0}。可通过领地申请命令向领主申请授权。",
+    "OwnedBy": "领主：{0}。",
+    "Granted": "{0} 已批准你的领地授权申请：{1}。",
+    "Rejected": "{0} 拒绝了你的领地授权申请。可稍后重新申请，或联系领主。",
+    "GrantChanged": "{0} 已修改或撤销你的领地授权。",
+    "Expired": "领地授权申请已失效，请在双方在线时重新申请。",
+    "AuthorizedHint": "领主：{0}。请联系领主。",
+    "EditAction": "编辑权限",
+    "ConfirmRevoke": "撤销 {0} 的全部领地授权？"
+  },
+  "Commands": {
+    "Territory_Description": "申请领地授权",
+    "Territory_RequestDescription": "向指定领主申请授权，权限由领主决定",
+    "Territory_DecideDescription": "审批领地授权申请",
+    "Territory_GrantDescription": "修改或撤销已有主体授权",
+    "Territory_Unavailable": "当前无法操作领地授权。",
+    "Territory_InvalidPermissions": "权限格式无效，请使用 enter,exit,dig,place（逗号分隔）、all 或 none。",
+    "Territory_UnknownOwner": "未找到该主体的领地，请使用完整主体地址。",
+    "Territory_OwnerOffline": "领主不在线，暂时无法申请。",
+    "Territory_InvalidRequest": "不能向自己申请，或申请数据无效。",
+    "Territory_AlreadyPending": "你已有待处理申请，请等待领主处理。",
+    "Territory_RateLimited": "申请过于频繁，请在上次申请 30 秒后重试。",
+    "Territory_QueueFull": "待处理申请或领地授权数量已达上限，请稍后重试或清理授权。",
+    "Territory_Requested": "申请已发送，等待领主审批；两分钟后失效。",
+    "Territory_RequestExpired": "申请已失效，或你不是该领主。",
+    "Territory_Processed": "领地授权已更新。",
+    "Territory_MissingGrant": "你没有领地，或该主体尚未获授权。",
+    "Territory_AlreadyGranted": "你已有授权，不能重复申请。请联系领主。",
+    "Territory_AdminDescription": "绕过领地保护并拆除领地石"
+  }
 }

@@ -307,7 +307,7 @@ public sealed class BlockEditContext(
     int y,
     int z,
     int value,
-    ComponentPlayer componentPlayer
+    ComponentCharacter componentCharacter
 )
 {
     public int X { get; } = x;
@@ -318,7 +318,7 @@ public sealed class BlockEditContext(
 
     public int Value { get; } = value;
 
-    public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+    public ComponentCharacter ComponentCharacter { get; } = componentCharacter;
 
     public bool Cancel { get; set; }
 
@@ -328,14 +328,14 @@ public sealed class BlockEditContext(
 public sealed class BlockEditInventoryItemContext(
     IInventory inventory,
     int slotIndex,
-    ComponentPlayer componentPlayer
+    ComponentCharacter componentCharacter
 )
 {
     public IInventory Inventory { get; } = inventory;
 
     public int SlotIndex { get; } = slotIndex;
 
-    public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+    public ComponentCharacter ComponentCharacter { get; } = componentCharacter;
 
     public bool Cancel { get; set; }
 

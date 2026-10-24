@@ -13,8 +13,8 @@ public sealed class ProtocolEnumTest
     [Fact]
     public void GameConceptsBelongToTheGameAssembly()
     {
-        var assembly = typeof(PlayerData).Assembly;
-        foreach (var type in new[] { typeof(GameMode), typeof(PlayerClass), typeof(Season), typeof(DragMode) })
+        var assembly = typeof(CharacterData).Assembly;
+        foreach (var type in new[] { typeof(GameMode), typeof(CharacterSex), typeof(Season), typeof(DragMode) })
         {
             Assert.Equal("Game", type.Namespace);
             Assert.Equal(assembly, type.Assembly);
@@ -27,7 +27,7 @@ public sealed class ProtocolEnumTest
     {
         var source = new ValuesDictionary();
         source.SetValue("Mode", GameMode.Survival);
-        source.SetValue("Class", PlayerClass.Female);
+        source.SetValue("Class", CharacterSex.Female);
         source.SetValue("Season", Season.Winter);
         source.SetValue("Drag", DragMode.SingleItem);
         var xml = new XElement("Values");
@@ -35,7 +35,7 @@ public sealed class ProtocolEnumTest
         var restored = new ValuesDictionary();
         restored.ApplyOverrides(xml);
         Assert.Equal(GameMode.Survival, restored.GetValue<GameMode>("Mode"));
-        Assert.Equal(PlayerClass.Female, restored.GetValue<PlayerClass>("Class"));
+        Assert.Equal(CharacterSex.Female, restored.GetValue<CharacterSex>("Class"));
         Assert.Equal(Season.Winter, restored.GetValue<Season>("Season"));
         Assert.Equal(DragMode.SingleItem, restored.GetValue<DragMode>("Drag"));
     }
@@ -44,11 +44,11 @@ public sealed class ProtocolEnumTest
     public void GameEnumValuesAreValidatedAtTheProtocolBoundary()
     {
         Assert.Equal((byte)2, ProtocolEnum.Encode(GameMode.Survival));
-        Assert.Equal((byte)1, ProtocolEnum.Encode(PlayerClass.Female));
+        Assert.Equal((byte)1, ProtocolEnum.Encode(CharacterSex.Female));
         Assert.Equal((byte)2, ProtocolEnum.Encode(Season.Winter));
         Assert.Equal((byte)1, ProtocolEnum.Encode(DragMode.SingleItem));
         RejectUnknown<GameMode>();
-        RejectUnknown<PlayerClass>();
+        RejectUnknown<CharacterSex>();
         RejectUnknown<Season>();
         RejectUnknown<DragMode>();
     }

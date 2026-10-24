@@ -3,7 +3,7 @@ namespace Game.Automation;
 /// <summary>Converges the normal first-person view through player look input.</summary>
 public sealed class AutomationViewController
 {
-    private ComponentPlayer? _player;
+    private ComponentCharacter? _player;
 
     private Vector3 _target;
 
@@ -28,7 +28,7 @@ public sealed class AutomationViewController
         ErrorDegrees = MathUtils.RadToDeg(_error)
     };
 
-    public long Start(ComponentPlayer player, Vector3 target, float toleranceDegrees, double timeoutSeconds)
+    public long Start(ComponentCharacter player, Vector3 target, float toleranceDegrees, double timeoutSeconds)
     {
         if (!float.IsFinite(target.X) ||
             !float.IsFinite(target.Y) ||
@@ -74,7 +74,7 @@ public sealed class AutomationViewController
     }
 
     public long StartAngles(
-        ComponentPlayer player,
+        ComponentCharacter player,
         float yawDegrees,
         float pitchDegrees,
         bool relative,
@@ -114,12 +114,12 @@ public sealed class AutomationViewController
         _player = null;
     }
 
-    private static bool CanControl(ComponentPlayer player) =>
+    private static bool CanControl(ComponentCharacter player) =>
         Window.IsActive &&
         ScreensManager.GetCurrentScreenName() == "Game" &&
         !ScreensManager.IsAnimating &&
         player.Entity.IsAddedToProject &&
-        player.PlayerData.IsReadyForPlaying &&
+        player.CharacterData.IsReadyForPlaying &&
         player.ComponentHealth.Health > 0 &&
         player.ComponentSleep.SleepFactor == 0 &&
         player.ComponentGui.ModalPanelWidget == null &&
@@ -138,7 +138,7 @@ public sealed class AutomationViewController
         }
     }
 
-    public void ApplyInput(ComponentPlayer player, ref PlayerInput input)
+    public void ApplyInput(ComponentCharacter player, ref PlayerInput input)
     {
         if (_player != player)
         {

@@ -1,4 +1,5 @@
 using Engine.Network;
+using Engine.Network.Security;
 
 using Game.Network;
 using Game.Network.Handling;
@@ -16,6 +17,7 @@ public sealed class ServerConnectionPreparationTest
     {
         await using var server = new NetworkHost();
         using var http = new HttpClient();
+        using var identity = NetworkIdentity.Create();
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         int? inspectedPort = null;
         server.DatagramReceived += (source, _) =>
@@ -26,6 +28,7 @@ public sealed class ServerConnectionPreparationTest
         var preparing = ServerConnectionPreparation.PrepareAsync(
             new AddressNetworkTarget("127.0.0.1", server.LocalPort),
             http,
+            identity,
             cancellation.Token
         );
         while (!preparing.IsCompleted)
@@ -47,6 +50,7 @@ public sealed class ServerConnectionPreparationTest
         PackageManager.RegisterPackage(() => new ServerInfoPackage(), new ServerInfoPackageHandler());
         await using var server = new NetworkHost();
         using var http = new HttpClient();
+        using var identity = NetworkIdentity.Create();
         using var stop = new CancellationTokenSource();
         int? inspectedPort = null;
         server.DatagramReceived += (source, payload) =>
@@ -83,7 +87,7 @@ public sealed class ServerConnectionPreparationTest
         {
             var target = new AddressNetworkTarget("localhost", server.LocalPort);
             await using var prepared =
-                await ServerConnectionPreparation.PrepareAsync(target, http, CancellationToken.None);
+                await ServerConnectionPreparation.PrepareAsync(target, http, identity, CancellationToken.None);
             Assert.Equal(target, prepared.Target);
             Assert.Equal(1, prepared.Status.ProtocolVersion);
             Assert.Equal(3, prepared.Status.PlayerCount);

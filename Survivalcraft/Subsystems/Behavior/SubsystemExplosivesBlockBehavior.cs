@@ -83,7 +83,7 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
         }
     }
 
-    public bool IgniteFuse(int x, int y, int z, PlayerData? miner = null)
+    public bool IgniteFuse(int x, int y, int z, CharacterData? miner = null)
     {
         var cellContents = _subsystemTerrain.Terrain.GetCellContents(x, y, z);
         switch (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents])
@@ -185,7 +185,7 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
         Utilities.Dispose(ref _fuseSound!);
     }
 
-    private void AddExplosive(Point3 point, float timeToExplosion, PlayerData? miner = null)
+    private void AddExplosive(Point3 point, float timeToExplosion, CharacterData? miner = null)
     {
         if (_explosiveDataByPoint.ContainsKey(point))
         {
@@ -218,7 +218,7 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
     {
         public FuseParticleSystem? FuseParticleSystem;
 
-        public PlayerData? Miner;
+        public CharacterData? Miner;
 
         public Point3 Point;
 

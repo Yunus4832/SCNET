@@ -3,12 +3,15 @@ using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 
 using Engine.Core.Runtime;
+using Engine.Core.Security;
 
 using EntitySystem.Core;
 
 using Game;
 using Game.Commands;
 using Game.Network;
+using Game.Protocol.Identity;
+using Game.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
@@ -32,7 +35,10 @@ public class HttpPlayerCommandAdapterTest
             var registry = Registry();
             var context = new CommandContext(
                 CommandInvocationChannel.Network,
-                CommandPrincipal.FromPlayer(player),
+                CommandPrincipal.FromSubject(
+                    player.Project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(player.OwnerAddress),
+                    player
+                ),
                 null,
                 "catalog"
             );
@@ -47,10 +53,14 @@ public class HttpPlayerCommandAdapterTest
             var ids = result.Data!["commands"]!.AsArray().Select(value => value!.GetValue<string>()).ToArray();
             Assert.DoesNotContain(_identity.ToString(), ids);
             Assert.DoesNotContain("test.playerhttp:application/change", ids);
-            player.CommandPermissions.Grant(_permission, false);
+            player.Project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(player.OwnerAddress).Permissions
+                .Grant(_permission, false);
             context = new CommandContext(
                 CommandInvocationChannel.Network,
-                CommandPrincipal.FromPlayer(player),
+                CommandPrincipal.FromSubject(
+                    player.Project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(player.OwnerAddress),
+                    player
+                ),
                 null,
                 "catalog"
             );
@@ -202,7 +212,10 @@ public class HttpPlayerCommandAdapterTest
             var dispatcher = new CommandDispatcher(registry);
             var context = new CommandContext(
                 CommandInvocationChannel.Network,
-                CommandPrincipal.FromPlayer(player),
+                CommandPrincipal.FromSubject(
+                    player.Project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(player.OwnerAddress),
+                    player
+                ),
                 project,
                 "request"
             );
@@ -216,10 +229,14 @@ public class HttpPlayerCommandAdapterTest
             );
             Assert.Equal(command, textCommand);
             Assert.Equal("command.forbidden", dispatcher.Execute(decoded!, context).Code);
-            player.CommandPermissions.Grant(_permission, false);
+            player.Project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(player.OwnerAddress).Permissions
+                .Grant(_permission, false);
             context = new CommandContext(
                 CommandInvocationChannel.Network,
-                CommandPrincipal.FromPlayer(player),
+                CommandPrincipal.FromSubject(
+                    player.Project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(player.OwnerAddress),
+                    player
+                ),
                 project,
                 "request"
             );
@@ -289,21 +306,22 @@ public class HttpPlayerCommandAdapterTest
         return registry;
     }
 
-    private static PlayerData Player(Project project)
+    private static CharacterData Player(Project project)
     {
-        var player = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData));
+        var player = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
         player.Name = "Test player";
-        typeof(PlayerData).GetField("<Project>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
+        typeof(CharacterData).GetField("<Project>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(player, project);
-        typeof(PlayerData).GetField(
-                "<CommandPermissions>k__BackingField",
-                BindingFlags.NonPublic | BindingFlags.Instance
-            )!
-            .SetValue(player, new CommandPermissionSet());
+        player.SubsystemCharacters = new SubsystemCharacters();
+        player.OwnerAddress = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
+
         return player;
     }
 
-    private sealed class TestProject : Project;
+    private sealed class TestProject : Project
+    {
+        public TestProject() => subsystems.Add(new SubsystemPlayers());
+    }
 
     private sealed record WorldCommand : IGameCommand;
 

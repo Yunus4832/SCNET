@@ -115,8 +115,6 @@ public class Settings
     ///     Stable identifier for this local multiplayer client. This is not an account credential
     ///     and does not authenticate the player to a remote service.
     /// </summary>
-    public Guid MultiplayerClientId { get; set; }
-
     public bool UseReducedZRange
     {
         get;
@@ -133,9 +131,9 @@ public class Settings
 
     public bool DisplayFpsRibbon { get; set; }
 
-    public bool ShowPlayerInformationOverlay { get; set; } = true;
+    public bool ShowCharacterInformationOverlay { get; set; } = true;
 
-    public PlayerListFilter PlayerInformationFilter { get; set; } =
+    public PlayerListFilter CharacterInformationFilter { get; set; } =
         PlayerListFilter.All;
 
     public bool ShowMessageHistoryOverlay { get; set; } = true;

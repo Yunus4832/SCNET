@@ -1,6 +1,10 @@
 using Engine.Core.Mathematics;
 
+using Game.Protocol.Identity;
+
 using TerritoryStoneMod;
+
+using static Survivalcraft.Test.Modding.TerritoryTestIdentity;
 
 namespace Survivalcraft.Test.Modding;
 
@@ -27,8 +31,8 @@ public class TerritoryAccessTest
     public void RequestsCanBeRepeatedAfterRejectionAndCooldown()
     {
         var requests = new TerritoryAccessRequests();
-        var owner = Guid.NewGuid();
-        var player = Guid.NewGuid();
+        var owner = Address();
+        var player = Address();
         Assert.True(requests.TryAdd(owner, player, "Player", 100, out var request, out _));
         Assert.False(requests.TryAdd(owner, player, "Player", 101, out _, out var duplicate));
         Assert.Equal("AlreadyPending", duplicate);
@@ -42,18 +46,18 @@ public class TerritoryAccessTest
     public void OnlyOwnerCanChoosePermissionsAndApproveOnlyOnce()
     {
         var requests = new TerritoryAccessRequests();
-        var owner = Guid.NewGuid();
+        var owner = Address();
         Assert.True(
             requests.TryAdd(
                 owner,
-                Guid.NewGuid(),
+                Address(),
                 "Player",
                 10,
                 out var request,
                 out _
             )
         );
-        Assert.False(requests.TryResolve(request!.Id, Guid.NewGuid(), TerritoryPermission.Dig, 11, out _));
+        Assert.False(requests.TryResolve(request!.Id, Address(), TerritoryPermission.Dig, 11, out _));
         Assert.False(requests.TryResolve(request.Id, owner, (TerritoryPermission)128, 11, out _));
         Assert.True(requests.TryResolve(request.Id, owner, TerritoryPermission.All, 11, out var resolved));
         Assert.Equal(request, resolved);
@@ -64,9 +68,9 @@ public class TerritoryAccessTest
     public void ExpiredOrDisconnectedRequestsAreRemovedWithoutSaving()
     {
         var requests = new TerritoryAccessRequests();
-        var owner = Guid.NewGuid();
-        requests.TryAdd(owner, Guid.NewGuid(), "First", 0, out var first, out _);
-        requests.TryAdd(owner, Guid.NewGuid(), "Second", 10, out var second, out _);
+        var owner = Address();
+        requests.TryAdd(owner, Address(), "First", 0, out var first, out _);
+        requests.TryAdd(owner, Address(), "Second", 10, out var second, out _);
         Assert.False(requests.TryResolve(first!.Id, owner, TerritoryPermission.Dig, 120, out _));
         var removed = requests.Expire(120, request => request.Id == second!.Id);
         Assert.Equal(2, removed.Length);
@@ -77,21 +81,21 @@ public class TerritoryAccessTest
     public void PerOwnerQueueIsBounded()
     {
         var requests = new TerritoryAccessRequests();
-        var owner = Guid.NewGuid();
+        var owner = Address();
         for (var index = 0; index < 8; index++)
         {
-            Assert.True(requests.TryAdd(owner, Guid.NewGuid(), "Player", 0, out _, out _));
+            Assert.True(requests.TryAdd(owner, Address(), "Player", 0, out _, out _));
         }
 
-        Assert.False(requests.TryAdd(owner, Guid.NewGuid(), "Player", 0, out _, out var error));
+        Assert.False(requests.TryAdd(owner, Address(), "Player", 0, out _, out var error));
         Assert.Equal("QueueFull", error);
     }
 
     [Fact]
     public void GrantsSurviveDiskAndNetworkRoundTripsAndRevocation()
     {
-        var owner = Guid.NewGuid();
-        var player = Guid.NewGuid();
+        var owner = Address();
+        var player = Address();
         var store = new TerritoryStore();
         Assert.True(store.TryCreate(owner, new Point3(0, 64, 0)));
         Assert.True(store.TryGet(owner, out var territory));
@@ -113,13 +117,18 @@ public class TerritoryAccessTest
     [Fact]
     public void GrantsRejectInvalidIdentityAndUnknownPermissionBits()
     {
-        var territory = new Territory(Guid.NewGuid(), new Point3(0, 64, 0));
-        Assert.Throws<InvalidDataException>(() => territory.SetGrant(Guid.Empty, "Player", TerritoryPermission.Enter));
+        var territory = new Territory(Address(), new Point3(0, 64, 0));
+        Assert.Throws<InvalidDataException>(() => territory.SetGrant(
+                default(PlayerAddress),
+                "Player",
+                TerritoryPermission.Enter
+            )
+        );
         Assert.Throws<InvalidDataException>(() =>
             territory.SetGrant(territory.Owner, "Owner", TerritoryPermission.All)
         );
         Assert.Throws<InvalidDataException>(() =>
-            territory.SetGrant(Guid.NewGuid(), "Player", (TerritoryPermission)16)
+            territory.SetGrant(Address(), "Player", (TerritoryPermission)16)
         );
     }
 }

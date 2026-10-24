@@ -10,7 +10,7 @@ public class ComponentSickness : Component, IUpdateable
 {
     public const string Name = "ComponentSickness";
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private float _greenoutDuration;
 
@@ -52,15 +52,15 @@ public class ComponentSickness : Component, IUpdateable
         if (SicknessDuration > 0f)
         {
             //开服后，睡觉疾病恢复速度x5
-            if (_componentPlayer.ComponentSleep is { IsSleeping: true, SubsystemUpdate.UpdatesPerFrame: 1 } &&
+            if (_componentCharacter.ComponentSleep is { IsSleeping: true, SubsystemUpdate.UpdatesPerFrame: 1 } &&
                 CommonLib.WorkType == WorkType.Server)
             {
                 dt *= _subsystemGameInfo.WorldSettings.RecoverFactor;
             }
 
             SicknessDuration = MathUtils.Max(SicknessDuration - dt, 0f);
-            if (_componentPlayer.ComponentHealth.Health > 0f &&
-                !_componentPlayer.ComponentSleep.IsSleeping &&
+            if (_componentCharacter.ComponentHealth.Health > 0f &&
+                !_componentCharacter.ComponentSleep.IsSleeping &&
                 _subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821) &&
                 (!_lastNauseaTime.HasValue ||
                  _subsystemTime.GameTime - _lastNauseaTime > 15.0))
@@ -82,13 +82,13 @@ public class ComponentSickness : Component, IUpdateable
                     SimplexNoise.Noise(2f * (float)MathUtils.Remainder(_subsystemTime.GameTime, 10000.0))
                 )
             );
-            _componentPlayer.ComponentLocomotion.LookOrder = new Vector2(
-                _componentPlayer.ComponentLocomotion.LookOrder.X,
-                MathUtils.Clamp(num - _componentPlayer.ComponentLocomotion.LookAngles.Y, -2f, 2f)
+            _componentCharacter.ComponentLocomotion.LookOrder = new Vector2(
+                _componentCharacter.ComponentLocomotion.LookOrder.X,
+                MathUtils.Clamp(num - _componentCharacter.ComponentLocomotion.LookAngles.Y, -2f, 2f)
             );
-            var upVector = _componentPlayer.ComponentCreatureModel.EyeRotation.GetUpVector();
-            var forwardVector = _componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector();
-            _pukeParticleSystem.Position = _componentPlayer.ComponentCreatureModel.EyePosition -
+            var upVector = _componentCharacter.ComponentCreatureModel.EyeRotation.GetUpVector();
+            var forwardVector = _componentCharacter.ComponentCreatureModel.EyeRotation.GetForwardVector();
+            _pukeParticleSystem.Position = _componentCharacter.ComponentCreatureModel.EyePosition -
                                            0.08f * upVector +
                                            0.3f * forwardVector;
             _pukeParticleSystem.Direction = Vector3.Normalize(forwardVector + 0.5f * upVector);
@@ -108,9 +108,9 @@ public class ComponentSickness : Component, IUpdateable
             _greenoutFactor = MathUtils.Max(_greenoutFactor - 0.5f * dt, 0f);
         }
 
-        _componentPlayer.ComponentScreenOverlays.GreenOutFactor = MathUtils.Max(
+        _componentCharacter.ComponentScreenOverlays.GreenOutFactor = MathUtils.Max(
             _greenoutFactor,
-            _componentPlayer.ComponentScreenOverlays.GreenOutFactor
+            _componentCharacter.ComponentScreenOverlays.GreenOutFactor
         );
     }
 
@@ -128,7 +128,7 @@ public class ComponentSickness : Component, IUpdateable
     {
         if (SicknessDuration == 0f)
         {
-            _componentPlayer.PlayerStats.TimesWasSick++;
+            _componentCharacter.CharacterStats.TimesWasSick++;
         }
 
         SicknessDuration = 900f;
@@ -150,25 +150,25 @@ public class ComponentSickness : Component, IUpdateable
         _lastPukeTime = _subsystemTime.GameTime;
         _pukeParticleSystem = new PukeParticleSystem(_subsystemTerrain);
         _subsystemParticles.AddParticleSystem(_pukeParticleSystem);
-        _componentPlayer.ComponentCreatureSounds.PlayPukeSound();
-        Project.FindSubsystem<SubsystemNoise>(true)!.MakeNoise(_componentPlayer.ComponentBody.Position, 0.25f, 10f);
+        _componentCharacter.ComponentCreatureSounds.PlayPukeSound();
+        Project.FindSubsystem<SubsystemNoise>(true)!.MakeNoise(_componentCharacter.ComponentBody.Position, 0.25f, 10f);
         _greenoutDuration = 0.8f;
-        _componentPlayer.PlayerStats.TimesPuked++;
+        _componentCharacter.CharacterStats.TimesPuked++;
     }
 
 
     public void NauseaEffect()
     {
         _lastNauseaTime = _subsystemTime.GameTime;
-        _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
-        var injury = MathUtils.Min(0.1f, _componentPlayer.ComponentHealth.Health - 0.075f);
+        _componentCharacter.ComponentCreatureSounds.PlayMoanSound();
+        var injury = MathUtils.Min(0.1f, _componentCharacter.ComponentHealth.Health - 0.075f);
         if (injury > 0f)
         {
             _subsystemTime.QueueGameTimeDelayedExecution(
                 _subsystemTime.GameTime + 0.75,
                 delegate
                 {
-                    _componentPlayer.ComponentHealth.Injure(injury, null, false, LanguageManager.Get(Name, 1));
+                    _componentCharacter.ComponentHealth.Injure(injury, null, false, LanguageManager.Get(Name, 1));
                 }
             );
         }
@@ -180,7 +180,7 @@ public class ComponentSickness : Component, IUpdateable
         }
         else
         {
-            _greenoutDuration = MathUtils.Lerp(4f, 2f, _componentPlayer.ComponentHealth.Health);
+            _greenoutDuration = MathUtils.Lerp(4f, 2f, _componentCharacter.ComponentHealth.Health);
             if (!_lastMessageTime.HasValue || Time.FrameStartTime - _lastMessageTime > 60.0)
             {
                 _lastMessageTime = Time.FrameStartTime;
@@ -188,7 +188,7 @@ public class ComponentSickness : Component, IUpdateable
                     _subsystemTime.GameTime + 1.5,
                     delegate
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(
                             LanguageManager.Get(Name, 2),
                             Color.White,
                             true,
@@ -206,7 +206,7 @@ public class ComponentSickness : Component, IUpdateable
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         SicknessDuration = valuesDictionary.GetValue<float>("SicknessDuration");
     }
 

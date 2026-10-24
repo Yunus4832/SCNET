@@ -27,11 +27,6 @@ public static class SettingsManager
 
         LoadSettings();
         var settingsChanged = false;
-        if (EnsureMultiplayerClientId(Current))
-        {
-            settingsChanged = true;
-        }
-
         if (EnsureHttpCommandAccessToken(Current))
         {
             settingsChanged = true;
@@ -43,18 +38,6 @@ public static class SettingsManager
         }
 
         Window.Deactivated += SaveSettings;
-    }
-
-    internal static bool EnsureMultiplayerClientId(Settings settings)
-    {
-        if (settings.MultiplayerClientId != Guid.Empty)
-        {
-            return false;
-        }
-
-        settings.MultiplayerClientId = Guid.NewGuid();
-        Log.Information("Generated a new local multiplayer client id for this instance.");
-        return true;
     }
 
     internal static bool EnsureHttpCommandAccessToken(Settings settings)

@@ -207,7 +207,7 @@ public static class ContentPackageInstallDialogs
                         name,
                         CharacterSkinsManager.GetDisplayName(name),
                         WorldsManager.WorldInfos.Count(world =>
-                            world.PlayerInfos.Any(player => player.CharacterSkinName == name)
+                            world.CharacterInfos.Any(player => player.CharacterSkinName == name)
                         )
                     )
                 )

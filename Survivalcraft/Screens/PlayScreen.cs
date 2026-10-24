@@ -62,8 +62,8 @@ public class PlayScreen : Screen
                     ? worldInfo.WorldSettings.Name + LanguageManager.GetContentWidgets(_typeName, 11)
                     : worldInfo.WorldSettings.Name;
                 labelWidget2.Text =
-                    $"{DataSizeFormatter.Format(worldInfo.Size)} | {worldInfo.LastSaveTime.ToLocalTime():dd MMM yyyy HH:mm} | {(worldInfo.PlayerInfos.Count > 1
-                        ? string.Format(LanguageManager.GetContentWidgets(_typeName, 9), worldInfo.PlayerInfos.Count)
+                    $"{DataSizeFormatter.Format(worldInfo.Size)} | {worldInfo.LastSaveTime.ToLocalTime():dd MMM yyyy HH:mm} | {(worldInfo.CharacterInfos.Count > 1
+                        ? string.Format(LanguageManager.GetContentWidgets(_typeName, 9), worldInfo.CharacterInfos.Count)
                         : string.Format(LanguageManager.GetContentWidgets(_typeName, 10), 1))} | {LanguageManager.Get("GameMode", worldInfo.WorldSettings.GameMode.ToString())} | {LanguageManager.Get("EnvironmentBehaviorMode",
                         worldInfo.WorldSettings.EnvironmentBehaviorMode.ToString())}";
                 if (worldInfo.ProjectFormatVersion != WorldVersions.ProjectFormatVersion)

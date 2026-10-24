@@ -16,7 +16,32 @@ public static partial class ProtocolMessageCodec
         writer.WriteEnum(message.GameMessage.Channel);
         writer.WriteEnum(message.GameMessage.Tone);
         writer.WriteEnum(message.GameMessage.Presentation);
-        writer.Write(message.GameMessage.SenderName);
+        var sender = message.GameMessage.Sender;
+        if ((message.GameMessage.Kind == GameMessageKind.Chat) != (sender is not null))
+        {
+            throw new InvalidDataException("Only chat messages require an authenticated sender.");
+        }
+
+        writer.Write(sender is not null);
+        if (sender is not null)
+        {
+            PlayerAddressCodec.Write(writer, sender.SubjectAddress);
+            writer.Write(sender.SubjectName);
+            writer.Write(sender.CharacterId.HasValue);
+            if (sender.CharacterId is { } characterId)
+            {
+                if (characterId == Guid.Empty) { throw new InvalidDataException("Invalid character context."); }
+
+                writer.Write(characterId);
+            }
+            else if (sender.CharacterName.Length > 0)
+            {
+                throw new InvalidDataException("A character name requires character context.");
+            }
+
+            writer.Write(sender.CharacterName);
+        }
+
         if (message.GameMessage.Content.Segments.Count > _maximumSegmentCount)
         {
             throw new InvalidDataException($"Too many message segments: {message.GameMessage.Content.Segments.Count}.");
@@ -55,7 +80,27 @@ public static partial class ProtocolMessageCodec
         var channel = reader.ReadEnum<GameMessageChannel>();
         var tone = reader.ReadEnum<GameMessageTone>();
         var presentation = reader.ReadEnum<GameMessagePresentation>();
-        var senderName = reader.ReadString();
+        MessageSender? sender = null;
+        var hasSender = reader.ReadBoolean();
+        if ((kind == GameMessageKind.Chat) != hasSender)
+        {
+            throw new InvalidDataException("Invalid chat sender context.");
+        }
+
+        if (hasSender)
+        {
+            var address = PlayerAddressCodec.Read(reader);
+            var subjectName = reader.ReadString();
+            Guid? characterId = reader.ReadBoolean() ? reader.ReadGuid() : null;
+            var characterName = reader.ReadString();
+            if (characterId == Guid.Empty || characterId is null && characterName.Length > 0)
+            {
+                throw new InvalidDataException("Invalid character context.");
+            }
+
+            sender = new MessageSender(address, subjectName, characterId, characterName);
+        }
+
         var segmentCount = reader.ReadByte();
         if (segmentCount > _maximumSegmentCount)
         {
@@ -88,7 +133,7 @@ public static partial class ProtocolMessageCodec
         var message = new GameMessage(
             kind,
             channel,
-            senderName,
+            sender,
             new MessageContent(segments),
             tone,
             presentation

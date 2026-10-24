@@ -35,7 +35,7 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
         CommonLib.WorkType = WorkType.Client;
         var player = CreatePlayer(false);
         var gui = CreateGui(player);
-        var input = new ComponentInput { ComponentPlayer = player };
+        var input = new ComponentInput { ComponentCharacter = player };
 
         Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(gui));
         Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(input));
@@ -48,35 +48,39 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
     {
         RunMode.Value = RunModeType.Gui;
         CommonLib.WorkType = WorkType.Client;
-        var mainPlayer = CreatePlayer(true);
-        var mainGui = CreateGui(mainPlayer);
-        var mainInput = new ComponentInput { ComponentPlayer = mainPlayer };
+        var localCharacter = CreatePlayer(true);
+        var mainGui = CreateGui(localCharacter);
+        var mainInput = new ComponentInput { ComponentCharacter = localCharacter };
 
         Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(mainGui));
         Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(mainInput));
         Assert.True(SubsystemDrawing.ShouldScheduleDrawable(mainGui));
 
         CommonLib.WorkType = WorkType.Local;
-        var localMainPlayer = CreatePlayer(true);
-        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(localMainPlayer)));
+        var localLocalCharacter = CreatePlayer(true);
+        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(localLocalCharacter)));
         var additionalLocalPlayer = CreatePlayer(false);
         Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(additionalLocalPlayer)));
     }
 
     [Fact]
-    public void GuiServerSchedulesOnlyMainPlayerGuiAndInput()
+    public void GuiServerSchedulesOnlyLocalCharacterGuiAndInput()
     {
         RunMode.Value = RunModeType.Gui;
         CommonLib.WorkType = WorkType.Server;
-        var mainPlayer = CreatePlayer(true);
+        var localCharacter = CreatePlayer(true);
         var remotePlayer = CreatePlayer(false);
 
-        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(mainPlayer)));
-        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(new ComponentInput { ComponentPlayer = mainPlayer }));
-        Assert.True(SubsystemDrawing.ShouldScheduleDrawable(CreateGui(mainPlayer)));
+        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(localCharacter)));
+        Assert.True(
+            SubsystemUpdate.ShouldScheduleUpdateable(new ComponentInput { ComponentCharacter = localCharacter })
+        );
+        Assert.True(SubsystemDrawing.ShouldScheduleDrawable(CreateGui(localCharacter)));
 
         Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(remotePlayer)));
-        Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(new ComponentInput { ComponentPlayer = remotePlayer }));
+        Assert.False(
+            SubsystemUpdate.ShouldScheduleUpdateable(new ComponentInput { ComponentCharacter = remotePlayer })
+        );
         Assert.False(SubsystemDrawing.ShouldScheduleDrawable(CreateGui(remotePlayer)));
     }
 
@@ -87,28 +91,29 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
         CommonLib.WorkType = WorkType.Server;
         var player = CreatePlayer(true);
         var gui = CreateGui(player);
-        var input = new ComponentInput { ComponentPlayer = player };
+        var input = new ComponentInput { ComponentCharacter = player };
 
         Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(gui));
         Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(input));
         Assert.False(SubsystemDrawing.ShouldScheduleDrawable(gui));
     }
 
-    private static ComponentPlayer CreatePlayer(bool isMainPlayer)
+    private static ComponentCharacter CreatePlayer(bool isLocalCharacter)
     {
-        var playerData = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData));
-        if (isMainPlayer)
+        var characterData = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
+        if (isLocalCharacter)
         {
-            playerData.SetMain();
+            // This fixture tests scheduling flags, including deliberately invalid Headless UI states.
+            typeof(CharacterData).GetProperty(nameof(CharacterData.IsLocalCharacter))!.SetValue(characterData, true);
         }
 
-        return new ComponentPlayer { PlayerData = playerData };
+        return new ComponentCharacter { CharacterData = characterData };
     }
 
-    private static ComponentGui CreateGui(ComponentPlayer player)
+    private static ComponentGui CreateGui(ComponentCharacter player)
     {
         var gui = (ComponentGui)RuntimeHelpers.GetUninitializedObject(typeof(ComponentGui));
-        gui.ComponentPlayer = player;
+        gui.ComponentCharacter = player;
         return gui;
     }
 }

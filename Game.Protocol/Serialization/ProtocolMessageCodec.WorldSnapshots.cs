@@ -1,7 +1,8 @@
 using Game.Protocol.Blocks;
+using Game.Protocol.Characters;
 using Game.Protocol.Connection;
 using Game.Protocol.Entities;
-using Game.Protocol.Players;
+using Game.Protocol.Teams;
 using Game.Protocol.World;
 
 namespace Game.Protocol.Serialization;
@@ -119,28 +120,28 @@ public static partial class ProtocolMessageCodec
         var players = new byte[count][];
         for (var i = 0; i < count; i++) { players[i] = reader.ReadBuff(); }
 
-        var summaries = ReadPlayerEntities(reader);
+        var summaries = ReadCharacterEntities(reader);
         var entities = reader.ReadBuff();
         return new InitialWorldSnapshotPackage
         {
             Epoch = epoch,
             ClientList = clients,
-            Players = players,
+            Characters = players,
             EntityData = entities,
-            PlayerEntities = summaries
+            CharacterEntities = summaries
         };
     }
 
     private static void WriteInitialSnapshot(InitialWorldSnapshotPackage message, ProtocolWriter writer)
     {
-        if (message.Players.Count > ushort.MaxValue) { throw new ArgumentException("Too many player snapshots."); }
+        if (message.Characters.Count > ushort.MaxValue) { throw new ArgumentException("Too many player snapshots."); }
 
         writer.Write(message.Epoch);
         WriteClient(message.ClientList, writer);
-        writer.Write((ushort)message.Players.Count);
-        foreach (var player in message.Players) { writer.WriteBuff(player); }
+        writer.Write((ushort)message.Characters.Count);
+        foreach (var player in message.Characters) { writer.WriteBuff(player); }
 
-        WritePlayerEntities(message.PlayerEntities, writer);
+        WriteCharacterEntities(message.CharacterEntities, writer);
         writer.WriteBuff(message.EntityData);
     }
 
@@ -153,21 +154,21 @@ public static partial class ProtocolMessageCodec
             case EntityPackage.EventType.LoadList:
                 var count = reader.ReadCount(ushort.MaxValue);
                 EnsureRemaining(reader, count * (sizeof(int) + 1));
-                var players = new PlayerSnapshot[count];
+                var players = new CharacterSnapshot[count];
                 for (var i = 0; i < count; i++)
                 {
                     var client = reader.ReadBoolean() ? ReadClient(reader).Client : null;
-                    players[i] = new PlayerSnapshot(reader.ReadBuff(), client);
+                    players[i] = new CharacterSnapshot(reader.ReadBuff(), client);
                 }
 
-                var summaries = ReadPlayerEntities(reader);
+                var summaries = ReadCharacterEntities(reader);
                 var data = reader.ReadBuff();
                 return new EntityPackage
                 {
                     Type = type,
-                    Players = players,
+                    Characters = players,
                     EntityData = data,
-                    PlayerEntities = summaries
+                    CharacterEntities = summaries
                 };
             case EntityPackage.EventType.Remove:
                 return new EntityPackage(reader.ReadInt32());
@@ -190,13 +191,13 @@ public static partial class ProtocolMessageCodec
         {
             case EntityPackage.EventType.LoadOne:
             case EntityPackage.EventType.LoadList:
-                if (message.Players.Count > ushort.MaxValue)
+                if (message.Characters.Count > ushort.MaxValue)
                 {
                     throw new ArgumentException("Too many entity player snapshots.");
                 }
 
-                writer.Write(message.Players.Count);
-                foreach (var player in message.Players)
+                writer.Write(message.Characters.Count);
+                foreach (var player in message.Characters)
                 {
                     writer.Write(player.Client != null);
                     if (player.Client != null)
@@ -208,7 +209,7 @@ public static partial class ProtocolMessageCodec
                     writer.WriteBuff(player.Data);
                 }
 
-                WritePlayerEntities(message.PlayerEntities, writer);
+                WriteCharacterEntities(message.CharacterEntities, writer);
                 writer.WriteBuff(message.EntityData);
                 break;
             case EntityPackage.EventType.Remove:
@@ -229,30 +230,30 @@ public static partial class ProtocolMessageCodec
         }
     }
 
-    private static PlayerEntitySnapshot[] ReadPlayerEntities(ProtocolReader reader)
+    private static CharacterEntitySnapshot[] ReadCharacterEntities(ProtocolReader reader)
     {
         var count = reader.ReadUInt16();
-        if (count > ProtocolLimits.MaximumPlayerEntitySnapshots)
+        if (count > ProtocolLimits.MaximumCharacterEntitySnapshots)
         {
             throw new InvalidDataException("Too many player entity summaries.");
         }
 
         EnsureRemaining(reader, count * 37);
-        var values = new PlayerEntitySnapshot[count];
+        var values = new CharacterEntitySnapshot[count];
         var identities = new HashSet<Guid>();
         var entities = new HashSet<int>();
         for (var i = 0; i < count; i++)
         {
-            var value = new PlayerEntitySnapshot(
+            var value = new CharacterEntitySnapshot(
                 reader.ReadGuid(),
                 reader.ReadInt32(),
                 reader.ReadVector3(),
                 reader.ReadInt32()
             );
-            if (value.PlayerGuid == Guid.Empty ||
+            if (value.CharacterId == Guid.Empty ||
                 value.EntityId <= 0 ||
                 value.ParentBodyId < 0 ||
-                !identities.Add(value.PlayerGuid) ||
+                !identities.Add(value.CharacterId) ||
                 !entities.Add(value.EntityId) ||
                 !float.IsFinite(value.Position.X) ||
                 !float.IsFinite(value.Position.Y) ||
@@ -267,9 +268,9 @@ public static partial class ProtocolMessageCodec
         return values;
     }
 
-    private static void WritePlayerEntities(IReadOnlyList<PlayerEntitySnapshot> values, ProtocolWriter writer)
+    private static void WriteCharacterEntities(IReadOnlyList<CharacterEntitySnapshot> values, ProtocolWriter writer)
     {
-        if (values.Count > ProtocolLimits.MaximumPlayerEntitySnapshots)
+        if (values.Count > ProtocolLimits.MaximumCharacterEntitySnapshots)
         {
             throw new ArgumentException("Too many player entity summaries.");
         }
@@ -277,7 +278,7 @@ public static partial class ProtocolMessageCodec
         writer.Write((ushort)values.Count);
         foreach (var value in values)
         {
-            writer.Write(value.PlayerGuid);
+            writer.Write(value.CharacterId);
             writer.Write(value.EntityId);
             writer.Write(value.Position);
             writer.Write(value.ParentBodyId);

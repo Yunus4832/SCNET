@@ -32,7 +32,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
 
     private readonly Dictionary<Point2, DynamicArray<ComponentBody>> _componentBodiesByArea = new();
 
-    private SubsystemPlayers _subsystemPlayers = null!;
+    private SubsystemCharacters _subsystemCharacters = null!;
 
     private SubsystemNetworkInterest _subsystemNetworkInterest = null!;
 
@@ -51,9 +51,9 @@ public class SubsystemBodies : Subsystem, IUpdateable
             var flag = _subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1, 0.0);
             _toSendList.Clear();
             var eligibleClients = flag
-                ? _subsystemPlayers.PlayersData
-                    .Where(player => !player.IsMainPlayer &&
-                                     player.ComponentPlayer is not null &&
+                ? _subsystemCharacters.Characters
+                    .Where(player => !player.IsLocalCharacter &&
+                                     player.ComponentCharacter is not null &&
                                      player.Client is { IsConnected: true }
                     )
                     .Select(player => player.Client!)
@@ -94,7 +94,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
             foreach (var item in _toSendList)
             {
                 var bodies = item.Value;
-                bodies.RemoveAll(body => body.Player is not null);
+                bodies.RemoveAll(body => body.Character is not null);
                 for (var i = 0; i < bodies.Count; i += _maxBodiesPerSnapshotPackage)
                 {
                     var count = Math.Min(_maxBodiesPerSnapshotPackage, bodies.Count - i);
@@ -305,8 +305,8 @@ public class SubsystemBodies : Subsystem, IUpdateable
 
     private void UpdateClientCreatureInterests()
     {
-        var clients = _subsystemPlayers.PlayersData
-            .Where(player => !player.IsMainPlayer &&
+        var clients = _subsystemCharacters.Characters
+            .Where(player => !player.IsLocalCharacter &&
                              player.Client is { IsConnected: true } client &&
                              CanReceiveEntityBaseline(client.State)
             )
@@ -360,7 +360,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
     {
         base.Load(valuesDictionary);
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
-        _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemCharacters = Project.FindSubsystem<SubsystemCharacters>(true)!;
         _subsystemNetworkInterest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
         _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
     }

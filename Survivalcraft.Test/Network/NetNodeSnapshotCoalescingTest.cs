@@ -13,13 +13,13 @@ public class NetNodeSnapshotCoalescingTest
         var packages = new List<OutboundPackage>
         {
             new(
-                new PlayerStatePackage
+                new CharacterStatePackage
                 {
-                    FromPlayerId = 7,
+                    ControllerSessionId = 7,
 
-                    PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange |
-                                        ComponentPlayerPackage.ChangFlag.VelocityChange |
-                                        ComponentPlayerPackage.ChangFlag.LadderChange,
+                    PackageChangeFlag = ComponentCharacterPackage.ChangFlag.PositionChange |
+                                        ComponentCharacterPackage.ChangFlag.VelocityChange |
+                                        ComponentCharacterPackage.ChangFlag.LadderChange,
                     LadderValue = 10,
                     Position = new Vector3(1f, 2f, 3f),
                     Velocity = new Vector3(4f, 5f, 6f)
@@ -27,12 +27,12 @@ public class NetNodeSnapshotCoalescingTest
                 PackageAudience.Global
             )
         };
-        var newer = new PlayerStatePackage
+        var newer = new CharacterStatePackage
         {
-            FromPlayerId = 7,
+            ControllerSessionId = 7,
 
-            PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange |
-                                ComponentPlayerPackage.ChangFlag.VelocityChange,
+            PackageChangeFlag = ComponentCharacterPackage.ChangFlag.PositionChange |
+                                ComponentCharacterPackage.ChangFlag.VelocityChange,
             Position = new Vector3(10f, 11f, 12f),
             Velocity = new Vector3(7f, 8f, 9f)
         };
@@ -43,11 +43,11 @@ public class NetNodeSnapshotCoalescingTest
             )
         );
 
-        var package = Assert.IsType<PlayerStatePackage>(Assert.Single(packages).Package);
-        Assert.True(package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.PositionChange));
-        Assert.True(package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.VelocityChange));
+        var package = Assert.IsType<CharacterStatePackage>(Assert.Single(packages).Package);
+        Assert.True(package.PackageChangeFlag.HasFlag(ComponentCharacterPackage.ChangFlag.PositionChange));
+        Assert.True(package.PackageChangeFlag.HasFlag(ComponentCharacterPackage.ChangFlag.VelocityChange));
         Assert.Same(newer, package);
-        Assert.False(package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.LadderChange));
+        Assert.False(package.PackageChangeFlag.HasFlag(ComponentCharacterPackage.ChangFlag.LadderChange));
         Assert.Equal(new Vector3(10f, 11f, 12f), package.Position);
         Assert.Equal(new Vector3(7f, 8f, 9f), package.Velocity);
     }
@@ -116,7 +116,7 @@ public class NetNodeSnapshotCoalescingTest
         var packages = new List<OutboundPackage>
         {
             new(
-                new OnlinePlayerStatePackage(),
+                new OnlineCharacterStatePackage(),
                 PackageAudience.To(firstClient)
             )
         };
@@ -125,7 +125,7 @@ public class NetNodeSnapshotCoalescingTest
             SnapshotPackageCoalescer.TryCoalesce(
                 packages,
                 new OutboundPackage(
-                    new OnlinePlayerStatePackage(),
+                    new OnlineCharacterStatePackage(),
                     PackageAudience.To(secondClient)
                 )
             )
@@ -139,11 +139,11 @@ public class NetNodeSnapshotCoalescingTest
     public void SnapshotsDoNotMergeAcrossReusedConnectionIds(bool exclusion)
     {
         var oldClient = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var newClient = new Client(null, 1, Guid.NewGuid(), oldClient.GUID, null);
+        var newClient = new Client(null, 1, Guid.NewGuid(), oldClient.CharacterId, null);
         var packages = new List<OutboundPackage>
         {
             new(
-                new OnlinePlayerStatePackage(),
+                new OnlineCharacterStatePackage(),
                 exclusion ? PackageAudience.Except(oldClient) : PackageAudience.To(oldClient)
             )
         };
@@ -152,7 +152,7 @@ public class NetNodeSnapshotCoalescingTest
             SnapshotPackageCoalescer.TryCoalesce(
                 packages,
                 new OutboundPackage(
-                    new OnlinePlayerStatePackage(),
+                    new OnlineCharacterStatePackage(),
                     exclusion ? PackageAudience.Except(newClient) : PackageAudience.To(newClient)
                 )
             )
@@ -164,8 +164,8 @@ public class NetNodeSnapshotCoalescingTest
     {
         var first = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
         var second = new Client(null, 2, Guid.NewGuid(), Guid.NewGuid(), null);
-        var older = new OnlinePlayerStatePackage();
-        var newer = new OnlinePlayerStatePackage();
+        var older = new OnlineCharacterStatePackage();
+        var newer = new OnlineCharacterStatePackage();
         var packages = new List<OutboundPackage> { new(older, PackageAudience.To([first, second])) };
 
         Assert.True(

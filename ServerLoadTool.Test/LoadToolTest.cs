@@ -39,16 +39,16 @@ public class LoadToolTest
     [Fact]
     public void PlayerBodyCodecIncludesConnectionIdentity()
     {
-        var package = new PlayerStatePackage
+        var package = new CharacterStatePackage
         {
             Position = new Vector3(10, 65, -20),
             Velocity = Vector3.Zero,
-            PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange |
-                                ComponentPlayerPackage.ChangFlag.VelocityChange
+            PackageChangeFlag = ComponentCharacterPackage.ChangFlag.PositionChange |
+                                ComponentCharacterPackage.ChangFlag.VelocityChange
         };
         var encoded = LoadWire.Encode(package, 7);
-        var decoded = Assert.IsType<PlayerStatePackage>(Assert.Single(LoadWire.Decode(encoded)));
-        Assert.Equal(7, decoded.FromPlayerId);
+        var decoded = Assert.IsType<CharacterStatePackage>(Assert.Single(LoadWire.Decode(encoded)));
+        Assert.Equal(7, decoded.ControllerSessionId);
         Assert.Equal(package.Position, decoded.Position);
         Assert.Equal(package.PackageChangeFlag, decoded.PackageChangeFlag);
     }

@@ -4,18 +4,36 @@ using Engine.Core.Runtime;
 using EntitySystem.Core;
 
 using Game;
+using Game.Commands;
 using Game.Components;
 using Game.Managers;
 using Game.Modding;
 using Game.Network;
+using Game.Protocol;
+using Game.Protocol.Identity;
 using Game.Terrains;
 
 namespace TerritoryStoneMod;
 
 public static class TerritoryProtection
 {
+    public static readonly ResourceId AdminPermission = new(new ModId(ModEntry.ModId), "admin");
+
+    public static PlayerAddress? ActorAddress(CharacterData? player) => player?.Client?.PlayerAddress;
+
     public static void Register(IModContext context)
     {
+        context.Commands.Permissions.Register(
+            AdminPermission,
+            new CommandPermissionDefinition(
+                CommandDomain.World,
+                description: new Game.Protocol.Localization.LocalizedText(
+                    "Commands",
+                    "Territory_AdminDescription",
+                    "绕过领地保护并拆除领地石"
+                )
+            )
+        );
         var lastDigDenialTime = double.NegativeInfinity;
         context.Gameplay.OnMinerDigging(digging =>
             {
@@ -23,7 +41,7 @@ public static class TerritoryProtection
                 var territory = Find(digging.Miner.Project, point.X, point.Z);
                 if (territory != null)
                 {
-                    var player = digging.Miner.ComponentPlayer?.PlayerData;
+                    var player = digging.Miner.ComponentCharacter?.CharacterData;
                     var ownerOnly = Terrain.ExtractContents(digging.CellValue) ==
                                     CurrentModRuntime.Value!
                                         .RequireWorldCatalog().GetBlock(TerritoryBlock.Id).BlockIndex &&
@@ -49,7 +67,7 @@ public static class TerritoryProtection
                 }
 
                 var territory = subsystem.Store.Find(placing.X, placing.Z);
-                if (territory != null && !CanPlace(territory, placing.Miner.ComponentPlayer?.PlayerData))
+                if (territory != null && !CanPlace(territory, placing.Miner.ComponentCharacter?.CharacterData))
                 {
                     placing.Cancel = true;
                     Notify(placing.Miner, "PlacingRestricted", territory);
@@ -64,9 +82,9 @@ public static class TerritoryProtection
                     return;
                 }
 
-                var owner = placing.Miner.ComponentPlayer?.PlayerData.PlayerGUID ?? Guid.Empty;
+                var owner = ActorAddress(placing.Miner.ComponentCharacter?.CharacterData);
                 var point = new Point3(placing.X, placing.Y, placing.Z);
-                if (!subsystem.Store.CanCreate(owner, point))
+                if (owner is not { } subject || !subsystem.Store.CanCreate(subject, point))
                 {
                     placing.Cancel = true;
                     Notify(placing.Miner, "ClaimUnavailable");
@@ -82,11 +100,13 @@ public static class TerritoryProtection
                     return;
                 }
 
-                var owner = added.Miner?.ComponentPlayer?.PlayerData.PlayerGUID ?? Guid.Empty;
+                var owner = ActorAddress(added.Miner?.ComponentCharacter?.CharacterData);
                 var subsystem = added.Terrain.Project.FindSubsystem<TerritorySubsystem>();
-                if (subsystem != null && subsystem.Store.TryCreate(owner, new Point3(added.X, added.Y, added.Z)))
+                if (subsystem != null &&
+                    owner is { } subject &&
+                    subsystem.Store.TryCreate(subject, new Point3(added.X, added.Y, added.Z)))
                 {
-                    subsystem.Store.TryGet(owner, out var territory);
+                    subsystem.Store.TryGet(subject, out var territory);
                     subsystem.PublishUpdate(territory!);
                 }
             }
@@ -108,7 +128,7 @@ public static class TerritoryProtection
         );
         context.Gameplay.OnTerrainCellChanging(changing =>
             {
-                var player = changing.Miner?.ComponentPlayer?.PlayerData;
+                var player = changing.Miner?.ComponentCharacter?.CharacterData;
                 var territory = Find(changing.Terrain.Project, changing.X, changing.Z);
                 if (player == null || territory == null)
                 {
@@ -130,7 +150,7 @@ public static class TerritoryProtection
         void OnBoundaryCollision(ComponentBody body, Territory territory, bool exiting)
         {
             if (Time.FrameStartTime - lastBoundaryDenialTime >= 2 &&
-                BodyPlayer(body)?.PlayerData.IsMainPlayer == true &&
+                BodyPlayer(body)?.CharacterData.IsLocalCharacter == true &&
                 RunMode.Value is RunModeType.Gui)
             {
                 Notify(
@@ -145,47 +165,57 @@ public static class TerritoryProtection
         context.Gameplay.OnTerrainCollisionBoxes(collision => AddBoundaryCollisions(collision, OnBoundaryCollision));
     }
 
-    public static bool CanDig(Territory territory, PlayerData? player) => player == null ||
-                                                                          AllowsOwner(territory, player) ||
-                                                                          territory.Settings.AllowDigging ||
-                                                                          (territory.PermissionsFor(player.PlayerGUID) &
-                                                                           TerritoryPermission.Dig) !=
-                                                                          0;
+    public static bool CanDig(Territory territory, CharacterData? player) => player == null ||
+                                                                             AllowsOwner(territory, player) ||
+                                                                             territory.Settings.AllowDigging ||
+                                                                             HasGrant(
+                                                                                 territory,
+                                                                                 player,
+                                                                                 TerritoryPermission.Dig
+                                                                             );
 
-    public static bool CanPlace(Territory territory, PlayerData? player) => player == null ||
-                                                                            AllowsOwner(territory, player) ||
-                                                                            territory.Settings.AllowPlacing ||
-                                                                            (territory.PermissionsFor(
-                                                                                 player.PlayerGUID
-                                                                             ) &
-                                                                             TerritoryPermission.Place) !=
-                                                                            0;
+    public static bool CanPlace(Territory territory, CharacterData? player) => player == null ||
+                                                                               AllowsOwner(territory, player) ||
+                                                                               territory.Settings.AllowPlacing ||
+                                                                               HasGrant(
+                                                                                   territory,
+                                                                                   player,
+                                                                                   TerritoryPermission.Place
+                                                                               );
 
-    public static bool CanCross(Territory territory, PlayerData player, bool exiting) =>
+    public static bool CanCross(Territory territory, CharacterData player, bool exiting) =>
         AllowsOwner(territory, player) ||
         (exiting ? territory.Settings.AllowExit : territory.Settings.AllowEntry) ||
-        (territory.PermissionsFor(player.PlayerGUID) &
-         (exiting ? TerritoryPermission.Exit : TerritoryPermission.Enter)) !=
-        0;
+        HasGrant(territory, player, exiting ? TerritoryPermission.Exit : TerritoryPermission.Enter);
 
-    public static bool AllowsOwner(Territory territory, PlayerData? player) => player != null &&
-                                                                               (player.PlayerGUID == territory.Owner ||
-                                                                                   player.ServerManager ||
-                                                                                   player.ServerMaster);
+    private static bool HasGrant(Territory territory, CharacterData player, TerritoryPermission permission)
+    {
+        return ActorAddress(player) is { } address && (territory.PermissionsFor(address) & permission) != 0;
+    }
+
+    public static bool AllowsOwner(Territory territory, CharacterData? player)
+    {
+        if (ActorAddress(player) is not { } address) { return false; }
+
+        return address == territory.Owner ||
+               player!.Client?.Subject is { Ban: null } subject &&
+               subject.Permissions.Grants.Any(grant => grant.Permission == AdminPermission);
+    }
 
     private static Territory? Find(Project project, int x, int z) =>
         project.FindSubsystem<TerritorySubsystem>()?.Store.Find(x, z);
 
     private static bool Notify(ComponentMiner miner, string key, Territory? territory = null)
     {
-        if (RunMode.Value is RunModeType.Gui && miner.ComponentPlayer?.PlayerData.IsMainPlayer == true)
+        if (RunMode.Value is RunModeType.Gui && miner.ComponentCharacter?.CharacterData.IsLocalCharacter == true)
         {
             var text = LanguageManager.Get("TerritoryProtection", key);
             if (territory != null)
             {
                 var world = miner.Project.FindSubsystem<TerritorySubsystem>()!;
                 var hint = key == "StoneOwnerOnly" ? "OwnedBy" :
-                    territory.Grants.ContainsKey(miner.ComponentPlayer.PlayerData.PlayerGUID) ? "AuthorizedHint" :
+                    ActorAddress(miner.ComponentCharacter.CharacterData) is { } subject &&
+                    territory.Grants.ContainsKey(subject) ? "AuthorizedHint" :
                     "RequestHint";
                 text += " " +
                         string.Format(
@@ -194,23 +224,25 @@ public static class TerritoryProtection
                         );
             }
 
-            miner.ComponentPlayer.ComponentGui.DisplaySmallMessage(text, Color.Yellow, false, true);
+            miner.ComponentCharacter.ComponentGui.DisplaySmallMessage(text, Color.Yellow, false, true);
             return true;
         }
 
         return false;
     }
 
-    private static ComponentPlayer? BodyPlayer(ComponentBody body) => body.Player ??
-                                                                      body.ChildBodies.Select(child => child.Player)
-                                                                          .FirstOrDefault(player => player != null);
+    private static ComponentCharacter? BodyPlayer(ComponentBody body) => body.Character ??
+                                                                         body.ChildBodies.Select(child =>
+                                                                                 child.Character
+                                                                             )
+                                                                             .FirstOrDefault(player => player != null);
 
     private static void AddBoundaryCollisions(
         TerrainCollisionBoxesContext context,
         Action<ComponentBody, Territory, bool> onCollision
     )
     {
-        var player = BodyPlayer(context.Body)?.PlayerData;
+        var player = BodyPlayer(context.Body)?.CharacterData;
         var store = context.Body.Project.FindSubsystem<TerritorySubsystem>()?.Store;
         if (player == null || store == null)
         {

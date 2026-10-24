@@ -8,7 +8,7 @@ namespace ServerLoadTool;
 public sealed class LoadClient : IDisposable
 {
     // The load client creates the default male character (wire value 0).
-    private const byte _defaultPlayerClass = 0;
+    private const byte _defaultCharacterSex = 0;
 
     private readonly LoadOptions _options;
 
@@ -18,7 +18,7 @@ public sealed class LoadClient : IDisposable
 
     private readonly Task<NetworkConnection> _connecting;
 
-    private readonly Guid _identity = Guid.NewGuid();
+    private Guid _characterId;
 
     private readonly Guid _token = Guid.NewGuid();
 
@@ -132,7 +132,6 @@ public sealed class LoadClient : IDisposable
         var request = new ConnectionRequestPackage(
             _token,
             GameProtocol.CurrentVersion,
-            _identity,
             GameProtocol.EmptyModDataHash
         );
         return await preparation.ConnectAsync(LoadWire.Encode(request), _stop.Token);
@@ -170,9 +169,9 @@ public sealed class LoadClient : IDisposable
         }
 
         var data = LoadWire.Encode(package, _id);
-        var channel = package is PlayerStatePackage ? NetworkChannel.Snapshot :
-            package is ComponentPlayerPackage ? NetworkChannel.ReliableEvent : NetworkChannel.Control;
-        var delivery = package is PlayerStatePackage ? DeliveryMode.Sequenced : DeliveryMode.ReliableOrdered;
+        var channel = package is CharacterStatePackage ? NetworkChannel.Snapshot :
+            package is ComponentCharacterPackage ? NetworkChannel.ReliableEvent : NetworkChannel.Control;
+        var delivery = package is CharacterStatePackage ? DeliveryMode.Sequenced : DeliveryMode.ReliableOrdered;
         var result = _peer.TrySend(data, (byte)channel, delivery);
         if (result != NetworkSendResult.Accepted)
         {
@@ -193,7 +192,9 @@ public sealed class LoadClient : IDisposable
             case BootstrapPackage bootstrap:
                 World = LoadWorldInfo.Read(bootstrap.World);
                 _epoch = bootstrap.Epoch;
-                _id = bootstrap.ClientList.List.Single(client => client.TokenId == _token).ID;
+                var ownClient = bootstrap.ClientList.List.Single(client => client.TokenId == _token);
+                _id = ownClient.ID;
+                _characterId = ownClient.CharacterId;
                 State = "bootstrap";
                 Send(new ConnectionPhaseAckPackage(_epoch, ConnectionPhase.BootstrapApplied));
                 break;
@@ -203,24 +204,37 @@ public sealed class LoadClient : IDisposable
                     throw new InvalidDataException("World snapshot epoch mismatch.");
                 }
 
-                ReadEntities(snapshot.PlayerEntities);
+                ReadEntities(snapshot.CharacterEntities);
                 _snapshot = true;
                 Send(new ConnectionPhaseAckPackage(_epoch, ConnectionPhase.WorldSnapshotApplied));
-                Send(
-                    new PlayerDataPackage
-                    {
-                        Type = PlayerDataPackage.DataType.Create,
-                        PlayerName = Name,
-                        SkinName = "$Male1",
-                        PlayerClass = _defaultPlayerClass
-                    }
-                );
+                if (_characterId == Guid.Empty)
+                {
+                    Send(
+                        new CharacterDataPackage
+                        {
+                            Type = CharacterDataPackage.DataType.Create,
+                            CreationRequestId = Guid.NewGuid(),
+                            CharacterName = Name,
+                            SkinName = "$Male1",
+                            CharacterSex = _defaultCharacterSex
+                        }
+                    );
+                }
+
                 State = "joining";
                 break;
-            case EntityPackage { Type: EntityPackage.EventType.LoadOne or EntityPackage.EventType.LoadList } entities:
-                ReadEntities(entities.PlayerEntities);
+            case CharacterDataPackage { Type: CharacterDataPackage.DataType.CreationRejected } rejected:
+                Fail($"Character creation rejected: {rejected.CreationError}");
                 break;
-            case PlayerPositionPackage position when position.FromPlayerId == _id:
+            case EntityPackage { Type: EntityPackage.EventType.LoadOne or EntityPackage.EventType.LoadList } entities:
+                foreach (var player in entities.Characters)
+                {
+                    if (player.Client is { } session && session.ID == _id) { _characterId = session.CharacterId; }
+                }
+
+                ReadEntities(entities.CharacterEntities);
+                break;
+            case CharacterPositionPackage position when position.ControllerSessionId == _id:
                 Position = position.Position;
                 _origin = Position;
                 _movingSeconds = 0;
@@ -249,14 +263,14 @@ public sealed class LoadClient : IDisposable
                 }
 
                 break;
-            case OnlinePlayerStatePackage online:
-                var ownState = online.Players.FirstOrDefault(player => player.PlayerGuid == _identity);
-                if (ownState.PlayerGuid == _identity)
+            case OnlineCharacterStatePackage online:
+                var ownState = online.Characters.FirstOrDefault(player => player.CharacterId == _characterId);
+                if (ownState.CharacterId == _characterId)
                 {
                     AuthoritativePosition = ownState.Position;
                 }
 
-                if (online.Players.Any(player => player.PlayerGuid == _identity && player.Health <= 0))
+                if (online.Characters.Any(player => player.CharacterId == _characterId && player.Health <= 0))
                 {
                     Fail("player died; use an isolated Creative world for this synthetic workload");
                 }
@@ -265,11 +279,11 @@ public sealed class LoadClient : IDisposable
         }
     }
 
-    private void ReadEntities(IReadOnlyList<PlayerEntitySnapshot> entities)
+    private void ReadEntities(IReadOnlyList<CharacterEntitySnapshot> entities)
     {
         foreach (var entity in entities)
         {
-            if (entity.PlayerGuid != _identity || _hasEntity) { continue; }
+            if (entity.CharacterId != _characterId || _hasEntity) { continue; }
 
             Position = entity.Position;
             _entityId = entity.EntityId;
@@ -326,7 +340,7 @@ public sealed class LoadClient : IDisposable
             _lastLocation = now;
             _locationCenter = Position.XZ;
             Send(
-                new PlayerDataPackage(
+                new CharacterDataPackage(
                     new TerrainUpdateLocation
                     {
                         Center = Position.XZ,
@@ -358,8 +372,8 @@ public sealed class LoadClient : IDisposable
             State = "playing";
             PlayingSeconds = now;
             Send(new ClientPackage(_id!.Value, ClientState.Playing));
-            Send(new PlayerReadyPackage());
-            Send(new PlayerFlightPackage { IsCreativeFly = true });
+            Send(new CharacterReadyPackage());
+            Send(new CharacterFlightPackage { IsCreativeFly = true });
         }
 
         if (State == "playing" && AuthoritativePosition is { } authoritative)
@@ -390,13 +404,13 @@ public sealed class LoadClient : IDisposable
             }
 
             Send(
-                new PlayerStatePackage
+                new CharacterStatePackage
                 {
-                    PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange |
-                                        ComponentPlayerPackage.ChangFlag.VelocityChange |
-                                        ComponentPlayerPackage.ChangFlag.RotationChange |
-                                        ComponentPlayerPackage.ChangFlag.LookAnglesChange |
-                                        ComponentPlayerPackage.ChangFlag.SneakChange,
+                    PackageChangeFlag = ComponentCharacterPackage.ChangFlag.PositionChange |
+                                        ComponentCharacterPackage.ChangFlag.VelocityChange |
+                                        ComponentCharacterPackage.ChangFlag.RotationChange |
+                                        ComponentCharacterPackage.ChangFlag.LookAnglesChange |
+                                        ComponentCharacterPackage.ChangFlag.SneakChange,
                     Position = Position,
                     Velocity = (Position - previousPosition) / (float)dt,
                     Rotation = Quaternion.Identity

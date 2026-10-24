@@ -18,11 +18,9 @@ public abstract class Block : IDisposable
 
     public BlockContentCatalog Catalog
     {
-        get => _catalog ?? throw new InvalidOperationException("Block is not bound to a content catalog.");
-        internal set => _catalog = value;
+        get => field ?? throw new InvalidOperationException("Block is not bound to a content catalog.");
+        internal set;
     }
-
-    private BlockContentCatalog? _catalog;
 
     public string CraftingId = string.Empty;
 
@@ -462,7 +460,7 @@ public abstract class Block : IDisposable
         SubsystemTerrain subsystemTerrain,
         string[] ingredients,
         float heatLevel,
-        ComponentPlayer? player
+        ComponentCharacter? player
     )
     {
         return null;

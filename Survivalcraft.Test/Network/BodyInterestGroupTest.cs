@@ -23,13 +23,13 @@ public sealed class BodyInterestGroupTest
         try
         {
             CommonLib.Net.Clients = new Dictionary<int, Client> { [owner.ID] = owner };
-            var data = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData));
-            data.PlayerGUID = owner.GUID;
+            var data = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
+            data.CharacterId = owner.CharacterId;
             var mount = new ComponentBody();
             var rider = new ComponentBody
             {
                 ParentBody = mount,
-                Player = new ComponentPlayer { PlayerData = data }
+                Character = new ComponentCharacter { CharacterData = data }
             };
             var interest = new SubsystemNetworkInterest();
 

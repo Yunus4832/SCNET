@@ -24,7 +24,7 @@ public class SubsystemDrawing : Subsystem
     internal static bool ShouldScheduleDrawable(IDrawable drawable)
     {
         return drawable is not ComponentGui componentGui ||
-               componentGui.ComponentPlayer is { IsLocallyControlled: true };
+               componentGui.ComponentCharacter is { IsLocallyControlled: true };
     }
 
     private void RemoveDrawable(IDrawable drawable)

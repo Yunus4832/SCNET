@@ -284,17 +284,33 @@ public static class GameManager
     private static void SetupNetworkHandlers(Project project)
     {
         var netNode = CommonLib.Net;
+        foreach (var session in netNode.Clients.Values) { session.SetProject(project); }
+
         netNode.TurnOnPackageHandle(project);
 
         if (CommonLib.WorkType == WorkType.Server)
         {
             SetupServerNetworkHandlers(project, netNode);
-            return;
         }
 
         if (CommonLib.WorkType == WorkType.Client)
         {
             SetupClientNetworkHandlers(project, netNode);
+        }
+        else if (RunMode.Value is RunModeType.Gui &&
+                 netNode.Self?.Subject is { CharacterId: var characterId } &&
+                 characterId != Guid.Empty)
+        {
+            var players = project.FindSubsystem<SubsystemCharacters>(true)!;
+            if (players.FindCharacterData(player => player.CharacterId == characterId) is null)
+            {
+                if (!players.MakeCharacterOnline(characterId, out _, out var entity))
+                {
+                    throw new InvalidDataException("The local subject's character data is missing.");
+                }
+
+                if (entity is not null) { project.AddEntity(entity); }
+            }
         }
     }
 
@@ -355,11 +371,11 @@ public static class GameManager
                 return;
             }
 
-            var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
-            var playerData = subsystemPlayers.PlayersData.Find(pd => pd.PlayerGUID == c.GUID);
-            if (playerData is { IsMainPlayer: false })
+            var subsystemCharacters = project.FindSubsystem<SubsystemCharacters>(true)!;
+            var characterData = subsystemCharacters.Characters.Find(pd => pd.CharacterId == c.CharacterId);
+            if (characterData is { IsLocalCharacter: false })
             {
-                subsystemPlayers.MakePlayerOffline(playerData.PlayerGUID);
+                subsystemCharacters.MakeCharacterOffline(characterData.CharacterId);
             }
         };
     }
@@ -412,35 +428,29 @@ public static class GameManager
         {
             case ClientState.NotConnected:
                 project.FindSubsystem<SubsystemNetworkInterest>(true)!.Entities.RemoveClient(client);
-                var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
-                subsystemPlayers.MakePlayerOffline(client.GUID);
-                net.QueuePackage(PlayerPackageBuilder.Capture(subsystemPlayers), PackageAudience.Global);
+                var subsystemCharacters = project.FindSubsystem<SubsystemCharacters>(true)!;
+                subsystemCharacters.MakeCharacterOffline(client.CharacterId);
+                net.QueuePackage(CharacterPackageBuilder.Capture(subsystemCharacters), PackageAudience.Global);
                 GC.Collect();
                 break;
             case ClientState.LoadTerrain:
                 GC.Collect();
-                if (client.PlayerData is { ComponentPlayer: not null })
+                if (client.CharacterData is { ComponentCharacter: not null })
                 {
                     if (project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.GameMode != GameMode.Creative)
                     {
-                        client.PlayerData.ComponentPlayer.ComponentHealth.IsInvulnerable = true;
+                        client.CharacterData.ComponentCharacter.ComponentHealth.IsInvulnerable = true;
                     }
                 }
 
                 break;
             case ClientState.Playing:
-                if (client.PlayerData.ComponentPlayer != null)
+                if (client.CharacterData?.ComponentCharacter is not null)
                 {
                     if (project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.GameMode != GameMode.Creative)
                     {
-                        client.PlayerData.ComponentPlayer.ComponentHealth.IsInvulnerable = false;
+                        client.CharacterData.ComponentCharacter.ComponentHealth.IsInvulnerable = false;
                     }
-                }
-
-                var blacklist = project.FindSubsystem<SubsystemPlayers>(true)!;
-                if (blacklist.BlackPlayerGuidList.ContainsKey(client.GUID.ToString()))
-                {
-                    net.RemoveClientImmediate(client, "你被禁止加入该服务器");
                 }
 
                 break;
@@ -449,18 +459,34 @@ public static class GameManager
 
     private static void SendBootstrap(Project project, NetNode net, Client client)
     {
-        var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
+        var subsystemCharacters = project.FindSubsystem<SubsystemCharacters>(true)!;
         try
         {
-            if (subsystemPlayers.MakePlayerOnline(client.GUID, out var playerData, out var entity))
+            if (client.Subject is not { } subject || subject.Ban is not null)
             {
-                client.CachePlayerEntity = entity!;
-                net.QueuePackage(PlayerPackageBuilder.Capture(subsystemPlayers), PackageAudience.Global);
+                net.RemoveClient(client, "用户未获准进入此存档");
+                return;
+            }
+
+            var restored = subsystemCharacters.MakeCharacterOnline(
+                client.CharacterId,
+                out var characterData,
+                out var entity
+            );
+            if (subject.CharacterId != Guid.Empty && !restored)
+            {
+                throw new InvalidDataException("The subject's persisted character data is missing.");
+            }
+
+            if (restored)
+            {
+                client.CachePlayerEntity = entity;
+                net.QueuePackage(CharacterPackageBuilder.Capture(subsystemCharacters), PackageAudience.Global);
             }
         }
         catch (Exception ex)
         {
-            Log.Warning($"玩家数据恢复失败，断开连接: guid={client.GUID:N}, error={ex.Message}");
+            Log.Warning($"玩家数据恢复失败，断开连接: guid={client.CharacterId:N}, error={ex.Message}");
             net.RemoveClient(client, "玩家数据加载失败，请稍后重试");
             return;
         }
@@ -500,7 +526,7 @@ public static class GameManager
 
     private static void SendInitialWorldSnapshot(Project project, NetNode net, Client client)
     {
-        var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
+        var subsystemCharacters = project.FindSubsystem<SubsystemCharacters>(true)!;
         var subsystemNetworkInterest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
         var sendList = project.EntityKeys
             .Where(EntityPackageBuilder.ShouldSend)
@@ -513,7 +539,7 @@ public static class GameManager
                 client.ConnectionEpoch,
                 project,
                 net.Clients.Values,
-                subsystemPlayers.PlayersData,
+                subsystemCharacters.Characters,
                 sendList
             ),
             PackageAudience.To(client)
@@ -531,6 +557,6 @@ public static class GameManager
         client.CachePlayerEntity = null;
         // A restored entity may already be attached from world loading. AddEntity then emits
         // no event, so refresh the connection-dependent player list after the join completes.
-        project.FindSubsystem<SubsystemPlayers>(true)!.UpdateComponentPlayers();
+        project.FindSubsystem<SubsystemCharacters>(true)!.UpdateComponentCharacters();
     }
 }

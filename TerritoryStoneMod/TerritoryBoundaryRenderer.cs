@@ -90,7 +90,7 @@ public sealed class TerritoryBoundaryRenderer : IDisposable
             .SetValue(Matrix.CreateTranslation(anchor) * camera.ViewProjectionMatrix);
         _shader.GetParameter("u_cameraPosition").SetValue(camera.ViewPosition - anchor);
         _shader.GetParameter("u_color").SetValue(
-            territory.Owner == camera.GameWidget.PlayerData.PlayerGUID
+            territory.Owner == TerritoryProtection.ActorAddress(camera.GameWidget.CharacterData)
                 ? new Vector4(0.2f, 0.85f, 1, 0.45f)
                 : new Vector4(1, 0.7f, 0.2f, 0.45f)
         );

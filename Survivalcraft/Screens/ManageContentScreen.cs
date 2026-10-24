@@ -117,11 +117,11 @@ public class ManageContentScreen : Screen
 
                 var node4 = ContentManager.Get<XElement>("Widgets/CharacterSkinItem");
                 containerWidget = (ContainerWidget)LoadWidget(this, node4, null);
-                var playerModelWidget = containerWidget.Children.Find<PlayerModelWidget>("CharacterSkinItem.Model")!;
+                var playerModelWidget = containerWidget.Children.Find<CharacterModelWidget>("CharacterSkinItem.Model")!;
                 var labelWidget5 = containerWidget.Children.Find<LabelWidget>("CharacterSkinItem.Text")!;
                 var labelWidget6 = containerWidget.Children.Find<LabelWidget>("CharacterSkinItem.Details")!;
                 var texture2 = _characterSkinsCache.GetTexture(listItem.Name);
-                playerModelWidget.PlayerClass = PlayerClass.Male;
+                playerModelWidget.CharacterSex = CharacterSex.Male;
                 playerModelWidget.CharacterSkinTexture = texture2;
                 labelWidget5.Text = listItem.DisplayName;
                 labelWidget6.Text = string.Format(LanguageManager.Get(_typeName, 4), texture2.Width, texture2.Height);
@@ -278,7 +278,7 @@ public class ManageContentScreen : Screen
                         DisplayName = CharacterSkinsManager.GetDisplayName(name),
                         CreationTime = CharacterSkinsManager.GetCreationDate(name),
                         UseCount = WorldsManager.WorldInfos.Count(wi =>
-                            wi.PlayerInfos.Any(pi => pi.CharacterSkinName == name)
+                            wi.CharacterInfos.Any(pi => pi.CharacterSkinName == name)
                         )
                     }
                 )

@@ -23,7 +23,7 @@ public sealed class ServerSubmissionTest
                 ? null
                 : new Client(null, 0, Guid.NewGuid(), Guid.NewGuid(), null);
 
-            Assert.Throws<InvalidOperationException>(() => NetworkSender.SendToServer(new PlayerDataPackage()));
+            Assert.Throws<InvalidOperationException>(() => NetworkSender.SendToServer(new CharacterDataPackage()));
         }
         finally
         {

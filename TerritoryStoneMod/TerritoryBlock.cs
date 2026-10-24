@@ -51,7 +51,7 @@ public class TerritoryBlock : CubeBlock
         SubsystemTerrain subsystemTerrain,
         string[] ingredients,
         float heatLevel,
-        ComponentPlayer? player
+        ComponentCharacter? player
     )
     {
         if (player == null || !RecipeMatches(ingredients))
@@ -59,7 +59,7 @@ public class TerritoryBlock : CubeBlock
             return null;
         }
 
-        var userLevel = (int)player.PlayerData.Level;
+        var userLevel = (int)player.CharacterData.Level;
         if (userLevel < _requiredPlayerLevel)
         {
             var displayName = GetDisplayName(subsystemTerrain, Terrain.MakeBlockValue(BlockIndex));

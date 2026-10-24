@@ -11,9 +11,9 @@ public static class CharacterSkinsManager
 
     private static readonly List<string> _characterSkinNames = [];
 
-    private static readonly Dictionary<PlayerClass, Model> _playerModels = new();
+    private static readonly Dictionary<CharacterSex, Model> _playerModels = new();
 
-    private static readonly Dictionary<PlayerClass, Model> _outerClothingModels = new();
+    private static readonly Dictionary<CharacterSex, Model> _outerClothingModels = new();
 
     public static readonly List<string> WaitReplyList = [];
 
@@ -58,17 +58,17 @@ public static class CharacterSkinsManager
         s.Write(skinData, 0, skinData.Length);
     }
 
-    public static PlayerClass? GetPlayerClass(string name)
+    public static CharacterSex? GetCharacterSex(string name)
     {
         name = name.ToLower();
         if (name.Contains("female") || name.Contains("girl") || name.Contains("woman"))
         {
-            return PlayerClass.Female;
+            return CharacterSex.Female;
         }
 
         if (name.Contains("male") || name.Contains("boy") || name.Contains("man"))
         {
-            return PlayerClass.Male;
+            return CharacterSex.Male;
         }
 
         return null;
@@ -261,17 +261,17 @@ public static class CharacterSkinsManager
         }
     }
 
-    public static Model GetPlayerModel(PlayerClass playerClass)
+    public static Model GetCharacterModel(CharacterSex characterSex)
     {
-        if (_playerModels.TryGetValue(playerClass, out var value))
+        if (_playerModels.TryGetValue(characterSex, out var value))
         {
             return value;
         }
 
-        var valuesDictionary = playerClass switch
+        var valuesDictionary = characterSex switch
         {
-            PlayerClass.Male => DatabaseManager.FindEntityValuesDictionary("MalePlayer", true)!,
-            PlayerClass.Female => DatabaseManager.FindEntityValuesDictionary("FemalePlayer", true)!,
+            CharacterSex.Male => DatabaseManager.FindEntityValuesDictionary("MaleCharacter", true)!,
+            CharacterSex.Female => DatabaseManager.FindEntityValuesDictionary("FemaleCharacter", true)!,
             _ => throw new InvalidOperationException("Unknown player class.")
         };
 
@@ -279,22 +279,22 @@ public static class CharacterSkinsManager
             valuesDictionary.GetValue<ValuesDictionary>("HumanModel")
                 .GetValue<string>("ModelName")
         );
-        _playerModels.Add(playerClass, value);
+        _playerModels.Add(characterSex, value);
 
         return value;
     }
 
-    public static Model GetOuterClothingModel(PlayerClass playerClass)
+    public static Model GetOuterClothingModel(CharacterSex characterSex)
     {
-        if (_outerClothingModels.TryGetValue(playerClass, out var value))
+        if (_outerClothingModels.TryGetValue(characterSex, out var value))
         {
             return value;
         }
 
-        var valuesDictionary = playerClass switch
+        var valuesDictionary = characterSex switch
         {
-            PlayerClass.Male => DatabaseManager.FindEntityValuesDictionary("MalePlayer", true)!,
-            PlayerClass.Female => DatabaseManager.FindEntityValuesDictionary("FemalePlayer", true)!,
+            CharacterSex.Male => DatabaseManager.FindEntityValuesDictionary("MaleCharacter", true)!,
+            CharacterSex.Female => DatabaseManager.FindEntityValuesDictionary("FemaleCharacter", true)!,
             _ => throw new InvalidOperationException("Unknown player class.")
         };
 
@@ -302,7 +302,7 @@ public static class CharacterSkinsManager
             valuesDictionary.GetValue<ValuesDictionary>("OuterClothingModel")
                 .GetValue<string>("ModelName")
         );
-        _outerClothingModels.Add(playerClass, value);
+        _outerClothingModels.Add(characterSex, value);
 
         return value;
     }

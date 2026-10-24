@@ -6,14 +6,14 @@ public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
 {
     public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:battery")];
 
-    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
+    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentCharacter componentCharacter)
     {
         var value = inventory.GetSlotValue(slotIndex);
         inventory.GetSlotCount(slotIndex);
         var data = Terrain.ExtractData(value);
         var voltageLevel = BatteryBlock.GetVoltageLevel(data);
         DialogsManager.ShowDialog(
-            componentPlayer.GuiWidget,
+            componentCharacter.GuiWidget,
             new EditBatteryDialog(
                 voltageLevel,
                 delegate(int newVoltageLevel)
@@ -40,12 +40,12 @@ public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
         return true;
     }
 
-    public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer componentPlayer)
+    public override bool OnEditBlock(int x, int y, int z, int value, ComponentCharacter componentCharacter)
     {
         var data = Terrain.ExtractData(value);
         var voltageLevel = BatteryBlock.GetVoltageLevel(data);
         DialogsManager.ShowDialog(
-            componentPlayer.GuiWidget,
+            componentCharacter.GuiWidget,
             new EditBatteryDialog(
                 voltageLevel,
                 delegate(int newVoltageLevel)

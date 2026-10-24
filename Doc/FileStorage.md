@@ -66,11 +66,27 @@ Starter 会先注册程序基础目录并读取 `Starter.xml`，再把选中的 
 
 `Project.xml` 的 `ExtensionData` 与 `Subsystems`、`Entities` 同级，用于非实体业务数据，内部按所有者标识和数据标识组织 `ValuesDictionary`。它复用世界保存流程，不产生独立文件；主线程保存时复制嵌套字典，后台写入不会遍历运行时业务字典。客户端世界初始化快照不包含该节点，业务数据需要联机展示时由对应功能显式同步。
 
-内置标记使用 `ExtensionData/game/position-marks`：`Public` 保存公共标记，`Private` 按玩家 GUID（无连字符的 `N` 格式）保存私有标记。标记属于世界，不依赖玩家在线状态或实体生命周期；`PlayerData` 与 `Players` 子系统不再分别保存 `PrivateMarks`、`PublicMarks`。旧开发存档的这些字段不再读取，不提供自动迁移，旧标记需要重新建立。`game` 是核心数据所有者，不能把整个 `ExtensionData` 当作第三方模组数据删除。
+内置标记使用 `ExtensionData/game/position-marks`：`Public` 保存公共标记，`Private` 按完整玩家身份地址（`PlayerAddress` 的 Bech32m 编码）保存私有标记。标记属于世界，不依赖玩家在线状态或实体生命周期；`SubsystemPositionMarks` 统一加载和保存这些数据，`CharacterData` 与角色子系统不各自持有标记副本。旧开发存档的这些字段不再读取，不提供自动迁移，旧标记需要重新建立。`game` 是核心数据所有者，不能把整个 `ExtensionData` 当作第三方模组数据删除。
 
-### 玩家库存
+### 玩家记录与角色数据
 
-玩家实体会同时保存普通 `Inventory` 与 `CreativeInventory`，加载时由 `ComponentMiner` 根据世界模式选择当前使用的库存。两套库存都为物品栏预留 `0–29`、为背包预留 `30–45`；世界设置 `SurvivalHotbarSlotsCount` 与 `CreativeHotbarSlotsCount` 分别决定两套库存中前 7–30 个物品栏槽位可用，运行时生成的创造物品目录位于持久化槽位之后。修改世界模式只更新世界设置，不会在两套库存之间复制或转换物品；切回原模式时会恢复该模式上次保存的库存。因此，在一种模式下保存于背包的物品切换模式后不可访问属于预期行为。旧版存档中的普通库存使用不同的槽位布局，不再兼容。
+`ExtensionData/game/players` 保存 `WorldPlayerStore`：按完整 `PlayerAddress` 记录玩家权限、封禁、禁言和角色归属。
+`Characters` 子系统中的 `Characters` 保存活动角色数据，离线角色保存独立的角色数据，已有实体时同时保存实体快照。
+尚未生成实体的角色离线后保留资料与归属，重新进入时继续正常生成流程。角色字段使用 `CharacterId`、
+`CharacterIndex` 和 `CharacterSex`。角色索引不是玩家身份，角色名称在同一存档内唯一。
+这些开发阶段字段替换旧名称，不提供旧开发存档的双读或自动迁移。
+
+### 队伍数据
+
+队伍独立保存于 `Subsystems/Teams/Teams`，不再属于 `Players` 子系统。
+记录以无连字符的 `Guid`（`N` 格式）为键，包含 `Name`、队长 `Leader` 和玩家地址集合 `Members`。
+邀请、加入申请、有效期和操作限流均为运行时状态，不写入存档；进程重启后须重新发起未完成请求。
+无效队长、未知玩家或跨队重复成员会拒绝整批加载，不部分覆盖已存在状态。
+不读取旧 `ServerGroups` 数据，也不提供旧格式兼容分支。
+
+### 角色库存
+
+角色实体会同时保存普通 `Inventory` 与 `CreativeInventory`，加载时由 `ComponentMiner` 根据世界模式选择当前使用的库存。两套库存都为物品栏预留 `0–29`、为背包预留 `30–45`；世界设置 `SurvivalHotbarSlotsCount` 与 `CreativeHotbarSlotsCount` 分别决定两套库存中前 7–30 个物品栏槽位可用，运行时生成的创造物品目录位于持久化槽位之后。修改世界模式只更新世界设置，不会在两套库存之间复制或转换物品；切回原模式时会恢复该模式上次保存的库存。因此，在一种模式下保存于背包的物品切换模式后不可访问属于预期行为。旧版存档中的普通库存使用不同的槽位布局，不再兼容。
 
 世界升级或修复工具必须把两套库存视为独立状态，不能依据当前模式删除、合并或重排另一套库存。扩展任一库存时应保留已有槽位索引，将新增但未出现在存档中的槽位初始化为空；创造物品目录不属于需要迁移的存档数据。
 

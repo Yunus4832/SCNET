@@ -27,7 +27,7 @@ public class ComponentInput : Component, IUpdateable
 
     private ComponentGui _componentGui = null!;
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private bool _isViewHoldStarted;
 
@@ -59,21 +59,21 @@ public class ComponentInput : Component, IUpdateable
 
     public UpdateOrder UpdateOrder => UpdateOrder.Input;
 
-    internal ComponentPlayer? ComponentPlayer { get => _componentPlayer; set => _componentPlayer = value!; }
+    internal ComponentCharacter? ComponentCharacter { get => _componentCharacter; set => _componentCharacter = value!; }
 
     public void Update(float dt)
     {
         _playerInput = default;
-        if (!_componentPlayer.IsLocallyControlled)
+        if (!_componentCharacter.IsLocallyControlled)
         {
             return;
         }
 
-        UpdateInputFromMouseAndKeyboard(_componentPlayer.GameWidget.Input);
-        UpdateInputFromGamepad(_componentPlayer.GameWidget.Input);
-        UpdateInputFromWidgets(_componentPlayer.GameWidget.Input);
-        Navigation.ApplyInput(_componentPlayer, ref _playerInput);
-        ViewControl.ApplyInput(_componentPlayer, ref _playerInput);
+        UpdateInputFromMouseAndKeyboard(_componentCharacter.GameWidget.Input);
+        UpdateInputFromGamepad(_componentCharacter.GameWidget.Input);
+        UpdateInputFromWidgets(_componentCharacter.GameWidget.Input);
+        Navigation.ApplyInput(_componentCharacter, ref _playerInput);
+        ViewControl.ApplyInput(_componentCharacter, ref _playerInput);
         if (_playerInput.Jump)
         {
             if (Time.RealTime - _lastJumpTime < 0.3)
@@ -90,13 +90,13 @@ public class ComponentInput : Component, IUpdateable
         _playerInput.CameraMove = _playerInput.Move;
         _playerInput.CameraSneakMove = _playerInput.SneakMove;
         _playerInput.CameraLook = _playerInput.Look;
-        if (!Window.IsActive || !_componentPlayer.PlayerData.IsReadyForPlaying)
+        if (!Window.IsActive || !_componentCharacter.CharacterData.IsReadyForPlaying)
         {
             _playerInput = default;
         }
-        else if (_componentPlayer.ComponentHealth.Health <= 0f ||
-                 _componentPlayer.ComponentSleep.SleepFactor > 0f ||
-                 !_componentPlayer.GameWidget.ActiveCamera.IsEntityControlEnabled)
+        else if (_componentCharacter.ComponentHealth.Health <= 0f ||
+                 _componentCharacter.ComponentSleep.SleepFactor > 0f ||
+                 !_componentCharacter.GameWidget.ActiveCamera.IsEntityControlEnabled)
         {
             _playerInput = new PlayerInput
             {
@@ -108,7 +108,7 @@ public class ComponentInput : Component, IUpdateable
                 KeyboardHelp = _playerInput.KeyboardHelp
             };
         }
-        else if (_componentPlayer.GameWidget.ActiveCamera.UsesMovementControls)
+        else if (_componentCharacter.GameWidget.ActiveCamera.UsesMovementControls)
         {
             _playerInput.Move = Vector3.Zero;
             _playerInput.SneakMove = Vector3.Zero;
@@ -156,20 +156,20 @@ public class ComponentInput : Component, IUpdateable
     {
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _componentGui = Entity.FindComponent<ComponentGui>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         IsTouchInputActive = PlatformManager.Platform is Platform.Android;
     }
 
     public void UpdateInputFromMouseAndKeyboard(WidgetInput input)
     {
         var isMouseOrKeyboardInputActive = false;
-        var viewPosition = _componentPlayer.GameWidget.ActiveCamera.ViewPosition;
-        var viewDirection = _componentPlayer.GameWidget.ActiveCamera.ViewDirection;
-        if (_componentGui.ModalPanelWidget != null || DialogsManager.HasDialogs(_componentPlayer.GuiWidget))
+        var viewPosition = _componentCharacter.GameWidget.ActiveCamera.ViewPosition;
+        var viewDirection = _componentCharacter.GameWidget.ActiveCamera.ViewDirection;
+        if (_componentGui.ModalPanelWidget != null || DialogsManager.HasDialogs(_componentCharacter.GuiWidget))
         {
             if (!input.IsMouseCursorVisible)
             {
-                var viewWidget = _componentPlayer.ViewWidget;
+                var viewWidget = _componentCharacter.ViewWidget;
                 var value = viewWidget.WidgetToScreen(viewWidget.ActualSize / 2f);
                 input.IsMouseCursorVisible = true;
                 input.MousePosition = value;
@@ -204,7 +204,7 @@ public class ComponentInput : Component, IUpdateable
             _playerInput.Move += vector;
             _playerInput.SneakMove += vector;
             _playerInput.Jump |= input.IsKeyDownOnce(Key.Space);
-            if (_componentPlayer.ComponentMiner.Inventory is IPagedInventory &&
+            if (_componentCharacter.ComponentMiner.Inventory is IPagedInventory &&
                 input.IsKeyDown(Key.Control))
             {
                 _playerInput.ScrollInventoryPage -= num;
@@ -255,7 +255,7 @@ public class ComponentInput : Component, IUpdateable
         _playerInput.Precipitation |= input.IsKeyDownOnce(Key.Y);
         _playerInput.Fog |= input.IsKeyDownOnce(Key.O);
 
-        if (_componentPlayer.ComponentMiner.Inventory is IPagedInventory)
+        if (_componentCharacter.ComponentMiner.Inventory is IPagedInventory)
         {
             if (input.IsKeyDownOnce(Key.Z))
             {
@@ -275,7 +275,7 @@ public class ComponentInput : Component, IUpdateable
                 continue;
             }
 
-            if (_componentPlayer.ComponentMiner.Inventory is IPagedInventory &&
+            if (_componentCharacter.ComponentMiner.Inventory is IPagedInventory &&
                 input.IsKeyDown(Key.Control))
             {
                 _playerInput.SelectInventoryPage = i;
@@ -297,13 +297,13 @@ public class ComponentInput : Component, IUpdateable
     public void UpdateInputFromGamepad(WidgetInput input)
     {
         var isGamepadInputActive = false;
-        var viewPosition = _componentPlayer.GameWidget.ActiveCamera.ViewPosition;
-        var viewDirection = _componentPlayer.GameWidget.ActiveCamera.ViewDirection;
-        if (_componentGui.ModalPanelWidget != null || DialogsManager.HasDialogs(_componentPlayer.GuiWidget))
+        var viewPosition = _componentCharacter.GameWidget.ActiveCamera.ViewPosition;
+        var viewDirection = _componentCharacter.GameWidget.ActiveCamera.ViewDirection;
+        if (_componentGui.ModalPanelWidget != null || DialogsManager.HasDialogs(_componentCharacter.GuiWidget))
         {
             if (!input.IsPadCursorVisible)
             {
-                var viewWidget = _componentPlayer.ViewWidget;
+                var viewWidget = _componentCharacter.ViewWidget;
                 var padCursorPosition = viewWidget.WidgetToScreen(viewWidget.ActualSize / 2f);
                 input.IsPadCursorVisible = true;
                 input.PadCursorPosition = padCursorPosition;
@@ -381,7 +381,7 @@ public class ComponentInput : Component, IUpdateable
         var num = MathUtils.Pow(1.25f, 10f * (SettingsManager.Current.MoveSensitivity - 0.5f));
         var num2 = MathUtils.Pow(1.25f, 10f * (SettingsManager.Current.LookSensitivity - 0.5f));
         var num3 = MathUtils.Clamp(_subsystemTime.GameTimeDelta, 0f, 0.1f);
-        var viewWidget = _componentPlayer.ViewWidget;
+        var viewWidget = _componentCharacter.ViewWidget;
         _componentGui.MoveWidget.Radius = 30f / num * _componentGui.MoveWidget.GlobalScale;
         if (_componentGui.ModalPanelWidget != null || !(_subsystemTime.GameTimeFactor > 0f) || !(num3 > 0f))
         {
@@ -398,7 +398,7 @@ public class ComponentInput : Component, IUpdateable
         {
             IsTouchInputActive = true;
             var value = _componentGui.ViewWidget.TouchInput.Value;
-            var activeCamera = _componentPlayer.GameWidget.ActiveCamera;
+            var activeCamera = _componentCharacter.GameWidget.ActiveCamera;
             var viewPosition = activeCamera.ViewPosition;
             var viewDirection = activeCamera.ViewDirection;
             var direction =
@@ -530,7 +530,7 @@ public class ComponentInput : Component, IUpdateable
 
     private bool IsMessagePanelOpen()
     {
-        var messagePanel = _componentPlayer.GameWidget.MessagePanel;
+        var messagePanel = _componentCharacter.GameWidget.MessagePanel;
         return messagePanel != null && _componentGui.ModalPanelWidget == messagePanel;
     }
 }

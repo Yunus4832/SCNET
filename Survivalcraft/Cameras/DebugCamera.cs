@@ -33,9 +33,9 @@ public class DebugCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
         Vector2 vector;
         bool num;
         bool flag;
-        if (GameWidget.PlayerData.ComponentPlayer != null)
+        if (GameWidget.CharacterData.ComponentCharacter != null)
         {
-            var i = GameWidget.PlayerData.ComponentPlayer.ComponentInput.PlayerInput;
+            var i = GameWidget.CharacterData.ComponentCharacter.ComponentInput.PlayerInput;
             zero = i.CameraMove;
             vector = new Vector2(i.CameraLook.X, i.CameraLook.Y);
             num = i.ToggleSneak;

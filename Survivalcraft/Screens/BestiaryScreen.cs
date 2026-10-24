@@ -71,7 +71,7 @@ public class BestiaryScreen : Screen
 
             var order = -1;
             var value2 = entitiesValuesDictionary.GetValue<ValuesDictionary>("CreatureEggData", false);
-            var value3 = entitiesValuesDictionary.GetValue<ValuesDictionary>("Player", false);
+            var value3 = entitiesValuesDictionary.GetValue<ValuesDictionary>("Character", false);
             if (value2 == null && value3 == null)
             {
                 continue;

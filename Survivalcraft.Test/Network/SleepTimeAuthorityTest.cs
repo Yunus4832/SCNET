@@ -29,15 +29,15 @@ public sealed class SleepTimeAuthorityTest
         CommonLib.WorkType = mode;
         try
         {
-            var players = new SubsystemPlayers();
-            var list = (List<ComponentPlayer>)typeof(SubsystemPlayers)
-                .GetField("_componentPlayers", BindingFlags.Instance | BindingFlags.NonPublic)!
+            var players = new SubsystemCharacters();
+            var list = (List<ComponentCharacter>)typeof(SubsystemCharacters)
+                .GetField("_componentCharacters", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .GetValue(players)!;
             var sleeper = new ComponentSleep();
             typeof(ComponentSleep).GetField("_sleepFactor", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .SetValue(sleeper, 1f);
             list.Add(
-                new ComponentPlayer
+                new ComponentCharacter
                 {
                     ComponentHealth = new ComponentHealth { Health = 1f },
                     ComponentSleep = sleeper,
@@ -47,7 +47,7 @@ public sealed class SleepTimeAuthorityTest
             if (includeAwakePlayer)
             {
                 list.Add(
-                    new ComponentPlayer
+                    new ComponentCharacter
                     {
                         ComponentHealth = new ComponentHealth { Health = 1f },
                         ComponentSleep = new ComponentSleep(),
@@ -58,7 +58,7 @@ public sealed class SleepTimeAuthorityTest
 
             var updates = new SubsystemUpdate { UpdatesPerFrame = 20 };
             var time = new SubsystemTime { FixedTimeStep = 0.05f };
-            typeof(SubsystemTime).GetField("_subsystemPlayers", BindingFlags.Instance | BindingFlags.NonPublic)!
+            typeof(SubsystemTime).GetField("_subsystemCharacters", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .SetValue(time, players);
             typeof(SubsystemTime).GetField("_subsystemUpdate", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .SetValue(time, updates);

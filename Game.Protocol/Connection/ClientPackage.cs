@@ -1,3 +1,5 @@
+using Game.Protocol.Identity;
+
 namespace Game.Protocol.Connection;
 
 public sealed record ClientPackage : IProtocolMessage
@@ -16,22 +18,22 @@ public sealed record ClientPackage : IProtocolMessage
     {
     }
 
-    public ClientPackage(byte id, Guid tokenId, Guid guid)
+    public ClientPackage(byte id, Guid tokenId, Guid characterId, PlayerAddress? playerAddress)
     {
         PackageEventType = EventType.Add;
-        Client = new ClientIdentity(id, tokenId, guid);
+        Client = new ClientIdentity(id, tokenId, characterId, playerAddress);
     }
 
     public ClientPackage(byte id)
     {
         PackageEventType = EventType.Remove;
-        Client = new ClientIdentity(id, Guid.Empty, Guid.Empty);
+        Client = new ClientIdentity(id, Guid.Empty, Guid.Empty, null);
     }
 
     public ClientPackage(byte id, ClientState state)
     {
         PackageEventType = EventType.StateChange;
-        Client = new ClientIdentity(id, Guid.Empty, Guid.Empty, state);
+        Client = new ClientIdentity(id, Guid.Empty, Guid.Empty, null, state);
     }
 
     public ClientPackage(IReadOnlyList<ClientIdentity> clients)

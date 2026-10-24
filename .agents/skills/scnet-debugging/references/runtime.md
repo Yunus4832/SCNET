@@ -69,8 +69,7 @@ time get
 stop
 ```
 
-Player command permissions are explicit; `ServerMaster` and `ServerManager` do not grant command
-permissions. An unclaimed server prints a process-local claim code. A player must connect and run:
+Subject command permissions are explicit; the old `ServerMaster` and `ServerManager` fields have been removed. An unclaimed server prints a process-local claim code. A player must connect and run:
 
 ```text
 /auth claim <claim-code>
@@ -97,10 +96,10 @@ Use `grant` for a non-delegable grant. A delegated player can grant or revoke on
 permission node, subject to its grant policy and delegation checks:
 
 ```text
-permission grant "Player Name" game:world.time.set
-permission delegate "Player Name" game:world.time.set
-permission revoke "Player Name" game:world.time.set
-permission list "Player Name"
+permission grant <subject-address> game:world.time.set
+permission delegate <subject-address> game:world.time.set
+permission revoke <subject-address> game:world.time.set
+permission list <subject-address>
 ```
 
 Permission mutations are always executed by the server. Client commands are requests; never mutate
@@ -110,8 +109,8 @@ stdin and the Android Headless management UI both execute as `LocalOperator`; th
 their frontend. Commands that require an online player are filtered by `AllowedPrincipals` and do
 not appear in server-control suggestions.
 
-For stdin discovery, enter `permission` to print usage plus the current player and permission-node
-lists. `permission players` and `permission nodes` print each list separately.
+For stdin discovery, enter `permission` to print usage plus the stored subject and permission-node
+lists. `permission users` and `permission nodes` print each list separately.
 
 Expected result lines start with:
 

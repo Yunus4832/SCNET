@@ -13,7 +13,7 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
 
     private readonly PrimitivesRenderer3D _primitivesRenderer3D = new();
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private Vector3 _sightsDirection;
 
@@ -25,13 +25,13 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
 
     public void Draw(Camera camera, int drawOrder)
     {
-        if (camera.GameWidget != _componentPlayer.GameWidget)
+        if (camera.GameWidget != _componentCharacter.GameWidget)
         {
             return;
         }
 
-        if (_componentPlayer.ComponentHealth.Health > 0f &&
-            _componentPlayer.ComponentGui.ControlsContainerWidget.IsVisible)
+        if (_componentCharacter.ComponentHealth.Health > 0f &&
+            _componentCharacter.ComponentGui.ControlsContainerWidget.IsVisible)
         {
             if (IsSightsVisible)
             {
@@ -65,7 +65,7 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
                 !camera.UsesMovementControls &&
                 !IsSightsVisible &&
                 (SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch ||
-                 !_componentPlayer.ComponentInput.IsTouchInputActive))
+                 !_componentCharacter.ComponentInput.IsTouchInputActive))
             {
                 var subtexture = ContentManager.Get<Subtexture>("Textures/Atlas/Crosshair");
                 var s2 = 1.25f;
@@ -114,6 +114,6 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
     }
 }

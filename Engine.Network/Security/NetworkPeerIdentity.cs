@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 
+using Engine.Core.Security;
+
 namespace Engine.Network.Security;
 
 /// <summary>A peer's proven P-256 public key. Trust must be decided independently of proof of possession.</summary>
@@ -29,7 +31,7 @@ public sealed class NetworkPeerIdentity
                    "\",\"y\":\"" +
                    Encode(parameters.Q.Y!) +
                    "\"}";
-        Address = Encode(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
+        Address = IdentityAddress.Encode(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
     }
 
     public string Address { get; }

@@ -36,7 +36,7 @@ public class SubsystemSpawn : Subsystem, IUpdateable
 
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
-    private SubsystemPlayers _subsystemPlayers = null!;
+    private SubsystemCharacters _subsystemCharacters = null!;
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
@@ -86,7 +86,7 @@ public class SubsystemSpawn : Subsystem, IUpdateable
     public override void Load(ValuesDictionary valuesDictionary)
     {
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
-        _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemCharacters = Project.FindSubsystem<SubsystemCharacters>(true)!;
         _subsystemViews = Project.FindSubsystem<SubsystemGameWidgets>(true)!;
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
@@ -192,9 +192,12 @@ public class SubsystemSpawn : Subsystem, IUpdateable
 
     private void UpdateLastVisitedTime()
     {
-        foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
+        foreach (var componentCharacter in _subsystemCharacters.ComponentCharacters)
         {
-            var v = new Vector2(componentPlayer.ComponentBody.Position.X, componentPlayer.ComponentBody.Position.Z);
+            var v = new Vector2(
+                componentCharacter.ComponentBody.Position.X,
+                componentCharacter.ComponentBody.Position.Z
+            );
             var p = v - new Vector2(8f);
             var p2 = v + new Vector2(8f);
             var point = Terrain.ToChunk(p);
@@ -213,12 +216,12 @@ public class SubsystemSpawn : Subsystem, IUpdateable
     private void SpawnChunks()
     {
         var centers = new List<Vector2>();
-        foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
+        foreach (var componentCharacter in _subsystemCharacters.ComponentCharacters)
         {
             centers.Add(
                 new Vector2(
-                    componentPlayer.ComponentBody.Position.X,
-                    componentPlayer.ComponentBody.Position.Z
+                    componentCharacter.ComponentBody.Position.X,
+                    componentCharacter.ComponentBody.Position.Z
                 )
             );
         }
@@ -279,9 +282,9 @@ public class SubsystemSpawn : Subsystem, IUpdateable
             var flag = true;
             var position = key.ComponentFrame.Position;
             var v = new Vector2(position.X, position.Z);
-            foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
+            foreach (var componentCharacter in _subsystemCharacters.ComponentCharacters)
             {
-                var viewPosition = componentPlayer.ComponentBody.Position;
+                var viewPosition = componentCharacter.ComponentBody.Position;
                 var v2 = new Vector2(viewPosition.X, viewPosition.Z);
                 if (!(Vector2.DistanceSquared(v, v2) <= 2704f))
                 {

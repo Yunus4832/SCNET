@@ -5,6 +5,7 @@ using System.Text;
 using EntitySystem.Core;
 
 using Game.Network;
+using Game.Players;
 
 namespace Game.Commands;
 
@@ -64,12 +65,12 @@ public static class ServerAdministrationBootstrap
 
     public static BootstrapClaimResult TryClaim(
         Project project,
-        PlayerData player,
+        WorldPlayer user,
         string claimCode
     )
     {
         ArgumentNullException.ThrowIfNull(project);
-        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(user);
         if (CommonLib.WorkType is not WorkType.Server)
         {
             return BootstrapClaimResult.LocalizedFail(
@@ -79,8 +80,9 @@ public static class ServerAdministrationBootstrap
             );
         }
 
-        if (!ReferenceEquals(player.Project, project) ||
-            player.Client is not { State: not ClientState.NotConnected })
+        var owner = CommonLib.Net.Clients.Values.FirstOrDefault(client => ReferenceEquals(client.Subject, user));
+        if (!ReferenceEquals(project.FindSubsystem<SubsystemPlayers>(true)!.Store.Find(user.Address), user) ||
+            owner is not { State: not ClientState.NotConnected })
         {
             return BootstrapClaimResult.LocalizedFail(
                 "auth.player_offline",
@@ -111,7 +113,7 @@ public static class ServerAdministrationBootstrap
                 );
             }
 
-            player.CommandPermissions.Grant(
+            user.Permissions.Grant(
                 BuiltInPermissionIds.ManageStandard,
                 canDelegate: true
             );
@@ -121,7 +123,7 @@ public static class ServerAdministrationBootstrap
             return BootstrapClaimResult.LocalizedOk(
                 "AuthClaimSuccess_Message",
                 "玩家 {0} 已成为首位权限管理员，可管理和再授权标准指令权限。",
-                player.Name
+                owner.CharacterData?.Name ?? (user.DisplayName.Length > 0 ? user.DisplayName : user.Address.Value)
             );
         }
     }
@@ -135,8 +137,8 @@ public static class ServerAdministrationBootstrap
     {
         var gameInfo = project.FindSubsystem<SubsystemGameInfo>(true)!;
         var players = project.FindSubsystem<SubsystemPlayers>(true)!;
-        var hasAdministrator = players.PlayersData.Any(player =>
-            player.CommandPermissions.Grants.Any(grant =>
+        var hasAdministrator = players.Store.Entries.Any(user =>
+            user.Permissions.Grants.Any(grant =>
                 grant.CanDelegate &&
                 grant.Permission == BuiltInPermissionIds.ManageStandard
             )
@@ -148,8 +150,8 @@ public static class ServerAdministrationBootstrap
             return true;
         }
 
-        gameInfo.ServerAdministrationClaimed = false;
-        return false;
+        // Losing an online character or revoking a grant never opens a new public claim window.
+        return gameInfo.ServerAdministrationClaimed;
     }
 
     internal static string GenerateClaimCode()

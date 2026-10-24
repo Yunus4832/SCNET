@@ -35,10 +35,10 @@ public class SubsystemBlockEntities : Subsystem
         var valuesDictionary = new ValuesDictionary();
         valuesDictionary.PopulateFromDatabaseObject(databaseObject);
         valuesDictionary.GetValue<ValuesDictionary>("BlockEntity").SetValue("Coordinates", point);
-        if (miner.ComponentPlayer != null)
+        if (miner.ComponentCharacter != null)
         {
             valuesDictionary.GetValue<ValuesDictionary>("BlockEntity")
-                .SetValue("Owner", miner.ComponentPlayer.PlayerGuid);
+                .SetValue("Owner", miner.ComponentCharacter.CharacterId);
         }
 
         var entity = Project.CreateEntity(valuesDictionary);

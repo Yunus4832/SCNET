@@ -113,7 +113,12 @@ public class MagnetBlock : Block
             return result;
         }
 
-        componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("Too many magnets", Color.White, true, false);
+        componentMiner.ComponentCharacter?.ComponentGui.DisplaySmallMessage(
+            "Too many magnets",
+            Color.White,
+            true,
+            false
+        );
         result = default;
         return result;
     }

@@ -214,9 +214,9 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                                 block.GetProjectilePower(projectile.Value),
                                 false
                             );
-                            if (projectile.Owner is { PlayerStats: not null })
+                            if (projectile.Owner is { CharacterStats: not null })
                             {
-                                projectile.Owner.PlayerStats.RangedHits++;
+                                projectile.Owner.CharacterStats.RangedHits++;
                             }
                         }
 
@@ -699,9 +699,9 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         };
         _projectiles.Add(projectile);
         ProjectileAdded?.Invoke(projectile);
-        if (CommonLib.WorkType != WorkType.Client && owner is { PlayerStats: not null })
+        if (CommonLib.WorkType != WorkType.Client && owner is { CharacterStats: not null })
         {
-            owner.PlayerStats.RangedAttacks++;
+            owner.CharacterStats.RangedAttacks++;
         }
 
         return projectile;

@@ -9,7 +9,8 @@
         <Using Include="Game.Protocol.Connection"/>
         <Using Include="Game.Protocol.Entities"/>
         <Using Include="Game.Protocol.Mods"/>
-        <Using Include="Game.Protocol.Players"/>
+        <Using Include="Game.Protocol.Characters"/>
+        <Using Include="Game.Protocol.Teams"/>
         <Using Include="Game.Protocol.World"/>
         <Using Include="Game.Protocol.Commands"/>
         <Using Include="Game.Protocol.Localization"/>

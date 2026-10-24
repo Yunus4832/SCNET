@@ -48,7 +48,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
     private SubsystemNetworkInterest _subsystemNetworkInterest = null!;
 
-    private SubsystemPlayers _subsystemPlayers = null!;
+    private SubsystemCharacters _subsystemCharacters = null!;
 
     private SubsystemSky _subsystemSky = null!;
 
@@ -56,7 +56,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
     private SubsystemTime _subsystemTime = null!;
 
-    private readonly List<ComponentPlayer> _tmpPlayers = [];
+    private readonly List<ComponentCharacter> _tmpPlayers = [];
 
     public ReadOnlyList<Pickable> Pickables => new(_pickables);
 
@@ -170,11 +170,11 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         var num = MathUtils.Pow(0.5f, dt);
         var num2 = MathUtils.Pow(0.001f, dt);
         _tmpPlayers.Clear();
-        foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
+        foreach (var componentCharacter in _subsystemCharacters.ComponentCharacters)
         {
-            if (componentPlayer.ComponentHealth.Health > 0f)
+            if (componentCharacter.ComponentHealth.Health > 0f)
             {
-                _tmpPlayers.Add(componentPlayer);
+                _tmpPlayers.Add(componentCharacter);
             }
         }
 
@@ -234,7 +234,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                         }
 
                         //玩家获取到Pickable
-                        pickable.GetPickPlayer = tmpPlayer.PlayerData.ClientId;
+                        pickable.GetPickPlayer = tmpPlayer.CharacterData.ClientId;
                         pickable.PositionFix = v;
                         pickable.Distance = num6;
                         if (CommonLib.WorkType != WorkType.Client)
@@ -624,7 +624,12 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         _availablePickableIds.Enqueue(id);
     }
 
-    private void OnPlayerGetPickable(Pickable pickable, ComponentPlayer tmpPlayer, Vector3 positionFix, float distance)
+    private void OnPlayerGetPickable(
+        Pickable pickable,
+        ComponentCharacter tmpPlayer,
+        Vector3 positionFix,
+        float distance
+    )
     {
         var flag = Terrain.ExtractContents(pickable.Value) == 248;
         var inventory = tmpPlayer.ComponentMiner.Inventory;
@@ -791,7 +796,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
     public override void Load(ValuesDictionary valuesDictionary)
     {
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;
-        _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemCharacters = Project.FindSubsystem<SubsystemCharacters>(true)!;
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;

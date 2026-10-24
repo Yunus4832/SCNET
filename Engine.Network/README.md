@@ -15,7 +15,8 @@
 `NetworkHostOptions.Identity` 可提供调用方管理的 P-256 身份，宿主创建自己的密钥副本，关闭后销毁副本。
 `NetworkIdentity.Create/Import/ExportPrivateKey` 支持生成和受控持久化；导出的 PKCS#8 私钥必须安全保存并及时清除临时副本。
 未提供身份时宿主使用临时密钥，重建宿主后地址可能变化；此默认值不代表游戏账号或存档身份。
-`LocalIdentity` 和请求/连接的 `PeerIdentity` 暴露规范 JWK SHA-256 指纹及公钥；对端在 DTLS 握手中证明持有私钥。
+`LocalIdentity` 和请求/连接的 `PeerIdentity` 暴露公钥及其 RFC 7638 SHA-256 指纹的 Bech32m 地址（`scnet` 前缀、64 字符）；对端在 DTLS 握手中证明持有私钥。
+用户输入可经 `Engine.Core.Security.IdentityAddress.Normalize` 校验并规范化；固定公钥时比较完整地址，不使用界面简写。
 
 **证明持钥与信任目标是不同的。** 默认不限制远端公钥，适用于开放实验或上层尚未选择身份的连接；
 它不提供预期服务器的首次信任，也不能阻止主动中间人替换未知目标。

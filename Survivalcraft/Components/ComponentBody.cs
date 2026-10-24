@@ -79,7 +79,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
     public NetVelocity NetVelocity = null!;
 
-    public ComponentPlayer? Player;
+    public ComponentCharacter? Character;
 
     /// <summary>最近一次应用的状态流轮次序号（客户端联机用，用于丢弃旧包）。</summary>
     public uint LastBodyStateTick;
@@ -276,11 +276,11 @@ public class ComponentBody : ComponentFrame, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
-            if (Player is { PlayerData.IsMainPlayer: false, ComponentBody.ParentBody: null } ||
-                (Player == null && ChildBodies.Count == 0) ||
+            if (Character is { CharacterData.IsLocalCharacter: false, ComponentBody.ParentBody: null } ||
+                (Character == null && ChildBodies.Count == 0) ||
                 (ChildBodies.Count > 0 &&
-                 ChildBodies[0].Player != null &&
-                 !ChildBodies[0].Player!.PlayerData.IsMainPlayer))
+                 ChildBodies[0].Character != null &&
+                 !ChildBodies[0].Character!.CharacterData.IsLocalCharacter))
             {
                 Position = NetPosition.Get(dt);
                 Rotation = NetRotation.Get(dt);
@@ -296,11 +296,11 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
         if (CommonLib.WorkType == WorkType.Server)
         {
-            if (Player is { PlayerData.IsMainPlayer: false, ComponentBody.ParentBody: null } ||
-                (Player == null &&
+            if (Character is { CharacterData.IsLocalCharacter: false, ComponentBody.ParentBody: null } ||
+                (Character == null &&
                  ChildBodies.Count > 0 &&
-                 ChildBodies[0].Player != null &&
-                 !ChildBodies[0].Player!.PlayerData.IsMainPlayer))
+                 ChildBodies[0].Character != null &&
+                 !ChildBodies[0].Character!.CharacterData.IsLocalCharacter))
             {
                 Position = NetPosition.Get(dt);
                 Rotation = NetRotation.Get(dt);
@@ -372,8 +372,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
                     {
                         componentHealth.Injure(0.15f, null, true, "Crushed");
                         //componentHealth.Health -= 0.15f;
-                        var componentPlayer = Entity.FindComponent<ComponentPlayer>();
-                        componentPlayer?.ComponentGui.DisplaySmallMessage("你卡住了", Color.White, true, true);
+                        var componentCharacter = Entity.FindComponent<ComponentCharacter>();
+                        componentCharacter?.ComponentGui.DisplaySmallMessage("你卡住了", Color.White, true, true);
 
                         _crushInjureTime = 0f;
                     }
@@ -617,7 +617,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         _subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true)!;
         _subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true)!;
         _subsystemFluidBlockBehavior = Project.FindSubsystem<SubsystemFluidBlockBehavior>(true)!;
-        CanCrouch = Entity.FindComponent<ComponentPlayer>() != null;
+        CanCrouch = Entity.FindComponent<ComponentCharacter>() != null;
         BoxSize = valuesDictionary.GetValue<Vector3>("BoxSize");
         Mass = valuesDictionary.GetValue<float>("Mass");
         Density = valuesDictionary.GetValue<float>("Density");
@@ -635,7 +635,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         IsGravityEnabled = true;
         IsGroundDragEnabled = true;
         IsWaterDragEnabled = true;
-        Player = Entity.FindComponent<ComponentPlayer>();
+        Character = Entity.FindComponent<ComponentCharacter>();
         Locomotion = Entity.FindComponent<ComponentLocomotion>();
         if (parentReference is EntityReference reference)
         {
@@ -1159,7 +1159,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
                     break;
             }
 
-            if (CommonLib.WorkType == WorkType.Client && Player is { PlayerData.IsMainPlayer: true })
+            if (CommonLib.WorkType == WorkType.Client && Character is { CharacterData.IsLocalCharacter: true })
             {
                 NetworkSender.SendToServer(
                     new SubsystemBodyPackage

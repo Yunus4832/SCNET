@@ -170,14 +170,14 @@ public class ModHostTest
         );
 
         host.LoadAndStart([descriptor]);
-        var context = new BlockEditContext(1, 2, 3, 4, new Game.Components.ComponentPlayer());
+        var context = new BlockEditContext(1, 2, 3, 4, new Game.Components.ComponentCharacter());
 
         host.BlockBehaviors.Invoke(context);
 
         Assert.Equal(["high", "normal"], calls);
         host.StopAll();
         calls.Clear();
-        host.BlockBehaviors.Invoke(new BlockEditContext(1, 2, 3, 4, new Game.Components.ComponentPlayer()));
+        host.BlockBehaviors.Invoke(new BlockEditContext(1, 2, 3, 4, new Game.Components.ComponentCharacter()));
         Assert.Empty(calls);
     }
 
@@ -194,7 +194,7 @@ public class ModHostTest
         host.LoadAndStart([descriptor]);
         var context = new PlayerRespawnRequestedContext(
             null!,
-            new Game.Components.ComponentPlayer(),
+            new Game.Components.ComponentCharacter(),
             PlayerRespawnRequestKind.StandardRespawn
         );
 
@@ -208,7 +208,7 @@ public class ModHostTest
         host.Gameplay.Invoke(
             new PlayerRespawnRequestedContext(
                 null!,
-                new Game.Components.ComponentPlayer(),
+                new Game.Components.ComponentCharacter(),
                 PlayerRespawnRequestKind.StandardRespawn
             )
         );
@@ -228,7 +228,7 @@ public class ModHostTest
         host.LoadAndStart([descriptor]);
         var action = host.ContextActions.Resolve(
             new PlayerContextActionQueryContext(
-                new Game.Components.ComponentPlayer(),
+                new Game.Components.ComponentCharacter(),
                 null!
             )
         );
@@ -237,7 +237,7 @@ public class ModHostTest
         Assert.Equal("救援", action!.Label);
         action.Execute(
             new PlayerContextActionExecutionContext(
-                new Game.Components.ComponentPlayer(),
+                new Game.Components.ComponentCharacter(),
                 null!
             )
         );
@@ -247,7 +247,7 @@ public class ModHostTest
         Assert.Null(
             host.ContextActions.Resolve(
                 new PlayerContextActionQueryContext(
-                    new Game.Components.ComponentPlayer(),
+                    new Game.Components.ComponentCharacter(),
                     null!
                 )
             )

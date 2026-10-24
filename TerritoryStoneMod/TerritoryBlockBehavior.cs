@@ -32,7 +32,7 @@ public sealed class TerritoryBlockBehavior : SubsystemBlockBehavior
         _models = Project.FindSubsystem<SubsystemModelsRenderer>();
     }
 
-    public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer player)
+    public override bool OnEditBlock(int x, int y, int z, int value, ComponentCharacter player)
     {
         if (!TerritoryBlock.IsTerritoryValue(value, CurrentModRuntime.Value!.RequireWorldCatalog()))
         {
@@ -48,7 +48,7 @@ public sealed class TerritoryBlockBehavior : SubsystemBlockBehavior
         var territory = _territories.Store.Territories.FirstOrDefault(item =>
             item.StonePoint == new Point3(x, y, z)
         );
-        if (territory == null || territory.Owner != player.PlayerData.PlayerGUID)
+        if (territory == null || territory.Owner != TerritoryProtection.ActorAddress(player.CharacterData))
         {
             player.ComponentGui.DisplaySmallMessage(
                 LanguageManager.Get("TerritorySettings", "OwnerOnly"),

@@ -27,9 +27,9 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
 
     public override ResourceId[] HandledBlocks => [];
 
-    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
+    public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentCharacter componentCharacter)
     {
-        componentPlayer.ComponentGui.ModalPanelWidget = componentPlayer.ComponentGui.ModalPanelWidget == null
+        componentCharacter.ComponentGui.ModalPanelWidget = componentCharacter.ComponentGui.ModalPanelWidget == null
             ? new CrossbowWidget(inventory, slotIndex)
             : null;
         return true;
@@ -85,7 +85,7 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
                     componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
                 if (componentFirstPersonModel != null)
                 {
-                    componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(
+                    componentMiner.ComponentCharacter?.ComponentAimingSights.ShowAimingSights(
                         aim.Position,
                         aim.Direction
                     );
@@ -108,7 +108,7 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
                 var arrowType = CrossbowBlock.GetArrowType(data);
                 if (draw != 15)
                 {
-                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                    componentMiner.ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                         LanguageManager.Get(_typeName, 0),
                         Color.White,
                         true,
@@ -117,7 +117,7 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
                 }
                 else if (!arrowType.HasValue)
                 {
-                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                    componentMiner.ComponentCharacter?.ComponentGui.DisplaySmallMessage(
                         LanguageManager.Get(_typeName, 1),
                         Color.White,
                         true,

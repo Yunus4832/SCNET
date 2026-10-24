@@ -145,8 +145,8 @@ public sealed class StartupManagerTest : IDisposable
         Assert.Equal(SessionTarget.RemoteServer, startup.Session.Target);
         Assert.Equal("127.0.0.1", Assert.IsType<AddressNetworkTarget>(startup.Session.RemoteTarget).Host);
         Assert.Equal(28987, startup.Session.ServerPort);
-        Assert.Equal("DebugPlayer", startup.Request.AutoJoinPlayerName);
-        Assert.Equal("DebugPlayer", startup.Session.AutoJoinPlayerName);
+        Assert.Equal("DebugPlayer", startup.Request.AutoJoinCharacterName);
+        Assert.Equal("DebugPlayer", startup.Session.AutoJoinCharacterName);
         Assert.Equal(28988, startup.Session.BroadcastPort);
         Assert.False(startup.Request.Save);
         Assert.Null(SessionInfoManager.LoadByName("client-smoke"));
@@ -212,8 +212,8 @@ public sealed class StartupManagerTest : IDisposable
 
         Assert.Equal(RunModeType.Gui, startup.Settings.RunMode);
         Assert.True(startup.Request.ForceWorldRunServer);
-        Assert.Equal("HostPlayer", startup.Request.AutoJoinPlayerName);
-        Assert.Equal("HostPlayer", startup.Session.AutoJoinPlayerName);
+        Assert.Equal("HostPlayer", startup.Request.AutoJoinCharacterName);
+        Assert.Equal("HostPlayer", startup.Session.AutoJoinCharacterName);
         Assert.Equal(SessionTarget.World, startup.Session.Target);
         Assert.Equal("GuiServerWorld", startup.Session.World);
         Assert.Equal(30987, startup.Session.ServerPort);

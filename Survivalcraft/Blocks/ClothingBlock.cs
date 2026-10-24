@@ -89,7 +89,7 @@ public class ClothingBlock : Block
             return;
         }
 
-        var playerModel = CharacterSkinsManager.GetPlayerModel(PlayerClass.Male);
+        var playerModel = CharacterSkinsManager.GetCharacterModel(CharacterSex.Male);
         var array = new Matrix[playerModel.Nodes.Count];
         playerModel.CopyAbsoluteNodeTransformsTo(array);
         var index = playerModel.FindNode("Hand1")!.Index;
@@ -109,7 +109,7 @@ public class ClothingBlock : Block
             }
         }
 
-        var outerClothingModel = CharacterSkinsManager.GetOuterClothingModel(PlayerClass.Male);
+        var outerClothingModel = CharacterSkinsManager.GetOuterClothingModel(CharacterSex.Male);
         var array2 = new Matrix[outerClothingModel.Nodes.Count];
         outerClothingModel.CopyAbsoluteNodeTransformsTo(array2);
         var index3 = outerClothingModel.FindNode("Leg1")!.Index;
@@ -228,7 +228,7 @@ public class ClothingBlock : Block
         SubsystemTerrain terrain,
         string[] ingredients,
         float heatLevel,
-        ComponentPlayer? player
+        ComponentCharacter? player
     )
     {
         if (heatLevel < 1f)

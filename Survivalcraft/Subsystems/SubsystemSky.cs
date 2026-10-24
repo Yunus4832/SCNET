@@ -435,9 +435,9 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
             }
 
             var componentCreature = componentBody.Entity.FindComponent<ComponentCreature>();
-            if (componentCreature is { PlayerStats: not null })
+            if (componentCreature is { CharacterStats: not null })
             {
-                componentCreature.PlayerStats.StruckByLightning++;
+                componentCreature.CharacterStats.StruckByLightning++;
             }
         }
 

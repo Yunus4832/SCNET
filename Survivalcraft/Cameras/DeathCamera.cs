@@ -18,7 +18,7 @@ public class DeathCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
         var vector = GameWidget.Target?.ComponentBody.BoundingBox.Center() ?? _position;
         _bestPosition = FindBestCameraPosition(vector, 6f);
         SetupPerspectiveCamera(_position, vector - _position, Vector3.UnitY);
-        if (GameWidget.Target is not ComponentPlayer { ComponentInput.IsControlledByVr: true } ||
+        if (GameWidget.Target is not ComponentCharacter { ComponentInput.IsControlledByVr: true } ||
             !_bestPosition.HasValue)
         {
             return;

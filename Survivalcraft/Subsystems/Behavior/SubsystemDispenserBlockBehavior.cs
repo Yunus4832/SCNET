@@ -50,7 +50,7 @@ public class SubsystemDispenserBlockBehavior : SubsystemBlockBehavior
 
     public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
     {
-        if (CommonLib.WorkType == WorkType.Client && CommonLib.MainPlayer == componentMiner.ComponentPlayer)
+        if (CommonLib.WorkType == WorkType.Client && CommonLib.LocalCharacter == componentMiner.ComponentCharacter)
         {
             IProtocolMessage package =
                 new BlockEditPackage(
@@ -76,13 +76,13 @@ public class SubsystemDispenserBlockBehavior : SubsystemBlockBehavior
             return false;
         }
 
-        if (componentMiner.ComponentPlayer is { PlayerData.IsMainPlayer: false })
+        if (componentMiner.ComponentCharacter is { CharacterData.IsLocalCharacter: false })
         {
             return true;
         }
 
         var componentDispenser = blockEntity.Entity.FindComponent<ComponentDispenser>(true)!;
-        componentMiner.ComponentPlayer?.ComponentGui.ModalPanelWidget =
+        componentMiner.ComponentCharacter?.ComponentGui.ModalPanelWidget =
             new DispenserWidget(componentMiner.Inventory, componentDispenser);
         AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
 

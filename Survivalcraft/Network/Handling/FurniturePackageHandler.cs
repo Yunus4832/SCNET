@@ -54,14 +54,14 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
         FurnitureSet? furnitureSet;
         FurnitureDesign? furniture;
         ValuesDictionary? valuesDictionary;
-        var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
+        var subsystemCharacters = project.FindSubsystem<SubsystemCharacters>(true)!;
         if (isServer && context.Sender == null)
         {
             return;
         }
 
-        var playerData = subsystemPlayers.PlayersData.Find(x => ReferenceEquals(x.Client, context.Sender));
-        if (isServer && playerData is not { ComponentPlayer: not null })
+        var characterData = subsystemCharacters.Characters.Find(x => ReferenceEquals(x.Client, context.Sender));
+        if (isServer && characterData is not { ComponentCharacter: not null })
         {
             return;
         }
@@ -250,7 +250,7 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
 
                 valuesDictionary = CommonLib.ReadVDict(package.AddXml);
                 furniture = new FurnitureDesign(0, subsystemTerrain, valuesDictionary);
-                subsystemPlayers.FindPlayerByClientId(
+                subsystemCharacters.FindCharacterByClientId(
                     context.Sender!.ID,
                     player =>
                     {

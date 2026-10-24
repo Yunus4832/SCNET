@@ -12,7 +12,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
 
     private float _autoChaseSuppressionTime;
 
-    private float _chaseNonPlayerProbability;
+    private float _chaseNonCharacterProbability;
 
     private float _chaseOnTouchProbability;
 
@@ -60,7 +60,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
 
     private SubsystemNoise _subsystemNoise = null!;
 
-    private SubsystemPlayers _subsystemPlayers = null!;
+    private SubsystemCharacters _subsystemCharacters = null!;
 
     private SubsystemSky _subsystemSky = null!;
 
@@ -171,7 +171,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
-        _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemCharacters = Project.FindSubsystem<SubsystemCharacters>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true)!;
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
@@ -186,7 +186,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
         _dayChaseTime = valuesDictionary.GetValue<float>("DayChaseTime");
         _nightChaseTime = valuesDictionary.GetValue<float>("NightChaseTime");
         _autoChaseMask = valuesDictionary.GetValue<CreatureCategory>("AutoChaseMask");
-        _chaseNonPlayerProbability = valuesDictionary.GetValue<float>("ChaseNonPlayerProbability");
+        _chaseNonCharacterProbability = valuesDictionary.GetValue<float>("ChaseNonCharacterProbability");
         _chaseWhenAttackedProbability = valuesDictionary.GetValue<float>("ChaseWhenAttackedProbability");
         _chaseOnTouchProbability = valuesDictionary.GetValue<float>("ChaseOnTouchProbability");
         _componentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
@@ -214,7 +214,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                 var componentCreature2 = body.Entity.FindComponent<ComponentCreature>();
                 if (componentCreature2 != null)
                 {
-                    var flag2 = _subsystemPlayers.IsPlayer(body.Entity);
+                    var flag2 = _subsystemCharacters.IsCharacter(body.Entity);
                     var flag3 = (componentCreature2.Category & _autoChaseMask) != 0;
                     if ((flag2 && _subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless) || (!flag2 && flag3))
                     {
@@ -437,7 +437,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
 
     public float ScoreTarget(ComponentCreature componentCreature)
     {
-        var flag = componentCreature.Entity.FindComponent<ComponentPlayer>() != null;
+        var flag = componentCreature.Entity.FindComponent<ComponentCharacter>() != null;
         var flag2 = _componentCreature.Category != CreatureCategory.WaterPredator &&
                     _componentCreature.Category != CreatureCategory.WaterOther;
         var flag3 = componentCreature == Target || _subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
@@ -450,7 +450,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                          componentCreature.GetHashCode() % 1000 / 1000f,
                          1.0
                      ) <
-                     _chaseNonPlayerProbability);
+                     _chaseNonCharacterProbability);
         if (componentCreature != _componentCreature &&
             ((!flag && flag5) || (flag && flag3)) &&
             componentCreature.Entity.IsAddedToProject &&

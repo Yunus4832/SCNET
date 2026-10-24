@@ -7,12 +7,13 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
     internal static Client ResolveServerClient(Client? current, Client incoming, Client? sender)
     {
         if (current is not null &&
-            current.GUID == incoming.GUID &&
+            current.PlayerAddress == incoming.PlayerAddress &&
             ReferenceEquals(current.Peer, sender?.Peer))
         {
             current.ID = incoming.ID;
             current.TokenId = incoming.TokenId;
             current.State = incoming.State;
+            current.CharacterId = incoming.CharacterId;
             return current;
         }
 
@@ -26,6 +27,15 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(ClientPackage)}");
+            return;
+        }
+
+        if (context.IsServer &&
+            (package.PackageEventType != ClientPackage.EventType.StateChange ||
+             package.Client is null ||
+             !netNode.Clients.TryGetValue(package.Client.ID, out var target) ||
+             !ReferenceEquals(context.Sender, target)))
+        {
             return;
         }
 
@@ -43,9 +53,9 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
                         context.Sender?.Peer,
                         package.Client!.ID,
                         package.Client.TokenId,
-                        package.Client.GUID,
+                        package.Client.CharacterId,
                         project
-                    )
+                    ) { PlayerAddress = package.Client.PlayerAddress }
                 );
                 break;
             case ClientPackage.EventType.Remove:

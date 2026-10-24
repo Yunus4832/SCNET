@@ -22,7 +22,7 @@ internal static class PlayerAndMessageCommandHandlers
             players,
             command.Name,
             command.SkinName,
-            command.PlayerClass
+            command.CharacterSex
         );
     }
 
@@ -40,8 +40,8 @@ internal static class PlayerAndMessageCommandHandlers
             );
         }
 
-        var players = context.Project.FindSubsystem<SubsystemPlayers>(true)!;
-        var player = players.FindPlayerData(item => item.PlayerGUID == command.PlayerId);
+        var players = context.Project.FindSubsystem<SubsystemCharacters>(true)!;
+        var player = players.FindCharacterData(item => item.CharacterId == command.PlayerId);
         if (player is null)
         {
             return CommandResult.LocalizedFail(
@@ -56,83 +56,81 @@ internal static class PlayerAndMessageCommandHandlers
             players,
             command.Name,
             command.SkinName,
-            command.PlayerClass
+            command.CharacterSex
         );
     }
 
     private static CommandResult ApplyProfile(
-        PlayerData actor,
-        SubsystemPlayers players,
+        CharacterData actor,
+        SubsystemCharacters players,
         string requestedName,
         string skinName,
-        PlayerClass playerClass
+        CharacterSex characterSex
     )
     {
         string name;
         try
         {
-            name = PlayerData.SanitizeName(requestedName.Trim());
+            name = CharacterData.SanitizeName(requestedName.Trim());
         }
         catch (InvalidOperationException)
         {
             return RejectProfile(
                 actor,
                 "player.profile.invalid_name",
-                "PlayerNameInvalid_Message",
-                "玩家名称不包含有效字符。"
+                "CharacterNameInvalid_Message",
+                "角色名称不包含有效字符。"
             );
         }
 
-        if (!PlayerData.VerifyName(name))
+        if (!CharacterData.VerifyName(name))
         {
             return RejectProfile(
                 actor,
                 "player.profile.invalid_name",
-                "PlayerNameEmpty_Message",
-                "玩家名称不能为空。"
+                "CharacterNameEmpty_Message",
+                "角色名称不能为空。"
             );
         }
 
-        if (players.PlayersData.Any(player => player != actor &&
-                                              string.Equals(player.Name, name, StringComparison.Ordinal)
-            ))
+        if (!players.IsCharacterNameAvailable(name, actor.CharacterId))
         {
             return RejectProfile(
                 actor,
                 "player.profile.duplicate_name",
-                "PlayerNameUsed_Message",
-                "该玩家名称已被使用。"
+                "CharacterNameUsed_Message",
+                "该角色名称已被使用。"
             );
         }
 
-        if (!Enum.IsDefined(playerClass) ||
+        if (!Enum.IsDefined(characterSex) ||
             string.IsNullOrWhiteSpace(skinName))
         {
             return RejectProfile(
                 actor,
                 "player.profile.invalid_appearance",
                 "PlayerSkinInvalid_Message",
-                "玩家外观数据无效。"
+                "角色外观数据无效。"
             );
         }
 
         actor.Name = name;
         actor.CharacterSkinName = skinName;
-        actor.PlayerClass = playerClass;
+        actor.CharacterSex = characterSex;
         CommonLib.Net.QueuePackage(
-            PlayerPackageBuilder.Capture(actor, PlayerDataPackage.DataType.Modify),
+            CharacterPackageBuilder.Capture(actor, CharacterDataPackage.DataType.Modify),
             PackageAudience.Global
         );
-        CommonLib.Net.QueuePackage(PlayerPackageBuilder.Capture(players), PackageAudience.Global);
+        CommonLib.Net.QueuePackage(CharacterPackageBuilder.Capture(players), PackageAudience.Global);
         return CommandResult.LocalizedOk(
             "player.profile.updated",
             "PlayerProfileUpdated_Message",
-            "玩家资料已更新。"
+            "角色资料已更新。"
         );
     }
 
     private static CommandResult RejectProfile(
-        PlayerData player,
+        CharacterData player,
         string code,
         string messageKey,
         string message
@@ -140,9 +138,9 @@ internal static class PlayerAndMessageCommandHandlers
     {
         if (player.Client is not null)
         {
-            var snapshot = PlayerPackageBuilder.Capture(
+            var snapshot = CharacterPackageBuilder.Capture(
                 player,
-                PlayerDataPackage.DataType.Modify
+                CharacterDataPackage.DataType.Modify
             );
             CommonLib.Net.QueuePackage(snapshot, PackageAudience.To(player.Client));
         }
@@ -155,10 +153,29 @@ internal static class PlayerAndMessageCommandHandlers
         SendChatMessageCommand command
     )
     {
-        if (!TryGetActor(context, out var actor, out var players, out var failure))
+        if (context.Project is null || context.Principal.Subject is not { } subject)
         {
-            return failure;
+            return CommandResult.LocalizedFail("chat.subject_required", "ChatSubjectRequired_Message", "聊天需要已进入存档的主体。");
         }
+
+        var session = PlayerSessionQuery.Find(subject.Address);
+        if (!ReferenceEquals(
+                context.Project.FindSubsystem<SubsystemPlayers>(true)!.Store.Find(subject.Address),
+                subject
+            ) ||
+            session is null ||
+            !ReferenceEquals(session.Subject, subject) ||
+            subject.Ban is not null)
+        {
+            return CommandResult.LocalizedFail("chat.subject_required", "ChatSubjectRequired_Message", "聊天需要已进入存档的主体。");
+        }
+
+        if (subject.IsMuted)
+        {
+            return CommandResult.LocalizedFail("chat.muted", "ChatMuted_Message", "当前主体已被禁言。");
+        }
+
+        var actor = session.CharacterData;
 
         if (!Enum.IsDefined(command.Channel))
         {
@@ -191,8 +208,8 @@ internal static class PlayerAndMessageCommandHandlers
         IReadOnlyCollection<byte>? recipients = null;
         if (command.Channel is GameMessageChannel.Team)
         {
-            if (actor.GroupKey.Length == 0 ||
-                !players.ServerGroups.TryGetValue(actor.GroupKey, out var group))
+            if (context.Project!.FindSubsystem<SubsystemTeams>(true)!.Store.FindForPlayer(subject.Address) is not
+                { } group)
             {
                 return CommandResult.LocalizedFail(
                     "chat.team_required",
@@ -201,18 +218,26 @@ internal static class PlayerAndMessageCommandHandlers
                 );
             }
 
-            recipients = group.Members
-                .Select(member => players.FindPlayerData(item => item.PlayerGUID == member))
-                .Where(item => item?.Client is not null || item?.IsMainPlayer == true)
-                .Select(item => item!.ClientId)
-                .Distinct()
-                .ToArray();
+            recipients = CommonLib.Net.Clients.Values
+                .Where(session => session.PlayerAddress is { } address && group.Members.Contains(address))
+                .Select(session => session.ID).Distinct().ToArray();
         }
 
         var messages = context.Project!
             .FindSubsystem<SubsystemGameWidgets>(true)!
             .Messages;
-        var message = messages.Normalize(GameMessage.Chat(command.Channel, actor.Name, text));
+        var message = messages.Normalize(
+            GameMessage.Chat(
+                command.Channel,
+                new MessageSender(
+                    subject.Address,
+                    subject.DisplayName,
+                    actor?.CharacterId,
+                    actor?.Name ?? string.Empty
+                ),
+                text
+            )
+        );
         var shouldDisplayOnServer =
             RunMode.Value is RunModeType.HeadlessServer ||
             recipients is null ||
@@ -228,13 +253,13 @@ internal static class PlayerAndMessageCommandHandlers
 
     private static bool TryGetActor(
         CommandContext context,
-        out PlayerData actor,
-        out SubsystemPlayers players,
+        out CharacterData actor,
+        out SubsystemCharacters players,
         out CommandResult failure
     )
     {
         if (context.Project is null ||
-            context.Principal.Player is not { } player)
+            context.Principal.Character is not { } player)
         {
             actor = null!;
             players = null!;
@@ -247,8 +272,8 @@ internal static class PlayerAndMessageCommandHandlers
         }
 
         actor = player;
-        players = context.Project.FindSubsystem<SubsystemPlayers>(true)!;
-        if (!players.PlayersData.Contains(actor))
+        players = context.Project.FindSubsystem<SubsystemCharacters>(true)!;
+        if (!players.Characters.Contains(actor))
         {
             failure = CommandResult.LocalizedFail(
                 "player.not_loaded",

@@ -43,10 +43,10 @@ public static class PackageTransportPolicy
     {
         return package switch
         {
-            PlayerStatePackage => Snapshot,
+            CharacterStatePackage => Snapshot,
             SubsystemBodyPackage { PackageEventType: SubsystemBodyPackage.EventType.BodyUpdate } => StateStream,
             PickablePackage { Type: PickablePackage.PickType.Update } => StateStream,
-            OnlinePlayerStatePackage => PlayerListState,
+            OnlineCharacterStatePackage => PlayerListState,
             ComponentBehaviorPackage { PackageEventType: ComponentBehaviorPackage.EventType.CreatureSound } => Effect,
             ComponentHealthPackage { Type: ComponentHealthPackage.EventType.HitResult } => Effect,
             ExplosionsPackage { Type: ExplosionsPackage.EventType.Sound } => Effect,
@@ -56,7 +56,7 @@ public static class PackageTransportPolicy
             MovingBlockPackage { Type: MovingBlockPackage.EventType.Update } => StateStream,
             MovingBlockPackage { Type: MovingBlockPackage.EventType.PistonSound } => Effect,
             MovingBlockPackage => ReliableEvent,
-            ComponentPlayerPackage => ReliableEvent,
+            ComponentCharacterPackage => ReliableEvent,
             ComponentHealthPackage => ReliableEvent,
             ComponentMountPackage
             {

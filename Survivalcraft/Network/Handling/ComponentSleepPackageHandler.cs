@@ -28,9 +28,9 @@ public sealed class ComponentSleepPackageHandler : PackageHandlerBase<ComponentS
         var project = GameManager.Project;
         if (context.IsServer &&
             (context.Sender is null ||
-             !project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData.Any(player =>
+             !project.FindSubsystem<SubsystemCharacters>(true)!.Characters.Any(player =>
                  ReferenceEquals(player.Client, context.Sender) &&
-                 player.ComponentPlayer?.Entity.EntityId == package.EntityId
+                 player.ComponentCharacter?.Entity.EntityId == package.EntityId
              )))
         {
             return;
@@ -76,7 +76,7 @@ public sealed class ComponentSleepPackageHandler : PackageHandlerBase<ComponentS
                         }
                         else
                         {
-                            var player = sleep.Entity.FindComponent<ComponentPlayer>();
+                            var player = sleep.Entity.FindComponent<ComponentCharacter>();
                             player?.ComponentGui.DisplaySmallMessage(package.Reason, Color.White, false, true);
                         }
 

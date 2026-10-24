@@ -60,6 +60,8 @@ public class TextBoxWidget : Widget
         }
     } = 512;
 
+    public bool IsPassword { get; set; }
+
     public bool OverwriteMode { get; set; }
 
     public bool HasFocus
@@ -231,11 +233,11 @@ public class TextBoxWidget : Widget
             {
                 EnterText(ClipboardManager.ClipboardString);
             }
-            else if (Input.IsKeyDownOnce(Key.C))
+            else if (!IsPassword && Input.IsKeyDownOnce(Key.C))
             {
                 ClipboardManager.ClipboardString = Text;
             }
-            else if (Input.IsKeyDownOnce(Key.X))
+            else if (!IsPassword && Input.IsKeyDownOnce(Key.X))
             {
                 ClipboardManager.ClipboardString = Text;
                 Text = string.Empty;
@@ -515,9 +517,8 @@ public class TextBoxWidget : Widget
 
     private string GetDisplayText()
     {
-        return string.IsNullOrEmpty(_compositionText)
-            ? Text
-            : Text.Insert(CaretPosition, _compositionText);
+        var display = string.IsNullOrEmpty(_compositionText) ? Text : Text.Insert(CaretPosition, _compositionText);
+        return IsPassword ? new string('*', display.Length) : display;
     }
 
     private void ClearComposition()

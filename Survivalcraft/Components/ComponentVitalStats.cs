@@ -14,7 +14,7 @@ public class ComponentVitalStats : Component, IUpdateable
 {
     private const string _typeName = nameof(ComponentVitalStats);
 
-    private ComponentPlayer _componentPlayer = null!;
+    private ComponentCharacter _componentCharacter = null!;
 
     private float _densityModifierApplied;
 
@@ -74,7 +74,7 @@ public class ComponentVitalStats : Component, IUpdateable
 
     public void Update(float dt)
     {
-        if (_componentPlayer.ComponentHealth.Health > 0f)
+        if (_componentCharacter.ComponentHealth.Health > 0f)
         {
             var runGui = RunMode.Value is RunModeType.Gui;
             UpdateFood(runGui);
@@ -86,10 +86,10 @@ public class ComponentVitalStats : Component, IUpdateable
             UpdateSleep(runGui);
             UpdateTemperature(runGui);
             UpdateWetness(runGui);
-            if (_componentPlayer.ComponentSleep.SubsystemUpdate.IsLastUpdateInFrame &&
+            if (_componentCharacter.ComponentSleep.SubsystemUpdate.IsLastUpdateInFrame &&
                 Time.PeriodicEvent(1.0, 0.5))
             {
-                if (CommonLib.WorkType == WorkType.Server && _componentPlayer.PlayerData.Client is { } owner)
+                if (CommonLib.WorkType == WorkType.Server && _componentCharacter.CharacterData.Client is { } owner)
                 {
                     NetworkSender.SendTo(owner, EntityStatePackageBuilder.Capture(this));
                 }
@@ -121,9 +121,9 @@ public class ComponentVitalStats : Component, IUpdateable
             return false;
         }
 
-        if (_componentPlayer.ComponentSickness.IsSick && sicknessProbability > 0f)
+        if (_componentCharacter.ComponentSickness.IsSick && sicknessProbability > 0f)
         {
-            _componentPlayer.ComponentGui.DisplaySmallMessage(
+            _componentCharacter.ComponentGui.DisplaySmallMessage(
                 LanguageManager.Get(_typeName, 1),
                 Color.White,
                 true,
@@ -134,7 +134,7 @@ public class ComponentVitalStats : Component, IUpdateable
 
         if (Food >= 0.98f)
         {
-            _componentPlayer.ComponentGui.DisplaySmallMessage(
+            _componentCharacter.ComponentGui.DisplaySmallMessage(
                 LanguageManager.Get(_typeName, 2),
                 Color.White,
                 true,
@@ -147,11 +147,11 @@ public class ComponentVitalStats : Component, IUpdateable
             "Audio/Creatures/HumanEat",
             1f,
             _random.Float(-0.2f, 0.2f),
-            _componentPlayer.ComponentBody.Position,
+            _componentCharacter.ComponentBody.Position,
             2f,
             0f
         );
-        if (_componentPlayer.ComponentSickness.IsSick)
+        if (_componentCharacter.ComponentSickness.IsSick)
         {
             num2 *= 0.75f;
         }
@@ -160,16 +160,16 @@ public class ComponentVitalStats : Component, IUpdateable
         _satiation.TryGetValue(num, out var value2);
         value2 += MathUtils.Max(num2, 0.5f);
         _satiation[num] = value2;
-        if (_componentPlayer.ComponentSickness.IsSick)
+        if (_componentCharacter.ComponentSickness.IsSick)
         {
-            _componentPlayer.ComponentSickness.NauseaEffect();
+            _componentCharacter.ComponentSickness.NauseaEffect();
         }
         else
         {
             switch (sicknessProbability)
             {
                 case >= 0.5f:
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(
+                    _componentCharacter.ComponentGui.DisplaySmallMessage(
                         LanguageManager.Get(_typeName, 3),
                         Color.White,
                         true,
@@ -177,7 +177,7 @@ public class ComponentVitalStats : Component, IUpdateable
                     );
                     break;
                 case > 0f:
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(
+                    _componentCharacter.ComponentGui.DisplaySmallMessage(
                         LanguageManager.Get(_typeName, 4),
                         Color.White,
                         true,
@@ -189,7 +189,7 @@ public class ComponentVitalStats : Component, IUpdateable
                     switch (value2)
                     {
                         case > 2.5f:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            _componentCharacter.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 5),
                                 Color.White,
                                 true,
@@ -197,7 +197,7 @@ public class ComponentVitalStats : Component, IUpdateable
                             );
                             break;
                         case > 2f:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            _componentCharacter.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 6),
                                 Color.White,
                                 true,
@@ -208,7 +208,7 @@ public class ComponentVitalStats : Component, IUpdateable
                         {
                             if (Food > 0.85f)
                             {
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                _componentCharacter.ComponentGui.DisplaySmallMessage(
                                     LanguageManager.Get(_typeName, 7),
                                     Color.White,
                                     true,
@@ -217,7 +217,7 @@ public class ComponentVitalStats : Component, IUpdateable
                             }
                             else
                             {
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                _componentCharacter.ComponentGui.DisplaySmallMessage(
                                     LanguageManager.Get(_typeName, 8),
                                     Color.White,
                                     true,
@@ -236,10 +236,10 @@ public class ComponentVitalStats : Component, IUpdateable
 
         if (_random.Bool(sicknessProbability) || value2 > 3.5f)
         {
-            _componentPlayer.ComponentSickness.StartSickness();
+            _componentCharacter.ComponentSickness.StartSickness();
         }
 
-        _componentPlayer.PlayerStats.FoodItemsEaten++;
+        _componentCharacter.CharacterStats.FoodItemsEaten++;
         return true;
     }
 
@@ -267,7 +267,7 @@ public class ComponentVitalStats : Component, IUpdateable
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;
         _subsystemMetersBlockBehavior = Project.FindSubsystem<SubsystemMetersBlockBehavior>(true)!;
         _subsystemWeather = Project.FindSubsystem<SubsystemWeather>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         Food = valuesDictionary.GetValue<float>("Food");
         Stamina = valuesDictionary.GetValue<float>("Stamina");
         Sleep = valuesDictionary.GetValue<float>("Sleep");
@@ -290,7 +290,7 @@ public class ComponentVitalStats : Component, IUpdateable
             _satiation[int.Parse(item.Key, CultureInfo.InvariantCulture)] = (float)item.Value;
         }
 
-        _componentPlayer.ComponentHealth.Attacked += delegate { _lastAttackedTime = _subsystemTime.GameTime; };
+        _componentCharacter.ComponentHealth.Attacked += delegate { _lastAttackedTime = _subsystemTime.GameTime; };
     }
 
     public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)
@@ -322,20 +322,21 @@ public class ComponentVitalStats : Component, IUpdateable
     public void UpdateFood(bool runGui = true)
     {
         var gameTimeDelta = _subsystemTime.GameTimeDelta;
-        var num = _componentPlayer.ComponentLocomotion.LastWalkOrder?.Length() ?? 0f;
-        var lastJumpOrder = _componentPlayer.ComponentLocomotion.LastJumpOrder;
-        var num2 = _componentPlayer.ComponentCreatureModel.EyePosition.Y - _componentPlayer.ComponentBody.Position.Y;
-        var flag = _componentPlayer.ComponentBody.ImmersionDepth > num2;
-        var flag2 = _componentPlayer.ComponentBody is { ImmersionFactor: > 0.33f, StandingOnValue: null };
-        var flag3 = _subsystemTime.PeriodicGameTimeEvent(240.0, 13.0) && !_componentPlayer.ComponentSickness.IsSick;
+        var num = _componentCharacter.ComponentLocomotion.LastWalkOrder?.Length() ?? 0f;
+        var lastJumpOrder = _componentCharacter.ComponentLocomotion.LastJumpOrder;
+        var num2 = _componentCharacter.ComponentCreatureModel.EyePosition.Y -
+                   _componentCharacter.ComponentBody.Position.Y;
+        var flag = _componentCharacter.ComponentBody.ImmersionDepth > num2;
+        var flag2 = _componentCharacter.ComponentBody is { ImmersionFactor: > 0.33f, StandingOnValue: null };
+        var flag3 = _subsystemTime.PeriodicGameTimeEvent(240.0, 13.0) && !_componentCharacter.ComponentSickness.IsSick;
         if (_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative &&
             _subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled)
         {
-            var hungerFactor = _componentPlayer.ComponentLevel.HungerFactor;
+            var hungerFactor = _componentCharacter.ComponentLevel.HungerFactor;
             //开服后，睡觉饥饿速度加快5倍
             if (CommonLib.WorkType == WorkType.Server &&
-                _componentPlayer.ComponentSleep.SubsystemUpdate.UpdatesPerFrame == 1 &&
-                _componentPlayer.ComponentSleep.IsSleeping)
+                _componentCharacter.ComponentSleep.SubsystemUpdate.UpdatesPerFrame == 1 &&
+                _componentCharacter.ComponentSleep.IsSleeping)
             {
                 hungerFactor *= _subsystemGameInfo.WorldSettings.RecoverFactor;
             }
@@ -351,27 +352,32 @@ public class ComponentVitalStats : Component, IUpdateable
             }
 
             Food -= hungerFactor * lastJumpOrder / 1200f;
-            if (_componentPlayer.ComponentMiner.DigCellFace.HasValue)
+            if (_componentCharacter.ComponentMiner.DigCellFace.HasValue)
             {
                 Food -= hungerFactor * gameTimeDelta / 2880f;
             }
 
-            if (!_componentPlayer.ComponentSleep.IsSleeping)
+            if (!_componentCharacter.ComponentSleep.IsSleeping)
             {
                 if (Food <= 0f)
                 {
                     if (_subsystemTime.PeriodicGameTimeEvent(50.0, 0.0))
                     {
-                        _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 9));
+                        _componentCharacter.ComponentHealth.Injure(
+                            0.05f,
+                            null,
+                            false,
+                            LanguageManager.Get(_typeName, 9)
+                        );
                         if (runGui)
                         {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            _componentCharacter.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 10),
                                 Color.White,
                                 true,
                                 false
                             );
-                            _componentPlayer.ComponentGui.FoodBarWidget.Flash(10);
+                            _componentCharacter.ComponentGui.FoodBarWidget.Flash(10);
                         }
                     }
                 }
@@ -380,7 +386,7 @@ public class ComponentVitalStats : Component, IUpdateable
                     switch (runGui)
                     {
                         case true when Food < 0.1f && (_lastFood >= 0.1f) | flag3:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            _componentCharacter.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 11),
                                 Color.White,
                                 true,
@@ -388,7 +394,7 @@ public class ComponentVitalStats : Component, IUpdateable
                             );
                             break;
                         case true when Food < 0.25f && (_lastFood >= 0.25f) | flag3:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            _componentCharacter.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 12),
                                 Color.White,
                                 true,
@@ -396,7 +402,7 @@ public class ComponentVitalStats : Component, IUpdateable
                             );
                             break;
                         case true when Food < 0.5f && (_lastFood >= 0.5f) | flag3:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            _componentCharacter.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 13),
                                 Color.White,
                                 true,
@@ -430,26 +436,27 @@ public class ComponentVitalStats : Component, IUpdateable
         _lastFood = Food;
         if (runGui)
         {
-            _componentPlayer.ComponentGui.FoodBarWidget.Value = Food;
+            _componentCharacter.ComponentGui.FoodBarWidget.Value = Food;
         }
     }
 
     public void UpdateStamina()
     {
         var gameTimeDelta = _subsystemTime.GameTimeDelta;
-        var num = _componentPlayer.ComponentLocomotion.LastWalkOrder?.Length() ?? 0f;
-        var lastJumpOrder = _componentPlayer.ComponentLocomotion.LastJumpOrder;
-        var num2 = _componentPlayer.ComponentCreatureModel.EyePosition.Y - _componentPlayer.ComponentBody.Position.Y;
-        var flag = _componentPlayer.ComponentBody.ImmersionDepth > num2;
-        var flag2 = _componentPlayer.ComponentBody is { ImmersionFactor: > 0.33f, StandingOnValue: null };
+        var num = _componentCharacter.ComponentLocomotion.LastWalkOrder?.Length() ?? 0f;
+        var lastJumpOrder = _componentCharacter.ComponentLocomotion.LastJumpOrder;
+        var num2 = _componentCharacter.ComponentCreatureModel.EyePosition.Y -
+                   _componentCharacter.ComponentBody.Position.Y;
+        var flag = _componentCharacter.ComponentBody.ImmersionDepth > num2;
+        var flag2 = _componentCharacter.ComponentBody is { ImmersionFactor: > 0.33f, StandingOnValue: null };
         if (_subsystemGameInfo.WorldSettings is
             {
                 GameMode: >= GameMode.Survival,
                 AreAdventureSurvivalMechanicsEnabled: true
             })
         {
-            var num3 = 1f / MathUtils.Max(_componentPlayer.ComponentLevel.SpeedFactor, 0.75f);
-            if (_componentPlayer.ComponentSickness.IsSick || _componentPlayer.ComponentFlu.HasFlu)
+            var num3 = 1f / MathUtils.Max(_componentCharacter.ComponentLevel.SpeedFactor, 0.75f);
+            if (_componentCharacter.ComponentSickness.IsSick || _componentCharacter.ComponentFlu.HasFlu)
             {
                 num3 *= 5f;
             }
@@ -467,7 +474,7 @@ public class ComponentVitalStats : Component, IUpdateable
 
             if (!flag2 && !flag && Stamina < 0.33f && _lastStamina >= 0.33f)
             {
-                _componentPlayer.ComponentGui.DisplaySmallMessage(
+                _componentCharacter.ComponentGui.DisplaySmallMessage(
                     LanguageManager.Get(_typeName, 14),
                     Color.White,
                     true,
@@ -477,7 +484,7 @@ public class ComponentVitalStats : Component, IUpdateable
 
             if (flag2 | flag && Stamina < 0.4f && _lastStamina >= 0.4f)
             {
-                _componentPlayer.ComponentGui.DisplaySmallMessage(
+                _componentCharacter.ComponentGui.DisplaySmallMessage(
                     LanguageManager.Get(_typeName, 15),
                     Color.White,
                     true,
@@ -491,8 +498,13 @@ public class ComponentVitalStats : Component, IUpdateable
                 {
                     if (_subsystemTime.PeriodicGameTimeEvent(5.0, 0.0))
                     {
-                        _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 16));
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentCharacter.ComponentHealth.Injure(
+                            0.05f,
+                            null,
+                            false,
+                            LanguageManager.Get(_typeName, 16)
+                        );
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(
                             LanguageManager.Get(_typeName, 17),
                             Color.White,
                             true,
@@ -502,12 +514,12 @@ public class ComponentVitalStats : Component, IUpdateable
 
                     if (_random.Float(0f, 1f) < 1f * gameTimeDelta)
                     {
-                        _componentPlayer.ComponentLocomotion.JumpOrder = 1f;
+                        _componentCharacter.ComponentLocomotion.JumpOrder = 1f;
                     }
                 }
                 else if (_subsystemTime.PeriodicGameTimeEvent(5.0, 0.0))
                 {
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(
+                    _componentCharacter.ComponentGui.DisplaySmallMessage(
                         LanguageManager.Get(_typeName, 18),
                         Color.White,
                         true,
@@ -526,11 +538,11 @@ public class ComponentVitalStats : Component, IUpdateable
                     _pantingSound.IsLooped = true;
                 }
 
-                var num5 = _componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 0.2f : 0f;
-                var distanceVolume = _componentPlayer.PlayerData.IsMainPlayer
+                var num5 = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 0.2f : 0f;
+                var distanceVolume = _componentCharacter.CharacterData.IsLocalCharacter
                     ? 1f
                     : _subsystemAudio.CalculateVolume(
-                        _subsystemAudio.CalculateListenerDistance(_componentPlayer.ComponentBody.Position),
+                        _subsystemAudio.CalculateListenerDistance(_componentCharacter.ComponentBody.Position),
                         2f
                     );
                 _pantingSound.Volume = SettingsManager.Current.SoundsVolume *
@@ -583,12 +595,12 @@ public class ComponentVitalStats : Component, IUpdateable
     public void UpdateSleep(bool runGui = true)
     {
         var gameTimeDelta = _subsystemTime.GameTimeDelta;
-        var flag = _componentPlayer.ComponentBody.ImmersionFactor > 0.05f;
+        var flag = _componentCharacter.ComponentBody.ImmersionFactor > 0.05f;
         var flag2 = _subsystemTime.PeriodicGameTimeEvent(240.0, 9.0);
         if (_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative &&
             _subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled)
         {
-            if (_componentPlayer.ComponentSleep.SleepFactor.CloseTo(1f))
+            if (_componentCharacter.ComponentSleep.SleepFactor.CloseTo(1f))
             {
                 Sleep += 0.05f * gameTimeDelta;
             }
@@ -599,25 +611,25 @@ public class ComponentVitalStats : Component, IUpdateable
                 switch (runGui)
                 {
                     case true when Sleep < 0.075f && (_lastSleep >= 0.075f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(
                             LanguageManager.Get(_typeName, 19),
                             Color.White,
                             true,
                             true
                         );
-                        _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
+                        _componentCharacter.ComponentCreatureSounds.PlayMoanSound();
                         break;
                     case true when Sleep < 0.2f && (_lastSleep >= 0.2f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(
                             LanguageManager.Get(_typeName, 20),
                             Color.White,
                             true,
                             true
                         );
-                        _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
+                        _componentCharacter.ComponentCreatureSounds.PlayMoanSound();
                         break;
                     case true when Sleep < 0.33f && (_lastSleep >= 0.33f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(
                             LanguageManager.Get(_typeName, 21),
                             Color.White,
                             true,
@@ -625,7 +637,7 @@ public class ComponentVitalStats : Component, IUpdateable
                         );
                         break;
                     case true when Sleep < 0.5f && (_lastSleep >= 0.5f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(
                             LanguageManager.Get(_typeName, 22),
                             Color.White,
                             true,
@@ -641,22 +653,22 @@ public class ComponentVitalStats : Component, IUpdateable
                     if (_random.Float(0f, 1f) < num * gameTimeDelta)
                     {
                         _sleepBlackoutDuration = MathUtils.Max(_sleepBlackoutDuration, x);
-                        _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
+                        _componentCharacter.ComponentCreatureSounds.PlayMoanSound();
                     }
                 }
 
-                if (Sleep <= 0f && !_componentPlayer.ComponentSleep.IsSleeping)
+                if (Sleep <= 0f && !_componentCharacter.ComponentSleep.IsSleeping)
                 {
-                    _componentPlayer.ComponentSleep.Sleep(false);
+                    _componentCharacter.ComponentSleep.Sleep(false);
                     if (runGui)
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(
                             LanguageManager.Get(_typeName, 23),
                             Color.White,
                             true,
                             true
                         );
-                        _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
+                        _componentCharacter.ComponentCreatureSounds.PlayMoanSound();
                     }
                 }
             }
@@ -676,22 +688,22 @@ public class ComponentVitalStats : Component, IUpdateable
         var num2 = MathUtils.Saturate(0.5f * _sleepBlackoutDuration);
         _sleepBlackoutFactor =
             MathUtils.Saturate(_sleepBlackoutFactor + 2f * gameTimeDelta * (num2 - _sleepBlackoutFactor));
-        if (_componentPlayer.ComponentSleep.IsSleeping)
+        if (_componentCharacter.ComponentSleep.IsSleeping)
         {
             return;
         }
 
-        _componentPlayer.ComponentScreenOverlays.BlackoutFactor = MathUtils.Max(
+        _componentCharacter.ComponentScreenOverlays.BlackoutFactor = MathUtils.Max(
             _sleepBlackoutFactor,
-            _componentPlayer.ComponentScreenOverlays.BlackoutFactor
+            _componentCharacter.ComponentScreenOverlays.BlackoutFactor
         );
         if (!(_sleepBlackoutFactor > 0.01))
         {
             return;
         }
 
-        _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageManager.Get(_typeName, 24);
-        _componentPlayer.ComponentScreenOverlays.FloatingMessageFactor =
+        _componentCharacter.ComponentScreenOverlays.FloatingMessage = LanguageManager.Get(_typeName, 24);
+        _componentCharacter.ComponentScreenOverlays.FloatingMessageFactor =
             MathUtils.Saturate(10f * (_sleepBlackoutFactor - 0.9f));
     }
 
@@ -699,14 +711,14 @@ public class ComponentVitalStats : Component, IUpdateable
     {
         var gameTimeDelta = _subsystemTime.GameTimeDelta;
         var flag = _subsystemTime.PeriodicGameTimeEvent(300.0, 17.0);
-        var num = _componentPlayer.ComponentClothing.Insulation *
+        var num = _componentCharacter.ComponentClothing.Insulation *
                   MathUtils.Lerp(1f, 0.05f, MathUtils.Saturate(4f * Wetness));
         if (_subsystemGameInfo.WorldSettings.GameMode <= GameMode.Survival)
         {
             num = num * 1.5f + 1f;
         }
 
-        var arg = _componentPlayer.ComponentClothing.LeastInsulatedSlot switch
+        var arg = _componentCharacter.ComponentClothing.LeastInsulatedSlot switch
         {
             ClothingSlot.Head => LanguageManager.Get(_typeName, 41),
             ClothingSlot.Torso => LanguageManager.Get(_typeName, 42),
@@ -716,9 +728,9 @@ public class ComponentVitalStats : Component, IUpdateable
 
         if (_subsystemTime.PeriodicGameTimeEvent(2.0, 2.0 * GetHashCode() % 1000.0 / 1000.0))
         {
-            var x = Terrain.ToCell(_componentPlayer.ComponentBody.Position.X);
-            var y = Terrain.ToCell(_componentPlayer.ComponentBody.Position.Y + 0.1f);
-            var z = Terrain.ToCell(_componentPlayer.ComponentBody.Position.Z);
+            var x = Terrain.ToCell(_componentCharacter.ComponentBody.Position.X);
+            var y = Terrain.ToCell(_componentCharacter.ComponentBody.Position.Y + 0.1f);
+            var z = Terrain.ToCell(_componentCharacter.ComponentBody.Position.Z);
             _subsystemMetersBlockBehavior.CalculateTemperature(
                 x,
                 y,
@@ -735,7 +747,7 @@ public class ComponentVitalStats : Component, IUpdateable
         {
             var num2 = _environmentTemperature - Temperature;
             var num3 = 0.01f + 0.005f * _environmentTemperatureFlux;
-            var numOrigin = _componentPlayer.ComponentClothing.Insulation;
+            var numOrigin = _componentCharacter.ComponentClothing.Insulation;
             if (num2 < 0)
             {
                 switch (numOrigin)
@@ -759,13 +771,13 @@ public class ComponentVitalStats : Component, IUpdateable
         switch (Temperature)
         {
             case <= 0f:
-                _componentPlayer.ComponentHealth.Injure(1f, null, false, LanguageManager.Get(_typeName, 25));
+                _componentCharacter.ComponentHealth.Injure(1f, null, false, LanguageManager.Get(_typeName, 25));
                 break;
             case < 3f:
             {
                 if (_subsystemTime.PeriodicGameTimeEvent(10.0, 0.0))
                 {
-                    _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 26));
+                    _componentCharacter.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 26));
                     string text;
 
                     if (Wetness > 0f)
@@ -783,8 +795,8 @@ public class ComponentVitalStats : Component, IUpdateable
 
                     if (runGui)
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(text, Color.White, true, false);
-                        _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(text, Color.White, true, false);
+                        _componentCharacter.ComponentGui.TemperatureBarWidget.Flash(10);
                     }
                 }
 
@@ -808,19 +820,19 @@ public class ComponentVitalStats : Component, IUpdateable
                             ) // 你的{0}有点冷,快穿上衣服
                         };
 
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(text2, Color.White, true, true);
-                        _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(text2, Color.White, true, true);
+                        _componentCharacter.ComponentGui.TemperatureBarWidget.Flash(10);
                         break;
                     }
                     // 当体温低于 8 时： 你觉得有点冷
                     case true when Temperature < 8f && (_lastTemperature >= 8f) | flag:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
+                        _componentCharacter.ComponentGui.DisplaySmallMessage(
                             LanguageManager.Get(_typeName, 33),
                             Color.White,
                             true,
                             false
                         );
-                        _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
+                        _componentCharacter.ComponentGui.TemperatureBarWidget.Flash(10);
                         break;
                 }
 
@@ -832,38 +844,43 @@ public class ComponentVitalStats : Component, IUpdateable
         {
             if (_subsystemTime.PeriodicGameTimeEvent(10.0, 0.0))
             {
-                _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 35)); // 被热死了
+                _componentCharacter.ComponentHealth.Injure(
+                    0.05f,
+                    null,
+                    false,
+                    LanguageManager.Get(_typeName, 35)
+                ); // 被热死了
                 if (runGui)
                 {
                     // 这里非常热，快离开这里
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(
+                    _componentCharacter.ComponentGui.DisplaySmallMessage(
                         LanguageManager.Get(_typeName, 34),
                         Color.White,
                         true,
                         false
                     );
-                    _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
+                    _componentCharacter.ComponentGui.TemperatureBarWidget.Flash(10);
                 }
             }
 
             if (runGui && _subsystemTime.PeriodicGameTimeEvent(8.0, 0.0))
             {
                 _temperatureBlackoutDuration = MathUtils.Max(_temperatureBlackoutDuration, 6f);
-                _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
+                _componentCharacter.ComponentCreatureSounds.PlayMoanSound();
             }
         }
         else if (runGui && Temperature > 20f && _subsystemTime.PeriodicGameTimeEvent(10.0, 0.0)) // 温度大于20
         {
             // 你觉得热
-            _componentPlayer.ComponentGui.DisplaySmallMessage(
+            _componentCharacter.ComponentGui.DisplaySmallMessage(
                 LanguageManager.Get(_typeName, 36),
                 Color.White,
                 true,
                 false
             );
             _temperatureBlackoutDuration = MathUtils.Max(_temperatureBlackoutDuration, 3f);
-            _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
-            _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
+            _componentCharacter.ComponentGui.TemperatureBarWidget.Flash(10);
+            _componentCharacter.ComponentCreatureSounds.PlayMoanSound();
         }
 
         _lastTemperature = Temperature;
@@ -872,23 +889,23 @@ public class ComponentVitalStats : Component, IUpdateable
             return;
         }
 
-        _componentPlayer.ComponentScreenOverlays.IceFactor = MathUtils.Saturate(1f - Temperature / 6f);
+        _componentCharacter.ComponentScreenOverlays.IceFactor = MathUtils.Saturate(1f - Temperature / 6f);
         _temperatureBlackoutDuration -= gameTimeDelta;
         var num4 = MathUtils.Saturate(0.5f * _temperatureBlackoutDuration);
         _temperatureBlackoutFactor =
             MathUtils.Saturate(_temperatureBlackoutFactor + 2f * gameTimeDelta * (num4 - _temperatureBlackoutFactor));
-        _componentPlayer.ComponentScreenOverlays.BlackoutFactor = MathUtils.Max(
+        _componentCharacter.ComponentScreenOverlays.BlackoutFactor = MathUtils.Max(
             _temperatureBlackoutFactor,
-            _componentPlayer.ComponentScreenOverlays.BlackoutFactor
+            _componentCharacter.ComponentScreenOverlays.BlackoutFactor
         );
         if (_temperatureBlackoutFactor > 0.01)
         {
-            _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageManager.Get(_typeName, 37);
-            _componentPlayer.ComponentScreenOverlays.FloatingMessageFactor =
+            _componentCharacter.ComponentScreenOverlays.FloatingMessage = LanguageManager.Get(_typeName, 37);
+            _componentCharacter.ComponentScreenOverlays.FloatingMessageFactor =
                 MathUtils.Saturate(10f * (_temperatureBlackoutFactor - 0.9f));
         }
 
-        _componentPlayer.ComponentGui.TemperatureBarWidget.BarSubtexture = _environmentTemperature switch
+        _componentCharacter.ComponentGui.TemperatureBarWidget.BarSubtexture = _environmentTemperature switch
         {
             > 22f => ContentManager.Get<Subtexture>("Textures/Atlas/Temperature6"),
             > 18f => ContentManager.Get<Subtexture>("Textures/Atlas/Temperature5"),
@@ -904,15 +921,15 @@ public class ComponentVitalStats : Component, IUpdateable
     public void UpdateWetness(bool runGui = true)
     {
         var gameTimeDelta = _subsystemTime.GameTimeDelta;
-        if (_componentPlayer.ComponentBody is { ImmersionFactor: > 0.2f, ImmersionFluidBlock: WaterBlock })
+        if (_componentCharacter.ComponentBody is { ImmersionFactor: > 0.2f, ImmersionFluidBlock: WaterBlock })
         {
-            var num = 2f * _componentPlayer.ComponentBody.ImmersionFactor;
+            var num = 2f * _componentCharacter.ComponentBody.ImmersionFactor;
             Wetness += MathUtils.Saturate(3f * gameTimeDelta) * (num - Wetness);
         }
 
-        var x = Terrain.ToCell(_componentPlayer.ComponentBody.Position.X);
-        var num2 = Terrain.ToCell(_componentPlayer.ComponentBody.Position.Y + 0.1f);
-        var z = Terrain.ToCell(_componentPlayer.ComponentBody.Position.Z);
+        var x = Terrain.ToCell(_componentCharacter.ComponentBody.Position.X);
+        var num2 = Terrain.ToCell(_componentCharacter.ComponentBody.Position.Y + 0.1f);
+        var z = Terrain.ToCell(_componentCharacter.ComponentBody.Position.Z);
         var precipitationShaftInfo = _subsystemWeather.GetPrecipitationShaftInfo(x, z);
         if (num2 >= precipitationShaftInfo.YLimit && precipitationShaftInfo.Type == PrecipitationType.Rain)
         {
@@ -945,7 +962,7 @@ public class ComponentVitalStats : Component, IUpdateable
                     {
                         if (Wetness > 0.8f)
                         {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            _componentCharacter.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 38),
                                 Color.White,
                                 true,
@@ -962,7 +979,7 @@ public class ComponentVitalStats : Component, IUpdateable
                     {
                         if (Wetness is > 0.2f and <= 0.8f && Wetness > _lastWetness)
                         {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            _componentCharacter.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 39),
                                 Color.White,
                                 true,
@@ -979,7 +996,7 @@ public class ComponentVitalStats : Component, IUpdateable
                     {
                         if (Wetness <= 0f)
                         {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                            _componentCharacter.ComponentGui.DisplaySmallMessage(
                                 LanguageManager.Get(_typeName, 40),
                                 Color.White,
                                 true,
@@ -1003,6 +1020,6 @@ public class ComponentVitalStats : Component, IUpdateable
         }
 
         _densityModifierApplied = modifier;
-        _componentPlayer.ComponentBody.Density += num;
+        _componentCharacter.ComponentBody.Density += num;
     }
 }

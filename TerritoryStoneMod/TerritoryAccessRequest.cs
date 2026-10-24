@@ -1,9 +1,11 @@
+using Game.Protocol.Identity;
+
 namespace TerritoryStoneMod;
 
 public sealed record TerritoryAccessRequest(
     Guid Id,
-    Guid Owner,
-    Guid Player,
-    string PlayerName,
+    PlayerAddress Owner,
+    PlayerAddress User,
+    string UserName,
     double ExpiresAt
 );

@@ -13,7 +13,7 @@ public class SubsystemTime : Subsystem
 
     private float _gameTimeFactor = 1f;
 
-    private SubsystemPlayers _subsystemPlayers = null!;
+    private SubsystemCharacters _subsystemCharacters = null!;
 
     private SubsystemUpdate _subsystemUpdate = null!;
 
@@ -56,13 +56,13 @@ public class SubsystemTime : Subsystem
 
         var num2 = 0;
         var num3 = 0;
-        foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
+        foreach (var componentCharacter in _subsystemCharacters.ComponentCharacters)
         {
-            if (componentPlayer.ComponentHealth.Health == 0f)
+            if (componentCharacter.ComponentHealth.Health == 0f)
             {
                 num3++;
             }
-            else if (componentPlayer.ComponentSleep.SleepFactor.CloseTo(1f))
+            else if (componentCharacter.ComponentSleep.SleepFactor.CloseTo(1f))
             {
                 num2++;
             }
@@ -70,7 +70,7 @@ public class SubsystemTime : Subsystem
 
         // A client's entity set is AOI-filtered, not the authoritative online player set.
         if (CommonLib.WorkType != WorkType.Client &&
-            num2 + num3 == _subsystemPlayers.ComponentPlayers.Count &&
+            num2 + num3 == _subsystemCharacters.ComponentCharacters.Count &&
             num2 >= 1)
         {
             FixedTimeStep = 0.05f;
@@ -83,9 +83,9 @@ public class SubsystemTime : Subsystem
         }
 
         var flag = true;
-        foreach (var componentPlayer2 in _subsystemPlayers.ComponentPlayers)
+        foreach (var componentCharacter2 in _subsystemCharacters.ComponentCharacters)
         {
-            if (!componentPlayer2.ComponentGui.IsGameMenuDialogVisible())
+            if (!componentCharacter2.ComponentGui.IsGameMenuDialogVisible())
             {
                 flag = false;
                 break;
@@ -127,7 +127,7 @@ public class SubsystemTime : Subsystem
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
-        _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemCharacters = Project.FindSubsystem<SubsystemCharacters>(true)!;
         _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
     }
 

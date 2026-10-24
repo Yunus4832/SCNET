@@ -44,11 +44,11 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
                 GameWidget.ActiveCamera.ViewPosition
             ) *
             12f;
-        var componentPlayer = GameWidget.PlayerData.ComponentPlayer;
+        var componentCharacter = GameWidget.CharacterData.ComponentCharacter;
         var count =
-            componentPlayer != null &&
-            componentPlayer.ComponentInput.SplitSourceInventory == inventoryDragData.Inventory &&
-            componentPlayer.ComponentInput.SplitSourceSlotIndex == inventoryDragData.SlotIndex
+            componentCharacter != null &&
+            componentCharacter.ComponentInput.SplitSourceInventory == inventoryDragData.Inventory &&
+            componentCharacter.ComponentInput.SplitSourceSlotIndex == inventoryDragData.SlotIndex
                 ? 1
                 : inventoryDragData.DragMode != DragMode.SingleItem
                     ? inventoryDragData.Inventory.GetSlotCount(inventoryDragData.SlotIndex)
@@ -61,8 +61,8 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
         if (CommonLib.WorkType == WorkType.Client)
         {
             NetworkSender.SendToServer(
-                PlayerPackageBuilder.Capture(
-                    GameWidget.PlayerData,
+                CharacterPackageBuilder.Capture(
+                    GameWidget.CharacterData,
                     inventoryDragData.Inventory.Id,
                     inventoryDragData.SlotIndex,
                     worldPos,
@@ -104,12 +104,12 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
 
     public override void Draw(DrawContext dc)
     {
-        if (GameWidget.PlayerData is not { ComponentPlayer: not null, IsReadyForPlaying: true })
+        if (GameWidget.CharacterData is not { ComponentCharacter: not null, IsReadyForPlaying: true })
         {
             return;
         }
 
-        if (CommonLib.WorkType == WorkType.Local || GameWidget.PlayerData.IsMainPlayer)
+        if (CommonLib.WorkType == WorkType.Local || GameWidget.CharacterData.IsLocalCharacter)
         {
             DrawToScreen(dc);
         }

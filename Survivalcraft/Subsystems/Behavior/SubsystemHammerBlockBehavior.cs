@@ -18,9 +18,9 @@ public class SubsystemHammerBlockBehavior : SubsystemBlockBehavior
             return false;
         }
 
-        if (componentMiner.ComponentPlayer != null &&
+        if (componentMiner.ComponentCharacter != null &&
             (CommonLib.WorkType == WorkType.Local ||
-             componentMiner.ComponentPlayer.PlayerData.IsMainPlayer))
+             componentMiner.ComponentCharacter.CharacterData.IsLocalCharacter))
         {
             _subsystemFurnitureBlockBehavior.ScanDesign(
                 terrainRaycastResult.Value.CellFace,

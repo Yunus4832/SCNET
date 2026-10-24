@@ -1,3 +1,6 @@
+using Game.Network;
+using Game.Players;
+
 namespace Game.Commands;
 
 public sealed class CommandPrincipal
@@ -8,7 +11,9 @@ public sealed class CommandPrincipal
 
     public string Name { get; }
 
-    public PlayerData? Player { get; }
+    public CharacterData? Character { get; }
+
+    public WorldPlayer? Subject { get; }
 
     public CommandPrincipalKind Kind { get; }
 
@@ -19,15 +24,17 @@ public sealed class CommandPrincipal
     private CommandPrincipal(
         string name,
         CommandPrincipalKind kind,
-        PlayerData? player = null,
+        CharacterData? player = null,
         IEnumerable<ResourceId>? permissions = null,
-        IEnumerable<ResourceId>? delegablePermissions = null
+        IEnumerable<ResourceId>? delegablePermissions = null,
+        WorldPlayer? subject = null
     )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         Name = name;
         Kind = kind;
-        Player = player;
+        Character = player;
+        Subject = subject;
         _permissions = new HashSet<ResourceId>(permissions ?? []);
         _delegablePermissions = new HashSet<ResourceId>(delegablePermissions ?? []);
     }
@@ -46,7 +53,7 @@ public sealed class CommandPrincipal
 
     internal static CommandPrincipal CreatePlayer(
         string name,
-        PlayerData? player = null,
+        CharacterData? player = null,
         IEnumerable<ResourceId>? permissions = null,
         IEnumerable<ResourceId>? delegablePermissions = null
     )
@@ -61,16 +68,40 @@ public sealed class CommandPrincipal
         );
     }
 
-    public static CommandPrincipal FromPlayer(PlayerData player)
+    /// <summary>Client input uses public character metadata without server-owned permissions or subject records.</summary>
+    internal static CommandPrincipal ForInput(CharacterData player)
     {
         ArgumentNullException.ThrowIfNull(player);
-        return CreatePlayer(
-            player.Name,
+        return CommonLib.WorkType == WorkType.Client ? CreatePlayer(player.Name, player) : FromPlayer(player);
+    }
+
+    public static CommandPrincipal FromSession(Client session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        var subject = session.Subject ??
+                      throw new InvalidOperationException("The session has no admitted world subject.");
+        return FromSubject(subject, session.CharacterData);
+    }
+
+    internal static CommandPrincipal FromSubject(WorldPlayer subject, CharacterData? player = null)
+    {
+        ArgumentNullException.ThrowIfNull(subject);
+        var name = subject.DisplayName.Length > 0 ? subject.DisplayName : player?.Name ?? subject.Address.Value;
+        return new CommandPrincipal(
+            name,
+            CommandPrincipalKind.Player,
             player,
-            player.CommandPermissions.Grants.Select(grant => grant.Permission),
-            player.CommandPermissions.Grants
-                .Where(grant => grant.CanDelegate)
-                .Select(grant => grant.Permission)
+            subject.Permissions.Grants.Select(grant => grant.Permission),
+            subject.Permissions.Grants.Where(grant => grant.CanDelegate).Select(grant => grant.Permission),
+            subject
+        );
+    }
+
+    public static CommandPrincipal FromPlayer(CharacterData player)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        return FromSession(
+            player.Client ?? throw new InvalidOperationException("The character has no controlling session.")
         );
     }
 

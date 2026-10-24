@@ -17,7 +17,7 @@ public sealed class PlayerDropValidationTest
     {
         Assert.Equal(
             valid,
-            ComponentPlayerPackageHandler.AreDropParametersValid(
+            ComponentCharacterPackageHandler.AreDropParametersValid(
                 slot,
                 10,
                 count,
@@ -34,7 +34,7 @@ public sealed class PlayerDropValidationTest
     public void DropRejectsNonFiniteOrExcessiveVelocity(float velocity)
     {
         Assert.False(
-            ComponentPlayerPackageHandler.AreDropParametersValid(
+            ComponentCharacterPackageHandler.AreDropParametersValid(
                 0,
                 10,
                 1,

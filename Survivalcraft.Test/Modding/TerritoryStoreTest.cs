@@ -3,8 +3,11 @@ using Engine.Core.Mathematics;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Components;
+using Game.Protocol.Identity;
 
 using TerritoryStoneMod;
+
+using static Survivalcraft.Test.Modding.TerritoryTestIdentity;
 
 namespace Survivalcraft.Test.Modding;
 
@@ -13,10 +16,10 @@ public class TerritoryStoreTest
     [Fact]
     public void StoreIsWorldLocalAndEnforcesOneStonePerOwner()
     {
-        var owner = Guid.NewGuid();
+        var owner = Address();
         var first = new TerritoryStore();
         var second = new TerritoryStore();
-        Assert.False(first.TryCreate(Guid.Empty, new Point3(0, 64, 0)));
+        Assert.False(first.TryCreate(default(PlayerAddress), new Point3(0, 64, 0)));
         Assert.True(first.TryCreate(owner, new Point3(0, 64, 0)));
         Assert.False(first.TryCreate(owner, new Point3(128, 64, 128)));
         Assert.True(second.TryCreate(owner, new Point3(128, 64, 128)));
@@ -28,7 +31,7 @@ public class TerritoryStoreTest
     [InlineData(16, 16)]
     public void BoundsAreCenteredOnStoneAcrossChunkAndNegativeCoordinates(int x, int z)
     {
-        var territory = new Territory(Guid.NewGuid(), new Point3(x, 64, z), new TerritorySettings(Size: 4));
+        var territory = new Territory(Address(), new Point3(x, 64, z), new TerritorySettings(Size: 4));
         Assert.Equal(x + 0.5f, territory.Bounds.Center().X);
         Assert.Equal(z + 0.5f, territory.Bounds.Center().Z);
         Assert.True(territory.Contains(x - 4, z + 4));
@@ -47,7 +50,7 @@ public class TerritoryStoreTest
     public void EntryAndExitAreIndependent(bool entry, bool exit)
     {
         var territory = new Territory(
-            Guid.NewGuid(),
+            Address(),
             new Point3(7, 64, 9),
             new TerritorySettings(Size: 4, AllowEntry: entry, AllowExit: exit)
         );
@@ -67,7 +70,7 @@ public class TerritoryStoreTest
     [InlineData(true)]
     public void CollisionWallsPushBackOnAllFourSides(bool exiting)
     {
-        var territory = new Territory(Guid.NewGuid(), new Point3(0, 64, 0), new TerritorySettings(Size: 4));
+        var territory = new Territory(Address(), new Point3(0, 64, 0), new TerritorySettings(Size: 4));
         var walls = territory.GetBoundaryBoxes(60, 70, exiting);
         var min = exiting ? -4f : -3.8f;
         var max = exiting ? 5f : 4.8f;
@@ -92,7 +95,7 @@ public class TerritoryStoreTest
     [InlineData(true)]
     public void BoundaryOverlapOnlyBlocksMovementInTheRestrictedDirection(bool exiting)
     {
-        var territory = new Territory(Guid.NewGuid(), new Point3(0, 64, 0), new TerritorySettings(Size: 4));
+        var territory = new Territory(Address(), new Point3(0, 64, 0), new TerritorySettings(Size: 4));
         var normals = new[] { -Vector3.UnitX, Vector3.UnitX, -Vector3.UnitZ, Vector3.UnitZ };
         var edges = new[]
         {
@@ -133,7 +136,7 @@ public class TerritoryStoreTest
     public void RadiusLimitsAreAcceptedByAuthoritativeSettings(int radius)
     {
         var store = new TerritoryStore();
-        var owner = Guid.NewGuid();
+        var owner = Address();
         Assert.True(store.TryCreate(owner, new Point3(0, 64, 0)));
         Assert.True(store.TryChangeSettings(owner, new TerritorySettings(Size: radius), out _));
         Assert.Equal(radius * 2 + 1, Assert.Single(store.Territories).MaxX - Assert.Single(store.Territories).MinX);
@@ -143,10 +146,10 @@ public class TerritoryStoreTest
     public void ResizeRejectsOverlapAtomicallyAndAllowsAdjacentTerritories()
     {
         var store = new TerritoryStore();
-        var owner = Guid.NewGuid();
+        var owner = Address();
         Assert.True(store.TryCreate(owner, new Point3(0, 64, 0)));
-        Assert.False(store.TryCreate(Guid.NewGuid(), new Point3(32, 200, 0)));
-        Assert.True(store.TryCreate(Guid.NewGuid(), new Point3(33, 200, 0)));
+        Assert.False(store.TryCreate(Address(), new Point3(32, 200, 0)));
+        Assert.True(store.TryCreate(Address(), new Point3(33, 200, 0)));
         Assert.True(store.TryGet(owner, out var territory));
         var original = territory!.Settings;
         Assert.False(store.TryChangeSettings(owner, original with { Size = 17, AllowEntry = true }, out var error));
@@ -164,7 +167,7 @@ public class TerritoryStoreTest
     public void ResizeRejectsInvalidRadius(int size)
     {
         var store = new TerritoryStore();
-        var owner = Guid.NewGuid();
+        var owner = Address();
         Assert.True(store.TryCreate(owner, new Point3(0, 64, 0)));
         Assert.False(store.TryChangeSettings(owner, new TerritorySettings(Size: size), out var error));
         Assert.Equal("InvalidSize", error);
@@ -174,11 +177,11 @@ public class TerritoryStoreTest
     public void SnapshotsValidateTheActualRadiusNotTheDefaultRadius()
     {
         var store = new TerritoryStore();
-        var owner = Guid.NewGuid();
+        var owner = Address();
         store.ApplySnapshot(
             [
                 new Territory(owner, new Point3(0, 64, 0), new TerritorySettings(Size: 4)),
-                new Territory(Guid.NewGuid(), new Point3(9, 200, 0), new TerritorySettings(Size: 4))
+                new Territory(Address(), new Point3(9, 200, 0), new TerritorySettings(Size: 4))
             ]
         );
         Assert.Equal(2, store.Territories.Count);
@@ -193,7 +196,7 @@ public class TerritoryStoreTest
     public void SaveLoadPreservesAllSettingsAndRemovalRequiresActualStone()
     {
         var source = new TerritoryStore();
-        var owner = Guid.NewGuid();
+        var owner = Address();
         var point = new Point3(-1, 65, -17);
         Assert.True(source.TryCreate(owner, point));
         var settings = new TerritorySettings(7, true, false, true, false, false);
@@ -211,7 +214,7 @@ public class TerritoryStoreTest
     public void InvalidSavedTerritoriesDoNotPartiallyReplaceLiveState()
     {
         var store = new TerritoryStore();
-        var owner = Guid.NewGuid();
+        var owner = Address();
         Assert.True(store.TryCreate(owner, new Point3(128, 64, 128)));
         var values = store.Save();
         ((ValuesDictionary)values.Single().Value).SetValue("Size", 0);

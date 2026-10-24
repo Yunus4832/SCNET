@@ -13,7 +13,7 @@ internal static class WorldControlCommandHandlers
         Project? project
     )
     {
-        return principal.Player is not null &&
+        return principal.Character is not null &&
                project?.FindSubsystem<SubsystemGameInfo>(true)?
                    .WorldSettings.GameMode is GameMode.Creative;
     }
@@ -117,7 +117,7 @@ internal static class WorldControlCommandHandlers
         TriggerPlayerLightningCommand command
     )
     {
-        if (context.Principal.Player?.ComponentPlayer is not { } player)
+        if (context.Principal.Character?.ComponentCharacter is not { } player)
         {
             return CommandResult.LocalizedFail(
                 "world.weather.player_required",

@@ -628,12 +628,12 @@ public static class SessionInfoManager
             element.Add(new XAttribute(nameof(SessionInfo.HttpCommandPort), httpCommandPort));
         }
 
-        if (!string.IsNullOrWhiteSpace(sessionInfo.AutoJoinPlayerName))
+        if (!string.IsNullOrWhiteSpace(sessionInfo.AutoJoinCharacterName))
         {
             element.Add(
                 new XAttribute(
-                    nameof(SessionInfo.AutoJoinPlayerName),
-                    sessionInfo.AutoJoinPlayerName
+                    nameof(SessionInfo.AutoJoinCharacterName),
+                    sessionInfo.AutoJoinCharacterName
                 )
             );
         }
@@ -681,8 +681,8 @@ public static class SessionInfoManager
             element.Attribute(nameof(SessionInfo.HttpCommandEnabled))?.Value
         );
         sessionInfo.HttpCommandPort = ParseOptionalPort(element.Attribute(nameof(SessionInfo.HttpCommandPort))?.Value);
-        sessionInfo.AutoJoinPlayerName = NormalizeOptionalText(
-            element.Attribute(nameof(SessionInfo.AutoJoinPlayerName))?.Value
+        sessionInfo.AutoJoinCharacterName = NormalizeOptionalText(
+            element.Attribute(nameof(SessionInfo.AutoJoinCharacterName))?.Value
         );
         sessionInfo.HttpCommandAccessToken =
             element.Attribute(nameof(SessionInfo.HttpCommandAccessToken))?.Value;
@@ -779,9 +779,9 @@ public static class SessionInfoManager
             sessionInfo.BroadcastPort = broadcastPort;
         }
 
-        if (request.AutoJoinPlayerName is not null)
+        if (request.AutoJoinCharacterName is not null)
         {
-            sessionInfo.AutoJoinPlayerName = request.AutoJoinPlayerName;
+            sessionInfo.AutoJoinCharacterName = request.AutoJoinCharacterName;
         }
 
         sessionInfo.P2POverrides = sessionInfo.P2POverrides.Merge(request.P2POverrides);
@@ -848,7 +848,7 @@ public static class SessionInfoManager
             : NormalizeSessionId(sessionInfo.SessionId);
         sessionInfo.Name = NormalizeSessionName(sessionInfo.Name);
         sessionInfo.World = NormalizeWorld(sessionInfo.World);
-        sessionInfo.AutoJoinPlayerName = NormalizeOptionalText(sessionInfo.AutoJoinPlayerName);
+        sessionInfo.AutoJoinCharacterName = NormalizeOptionalText(sessionInfo.AutoJoinCharacterName);
         if (sessionInfo.ServerPort < 0)
         {
             sessionInfo.ServerPort = 0;
@@ -984,7 +984,7 @@ public static class SessionInfoManager
             P2POverrides = source.P2POverrides,
             ServerPort = source.ServerPort,
             BroadcastPort = source.BroadcastPort,
-            AutoJoinPlayerName = source.AutoJoinPlayerName,
+            AutoJoinCharacterName = source.AutoJoinCharacterName,
             HttpCommandEnabled = source.HttpCommandEnabled,
             HttpCommandPort = source.HttpCommandPort,
             HttpCommandAccessToken = source.HttpCommandAccessToken

@@ -1,4 +1,5 @@
-using Game.Protocol.Players;
+using Game.Protocol.Characters;
+using Game.Protocol.Teams;
 
 namespace Game.Protocol.Entities;
 
@@ -10,9 +11,9 @@ public sealed record EntityPackage : IProtocolMessage
 
     public byte[] EntityData { get; init; } = [];
 
-    public IReadOnlyList<PlayerSnapshot> Players { get; init; } = [];
+    public IReadOnlyList<CharacterSnapshot> Characters { get; init; } = [];
 
-    public IReadOnlyList<PlayerEntitySnapshot> PlayerEntities { get; init; } = [];
+    public IReadOnlyList<CharacterEntitySnapshot> CharacterEntities { get; init; } = [];
 
     public int EntityId { get; init; }
 

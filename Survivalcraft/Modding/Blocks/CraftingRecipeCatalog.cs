@@ -131,10 +131,10 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
         SubsystemTerrain terrain,
         string[] ingredients,
         float heatLevel,
-        ComponentPlayer? componentPlayer
+        ComponentCharacter? componentCharacter
     )
     {
-        var playerLevel = componentPlayer?.PlayerData.Level ?? 1f;
+        var playerLevel = componentCharacter?.CharacterData.Level ?? 1f;
         CraftingRecipe? craftingRecipe = null;
         var blocks = catalog.RegisteredBlocks;
         foreach (var block in blocks)
@@ -143,7 +143,7 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
                 terrain,
                 ingredients,
                 heatLevel,
-                componentPlayer
+                componentCharacter
             );
             if (adHocCraftingRecipe == null || !MatchRecipe(adHocCraftingRecipe.Ingredients, ingredients))
             {
@@ -210,7 +210,7 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
             return craftingRecipe;
         }
 
-        componentPlayer?.ComponentGui.DisplaySmallMessage("此物品已被禁用", Color.Red, false, true);
+        componentCharacter?.ComponentGui.DisplaySmallMessage("此物品已被禁用", Color.Red, false, true);
         return null;
     }
 

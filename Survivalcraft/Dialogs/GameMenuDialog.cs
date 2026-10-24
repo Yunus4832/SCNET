@@ -17,14 +17,14 @@ public class GameMenuDialog : Dialog
 
     private readonly bool _adventureRestartExists;
 
-    private readonly ComponentPlayer _componentPlayer;
+    private readonly ComponentCharacter _componentCharacter;
 
-    public GameMenuDialog(ComponentPlayer componentPlayer)
+    public GameMenuDialog(ComponentCharacter componentCharacter)
     {
         var node = ContentManager.Get<XElement>("Dialogs/GameMenuDialog");
         LoadContents(this, node);
         var statsPanel = Children.Find<StackPanelWidget>("StatsPanel")!;
-        _componentPlayer = componentPlayer;
+        _componentCharacter = componentCharacter;
         if (CommonLib.WorkType != WorkType.Client && GameManager.WorldInfo != null)
         {
             _adventureRestartExists =
@@ -66,9 +66,9 @@ public class GameMenuDialog : Dialog
         }
 
         statsPanel.Children.Clear();
-        var project = componentPlayer.Project;
-        var playerData = componentPlayer.PlayerData;
-        var playerStats = componentPlayer.PlayerStats;
+        var project = componentCharacter.Project;
+        var characterData = componentCharacter.CharacterData;
+        var characterStats = componentCharacter.CharacterStats;
         var subsystemGameInfo = project.FindSubsystem<SubsystemGameInfo>(true)!;
         var subsystemFurnitureBlockBehavior = project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true)!;
         var font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
@@ -178,33 +178,33 @@ public class GameMenuDialog : Dialog
                 Color = white
             }
         );
-        AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 18), playerData.Name);
-        AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 19), playerData.PlayerClass.ToString());
-        var value = playerData.FirstSpawnTime >= 0.0
-            ? ((subsystemGameInfo.TotalElapsedGameTime - playerData.FirstSpawnTime) / 1200.0).ToString("N1") +
+        AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 18), characterData.Name);
+        AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 19), characterData.CharacterSex.ToString());
+        var value = characterData.FirstSpawnTime >= 0.0
+            ? ((subsystemGameInfo.TotalElapsedGameTime - characterData.FirstSpawnTime) / 1200.0).ToString("N1") +
               LanguageManager.Get(_typeName, 20)
             : LanguageManager.Get(_typeName, 21);
         AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 22), value);
-        var value2 = playerData.LastSpawnTime >= 0.0
-            ? ((subsystemGameInfo.TotalElapsedGameTime - playerData.LastSpawnTime) / 1200.0).ToString("N1") +
+        var value2 = characterData.LastSpawnTime >= 0.0
+            ? ((subsystemGameInfo.TotalElapsedGameTime - characterData.LastSpawnTime) / 1200.0).ToString("N1") +
               LanguageManager.Get(_typeName, 23)
             : LanguageManager.Get(_typeName, 24);
         AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 25), value2);
         AddStat(
             stackPanelWidget,
             LanguageManager.Get(_typeName, 26),
-            MathUtils.Max(playerData.SpawnsCount - 1, 0).ToString("N0") + LanguageManager.Get(_typeName, 27)
+            MathUtils.Max(characterData.SpawnsCount - 1, 0).ToString("N0") + LanguageManager.Get(_typeName, 27)
         );
         AddStat(
             stackPanelWidget,
             LanguageManager.Get(_typeName, 28),
             string.Format(
                 LanguageManager.Get(_typeName, 29),
-                ((int)MathUtils.Floor(playerStats.HighestLevel)).ToString("N0")
+                ((int)MathUtils.Floor(characterStats.HighestLevel)).ToString("N0")
             )
         );
 
-        var position = componentPlayer.ComponentBody.Position;
+        var position = componentCharacter.ComponentBody.Position;
         if (subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative)
         {
             AddStat(
@@ -242,29 +242,37 @@ public class GameMenuDialog : Dialog
                     Color = white
                 }
             );
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 34), playerStats.PlayerKills.ToString("N0"));
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 35), playerStats.LandCreatureKills.ToString("N0"));
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 34), characterStats.PlayerKills.ToString("N0"));
+            AddStat(
+                stackPanelWidget,
+                LanguageManager.Get(_typeName, 35),
+                characterStats.LandCreatureKills.ToString("N0")
+            );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 36),
-                playerStats.WaterCreatureKills.ToString("N0")
+                characterStats.WaterCreatureKills.ToString("N0")
             );
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 37), playerStats.AirCreatureKills.ToString("N0"));
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 38), playerStats.MeleeAttacks.ToString("N0"));
+            AddStat(
+                stackPanelWidget,
+                LanguageManager.Get(_typeName, 37),
+                characterStats.AirCreatureKills.ToString("N0")
+            );
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 38), characterStats.MeleeAttacks.ToString("N0"));
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 39),
-                playerStats.MeleeHits.ToString("N0"),
-                $"({(playerStats.MeleeHits == 0L ? 0.0 : playerStats.MeleeHits / (double)playerStats.MeleeAttacks * 100.0):0}%)"
+                characterStats.MeleeHits.ToString("N0"),
+                $"({(characterStats.MeleeHits == 0L ? 0.0 : characterStats.MeleeHits / (double)characterStats.MeleeAttacks * 100.0):0}%)"
             );
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 40), playerStats.RangedAttacks.ToString("N0"));
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 40), characterStats.RangedAttacks.ToString("N0"));
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 41),
-                playerStats.RangedHits.ToString("N0"),
-                $"({(playerStats.RangedHits == 0L ? 0.0 : playerStats.RangedHits / (double)playerStats.RangedAttacks * 100.0):0}%)"
+                characterStats.RangedHits.ToString("N0"),
+                $"({(characterStats.RangedHits == 0L ? 0.0 : characterStats.RangedHits / (double)characterStats.RangedAttacks * 100.0):0}%)"
             );
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 42), playerStats.HitsReceived.ToString("N0"));
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 42), characterStats.HitsReceived.ToString("N0"));
             stackPanelWidget.Children.Add(
                 new LabelWidget
                 {
@@ -275,14 +283,18 @@ public class GameMenuDialog : Dialog
                     Color = white
                 }
             );
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 44), playerStats.BlocksDug.ToString("N0"));
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 45), playerStats.BlocksPlaced.ToString("N0"));
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 46), playerStats.BlocksInteracted.ToString("N0"));
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 47), playerStats.ItemsCrafted.ToString("N0"));
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 44), characterStats.BlocksDug.ToString("N0"));
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 45), characterStats.BlocksPlaced.ToString("N0"));
+            AddStat(
+                stackPanelWidget,
+                LanguageManager.Get(_typeName, 46),
+                characterStats.BlocksInteracted.ToString("N0")
+            );
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 47), characterStats.ItemsCrafted.ToString("N0"));
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 48),
-                playerStats.FurnitureItemsMade.ToString("N0")
+                characterStats.FurnitureItemsMade.ToString("N0")
             );
             stackPanelWidget.Children.Add(
                 new LabelWidget
@@ -297,48 +309,60 @@ public class GameMenuDialog : Dialog
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 50),
-                FormatDistance(playerStats.DistanceTravelled)
+                FormatDistance(characterStats.DistanceTravelled)
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 51),
-                FormatDistance(playerStats.DistanceWalked),
-                $"({(playerStats.DistanceTravelled > 0.0 ? playerStats.DistanceWalked / playerStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+                FormatDistance(characterStats.DistanceWalked),
+                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceWalked / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 52),
-                FormatDistance(playerStats.DistanceFallen),
-                $"({(playerStats.DistanceTravelled > 0.0 ? playerStats.DistanceFallen / playerStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+                FormatDistance(characterStats.DistanceFallen),
+                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceFallen / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 53),
-                FormatDistance(playerStats.DistanceClimbed),
-                $"({(playerStats.DistanceTravelled > 0.0 ? playerStats.DistanceClimbed / playerStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+                FormatDistance(characterStats.DistanceClimbed),
+                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceClimbed / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 54),
-                FormatDistance(playerStats.DistanceFlown),
-                $"({(playerStats.DistanceTravelled > 0.0 ? playerStats.DistanceFlown / playerStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+                FormatDistance(characterStats.DistanceFlown),
+                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceFlown / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 55),
-                FormatDistance(playerStats.DistanceSwam),
-                $"({(playerStats.DistanceTravelled > 0.0 ? playerStats.DistanceSwam / playerStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+                FormatDistance(characterStats.DistanceSwam),
+                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceSwam / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 56),
-                FormatDistance(playerStats.DistanceRidden),
-                $"({(playerStats.DistanceTravelled > 0.0 ? playerStats.DistanceRidden / playerStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+                FormatDistance(characterStats.DistanceRidden),
+                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceRidden / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
             );
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 57), FormatDistance(playerStats.LowestAltitude));
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 58), FormatDistance(playerStats.HighestAltitude));
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 59), playerStats.DeepestDive.ToString("N1") + "m");
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 60), playerStats.Jumps.ToString("N0"));
+            AddStat(
+                stackPanelWidget,
+                LanguageManager.Get(_typeName, 57),
+                FormatDistance(characterStats.LowestAltitude)
+            );
+            AddStat(
+                stackPanelWidget,
+                LanguageManager.Get(_typeName, 58),
+                FormatDistance(characterStats.HighestAltitude)
+            );
+            AddStat(
+                stackPanelWidget,
+                LanguageManager.Get(_typeName, 59),
+                characterStats.DeepestDive.ToString("N1") + "m"
+            );
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 60), characterStats.Jumps.ToString("N0"));
             stackPanelWidget.Children.Add(
                 new LabelWidget
                 {
@@ -352,37 +376,37 @@ public class GameMenuDialog : Dialog
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 62),
-                (playerStats.TotalHealthLost * 100.0).ToString("N0") + "%"
+                (characterStats.TotalHealthLost * 100.0).ToString("N0") + "%"
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 63),
-                playerStats.FoodItemsEaten.ToString("N0") + LanguageManager.Get(_typeName, 64)
+                characterStats.FoodItemsEaten.ToString("N0") + LanguageManager.Get(_typeName, 64)
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 65),
-                playerStats.TimesWentToSleep.ToString("N0") + LanguageManager.Get(_typeName, 66)
+                characterStats.TimesWentToSleep.ToString("N0") + LanguageManager.Get(_typeName, 66)
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 67),
-                (playerStats.TimeSlept / 1200.0).ToString("N1") + LanguageManager.Get(_typeName, 68)
+                (characterStats.TimeSlept / 1200.0).ToString("N1") + LanguageManager.Get(_typeName, 68)
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 69),
-                playerStats.TimesWasSick.ToString("N0") + LanguageManager.Get(_typeName, 66)
+                characterStats.TimesWasSick.ToString("N0") + LanguageManager.Get(_typeName, 66)
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 70),
-                playerStats.TimesPuked.ToString("N0") + LanguageManager.Get(_typeName, 66)
+                characterStats.TimesPuked.ToString("N0") + LanguageManager.Get(_typeName, 66)
             );
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 71),
-                playerStats.TimesHadFlu.ToString("N0") + LanguageManager.Get(_typeName, 66)
+                characterStats.TimesHadFlu.ToString("N0") + LanguageManager.Get(_typeName, 66)
             );
             stackPanelWidget.Children.Add(
                 new LabelWidget
@@ -397,15 +421,15 @@ public class GameMenuDialog : Dialog
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 73),
-                playerStats.StruckByLightning.ToString("N0") + LanguageManager.Get(_typeName, 66)
+                characterStats.StruckByLightning.ToString("N0") + LanguageManager.Get(_typeName, 66)
             );
-            var easiestModeUsed = playerStats.EasiestModeUsed;
+            var easiestModeUsed = characterStats.EasiestModeUsed;
             AddStat(
                 stackPanelWidget,
                 LanguageManager.Get(_typeName, 74),
                 LanguageManager.Get("GameMode", easiestModeUsed.ToString())
             );
-            if (playerStats.DeathRecords.Count > 0)
+            if (characterStats.DeathRecords.Count > 0)
             {
                 stackPanelWidget.Children.Add(
                     new LabelWidget
@@ -417,7 +441,7 @@ public class GameMenuDialog : Dialog
                         Color = white
                     }
                 );
-                foreach (var deathRecord in playerStats.DeathRecords)
+                foreach (var deathRecord in characterStats.DeathRecords)
                 {
                     AddStat(stackPanelWidget, $"Day {Math.Floor(deathRecord.Day) + 1.0:0}", "", deathRecord.Cause);
                 }
@@ -495,8 +519,9 @@ public class GameMenuDialog : Dialog
                     delegate
                     {
                         ScreensManager.SwitchScreen(
-                            "Players",
-                            _componentPlayer.Project.FindSubsystem<SubsystemPlayers>(true)!
+                            "Character",
+                            CharacterScreen.Mode.Edit,
+                            _componentCharacter.CharacterData
                         );
                     }
                 )

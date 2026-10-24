@@ -1,23 +1,23 @@
 <Project>
     <!-- Release versions are independent; change only the units being released. -->
     <PropertyGroup>
-        <GameVersion>0.2.0</GameVersion>
-        <EngineVersion>0.2.0</EngineVersion>
+        <GameVersion>0.2.1</GameVersion>
+        <EngineVersion>0.2.1</EngineVersion>
         <ImageCodecsVersion>0.1.1</ImageCodecsVersion>
         <OpenALVersion>0.1.0</OpenALVersion>
-        <ContentPackagingVersion>0.1.4</ContentPackagingVersion>
-        <ContentToolVersion>0.1.4</ContentToolVersion>
-        <ModTemplatesVersion>0.1.7</ModTemplatesVersion>
+        <ContentPackagingVersion>0.1.5</ContentPackagingVersion>
+        <ContentToolVersion>0.1.5</ContentToolVersion>
+        <ModTemplatesVersion>0.1.8</ModTemplatesVersion>
         <InitialModVersion>0.1.0</InitialModVersion>
         <ServerSourceProtocolVersion>0.1.0</ServerSourceProtocolVersion>
         <RendezvousProtocolVersion>0.1.1</RendezvousProtocolVersion>
-        <ContentServerVersion>0.1.5</ContentServerVersion>
+        <ContentServerVersion>0.1.6</ContentServerVersion>
         <RendezvousServerVersion>0.1.1</RendezvousServerVersion>
-        <TerritoryStoneVersion>0.1.8</TerritoryStoneVersion>
-        <BeaconVersion>0.1.5</BeaconVersion>
-        <UiPreviewToolVersion>0.1.5</UiPreviewToolVersion>
-        <ToolsVersion>0.1.5</ToolsVersion>
-        <GameProtocolPackageVersion>0.1.1</GameProtocolPackageVersion>
+        <TerritoryStoneVersion>0.1.9</TerritoryStoneVersion>
+        <BeaconVersion>0.1.6</BeaconVersion>
+        <UiPreviewToolVersion>0.1.6</UiPreviewToolVersion>
+        <ToolsVersion>0.1.6</ToolsVersion>
+        <GameProtocolPackageVersion>0.1.2</GameProtocolPackageVersion>
         <GameProtocolVersion>1</GameProtocolVersion>
         <AndroidReleaseCode>8</AndroidReleaseCode>
     </PropertyGroup>

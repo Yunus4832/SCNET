@@ -36,7 +36,7 @@ public sealed class EntityInterestTrackerTest
     {
         var tracker = new EntityInterestTracker();
         tracker.Seed(_client, EntityInterestGroup.Creatures, [10]);
-        var replacement = new Client(null, _client.ID, Guid.NewGuid(), _client.GUID, null);
+        var replacement = new Client(null, _client.ID, Guid.NewGuid(), _client.CharacterId, null);
 
         tracker.RetainClients([replacement]);
         var changes = tracker.Synchronize(

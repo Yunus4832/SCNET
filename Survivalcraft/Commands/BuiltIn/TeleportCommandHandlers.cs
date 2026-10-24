@@ -13,7 +13,7 @@ internal static class TeleportCommandHandlers
 
     private static CommandResult MarkNamed(CommandContext context, string name, bool isPublic)
     {
-        if (ValidateTarget(context, context.Principal.Player) is { } unavailable)
+        if (ValidateTarget(context, context.Principal.Character) is { } unavailable)
         {
             return unavailable;
         }
@@ -27,8 +27,8 @@ internal static class TeleportCommandHandlers
             );
         }
 
-        var player = context.Principal.Player!;
-        var position = player.ComponentPlayer!.ComponentBody.Position;
+        var player = context.Principal.Character!;
+        var position = player.ComponentCharacter!.ComponentBody.Position;
         if (!IsValidPosition(position))
         {
             return CommandResult.LocalizedFail(
@@ -39,8 +39,12 @@ internal static class TeleportCommandHandlers
         }
 
         var marks = isPublic
-            ? context.Project!.FindSubsystem<SubsystemPlayers>(true)!.PublicMarks
-            : player.PrivateMarks;
+            ? context.Project!.FindSubsystem<SubsystemPositionMarks>(true)!.PublicMarks
+            : context.Principal.Subject is { } subject
+                ? context.Project!.FindSubsystem<SubsystemPositionMarks>(true)!.GetPrivateMarks(subject.Address)
+                : null;
+        if (marks is null) { return MissingSubject(); }
+
         marks.Set(name, position);
         return CommandResult.LocalizedOk(
             "mark.saved",
@@ -52,14 +56,14 @@ internal static class TeleportCommandHandlers
     }
 
     public static CommandResult MarkTeleport(CommandContext context, TeleportMarkCommand command) =>
-        MarkTeleport(context, context.Principal.Player, command, command.Name, command.Public);
+        MarkTeleport(context, context.Principal.Character, command, command.Name, command.Public);
 
     public static CommandResult PlayerMarkTeleport(CommandContext context, TeleportPlayerMarkCommand command) =>
         MarkTeleport(context, FindPlayer(context, command.Player), command, command.Name, command.Public);
 
     private static CommandResult MarkTeleport(
         CommandContext context,
-        PlayerData? player,
+        CharacterData? player,
         IGameCommand command,
         string name,
         bool isPublic
@@ -71,8 +75,10 @@ internal static class TeleportCommandHandlers
         }
 
         var marks = isPublic
-            ? context.Project!.FindSubsystem<SubsystemPlayers>(true)!.PublicMarks
-            : player!.PrivateMarks;
+            ? context.Project!.FindSubsystem<SubsystemPositionMarks>(true)!.PublicMarks
+            : TargetPrivateMarks(context, player!);
+        if (marks is null) { return MissingSubject(); }
+
         if (!marks.TryGet(name, out var position))
         {
             return CommandResult.LocalizedFail("mark.missing", "MarkMissing_Message", "该作用域中没有标记 {0}。", name);
@@ -81,20 +87,34 @@ internal static class TeleportCommandHandlers
         return Teleport(context, player, command, position, null);
     }
 
+    private static PositionMarks? TargetPrivateMarks(CommandContext context, CharacterData target)
+    {
+        var address = ReferenceEquals(context.Principal.Character, target) ? context.Principal.Subject?.Address : null;
+        address ??= PlayerSessionQuery.GetController(target.CharacterId);
+        return address is { } subject
+            ? context.Project!.FindSubsystem<SubsystemPositionMarks>(true)!.GetPrivateMarks(subject)
+            : null;
+    }
+
+    private static CommandResult MissingSubject()
+    {
+        return CommandResult.LocalizedFail("mark.subject_required", "MarkSubjectRequired_Message", "私人标记需要已进入存档的主体。");
+    }
+
     public static CommandResult Self(CommandContext context, TeleportSelfCommand command) =>
-        Teleport(context, context.Principal.Player, command, command.Position, command.DestinationPlayer);
+        Teleport(context, context.Principal.Character, command, command.Position, command.DestinationPlayer);
 
     public static CommandResult Player(CommandContext context, TeleportPlayerCommand command) =>
         Teleport(context, FindPlayer(context, command.Player), command, command.Position, command.DestinationPlayer);
 
-    private static PlayerData? FindPlayer(CommandContext context, string name) =>
-        context.Project?.FindSubsystem<SubsystemPlayers>(true)?.FindPlayerData(player =>
+    private static CharacterData? FindPlayer(CommandContext context, string name) =>
+        context.Project?.FindSubsystem<SubsystemCharacters>(true)?.FindCharacterData(player =>
             MatchesPlayer(player, name)
         );
 
-    internal static bool MatchesPlayer(PlayerData player, string name) =>
+    internal static bool MatchesPlayer(CharacterData player, string name) =>
         Guid.TryParse(name, out var id)
-            ? player.PlayerGUID == id
+            ? player.CharacterId == id
             : string.Equals(player.Name, name, StringComparison.OrdinalIgnoreCase);
 
     internal static bool IsValidPosition(Vector3 position) =>
@@ -128,18 +148,18 @@ internal static class TeleportCommandHandlers
         return true;
     }
 
-    internal static CommandResult? ValidateTarget(CommandContext context, PlayerData? target)
+    internal static CommandResult? ValidateTarget(CommandContext context, CharacterData? target)
     {
         if (context.Project == null)
         {
             return CommandResult.LocalizedFail("teleport.no_world", "NoWorld_Message", "当前没有加载世界。");
         }
 
-        if (target?.ComponentPlayer is not { } player ||
+        if (target?.ComponentCharacter is not { } player ||
             !target.IsReadyForPlaying ||
-            !context.Project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData.Contains(target) ||
+            !context.Project.FindSubsystem<SubsystemCharacters>(true)!.Characters.Contains(target) ||
             (CommonLib.WorkType == WorkType.Server &&
-             !target.IsMainPlayer &&
+             !target.IsLocalCharacter &&
              target.Client is not { IsConnected: true }) ||
             player.ComponentHealth.Health <= 0f)
         {
@@ -155,7 +175,7 @@ internal static class TeleportCommandHandlers
 
     private static CommandResult Teleport(
         CommandContext context,
-        PlayerData? target,
+        CharacterData? target,
         IGameCommand command,
         Vector3? position,
         string? destination
@@ -187,9 +207,9 @@ internal static class TeleportCommandHandlers
                 );
             }
 
-            if (destinationPlayer?.ComponentPlayer == null ||
+            if (destinationPlayer?.ComponentCharacter == null ||
                 !destinationPlayer.IsReadyForPlaying ||
-                destinationPlayer.ComponentPlayer.ComponentHealth.Health <= 0f)
+                destinationPlayer.ComponentCharacter.ComponentHealth.Health <= 0f)
             {
                 return CommandResult.LocalizedFail(
                     "teleport.destination_unavailable",
@@ -198,7 +218,7 @@ internal static class TeleportCommandHandlers
                 );
             }
 
-            position = destinationPlayer.ComponentPlayer.ComponentBody.Position;
+            position = destinationPlayer.ComponentCharacter.ComponentBody.Position;
         }
 
         if (!IsValidPosition(position!.Value))
@@ -221,14 +241,14 @@ internal static class TeleportCommandHandlers
     }
 
     // Null means terrain preparation is still in progress, not a failed teleport.
-    internal static CommandResult? TryComplete(CommandContext context, PlayerData target, Vector3 position)
+    internal static CommandResult? TryComplete(CommandContext context, CharacterData target, Vector3 position)
     {
         if (ValidateTarget(context, target) is { } unavailable)
         {
             return unavailable;
         }
 
-        var player = target.ComponentPlayer!;
+        var player = target.ComponentCharacter!;
         if (player.Entity.FindComponent<ComponentRider>()?.Mount != null)
         {
             return CommandResult.LocalizedFail("teleport.mounted", "TeleportMounted_Message", "请先离开坐骑再传送。");
@@ -250,13 +270,16 @@ internal static class TeleportCommandHandlers
             return CommandResult.LocalizedFail("teleport.blocked", "TeleportBlocked_Message", "落点空间不足，玩家会卡在方块中，未执行传送。");
         }
 
+        var marks = TargetPrivateMarks(context, target);
+        if (marks is null) { return MissingSubject(); }
+
         player.ComponentInput.Navigation.Cancel("teleported");
         player.ComponentInput.ViewControl.Cancel("teleported");
-        target.PrivateMarks.Set("previous", ApplyPosition(body, position));
+        marks.Set("previous", ApplyPosition(body, position));
 
         // Hand off the prepared chunks to the player's normal interest before releasing the temporary location.
         var updater = subsystemTerrain.TerrainUpdater;
-        updater.UpdateLocations.TryGetValue(target.PlayerIndex, out var location);
+        updater.UpdateLocations.TryGetValue(target.CharacterIndex, out var location);
         location.Center = position.XZ;
         location.VisibilityDistance = Math.Max(32f, location.VisibilityDistance);
         location.ContentDistance = Math.Max(32f, location.ContentDistance);
@@ -271,7 +294,7 @@ internal static class TeleportCommandHandlers
         else
         {
             updater.SetUpdateLocation(
-                target.PlayerIndex,
+                target.CharacterIndex,
                 location.Center,
                 location.VisibilityDistance,
                 location.ContentDistance
@@ -283,14 +306,14 @@ internal static class TeleportCommandHandlers
             if (target.Client != null)
             {
                 CommonLib.Net.QueuePackage(
-                    PlayerPackageBuilder.Capture(player, ComponentPlayerPackage.PlayerAction.PositionSet),
+                    CharacterPackageBuilder.Capture(player, ComponentCharacterPackage.CharacterAction.PositionSet),
                     PackageAudience.To(target.Client)
                 );
             }
 
             NetworkSender.SendToObservers(
                 player.Entity,
-                PlayerPackageBuilder.Capture(player, ComponentPlayerPackage.PlayerAction.PositionSet),
+                CharacterPackageBuilder.Capture(player, ComponentCharacterPackage.CharacterAction.PositionSet),
                 target.Client
             );
         }

@@ -231,7 +231,7 @@ NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scr
 ### GUI 图集
 
 `GuiAtlasTool/Assets/` 保存独立、透明且可直接渲染的 SVG 和 PNG。文件名就是图集条目名；例如
-`PlayerList.svg` 会生成 `Textures/Atlas/PlayerList`。SVG 必须使用整数像素声明 `width` 和
+`CharacterList.svg` 会生成 `Textures/Atlas/CharacterList`。SVG 必须使用整数像素声明 `width` 和
 `height`，并应提供对应的 `viewBox`；PNG 必须使用未预乘 Alpha 的 RGBA 数据。同一条目不能同时
 存在 SVG 和 PNG。不要把 Inkscape 工程文件、隐藏设计图层或背景画布放入该目录。
 

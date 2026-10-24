@@ -26,10 +26,10 @@ public class RandomJumpCamera(GameWidget gameWidget) : BasePerspectiveCamera(gam
 
         if (_innerRandom.Float(0f, 1f) < _frequency * dt)
         {
-            var subsystemPlayers = GameWidget.SubsystemGameWidgets.Project.FindSubsystem<SubsystemPlayers>(true)!;
-            if (subsystemPlayers.PlayersData.Count > 0)
+            var subsystemCharacters = GameWidget.SubsystemGameWidgets.Project.FindSubsystem<SubsystemCharacters>(true)!;
+            if (subsystemCharacters.Characters.Count > 0)
             {
-                var spawnPosition = subsystemPlayers.PlayersData[0].SpawnPosition;
+                var spawnPosition = subsystemCharacters.Characters[0].SpawnPosition;
                 spawnPosition.X += _innerRandom.Float(-150f, 150f);
                 spawnPosition.Y = _innerRandom.Float(70f, 120f);
                 spawnPosition.Z += _innerRandom.Float(-150f, 150f);

@@ -29,10 +29,10 @@ public class SubsystemBulletBlockBehavior : SubsystemBlockBehavior
         var obj = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (worldItem.Velocity.Length() > 30f)
         {
-            ComponentPlayer? player = null;
+            ComponentCharacter? player = null;
             if (worldItem is Projectile proj)
             {
-                player = proj.Owner?.Entity.FindComponent<ComponentPlayer>();
+                player = proj.Owner?.Entity.FindComponent<ComponentCharacter>();
             }
 
             _subsystemExplosions.TryExplodeBlock(
@@ -40,7 +40,7 @@ public class SubsystemBulletBlockBehavior : SubsystemBlockBehavior
                 cellFace.Value.Y,
                 cellFace.Value.Z,
                 cellValue,
-                player?.PlayerData
+                player?.CharacterData
             );
         }
 

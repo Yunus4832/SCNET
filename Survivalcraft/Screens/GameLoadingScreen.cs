@@ -143,9 +143,9 @@ public class GameLoadingScreen : Screen
                     if (_isAdventureRestart && CommonLib.WorkType == WorkType.Client)
                     {
                         NetworkSender.SendToServer(
-                            PlayerPackageBuilder.Capture(
-                                CommonLib.MainPlayer!,
-                                ComponentPlayerPackage.PlayerAction.IntoPlaying
+                            CharacterPackageBuilder.Capture(
+                                CommonLib.LocalCharacter!,
+                                ComponentCharacterPackage.CharacterAction.IntoPlaying
                             )
                         );
                     }
@@ -187,8 +187,8 @@ public class GameLoadingScreen : Screen
             {
                 SetSpawnDialogMessage("应用初始世界快照", 0.8f);
                 if (_isWorldSnapshotApplied &&
-                    GameManager.Project?.FindSubsystem<SubsystemPlayers>()?.PlayersData
-                        .Any(player => player.IsMainPlayer) ==
+                    GameManager.Project?.FindSubsystem<SubsystemCharacters>()?.Characters
+                        .Any(player => player.IsLocalCharacter) ==
                     true)
                 {
                     ScreensManager.SwitchScreen("Game");
@@ -322,12 +322,16 @@ public class GameLoadingScreen : Screen
         }
     }
 
-    private static void AbortLoading()
+    private void AbortLoading()
     {
         var previous = ScreensManager.PreviousScreen;
         CommonLib.Net.StopImmediate();
         GameManager.DisposeProject();
-        ScreensManager.SwitchScreen(previous);
+        if (previous is null or LoadingScreen or GameLoadingScreen)
+        {
+            ScreensManager.SwitchScreen(_serverPreparation is null ? "Play" : "NetPlay");
+        }
+        else { ScreensManager.SwitchScreen(previous); }
     }
 
     public override void Leave()

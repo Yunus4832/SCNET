@@ -60,7 +60,7 @@ public sealed class ContentServerClientPool(ContentServerClientFactory factory) 
             }
 
             entry.Client ??= factory.Create(entry.Repository);
-            entry.Users++;
+            entry.LeaseCount++;
             return new Lease(entry.Client, () => Release(entry));
         }
     }
@@ -107,7 +107,7 @@ public sealed class ContentServerClientPool(ContentServerClientFactory factory) 
     private static void Retire(Entry entry)
     {
         entry.Retired = true;
-        if (entry.Users == 0)
+        if (entry.LeaseCount == 0)
         {
             entry.Client?.Dispose();
         }
@@ -117,8 +117,8 @@ public sealed class ContentServerClientPool(ContentServerClientFactory factory) 
     {
         lock (_gate)
         {
-            entry.Users--;
-            if (entry.Retired && entry.Users == 0)
+            entry.LeaseCount--;
+            if (entry.Retired && entry.LeaseCount == 0)
             {
                 entry.Client?.Dispose();
             }
@@ -133,7 +133,7 @@ public sealed class ContentServerClientPool(ContentServerClientFactory factory) 
 
         public ContentServerClient? Client { get; set; }
 
-        public int Users { get; set; }
+        public int LeaseCount { get; set; }
 
         public bool Retired { get; set; }
     }

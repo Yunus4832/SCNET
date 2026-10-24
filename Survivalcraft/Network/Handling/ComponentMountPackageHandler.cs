@@ -20,11 +20,11 @@ public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentM
         }
 
         var project = GameManager.Project;
-        var player = project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData
-            .FirstOrDefault(playerData => ReferenceEquals(playerData.Client, context.Sender));
+        var player = project.FindSubsystem<SubsystemCharacters>(true)!.Characters
+            .FirstOrDefault(characterData => ReferenceEquals(characterData.Client, context.Sender));
         if (isServer &&
             (context.Sender is null ||
-             player?.ComponentPlayer?.Entity.EntityId != package.FromId))
+             player?.ComponentCharacter?.Entity.EntityId != package.FromId))
         {
             return;
         }

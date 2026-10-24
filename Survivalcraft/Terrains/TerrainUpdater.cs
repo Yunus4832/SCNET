@@ -299,7 +299,7 @@ public class TerrainUpdater
         _pendingLocations[locationIndex] = location;
         if (_subsystemTerrain.UsesRemoteChunkTransport)
         {
-            NetworkSender.SendToServer(new PlayerDataPackage(location));
+            NetworkSender.SendToServer(new CharacterDataPackage(location));
         }
     }
 
@@ -673,7 +673,7 @@ public class TerrainUpdater
     public void PrepareForDrawing(Camera camera)
     {
         SetUpdateLocation(
-            camera.GameWidget.PlayerData.PlayerIndex,
+            camera.GameWidget.CharacterData.CharacterIndex,
             camera.ViewPosition.XZ,
             SettingsManager.Current.VisibilityRange,
             64f

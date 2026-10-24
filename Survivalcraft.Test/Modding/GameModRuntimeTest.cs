@@ -53,12 +53,12 @@ public class GameModRuntimeTest
 
         Assert.True(ContentManager.ContainsKey("BlocksData.txt"));
         Assert.True(ContentManager.ContainsKey("Fonts/Pericles.lst"));
-        var playerPanelTemplate = ContentManager.Get<XElement>("Widgets/PlayerPanelWidget");
+        var playerPanelTemplate = ContentManager.Get<XElement>("Widgets/MultiplayerPanelWidget");
         var messagePanelTemplate = ContentManager.Get<XElement>("Widgets/MessagePanelWidget");
-        Assert.Equal("PlayerPanelWidget", playerPanelTemplate.Name.LocalName);
+        Assert.Equal("MultiplayerPanelWidget", playerPanelTemplate.Name.LocalName);
         Assert.Equal("MessagePanelWidget", messagePanelTemplate.Name.LocalName);
 
-        var tabsTemplate = playerPanelTemplate.Elements()
+        var tabsTemplate = playerPanelTemplate.Descendants()
             .Single(element => element.Attribute("Name")?.Value == "Tabs");
         new StackPanelWidget().LoadProperties(null, tabsTemplate);
 

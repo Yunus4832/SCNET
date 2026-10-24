@@ -115,16 +115,19 @@ public sealed class PlayerContextActionHooks
     }
 }
 
-public sealed class PlayerContextActionQueryContext(ComponentPlayer componentPlayer, ComponentGui componentGui)
+public sealed class PlayerContextActionQueryContext(ComponentCharacter componentCharacter, ComponentGui componentGui)
 {
-    public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+    public ComponentCharacter ComponentCharacter { get; } = componentCharacter;
 
     public ComponentGui ComponentGui { get; } = componentGui;
 }
 
-public sealed class PlayerContextActionExecutionContext(ComponentPlayer componentPlayer, ComponentGui componentGui)
+public sealed class PlayerContextActionExecutionContext(
+    ComponentCharacter componentCharacter,
+    ComponentGui componentGui
+)
 {
-    public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+    public ComponentCharacter ComponentCharacter { get; } = componentCharacter;
 
     public ComponentGui ComponentGui { get; } = componentGui;
 }

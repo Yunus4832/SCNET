@@ -17,11 +17,11 @@ public static class GameMessageFormatter
         {
             case GameMessageKind.Chat:
                 AppendChannelPrefix(segments, message.Channel);
-                if (!string.IsNullOrWhiteSpace(message.SenderName))
+                if (message.Sender is { } sender)
                 {
                     segments.Add(
                         new MessageSegment(
-                            $"[{message.SenderName}]",
+                            $"[{SenderLabel(sender)}]",
                             MessageTextStyle.Sender
                         )
                     );
@@ -47,6 +47,15 @@ public static class GameMessageFormatter
             case GameMessageKind.Sign:
                 break;
         }
+    }
+
+    private static string SenderLabel(MessageSender sender)
+    {
+        var address = sender.SubjectAddress.Value[..14] + "…";
+        var name = string.IsNullOrWhiteSpace(sender.SubjectName) ? address : $"{sender.SubjectName} · {address}";
+        return sender.CharacterId.HasValue && sender.CharacterName.Length > 0
+            ? $"{sender.CharacterName} ({name})"
+            : name;
     }
 
     private static void AppendChannelPrefix(

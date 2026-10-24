@@ -23,9 +23,9 @@ public sealed class ComponentBehaviorPackageHandler : PackageHandlerBase<Compone
         if (isServer &&
             (package.PackageEventType != ComponentBehaviorPackage.EventType.HumanRow ||
              context.Sender is null ||
-             !project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData.Any(player =>
+             !project.FindSubsystem<SubsystemCharacters>(true)!.Characters.Any(player =>
                  ReferenceEquals(player.Client, context.Sender) &&
-                 player.ComponentPlayer?.Entity.EntityId == package.EntityId
+                 player.ComponentCharacter?.Entity.EntityId == package.EntityId
              )))
         {
             return;

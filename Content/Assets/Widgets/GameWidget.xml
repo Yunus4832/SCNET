@@ -85,9 +85,9 @@
                                     NormalSubtexture="{Textures/Atlas/InventoryButton}"
                                     ClickedSubtexture="{Textures/Atlas/InventoryButton_Pressed}" Margin="0, 3"
                                     IsAutoCheckingEnabled="true"/>
-                <BitmapButtonWidget Name="PlayerListButton" Text="[GameWidget:5]" Size="64, 64"
-                                    NormalSubtexture="{Textures/Atlas/PlayerList}"
-                                    ClickedSubtexture="{Textures/Atlas/PlayerList_Pressed}" Margin="0, 3"/>
+                <BitmapButtonWidget Name="CharacterListButton" Text="[GameWidget:5]" Size="64, 64"
+                                    NormalSubtexture="{Textures/Atlas/CharacterList}"
+                                    ClickedSubtexture="{Textures/Atlas/CharacterList_Pressed}" Margin="0, 3"/>
             </StackPanelWidget>
 
             <StackPanelWidget Name="RightControlsContainer" Direction="Vertical" HorizontalAlignment="Far"

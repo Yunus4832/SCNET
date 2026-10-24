@@ -14,7 +14,7 @@ public class ComponentHealth : Component, IUpdateable
 
     private ComponentOnFire _componentOnFire = null!;
 
-    private ComponentPlayer? _componentPlayer;
+    private ComponentCharacter? _componentCharacter;
 
     private float _lastHealth;
 
@@ -75,18 +75,18 @@ public class ComponentHealth : Component, IUpdateable
             }
 
             var num = 0f;
-            if (_componentPlayer != null)
+            if (_componentCharacter != null)
             {
                 if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Harmless)
                 {
                     num = 0.0166666675f;
                 }
-                else if (_componentPlayer.ComponentSleep.SleepFactor.CloseTo(1f) &&
-                         _componentPlayer.ComponentVitalStats.Food > 0f)
+                else if (_componentCharacter.ComponentSleep.SleepFactor.CloseTo(1f) &&
+                         _componentCharacter.ComponentVitalStats.Food > 0f)
                 {
                     num = 0.00166666671f;
                 }
-                else if (_componentPlayer.ComponentVitalStats.Food > 0.5f)
+                else if (_componentCharacter.ComponentVitalStats.Food > 0.5f)
                 {
                     num = 0.00111111114f;
                 }
@@ -134,16 +134,16 @@ public class ComponentHealth : Component, IUpdateable
         {
             //掉落伤害，这里需要客户端计算伤害同步到服务器
             var num4 = MathUtils.Sqr(MathUtils.Max(num3 - FallResilience, 0f)) / 15f;
-            if (_componentPlayer != null)
+            if (_componentCharacter != null)
             {
-                num4 /= _componentPlayer.ComponentLevel.ResilienceFactor;
+                num4 /= _componentCharacter.ComponentLevel.ResilienceFactor;
             }
 
             var cause = LanguageManager.Get(Name, 2);
             var flagMainRider = _componentCreature.ComponentBody.ChildBodies.Count > 0 &&
-                                _componentCreature.ComponentBody.ChildBodies[0].Player is
-                                    { PlayerData.IsMainPlayer: true };
-            var flagMainPlayer = _componentPlayer is { PlayerData.IsMainPlayer: true };
+                                _componentCreature.ComponentBody.ChildBodies[0].Character is
+                                    { CharacterData.IsLocalCharacter: true };
+            var flagLocalCharacter = _componentCharacter is { CharacterData.IsLocalCharacter: true };
             var flagNoRider = _componentCreature.ComponentBody.ChildBodies.Count == 0;
             if (CommonLib.WorkType == WorkType.Local)
             {
@@ -153,7 +153,7 @@ public class ComponentHealth : Component, IUpdateable
             if (CommonLib.WorkType == WorkType.Server)
             {
                 //是(主玩家、主玩家骑乘的生物、没有被玩家骑乘的生物)计算伤害
-                if (flagMainPlayer || flagMainRider || flagNoRider)
+                if (flagLocalCharacter || flagMainRider || flagNoRider)
                 {
                     Injure(num4, null, false, cause);
                 }
@@ -161,7 +161,7 @@ public class ComponentHealth : Component, IUpdateable
             else if (CommonLib.WorkType == WorkType.Client)
             {
                 //是(主玩家、被主玩家骑乘的生物)计算伤害，请求给服务器
-                if (flagMainPlayer || flagMainRider)
+                if (flagLocalCharacter || flagMainRider)
                 {
                     NetworkSender.SendToServer(
                         EntityStatePackageBuilder.Capture(
@@ -184,7 +184,7 @@ public class ComponentHealth : Component, IUpdateable
         {
             //掉出世界伤害
             Injure(0.1f, null, true, LanguageManager.Get(Name, 3));
-            _componentPlayer?.ComponentGui.DisplaySmallMessage(
+            _componentCharacter?.ComponentGui.DisplaySmallMessage(
                 LanguageManager.Get(Name, 4),
                 Color.White,
                 true,
@@ -196,9 +196,9 @@ public class ComponentHealth : Component, IUpdateable
         if (num5 && Air == 0f)
         {
             var num6 = 0.12f;
-            if (_componentPlayer != null)
+            if (_componentCharacter != null)
             {
-                num6 /= _componentPlayer.ComponentLevel.ResilienceFactor;
+                num6 /= _componentCharacter.ComponentLevel.ResilienceFactor;
             }
 
             //窒息伤害
@@ -208,21 +208,21 @@ public class ComponentHealth : Component, IUpdateable
         if (num5 && (_componentOnFire.IsOnFire || _componentOnFire.TouchesFire))
         {
             var flagMainRider = _componentCreature.ComponentBody.ChildBodies.Count > 0 &&
-                                _componentCreature.ComponentBody.ChildBodies[0].Player is
-                                    { PlayerData.IsMainPlayer: true };
-            var flagMainPlayer = _componentPlayer is { PlayerData.IsMainPlayer: true };
+                                _componentCreature.ComponentBody.ChildBodies[0].Character is
+                                    { CharacterData.IsLocalCharacter: true };
+            var flagLocalCharacter = _componentCharacter is { CharacterData.IsLocalCharacter: true };
             var flagNoRider = _componentCreature.ComponentBody.ChildBodies.Count == 0;
             var num7 = 1f / FireResilience;
-            if (_componentPlayer != null)
+            if (_componentCharacter != null)
             {
-                num7 /= _componentPlayer.ComponentLevel.ResilienceFactor;
+                num7 /= _componentCharacter.ComponentLevel.ResilienceFactor;
             }
 
             var cause = LanguageManager.Get(Name, 5);
             //玩家 TouchesFire 伤害由客户端计算
             if (CommonLib.WorkType == WorkType.Client)
             {
-                if (flagMainPlayer || flagMainRider)
+                if (flagLocalCharacter || flagMainRider)
                 {
                     NetworkSender.SendToServer(
                         EntityStatePackageBuilder.Capture(
@@ -240,7 +240,7 @@ public class ComponentHealth : Component, IUpdateable
 
             if (CommonLib.WorkType == WorkType.Server)
             {
-                if (flagMainPlayer || flagMainRider || flagNoRider)
+                if (flagLocalCharacter || flagMainRider || flagNoRider)
                 {
                     Injure(num7, _componentOnFire.Attacker, false, LanguageManager.Get(Name, 5));
                 }
@@ -278,21 +278,21 @@ public class ComponentHealth : Component, IUpdateable
             RedScreenFactor += -4f * HealthChange;
             if (RunMode.Value is RunModeType.Gui)
             {
-                _componentPlayer?.ComponentGui.HealthBarWidget.Flash(
+                _componentCharacter?.ComponentGui.HealthBarWidget.Flash(
                     MathUtils.Clamp((int)((0f - HealthChange) * 30f), 0, 10)
                 );
             }
         }
 
-        _componentPlayer?.ComponentScreenOverlays.RedOutFactor = MathUtils
+        _componentCharacter?.ComponentScreenOverlays.RedOutFactor = MathUtils
             .Max(
-                _componentPlayer.ComponentScreenOverlays.RedOutFactor,
+                _componentCharacter.ComponentScreenOverlays.RedOutFactor,
                 RedScreenFactor
             );
 
         if (RunMode.Value is RunModeType.Gui)
         {
-            _componentPlayer?.ComponentGui.HealthBarWidget.Value = Health;
+            _componentCharacter?.ComponentGui.HealthBarWidget.Value = Health;
         }
 
         if (Health == 0f && HealthChange < 0f)
@@ -335,7 +335,7 @@ public class ComponentHealth : Component, IUpdateable
 
         //开服后，睡觉恢复速度加快5倍
         if (CommonLib.WorkType == WorkType.Server &&
-            _componentPlayer is
+            _componentCharacter is
                 { ComponentSleep: { SubsystemUpdate.UpdatesPerFrame: 1, IsSleeping: true } })
         {
             amount *= _subsystemGameInfo.WorldSettings.RecoverFactor;
@@ -379,14 +379,14 @@ public class ComponentHealth : Component, IUpdateable
     {
         if (Health > 0f)
         {
-            if (_componentCreature.PlayerStats != null)
+            if (_componentCreature.CharacterStats != null)
             {
                 if (attacker != null)
                 {
-                    _componentCreature.PlayerStats.HitsReceived++;
+                    _componentCreature.CharacterStats.HitsReceived++;
                 }
 
-                _componentCreature.PlayerStats.TotalHealthLost += MathUtils.Min(amount, Health);
+                _componentCreature.CharacterStats.TotalHealthLost += MathUtils.Min(amount, Health);
             }
 
             Health = MathUtils.Max(Health - amount, 0f);
@@ -404,17 +404,17 @@ public class ComponentHealth : Component, IUpdateable
 
                 if (attacker != null)
                 {
-                    var player = Entity.FindComponent<ComponentPlayer>();
-                    var player2 = attacker.Entity.FindComponent<ComponentPlayer>();
+                    var player = Entity.FindComponent<ComponentCharacter>();
+                    var player2 = attacker.Entity.FindComponent<ComponentCharacter>();
                     if (player != null && player2 != null)
                     {
                         CauseOfDeath =
-                            $" 被 {player2.PlayerData.Name} 噶了";
+                            $" 被 {player2.CharacterData.Name} 噶了";
                     }
                 }
 
-                _componentCreature.PlayerStats?.AddDeathRecord(
-                    new PlayerStats.DeathRecord
+                _componentCreature.CharacterStats?.AddDeathRecord(
+                    new CharacterStats.DeathRecord
                     {
                         Day = _subsystemTimeOfDay.Day,
                         Location = _componentCreature.ComponentBody.Position,
@@ -422,25 +422,25 @@ public class ComponentHealth : Component, IUpdateable
                     }
                 );
 
-                var componentPlayer = attacker?.Entity.FindComponent<ComponentPlayer>();
-                if (componentPlayer is not null)
+                var componentCharacter = attacker?.Entity.FindComponent<ComponentCharacter>();
+                if (componentCharacter is not null)
                 {
-                    if (_componentPlayer != null)
+                    if (_componentCharacter != null)
                     {
-                        componentPlayer.PlayerStats.PlayerKills++;
+                        componentCharacter.CharacterStats.PlayerKills++;
                     }
                     else if (_componentCreature.Category is CreatureCategory.LandPredator or CreatureCategory.LandOther)
                     {
-                        componentPlayer.PlayerStats.LandCreatureKills++;
+                        componentCharacter.CharacterStats.LandCreatureKills++;
                     }
                     else if (_componentCreature.Category is CreatureCategory.WaterPredator
                              or CreatureCategory.WaterOther)
                     {
-                        componentPlayer.PlayerStats.WaterCreatureKills++;
+                        componentCharacter.CharacterStats.WaterCreatureKills++;
                     }
                     else
                     {
-                        componentPlayer.PlayerStats.AirCreatureKills++;
+                        componentCharacter.CharacterStats.AirCreatureKills++;
                     }
 
                     var num = (int)MathUtils.Ceiling(_componentCreature.ComponentHealth.AttackResilience / 12f);
@@ -475,7 +475,7 @@ public class ComponentHealth : Component, IUpdateable
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _subsystemPickables = Project.FindSubsystem<SubsystemPickables>(true)!;
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>();
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>();
         _componentOnFire = Entity.FindComponent<ComponentOnFire>(true)!;
         AttackResilience = valuesDictionary.GetValue<float>("AttackResilience");
         FallResilience = valuesDictionary.GetValue<float>("FallResilience");
@@ -490,7 +490,7 @@ public class ComponentHealth : Component, IUpdateable
         DeathTime = value >= 0.0 ? new double?(value) : null;
         CauseOfDeath = valuesDictionary.GetValue<string>("CauseOfDeath");
         if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
-            Entity.FindComponent<ComponentPlayer>() != null)
+            Entity.FindComponent<ComponentCharacter>() != null)
         {
             IsInvulnerable = true;
         }

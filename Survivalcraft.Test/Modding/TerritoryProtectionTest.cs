@@ -8,16 +8,37 @@ using EntitySystem.Core;
 using Game;
 using Game.Modding;
 using Game.Network;
+using Game.Protocol.Identity;
 using Game.Subsystems;
+using Game.Teams;
 using Game.Terrains;
 
+using Survivalcraft.Test.Subsystems;
+
 using TerritoryStoneMod;
+
+using static Survivalcraft.Test.Modding.TerritoryTestIdentity;
 
 namespace Survivalcraft.Test.Modding;
 
 [Collection(ConfigFileCollection.Name)]
-public class TerritoryProtectionTest
+public class TerritoryProtectionTest : IDisposable
 {
+    private readonly Dictionary<int, Client> _previousClients = CommonLib.Net.Clients;
+
+    private readonly TeamProject _project = new();
+
+    public TerritoryProtectionTest()
+    {
+        CommonLib.Net.Clients = [];
+    }
+
+    public void Dispose()
+    {
+        CommonLib.Net.Clients = _previousClients;
+        _project.Dispose();
+    }
+
     [Fact]
     public void PistonUsesTheModBlocksMovabilityContractWithoutAKnownIndexCase()
     {
@@ -37,11 +58,11 @@ public class TerritoryProtectionTest
         CommonLib.WorkType = WorkType.Local;
         try
         {
-            var territory = new Territory(Guid.NewGuid(), new Point3(0, 64, 0));
+            var territory = new Territory(Address(), new Point3(0, 64, 0));
             var owner = Player(territory.Owner);
-            var stranger = Player(Guid.NewGuid());
-            var administrator = Player(Guid.NewGuid());
-            administrator.ServerManager = true;
+            var stranger = Player(Address());
+            var administrator = Player(Address());
+            administrator.Client!.Subject!.Permissions.Grant(TerritoryProtection.AdminPermission, false);
 
             Assert.True(TerritoryProtection.CanDig(territory, owner));
             Assert.True(TerritoryProtection.CanPlace(territory, administrator));
@@ -56,6 +77,24 @@ public class TerritoryProtectionTest
         }
     }
 
+    [Fact]
+    public void RoleOwnershipAndLocalCharacterStatusDoNotGrantSubjectPermissions()
+    {
+        var owner = Address();
+        var territory = new Territory(owner, new Point3(0, 64, 0));
+        var controlled = Player(Address());
+        controlled.OwnerAddress = owner;
+        typeof(CharacterData).GetProperty(nameof(CharacterData.IsLocalCharacter))!.SetValue(controlled, true);
+        Assert.False(TerritoryProtection.AllowsOwner(territory, controlled));
+        Assert.False(TerritoryProtection.CanDig(territory, controlled));
+        var actor = controlled.Client!.Subject!;
+        territory.SetGrant(actor.Address, "Actual actor", TerritoryPermission.Dig);
+        Assert.True(TerritoryProtection.CanDig(territory, controlled));
+        Assert.False(TerritoryProtection.CanPlace(territory, controlled));
+        actor.Permissions.Grant(TerritoryProtection.AdminPermission, false);
+        Assert.True(TerritoryProtection.CanPlace(territory, controlled));
+    }
+
     [Theory]
     [InlineData(true, false)]
     [InlineData(false, true)]
@@ -64,11 +103,11 @@ public class TerritoryProtectionTest
     public void NonMemberDiggingAndPlacingAreIndependent(bool digging, bool placing)
     {
         var territory = new Territory(
-            Guid.NewGuid(),
+            Address(),
             new Point3(0, 64, 0),
             new TerritorySettings(AllowDigging: digging, AllowPlacing: placing)
         );
-        var player = Player(Guid.NewGuid());
+        var player = Player(Address());
         Assert.Equal(digging, TerritoryProtection.CanDig(territory, player));
         Assert.Equal(placing, TerritoryProtection.CanPlace(territory, player));
         Assert.True(TerritoryProtection.CanDig(territory, null));
@@ -78,20 +117,16 @@ public class TerritoryProtectionTest
     [Fact]
     public void TeamMembershipDoesNotGrantTerritoryPermissions()
     {
-        var owner = Guid.NewGuid();
-        var teammate = Player(Guid.NewGuid());
-        var project = new TeamProject();
-        var group = new SubsystemPlayers.Group();
-        group.Members.Add(owner);
-        group.Members.Add(teammate.PlayerGUID);
-        project.Players.ServerGroups.Add("team", group);
-        teammate.GroupKey = "team";
-        typeof(PlayerData).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .SetValue(teammate, project);
+        var owner = Address();
+        var teammate = Player(Address());
+        _project.Players.Store.GetOrCreate(owner);
+        _project.Teams.Store.Replace(
+            [new Team(Guid.NewGuid(), "Team", owner, [owner, teammate.Client!.PlayerAddress!.Value])]
+        );
         var restricted = new Territory(owner, new Point3(0, 64, 0));
         Assert.False(TerritoryProtection.CanDig(restricted, teammate));
         Assert.False(TerritoryProtection.CanPlace(restricted, teammate));
-        restricted.SetGrant(teammate.PlayerGUID, "Teammate", TerritoryPermission.Dig);
+        restricted.SetGrant(teammate.Client!.PlayerAddress!.Value, "Teammate", TerritoryPermission.Dig);
         Assert.True(TerritoryProtection.CanDig(restricted, teammate));
         Assert.False(TerritoryProtection.CanPlace(restricted, teammate));
         Assert.False(TerritoryProtection.AllowsOwner(restricted, teammate));
@@ -115,12 +150,12 @@ public class TerritoryProtectionTest
         try
         {
             var territory = new Territory(
-                Guid.NewGuid(),
+                Address(),
                 new Point3(0, 64, 0),
                 new TerritorySettings(AllowExit: false)
             );
-            var player = Player(Guid.NewGuid());
-            territory.SetGrant(player.PlayerGUID, "Visitor", permissions);
+            var player = Player(Address());
+            territory.SetGrant(player.Client!.PlayerAddress!.Value, "Visitor", permissions);
             Assert.Equal(enter, TerritoryProtection.CanCross(territory, player, false));
             Assert.Equal(exit, TerritoryProtection.CanCross(territory, player, true));
             Assert.Equal(dig, TerritoryProtection.CanDig(territory, player));
@@ -140,10 +175,10 @@ public class TerritoryProtectionTest
         CommonLib.WorkType = WorkType.Local;
         try
         {
-            var territory = new Territory(Guid.NewGuid(), new Point3(0, 64, 0));
-            var player = Player(Guid.NewGuid());
-            territory.SetGrant(player.PlayerGUID, "Visitor", TerritoryPermission.Enter);
-            territory.SetGrant(player.PlayerGUID, "Visitor", TerritoryPermission.None);
+            var territory = new Territory(Address(), new Point3(0, 64, 0));
+            var player = Player(Address());
+            territory.SetGrant(player.Client!.PlayerAddress!.Value, "Visitor", TerritoryPermission.Enter);
+            territory.SetGrant(player.Client!.PlayerAddress!.Value, "Visitor", TerritoryPermission.None);
             Assert.True(TerritoryProtection.CanCross(territory, player, true));
             Assert.False(TerritoryProtection.CanCross(territory, player, false));
             var position = new Vector3(territory.MaxX + 0.1f, 64, 0);
@@ -171,14 +206,37 @@ public class TerritoryProtectionTest
     {
         public SubsystemPlayers Players { get; } = new();
 
-        public TeamProject() => subsystems.Add(Players);
+        public SubsystemCharacters Characters { get; } = new();
+
+        public SubsystemPositionMarks Marks { get; } = new();
+
+        public SubsystemTeams Teams { get; }
+
+        public TeamProject()
+        {
+            Teams = TeamTestSupport.CreateSubsystem(Players.Store);
+            subsystems.Add(Players);
+            subsystems.Add(Characters);
+            subsystems.Add(Marks);
+            WorldSubsystemTestSupport.Attach(this, Players);
+            WorldSubsystemTestSupport.Attach(this, Characters);
+            WorldSubsystemTestSupport.Attach(this, Marks);
+            subsystems.Add(Teams);
+        }
     }
 
-    private static PlayerData Player(Guid guid)
+    private CharacterData Player(PlayerAddress address)
     {
-        var player = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData));
-        player.PlayerGUID = guid;
-        player.GroupKey = string.Empty;
+        var player = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
+        player.CharacterId = Guid.NewGuid();
+        player.OwnerAddress = address;
+        player.SubsystemCharacters = _project.Characters;
+        typeof(CharacterData).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(player, _project);
+        _project.Players.Store.GetOrCreate(address);
+        var id = (byte)(CommonLib.Net.Clients.Count + 1);
+        CommonLib.Net.Clients[id] = new Client(null, id, Guid.NewGuid(), player.CharacterId, _project)
+            { PlayerAddress = address };
         return player;
     }
 }

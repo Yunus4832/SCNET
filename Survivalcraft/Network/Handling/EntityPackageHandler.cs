@@ -34,25 +34,28 @@ public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
         {
             case EntityPackage.EventType.LoadOne:
             case EntityPackage.EventType.LoadList:
-                foreach (var snapshot in package.Players)
+                foreach (var snapshot in package.Characters)
                 {
                     if (snapshot.Client is { } client && !netNode.Clients.ContainsKey(client.ID))
                     {
-                        PackageDispatcher.Handle(new ClientPackage(client.ID, client.TokenId, client.GUID), context);
+                        PackageDispatcher.Handle(
+                            new ClientPackage(client.ID, client.TokenId, client.CharacterId, client.PlayerAddress),
+                            context
+                        );
                     }
                 }
 
-                var players = project.FindSubsystem<SubsystemPlayers>(true)!;
-                foreach (var snapshot in package.Players)
+                var players = project.FindSubsystem<SubsystemCharacters>(true)!;
+                foreach (var snapshot in package.Characters)
                 {
                     var values = new EntitySystem.TemplatesDatabase.ValuesDictionary();
                     values.ApplyOverridesUseMessagePack(snapshot.Data);
-                    var guid = values.GetValue("PlayerGUID", Guid.Empty);
-                    if (players.PlayersData.All(player => player.PlayerGUID != guid))
+                    var guid = values.GetValue("CharacterId", Guid.Empty);
+                    if (players.Characters.All(player => player.CharacterId != guid))
                     {
-                        var player = new PlayerData(project);
+                        var player = new CharacterData(project);
                         player.Load(values);
-                        players.AddPlayerData(player);
+                        players.AddCharacterData(player);
                     }
                 }
 

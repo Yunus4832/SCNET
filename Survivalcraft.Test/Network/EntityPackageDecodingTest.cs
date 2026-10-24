@@ -18,7 +18,7 @@ public sealed class EntityPackageDecodingTest
 
         Assert.Equal(type, package.Type);
         Assert.Equal(payload, package.EntityData);
-        Assert.Empty(package.PlayerEntities);
+        Assert.Empty(package.CharacterEntities);
         Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
     }
 }

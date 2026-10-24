@@ -18,7 +18,7 @@ public class ComponentHumanModel : ComponentCreatureModel
 
     private ComponentMiner? _componentMiner;
 
-    private ComponentPlayer? _componentPlayer;
+    private ComponentCharacter? _componentCharacter;
 
     private ComponentRider? _componentRider;
 
@@ -216,7 +216,7 @@ public class ComponentHumanModel : ComponentCreatureModel
         {
             if (CommonLib.WorkType == WorkType.Client)
             {
-                if (Entity.FindComponent<ComponentPlayer>()?.PlayerData.IsMainPlayer == true)
+                if (Entity.FindComponent<ComponentCharacter>()?.CharacterData.IsLocalCharacter == true)
                 {
                     NetworkSender.SendToServer(BehaviorPackageBuilder.Capture(this));
                 }
@@ -521,7 +521,7 @@ public class ComponentHumanModel : ComponentCreatureModel
             );
         }
 
-        if (_componentPlayer != null && camera.GameWidget.PlayerData != _componentPlayer.PlayerData)
+        if (_componentCharacter != null && camera.GameWidget.CharacterData != _componentCharacter.CharacterData)
         {
             var position =
                 Vector3.Transform(
@@ -554,7 +554,7 @@ public class ComponentHumanModel : ComponentCreatureModel
                             BlendState.AlphaBlend,
                             SamplerState.LinearClamp
                         ).QueueText(
-                            _componentPlayer.PlayerData.Name,
+                            _componentCharacter.CharacterData.Name,
                             position,
                             right,
                             down,
@@ -578,7 +578,7 @@ public class ComponentHumanModel : ComponentCreatureModel
         _componentMiner = Entity.FindComponent<ComponentMiner>();
         _componentRider = Entity.FindComponent<ComponentRider>();
         _componentSleep = Entity.FindComponent<ComponentSleep>();
-        _componentPlayer = Entity.FindComponent<ComponentPlayer>();
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>();
         _walkAnimationSpeed = valuesDictionary.GetValue<float>("WalkAnimationSpeed");
         _walkBobHeight = valuesDictionary.GetValue<float>("WalkBobHeight");
         _walkLegsAngle = valuesDictionary.GetValue<float>("WalkLegsAngle");

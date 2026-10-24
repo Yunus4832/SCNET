@@ -107,8 +107,8 @@ public class SubsystemUpdate : Subsystem
     {
         return updateable switch
         {
-            ComponentGui componentGui => componentGui.ComponentPlayer is { IsLocallyControlled: true },
-            ComponentInput componentInput => componentInput.ComponentPlayer is { IsLocallyControlled: true },
+            ComponentGui componentGui => componentGui.ComponentCharacter is { IsLocallyControlled: true },
+            ComponentInput componentInput => componentInput.ComponentCharacter is { IsLocallyControlled: true },
             _ => true
         };
     }

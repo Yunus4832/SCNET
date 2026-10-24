@@ -3,6 +3,7 @@ using EntitySystem.Core;
 using Game.Commands;
 using Game.Localization;
 using Game.Network.Transport;
+using Game.Protocol.Identity;
 
 namespace Game.Network.Handling;
 
@@ -12,9 +13,9 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
     private static readonly long _minimumCommandInterval = Math.Max(1, Stopwatch.Frequency / 10);
 
-    private readonly Dictionary<Guid, long> _lastCommandTimestamp = [];
+    private readonly Dictionary<PlayerAddress, long> _lastCommandTimestamp = [];
 
-    private readonly Dictionary<Guid, long> _lastSuggestionTimestamp = [];
+    private readonly Dictionary<PlayerAddress, long> _lastSuggestionTimestamp = [];
 
     public override void Handle(CommandPackage package, PackageReceiveContext context)
     {
@@ -30,6 +31,8 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             if (package.Mode is CommandPackage.CommandPackageMode.SuggestionRequest)
             {
                 if (context.Sender is not { } sender ||
+                    sender.Subject is null ||
+                    sender.PlayerAddress is null ||
                     package.Input.Length > _maximumCommandLength ||
                     CurrentModRuntime.Value is not { } runtime)
                 {
@@ -37,7 +40,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
                 }
 
                 var now = Stopwatch.GetTimestamp();
-                if (_lastSuggestionTimestamp.TryGetValue(sender.GUID, out var last) &&
+                if (_lastSuggestionTimestamp.TryGetValue(sender.PlayerAddress!.Value, out var last) &&
                     now - last < _minimumCommandInterval)
                 {
                     return;
@@ -48,10 +51,10 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
                     _lastSuggestionTimestamp.Clear();
                 }
 
-                _lastSuggestionTimestamp[sender.GUID] = now;
+                _lastSuggestionTimestamp[sender.PlayerAddress!.Value] = now;
                 var suggestions = new TextCommandAdapter(runtime.Commands).Suggest(
                     package.Input,
-                    CommandPrincipal.FromPlayer(sender.PlayerData)
+                    CommandPrincipal.FromSession(sender)
                 );
                 netNode.QueuePackage(
                     CommandPackage.CreateSuggestions(package.Input, package.CorrelationId, suggestions),
@@ -66,7 +69,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
         if (package.Mode is CommandPackage.CommandPackageMode.Suggestions)
         {
-            CommonLib.MainPlayer?.GameWidget.MessagePanel?.ReceiveSuggestions(
+            CommonLib.LocalCharacter?.GameWidget.MessagePanel?.ReceiveSuggestions(
                 package.Input,
                 package.CorrelationId,
                 package.Suggestions.Select(value => value with
@@ -98,29 +101,24 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
         if (package.Mode is CommandPackage.CommandPackageMode.PermissionSnapshot)
         {
-            var players = GameManager.Project.FindSubsystem<SubsystemPlayers>(true)!;
-            players.FindPlayerData(player => player.PlayerGUID == package.PlayerGuid)?
-                .CommandPermissions.Replace(package.PermissionGrants);
-            if (CommonLib.MainPlayer?.PlayerData.PlayerGUID == package.PlayerGuid)
+            if (package.PlayerAddress is not { } address || CommonLib.Net.Self?.PlayerAddress != address)
             {
-                GameManager.Project.FindSubsystem<SubsystemGameWidgets>(true)!
-                    .Messages.DisplayLocal(
-                        GameMessage.Command(
-                            CommandText.Get(
-                                "PermissionUpdated_Message",
-                                "你的指令权限已更新。"
-                            ),
-                            success: true
-                        )
-                    );
+                return;
             }
+
+            var players = GameManager.Project.FindSubsystem<SubsystemPlayers>(true)!;
+            players.Store.GetOrCreate(address).Permissions.Replace(package.PermissionGrants);
+            GameManager.Project.FindSubsystem<SubsystemGameWidgets>(true)!.Messages.DisplayLocal(
+                GameMessage.Command(CommandText.Get("PermissionUpdated_Message", "你的指令权限已更新。"), success: true)
+            );
         }
     }
 
     private void HandleServer(CommandPackage package, Project project, PackageReceiveContext context)
     {
         if (package.Mode is not CommandPackage.CommandPackageMode.Request ||
-            context.Sender is null)
+            context.Sender?.Subject is null ||
+            context.Sender.PlayerAddress is null)
         {
             return;
         }
@@ -139,7 +137,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             }
         }
 
-        if (_lastCommandTimestamp.TryGetValue(context.Sender.GUID, out var last) &&
+        if (_lastCommandTimestamp.TryGetValue(context.Sender.PlayerAddress!.Value, out var last) &&
             now - last < _minimumCommandInterval)
         {
             result = CommandResult.LocalizedFail(
@@ -150,8 +148,8 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
         }
         else
         {
-            _lastCommandTimestamp[context.Sender.GUID] = now;
-            result = ExecuteRequest(package, context.Sender.PlayerData);
+            _lastCommandTimestamp[context.Sender.PlayerAddress!.Value] = now;
+            result = ExecuteRequest(package, context.Sender, project);
         }
 
         CommandResultPublisher.PublishRemote(
@@ -164,7 +162,8 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
     private static CommandResult ExecuteRequest(
         CommandPackage package,
-        PlayerData player
+        Client session,
+        Project project
     )
     {
         if (CurrentModRuntime.Value is not { } runtime)
@@ -190,8 +189,8 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             command!,
             new CommandContext(
                 CommandInvocationChannel.Network,
-                CommandPrincipal.FromPlayer(player),
-                player.Project,
+                CommandPrincipal.FromSession(session),
+                project,
                 package.CorrelationId
             )
         );

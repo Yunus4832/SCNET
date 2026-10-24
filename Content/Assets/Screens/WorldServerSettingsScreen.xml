@@ -95,31 +95,64 @@
                             </UniformSpacingPanelWidget>
 
                             <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                                <LabelWidget Text="[WorldServerSettingsScreen:P2PTitle]" HorizontalAlignment="Far" VerticalAlignment="Center"
-                                             TextAnchor="Right, VerticalCenter" Margin="20, 0"/>
-                                <BevelledButtonWidget Name="P2P" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0"/>
+                                <CanvasWidget Size="Infinity, 58" HorizontalAlignment="Far"
+                                              VerticalAlignment="Center" Margin="20, 0">
+                                    <LabelWidget Text="[WorldServerSettingsScreen:P2PTitle]"
+                                                 HorizontalAlignment="Far" VerticalAlignment="Center"
+                                                 TextAnchor="Right, VerticalCenter"/>
+                                </CanvasWidget>
+                                <BevelledButtonWidget Name="P2P" Style="{Styles/ButtonStyle_310x60}"
+                                                      VerticalAlignment="Center" Margin="20, 0"/>
                             </UniformSpacingPanelWidget>
 
                             <StackPanelWidget Name="P2POptions" Direction="Vertical" IsEnabled="false">
                                 <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                                    <CanvasWidget Size="310, 60" HorizontalAlignment="Far" VerticalAlignment="Near" Margin="20, 0"><LabelWidget Text="[WorldServerSettingsScreen:P2PService]" HorizontalAlignment="Far" VerticalAlignment="Center" TextAnchor="Right, VerticalCenter"/></CanvasWidget>
-                                    <InlineSelectionWidget Name="P2PService" CollapsedSize="310, 60" VerticalAlignment="Near" Margin="20, 0" MaxVisibleItems="4"/>
+                                    <CanvasWidget Size="Infinity, 60" HorizontalAlignment="Far"
+                                                  VerticalAlignment="Near" Margin="20, 0">
+                                        <LabelWidget Text="[WorldServerSettingsScreen:P2PService]"
+                                                     HorizontalAlignment="Far" VerticalAlignment="Center"
+                                                     TextAnchor="Right, VerticalCenter"/>
+                                    </CanvasWidget>
+                                    <InlineSelectionWidget Name="P2PService" CollapsedSize="310, 60"
+                                                           VerticalAlignment="Near" Margin="20, 0" MaxVisibleItems="4"/>
                                 </UniformSpacingPanelWidget>
                                 <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                                    <LabelWidget Text="[WorldServerSettingsScreen:P2PRoomName]" HorizontalAlignment="Far" VerticalAlignment="Center" TextAnchor="Right, VerticalCenter" Margin="20, 0"/>
-                                    <CanvasWidget Size="310, 50" VerticalAlignment="Center" Margin="20, 5"><BevelledRectangleWidget Style="{Styles/TextBoxArea}"/><TextBoxWidget Name="P2PName" Size="310, 50" VerticalAlignment="Center" Margin="10, 0"/></CanvasWidget>
+                                    <CanvasWidget Size="Infinity, 58" HorizontalAlignment="Far"
+                                                  VerticalAlignment="Center" Margin="20, 0">
+                                        <LabelWidget Text="[WorldServerSettingsScreen:P2PRoomName]"
+                                                     HorizontalAlignment="Far" VerticalAlignment="Center"
+                                                     TextAnchor="Right, VerticalCenter"/>
+                                    </CanvasWidget>
+                                    <CanvasWidget Size="310, 50" VerticalAlignment="Center" Margin="20, 5">
+                                        <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                                        <TextBoxWidget Name="P2PName" Size="310, 50" VerticalAlignment="Center" Margin="10, 0"/>
+                                    </CanvasWidget>
                                 </UniformSpacingPanelWidget>
                                 <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                                    <LabelWidget Text="[WorldServerSettingsScreen:P2PDescription]" HorizontalAlignment="Far" VerticalAlignment="Center" TextAnchor="Right, VerticalCenter" Margin="20, 0"/>
-                                    <CanvasWidget Size="310, 50" VerticalAlignment="Center" Margin="20, 5"><BevelledRectangleWidget Style="{Styles/TextBoxArea}"/><TextBoxWidget Name="P2PDescription" Size="310, 50" VerticalAlignment="Center" Margin="10, 0"/></CanvasWidget>
+                                    <CanvasWidget Size="Infinity, 58" HorizontalAlignment="Far"
+                                                  VerticalAlignment="Center" Margin="20, 0">
+                                        <LabelWidget Text="[WorldServerSettingsScreen:P2PDescription]"
+                                                     HorizontalAlignment="Far" VerticalAlignment="Center"
+                                                     TextAnchor="Right, VerticalCenter"/>
+                                    </CanvasWidget>
+                                    <CanvasWidget Size="310, 50" VerticalAlignment="Center" Margin="20, 5">
+                                        <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                                        <TextBoxWidget Name="P2PDescription" Size="310, 50"
+                                                       VerticalAlignment="Center" Margin="10, 0"/>
+                                    </CanvasWidget>
                                 </UniformSpacingPanelWidget>
                                 <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                                    <LabelWidget Text="[WorldServerSettingsScreen:P2PPublic]" HorizontalAlignment="Far" VerticalAlignment="Center" TextAnchor="Right, VerticalCenter" Margin="20, 0"/>
-                                    <BevelledButtonWidget Name="P2PPublic" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0"/>
+                                    <CanvasWidget Size="Infinity, 58" HorizontalAlignment="Far"
+                                                  VerticalAlignment="Center" Margin="20, 0">
+                                        <LabelWidget Text="[WorldServerSettingsScreen:P2PPublic]"
+                                                     HorizontalAlignment="Far" VerticalAlignment="Center"
+                                                     TextAnchor="Right, VerticalCenter"/>
+                                    </CanvasWidget>
+                                    <BevelledButtonWidget Name="P2PPublic" Style="{Styles/ButtonStyle_310x60}"
+                                                          VerticalAlignment="Center" Margin="20, 0"/>
                                 </UniformSpacingPanelWidget>
-
+                            </StackPanelWidget>
                         </StackPanelWidget>
-                    </StackPanelWidget>
                     </StackPanelWidget>
                 </ScrollPanelWidget>
             </CanvasWidget>

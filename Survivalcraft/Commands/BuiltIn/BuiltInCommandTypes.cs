@@ -126,21 +126,31 @@ public sealed record RegenerateServerAuthCodeCommand : IGameCommand;
 
 public sealed record ShowPermissionHelpCommand : IGameCommand;
 
-public sealed record ListPermissionPlayersCommand : IGameCommand;
+public sealed record ListPermissionUsersCommand : IGameCommand;
 
 public sealed record ListPermissionNodesCommand : IGameCommand;
 
 public sealed record ListOwnPermissionsCommand : IGameCommand;
 
-public sealed record ListPlayerPermissionsCommand(string Player) : IGameCommand;
+public sealed record ListUserPermissionsCommand(string User) : IGameCommand;
 
-public sealed record GrantPlayerPermissionCommand(
-    string Player,
+public sealed record GrantUserPermissionCommand(
+    string User,
     string Permission,
     bool CanDelegate
 ) : IGameCommand;
 
-public sealed record RevokePlayerPermissionCommand(
-    string Player,
+public sealed record RevokeUserPermissionCommand(
+    string User,
     string Permission
 ) : IGameCommand;
+
+public sealed record BanUserCommand(string User, string Reason) : IGameCommand;
+
+public sealed record UnbanUserCommand(string User) : IGameCommand;
+
+public sealed record ListPlayerBansCommand : IGameCommand;
+
+public sealed record SetUserMuteCommand(string User, bool IsMuted) : IGameCommand;
+
+public sealed record ListMutedUsersCommand : IGameCommand;

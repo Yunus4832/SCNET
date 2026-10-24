@@ -95,12 +95,12 @@ public static class ScreenCaptureManager
         {
             if (!SettingsManager.Current.ShowGuiInScreenshots)
             {
-                foreach (var componentPlayer in GameManager.Project.FindSubsystem<SubsystemPlayers>(true)!
-                             .ComponentPlayers)
+                foreach (var componentCharacter in GameManager.Project.FindSubsystem<SubsystemCharacters>(true)!
+                             .ComponentCharacters)
                 {
-                    dictionary[componentPlayer.ComponentGui] =
-                        componentPlayer.ComponentGui.ControlsContainerWidget.IsVisible;
-                    componentPlayer.ComponentGui.ControlsContainerWidget.IsVisible = false;
+                    dictionary[componentCharacter.ComponentGui] =
+                        componentCharacter.ComponentGui.ControlsContainerWidget.IsVisible;
+                    componentCharacter.ComponentGui.ControlsContainerWidget.IsVisible = false;
                 }
             }
 

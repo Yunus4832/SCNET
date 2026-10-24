@@ -13,7 +13,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 {
     private readonly BlockIconWidget _blockIconWidget;
 
-    private ComponentPlayer? _componentPlayer;
+    private ComponentCharacter? _componentCharacter;
 
     private readonly LabelWidget _countWidget;
 
@@ -250,7 +250,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                 _inventory,
                 _slotIndex,
                 ProcessingOnly,
-                _componentPlayer
+                _componentCharacter
             );
         }
     }
@@ -268,8 +268,8 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         _inventory = inventory;
         _slotIndex = slotIndex;
         _subsystemTerrain = inventory?.Project.FindSubsystem<SubsystemTerrain>(true)!;
-        _componentPlayer = inventory is Component component
-            ? component.Entity.FindComponent<ComponentPlayer>()
+        _componentCharacter = inventory is Component component
+            ? component.Entity.FindComponent<ComponentCharacter>()
             : null;
         _blockIconWidget.Catalog = CurrentModRuntime.Value!.RequireWorldCatalog();
         _blockIconWidget.DrawBlockEnvironmentData.SubsystemTerrain = _subsystemTerrain;
@@ -289,9 +289,9 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         var num = Terrain.ExtractContents(slotValue);
         var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         UpdateEnvironmentData(_blockIconWidget.DrawBlockEnvironmentData);
-        if (_componentPlayer != null)
+        if (_componentCharacter != null)
         {
-            _blockIconWidget.DrawBlockEnvironmentData.InWorldMatrix = _componentPlayer.ComponentBody.Matrix;
+            _blockIconWidget.DrawBlockEnvironmentData.InWorldMatrix = _componentCharacter.ComponentBody.Matrix;
         }
 
         if (_focus && !input.Press.HasValue)
@@ -566,9 +566,9 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         _inventoryDragData = null;
     }
 
-    private ComponentPlayer? GetViewPlayer()
+    private ComponentCharacter? GetViewPlayer()
     {
-        return GameWidget?.PlayerData.ComponentPlayer;
+        return GameWidget?.CharacterData.ComponentCharacter;
     }
 
     private bool IsSplitMode()
@@ -610,7 +610,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                 return false;
             }
 
-            var player = component.Entity.FindComponent<ComponentPlayer>();
+            var player = component.Entity.FindComponent<ComponentCharacter>();
             player?.ComponentGui.DisplaySmallMessage("此物品已被禁用", Color.Red, false, true);
 
             return false;
@@ -672,7 +672,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         IInventory targetInventory,
         int targetSlotIndex,
         bool processingOnly,
-        ComponentPlayer? componentPlayer = null
+        ComponentCharacter? componentCharacter = null
     )
     {
         var sourceValue = sourceInventory.GetSlotValue(sourceSlotIndex);
@@ -691,7 +691,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                 return false;
             }
 
-            var player = component.Entity.FindComponent<ComponentPlayer>();
+            var player = component.Entity.FindComponent<ComponentCharacter>();
             player?.ComponentGui.DisplaySmallMessage("此物品已被禁用", Color.Red, false, true);
 
             return false;
@@ -790,7 +790,8 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             }
         }
 
-        if (flag && componentPlayer is { PlayerData.IsMainPlayer: true }) // 一堆人移动物品的话，会导致房主出现一堆杂音，没法比只好房主没有声音了
+        if (flag &&
+            componentCharacter is { CharacterData.IsLocalCharacter: true }) // 一堆人移动物品的话，会导致房主出现一堆杂音，没法比只好房主没有声音了
         {
             AudioManager.PlaySound("Audio/UI/ItemMoved", 1f, 0f, 0f);
         }

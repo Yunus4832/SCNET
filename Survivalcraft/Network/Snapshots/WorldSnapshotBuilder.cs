@@ -40,7 +40,7 @@ public static class WorldSnapshotBuilder
         Guid epoch,
         Project project,
         IEnumerable<Client> clients,
-        IEnumerable<PlayerData> players,
+        IEnumerable<CharacterData> players,
         IEnumerable<Entity> source
     )
     {
@@ -49,7 +49,7 @@ public static class WorldSnapshotBuilder
         {
             Epoch = epoch,
             ClientList = ClientPackageBuilder.Snapshot(clients),
-            Players = players.Select(player =>
+            Characters = players.Select(player =>
                 {
                     var values = new ValuesDictionary();
                     player.Save(values);
@@ -57,7 +57,7 @@ public static class WorldSnapshotBuilder
                 }
             ).ToArray(),
             EntityData = EntitySnapshotSerializer.Serialize(project, entities),
-            PlayerEntities = EntitySnapshotSerializer.CapturePlayerEntities(entities)
+            CharacterEntities = EntitySnapshotSerializer.CaptureCharacterEntities(entities)
         };
     }
 

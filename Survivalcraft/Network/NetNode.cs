@@ -8,6 +8,7 @@ using Game.Commands;
 using Game.Network.Diagnostics;
 using Game.Network.Handling;
 using Game.Network.Transport;
+using Game.Protocol.Identity;
 using Game.Servers;
 
 using LiteNetLib.Utils;
@@ -114,6 +115,8 @@ public class NetNode
 
     private bool _isStopping;
 
+    private bool _leaveWorldOnStop;
+
     public Action<Client>? OnClientStateChanged;
 
     public Action<Client>? OnClientTransportConnected;
@@ -142,7 +145,7 @@ public class NetNode
 
     public bool IsServer => CurrentStage == Stage.Connected && Self == Server;
 
-    public int ClientCount => Peers.Count() + 1;
+    public int ClientCount => Clients.Values.Count(client => client.PlayerAddress is not null);
 
     private Client? ResolveSender(
         NetworkConnection? peer = null,
@@ -222,17 +225,6 @@ public class NetNode
             throw new InvalidOperationException("creating client as non-server");
         }
 
-        // 下一帧移除，否则会报错集合已更改
-        foreach (var p in Peers)
-        {
-            if (p.GUID != guid)
-            {
-                continue;
-            }
-
-            RemoveClient(p, "相同的联机客户端 ID 已经连接");
-        }
-
         var client = new Client(peer, FindUnusedIndex(), tokenId, guid, GameManager.Project);
         _transportClients[peer.Id] = client;
         return client;
@@ -270,8 +262,9 @@ public class NetNode
     {
         if (client == Self)
         {
-            // 如果是自己，停止服务器
-            Stop();
+            // A removed GUI host must leave its authoritative world as well as stop transport.
+            _leaveWorldOnStop = RunMode.Value == RunModeType.Gui && CommonLib.WorkType == WorkType.Server;
+            Stop(reason);
             return;
         }
 
@@ -292,6 +285,11 @@ public class NetNode
             Stop();
             CurrentStage = Stage.NotConnected;
             return;
+        }
+
+        if (IsServer && client.PlayerAddress is { } playerAddress)
+        {
+            GameManager.Project?.FindSubsystem<SubsystemTeams>()?.CancelPendingOperations(playerAddress);
         }
 
         if (Clients.ContainsKey(client.ID))
@@ -315,6 +313,11 @@ public class NetNode
         var clients = new List<Client>(Clients.Values);
         foreach (var client in clients)
         {
+            if (IsServer && client.PlayerAddress is { } playerAddress)
+            {
+                GameManager.Project?.FindSubsystem<SubsystemTeams>()?.CancelPendingOperations(playerAddress);
+            }
+
             if (client == Self)
             {
                 continue;
@@ -342,9 +345,9 @@ public class NetNode
         return Clients.TryGetValue(id, out var byID) ? byID : null;
     }
 
-    public Client? GetClientByGUID(Guid? guid, bool throwIfNull = false)
+    public Client? GetClientByCharacterId(Guid? guid, bool throwIfNull = false)
     {
-        var client = Clients.Values.FirstOrDefault(c => c.GUID == guid);
+        var client = Clients.Values.FirstOrDefault(c => c.CharacterId == guid);
         if (client is null && throwIfNull)
         {
             throw new InvalidOperationException("Client not found");
@@ -416,6 +419,8 @@ public class NetNode
         var list = PackageManager.DecodePackages(this, payload, ResolveSender(endpoint: remoteEndPoint));
         foreach (var packageItem in list)
         {
+            if (packageItem.Package is not ServerInfoPackage) { continue; }
+
             packageItem.Context.Sender?.IsLocalRemote = fromBroadcast;
             try
             {
@@ -513,32 +518,27 @@ public class NetNode
 
     public void StartLocal()
     {
+        _leaveWorldOnStop = false;
         _isStopping = false;
         Clients.Clear();
-        Guid multiplayerClientId;
-        if (RunMode.Value is RunModeType.HeadlessServer)
+        Self = new Client(Guid.Empty, GameManager.Project!);
+        if (RunMode.Value is RunModeType.Gui)
         {
-            multiplayerClientId = Guid.NewGuid();
-        }
-        else
-        {
-            multiplayerClientId = SettingsManager.Current.MultiplayerClientId;
-            if (multiplayerClientId == Guid.Empty)
-            {
-                throw new InvalidOperationException("The local multiplayer client id is invalid.");
-            }
+            using var identity = LocalIdentityManager.Current.OpenPlayerIdentity();
+            Self.PlayerAddress = new PlayerAddress(identity.PublicIdentity.Address);
         }
 
-        Self = new Client(multiplayerClientId, GameManager.Project!);
         AddClient(Self);
     }
 
     private NetworkHost CreateHost(int port)
     {
+        using var identity = LocalIdentityManager.Current.OpenServerIdentity();
         var host = new NetworkHost(
             port,
             new NetworkHostOptions
             {
+                Identity = identity,
                 ReuseAddress = true,
                 DisconnectTimeout = TimeSpan.FromMilliseconds(CommonLib.DisconnectTimeout)
             }
@@ -625,7 +625,6 @@ public class NetNode
             var request = new ConnectionRequestPackage(
                 TokenId,
                 VersionsManager.ProtocolVersion,
-                SettingsManager.Current.MultiplayerClientId,
                 CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash
             );
             CurrentStage = Stage.Bootstrapping;
@@ -689,6 +688,8 @@ public class NetNode
     public void StopImmediate()
     {
         var wasClient = CommonLib.WorkType == WorkType.Client;
+        var leaveWorld = _leaveWorldOnStop;
+        _leaveWorldOnStop = false;
         _isStopping = true;
         try
         {
@@ -777,9 +778,15 @@ public class NetNode
             OnClientBecameLive = null;
             ConnectionEpoch = Guid.Empty;
             CurrentConnectionPhase = ConnectionPhase.TransportConnected;
+            if (leaveWorld)
+            {
+                try { GameManager.SaveProject(true, true); }
+                catch (Exception e) { Log.Error(e); }
+            }
+
             CurrentStage = Stage.NotConnected;
             CommonLib.WorkType = WorkType.Local;
-            if (wasClient)
+            if (wasClient || leaveWorld)
             {
                 try
                 {
@@ -790,7 +797,7 @@ public class NetNode
                     Log.Error(e);
                 }
 
-                ScreensManager.SwitchScreen("NetPlay");
+                ScreensManager.SwitchScreen(wasClient ? "NetPlay" : "Play");
             }
 
             Clients.Clear();
@@ -910,7 +917,12 @@ public class NetNode
         }
         else if (request != null)
         {
-            _host!.SendDatagram(request.TransportEndpoint, w.Data.AsSpan(0, w.Length));
+            // Transport rejection data is bounded; keep malformed-request diagnostics in logs.
+            request.Reject(
+                w.Length <= 256
+                    ? w.Data.AsSpan(0, w.Length)
+                    : CreateUnconnectedPayload(new ConnectionRejectPackage("连接请求被拒绝"))
+            );
         }
         else if (iPEndPoint != null)
         {

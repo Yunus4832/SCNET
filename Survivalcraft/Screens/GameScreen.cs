@@ -88,7 +88,7 @@ public class GameScreen : Screen
             GameManager.Project is not { } project ||
             ReferenceEquals(_administrationDialogProject, project) ||
             ServerAdministrationBootstrap.IsClaimed(project) ||
-            CommonLib.MainPlayer is not { } player ||
+            CommonLib.LocalCharacter is not { } player ||
             !ServerAdministrationBootstrap.TryGetClaimCode(project, out var code))
         {
             return;
@@ -135,7 +135,7 @@ public class GameScreen : Screen
                         return;
                     }
 
-                    var result = CommandExecutor.ExecutePlayer(claimCommand, player.PlayerData);
+                    var result = CommandExecutor.ExecutePlayer(claimCommand, player.CharacterData);
                     CommandResultPublisher.DisplayLocal(
                         project,
                         result with { Presentation = CommandResultPresentation.Toast }

@@ -22,8 +22,8 @@
     <CanvasWidget CanvasWidget.Position="106, 52" Size="160, 288">
         <BevelledRectangleWidget BevelSize="-2" DirectionalLight="0.15" CenterColor="0, 0, 0, 0"/>
         <StackPanelWidget Name="ClothingStack" Direction="Vertical"/>
-        <PlayerModelWidget Name="InnerClothingModel" AnimateHeadSeed="1" AnimateHandsSeed="1"/>
-        <PlayerModelWidget Name="OuterClothingModel" AnimateHeadSeed="1" AnimateHandsSeed="1" OuterClothing="true"/>
+        <CharacterModelWidget Name="InnerClothingModel" AnimateHeadSeed="1" AnimateHandsSeed="1"/>
+        <CharacterModelWidget Name="OuterClothingModel" AnimateHeadSeed="1" AnimateHandsSeed="1" OuterClothing="true"/>
     </CanvasWidget>
 
     <GridPanelWidget CanvasWidget.Position="286, 52" Name="InventoryGrid" ColumnsCount="4" RowsCount="4"/>

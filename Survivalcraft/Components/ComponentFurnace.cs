@@ -104,7 +104,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
                         coordinates.Y,
                         coordinates.Z,
                         slot2.Value,
-                        _componentBlockEntity.OwnPlayerData
+                        _componentBlockEntity.OwnCharacterData
                     );
                 }
                 else if (block.FuelHeatLevel > 0f)
@@ -291,12 +291,12 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
             }
         }
 
-        var componentPlayer = FindInteractingPlayer();
+        var componentCharacter = FindInteractingPlayer();
         var craftingRecipe = CurrentModRuntime.Value!.RequireWorldCatalog().Recipes.FindMatchingRecipe(
             _subsystemTerrain,
             _matchedIngredients,
             heatLevel,
-            componentPlayer
+            componentCharacter
         );
         if (craftingRecipe != null && craftingRecipe.ResultValue != 0)
         {
@@ -340,7 +340,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
 
         if (craftingRecipe != null && !string.IsNullOrEmpty(craftingRecipe.Message))
         {
-            componentPlayer?.ComponentGui.DisplaySmallMessage(craftingRecipe.Message, Color.White, true, true);
+            componentCharacter?.ComponentGui.DisplaySmallMessage(craftingRecipe.Message, Color.White, true, true);
         }
 
         return craftingRecipe;

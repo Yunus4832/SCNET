@@ -1,10 +1,11 @@
 using Game.Protocol.Blocks;
+using Game.Protocol.Characters;
 using Game.Protocol.Commands;
 using Game.Protocol.Connection;
 using Game.Protocol.Entities;
 using Game.Protocol.Messaging;
 using Game.Protocol.Mods;
-using Game.Protocol.Players;
+using Game.Protocol.Teams;
 using Game.Protocol.Terrain;
 using Game.Protocol.World;
 
@@ -23,8 +24,8 @@ public static partial class ProtocolMessageCodec
         PackageType.Pickable => ReadPickablePackage(reader),
         PackageType.Projectile => ReadProjectilePackage(reader),
         PackageType.Message => ReadMessagePackage(reader),
-        PackageType.GroupManage => ReadGroupManagePackage(reader),
-        PackageType.PlayerData => ReadPlayerDataPackage(reader),
+        PackageType.TeamManage => ReadTeamManagePackage(reader),
+        PackageType.CharacterData => ReadCharacterDataPackage(reader),
         PackageType.Explosion => ReadExplosionsPackage(reader),
         PackageType.ComponentHealth => ReadComponentHealthPackage(reader),
         PackageType.MovingBlockSet => ReadMovingBlockPackage(reader),
@@ -37,13 +38,13 @@ public static partial class ProtocolMessageCodec
         PackageType.Dispenser => ReadDispenserPackage(reader),
         PackageType.ComponentSickness => ReadComponentSicknessPackage(reader),
         PackageType.ModEnvelope => ReadModEnvelopePackage(reader),
-        PackageType.PlayerList => ReadPlayerListPackage(reader),
-        PackageType.OnlinePlayerState => ReadOnlinePlayerStatePackage(reader),
+        PackageType.CharacterList => ReadPlayerListPackage(reader),
+        PackageType.OnlineCharacterState => ReadOnlineCharacterStatePackage(reader),
         PackageType.ComponentMount => ReadComponentMountPackage(reader),
         PackageType.ComponentSleep => ReadComponentSleepPackage(reader),
         PackageType.SubsystemWeather => ReadSubsystemWeatherPackage(reader),
         PackageType.ComponentFlu => ReadComponentFluPackage(reader),
-        PackageType.ComponentPlayer => ReadPlayer(reader),
+        PackageType.ComponentCharacter => ReadPlayer(reader),
         PackageType.SubsystemTerrain => ReadTerrain(reader),
         PackageType.SubsystemBody => ReadBody(reader),
         PackageType.ServerInfo => ReadServerInfo(reader),
@@ -92,11 +93,11 @@ public static partial class ProtocolMessageCodec
             case MessagePackage valueMessagePackage:
                 WriteMessagePackage(valueMessagePackage, writer);
                 break;
-            case GroupManagePackage valueGroupManagePackage:
-                WriteGroupManagePackage(valueGroupManagePackage, writer);
+            case TeamManagePackage valueTeamManagePackage:
+                WriteTeamManagePackage(valueTeamManagePackage, writer);
                 break;
-            case PlayerDataPackage valuePlayerDataPackage:
-                WritePlayerDataPackage(valuePlayerDataPackage, writer);
+            case CharacterDataPackage valueCharacterDataPackage:
+                WriteCharacterDataPackage(valueCharacterDataPackage, writer);
                 break;
             case ExplosionsPackage explosions:
                 WriteExplosionsPackage(explosions, writer);
@@ -134,11 +135,11 @@ public static partial class ProtocolMessageCodec
             case ModEnvelopePackage valueModEnvelopePackage:
                 WriteModEnvelopePackage(valueModEnvelopePackage, writer);
                 break;
-            case PlayerListPackage valuePlayerListPackage:
+            case CharacterListPackage valuePlayerListPackage:
                 WritePlayerListPackage(valuePlayerListPackage, writer);
                 break;
-            case OnlinePlayerStatePackage valueOnlinePlayerStatePackage:
-                WriteOnlinePlayerStatePackage(valueOnlinePlayerStatePackage, writer);
+            case OnlineCharacterStatePackage valueOnlineCharacterStatePackage:
+                WriteOnlineCharacterStatePackage(valueOnlineCharacterStatePackage, writer);
                 break;
             case ComponentMountPackage valueComponentMountPackage:
                 WriteComponentMountPackage(valueComponentMountPackage, writer);
@@ -152,7 +153,7 @@ public static partial class ProtocolMessageCodec
             case ComponentFluPackage valueComponentFluPackage:
                 WriteComponentFluPackage(valueComponentFluPackage, writer);
                 break;
-            case ComponentPlayerPackage player:
+            case ComponentCharacterPackage player:
                 WritePlayer(player, writer);
                 break;
             case SubsystemTerrainPackage terrain:
@@ -180,7 +181,6 @@ public static partial class ProtocolMessageCodec
                 writer.Write(request.Magic);
                 writer.Write(request.ProtocolVersion);
                 writer.Write(request.TmpToken);
-                writer.Write(request.MultiplayerClientId);
                 writer.Write(request.ModDataHash);
                 break;
             case ConnectionRejectPackage reject:
@@ -218,8 +218,8 @@ public static partial class ProtocolMessageCodec
         PackageType.Pickable or
         PackageType.Projectile or
         PackageType.Message or
-        PackageType.GroupManage or
-        PackageType.PlayerData or
+        PackageType.TeamManage or
+        PackageType.CharacterData or
         PackageType.Explosion or
         PackageType.ComponentHealth or
         PackageType.MovingBlockSet or
@@ -232,13 +232,13 @@ public static partial class ProtocolMessageCodec
         PackageType.Dispenser or
         PackageType.ComponentSickness or
         PackageType.ModEnvelope or
-        PackageType.PlayerList or
-        PackageType.OnlinePlayerState or
+        PackageType.CharacterList or
+        PackageType.OnlineCharacterState or
         PackageType.ComponentMount or
         PackageType.ComponentSleep or
         PackageType.SubsystemWeather or
         PackageType.ComponentFlu or
-        PackageType.ComponentPlayer or
+        PackageType.ComponentCharacter or
         PackageType.SubsystemTerrain or
         PackageType.SubsystemBody or
         PackageType.ServerInfo or
@@ -268,7 +268,6 @@ public static partial class ProtocolMessageCodec
         var magic = reader.ReadInt32();
         var version = reader.ReadInt32();
         var token = reader.ReadGuid();
-        var identity = reader.ReadGuid();
-        return new ConnectionRequestPackage(token, version, identity, reader.ReadString(), magic);
+        return new ConnectionRequestPackage(token, version, reader.ReadString(), magic);
     }
 }

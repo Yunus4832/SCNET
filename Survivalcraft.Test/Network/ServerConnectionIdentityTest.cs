@@ -11,7 +11,7 @@ public sealed class ServerConnectionIdentityTest
     {
         var server = new Client(null, 0, Guid.NewGuid(), Guid.NewGuid(), null);
         var audience = PackageAudience.To(server);
-        var incoming = new Client(null, 0, Guid.NewGuid(), server.GUID, null) { State = ClientState.Playing };
+        var incoming = new Client(null, 0, Guid.NewGuid(), server.CharacterId, null) { State = ClientState.Playing };
 
         var resolved = ClientPackageHandler.ResolveServerClient(server, incoming, server);
 
@@ -22,15 +22,16 @@ public sealed class ServerConnectionIdentityTest
     }
 
     [Fact]
-    public void BootstrapReplacesUnidentifiedTransportWithAuthoritativeServerIdentity()
+    public void BootstrapBindsCharacterMetadataWithoutReplacingTheTransportSession()
     {
         var transport = new Client(null, 0, Guid.NewGuid(), Guid.Empty, null);
         var incoming = new Client(null, 0, Guid.NewGuid(), Guid.NewGuid(), null);
 
         var resolved = ClientPackageHandler.ResolveServerClient(transport, incoming, transport);
 
-        Assert.Same(incoming, resolved);
-        Assert.True(PackageAudience.To(resolved).Includes(incoming));
-        Assert.False(PackageAudience.To(transport).Includes(resolved));
+        Assert.Same(transport, resolved);
+        Assert.Equal(incoming.CharacterId, resolved.CharacterId);
+        Assert.True(PackageAudience.To(transport).Includes(resolved));
+        Assert.False(PackageAudience.To(incoming).Includes(resolved));
     }
 }

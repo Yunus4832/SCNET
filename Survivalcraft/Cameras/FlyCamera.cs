@@ -31,7 +31,7 @@ public class FlyCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidget
     {
         var vector = Vector3.Zero;
         var vector2 = Vector2.Zero;
-        var componentInput = GameWidget.PlayerData.ComponentPlayer?.ComponentInput;
+        var componentInput = GameWidget.CharacterData.ComponentCharacter?.ComponentInput;
         if (componentInput != null)
         {
             vector = componentInput.PlayerInput.CameraMove * new Vector3(1f, 0f, 1f);

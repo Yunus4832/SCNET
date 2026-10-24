@@ -368,7 +368,7 @@
                                        Type="float"/>
                             <Parameter Name="DayChaseRange" Guid="d7452b2f-8a3a-4e60-b29f-f25ba1487226" Value="8"
                                        Type="float"/>
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="f09c537a-6716-4a4e-a6d7-7efd1fef90dd"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="f09c537a-6716-4a4e-a6d7-7efd1fef90dd"
                                        Value="0.03" Type="float"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Creature" Guid="427dc316-b539-4302-b79e-19e87933dac3">
@@ -486,7 +486,7 @@
                                        Type="float"/>
                             <Parameter Name="NightChaseTime" Guid="c9417c62-0ecd-4df1-8a96-6b809adf1f1b" Value="15"
                                        Type="float"/>
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="d6e6b183-b63b-4034-9519-8e05d74facea"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="d6e6b183-b63b-4034-9519-8e05d74facea"
                                        Value="0.03" Type="float"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Miner" Guid="92d9e7b0-47bd-4bb8-a481-156bbb9039a0"
@@ -520,9 +520,9 @@
                             <Parameter Name="AutoFeed" Guid="d5a2f4b0-b33e-42b5-8f3c-b7bd873d6b9a" Value="False"
                                        Type="bool"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="FindPlayerBehavior" Guid="c51a8ed2-e37c-47f6-856f-46856bb0f87f"
+                        <MemberComponentTemplate Name="FindCharacterBehavior" Guid="c51a8ed2-e37c-47f6-856f-46856bb0f87f"
                                                  InheritanceParent="44c9a961-258c-4eb3-81d1-d3ae249ae031"/>
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="d5ea9ab5-c55d-421d-abcb-c20a9e52c096"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="d5ea9ab5-c55d-421d-abcb-c20a9e52c096"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0">
                             <Parameter Name="NightRange" Guid="9fa99023-d083-440e-9036-9a8eff90f18c" Value="0"
                                        Type="float"/>
@@ -556,7 +556,7 @@
                                        Type="string"/>
                         </MemberComponentTemplate>
                     </EntityTemplate>
-                    <EntityTemplate Name="Player" Guid="4be6c1c5-d65d-4537-8a8b-a391969e6dc2">
+                    <EntityTemplate Name="Character" Guid="4be6c1c5-d65d-4537-8a8b-a391969e6dc2">
                         <MemberComponentTemplate Name="DiggingCracks" Guid="041f105b-eed2-40ec-8f30-8c88d60d7f85"
                                                  InheritanceParent="7ea6062c-28be-4e76-8765-39b7a1f5be9b"/>
                         <MemberComponentTemplate Name="CraftingTable" Guid="0b234d05-36eb-4902-9571-6a884d707b85"
@@ -620,7 +620,7 @@
                                                  InheritanceParent="c2429b7f-55e0-4ca7-b435-2c569f112229"/>
                         <MemberComponentTemplate Name="FurnitureInventory" Guid="8b848d03-65ac-436b-a78a-494bd9c41d16"
                                                  InheritanceParent="c4b4f7d0-8439-4cb8-b316-cdd4342ee2ed"/>
-                        <MemberComponentTemplate Name="Player" Guid="91a25e4a-47bb-4e2e-b790-69fead86f4ec"
+                        <MemberComponentTemplate Name="Character" Guid="91a25e4a-47bb-4e2e-b790-69fead86f4ec"
                                                  InheritanceParent="74a31f2d-3241-4f2e-a6ef-3add252691a7">
                             <Parameter Name="Category" Guid="dd5cd9d2-08bb-4d1c-a643-7fdfaa5d1695" Value="LandOther"
                                        Type="Game.CreatureCategory"/>
@@ -1100,7 +1100,7 @@
                                        Type="float"/>
                             <Parameter Name="DayChaseRange" Guid="d59b583d-a8a7-49b0-ab41-bd5fd722a17b" Value="8"
                                        Type="float"/>
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="e23d7309-ca76-4b84-82db-cdfde42fc1ad"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="e23d7309-ca76-4b84-82db-cdfde42fc1ad"
                                        Value="1" Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="f4976a27-e7d0-493d-a2e0-473cdf767f1e"
                                        Value="LandPredator, LandOther, Bird" Type="Game.CreatureCategory"/>
@@ -1511,7 +1511,7 @@
                                            Type="string"/>
                             </ParameterSet>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="7fd8fce3-c990-4e49-b9b3-7aaba1be8915"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="7fd8fce3-c990-4e49-b9b3-7aaba1be8915"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0"/>
                         <MemberComponentTemplate Name="Creature" Guid="884f4f6d-48f3-4803-a27a-70e49eeb605d">
                             <Parameter Name="KillVerbs" Guid="0e9ffeb0-38d5-49c4-b9e1-ec5a9964e735" Value="kicked"
@@ -1642,7 +1642,7 @@
                             <Parameter Name="FallResilience" Guid="a4b1f700-a7b7-49ec-864c-50338318b72d" Value="10"
                                        Type="float"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="FindPlayerBehavior" Guid="18038f24-27a5-467e-8268-36cc83b092a6"
+                        <MemberComponentTemplate Name="FindCharacterBehavior" Guid="18038f24-27a5-467e-8268-36cc83b092a6"
                                                  InheritanceParent="44c9a961-258c-4eb3-81d1-d3ae249ae031"/>
                         <MemberComponentTemplate Name="Loot" Guid="2668454f-14aa-48ca-a086-d1ef13afd5b6">
                             <ParameterSet Name="Loot" Guid="c0e9f4c1-03c1-4f50-85eb-f2b3e500c4ec">
@@ -1668,7 +1668,7 @@
                                        Type="float"/>
                             <Parameter Name="DayChaseRange" Guid="48f216f9-3882-49d0-8151-110f3ceee2de" Value="8"
                                        Type="float"/>
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="7d423e92-4a06-4422-a111-150f85f9f2bb"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="7d423e92-4a06-4422-a111-150f85f9f2bb"
                                        Value="0.2" Type="float"/>
                             <Parameter Name="NightChaseRange" Guid="ae756d04-f07e-4da4-9136-7af5ce5eeaae" Value="10"
                                        Type="float"/>
@@ -1688,7 +1688,7 @@
                             <Parameter Name="PainSound" Guid="f62e942f-a7f5-4cca-b9b2-3532afdbf58c"
                                        Value="Audio/Creatures/LeopardRoar" Type="string"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="77c64001-7ae2-4546-8654-9f5ba9a6b6bd"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="77c64001-7ae2-4546-8654-9f5ba9a6b6bd"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0">
                             <Parameter Name="NightRange" Guid="1864721f-981d-4658-88b7-98027aa3bf8d" Value="0"
                                        Type="float"/>
@@ -1871,7 +1871,7 @@
                                        Type="float"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="OnFire" Guid="d1d75f81-3ccf-49dc-bb8b-e81dce0c1451"/>
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="d82a3fa5-055c-4d4e-8772-83beb012204e"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="d82a3fa5-055c-4d4e-8772-83beb012204e"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0">
                             <Parameter Name="DayRange" Guid="781455fb-caf8-4610-9af0-def2ef2947ec" Value="20"
                                        Type="float"/>
@@ -2052,7 +2052,7 @@
                                        Value="LandPredator" Type="Game.CreatureCategory"/>
                             <Parameter Name="DayChaseTime" Guid="522f15d1-bd65-46ee-b4e7-fb2f7e9f48fd" Value="15"
                                        Type="float"/>
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="7803a5ae-631a-46fb-9128-af241c146474"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="7803a5ae-631a-46fb-9128-af241c146474"
                                        Value="0.5" Type="float"/>
                             <Parameter Name="NightChaseRange" Guid="cfcbe4fb-c2cd-4294-b2d2-5e2a3fa95b5c" Value="16"
                                        Type="float"/>
@@ -2120,7 +2120,7 @@
                             <Parameter Name="Mass" Guid="bc351678-ffc7-4d32-b416-62c928a27135" Value="220"
                                        Type="float"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="872b1a5b-1aa9-4300-8f06-01adf798bbcb"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="872b1a5b-1aa9-4300-8f06-01adf798bbcb"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0"/>
                         <MemberComponentTemplate Name="Creature" Guid="9a5e9ebc-caa5-42bc-95e8-c1ec4c9492f9">
                             <Parameter Name="DisplayName" Guid="3afb2803-85f7-42b8-ab12-1fc32f663af3"
@@ -2218,7 +2218,7 @@
                                        Type="float"/>
                             <Parameter Name="DayChaseRange" Guid="b6cb7c6d-0c9e-4cf4-a708-b5d4c46f8037" Value="10"
                                        Type="float"/>
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="d7c9b09d-897f-4d82-8727-1711fe1eb660"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="d7c9b09d-897f-4d82-8727-1711fe1eb660"
                                        Value="0.1" Type="float"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Health" Guid="98badc5d-3ed6-48ea-a61e-bc159ee745a4">
@@ -2422,7 +2422,7 @@
                                            Type="float"/>
                             </ParameterSet>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="811c064a-36f8-4c96-86c7-988136a0f07c"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="811c064a-36f8-4c96-86c7-988136a0f07c"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0"/>
                         <MemberComponentTemplate Name="CattleDriveBehavior" Guid="842a8a63-e165-4680-a398-a0d27dbc5e3f"
                                                  InheritanceParent="106abfad-57fb-46e2-adb1-7d16c8182b62"/>
@@ -2564,7 +2564,7 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="d71acd48-f5d5-4b5e-8baf-9a4a1db39841"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="0dbdd746-b568-4001-bcda-c07580605ad8"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="0dbdd746-b568-4001-bcda-c07580605ad8"
                                        Value="0.25" Type="float"/>
                             <Parameter Name="NightChaseRange" Guid="42b0ca10-e48b-4079-b513-966221ecb1ab" Value="20"
                                        Type="float"/>
@@ -2593,7 +2593,7 @@
                             <Parameter Name="AccelerationFactor" Guid="ee2259c6-af22-4149-aad0-1e1e34d7a30f" Value="1.2"
                                        Type="float"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="FindPlayerBehavior" Guid="e497cc8a-c35b-4ce3-9da8-501bb826009d"
+                        <MemberComponentTemplate Name="FindCharacterBehavior" Guid="e497cc8a-c35b-4ce3-9da8-501bb826009d"
                                                  InheritanceParent="44c9a961-258c-4eb3-81d1-d3ae249ae031"/>
                         <MemberComponentTemplate Name="Shapeshifter" Guid="ee661a93-cbb5-4889-9cd3-b9cfbe4f2d4e"
                                                  InheritanceParent="92e52f46-5d88-4273-80d2-1b5bfb7fdee8">
@@ -2629,7 +2629,7 @@
                             <ParameterSet Name="Loot" Guid="4c8b3db6-4a90-4080-aa68-359852161fac"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="f9a39b09-f82d-4c78-ab96-215769f9cf71">
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="0e890fc3-4de1-48d7-93a0-6fd07e149d6a"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="0e890fc3-4de1-48d7-93a0-6fd07e149d6a"
                                        Value="0.15" Type="float"/>
                         </MemberComponentTemplate>
                         <ParameterSet Name="CreatureEggData" Guid="fda00c63-3dd2-4b84-a023-0c41c124cb2d">
@@ -2735,7 +2735,7 @@
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
                             <Parameter Name="NightChaseTime" Guid="5c2f6e7f-27ea-4799-8580-43739c5c7883" Value="15"
                                        Type="float"/>
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="6258590b-0902-4d15-b718-8e99973df486"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="6258590b-0902-4d15-b718-8e99973df486"
                                        Value="0.25" Type="float"/>
                             <Parameter Name="NightChaseRange" Guid="7adcfb49-0d52-4768-b4c5-d311d75bd5e4" Value="32"
                                        Type="float"/>
@@ -2958,7 +2958,7 @@
                                        Type="float"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="OnFire" Guid="db056566-972b-427a-8225-ce9086c2be4c"/>
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="e51e81b3-2fa2-40a3-94c9-dec6c74060d3"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="e51e81b3-2fa2-40a3-94c9-dec6c74060d3"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0">
                             <Parameter Name="DayRange" Guid="52b0657e-33b9-49e1-be65-883db016742f" Value="24"
                                        Type="float"/>
@@ -3171,7 +3171,7 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="470b1156-830b-4324-99f2-fb292d2897f5"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="0bb18f7f-f70a-46c5-9518-3c93650cde1e"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="0bb18f7f-f70a-46c5-9518-3c93650cde1e"
                                        Value="0.03" Type="float"/>
                             <Parameter Name="DayChaseRange" Guid="1bb139b5-e29f-4c10-8723-c7c09b81b613" Value="8"
                                        Type="float"/>
@@ -3229,14 +3229,14 @@
                                            Type="float"/>
                             </ParameterSet>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="ce4d5c7e-222c-496b-82cf-e74259e98986"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="ce4d5c7e-222c-496b-82cf-e74259e98986"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0">
                             <Parameter Name="NightRange" Guid="5ddd1da2-cdf1-4ce7-bc29-d6b7b191b094" Value="0"
                                        Type="float"/>
                             <Parameter Name="DayRange" Guid="6f74ed1c-ae21-456b-9ab3-b1237f5cc3c2" Value="12"
                                        Type="float"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="FindPlayerBehavior" Guid="dc53c311-a1a4-449e-a41c-a0fa6b3875c7"
+                        <MemberComponentTemplate Name="FindCharacterBehavior" Guid="dc53c311-a1a4-449e-a41c-a0fa6b3875c7"
                                                  InheritanceParent="44c9a961-258c-4eb3-81d1-d3ae249ae031"/>
                         <MemberComponentTemplate Name="AvoidFireBehavior" Guid="f5c17875-5e49-4b9b-90c0-1837d4b994db"
                                                  InheritanceParent="885b2df5-b47b-4c53-bda0-5c1a0c988a3c"/>
@@ -3306,13 +3306,13 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="WalkAroundBehavior" Guid="30afdfc9-4f74-47f9-ac2c-86c2139155c6"
                                                  InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71"/>
-                        <MemberComponentTemplate Name="FindPlayerBehavior" Guid="33e75692-35e5-4976-9944-2fe4b9e45465"
+                        <MemberComponentTemplate Name="FindCharacterBehavior" Guid="33e75692-35e5-4976-9944-2fe4b9e45465"
                                                  InheritanceParent="44c9a961-258c-4eb3-81d1-d3ae249ae031"/>
                         <MemberComponentTemplate Name="AvoidFireBehavior" Guid="7a95336b-4f26-409e-bfb2-eb55a99c9119"
                                                  InheritanceParent="885b2df5-b47b-4c53-bda0-5c1a0c988a3c"/>
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="8e982560-e55f-4b6a-a594-934a1f651de4"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="2664150b-0c5b-4688-a4c9-26a829bc5393"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="2664150b-0c5b-4688-a4c9-26a829bc5393"
                                        Value="0.15" Type="float"/>
                             <Parameter Name="DayChaseTime" Guid="3f74f48e-88cf-4358-96a9-3ae425acef06" Value="15"
                                        Type="float"/>
@@ -3641,7 +3641,7 @@
                                        Type="float"/>
                             <Parameter Name="DayChaseRange" Guid="7372e754-5977-42c4-a876-756e4f55cb8d" Value="10"
                                        Type="float"/>
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="b933cd38-7216-4ee0-9e26-22272d07d11c"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="b933cd38-7216-4ee0-9e26-22272d07d11c"
                                        Value="0.25" Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="fcd7627f-4014-49d4-8be2-e6f73e61b86a"
                                        Value="LandPredator, LandOther, Bird" Type="Game.CreatureCategory"/>
@@ -3874,7 +3874,7 @@
                                        Value="Models/PolarBear" Type="string"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="91f900ac-ee18-42b7-a4e6-adb16032ebb3">
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="4083337a-1029-4003-b44f-515b48d5d68d"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="4083337a-1029-4003-b44f-515b48d5d68d"
                                        Value="0.1" Type="float"/>
                             <Parameter Name="NightChaseRange" Guid="aa6d9ca6-f42f-4340-a717-8fa73b93df83" Value="10"
                                        Type="float"/>
@@ -4247,7 +4247,7 @@
                     </EntityTemplate>
                     <EntityTemplate Name="Hyena" Guid="da9a1c74-142c-4b2c-b61f-5c86def9f658"
                                     InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="0e16f131-badf-4572-8ff2-ed1cb3e5e42b"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="0e16f131-badf-4572-8ff2-ed1cb3e5e42b"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0">
                             <Parameter Name="NightRange" Guid="4a91f09d-f273-43e3-a56e-ce84d2ed8b5d" Value="0"
                                        Type="float"/>
@@ -4311,7 +4311,7 @@
                             <Parameter Name="KillVerbs" Guid="eb41096a-18df-458c-b198-2b069f75663b" Value="eaten"
                                        Type="string"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="FindPlayerBehavior" Guid="ba5201f9-b06a-4b09-949e-4217be90a7c3"
+                        <MemberComponentTemplate Name="FindCharacterBehavior" Guid="ba5201f9-b06a-4b09-949e-4217be90a7c3"
                                                  InheritanceParent="44c9a961-258c-4eb3-81d1-d3ae249ae031"/>
                         <MemberComponentTemplate Name="Miner" Guid="c1a2e28a-4292-4ec9-acce-7373a0c256a0"
                                                  InheritanceParent="8acca888-ba39-464f-bcf5-6ae15e448c62">
@@ -4366,7 +4366,7 @@
                                        Type="float"/>
                             <Parameter Name="NightChaseRange" Guid="18fcd2f3-bf55-414a-a43b-9df30278a615" Value="10"
                                        Type="float"/>
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="2c9c8f4b-41b9-484c-85c7-3e82adaa0399"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="2c9c8f4b-41b9-484c-85c7-3e82adaa0399"
                                        Value="0.03" Type="float"/>
                             <Parameter Name="NightChaseTime" Guid="47ade34a-e445-41ba-90fc-ce45df99a722" Value="15"
                                        Type="float"/>
@@ -4675,7 +4675,7 @@
                             <Parameter Name="HerdingRange" Guid="a43382d9-a6db-45eb-8f6a-1f77ddd8f28e" Value="40"
                                        Type="float"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="f4c1ec60-def8-45df-a9a2-718574dc283f"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="f4c1ec60-def8-45df-a9a2-718574dc283f"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0"/>
                         <ParameterSet Name="CreatureEggData" Guid="cac94661-7074-4335-9020-d391a9bb00bf">
                             <Parameter Name="TextureSlot" Guid="1ed4cfc3-0f0c-4cc6-97c7-e49e75062471" Value="163"
@@ -4692,7 +4692,7 @@
                     </EntityTemplate>
                     <EntityTemplate Name="Jaguar" Guid="f36d8eea-f172-4960-ab15-99de3aa1d423"
                                     InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="029c165e-c598-48fc-b62d-2fa876f317b7"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="029c165e-c598-48fc-b62d-2fa876f317b7"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0">
                             <Parameter Name="DayRange" Guid="1e8d7139-7767-47a6-96ab-52e32b899c26" Value="10"
                                        Type="float"/>
@@ -4796,7 +4796,7 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="c346c26d-6021-49aa-a4a8-8df79e93869f"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
-                            <Parameter Name="ChaseNonPlayerProbability" Guid="1407ca9a-8509-4d23-93a8-3651fea57d9f"
+                            <Parameter Name="ChaseNonCharacterProbability" Guid="1407ca9a-8509-4d23-93a8-3651fea57d9f"
                                        Value="0.15" Type="float"/>
                             <Parameter Name="NightChaseRange" Guid="512249a4-f498-41fb-ad0e-0709dc2ee9e5" Value="10"
                                        Type="float"/>
@@ -4807,7 +4807,7 @@
                             <Parameter Name="DayChaseTime" Guid="eb3ffd46-54a2-46e9-a5ef-fa1314f3643a" Value="15"
                                        Type="float"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="FindPlayerBehavior" Guid="d0f770cb-4178-45c4-b322-be94be76b294"
+                        <MemberComponentTemplate Name="FindCharacterBehavior" Guid="d0f770cb-4178-45c4-b322-be94be76b294"
                                                  InheritanceParent="44c9a961-258c-4eb3-81d1-d3ae249ae031"/>
                         <MemberComponentTemplate Name="Miner" Guid="e645211f-6f00-483f-894b-de37b118cd5b"
                                                  InheritanceParent="8acca888-ba39-464f-bcf5-6ae15e448c62">
@@ -4882,7 +4882,7 @@
                             <Parameter Name="AccelerationFactor" Guid="d6018d3f-ebe2-4c5b-a62e-fdab5391f4a9"
                                        Value="0.75" Type="float"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="AvoidPlayerBehavior" Guid="93ff6921-6dd6-4140-96fd-de1564f7206e"
+                        <MemberComponentTemplate Name="AvoidCharacterBehavior" Guid="93ff6921-6dd6-4140-96fd-de1564f7206e"
                                                  InheritanceParent="3942e891-6b50-467c-8da5-a15bc63e59e0">
                             <Parameter Name="DayRange" Guid="cf6370ca-09b2-41c9-8a63-5b13d5f4499a" Value="24"
                                        Type="float"/>
@@ -5212,8 +5212,8 @@
                         </ParameterSet>
                     </EntityTemplate>
                 </Folder>
-                <Folder Name="Players" Guid="73d6038f-40fe-4347-b85f-85d96311f6d2">
-                    <EntityTemplate Name="FemalePlayer" Guid="7b37876b-5f60-46fc-9e95-f78c7aea02a3"
+                <Folder Name="Characters" Guid="73d6038f-40fe-4347-b85f-85d96311f6d2">
+                    <EntityTemplate Name="FemaleCharacter" Guid="7b37876b-5f60-46fc-9e95-f78c7aea02a3"
                                     InheritanceParent="4be6c1c5-d65d-4537-8a8b-a391969e6dc2">
                         <MemberComponentTemplate Name="Locomotion" Guid="1520c64b-585c-4f64-85c3-7032deae208d">
                             <Parameter Name="InAirWalkFactor" Guid="201ca478-9c0a-4f9f-8586-1cf4614ef0cd" Value="0.5"
@@ -5233,7 +5233,7 @@
                             <Parameter Name="MoanSound" Guid="c2bfcb10-1acb-4f45-bbbf-474a1dd561bc"
                                        Value="Audio/Creatures/FemaleMoan" Type="string"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="Player" Guid="459d33ed-7897-4b49-912c-8c97a4927ad7">
+                        <MemberComponentTemplate Name="Character" Guid="459d33ed-7897-4b49-912c-8c97a4927ad7">
                             <Parameter Name="DisplayName" Guid="ba9e4fe5-d483-4535-8b60-4d6f71f49c7a"
                                        Value="[DisplayName:97]" Type="string"/>
                             <Parameter Name="Description" Guid="c45d1431-b27b-4ba7-9d5e-93ccd1ea05b5"
@@ -5263,7 +5263,7 @@
                                        Type="float"/>
                         </MemberComponentTemplate>
                     </EntityTemplate>
-                    <EntityTemplate Name="MalePlayer" Guid="bef1b918-6418-41c9-a598-95e8ffd39ab3"
+                    <EntityTemplate Name="MaleCharacter" Guid="bef1b918-6418-41c9-a598-95e8ffd39ab3"
                                     InheritanceParent="4be6c1c5-d65d-4537-8a8b-a391969e6dc2">
                         <MemberComponentTemplate Name="Health" Guid="4fb8bd3a-2df4-4842-adc6-21232b34d518"/>
                         <MemberComponentTemplate Name="CreatureSounds" Guid="66241b32-3419-4540-9570-bffc93c76ab4">
@@ -5278,7 +5278,7 @@
                             <Parameter Name="CoughSound" Guid="b67ee6b9-9194-41aa-817a-0c566aef633d"
                                        Value="Audio/Creatures/MaleCough" Type="string"/>
                         </MemberComponentTemplate>
-                        <MemberComponentTemplate Name="Player" Guid="6ff2595d-f888-4463-9849-5afb9265846c">
+                        <MemberComponentTemplate Name="Character" Guid="6ff2595d-f888-4463-9849-5afb9265846c">
                             <Parameter Name="DisplayName" Guid="8026878c-9027-4d9b-b291-128ac1196b10"
                                        Value="[DisplayName:98]" Type="string"/>
                             <Parameter Name="Description" Guid="edc876a3-37e9-4432-9c72-451b2f2aed22"
@@ -5775,17 +5775,36 @@
                     <Parameter Name="Dependencies" Guid="3efcb2f8-31d0-4818-9772-06492753a27d" Value="GameInfo"
                                Type="string"/>
                 </SubsystemTemplate>
-                <SubsystemTemplate Name="Players" Description="Spawns and respawns players, manages spawn positions"
+                <SubsystemTemplate Name="Teams" Description="Manages player team membership and consent requests"
+                                   Guid="1d28ca38-bb73-44e0-bfd5-ea279a2682b5"
+                                   InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+                    <ParameterSet Name="Teams" Description="Persistent player team membership"
+                                  Guid="4716f8ef-32f7-4839-9a55-450968085366"/>
+                    <Parameter Name="Class" Guid="28eb7214-5169-4302-9f99-c377d2001172"
+                               Value="Game.Subsystems.SubsystemTeams" Type="string"/>
+                    <Parameter Name="Dependencies" Guid="5ce72a4b-46aa-42ae-9b13-f3d09acb1d09" Value="Players" Type="string"/>
+                </SubsystemTemplate>
+                <SubsystemTemplate Name="Players" Description="Manages persistent world players, permissions and character ownership" Guid="8eebccbf-1da2-45b6-b8a8-1d1ced24c7b5"
+                                   InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+                    <Parameter Name="Class" Guid="4f953c48-d462-441c-aeae-b20d09681007" Value="Game.Subsystems.SubsystemPlayers" Type="string"/>
+                </SubsystemTemplate>
+                <SubsystemTemplate Name="PositionMarks" Description="Manages public world marks and player-addressed private marks" Guid="462e18e4-e317-40ad-b01f-a9bd0833e334"
+                                   InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+                    <Parameter Name="Class" Guid="5077ce57-3fbc-4d1c-8e47-d96e1c955783" Value="Game.Subsystems.SubsystemPositionMarks" Type="string"/>
+                </SubsystemTemplate>
+                <SubsystemTemplate Name="Characters" Description="Manages character data, spawning and runtime lifecycle"
                                    Guid="30b8559d-fc03-42cb-b716-e985aaac96c0"
                                    InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
-                    <ParameterSet Name="Players" Description="Contains players data"
+                    <ParameterSet Name="Characters" Description="Contains online character data"
                                   Guid="dab7078b-7788-46cb-9022-1a95127e0ad7"/>
-                    <Parameter Name="Class" Guid="4a38c418-c0da-43e2-bef1-a599caa6bed6" Value="Game.Subsystems.SubsystemPlayers"
+                    <ParameterSet Name="OfflineCharacters" Description="Contains offline character data and entity snapshots"
+                                  Guid="909753db-8174-4f9a-946c-14140445c466"/>
+                    <Parameter Name="Class" Guid="4a38c418-c0da-43e2-bef1-a599caa6bed6" Value="Game.Subsystems.SubsystemCharacters"
                                Type="string"/>
                     <Parameter Name="GlobalSpawnPosition"
-                               Description="Global spawn position for all players, or 0,0,0 if not set yet"
+                               Description="Global spawn position for all characters, or 0,0,0 if not set yet"
                                Guid="f220b69c-8627-41b4-b251-24c8ef83c5f4" Value="0,0,0" Type="Vector3"/>
-                    <Parameter Name="Dependencies" Guid="fb87c7e2-8011-4272-bfa3-b464a0a23d14" Value="GameInfo, Terrain"
+                    <Parameter Name="Dependencies" Guid="fb87c7e2-8011-4272-bfa3-b464a0a23d14" Value="Players,PositionMarks,GameInfo,Terrain"
                                Type="string"/>
                 </SubsystemTemplate>
                 <SubsystemTemplate Name="CellChangeQueue"
@@ -5952,7 +5971,7 @@
                                    Guid="880526dc-6a55-49c8-97ea-b344cdbd3e86"
                                    InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
                     <Parameter Name="Dependencies" Guid="6b1139c9-d0b8-420f-812f-a3e0da5b185d"
-                               Value="Players,Terrain" Type="string"/>
+                               Value="Characters,Terrain" Type="string"/>
                     <Parameter Name="Class" Guid="9156270b-9cee-4674-b82d-94f52289857a"
                                Value="Game.Subsystems.SubsystemNetworkInterest" Type="string"/>
                 </SubsystemTemplate>
@@ -5964,12 +5983,12 @@
                     <Parameter Name="Class" Guid="3c28d383-dc6e-4d55-8084-5d914abd4d79" Value="Game.Subsystems.SubsystemSky"
                                Type="string"/>
                 </SubsystemTemplate>
-                <SubsystemTemplate Name="PlayerStats" Description="Manages player statistics"
+                <SubsystemTemplate Name="CharacterStats" Description="Manages character statistics"
                                    Guid="c829cb1d-879e-47c4-8597-1507cdac7629"
                                    InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
                     <ParameterSet Name="Stats" Guid="a5ca06a7-6644-4f5f-9cb6-ec9d89a947e1"/>
                     <Parameter Name="Class" Guid="93ecf94c-074c-4598-81eb-4dd9b0d1b2f1"
-                               Value="Game.Subsystems.SubsystemPlayerStats" Type="string"/>
+                               Value="Game.Subsystems.SubsystemCharacterStats" Type="string"/>
                 </SubsystemTemplate>
                 <SubsystemTemplate Name="BlockEntities" Description="Manages entities associated with terrain blocks"
                                    Guid="ccd8d745-1802-4dc7-80ed-8e01712fe611"
@@ -6036,7 +6055,7 @@
                                    InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
                     <Parameter Name="Class" Guid="6bf14dc6-32e7-4e8c-b3c4-438e0eee13ad"
                                Value="Game.Subsystems.SubsystemGameWidgets" Type="string"/>
-                    <Parameter Name="Dependencies" Guid="a9c5f123-1ed0-4728-988b-c6327089a13c" Value="Players"
+                    <Parameter Name="Dependencies" Guid="a9c5f123-1ed0-4728-988b-c6327089a13c" Value="Characters"
                                Type="string"/>
                 </SubsystemTemplate>
                 <SubsystemTemplate Name="ModelsRenderer" Description="Renders all ComponentModels in project"
@@ -6234,17 +6253,17 @@
                     <Parameter Name="AutoChaseMask" Description="Creature categories to chase"
                                Guid="fdf593ec-ea38-463f-bb81-15cbf66a631e" Value="LandOther, Bird"
                                Type="Game.CreatureCategory"/>
-                    <Parameter Name="ChaseNonPlayerProbability"
-                               Description="Probability of creature chasing a non-player target when in range, 0 to 1"
+                    <Parameter Name="ChaseNonCharacterProbability"
+                               Description="Probability of creature chasing a non-character target when in range, 0 to 1"
                                Guid="ffbada42-c15c-48e3-bdf0-7e9a20de4a0e" Value="0" Type="float"/>
                 </ComponentTemplate>
-                <ComponentTemplate Name="AvoidPlayerBehavior"
-                                   Description="Behavior that makes a creature move further away from player"
+                <ComponentTemplate Name="AvoidCharacterBehavior"
+                                   Description="Behavior that makes a creature move further away from a character"
                                    Guid="3942e891-6b50-467c-8da5-a15bc63e59e0"
                                    InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
                     <Parameter Name="DayRange" Guid="06a9df3f-01d2-4d65-911e-6d8a6a2c763c" Value="16" Type="float"/>
                     <Parameter Name="Class" Guid="4d994cdc-05e2-4ee5-b1b6-59d450c4fede"
-                               Value="Game.Components.ComponentAvoidPlayerBehavior" Type="string"/>
+                               Value="Game.Components.ComponentAvoidCharacterBehavior" Type="string"/>
                     <Parameter Name="NightRange" Guid="bcc95b19-7157-4046-ba05-bf72d642f365" Value="8" Type="float"/>
                 </ComponentTemplate>
                 <ComponentTemplate Name="RandomFeedBehavior" Description="Behavior that makes a creature feed randomly"
@@ -6261,13 +6280,13 @@
                     <Parameter Name="Class" Guid="5a4a1641-acc6-40e9-8fdd-7ee0101d3e66"
                                Value="Game.Components.ComponentFishOutOfWaterBehavior" Type="string"/>
                 </ComponentTemplate>
-                <ComponentTemplate Name="FindPlayerBehavior"
-                                   Description="Behavior that makes a creature move closer to player"
+                <ComponentTemplate Name="FindCharacterBehavior"
+                                   Description="Behavior that makes a creature move closer to a character"
                                    Guid="44c9a961-258c-4eb3-81d1-d3ae249ae031"
                                    InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
                     <Parameter Name="DayRange" Guid="191a3c19-8119-4bac-bcb5-147a93d9f982" Value="0" Type="float"/>
                     <Parameter Name="Class" Guid="47c1f02c-0ff4-4005-90d0-c348a9adb299"
-                               Value="Game.Components.ComponentFindPlayerBehavior" Type="string"/>
+                               Value="Game.Components.ComponentFindCharacterBehavior" Type="string"/>
                     <Parameter Name="MinRange" Guid="b4588d67-c255-4878-94f3-e5482c407be1" Value="8" Type="float"/>
                     <Parameter Name="NightRange" Guid="c698df14-2139-4cbc-b750-a2f3b5f8ae52" Value="64" Type="float"/>
                 </ComponentTemplate>
@@ -6409,7 +6428,7 @@
                                Value="Game.Components.ComponentCetaceanBreatheBehavior" Type="string"/>
                 </ComponentTemplate>
                 <ComponentTemplate Name="MoveAwayBehavior"
-                                   Description="Behavior that makes a creature move further away from player"
+                                   Description="Behavior that makes a creature move away from a colliding body"
                                    Guid="ea5c25d3-2179-494b-b6e3-0534f08aee36"
                                    InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
                     <Parameter Name="Class" Guid="855378e1-408e-45e5-8a00-e4b649ae6250"
@@ -6638,12 +6657,14 @@
                     <Parameter Name="Class" Guid="1caa89de-22f9-45aa-aae3-039ba73b12b6" Value="Game.Components.ComponentChest"
                                Type="string"/>
                 </ComponentTemplate>
-                <ComponentTemplate Name="Player" Description="Takes player inputs and controls a creature with them"
+                <ComponentTemplate Name="Character" Description="Character entity controlled through a player session"
                                    Guid="74a31f2d-3241-4f2e-a6ef-3add252691a7"
                                    InheritanceParent="4c6556e2-af4a-42ae-9543-4f27f9df6f39">
+                    <Parameter Name="CharacterId" Guid="653b6fb8-28b5-4c3c-ae0b-7647f1c5c8c8"
+                               Value="00000000-0000-0000-0000-000000000000" Type="System.Guid"/>
                     <Parameter Name="KillVerbs" Guid="5dc4375c-d47e-4eac-9da0-e30fc2792776" Value="murdered,killed"
                                Type="string"/>
-                    <Parameter Name="Class" Guid="7ecfafc4-4603-424c-87dd-1df59e7ef413" Value="Game.Components.ComponentPlayer"
+                    <Parameter Name="Class" Guid="7ecfafc4-4603-424c-87dd-1df59e7ef413" Value="Game.Components.ComponentCharacter"
                                Type="string"/>
                 </ComponentTemplate>
                 <ComponentTemplate Name="Input" Description="Collects input for the player"
@@ -6652,7 +6673,7 @@
                     <Parameter Name="Class" Guid="ec809766-ba61-434e-bfde-e677f506b887" Value="Game.Components.ComponentInput"
                                Type="string"/>
                 </ComponentTemplate>
-                <ComponentTemplate Name="CreativeInventory" Description="Player's inventory in creative mode"
+                <ComponentTemplate Name="CreativeInventory" Description="Character's inventory in creative mode"
                                    Guid="7d1b4260-39c0-4f23-b9f5-9ecf6d046396"
                                    InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
                     <Parameter Name="ActiveSlotIndex" Description="Index of active slot"
@@ -6783,7 +6804,7 @@
                     <Parameter Name="Class" Guid="2ecdc324-1a9e-444f-941d-f313447c00a5" Value="Game.Components.ComponentSickness"
                                Type="string"/>
                 </ComponentTemplate>
-                <ComponentTemplate Name="Clothing" Description="Handles clothes and skin of player"
+                <ComponentTemplate Name="Clothing" Description="Handles clothes and skin of a character"
                                    Guid="b7d5ba34-de1b-4f62-a24c-314e4e1b25ca"
                                    InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
                     <ParameterSet Name="Clothes" Description="Contains clothes worn by creature"
@@ -6894,7 +6915,7 @@
                     <Parameter Name="Position" Description="Position of frame"
                                Guid="622de328-a99c-45ca-b83c-fd0bbb3fc279" Value="0,0,0" Type="Vector3"/>
                 </ComponentTemplate>
-                <ComponentTemplate Name="Inventory" Description="Player's inventory"
+                <ComponentTemplate Name="Inventory" Description="Character's inventory"
                                    Guid="de5c0cb9-42d1-4ee4-b58f-bb9bb668b890"
                                    InheritanceParent="81a44c6a-c30a-4f53-8d64-0c30aabab8f9">
                     <Parameter Name="Class" Guid="b4723611-8b4e-4763-a11d-b4ff19c6109f" Value="Game.Components.ComponentInventory"
@@ -7022,7 +7043,7 @@
                                Value="Game.Components.ComponentBlockHighlight" Type="string"/>
                 </ComponentTemplate>
                 <ComponentTemplate Name="FirstPersonModel"
-                                   Description="Player's first person model (hand and held items)"
+                                   Description="Character's first person model (hand and held items)"
                                    Guid="3d4a5ce2-b578-4d90-b365-ce5a3cc693f1"
                                    InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
                     <Parameter Name="HandModelName" Description="Name of hand model"
@@ -7150,7 +7171,7 @@
                                          InheritanceParent="8717b547-e3eb-4465-946a-e4fb0b2fedb4"/>
                 <MemberSubsystemTemplate Name="FenceBlockBehavior" Guid="00f400d3-adc4-41e1-b3ff-ee46631571b5"
                                          InheritanceParent="b9a7f98e-b2fd-4902-9e37-d2c0a73909c4"/>
-                <MemberSubsystemTemplate Name="PlayerStats" Guid="0d9c91b0-9f70-4754-b2dd-2667600eee95"
+                <MemberSubsystemTemplate Name="CharacterStats" Guid="0d9c91b0-9f70-4754-b2dd-2667600eee95"
                                          InheritanceParent="c829cb1d-879e-47c4-8597-1507cdac7629"/>
                 <MemberSubsystemTemplate Name="BombBlockBehavior" Guid="11630912-4eed-4b8f-931c-683a6d03855f"
                                          InheritanceParent="e8d530fa-cb89-46e8-8722-43c539dde579"/>
@@ -7158,7 +7179,11 @@
                                          InheritanceParent="7da47c66-2c8d-4b54-90ac-c270b42c333f"/>
                 <MemberSubsystemTemplate Name="RakeBlockBehavior" Guid="14c832ee-b501-4f78-8246-c6cac079c3cc"
                                          InheritanceParent="349f7e10-7478-4ae9-ae17-278866421f39"/>
-                <MemberSubsystemTemplate Name="Players" Guid="194f1d5a-9b95-40aa-8926-f9b373626a5f"
+                <MemberSubsystemTemplate Name="Teams" Guid="78f7361d-71d4-4b84-8804-eabc7eb188c7"
+                                         InheritanceParent="1d28ca38-bb73-44e0-bfd5-ea279a2682b5"/>
+                <MemberSubsystemTemplate Name="Players" Guid="cfcb5759-9e81-415e-ac23-6c49d11f8c10" InheritanceParent="8eebccbf-1da2-45b6-b8a8-1d1ced24c7b5"/>
+                <MemberSubsystemTemplate Name="PositionMarks" Guid="3a0d8532-d78f-4dc3-8106-76fd12204b4c" InheritanceParent="462e18e4-e317-40ad-b01f-a9bd0833e334"/>
+                <MemberSubsystemTemplate Name="Characters" Guid="194f1d5a-9b95-40aa-8926-f9b373626a5f"
                                          InheritanceParent="30b8559d-fc03-42cb-b716-e985aaac96c0"/>
                 <MemberSubsystemTemplate Name="FallenLeavesBlockBehavior" Guid="19c9c0b3-2467-4e96-983e-5e34d0305350"
                                          InheritanceParent="0a4bc5f7-5c06-4f21-97ff-2a825bcb4f2d"/>
@@ -7525,7 +7550,7 @@
             <Parameter Guid="fe62d375-36da-4d00-9eac-981cd898d537"/>
             <Parameter Guid="e792a45c-094a-45c9-bf1b-987ee84ef125"/>
         </GridViewPreset>
-        <GridViewPreset Name="Creature FindPlayerBehavior">
+        <GridViewPreset Name="Creature FindCharacterBehavior">
             <Parameter Guid="191a3c19-8119-4bac-bcb5-147a93d9f982"/>
             <Parameter Guid="c698df14-2139-4cbc-b750-a2f3b5f8ae52"/>
             <Parameter Guid="b4588d67-c255-4878-94f3-e5482c407be1"/>
@@ -7541,7 +7566,7 @@
         <GridViewPreset Name="Creature Howl Behavior">
             <Parameter Guid="3f8c39d6-4a85-4bc3-a051-e72e3d01ff64"/>
         </GridViewPreset>
-        <GridViewPreset Name="Creature AvoidPlayerBehavior">
+        <GridViewPreset Name="Creature AvoidCharacterBehavior">
             <Parameter Guid="06a9df3f-01d2-4d65-911e-6d8a6a2c763c"/>
             <Parameter Guid="bcc95b19-7157-4046-ba05-bf72d642f365"/>
         </GridViewPreset>

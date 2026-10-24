@@ -829,7 +829,13 @@ public sealed class NetPlayScreen : Screen
         var cancellationToken = cancellation.Token;
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(
-                () => ServerConnectionPreparation.PrepareAsync(target, _connectionHttp, cancellationToken),
+                async () =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    using var identity = LocalIdentityManager.Current.OpenPlayerIdentity();
+                    return await ServerConnectionPreparation
+                        .PrepareAsync(target, _connectionHttp, identity, cancellationToken).ConfigureAwait(false);
+                },
                 cancellationToken
             )
             .ContinueWith(task => Dispatcher.Dispatch(() =>
