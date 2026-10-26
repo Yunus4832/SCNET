@@ -5,6 +5,7 @@ namespace Game.Network.Handling;
 public sealed class BootstrapPackageHandler : PackageHandlerBase<BootstrapPackage>
 {
     internal static bool CanApply(BootstrapPackage package, NetNode node) =>
+        node.AdmissionAccepted &&
         ProtocolEnum.TryDecode<GameMode>(package.World.Mode, out _) &&
         node.CurrentStage == NetNode.Stage.Bootstrapping &&
         node.CurrentConnectionPhase == ConnectionPhase.TransportConnected &&

@@ -1,0 +1,23 @@
+<Dialog xmlns="runtime-namespace:Game.Widgets">
+    <CanvasWidget Size="680, 490" HorizontalAlignment="Center" VerticalAlignment="Center" ClampToBounds="true">
+        <BevelledRectangleWidget Style="{Styles/DialogArea}"/>
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <LabelWidget Text="[AuthenticationConsentDialog:Title]" Size="630, 36" FontScale="0.95" TextAnchor="HorizontalCenter, VerticalCenter"/>
+            <LabelWidget Name="Description" Size="630, 52" FontScale="0.7" WordWrap="true"/>
+            <CanvasWidget Size="630, 136" Margin="0, 4">
+                <ScrollPanelWidget Direction="Vertical" ScrollPosition="0" ScrollSpeed="0">
+                    <StackPanelWidget Direction="Vertical">
+                        <LabelWidget Name="Service" Size="620, 26" FontScale="0.85" Ellipsis="true"/>
+                        <LabelWidget Name="Url" Size="620, -1" FontScale="0.7" WordWrap="true"/>
+                        <LabelWidget Name="Fingerprint" Size="620, -1" FontScale="0.7" WordWrap="true" Margin="0, 8"/>
+                        <LabelWidget Name="Server" Size="620, -1" FontScale="0.65" WordWrap="true"/>
+                    </StackPanelWidget>
+                </ScrollPanelWidget>
+            </CanvasWidget>
+            <BevelledButtonWidget Name="Details" Text="[AuthenticationConsentDialog:Details]" Style="{Styles/ButtonStyle_160x60}" Size="620, 44" Margin="0, 3"/>
+            <BevelledButtonWidget Name="Save" Text="[AuthenticationConsentDialog:Save]" Style="{Styles/ButtonStyle_160x60}" Size="620, 60" Margin="0, 3" Color="120, 255, 120"/>
+            <BevelledButtonWidget Name="Once" Text="[AuthenticationConsentDialog:Once]" Style="{Styles/ButtonStyle_160x60}" Size="620, 60" Margin="0, 3"/>
+            <BevelledButtonWidget Name="Reject" Text="[AuthenticationConsentDialog:Reject]" Style="{Styles/ButtonStyle_160x60}" Size="620, 60" Margin="0, 3"/>
+        </StackPanelWidget>
+    </CanvasWidget>
+</Dialog>

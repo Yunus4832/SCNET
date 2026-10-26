@@ -42,5 +42,8 @@
   "Message": 40,
   "TeamManage": 41,
   "Command": 42,
-  "ModEnvelope": 43
+  "ModEnvelope": 43,
+  "AdmissionChallenge": 44,
+  "AdmissionProof": 45,
+  "AdmissionResult": 46
 }

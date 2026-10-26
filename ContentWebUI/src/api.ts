@@ -244,3 +244,29 @@ export interface RendezvousService {
   reviewMessage?: string;
   createdAt?: string;
 }
+
+export interface AuthenticationService {
+  id: string;
+  name: string;
+  serviceUrl: string;
+  description?: string;
+  reviewedAt?: string;
+  publisherId?: string;
+  publisherName?: string;
+  status?: string;
+  revision?: number;
+  reviewMessage?: string;
+}
+
+export interface AuthenticationServiceAudit {
+  revision: number;
+  publisherId: string;
+  administratorId?: string;
+  action: string;
+  message?: string;
+  occurredAt: string;
+  name: string;
+  serviceUrl: string;
+  description?: string;
+  status: string;
+}

@@ -17,10 +17,13 @@ import { copyText } from '../clipboard';
 import { getRuntimeConfig } from '../config';
 import { contentTypeLabel } from '../contentTypes';
 import RendezvousServicesPanel from '../components/RendezvousServicesPanel.vue';
+import AuthenticationServicesPanel from '../components/AuthenticationServicesPanel.vue';
 
 const search = ref('');
 const appliedSearch = ref('');
-const catalogView = ref<'content' | 'serverSources' | 'rendezvous' | 'gameInformation'>('content');
+const catalogView = ref<
+  'content' | 'serverSources' | 'rendezvous' | 'authentication' | 'gameInformation'
+>('content');
 const type = ref('');
 const page = ref(1);
 const selectedContent = ref<ContentVersion>();
@@ -165,7 +168,7 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
 <template>
   <section class="hero shell">
     <h1>社区内容</h1>
-    <p>集中浏览经审核的游戏内容、服务器源与信令服务；公开内容可匿名访问。</p>
+    <p>集中浏览经审核的游戏内容、服务器源、信令和认证服务；公开内容可匿名访问。</p>
     <div class="workspace-tabs catalog-tabs">
       <button :class="{ active: catalogView === 'content' }" @click="catalogView = 'content'">
         内容广场
@@ -180,6 +183,12 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
         信令服务器
       </button>
       <button
+        :class="{ active: catalogView === 'authentication' }"
+        @click="catalogView = 'authentication'"
+      >
+        认证服务
+      </button>
+      <button
         :class="{ active: catalogView === 'gameInformation' }"
         @click="catalogView = 'gameInformation'"
       >
@@ -192,7 +201,9 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
         :placeholder="
           catalogView === 'content'
             ? '搜索名称、标识符或简介'
-            : catalogView === 'serverSources' || catalogView === 'rendezvous'
+            : catalogView === 'serverSources' ||
+                catalogView === 'rendezvous' ||
+                catalogView === 'authentication'
               ? '搜索名称、地址或说明'
               : '搜索公告、版本号、平台或说明'
         "
@@ -348,6 +359,9 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
     <template v-else-if="catalogView === 'rendezvous'">
       <RendezvousServicesPanel mode="public" :search="appliedSearch" />
     </template>
+    <template v-else-if="catalogView === 'authentication'"
+      ><AuthenticationServicesPanel mode="public" :search="appliedSearch"
+    /></template>
     <template v-else>
       <div v-if="announcements.isPending.value || releases.isPending.value" class="state">
         <span class="spinner" />正在取得公告与游戏版本…

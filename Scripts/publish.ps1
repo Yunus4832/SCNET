@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [ValidateSet("Survivalcraft.Linux", "Survivalcraft.Windows", "Survivalcraft.Android", "Survivalcraft.Android.Arm32", "ContentServer", "RendezvousServer", "NetworkProbe")]
+    [ValidateSet("Survivalcraft.Linux", "Survivalcraft.Windows", "Survivalcraft.Android", "Survivalcraft.Android.Arm32", "ContentServer", "RendezvousServer", "Authentication.Server", "NetworkProbe")]
     [string[]]$Project = @(),
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$AdditionalArguments
@@ -58,6 +58,13 @@ try {
         }
     }
 
+    if ($Project.Count -eq 0 -or $Project -contains "Authentication.Server") {
+        Write-Host "[SCNET Publish] Publishing Authentication.Server (portable ZIP and container bundle on Linux)"
+        & dotnet publish "Authentication.Server/Authentication.Server.csproj" --configuration $Configuration @AdditionalArguments
+        if ($LASTEXITCODE -ne 0) {
+            throw "Publishing Authentication.Server failed with exit code $LASTEXITCODE."
+        }
+    }
     if ($Project.Count -eq 0 -or $Project -contains "NetworkProbe") {
         Write-Host "[SCNET Publish] Publishing NetworkProbe"
         & dotnet publish "NetworkProbe/NetworkProbe.csproj" --configuration $Configuration @AdditionalArguments

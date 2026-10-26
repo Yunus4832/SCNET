@@ -23,6 +23,11 @@ public class PackageManager
     private static void RegisterBuiltInPackages()
     {
         RegisterProtocolPackage<ServerInfoPackage, ServerInfoPackageHandler>(PackageType.ServerInfo);
+        RegisterProtocolPackage<AdmissionChallengePackage, AdmissionChallengePackageHandler>(
+            PackageType.AdmissionChallenge
+        );
+        RegisterProtocolPackage<AdmissionProofPackage, AdmissionProofPackageHandler>(PackageType.AdmissionProof);
+        RegisterProtocolPackage<AdmissionResultPackage, AdmissionResultPackageHandler>(PackageType.AdmissionResult);
         RegisterProtocolPackage<ConnectionRequestPackage, ConnectionRequestPackageHandler>(
             PackageType
                 .ConnectionRequest

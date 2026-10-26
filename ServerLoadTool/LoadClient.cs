@@ -100,10 +100,11 @@ public sealed class LoadClient : IDisposable
         Index = index;
         Name = $"Load{runName}{index:D3}";
         _network = new NetworkHost(options: new NetworkHostOptions { DisconnectTimeout = TimeSpan.FromSeconds(15) });
-        _network.Received += (_, message) =>
+        _network.Received += (peer, message) =>
         {
             try
             {
+                _peer ??= peer;
                 ReceivedBytes += message.Payload.Length;
                 foreach (var package in LoadWire.Decode(message.Payload))
                 {
@@ -188,6 +189,23 @@ public sealed class LoadClient : IDisposable
         {
             case ConnectionRejectPackage reject:
                 Fail($"rejected: {reject.Reason}");
+                break;
+            case AdmissionChallengePackage challenge:
+                if (challenge.Mode != ServerAdmissionMode.Open)
+                {
+                    Fail("This load client requires an open-admission server.");
+                    break;
+                }
+
+                State = "admission";
+                Send(new AdmissionProofPackage(challenge.Nonce));
+                break;
+            case AdmissionResultPackage admission:
+                if (admission.Code != AdmissionResultCode.Accepted)
+                {
+                    Fail($"admission: {admission.Code}");
+                }
+
                 break;
             case BootstrapPackage bootstrap:
                 World = LoadWorldInfo.Read(bootstrap.World);

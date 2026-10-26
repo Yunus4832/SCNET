@@ -29,7 +29,7 @@ public sealed class SettingsIdentityScreen : Screen
 
     private char[]? _password;
 
-    private IdentityPasswordDialog? _passwordDialog;
+    private PasswordDialog? _passwordDialog;
 
     public SettingsIdentityScreen()
     {
@@ -74,6 +74,36 @@ public sealed class SettingsIdentityScreen : Screen
             ClipboardManager.ClipboardString = LocalIdentityManager.Current.GetAddress(Purpose) ?? string.Empty;
         }
 
+        if (Children.Find<ButtonWidget>("Details")!.IsClicked)
+        {
+            DialogsManager.Alert(LocalIdentityManager.Current.GetAddress(Purpose) ?? Text("NotCreated"));
+        }
+
+        var forget = Children.Find<ButtonWidget>("ForgetPasswords")!;
+        forget.IsEnabled = AuthenticationManager.Current.ServerCredentials.Count > 0;
+        if (forget.IsClicked)
+        {
+            DialogsManager.ShowDialog(
+                this,
+                new MessageDialog(
+                    Text("ForgetPasswords"),
+                    Text("ForgetPasswordsConfirm"),
+                    LanguageManager.Get("Usual", "ok"),
+                    LanguageManager.Get("Usual", "cancel"),
+                    button =>
+                    {
+                        if (button != MessageDialogButton.Button1) { return; }
+
+                        try { AuthenticationManager.Current.ServerCredentials.Clear(); }
+                        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+                        {
+                            DialogsManager.Alert(Text("ForgetPasswordsFailed"));
+                        }
+                    }
+                )
+            );
+        }
+
         if (_export.IsClicked) { BeginExport(); }
 
         if (_import.IsClicked) { BeginImport(); }
@@ -87,7 +117,7 @@ public sealed class SettingsIdentityScreen : Screen
     private void Refresh()
     {
         var address = LocalIdentityManager.Current.GetAddress(Purpose);
-        _address.Text = address ?? Text("NotCreated");
+        _address.Text = address is null ? Text("NotCreated") : IdentityAddressDisplay.Abbreviate(address);
         _hint.Text = !LocalIdentityManager.CanImport ? Text("OfflineRequired") : Text("SecurityHint");
         _copy.IsEnabled = !_busy && address is not null;
         _export.IsEnabled = !_busy && address is not null && FilePicker.IsAvailable;
@@ -102,7 +132,7 @@ public sealed class SettingsIdentityScreen : Screen
         _busy = true;
         var generation = _generation;
         var purpose = Purpose;
-        _passwordDialog = new IdentityPasswordDialog(
+        _passwordDialog = new PasswordDialog(
             Text("ExportPassword"),
             true,
             password =>
@@ -253,7 +283,7 @@ public sealed class SettingsIdentityScreen : Screen
 
     private void AskImportPassword(IdentityPurpose purpose, int generation)
     {
-        _passwordDialog = new IdentityPasswordDialog(
+        _passwordDialog = new PasswordDialog(
             Text("ImportPassword"),
             false,
             password =>
@@ -274,7 +304,11 @@ public sealed class SettingsIdentityScreen : Screen
                     var address = LocalIdentityManager.Current.InspectBackup(purpose, backup, password);
                     var expected = LocalIdentityManager.Current.GetAddress(purpose);
                     DialogsManager.Confirm(
-                        string.Format(Text("ImportConfirm"), expected ?? Text("NotCreated"), address),
+                        string.Format(
+                            Text("ImportConfirm"),
+                            expected is null ? Text("NotCreated") : IdentityAddressDisplay.Abbreviate(expected),
+                            IdentityAddressDisplay.Abbreviate(address)
+                        ),
                         button =>
                         {
                             try

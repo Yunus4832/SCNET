@@ -1,0 +1,24 @@
+<Project>
+    <Import Project="../Directory.Build.targets"/>
+    <PropertyGroup>
+        <BuildAuthenticationServerArtifacts Condition="'$(BuildAuthenticationServerArtifacts)' == ''">true</BuildAuthenticationServerArtifacts>
+    </PropertyGroup>
+    <Target Name="ValidateAuthenticationPublishPayload" BeforeTargets="PackOutput;BuildAuthenticationServerContainer"
+            Condition="'$(Configuration)' == 'Release' AND '$(DesignTimeBuild)' != 'true'">
+        <ItemGroup>
+            <_AuthenticationPrivateFiles Include="$(PublishDir)**/*.p8;$(PublishDir)**/*.pfx;$(PublishDir)**/*.key;$(PublishDir)**/authorizations.json;$(PublishDir)**/provider.env;$(PublishDir)**/appsettings*.json"/>
+        </ItemGroup>
+        <Error Condition="'@(_AuthenticationPrivateFiles)' != ''" Text="Authentication publish payload contains runtime credentials or local configuration. Use an empty publish directory and external runtime configuration."/>
+    </Target>
+    <Target Name="BuildAuthenticationServerContainer" AfterTargets="Publish"
+            Condition="'$(Configuration)' == 'Release' AND '$(BuildAuthenticationServerArtifacts)' == 'true' AND '$(DesignTimeBuild)' != 'true'">
+        <PropertyGroup>
+            <AuthenticationServerPublishDirectory>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(PublishDir)'))</AuthenticationServerPublishDirectory>
+        </PropertyGroup>
+        <Exec Command="bash &quot;$(MSBuildProjectDirectory)/Deployment/build-image.sh&quot;"
+              EnvironmentVariables="AUTHENTICATIONSERVER_PUBLISH_DIR=$(AuthenticationServerPublishDirectory);AUTHENTICATION_SERVER_VERSION=$(AuthenticationServerVersion);DOTNET_SDK_VERSION=$(NETCoreSdkVersion);PLATFORM=linux/amd64"
+              Condition="$([MSBuild]::IsOSPlatform('Linux'))"/>
+        <Message Text="[AuthenticationServer] 当前系统不是 Linux，已跳过容器镜像打包。" Importance="high"
+                 Condition="!$([MSBuild]::IsOSPlatform('Linux'))"/>
+    </Target>
+</Project>

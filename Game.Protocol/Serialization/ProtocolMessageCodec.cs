@@ -52,6 +52,9 @@ public static partial class ProtocolMessageCodec
         PackageType.Bootstrap => ReadBootstrap(reader),
         PackageType.InitialWorldSnapshot => ReadInitialSnapshot(reader),
         PackageType.Entity => ReadEntity(reader),
+        PackageType.AdmissionChallenge => ReadAdmissionChallenge(reader),
+        PackageType.AdmissionProof => ReadAdmissionProof(reader),
+        PackageType.AdmissionResult => ReadAdmissionResult(reader),
         PackageType.ConnectionRequest => ReadConnectionRequest(reader),
         PackageType.ConnectionReject => new ConnectionRejectPackage(reader.ReadString()),
         PackageType.ConnectionPhaseAck => ReadPhaseAck(reader),
@@ -177,6 +180,15 @@ public static partial class ProtocolMessageCodec
             case ClientPackage clients:
                 WriteClient(clients, writer);
                 break;
+            case AdmissionChallengePackage admissionChallenge:
+                WriteAdmissionChallenge(admissionChallenge, writer);
+                break;
+            case AdmissionProofPackage admissionProof:
+                WriteAdmissionProof(admissionProof, writer);
+                break;
+            case AdmissionResultPackage admissionResult:
+                WriteAdmissionResult(admissionResult, writer);
+                break;
             case ConnectionRequestPackage request:
                 writer.Write(request.Magic);
                 writer.Write(request.ProtocolVersion);
@@ -246,6 +258,9 @@ public static partial class ProtocolMessageCodec
         PackageType.Bootstrap or
         PackageType.InitialWorldSnapshot or
         PackageType.Entity or
+        PackageType.AdmissionChallenge or
+        PackageType.AdmissionProof or
+        PackageType.AdmissionResult or
         PackageType.ConnectionRequest or
         PackageType.ConnectionReject or
         PackageType.ConnectionPhaseAck or

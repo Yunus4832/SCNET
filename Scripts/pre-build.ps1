@@ -20,6 +20,7 @@ try {
         @{ Id = "SCNET.Content.Packaging"; Project = "Content.Packaging/Content.Packaging.csproj" },
         @{ Id = "SCNET.ServerSource.Protocol"; Project = "ServerSource.Protocol/ServerSource.Protocol.csproj" },
         @{ Id = "SCNET.ContentTool"; Project = "ContentTool/ContentTool.csproj" },
+        @{ Id = "SCNET.Authentication.Protocol"; Project = "Authentication.Protocol/Authentication.Protocol.csproj" },
         @{ Id = "SCNET.Game.Protocol"; Project = "Game.Protocol/Game.Protocol.csproj" },
         @{ Id = "SCNET.Survivalcraft"; Project = "Survivalcraft/Survivalcraft.csproj" },
         @{ Id = "SCNET.ModTemplates"; Project = "Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj" }

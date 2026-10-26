@@ -5,6 +5,8 @@ using Engine.Graphics;
 using Engine.Media.Images;
 using Engine.Network;
 
+using Game.Admission;
+using Game.Authentication;
 using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Handling;
@@ -20,6 +22,14 @@ public class GameLoadingScreen : Screen
     private const string _typeName = nameof(GameLoadingScreen);
 
     private readonly StringBuilder _builder = new();
+
+    private ClientAdmissionUi? _admissionUi;
+
+    private TemporaryJoinAuthorization? _temporaryAuthorization;
+
+    private HostedWorldStartup? _hostStartup;
+
+    private ServerAdmissionConfiguration? _hostPolicy;
 
     private bool _isAdventureRestart;
 
@@ -74,7 +84,7 @@ public class GameLoadingScreen : Screen
                     }
                     else
                     {
-                        _stateMachine.TransitionTo("Loading");
+                        BeginLocalWorldLoad();
                     }
                 }
                 else
@@ -90,11 +100,14 @@ public class GameLoadingScreen : Screen
             delegate { _timer = Stopwatch.StartNew(); },
             delegate
             {
-                SetSpawnDialogMessage("等待服务器响应", 0.25f);
-                //Fix me::客户端中断连接口再次连接会卡住
+                SetSpawnDialogMessage(_admissionUi?.Status is { Length: > 0 } status ? status : "等待服务器响应", 0.25f);
+                if (_admissionUi?.IsWaitingForDetachedAuthentication == true) { return; }
+
                 if (CommonLib.Net.CurrentStage == Stage.Bootstrapping)
                 {
-                    if (_timer.ElapsedMilliseconds >= CommonLib.DisconnectTimeout)
+                    if (CommonLib.Net.AdmissionDeadline is { } deadline
+                            ? DateTimeOffset.UtcNow >= deadline
+                            : _timer.ElapsedMilliseconds >= CommonLib.DisconnectTimeout)
                     {
                         CommonLib.Net.Stop("连接超时");
                     }
@@ -115,6 +128,27 @@ public class GameLoadingScreen : Screen
                     NetworkSender.SendToServer(new ClientPackage(CommonLib.Net.Self!.ID, ClientState.Connected));
                 }
             }
+        );
+
+        _stateMachine.AddState(
+            "WaitLocalAdmission",
+            Actions.Empty,
+            () =>
+            {
+                SetSpawnDialogMessage(_admissionUi?.Status is { Length: > 0 } status ? status : "认证", 0.25f);
+                if (CommonLib.Net.IsClosing)
+                {
+                    AbortLoading();
+                    return;
+                }
+
+                if (CommonLib.Net.AdmissionAccepted)
+                {
+                    CommonLib.Net.PrepareLocalHostWorld();
+                    _stateMachine.TransitionTo("Loading");
+                }
+            },
+            Actions.Empty
         );
 
         _stateMachine.AddState(
@@ -140,6 +174,15 @@ public class GameLoadingScreen : Screen
                     var gamesWidget = ScreensManager.FindScreen<GameScreen>("Game", true)!.Children
                         .Find<ContainerWidget>("GamesWidget")!;
                     GameManager.LoadProject(_worldInfo, gamesWidget);
+                    if (_hostStartup is { } host)
+                    {
+                        if (host.Session is { } session)
+                        {
+                            CommonLib.StartServer(session, _worldInfo.WorldSettings, _hostPolicy);
+                        }
+                        else { CommonLib.StartServer(_worldInfo.WorldSettings, _hostPolicy); }
+                    }
+
                     if (_isAdventureRestart && CommonLib.WorkType == WorkType.Client)
                     {
                         NetworkSender.SendToServer(
@@ -206,12 +249,37 @@ public class GameLoadingScreen : Screen
             Actions.Empty,
             delegate
             {
+                CommonLib.Net.StopImmediate();
                 GameManager.DisposeProject();
+                CommonLib.Net.StartLocal();
                 WorldsManager.RestoreWorldFromSnapshot(_worldInfo.DirectoryName, _worldSnapshotName);
-                _stateMachine.TransitionTo("Loading");
+                BeginLocalWorldLoad();
             },
             Actions.Empty
         );
+    }
+
+    private void BeginLocalWorldLoad()
+    {
+        if (_hostStartup is null)
+        {
+            _temporaryAuthorization = null;
+            _stateMachine.TransitionTo("Loading");
+            return;
+        }
+
+        _admissionUi ??= new ClientAdmissionUi(
+            CommonLib.Net,
+            this,
+            AuthenticationJoinScope.ForWorld(_worldInfo.DirectoryName),
+            _temporaryAuthorization
+        );
+        _temporaryAuthorization = null;
+        var saved = ServerAdmissionConfiguration.ReadWorld(_worldInfo.DirectoryName);
+        _hostPolicy = _hostStartup.Session?.AdmissionOverrides.Apply(saved) ?? saved;
+        DialogsManager.ShowDialog(this, SpawnDialog);
+        CommonLib.Net.BeginLocalAdmission(_worldInfo.DirectoryName, _hostPolicy);
+        _stateMachine.TransitionTo("WaitLocalAdmission");
     }
 
     private static void Handle(NetNode node, IEnumerable<ReceivedPackage> packages)
@@ -219,7 +287,11 @@ public class GameLoadingScreen : Screen
         foreach (var received in packages)
         {
             var package = received.Package;
-            if (package is ClientPackage clientPackage)
+            if (package is AdmissionChallengePackage or AdmissionResultPackage or ConnectionRejectPackage)
+            {
+                PackageDispatcher.Handle(received);
+            }
+            else if (package is ClientPackage clientPackage)
             {
                 try
                 {
@@ -298,12 +370,31 @@ public class GameLoadingScreen : Screen
     {
         if (Input.Back || Input.Cancel)
         {
+            Log.Information("Cancelled game loading from back or cancel input.");
             AbortLoading();
             return;
         }
 
         try
         {
+            CommonLib.Net.PumpLocalAdmission();
+            _admissionUi?.Update();
+            if (_admissionUi?.DetachedFailure is { } failure)
+            {
+                AbortLoading();
+                DialogsManager.Alert(failure);
+                return;
+            }
+
+            if (_serverPreparation is { } prepared &&
+                _admissionUi?.TakeReconnectAuthorization() is { } authorization)
+            {
+                var target = prepared.Target;
+                CommonLib.Net.StopForAdmissionRecovery();
+                ScreensManager.SwitchScreen("NetPlay", target, authorization);
+                return;
+            }
+
             GameManager.UpdateProject();
             _stateMachine.Update();
         }
@@ -327,7 +418,7 @@ public class GameLoadingScreen : Screen
         var previous = ScreensManager.PreviousScreen;
         CommonLib.Net.StopImmediate();
         GameManager.DisposeProject();
-        if (previous is null or LoadingScreen or GameLoadingScreen)
+        if (previous is null or LoadingScreen or GameLoadingScreen or GameScreen)
         {
             ScreensManager.SwitchScreen(_serverPreparation is null ? "Play" : "NetPlay");
         }
@@ -336,6 +427,9 @@ public class GameLoadingScreen : Screen
 
     public override void Leave()
     {
+        _temporaryAuthorization = null;
+        _admissionUi?.Dispose();
+        _admissionUi = null;
         DialogsManager.HideDialog(SpawnDialog);
         if (_serverPreparation is not null)
         {
@@ -355,6 +449,9 @@ public class GameLoadingScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        _temporaryAuthorization = null;
+        _admissionUi?.Dispose();
+        _admissionUi = null;
         _isServerReply = false;
         _isWorldSnapshotApplied = false;
         if (CommonLib.WorkType == WorkType.Local)
@@ -362,17 +459,35 @@ public class GameLoadingScreen : Screen
             CommonLib.Net.StartLocal();
         }
 
-        if (parameters.Length < 3)
+        _hostStartup = null;
+        _hostPolicy = null;
+        if (parameters.Length >= 3 && parameters[2] is ServerConnectionPreparation prepared)
+        {
+            _worldSnapshotName = string.Empty;
+            _serverPreparation = prepared;
+            _admissionUi = new ClientAdmissionUi(
+                CommonLib.Net,
+                this,
+                AuthenticationJoinScope.ForRemote(prepared.Target),
+                parameters.OfType<TemporaryJoinAuthorization>().FirstOrDefault()
+            );
+        }
+        else
         {
             _worldInfo = (WorldInfo)parameters[0];
             _worldSnapshotName = (string)parameters[1];
             _serverPreparation = null;
             _isAdventureRestart = _worldSnapshotName == "AdventureRestart";
-        }
-        else
-        {
-            _worldSnapshotName = string.Empty;
-            _serverPreparation = (ServerConnectionPreparation)parameters[2];
+            _hostStartup = parameters.Length >= 3 ? parameters[2] as HostedWorldStartup : null;
+            if (_isAdventureRestart && CommonLib.Net.IsServer)
+            {
+                _temporaryAuthorization = CommonLib.Net.TemporaryAuthentication;
+                _hostStartup = new HostedWorldStartup(CommonLib.Net.ActiveHostSession);
+            }
+            else if (_hostStartup is null && _worldInfo.WorldSettings.RunServer)
+            {
+                _hostStartup = new HostedWorldStartup();
+            }
         }
 
         _stateMachine.TransitionTo("WaitingForFadeIn");

@@ -18,6 +18,7 @@ pack_entitysystem=false
 pack_content_packaging=false
 pack_serversource_protocol=false
 pack_contenttool=false
+pack_authentication_protocol=false
 pack_game_protocol=false
 pack_survivalcraft=false
 pack_survivalcraft_modtemplates=false
@@ -38,6 +39,7 @@ select_project() {
         Content.Packaging) pack_content_packaging=true ;;
         ServerSource.Protocol) pack_serversource_protocol=true ;;
         ContentTool) pack_contenttool=true ;;
+        Authentication.Protocol) pack_authentication_protocol=true ;;
         Game.Protocol) pack_game_protocol=true ;;
         Survivalcraft) pack_survivalcraft=true ;;
         Survivalcraft.ModTemplates) pack_survivalcraft_modtemplates=true ;;
@@ -125,6 +127,11 @@ fi
 if ! $selected || $pack_contenttool; then
     echo "[SCNET Pack] Packing SCNET.ContentTool"
     dotnet pack "ContentTool/ContentTool.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+fi
+
+if ! $selected || $pack_authentication_protocol; then
+    echo "[SCNET Pack] Packing SCNET.Authentication.Protocol"
+    dotnet pack "Authentication.Protocol/Authentication.Protocol.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $pack_game_protocol; then

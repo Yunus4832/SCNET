@@ -195,9 +195,9 @@ dotnet run --configuration Release --project Engine.Core.Benchmarks/Engine.Core.
 - 测试工程在 `Release` 下会被排除，部分 Android 变体也会在 `Release` 下被排除
 - 当前代码库大量使用反射，因此不启用 `trim`，也不支持通过裁剪方式进行发布优化
 
-`Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口启动独立、串行的 `dotnet publish`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、Windows、Android Arm64、Android Arm32、ContentServer、RendezvousServer 和 NetworkProbe。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
+`Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口启动独立、串行的 `dotnet publish`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、Windows、Android Arm64、Android Arm32、ContentServer、RendezvousServer、Authentication.Server 和 NetworkProbe。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
 
-不指定项目时发布全部。指定项目时只发布选中的入口；多个项目仍按脚本中的固定顺序发布。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32`、`ContentServer`、`RendezvousServer` 和 `NetworkProbe`。例如：
+不指定项目时发布全部。指定项目时只发布选中的入口；多个项目仍按脚本中的固定顺序发布。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32`、`ContentServer`、`RendezvousServer`、`Authentication.Server` 和 `NetworkProbe`。例如：
 
 ```bash
 ./Scripts/publish.sh --project ContentServer
@@ -268,6 +268,14 @@ Agent 使用的本机、地址族隔离与 NAT 实验脚本集中在 `scnet-netw
 环境执行，不随探针发行包分发。
 脚本使用 Python 3 标准库；隔离场景还需要文档中列出的 Linux 网络工具。配置、HTTPS/UDP 开放与探针使用见
 [信令服务部署](RendezvousDeployment.md)。普通 `dotnet build` 不生成这些发行物。
+
+`Authentication.Server` 使用独立 `AuthenticationServerVersion`，新发行单元初始为 `0.1.0`；不跟随普通开发构建递增。
+通过 `Scripts/publish.sh --project Authentication.Server` 或 PowerShell 同名入口生成
+`authentication-server-<版本>-portable.zip`；Linux 另生成 `authentication-server-<版本>-linux-amd64.tar.gz` 容器 bundle。
+便携服务依赖 ASP.NET Core 10 运行时。包内含运行脚本、空数据目录模板、配置示例及第三方许可，
+不包含本机 appsettings、身份私钥、授权状态或账号运行配置；已有发布目录夹带这些文件时拒绝打包。
+普通 `dotnet build` 不执行打包或容器组装。容器基础镜像默认只用本地缓存，和信令服务相同的
+`CONTAINER_ENGINE`、`IMAGE_PULL_POLICY` 覆盖适用。配置与备份见 [认证服务部署](../Authentication.Server/README.md#linux-容器部署)。
 
 ### 桌面更新包
 

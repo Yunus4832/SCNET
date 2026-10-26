@@ -3,8 +3,11 @@ using Engine.Core.Runtime;
 using Game;
 using Game.Managers;
 
+using Survivalcraft.Test.Modding;
+
 namespace Survivalcraft.Test;
 
+[Collection(ConfigFileCollection.Name)]
 public sealed class GameExitManagerTest
 {
     [Fact]

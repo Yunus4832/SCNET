@@ -3,6 +3,9 @@ using System.Xml.Linq;
 
 using Engine.Network;
 
+using Game.Admission;
+using Game.Authentication;
+using Game.Identity;
 using Game.Servers;
 
 using Rendezvous.Protocol;
@@ -11,6 +14,24 @@ namespace Game.Screens;
 
 public class WorldServerSettingsScreen : Screen
 {
+    private WorldAdmissionDraft _admission = new();
+
+    private ButtonWidget _admissionButton = null!;
+
+    private LabelWidget _admissionSummary = null!;
+
+    private PasswordDialog? _admissionPassword;
+
+    private ListSelectionDialog? _admissionSelection;
+
+    private Task<ServerAdmissionConfiguration>? _passwordDerivation;
+
+    private MessageDialog? _admissionConfirmation;
+
+    private int _generation;
+
+    private int _derivationGeneration;
+
     private const string _typeName = nameof(WorldServerSettingsScreen);
 
     private readonly SliderWidget _daySpeedSlider;
@@ -59,6 +80,8 @@ public class WorldServerSettingsScreen : Screen
         LoadContents(this, node);
         _runServerButton = Children.Find<ButtonWidget>("RunServer")!;
         _serverOptions = Children.Find<ContainerWidget>("ServerOptions")!;
+        _admissionButton = Children.Find<ButtonWidget>("Admission")!;
+        _admissionSummary = Children.Find<LabelWidget>("AdmissionSummary")!;
         _p2pButton = Children.Find<ButtonWidget>("P2P")!;
         _p2pOptions = Children.Find<ContainerWidget>("P2POptions")!;
         _p2pService = Children.Find<InlineSelectionWidget>("P2PService")!;
@@ -95,6 +118,8 @@ public class WorldServerSettingsScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        _generation++;
+        _admission = parameters.OfType<WorldAdmissionDraft>().FirstOrDefault() ?? new WorldAdmissionDraft();
         _worldSettings = parameters.Length > 0 && parameters[0] is WorldSettings worldSettings
             ? worldSettings
             : new WorldSettings { RunServer = true };
@@ -119,8 +144,46 @@ public class WorldServerSettingsScreen : Screen
         UpdateControlTexts();
     }
 
+    public override void Leave()
+    {
+        _generation++;
+        _admissionPassword?.Cancel();
+        _admissionPassword = null;
+        if (_admissionSelection is not null)
+        {
+            DialogsManager.HideDialog(_admissionSelection);
+            _admissionSelection = null;
+        }
+
+        _ = _passwordDerivation?.ContinueWith(task => { _ = task.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
+        _passwordDerivation = null;
+        if (_admissionConfirmation is not null)
+        {
+            DialogsManager.HideDialog(_admissionConfirmation);
+            _admissionConfirmation = null;
+        }
+    }
+
     public override void Update()
     {
+        _admissionButton.Text = AdmissionText(_admission.Configuration.Mode.ToString());
+        _admissionButton.IsEnabled = _passwordDerivation is null;
+        _admissionSummary.Text = _admission.Configuration.Authority is { } authority
+            ? authority.BaseUri.AbsoluteUri + "\n" + IdentityAddressDisplay.Abbreviate(authority.Identity.Address)
+            : string.Empty;
+        _admissionSummary.IsVisible = _admissionSummary.Text.Length > 0;
+        if (_passwordDerivation is { IsCompleted: true } derivation)
+        {
+            _passwordDerivation = null;
+            if (_derivationGeneration == _generation && derivation.IsCompletedSuccessfully)
+            {
+                SetAdmission(derivation.Result);
+            }
+            else if (derivation.IsFaulted) { DialogsManager.Alert(AdmissionText("Error")); }
+        }
+
+        if (_admissionButton.IsClicked) { SelectAdmission(); }
+
         if (_p2pButton.IsClicked)
         {
             _worldSettings.P2P = _worldSettings.P2P with { Enabled = !_worldSettings.P2P.Enabled };
@@ -153,6 +216,115 @@ public class WorldServerSettingsScreen : Screen
             }
         }
     }
+
+    private void SelectAdmission()
+    {
+        var generation = _generation;
+        _admissionSelection = new ListSelectionDialog(
+            AdmissionText("Title"),
+            new[] { ServerAdmissionMode.Open, ServerAdmissionMode.Password, ServerAdmissionMode.External },
+            60,
+            item => AdmissionText(item.ToString()!),
+            item =>
+            {
+                _admissionSelection = null;
+                if (generation != _generation) { return; }
+
+                var mode = (ServerAdmissionMode)item;
+                if (mode == ServerAdmissionMode.Open) { SetAdmission(ServerAdmissionConfiguration.Open); }
+                else if (mode == ServerAdmissionMode.Password)
+                {
+                    _admissionPassword = new PasswordDialog(
+                        AdmissionText("Password"),
+                        true,
+                        password =>
+                        {
+                            _admissionPassword = null;
+                            if (password is null) { return; }
+
+                            if (generation != _generation)
+                            {
+                                Array.Clear(password);
+                                return;
+                            }
+
+                            _derivationGeneration = generation;
+                            _passwordDerivation = Task.Run(() =>
+                                {
+                                    try { return ServerAdmissionConfiguration.WithPassword(new string(password)); }
+                                    finally { Array.Clear(password); }
+                                }
+                            );
+                        },
+                        1,
+                        1024
+                    );
+                    DialogsManager.ShowDialog(this, _admissionPassword);
+                }
+                else
+                {
+                    var providers = AuthenticationManager.Current.Services.Services.Where(service => service.Enabled)
+                        .ToArray();
+                    if (providers.Length == 0)
+                    {
+                        DialogsManager.Alert(AdmissionText("NoServices"));
+                        return;
+                    }
+
+                    _admissionSelection = new ListSelectionDialog(
+                        AdmissionText("ChooseService"),
+                        providers,
+                        60,
+                        provider => ((InstalledAuthenticationService)provider).Endpoint.Description.DisplayName +
+                                    " · " +
+                                    ((InstalledAuthenticationService)provider).Endpoint.BaseUri.Host,
+                        provider =>
+                        {
+                            _admissionSelection = null;
+                            if (generation != _generation) { return; }
+
+                            SetAdmission(
+                                ServerAdmissionConfiguration.WithAuthority(
+                                    ((InstalledAuthenticationService)provider).Endpoint
+                                )
+                            );
+                        }
+                    );
+                    DialogsManager.ShowDialog(this, _admissionSelection);
+                }
+            }
+        );
+        DialogsManager.ShowDialog(this, _admissionSelection);
+    }
+
+    private void SetAdmission(ServerAdmissionConfiguration policy)
+    {
+        if (_admission.Configuration.Mode == ServerAdmissionMode.Open ||
+            _admission.Configuration.Fingerprint() == policy.Fingerprint())
+        {
+            _admission.Configuration = policy;
+            return;
+        }
+
+        var generation = _generation;
+        _admissionConfirmation = new MessageDialog(
+            AdmissionText("Title"),
+            AdmissionText("ConfirmChange"),
+            LanguageManager.Get("Usual", "ok"),
+            LanguageManager.Get("Usual", "cancel"),
+            button =>
+            {
+                _admissionConfirmation = null;
+                if (generation == _generation && button == MessageDialogButton.Button1)
+                {
+                    _admission.Configuration = policy;
+                }
+            }
+        );
+        DialogsManager.ShowDialog(this, _admissionConfirmation);
+    }
+
+    private static string AdmissionText(string key) => LanguageManager.GetContentWidgets("ServerAdmission", key);
 
     private void RefreshP2PServices()
     {

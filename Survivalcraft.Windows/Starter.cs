@@ -132,7 +132,7 @@ public class Starter
     {
         RunMode.Value = RunModeType.HeadlessServer;
         AllocConsole();
-        HeadlessEntry.Main(startup);
+        Environment.ExitCode = HeadlessEntry.Main(startup);
     }
 
     private static void Restart(string instanceId)

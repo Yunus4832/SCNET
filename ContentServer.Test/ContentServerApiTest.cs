@@ -274,6 +274,14 @@ public sealed class ContentServerApiTest : IDisposable
 
         foreach (var entity in db.Model.GetEntityTypes())
         {
+            if (entity.IsOwned())
+            {
+                // Immutable audit snapshots have the lifecycle and visibility of their owning aggregate.
+                Assert.NotNull(entity.FindOwnership());
+                Assert.NotNull(entity.FindOwnership()!.PrincipalEntityType.FindProperty("Deleted"));
+                continue;
+            }
+
             var deleted = entity.FindProperty("Deleted");
             Assert.NotNull(deleted);
             Assert.False(deleted.IsShadowProperty());

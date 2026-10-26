@@ -1,0 +1,17 @@
+services:
+  authentication-server:
+    image: __AUTHENTICATIONSERVER_IMAGE__
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${CONTROL_PORT:-31992}:8080"
+    env_file:
+      - ./provider.env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      Authentication__DataDirectory: /home/app/AuthenticationData
+    volumes:
+      - authentication-data:/home/app
+
+volumes:
+  authentication-data:
+    name: ${AUTHENTICATION_DATA_VOLUME:-scnet-authentication-data}

@@ -130,6 +130,49 @@ public static class StartupManager
                 continue;
             }
 
+            var admissionOption = arg.ToLowerInvariant();
+            if (admissionOption is "--server-password" or "--join-password")
+            {
+                throw new Game.Admission.AdmissionConfigurationException(
+                    "Plaintext password arguments are not supported. Use --server-password-file."
+                );
+            }
+
+            if (admissionOption is "--admission" or "--server-password-file" or "--authentication-url"
+                or "--authentication-key" or "--authentication-name")
+            {
+                if (i + 1 >= args.Length || args[i + 1].StartsWith("--", StringComparison.Ordinal))
+                {
+                    throw new Game.Admission.AdmissionConfigurationException("An admission option value is missing.");
+                }
+
+                var value = args[++i];
+                request.AdmissionOverrides = admissionOption switch
+                {
+                    "--admission" => request.AdmissionOverrides with
+                    {
+                        Mode = value.ToLowerInvariant() switch
+                        {
+                            "open" => ServerAdmissionMode.Open, "password" => ServerAdmissionMode.Password,
+                            "external" => ServerAdmissionMode.External,
+                            _ => throw new Game.Admission.AdmissionConfigurationException(
+                                "--admission requires open, password or external."
+                            )
+                        }
+                    },
+                    "--server-password-file" => request.AdmissionOverrides with
+                    {
+                        PasswordFile = Path.IsPathRooted(value) || !value.Contains(':')
+                            ? Path.GetFullPath(value)
+                            : value
+                    },
+                    "--authentication-url" => request.AdmissionOverrides with { AuthenticationUrl = value },
+                    "--authentication-key" => request.AdmissionOverrides with { AuthenticationKey = value },
+                    _ => request.AdmissionOverrides with { AuthenticationName = value }
+                };
+                continue;
+            }
+
             if (string.Equals(arg, "--p2p", StringComparison.OrdinalIgnoreCase))
             {
                 if (!bool.TryParse(ReadOptionValue(args, ref i, "--p2p"), out var value))
@@ -278,6 +321,9 @@ public static class StartupManager
         request.AutoJoinCharacterName = string.IsNullOrWhiteSpace(request.AutoJoinCharacterName)
             ? null
             : request.AutoJoinCharacterName;
+        request.AdmissionOverrides =
+            Game.Admission.ServerAdmissionOverrides.FromEnvironment().Merge(request.AdmissionOverrides);
+        request.AdmissionOverrides.Validate();
         settings.RemainingArgs = remainingArgs.ToArray();
         return request;
     }

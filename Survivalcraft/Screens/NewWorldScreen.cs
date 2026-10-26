@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+using Game.Admission;
 using Game.Network;
 
 namespace Game.Screens;
@@ -28,6 +29,8 @@ public class NewWorldScreen : Screen
 
     private WorldSettings _worldSettings = null!;
 
+    private WorldAdmissionDraft _admission = new();
+
     public NewWorldScreen()
     {
         var node = ContentManager.Get<XElement>("Screens/NewWorldScreen");
@@ -51,9 +54,15 @@ public class NewWorldScreen : Screen
         if (parameters.Length > 0 && parameters[0] is WorldSettings worldSettings)
         {
             _worldSettings = worldSettings;
+            if (parameters.OfType<WorldAdmissionDraft>().FirstOrDefault() is { } draft) { _admission = draft; }
+            else if (ScreensManager.PreviousScreen is not WorldOptionsScreen and not WorldServerSettingsScreen)
+            {
+                _admission = new WorldAdmissionDraft();
+            }
         }
         else if (ScreensManager.PreviousScreen?.GetType() != typeof(WorldOptionsScreen))
         {
+            _admission = new WorldAdmissionDraft();
             _worldSettings = new WorldSettings
             {
                 Name = WorldsManager.GetUnusedWorldName()
@@ -99,12 +108,12 @@ public class NewWorldScreen : Screen
 
         if (_serverSettingsButton.IsClicked)
         {
-            ScreensManager.SwitchScreen("WorldServerSettings", _worldSettings, "NewWorld", _worldSettings);
+            ScreensManager.SwitchScreen("WorldServerSettings", _worldSettings, "NewWorld", _worldSettings, _admission);
         }
 
         if (_playButton.IsClicked && WorldsManager.ValidateWorldName(_nameTextBox.Text))
         {
-            var worldInfo = WorldsManager.CreateWorld(_worldSettings);
+            var worldInfo = WorldsManager.CreateWorld(_worldSettings, admission: _admission.Configuration);
             if (_worldSettings.GameMode != GameMode.Creative)
             {
                 _worldSettings.ResetOptionsForNonCreativeMode();
@@ -193,31 +202,13 @@ public class NewWorldScreen : Screen
     {
         if (runServer)
         {
-            if (CommonLib.StartServer(worldInfo.WorldSettings))
-            {
-                ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
-            }
-            else
-            {
-                DialogsManager.ShowDialog(
-                    this,
-                    new MessageDialog(
-                        "提示",
-                        "创建服务器失败，端口已被占用",
-                        "确定",
-                        string.Empty,
-                        _ =>
-                        {
-                            CommonLib.Net.StopImmediate();
-                            DialogsManager.HideAllDialogs();
-                        }
-                    )
-                );
-            }
+            ScreensManager.SwitchScreen(
+                "GameLoading",
+                worldInfo,
+                string.Empty,
+                new Game.Admission.HostedWorldStartup()
+            );
         }
-        else
-        {
-            ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
-        }
+        else { ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty); }
     }
 }

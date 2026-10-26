@@ -63,6 +63,14 @@ public class MainActivity : BlackActivity
 
     private bool _waitingForStoragePermission;
 
+    private static WeakReference<MainActivity>? _currentController;
+
+    private static StarterInstanceContext? _runtimeInstance;
+
+    private static bool _guiRuntimeRouted;
+
+    private static int _guiCompletionHandled;
+
     private StarterInstanceContext? _instance;
 
     private string? _commandLine;
@@ -74,6 +82,18 @@ public class MainActivity : BlackActivity
         base.OnCreate(savedInstanceState);
         _commandLine = Intent?.GetStringExtra(commandLineExtra);
         _instanceId = Intent?.GetStringExtra(instanceIdExtra);
+        if (Intent?.Action == Intent.ActionMain &&
+            Intent.HasCategory(Intent.CategoryLauncher) &&
+            string.IsNullOrWhiteSpace(_commandLine) &&
+            string.IsNullOrWhiteSpace(_instanceId) &&
+            GameActivity.TryResumeExisting())
+        {
+            _instance = _runtimeInstance;
+            _routeStarted = true;
+            _currentController = new WeakReference<MainActivity>(this);
+            return;
+        }
+
         GamePlatformManager.RegisterPlatform(Platform.Android);
         RouteWhenReady();
     }
@@ -142,14 +162,39 @@ public class MainActivity : BlackActivity
             return;
         }
 
+        if (_guiRuntimeRouted)
+        {
+            // Activity results may arrive before the native game loop has saved and disposed its world.
+            // GameActivity reports completion after GameEntry returns instead.
+            return;
+        }
+
+        HandleRouteResult((int)resultCode);
+    }
+
+    internal static void CompleteGameRun(int resultCode)
+    {
+        if (Interlocked.Exchange(ref _guiCompletionHandled, 1) != 0) { return; }
+
+        if (_currentController?.TryGetTarget(out var controller) == true &&
+            controller is not null &&
+            !controller.IsDestroyed)
+        {
+            controller.RunOnUiThread(() => controller.HandleRouteResult(resultCode));
+        }
+        else { AndroidProcess.KillProcess(AndroidProcess.MyPid()); }
+    }
+
+    private void HandleRouteResult(int resultCode)
+    {
         _routeStarted = false;
-        switch ((int)resultCode)
+        switch (resultCode)
         {
             case restartResultCode:
-                RestartApplication(_instance?.Id ?? StarterInstanceManager.DefaultInstanceId, _commandLine);
+                RestartApplication(_instance?.Id ?? StarterInstanceManager.DefaultInstanceId);
                 break;
             case switchInstanceResultCode:
-                RestartApplication(GameExitManager.SwitchInstanceId, _commandLine);
+                RestartApplication(GameExitManager.SwitchInstanceId);
                 break;
             case updateResultCode:
                 InstallUpdate();
@@ -206,16 +251,11 @@ public class MainActivity : BlackActivity
         AndroidProcess.KillProcess(AndroidProcess.MyPid());
     }
 
-    private void RestartApplication(string instanceId, string? commandLine)
+    private void RestartApplication(string instanceId)
     {
         var restartIntent = new Intent(this, typeof(RestartActivity));
         restartIntent.PutExtra(RestartActivity.mainProcessIdExtra, AndroidProcess.MyPid());
         restartIntent.PutExtra(instanceIdExtra, instanceId);
-        if (!string.IsNullOrWhiteSpace(commandLine))
-        {
-            restartIntent.PutExtra(commandLineExtra, commandLine);
-        }
-
         restartIntent.AddFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
         StartActivity(restartIntent);
     }
@@ -234,6 +274,8 @@ public class MainActivity : BlackActivity
     private void InitializeAndRoute()
     {
         _instance ??= RegisterStorageRoots(_instanceId, _commandLine);
+        _runtimeInstance = _instance;
+        _currentController = new WeakReference<MainActivity>(this);
         Route();
     }
 
@@ -249,6 +291,7 @@ public class MainActivity : BlackActivity
         var activityType = startup.Settings.RunMode is RunModeType.HeadlessServer
             ? typeof(ServerActivity)
             : typeof(GameActivity);
+        _guiRuntimeRouted = activityType == typeof(GameActivity);
         var intent = new Intent(this, activityType);
         if (activityType == typeof(GameActivity) && Intent?.Data is not null)
         {

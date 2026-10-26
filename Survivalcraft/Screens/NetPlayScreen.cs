@@ -2,12 +2,17 @@ using System.Xml.Linq;
 
 using Engine.Network;
 
+using Game.Authentication;
 using Game.Servers;
 
 namespace Game.Screens;
 
 public sealed class NetPlayScreen : Screen
 {
+    private TemporaryJoinAuthorization? _temporaryAuthorization;
+
+    private int _continuationGeneration;
+
     private enum ServerAction
     {
         Connect = 0,
@@ -163,16 +168,23 @@ public sealed class NetPlayScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        Log.Debug($"Entered multiplayer screen with {parameters.Length} startup parameters.");
         _searchPlaceholder.Text = Text("SearchPlaceholder");
         _searchTextBox.Text = string.Empty;
         UpdateSearchPlaceholder();
         _sourceCategoryDrawer.RefreshItems();
         _sortDrawer.RefreshItems();
         ReloadSources();
+        if (parameters is [NetworkTarget target, TemporaryJoinAuthorization authorization])
+        {
+            ConnectToRemoteSession(target, authorization);
+        }
     }
 
     public override void Leave()
     {
+        _temporaryAuthorization = null;
+        _continuationGeneration++;
         _connectionCancellation?.Cancel();
         _refreshCancellation?.Cancel();
         _refreshCancellation = null;
@@ -811,13 +823,31 @@ public sealed class NetPlayScreen : Screen
         ConnectToAddress(server.DisplayName, server.Address);
     }
 
-    public void ConnectToRemoteSession(NetworkTarget target)
+    public void ConnectToRemoteSession(NetworkTarget target) => ConnectToRemoteSession(target, null);
+
+    internal void ConnectToRemoteSession(NetworkTarget target, TemporaryJoinAuthorization? authorization)
     {
         if (_connectionCancellation is not null)
         {
+            if (authorization is not null)
+            {
+                Log.Warning("Authentication recovery found another connection preparation.");
+            }
+
             return;
         }
 
+        if (authorization is not null)
+        {
+            Log.Information("Preparing a fresh connection after browser authentication.");
+        }
+
+        if (authorization is not null && authorization.Scope != AuthenticationJoinScope.ForRemote(target))
+        {
+            throw new ArgumentException("Authentication recovery belongs to another target.", nameof(authorization));
+        }
+
+        _temporaryAuthorization = authorization;
         var busyDialog = new CancellableBusyDialog(Text("Connect"), false)
         {
             SmallMessage = Text("Loading"),
@@ -877,12 +907,17 @@ public sealed class NetPlayScreen : Screen
             );
     }
 
-    private void FinishConnectionPreparation(CancellableBusyDialog dialog, CancellationTokenSource cancellation)
+    private void FinishConnectionPreparation(
+        CancellableBusyDialog dialog,
+        CancellationTokenSource cancellation,
+        bool preserveTemporary = false
+    )
     {
         DialogsManager.HideDialog(dialog);
         if (ReferenceEquals(_connectionCancellation, cancellation))
         {
             _connectionCancellation = null;
+            if (!preserveTemporary) { _temporaryAuthorization = null; }
         }
 
         dialog.CancelRequested -= cancellation.Cancel;
@@ -1090,7 +1125,7 @@ public sealed class NetPlayScreen : Screen
         var requiredProfile = prepared.Status.RequiredModProfile;
         if (requiredProfile is null)
         {
-            FinishConnectionPreparation(busyDialog, cancellation);
+            FinishConnectionPreparation(busyDialog, cancellation, true);
             ConnectPreparedRemoteSession(prepared);
             return;
         }
@@ -1137,7 +1172,7 @@ public sealed class NetPlayScreen : Screen
 
                         if (!task.Result.RequiresRestart)
                         {
-                            FinishConnectionPreparation(busyDialog, cancellation);
+                            FinishConnectionPreparation(busyDialog, cancellation, true);
                             ConnectPreparedRemoteSession(prepared);
                             return;
                         }
@@ -1146,7 +1181,11 @@ public sealed class NetPlayScreen : Screen
                             prepared,
                             () =>
                             {
-                                FinishConnectionPreparation(busyDialog, cancellation);
+                                FinishConnectionPreparation(
+                                    busyDialog,
+                                    cancellation,
+                                    !cancellationToken.IsCancellationRequested
+                                );
                                 if (!cancellationToken.IsCancellationRequested)
                                 {
                                     ConfirmRemoteModRestart(task.Result);
@@ -1175,14 +1214,18 @@ public sealed class NetPlayScreen : Screen
         );
     }
 
-    private static void ConnectPreparedRemoteSession(ServerConnectionPreparation prepared)
+    private void ConnectPreparedRemoteSession(ServerConnectionPreparation prepared)
     {
         DialogsManager.HideAllDialogs();
-        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, prepared);
+        var authorization = _temporaryAuthorization;
+        _temporaryAuthorization = null;
+        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, prepared, authorization!);
     }
 
-    private static void ConfirmRemoteModRestart(RemoteModSessionPreparation result)
+    private void ConfirmRemoteModRestart(RemoteModSessionPreparation result)
     {
+        _temporaryAuthorization = null;
+        var generation = _continuationGeneration;
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
@@ -1192,7 +1235,7 @@ public sealed class NetPlayScreen : Screen
                 LanguageManager.Get("Usual", "cancel"),
                 button =>
                 {
-                    if (button == MessageDialogButton.Button1)
+                    if (generation == _continuationGeneration && button == MessageDialogButton.Button1)
                     {
                         GameExitManager.RequestRestart(result.RemoteSession!, result.SessionProfile!);
                     }

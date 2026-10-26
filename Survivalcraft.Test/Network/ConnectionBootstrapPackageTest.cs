@@ -89,6 +89,8 @@ public class ConnectionBootstrapPackageTest
             Epoch = Guid.NewGuid(),
             ClientList = ClientPackageBuilder.Snapshot([new Client(null, 1, token, Guid.NewGuid(), null)])
         };
+        Assert.False(BootstrapPackageHandler.CanApply(package, node));
+        typeof(NetNode).GetProperty(nameof(NetNode.AdmissionAccepted))!.SetValue(node, true);
         Assert.True(BootstrapPackageHandler.CanApply(package, node));
         Assert.False(
             BootstrapPackageHandler.CanApply(

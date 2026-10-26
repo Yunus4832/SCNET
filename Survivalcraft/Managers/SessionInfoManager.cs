@@ -44,6 +44,14 @@ public static class SessionInfoManager
 
             PopulateFromElement(sessionInfo, sessionElement);
         }
+        catch (Game.Admission.AdmissionConfigurationException) { throw; }
+        catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        {
+            throw new Game.Admission.AdmissionConfigurationException(
+                "Startup session configuration is unreadable or malformed; refusing fallback.",
+                error
+            );
+        }
         catch (Exception ex)
         {
             Log.Warning($"Failed to load {SessionInfoPath}: {ex.Message}");
@@ -79,6 +87,14 @@ public static class SessionInfoManager
                 CreateDefault(NormalizeSessionId(sessionElement.Attribute(nameof(SessionInfo.SessionId))?.Value));
             PopulateFromElement(sessionInfo, sessionElement);
             return sessionInfo;
+        }
+        catch (Game.Admission.AdmissionConfigurationException) { throw; }
+        catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        {
+            throw new Game.Admission.AdmissionConfigurationException(
+                "Startup session configuration is unreadable or malformed; refusing fallback.",
+                error
+            );
         }
         catch (Exception ex)
         {
@@ -128,6 +144,14 @@ public static class SessionInfoManager
             using var stream = Storage.OpenFile(SessionInfoPath, OpenFileMode.Create);
             root.Save(stream);
         }
+        catch (Game.Admission.AdmissionConfigurationException) { throw; }
+        catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        {
+            throw new Game.Admission.AdmissionConfigurationException(
+                "Startup session configuration is unreadable or malformed; refusing fallback.",
+                error
+            );
+        }
         catch (Exception ex)
         {
             Log.Warning($"Failed to save {SessionInfoPath}: {ex.Message}");
@@ -136,9 +160,7 @@ public static class SessionInfoManager
 
     public static SessionInfo CaptureCurrentSession()
     {
-        var sessionInfo = Load(StartupManager.Current.Session.SessionId);
-        sessionInfo.SessionId = NormalizeSessionId(StartupManager.Current.Session.SessionId);
-        sessionInfo.P2POverrides = StartupManager.Current.Session.P2POverrides;
+        var sessionInfo = Clone(StartupManager.Current.Session);
         PopulateFromCurrentState(sessionInfo);
         Normalize(sessionInfo);
         return sessionInfo;
@@ -395,16 +417,15 @@ public static class SessionInfoManager
         var startServer = CommonLib.WorkType == WorkType.Server || worldInfo!.WorldSettings.RunServer;
         if (startServer)
         {
-            if (!CommonLib.StartServer(sessionInfo, worldInfo!.WorldSettings))
-            {
-                Log.Warning("Cannot restore hosted world: server port is already in use.");
-                DialogsManager.Alert("恢复联机世界失败：端口被占用");
-                ScreensManager.SwitchScreen("Play");
-                return true;
-            }
+            ScreensManager.SwitchScreen(
+                "GameLoading",
+                worldInfo!,
+                string.Empty,
+                new Game.Admission.HostedWorldStartup(sessionInfo)
+            );
         }
+        else { ScreensManager.SwitchScreen("GameLoading", worldInfo!, string.Empty); }
 
-        ScreensManager.SwitchScreen("GameLoading", worldInfo!, string.Empty);
         return true;
     }
 
@@ -479,6 +500,14 @@ public static class SessionInfoManager
 
             PopulateFromElement(sessionInfo, sessionElement);
             return true;
+        }
+        catch (Game.Admission.AdmissionConfigurationException) { throw; }
+        catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        {
+            throw new Game.Admission.AdmissionConfigurationException(
+                "Startup session configuration is unreadable or malformed; refusing fallback.",
+                error
+            );
         }
         catch (Exception ex)
         {
@@ -567,6 +596,8 @@ public static class SessionInfoManager
             new XAttribute(nameof(SessionInfo.ServerPort), sessionInfo.ServerPort),
             new XAttribute(nameof(SessionInfo.BroadcastPort), sessionInfo.BroadcastPort)
         );
+        if (!sessionInfo.AdmissionOverrides.IsEmpty) { element.Add(sessionInfo.AdmissionOverrides.ToXml()); }
+
         if (sessionInfo.RemoteTarget is not null)
         {
             element.Add(CreateRemoteTargetElement(sessionInfo.RemoteTarget));
@@ -653,6 +684,8 @@ public static class SessionInfoManager
 
     private static void PopulateFromElement(SessionInfo sessionInfo, XElement element)
     {
+        sessionInfo.AdmissionOverrides =
+            Game.Admission.ServerAdmissionOverrides.FromXml(element.Element("AdmissionOverrides"));
         sessionInfo.SessionId = NormalizeSessionId(element.Attribute(nameof(SessionInfo.SessionId))?.Value);
         sessionInfo.Name = NormalizeSessionName(element.Attribute(nameof(SessionInfo.Name))?.Value);
         sessionInfo.Target = ParseTarget(element.Attribute(nameof(SessionInfo.Target))?.Value);
@@ -785,6 +818,7 @@ public static class SessionInfoManager
         }
 
         sessionInfo.P2POverrides = sessionInfo.P2POverrides.Merge(request.P2POverrides);
+        sessionInfo.AdmissionOverrides = sessionInfo.AdmissionOverrides.Merge(request.AdmissionOverrides);
 
         if (request.HttpCommandEnabled is { } httpCommandEnabled)
         {
@@ -827,6 +861,7 @@ public static class SessionInfoManager
 
     private static void Normalize(SessionInfo sessionInfo)
     {
+        sessionInfo.AdmissionOverrides.Validate();
         if (sessionInfo.Target != SessionTarget.RemoteServer)
         {
             sessionInfo.RemoteTarget = null;
@@ -982,6 +1017,7 @@ public static class SessionInfoManager
             TerrainLevel = source.TerrainLevel,
             RemoteTarget = source.RemoteTarget,
             P2POverrides = source.P2POverrides,
+            AdmissionOverrides = source.AdmissionOverrides,
             ServerPort = source.ServerPort,
             BroadcastPort = source.BroadcastPort,
             AutoJoinCharacterName = source.AutoJoinCharacterName,
@@ -1037,6 +1073,14 @@ public static class SessionInfoManager
             existing.Remove();
             using var stream = Storage.OpenFile(SessionInfoPath, OpenFileMode.Create);
             root.Save(stream);
+        }
+        catch (Game.Admission.AdmissionConfigurationException) { throw; }
+        catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        {
+            throw new Game.Admission.AdmissionConfigurationException(
+                "Startup session configuration is unreadable or malformed; refusing fallback.",
+                error
+            );
         }
         catch (Exception ex)
         {

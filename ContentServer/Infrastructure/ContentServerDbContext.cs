@@ -1,5 +1,6 @@
 using ContentServer.Domain.Administration;
 using ContentServer.Domain.Announcements;
+using ContentServer.Domain.AuthenticationServices;
 using ContentServer.Domain.Contents;
 using ContentServer.Domain.Packages;
 using ContentServer.Domain.Publishers;
@@ -41,6 +42,8 @@ public sealed partial class ContentServerDbContext(
     public DbSet<ServerSourceRegistration> ServerSources => Set<ServerSourceRegistration>();
 
     public DbSet<RendezvousServiceRegistration> RendezvousServices => Set<RendezvousServiceRegistration>();
+
+    public DbSet<AuthenticationServiceRegistration> AuthenticationServices => Set<AuthenticationServiceRegistration>();
 
     public DbSet<DirectoryServer> DirectoryServers => Set<DirectoryServer>();
 

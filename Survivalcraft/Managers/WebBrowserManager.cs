@@ -9,35 +9,26 @@ public static class WebBrowserManager
         _launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
     }
 
-    public static void LaunchBrowser(string url)
+    public static bool LaunchBrowser(string url)
     {
-        if (!url.Contains("://"))
-        {
-            url = "http://" + url;
-        }
+        if (!url.Contains("://")) { url = "http://" + url; }
 
         try
         {
             if (_launcher is null)
             {
-                Log.Warning($"No web browser launcher registered for URL \"{url}\".");
-                return;
+                Log.Warning("No web browser launcher is registered.");
+                return false;
             }
 
             _launcher(url);
+            return true;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Log.Error(
-                string.Format(
-                    "Error launching web browser with URL \"{0}\". Reason: {1}",
-                    new object[]
-                    {
-                        url,
-                        ex.Message
-                    }
-                )
-            );
+            // Authentication browser URLs and launcher exception messages can contain transaction secrets.
+            Log.Error("Could not open the requested web page.");
+            return false;
         }
     }
 }

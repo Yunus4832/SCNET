@@ -180,7 +180,7 @@ public class Starter
     private static void RunHeadlessServer(StartupContext startup)
     {
         RunMode.Value = RunModeType.HeadlessServer;
-        HeadlessEntry.Main(startup);
+        Environment.ExitCode = HeadlessEntry.Main(startup);
     }
 
     private static void WriteDesktopEntry(

@@ -28,6 +28,8 @@ public sealed class StartupRequest
 
     public int? BroadcastPort { get; set; }
 
+    public Game.Admission.ServerAdmissionOverrides AdmissionOverrides { get; set; } = new();
+
     public P2PRoomOverrides P2POverrides { get; set; } = new();
 
     /// <summary>Optional HTTP command host enablement override for this startup session.</summary>

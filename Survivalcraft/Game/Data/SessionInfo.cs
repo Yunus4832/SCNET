@@ -42,6 +42,8 @@ public sealed class SessionInfo
     /// <summary>Optional player name used to automatically enter a world after startup.</summary>
     public string? AutoJoinCharacterName { get; set; }
 
+    public Game.Admission.ServerAdmissionOverrides AdmissionOverrides { get; set; } = new();
+
     public P2PRoomOverrides P2POverrides { get; set; } = new();
 
     /// <summary>Optional HTTP command host enablement override restored with this startup session.</summary>

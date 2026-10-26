@@ -25,3 +25,13 @@ RENDEZVOUS=
 ROOM_NAME=World
 ROOM_DESCRIPTION=
 ROOM_PUBLIC=false
+
+# Optional admission override: empty inherits the saved session/world; open, password or external.
+ADMISSION=
+# Container-visible private file, for example /app/Instances/server/Config/join-password.txt.
+# It contains one password line. No plaintext password belongs in this configuration.
+SERVER_PASSWORD_FILE=
+# External mode needs public URL and SPKI base64url key. Server startup makes no HTTP request.
+AUTHENTICATION_URL=
+AUTHENTICATION_KEY=
+AUTHENTICATION_NAME=

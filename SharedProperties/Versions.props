@@ -17,6 +17,8 @@
         <BeaconVersion>0.1.6</BeaconVersion>
         <UiPreviewToolVersion>0.1.6</UiPreviewToolVersion>
         <ToolsVersion>0.1.6</ToolsVersion>
+        <AuthenticationServerVersion>0.1.0</AuthenticationServerVersion>
+        <AuthenticationProtocolPackageVersion>0.1.0</AuthenticationProtocolPackageVersion>
         <GameProtocolPackageVersion>0.1.2</GameProtocolPackageVersion>
         <GameProtocolVersion>1</GameProtocolVersion>
         <AndroidReleaseCode>8</AndroidReleaseCode>

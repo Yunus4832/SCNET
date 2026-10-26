@@ -1,3 +1,5 @@
+using Engine.Network;
+
 using EntitySystem.Core;
 
 using Game.Network.Transport;
@@ -24,7 +26,6 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
 
         // The subject comes exclusively from the completed DTLS proof, never from application payloads.
         var address = new PlayerAddress(request.PeerIdentity.Address);
-        var users = project.FindSubsystem<SubsystemPlayers>(true)!.Store;
         var error = AdmissionError(package, project, node, address);
         if (error is not null)
         {
@@ -33,13 +34,36 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
             return;
         }
 
-        var user = users.GetOrCreate(address);
-        node.PendingPeer = request.Accept();
-        if (node.PendingPeer is null) { return; }
+        if (node.AdmissionController is not { } admission)
+        {
+            request.Reject(NetNode.CreateUnconnectedPayload(new ConnectionRejectPackage("服务器认证尚未准备完成")));
+            return;
+        }
 
-        // A newly admitted subject may not own a character yet.
-        var characterId = user.CharacterId;
-        var client = node.CreateClient(node.PendingPeer, package.TmpToken, characterId);
+        admission.Begin(request, package);
+    }
+
+    internal static void CompleteAdmission(
+        ConnectionRequestPackage package,
+        Project project,
+        NetNode node,
+        NetworkConnection peer,
+        string nonce
+    )
+    {
+        var address = new PlayerAddress(peer.PeerIdentity.Address);
+        var error = AdmissionError(package, project, node, address);
+        if (error is not null)
+        {
+            node.SendWriterFromPackage(new ConnectionRejectPackage(error), peer);
+            node.RemoveClient(node.ResolveSender(peer: peer), error);
+            return;
+        }
+
+        node.SendWriterFromPackage(new AdmissionResultPackage(nonce, AdmissionResultCode.Accepted), peer);
+        var user = project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(address);
+        node.PendingPeer = peer;
+        var client = node.CreateClient(peer, package.TmpToken, user.CharacterId);
         var notification = new ClientPackage(client.ID, client.TokenId, client.CharacterId, client.PlayerAddress);
         foreach (var other in node.Peers)
         {
@@ -47,7 +71,6 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
             node.SendWriterFromPackage(notification, other.Peer, true);
         }
 
-        Log.Information($"Accepted connection request from {request.TransportEndpoint}");
         node.DeliveryEvent(null);
     }
 

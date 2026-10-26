@@ -172,3 +172,12 @@ POST   /api/v1/admin/servers/{id}/restore
 POST   /api/v1/admin/servers/{id}/suspend
 PUT    /api/v1/admin/servers/{id}
 ```
+
+
+## 认证服务目录
+
+独立目录入口为 `GET /api/v1/authentication-services`，发布者和管理员入口分别位于
+`/api/v1/publisher/authentication-services` 与 `/api/v1/admin/authentication-services`。
+公开、管理和审计列表均使用分页结构；修改、审核及删除携带修订号。完整端点表、字段、所有权及重审规则见
+[认证服务目录](ContentServer.md#认证服务目录)，外部登录协议见 [认证协议](Protocol/AuthenticationProtocol.md)。
+目录不接收玩家私钥、grant 或游戏服务器密码。

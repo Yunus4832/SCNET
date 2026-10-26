@@ -17,7 +17,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         var (statusCode, message) = exception switch
         {
             KnownException known => (NormalizeStatusCode(known.ErrorCode), known.Message),
-            DbUpdateException => (StatusCodes.Status409Conflict, "content_or_version_conflict"),
+            DbUpdateException => (StatusCodes.Status409Conflict, "resource_conflict"),
             BadHttpRequestException => (StatusCodes.Status400BadRequest, "invalid_request"),
             _ => (StatusCodes.Status500InternalServerError, "internal_server_error")
         };

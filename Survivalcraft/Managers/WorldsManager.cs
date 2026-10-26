@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Text;
 using System.Xml.Linq;
 
 using EntitySystem.Core;
@@ -420,7 +421,11 @@ public static class WorldsManager
         }
     }
 
-    public static WorldInfo CreateWorld(WorldSettings worldSettings, string customWorldDirectoryName = "")
+    public static WorldInfo CreateWorld(
+        WorldSettings worldSettings,
+        string customWorldDirectoryName = "",
+        Game.Admission.ServerAdmissionConfiguration? admission = null
+    )
     {
         string unusedWorldDirectoryName;
         if (string.IsNullOrEmpty(customWorldDirectoryName))
@@ -462,14 +467,13 @@ public static class WorldsManager
         var projectNode = new XElement("Project");
         XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);
         projectData.Save(projectNode);
-        projectNode.Add(BlockIndexMapping.Empty.ToXml());
-        using (var stream = Storage.OpenFile(
-                   Storage.CombinePaths(unusedWorldDirectoryName, "Project.xml"),
-                   OpenFileMode.Create
-               ))
+        if (admission is not null)
         {
-            XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
+            Game.Admission.ServerAdmissionConfiguration.ApplyWorldXml(projectNode, admission);
         }
+
+        projectNode.Add(BlockIndexMapping.Empty.ToXml());
+        SaveWorldMetadata(Storage.CombinePaths(unusedWorldDirectoryName, "Project.xml"), projectNode);
 
         return GetWorldInfo(unusedWorldDirectoryName) ?? throw new ArgumentException("Create world failed");
     }
@@ -530,7 +534,11 @@ public static class WorldsManager
         }
     }
 
-    public static void ChangeWorld(string directoryName, WorldSettings worldSettings)
+    public static void ChangeWorld(
+        string directoryName,
+        WorldSettings worldSettings,
+        Game.Admission.ServerAdmissionConfiguration? admission = null
+    )
     {
         var xmlFile = Storage.CombinePaths(directoryName, "Project.xml");
         if (!Storage.FileExists(xmlFile))
@@ -552,10 +560,12 @@ public static class WorldsManager
             valuesDictionary.Save(gameInfoNode);
         }
 
-        using (var stream = Storage.OpenFile(xmlFile, OpenFileMode.Create))
+        if (admission is not null)
         {
-            XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
+            Game.Admission.ServerAdmissionConfiguration.ApplyWorldXml(projectNode, admission);
         }
+
+        SaveWorldMetadata(xmlFile, projectNode);
 
         if (worldSettings.GameMode == value)
         {
@@ -569,6 +579,30 @@ public static class WorldsManager
         else
         {
             DeleteWorldSnapshot(directoryName, "AdventureRestart");
+        }
+    }
+
+    private static void SaveWorldMetadata(string location, XElement root)
+    {
+        var path = Storage.GetSystemPath(location);
+        var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            {
+                using (var writer = new StreamWriter(stream, new UTF8Encoding(false), 1024, leaveOpen: true))
+                {
+                    XmlUtils.SaveXmlToTextWriter(root, writer, true);
+                }
+
+                stream.Flush(true);
+            }
+
+            File.Move(temporary, path, true);
+        }
+        finally
+        {
+            if (File.Exists(temporary)) { File.Delete(temporary); }
         }
     }
 

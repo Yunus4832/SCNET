@@ -7,6 +7,7 @@ using Engine.Network;
 
 using Game.Automation;
 using Game.Commands;
+using Game.Network;
 
 namespace Game;
 
@@ -145,6 +146,9 @@ public static class GameEntry
             );
         }
 
+        CommonLib.Net.StopImmediate();
+        GameManager.SaveProject(waitForCompletion: true, showErrorDialog: false);
+        GameManager.DisposeProject();
         ModRuntime?.Dispose();
         CurrentModRuntime.Set(null);
         SettingsManager.SaveSettings();
@@ -170,6 +174,7 @@ public static class GameEntry
         );
         SettingsManager.Initialize();
         LocalIdentityManager.Initialize();
+        AuthenticationManager.Initialize();
         ContentRepositoryManager.Initialize();
         ServerDirectoryManager.Initialize();
         RendezvousManager.Initialize();

@@ -1,5 +1,6 @@
 using Android.Content;
 using Android.Content.PM;
+using Android.OS;
 
 using Game;
 
@@ -31,7 +32,41 @@ public class GameActivity : EngineActivity
 {
     private static int _gameRuntimeStarted;
 
+    private static WeakReference<GameActivity>? _currentActivity;
+
     private AndroidFilePicker? _filePicker;
+
+    internal static bool TryResumeExisting()
+    {
+        if (_currentActivity?.TryGetTarget(out var activity) != true ||
+            activity is null ||
+            activity.IsFinishing ||
+            activity.IsDestroyed)
+        {
+            return false;
+        }
+
+        var intent = new Intent(activity, typeof(GameActivity));
+        intent.AddFlags(ActivityFlags.ReorderToFront | ActivityFlags.SingleTop);
+        activity.StartActivity(intent);
+        return true;
+    }
+
+    protected override void OnCreate(Bundle? savedInstanceState)
+    {
+        base.OnCreate(savedInstanceState);
+        _currentActivity = new WeakReference<GameActivity>(this);
+    }
+
+    protected override void OnDestroy()
+    {
+        if (_currentActivity?.TryGetTarget(out var activity) == true && ReferenceEquals(activity, this))
+        {
+            _currentActivity = null;
+        }
+
+        base.OnDestroy();
+    }
 
     protected override void OnRun()
     {
@@ -63,7 +98,9 @@ public class GameActivity : EngineActivity
         {
             var gameArguments = Intent?.GetStringArrayExtra(MainActivity.gameArgumentsExtra) ?? [];
             var exitAction = GameEntry.EntryPoint(StartupManager.Load(gameArguments));
-            SetResult(GetResultCode(exitAction));
+            var resultCode = GetResultCode(exitAction);
+            SetResult(resultCode);
+            MainActivity.CompleteGameRun((int)resultCode);
         }
         finally
         {

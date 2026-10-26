@@ -6,6 +6,8 @@ public class SettingsScreen : Screen
 {
     private readonly ButtonWidget _identityButton;
 
+    private readonly ButtonWidget _authenticationButton;
+
     private readonly ButtonWidget _audioButton;
 
     private readonly ButtonWidget _controlsButton;
@@ -31,6 +33,7 @@ public class SettingsScreen : Screen
         _audioButton = Children.Find<ButtonWidget>("Audio")!;
         _controlsButton = Children.Find<ButtonWidget>("Controls")!;
         _identityButton = Children.Find<ButtonWidget>("Identity")!;
+        _authenticationButton = Children.Find<ButtonWidget>("Authentication")!;
     }
 
     public override void Enter(object[] parameters)
@@ -67,6 +70,8 @@ public class SettingsScreen : Screen
         }
 
         if (_identityButton.IsClicked) { ScreensManager.SwitchScreen("SettingsIdentity"); }
+
+        if (_authenticationButton.IsClicked) { ScreensManager.SwitchScreen("ManageAuthentication"); }
 
         if (_controlsButton.IsClicked)
         {

@@ -177,6 +177,8 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("SettingsAudio", new SettingsAudioScreen()); });
         AddLoadAction(delegate { AddScreen("SettingsControls", new SettingsControlsScreen()); });
         AddLoadAction(delegate { AddScreen("SettingsIdentity", new SettingsIdentityScreen()); });
+        AddLoadAction(delegate { AddScreen("ManageAuthentication", new ManageAuthenticationScreen()); });
+        AddLoadAction(delegate { AddScreen("AuthenticationCatalog", new AuthenticationCatalogScreen()); });
         AddLoadAction(delegate { AddScreen("Play", new PlayScreen()); });
         AddLoadAction(delegate { AddScreen("NewWorld", new NewWorldScreen()); });
         AddLoadAction(delegate { AddScreen("WorldServerSettings", new WorldServerSettingsScreen()); });

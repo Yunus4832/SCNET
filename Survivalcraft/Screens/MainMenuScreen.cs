@@ -163,14 +163,11 @@ public class MainMenuScreen : Screen
                 ConfirmAction(
                     MainMenuText("ConfirmRestart"),
                     () =>
-                        ExecuteApplicationCommand(
-                            new RestartApplicationCommand(
-                                new SessionInfo
-                                {
-                                    Target = SessionTarget.MainMenu
-                                }
-                            )
-                        )
+                    {
+                        var session = SessionInfoManager.CaptureCurrentSession();
+                        session.Target = SessionTarget.MainMenu;
+                        ExecuteApplicationCommand(new RestartApplicationCommand(session));
+                    }
                 );
                 break;
             case PowerMenuAction.SwitchInstance:

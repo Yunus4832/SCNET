@@ -107,7 +107,9 @@ public static partial class Window
 
     private static partial void ClosePlatformView()
     {
-        ActivityInstance.Finish();
+        // Keep the Activity visible while the closing handlers save and dispose the game.
+        // Its owner completes the Android task after Window.Run returns.
+        View.Close();
     }
 
     private static partial void InitializePlatform()

@@ -1,3 +1,5 @@
+using System.Reflection;
+
 using Engine.Core.Runtime;
 using Engine.FileStorage;
 using Engine.Network;
@@ -5,6 +7,8 @@ using Engine.Network;
 using Game;
 using Game.Commands;
 using Game.Managers;
+using Game.Modding;
+
 
 namespace Survivalcraft.Test.Modding;
 
@@ -19,6 +23,92 @@ public sealed class StartupManagerTest : IDisposable
     {
         DeleteIfExists(RunningSettingManager.RunningSettingPath);
         DeleteIfExists(SessionInfoManager.SessionInfoPath);
+    }
+
+    [Fact]
+    public void CapturingAnUnsavedSessionKeepsEffectiveAutomationAndTransportOverrides()
+    {
+        var startup = StartupManager.Load(
+            [
+                "--session", "capture-effective", "--connect", "game.example:28887", "--player", "ResumeTester",
+                "--http-command", "--http-command-port", "35711", "--p2p", "true", "--room-name", "Transient room"
+            ]
+        );
+        var captured = SessionInfoManager.CaptureCurrentSession();
+        Assert.True(captured.HttpCommandEnabled);
+        Assert.Equal(35711, captured.HttpCommandPort);
+        Assert.Equal("ResumeTester", captured.AutoJoinCharacterName);
+        Assert.Equal(startup.Session.P2POverrides, captured.P2POverrides);
+        var pending = SessionInfoManager.PrepareRestartSession(captured);
+        var restored = SessionInfoManager.Load(pending.SessionId);
+        Assert.True(restored.HttpCommandEnabled);
+        Assert.Equal(35711, restored.HttpCommandPort);
+        Assert.Equal("ResumeTester", restored.AutoJoinCharacterName);
+        Assert.Equal(startup.Session.P2POverrides, restored.P2POverrides);
+    }
+
+    [Fact]
+    public void ModRestartRestoresTheRemoteSessionWithoutClientAuthenticationInitialization()
+    {
+        var currentField = typeof(AuthenticationManager).GetField(
+            "_current",
+            BindingFlags.Static | BindingFlags.NonPublic
+        )!;
+        var previousManager = currentField.GetValue(null);
+        var previousMode = RunMode.Value;
+        var pending = string.Empty;
+        try
+        {
+            currentField.SetValue(null, null);
+            var startup = StartupManager.Load(
+                ["--session", "mod-restart", "--connect", "game.example:28887", "--player", "ResumeTester"]
+            );
+            RunMode.Value = RunModeType.HeadlessServer;
+            GameExitManager.BeginSession();
+            GameExitManager.RequestRestart(startup.Session, new ModProfile());
+            pending = RunningSettingManager.Current.PendingSessionId;
+            Assert.NotEmpty(pending);
+            Assert.Equal(GameExitAction.Restart, GameExitManager.ExitAction);
+            var restored = StartupManager.Load([]);
+            Assert.Equal(startup.Session.RemoteTarget, restored.Session.RemoteTarget);
+            Assert.Equal("ResumeTester", restored.Session.AutoJoinCharacterName);
+            Assert.Null(currentField.GetValue(null));
+        }
+        finally
+        {
+            currentField.SetValue(null, previousManager);
+            RunMode.Value = previousMode;
+            GameExitManager.BeginSession();
+            if (pending.Length > 0) { ModProfileManager.DeleteSessionProfile(pending); }
+        }
+    }
+
+    [Fact]
+    public void UnreadableAdmissionSessionDoesNotFallBackToOpenDefaults()
+    {
+        var session = SaveSession("locked-policy");
+        using var locked = new FileStream(
+            Storage.GetSystemPath(SessionInfoManager.SessionInfoPath),
+            FileMode.Open,
+            FileAccess.ReadWrite,
+            FileShare.None
+        );
+        Assert.Throws<Game.Admission.AdmissionConfigurationException>(() => SessionInfoManager.Load(session.SessionId));
+        Assert.Throws<Game.Admission.AdmissionConfigurationException>(() => SessionInfoManager.LoadByName(session.Name)
+        );
+        Assert.Throws<Game.Admission.AdmissionConfigurationException>(() =>
+            SessionInfoManager.SessionExists(session.SessionId)
+        );
+    }
+
+    [Fact]
+    public void MalformedSessionDoesNotCreateAnOpenReplacement()
+    {
+        var session = SaveSession("malformed-policy");
+        File.WriteAllText(Storage.GetSystemPath(SessionInfoManager.SessionInfoPath), "<Sessions><SessionInfo");
+        Assert.Throws<Game.Admission.AdmissionConfigurationException>(() =>
+            StartupManager.Load(["--session", session.Name])
+        );
     }
 
     [Fact]
@@ -44,6 +134,81 @@ public sealed class StartupManagerTest : IDisposable
         Assert.False(SessionInfoManager.Load(session.SessionId).P2POverrides.Enabled);
         var restart = SessionInfoManager.PrepareRestartSession(changed.Session);
         Assert.Equal(changed.Session.P2POverrides, SessionInfoManager.Load(restart.SessionId).P2POverrides);
+    }
+
+    [Fact]
+    public void AdmissionSessionOverridesAreRecoverableOnlyWhenExplicitlySaved()
+    {
+        var saved = SaveSession("admission-config");
+        var path = Path.Combine(Path.GetTempPath(), "scnet-password-reference");
+        var args = new[] { "--session", "admission-config", "--admission", "password", "--server-password-file", path };
+        var temporary = StartupManager.Load(args);
+        Assert.Equal(Game.Protocol.Connection.ServerAdmissionMode.Password, temporary.Session.AdmissionOverrides.Mode);
+        Assert.Equal(path, temporary.Session.AdmissionOverrides.PasswordFile);
+        Assert.True(SessionInfoManager.Load(saved.SessionId).AdmissionOverrides.IsEmpty);
+        StartupManager.Load([.. args, "--save"]);
+        var restored = StartupManager.Load(["--session", "admission-config"]);
+        Assert.Equal(path, restored.Session.AdmissionOverrides.PasswordFile);
+        var changed = StartupManager.Load(["--session", "admission-config", "--admission", "open"]);
+        Assert.Equal(Game.Protocol.Connection.ServerAdmissionMode.Open, changed.Session.AdmissionOverrides.Mode);
+        Assert.Null(changed.Session.AdmissionOverrides.PasswordFile);
+        Assert.Equal(path, SessionInfoManager.Load(saved.SessionId).AdmissionOverrides.PasswordFile);
+        var pending = SessionInfoManager.PrepareRestartSession(restored.Session);
+        Assert.Equal(
+            restored.Session.AdmissionOverrides,
+            SessionInfoManager.Load(pending.SessionId).AdmissionOverrides
+        );
+        var running = Engine.FileStorage.Storage.ReadAllText(RunningSettingManager.RunningSettingPath);
+        Assert.DoesNotContain("server-password-file", running);
+        Assert.DoesNotContain(path, running);
+    }
+
+    [Fact]
+    public void AdmissionEnvironmentIsInvocationIntentAndExplicitCliModeTakesPrecedence()
+    {
+        var variables = new[]
+        {
+            "SCNET_ADMISSION", "SCNET_SERVER_PASSWORD_FILE", "SCNET_AUTHENTICATION_URL",
+            "SCNET_AUTHENTICATION_KEY", "SCNET_AUTHENTICATION_NAME", "SCNET_SERVER_PASSWORD"
+        };
+        var previous = variables.ToDictionary(variable => variable, Environment.GetEnvironmentVariable);
+        try
+        {
+            foreach (var variable in variables) { Environment.SetEnvironmentVariable(variable, null); }
+
+            Environment.SetEnvironmentVariable("SCNET_ADMISSION", "password");
+            Environment.SetEnvironmentVariable(
+                "SCNET_SERVER_PASSWORD_FILE",
+                Path.Combine(Path.GetTempPath(), "only-a-file-reference")
+            );
+            var inherited = StartupManager.Load([]);
+            Assert.Equal(
+                Game.Protocol.Connection.ServerAdmissionMode.Password,
+                inherited.Session.AdmissionOverrides.Mode
+            );
+            var explicitOpen = StartupManager.Load(["--admission", "open"]);
+            Assert.Equal(
+                Game.Protocol.Connection.ServerAdmissionMode.Open,
+                explicitOpen.Session.AdmissionOverrides.Mode
+            );
+            Assert.Null(explicitOpen.Session.AdmissionOverrides.PasswordFile);
+            Environment.SetEnvironmentVariable("SCNET_SERVER_PASSWORD", "not-accepted");
+            Assert.Throws<Game.Admission.AdmissionConfigurationException>(() => StartupManager.Load([]));
+        }
+        finally
+        {
+            foreach (var variable in variables) { Environment.SetEnvironmentVariable(variable, previous[variable]); }
+        }
+    }
+
+    [Theory]
+    [InlineData("--admission", "invalid")]
+    [InlineData("--server-password", "must-not-be-accepted")]
+    [InlineData("--SERVER-PASSWORD", "must-not-be-accepted")]
+    [InlineData("--authentication-url", "http://not-secure.example/")]
+    public void UnsafeOrInvalidAdmissionFlagsNeverBecomeUnknownSavedArguments(string flag, string value)
+    {
+        Assert.Throws<Game.Admission.AdmissionConfigurationException>(() => StartupManager.Load([flag, value]));
     }
 
     [Theory]

@@ -1,0 +1,14 @@
+{
+  "Authentication": {
+    "PublicUrl": "https://auth.example.org/",
+    "DisplayName": "SCNET Authentication",
+    "DataDirectory": "AuthenticationData",
+    "Accounts": {},
+    "TrustedProxies": ["127.0.0.1", "::1"]
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning"
+    }
+  }
+}

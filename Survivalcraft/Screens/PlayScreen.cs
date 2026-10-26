@@ -386,33 +386,6 @@ public class PlayScreen : Screen
 
     private void PlayPreparedWorld(WorldInfo worldInfo)
     {
-        if (worldInfo.WorldSettings.RunServer)
-        {
-            if (CommonLib.StartServer(worldInfo.WorldSettings))
-            {
-                ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
-            }
-            else
-            {
-                DialogsManager.ShowDialog(
-                    this,
-                    new MessageDialog(
-                        LanguageManager.Get("Usual", "warning"),
-                        LanguageManager.GetContentWidgets(_typeName, 19),
-                        LanguageManager.Get("Usual", "ok"),
-                        string.Empty,
-                        _ =>
-                        {
-                            CommonLib.Net.StopImmediate();
-                            DialogsManager.HideAllDialogs();
-                        }
-                    )
-                );
-            }
-        }
-        else
-        {
-            ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
-        }
+        ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
     }
 }

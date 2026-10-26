@@ -1,0 +1,4 @@
+# Trusted Bash deployment configuration. Runtime account hashes belong in provider.env.
+CONTROL_PORT=31992
+# Keep this stable across updates; use a different volume for each independent authority.
+AUTHENTICATION_DATA_VOLUME=scnet-authentication-data

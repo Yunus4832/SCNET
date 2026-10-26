@@ -250,6 +250,36 @@ public partial class InitialContentServer : Migration
         );
 
         migrationBuilder.CreateTable(
+            name: "AuthenticationServices",
+            columns: table => new
+            {
+                Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                Deleted = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                PublisherId = table.Column<Guid>(type: "TEXT", nullable: false),
+                Name = table.Column<string>(type: "TEXT", nullable: false),
+                ServiceUrl = table.Column<string>(type: "TEXT", nullable: false),
+                Description = table.Column<string>(type: "TEXT", nullable: true),
+                Status = table.Column<string>(type: "TEXT", nullable: false),
+                Revision = table.Column<long>(type: "INTEGER", nullable: false),
+                ReviewMessage = table.Column<string>(type: "TEXT", nullable: true),
+                CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                UpdatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                ReviewedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_AuthenticationServices", x => x.Id);
+                table.ForeignKey(
+                    name: "FK_AuthenticationServices_Publishers_PublisherId",
+                    column: x => x.PublisherId,
+                    principalTable: "Publishers",
+                    principalColumn: "Id",
+                    onDelete: ReferentialAction.Restrict
+                );
+            }
+        );
+
+        migrationBuilder.CreateTable(
             name: "DirectoryServers",
             columns: table => new
             {
@@ -366,6 +396,34 @@ public partial class InitialContentServer : Migration
             }
         );
 
+        migrationBuilder.CreateTable(
+            name: "AuthenticationServiceAudit",
+            columns: table => new
+            {
+                Revision = table.Column<long>(type: "INTEGER", nullable: false),
+                RegistrationId = table.Column<Guid>(type: "TEXT", nullable: false),
+                Action = table.Column<string>(type: "TEXT", nullable: false),
+                AdministratorId = table.Column<Guid>(type: "TEXT", nullable: true),
+                Message = table.Column<string>(type: "TEXT", nullable: true),
+                OccurredAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                Name = table.Column<string>(type: "TEXT", nullable: false),
+                ServiceUrl = table.Column<string>(type: "TEXT", nullable: false),
+                Description = table.Column<string>(type: "TEXT", nullable: true),
+                Status = table.Column<string>(type: "TEXT", nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_AuthenticationServiceAudit", x => new { x.RegistrationId, x.Revision });
+                table.ForeignKey(
+                    name: "FK_AuthenticationServiceAudit_AuthenticationServices_RegistrationId",
+                    column: x => x.RegistrationId,
+                    principalTable: "AuthenticationServices",
+                    principalColumn: "Id",
+                    onDelete: ReferentialAction.Cascade
+                );
+            }
+        );
+
         migrationBuilder.CreateIndex(
             name: "IX_AdministratorKeys_AdministratorId",
             table: "AdministratorKeys",
@@ -377,6 +435,26 @@ public partial class InitialContentServer : Migration
             table: "AdministratorKeys",
             column: "KeyHash",
             unique: true
+        );
+
+        migrationBuilder.CreateIndex(
+            name: "IX_AuthenticationServices_PublisherId",
+            table: "AuthenticationServices",
+            column: "PublisherId"
+        );
+
+        migrationBuilder.CreateIndex(
+            name: "IX_AuthenticationServices_ServiceUrl",
+            table: "AuthenticationServices",
+            column: "ServiceUrl",
+            unique: true,
+            filter: "\"Deleted\" = 0"
+        );
+
+        migrationBuilder.CreateIndex(
+            name: "IX_AuthenticationServices_Status",
+            table: "AuthenticationServices",
+            column: "Status"
         );
 
         migrationBuilder.CreateIndex(
@@ -521,6 +599,8 @@ public partial class InitialContentServer : Migration
     {
         migrationBuilder.DropTable(name: "AdministratorKeys");
 
+        migrationBuilder.DropTable(name: "AuthenticationServiceAudit");
+
         migrationBuilder.DropTable(name: "ContentVersions");
 
         migrationBuilder.DropTable(name: "DirectoryServers");
@@ -538,6 +618,8 @@ public partial class InitialContentServer : Migration
         migrationBuilder.DropTable(name: "ServerSources");
 
         migrationBuilder.DropTable(name: "Administrators");
+
+        migrationBuilder.DropTable(name: "AuthenticationServices");
 
         migrationBuilder.DropTable(name: "Contents");
 

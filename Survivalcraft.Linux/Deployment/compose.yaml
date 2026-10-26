@@ -6,6 +6,12 @@ services:
     network_mode: host
     volumes:
       - "${SCNET_INSTANCES_DIR:-./Instances}:/app/Instances"
+    environment:
+      SCNET_ADMISSION: "${SCNET_ADMISSION:-}"
+      SCNET_SERVER_PASSWORD_FILE: "${SCNET_SERVER_PASSWORD_FILE:-}"
+      SCNET_AUTHENTICATION_URL: "${SCNET_AUTHENTICATION_URL:-}"
+      SCNET_AUTHENTICATION_KEY: "${SCNET_AUTHENTICATION_KEY:-}"
+      SCNET_AUTHENTICATION_NAME: "${SCNET_AUTHENTICATION_NAME:-}"
     command:
       - --instance
       - ${SCNET_INSTANCE:-server}

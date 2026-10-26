@@ -98,4 +98,10 @@ public enum PackageType : byte
 
     // 模组消息
     ModEnvelope = 43,
+
+    AdmissionChallenge = 44,
+
+    AdmissionProof = 45,
+
+    AdmissionResult = 46,
 }

@@ -34,6 +34,10 @@
     </Folder>
 
     <Folder Name="/04 Protocol/">
+        <Project Path="Authentication.Protocol/Authentication.Protocol.csproj"/>
+        <Project Path="Authentication.Protocol.Test/Authentication.Protocol.Test.csproj">
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
         <Project Path="Game.Protocol/Game.Protocol.csproj"/>
         <Project Path="Game.Protocol.Test/Game.Protocol.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
@@ -86,6 +90,10 @@
     </Folder>
 
     <Folder Name="/09 ContentServer/">
+        <Project Path="Authentication.Server/Authentication.Server.csproj"/>
+        <Project Path="Authentication.Server.Test/Authentication.Server.Test.csproj">
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
         <Project Path="RendezvousServer/RendezvousServer.csproj"/>
         <Project Path="RendezvousServer.Test/RendezvousServer.Test.csproj">
             <Build Solution="Release|*" Project="false"/>

@@ -1,0 +1,25 @@
+{
+  "generator": "OpenSSL 3.6.4 25 Aug 2026 (Library: OpenSSL 3.6.4 25 Aug 2026)",
+  "now": 1792840000,
+  "keys": {
+    "authority": {
+      "publicKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOSjh3ICkmpwYkCpk2-n82uJBLWMmQdXpkCZx87_dxAkiLkL8w0Ech4Bjx1giPZVU6jyX1jcbIiIsXMV_BtuFpA",
+      "identity": "scnet1gxeue69ly4fpglr9gca3mmg4slrkrp845n5maf3m600d68mhc86qgm8vcl",
+      "thumbprintHex": "41b3cce8bf2552147c65463b1ded1587c76184f5a4e9bea63bd3dedd1f77c1f4"
+    },
+    "subject": {
+      "publicKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUiAdg10bJEAfKrUdQW-qhcV2mz1FKvZLoSKP3ai1c2Pblh5vaaUA0Rg5cTkAjR-9hkKnOEPLxQA-i3MsV3p7kg",
+      "identity": "scnet1etpvl0sr3zj2aj3vt9g8qfedqlxyxz8nkjkk4qewl6dplfm6m6lslthngs",
+      "thumbprintHex": "cac2cfbe0388a4aeca2c595070272d07cc4308f3b4ad6a832efe9a1fa77adebf"
+    },
+    "server": {
+      "publicKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEywvo0Z05wfOkLEP8WAXrsntK4-JMdkJo7oRPA2eYYtG9cwNbBD5i3jCKlABRGEJkntQLBC8cszrFdCf4gpuw7Q",
+      "identity": "scnet1z5n9vs8h393hz6nd50z7e0k0yyy3a3dre95m7zyg7hap0tdj04ushsfe6j",
+      "thumbprintHex": "15265640f78963716a6da3c5ecbecf21091ec5a3c969bf0888f5fa17adb27d79"
+    }
+  },
+  "nonce": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "channelBinding": "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8",
+  "expiresAt": 1792840120,
+  "approval": "eyJhbGciOiJFUzI1NiIsInR5cCI6InNjbmV0LWFkbWlzc2lvbitqd3QiLCJraWQiOiJzY25ldDFneGV1ZTY5bHk0ZnBnbHI5Z2NhM21tZzRzbHJrcnA4NDVuNW1hZjNtNjAwZDY4bWhjODZxZ204dmNsIn0.eyJpc3MiOiJzY25ldDFneGV1ZTY5bHk0ZnBnbHI5Z2NhM21tZzRzbHJrcnA4NDVuNW1hZjNtNjAwZDY4bWhjODZxZ204dmNsIiwiYXVkIjoic2NuZXQxejVuOXZzOGgzOTNoejZuZDUwejdlMGsweXl5M2EzZHJlOTVtN3p5ZzdoYXAwdGRqMDR1c2hzZmU2aiIsInN1YiI6InNjbmV0MWV0cHZsMHNyM3pqMmFqM3Z0OWc4cWZlZHFseHl4ejhua2prazRxZXdsNmRwbGZtNm02bHNsdGhuZ3MiLCJpYXQiOjE3OTI4NDAwMDAsIm5iZiI6MTc5Mjg0MDAwMCwiZXhwIjoxNzkyODQwMTIwLCJqdGkiOiJRRUZDUTBSRlJrZElTVXBMVEUxT1QxQlJVbE5VVlZaWFdGbGFXMXhkWGw4IiwicHVycG9zZSI6ImpvaW4iLCJub25jZSI6IkFBRUNBd1FGQmdjSUNRb0xEQTBPRHhBUkVoTVVGUllYR0JrYUd4d2RIaDgiLCJjYiI6IklDRWlJeVFsSmljb0tTb3JMQzB1THpBeE1qTTBOVFkzT0RrNk96dzlQajgifQ.DT_lOiIF8yu7-UCXToHQ4uIzVM1I2y8pgkflMhEjBdV6aPcWswo1mXF8-g2IPhmVEtXVFnhx5VE2U72Vo-QiWA"
+}

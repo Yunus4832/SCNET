@@ -6,6 +6,8 @@ public sealed class ConnectionRejectPackageHandler : PackageHandlerBase<Connecti
 {
     public override void Handle(ConnectionRejectPackage package, PackageReceiveContext context)
     {
+        if (context.IsServer) { return; }
+
         var netNode = context.Node;
         if (netNode == null)
         {

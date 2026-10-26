@@ -2,10 +2,16 @@ using System.Xml.Linq;
 
 using EntitySystem.TemplatesDatabase;
 
+using Game.Admission;
+
 namespace Game.Screens;
 
 public class ModifyWorldScreen : Screen
 {
+    private WorldAdmissionDraft _admission = new();
+
+    private string _originalAdmission = string.Empty;
+
     private const string _typeName = nameof(ModifyWorldScreen);
 
     // 新增一个布尔变量，用于控制是否允许在残酷模式下更改游戏模式
@@ -70,6 +76,9 @@ public class ModifyWorldScreen : Screen
         WorldSettings = (WorldSettings)parameters[1];
         if (!isReturningFromServerSettings)
         {
+            _admission = new WorldAdmissionDraft
+                { Configuration = ServerAdmissionConfiguration.ReadWorld(_directoryName) };
+            _originalAdmission = _admission.Configuration.Fingerprint();
             _originalWorldSettingsData.Clear();
             WorldSettings.Save(_originalWorldSettingsData, true);
         }
@@ -94,7 +103,8 @@ public class ModifyWorldScreen : Screen
 
         _currentWorldSettingsData.Clear();
         WorldSettings.Save(_currentWorldSettingsData, true);
-        var flag = !CompareValueDictionaries(_originalWorldSettingsData, _currentWorldSettingsData);
+        var flag = !CompareValueDictionaries(_originalWorldSettingsData, _currentWorldSettingsData) ||
+                   _originalAdmission != _admission.Configuration.Fingerprint();
         var flag2 = WorldsManager.ValidateWorldName(WorldSettings.Name);
         _nameTextBox.Text = WorldSettings.Name;
         _seedLabel.Text = WorldSettings.Seed;
@@ -114,7 +124,8 @@ public class ModifyWorldScreen : Screen
                 WorldSettings,
                 "ModifyWorld",
                 _directoryName,
-                WorldSettings
+                WorldSettings,
+                _admission
             );
         }
 
@@ -125,7 +136,7 @@ public class ModifyWorldScreen : Screen
                 WorldSettings.ResetOptionsForNonCreativeMode();
             }
 
-            WorldsManager.ChangeWorld(_directoryName, WorldSettings);
+            WorldsManager.ChangeWorld(_directoryName, WorldSettings, _admission.Configuration);
             ScreensManager.SwitchScreen("Play");
         }
 

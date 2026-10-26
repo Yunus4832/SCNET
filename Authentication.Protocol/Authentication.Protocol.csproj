@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(AuthenticationProtocolPackageVersion)</Version>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Authentication.Protocol</PackageId>
+        <Description>Independent SCNET authentication contracts, proof validation and HTTPS client.</Description>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>SCNET.Authentication.Protocol</AssemblyName>
+        <RootNamespace>SCNET.Authentication.Protocol</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
+        <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0"/>
+        <None Include="README.md" Pack="true" PackagePath="/"/>
+    </ItemGroup>
+</Project>

@@ -35,3 +35,11 @@ CONTENT_SERVER_URL=http://localhost:5088 npm run dev
 浏览器可以访问的 ContentServer 公网地址；不要使用只对服务器自身有效的 `localhost`。
 
 若 WebUI 与 ContentServer 不同源，需要在 ContentServer 的 `AllowedOrigins` 中精确列出 WebUI 来源。
+
+
+## 认证服务目录
+
+社区首页、发布者工作台、管理员审核及管理页均提供独立的认证服务板块。公开列表只展示服务来源地址和目录资料；
+投稿只填写 HTTPS 基址和说明，身份由游戏客户端直接发现并确认。修改会下架重审，审核、撤回、停用、删除均携带所见修订号，
+冲突后需要刷新核对，不自动覆盖或重试批准。管理员可在操作历史中核对历史来源地址与操作人，按记录 ID 查询已删除条目。
+页面不保存玩家私钥、认证授权或游戏服务器密码。详细 API 约定见 [ContentServer](../Doc/ContentServer.md#认证服务目录)。

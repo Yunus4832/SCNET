@@ -20,6 +20,7 @@ import ContentSubmissionDialog from '../components/ContentSubmissionDialog.vue';
 import ServerSourceSubmissionDialog from '../components/ServerSourceSubmissionDialog.vue';
 import ServerSubmissionDialog from '../components/ServerSubmissionDialog.vue';
 import RendezvousServicesPanel from '../components/RendezvousServicesPanel.vue';
+import AuthenticationServicesPanel from '../components/AuthenticationServicesPanel.vue';
 
 interface Publisher {
   publisherId: string;
@@ -100,7 +101,9 @@ const showServerSourceForm = ref(false);
 const showServerForm = ref(false);
 const serverTarget = ref<DirectoryServer>();
 const submissionTarget = ref<ContentItem>();
-const view = ref<'content' | 'versions' | 'servers' | 'serverSources' | 'rendezvous'>('content');
+const view = ref<
+  'content' | 'versions' | 'servers' | 'serverSources' | 'rendezvous' | 'authentication'
+>('content');
 const copiedVersionId = ref('');
 function removeKey() {
   clearAccess('publisher', getAccess('publisher')?.apiKey);
@@ -209,6 +212,9 @@ async function setServerEnabled(item: DirectoryServer) {
           <button :class="{ active: view === 'servers' }" @click="view = 'servers'">服务器</button>
           <button :class="{ active: view === 'serverSources' }" @click="view = 'serverSources'">
             服务器源
+          </button>
+          <button :class="{ active: view === 'authentication' }" @click="view = 'authentication'">
+            认证服务
           </button>
           <button :class="{ active: view === 'rendezvous' }" @click="view = 'rendezvous'">
             信令服务器
@@ -419,6 +425,11 @@ async function setServerEnabled(item: DirectoryServer) {
         </div>
         <div v-else class="state">暂无服务器提交记录</div>
       </template>
+      <template v-else-if="view === 'authentication'"
+        ><AuthenticationServicesPanel
+          mode="publisher"
+          :can-submit="self.data.value?.status === 'active'"
+      /></template>
       <template v-else-if="view === 'rendezvous'">
         <RendezvousServicesPanel
           mode="publisher"

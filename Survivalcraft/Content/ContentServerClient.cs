@@ -142,6 +142,55 @@ public sealed class ContentServerClient : IDisposable
         return result.Data;
     }
 
+    public async Task<IReadOnlyList<ContentServerAuthenticationService>> ListAuthenticationServicesAsync(
+        CancellationToken cancellationToken = default
+    )
+    {
+        var services = new List<ContentServerAuthenticationService>();
+        int? total = null;
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        var urls = new HashSet<string>(StringComparer.Ordinal);
+        for (var pageIndex = 1; pageIndex <= _maximumCatalogPages; pageIndex++)
+        {
+            var page = await GetPageAsync<ContentServerAuthenticationService>(
+                $"api/v1/authentication-services?pageIndex={pageIndex}&pageSize=100",
+                cancellationToken
+            ).ConfigureAwait(false);
+            if (page.PageIndex != pageIndex || page.PageSize != 100 || page.Items.Count > 100 || page.Total > 10000)
+            {
+                throw new InvalidDataException("Invalid authentication directory pagination.");
+            }
+
+            total ??= page.Total;
+            if (page.Total != total ||
+                page.Items.Count != Math.Min(100, Math.Max(0, page.Total - (pageIndex - 1) * 100)))
+            {
+                throw new InvalidDataException("Incomplete or changing authentication directory pagination.");
+            }
+
+            foreach (var record in page.Items)
+            {
+                if (record is null) { throw new InvalidDataException("Invalid authentication directory entry."); }
+
+                var serviceUrl = record.Validate();
+                if (!ids.Add(record.Id) || !urls.Add(serviceUrl.AbsoluteUri))
+                {
+                    throw new InvalidDataException("Duplicate authentication directory source.");
+                }
+            }
+
+            services.AddRange(page.Items);
+            if (pageIndex * page.PageSize >= page.Total) { return services; }
+
+            if (page.Items.Count == 0)
+            {
+                throw new InvalidDataException("Incomplete authentication directory pagination.");
+            }
+        }
+
+        throw new InvalidDataException("Authentication directory exceeds its page limit.");
+    }
+
     public async Task<IReadOnlyList<ContentServerRendezvousService>> ListRendezvousServicesAsync(
         CancellationToken cancellationToken = default
     )

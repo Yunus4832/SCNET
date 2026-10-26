@@ -4,6 +4,8 @@ using Engine.Network;
 
 using EntitySystem.Core;
 
+using Game.Admission;
+using Game.Authentication;
 using Game.Commands;
 using Game.Network.Diagnostics;
 using Game.Network.Handling;
@@ -17,6 +19,8 @@ namespace Game.Network;
 
 public class NetNode
 {
+    internal TemporaryJoinAuthorization? TemporaryAuthentication { get; set; }
+
     public NetworkSendStatistics SendStatistics { get; } = new();
 
     public int PendingPackageCount
@@ -115,6 +119,10 @@ public class NetNode
 
     private bool _isStopping;
 
+    private bool _keepAdmissionScreenOnStop;
+
+    internal event Func<bool>? AdmissionTransportInterrupted;
+
     private bool _leaveWorldOnStop;
 
     public Action<Client>? OnClientStateChanged;
@@ -145,9 +153,79 @@ public class NetNode
 
     public bool IsServer => CurrentStage == Stage.Connected && Self == Server;
 
+    private LocalHostAdmissionSession? _localAdmission;
+
+    internal SessionInfo? ActiveHostSession { get; set; }
+
+    internal void BeginLocalAdmission(string worldDirectory, ServerAdmissionConfiguration configuration)
+    {
+        if (_host is not null)
+        {
+            throw new InvalidOperationException("A hosted world must authenticate before listening.");
+        }
+
+        StartLocal();
+        using var player = LocalIdentityManager.Current.OpenPlayerIdentity();
+        using var server = LocalIdentityManager.Current.OpenServerIdentity();
+        _isStopping = false;
+        _localAdmission = new LocalHostAdmissionSession(
+            worldDirectory,
+            configuration,
+            player.PublicIdentity.Address,
+            server.PublicIdentity.Address,
+            DateTimeOffset.UtcNow
+        );
+        CurrentStage = Stage.Bootstrapping;
+        AdmissionAccepted = false;
+        PendingAdmissionChallenge = _localAdmission.Describe();
+        AdmissionDeadline = DateTimeOffset.FromUnixTimeSeconds(_localAdmission.Challenge.ExpiresAt);
+        if (configuration.Mode == ServerAdmissionMode.Open)
+        {
+            TrySubmitAdmission(new AdmissionProofPackage(PendingAdmissionChallenge.Nonce));
+        }
+        else { AdmissionRequired?.Invoke(PendingAdmissionChallenge); }
+    }
+
+    internal void PumpLocalAdmission()
+    {
+        if (_isStopping || _localAdmission is null) { return; }
+
+        if (_localAdmission.Poll(DateTimeOffset.UtcNow) is { } result) { ApplyAdmissionResult(result); }
+    }
+
+    internal void PrepareLocalHostWorld()
+    {
+        if (_localAdmission is not { Approved: true })
+        {
+            throw new InvalidOperationException("Local host is not admitted.");
+        }
+
+        CurrentStage = Stage.Connected;
+        Server = Self;
+        CommonLib.WorkType = WorkType.Server;
+    }
+
+    internal bool IsClosing => _isStopping;
+
+    internal ServerAdmissionController? AdmissionController { get; private set; }
+
+    public AdmissionChallengePackage? PendingAdmissionChallenge { get; private set; }
+
+    public DateTimeOffset? AdmissionDeadline { get; private set; }
+
+    public bool AdmissionAccepted { get; private set; }
+
+    private ReceivedPackage? _admissionBootstrap;
+
+    public event Action<AdmissionChallengePackage>? AdmissionRequired;
+
+    public event Action<AdmissionResultPackage>? AdmissionResultReceived;
+
+    private NetworkConnection? _admissionServerPeer;
+
     public int ClientCount => Clients.Values.Count(client => client.PlayerAddress is not null);
 
-    private Client? ResolveSender(
+    internal Client? ResolveSender(
         NetworkConnection? peer = null,
         NetworkConnectionRequest? request = null,
         IPEndPoint? endpoint = null
@@ -230,6 +308,131 @@ public class NetNode
         return client;
     }
 
+    internal bool CanReceiveFromSession(Client? sender, IProtocolMessage package)
+    {
+        return sender is not null &&
+               (Clients.TryGetValue(sender.ID, out var registered) && ReferenceEquals(registered, sender) ||
+                package is AdmissionProofPackage);
+    }
+
+    internal void ReceiveAdmissionChallenge(Client sender, AdmissionChallengePackage challenge)
+    {
+        if (IsServer || CurrentStage != Stage.Bootstrapping || sender.Peer is not { } peer) { return; }
+
+        if (AdmissionAccepted)
+        {
+            Stop("服务器在认证通过后更换了挑战");
+            return;
+        }
+
+        SCNET.Authentication.Protocol.Security.AuthenticationNonce.Validate(challenge.Nonce);
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        if (challenge.ExpiresAt <= now ||
+            challenge.ExpiresAt >
+            now +
+            SCNET.Authentication.Protocol.AuthenticationProtocol.MaximumChallengeLifetimeSeconds +
+            SCNET.Authentication.Protocol.AuthenticationProtocol.ClockSkewSeconds)
+        {
+            Stop("服务器认证挑战已过期或无效");
+            return;
+        }
+
+        if (PendingAdmissionChallenge is { } pending)
+        {
+            if (ReferenceEquals(_admissionServerPeer, peer) && pending == challenge) { return; }
+
+            Stop("服务器在认证期间更换了挑战");
+            return;
+        }
+
+        _admissionServerPeer = peer;
+        PendingAdmissionChallenge = challenge;
+        AdmissionDeadline = DateTimeOffset.FromUnixTimeSeconds(challenge.ExpiresAt);
+        if (challenge.Mode == ServerAdmissionMode.Open)
+        {
+            TrySubmitAdmission(new AdmissionProofPackage(challenge.Nonce));
+        }
+        else { AdmissionRequired?.Invoke(challenge); }
+    }
+
+    internal string? AdmissionServerAddress =>
+        _localAdmission?.Challenge.Server ?? _admissionServerPeer?.PeerIdentity.Address;
+
+    internal SCNET.Authentication.Protocol.Contracts.AdmissionChallenge CaptureAdmissionChallenge()
+    {
+        if (_localAdmission is { } local && PendingAdmissionChallenge?.Nonce == local.Challenge.Nonce)
+        {
+            return local.Challenge;
+        }
+
+        if (PendingAdmissionChallenge is not { } challenge || _admissionServerPeer is not { } peer || _host is null)
+        {
+            throw new InvalidOperationException("No active external admission challenge.");
+        }
+
+        return new SCNET.Authentication.Protocol.Contracts.AdmissionChallenge(
+            _host.LocalIdentity.Address,
+            peer.PeerIdentity.Address,
+            challenge.Nonce,
+            SCNET.Authentication.Protocol.Security.AuthenticationNonce.Encode(peer.ChannelBinding.Span),
+            challenge.ExpiresAt
+        );
+    }
+
+    internal bool CanSubmitAdmission(string nonce)
+    {
+        return !_isStopping &&
+               CurrentStage == Stage.Bootstrapping &&
+               PendingAdmissionChallenge?.Nonce == nonce &&
+               (_localAdmission is not null || _admissionServerPeer is { IsConnected: true });
+    }
+
+    public bool TrySubmitAdmission(AdmissionProofPackage proof)
+    {
+        if (!CanSubmitAdmission(proof.Nonce)) { return false; }
+
+        if (_localAdmission is { } local) { return local.Submit(proof); }
+
+        SendWriterFromPackage(proof, _admissionServerPeer!);
+        return true;
+    }
+
+    internal void ReceiveAdmissionResult(Client sender, AdmissionResultPackage result)
+    {
+        if (_isStopping ||
+            !ReferenceEquals(sender.Peer, _admissionServerPeer) ||
+            PendingAdmissionChallenge?.Nonce != result.Nonce)
+        {
+            return;
+        }
+
+        ApplyAdmissionResult(result);
+    }
+
+    private void ApplyAdmissionResult(AdmissionResultPackage result)
+    {
+        if (result.Code == AdmissionResultCode.Accepted)
+        {
+            AdmissionAccepted = true;
+            PendingAdmissionChallenge = null;
+            AdmissionDeadline = DateTimeOffset.UtcNow.AddMilliseconds(CommonLib.DisconnectTimeout);
+        }
+
+        AdmissionResultReceived?.Invoke(result);
+        if (result.Code == AdmissionResultCode.Accepted && !_isStopping && _admissionBootstrap is { } bootstrap)
+        {
+            _admissionBootstrap = null;
+            if (OnReceive is { } receive) { receive(this, [bootstrap]); }
+            else { AddPendingHandlePackage(bootstrap); }
+        }
+
+        if (!_isStopping &&
+            result.Code is (AdmissionResultCode.Cancelled or AdmissionResultCode.Expired or AdmissionResultCode.Denied))
+        {
+            Stop("认证已取消、过期或被拒绝");
+        }
+    }
+
     public void AddClient(Client client)
     {
         Clients[client.ID] = client;
@@ -292,7 +495,7 @@ public class NetNode
             GameManager.Project?.FindSubsystem<SubsystemTeams>()?.CancelPendingOperations(playerAddress);
         }
 
-        if (Clients.ContainsKey(client.ID))
+        if (Clients.TryGetValue(client.ID, out var registered) && ReferenceEquals(registered, client))
         {
             if (IsServer)
             {
@@ -371,12 +574,23 @@ public class NetNode
     /// </summary>
     private void PeerDisconnectedEvent(NetworkConnection peer, NetworkDisconnectInfo disconnectInfo)
     {
+        AdmissionController?.Forget(peer);
         Log.Information($"{peer.TransportEndpoint}连接关闭: " + disconnectInfo.Reason);
         var str = DecodeDisconnectReason(disconnectInfo);
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            Stop(str);
+            Log.Debug(
+                $"Client transport disconnected: stage={CurrentStage}, admitted={AdmissionAccepted}, admissionOwner={AdmissionTransportInterrupted is not null}."
+            );
+            if (CurrentStage == Stage.Bootstrapping &&
+                !AdmissionAccepted &&
+                AdmissionTransportInterrupted?.Invoke() == true)
+            {
+                _keepAdmissionScreenOnStop = true;
+                Stop();
+            }
+            else { Stop(str); }
         }
         else
         {
@@ -446,13 +660,31 @@ public class NetNode
     /// <param name="message"></param>
     private void NetworkReceiveEvent(NetworkConnection peer, NetworkMessage message)
     {
-        if (CurrentStage == Stage.NotConnected)
+        if (_isStopping || CurrentStage == Stage.NotConnected)
         {
             return;
         }
 
         var fromClient = ResolveSender(peer: peer);
         var list = PackageManager.DecodePackages(this, message.Payload, fromClient);
+        if (IsServer)
+        {
+            list.RemoveAll(received => !CanReceiveFromSession(fromClient, received.Package));
+        }
+
+        else if (!AdmissionAccepted && CurrentStage == Stage.Bootstrapping)
+        {
+            foreach (var received in list)
+            {
+                if (received.Package is BootstrapPackage) { _admissionBootstrap ??= received; }
+            }
+
+            // Bulk Bootstrap can overtake the control-channel acceptance. Keep one bounded copy until accepted.
+            list.RemoveAll(received => received.Package is not AdmissionChallengePackage and not AdmissionResultPackage
+                and not ConnectionRejectPackage
+            );
+        }
+
         list.InsertRange(0, _pendingHandlePackages);
         _pendingHandlePackages.Clear();
         try
@@ -518,6 +750,7 @@ public class NetNode
 
     public void StartLocal()
     {
+        TemporaryAuthentication = null;
         _leaveWorldOnStop = false;
         _isStopping = false;
         Clients.Clear();
@@ -562,7 +795,13 @@ public class NetNode
     /// <param name="broadcastPort"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public bool StartServer(int port, int? broadcastPort, int maxParticipants, P2PRoomSettings room)
+    public bool StartServer(
+        int port,
+        int? broadcastPort,
+        int maxParticipants,
+        P2PRoomSettings room,
+        ServerAdmissionConfiguration? policyOverride = null
+    )
     {
         if (_host is not null)
         {
@@ -572,7 +811,40 @@ public class NetNode
         try
         {
             _isStopping = false;
-            StartLocal();
+            var project = GameManager.Project ??
+                          throw new InvalidOperationException("Load the admitted world before starting its listener.");
+            var policy = policyOverride ??
+                         ServerAdmissionConfiguration.Load(project.ExtensionData.Get("game", "admission"));
+            using (var identity = LocalIdentityManager.Current.OpenServerIdentity())
+            {
+                if (RunMode.Value == RunModeType.Gui &&
+                    policy.Mode != ServerAdmissionMode.Open &&
+                    (_localAdmission is null ||
+                     !_localAdmission.Authorizes(
+                         project.FindSubsystem<SubsystemGameInfo>(true)!.DirectoryName,
+                         policy,
+                         Self?.PlayerAddress?.Value ?? string.Empty,
+                         identity.PublicIdentity.Address,
+                         DateTimeOffset.UtcNow
+                     )))
+                {
+                    throw new InvalidOperationException(
+                        "GUI host must complete admission for this world and policy before listening."
+                    );
+                }
+
+                if (Self is null) { StartLocal(); }
+
+                Self!.SetProject(project);
+                AdmissionController = new ServerAdmissionController(
+                    this,
+                    project,
+                    policy,
+                    identity.PublicIdentity.Address
+                );
+            }
+
+            _localAdmission = null;
             _host = CreateHost(port);
             if (broadcastPort.HasValue)
             {
@@ -611,6 +883,7 @@ public class NetNode
         }
 
         var transport = prepared.Consume();
+        TemporaryAuthentication = null;
         try
         {
             _isStopping = false;
@@ -667,6 +940,7 @@ public class NetNode
 
     public void Stop(string error = "")
     {
+        TemporaryAuthentication = null;
         _isStopping = true;
         Error = error;
     }
@@ -685,8 +959,21 @@ public class NetNode
         }
     }
 
-    public void StopImmediate()
+    public void StopImmediate() => StopImmediate(false);
+
+    internal void StopForAdmissionRecovery()
     {
+        if (AdmissionAccepted || CurrentStage == Stage.Connected)
+        {
+            throw new InvalidOperationException("An admitted world session cannot resume a pending authentication.");
+        }
+
+        StopImmediate(true);
+    }
+
+    private void StopImmediate(bool keepAdmissionScreen)
+    {
+        TemporaryAuthentication = null;
         var wasClient = CommonLib.WorkType == WorkType.Client;
         var leaveWorld = _leaveWorldOnStop;
         _leaveWorldOnStop = false;
@@ -762,6 +1049,14 @@ public class NetNode
 
             _deliveryReceipts.Clear();
             _transportClients.Clear();
+            AdmissionController = null;
+            _localAdmission = null;
+            ActiveHostSession = null;
+            PendingAdmissionChallenge = null;
+            AdmissionDeadline = null;
+            _admissionServerPeer = null;
+            AdmissionAccepted = false;
+            _admissionBootstrap = null;
         }
         catch (Exception e)
         {
@@ -786,7 +1081,8 @@ public class NetNode
 
             CurrentStage = Stage.NotConnected;
             CommonLib.WorkType = WorkType.Local;
-            if (wasClient || leaveWorld)
+            _keepAdmissionScreenOnStop = false;
+            if (!keepAdmissionScreen && (wasClient || leaveWorld))
             {
                 try
                 {
@@ -805,7 +1101,7 @@ public class NetNode
             Server = null;
             _pendingHandlePackages.Clear();
 
-            if (!string.IsNullOrEmpty(Error))
+            if (!keepAdmissionScreen && !string.IsNullOrEmpty(Error))
             {
                 DialogsManager.Alert(Error);
             }
@@ -967,7 +1263,7 @@ public class NetNode
 
         if (_isStopping)
         {
-            StopImmediate();
+            StopImmediate(_keepAdmissionScreenOnStop);
         }
         else
         {
@@ -993,6 +1289,7 @@ public class NetNode
         }
 
         _host?.DispatchEvents();
+        AdmissionController?.Update();
         _broadcastHost?.DispatchEvents();
         if (_host?.Failure is { } failure)
         {

@@ -12,11 +12,13 @@ import {
   type ContentVersion,
   type PagedData,
   type RendezvousService,
+  type AuthenticationService,
 } from '../api';
 import { contentTypeLabel } from '../contentTypes';
 import GameInformationManagement from '../components/GameInformationManagement.vue';
 import ServerSubmissionDialog from '../components/ServerSubmissionDialog.vue';
 import RendezvousServicesPanel from '../components/RendezvousServicesPanel.vue';
+import AuthenticationServicesPanel from '../components/AuthenticationServicesPanel.vue';
 import ReviewApplications, { type ReviewApplication } from '../components/ReviewApplications.vue';
 
 interface Applicant {
@@ -85,7 +87,13 @@ const router = useRouter();
 const client = useQueryClient();
 const mode = ref<'review' | 'manage' | 'gameInformation'>('review');
 const tab = ref<
-  'content' | 'publishers' | 'administrators' | 'servers' | 'serverSources' | 'rendezvous'
+  | 'content'
+  | 'publishers'
+  | 'administrators'
+  | 'servers'
+  | 'serverSources'
+  | 'rendezvous'
+  | 'authentication'
 >('content');
 const actionError = ref('');
 const serverTarget = ref<DirectoryServer>();
@@ -160,6 +168,14 @@ const serverSourceApplications = useQuery({
   queryKey: ['admin-server-source-applications', accessCacheKey],
   enabled: isActive,
   queryFn: () => api<ServerSourceRegistration[]>('/api/v1/admin/server-sources'),
+});
+const authenticationApplications = useQuery({
+  queryKey: ['authentication-services', 'counts', accessCacheKey],
+  enabled: isActive,
+  queryFn: ({ signal }) =>
+    api<PagedData<AuthenticationService>>('/api/v1/admin/authentication-services?pageSize=1', {
+      signal,
+    }),
 });
 const rendezvousApplications = useQuery({
   queryKey: ['rendezvous-services', 'review', accessCacheKey],
@@ -298,6 +314,7 @@ const reviewQuery = computed(
       servers: serverApplications,
       serverSources: serverSourceApplications,
       rendezvous: rendezvousApplications,
+      authentication: authenticationApplications,
       publishers,
       administrators,
     })[tab.value],
@@ -426,7 +443,14 @@ function switchMode(value: 'review' | 'manage' | 'gameInformation') {
     tab.value = 'content';
 }
 function selectManageTab(
-  value: 'content' | 'publishers' | 'administrators' | 'servers' | 'serverSources' | 'rendezvous',
+  value:
+    | 'content'
+    | 'publishers'
+    | 'administrators'
+    | 'servers'
+    | 'serverSources'
+    | 'rendezvous'
+    | 'authentication',
 ) {
   tab.value = value;
   manageSearchInput.value = '';
@@ -484,6 +508,10 @@ function selectContentType(value: string) {
             <b>{{ serverSourceApplications.data.value?.length ?? 0 }}</b
             ><span>服务器源申请</span>
           </button>
+          <button :class="{ active: tab === 'authentication' }" @click="tab = 'authentication'">
+            <b>{{ authenticationApplications.data.value?.total ?? 0 }}</b
+            ><span>认证服务申请</span>
+          </button>
           <button :class="{ active: tab === 'rendezvous' }" @click="tab = 'rendezvous'">
             <b>{{ rendezvousApplications.data.value?.length ?? 0 }}</b
             ><span>信令服务器申请</span>
@@ -497,7 +525,9 @@ function selectContentType(value: string) {
           </button>
         </div>
         <p v-if="actionError" class="form-error">{{ actionError }}</p>
+        <AuthenticationServicesPanel v-if="tab === 'authentication'" mode="review" />
         <ReviewApplications
+          v-else
           :key="tab"
           :items="reviewItems"
           :loading="reviewQuery.isPending.value"
@@ -522,6 +552,13 @@ function selectContentType(value: string) {
           >
             <b>{{ managedServerSources.data.value?.length ?? 0 }}</b
             ><span>服务器源</span>
+          </button>
+          <button
+            :class="{ active: tab === 'authentication' }"
+            @click="selectManageTab('authentication')"
+          >
+            <b>{{ authenticationApplications.data.value?.total ?? 0 }}</b
+            ><span>认证服务</span>
           </button>
           <button :class="{ active: tab === 'rendezvous' }" @click="selectManageTab('rendezvous')">
             <b>{{ managedRendezvousServices.data.value?.length ?? 0 }}</b
@@ -708,6 +745,9 @@ function selectContentType(value: string) {
             </article>
           </div>
           <div v-else class="state compact-state">没有服务器源记录</div>
+        </div>
+        <div v-else-if="tab === 'authentication'" class="review-list">
+          <AuthenticationServicesPanel mode="manage" :search="manageSearch" />
         </div>
         <div v-else-if="tab === 'rendezvous'" class="review-list">
           <RendezvousServicesPanel mode="manage" :search="manageSearch" />

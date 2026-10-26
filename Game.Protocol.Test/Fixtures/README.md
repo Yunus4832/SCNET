@@ -2,7 +2,7 @@
 
 Captured before protocol extraction from commit `67dfe654` on .NET 10, Release build.
 Each `.bin` contains an uncompressed application frame and one `0x88 + message ID + payload` entry.
-During the unreleased `PackageType` cleanup, only the message ID byte (offset 6) was explicitly updated to the current assignments. All other captured bytes remain unchanged. `package-ids.json` records the current explicit assignments, including the `ModEnvelope` ID. There is no runtime legacy-ID mapping. Do not regenerate payload samples using the new codecs to make tests pass.
+During the unreleased `PackageType` cleanup, only the message ID byte (offset 6) was explicitly updated to the current assignments. All other captured bytes remain unchanged. `package-ids.json` records the current explicit assignments, including `ModEnvelope` and the three admission-message IDs. There is no runtime legacy-ID mapping. Do not regenerate payload samples using the new codecs to make tests pass.
 
 Samples cover handshake, rejection, 100 body states, terrain request/delta/fragment, initial snapshot and a mod envelope.
 The snapshot entity bytes are an opaque deterministic 4096-byte payload, not a playable world fixture.

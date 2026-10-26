@@ -138,7 +138,14 @@ ContentServer/Data/content-server.db
 - `PackageBlobs`
 - `ReviewRecords`
 - `ServerSources` / `RendezvousServices` / `DirectoryServers`
+- `AuthenticationServices` / `AuthenticationServiceAudit`
 - `GameAnnouncements` / `GameReleases` / `GameReleaseArtifacts`
+
+认证服务目录的内部模型独立于信令服务和游戏服务器目录。条目保存发布者、显示资料、HTTPS 基址及说明；不保存玩家私钥、授权或游戏服务器密码。
+公开描述的编辑会转为待审核，修订号用于拒绝过期审核和并发覆盖；服务 URL 在未删除条目中唯一。
+每次提交、修改、审核、撤回、停用和删除均在所属聚合中追加公开快照；这些不可变来源快照属于拥有者的生命周期，不是可独立删除的业务实体。
+管理员动作同时写入通用审核记录，审核记录写入失败会回滚条目及快照。目录 HTTP 入口、社区 WebUI 和游戏内“设置 → 认证服务 → 服务目录”已接入。
+探测只执行匿名 HTTPS 发现请求，仅检查提交的来源地址及发现协议可用性，不记录或固定公钥，限制十秒及 32 KiB 响应；不允许重定向或代理，DNS 解析结果必须全部为允许的公共地址，实际连接使用已检查的 IP，避免二次解析。
 
 数据库结构由 `Infrastructure/Migrations` 中的一份 EF Core 初始迁移和模型快照维护，服务启动时自动应用迁移。项目发布前，模型发生变化时重新生成初始迁移：
 
@@ -252,6 +259,53 @@ Profile/当前会话引用、缓存、缺失、大小、来源和部分仓库失
 Mod 管理页不访问 ContentServer。它只合并缓存和 Profile/Runtime requirement，缺失项通过完整
 `ModId + Version + PackageHash` 导航到在线内容页。启动补全使用同一个缓存优先下载服务；联机临时仓库优先于持久仓库但不被
 持久化。单仓库部署只是集合中只有一项的普通配置，不存在单地址专用客户端路径。
+
+## 认证服务目录
+
+认证服务目录与内容包、服务器源、信令服务分别管理。目录只收录公开的认证来源入口，
+不签发玩家准入批准，也不代理用户登录。目录条目 ID 仅标识本仓库的一条收录记录；认证服务身份由客户端直接发现并由玩家确认，目录不保存公钥或身份指纹。
+同一服务被多个 ContentServer 收录不会产生多个用户主体。已审核不表示官方担保、永久安全或实时可用。
+
+社区首页的“认证服务”板块展示公开条目，可复制服务地址。发布者工作台提供投稿、修改重审、撤回和删除；
+管理员的审核与管理页分别提供待审核/历史列表，以及停用、删除和操作历史。每次管理操作携带当前所见修订号，
+确认框显示实际地址、指纹和修订。冲突会提示刷新，保留编辑输入或审核意见，不自动重试批准。
+管理员可凭目录记录 ID 查询已删除条目的历史；删除后也会直接打开历史窗口。页面仅管理目录收录，不代替玩家在认证服务处登录。
+
+公开接口为 `GET /api/v1/authentication-services`，仅返回未删除且已批准的条目，并要求所属发布者有效。
+每项提供 `id`、`name`、`serviceUrl`、可选 `description` 和 `reviewedAt`；
+条目不提供认证公钥或身份地址。
+公开列表不返回内部审核意见或发布者管理数据。客户端在安装时直接发现公钥并由玩家确认；后续连接核对本地固定公钥；目录不是信任根。
+
+发布者使用自己的 Bearer API Key，管理员使用管理员 Key。路径角色由现有认证中间件检查，
+发布者不能操作他人的条目或调用管理员入口。有效发布者才能投稿、修改；已停用发布者仍可查看、撤回或删除自己的条目。
+
+| 操作 | 方法及路径 | 请求 |
+|---|---|---|
+| 发布者列表 | `GET /api/v1/publisher/authentication-services` | 可选 `status` 与分页参数 |
+| 投稿 | `POST /api/v1/publisher/authentication-services` | `name`、`serviceUrl`、可选 `description` |
+| 修改并重审 | `POST /api/v1/publisher/authentication-services/{id}/edit` | 同投稿，并提供 `revision` |
+| 撤回 | `POST /api/v1/publisher/authentication-services/{id}/withdraw` | `revision` |
+| 发布者删除 | `DELETE /api/v1/publisher/authentication-services/{id}?revision=N` | 无请求体 |
+| 管理员列表 | `GET /api/v1/admin/authentication-services` | 可选 `status` 与分页参数 |
+| 批准 / 拒绝 | `POST /api/v1/admin/authentication-services/{id}/approve` 或 `/reject` | `revision`、可选 `message` |
+| 停用 | `POST /api/v1/admin/authentication-services/{id}/disable` | `revision`、可选 `reason` |
+| 管理员删除 | `DELETE /api/v1/admin/authentication-services/{id}?revision=N` | 无请求体 |
+| 操作历史 | `GET /api/v1/admin/authentication-services/{id}/audit` | 分页参数；删除后仍可查询 |
+
+名称不超过 100 字符，说明及审核意见不超过 1000 字符；入口必须是以 `/` 结尾、无用户信息、查询或片段的 HTTPS 基址。
+投稿、修改和批准检查来源地址的发现协议是否可用；不固定或比较认证服务公钥，公钥变化不由目录裁定。探测在事务之外，
+审核命令再次核对修订号，防止探测期间编辑的内容被误批准。探测失败返回 422，不创建或批准条目。
+模式状态为 `pending`、`active`、`rejected`、`withdrawn`、`disabled`；所有公开描述的修改都会下架并进入待审核，
+不保留未经复核的新公开描述。停用或撤回后须修改并重新审核才能上架。
+
+管理列表返回条目的 `revision`、状态、发布者及审核信息。每次变更递增修订号；缺少有效修订号返回 400，
+旧修订、重复地址及数据库并发冲突返回 409，不自动重试审核。越权访问他人的发布者条目返回 404。
+删除为软删除，不能通过编辑复活；历史快照保留来源地址、公开描述、操作人、审核意见与时间。
+管理员动作同时进入通用审核记录。数据库写入冲突使用通用 `resource_conflict` 错误标识。
+
+公开、管理及历史列表均返回 `items`、`total`、`pageIndex`、`pageSize`，页码从 1 开始，每页最多 100 项，
+页码超过 100 返回 400。条目按 ID 降序，历史按修订号降序；`status` 不区分大小写，未知状态返回 400。
+目录下架或离线不自动删除客户端已经安装的认证服务，也不撤销用户在认证服务处的授权。
 
 ## 信令服务登记
 

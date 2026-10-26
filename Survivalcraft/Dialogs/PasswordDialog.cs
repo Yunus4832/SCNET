@@ -2,7 +2,7 @@ using System.Xml.Linq;
 
 namespace Game.Dialogs;
 
-public sealed class IdentityPasswordDialog : Dialog
+public sealed class PasswordDialog : Dialog
 {
     private readonly TextBoxWidget _password;
 
@@ -14,16 +14,48 @@ public sealed class IdentityPasswordDialog : Dialog
 
     private readonly bool _confirmPassword;
 
+    private readonly int _minimumLength;
+
     private readonly Action<char[]?> _complete;
+
+    private readonly CheckboxWidget _remember;
+
+    public bool RememberPassword => _remember.IsChecked;
 
     private bool _closed;
 
-    public IdentityPasswordDialog(string title, bool confirmPassword, Action<char[]?> complete)
+    public PasswordDialog(
+        string title,
+        bool confirmPassword,
+        Action<char[]?> complete,
+        int minimumLength = 8,
+        int maximumLength = 128,
+        bool allowRemember = false
+    )
     {
-        LoadContents(this, ContentManager.Get<XElement>("Dialogs/IdentityPasswordDialog"));
+        if (minimumLength < 1 || maximumLength < minimumLength || maximumLength > 1024)
+        {
+            throw new ArgumentOutOfRangeException(nameof(minimumLength));
+        }
+
+        _minimumLength = minimumLength;
+        LoadContents(this, ContentManager.Get<XElement>("Dialogs/PasswordDialog"));
+        Children.Find<CanvasWidget>("Surface")!.Size = new Vector2(
+            600,
+            confirmPassword ? 360 : allowRemember ? 310 : 260
+        );
+        Children.Find<LabelWidget>("PasswordLabel")!.Text = string.Format(
+            LanguageManager.GetContentWidgets(nameof(PasswordDialog), "PasswordMinimum"),
+            minimumLength
+        );
         Children.Find<LabelWidget>("Title")!.Text = title;
+        _remember = Children.Find<CheckboxWidget>("Remember")!;
+        _remember.IsVisible = allowRemember;
+        _remember.IsChecked = false;
         _password = Children.Find<TextBoxWidget>("Password")!;
         _repeat = Children.Find<TextBoxWidget>("RepeatPassword")!;
+        _password.MaximumLength = maximumLength;
+        _repeat.MaximumLength = maximumLength;
         _confirm = Children.Find<ButtonWidget>("Confirm")!;
         _cancel = Children.Find<ButtonWidget>("Cancel")!;
         _confirm.Text = LanguageManager.Get("Usual", "ok");
@@ -37,7 +69,8 @@ public sealed class IdentityPasswordDialog : Dialog
 
     public override void Update()
     {
-        _confirm.IsEnabled = _password.Text.Length >= 8 && (!_confirmPassword || _password.Text == _repeat.Text);
+        _confirm.IsEnabled = _password.Text.Length >= _minimumLength &&
+                             (!_confirmPassword || _password.Text == _repeat.Text);
         if (Input.Back || Input.Cancel || _cancel.IsClicked) { Complete(false); }
         else if (_confirm.IsEnabled && (_confirm.IsClicked || Input.Ok)) { Complete(true); }
     }
