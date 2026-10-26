@@ -1,5 +1,7 @@
 # SCNET.Engine.Network
 
+跨层保护范围与连接绑定见[安全传输](../Doc/Protocol/TransportProtocol.md)。
+
 提供传输宿主、连接生命周期、可靠投递确认，以及邀请打洞与认证中继路径。
 业务通过 Engine 类型访问网络；LiteNetLib 由模块内部使用。
 游戏协议、玩家权限、世界、模组配置和 UI 由调用方负责。

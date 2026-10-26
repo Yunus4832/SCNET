@@ -36,7 +36,7 @@ manifest.json
 payload/**
 ```
 
-不得有根目录以外的文件、空目录、符号链接、加密条目、ZIP 注释承载的数据或嵌套归档。`payload/` 本身可以不作为独立 ZIP 目录条目出现。
+不得有上述集合之外的文件、显式目录条目、符号链接、加密条目或嵌套归档。`payload/` 只作为文件路径前缀，不写入独立 ZIP 目录条目。ZIP 注释不承载协议字段，不参与逻辑内容解释和 PackageHash。
 
 读取器在解释 manifest 或 payload 前必须验证以下限制；Writer 也必须产生满足这些限制的包：
 
@@ -84,7 +84,7 @@ payload/**
 
 | 字段 | 规则 |
 |---|---|
-| `formatVersion` | JSON number，必须是整数 `1`。新协议破坏性变更使用新整数，不做猜测或 fallback。 |
+| `formatVersion` | JSON number，必须是整数 `1`。当前未发布阶段保持为 `1`，不维护旧开发线格式；建立正式互操作边界后再决定破坏性变更的版本规则，不做猜测或 fallback。 |
 | `type` | 精确为 `mod`、`world`、`blocksTexture`、`characterSkin` 或 `furniturePack`。 |
 | `identifier` | Mod 是规范 ModId；其余类型是小写 RFC 4122 UUID（`8-4-4-4-12` 十六进制形式）。全局、大小写不敏感地唯一。 |
 | `name` | NFC 文本，去除首尾 Unicode 空白后长度 1–120 个 Unicode 标量值；不得含控制字符。它只是显示名称。 |
@@ -103,7 +103,7 @@ Writer 必须用 UTF-8 无 BOM、两空格缩进、LF 换行和上表字段顺�
 `PackageHash` 是 32 字节 SHA-256 的小写十六进制字符串。其输入不是 ZIP 原始字节，而是逻辑条目序列：精确原始 `manifest.json` 字节，及所有 payload 文件的精确未压缩字节。
 
 1. 收集 `manifest.json` 与全部 payload 文件；目录不参与。
-2. 先使用上节路径规则规范化路径，按 UTF-8 字节的 ordinal 升序排序。
+2. 先校验路径已满足上节规则，按 UTF-8 字节的 ordinal 升序排序。
 3. 对每个条目依次写入：路径 UTF-8 字节长度的 4 字节无符号大端整数、路径 UTF-8 字节、内容长度的 8 字节无符号大端整数、内容原始字节。
 4. 对完整序列计算 SHA-256，输出小写十六进制。
 

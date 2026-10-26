@@ -22,6 +22,14 @@
 - [网络复制](NetworkReplication.md)：游戏状态同步与复制职责。
 - [地形分发](TerrainDistribution.md)：区块权威内容、版本和线程所有权。
 
+## 协议
+
+- [协议索引](Protocol/README.md)：来源、信令、传输、游戏准入和认证的分层及接入顺序。
+- [游戏联机协议](Protocol/GameProtocol.md)：帧格式、准入消息、身份与角色的授权边界。
+- [安全传输](Protocol/TransportProtocol.md)：DTLS、持钥证明、连接绑定和中继保护范围。
+- [信令与中继协议](Protocol/RendezvousProtocol.md)：控制面、临时房间、UDP 地址交换与中继封装。
+- [外部认证协议](Protocol/AuthenticationProtocol.md)：三种准入、签名事务、grant 与连接批准。
+
 ## 模组与内容协议
 
 - [模组使用](Mods.md)：缓存、配置范围、内容来源和联机准备。
@@ -37,6 +45,7 @@
 - [ContentServer HTTP API](ContentServerApi.md)：端点、认证、初始化及投稿格式。
 - [ContentServer 部署](ContentServerDeployment.md)：配置、持久化、反向代理和容器。
 - [信令服务部署](RendezvousDeployment.md)：HTTPS、UDP、中继端口与部署配置。
+- [参考认证服务](../Authentication.Server/README.md)：账号哈希、持久化、反向代理、便携及容器部署。
 - [Web 工作台](../ContentWebUI/README.md)：前端开发、后端地址及跨域设置。
 
 ## 测试与工具

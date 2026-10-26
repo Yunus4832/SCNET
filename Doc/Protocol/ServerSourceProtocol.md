@@ -4,7 +4,9 @@
 它与 `.scpkg` 内容制品、ContentServer 中的服务器源登记，以及客户端中的安装配置具有独立生命周期。
 
 `SCNET.ServerSource.Protocol` 是协议的 .NET 参考实现，提供传输契约、结构验证和有界 HTTP 客户端。
-其 JSON Schema 位于 `ServerSource.Protocol/Schemas/server-source-v1.schema.json`，非 .NET 实现应以本文档和 Schema 为依据。
+其 [JSON Schema](../../ServerSource.Protocol/Schemas/server-source-v1.schema.json) 位于协议项目中，非 .NET 实现应以本文档和 Schema 为依据。
+
+协议整数保持 `1`，与 NuGet SemVer 独立。协议层不提供玩家认证；目录可用、游戏可达、传输持钥和玩家准入是不同事实，见[协议索引](README.md)。
 
 ## 请求
 
@@ -38,7 +40,7 @@
 }
 ```
 
-`protocolVersion` 必须为 `1`。`source.id` 是来源的稳定身份，不应因名称或 URL 变更而改变。
+`protocolVersion` 必须为 `1`。`source.id` 是目录来源的稳定标识，不应因名称或 URL 变更而改变；它不是公钥派生身份，也不证明来源可信。
 `servers[].id` 只需在该来源内稳定且唯一。相同地址在不同来源中是独立条目，客户端不进行跨来源聚合。
 
 `address` 必须包含显式端口，例如 `example.org:28887`、`127.0.0.1:28887` 或
@@ -74,7 +76,7 @@ ContentServer 登记 ID、显示名称、API URL、启用状态和顺序。NetPl
 - 单页最多 100 个服务器条目。
 - 单个响应最多 1 MiB。
 - 来源 ID 最长 64 个字符，条目 ID 最长 128 个字符。
-- 名称最长 100 个字符，描述最长 1024 个字符。
+- 名称最长 100 个字符，描述最长 1024 个字符，地址最长 255 个字符。
 - 每个条目最多 16 个标签，每个标签最长 32 个字符。
 - 游标最长 512 个字符。
 - ID 只能由 ASCII 字母、数字、点、下划线和连字符组成，且首字符必须是字母或数字。

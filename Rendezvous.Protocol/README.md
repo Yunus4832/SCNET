@@ -1,5 +1,7 @@
 # SCNET.Rendezvous.Protocol
 
+HTTP 入口、UDP JSON 和中继二进制布局见[信令与中继协议](../Doc/Protocol/RendezvousProtocol.md)。
+
 邀请联机的信令与认证中继协议契约，面向 .NET 10，命名空间为 `Rendezvous.Protocol`。
 
 - 会话注册、续约、参与方、房间发现和错误响应模型。

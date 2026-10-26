@@ -1,5 +1,7 @@
 # SCNET.Game.Protocol
 
+游戏线格式与准入总览见 [游戏联机协议](../Doc/Protocol/GameProtocol.md)，跨层边界见[协议索引](../Doc/Protocol/README.md)。
+
 ## 名称空间
 
 目录与名称空间按协议职责对应，不按游戏组件或调用入口分层：
