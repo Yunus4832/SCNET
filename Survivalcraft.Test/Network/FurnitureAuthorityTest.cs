@@ -1,5 +1,5 @@
-using Game;
 using Game.Components;
+using Game.Furniture;
 using Game.Network;
 using Game.Subsystems;
 

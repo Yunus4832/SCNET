@@ -71,14 +71,37 @@ Starter 统一通过 `PlatformManager` 注册平台能力，避免直接操作�
 `Survivalcraft/` 是最主要的业务层，包含：
 
 - `Managers/`：设置、内容、世界、版本、资源与运行配置
-- `Game/`：历史根 `Game` 名称空间类型，包括入口、Headless 启动及基础游戏类型
+- 项目根目录：保留 `GameEntry`、`HeadlessEntry` 和 `GamePaths`，作为启动交接入口与路径定义，不再设置额外的 `Game/` 目录
 - `Authentication/`、`Admission/`、`Identity/`、`Players/`、`Teams/`：对应 `Game.Authentication` 等子名称空间的独立职责模块
 - `Network/`：服务端、客户端、包协议、序列化和网络调度
 - `Subsystems/`：世界更新、天气、光照、爆炸、动画、移动方块等系统
 - `Components/`：玩家、实体、行为、交互、装备、生命等组件
 - `Screens/`：游戏主菜单、加载、设置、联机界面等 UI
 
-新增模块目录相对于 `Survivalcraft/` 项目根组织，与 `Game.<模块>` 名称空间对应；不要在历史 `Game/` 目录下继续嵌套新的子名称空间。已有根名称空间类型不因此批量改名或迁移。
+模块目录相对于 `Survivalcraft/` 项目根组织，与 `Game.<模块>` 名称空间对应。`RootNamespace=Game` 是项目默认前缀，
+不表示类型应全部位于根名称空间。没有 `Game.Data`、`Game.Enums` 或 `Game.Interface` 这样的通用集合：
+值对象、枚举、查询和接口随其职责模块放置。
+
+| 模块 | 负责的类型与边界 |
+|---|---|
+| `Startup` / `Configuration` / `Platforms` | 启动请求及会话、实例设置、平台类别识别；不保存游戏角色状态 |
+| `World` / `Terrains` / `Spawning` | 世界设置和物体、空间查询与更新约定、地形规则、生成数据 |
+| `Characters` / `Creatures` / `Controls` | 玩家角色与角色统计、生物类别及行为数据、操控输入；不混同持钥玩家身份 |
+| `Inventories` / `Crafting` / `Furniture` | 库存协议与槽位布局、配方数据、家具设计及集合；家具面板仍归 `Widgets` |
+| `Blocks` / `ElectricElements` | 方块几何及放置、可编辑方块数据、电路连接及逻辑数据 |
+| `Rendering` / `ParticleSystems` / `Widgets` | 游戏专用模型与天空渲染、粒子数据、界面控件和输入描述 |
+| `Entities` / `Content` / `Servers` | 实体引用与转换、内容来源和公开内容资料、游戏服务器来源及房间配置 |
+| `Diagnostics` / `Help` | 游戏日志和 Headless 统计、帮助页面资料 |
+
+不依赖游戏的算法不留在这些模块中：A* 及其存储/世界接口位于 `Engine.Core.Pathfinding`，
+几何、噪声与曲线位于 `Engine.Core.Mathematics`，集合、状态机、性能统计和文本工具分别归属
+`Engine.Core.Collections`、`Runtime`、`Diagnostics`、`Text`。通用子纹理、图集、路径和斜面绘图及基础天空 shader 归 `Engine.Graphics`；
+游戏天空/模型渲染和依赖游戏内容管理器的资源缓存仍归游戏。
+引擎基础类型不得反向引用游戏或序列化项目。
+
+全局导入只为已有的共享游戏表面提供便利；它不建立职责或绕过模块依赖。窄领域在调用处显式导入。
+模板数据库、XML 类型字符串、反射与人类可读序列化使用当前实际全名，不维护旧根名称别名。
+本项目未发布，不提供旧开发存档的名称空间迁移层。
 
 内容分发在游戏核心中分成四个边界：`ContentRepositoryManager` 维护多个持久来源；`ContentServerClientPool` 按持久或连接作用域复用客户端；
 目录服务负责分页、跨仓库聚合、版本历史和冲突；下载服务只按精确 PackageHash 写入统一缓存。Screen 不创建单地址客户端，

@@ -93,7 +93,7 @@ public class GunSmokeParticleSystem : ParticleSystem<GunSmokeParticleSystem.Part
         return !flag && _time >= 0.5f;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public float Duration;
 

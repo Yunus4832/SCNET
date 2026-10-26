@@ -1,5 +1,7 @@
 using EntitySystem.TemplatesDatabase;
 
+using Game.Furniture;
+
 namespace Game.Network.Snapshots;
 
 public static class FurnitureSnapshotSerializer

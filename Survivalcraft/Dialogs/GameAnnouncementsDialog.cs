@@ -2,6 +2,8 @@ using System.Xml.Linq;
 
 using Engine.Graphics;
 
+using Game.Content;
+
 namespace Game.Dialogs;
 
 public sealed class GameAnnouncementsDialog : Dialog

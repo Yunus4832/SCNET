@@ -10,6 +10,8 @@ using EntitySystem.XmlUtilities;
 using Game;
 using Game.Managers;
 using Game.Modding;
+using Game.Startup;
+using Game.World;
 
 namespace Survivalcraft.Test.Modding;
 

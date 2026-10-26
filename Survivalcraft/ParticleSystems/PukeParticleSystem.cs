@@ -125,7 +125,7 @@ public class PukeParticleSystem : ParticleSystem<PukeParticleSystem.Particle>
         return false;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public float TimeToLive;
 

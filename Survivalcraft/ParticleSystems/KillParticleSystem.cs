@@ -76,7 +76,7 @@ public class KillParticleSystem : ParticleSystem<KillParticleSystem.Particle>
         return !flag;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public float TimeToLive;
 

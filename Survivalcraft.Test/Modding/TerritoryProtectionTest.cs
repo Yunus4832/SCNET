@@ -5,7 +5,7 @@ using Engine.Core.Mathematics;
 
 using EntitySystem.Core;
 
-using Game;
+using Game.Characters;
 using Game.Modding;
 using Game.Network;
 using Game.Protocol.Identity;

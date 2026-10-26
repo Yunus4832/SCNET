@@ -1,7 +1,7 @@
 using EntitySystem.TemplatesDatabase;
 
-using Game;
 using Game.Subsystems;
+using Game.World;
 
 namespace Survivalcraft.Test.Subsystems;
 

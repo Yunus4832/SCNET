@@ -99,7 +99,7 @@ public class SmokeTrailParticleSystem : ParticleSystem<SmokeTrailParticleSystem.
         return false;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public float Duration;
 

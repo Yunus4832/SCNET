@@ -3,9 +3,6 @@ using System.Xml.Linq;
 
 using Game.Admission;
 
-using SCNET.Authentication.Protocol;
-using SCNET.Authentication.Protocol.Contracts;
-using SCNET.Authentication.Protocol.Http;
 using SCNET.Authentication.Protocol.Security;
 
 namespace Survivalcraft.Test.Admission;

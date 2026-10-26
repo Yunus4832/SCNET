@@ -5,9 +5,10 @@ using Engine.Core.Mathematics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game;
+using Game.ElectricElements;
 using Game.Network;
 using Game.Subsystems;
+using Game.World;
 
 namespace Survivalcraft.Test.Network;
 

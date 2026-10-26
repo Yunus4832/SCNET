@@ -6,6 +6,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
 
+using Game.Content;
 using Game.Modding.Blocks;
 
 namespace Game.Managers;

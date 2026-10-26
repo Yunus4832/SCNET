@@ -7,12 +7,12 @@ using Engine.Network.Security;
 
 using EntitySystem.Core;
 
-using Game;
 using Game.Admission;
 using Game.Managers;
 using Game.Network;
 using Game.Network.Handling;
 using Game.Subsystems;
+using Game.World;
 
 using SCNET.Authentication.Protocol;
 using SCNET.Authentication.Protocol.Contracts;

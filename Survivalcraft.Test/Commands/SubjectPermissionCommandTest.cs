@@ -6,7 +6,6 @@ using Engine.Core.Security;
 
 using EntitySystem.Core;
 
-using Game;
 using Game.Commands;
 using Game.Managers;
 using Game.Network;

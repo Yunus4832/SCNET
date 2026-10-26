@@ -3,6 +3,8 @@ using System.Xml.Linq;
 
 using EntitySystem.XmlUtilities;
 
+using Game.Crafting;
+
 namespace Game.Modding.Blocks;
 
 public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)

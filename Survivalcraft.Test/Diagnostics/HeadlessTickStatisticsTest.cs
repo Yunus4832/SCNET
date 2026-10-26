@@ -1,4 +1,4 @@
-using Game;
+using Game.Diagnostics;
 
 namespace Survivalcraft.Test.Diagnostics;
 

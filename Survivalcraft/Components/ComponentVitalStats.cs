@@ -1,6 +1,7 @@
 using System.Globalization;
 
 using Engine.Audio;
+using Engine.Graphics;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;

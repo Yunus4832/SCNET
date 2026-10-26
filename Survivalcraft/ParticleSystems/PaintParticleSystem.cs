@@ -107,7 +107,7 @@ public class PaintParticleSystem : ParticleSystem<PaintParticleSystem.Particle>
         return !flag;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public float Alpha;
 

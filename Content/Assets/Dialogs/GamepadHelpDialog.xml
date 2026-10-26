@@ -20,9 +20,9 @@
                             <LabelWidget Text="[GamepadHelpDialog:4]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[GamepadHelpDialog:5]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[GamepadHelpDialog:6]" HorizontalAlignment="Center"
-                                         _ExcludePlatforms="Ios"/>
+                                        />
                             <LabelWidget Text="[GamepadHelpDialog:7]" HorizontalAlignment="Center"
-                                         _ExcludePlatforms="Ios"/>
+                                        />
                             <LabelWidget Text="[GamepadHelpDialog:8]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[GamepadHelpDialog:9]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[GamepadHelpDialog:10]" HorizontalAlignment="Center"/>
@@ -46,8 +46,8 @@
                             <LabelWidget Text="[GamepadHelpDialog:23]" Color="160, 160, 160"/>
                             <LabelWidget Text="[GamepadHelpDialog:24]" Color="160, 160, 160"/>
                             <LabelWidget Text="[GamepadHelpDialog:25]" Color="160, 160, 160"/>
-                            <LabelWidget Text="[GamepadHelpDialog:26]" Color="160, 160, 160" _ExcludePlatforms="Ios"/>
-                            <LabelWidget Text="[GamepadHelpDialog:27]" Color="160, 160, 160" _ExcludePlatforms="Ios"/>
+                            <LabelWidget Text="[GamepadHelpDialog:26]" Color="160, 160, 160"/>
+                            <LabelWidget Text="[GamepadHelpDialog:27]" Color="160, 160, 160"/>
                             <LabelWidget Text="[GamepadHelpDialog:28]" Color="160, 160, 160"/>
                             <LabelWidget Text="[GamepadHelpDialog:29]" Color="160, 160, 160"/>
                             <LabelWidget Text="[GamepadHelpDialog:30]" Color="160, 160, 160"/>

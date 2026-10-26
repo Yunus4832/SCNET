@@ -98,7 +98,7 @@ public class HitValueParticleSystem : ParticleSystem<HitValueParticleSystem.Part
         }
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public Color BaseColor;
 

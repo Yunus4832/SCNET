@@ -166,7 +166,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
         return !flag;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public float Angle;
 

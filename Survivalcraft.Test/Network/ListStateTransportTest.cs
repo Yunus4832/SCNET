@@ -1,9 +1,9 @@
 using Engine.Core.Mathematics;
 using Engine.Network;
 
-using Game;
 using Game.Network;
 using Game.Network.Transport;
+using Game.World;
 
 namespace Survivalcraft.Test.Network;
 

@@ -4,6 +4,8 @@ using Engine.Graphics;
 
 using EntitySystem.TemplatesDatabase;
 
+using Game.Creatures;
+
 namespace Game.Screens;
 
 public class BestiaryScreen : Screen

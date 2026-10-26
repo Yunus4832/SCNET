@@ -1,3 +1,5 @@
+using Game.Configuration;
+
 namespace Game.Widgets;
 
 /// <summary>

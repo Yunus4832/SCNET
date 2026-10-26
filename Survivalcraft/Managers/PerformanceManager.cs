@@ -1,3 +1,4 @@
+using Engine.Core.Diagnostics;
 using Engine.Graphics;
 
 namespace Game.Managers;

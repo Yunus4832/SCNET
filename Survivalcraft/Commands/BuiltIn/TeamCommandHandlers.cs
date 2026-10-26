@@ -2,7 +2,6 @@ using Game.Network;
 using Game.Network.Handling;
 using Game.Network.Transport;
 using Game.Players;
-using Game.Protocol.Identity;
 using Game.Teams;
 
 namespace Game.Commands;

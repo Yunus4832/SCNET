@@ -3,8 +3,6 @@ using Engine.Core.Mathematics;
 using EntitySystem.Core;
 
 using Game.Network;
-using Game.Protocol.Identity;
-using Game.Protocol.Serialization;
 using Game.Subsystems;
 
 using Survivalcraft.Test.Subsystems;

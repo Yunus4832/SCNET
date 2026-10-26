@@ -7,9 +7,9 @@ using Engine.Core.Security;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game;
 using Game.Protocol.Identity;
 using Game.Subsystems;
+using Game.World;
 
 namespace Survivalcraft.Test.Commands;
 

@@ -3,6 +3,8 @@ using Engine.Serialization;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Creatures;
+
 namespace Game.Components;
 
 public class ComponentCreature : Component

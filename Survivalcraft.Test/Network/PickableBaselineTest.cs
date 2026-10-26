@@ -1,8 +1,8 @@
 using Engine.Core.Mathematics;
 
-using Game;
 using Game.Network.Handling;
 using Game.Subsystems;
+using Game.World;
 
 namespace Survivalcraft.Test.Network;
 

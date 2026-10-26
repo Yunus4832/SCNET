@@ -4,6 +4,7 @@ using Engine.Graphics;
 
 using EntitySystem.XmlUtilities;
 
+using Game.Crafting;
 using Game.Modding.Blocks;
 
 namespace Game.Blocks;

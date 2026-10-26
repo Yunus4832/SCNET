@@ -4,7 +4,6 @@ using BeaconMod;
 
 using EntitySystem.TemplatesDatabase;
 
-using Game;
 using Game.Blocks;
 using Game.ElectricElements;
 using Game.Managers;

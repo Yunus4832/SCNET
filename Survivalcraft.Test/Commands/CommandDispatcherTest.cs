@@ -3,10 +3,11 @@ using System.Text.Json.Nodes;
 using Engine.Core.Mathematics;
 using Engine.Core.Security;
 
-using Game;
+using Game.Characters;
 using Game.Commands;
 using Game.Managers;
 using Game.Protocol.Identity;
+using Game.World;
 
 namespace Survivalcraft.Test.Commands;
 

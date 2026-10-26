@@ -3,6 +3,7 @@ using System.Globalization;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Entities;
 using Game.Network;
 using Game.Network.Transport;
 

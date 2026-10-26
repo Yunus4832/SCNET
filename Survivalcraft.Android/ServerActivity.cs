@@ -8,10 +8,11 @@ using Android.Views.InputMethods;
 
 using Game;
 using Game.Commands;
+using Game.Diagnostics;
 using Game.Localization;
+using Game.Platforms;
 
 using AndroidAlertDialog = Android.App.AlertDialog;
-using AndroidProviderSettings = Android.Provider.Settings;
 using Color = Android.Graphics.Color;
 
 namespace Survivalcraft.Android;
@@ -294,7 +295,6 @@ public class ServerActivity : BlackActivity
         AppendInitialLogs();
         Log.MsgAdded += OnLogMsgAdded;
 
-        InitializeAndroidId();
         RunMode.Value = RunModeType.HeadlessServer;
         var gameArguments = Intent?.GetStringArrayExtra(MainActivity.gameArgumentsExtra) ?? [];
         var startup = StartupManager.Load(gameArguments);
@@ -309,15 +309,6 @@ public class ServerActivity : BlackActivity
         return resourceId > 0 ? Resources!.GetDimensionPixelSize(resourceId) : 0;
     }
 
-    private void InitializeAndroidId()
-    {
-        GetMachineID.AndroidID = AndroidProviderSettings.Secure
-                                     .GetString(
-                                         ContentResolver,
-                                         AndroidProviderSettings.Secure.AndroidId
-                                     ) ??
-                                 string.Empty;
-    }
 
     protected override void OnDestroy()
     {

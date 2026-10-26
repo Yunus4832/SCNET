@@ -4,6 +4,8 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Automation;
+using Game.Controls;
+using Game.Platforms;
 
 namespace Game.Components;
 

@@ -1,11 +1,8 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
-using System.Security.Cryptography;
 
 using Game.Content;
-
-using SCNET.Authentication.Protocol.Security;
 
 namespace Survivalcraft.Test.Modding;
 

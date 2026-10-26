@@ -1,6 +1,8 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Entities;
+
 namespace Game.Subsystems;
 
 public abstract class SubsystemBlockBehavior : Subsystem

@@ -2,9 +2,9 @@ using System.Xml.Linq;
 
 using EntitySystem.TemplatesDatabase;
 
-using Game;
 using Game.Admission;
 using Game.Managers;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 

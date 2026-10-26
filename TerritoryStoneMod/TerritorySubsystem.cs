@@ -3,7 +3,6 @@ using Engine.Core.Runtime;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game;
 using Game.Cameras;
 using Game.Commands;
 using Game.Managers;
@@ -15,8 +14,10 @@ using Game.Protocol.Connection;
 using Game.Protocol.Identity;
 using Game.Protocol.Messaging;
 using Game.Protocol.Serialization;
+using Game.Rendering;
 using Game.Screens;
 using Game.Subsystems;
+using Game.World;
 
 namespace TerritoryStoneMod;
 

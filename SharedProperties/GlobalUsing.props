@@ -21,9 +21,15 @@
         <Using Include="Engine.Core.Collections"/>
         <Using Include="Engine.Core.Logging"/>
         <Using Include="Engine.Core.Runtime"/>
+        <Using Include="Engine.Core.Text"/>
         <Using Include="Engine.Core.Mathematics.Random" Alias="Random"/>
         <Using Include="Engine.FileStorage"/>
         <Using Include="Engine.Windowing"/>
+        <Using Include="Game.Characters"/>
+        <Using Include="Game.Inventories"/>
+        <Using Include="Game.Rendering"/>
+        <Using Include="Game.Startup"/>
+        <Using Include="Game.World"/>
         <Using Include="Game.Utils"/>
         <Using Include="Game.Blocks"/>
         <Using Include="Game.Terrains"/>
@@ -39,6 +45,7 @@
         <Using Include="Game.Dialogs"/>
         <Using Include="Game.Modding"/>
         <Using Include="Game.Managers.GameManager" Alias="GameManager"/>
+        <Using Include="Game.World.GameMode" Alias="GameMode" Condition="'$(TargetFramework)' == '$(AndroidTargetFramework)'"/>
         <Using Include="Game.Dialogs.AlertDialog" Alias="AlertDialog"/>
     </ItemGroup>
 </Project>

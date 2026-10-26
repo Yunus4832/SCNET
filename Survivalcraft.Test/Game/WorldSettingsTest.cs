@@ -1,6 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
-using Game;
+using Game.World;
 
 namespace Survivalcraft.Test;
 

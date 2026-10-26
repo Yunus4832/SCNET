@@ -1,5 +1,7 @@
 using Engine.Input;
 
+using Game.Platforms;
+
 namespace Game.Managers;
 
 public static class PlatformManager

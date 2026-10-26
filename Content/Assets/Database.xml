@@ -80,7 +80,7 @@
                                                  InheritanceParent="9c8f236d-7a27-4cf4-b223-47a87cad977d"/>
                         <MemberComponentTemplate Name="Creature" Guid="ee33b8a8-5e24-4d5c-8965-3b7c6dee9df9">
                             <Parameter Name="Category" Guid="c9a59b8e-5caf-4365-809b-ca467cebdf7b" Value="Bird"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Health" Guid="f8814eba-7e1d-48b7-83ed-9d3fc75e4a1f">
                             <Parameter Name="FireResilience" Guid="58baefde-4739-42fb-879d-345169d3979a" Value="10"
@@ -139,7 +139,7 @@
                             <Parameter Name="ChaseOnTouchProbability" Guid="cbce3466-0be5-4b11-ad33-b84cd4c02ed4"
                                        Value="0" Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="d501c4da-0b57-4d34-80cb-fa9f222e453b" Value="0"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="FourLeggedModel" Guid="749e6ebb-b7b2-44d0-aff6-0b8c150176fc"
                                                  InheritanceParent="76d24f74-5f25-4d30-92ef-658c1a4d66c8">
@@ -164,7 +164,7 @@
                                                  InheritanceParent="3d5c9b46-1592-45de-ae90-9d050021a5ad"/>
                         <MemberComponentTemplate Name="Creature" Guid="b2d21984-d36d-4f2b-9d85-e33a07c524ea">
                             <Parameter Name="Category" Guid="15cfb09f-3f64-4db5-9825-ab36cbdeff30" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="KillVerbs" Guid="5dff494c-cf21-40dc-a03b-1c9f15a38dc6" Value="trampled"
                                        Type="string"/>
                         </MemberComponentTemplate>
@@ -212,7 +212,7 @@
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="527c9b8e-a371-4fb4-b7be-3530841627c7"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
                             <Parameter Name="AutoChaseMask" Guid="0434faa5-d599-4cea-989f-7d4c08a2e34c" Value="0"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="ChaseOnTouchProbability" Guid="52db8718-a176-4cea-a735-2dc76d3fba37"
                                        Value="0.5" Type="float"/>
                             <Parameter Name="DayChaseTime" Guid="7cf11d2a-f762-40d7-9f53-2f653ee531f5" Value="6"
@@ -263,7 +263,7 @@
                                                  InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71"/>
                         <MemberComponentTemplate Name="Creature" Guid="aea582d4-5f93-42b1-8003-12854abf0533">
                             <Parameter Name="Category" Guid="3c3f7861-e516-49cc-bd00-4a430bde3da2" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="Description" Guid="b8c9cebc-c3bc-4470-a589-1de27d145c47"
                                        Value="[Description:1]" Type="string"/>
                             <Parameter Name="KillVerbs" Guid="d9ffe3bc-f1e0-436f-81bc-02a64ff82495" Value="trampled"
@@ -361,7 +361,7 @@
                             <Parameter Name="NightChaseRange" Guid="11f6f11a-c794-47ee-ae2b-b0789be2dd0b" Value="10"
                                        Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="3f3e1bca-4466-4b17-be65-c2566e651a76"
-                                       Value="LandOther, WaterOther, Bird" Type="Game.CreatureCategory"/>
+                                       Value="LandOther, WaterOther, Bird" Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DayChaseTime" Guid="3fa4fd78-65bd-4872-acf7-722a9706d293" Value="10"
                                        Type="float"/>
                             <Parameter Name="NightChaseTime" Guid="7bdd4e36-cb97-4010-a9a8-ff4c49dddc58" Value="15"
@@ -375,7 +375,7 @@
                             <Parameter Name="KillVerbs" Guid="fd5fa451-cb19-4558-9c51-3c7ac70dbef9" Value="mauled"
                                        Type="string"/>
                             <Parameter Name="Category" Guid="fd9142b5-5cb1-475f-a331-131409a78489" Value="LandPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="EatPickableBehavior" Guid="5a9f3779-818b-4848-9b1d-ed676464e607">
                             <ParameterSet Name="FoodFactors" Guid="f85127ce-ab8e-4c7b-ad3d-333038b90945">
@@ -551,7 +551,7 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Creature" Guid="fc90b61e-b886-4f2c-ac4b-80897db03d40">
                             <Parameter Name="Category" Guid="07e839ad-a1c6-4d60-94a4-9c99b92422cb" Value="LandPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="KillVerbs" Guid="9f594f7d-f851-4511-a942-870f3ff6fb48" Value="killed"
                                        Type="string"/>
                         </MemberComponentTemplate>
@@ -623,7 +623,7 @@
                         <MemberComponentTemplate Name="Character" Guid="91a25e4a-47bb-4e2e-b790-69fead86f4ec"
                                                  InheritanceParent="74a31f2d-3241-4f2e-a6ef-3add252691a7">
                             <Parameter Name="Category" Guid="dd5cd9d2-08bb-4d1c-a643-7fdfaa5d1695" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Gui" Guid="a26abc20-9910-4365-a5eb-652b9486439c"
                                                  InheritanceParent="12fc0405-dbcc-417c-8ec8-005de26e670d"/>
@@ -695,7 +695,7 @@
                                                  InheritanceParent="f0e56b9e-befc-453b-ba44-064fcd341bdc"/>
                         <MemberComponentTemplate Name="Creature" Guid="4118c859-1e01-4267-9661-7bcf38f6d606">
                             <Parameter Name="Category" Guid="e979cb86-d28b-4384-a87d-250b95027412" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Locomotion" Guid="42673eb1-5887-4cca-9b07-5c2f737da4bd">
                             <Parameter Name="TurnSpeed" Guid="5fe4df0a-e976-4431-b751-0504968ed6c4" Value="8"
@@ -747,7 +747,7 @@
                             <Parameter Name="KillVerbs" Guid="4c7b20fa-43c4-4030-939c-37340310d297" Value="kicked"
                                        Type="string"/>
                             <Parameter Name="Category" Guid="94669ef3-93b3-4956-bd46-7cba93492143" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="Description" Guid="964738e4-4ab0-40e6-a28f-32babc146156"
                                        Value="[Description:2]" Type="string"/>
                         </MemberComponentTemplate>
@@ -878,7 +878,7 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Creature" Guid="2cf38f62-d898-4f93-9da8-451da20cf7d6">
                             <Parameter Name="Category" Guid="1914b71d-f918-42b4-9e7c-7c201b6bad1d" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Loot" Guid="75014821-6d52-462b-aa82-aa0349bdae6b">
                             <ParameterSet Name="LootOnFire" Guid="0185b2a6-c823-4e42-8b0c-8097e414c519"/>
@@ -969,7 +969,7 @@
                             <Parameter Name="KillVerbs" Guid="451c149d-5a1d-4374-acfa-6a0cab1590ee" Value="stung"
                                        Type="string"/>
                             <Parameter Name="Category" Guid="4a9eeba0-cc87-4bbd-880a-b6f5bd32600f" Value="WaterOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Body" Guid="f6d77bf0-b2b7-4a4c-b7fc-210659a92c71">
                             <Parameter Name="Density" Guid="29b1e0e2-f45b-4072-807b-1d2697f7ceee" Value="1.05"
@@ -1027,7 +1027,7 @@
                             <Parameter Name="FireResilience" Guid="b150276c-a4c9-4513-9c1e-ffe5bcdfd759" Value="10"
                                        Type="float"/>
                             <Parameter Name="BreathingMode" Guid="fd8a3849-ad28-40b1-b5a7-d8835fee07de" Value="Air"
-                                       Type="Game.BreathingMode"/>
+                                       Type="Game.Creatures.BreathingMode"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="FishModel" Guid="7809bc9e-f372-4c66-8337-65b7c9907d85"
                                                  InheritanceParent="210eecbb-7833-4a6b-b3d6-884e8baa6683">
@@ -1082,7 +1082,7 @@
                             <Parameter Name="KillVerbs" Guid="097e0a0e-2cb6-4ac5-b8fd-47ce3bf454d4" Value="dismembered"
                                        Type="string"/>
                             <Parameter Name="Category" Guid="8e556f95-1934-4fcf-b91c-ae74e5fda93b" Value="WaterPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="EatPickableBehavior" Guid="2d6c7c18-cb4e-4d25-a296-4468fa1a509d">
                             <ParameterSet Name="FoodFactors" Guid="d6638dbf-66cb-49c5-a90d-4bffcf55b7af">
@@ -1103,7 +1103,7 @@
                             <Parameter Name="ChaseNonCharacterProbability" Guid="e23d7309-ca76-4b84-82db-cdfde42fc1ad"
                                        Value="1" Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="f4976a27-e7d0-493d-a2e0-473cdf767f1e"
-                                       Value="LandPredator, LandOther, Bird" Type="Game.CreatureCategory"/>
+                                       Value="LandPredator, LandOther, Bird" Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="SwimAroundBehavior" Guid="5088a6a4-229e-4180-9e3a-cbe2d1b50800"
                                                  InheritanceParent="4a21d83b-8741-42e7-87a4-853ddc59d201"/>
@@ -1118,7 +1118,7 @@
                                                  InheritanceParent="2e0632aa-8235-4adc-80fa-37d497ca8449"/>
                         <MemberComponentTemplate Name="Health" Guid="3e65fe53-397a-4987-8812-7f1e40c0da26">
                             <Parameter Name="BreathingMode" Guid="3216fe30-0e15-4e6c-9cca-471b449b7c77" Value="Water"
-                                       Type="Game.BreathingMode"/>
+                                       Type="Game.Creatures.BreathingMode"/>
                             <Parameter Name="FireResilience" Guid="b804dcf1-5aed-4565-a4b1-447de592da56" Value="10"
                                        Type="float"/>
                         </MemberComponentTemplate>
@@ -1257,7 +1257,7 @@
                             <Parameter Name="DisplayName" Guid="c73c7959-0467-46d8-8062-9827cc148e7b"
                                        Value="[DisplayName:8]" Type="string"/>
                             <Parameter Name="Category" Guid="fcd9d3e9-cc44-4d88-839b-b0e5ca3790ce" Value="WaterOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Miner" Guid="9a565a1e-6691-43f7-814c-25484c1780cd"
                                                  InheritanceParent="8acca888-ba39-464f-bcf5-6ae15e448c62">
@@ -1438,7 +1438,7 @@
                             <Parameter Name="DisplayName" Guid="7f8a5254-a45f-422e-98f8-8417c9abf847"
                                        Value="[DisplayName:12]" Type="string"/>
                             <Parameter Name="Category" Guid="b571a020-b3bb-49a8-8948-7e23f6bc30ed" Value="WaterOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="Description" Guid="f96a52e3-915c-4d99-927a-1833951e7df9"
                                        Value="[Description:6]" Type="string"/>
                         </MemberComponentTemplate>
@@ -1451,7 +1451,7 @@
                             <Parameter Name="DayChaseRange" Guid="bf3174a5-b2dd-4ff3-9a06-326cccef9658" Value="0"
                                        Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="e8f59003-a8f5-4c35-b5f1-6642c7396263" Value="0"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Health" Guid="f67bbea3-7b87-42d2-bc51-57a6038d1794">
                             <Parameter Name="AttackResilience" Guid="5d45f314-6c85-40d1-a01d-f62008c88c56" Value="240"
@@ -1654,7 +1654,7 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Creature" Guid="2c1c39c1-86e3-4d5e-864c-a43fc996faa4">
                             <Parameter Name="Category" Guid="3360edf0-5b8e-4373-ae16-38180a65b74d" Value="LandPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="Description" Guid="3fcb506c-3f25-422e-a206-0cc906b70ed6"
                                        Value="[Description:8]" Type="string"/>
                             <Parameter Name="DisplayName" Guid="97afdade-06a8-4f4d-bdd0-7ac7ed4f7e39"
@@ -1783,7 +1783,7 @@
                             <Parameter Name="Description" Guid="6e2af114-ccc2-4782-8ad9-da378f39b705"
                                        Value="[Description:9]" Type="string"/>
                             <Parameter Name="Category" Guid="e4490f78-c3da-431d-bab2-929323977e14" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="CreatureSounds" Guid="3ea99776-0a5a-49d0-a4e8-1c6e5c0e3d67">
                             <Parameter Name="AttackSound" Guid="7c158fb7-8463-4969-b1b8-2b999ed8d84c"
@@ -1837,7 +1837,7 @@
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="9e9a672c-6d14-4f38-9e02-025b95b20c32"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
                             <Parameter Name="AutoChaseMask" Guid="078dedd0-239d-4a31-b775-5fb20696d0c2" Value="0"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DayChaseRange" Guid="460dec38-28c2-4a08-8b13-38899eb3cc4e" Value="0"
                                        Type="float"/>
                             <Parameter Name="NightChaseRange" Guid="73f1eabe-3d62-4195-98a2-944d5a4c7c2d" Value="0"
@@ -1948,7 +1948,7 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="ceacdd33-d8bd-4c08-a108-d7377b2f48ea">
                             <Parameter Name="AutoChaseMask" Guid="886301bd-26f2-41e9-b680-d90aa43dfcae" Value="0"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="SummonBehavior" Guid="dba5f81a-6ab9-43a2-9f04-832feed3bc8f">
                             <Parameter Name="IsEnabled" Guid="3432e3db-f73d-41f4-a955-4eb8eaaf1680" Value="True"
@@ -2026,7 +2026,7 @@
                             <Parameter Name="KillVerbs" Guid="60366a6b-8414-40e1-bdf5-bcd5a1dbe895"
                                        Value="trampled,mauled" Type="string"/>
                             <Parameter Name="Category" Guid="8e8d6a37-eb95-41c1-854f-3c95d52ef05d" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DisplayName" Guid="a23ec8f5-04a2-4a0f-8046-b890f0ca5a94"
                                        Value="[DisplayName:24]" Type="string"/>
                         </MemberComponentTemplate>
@@ -2049,7 +2049,7 @@
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="fb3635b3-b702-497b-953a-207972dd2fe6"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
                             <Parameter Name="AutoChaseMask" Guid="45e88edf-6be4-491c-acbd-732cbc563072"
-                                       Value="LandPredator" Type="Game.CreatureCategory"/>
+                                       Value="LandPredator" Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DayChaseTime" Guid="522f15d1-bd65-46ee-b4e7-fb2f7e9f48fd" Value="15"
                                        Type="float"/>
                             <Parameter Name="ChaseNonCharacterProbability" Guid="7803a5ae-631a-46fb-9128-af241c146474"
@@ -2128,7 +2128,7 @@
                             <Parameter Name="KillVerbs" Guid="7d36aebf-97eb-4860-85eb-d3c4d04b096e"
                                        Value="kicked,trampled" Type="string"/>
                             <Parameter Name="Category" Guid="fe8b399f-e20c-41a4-8e06-4c7e38fcc945" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="Description" Guid="ffab8aae-5bac-4044-b879-faf0313cb426"
                                        Value="[Description:12]" Type="string"/>
                         </MemberComponentTemplate>
@@ -2213,7 +2213,7 @@
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="9469022b-97f0-42eb-a52f-2135e1513d68"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
                             <Parameter Name="AutoChaseMask" Guid="309ca7b3-dd3a-4a07-9aab-204f9e9b7cf9"
-                                       Value="LandPredator, LandOther, Bird" Type="Game.CreatureCategory"/>
+                                       Value="LandPredator, LandOther, Bird" Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="NightChaseRange" Guid="b46ad83a-9b73-401d-a67d-5d66a1f2be7e" Value="20"
                                        Type="float"/>
                             <Parameter Name="DayChaseRange" Guid="b6cb7c6d-0c9e-4cf4-a708-b5d4c46f8037" Value="10"
@@ -2231,7 +2231,7 @@
                             <Parameter Name="DisplayName" Guid="16eb5dd0-7a3d-40e9-86e8-39abdabeb57e"
                                        Value="[DisplayName:28]" Type="string"/>
                             <Parameter Name="Category" Guid="88680568-e5e0-44ac-82b0-236a0d9f8019" Value="WaterPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="KillVerbs" Guid="a7f10817-24c3-451f-a4b1-5f103a5286cb" Value="bitten"
                                        Type="string"/>
                         </MemberComponentTemplate>
@@ -2339,7 +2339,7 @@
                             <Parameter Name="KillVerbs" Guid="1810adbb-6ca9-4535-b7a2-57209545038b" Value="kicked"
                                        Type="string"/>
                             <Parameter Name="Category" Guid="875935e8-8604-4b1f-a19f-384d6a60300e" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DisplayName" Guid="ab6ba1d1-3c22-4e6a-b0f5-16a730cdc330"
                                        Value="[DisplayName:32]" Type="string"/>
                             <Parameter Name="Description" Guid="fa234607-526f-4cf1-accb-2fc5523d81ca"
@@ -2352,7 +2352,7 @@
                             <Parameter Name="ChaseWhenAttackedProbability" Guid="3ecc6037-df98-4d7f-b22d-5cd2c1560bad"
                                        Value="0.2" Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="4060ea0f-f996-4a26-a606-38cb5ce40fb1" Value="0"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="ChaseOnTouchProbability" Guid="7e61eec8-72d7-46a7-922b-2fb3dff5dcba"
                                        Value="0" Type="float"/>
                             <Parameter Name="NightChaseRange" Guid="ab0b656a-b11f-49a5-a6d9-c24e184370d5" Value="0"
@@ -2488,7 +2488,7 @@
                             <Parameter Name="Description" Guid="038b6286-7bcb-4e32-b954-dc726735cbe5"
                                        Value="[Description:16]" Type="string"/>
                             <Parameter Name="Category" Guid="8904d81d-47a1-4177-b751-478f0bd7646a" Value="LandPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DisplayName" Guid="aa6e1388-6967-4ea7-ad1c-deff6d49b342"
                                        Value="[DisplayName:34]" Type="string"/>
                             <Parameter Name="ConstantSpawn" Guid="d187185b-332d-480d-b7ef-46c62c897630" Value="True"
@@ -2700,7 +2700,7 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Creature" Guid="363fce18-7459-473b-85a1-8652f93bfa46">
                             <Parameter Name="Category" Guid="195f002d-fb5a-491a-81d2-4f2ce762a45a" Value="WaterPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DisplayName" Guid="39990f1d-df22-48ed-b87c-564ffb085cf9"
                                        Value="[DisplayName:39]" Type="string"/>
                             <Parameter Name="Description" Guid="81995355-3078-481e-9ed1-5547d9f68c10"
@@ -2740,7 +2740,7 @@
                             <Parameter Name="NightChaseRange" Guid="7adcfb49-0d52-4768-b4c5-d311d75bd5e4" Value="32"
                                        Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="c8baa219-6605-4771-81ef-9c2770243568"
-                                       Value="LandPredator, LandOther" Type="Game.CreatureCategory"/>
+                                       Value="LandPredator, LandOther" Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DayChaseRange" Guid="f8c4f30d-c05e-4819-99dc-66cd028a59aa" Value="32"
                                        Type="float"/>
                         </MemberComponentTemplate>
@@ -2883,7 +2883,7 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Creature" Guid="3308b3b7-352d-43d4-83ce-f85510ab2a5d">
                             <Parameter Name="Category" Guid="46449a5c-a96b-4015-9404-8b51a6b01142" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="KillVerbs" Guid="63935cb0-0253-42a7-bbc5-df5582da5bf9" Value="kicked"
                                        Type="string"/>
                             <Parameter Name="Description" Guid="7a030053-23a1-4607-979a-ba80d6981181"
@@ -2898,7 +2898,7 @@
                             <Parameter Name="ChaseWhenAttackedProbability" Guid="1b593e17-e314-4fca-8929-01de2291ecec"
                                        Value="0.2" Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="2deb52ec-7fae-4787-88b0-1004dbcaf5a6" Value="0"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="ChaseOnTouchProbability" Guid="4850e032-7c7f-4153-8571-11ca0d619b7e"
                                        Value="0" Type="float"/>
                             <Parameter Name="DayChaseRange" Guid="e813a65a-12d7-4244-af3c-fb0624d0a797" Value="0"
@@ -3186,7 +3186,7 @@
                             <Parameter Name="KillVerbs" Guid="5fef0879-5e36-41f8-b8d4-7f6bf2805750" Value="hunted,eaten"
                                        Type="string"/>
                             <Parameter Name="Category" Guid="8ac038cc-a8ea-486b-a7a3-7f6bb98ef749" Value="LandPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DisplayName" Guid="908c6076-6839-4c76-b377-cae0e1bf826e"
                                        Value="[DisplayName:53]" Type="string"/>
                         </MemberComponentTemplate>
@@ -3352,7 +3352,7 @@
                             <Parameter Name="DisplayName" Guid="03fedd28-204f-4510-9766-83deb9e94175"
                                        Value="[DisplayName:55]" Type="string"/>
                             <Parameter Name="Category" Guid="09417933-3a9c-4cd9-84d8-d1bda37571ed" Value="LandPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="KillVerbs" Guid="2c95fd2d-3baa-42e0-908c-9c3679ccd160"
                                        Value="hunted,dismembered,eaten" Type="string"/>
                             <Parameter Name="Description" Guid="f88c4542-139b-434e-86ae-562e4e0e7f2d"
@@ -3435,7 +3435,7 @@
                             <Parameter Name="KillVerbs" Guid="396548f4-4d2d-4329-8173-191e4fb63dad" Value="kicked"
                                        Type="string"/>
                             <Parameter Name="Category" Guid="c0cdc135-6bec-4976-9908-29bb0ae86d3e" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="Description" Guid="f7cd4004-3641-4182-b26e-2c8567a13413"
                                        Value="[Description:25]" Type="string"/>
                         </MemberComponentTemplate>
@@ -3621,7 +3621,7 @@
                             <Parameter Name="KillVerbs" Guid="3341fd97-a2cf-4798-ae7e-8e3a2732e4f0" Value="eaten"
                                        Type="string"/>
                             <Parameter Name="Category" Guid="42f1059f-9a92-42e1-b78f-d130d267200b" Value="WaterPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DisplayName" Guid="7a001bd9-80a2-4572-aa9f-2c1a934d882a"
                                        Value="[DisplayName:63]" Type="string"/>
                             <Parameter Name="Description" Guid="82728970-8ad4-440f-a8f5-ca0f80570236"
@@ -3644,7 +3644,7 @@
                             <Parameter Name="ChaseNonCharacterProbability" Guid="b933cd38-7216-4ee0-9e26-22272d07d11c"
                                        Value="0.25" Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="fcd7627f-4014-49d4-8be2-e6f73e61b86a"
-                                       Value="LandPredator, LandOther, Bird" Type="Game.CreatureCategory"/>
+                                       Value="LandPredator, LandOther, Bird" Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="FishModel" Guid="4d060213-fdb7-4c9c-a65b-0790796ced8b">
                             <Parameter Name="ModelName" Guid="749de893-e845-46c2-92c0-26ce7ee7ad86"
@@ -3711,7 +3711,7 @@
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="1829db1b-2b51-4a6b-ae82-bf0e9e890e6c"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
                             <Parameter Name="AutoChaseMask" Guid="7d20eb6a-0a68-4b21-8853-4b2117dfa2d7" Value="0"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="NightChaseRange" Guid="83dad3c3-41a0-47b6-91d9-63982934f67b" Value="4"
                                        Type="float"/>
                         </MemberComponentTemplate>
@@ -3728,7 +3728,7 @@
                             <Parameter Name="Description" Guid="2bc5624f-0df9-4afe-bf06-1f944833d5bf"
                                        Value="[Description:28]" Type="string"/>
                             <Parameter Name="Category" Guid="418311cb-26af-473e-bec0-e9fda513ea33" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="KillVerbs" Guid="497da686-5df3-40c2-8a59-81e76df946cd" Value="mauled"
                                        Type="string"/>
                             <Parameter Name="DisplayName" Guid="f751455c-6095-4059-bfbf-47fb0f4bb51c"
@@ -3994,7 +3994,7 @@
                                     InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
                         <MemberComponentTemplate Name="Creature" Guid="0a13ac88-a9b7-4d17-8fd6-f14f811a91b2">
                             <Parameter Name="Category" Guid="1c88ed92-669c-4c27-8a3b-b85928105f95" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DisplayName" Guid="a7cb1526-9c01-49fd-9bd4-f761b8065f34"
                                        Value="[DisplayName:73]" Type="string"/>
                             <Parameter Name="KillVerbs" Guid="c171096f-a272-4c2e-8b54-e97d5fe530bd"
@@ -4062,7 +4062,7 @@
                             <Parameter Name="NightChaseRange" Guid="094da487-5784-4d58-ae57-7d7bd4769819" Value="0"
                                        Type="float"/>
                             <Parameter Name="AutoChaseMask" Guid="bff27a9f-c99f-40c4-a76f-e0f8b7c39ef5" Value="0"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DayChaseRange" Guid="cec320a1-284b-4b18-9466-9023b9078301" Value="0"
                                        Type="float"/>
                             <Parameter Name="ChaseWhenAttackedProbability" Guid="ed4e53b3-179e-433c-9639-e03aab3a7332"
@@ -4190,7 +4190,7 @@
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="Creature" Guid="518db0fd-f499-48b4-8dd3-15f921dc8c24">
                             <Parameter Name="Category" Guid="350cd622-d785-4102-8c55-e1c82b915ab1" Value="WaterOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="Description" Guid="7312672a-2564-4b8d-b2c9-0695bddbf2e1"
                                        Value="[Description:34]" Type="string"/>
                             <Parameter Name="DisplayName" Guid="91f92f75-5723-4425-8648-081e536cb848"
@@ -4305,7 +4305,7 @@
                             <Parameter Name="DisplayName" Guid="42d4fbe0-e974-403c-bf33-5539220f42ac"
                                        Value="[DisplayName:81]" Type="string"/>
                             <Parameter Name="Category" Guid="507da620-ccaa-4f34-a139-0e5656dabe14" Value="LandPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="Description" Guid="7ef63359-cceb-417b-8a68-786f59f7cb1e"
                                        Value="[Description:35]" Type="string"/>
                             <Parameter Name="KillVerbs" Guid="eb41096a-18df-458c-b198-2b069f75663b" Value="eaten"
@@ -4621,14 +4621,14 @@
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="5bd793c1-5bdc-4d31-b931-16954683c9a9"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
                             <Parameter Name="AutoChaseMask" Guid="0f132137-071f-4b6f-ae79-2f7a06fb8101"
-                                       Value="LandPredator" Type="Game.CreatureCategory"/>
+                                       Value="LandPredator" Type="Game.Creatures.CreatureCategory"/>
                         </MemberComponentTemplate>
                         <MemberComponentTemplate Name="OnFire" Guid="771d8ac1-7fad-4d35-90d7-9d07c31b36dc"/>
                         <MemberComponentTemplate Name="Creature" Guid="7acad7f1-91ed-4f6a-9c7a-a0d0af5db885">
                             <Parameter Name="Description" Guid="428b5fb8-2eb4-405a-a3d9-9721e4aece17"
                                        Value="[Description:39]" Type="string"/>
                             <Parameter Name="Category" Guid="49d4cc6d-4b64-474c-8c01-18c9dbe14f32" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="KillVerbs" Guid="c858b714-4356-4b33-8634-6ac8f6ca8bd2" Value="trampled"
                                        Type="string"/>
                             <Parameter Name="DisplayName" Guid="dffc0149-adc8-4feb-9166-e9ac8f921306"
@@ -4715,7 +4715,7 @@
                             <Parameter Name="KillVerbs" Guid="4835449a-92ca-402e-b238-478f720251c1"
                                        Value="hunted,dismembered,eaten" Type="string"/>
                             <Parameter Name="Category" Guid="732ae0a6-db23-4270-8449-e1c05c28b5d8" Value="LandPredator"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DisplayName" Guid="97cf2358-db9b-4ab9-a6fb-c238da8b4136"
                                        Value="[DisplayName:91]" Type="string"/>
                             <Parameter Name="Description" Guid="9ae60566-6d71-4b3d-b5d6-c803446faa48"
@@ -4893,7 +4893,7 @@
                             <Parameter Name="KillVerbs" Guid="65010fae-18f7-4b60-afd8-92e2e8c51118"
                                        Value="kicked,trampled" Type="string"/>
                             <Parameter Name="Category" Guid="886f65b2-3b40-4e16-a9a9-7da20b1b0c79" Value="LandOther"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="Description" Guid="f7cd815f-3e76-4e52-b447-a5afeb41b775"
                                        Value="[Description:41]" Type="string"/>
                         </MemberComponentTemplate>
@@ -4995,7 +4995,7 @@
                         <MemberComponentTemplate Name="ChaseBehavior" Guid="7e2ede9c-62df-4c8c-9301-8849b1545103"
                                                  InheritanceParent="31894441-d90a-4549-9264-db9dbe20e234">
                             <Parameter Name="AutoChaseMask" Guid="89b19726-2c69-49fe-a469-fe4f7d893736" Value="0"
-                                       Type="Game.CreatureCategory"/>
+                                       Type="Game.Creatures.CreatureCategory"/>
                             <Parameter Name="DayChaseRange" Guid="bfa3925f-72d4-4c59-8daf-f7aecdb6dfaf" Value="0"
                                        Type="float"/>
                             <Parameter Name="ChaseWhenAttackedProbability" Guid="c4534331-3b07-4686-b028-200eb59ed8fe"
@@ -5920,12 +5920,12 @@
                                    InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
                     <Parameter Name="TerrainGenerationMode" Description="Game mode of the world"
                                Guid="1f272122-3918-49ab-96ed-6cb7df1588df" Value="Continent"
-                               Type="Game.TerrainGenerationMode"/>
+                               Type="Game.Terrains.TerrainGenerationMode"/>
                     <Parameter Name="EnvironmentBehaviorMode" Description="Environment behavior mode of the world"
                                Guid="3369f738-e249-4159-ac72-fd1bcf3b81ce" Value="Living"
-                               Type="Game.EnvironmentBehaviorMode"/>
+                               Type="Game.World.EnvironmentBehaviorMode"/>
                     <Parameter Name="TimeOfDayMode" Description="Time of day mode of the world"
-                               Guid="4f952456-98f7-4a81-9848-2d39f37081dd" Value="Changing" Type="Game.TimeOfDayMode"/>
+                               Guid="4f952456-98f7-4a81-9848-2d39f37081dd" Value="Changing" Type="Game.World.TimeOfDayMode"/>
                     <Parameter Name="Class" Guid="5d358a77-f64b-4972-81ee-6baa2d348109" Value="Game.Subsystems.SubsystemGameInfo"
                                Type="string"/>
                     <Parameter Name="TerrainLevel" Description="Terrain generation level, in blocks"
@@ -5935,7 +5935,7 @@
                     <Parameter Name="WorldSeed" Description="Seed of the world"
                                Guid="bd44aafa-752a-411d-baa4-9dbf61bd2e19" Value="0" Type="int"/>
                     <Parameter Name="GameMode" Description="Game mode of the world"
-                               Guid="c39bc31c-7a39-4b76-8cf4-eb7cd412cf03" Value="Challenging" Type="Game.GameMode"/>
+                               Guid="c39bc31c-7a39-4b76-8cf4-eb7cd412cf03" Value="Challenging" Type="Game.World.GameMode"/>
                     <Parameter Name="AreWeatherEffectsEnabled" Description="Whether weather effects are enabled"
                                Guid="d00250b7-d95a-4a2d-9cc2-bb4a4321b910" Value="True" Type="bool"/>
                     <Parameter Name="WorldName" Description="Name of the world"
@@ -6252,7 +6252,7 @@
                                Guid="c5f8be48-0c8c-4d92-a5fe-af7c5e3a8370" Value="1.5" Type="float"/>
                     <Parameter Name="AutoChaseMask" Description="Creature categories to chase"
                                Guid="fdf593ec-ea38-463f-bb81-15cbf66a631e" Value="LandOther, Bird"
-                               Type="Game.CreatureCategory"/>
+                               Type="Game.Creatures.CreatureCategory"/>
                     <Parameter Name="ChaseNonCharacterProbability"
                                Description="Probability of creature chasing a non-character target when in range, 0 to 1"
                                Guid="ffbada42-c15c-48e3-bdf0-7e9a20de4a0e" Value="0" Type="float"/>
@@ -6574,7 +6574,7 @@
                     <Parameter Name="Description" Description="Description of creature"
                                Guid="58bdf301-65b5-4418-9d17-45903de29a28" Value="[Description:45]" Type="string"/>
                     <Parameter Name="Category" Guid="61947601-f041-4d1c-b7a4-988bedff5fd3" Value="0"
-                               Type="Game.CreatureCategory"/>
+                               Type="Game.Creatures.CreatureCategory"/>
                     <Parameter Name="DisplayName" Description="Name of creature"
                                Guid="715ff548-ef2b-430e-8e6b-51b934e5da1d" Value="[DisplayName:99]" Type="string"/>
                     <Parameter Name="ConstantSpawn"
@@ -6760,7 +6760,7 @@
                                Guid="b69f3f30-04bf-4038-b678-a43dd952c787" Value="0,0,0" Type="Vector3"/>
                     <Parameter Name="ParentBody"
                                Description="Reference to body to which this body is attached, or null if not attached"
-                               Guid="ebf95053-93be-439d-87e8-08a39da937e9" Value="null:" Type="Game.EntityReference"/>
+                               Guid="ebf95053-93be-439d-87e8-08a39da937e9" Value="null:" Type="Game.Entities.EntityReference"/>
                     <Parameter Name="AirDrag"
                                Description="Air drag coefficient, in 1/s, separate for horizontal and vertical movement"
                                Guid="fcaf98a9-9607-4d21-ada7-8f1ee3bdb393" Value="0.25,0.25" Type="Vector2"/>
@@ -6893,7 +6893,7 @@
                     <Parameter Name="Air" Description="Amount of air, 0 to 1"
                                Guid="b1200714-6145-4744-8e8b-03376e40e1eb" Value="1" Type="float"/>
                     <Parameter Name="BreathingMode" Description="Breathing mode of creature"
-                               Guid="b7b7a44e-7638-43ff-823e-758c07bb9bc6" Value="Air" Type="Game.BreathingMode"/>
+                               Guid="b7b7a44e-7638-43ff-823e-758c07bb9bc6" Value="Air" Type="Game.Creatures.BreathingMode"/>
                     <Parameter Name="CanStrand" Description="Whether creature will take damage when on land"
                                Guid="c83a6ce6-8320-4426-8944-2ec31289aeb5" Value="False" Type="bool"/>
                     <Parameter Name="FireResilience"

@@ -9,6 +9,8 @@ using Engine.Windowing;
 
 using Game;
 using Game.Managers;
+using Game.Platforms;
+using Game.Startup;
 
 using Scnet.Desktop.Updates;
 

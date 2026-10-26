@@ -14,10 +14,10 @@ parameter.
 Read [Doc/StartupSessions.md](../../../Doc/StartupSessions.md) completely before editing. Then read
 the current definitions and the manager that owns the affected transition:
 
-- `Survivalcraft/Game/Data/RunningSetting.cs`
-- `Survivalcraft/Game/Data/StartupRequest.cs`
-- `Survivalcraft/Game/Data/SessionInfo.cs`
-- `Survivalcraft/Game/Data/StartupContext.cs`
+- `Survivalcraft/Startup/RunningSetting.cs`
+- `Survivalcraft/Startup/StartupRequest.cs`
+- `Survivalcraft/Startup/SessionInfo.cs`
+- `Survivalcraft/Startup/StartupContext.cs`
 - `Survivalcraft/Managers/StartupManager.cs`
 - `Survivalcraft/Managers/SessionInfoManager.cs`
 - `Survivalcraft/Managers/RunningSettingManager.cs`

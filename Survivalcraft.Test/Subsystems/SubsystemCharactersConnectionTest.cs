@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 using Engine.Core.Runtime;
 
-using Game;
+using Game.Characters;
 using Game.Components;
 using Game.Network;
 using Game.Subsystems;

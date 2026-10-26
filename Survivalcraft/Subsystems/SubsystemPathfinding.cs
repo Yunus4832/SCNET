@@ -1,7 +1,10 @@
+using Engine.Core.Pathfinding;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
+using Game.Pathfinding;
 
 namespace Game.Subsystems;
 

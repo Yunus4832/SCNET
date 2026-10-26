@@ -97,7 +97,7 @@ public class WhalePlumeParticleSystem : ParticleSystem<WhalePlumeParticleSystem.
         return !flag && (_time >= _duration || IsStopped);
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public float Duration;
 

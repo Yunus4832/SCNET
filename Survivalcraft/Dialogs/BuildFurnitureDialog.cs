@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Game.Furniture;
+
 namespace Game.Dialogs;
 
 public class BuildFurnitureDialog : Dialog

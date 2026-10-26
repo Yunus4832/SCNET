@@ -1,5 +1,7 @@
 using Engine.Graphics;
 
+using Game.Crafting;
+
 namespace Game.Blocks;
 
 public class OneLedBlock : MountedElectricElementBlock

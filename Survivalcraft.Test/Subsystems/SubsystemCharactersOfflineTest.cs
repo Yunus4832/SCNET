@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using Engine.Core.Runtime;
 using Engine.Core.Security;
 
-using Game;
+using Game.Characters;
 using Game.Extensions;
 using Game.Managers;
 using Game.Network;

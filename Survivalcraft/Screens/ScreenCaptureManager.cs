@@ -1,6 +1,8 @@
 using Engine.Graphics;
 using Engine.Media.Images;
 
+using Game.Configuration;
+
 namespace Game.Screens;
 
 public static class ScreenCaptureManager

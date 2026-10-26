@@ -1,6 +1,4 @@
 using Game.Commands;
-using Game.Protocol.Commands;
-using Game.Protocol.Messaging;
 
 namespace Game.Network.Snapshots;
 

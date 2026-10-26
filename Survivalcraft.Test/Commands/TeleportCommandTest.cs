@@ -1,10 +1,10 @@
 using Engine.Core.Collections;
 using Engine.Core.Mathematics;
 
-using Game;
 using Game.Commands;
 using Game.Components;
 using Game.Terrains;
+using Game.World;
 
 namespace Survivalcraft.Test.Commands;
 

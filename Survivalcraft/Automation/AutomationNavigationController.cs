@@ -1,3 +1,6 @@
+using Game.Controls;
+using Game.Pathfinding;
+
 namespace Game.Automation;
 
 /// <summary>Reuses terrain path search but drives the local player through its normal input stage.</summary>

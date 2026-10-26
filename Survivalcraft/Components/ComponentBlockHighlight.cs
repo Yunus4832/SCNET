@@ -3,6 +3,8 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Controls;
+
 namespace Game.Components;
 
 public class ComponentBlockHighlight : Component, IDrawable, IUpdateable

@@ -90,7 +90,7 @@ public class OnFireParticleSystem : ParticleSystem<OnFireParticleSystem.Particle
         base.Draw(camera);
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public float Duration;
 

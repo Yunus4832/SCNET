@@ -1,7 +1,5 @@
 using System.Xml.Linq;
 
-using Game.Network;
-
 namespace Game.Screens;
 
 public class PlayScreen : Screen

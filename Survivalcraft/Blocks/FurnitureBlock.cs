@@ -1,5 +1,7 @@
 using Engine.Graphics;
 
+using Game.Crafting;
+using Game.Furniture;
 using Game.Modding.Blocks;
 using Game.Network;
 

@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
+using Game.Configuration;
+
 namespace Game.Managers;
 
 public static class LanguageManager

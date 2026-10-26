@@ -1,12 +1,12 @@
 using Engine.Core.Runtime;
 using Engine.FileStorage;
 
-using Game;
 using Game.Blocks;
 using Game.Managers;
 using Game.Modding;
 using Game.Modding.Blocks;
 using Game.Widgets;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 

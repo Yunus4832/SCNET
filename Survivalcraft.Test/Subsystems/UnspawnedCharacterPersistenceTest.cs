@@ -8,7 +8,7 @@ using Engine.Core.Security;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game;
+using Game.Characters;
 using Game.Managers;
 using Game.Network;
 using Game.Protocol.Identity;

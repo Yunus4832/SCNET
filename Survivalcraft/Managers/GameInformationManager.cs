@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using Content.Packaging;
 
 using Game.Content;
+using Game.Platforms;
 
 using Dialog = Game.Dialogs.Dialog;
 

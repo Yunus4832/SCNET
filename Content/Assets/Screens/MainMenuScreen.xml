@@ -54,12 +54,12 @@
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" Margin="0, 4">
             <StackPanelWidget HorizontalAlignment="Center">
                 <LabelWidget Text="[MainMenuScreen:8]" Color="255, 255, 255, 255" VerticalAlignment="Center"
-                             FontScale="0.7" DropShadow="true" _ExcludePlatforms="Ios"/>
+                             FontScale="0.7" DropShadow="true"/>
                 <LinkWidget Name="Link" Text="[MainMenuScreen:9]" Color="64, 192, 64" FontScale="0.7"
                             VerticalAlignment="Center" Url="http://kaalus.wordpress.com" DropShadow="true"
-                            _ExcludePlatforms="Ios"/>
+                           />
                 <LabelWidget Text="[MainMenuScreen:10]" Color="255, 255, 255, 255" VerticalAlignment="Center"
-                             FontScale="0.7" DropShadow="true" _ExcludePlatforms="Ios"/>
+                             FontScale="0.7" DropShadow="true"/>
             </StackPanelWidget>
 
         </StackPanelWidget>

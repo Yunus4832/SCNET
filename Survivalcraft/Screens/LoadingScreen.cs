@@ -1,6 +1,7 @@
 using Engine.Audio;
 using Engine.Graphics;
 
+using Game.Configuration;
 using Game.Network.Handling;
 
 namespace Game.Screens;

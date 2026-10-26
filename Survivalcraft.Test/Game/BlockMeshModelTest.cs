@@ -2,7 +2,7 @@ using Engine.Core.Mathematics;
 using Engine.Graphics;
 using Engine.Media.Models;
 
-using Game;
+using Game.Blocks;
 
 namespace Survivalcraft.Test;
 

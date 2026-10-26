@@ -1,5 +1,5 @@
-using Game;
 using Game.Commands;
+using Game.Servers;
 
 namespace Survivalcraft.Test.Commands;
 

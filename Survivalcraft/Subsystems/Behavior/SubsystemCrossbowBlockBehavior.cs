@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+using Game.Entities;
 using Game.Network;
 
 namespace Game.Subsystems;

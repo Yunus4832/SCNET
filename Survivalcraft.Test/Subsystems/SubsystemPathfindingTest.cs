@@ -1,6 +1,6 @@
 using Engine.Core.Mathematics;
 
-using Game;
+using Game.Pathfinding;
 using Game.Subsystems;
 
 namespace Survivalcraft.Test.Subsystems;

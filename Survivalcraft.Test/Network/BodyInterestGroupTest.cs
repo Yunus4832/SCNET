@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 using Engine.Core.Mathematics;
 
-using Game;
+using Game.Characters;
 using Game.Components;
 using Game.Network;
 using Game.Network.Replication;

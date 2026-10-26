@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 using Engine.Core.Security;
 
-using Game;
+using Game.Characters;
 using Game.Commands;
 using Game.Network;
 using Game.Protocol.Identity;

@@ -1,6 +1,8 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Creatures;
+
 namespace Game.Subsystems;
 
 public class SubsystemNoise : Subsystem

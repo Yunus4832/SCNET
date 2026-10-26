@@ -2,8 +2,10 @@ using System.Reflection;
 
 using Engine.Core.Mathematics;
 
-using Game;
+using Game.Blocks;
+using Game.ElectricElements;
 using Game.Subsystems;
+using Game.World;
 
 namespace Survivalcraft.Test.Network;
 

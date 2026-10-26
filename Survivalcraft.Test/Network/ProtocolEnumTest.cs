@@ -2,9 +2,11 @@ using System.Xml.Linq;
 
 using EntitySystem.TemplatesDatabase;
 
-using Game;
+using Game.Characters;
+using Game.Inventories;
 using Game.Network;
 using Game.Servers;
+using Game.World;
 
 namespace Survivalcraft.Test.Network;
 
@@ -16,7 +18,7 @@ public sealed class ProtocolEnumTest
         var assembly = typeof(CharacterData).Assembly;
         foreach (var type in new[] { typeof(GameMode), typeof(CharacterSex), typeof(Season), typeof(DragMode) })
         {
-            Assert.Equal("Game", type.Namespace);
+            Assert.StartsWith("Game.", type.Namespace);
             Assert.Equal(assembly, type.Assembly);
             Assert.Null(typeof(GameProtocol).Assembly.GetType(type.FullName!));
         }

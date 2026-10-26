@@ -1,6 +1,8 @@
 using System.Text.Json.Nodes;
 using System.Xml.Linq;
 
+using Game.Help;
+
 namespace Game.Screens;
 
 public class HelpScreen : Screen

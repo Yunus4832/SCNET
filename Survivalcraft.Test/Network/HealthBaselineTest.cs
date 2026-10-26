@@ -4,10 +4,11 @@ using System.Runtime.CompilerServices;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game;
 using Game.Components;
+using Game.Creatures;
 using Game.Network;
 using Game.Subsystems;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 

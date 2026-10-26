@@ -4,6 +4,7 @@ using Engine.Serialization;
 
 using EntitySystem.TemplatesDatabase;
 
+using Game.Furniture;
 using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Transport;

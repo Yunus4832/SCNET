@@ -1,6 +1,8 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Creatures;
+
 namespace Game.Components;
 
 public class ComponentCattleDriveBehavior : ComponentBehavior, IUpdateable, INoiseListener

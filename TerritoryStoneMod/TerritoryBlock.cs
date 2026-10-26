@@ -1,8 +1,8 @@
 using Engine.Core.Mathematics;
 
-using Game;
 using Game.Blocks;
 using Game.Components;
+using Game.Crafting;
 using Game.Managers;
 using Game.Modding.Blocks;
 using Game.Protocol;

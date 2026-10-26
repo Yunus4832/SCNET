@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 using EntitySystem.TemplatesDatabase;
 
-using Game;
+using Game.Characters;
 using Game.Components;
 using Game.Subsystems;
 

@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+using Game.Configuration;
 using Game.Network;
 using Game.Network.Chunks;
 

@@ -1,3 +1,5 @@
+using Game.Furniture;
+
 namespace Game.Network.Snapshots;
 
 public static class FurniturePackageBuilder

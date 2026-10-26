@@ -1,6 +1,6 @@
 using Engine.Core.Mathematics;
 
-using Game;
+using Game.World;
 
 namespace Survivalcraft.Test.Commands;
 

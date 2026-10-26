@@ -37,9 +37,9 @@
             <Value Name="WorldSeed" Type="System.Int32" Value="0"/>
             <Value Name="WorldSeedString" Type="System.String" Value="0"/>
             <Value Name="TotalElapsedGameTime" Type="System.Double" Value="0"/>
-            <Value Name="GameMode" Type="Game.GameMode" Value="Creative"/>
-            <Value Name="EnvironmentBehaviorMode" Type="Game.EnvironmentBehaviorMode" Value="Living"/>
-            <Value Name="TerrainGenerationMode" Type="Game.TerrainGenerationMode" Value="Continent"/>
+            <Value Name="GameMode" Type="Game.World.GameMode" Value="Creative"/>
+            <Value Name="EnvironmentBehaviorMode" Type="Game.World.EnvironmentBehaviorMode" Value="Living"/>
+            <Value Name="TerrainGenerationMode" Type="Game.Terrains.TerrainGenerationMode" Value="Continent"/>
         </Values>
         <Values Name="Intro">
             <Value Name="PlayIntro" Type="System.Boolean" Value="False"/>

@@ -2,6 +2,8 @@ using System.Xml.Linq;
 
 using Engine.Graphics;
 
+using Game.Creatures;
+
 namespace Game.Screens;
 
 public class BestiaryDescriptionScreen : Screen

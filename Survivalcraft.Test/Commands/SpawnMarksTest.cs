@@ -3,10 +3,11 @@ using System.Runtime.CompilerServices;
 using Engine.Core.Mathematics;
 using Engine.Core.Security;
 
-using Game;
+using Game.Characters;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
+using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 

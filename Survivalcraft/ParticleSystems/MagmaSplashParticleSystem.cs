@@ -119,7 +119,7 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
         return !flag;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public float Duration;
 

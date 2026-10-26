@@ -111,7 +111,7 @@ public class RainSplashParticleSystem : ParticleSystem<RainSplashParticleSystem.
         return false;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public Color BaseColor;
 

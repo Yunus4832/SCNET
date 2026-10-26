@@ -17,7 +17,7 @@ public sealed class PlayerCreationAuthorityTest
             CreationRequestId = Guid.NewGuid(),
             CharacterName = "Codex",
             SkinName = "$Male1",
-            CharacterSex = ProtocolEnum.Encode(Game.CharacterSex.Female),
+            CharacterSex = ProtocolEnum.Encode(Game.Characters.CharacterSex.Female),
             CharacterId = Guid.NewGuid()
         };
         using var writer = new ProtocolWriter();

@@ -2,6 +2,7 @@ using System.Xml.Linq;
 
 using Engine.Graphics;
 
+using Game.Furniture;
 using Game.Modding.Blocks;
 using Game.Network.Handling;
 

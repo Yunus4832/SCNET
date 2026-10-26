@@ -2,6 +2,8 @@ using System.Globalization;
 
 using Engine.Graphics;
 
+using Game.Crafting;
+
 namespace Game.Blocks;
 
 public class EggBlock : Block

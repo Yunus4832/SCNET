@@ -1,5 +1,7 @@
 using Engine.Graphics;
 
+using Game.Furniture;
+
 namespace Game.Widgets;
 
 public class FurnitureDesignWidget : Widget

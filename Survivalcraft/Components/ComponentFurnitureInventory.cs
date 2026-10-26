@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Furniture;
 using Game.Modding.Blocks;
 
 namespace Game.Components;

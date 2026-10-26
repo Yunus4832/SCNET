@@ -2,10 +2,10 @@ using Engine.Core.Mathematics;
 using Engine.Core.Runtime;
 using Engine.Graphics;
 
-using Game;
 using Game.Cameras;
 using Game.Modding;
 using Game.Protocol;
+using Game.Rendering;
 using Game.Subsystems;
 using Game.Terrains;
 

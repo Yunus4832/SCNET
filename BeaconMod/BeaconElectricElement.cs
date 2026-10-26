@@ -1,6 +1,5 @@
 using Engine.Core.Mathematics;
 
-using Game;
 using Game.Components;
 using Game.ElectricElements;
 using Game.Protocol.Terrain;

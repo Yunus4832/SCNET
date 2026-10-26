@@ -1,3 +1,5 @@
+using Game.Content;
+
 namespace Game.Managers;
 
 public static class ContentPackageManager

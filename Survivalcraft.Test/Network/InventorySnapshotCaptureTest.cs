@@ -9,7 +9,7 @@ public sealed class InventorySnapshotCaptureTest
     {
         var inventory = new TestInventory();
         var package = InventoryPackageBuilder.Capture(
-            new Dictionary<Game.IInventory, List<int>>
+            new Dictionary<Game.Inventories.IInventory, List<int>>
                 { [inventory] = [0, 0] }
         );
         inventory.Change(8, 99);

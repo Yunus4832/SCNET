@@ -1,5 +1,7 @@
 using Engine.Graphics;
 
+using Game.Crafting;
+using Game.Creatures;
 using Game.Modding.Blocks;
 
 namespace Game.Blocks;

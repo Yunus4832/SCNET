@@ -1,7 +1,7 @@
 using Engine.Network;
 
-using Game;
 using Game.Network;
+using Game.Servers;
 
 namespace Survivalcraft.Test.Network;
 

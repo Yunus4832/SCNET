@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+using Game.Furniture;
 using Game.Messaging;
 using Game.Network.Transport;
 

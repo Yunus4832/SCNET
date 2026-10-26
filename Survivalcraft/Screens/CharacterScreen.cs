@@ -6,7 +6,6 @@ using EntitySystem.Core;
 
 using Game.Commands;
 using Game.Network;
-using Game.Network.Transport;
 
 namespace Game.Screens;
 

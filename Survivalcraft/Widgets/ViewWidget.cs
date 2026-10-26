@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+using Game.Configuration;
 using Game.Network;
 using Game.Network.Transport;
 

@@ -1,12 +1,11 @@
 using Android.Content;
 using Android.Content.PM;
-using Android.OS;
 
 using Game;
+using Game.Platforms;
 
 using AndroidLog = Android.Util.Log;
 using AndroidProcess = Android.OS.Process;
-using AndroidProviderSettings = Android.Provider.Settings;
 using AndroidUri = Android.Net.Uri;
 using EngineSdlTextInputBackend = Engine.Input.SdlTextInputBackend;
 using GamePlatformManager = Game.Managers.PlatformManager;
@@ -90,7 +89,6 @@ public class GameActivity : EngineActivity
             ".apk",
             "ConfirmInstall"
         );
-        InitializeAndroidId();
         LoadAssetAssemblies();
 
         GameExitManager.ExitRequested += OnExitRequested;
@@ -134,12 +132,6 @@ public class GameActivity : EngineActivity
         };
     }
 
-    private void InitializeAndroidId()
-    {
-        GetMachineID.AndroidID = AndroidProviderSettings.Secure
-                                     .GetString(ContentResolver, AndroidProviderSettings.Secure.AndroidId) ??
-                                 string.Empty;
-    }
 
     private void OpenLink(string link)
     {

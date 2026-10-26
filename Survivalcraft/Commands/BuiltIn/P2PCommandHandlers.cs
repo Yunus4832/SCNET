@@ -5,6 +5,7 @@ using Engine.Network;
 
 using Game.Localization;
 using Game.Network;
+using Game.Servers;
 
 using Rendezvous.Protocol;
 

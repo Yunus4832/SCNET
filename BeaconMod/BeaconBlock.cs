@@ -1,9 +1,9 @@
 using Engine.Core.Mathematics;
 using Engine.Graphics;
 
-using Game;
 using Game.Blocks;
 using Game.Components;
+using Game.Crafting;
 using Game.ElectricElements;
 using Game.Managers;
 using Game.Protocol;

@@ -3,8 +3,8 @@ using System.Runtime.CompilerServices;
 
 using Engine.Core.Mathematics;
 
-using Game;
 using Game.Cameras;
+using Game.Characters;
 using Game.Network;
 using Game.Subsystems;
 using Game.Widgets;

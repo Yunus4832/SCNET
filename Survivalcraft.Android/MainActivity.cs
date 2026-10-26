@@ -6,8 +6,8 @@ using Android.Runtime;
 
 using AndroidX.Core.Content;
 
-using Game;
 using Game.Commands;
+using Game.Platforms;
 
 using AndroidEnvironment = Android.OS.Environment;
 using AndroidProcess = Android.OS.Process;

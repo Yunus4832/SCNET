@@ -8,7 +8,9 @@ using Game;
 using Game.Commands;
 using Game.Managers;
 using Game.Modding;
-
+using Game.Startup;
+using Game.Terrains;
+using Game.World;
 
 namespace Survivalcraft.Test.Modding;
 

@@ -3,15 +3,16 @@ using Engine.Core.Runtime;
 
 using EntitySystem.TemplatesDatabase;
 
-using Game;
 using Game.Components;
 using Game.Managers;
 using Game.Modding;
 using Game.Network;
 using Game.Protocol;
 using Game.Protocol.Terrain;
+using Game.Rendering;
 using Game.Subsystems;
 using Game.Terrains;
+using Game.World;
 
 namespace TerritoryStoneMod;
 

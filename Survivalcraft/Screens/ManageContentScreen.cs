@@ -1,5 +1,10 @@
 using System.Xml.Linq;
 
+using Engine.Graphics;
+
+using Game.Content;
+using Game.Furniture;
+
 namespace Game.Screens;
 
 public class ManageContentScreen : Screen

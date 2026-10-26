@@ -2,6 +2,8 @@ using System.Xml.Linq;
 
 using EntitySystem.TemplatesDatabase;
 
+using Game.Furniture;
+
 namespace Game.Managers;
 
 public static class FurniturePacksManager

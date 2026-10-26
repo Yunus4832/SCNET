@@ -1,7 +1,7 @@
 using Engine.Core.Runtime;
 
-using Game;
 using Game.Managers;
+using Game.Startup;
 
 using Survivalcraft.Test.Modding;
 

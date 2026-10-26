@@ -1,3 +1,5 @@
+using Engine.Graphics;
+
 namespace Game.Widgets;
 
 /// <summary>

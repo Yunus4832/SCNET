@@ -58,9 +58,9 @@ internal sealed class ProjectMetadataRepairStep : IWorldMaintenanceStep
         );
         EnsureGameInfoValue(projectNode, "WorldSeed", "System.Int32", "0");
         EnsureGameInfoValue(projectNode, "WorldSeedString", "System.String", "0");
-        EnsureGameInfoValue(projectNode, "GameMode", "Game.GameMode", "Survival");
-        EnsureGameInfoValue(projectNode, "EnvironmentBehaviorMode", "Game.EnvironmentBehaviorMode", "Living");
-        EnsureGameInfoValue(projectNode, "TerrainGenerationMode", "Game.TerrainGenerationMode", "Continent");
+        EnsureGameInfoValue(projectNode, "GameMode", "Game.World.GameMode", "Survival");
+        EnsureGameInfoValue(projectNode, "EnvironmentBehaviorMode", "Game.World.EnvironmentBehaviorMode", "Living");
+        EnsureGameInfoValue(projectNode, "TerrainGenerationMode", "Game.Terrains.TerrainGenerationMode", "Continent");
     }
 
     private static string GetWorldSettingValue(XElement projectNode, string name, string defaultValue)
@@ -98,7 +98,7 @@ internal sealed class ProjectMetadataRepairStep : IWorldMaintenanceStep
         {
             valueNode = new XElement("Value");
             XmlUtils.SetAttributeValue(valueNode, "Name", name);
-            XmlUtils.SetAttributeValue(valueNode, "Type", "Game.TerrainGenerationMode");
+            XmlUtils.SetAttributeValue(valueNode, "Type", "Game.Terrains.TerrainGenerationMode");
             worldSettingsNode.Add(valueNode);
         }
 

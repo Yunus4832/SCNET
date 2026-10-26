@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Game.Diagnostics;
+
 namespace Game.Dialogs;
 
 public class ViewGameLogDialog : Dialog

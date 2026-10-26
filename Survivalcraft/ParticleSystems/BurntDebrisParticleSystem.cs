@@ -120,7 +120,7 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
         return !flag;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public float TimeToLive;
 

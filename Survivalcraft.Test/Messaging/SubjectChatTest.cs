@@ -5,7 +5,7 @@ using Engine.Core.Security;
 
 using EntitySystem.Core;
 
-using Game;
+using Game.Characters;
 using Game.Commands;
 using Game.Messaging;
 using Game.Network;
@@ -14,6 +14,7 @@ using Game.Players;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 using Game.Teams;
+using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 

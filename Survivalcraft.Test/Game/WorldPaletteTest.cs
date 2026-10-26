@@ -1,4 +1,4 @@
-using Game;
+using Game.World;
 
 namespace Survivalcraft.Test;
 

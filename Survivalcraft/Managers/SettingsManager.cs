@@ -5,6 +5,8 @@ using Engine.Serialization;
 
 using EntitySystem.XmlUtilities;
 
+using Game.Configuration;
+
 namespace Game.Managers;
 
 public static class SettingsManager

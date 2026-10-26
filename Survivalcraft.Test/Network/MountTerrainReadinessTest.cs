@@ -5,7 +5,6 @@ using Engine.Core.Mathematics;
 
 using EntitySystem.Core;
 
-using Game;
 using Game.Components;
 using Game.Subsystems;
 using Game.Terrains;

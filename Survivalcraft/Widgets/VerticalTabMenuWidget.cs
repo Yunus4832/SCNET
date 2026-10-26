@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Engine.Graphics;
+
 namespace Game.Widgets;
 
 public sealed record VerticalTabMenuItem(

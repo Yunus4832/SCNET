@@ -23,7 +23,7 @@ public class ConnectionBootstrapPackageTest
         );
         var package = new BootstrapPackage
         {
-            World = new WorldMetadata("Protocol test", 123, ProtocolEnum.Encode(Game.GameMode.Creative), 20),
+            World = new WorldMetadata("Protocol test", 123, ProtocolEnum.Encode(Game.World.GameMode.Creative), 20),
             Epoch = Guid.NewGuid(),
             BlockMapping = mapping.Entries.Select(pair => new BlockIndexEntry(pair.Key, checked((ushort)pair.Value)))
                 .ToArray(),
@@ -85,7 +85,7 @@ public class ConnectionBootstrapPackageTest
         var node = new NetNode { TokenId = token, CurrentStage = NetNode.Stage.Bootstrapping };
         var package = new BootstrapPackage
         {
-            World = new WorldMetadata("Protocol test", 123, ProtocolEnum.Encode(Game.GameMode.Creative), 20),
+            World = new WorldMetadata("Protocol test", 123, ProtocolEnum.Encode(Game.World.GameMode.Creative), 20),
             Epoch = Guid.NewGuid(),
             ClientList = ClientPackageBuilder.Snapshot([new Client(null, 1, token, Guid.NewGuid(), null)])
         };
@@ -117,7 +117,7 @@ public class ConnectionBootstrapPackageTest
         var epoch = Guid.NewGuid();
         var package = new BootstrapPackage
         {
-            World = new WorldMetadata("Protocol test", 123, ProtocolEnum.Encode(Game.GameMode.Creative), 20),
+            World = new WorldMetadata("Protocol test", 123, ProtocolEnum.Encode(Game.World.GameMode.Creative), 20),
             Epoch = epoch,
             ClientList = new ClientPackage([]),
             TextureData = [1, 2, 3],

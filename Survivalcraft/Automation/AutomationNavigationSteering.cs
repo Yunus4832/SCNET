@@ -1,3 +1,5 @@
+using Game.Controls;
+
 namespace Game.Automation;
 
 public static class AutomationNavigationSteering

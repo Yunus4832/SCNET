@@ -3,7 +3,6 @@ using System.Text;
 
 using Engine.Core.Security;
 
-using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Players;

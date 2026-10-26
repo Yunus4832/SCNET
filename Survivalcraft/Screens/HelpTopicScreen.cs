@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Game.Help;
+
 namespace Game.Screens;
 
 public class HelpTopicScreen : Screen

@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 
-using Game.Dialogs;
 using Game.Identity;
 using Game.Network;
 

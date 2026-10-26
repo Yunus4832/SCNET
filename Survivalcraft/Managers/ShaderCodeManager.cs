@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
 
+using Game.Platforms;
+
 namespace Game.Managers;
 
 public class ShaderCodeManager

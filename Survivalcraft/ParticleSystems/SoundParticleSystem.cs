@@ -83,7 +83,7 @@ public class SoundParticleSystem : ParticleSystem<SoundParticleSystem.Particle>
         return !flag;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public Color BaseColor;
 

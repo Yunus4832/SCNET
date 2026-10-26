@@ -19,7 +19,7 @@
           <Value Name="DistanceSwam" Type="double" Value="0" />
           <Value Name="DistanceTravelled" Type="double" Value="0.01000213623046875" />
           <Value Name="DistanceWalked" Type="double" Value="0" />
-          <Value Name="EasiestModeUsed" Type="Game.GameMode" Value="Creative" />
+          <Value Name="EasiestModeUsed" Type="Game.World.GameMode" Value="Creative" />
           <Value Name="FoodItemsEaten" Type="long" Value="0" />
           <Value Name="FurnitureItemsMade" Type="long" Value="0" />
           <Value Name="HighestAltitude" Type="double" Value="65.01000213623047" />
@@ -60,7 +60,7 @@
           <Value Name="PlayerClass" Type="Game.PlayerClass" Value="Male" />
           <Value Name="Level" Type="float" Value="1" />
           <Value Name="CharacterSkinName" Type="string" Value="$Male3" />
-          <Value Name="InputDevice" Type="Game.WidgetInputDevice" Value="None" />
+          <Value Name="InputDevice" Type="Game.Widgets.WidgetInputDevice" Value="None" />
           <Value Name="ServerManager" Type="bool" Value="False" />
           <Value Name="GroupKey" Type="string" Value="" />
         </Values>
@@ -128,9 +128,9 @@
     </Values>
     <Values Name="GameInfo">
       <Value Name="WorldName" Type="string" Value="Belborough" />
-      <Value Name="GameMode" Type="Game.GameMode" Value="Creative" />
-      <Value Name="EnvironmentBehaviorMode" Type="Game.EnvironmentBehaviorMode" Value="Living" />
-      <Value Name="TimeOfDayMode" Type="Game.TimeOfDayMode" Value="Changing" />
+      <Value Name="GameMode" Type="Game.World.GameMode" Value="Creative" />
+      <Value Name="EnvironmentBehaviorMode" Type="Game.World.EnvironmentBehaviorMode" Value="Living" />
+      <Value Name="TimeOfDayMode" Type="Game.World.TimeOfDayMode" Value="Changing" />
       <Value Name="AreSeasonsChanging" Type="bool" Value="True" />
       <Value Name="YearDays" Type="float" Value="24" />
       <Value Name="TimeOfYear" Type="float" Value="0.12534723" />
@@ -147,7 +147,7 @@
       <Value Name="IsNeedCommunityLogin" Type="bool" Value="False" />
       <Value Name="ModProfileResolutionStrategy" Type="Game.Modding.ModProfileResolutionStrategy" Value="GlobalPlusWorld" />
       <Value Name="WorldSeedString" Type="string" Value="" />
-      <Value Name="TerrainGenerationMode" Type="Game.TerrainGenerationMode" Value="Continent" />
+      <Value Name="TerrainGenerationMode" Type="Game.Terrains.TerrainGenerationMode" Value="Continent" />
       <Value Name="IslandSize" Type="Vector2" Value="400,400" />
       <Value Name="TerrainLevel" Type="int" Value="64" />
       <Value Name="ShoreRoughness" Type="float" Value="0.5" />
@@ -157,7 +157,7 @@
       <Value Name="HumidityOffset" Type="float" Value="0" />
       <Value Name="SeaLevelOffset" Type="int" Value="0" />
       <Value Name="BiomeSize" Type="float" Value="1" />
-      <Value Name="StartingPositionMode" Type="Game.StartingPositionMode" Value="Easy" />
+      <Value Name="StartingPositionMode" Type="Game.World.StartingPositionMode" Value="Easy" />
       <Value Name="BlockTextureName" Type="string" Value="" />
       <Values Name="Palette">
         <Value Name="Colors" Type="string" Value=";;;;;;;;;;;;;;;" />

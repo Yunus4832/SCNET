@@ -1,6 +1,8 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Pathfinding;
+
 namespace Game.Components;
 
 public class ComponentPathfinding : Component, IUpdateable

@@ -1,3 +1,5 @@
+using Game.Controls;
+
 namespace Game.Automation;
 
 /// <summary>Converges the normal first-person view through player look input.</summary>

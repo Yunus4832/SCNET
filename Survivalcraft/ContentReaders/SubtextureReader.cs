@@ -6,7 +6,7 @@ public class SubtextureReader : IContentReader
 {
     public override string[] DefaultSuffix => ["png", "txt"];
 
-    public override string Type => "Game.Subtexture";
+    public override string Type => "Engine.Graphics.Subtexture";
 
     public override object Get(ContentInfo[] contents)
     {

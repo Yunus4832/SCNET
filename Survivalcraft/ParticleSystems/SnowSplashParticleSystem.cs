@@ -84,7 +84,7 @@ public class SnowSplashParticleSystem : ParticleSystem<SnowSplashParticleSystem.
         return false;
     }
 
-    public class Particle : Game.Particle
+    public class Particle : Game.ParticleSystems.Particle
     {
         public Color BaseColor;
 

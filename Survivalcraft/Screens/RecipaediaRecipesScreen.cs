@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Game.Crafting;
+
 namespace Game.Screens;
 
 public class RecipaediaRecipesScreen : Screen

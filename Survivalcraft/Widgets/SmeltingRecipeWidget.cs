@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+using Game.Crafting;
 using Game.Modding.Blocks;
 
 namespace Game.Widgets;

@@ -1,5 +1,7 @@
 using Engine.Graphics;
 
+using Game.Controls;
+
 namespace Game.Managers;
 
 public static class VrManager

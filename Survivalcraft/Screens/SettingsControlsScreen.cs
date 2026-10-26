@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Xml.Linq;
 
+using Game.Controls;
+
 namespace Game.Screens;
 
 public class SettingsControlsScreen : Screen
