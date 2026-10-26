@@ -17,7 +17,6 @@ using ContentServer.Infrastructure;
 using Engine.Core.Mathematics;
 using Engine.Media.Images;
 
-using Game;
 using Game.Content;
 using Game.Managers;
 using Game.Modding;

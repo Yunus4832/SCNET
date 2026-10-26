@@ -1,6 +1,5 @@
 using Game.Protocol.Characters;
 using Game.Protocol.Connection;
-using Game.Protocol.Teams;
 
 namespace Game.Protocol.World;
 

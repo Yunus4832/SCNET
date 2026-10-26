@@ -4,7 +4,6 @@ using System.Threading.RateLimiting;
 
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.RateLimiting;
 
 using SCNET.Authentication.Protocol;
 using SCNET.Authentication.Protocol.Contracts;

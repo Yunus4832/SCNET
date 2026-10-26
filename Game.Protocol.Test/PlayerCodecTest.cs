@@ -4,7 +4,6 @@ using Game.Protocol.Characters;
 using Game.Protocol.Connection;
 using Game.Protocol.Entities;
 using Game.Protocol.Serialization;
-using Game.Protocol.Teams;
 
 namespace Game.Protocol.Test;
 

@@ -1,7 +1,6 @@
 using Engine.Core.Mathematics;
 
 using Game.Protocol.Characters;
-using Game.Protocol.Teams;
 
 namespace Game.Protocol.Entities;
 

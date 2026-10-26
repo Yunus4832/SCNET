@@ -7,7 +7,6 @@ using Game.Protocol.Connection;
 using Game.Protocol.Entities;
 using Game.Protocol.Identity;
 using Game.Protocol.Serialization;
-using Game.Protocol.Teams;
 using Game.Protocol.World;
 
 namespace Game.Protocol.Test;

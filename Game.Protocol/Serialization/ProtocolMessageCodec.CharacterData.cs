@@ -1,5 +1,4 @@
 using Game.Protocol.Characters;
-using Game.Protocol.Teams;
 using Game.Protocol.Terrain;
 
 namespace Game.Protocol.Serialization;

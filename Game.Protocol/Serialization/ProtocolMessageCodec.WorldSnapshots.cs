@@ -2,7 +2,6 @@ using Game.Protocol.Blocks;
 using Game.Protocol.Characters;
 using Game.Protocol.Connection;
 using Game.Protocol.Entities;
-using Game.Protocol.Teams;
 using Game.Protocol.World;
 
 namespace Game.Protocol.Serialization;

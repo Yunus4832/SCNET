@@ -1,12 +1,9 @@
-using System.Security.Cryptography;
-
 using ContentServer.Application.Commands;
 using ContentServer.Domain.AuthenticationServices;
 
 using NetCorePal.Extensions.Primitives;
 
 using SCNET.Authentication.Protocol;
-using SCNET.Authentication.Protocol.Contracts;
 using SCNET.Authentication.Protocol.Http;
 
 namespace ContentServer.Endpoints.AuthenticationServices;

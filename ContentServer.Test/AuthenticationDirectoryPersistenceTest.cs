@@ -13,10 +13,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-using SCNET.Authentication.Protocol;
-using SCNET.Authentication.Protocol.Contracts;
-using SCNET.Authentication.Protocol.Http;
-
 namespace ContentServer.Test;
 
 public sealed class AuthenticationDirectoryPersistenceTest : IDisposable
