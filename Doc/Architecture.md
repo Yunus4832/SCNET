@@ -71,11 +71,14 @@ Starter 统一通过 `PlatformManager` 注册平台能力，避免直接操作�
 `Survivalcraft/` 是最主要的业务层，包含：
 
 - `Managers/`：设置、内容、世界、版本、资源与运行配置
-- `Game/`：入口、Headless 启动、世界加载与保存
+- `Game/`：历史根 `Game` 名称空间类型，包括入口、Headless 启动及基础游戏类型
+- `Authentication/`、`Admission/`、`Identity/`、`Players/`、`Teams/`：对应 `Game.Authentication` 等子名称空间的独立职责模块
 - `Network/`：服务端、客户端、包协议、序列化和网络调度
 - `Subsystems/`：世界更新、天气、光照、爆炸、动画、移动方块等系统
 - `Components/`：玩家、实体、行为、交互、装备、生命等组件
 - `Screens/`：游戏主菜单、加载、设置、联机界面等 UI
+
+新增模块目录相对于 `Survivalcraft/` 项目根组织，与 `Game.<模块>` 名称空间对应；不要在历史 `Game/` 目录下继续嵌套新的子名称空间。已有根名称空间类型不因此批量改名或迁移。
 
 内容分发在游戏核心中分成四个边界：`ContentRepositoryManager` 维护多个持久来源；`ContentServerClientPool` 按持久或连接作用域复用客户端；
 目录服务负责分页、跨仓库聚合、版本历史和冲突；下载服务只按精确 PackageHash 写入统一缓存。Screen 不创建单地址客户端，
