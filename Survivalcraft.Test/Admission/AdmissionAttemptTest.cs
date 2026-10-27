@@ -22,8 +22,8 @@ public sealed class AdmissionAttemptTest
         var attempt = Attempt(ServerAdmissionConfiguration.Open);
         var proof = new AdmissionProofPackage(attempt.Challenge.Nonce);
         var replies = await Task.WhenAll(attempt.AuthorizeAsync(proof, _now), attempt.AuthorizeAsync(proof, _now));
-        Assert.Single(replies.Where(reply => reply.Code == AdmissionResultCode.Accepted));
-        Assert.Single(replies.Where(reply => reply.Code == AdmissionResultCode.Denied));
+        Assert.Single(replies, reply => reply.Code == AdmissionResultCode.Accepted);
+        Assert.Single(replies, reply => reply.Code == AdmissionResultCode.Denied);
     }
 
     [Fact]
