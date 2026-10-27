@@ -285,7 +285,7 @@ public sealed class ContentServerApiTest : IDisposable
             Assert.NotNull(deleted);
             Assert.False(deleted.IsShadowProperty());
             Assert.Equal(typeof(Deleted), deleted.ClrType);
-            Assert.NotNull(entity.GetQueryFilter());
+            Assert.NotEmpty(entity.GetDeclaredQueryFilters());
         }
     }
 

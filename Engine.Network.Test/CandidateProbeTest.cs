@@ -7,7 +7,7 @@ namespace Engine.Network.Test;
 public sealed class CandidateProbeTest
 {
     [Fact]
-    public void OnlyAuthorizedSourcesAndMatchingIdentityCanConfirm()
+    public async Task OnlyAuthorizedSourcesAndMatchingIdentityCanConfirm()
     {
         var observed = new IPEndPoint(IPAddress.Parse("203.0.113.1"), 4000);
         var local = new IPEndPoint(IPAddress.Parse("240e:1234::2"), 4000);
@@ -28,10 +28,10 @@ public sealed class CandidateProbeTest
         Assert.False(probe.Matches(acknowledgement with { RequestId = Guid.NewGuid() }, local));
         Assert.False(probe.Matches(acknowledgement with { SessionId = Guid.NewGuid() }, local));
         probe.ConfirmReachability(local);
-        Assert.Equal(local, probe.Completion.Task.Result);
+        Assert.Equal(local, await probe.Completion.Task);
         Assert.Equal(local, Assert.Single(probe.SendEndpoints));
         Assert.False(probe.Matches(acknowledgement, observed));
         probe.ConfirmReachability(observed);
-        Assert.Equal(local, probe.Completion.Task.Result);
+        Assert.Equal(local, await probe.Completion.Task);
     }
 }
