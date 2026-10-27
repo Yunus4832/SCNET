@@ -20,6 +20,11 @@
 
 这些属性会被大多数项目自动继承，所以单个项目里通常只需要写差异部分。
 
+项目自身的目标框架引用 `GlobalTargetFramework` 或 `AndroidTargetFramework`；Windows 启动器
+在通用框架后追加 `-windows`。受已知 MSBuild 缺陷影响，`ProjectReference.SetTargetFramework`
+仍须硬编码，平台引用的 RID 也按现有约定固定，不应将这些缺陷规避改为属性引用。
+框架升级时需同步检查这些引用、独立模组模板及 NuGet 包内工具路径。
+
 ### `SharedProperties/Versions.props`
 
 所有自主发布单元从 `0.1.0` 开始，使用 `MAJOR.MINOR.PATCH[-prerelease]`。

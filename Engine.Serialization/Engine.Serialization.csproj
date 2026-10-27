@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <Version>$(EngineVersion)</Version>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <IsPackable>true</IsPackable>
         <PackageId>SCNET.Engine.Serialization</PackageId>
         <Description>Serialization support for the SCNET engine.</Description>
