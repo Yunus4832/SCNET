@@ -4,7 +4,7 @@ public class NetPosition(Vector3 v)
 {
     protected Vector3 previous = v;
 
-    private float _elapsedTime = 0;
+    private float _elapsedTime;
 
     protected Vector3 next = v;
 

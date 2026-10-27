@@ -133,7 +133,7 @@ public static class StartupManager
             var admissionOption = arg.ToLowerInvariant();
             if (admissionOption is "--server-password" or "--join-password")
             {
-                throw new Game.Admission.AdmissionConfigurationException(
+                throw new Admission.AdmissionConfigurationException(
                     "Plaintext password arguments are not supported. Use --server-password-file."
                 );
             }
@@ -143,7 +143,7 @@ public static class StartupManager
             {
                 if (i + 1 >= args.Length || args[i + 1].StartsWith("--", StringComparison.Ordinal))
                 {
-                    throw new Game.Admission.AdmissionConfigurationException("An admission option value is missing.");
+                    throw new Admission.AdmissionConfigurationException("An admission option value is missing.");
                 }
 
                 var value = args[++i];
@@ -155,7 +155,7 @@ public static class StartupManager
                         {
                             "open" => ServerAdmissionMode.Open, "password" => ServerAdmissionMode.Password,
                             "external" => ServerAdmissionMode.External,
-                            _ => throw new Game.Admission.AdmissionConfigurationException(
+                            _ => throw new Admission.AdmissionConfigurationException(
                                 "--admission requires open, password or external."
                             )
                         }
@@ -322,7 +322,7 @@ public static class StartupManager
             ? null
             : request.AutoJoinCharacterName;
         request.AdmissionOverrides =
-            Game.Admission.ServerAdmissionOverrides.FromEnvironment().Merge(request.AdmissionOverrides);
+            Admission.ServerAdmissionOverrides.FromEnvironment().Merge(request.AdmissionOverrides);
         request.AdmissionOverrides.Validate();
         settings.RemainingArgs = remainingArgs.ToArray();
         return request;

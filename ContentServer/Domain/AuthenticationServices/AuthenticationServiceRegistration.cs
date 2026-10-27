@@ -127,7 +127,7 @@ public sealed class AuthenticationServiceRegistration : Entity<AuthenticationSer
         return true;
     }
 
-    private bool Matches(long expectedRevision) => Deleted == new Deleted(false) && Revision == expectedRevision;
+    private bool Matches(long expectedRevision) => Deleted == new Deleted() && Revision == expectedRevision;
 
     private void SetDescription(string name, Uri serviceUrl, string? description)
     {

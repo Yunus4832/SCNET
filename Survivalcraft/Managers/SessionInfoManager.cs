@@ -45,10 +45,10 @@ public static class SessionInfoManager
 
             PopulateFromElement(sessionInfo, sessionElement);
         }
-        catch (Game.Admission.AdmissionConfigurationException) { throw; }
+        catch (Admission.AdmissionConfigurationException) { throw; }
         catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
         {
-            throw new Game.Admission.AdmissionConfigurationException(
+            throw new Admission.AdmissionConfigurationException(
                 "Startup session configuration is unreadable or malformed; refusing fallback.",
                 error
             );
@@ -89,10 +89,10 @@ public static class SessionInfoManager
             PopulateFromElement(sessionInfo, sessionElement);
             return sessionInfo;
         }
-        catch (Game.Admission.AdmissionConfigurationException) { throw; }
+        catch (Admission.AdmissionConfigurationException) { throw; }
         catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
         {
-            throw new Game.Admission.AdmissionConfigurationException(
+            throw new Admission.AdmissionConfigurationException(
                 "Startup session configuration is unreadable or malformed; refusing fallback.",
                 error
             );
@@ -145,10 +145,10 @@ public static class SessionInfoManager
             using var stream = Storage.OpenFile(SessionInfoPath, OpenFileMode.Create);
             root.Save(stream);
         }
-        catch (Game.Admission.AdmissionConfigurationException) { throw; }
+        catch (Admission.AdmissionConfigurationException) { throw; }
         catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
         {
-            throw new Game.Admission.AdmissionConfigurationException(
+            throw new Admission.AdmissionConfigurationException(
                 "Startup session configuration is unreadable or malformed; refusing fallback.",
                 error
             );
@@ -422,7 +422,7 @@ public static class SessionInfoManager
                 "GameLoading",
                 worldInfo!,
                 string.Empty,
-                new Game.Admission.HostedWorldStartup(sessionInfo)
+                new Admission.HostedWorldStartup(sessionInfo)
             );
         }
         else { ScreensManager.SwitchScreen("GameLoading", worldInfo!, string.Empty); }
@@ -502,10 +502,10 @@ public static class SessionInfoManager
             PopulateFromElement(sessionInfo, sessionElement);
             return true;
         }
-        catch (Game.Admission.AdmissionConfigurationException) { throw; }
+        catch (Admission.AdmissionConfigurationException) { throw; }
         catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
         {
-            throw new Game.Admission.AdmissionConfigurationException(
+            throw new Admission.AdmissionConfigurationException(
                 "Startup session configuration is unreadable or malformed; refusing fallback.",
                 error
             );
@@ -686,7 +686,7 @@ public static class SessionInfoManager
     private static void PopulateFromElement(SessionInfo sessionInfo, XElement element)
     {
         sessionInfo.AdmissionOverrides =
-            Game.Admission.ServerAdmissionOverrides.FromXml(element.Element("AdmissionOverrides"));
+            Admission.ServerAdmissionOverrides.FromXml(element.Element("AdmissionOverrides"));
         sessionInfo.SessionId = NormalizeSessionId(element.Attribute(nameof(SessionInfo.SessionId))?.Value);
         sessionInfo.Name = NormalizeSessionName(element.Attribute(nameof(SessionInfo.Name))?.Value);
         sessionInfo.Target = ParseTarget(element.Attribute(nameof(SessionInfo.Target))?.Value);
@@ -1075,10 +1075,10 @@ public static class SessionInfoManager
             using var stream = Storage.OpenFile(SessionInfoPath, OpenFileMode.Create);
             root.Save(stream);
         }
-        catch (Game.Admission.AdmissionConfigurationException) { throw; }
+        catch (Admission.AdmissionConfigurationException) { throw; }
         catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
         {
-            throw new Game.Admission.AdmissionConfigurationException(
+            throw new Admission.AdmissionConfigurationException(
                 "Startup session configuration is unreadable or malformed; refusing fallback.",
                 error
             );

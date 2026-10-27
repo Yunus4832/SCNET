@@ -492,7 +492,7 @@ public sealed class AuthenticationDirectoryApiTest : IDisposable
                 await mediator.Send(
                     new EditAuthenticationServiceCommand(
                         new AuthenticationServiceRegistrationId(Guid.Parse(id)),
-                        new ContentServer.Domain.Publishers.PublisherId(Guid.Parse(owner.Id)),
+                        new Domain.Publishers.PublisherId(Guid.Parse(owner.Id)),
                         1,
                         "Changed",
                         replacement.BaseUri,

@@ -425,7 +425,7 @@ public static class WorldsManager
     public static WorldInfo CreateWorld(
         WorldSettings worldSettings,
         string customWorldDirectoryName = "",
-        Game.Admission.ServerAdmissionConfiguration? admission = null
+        Admission.ServerAdmissionConfiguration? admission = null
     )
     {
         string unusedWorldDirectoryName;
@@ -470,7 +470,7 @@ public static class WorldsManager
         projectData.Save(projectNode);
         if (admission is not null)
         {
-            Game.Admission.ServerAdmissionConfiguration.ApplyWorldXml(projectNode, admission);
+            Admission.ServerAdmissionConfiguration.ApplyWorldXml(projectNode, admission);
         }
 
         projectNode.Add(BlockIndexMapping.Empty.ToXml());
@@ -538,7 +538,7 @@ public static class WorldsManager
     public static void ChangeWorld(
         string directoryName,
         WorldSettings worldSettings,
-        Game.Admission.ServerAdmissionConfiguration? admission = null
+        Admission.ServerAdmissionConfiguration? admission = null
     )
     {
         var xmlFile = Storage.CombinePaths(directoryName, "Project.xml");
@@ -563,7 +563,7 @@ public static class WorldsManager
 
         if (admission is not null)
         {
-            Game.Admission.ServerAdmissionConfiguration.ApplyWorldXml(projectNode, admission);
+            Admission.ServerAdmissionConfiguration.ApplyWorldXml(projectNode, admission);
         }
 
         SaveWorldMetadata(xmlFile, projectNode);

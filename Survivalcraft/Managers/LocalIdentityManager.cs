@@ -34,8 +34,8 @@ public static class LocalIdentityManager
     }
 
     public static bool CanImport => GameManager.Project is null &&
-                                    !Game.Network.CommonLib.Net.IsTransportRunning &&
-                                    Game.Network.CommonLib.Net.CurrentStage == Game.Network.NetNode.Stage.NotConnected;
+                                    !Network.CommonLib.Net.IsTransportRunning &&
+                                    Network.CommonLib.Net.CurrentStage == Network.NetNode.Stage.NotConnected;
 
     public static string ImportBackup(
         IdentityPurpose purpose,

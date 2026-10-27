@@ -136,12 +136,12 @@ public class Random
 
     public Vector2 Vector2(float length)
     {
-        return Engine.Core.Mathematics.Vector2.Normalize(Vector2()) * length;
+        return Mathematics.Vector2.Normalize(Vector2()) * length;
     }
 
     public Vector2 Vector2(float minLength, float maxLength)
     {
-        return Engine.Core.Mathematics.Vector2.Normalize(Vector2()) * Float(minLength, maxLength);
+        return Mathematics.Vector2.Normalize(Vector2()) * Float(minLength, maxLength);
     }
 
     public Vector3 Vector3()
@@ -162,12 +162,12 @@ public class Random
 
     public Vector3 Vector3(float length)
     {
-        return Engine.Core.Mathematics.Vector3.Normalize(Vector3()) * length;
+        return Mathematics.Vector3.Normalize(Vector3()) * length;
     }
 
     public Vector3 Vector3(float minLength, float maxLength)
     {
-        return Engine.Core.Mathematics.Vector3.Normalize(Vector3()) * Float(minLength, maxLength);
+        return Mathematics.Vector3.Normalize(Vector3()) * Float(minLength, maxLength);
     }
 
     public static uint RotateLeft(uint x, int k)

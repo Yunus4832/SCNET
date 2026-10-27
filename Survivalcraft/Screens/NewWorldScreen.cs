@@ -205,7 +205,7 @@ public class NewWorldScreen : Screen
                 "GameLoading",
                 worldInfo,
                 string.Empty,
-                new Game.Admission.HostedWorldStartup()
+                new HostedWorldStartup()
             );
         }
         else { ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty); }

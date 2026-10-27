@@ -145,14 +145,14 @@ public sealed class StartupManagerTest : IDisposable
         var path = Path.Combine(Path.GetTempPath(), "scnet-password-reference");
         var args = new[] { "--session", "admission-config", "--admission", "password", "--server-password-file", path };
         var temporary = StartupManager.Load(args);
-        Assert.Equal(Game.Protocol.Connection.ServerAdmissionMode.Password, temporary.Session.AdmissionOverrides.Mode);
+        Assert.Equal(ServerAdmissionMode.Password, temporary.Session.AdmissionOverrides.Mode);
         Assert.Equal(path, temporary.Session.AdmissionOverrides.PasswordFile);
         Assert.True(SessionInfoManager.Load(saved.SessionId).AdmissionOverrides.IsEmpty);
         StartupManager.Load([.. args, "--save"]);
         var restored = StartupManager.Load(["--session", "admission-config"]);
         Assert.Equal(path, restored.Session.AdmissionOverrides.PasswordFile);
         var changed = StartupManager.Load(["--session", "admission-config", "--admission", "open"]);
-        Assert.Equal(Game.Protocol.Connection.ServerAdmissionMode.Open, changed.Session.AdmissionOverrides.Mode);
+        Assert.Equal(ServerAdmissionMode.Open, changed.Session.AdmissionOverrides.Mode);
         Assert.Null(changed.Session.AdmissionOverrides.PasswordFile);
         Assert.Equal(path, SessionInfoManager.Load(saved.SessionId).AdmissionOverrides.PasswordFile);
         var pending = SessionInfoManager.PrepareRestartSession(restored.Session);
@@ -160,7 +160,7 @@ public sealed class StartupManagerTest : IDisposable
             restored.Session.AdmissionOverrides,
             SessionInfoManager.Load(pending.SessionId).AdmissionOverrides
         );
-        var running = Engine.FileStorage.Storage.ReadAllText(RunningSettingManager.RunningSettingPath);
+        var running = Storage.ReadAllText(RunningSettingManager.RunningSettingPath);
         Assert.DoesNotContain("server-password-file", running);
         Assert.DoesNotContain(path, running);
     }
@@ -185,12 +185,12 @@ public sealed class StartupManagerTest : IDisposable
             );
             var inherited = StartupManager.Load([]);
             Assert.Equal(
-                Game.Protocol.Connection.ServerAdmissionMode.Password,
+                ServerAdmissionMode.Password,
                 inherited.Session.AdmissionOverrides.Mode
             );
             var explicitOpen = StartupManager.Load(["--admission", "open"]);
             Assert.Equal(
-                Game.Protocol.Connection.ServerAdmissionMode.Open,
+                ServerAdmissionMode.Open,
                 explicitOpen.Session.AdmissionOverrides.Mode
             );
             Assert.Null(explicitOpen.Session.AdmissionOverrides.PasswordFile);
