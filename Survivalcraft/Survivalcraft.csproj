@@ -26,11 +26,11 @@
     <ItemGroup>
         <ProjectReference Include="../Authentication.Protocol/Authentication.Protocol.csproj"/>
         <ProjectReference Include="../Game.Protocol/Game.Protocol.csproj"/>
-        <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
-        <ProjectReference Include="..\Engine\Engine.csproj"/>
-        <ProjectReference Include="..\Engine.Network\Engine.Network.csproj"/>
-        <ProjectReference Include="..\EntitySystem\EntitySystem.csproj"/>
-        <ProjectReference Include="..\ServerSource.Protocol\ServerSource.Protocol.csproj"/>
+        <ProjectReference Include="../Content.Packaging/Content.Packaging.csproj"/>
+        <ProjectReference Include="../Engine/Engine.csproj"/>
+        <ProjectReference Include="../Engine.Network/Engine.Network.csproj"/>
+        <ProjectReference Include="../EntitySystem/EntitySystem.csproj"/>
+        <ProjectReference Include="../ServerSource.Protocol/ServerSource.Protocol.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

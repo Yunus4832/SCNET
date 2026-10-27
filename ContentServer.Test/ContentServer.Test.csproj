@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ContentServer\ContentServer.csproj"/>
-        <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj"/>
+        <ProjectReference Include="../ContentServer/ContentServer.csproj"/>
+        <ProjectReference Include="../Survivalcraft/Survivalcraft.csproj"/>
     </ItemGroup>
 </Project>

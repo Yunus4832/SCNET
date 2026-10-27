@@ -12,7 +12,7 @@
 
     <ItemGroup>
         <Using Include="Xunit"/>
-        <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
+        <ProjectReference Include="../Content.Packaging/Content.Packaging.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

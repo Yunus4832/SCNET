@@ -10,7 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Engine.Media\Engine.Media.csproj"/>
+        <ProjectReference Include="../Engine.Media/Engine.Media.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

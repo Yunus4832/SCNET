@@ -8,8 +8,8 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\Engine.Core\Engine.Core.csproj"/>
-        <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj"/>
+        <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
+        <ProjectReference Include="../Engine.Serialization/Engine.Serialization.csproj"/>
         <PackageReference Include="NAudio.Core" Version="2.2.1"/>
         <PackageReference Include="NAudio.Flac.Unknown" Version="1.0.4"/>
         <PackageReference Include="NLayer.NAudioSupport" Version="1.4.0"/>

@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\EntitySystem\EntitySystem.csproj"/>
+        <ProjectReference Include="../EntitySystem/EntitySystem.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Engine\Engine.csproj"/>
+        <ProjectReference Include="../Engine/Engine.csproj"/>
         <None Update="TestAssets/Models/*.glb" CopyToOutputDirectory="PreserveNewest"/>
         <None Include="..\Content\Assets\Models\StoneClub.glb" Link="TestAssets/StoneClub.glb"
               CopyToOutputDirectory="PreserveNewest"/>

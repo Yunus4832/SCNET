@@ -18,7 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj"/>
+        <ProjectReference Include="../Engine.Serialization/Engine.Serialization.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

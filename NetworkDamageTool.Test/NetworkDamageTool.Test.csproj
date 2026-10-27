@@ -12,6 +12,6 @@
         <Using Include="Xunit"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\NetworkDamageTool\NetworkDamageTool.csproj"/>
+        <ProjectReference Include="../NetworkDamageTool/NetworkDamageTool.csproj"/>
     </ItemGroup>
 </Project>

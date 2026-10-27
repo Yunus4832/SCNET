@@ -58,9 +58,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Engine.Core\Engine.Core.csproj"/>
-        <ProjectReference Include="..\Engine.Media\Engine.Media.csproj"/>
-        <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj"/>
+        <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
+        <ProjectReference Include="../Engine.Media/Engine.Media.csproj"/>
+        <ProjectReference Include="../Engine.Serialization/Engine.Serialization.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -17,8 +17,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\WorldUpgradeTool\WorldUpgradeTool.csproj"/>
-        <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj"/>
+        <ProjectReference Include="../WorldUpgradeTool/WorldUpgradeTool.csproj"/>
+        <ProjectReference Include="../Survivalcraft/Survivalcraft.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

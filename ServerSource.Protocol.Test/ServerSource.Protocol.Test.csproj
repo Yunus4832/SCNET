@@ -12,6 +12,6 @@
 
     <ItemGroup>
         <Using Include="Xunit"/>
-        <ProjectReference Include="..\ServerSource.Protocol\ServerSource.Protocol.csproj"/>
+        <ProjectReference Include="../ServerSource.Protocol/ServerSource.Protocol.csproj"/>
     </ItemGroup>
 </Project>

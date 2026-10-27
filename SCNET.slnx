@@ -14,21 +14,21 @@
         <Project Path="Engine.Network.Test/Engine.Network.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
-        <Project Path="Engine\Engine.csproj"/>
+        <Project Path="Engine/Engine.csproj"/>
         <Project Path="Engine.Core/Engine.Core.csproj"/>
         <Project Path="Engine.Media/Engine.Media.csproj"/>
         <Project Path="Engine.Core.Benchmarks/Engine.Core.Benchmarks.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
         <Project Path="Engine.Serialization/Engine.Serialization.csproj"/>
-        <Project Path="Engine.Test\Engine.Test.csproj">
+        <Project Path="Engine.Test/Engine.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
 
     <Folder Name="/03 EntitySystem/">
-        <Project Path="EntitySystem\EntitySystem.csproj"/>
-        <Project Path="EntitySystem.Test\EntitySystem.Test.csproj">
+        <Project Path="EntitySystem/EntitySystem.csproj"/>
+        <Project Path="EntitySystem.Test/EntitySystem.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
@@ -46,19 +46,19 @@
         <Project Path="Rendezvous.Protocol.Test/Rendezvous.Protocol.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
-        <Project Path="Content.Packaging\Content.Packaging.csproj"/>
-        <Project Path="Content.Packaging.Test\Content.Packaging.Test.csproj">
+        <Project Path="Content.Packaging/Content.Packaging.csproj"/>
+        <Project Path="Content.Packaging.Test/Content.Packaging.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
-        <Project Path="ServerSource.Protocol\ServerSource.Protocol.csproj"/>
-        <Project Path="ServerSource.Protocol.Test\ServerSource.Protocol.Test.csproj">
+        <Project Path="ServerSource.Protocol/ServerSource.Protocol.csproj"/>
+        <Project Path="ServerSource.Protocol.Test/ServerSource.Protocol.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
 
     <Folder Name="/05 Survivalcraft/">
-        <Project Path="Survivalcraft\Survivalcraft.csproj"/>
-        <Project Path="Survivalcraft.Test\Survivalcraft.Test.csproj">
+        <Project Path="Survivalcraft/Survivalcraft.csproj"/>
+        <Project Path="Survivalcraft.Test/Survivalcraft.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
@@ -68,17 +68,17 @@
         <Project Path="Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
-        <Project Path="Survivalcraft.Linux\Survivalcraft.Linux.csproj"/>
-        <Project Path="Survivalcraft.Windows\Survivalcraft.Windows.csproj"/>
+        <Project Path="Survivalcraft.Linux/Survivalcraft.Linux.csproj"/>
+        <Project Path="Survivalcraft.Windows/Survivalcraft.Windows.csproj"/>
     </Folder>
 
     <Folder Name="/07 Android/">
-        <Project Path="Survivalcraft.Android\Survivalcraft.Android.csproj"/>
-        <Project Path="Survivalcraft.Android.Arm32\Survivalcraft.Android.Arm32.csproj"/>
-        <Project Path="Survivalcraft.Android.X64\Survivalcraft.Android.X64.csproj">
+        <Project Path="Survivalcraft.Android/Survivalcraft.Android.csproj"/>
+        <Project Path="Survivalcraft.Android.Arm32/Survivalcraft.Android.Arm32.csproj"/>
+        <Project Path="Survivalcraft.Android.X64/Survivalcraft.Android.X64.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
-        <Project Path="Survivalcraft.Android.X86\Survivalcraft.Android.X86.csproj">
+        <Project Path="Survivalcraft.Android.X86/Survivalcraft.Android.X86.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
@@ -86,7 +86,7 @@
     <Folder Name="/08 Mod/">
         <Project Path="BeaconMod/BeaconMod.csproj"/>
         <Project Path="TerritoryStoneMod/TerritoryStoneMod.csproj"/>
-        <Project Path="Survivalcraft.ModTemplates\Survivalcraft.ModTemplates.csproj"/>
+        <Project Path="Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj"/>
     </Folder>
 
     <Folder Name="/09 ContentServer/">
@@ -98,9 +98,9 @@
         <Project Path="RendezvousServer.Test/RendezvousServer.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
-        <Project Path="ContentWebUI\ContentWebUI.esproj"/>
-        <Project Path="ContentServer\ContentServer.csproj"/>
-        <Project Path="ContentServer.Test\ContentServer.Test.csproj">
+        <Project Path="ContentWebUI/ContentWebUI.esproj"/>
+        <Project Path="ContentServer/ContentServer.csproj"/>
+        <Project Path="ContentServer.Test/ContentServer.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
@@ -115,15 +115,15 @@
         <Project Path="ServerLoadTool.Test/ServerLoadTool.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
-        <Project Path="GuiAtlasTool\GuiAtlasTool.csproj"/>
-        <Project Path="ContentTool\ContentTool.csproj"/>
-        <Project Path="LanguageTool\LanguageTool.csproj"/>
-        <Project Path="WorldUpgradeTool\WorldUpgradeTool.csproj"/>
-        <Project Path="WorldUpgradeTool.Test\WorldUpgradeTool.Test.csproj">
+        <Project Path="GuiAtlasTool/GuiAtlasTool.csproj"/>
+        <Project Path="ContentTool/ContentTool.csproj"/>
+        <Project Path="LanguageTool/LanguageTool.csproj"/>
+        <Project Path="WorldUpgradeTool/WorldUpgradeTool.csproj"/>
+        <Project Path="WorldUpgradeTool.Test/WorldUpgradeTool.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
-        <Project Path="NetworkDamageTool\NetworkDamageTool.csproj"/>
-        <Project Path="NetworkDamageTool.Test\NetworkDamageTool.Test.csproj">
+        <Project Path="NetworkDamageTool/NetworkDamageTool.csproj"/>
+        <Project Path="NetworkDamageTool.Test/NetworkDamageTool.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>

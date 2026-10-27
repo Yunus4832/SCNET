@@ -14,7 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Engine.Core\Engine.Core.csproj"/>
+        <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

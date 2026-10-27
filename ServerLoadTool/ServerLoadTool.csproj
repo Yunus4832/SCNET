@@ -17,7 +17,7 @@
         <Using Include="Game.Protocol.Localization"/>
         <Using Include="Game.Protocol.Messaging"/>
         <Using Include="Game.Protocol.Serialization"/>
-        <ProjectReference Include="..\Game.Protocol\Game.Protocol.csproj"/>
-        <ProjectReference Include="..\Engine.Network\Engine.Network.csproj"/>
+        <ProjectReference Include="../Game.Protocol/Game.Protocol.csproj"/>
+        <ProjectReference Include="../Engine.Network/Engine.Network.csproj"/>
     </ItemGroup>
 </Project>
