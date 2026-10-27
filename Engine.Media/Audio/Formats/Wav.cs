@@ -1,8 +1,7 @@
-using System.Runtime.InteropServices;
+using System.Buffers.Binary;
+using System.Text;
 
 using Engine.Core.Mathematics;
-using Engine.Core.Runtime;
-using Engine.Serialization;
 
 namespace Engine.Media.Audio.Formats;
 
@@ -10,17 +9,24 @@ public static class Wav
 {
     public static bool IsWavStream(Stream stream)
     {
-        var binaryReader = new BinaryReader(stream);
-        if (stream.Length - stream.Position < Utilities.SizeOf<WavHeader>())
+        ArgumentNullException.ThrowIfNull(stream);
+        if (stream.Length - stream.Position < 12)
         {
             return false;
         }
 
-        var num = binaryReader.ReadInt32();
-        var num2 = binaryReader.ReadInt32();
-        var num3 = binaryReader.ReadInt32();
-        stream.Position -= 12L;
-        return num == MakeFourCc("RIFF") && num2 != 0 && num3 == MakeFourCc("WAVE");
+        var position = stream.Position;
+        using var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
+        try
+        {
+            return reader.ReadInt32() == MakeFourCc("RIFF") &&
+                   reader.ReadUInt32() >= 4 &&
+                   reader.ReadInt32() == MakeFourCc("WAVE");
+        }
+        finally
+        {
+            stream.Position = position;
+        }
     }
 
     public static WavInfo GetInfo(Stream stream)
@@ -44,53 +50,41 @@ public static class Wav
         stream.Position = dataStart;
         var soundData = new SoundData(fmtHeader.ChannelsCount, fmtHeader.SamplingFrequency, dataHeader.DataSize);
         var array = new byte[dataHeader.DataSize];
-        if (stream.Read(array, 0, array.Length) != array.Length)
+        stream.ReadExactly(array);
+        for (var i = 0; i < soundData.Data.Length; i++)
         {
-            throw new InvalidOperationException("Truncated WAV data.");
+            soundData.Data[i] = BinaryPrimitives.ReadInt16LittleEndian(array.AsSpan(i * 2));
         }
 
-        Buffer.BlockCopy(array, 0, soundData.Data, 0, array.Length);
         return soundData;
     }
 
     public static void Save(SoundData soundData, Stream stream)
     {
-        if (soundData == null)
+        ArgumentNullException.ThrowIfNull(soundData);
+        ArgumentNullException.ThrowIfNull(stream);
+        var dataSize = checked(soundData.Data.Length * 2);
+        using var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true);
+        writer.Write(MakeFourCc("RIFF"));
+        writer.Write(checked(36 + dataSize));
+        writer.Write(MakeFourCc("WAVE"));
+        writer.Write(MakeFourCc("fmt "));
+        writer.Write(16);
+        writer.Write((short)1);
+        writer.Write((short)soundData.ChannelsCount);
+        writer.Write(soundData.SamplingFrequency);
+        writer.Write(checked(soundData.ChannelsCount * 2 * soundData.SamplingFrequency));
+        writer.Write((short)(soundData.ChannelsCount * 2));
+        writer.Write((short)16);
+        writer.Write(MakeFourCc("data"));
+        writer.Write(dataSize);
+        var bytes = new byte[dataSize];
+        for (var i = 0; i < soundData.Data.Length; i++)
         {
-            throw new ArgumentNullException(nameof(soundData));
+            BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(i * 2), soundData.Data[i]);
         }
 
-        if (stream == null)
-        {
-            throw new ArgumentNullException(nameof(stream));
-        }
-
-        var engineBinaryWriter = new EngineBinaryWriter(stream);
-        var structure = default(WavHeader);
-        structure.Riff = MakeFourCc("RIFF");
-        structure.FileSize = Utilities.SizeOf<WavHeader>() +
-                             Utilities.SizeOf<FmtHeader>() +
-                             Utilities.SizeOf<DataHeader>() +
-                             soundData.Data.Length;
-        structure.Wave = MakeFourCc("WAVE");
-        engineBinaryWriter.WriteStruct(structure);
-        var structure2 = default(FmtHeader);
-        structure2.Fmt = MakeFourCc("fmt ");
-        structure2.FormatSize = 16;
-        structure2.Type = 1;
-        structure2.ChannelsCount = (short)soundData.ChannelsCount;
-        structure2.SamplingFrequency = soundData.SamplingFrequency;
-        structure2.BytesPerSecond = soundData.ChannelsCount * 2 * soundData.SamplingFrequency;
-        structure2.BytesPerSample = (short)(soundData.ChannelsCount * 2);
-        structure2.BitsPerChannel = 16;
-        engineBinaryWriter.WriteStruct(structure2);
-        var structure3 = default(DataHeader);
-        structure3.Data = MakeFourCc("data");
-        structure3.DataSize = soundData.Data.Length * 2;
-        engineBinaryWriter.WriteStruct(structure3);
-        var array = new byte[soundData.Data.Length * 2];
-        Buffer.BlockCopy(soundData.Data, 0, array, 0, array.Length);
-        stream.Write(array, 0, array.Length);
+        writer.Write(bytes);
     }
 
     private static void ReadHeaders(
@@ -100,60 +94,81 @@ public static class Wav
         out long dataStart
     )
     {
-        if (stream == null)
-        {
-            throw new ArgumentNullException(nameof(stream));
-        }
-
-        if (!BitConverter.IsLittleEndian)
-        {
-            throw new InvalidOperationException("Unsupported system endianness.");
-        }
-
+        ArgumentNullException.ThrowIfNull(stream);
         if (!IsWavStream(stream))
         {
             throw new InvalidOperationException("Invalid WAV header.");
         }
 
-        var engineBinaryReader = new EngineBinaryReader(stream);
+        using var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
+        var start = stream.Position;
+        reader.ReadInt32();
+        var end = start + 8 + reader.ReadUInt32();
+        reader.ReadInt32();
+        if (end > stream.Length)
+        {
+            throw new InvalidOperationException("Truncated WAV data.");
+        }
+
         fmtHeader = default;
         dataHeader = default;
-        dataStart = 0L;
-        stream.Position += 12L;
-        var flag = false;
-        var flag2 = false;
-        while (!flag || !flag2)
+        dataStart = 0;
+        var hasFormat = false;
+        var hasData = false;
+        while (!hasFormat || !hasData)
         {
-            var num = engineBinaryReader.ReadInt32();
-            if (num == MakeFourCc("fmt "))
+            if (end - stream.Position < 8)
             {
-                stream.Position -= 4L;
-                fmtHeader = engineBinaryReader.ReadStruct<FmtHeader>();
-                flag = true;
+                throw new InvalidOperationException("Missing WAV format or data chunk.");
             }
-            else if (num == MakeFourCc("data"))
+
+            var id = reader.ReadInt32();
+            var size = reader.ReadUInt32();
+            var chunkStart = stream.Position;
+            var chunkEnd = chunkStart + size;
+            var paddedEnd = chunkEnd + (size & 1);
+            if (paddedEnd > end || size > int.MaxValue)
             {
-                stream.Position -= 4L;
-                dataHeader = engineBinaryReader.ReadStruct<DataHeader>();
-                dataStart = stream.Position;
-                flag2 = true;
+                throw new InvalidOperationException("Truncated or oversized WAV chunk.");
             }
-            else
+
+            if (id == MakeFourCc("fmt ") && !hasFormat)
             {
-                var num2 = engineBinaryReader.ReadInt32();
-                stream.Position += num2;
+                if (size < 16)
+                {
+                    throw new InvalidOperationException("Invalid WAV format chunk.");
+                }
+
+                fmtHeader.Type = reader.ReadInt16();
+                fmtHeader.ChannelsCount = reader.ReadInt16();
+                fmtHeader.SamplingFrequency = reader.ReadInt32();
+                fmtHeader.BytesPerSecond = reader.ReadInt32();
+                fmtHeader.BytesPerSample = reader.ReadInt16();
+                fmtHeader.BitsPerChannel = reader.ReadInt16();
+                hasFormat = true;
             }
+            else if (id == MakeFourCc("data") && !hasData)
+            {
+                dataHeader.DataSize = (int)size;
+                dataStart = chunkStart;
+                hasData = true;
+            }
+
+            stream.Position = paddedEnd;
         }
 
         if (fmtHeader.Type != 1 ||
-            fmtHeader.ChannelsCount < 1 ||
-            fmtHeader.ChannelsCount > 2 ||
-            fmtHeader.SamplingFrequency < 8000 ||
-            fmtHeader.SamplingFrequency > 48000 ||
-            fmtHeader.BitsPerChannel != 16)
+            fmtHeader.ChannelsCount is < 1 or > 2 ||
+            fmtHeader.SamplingFrequency is < 8000 or > 48000 ||
+            fmtHeader.BitsPerChannel != 16 ||
+            fmtHeader.BytesPerSample != fmtHeader.ChannelsCount * 2 ||
+            fmtHeader.BytesPerSecond != fmtHeader.SamplingFrequency * fmtHeader.BytesPerSample ||
+            dataHeader.DataSize % fmtHeader.BytesPerSample != 0)
         {
             throw new InvalidOperationException("Unsupported WAV format.");
         }
+
+        stream.Position = dataStart;
     }
 
     private static int MakeFourCc(string text)
@@ -303,23 +318,8 @@ public static class Wav
         public int BytesCount;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    private struct WavHeader
-    {
-        public int Riff;
-
-        public int FileSize;
-
-        public int Wave;
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     private struct FmtHeader
     {
-        public int Fmt;
-
-        public int FormatSize;
-
         public short Type;
 
         public short ChannelsCount;
@@ -333,11 +333,8 @@ public static class Wav
         public short BitsPerChannel;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     private struct DataHeader
     {
-        public int Data;
-
         public int DataSize;
     }
 }

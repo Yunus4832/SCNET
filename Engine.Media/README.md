@@ -20,7 +20,7 @@
 
 API 接受 `Stream`，调用方负责打开文件和解析游戏存储路径。纹理、模型上传、声音播放和
 `BitmapFont` 留在 `Engine` 的 Graphics/Audio 层。托管依赖包括 Engine.Core、
-Engine.Serialization、NAudio、NLayer、NVorbis 和 SharpGLTF.Core；图像原生库由独立的原生资产包提供。
+NAudio、NLayer、NVorbis 和 SharpGLTF.Core；图像原生库由独立的原生资产包提供。
 
 原生图像库的版本、来源及重编译步骤见
 [Native.ImageCodecs](https://gitee.com/Yunus0712/scnet/blob/main/Native.ImageCodecs/README.md)。
@@ -40,3 +40,7 @@ Android 图像库通过原生包依赖进入 APK；OpenAL 则通过 Engine 的�
 游戏截图统一保存为不含透明通道的 PNG。媒体接口不提供 JPEG 或 TIFF 编解码。
 
 模型数据、资源解析和渲染能力边界见 [模型与 glTF](../Doc/Models.md)。
+
+WAV 的 RIFF/PCM 头和样本采用格式本地的小端读写，不依赖通用归档框架。
+支持单/双声道 16 位 PCM、扩展 fmt 块和带填充的未知块，拒绝声明越界或截断的数据；
+检测与普通加载/保存不接管调用方的流，流式读取的所有权由 `leaveOpen` 指定。
