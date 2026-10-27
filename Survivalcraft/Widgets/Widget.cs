@@ -1,8 +1,9 @@
 using System.Xml.Linq;
 
+using Engine.Core.Reflection;
+using Engine.Core.Text.Conversion;
 using Engine.Graphics;
 using Engine.Input;
-using Engine.Serialization;
 
 using EntitySystem.XmlUtilities;
 
@@ -621,7 +622,7 @@ public class Widget : IDisposable
             var uri = new Uri(namespaceName);
             if (uri.Scheme == "runtime-namespace")
             {
-                return TypeCache.FindType(uri.AbsolutePath + "." + name, false, true)!;
+                return RuntimeTypeResolver.FindType(uri.AbsolutePath + "." + name, true)!;
             }
 
             throw new InvalidOperationException(

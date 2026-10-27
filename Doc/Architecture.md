@@ -20,7 +20,7 @@
 - `Engine.Network/` 提供独立传输宿主、连接与准备生命周期、无连接端点及邀请/中继路径；不识别玩家或游戏包
 - `Rendezvous.Protocol/` 定义信令契约与认证中继编码，`RendezvousServer/` 是独立部署的内存会话/中继服务
 - `NetworkProbe/` 通过 Engine 网络 API 验证独立进程连接，不加载游戏世界
-- `Engine.Core/` 按 `Mathematics`、`Collections`、`Logging`、`Runtime` 组织基础类型，`Engine.Serialization/` 负责序列化
+- `Engine.Core/` 按 `Mathematics`、`Collections`、`Logging`、`Runtime` 组织基础类型，文本值转换归属 `Engine.Core.Text.Conversion`，运行时类型查找归属 `Engine.Core.Reflection`；XML 模板与类型短名由 EntitySystem 管理
 - `Engine.Media/` 按 `Images`、`Audio`、`Models` 子目录和命名空间组织图像、音频及模型数据，不依赖窗口、GPU 或音频设备
 - `EntitySystem/` 提供实体与组件系统
 - `Content.Packaging/` 位于解决方案的 Protocol 层，定义与游戏运行时、服务端和工具共享的内容包协议

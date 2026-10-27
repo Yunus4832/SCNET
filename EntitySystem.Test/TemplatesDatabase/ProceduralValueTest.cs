@@ -559,10 +559,7 @@ public class ProceduralValueTest
         // Act
         var result = proceduralValue.Parse(_rootObject);
 
-        // Assert - 注意：如果 HumanReadableConverter 未配置，可能返回 Guid.Empty 的字符串表示
-        // 这里我们验证至少发生了某种转换
-        Assert.IsType<string>(result);
-        Assert.Contains("Values:", (string)result);
+        Assert.Equal("Values: 42, True", Assert.IsType<string>(result));
     }
 
     #endregion

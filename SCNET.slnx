@@ -21,7 +21,6 @@
         <Project Path="Engine.Core.Benchmarks/Engine.Core.Benchmarks.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
-        <Project Path="Engine.Serialization/Engine.Serialization.csproj"/>
         <Project Path="Engine.Test/Engine.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>

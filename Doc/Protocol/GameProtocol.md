@@ -103,7 +103,7 @@ GUID 使用 MessagePack 标准 GUID 字符串编码，数学值由协议层格�
 
 解码前按声明的契约检查字段数量、必填值、已知 Union、枚举、集合长度和最大 64 层深度，
 随后执行协议语义校验。未知标签、截断、尾随数据或非法字段导致整个批次失败；不猜测或跳过。
-MessagePack 依赖、格式化器及配置归属 `Game.Protocol`，`Engine.Serialization` 和 `Engine.Network`
+MessagePack 依赖、格式化器及配置归属 `Game.Protocol`，`Engine.Core` 和 `Engine.Network`
 不依赖这一游戏线格式。游戏、工具、命令参数和模组的类型化载荷使用同一协议配置。
 
 Adaptive 压缩是发送优化，不改变消息含义；接收端必须接受当前定义的两种压缩码。

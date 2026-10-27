@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text;
 
+using Engine.Core.Text.Conversion;
 using Engine.Graphics;
-using Engine.Serialization;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;

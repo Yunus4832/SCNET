@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-using Engine.Serialization;
+using Engine.Core.Reflection;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
@@ -24,7 +24,7 @@ public sealed class TemplateTypeResolutionTest
         {
             if ((string?)node.Attribute("Type") is { Length: > 0 } typeName)
             {
-                Assert.NotNull(TypeCache.FindType(typeName, false, true));
+                Assert.NotNull(TemplateTypeNames.Resolve(typeName));
             }
         }
 
@@ -40,7 +40,7 @@ public sealed class TemplateTypeResolutionTest
                 if (name.Length == 0) { continue; }
 
                 var optional = item.GetValue<bool>("IsOptional", false);
-                var type = TypeCache.FindType(name, false, !optional);
+                var type = RuntimeTypeResolver.FindType(name, !optional);
                 if (!optional) { Assert.NotNull(type); }
             }
         }

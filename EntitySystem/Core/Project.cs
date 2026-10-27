@@ -1,6 +1,6 @@
 using Engine.Core.Collections;
 using Engine.Core.Logging;
-using Engine.Serialization;
+using Engine.Core.Reflection;
 
 using EntitySystem.TemplatesDatabase;
 
@@ -59,7 +59,7 @@ public class Project : IDisposable
             {
                 var value = item.GetValue<bool>("IsOptional");
                 var value2 = item.GetValue<string>("Class");
-                var type = TypeCache.FindType(value2, false, !value);
+                var type = RuntimeTypeResolver.FindType(value2, !value);
                 if (type is null)
                 {
                     continue;

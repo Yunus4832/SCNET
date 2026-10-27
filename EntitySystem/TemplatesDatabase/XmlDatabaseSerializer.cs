@@ -1,7 +1,5 @@
 using System.Xml.Linq;
 
-using Engine.Serialization;
-
 using EntitySystem.XmlUtilities;
 
 namespace EntitySystem.TemplatesDatabase;
@@ -293,7 +291,7 @@ public static class XmlDatabaseSerializer
         object? value = null;
         if (!string.IsNullOrEmpty(attributeValue5))
         {
-            var type = TypeCache.FindType(attributeValue5, false, true)!;
+            var type = TemplateTypeNames.Resolve(attributeValue5, true)!;
             value = XmlUtils.GetAttributeValue(node, "Value", type);
         }
 
@@ -354,7 +352,7 @@ public static class XmlDatabaseSerializer
         XmlUtils.SetAttributeValue(
             node,
             "Type",
-            TypeCache.GetShortTypeName(
+            TemplateTypeNames.GetShortTypeName(
                 databaseObject.Value.GetType().FullName ??
                 throw new InvalidOperationException("Cannot get type FullName")
             )

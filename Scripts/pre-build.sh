@@ -17,7 +17,6 @@ packages=(
     "SCNET.Native.SDL|Native.SDL/Native.SDL.csproj"
     "SCNET.Engine.Core|Engine.Core/Engine.Core.csproj"
     "SCNET.Engine.Media|Engine.Media/Engine.Media.csproj"
-    "SCNET.Engine.Serialization|Engine.Serialization/Engine.Serialization.csproj"
     "SCNET.Rendezvous.Protocol|Rendezvous.Protocol/Rendezvous.Protocol.csproj"
     "SCNET.Engine.Network|Engine.Network/Engine.Network.csproj"
     "SCNET.Engine|Engine/Engine.csproj"

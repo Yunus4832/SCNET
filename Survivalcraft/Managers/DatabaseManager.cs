@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-using Engine.Serialization;
+using Engine.Core.Reflection;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
@@ -60,7 +60,7 @@ public static class DatabaseManager
                 continue;
             }
 
-            var type = TypeCache.FindType(item.GetValue<string>("Class"), true, true)!;
+            var type = RuntimeTypeResolver.FindType(item.GetValue<string>("Class"), true)!;
             if (componentType.GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
             {
                 return item;

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Version>$(EngineVersion)</Version>
         <AssemblyName>Engine</AssemblyName>
@@ -61,7 +61,6 @@
     <ItemGroup>
         <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
         <ProjectReference Include="../Engine.Media/Engine.Media.csproj"/>
-        <ProjectReference Include="../Engine.Serialization/Engine.Serialization.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

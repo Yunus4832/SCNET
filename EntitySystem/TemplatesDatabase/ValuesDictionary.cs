@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Xml.Linq;
 
-using Engine.Serialization;
+using Engine.Core.Text.Conversion;
 
 using EntitySystem.XmlUtilities;
 
@@ -110,7 +110,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 XmlUtils.SetAttributeValue(
                     node3,
                     "Type",
-                    TypeCache.GetShortTypeName(
+                    TemplateTypeNames.GetShortTypeName(
                         item.Value.GetType().FullName ??
                         throw new InvalidOperationException("Can not get type FullName")
                     )
@@ -190,7 +190,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 }
                 else
                 {
-                    type = TypeCache.FindType(attributeValue2, false, true)!;
+                    type = TemplateTypeNames.Resolve(attributeValue2, true)!;
                 }
 
                 var attributeValue3 = XmlUtils.GetAttributeValue(item, "Value", type);
@@ -260,7 +260,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 }
                 else
                 {
-                    type = TypeCache.FindType(keyType, false, true)!;
+                    type = TemplateTypeNames.Resolve(keyType, true)!;
                 }
 
                 if (type == typeof(bool) || type.IsPrimitive || type == typeof(string))
@@ -322,7 +322,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 {
                     dictionary[item.Key] = new[]
                     {
-                        TypeCache.GetShortTypeName(
+                        TemplateTypeNames.GetShortTypeName(
                             item.Value.GetType().FullName ??
                             throw new InvalidOperationException("Can not get type FullName")
                         ),
@@ -333,7 +333,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 {
                     dictionary[item.Key] = new object[]
                     {
-                        TypeCache.GetShortTypeName(
+                        TemplateTypeNames.GetShortTypeName(
                             item.Value.GetType().FullName ??
                             throw new InvalidOperationException("Can not  get type FullName")
                         ),

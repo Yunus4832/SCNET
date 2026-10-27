@@ -8,7 +8,7 @@
 
 - `Survivalcraft/` 负责游戏规则、世界、网络、存档、模组和界面逻辑
 - `Engine/` 负责渲染、音频、窗口、输入等运行时能力
-- `Engine.Core/` 和 `Engine.Serialization/` 负责基础类型与序列化
+- `Engine.Core/` 负责基础类型、文本值转换和通用运行时类型查找
 - `EntitySystem/` 提供实体与组件系统
 - 平台项目只负责启动方式、资源打包和宿主差异
 
@@ -34,7 +34,6 @@
 | `Engine.Media/` | 独立的图像、音频、模型数据与编解码，使用流接口，无窗口和设备依赖 |
 | `Native.ImageCodecs/` | 图像原生资产 NuGet 包，按 RID 提供依赖 |
 | `Native.OpenAL/` | Windows、Linux 和 Android 的 OpenAL 原生资产 NuGet 包 |
-| `Engine.Serialization/` | 序列化与数据支持 |
 | `EntitySystem/` | 实体、组件和模板数据库 |
 | `Survivalcraft.Windows/` | Windows 启动器，支持客户端和服务器模式 |
 | `Survivalcraft.Linux/` | Linux 启动器，适合部署 Headless 服务器 |

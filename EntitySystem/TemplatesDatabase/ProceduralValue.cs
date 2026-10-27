@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-using Engine.Serialization;
+using Engine.Core.Text.Conversion;
 
 namespace EntitySystem.TemplatesDatabase;
 

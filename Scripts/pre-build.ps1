@@ -13,7 +13,6 @@ try {
         @{ Id = "SCNET.Native.SDL"; Project = "Native.SDL/Native.SDL.csproj" },
         @{ Id = "SCNET.Engine.Core"; Project = "Engine.Core/Engine.Core.csproj" },
         @{ Id = "SCNET.Engine.Media"; Project = "Engine.Media/Engine.Media.csproj" },
-        @{ Id = "SCNET.Engine.Serialization"; Project = "Engine.Serialization/Engine.Serialization.csproj" },
         @{ Id = "SCNET.Rendezvous.Protocol"; Project = "Rendezvous.Protocol/Rendezvous.Protocol.csproj" },
         @{ Id = "SCNET.Engine.Network"; Project = "Engine.Network/Engine.Network.csproj" },
         @{ Id = "SCNET.Engine"; Project = "Engine/Engine.csproj" },

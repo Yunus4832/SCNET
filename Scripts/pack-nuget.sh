@@ -10,7 +10,6 @@ pack_native_imagecodecs=false
 pack_native_openal=false
 pack_native_sdl=false
 pack_engine_core=false
-pack_engine_serialization=false
 pack_engine_media=false
 pack_rendezvous_protocol=false
 pack_engine_network=false
@@ -32,7 +31,6 @@ select_project() {
         Native.OpenAL) pack_native_openal=true ;;
         Native.SDL) pack_native_sdl=true ;;
         Engine.Core) pack_engine_core=true ;;
-        Engine.Serialization) pack_engine_serialization=true ;;
         Engine.Media) pack_engine_media=true ;;
         Rendezvous.Protocol) pack_rendezvous_protocol=true ;;
         Engine.Network) pack_engine_network=true ;;
@@ -89,11 +87,6 @@ fi
 if ! $selected || $pack_engine_core; then
     echo "[SCNET Pack] Packing SCNET.Engine.Core"
     dotnet pack "Engine.Core/Engine.Core.csproj" --configuration "$configuration" "${additional_arguments[@]}"
-fi
-
-if ! $selected || $pack_engine_serialization; then
-    echo "[SCNET Pack] Packing SCNET.Engine.Serialization"
-    dotnet pack "Engine.Serialization/Engine.Serialization.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $pack_engine_media; then

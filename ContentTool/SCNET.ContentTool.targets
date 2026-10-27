@@ -26,7 +26,6 @@
                                                           and '%(Filename)' != 'Survivalcraft'
                                                           and '%(Filename)' != 'Engine'
                                                           and '%(Filename)' != 'Engine.Core'
-                                                          and '%(Filename)' != 'Engine.Serialization'
                                                           and '%(Filename)' != 'Engine.Media'
                                                           and '%(Filename)' != 'Engine.Network'
                                                           and '%(Filename)' != 'Rendezvous.Protocol'

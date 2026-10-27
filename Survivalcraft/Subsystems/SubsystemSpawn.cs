@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-using Engine.Serialization;
+using Engine.Core.Text.Conversion;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;

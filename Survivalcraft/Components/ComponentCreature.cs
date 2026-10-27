@@ -1,4 +1,4 @@
-using Engine.Serialization;
+using Engine.Core.Text.Conversion;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;

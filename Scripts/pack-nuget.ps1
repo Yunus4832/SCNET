@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [ValidateSet("Native.ImageCodecs", "Native.OpenAL", "Native.SDL", "Engine.Core", "Engine.Serialization", "Engine.Media", "Rendezvous.Protocol", "Engine.Network", "Engine", "EntitySystem", "Content.Packaging", "ServerSource.Protocol", "ContentTool", "Authentication.Protocol", "Game.Protocol", "Survivalcraft", "Survivalcraft.ModTemplates")]
+    [ValidateSet("Native.ImageCodecs", "Native.OpenAL", "Native.SDL", "Engine.Core", "Engine.Media", "Rendezvous.Protocol", "Engine.Network", "Engine", "EntitySystem", "Content.Packaging", "ServerSource.Protocol", "ContentTool", "Authentication.Protocol", "Game.Protocol", "Survivalcraft", "Survivalcraft.ModTemplates")]
     [string[]]$Project = @(),
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$AdditionalArguments
@@ -33,12 +33,6 @@ try {
         Write-Host "[SCNET Pack] Packing SCNET.Engine.Core"
         & dotnet pack "Engine.Core/Engine.Core.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Engine.Core failed with exit code $LASTEXITCODE." }
-    }
-
-    if ($Project.Count -eq 0 -or $Project -contains "Engine.Serialization") {
-        Write-Host "[SCNET Pack] Packing SCNET.Engine.Serialization"
-        & dotnet pack "Engine.Serialization/Engine.Serialization.csproj" --configuration $Configuration @AdditionalArguments
-        if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Engine.Serialization failed with exit code $LASTEXITCODE." }
     }
 
     if ($Project.Count -eq 0 -or $Project -contains "Engine.Media") {
