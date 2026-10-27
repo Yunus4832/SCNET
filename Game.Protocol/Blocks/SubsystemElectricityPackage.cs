@@ -1,11 +1,11 @@
+using MessagePack;
+
 namespace Game.Protocol.Blocks;
 
-public sealed record SubsystemElectricityPackage : IProtocolMessage
+[MessagePackObject]
+public sealed record SubsystemElectricityPackage([property: Key(0)] ElectricitySnapshot Snapshot) : IProtocolMessage
 {
-    public ElectricitySnapshot Snapshot { get; init; }
-
-    public byte ID => (byte)PackageType.SubsystemElectricity;
-
-    public SubsystemElectricityPackage() => Snapshot = new ElectricitySnapshot();
-    public SubsystemElectricityPackage(ElectricitySnapshot snapshot) => Snapshot = snapshot;
+    public SubsystemElectricityPackage() : this(new ElectricitySnapshot())
+    {
+    }
 }

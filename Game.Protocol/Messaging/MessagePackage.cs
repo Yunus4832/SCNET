@@ -1,6 +1,8 @@
+using MessagePack;
+
 namespace Game.Protocol.Messaging;
 
-public sealed record MessagePackage(GameMessage GameMessage) : IProtocolMessage
+[MessagePackObject]
+public sealed record MessagePackage([property: Key(0)] GameMessage GameMessage) : IProtocolMessage
 {
-    public byte ID => (byte)PackageType.Message;
 }

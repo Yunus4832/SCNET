@@ -15,6 +15,16 @@ public static class ClothingPackageBuilder
             data = StreamUtils.ReadBytes(stream);
         }
 
-        return new ComponentClothingPackage(skinName, type) { SkinData = data };
+        return type switch
+        {
+            ComponentClothingPackage.DataType.RequestSkin => new SkinRequestPackage { SkinName = skinName },
+            ComponentClothingPackage.DataType.ReplySkin => new SkinReplyPackage
+                { SkinName = skinName, SkinData = data },
+            ComponentClothingPackage.DataType.WhoHas => new SkinAvailabilityRequestPackage
+                { SkinName = skinName },
+            ComponentClothingPackage.DataType.WhoHasReply => new SkinAvailabilityReplyPackage
+                { SkinName = skinName, SkinData = data },
+            _ => throw new InvalidOperationException("Unsupported message operation.")
+        };
     }
 }

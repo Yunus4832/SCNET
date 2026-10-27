@@ -500,7 +500,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 if (observers.Length > 0)
                 {
                     CommonLib.Net.QueuePackage(
-                        PickablePackageBuilder.Capture(item, PickablePackage.PickType.Delete),
+                        PickablePackageBuilder.CaptureRemoval(item),
                         PackageAudience.To(observers)
                     );
                 }
@@ -681,10 +681,8 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         if (!found && CommonLib.WorkType == WorkType.Client && requestSync)
         {
             NetworkSender.SendToServer(
-                new PickablePackage
-                {
-                    Type = PickablePackage.PickType.RequestSync, Id = id, StateTick = unchecked((uint)Time.FrameIndex)
-                }
+                new PickableSyncRequestPackage
+                    { Id = id, StateTick = unchecked((uint)Time.FrameIndex) }
             );
         }
 
@@ -867,7 +865,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             if (entered.Count > 0)
             {
                 CommonLib.Net.QueuePackage(
-                    PickablePackageBuilder.Capture(entered, PickablePackage.PickType.CreateList),
+                    PickablePackageBuilder.CaptureAdded(entered),
                     PackageAudience.To(client)
                 );
             }
@@ -876,7 +874,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             {
                 var left = changes.Left.Select(id => new Pickable { Id = (ushort)id }).ToList();
                 CommonLib.Net.QueuePackage(
-                    PickablePackageBuilder.Capture(left, PickablePackage.PickType.DeleteList),
+                    PickablePackageBuilder.CaptureRemoved(left),
                     PackageAudience.To(client)
                 );
             }

@@ -3,6 +3,7 @@ using Engine.Core.Security;
 namespace Game.Protocol.Identity;
 
 /// <summary>A canonical SCNET Bech32m public-key thumbprint, independent of character and connection identifiers.</summary>
+[MessagePack.MessagePackFormatter(typeof(Serialization.Formatters.ProtocolValueFormatter))]
 public readonly record struct PlayerAddress
 {
     private readonly string? _value;

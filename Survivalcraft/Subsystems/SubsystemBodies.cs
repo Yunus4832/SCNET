@@ -286,7 +286,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
             if (observers.Length > 0)
             {
                 CommonLib.Net.QueuePackage(
-                    new EntityPackage(entity.EntityId),
+                    new EntityRemovedPackage { EntityId = entity.EntityId },
                     PackageAudience.To(observers)
                 );
             }
@@ -344,7 +344,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
             foreach (var creatureId in changes.Left)
             {
                 CommonLib.Net.QueuePackage(
-                    new EntityPackage(creatureId),
+                    new EntityRemovedPackage { EntityId = creatureId },
                     PackageAudience.To(client)
                 );
             }

@@ -1,35 +1,40 @@
+using MessagePack;
+
 namespace Game.Protocol.Blocks;
 
-public sealed record ComponentFurnacePackage : IProtocolMessage
+[MessagePackObject]
+public sealed record ComponentFurnacePackage() : IProtocolMessage
 {
-    public IReadOnlyList<FurnacePackageData> FurnaceDataList { get; init; } = [];
+    [Key(0)] public IReadOnlyList<FurnacePackageData> FurnaceDataList { get; init; } = [];
 
-    public byte ID => (byte)PackageType.ComponentFurnace;
-
-    public ComponentFurnacePackage()
-    {
-    }
-
-    public ComponentFurnacePackage(int entityId, float fireTimeRemaining, float smeltingProgress, float heatLevel)
+    public ComponentFurnacePackage(
+        int entityId,
+        float fireTimeRemaining,
+        float smeltingProgress,
+        float heatLevel
+    ) : this()
     {
         FurnaceDataList =
         [
             new FurnacePackageData
             {
-                EntityID = entityId, FireTimeRemaining = fireTimeRemaining, SmeltingProgress = smeltingProgress,
+                EntityID = entityId,
+                FireTimeRemaining = fireTimeRemaining,
+                SmeltingProgress = smeltingProgress,
                 HeatLevel = heatLevel
             }
         ];
     }
 
+    [MessagePackObject]
     public readonly record struct FurnacePackageData
     {
-        public float FireTimeRemaining { get; init; }
+        [Key(0)] public float FireTimeRemaining { get; init; }
 
-        public float SmeltingProgress { get; init; }
+        [Key(1)] public float SmeltingProgress { get; init; }
 
-        public float HeatLevel { get; init; }
+        [Key(2)] public float HeatLevel { get; init; }
 
-        public int EntityID { get; init; }
+        [Key(3)] public int EntityID { get; init; }
     }
 }

@@ -9,7 +9,8 @@ public static class EntityPackageBuilder
                                                     entity.FindComponent<ComponentCharacter>() is not { } player ||
                                                     player.CharacterData.Client != null;
 
-    public static EntityPackage Capture(Entity entity) => Capture(entity.Project, [entity], true);
+    public static SingleEntitySnapshotPackage Capture(Entity entity) =>
+        (SingleEntitySnapshotPackage)Capture(entity.Project, [entity], true);
 
     public static EntityPackage Capture(Project project, IEnumerable<Entity> source, bool single = false)
     {
@@ -25,12 +26,16 @@ public static class EntityPackageBuilder
                     );
                 }
             ).ToArray();
-        return new EntityPackage
-        {
-            Type = single ? EntityPackage.EventType.LoadOne : EntityPackage.EventType.LoadList,
-            Characters = players,
-            EntityData = EntitySnapshotSerializer.Serialize(project, entities),
-            CharacterEntities = EntitySnapshotSerializer.CaptureCharacterEntities(entities)
-        };
+        return ((single
+            ? new SingleEntitySnapshotPackage
+            {
+                Characters = players, EntityData = EntitySnapshotSerializer.Serialize(project, entities),
+                CharacterEntities = EntitySnapshotSerializer.CaptureCharacterEntities(entities)
+            }
+            : new EntitySnapshotPackage
+            {
+                Characters = players, EntityData = EntitySnapshotSerializer.Serialize(project, entities),
+                CharacterEntities = EntitySnapshotSerializer.CaptureCharacterEntities(entities)
+            }));
     }
 }

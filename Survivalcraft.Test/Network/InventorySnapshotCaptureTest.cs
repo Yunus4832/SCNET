@@ -13,7 +13,7 @@ public sealed class InventorySnapshotCaptureTest
                 { [inventory] = [0, 0] }
         );
         inventory.Change(8, 99);
-        var slot = Assert.Single(Assert.Single(package.Slots).Value);
+        var slot = Assert.IsType<ItemSlotSnapshot>(Assert.Single(Assert.Single(package.Slots).Value));
         Assert.Equal(0, slot.SlotIndex);
         Assert.Equal(3, slot.Count);
         Assert.Equal(7, slot.Value);

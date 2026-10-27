@@ -16,7 +16,6 @@ public class CommandPackageTest
         Assert.Equal(CommandPackage.CommandPackageMode.SuggestionRequest, request.Mode);
         Assert.Equal("/tp self private H", request.Input);
         Assert.Equal("completion-1", request.CorrelationId);
-        Assert.Null(request.Result);
         var description = new LocalizedText("Commands", "TeleportMark_Description", "Teleport to a mark");
         var response = RoundTrip(
             CommandPackage.CreateSuggestions(
@@ -159,12 +158,11 @@ public class CommandPackageTest
         Assert.Equal(result.MessageArguments, restored.MessageArguments);
     }
 
-    private static CommandPackage RoundTrip(CommandPackage package)
+    private static T RoundTrip<T>(T package) where T : CommandPackage
     {
-        var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<CommandPackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<T>(ProtocolMessageCodec.Decode(reader));
         return clone;
     }
 }

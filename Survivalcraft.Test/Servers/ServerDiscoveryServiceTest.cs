@@ -15,14 +15,11 @@ public sealed class ServerDiscoveryServiceTest
     [Fact]
     public async Task ProbeReadsServerInfoThroughEngineDatagrams()
     {
-        var response = new ServerInfoPackage
+        var response = new ServerInfoResponsePackage
         {
-            ProtocolVersion = 1,
-            ClientCount = 2,
-            MaxPlayerCount = 20,
-            GameMode = ProtocolEnum.Encode(GameMode.Creative)
+            ProtocolVersion = 1, ClientCount = 2, MaxPlayerCount = 20, GameMode = ProtocolEnum.Encode(GameMode.Creative)
         };
-        PackageManager.RegisterPackage(() => new ServerInfoPackage(), new ServerInfoPackageHandler());
+        PackageManager.RegisterPackage(new ServerInfoPackageHandler());
         await using var server = new NetworkHost();
         using var stop = new CancellationTokenSource();
         server.DatagramReceived += (source, payload) =>
@@ -31,14 +28,16 @@ public sealed class ServerDiscoveryServiceTest
             Assert.True(request.Package.RequestInfo);
             source.Send(NetNode.CreateUnconnectedPayload(response));
         };
-        var polling = Task.Run(async () =>
+        var polling = Task.Run(
+            async () =>
             {
                 while (!stop.IsCancellationRequested)
                 {
                     server.DispatchEvents();
                     await Task.Delay(2, stop.Token);
                 }
-            }
+            },
+            stop.Token
         );
         try
         {
@@ -63,7 +62,7 @@ public sealed class ServerDiscoveryServiceTest
             {
             }
 
-            PackageManager.UnRegisterPackage(response);
+            PackageManager.UnregisterPackage(typeof(ServerInfoPackage));
         }
     }
 
@@ -113,7 +112,7 @@ public sealed class ServerDiscoveryServiceTest
     {
         await using var network = new NetworkHost();
         using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
+        await cancellation.CancelAsync();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             ServerDiscoveryService.PollAsync(
                 network,

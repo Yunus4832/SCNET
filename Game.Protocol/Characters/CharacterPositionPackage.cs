@@ -1,12 +1,15 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
 namespace Game.Protocol.Characters;
 
+[MessagePackObject]
 public sealed record CharacterPositionPackage : ComponentCharacterPackage
 {
-    public override CharacterAction Type => CharacterAction.PositionSet;
+    [IgnoreMember] public override CharacterAction Type => CharacterAction.PositionSet;
 
-    public Vector3 Position { get; init; }
+    [Key(1)] public Vector3 Position { get; init; }
 
-    public Vector3 Velocity { get; init; }
+    [Key(2)] public Vector3 Velocity { get; init; }
 }

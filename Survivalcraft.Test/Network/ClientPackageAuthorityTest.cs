@@ -17,11 +17,17 @@ public sealed class ClientPackageAuthorityTest
         var changes = 0;
         node.OnClientStateChanged += _ => changes++;
         var handler = new ClientPackageHandler();
-        handler.Handle(new ClientPackage(other.ID, ClientState.Playing), new PackageReceiveContext(node, true, actor));
+        handler.Handle(
+            new ClientStateChangedPackage { ClientId = other.ID, State = ClientState.Playing },
+            new PackageReceiveContext(node, true, actor)
+        );
         Assert.Equal(ClientState.Connected, other.State);
         Assert.Equal(0, changes);
 
-        handler.Handle(new ClientPackage(actor.ID, ClientState.Playing), new PackageReceiveContext(node, true, actor));
+        handler.Handle(
+            new ClientStateChangedPackage { ClientId = actor.ID, State = ClientState.Playing },
+            new PackageReceiveContext(node, true, actor)
+        );
         Assert.Equal(ClientState.Playing, actor.State);
         Assert.Equal(1, changes);
     }
@@ -35,7 +41,14 @@ public sealed class ClientPackageAuthorityTest
         var node = new NetNode();
         var actor = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
         node.Clients[actor.ID] = actor;
-        var package = new ClientPackage(actor.ID) with { PackageEventType = type };
+        ClientPackage package = type switch
+        {
+            ClientPackage.EventType.Add => new ClientAddedPackage
+                { Client = new ClientIdentity(actor.ID, Guid.Empty, Guid.Empty, null) },
+            ClientPackage.EventType.Remove => new ClientRemovedPackage { ClientId = actor.ID },
+            ClientPackage.EventType.SyncList => new ClientListPackage(),
+            _ => new ClientStateChangedPackage { ClientId = actor.ID, State = ClientState.NotConnected }
+        };
         new ClientPackageHandler().Handle(package, new PackageReceiveContext(node, true, actor));
         Assert.Same(actor, Assert.Single(node.Clients).Value);
     }

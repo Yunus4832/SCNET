@@ -1,6 +1,11 @@
+using MessagePack;
+
 namespace Game.Protocol.World;
 
-public sealed record SubsystemTimePackage(double Time, double TimeOfDayOffset) : IProtocolMessage
+[MessagePackObject]
+public sealed record SubsystemTimePackage(
+    [property: Key(0)] double Time,
+    [property: Key(1)] double TimeOfDayOffset
+) : IProtocolMessage
 {
-    public byte ID => (byte)PackageType.SubsystemTime;
 }

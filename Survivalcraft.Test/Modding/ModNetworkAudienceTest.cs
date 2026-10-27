@@ -27,11 +27,11 @@ public sealed class ModNetworkAudienceTest
             var hooks = new ModNetworkHooks();
             var owner = new ModId("test.audience");
             var network = hooks.ForOwner(owner);
-            network.Send("state", new byte[] { 1, 2 }, audience, ClientState.Playing);
-            network.Send("event", writer => writer.Write(7), PackageAudience.Global);
+            network.Send("state", [1, 2], audience, ClientState.Playing);
+            network.Send("event", 7, PackageAudience.Global);
             var context = new ModNetworkMessageContext(hooks, owner, "reply", null!, first, node, true);
-            context.Reply(writer => writer.Write(8));
-            context.Send("empty", writer => writer.Write(9), PackageAudience.To(Array.Empty<Client>()));
+            context.Reply(8);
+            context.Send("empty", 9, PackageAudience.To(Array.Empty<Client>()));
 
             Assert.Equal(4, pending.Count);
             Assert.True(pending[0].Audience.Includes(first));

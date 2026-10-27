@@ -2,12 +2,8 @@ namespace Game.Network.Snapshots;
 
 public static class BodySnapshotBuilder
 {
-    public static SubsystemBodyPackage Capture(IEnumerable<ComponentBody> bodies, uint tick) => new()
-    {
-        PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
-        StateTick = tick,
-        BodyList = bodies.Select(Capture).ToArray()
-    };
+    public static SubsystemBodyPackage Capture(IEnumerable<ComponentBody> bodies, uint tick) =>
+        new BodyStatesPackage { StateTick = tick, BodyList = bodies.Select(Capture).ToArray() };
 
     public static SubsystemBodyPackage.BodyItem Capture(ComponentBody body)
     {

@@ -1,6 +1,13 @@
+using MessagePack;
+
 namespace Game.Protocol.Entities;
 
-public sealed record ComponentClothingPackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(SkinAvailabilityReplyPackage))]
+[Union(1, typeof(SkinAvailabilityRequestPackage))]
+[Union(2, typeof(SkinReplyPackage))]
+[Union(3, typeof(SkinRequestPackage))]
+public abstract record ComponentClothingPackage : IProtocolMessage
 {
     public enum DataType
     {
@@ -13,21 +20,7 @@ public sealed record ComponentClothingPackage : IProtocolMessage
         WhoHasReply = 3 //客户回应请求
     }
 
-    public byte[] SkinData { get; init; } = [];
+    [IgnoreMember] public abstract DataType Type { get; }
 
-    public DataType Type { get; init; }
-
-    public string SkinName { get; init; } = string.Empty;
-
-    public byte ID => (byte)PackageType.ComponentClothing;
-
-    public ComponentClothingPackage()
-    {
-    }
-
-    public ComponentClothingPackage(string skinName, DataType type)
-    {
-        SkinName = skinName;
-        Type = type;
-    }
+    [Key(0)] public string SkinName { get; init; } = string.Empty;
 }

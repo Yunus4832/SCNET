@@ -58,12 +58,10 @@ public class TerritoryMessagesTest : IDisposable
             new Point3(48, 64, -48),
             new TerritorySettings(9, true, false, true, false, false)
         );
-        using var writer = new ProtocolWriter();
-        TerritoryMessages.WriteSnapshot(writer, new[] { territory });
-        using var reader = new ProtocolReader(writer.Data());
+        var payload = ProtocolPayloadCodec.Encode(new TerritoryWorldSnapshot([TerritoryMessages.Capture(territory)]));
         var store = new TerritoryStore();
         Assert.True(store.TryCreate(Address(), new Point3(0, 64, 0)));
-        store.ApplySnapshot(TerritoryMessages.ReadSnapshot(reader));
+        store.ApplySnapshot(TerritoryMessages.Restore(ProtocolPayloadCodec.Decode<TerritoryWorldSnapshot>(payload)));
         var restored = Assert.Single(store.Territories);
         Assert.Equal(territory.Owner, restored.Owner);
         Assert.Equal(territory.StonePoint, restored.StonePoint);
@@ -94,22 +92,26 @@ public class TerritoryMessagesTest : IDisposable
     [InlineData(1025)]
     public void SnapshotRejectsInvalidCountsBeforeReadingEntries(int count)
     {
-        using var writer = new ProtocolWriter();
-        writer.Write(count);
-        using var reader = new ProtocolReader(writer.Data());
-        Assert.Throws<InvalidDataException>(() => TerritoryMessages.ReadSnapshot(reader));
+        var snapshot = new TerritoryWorldSnapshot(new TerritorySnapshot[Math.Max(count, 0)]);
+        if (count < 0)
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                ProtocolPayloadCodec.Decode<TerritoryWorldSnapshot>(new byte[] { 0x91, 0xff })
+            );
+        }
+        else { Assert.Throws<InvalidDataException>(() => TerritoryMessages.Restore(snapshot)); }
     }
 
     [Fact]
     public void SnapshotRejectsInvalidRadiusBeforeReplacingClientState()
     {
-        using var writer = new ProtocolWriter();
-        writer.Write(1);
-        PlayerAddressCodec.Write(writer, Address());
-        writer.Write(new Point3(0, 64, 0));
-        TerritoryMessages.WriteSettings(writer, new TerritorySettings(Size: 0));
-        using var reader = new ProtocolReader(writer.Data());
-        Assert.Throws<InvalidDataException>(() => TerritoryMessages.ReadSnapshot(reader));
+        var invalid = new TerritoryWorldSnapshot(
+            [new TerritorySnapshot(Address(), new Point3(0, 64, 0), new TerritorySettings(Size: 0), [])]
+        );
+        var payload = ProtocolPayloadCodec.Encode(invalid);
+        Assert.Throws<InvalidDataException>(() =>
+            TerritoryMessages.Restore(ProtocolPayloadCodec.Decode<TerritoryWorldSnapshot>(payload))
+        );
     }
 
     [Fact]

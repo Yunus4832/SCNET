@@ -21,12 +21,7 @@ internal static class PlayerModerationCommandHandlers
                 CommandDomain.Server,
                 Text("PlayerBan_Description", "封禁主体并断开其会话"),
                 permission,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.User);
-                    writer.Write(command.Reason);
-                },
-                read: static reader => new BanUserCommand(reader.ReadString(), reader.ReadString())
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -36,8 +31,7 @@ internal static class PlayerModerationCommandHandlers
                 CommandDomain.Server,
                 Text("UserUnban_Description", "解除主体封禁并保留角色资产"),
                 permission,
-                write: static (writer, command) => writer.Write(command.User),
-                read: static reader => new UnbanUserCommand(reader.ReadString())
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -47,8 +41,7 @@ internal static class PlayerModerationCommandHandlers
                 CommandDomain.Server,
                 Text("PlayerBans_Description", "列出存档主体封禁"),
                 permission,
-                write: static (_, _) => { },
-                read: static _ => new ListPlayerBansCommand()
+                supportsRemoteInvocation: true
             )
         );
         var mutePermission = new ResourceId(owner, "server.users.mute");
@@ -66,12 +59,7 @@ internal static class PlayerModerationCommandHandlers
                 CommandDomain.Server,
                 Text("UserMute_Description", "设置主体禁言状态"),
                 mutePermission,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.User);
-                    writer.Write(command.IsMuted);
-                },
-                read: static reader => new SetUserMuteCommand(reader.ReadString(), reader.ReadBoolean())
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -81,8 +69,7 @@ internal static class PlayerModerationCommandHandlers
                 CommandDomain.Server,
                 Text("UserMutedList_Description", "列出被禁言的主体"),
                 mutePermission,
-                write: static (_, _) => { },
-                read: static _ => new ListMutedUsersCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Adapters.Register(

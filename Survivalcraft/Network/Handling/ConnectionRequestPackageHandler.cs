@@ -64,7 +64,10 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
         var user = project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(address);
         node.PendingPeer = peer;
         var client = node.CreateClient(peer, package.TmpToken, user.CharacterId);
-        var notification = new ClientPackage(client.ID, client.TokenId, client.CharacterId, client.PlayerAddress);
+        var notification = new ClientAddedPackage
+        {
+            Client = new ClientIdentity(client.ID, client.TokenId, client.CharacterId, client.PlayerAddress)
+        };
         foreach (var other in node.Peers)
         {
             node.AgreeOnPendingPeer.Add(other.ID);

@@ -2,42 +2,40 @@ namespace Game.Network.Snapshots;
 
 public static class PickablePackageBuilder
 {
-    public static PickablePackage Capture(Pickable pickable, PickablePackage.PickType type) => new()
+    public static PickableAddedPackage Capture(Pickable pickable) => new()
     {
-        StateTick = unchecked((uint)Time.FrameIndex),
-        Type = type,
-        Id = pickable.Id,
-        Value = pickable.Value,
-        Count = (byte)pickable.Count,
-        Position = pickable.Position,
-        Velocity = pickable.Velocity,
-        StuckMatrix = pickable.StuckMatrix,
-        PlaySound = pickable.PlaySound
+        StateTick = unchecked((uint)Time.FrameIndex), Id = pickable.Id, Value = pickable.Value,
+        Count = pickable.Count, Position = pickable.Position, Velocity = pickable.Velocity,
+        StuckMatrix = pickable.StuckMatrix
     };
 
-    public static PickablePackage Capture(
-        IEnumerable<Pickable> items,
-        PickablePackage.PickType type = PickablePackage.PickType.Update
-    )
+    public static PickableRemovedPackage CaptureRemoval(Pickable pickable) => new()
     {
-        var tick = unchecked((uint)Time.FrameIndex);
-        return type switch
-        {
-            PickablePackage.PickType.Update => new PickablePackage
-            {
-                Type = type, StateTick = tick,
-                Positions = items.Select(p => new PickablePosition(p.Id, p.Position)).ToArray()
-            },
-            PickablePackage.PickType.CreateList => new PickablePackage
-            {
-                Type = type, StateTick = tick,
-                Pickables = items.Select(p =>
-                    new PickableSnapshot(p.Id, p.Count, p.Value, p.Position, p.Velocity, p.StuckMatrix)
-                ).ToArray()
-            },
-            PickablePackage.PickType.DeleteList => new PickablePackage
-                { Type = type, StateTick = tick, RemovedIds = items.Select(p => p.Id).ToArray() },
-            _ => throw new ArgumentOutOfRangeException(nameof(type))
-        };
-    }
+        StateTick = unchecked((uint)Time.FrameIndex), Id = pickable.Id, PlaySound = pickable.PlaySound
+    };
+
+    public static PickablePositionsPackage Capture(IEnumerable<Pickable> items) => new()
+    {
+        StateTick = unchecked((uint)Time.FrameIndex),
+        Positions = items.Select(item => new PickablePosition(item.Id, item.Position)).ToArray()
+    };
+
+    public static PickablesAddedPackage CaptureAdded(IEnumerable<Pickable> items) => new()
+    {
+        StateTick = unchecked((uint)Time.FrameIndex),
+        Pickables = items.Select(item => new PickableSnapshot(
+                item.Id,
+                item.Count,
+                item.Value,
+                item.Position,
+                item.Velocity,
+                item.StuckMatrix
+            )
+        ).ToArray()
+    };
+
+    public static PickablesRemovedPackage CaptureRemoved(IEnumerable<Pickable> items) => new()
+    {
+        StateTick = unchecked((uint)Time.FrameIndex), RemovedIds = items.Select(item => item.Id).ToArray()
+    };
 }

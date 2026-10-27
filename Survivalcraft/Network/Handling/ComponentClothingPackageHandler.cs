@@ -34,14 +34,15 @@ public sealed class ComponentClothingPackageHandler : PackageHandlerBase<Compone
             return;
         }
 
-        switch (package.Type)
+        switch (package)
         {
-            case ComponentClothingPackage.DataType.RequestSkin:
-                if (CharacterSkinsManager.HasSkinRes(package.SkinName))
+            case SkinRequestPackage message1:
+            {
+                if (CharacterSkinsManager.HasSkinRes(message1.SkinName))
                 {
                     netNode.QueuePackage(
                         ClothingPackageBuilder.Capture(
-                            package.SkinName,
+                            message1.SkinName,
                             ComponentClothingPackage.DataType.ReplySkin
                         ),
                         PackageAudience.To(context.Sender!)
@@ -49,43 +50,55 @@ public sealed class ComponentClothingPackageHandler : PackageHandlerBase<Compone
                 }
                 else
                 {
-                    if (!CharacterSkinsManager.WaitReplyList.Contains(package.SkinName))
+                    if (!CharacterSkinsManager.WaitReplyList.Contains(message1.SkinName))
                     {
                         netNode.QueuePackage(
                             ClothingPackageBuilder.Capture(
-                                package.SkinName,
+                                message1.SkinName,
                                 ComponentClothingPackage.DataType.WhoHas
                             ),
                             PackageAudience.Global
                         );
-                        CharacterSkinsManager.WaitReplyList.Add(package.SkinName);
+                        CharacterSkinsManager.WaitReplyList.Add(message1.SkinName);
                     }
                 }
 
                 break;
-            // 储存回复的资源
-            case ComponentClothingPackage.DataType.WhoHasReply:
-            case ComponentClothingPackage.DataType.ReplySkin:
-                if (CharacterSkinsManager.WaitReplyList.Contains(package.SkinName))
+            }
+            case SkinAvailabilityReplyPackage message2:
+            {
+                if (CharacterSkinsManager.WaitReplyList.Contains(message2.SkinName))
                 {
-                    CharacterSkinsManager.WaitReplyList.Remove(package.SkinName);
+                    CharacterSkinsManager.WaitReplyList.Remove(message2.SkinName);
                 }
 
-                CharacterSkinsManager.SaveSkinToFile(package.SkinName, package.SkinData);
+                CharacterSkinsManager.SaveSkinToFile(message2.SkinName, message2.SkinData);
                 break;
-            //响应谁有这个资源
-            case ComponentClothingPackage.DataType.WhoHas:
-                if (CharacterSkinsManager.HasSkinRes(package.SkinName))
+            }
+            case SkinReplyPackage message3:
+            {
+                if (CharacterSkinsManager.WaitReplyList.Contains(message3.SkinName))
+                {
+                    CharacterSkinsManager.WaitReplyList.Remove(message3.SkinName);
+                }
+
+                CharacterSkinsManager.SaveSkinToFile(message3.SkinName, message3.SkinData);
+                break;
+            }
+            case SkinAvailabilityRequestPackage message4:
+            {
+                if (CharacterSkinsManager.HasSkinRes(message4.SkinName))
                 {
                     NetworkSender.SendToServer(
                         ClothingPackageBuilder.Capture(
-                            package.SkinName,
+                            message4.SkinName,
                             ComponentClothingPackage.DataType.WhoHasReply
                         )
                     );
                 }
 
                 break;
+            }
         }
     }
 }

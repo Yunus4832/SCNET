@@ -62,7 +62,7 @@ public sealed class NetworkChunkContentTransport : IChunkContentTransport
         if (fullRequests.Count > 0)
         {
             Interlocked.Add(ref _fullChunkRequestsSent, fullRequests.Count);
-            NetworkSender.SendToServer(new SubsystemTerrainPackage(fullRequests));
+            NetworkSender.SendToServer(new TerrainChunksRequestPackage { ChunkRequests = fullRequests.ToArray() });
         }
 
         foreach (var batch in fragmentRequests.Chunk(SubsystemTerrainPackage.MaximumFragmentRequestsPerPackage))

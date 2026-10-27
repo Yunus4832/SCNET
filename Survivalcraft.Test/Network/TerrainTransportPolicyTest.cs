@@ -30,13 +30,10 @@ public sealed class TerrainTransportPolicyTest
             new byte[EncodedTerrainChunkFragmenter.DefaultFragmentPayloadSize]
         );
         var fragment = Assert.Single(EncodedTerrainChunkFragmenter.Split(chunk, allocation));
-        var package = new SubsystemTerrainPackage(fragment);
-        using var writer = new ProtocolWriter();
-        writer.Write((byte)0);
-        writer.Write(package.ID);
-        ProtocolMessageCodec.Write(package, writer);
+        var package = new TerrainFragmentPackage { ChunkFragment = fragment };
+        var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
 
-        var datagram = CommonLib.GetWriter(writer, out _, CompressionPolicy.None);
+        var datagram = CommonLib.GetWriter(writer);
 
         Assert.InRange(datagram.Length, 1, 419);
     }
@@ -45,9 +42,10 @@ public sealed class TerrainTransportPolicyTest
     public void ChunkFragmentsUseIndependentUnreliableDatagrams()
     {
         var coords = new Point2(1, 2);
-        var package = new SubsystemTerrainPackage(
-            new EncodedTerrainChunkFragment(new ChunkAllocationId(coords, 1), 1, 3, 0, 1, [1, 2, 3])
-        );
+        var package = new TerrainFragmentPackage
+        {
+            ChunkFragment = new EncodedTerrainChunkFragment(new ChunkAllocationId(coords, 1), 1, 3, 0, 1, [1, 2, 3])
+        };
 
         var transport = PackageTransportPolicy.Get(package);
 
@@ -58,11 +56,13 @@ public sealed class TerrainTransportPolicyTest
     [Fact]
     public void ChunkRequestsRemainReliableOrderedControlMessages()
     {
-        var package = new SubsystemTerrainPackage(
+        var package = new TerrainChunksRequestPackage
+        {
+            ChunkRequests =
             [
                 new ChunkContentRequest(new ChunkAllocationId(new Point2(1, 2), 1))
             ]
-        );
+        };
 
         Assert.Equal(PackageTransportPolicy.Control, PackageTransportPolicy.Get(package));
     }
@@ -70,7 +70,8 @@ public sealed class TerrainTransportPolicyTest
     [Fact]
     public void CellDeltasUseReliableOrderedControlMessages()
     {
-        var package = new SubsystemTerrainPackage(new TerrainCellDelta(new Point3(1, 2, 3), 4, 5, 6));
+        var package = new TerrainCellDeltaPackage
+            { CellDelta = new TerrainCellDelta(new Point3(1, 2, 3), 4, 5, 6) };
 
         var transport = PackageTransportPolicy.Get(package);
 

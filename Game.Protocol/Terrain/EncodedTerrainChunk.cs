@@ -1,5 +1,12 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
 namespace Game.Protocol.Terrain;
 
-public sealed record EncodedTerrainChunk(Point2 Coords, long ContentVersion, byte[] Payload);
+[MessagePackObject]
+public sealed record EncodedTerrainChunk(
+    [property: Key(0)] Point2 Coords,
+    [property: Key(1)] long ContentVersion,
+    [property: Key(2)] byte[] Payload
+);

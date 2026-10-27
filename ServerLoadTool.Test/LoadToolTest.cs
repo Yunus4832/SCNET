@@ -56,8 +56,10 @@ public class LoadToolTest
     [Fact]
     public void ChunkRequestCodecUsesCurrentAllocationContract()
     {
-        var package = new SubsystemTerrainPackage([new(new(new Point2(-2, 4), 7), 99)]);
-        var decoded = Assert.IsType<SubsystemTerrainPackage>(Assert.Single(LoadWire.Decode(LoadWire.Encode(package))));
+        var package = new TerrainChunksRequestPackage
+            { ChunkRequests = [new ChunkContentRequest(new ChunkAllocationId(new Point2(-2, 4), 7), 99)] };
+        var decoded =
+            Assert.IsType<TerrainChunksRequestPackage>(Assert.Single(LoadWire.Decode(LoadWire.Encode(package))));
         Assert.Equal(package.ChunkRequests, decoded.ChunkRequests);
     }
 

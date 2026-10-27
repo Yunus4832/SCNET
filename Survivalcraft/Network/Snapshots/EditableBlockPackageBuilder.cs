@@ -8,14 +8,18 @@ public static class EditableBlockPackageBuilder
         int inventory,
         int slot,
         TruthTableData data
-    ) => new()
+    ) => new EditableBlockDataPackage
     {
-        ItemType = BuiltInBlockEditKind.TruthTable, CellFace = cell, EditAsItem = asItem, InventoryId = inventory,
-        SlotIndex = slot, Data = data.Data.ToArray()
+        ItemType = BuiltInBlockEditKind.TruthTable,
+        Target = asItem ? new EditableInventorySlotTarget(inventory, slot) : new EditableWorldBlockTarget(cell),
+        Data = data.Data.ToArray()
     };
 
-    public static EditableBlockPackage Capture(int id, TruthTableData data) => new()
-        { ItemType = BuiltInBlockEditKind.TruthTable, SlotIndex = id, SyncItem = true, Data = data.Data.ToArray() };
+    public static EditableBlockPackage Capture(int id, TruthTableData data) => new EditableBlockDataPackage
+    {
+        ItemType = BuiltInBlockEditKind.TruthTable, Target = new EditableItemDefinitionTarget(id),
+        Data = data.Data.ToArray()
+    };
 
     public static EditableBlockPackage Capture(
         CellFace cell,
@@ -23,12 +27,16 @@ public static class EditableBlockPackageBuilder
         int inventory,
         int slot,
         MemoryBankData data
-    ) => new()
+    ) => new EditableBlockDataPackage
     {
-        ItemType = BuiltInBlockEditKind.MemoryBank, CellFace = cell, EditAsItem = asItem, InventoryId = inventory,
-        SlotIndex = slot, Data = data.Data.ToArray()
+        ItemType = BuiltInBlockEditKind.MemoryBank,
+        Target = asItem ? new EditableInventorySlotTarget(inventory, slot) : new EditableWorldBlockTarget(cell),
+        Data = data.Data.ToArray()
     };
 
-    public static EditableBlockPackage Capture(int id, MemoryBankData data) => new()
-        { ItemType = BuiltInBlockEditKind.MemoryBank, SlotIndex = id, SyncItem = true, Data = data.Data.ToArray() };
+    public static EditableBlockPackage Capture(int id, MemoryBankData data) => new EditableBlockDataPackage
+    {
+        ItemType = BuiltInBlockEditKind.MemoryBank, Target = new EditableItemDefinitionTarget(id),
+        Data = data.Data.ToArray()
+    };
 }

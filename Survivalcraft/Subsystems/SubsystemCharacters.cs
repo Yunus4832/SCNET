@@ -44,12 +44,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         if (PendingCharacterCreationId != Guid.Empty) { return PendingCharacterCreationId; }
 
         PendingCharacterCreationId = Guid.NewGuid();
-        NetworkSender.SendToServer(
-            CharacterPackageBuilder.Capture(profile, CharacterDataPackage.DataType.Create) with
-            {
-                CreationRequestId = PendingCharacterCreationId
-            }
-        );
+        NetworkSender.SendToServer(CharacterPackageBuilder.CaptureCreation(profile, PendingCharacterCreationId));
         return PendingCharacterCreationId;
     }
 
@@ -242,13 +237,13 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         if (CommonLib.WorkType == WorkType.Client &&
             _characterList.Values.Any(entry =>
                 entry.CharacterId != exceptCharacterId &&
-                !_characters.Any(player => player.CharacterId == entry.CharacterId) &&
+                _characters.All(player => player.CharacterId != entry.CharacterId) &&
                 string.Equals(entry.Name, name, StringComparison.OrdinalIgnoreCase)
             )) { return false; }
 
         // Active data supersedes its saved offline copy, including a subsequent rename.
         return !_offlineCharacters.Any(entry => entry.Key != exceptCharacterId &&
-                                                !_characters.Any(player => player.CharacterId == entry.Key) &&
+                                                _characters.All(player => player.CharacterId != entry.Key) &&
                                                 string.Equals(
                                                     entry.Value.CharacterData.GetValue<string>("Name"),
                                                     name,

@@ -25,16 +25,26 @@ public static class CharacterPackageBuilder
                 ControllerSessionId = player.CharacterData.ClientId, AimEvent = player.CurAimEventItem.AimEvent,
                 NetAimRay = player.CurAimEventItem.NetAim
             },
-            ComponentCharacterPackage.CharacterAction.InteractEvent => new CharacterInteractionPackage
+            ComponentCharacterPackage.CharacterAction.InteractEvent => (player.CurInteractEventItem.InteractEvent switch
             {
-                ControllerSessionId = player.CharacterData.ClientId,
-                InteractEvent = player.CurInteractEventItem.InteractEvent,
-                PlacementRequestId = player.CurInteractEventItem.RequestId,
-                PlacementCell = player.CurInteractEventItem.PlacementCell,
-                PlacementExpectedValue = player.CurInteractEventItem.ExpectedValue,
-                NetInteractRay = player.CurInteractEventItem.NetInteractRay,
-                NetInteractRaycast = CaptureHit(player.CurInteractEventItem.NetPlaceRaycast)
-            },
+                InteractionMessageKind.Use => new
+                    CharacterUsePackage
+                    {
+                        ControllerSessionId = player.CharacterData.ClientId,
+                        NetInteractRay = player.CurInteractEventItem.NetInteractRay,
+                        NetInteractRaycast = CaptureHit(player.CurInteractEventItem.NetPlaceRaycast)
+                    },
+                InteractionMessageKind.Place => new CharacterPlacePackage
+                {
+                    ControllerSessionId = player.CharacterData.ClientId,
+                    PlacementRequestId = player.CurInteractEventItem.RequestId,
+                    PlacementCell = player.CurInteractEventItem.PlacementCell,
+                    PlacementExpectedValue = player.CurInteractEventItem.ExpectedValue,
+                    NetInteractRay = player.CurInteractEventItem.NetInteractRay,
+                    NetInteractRaycast = CaptureHit(player.CurInteractEventItem.NetPlaceRaycast)
+                },
+                _ => throw new InvalidOperationException("Unsupported message operation.")
+            }),
             ComponentCharacterPackage.CharacterAction.CreativeFlyChange => new CharacterFlightPackage
             {
                 ControllerSessionId = player.CharacterData.ClientId,
@@ -182,9 +192,15 @@ public static class CharacterPackageBuilder
         return new CharacterListPackage(players.CharacterList.Values);
     }
 
-    public static CharacterDataPackage Capture(CharacterData player, CharacterDataPackage.DataType type) => new()
+    public static CharacterProfilePackage CaptureProfile(CharacterData player) => new()
     {
-        Type = type, CharacterName = player.Name, SkinName = player.CharacterSkinName, CharacterId = player.CharacterId,
+        CharacterName = player.Name, SkinName = player.CharacterSkinName, CharacterId = player.CharacterId,
         CharacterSex = ProtocolEnum.Encode(player.CharacterSex)
+    };
+
+    public static CharacterCreateRequestPackage CaptureCreation(CharacterData profile, Guid requestId) => new()
+    {
+        CreationRequestId = requestId, CharacterName = profile.Name, SkinName = profile.CharacterSkinName,
+        CharacterSex = ProtocolEnum.Encode(profile.CharacterSex)
     };
 }

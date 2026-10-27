@@ -13,33 +13,34 @@ public sealed class MovingBlockPackageHandler : PackageHandlerBase<MovingBlockPa
         }
 
         var project = GameManager.Project;
-        if (package.Type == MovingBlockPackage.EventType.PistonSound)
+        if (package is PistonSoundPackage message1)
         {
-            project.FindSubsystem<SubsystemAudio>(true)!.PlaySound("Audio/Piston", 1f, 0f, package.Position, 2f, true);
+            project.FindSubsystem<SubsystemAudio>(true)!.PlaySound("Audio/Piston", 1f, 0f, message1.Position, 2f, true);
             return;
         }
 
         var subsystemMovingBlocks = project.FindSubsystem<SubsystemMovingBlocks>(true)!;
-        switch (package.Type)
+        switch (package)
         {
-            case MovingBlockPackage.EventType.Add:
-                if (package.AddData == null ||
-                    subsystemMovingBlocks.FindMovingBlocks(package.NetworkId) is not null)
+            case MovingBlockAddedPackage message4:
+            {
+                if (message4.AddData == null ||
+                    subsystemMovingBlocks.FindMovingBlocks(message4.NetworkId) is not null)
                 {
                     break;
                 }
 
                 var baseline = new EntitySystem.TemplatesDatabase.ValuesDictionary();
-                baseline.ApplyOverridesUseMessagePack(package.AddData);
-                var m = subsystemMovingBlocks.LoadAndAddMovingItem(baseline) as SubsystemMovingBlocks.MovingBlockSet;
-                if (m != null)
+                baseline.ApplyOverridesUseMessagePack(message4.AddData);
+                if (subsystemMovingBlocks.LoadAndAddMovingItem(baseline) is SubsystemMovingBlocks.MovingBlockSet m)
                 {
-                    m.NetworkId = package.NetworkId;
-                    m.LastNetworkStateTick = package.StateTick;
+                    m.NetworkId = message4.NetworkId;
+                    m.LastNetworkStateTick = message4.StateTick;
                     subsystemMovingBlocks.MovingBlockSets.Add(m);
                 }
 
                 break;
+            }
             default:
                 var mm = subsystemMovingBlocks.FindMovingBlocks(package.NetworkId);
                 if (mm == null)
@@ -47,22 +48,22 @@ public sealed class MovingBlockPackageHandler : PackageHandlerBase<MovingBlockPa
                     break;
                 }
 
-                if (package.Type == MovingBlockPackage.EventType.Update)
+                if (package is MovingBlockStatePackage message3)
                 {
-                    if (!mm.NetworkStopped && unchecked((int)(package.StateTick - mm.LastNetworkStateTick)) > 0)
+                    if (!mm.NetworkStopped && unchecked((int)(message3.StateTick - mm.LastNetworkStateTick)) > 0)
                     {
-                        mm.LastNetworkStateTick = package.StateTick;
-                        mm.Position = package.Position;
-                        mm.CurrentVelocity = package.Velocity;
-                        mm.Speed = package.Speed;
+                        mm.LastNetworkStateTick = message3.StateTick;
+                        mm.Position = message3.Position;
+                        mm.CurrentVelocity = message3.Velocity;
+                        mm.Speed = message3.Speed;
                     }
                 }
-                else if (package.Type == MovingBlockPackage.EventType.Stopped)
+                else if (package is MovingBlockStoppedPackage message2)
                 {
                     mm.NetworkStopped = true;
-                    mm.Position = package.Position;
-                    mm.CurrentVelocity = package.Velocity;
-                    mm.Speed = package.Speed;
+                    mm.Position = message2.Position;
+                    mm.CurrentVelocity = message2.Velocity;
+                    mm.Speed = message2.Speed;
                     subsystemMovingBlocks.DoStop(mm);
                 }
                 else

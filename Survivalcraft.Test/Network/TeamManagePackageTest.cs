@@ -49,9 +49,8 @@ public class TeamManagePackageTest
         var groupKey = Guid.NewGuid();
         var firstMember = Address(1);
         var secondMember = Address(2);
-        var package = new TeamManagePackage
+        var package = new TeamSnapshotPackage
         {
-            Command = TeamManagePackage.CommandType.SyncTeams,
             Teams =
             [
                 new TeamManagePackage.TeamState
@@ -78,12 +77,11 @@ public class TeamManagePackageTest
         return new PlayerAddress(IdentityAddress.Encode(bytes));
     }
 
-    private static TeamManagePackage RoundTrip(TeamManagePackage package)
+    private static T RoundTrip<T>(T package) where T : TeamManagePackage
     {
-        var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<TeamManagePackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsAssignableFrom<T>(ProtocolMessageCodec.Decode(reader));
         return clone;
     }
 }

@@ -1,14 +1,11 @@
+using MessagePack;
+
 namespace Game.Protocol.Entities;
 
-public sealed record InventorySlotSnapshot
+[MessagePackObject]
+[Union(0, typeof(ItemSlotSnapshot))]
+[Union(1, typeof(ClothingSlotSnapshot))]
+public abstract record InventorySlotSnapshot
 {
-    public int SlotIndex { get; init; }
-
-    public byte Type { get; init; }
-
-    public int Count { get; init; }
-
-    public int Value { get; init; }
-
-    public IReadOnlyList<int> ClothingList { get; init; } = [];
+    [Key(0)] public int SlotIndex { get; init; }
 }

@@ -1,6 +1,9 @@
+using MessagePack;
+
 namespace Game.Protocol.Commands;
 
+[MessagePackObject]
 public sealed record CommandPermissionGrant(
-    ResourceId Permission,
-    bool CanDelegate
+    [property: Key(0)] ResourceId Permission,
+    [property: Key(1)] bool CanDelegate
 );

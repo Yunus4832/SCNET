@@ -1,6 +1,13 @@
+using MessagePack;
+
 namespace Game.Protocol.Entities;
 
-public sealed record ComponentSleepPackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(SleepRequestPackage))]
+[Union(1, typeof(SleepResultPackage))]
+[Union(2, typeof(WakeupPackage))]
+[Union(3, typeof(WakeupRequestPackage))]
+public abstract record ComponentSleepPackage : IProtocolMessage
 {
     public enum EventType
     {
@@ -13,34 +20,7 @@ public sealed record ComponentSleepPackage : IProtocolMessage
         WakeUp = 3
     }
 
-    public bool AllowManualWakeup { get; init; }
+    [IgnoreMember] public abstract EventType Type { get; }
 
-    public int EntityId { get; init; }
-
-    public bool Result { get; init; }
-
-    public EventType Type { get; init; }
-
-    public string Reason { get; init; } = string.Empty;
-
-    public byte ID => (byte)PackageType.ComponentSleep;
-
-    public ComponentSleepPackage()
-    {
-    }
-
-    public ComponentSleepPackage(
-        int entityId,
-        EventType eventType,
-        bool allow = false,
-        bool result = false,
-        string msg = ""
-    )
-    {
-        Reason = msg;
-        EntityId = entityId;
-        Type = eventType;
-        AllowManualWakeup = allow;
-        Result = result;
-    }
+    [Key(0)] public int EntityId { get; init; }
 }

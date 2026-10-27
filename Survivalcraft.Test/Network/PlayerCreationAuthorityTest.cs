@@ -11,26 +11,20 @@ public sealed class PlayerCreationAuthorityTest
     [Fact]
     public void CreationCarriesOnlyProfileAndNotClaimedIdentity()
     {
-        var request = new CharacterDataPackage
+        var request = new CharacterCreateRequestPackage
         {
-            Type = CharacterDataPackage.DataType.Create,
-            CreationRequestId = Guid.NewGuid(),
-            CharacterName = "Codex",
-            SkinName = "$Male1",
-            CharacterSex = ProtocolEnum.Encode(Game.Characters.CharacterSex.Female),
-            CharacterId = Guid.NewGuid()
+            CreationRequestId = Guid.NewGuid(), CharacterName = "Codex", SkinName = "$Male1",
+            CharacterSex = ProtocolEnum.Encode(Game.Characters.CharacterSex.Female)
         };
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(request, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var decoded = Assert.IsType<CharacterDataPackage>(ProtocolMessageCodec.Read(request.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(request);
+        var reader = writer;
+        var decoded = Assert.IsType<CharacterCreateRequestPackage>(ProtocolMessageCodec.Decode(reader));
 
         Assert.Equal(request.CreationRequestId, decoded.CreationRequestId);
         Assert.Equal(request.CharacterName, decoded.CharacterName);
         Assert.Equal(request.SkinName, decoded.SkinName);
         Assert.Equal(request.CharacterSex, decoded.CharacterSex);
-        Assert.Equal(Guid.Empty, decoded.CharacterId);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
+        Assert.Null(typeof(CharacterCreateRequestPackage).GetProperty("CharacterId"));
     }
 
     [Fact]

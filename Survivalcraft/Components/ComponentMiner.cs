@@ -598,7 +598,8 @@ public class ComponentMiner : Component, IUpdateable
                     Project,
                     position,
                     24f,
-                    new ComponentHealthPackage(position, velocity, Color.White, text)
+                    new CharacterHitEffectPackage
+                        { Position = position, Velocity = velocity, Color = Color.White, Text = text }
                 );
                 var particleSystem = new HitValueParticleSystem(position, velocity, Color.White, text);
                 Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
@@ -861,7 +862,10 @@ public class ComponentMiner : Component, IUpdateable
                                 target.Project,
                                 position,
                                 24f,
-                                new ComponentHealthPackage(position, velocity, Color.White, text2)
+                                new CharacterHitEffectPackage
+                                {
+                                    Position = position, Velocity = velocity, Color = Color.White, Text = text2
+                                }
                             );
                             var particleSystem = new HitValueParticleSystem(position, velocity, Color.White, text2);
                             target.Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);

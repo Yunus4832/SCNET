@@ -16,13 +16,8 @@ public sealed class ProjectilePackageTest
     [InlineData(ProjectilePackage.EffectType.Sizzle)]
     public void EffectDoesNotRequireAReplicatedProjectile(ProjectilePackage.EffectType effect)
     {
-        var package = new ProjectilePackage
-        {
-            Type = ProjectilePackage.EventType.Effect,
-            Effect = effect,
-            Value = 100,
-            Position = new Vector3(1, 2, 3)
-        };
+        var package = new ProjectileEffectPackage
+            { Effect = effect, Value = 100, Position = new Vector3(1, 2, 3) };
         var clone = RoundTrip(package);
 
         Assert.Equal(effect, clone.Effect);
@@ -35,7 +30,7 @@ public sealed class ProjectilePackageTest
     [Fact]
     public void MotionUpdatePreservesStateAndUsesUnreliableStateStream()
     {
-        var package = ProjectilePackageBuilder.Capture(
+        var package = ProjectilePackageBuilder.CaptureState(
                 new Projectile
                 {
                     NetworkId = 42,
@@ -46,7 +41,7 @@ public sealed class ProjectilePackageTest
                 }
             ) with
             {
-                Type = ProjectilePackage.EventType.Update, StateTick = 5
+                StateTick = 5
             };
         var clone = RoundTrip(package);
 
@@ -62,12 +57,8 @@ public sealed class ProjectilePackageTest
     public void MotionRejectsStaleStateAndHandlesTickWraparound()
     {
         var projectile = new Projectile { LastNetworkStateTick = uint.MaxValue };
-        var update = new ProjectilePackage
-        {
-            Type = ProjectilePackage.EventType.Update,
-            StateTick = 0,
-            Position = new Vector3(1, 2, 3)
-        };
+        var update = new ProjectileStatePackage
+            { StateTick = 0, Position = new Vector3(1, 2, 3) };
 
         Assert.True(SubsystemProjectiles.ApplyNetworkMotion(projectile, update));
         Assert.Equal(update.Position, projectile.Position);
@@ -106,23 +97,22 @@ public sealed class ProjectilePackageTest
     [Fact]
     public void LeaveMessageContainsOnlyTypeAndIdentity()
     {
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(new ProjectilePackage(42), writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<ProjectilePackage>(ProtocolMessageCodec.Read((byte)PackageType.Projectile, reader));
+        var writer =
+            ProtocolMessageCodec.Encode(new ProjectileRemovedPackage { NetworkId = 42 });
+        var reader = writer;
+        var clone = Assert.IsType<ProjectileRemovedPackage>(ProtocolMessageCodec.Decode(reader));
 
         Assert.Equal(ProjectilePackage.EventType.Remove, clone.Type);
         Assert.Equal(42, clone.NetworkId);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
+
         Assert.Equal(PackageTransportPolicy.ReliableEvent, PackageTransportPolicy.Get(clone));
     }
 
-    private static ProjectilePackage RoundTrip(ProjectilePackage package)
+    private static T RoundTrip<T>(T package) where T : ProjectilePackage
     {
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<ProjectilePackage>(ProtocolMessageCodec.Read((byte)PackageType.Projectile, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<T>(ProtocolMessageCodec.Decode(reader));
         return clone;
     }
 }

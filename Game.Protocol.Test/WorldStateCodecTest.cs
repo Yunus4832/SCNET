@@ -12,13 +12,12 @@ public sealed class WorldStateCodecTest
     {
         {
             "vital-state",
-            new ComponentVitalStatPackage
+            new VitalStatePackage
                 { EntityId = 42, Food = 0.25f, Sleep = 0.5f, Stamina = 0.75f, Temperature = 20, Wetness = 0.125f }
         },
         {
             "skin-reply",
-            new ComponentClothingPackage("test.png", ComponentClothingPackage.DataType.ReplySkin)
-                { SkinData = [1, 2, 3, 4] }
+            new SkinReplyPackage { SkinName = "test.png", SkinData = [1, 2, 3, 4] }
         },
         { "furnace-state", new ComponentFurnacePackage(42, 3.5f, 0.25f, 2) },
         {
@@ -43,44 +42,29 @@ public sealed class WorldStateCodecTest
         },
         {
             "block-edit",
-            new BlockEditPackage { Type = BlockEditPackage.EventType.CrossbowPull, InventoryId = 42, SlotIndex = 3 }
+            new CrossbowPullPackage { InventoryId = 42, SlotIndex = 3 }
         }
     };
 
     [Theory]
     [MemberData(nameof(Samples))]
-    public void EncodingMatchesCapturedPayloadWithCurrentMessageId(string name, IProtocolMessage message)
+    public void WorldStateMessagesRoundTripTheirDeclaredContracts(string name, IProtocolMessage message)
     {
-        Assert.True(ProtocolMessageCodec.IsDefined(message.ID));
-        using var writer = new ProtocolWriter();
-        writer.Write((byte)0x88);
-        writer.Write(message.ID);
-        ProtocolMessageCodec.Write(message, writer);
-        var bytes = writer.Data(CompressionPolicy.None);
-        Assert.Equal(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", name + ".bin")), bytes);
-        using var reader = new ProtocolReader(bytes);
-        Assert.Equal(0x88, reader.ReadByte());
-        var restored = ProtocolMessageCodec.Read(reader.ReadByte(), reader);
+        Assert.True(ProtocolMessageCodec.IsDefined(message.GetType()), name);
+        var encoded = ProtocolMessageCodec.Encode(message);
+        var restored = ProtocolMessageCodec.Decode(encoded);
         Assert.Equal(message.GetType(), restored.GetType());
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
-        using var repeated = new ProtocolWriter();
-        ProtocolMessageCodec.Write(restored, repeated);
-        Assert.Equal(
-            ProtocolFrameCodec.DecodeFrame(bytes)[2..],
-            ProtocolFrameCodec.DecodeFrame(repeated.Data(CompressionPolicy.None))
-        );
+        Assert.Equal(encoded, ProtocolMessageCodec.Encode(restored));
     }
 
     [Fact]
     public void SignLineCountIsIndependentFromColorCount()
     {
         var message = new SignBlockPackage(Point3.Zero, ["one", "two", "three"], [Color.White], string.Empty);
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        var restored = Assert.IsType<SignBlockPackage>(ProtocolMessageCodec.Read(message.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(message);
+        var reader = writer;
+        var restored = Assert.IsType<SignBlockPackage>(ProtocolMessageCodec.Decode(reader));
         Assert.Equal(message.Lines, restored.Lines);
         Assert.Equal(message.Colors, restored.Colors);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
     }
 }

@@ -23,14 +23,11 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
                     var num = Terrain.ReplaceData(value, data2);
                     if (num != value)
                     {
-                        var p = new EditableBlockPackage(
-                            BuiltInBlockEditKind.AdjustableDelayGate,
-                            default,
-                            true,
-                            inventory.Id,
-                            slotIndex,
-                            newDelay
-                        );
+                        var p = new EditableBlockValuePackage
+                        {
+                            ItemType = BuiltInBlockEditKind.AdjustableDelayGate,
+                            Target = new EditableInventorySlotTarget(inventory.Id, slotIndex), Value = newDelay
+                        };
                         EditableBlockPackageHandler.Submit(p);
                     }
                 }
@@ -59,14 +56,11 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
                         ((AdjustableDelayGateBlock)CurrentModRuntime.Value!.RequireWorldCatalog()
                             .Blocks[BuiltInBlockRegistry.GetIndex<AdjustableDelayGateBlock>()]).GetFace(value);
                     var cell = new CellFace(x, y, z, face);
-                    var p = new EditableBlockPackage(
-                        BuiltInBlockEditKind.AdjustableDelayGate,
-                        cell,
-                        false,
-                        0,
-                        0,
-                        newDelay
-                    );
+                    var p = new EditableBlockValuePackage
+                    {
+                        ItemType = BuiltInBlockEditKind.AdjustableDelayGate,
+                        Target = new EditableWorldBlockTarget(cell), Value = newDelay
+                    };
                     EditableBlockPackageHandler.Submit(p);
                 }
             )

@@ -227,7 +227,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         var point = new Point3(x, y, z);
         if (CommonLib.WorkType == WorkType.Client && componentCharacter == CommonLib.LocalCharacter)
         {
-            NetworkSender.SendToServer(new BlockEditPackage(point, BlockEditPackage.EventType.EditSign));
+            NetworkSender.SendToServer(new OpenSignEditorPackage { Point3 = point });
             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
             return true;
         }

@@ -4,7 +4,7 @@ namespace Game.Network.Snapshots;
 
 public static class ServerInfoPackageBuilder
 {
-    public static ServerInfoPackage Capture()
+    public static ServerInfoResponsePackage Capture()
     {
         var project = GameManager.Project ?? throw new InvalidOperationException("GameManager is not ready.");
         var settings = project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings;
@@ -12,21 +12,19 @@ public static class ServerInfoPackageBuilder
         var profile = CurrentModRuntime.Value?.CreateServerRequiredProfile();
         if (profile != null) { ModProfileValidation.Validate(profile); }
 
-        return new ServerInfoPackage
+        return new ServerInfoResponsePackage
         {
-            ProtocolVersion = VersionsManager.ProtocolVersion,
-            ClientCount = (ushort)CommonLib.Net.ClientCount,
-            MaxPlayerCount = settings.MaxOnlinePlayerCount,
-            GameMode = ProtocolEnum.Encode(settings.GameMode),
+            ProtocolVersion = VersionsManager.ProtocolVersion, ClientCount = (ushort)CommonLib.Net.ClientCount,
+            MaxPlayerCount = settings.MaxOnlinePlayerCount, GameMode = ProtocolEnum.Encode(settings.GameMode),
             TimeOfDay = project.FindSubsystem<SubsystemTimeOfDay>(true)!.CalculateTimeOfDay(),
-            Season = ProtocolEnum.Encode(seasons.Season),
-            TimeOfSeason = seasons.TimeOfSeason,
-            RequiredModProfile = profile == null
-                ? null
-                : new RequiredModProfile(
-                    profile.Id,
-                    profile.Packages.Select(p => new RequiredModPackage(p.ModId, p.Version, p.PackageHash)).ToArray()
-                ),
+            Season = ProtocolEnum.Encode(seasons.Season), TimeOfSeason = seasons.TimeOfSeason, RequiredModProfile =
+                profile == null
+                    ? null
+                    : new RequiredModProfile(
+                        profile.Id,
+                        profile.Packages.Select(p => new RequiredModPackage(p.ModId, p.Version, p.PackageHash))
+                            .ToArray()
+                    ),
             TemporaryRepositories = TemporaryContentRepositories.Validate(
                 ContentRepositoryManager.Current.Snapshot()
                     .Where(repository => repository.IsEnabled)

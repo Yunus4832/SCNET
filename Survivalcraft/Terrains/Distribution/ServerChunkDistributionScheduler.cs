@@ -234,7 +234,7 @@ public sealed class ServerChunkDistributionScheduler(
                                  ))
                         {
                             CommonLib.Net.QueuePackage(
-                                new SubsystemTerrainPackage(fragment),
+                                new TerrainFragmentPackage { ChunkFragment = fragment },
                                 PackageAudience.To(item.Key)
                             );
                         }
@@ -380,7 +380,7 @@ public sealed class ServerChunkDistributionScheduler(
             foreach (var fragment in fragments)
             {
                 CommonLib.Net.QueuePackage(
-                    new SubsystemTerrainPackage(fragment),
+                    new TerrainFragmentPackage { ChunkFragment = fragment },
                     PackageAudience.To(client)
                 );
             }

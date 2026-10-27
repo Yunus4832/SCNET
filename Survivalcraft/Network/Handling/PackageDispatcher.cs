@@ -6,6 +6,8 @@ public static class PackageDispatcher
 {
     private static readonly Dictionary<Type, IPackageHandler> _handlers = new();
 
+    internal static void Clear() => _handlers.Clear();
+
     public static void Register(IPackageHandler handler)
     {
         _handlers[handler.PackageType] = handler;

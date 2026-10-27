@@ -106,20 +106,12 @@ public static class CommonLib
         return started;
     }
 
-    public static NetDataWriter GetWriter(
-        ProtocolWriter writer,
-        out int size,
-        CompressionPolicy compressionPolicy = CompressionPolicy.Adaptive
-    )
+    public static NetDataWriter GetWriter(byte[] packet)
     {
-        var data = writer.Data(compressionPolicy);
-        var tmp = new NetDataWriter();
-        tmp.PutBytesWithLength(data);
-        size = data.Length;
-        return tmp;
+        var writer = new NetDataWriter();
+        writer.Put(packet);
+        return writer;
     }
-
-    public static ProtocolReader GetReader(ReadOnlyMemory<byte> data) => ProtocolPacketCodec.CreateReader(data);
 
     public static string GetInnerIp()
     {

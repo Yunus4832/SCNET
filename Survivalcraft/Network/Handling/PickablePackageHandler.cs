@@ -5,7 +5,7 @@ namespace Game.Network.Handling;
 
 public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
 {
-    internal static void ApplyBaseline(Pickable pickable, PickablePackage package)
+    internal static void ApplyBaseline(Pickable pickable, PickableAddedPackage package)
     {
         pickable.Value = package.Value;
         pickable.Count = package.Count;
@@ -41,39 +41,44 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
 
         var project = GameManager.Project;
         var subsystemPickable = project.FindSubsystem<SubsystemPickables>(true)!;
-        switch (package.Type)
+        switch (package)
         {
-            case PickablePackage.PickType.Create:
-                if (subsystemPickable.TryGetPickable(package.Id, out var tmp))
+            case PickableAddedPackage message1:
+            {
+                if (subsystemPickable.TryGetPickable(message1.Id, out var tmp))
                 {
-                    ApplyBaseline(tmp, package);
+                    ApplyBaseline(tmp, message1);
                 }
                 else
                 {
                     var created = subsystemPickable.CreatePickable(
-                        package.Id,
-                        package.Value,
-                        package.Count,
-                        package.Position,
-                        package.Velocity,
-                        package.StuckMatrix
+                        message1.Id,
+                        message1.Value,
+                        message1.Count,
+                        message1.Position,
+                        message1.Velocity,
+                        message1.StuckMatrix
                     );
                     if (created is not null)
                     {
-                        created.LastStateTick = package.StateTick;
+                        created.LastStateTick = message1.StateTick;
                     }
                 }
 
                 break;
-            case PickablePackage.PickType.Update:
-                subsystemPickable.ApplyPositionSnapshot(package.Positions, package.StateTick);
+            }
+            case PickablePositionsPackage message2:
+            {
+                subsystemPickable.ApplyPositionSnapshot(message2.Positions, message2.StateTick);
                 break;
-            case PickablePackage.PickType.Delete:
+            }
+            case PickableRemovedPackage message3:
+            {
                 subsystemPickable.PickableAction(
-                    package.Id,
+                    message3.Id,
                     pick =>
                     {
-                        if (package.PlaySound)
+                        if (message3.PlaySound)
                         {
                             subsystemPickable.PlayPickableCollectedSound(pick);
                         }
@@ -83,18 +88,20 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                     false
                 );
                 break;
-            case PickablePackage.PickType.RequestSync:
+            }
+            case PickableSyncRequestPackage message4:
+            {
                 if (context.Sender is null)
                 {
                     break;
                 }
 
                 var interest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
-                if (subsystemPickable.TryGetPickable(package.Id, out var requested) &&
+                if (subsystemPickable.TryGetPickable(message4.Id, out var requested) &&
                     interest.IsPositionRelevant(context.Sender, requested.Position.XZ))
                 {
                     netNode.QueuePackage(
-                        PickablePackageBuilder.Capture(requested, PickablePackage.PickType.Create),
+                        PickablePackageBuilder.Capture(requested),
                         PackageAudience.To(context.Sender)
                     );
                     interest.Entities.AddObserved(
@@ -106,19 +113,21 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                 else
                 {
                     netNode.QueuePackage(
-                        new PickablePackage(package.Id),
+                        new PickableRemovedPackage { Id = message4.Id },
                         PackageAudience.To(context.Sender)
                     );
                 }
 
                 break;
-            case PickablePackage.PickType.CreateList:
+            }
+            case PickablesAddedPackage message5:
+            {
                 if (isServer)
                 {
                     break;
                 }
 
-                foreach (var pickable in package.Pickables)
+                foreach (var pickable in message5.Pickables)
                 {
                     var created = subsystemPickable.CreatePickable(
                         pickable.Id,
@@ -130,18 +139,20 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                     );
                     if (created is not null)
                     {
-                        created.LastStateTick = package.StateTick;
+                        created.LastStateTick = message5.StateTick;
                     }
                 }
 
                 break;
-            case PickablePackage.PickType.DeleteList:
+            }
+            case PickablesRemovedPackage message6:
+            {
                 if (isServer)
                 {
                     break;
                 }
 
-                foreach (var id in package.RemovedIds)
+                foreach (var id in message6.RemovedIds)
                 {
                     subsystemPickable.PickableAction(
                         id,
@@ -151,6 +162,7 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                 }
 
                 break;
+            }
         }
     }
 }

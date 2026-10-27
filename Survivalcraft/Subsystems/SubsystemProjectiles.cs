@@ -547,13 +547,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             return;
         }
 
-        var package = new ProjectilePackage
-        {
-            Type = ProjectilePackage.EventType.Effect,
-            Effect = effect,
-            Value = value,
-            Position = position
-        };
+        var package = new ProjectileEffectPackage
+            { Effect = effect, Value = value, Position = position };
         if (effect == ProjectilePackage.EffectType.Debris)
         {
             var observers = _subsystemNetworkInterest.GetObservers(position.XZ).ToArray();
@@ -781,7 +776,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         return projectile;
     }
 
-    public Projectile AddReplicatedProjectile(ProjectilePackage package, ComponentCreature? owner)
+    public Projectile AddReplicatedProjectile(ProjectileAddedPackage package, ComponentCreature? owner)
     {
         var projectile = AddProjectileNet(
             package.Value,
@@ -802,7 +797,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         return projectile;
     }
 
-    internal static bool ApplyNetworkMotion(Projectile projectile, ProjectilePackage package)
+    internal static bool ApplyNetworkMotion(Projectile projectile, ProjectileStatePackage package)
     {
         if (unchecked((int)(package.StateTick - projectile.LastNetworkStateTick)) <= 0)
         {
@@ -946,7 +941,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         if (observers.Length > 0)
         {
             CommonLib.Net.QueuePackage(
-                new ProjectilePackage(projectile.NetworkId),
+                new ProjectileRemovedPackage { NetworkId = projectile.NetworkId },
                 PackageAudience.To(observers)
             );
         }
@@ -995,7 +990,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             foreach (var networkId in changes.Left)
             {
                 CommonLib.Net.QueuePackage(
-                    new ProjectilePackage(networkId),
+                    new ProjectileRemovedPackage { NetworkId = networkId },
                     PackageAudience.To(client)
                 );
             }
@@ -1004,9 +999,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             {
                 var projectile = projectiles[networkId];
                 CommonLib.Net.QueuePackage(
-                    ProjectilePackageBuilder.Capture(projectile) with
+                    ProjectilePackageBuilder.CaptureState(projectile) with
                     {
-                        Type = ProjectilePackage.EventType.Update,
                         StateTick = _networkStateTick
                     },
                     PackageAudience.To(client)

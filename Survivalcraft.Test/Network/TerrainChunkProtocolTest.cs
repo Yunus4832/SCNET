@@ -14,7 +14,7 @@ public sealed class TerrainChunkProtocolTest
             new ChunkAllocationId(new Point2(3, 4), 17),
             23
         );
-        var clone = RoundTrip(new SubsystemTerrainPackage([expected]));
+        var clone = RoundTrip(new TerrainChunksRequestPackage { ChunkRequests = [expected] });
 
         Assert.Equal(expected, Assert.Single(clone.ChunkRequests));
     }
@@ -31,7 +31,7 @@ public sealed class TerrainChunkProtocolTest
             encoded,
             allocation
         ).First();
-        var clone = RoundTrip(new SubsystemTerrainPackage(fragment));
+        var clone = RoundTrip(new TerrainFragmentPackage { ChunkFragment = fragment });
 
         Assert.Equal(fragment.Allocation, clone.ChunkFragment.Allocation);
         Assert.Equal(fragment.ContentVersion, clone.ChunkFragment.ContentVersion);
@@ -65,17 +65,16 @@ public sealed class TerrainChunkProtocolTest
     {
         var expected = new TerrainCellDelta(new Point3(4, 5, 6), 7, 8, 9);
 
-        var clone = RoundTrip(new SubsystemTerrainPackage(expected));
+        var clone = RoundTrip(new TerrainCellDeltaPackage { CellDelta = expected });
 
         Assert.Equal(expected, clone.CellDelta);
     }
 
-    private static SubsystemTerrainPackage RoundTrip(SubsystemTerrainPackage package)
+    private static T RoundTrip<T>(T package) where T : SubsystemTerrainPackage
     {
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<SubsystemTerrainPackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<T>(ProtocolMessageCodec.Decode(reader));
         return clone;
     }
 }

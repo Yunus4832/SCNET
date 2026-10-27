@@ -343,7 +343,7 @@ public class FurnitureInventoryPanel : CanvasWidget
             return;
         }
 
-        FurniturePackageHandler.Submit(new FurniturePackage(furnitureSet.Name));
+        FurniturePackageHandler.Submit(new FurnitureSetDeletedPackage { Name = furnitureSet.Name });
     }
 
     public void RenameFurnitureSet()
@@ -361,7 +361,9 @@ public class FurnitureInventoryPanel : CanvasWidget
             20,
             delegate(string s)
             {
-                FurniturePackageHandler.Submit(new FurniturePackage(furnitureSet.Name, s));
+                FurniturePackageHandler.Submit(
+                    new FurnitureSetRenamedPackage { OldName = furnitureSet.Name, NewName = s }
+                );
             }
         );
     }

@@ -817,7 +817,10 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
         if (CommonLib.WorkType == WorkType.Server)
         {
-            CommonLib.Net.QueuePackage(new FurniturePackage(list), PackageAudience.Global);
+            CommonLib.Net.QueuePackage(
+                new FurnitureDesignsRemovedPackage { ToRemoveList = list.ToArray() },
+                PackageAudience.Global
+            );
         }
     }
 

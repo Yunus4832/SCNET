@@ -28,12 +28,12 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
         if (isServer)
         {
-            if (package.Mode is CommandPackage.CommandPackageMode.SuggestionRequest)
+            if (package is CommandSuggestionsRequestPackage completionRequest)
             {
                 if (context.Sender is not { } sender ||
                     sender.Subject is null ||
                     sender.PlayerAddress is null ||
-                    package.Input.Length > _maximumCommandLength ||
+                    completionRequest.Input.Length > _maximumCommandLength ||
                     CurrentModRuntime.Value is not { } runtime)
                 {
                     return;
@@ -53,26 +53,31 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
                 _lastSuggestionTimestamp[sender.PlayerAddress!.Value] = now;
                 var suggestions = new TextCommandAdapter(runtime.Commands).Suggest(
-                    package.Input,
+                    completionRequest.Input,
                     CommandPrincipal.FromSession(sender)
                 );
                 netNode.QueuePackage(
-                    CommandPackage.CreateSuggestions(package.Input, package.CorrelationId, suggestions),
+                    CommandPackage.CreateSuggestions(
+                        completionRequest.Input,
+                        completionRequest.CorrelationId,
+                        suggestions
+                    ),
                     PackageAudience.To(sender)
                 );
                 return;
             }
 
-            HandleServer(package, project, context);
+            if (package is CommandRequestPackage commandRequest) { HandleServer(commandRequest, project, context); }
+
             return;
         }
 
-        if (package.Mode is CommandPackage.CommandPackageMode.Suggestions)
+        if (package is CommandSuggestionsPackage completion)
         {
             CommonLib.LocalCharacter?.GameWidget.MessagePanel?.ReceiveSuggestions(
-                package.Input,
-                package.CorrelationId,
-                package.Suggestions.Select(value => value with
+                completion.Input,
+                completion.CorrelationId,
+                completion.Suggestions.Select(value => value with
                     {
                         Description = value.DescriptionSource?.Resolve() ?? value.Description
                     }
@@ -81,8 +86,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             return;
         }
 
-        if (package.Mode is CommandPackage.CommandPackageMode.Result &&
-            package.Result is { } result)
+        if (package is CommandResultPackage { Result: { } result })
         {
             if (!ReferenceEquals(context.Sender, netNode.Server))
             {
@@ -99,25 +103,24 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             return;
         }
 
-        if (package.Mode is CommandPackage.CommandPackageMode.PermissionSnapshot)
+        if (package is CommandPermissionSnapshotPackage permissions)
         {
-            if (package.PlayerAddress is not { } address || CommonLib.Net.Self?.PlayerAddress != address)
+            if (permissions.PlayerAddress is not { } address || CommonLib.Net.Self?.PlayerAddress != address)
             {
                 return;
             }
 
             var players = GameManager.Project.FindSubsystem<SubsystemPlayers>(true)!;
-            players.Store.GetOrCreate(address).Permissions.Replace(package.PermissionGrants);
+            players.Store.GetOrCreate(address).Permissions.Replace(permissions.PermissionGrants);
             GameManager.Project.FindSubsystem<SubsystemGameWidgets>(true)!.Messages.DisplayLocal(
                 GameMessage.Command(CommandText.Get("PermissionUpdated_Message", "你的指令权限已更新。"), success: true)
             );
         }
     }
 
-    private void HandleServer(CommandPackage package, Project project, PackageReceiveContext context)
+    private void HandleServer(CommandRequestPackage package, Project project, PackageReceiveContext context)
     {
-        if (package.Mode is not CommandPackage.CommandPackageMode.Request ||
-            context.Sender?.Subject is null ||
+        if (context.Sender?.Subject is null ||
             context.Sender.PlayerAddress is null)
         {
             return;
@@ -161,7 +164,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
     }
 
     private static CommandResult ExecuteRequest(
-        CommandPackage package,
+        CommandRequestPackage package,
         Client session,
         Project project
     )

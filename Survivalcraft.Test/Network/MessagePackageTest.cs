@@ -72,14 +72,14 @@ public class MessagePackageTest
     [InlineData(GameMessageKind.System, true)]
     public void DecoderRejectsMissingOrInappropriateSender(GameMessageKind kind, bool hasSender)
     {
-        using var writer = new ProtocolWriter();
-        writer.WriteEnum(kind);
-        writer.WriteEnum(GameMessageChannel.Global);
-        writer.WriteEnum(GameMessageTone.Normal);
-        writer.WriteEnum(GameMessagePresentation.Default);
-        writer.Write(hasSender);
-        using var reader = new ProtocolReader(writer.Data());
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read((byte)PackageType.Message, reader));
+        var sender = hasSender
+            ? new MessageSender(new PlayerAddress(IdentityAddress.Encode(new byte[32])), "Account")
+            : null;
+        var invalid = new MessagePackage(
+            new GameMessage(kind, GameMessageChannel.Global, sender, MessageContent.Plain("test"))
+        );
+        var payload = ProtocolPayloadCodec.Encode<IProtocolMessage>(invalid);
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(payload));
     }
 
     [Fact]
@@ -92,10 +92,9 @@ public class MessagePackageTest
                      new MessageSender(address, "Account", Guid.Empty)
                  })
         {
-            using var writer = new ProtocolWriter();
-            Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Write(
-                    new MessagePackage(GameMessage.Chat(GameMessageChannel.Global, sender, "hello")),
-                    writer
+            Assert.Throws<InvalidDataException>(() =>
+                ProtocolMessageCodec.Encode(
+                    new MessagePackage(GameMessage.Chat(GameMessageChannel.Global, sender, "hello"))
                 )
             );
         }
@@ -103,10 +102,9 @@ public class MessagePackageTest
 
     private static MessagePackage RoundTrip(MessagePackage package)
     {
-        var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<MessagePackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<MessagePackage>(ProtocolMessageCodec.Decode(reader));
         return clone;
     }
 }

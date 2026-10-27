@@ -1,8 +1,14 @@
-using Engine.Core.Mathematics;
+using MessagePack;
 
 namespace Game.Protocol.Entities;
 
-public sealed record ComponentHealthPackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(CharacterHitEffectPackage))]
+[Union(1, typeof(EntityDamagePackage))]
+[Union(2, typeof(EntityHealthPackage))]
+[Union(3, typeof(EntityInjuryPackage))]
+[Union(4, typeof(EntityInjuryRequestPackage))]
+public abstract record ComponentHealthPackage : IProtocolMessage
 {
     public enum EventType
     {
@@ -17,6 +23,7 @@ public sealed record ComponentHealthPackage : IProtocolMessage
         Damage = 4 //船被破坏
     }
 
+
     public enum RequestInjureType
     {
         Unknown = 0, // 未知
@@ -30,42 +37,5 @@ public sealed record ComponentHealthPackage : IProtocolMessage
         Fire = 4 // 着火
     }
 
-    public float Amount { get; init; }
-
-    public int AttackerId { get; init; }
-
-    public Color Color { get; init; }
-
-    public string Cause { get; init; } = string.Empty;
-
-    public float Health { get; init; }
-
-    public bool IgnoreInvulnerability { get; init; }
-
-    public Vector3 Position { get; init; }
-
-    public RequestInjureType InjureRequestType { get; init; }
-
-    public int TargetId { get; init; }
-
-    public string Text { get; init; } = string.Empty;
-
-    public EventType Type { get; init; }
-
-    public Vector3 Velocity { get; init; }
-
-    public byte ID => (byte)PackageType.ComponentHealth;
-
-    public ComponentHealthPackage()
-    {
-    }
-
-    public ComponentHealthPackage(Vector3 position, Vector3 velocity, Color color, string text)
-    {
-        Position = position;
-        Velocity = velocity;
-        Color = color;
-        Text = text;
-        Type = EventType.HitResult;
-    }
+    [IgnoreMember] public abstract EventType Type { get; }
 }

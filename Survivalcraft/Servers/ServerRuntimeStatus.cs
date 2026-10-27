@@ -27,7 +27,7 @@ public sealed record ServerRuntimeStatus
 
     public IReadOnlyList<ContentRepository> TemporaryRepositories { get; init; } = [];
 
-    public static ServerRuntimeStatus FromPackage(ServerInfoPackage package, long pingMilliseconds)
+    public static ServerRuntimeStatus FromPackage(ServerInfoResponsePackage package, long pingMilliseconds)
     {
         return new ServerRuntimeStatus
         {

@@ -1,3 +1,6 @@
+using MessagePack;
+
 namespace Game.Commands;
 
-public sealed record MarkPrivatePositionCommand(string Name) : IGameCommand;
+[MessagePackObject]
+public sealed record MarkPrivatePositionCommand([property: Key(0)] string Name) : IGameCommand;

@@ -2,6 +2,7 @@ using Engine.Core.Mathematics;
 
 namespace Game.Protocol.Terrain;
 
+[MessagePack.MessagePackFormatter(typeof(Serialization.Formatters.ProtocolValueFormatter))]
 public struct CellFace(int x, int y, int z, int face) : IEquatable<CellFace>
 {
     public int X = x;

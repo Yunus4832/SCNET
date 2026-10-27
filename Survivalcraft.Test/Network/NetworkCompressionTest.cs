@@ -2,30 +2,16 @@ namespace Survivalcraft.Test.Network;
 
 public sealed class NetworkCompressionTest
 {
-    [Fact]
-    public void AdaptiveCompressionLeavesSmallFramesUncompressed()
+    [Theory]
+    [InlineData(4, false)]
+    [InlineData(16384, true)]
+    public void AdaptiveCompressionUsesThePayloadSize(int size, bool compressed)
     {
-        using var writer = new ProtocolWriter();
-        writer.Write(42);
-
-        var frame = writer.Data();
-
-        Assert.Equal(0, frame[0]);
-        using var reader = new ProtocolReader(frame);
-        Assert.Equal(42, reader.ReadInt32());
-    }
-
-    [Fact]
-    public void AdaptiveCompressionCompressesLargeRepetitiveFrames()
-    {
-        using var writer = new ProtocolWriter();
-        writer.Write(new byte[16 * 1024]);
-
-        var frame = writer.Data();
-
-        Assert.Equal(1, frame[0]);
-        Assert.True(frame.Length < 1024);
-        using var reader = new ProtocolReader(frame);
-        Assert.Equal(new byte[16 * 1024], reader.ReadBytes(16 * 1024));
+        var payload = new byte[size];
+        using var stream = new MemoryStream(payload);
+        var frame = ProtocolFrameCodec.EncodeFrame(stream, CompressionPolicy.Adaptive);
+        Assert.Equal(compressed ? 1 : 0, frame[0]);
+        Assert.Equal(payload, ProtocolFrameCodec.DecodeFrame(frame));
+        if (compressed) { Assert.True(frame.Length < 1024); }
     }
 }

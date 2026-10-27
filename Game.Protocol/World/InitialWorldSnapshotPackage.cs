@@ -1,19 +1,26 @@
 using Game.Protocol.Characters;
 using Game.Protocol.Connection;
 
+using MessagePack;
+
+using MaxLengthAttribute = System.ComponentModel.DataAnnotations.MaxLengthAttribute;
+
 namespace Game.Protocol.World;
 
+[MessagePackObject]
 public sealed record InitialWorldSnapshotPackage : IProtocolMessage
 {
-    public Guid Epoch { get; init; }
+    [Key(0)] public Guid Epoch { get; init; }
 
-    public ClientPackage ClientList { get; init; } = new([]);
+    [Key(1)]
+    public ClientListPackage ClientList { get; init; } = new()
+    {
+        List = []
+    };
 
-    public IReadOnlyList<byte[]> Characters { get; init; } = [];
+    [Key(2)] public IReadOnlyList<byte[]> Characters { get; init; } = [];
 
-    public byte[] EntityData { get; init; } = [];
+    [Key(3)] public byte[] EntityData { get; init; } = [];
 
-    public IReadOnlyList<CharacterEntitySnapshot> CharacterEntities { get; init; } = [];
-
-    public byte ID => (byte)PackageType.InitialWorldSnapshot;
+    [Key(4), MaxLength(1024)] public IReadOnlyList<CharacterEntitySnapshot> CharacterEntities { get; init; } = [];
 }

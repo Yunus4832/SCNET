@@ -63,7 +63,7 @@ public sealed class ServerConnectionPreparation : IAsyncDisposable
 
             void Receive(byte[] payload)
             {
-                var package = PackageManager.DecodePackage<ServerInfoPackage>(null, payload);
+                var package = PackageManager.DecodePackage<ServerInfoResponsePackage>(null, payload);
                 if (!package.Package.RequestInfo)
                 {
                     status = ServerRuntimeStatus.FromPackage(package.Package, stopwatch.ElapsedMilliseconds);
@@ -73,7 +73,8 @@ public sealed class ServerConnectionPreparation : IAsyncDisposable
             path.DatagramReceived += Receive;
             try
             {
-                void SendProbe() => path.SendDatagram(NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true)));
+                void SendProbe() => path.SendDatagram(NetNode.CreateUnconnectedPayload(new ServerInfoRequestPackage()));
+
                 SendProbe();
                 await ServerDiscoveryService.PollAsync(
                     host,

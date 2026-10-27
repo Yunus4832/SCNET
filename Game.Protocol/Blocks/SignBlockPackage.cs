@@ -1,24 +1,23 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
+using MaxLengthAttribute = System.ComponentModel.DataAnnotations.MaxLengthAttribute;
+
 namespace Game.Protocol.Blocks;
 
-public sealed record SignBlockPackage : IProtocolMessage
+[MessagePackObject]
+public sealed record SignBlockPackage() : IProtocolMessage
 {
-    public Point3 Point { get; init; }
+    [Key(0)] public Point3 Point { get; init; }
 
-    public IReadOnlyList<string> Lines { get; init; } = [];
+    [Key(1), MaxLength(255)] public IReadOnlyList<string> Lines { get; init; } = [];
 
-    public IReadOnlyList<Color> Colors { get; init; } = [];
+    [Key(2), MaxLength(255)] public IReadOnlyList<Color> Colors { get; init; } = [];
 
-    public string Url { get; init; } = string.Empty;
+    [Key(3)] public string Url { get; init; } = string.Empty;
 
-    public byte ID => (byte)PackageType.SignBlock;
-
-    public SignBlockPackage()
-    {
-    }
-
-    public SignBlockPackage(Point3 point, string[] lines, Color[] colors, string url)
+    public SignBlockPackage(Point3 point, string[] lines, Color[] colors, string url) : this()
     {
         Point = point;
         Lines = lines.ToArray();

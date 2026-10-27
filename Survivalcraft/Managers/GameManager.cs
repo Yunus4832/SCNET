@@ -336,7 +336,7 @@ public static class GameManager
             {
                 var interest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
                 net.QueuePackage(
-                    new EntityPackage(arg.Entity.EntityId),
+                    new EntityRemovedPackage { EntityId = arg.Entity.EntityId },
                     PackageAudience.To(
                         interest.Entities.GetObservers(EntityInterestGroup.BlockEntities, arg.Entity.EntityId).ToArray()
                     )
@@ -347,7 +347,10 @@ public static class GameManager
 
             if (!IsInterestManagedBody(arg.Entity))
             {
-                net.QueuePackage(new EntityPackage(arg.Entity.EntityId), PackageAudience.Global);
+                net.QueuePackage(
+                    new EntityRemovedPackage { EntityId = arg.Entity.EntityId },
+                    PackageAudience.Global
+                );
             }
         };
         net.OnClientStateChanged += client => OnServerClientStateChanged(project, net, client);
@@ -421,7 +424,7 @@ public static class GameManager
     {
         client.SetProject(project);
         net.QueuePackage(
-            new ClientPackage(client.ID, client.State),
+            new ClientStateChangedPackage { ClientId = client.ID, State = client.State },
             PackageAudience.Except(client)
         );
         switch (client.State)

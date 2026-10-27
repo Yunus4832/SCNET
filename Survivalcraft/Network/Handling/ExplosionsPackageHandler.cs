@@ -15,23 +15,27 @@ public sealed class ExplosionsPackageHandler : PackageHandlerBase<ExplosionsPack
 
         var project = GameManager.Project;
         var sub = project.FindSubsystem<SubsystemExplosions>(true)!;
-        switch (package.Type)
+        switch (package)
         {
-            case ExplosionsPackage.EventType.Cell:
+            case ExplosionCellsPackage message1:
+            {
                 if ((ExplosionParticleSystem?)sub.ExplosionParticleSystem is null)
                 {
                     break;
                 }
 
-                foreach (var j in package.Cells.SelectMany(i => i.Value))
+                foreach (var j in message1.Cells.SelectMany(i => i.Value))
                 {
                     sub.ExplosionParticleSystem.SetExplosionCell(j.Position, j.Pressure);
                 }
 
                 break;
-            case ExplosionsPackage.EventType.Sound:
-                sub.PlayExplosionSound(package.Position, package.Level, package.Delay, true);
+            }
+            case ExplosionSoundPackage message2:
+            {
+                sub.PlayExplosionSound(message2.Position, message2.Level, message2.Delay, true);
                 break;
+            }
         }
     }
 }

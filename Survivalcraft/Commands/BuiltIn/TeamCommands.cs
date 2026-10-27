@@ -1,16 +1,21 @@
 using Game.Protocol.Identity;
 
+using MessagePack;
+
 namespace Game.Commands;
 
-public sealed record CreateTeamCommand(string Name) : IGameCommand;
+[MessagePackObject]
+public sealed record CreateTeamCommand([property: Key(0)] string Name) : IGameCommand;
 
-public sealed record RequestJoinTeamCommand(Guid TeamId) : IGameCommand;
+[MessagePackObject]
+public sealed record RequestJoinTeamCommand([property: Key(0)] Guid TeamId) : IGameCommand;
 
-public sealed record InvitePlayerToTeamCommand(PlayerAddress Player) : IGameCommand;
+[MessagePackObject]
+public sealed record InvitePlayerToTeamCommand([property: Key(0)] PlayerAddress Player) : IGameCommand;
 
-public sealed record RespondTeamRequestCommand(
-    Guid OperationId,
-    bool Accepted
-) : IGameCommand;
+[MessagePackObject]
+public sealed record RespondTeamRequestCommand([property: Key(0)] Guid OperationId, [property: Key(1)] bool Accepted)
+    : IGameCommand;
 
+[MessagePackObject]
 public sealed record LeaveTeamCommand : IGameCommand;

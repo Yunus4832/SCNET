@@ -22,29 +22,32 @@ public sealed class ComponentHealthPackageHandler : PackageHandlerBase<Component
         var project = GameManager.Project;
         if (context.IsServer)
         {
+            if (package is not EntityInjuryRequestPackage request) { return; }
+
             var player = project.FindSubsystem<SubsystemCharacters>(true)!.Characters
                 .FirstOrDefault(data => ReferenceEquals(data.Client, context.Sender))?.ComponentCharacter;
             var mount = player?.Entity.FindComponent<ComponentRider>()?.Mount;
             if (context.Sender is null ||
                 player is null ||
-                (package.TargetId != player.Entity.EntityId && package.TargetId != mount?.Entity.EntityId) ||
-                package.AttackerId != 0 ||
-                (package.IgnoreInvulnerability &&
-                 (package.InjureRequestType != ComponentHealthPackage.RequestInjureType.Choke ||
-                  package.TargetId != player.Entity.EntityId ||
-                  package.Amount != 0.1f)) ||
-                !float.IsFinite(package.Amount) ||
-                package.Amount <= 0f)
+                (request.TargetId != player.Entity.EntityId && request.TargetId != mount?.Entity.EntityId) ||
+                request.AttackerId != 0 ||
+                (request.IgnoreInvulnerability &&
+                 (request.InjureRequestType != ComponentHealthPackage.RequestInjureType.Choke ||
+                  request.TargetId != player.Entity.EntityId ||
+                  request.Amount != 0.1f)) ||
+                !float.IsFinite(request.Amount) ||
+                request.Amount <= 0f)
             {
                 return;
             }
         }
 
-        switch (package.Type)
+        switch (package)
         {
-            case ComponentHealthPackage.EventType.RequestInjure:
+            case EntityInjuryRequestPackage message1:
+            {
                 project.FindEntityById(
-                    package.TargetId,
+                    message1.TargetId,
                     entity =>
                     {
                         var health = entity.FindComponent<ComponentHealth>();
@@ -53,22 +56,22 @@ public sealed class ComponentHealthPackageHandler : PackageHandlerBase<Component
                             return;
                         }
 
-                        if (package.AttackerId == 0)
+                        if (message1.AttackerId == 0)
                         {
-                            health.Injure(package.Amount, null, package.IgnoreInvulnerability, package.Cause);
+                            health.Injure(message1.Amount, null, message1.IgnoreInvulnerability, message1.Cause);
                         }
                         else
                         {
                             project.FindEntityById(
-                                package.AttackerId,
+                                message1.AttackerId,
                                 entity2 =>
                                 {
                                     var attacker = entity2.FindComponent<ComponentCreature>();
                                     health.Injure(
-                                        package.Amount,
+                                        message1.Amount,
                                         attacker,
-                                        package.IgnoreInvulnerability,
-                                        package.Cause
+                                        message1.IgnoreInvulnerability,
+                                        message1.Cause
                                     );
                                 }
                             );
@@ -77,9 +80,11 @@ public sealed class ComponentHealthPackageHandler : PackageHandlerBase<Component
                 );
 
                 break;
-            case ComponentHealthPackage.EventType.Injure:
+            }
+            case EntityInjuryPackage message2:
+            {
                 project.FindEntityById(
-                    package.TargetId,
+                    message2.TargetId,
                     entity =>
                     {
                         var health = entity.FindComponent<ComponentHealth>();
@@ -89,10 +94,10 @@ public sealed class ComponentHealthPackageHandler : PackageHandlerBase<Component
                             return;
                         }
 
-                        if (package.AttackerId != 0)
+                        if (message2.AttackerId != 0)
                         {
                             project.FindEntityById(
-                                package.AttackerId,
+                                message2.AttackerId,
                                 entity2 =>
                                 {
                                     attacker = entity2.FindComponent<ComponentCreature>();
@@ -100,28 +105,32 @@ public sealed class ComponentHealthPackageHandler : PackageHandlerBase<Component
                             );
                         }
 
-                        health.NetInjure(package.Amount, attacker, package.Cause);
-                        health.Health = package.Health;
+                        health.NetInjure(message2.Amount, attacker, message2.Cause);
+                        health.Health = message2.Health;
                     }
                 );
                 break;
-            case ComponentHealthPackage.EventType.HitResult:
+            }
+            case CharacterHitEffectPackage message3:
+            {
                 var particleSystem =
-                    new HitValueParticleSystem(package.Position, package.Velocity, package.Color, package.Text);
+                    new HitValueParticleSystem(message3.Position, message3.Velocity, message3.Color, message3.Text);
                 var pitch = new Random().Float(-0.2f, 0.2f);
                 project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
                 project.FindSubsystem<SubsystemAudio>(true)!.PlaySound(
                     "Audio/Swoosh",
                     1f,
                     pitch,
-                    package.Position,
+                    message3.Position,
                     3f,
                     false
                 );
                 break;
-            case ComponentHealthPackage.EventType.SyncHealth:
+            }
+            case EntityHealthPackage message4:
+            {
                 project.FindEntityById(
-                    package.TargetId,
+                    message4.TargetId,
                     e =>
                     {
                         var h = e.FindComponent<ComponentHealth>();
@@ -130,26 +139,29 @@ public sealed class ComponentHealthPackageHandler : PackageHandlerBase<Component
                             return;
                         }
 
-                        h.Health = package.Health;
+                        h.Health = message4.Health;
                         // 服务端在死亡时通过 SyncHealth 携带死亡原因，
                         // 客户端在此应用，避免死亡视角显示“未知原因”。
-                        if (h.Health == 0f && !string.IsNullOrEmpty(package.Cause))
+                        if (h.Health == 0f && !string.IsNullOrEmpty(message4.Cause))
                         {
-                            h.CauseOfDeath = package.Cause;
+                            h.CauseOfDeath = message4.Cause;
                         }
                     }
                 );
                 break;
-            case ComponentHealthPackage.EventType.Damage:
+            }
+            case EntityDamagePackage message5:
+            {
                 project.FindEntityById(
-                    package.TargetId,
+                    message5.TargetId,
                     e =>
                     {
                         var h = e.FindComponent<ComponentDamage>();
-                        h?.HitPoints = package.Health;
+                        h?.HitPoints = message5.Health;
                     }
                 );
                 break;
+            }
         }
     }
 }

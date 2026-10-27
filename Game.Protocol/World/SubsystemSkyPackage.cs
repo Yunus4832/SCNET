@@ -1,8 +1,10 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
 namespace Game.Protocol.World;
 
-public sealed record SubsystemSkyPackage(Vector3 LightningStrikePosition) : IProtocolMessage
+[MessagePackObject]
+public sealed record SubsystemSkyPackage([property: Key(0)] Vector3 LightningStrikePosition) : IProtocolMessage
 {
-    public byte ID => (byte)PackageType.SubsystemSky;
 }

@@ -1,6 +1,11 @@
+using MessagePack;
+
 namespace Game.Protocol.Entities;
 
-public sealed record ComponentVitalStatPackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(EatRequestPackage))]
+[Union(1, typeof(VitalStatePackage))]
+public abstract record ComponentVitalStatPackage : IProtocolMessage
 {
     public enum EventType
     {
@@ -9,19 +14,7 @@ public sealed record ComponentVitalStatPackage : IProtocolMessage
         RequestEat = 1
     }
 
-    public float Food { get; init; }
+    [IgnoreMember] public abstract EventType PackageEventType { get; }
 
-    public int EntityId { get; init; }
-
-    public EventType PackageEventType { get; init; }
-
-    public float Sleep { get; init; }
-
-    public float Stamina { get; init; }
-
-    public float Temperature { get; init; }
-
-    public float Wetness { get; init; }
-
-    public byte ID => (byte)PackageType.ComponentVitalStat;
+    [Key(0)] public int EntityId { get; init; }
 }

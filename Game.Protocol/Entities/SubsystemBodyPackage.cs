@@ -1,8 +1,14 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
 namespace Game.Protocol.Entities;
 
-public sealed record SubsystemBodyPackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(BodyCollisionPackage))]
+[Union(1, typeof(BodyImpulsePackage))]
+[Union(2, typeof(BodyStatesPackage))]
+public abstract record SubsystemBodyPackage : IProtocolMessage
 {
     [Flags]
     public enum ChangeFlag : byte
@@ -20,6 +26,7 @@ public sealed record SubsystemBodyPackage : IProtocolMessage
         VelocityChange = 16
     }
 
+
     public enum EventType
     {
         BodyUpdate = 0,
@@ -29,34 +36,23 @@ public sealed record SubsystemBodyPackage : IProtocolMessage
         HandleAxisCollision = 2
     }
 
-    public IReadOnlyList<BodyItem> BodyList { get; init; } = [];
-
-    public int CreatureId { get; init; }
-
-    public EventType PackageEventType { get; init; }
-
-    public Vector3 Impulse { get; init; }
-
-    public int TargetCreatureId { get; init; }
-
-    public uint StateTick { get; init; }
-
-    public byte ID => (byte)PackageType.SubsystemBody;
-
+    [MessagePackObject]
     public record struct BodyItem
     {
-        public int CreatureId;
+        [Key(0)] public int CreatureId;
 
-        public Vector3 Position;
+        [Key(1)] public Vector3 Position;
 
-        public Vector3 Velocity;
+        [Key(2)] public Vector3 Velocity;
 
-        public Quaternion Rotation;
+        [Key(3)] public Quaternion Rotation;
 
-        public Vector2 LookAngles;
+        [Key(4)] public Vector2 LookAngles;
 
-        public Vector3? FlyOrder;
+        [Key(5)] public Vector3? FlyOrder;
 
-        public ChangeFlag ChangeFlag;
+        [Key(6)] public ChangeFlag ChangeFlag;
     }
+
+    [IgnoreMember] public abstract EventType PackageEventType { get; }
 }

@@ -1,5 +1,8 @@
+using MessagePack;
+
 namespace Game.Protocol.Entities;
 
+[MessagePackObject]
 public sealed record ComponentFluPackage : IProtocolMessage
 {
     public enum EventType
@@ -13,17 +16,15 @@ public sealed record ComponentFluPackage : IProtocolMessage
         Sneeze = 3
     }
 
-    public int EntityId { get; init; }
+    [Key(0)] public int EntityId { get; init; }
 
-    public float CoughDuration { get; init; }
+    [Key(1)] public float CoughDuration { get; init; }
 
-    public EventType PackageEventType { get; init; }
+    [Key(2)] public EventType PackageEventType { get; init; }
 
-    public float FluDuration { get; init; }
+    [Key(3)] public float FluDuration { get; init; }
 
-    public float FluOnset { get; init; }
+    [Key(4)] public float FluOnset { get; init; }
 
-    public float SneezeDuration { get; init; }
-
-    public byte ID => (byte)PackageType.ComponentFlu;
+    [Key(5)] public float SneezeDuration { get; init; }
 }

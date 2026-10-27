@@ -228,12 +228,9 @@ public sealed class LoadClient : IDisposable
                 if (_characterId == Guid.Empty)
                 {
                     Send(
-                        new CharacterDataPackage
+                        new CharacterCreateRequestPackage
                         {
-                            Type = CharacterDataPackage.DataType.Create,
-                            CreationRequestId = Guid.NewGuid(),
-                            CharacterName = Name,
-                            SkinName = "$Male1",
+                            CreationRequestId = Guid.NewGuid(), CharacterName = Name, SkinName = "$Male1",
                             CharacterSex = _defaultCharacterSex
                         }
                     );
@@ -241,16 +238,14 @@ public sealed class LoadClient : IDisposable
 
                 State = "joining";
                 break;
-            case CharacterDataPackage { Type: CharacterDataPackage.DataType.CreationRejected } rejected:
+            case CharacterCreateRejectedPackage rejected:
                 Fail($"Character creation rejected: {rejected.CreationError}");
                 break;
-            case EntityPackage { Type: EntityPackage.EventType.LoadOne or EntityPackage.EventType.LoadList } entities:
-                foreach (var player in entities.Characters)
-                {
-                    if (player.Client is { } session && session.ID == _id) { _characterId = session.CharacterId; }
-                }
-
-                ReadEntities(entities.CharacterEntities);
+            case SingleEntitySnapshotPackage entity:
+                ReadCharacterSnapshots(entity.Characters, entity.CharacterEntities);
+                break;
+            case EntitySnapshotPackage entities:
+                ReadCharacterSnapshots(entities.Characters, entities.CharacterEntities);
                 break;
             case CharacterPositionPackage position when position.ControllerSessionId == _id:
                 Position = position.Position;
@@ -258,18 +253,18 @@ public sealed class LoadClient : IDisposable
                 _movingSeconds = 0;
                 break;
             case ComponentMountPackage mount when mount.FromId == _entityId:
-                if (mount.Type == ComponentMountPackage.EventType.Dismount)
+                if (mount is DismountedPackage message2)
                 {
                     _mounted = false;
                     _dismountReadyAt = _clock.Elapsed.TotalSeconds + 1;
                 }
-                else if (mount.Type == ComponentMountPackage.EventType.Mount)
+                else if (mount is MountedPackage message1)
                 {
                     _mounted = true;
                 }
 
                 break;
-            case SubsystemTerrainPackage { Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment } terrain:
+            case TerrainFragmentPackage terrain:
                 if (_chunks.TryGetValue(terrain.ChunkFragment.Allocation.Coords, out var chunk) &&
                     !chunk.Completed &&
                     chunk.Allocation == terrain.ChunkFragment.Allocation &&
@@ -295,6 +290,19 @@ public sealed class LoadClient : IDisposable
 
                 break;
         }
+    }
+
+    private void ReadCharacterSnapshots(
+        IReadOnlyList<CharacterSnapshot> characters,
+        IReadOnlyList<CharacterEntitySnapshot> summaries
+    )
+    {
+        foreach (var character in characters)
+        {
+            if (character.Client is { } session && session.ID == _id) { _characterId = session.CharacterId; }
+        }
+
+        ReadEntities(summaries);
     }
 
     private void ReadEntities(IReadOnlyList<CharacterEntitySnapshot> entities)
@@ -358,15 +366,16 @@ public sealed class LoadClient : IDisposable
             _lastLocation = now;
             _locationCenter = Position.XZ;
             Send(
-                new CharacterDataPackage(
-                    new TerrainUpdateLocation
+                new CharacterUpdateLocationPackage
+                {
+                    UpdateLocation = new TerrainUpdateLocation
                     {
                         Center = Position.XZ,
                         ContentDistance = _options.Visibility,
                         VisibilityDistance = _options.Visibility,
                         LastChunksUpdateCenter = _locationCenter
                     }
-                )
+                }
             );
             UpdateChunks(now);
         }
@@ -375,10 +384,7 @@ public sealed class LoadClient : IDisposable
         if (_mounted && now - _lastDismountRequest >= 1)
         {
             _lastDismountRequest = now;
-            Send(
-                new ComponentMountPackage
-                    { Type = ComponentMountPackage.EventType.DismountRequest, FromId = _entityId }
-            );
+            Send(new DismountRequestPackage { FromId = _entityId });
         }
 
         if (State != "playing" &&
@@ -389,7 +395,7 @@ public sealed class LoadClient : IDisposable
         {
             State = "playing";
             PlayingSeconds = now;
-            Send(new ClientPackage(_id!.Value, ClientState.Playing));
+            Send(new ClientStateChangedPackage { ClientId = _id!.Value, State = ClientState.Playing });
             Send(new CharacterReadyPackage());
             Send(new CharacterFlightPackage { IsCreativeFly = true });
         }
@@ -459,7 +465,7 @@ public sealed class LoadClient : IDisposable
 
         if (requests.Count > 0)
         {
-            Send(new SubsystemTerrainPackage(requests));
+            Send(new TerrainChunksRequestPackage { ChunkRequests = requests.ToArray() });
         }
     }
 
@@ -475,7 +481,10 @@ public sealed class LoadClient : IDisposable
             }
             else
             {
-                Send(new SubsystemTerrainPackage([new ChunkContentRequest(chunk.Allocation)]));
+                Send(
+                    new TerrainChunksRequestPackage
+                        { ChunkRequests = [new ChunkContentRequest(chunk.Allocation)] }
+                );
             }
         }
     }

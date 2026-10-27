@@ -30,23 +30,31 @@ public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
 
         var project = GameManager.Project;
         var el = new List<Entity>();
-        switch (package.Type)
+        switch (package)
         {
-            case EntityPackage.EventType.LoadOne:
-            case EntityPackage.EventType.LoadList:
-                foreach (var snapshot in package.Characters)
+            case SingleEntitySnapshotPackage message1:
+            {
+                foreach (var snapshot in message1.Characters)
                 {
                     if (snapshot.Client is { } client && !netNode.Clients.ContainsKey(client.ID))
                     {
                         PackageDispatcher.Handle(
-                            new ClientPackage(client.ID, client.TokenId, client.CharacterId, client.PlayerAddress),
+                            new ClientAddedPackage
+                            {
+                                Client = new ClientIdentity(
+                                    client.ID,
+                                    client.TokenId,
+                                    client.CharacterId,
+                                    client.PlayerAddress
+                                )
+                            },
                             context
                         );
                     }
                 }
 
                 var players = project.FindSubsystem<SubsystemCharacters>(true)!;
-                foreach (var snapshot in package.Characters)
+                foreach (var snapshot in message1.Characters)
                 {
                     var values = new EntitySystem.TemplatesDatabase.ValuesDictionary();
                     values.ApplyOverridesUseMessagePack(snapshot.Data);
@@ -59,19 +67,61 @@ public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
                     }
                 }
 
-                project.AddEntities(EntitySnapshotSerializer.Deserialize(project, package.EntityData));
+                project.AddEntities(EntitySnapshotSerializer.Deserialize(project, message1.EntityData));
                 break;
-            case EntityPackage.EventType.Remove:
-                project.FindEntityById(package.EntityId, entity => { project.RemoveEntity(entity, true); });
+            }
+            case EntitySnapshotPackage message2:
+            {
+                foreach (var snapshot in message2.Characters)
+                {
+                    if (snapshot.Client is { } client && !netNode.Clients.ContainsKey(client.ID))
+                    {
+                        PackageDispatcher.Handle(
+                            new ClientAddedPackage
+                            {
+                                Client = new ClientIdentity(
+                                    client.ID,
+                                    client.TokenId,
+                                    client.CharacterId,
+                                    client.PlayerAddress
+                                )
+                            },
+                            context
+                        );
+                    }
+                }
+
+                var players = project.FindSubsystem<SubsystemCharacters>(true)!;
+                foreach (var snapshot in message2.Characters)
+                {
+                    var values = new EntitySystem.TemplatesDatabase.ValuesDictionary();
+                    values.ApplyOverridesUseMessagePack(snapshot.Data);
+                    var guid = values.GetValue("CharacterId", Guid.Empty);
+                    if (players.Characters.All(player => player.CharacterId != guid))
+                    {
+                        var player = new CharacterData(project);
+                        player.Load(values);
+                        players.AddCharacterData(player);
+                    }
+                }
+
+                project.AddEntities(EntitySnapshotSerializer.Deserialize(project, message2.EntityData));
                 break;
-            case EntityPackage.EventType.RequestSync:
+            }
+            case EntityRemovedPackage message3:
+            {
+                project.FindEntityById(message3.EntityId, entity => { project.RemoveEntity(entity, true); });
+                break;
+            }
+            case EntitySyncRequestPackage message4:
+            {
                 if (!isServer || context.Sender is null)
                 {
                     break;
                 }
 
                 var interest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
-                foreach (var e in package.EntityIdList)
+                foreach (var e in message4.EntityIdList)
                 {
                     project.FindEntityById(
                         e,
@@ -119,6 +169,7 @@ public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
                 }
 
                 break;
+            }
         }
     }
 }

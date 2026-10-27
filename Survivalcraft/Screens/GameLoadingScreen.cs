@@ -125,7 +125,10 @@ public class GameLoadingScreen : Screen
             {
                 if (CommonLib.Net.CurrentStage == Stage.Connected)
                 {
-                    NetworkSender.SendToServer(new ClientPackage(CommonLib.Net.Self!.ID, ClientState.Connected));
+                    NetworkSender.SendToServer(
+                        new ClientStateChangedPackage
+                            { ClientId = CommonLib.Net.Self!.ID, State = ClientState.Connected }
+                    );
                 }
             }
         );

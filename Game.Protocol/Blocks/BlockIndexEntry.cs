@@ -1,3 +1,6 @@
+using MessagePack;
+
 namespace Game.Protocol.Blocks;
 
-public readonly record struct BlockIndexEntry(ResourceId Id, ushort Index);
+[MessagePackObject]
+public readonly record struct BlockIndexEntry([property: Key(0)] ResourceId Id, [property: Key(1)] ushort Index);

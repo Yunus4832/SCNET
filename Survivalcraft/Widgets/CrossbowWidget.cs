@@ -114,11 +114,8 @@ public class CrossbowWidget : CanvasWidget
                     if (CommonLib.WorkType == WorkType.Client)
                     {
                         NetworkSender.SendToServer(
-                            new BlockEditPackage(
-                                _inventory.Id,
-                                _slotIndex,
-                                BlockEditPackage.EventType.CrossbowPull
-                            )
+                            new CrossbowPullPackage
+                                { InventoryId = _inventory.Id, SlotIndex = _slotIndex }
                         );
                     }
 

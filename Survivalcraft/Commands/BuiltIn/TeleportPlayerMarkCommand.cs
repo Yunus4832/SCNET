@@ -1,3 +1,10 @@
+using MessagePack;
+
 namespace Game.Commands;
 
-public sealed record TeleportPlayerMarkCommand(string Player, string Name, bool Public) : IGameCommand;
+[MessagePackObject]
+public sealed record TeleportPlayerMarkCommand(
+    [property: Key(0)] string Player,
+    [property: Key(1)] string Name,
+    [property: Key(2)] bool Public
+) : IGameCommand;

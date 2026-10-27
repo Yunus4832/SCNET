@@ -27,23 +27,15 @@ public sealed class SimpleMessageTest
     [MemberData(nameof(Messages))]
     public void SimpleRecordsRoundTrip(IProtocolMessage message)
     {
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        var result = ProtocolMessageCodec.Read(message.ID, reader);
-        Assert.Equal(message, result);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
+        var payload = ProtocolMessageCodec.Encode(message);
+        Assert.Equal(message, ProtocolMessageCodec.Decode(payload));
     }
 
     [Fact]
     public void UnknownConnectionPhaseIsRejected()
     {
-        using var writer = new ProtocolWriter();
-        writer.Write(Guid.NewGuid());
-        writer.Write((byte)255);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() =>
-            ProtocolMessageCodec.Read((byte)PackageType.ConnectionPhaseAck, reader)
-        );
+        var message = new ConnectionPhaseAckPackage(Guid.NewGuid(), ConnectionPhase.BootstrapApplied);
+        var malformed = WireTestData.ReplaceField(message, 1, [0xcc, 255]);
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(malformed));
     }
 }

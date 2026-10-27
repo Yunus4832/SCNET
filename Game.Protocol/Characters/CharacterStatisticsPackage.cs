@@ -1,8 +1,11 @@
+using MessagePack;
+
 namespace Game.Protocol.Characters;
 
+[MessagePackObject]
 public sealed record CharacterStatisticsPackage : ComponentCharacterPackage
 {
-    public override CharacterAction Type => CharacterAction.SyncStat;
+    [IgnoreMember] public override CharacterAction Type => CharacterAction.SyncStat;
 
-    public byte[] Stat { get; init; } = [];
+    [Key(1)] public byte[] Stat { get; init; } = [];
 }

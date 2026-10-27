@@ -21,12 +21,13 @@ public sealed class WorldSnapshotCodecTest
         var sample = new InitialWorldSnapshotPackage
         {
             Epoch = _identity,
-            ClientList = new ClientPackage(
-                1,
-                _identity,
-                _identity,
-                new PlayerAddress(IdentityAddress.Encode(new byte[32]))
-            ),
+            ClientList = new ClientListPackage
+            {
+                List =
+                [
+                    new ClientIdentity(1, _identity, _identity, new PlayerAddress(IdentityAddress.Encode(new byte[32])))
+                ]
+            },
             Characters = [new byte[] { 1, 2, 3 }],
             EntityData = [4, 5, 6],
             CharacterEntities = [new CharacterEntitySnapshot(_identity, 42, new Vector3(-100, 80, 200), 12)]
@@ -39,37 +40,24 @@ public sealed class WorldSnapshotCodecTest
     }
 
     [Fact]
-    public void ExplicitMetadataPrecedesTheCapturedLargeEntityPayload()
+    public void LargeOpaqueEntityPayloadPreservesSessionMetadata()
     {
-        var frame = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "initial-snapshot.bin"));
-        var original = ProtocolFrameCodec.DecodeFrame(frame);
         var message = new InitialWorldSnapshotPackage
         {
             Epoch = _identity,
-            ClientList = new ClientPackage(
-                1,
-                _identity,
-                _identity,
-                new PlayerAddress(IdentityAddress.Encode(new byte[32]))
-            ),
+            ClientList = new ClientListPackage
+            {
+                List =
+                [
+                    new ClientIdentity(1, _identity, _identity, new PlayerAddress(IdentityAddress.Encode(new byte[32])))
+                ]
+            },
             EntityData = Enumerable.Range(0, 4096).Select(index => (byte)index).ToArray()
         };
-        using var writer = new ProtocolWriter();
-        writer.Write((byte)0x88);
-        writer.Write(message.ID);
-        ProtocolMessageCodec.Write(message, writer);
-        var payload = ProtocolFrameCodec.DecodeFrame(writer.Data(CompressionPolicy.None));
-        // Add the new subject-address field independently of the codec under test.
-        const int addressOffset = 2 + 17 + 1 + 1 + 17 + 17;
-        var updated = original[..addressOffset]
-            .Concat(new byte[] { IdentityAddress.EncodedLength })
-            .Concat(System.Text.Encoding.ASCII.GetBytes(IdentityAddress.Encode(new byte[32])))
-            .Concat(new byte[] { (byte)ClientState.NotConnected })
-            .Concat(original[addressOffset..])
-            .ToArray();
-        var payloadOffset = updated.Length - 4096 - sizeof(int);
-        var expected = updated[..payloadOffset].Concat(new byte[2]).Concat(updated[payloadOffset..]).ToArray();
-        Assert.Equal(expected, payload);
+        var restored = RoundTrip(message);
+        Assert.Equal(message.Epoch, restored.Epoch);
+        Assert.Equal(message.ClientList.List, restored.ClientList.List);
+        Assert.Equal(message.EntityData, restored.EntityData);
     }
 
     [Fact]
@@ -79,9 +67,13 @@ public sealed class WorldSnapshotCodecTest
         {
             Epoch = _identity,
             World = new WorldMetadata("Test", 123, 0, 20),
-            ClientList = new ClientPackage(
-                [new ClientIdentity(1, _identity, _identity, new PlayerAddress(IdentityAddress.Encode(new byte[32])))]
-            ),
+            ClientList = new ClientListPackage
+            {
+                List =
+                [
+                    new ClientIdentity(1, _identity, _identity, new PlayerAddress(IdentityAddress.Encode(new byte[32])))
+                ]
+            },
             BlockMapping = [new BlockIndexEntry(ResourceId.Parse("example:block"), 300)],
             ProjectData = [1, 2, 3],
             TextureData = [4, 5]
@@ -99,39 +91,32 @@ public sealed class WorldSnapshotCodecTest
     [InlineData(EntityPackage.EventType.LoadList)]
     public void EntityMessagesCarrySnapshotsRatherThanRuntimeEntities(EntityPackage.EventType type)
     {
-        var message = new EntityPackage
+        var characters = new[]
         {
-            Type = type,
-            EntityData = [5, 6],
-            Characters =
-            [
-                new CharacterSnapshot(
-                    [1, 2],
-                    new ClientIdentity(1, _identity, _identity, new PlayerAddress(IdentityAddress.Encode(new byte[32])))
-                )
-            ],
-            CharacterEntities = [new CharacterEntitySnapshot(_identity, 42, Vector3.One, 0)]
+            new CharacterSnapshot(
+                [1, 2],
+                new ClientIdentity(1, _identity, _identity, new PlayerAddress(IdentityAddress.Encode(new byte[32])))
+            )
         };
-        var restored = RoundTrip(message);
-        Assert.Equal(message.EntityData, restored.EntityData);
-        Assert.Equal(message.Characters[0].Data, Assert.Single(restored.Characters).Data);
-        Assert.Equal(message.Characters[0].Client, restored.Characters[0].Client);
-        Assert.Equal(message.CharacterEntities[0], Assert.Single(restored.CharacterEntities));
+        var summaries = new[] { new CharacterEntitySnapshot(_identity, 42, Vector3.One, 0) };
+        EntityPackage message = type == EntityPackage.EventType.LoadOne
+            ? new SingleEntitySnapshotPackage
+                { EntityData = [5, 6], Characters = characters, CharacterEntities = summaries }
+            : new EntitySnapshotPackage { EntityData = [5, 6], Characters = characters, CharacterEntities = summaries };
+        var encoded = ProtocolMessageCodec.Encode(message);
+        Assert.Equal(encoded, ProtocolMessageCodec.Encode(ProtocolMessageCodec.Decode(encoded)));
     }
 
     [Fact]
     public void DuplicateAndTruncatedPlayerEntityMetadataAreRejected()
     {
         var summary = new CharacterEntitySnapshot(_identity, 42, Vector3.One, 0);
-        var message = new EntityPackage
-            { Type = EntityPackage.EventType.LoadOne, CharacterEntities = [summary, summary] };
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read(message.ID, reader));
-        var bytes = ProtocolFrameCodec.DecodeFrame(writer.Data(CompressionPolicy.None));
-        using var truncated = new ProtocolReader(new MemoryStream(bytes[..^1]));
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read(message.ID, truncated));
+        var message = new SingleEntitySnapshotPackage { CharacterEntities = [summary] };
+        Assert.Throws<InvalidDataException>(() =>
+            ProtocolMessageCodec.Encode(message with { CharacterEntities = [summary, summary] })
+        );
+        var payload = ProtocolMessageCodec.Encode(message);
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(payload.AsMemory(0, payload.Length - 1)));
     }
 
     [Fact]
@@ -148,11 +133,10 @@ public sealed class WorldSnapshotCodecTest
 
     private static T RoundTrip<T>(T message) where T : IProtocolMessage
     {
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        var restored = (T)ProtocolMessageCodec.Read(message.ID, reader);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
+        var writer = ProtocolMessageCodec.Encode(message);
+        var reader = writer;
+        var restored = (T)ProtocolMessageCodec.Decode(reader);
+
         return restored;
     }
 }

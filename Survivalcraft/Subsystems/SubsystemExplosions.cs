@@ -343,8 +343,8 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                 var flag = false;
                 var probability = num6 > 5f ? 0.95f : 0.75f;
                 if (SharedRandom.Bool(probability))
-                    //爆炸方块
                 {
+                    //爆炸方块
                     flag = TryNetExplodeBlock(x, y, z, cellValue);
                 }
 
@@ -647,7 +647,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             if (observers.Length > 0)
             {
                 CommonLib.Net.QueuePackage(
-                    new ExplosionsPackage(position, num2, delay),
+                    new ExplosionSoundPackage { Position = position, Level = num2, Delay = delay },
                     PackageAudience.To(observers)
                 );
             }

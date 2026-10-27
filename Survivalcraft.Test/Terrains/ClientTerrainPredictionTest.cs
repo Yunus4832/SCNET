@@ -302,17 +302,11 @@ public sealed class ClientTerrainPredictionTest
     [Fact]
     public void CompletionPacketRoundTripsAndOnlyAcceptsServerDirection()
     {
-        var package = new SubsystemTerrainPackage
-        {
-            Type = SubsystemTerrainPackage.DataType.CellEditCompleted,
-            EditRequestId = 123,
-            EditedCell = _cell,
-            EditContentVersion = 789
-        };
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var restored = Assert.IsType<SubsystemTerrainPackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var package = new TerrainCellEditCompletedPackage
+            { EditRequestId = 123, EditedCell = _cell, EditContentVersion = 789 };
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var restored = Assert.IsType<TerrainCellEditCompletedPackage>(ProtocolMessageCodec.Decode(reader));
         Assert.Equal(package.EditRequestId, restored.EditRequestId);
         Assert.Equal(package.EditedCell, restored.EditedCell);
         Assert.Equal(package.EditContentVersion, restored.EditContentVersion);

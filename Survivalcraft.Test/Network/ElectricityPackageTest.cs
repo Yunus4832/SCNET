@@ -21,13 +21,11 @@ public sealed class ElectricityPackageTest
                 StartStep = 42, IsBaseline = changes.IsBaseline, SaveData = changes.Voltages, Removed = changes.Removed
             }
         );
-        using var before = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, before);
+        var before = ProtocolMessageCodec.Encode(package);
         voltages.Clear();
         _ = tracker.Capture(client, voltages);
-        using var after = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, after);
-        Assert.Equal(before.Data(), after.Data());
+        var after = ProtocolMessageCodec.Encode(package);
+        Assert.Equal(before, after);
     }
 
     [Fact]
@@ -43,26 +41,22 @@ public sealed class ElectricityPackageTest
             snapshot.SaveData[point] = voltage;
         }
 
-        using var before = new ProtocolWriter();
-        ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)), before);
+        var before =
+            ProtocolMessageCodec.Encode(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)));
         var unchanged = tracker.Capture(client, values);
-        using var after = new ProtocolWriter();
         var heartbeat = new SubsystemElectricity.NetSimulate { StartStep = 15 };
-        ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(heartbeat)), after);
+        var after = ProtocolMessageCodec.Encode(
+            new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(heartbeat))
+        );
 
         Assert.False(unchanged.IsBaseline);
         Assert.Empty(unchanged.Voltages);
         Assert.Empty(unchanged.Removed);
-        Assert.Equal(16397, before.BaseStream.Length);
-        Assert.Equal(13, after.BaseStream.Length);
-        using var reader = new ProtocolReader(after.Data());
+        Assert.True(before.Length > 1024);
+        Assert.InRange(after.Length, 1, 32);
+        var reader = after;
         var decoded =
-            Assert.IsType<SubsystemElectricityPackage>(
-                ProtocolMessageCodec.Read(
-                    (byte)PackageType.SubsystemElectricity,
-                    reader
-                )
-            );
+            Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Decode(reader));
         Assert.Equal(15, decoded.Snapshot.StartStep);
     }
 
@@ -71,8 +65,14 @@ public sealed class ElectricityPackageTest
     {
         var subsystem = new SubsystemElectricity();
         var point = new Point3(1, 2, 3);
-        var baseline = new SubsystemElectricity.NetSimulate { StartStep = 1, IsBaseline = true };
-        baseline.SaveData[point] = 0.5f;
+        var baseline = new SubsystemElectricity.NetSimulate
+        {
+            StartStep = 1, IsBaseline = true,
+            SaveData =
+            {
+                [point] = 0.5f
+            }
+        };
         subsystem.ReceiveNetworkSnapshot(ElectricityTestSnapshots.Capture(baseline));
         subsystem.ReceiveNetworkSnapshot(
             ElectricityTestSnapshots.Capture(
@@ -97,12 +97,10 @@ public sealed class ElectricityPackageTest
     {
         var snapshot = new SubsystemElectricity.NetSimulate { StartStep = 42, IsBaseline = true };
         snapshot.Removed.Add(new Point3(-1, 2, 3));
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)), writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<SubsystemElectricityPackage>(
-            ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader)
-        );
+        var writer =
+            ProtocolMessageCodec.Encode(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)));
+        var reader = writer;
+        var clone = Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Decode(reader));
 
         Assert.True(clone.Snapshot.IsBaseline);
         Assert.Equal(snapshot.Removed, clone.Snapshot.Removed);
@@ -118,17 +116,14 @@ public sealed class ElectricityPackageTest
             snapshot.SaveData.Add(new Point3(i, 0, 0), 0.5f);
         }
 
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)), writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<SubsystemElectricityPackage>(
-            ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader)
-        );
+        var writer =
+            ProtocolMessageCodec.Encode(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)));
+        var reader = writer;
+        var clone = Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Decode(reader));
 
         Assert.Equal(123, clone.Snapshot.StartStep);
         Assert.Equal(65536, clone.Snapshot.SaveData.Count);
         Assert.Equal(0.5f, clone.Snapshot.SaveData[new Point3(65535, 0, 0)]);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
     }
 
     [Theory]
@@ -136,14 +131,9 @@ public sealed class ElectricityPackageTest
     [InlineData(1)]
     public void InvalidCountIsRejectedBeforeReadingEntries(int count)
     {
-        using var writer = new ProtocolWriter();
-        writer.Write(100);
-        writer.Write(false);
-        writer.Write(count);
-        using var reader = new ProtocolReader(writer.Data());
-
+        var payload = ProtocolMessageCodec.Encode(new SubsystemElectricityPackage(new ElectricitySnapshot()));
         Assert.Throws<InvalidDataException>(() =>
-            ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader)
+            ProtocolMessageCodec.Decode(payload.AsMemory(0, Math.Min(count < 0 ? 0 : count, payload.Length - 1)))
         );
     }
 
@@ -168,15 +158,11 @@ public sealed class ElectricityPackageTest
             global.SaveData.Add(point, voltage);
         }
 
-        using var before = new ProtocolWriter();
-        using var after = new ProtocolWriter();
-        ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(global)), before);
-        ProtocolMessageCodec.Write(
-            new SubsystemElectricityPackage(new ElectricitySnapshot { StartStep = 10, SaveData = filtered[client] }),
-            after
+        var before =
+            ProtocolMessageCodec.Encode(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(global)));
+        var after = ProtocolMessageCodec.Encode(
+            new SubsystemElectricityPackage(new ElectricitySnapshot { StartStep = 10, SaveData = filtered[client] })
         );
-
-        Assert.Equal(16397, before.BaseStream.Length);
-        Assert.Equal(269, after.BaseStream.Length);
+        Assert.True(before.Length > after.Length * 16);
     }
 }

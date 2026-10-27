@@ -44,13 +44,10 @@ public sealed class ElectricityBoundaryReplicationTest
                 StartStep = step, IsBaseline = changes.IsBaseline, SaveData = changes.Voltages,
                 Removed = changes.Removed
             };
-            using var writer = new ProtocolWriter();
-            ProtocolMessageCodec.Write(new SubsystemElectricityPackage(snapshot), writer);
-            using var reader = new ProtocolReader(writer.Data());
+            var writer = ProtocolMessageCodec.Encode(new SubsystemElectricityPackage(snapshot));
+            var reader = writer;
             var received =
-                Assert.IsType<SubsystemElectricityPackage>(
-                    ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader)
-                );
+                Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Decode(reader));
             receiver.ReceiveNetworkSnapshot(received.Snapshot);
         }
     }

@@ -16,7 +16,7 @@ public sealed class CharacterDataPackageHandler : PackageHandlerBase<CharacterDa
             : type is CharacterDataPackage.DataType.Modify or CharacterDataPackage.DataType.CreationRejected;
 
     internal static CharacterCreationError? ValidateCreation(
-        CharacterDataPackage package,
+        CharacterCreateRequestPackage package,
         Client? sender,
         SubsystemCharacters players,
         WorldPlayerStore playerStore,
@@ -68,27 +68,24 @@ public sealed class CharacterDataPackageHandler : PackageHandlerBase<CharacterDa
         var project = GameManager.Project;
         CharacterData? characterData;
         var subsystemCharacters = project.FindSubsystem<SubsystemCharacters>(true)!;
-        switch (package.Type)
+        switch (package)
         {
-            case CharacterDataPackage.DataType.Create:
-
+            case CharacterCreateRequestPackage message1:
+            {
                 void Reject(CharacterCreationError error)
                 {
                     if (context.Sender is { } sender)
                     {
                         netNode.QueuePackage(
-                            new CharacterDataPackage
-                            {
-                                Type = CharacterDataPackage.DataType.CreationRejected,
-                                CreationRequestId = package.CreationRequestId, CreationError = error
-                            },
+                            new CharacterCreateRejectedPackage
+                                { CreationRequestId = message1.CreationRequestId, CreationError = error },
                             PackageAudience.To(sender)
                         );
                     }
                 }
 
                 var error = ValidateCreation(
-                    package,
+                    message1,
                     context.Sender,
                     subsystemCharacters,
                     project.FindSubsystem<SubsystemPlayers>(true)!.Store,
@@ -106,53 +103,60 @@ public sealed class CharacterDataPackageHandler : PackageHandlerBase<CharacterDa
                     CharacterId = Guid.NewGuid(),
                     OwnerAddress = context.Sender!.PlayerAddress!.Value,
                     Name = name,
-                    CharacterSkinName = package.SkinName,
+                    CharacterSkinName = message1.SkinName,
                     CharacterSex = requestedClass
                 };
                 context.Sender!.CharacterId = characterData.CharacterId;
                 subsystemCharacters.AddCharacterData(characterData);
                 netNode.QueuePackage(CharacterPackageBuilder.Capture(subsystemCharacters), PackageAudience.Global);
                 break;
-            case CharacterDataPackage.DataType.CreationRejected:
-                subsystemCharacters.RejectCharacterCreation(package.CreationRequestId, package.CreationError);
+            }
+            case CharacterCreateRejectedPackage message2:
+            {
+                subsystemCharacters.RejectCharacterCreation(message2.CreationRequestId, message2.CreationError);
                 break;
-            case CharacterDataPackage.DataType.Modify:
-                if (!ProtocolEnum.TryDecode(package.CharacterSex, out CharacterSex updatedClass))
+            }
+            case CharacterProfilePackage message3:
+            {
+                if (!ProtocolEnum.TryDecode(message3.CharacterSex, out CharacterSex updatedClass))
                 {
                     break;
                 }
 
-                var characterData2 = subsystemCharacters.FindCharacterData(p => p.CharacterId == package.CharacterId);
+                var characterData2 = subsystemCharacters.FindCharacterData(p => p.CharacterId == message3.CharacterId);
                 if (characterData2 != null)
                 {
-                    characterData2.Name = package.CharacterName;
-                    characterData2.CharacterSkinName = package.SkinName;
+                    characterData2.Name = message3.CharacterName;
+                    characterData2.CharacterSkinName = message3.SkinName;
                     characterData2.CharacterSex = updatedClass;
                 }
 
                 break;
-            case CharacterDataPackage.DataType.SetUpdateLocation:
+            }
+            case CharacterUpdateLocationPackage message4:
+            {
                 var player = subsystemCharacters.Characters.Find(x => ReferenceEquals(x.Client, context.Sender));
                 if (player == null)
                 {
                     Log.Warning(
                         $"Ignored terrain update location without matching player: " +
-                        $"client={context.Sender?.ID.ToString() ?? "null"}, center={package.UpdateLocation.Center}."
+                        $"client={context.Sender?.ID.ToString() ?? "null"}, center={message4.UpdateLocation.Center}."
                     );
                     break;
                 }
 
                 if (context.Sender is null ||
                     !project.FindSubsystem<SubsystemNetworkInterest>(true)!
-                        .SetRequestedLocation(context.Sender, player, package.UpdateLocation))
+                        .SetRequestedLocation(context.Sender, player, message4.UpdateLocation))
                 {
                     Log.Warning(
                         $"Rejected invalid terrain update location: client={context.Sender?.ID.ToString() ?? "null"}, " +
-                        $"center={package.UpdateLocation.Center}."
+                        $"center={message4.UpdateLocation.Center}."
                     );
                 }
 
                 break;
+            }
         }
     }
 }

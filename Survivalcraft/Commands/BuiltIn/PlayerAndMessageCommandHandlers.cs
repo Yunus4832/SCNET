@@ -118,7 +118,7 @@ internal static class PlayerAndMessageCommandHandlers
         actor.CharacterSkinName = skinName;
         actor.CharacterSex = characterSex;
         CommonLib.Net.QueuePackage(
-            CharacterPackageBuilder.Capture(actor, CharacterDataPackage.DataType.Modify),
+            CharacterPackageBuilder.CaptureProfile(actor),
             PackageAudience.Global
         );
         CommonLib.Net.QueuePackage(CharacterPackageBuilder.Capture(players), PackageAudience.Global);
@@ -138,10 +138,7 @@ internal static class PlayerAndMessageCommandHandlers
     {
         if (player.Client is not null)
         {
-            var snapshot = CharacterPackageBuilder.Capture(
-                player,
-                CharacterDataPackage.DataType.Modify
-            );
+            var snapshot = CharacterPackageBuilder.CaptureProfile(player);
             CommonLib.Net.QueuePackage(snapshot, PackageAudience.To(player.Client));
         }
 

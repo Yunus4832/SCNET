@@ -45,55 +45,35 @@ public sealed class CommandCodecTest
     [MemberData(nameof(Modes))]
     public void EveryCommandModeRoundTripsWithoutRuntimeExecution(CommandPackage message)
     {
-        Assert.True(ProtocolMessageCodec.IsDefined(message.ID));
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        var bytes = writer.Data(CompressionPolicy.None);
-        using var reader = new ProtocolReader(bytes);
-        var restored = Assert.IsType<CommandPackage>(ProtocolMessageCodec.Read(message.ID, reader));
+        Assert.True(ProtocolMessageCodec.IsDefined(message.GetType()));
+        var writer = ProtocolMessageCodec.Encode(message);
+        var bytes = writer;
+        var reader = bytes;
+        var restored = Assert.IsAssignableFrom<CommandPackage>(ProtocolMessageCodec.Decode(reader));
         Assert.Equal(message.Mode, restored.Mode);
         Assert.Equal(message.CorrelationId, restored.CorrelationId);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
-        using var repeated = new ProtocolWriter();
-        ProtocolMessageCodec.Write(restored, repeated);
-        Assert.Equal(bytes, repeated.Data(CompressionPolicy.None));
+
+        var repeated = ProtocolMessageCodec.Encode(restored);
+        Assert.Equal(bytes, repeated);
     }
 
-    [Theory]
-    [InlineData(CommandPackage.CommandPackageMode.Request, 4096)]
-    public void ParameterPayloadLimitsAreEnforcedBeforeReadingOrWriting(
-        CommandPackage.CommandPackageMode mode,
-        int maximumLength
-    )
+    [Fact]
+    public void ParameterPayloadLimitsAreEnforcedBeforeReadingOrWriting()
     {
-        var identity = ResourceId.Parse("game:time");
-        var message = new CommandPackage(mode, "request")
-        {
-            CommandId = identity,
-            Payload = new byte[maximumLength]
-        };
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        var restored = Assert.IsType<CommandPackage>(ProtocolMessageCodec.Read(message.ID, reader));
-        Assert.Equal(identity, restored.CommandId);
+        const int maximumLength = ProtocolLimits.MaximumCommandPayloadLength;
+        var message = new CommandRequestPackage
+            { CommandId = ResourceId.Parse("game:time"), Payload = new byte[maximumLength] };
+        var restored =
+            Assert.IsType<CommandRequestPackage>(ProtocolMessageCodec.Decode(ProtocolMessageCodec.Encode(message)));
+        Assert.Equal(message.CommandId, restored.CommandId);
         Assert.Equal(message.Payload, restored.Payload);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
-
-        using var oversized = new ProtocolWriter();
-        Assert.Throws<ArgumentException>(() => ProtocolMessageCodec.Write(
-                message with { Payload = new byte[maximumLength + 1] },
-                oversized
-            )
+        Assert.Throws<InvalidDataException>(() =>
+            ProtocolMessageCodec.Encode(message with { Payload = new byte[maximumLength + 1] })
         );
-        using var malformed = new ProtocolWriter();
-        malformed.WriteEnum(mode);
-        malformed.Write("request");
-        malformed.Write(identity.Namespace.Value);
-        malformed.Write(identity.Path);
-        malformed.Write(maximumLength + 1);
-        using var malformedReader = new ProtocolReader(malformed.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read(message.ID, malformedReader));
+        var oversized = MessagePack.MessagePackSerializer.Serialize(new byte[maximumLength + 1]);
+        Assert.Throws<InvalidDataException>(() =>
+            ProtocolMessageCodec.Decode(WireTestData.ReplaceField(message, 2, oversized))
+        );
     }
 
     [Fact]
@@ -122,11 +102,10 @@ public sealed class CommandCodecTest
             Presentation: GameMessagePresentation.History | GameMessagePresentation.Toast,
             CloseInputOnSuccess: true
         );
-        var message = new CommandPackage(CommandPackage.CommandPackageMode.Result, "request") { Result = response };
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        var restored = Assert.IsType<CommandPackage>(ProtocolMessageCodec.Read(message.ID, reader)).Result!;
+        var message = new CommandResultPackage { CorrelationId = "request", Result = response };
+        var writer = ProtocolMessageCodec.Encode(message);
+        var reader = writer;
+        var restored = Assert.IsType<CommandResultPackage>(ProtocolMessageCodec.Decode(reader)).Result!;
         Assert.Equal(response.Success, restored.Success);
         Assert.Equal(response.Code, restored.Code);
         Assert.Equal(response.Message, restored.Message);
@@ -139,6 +118,5 @@ public sealed class CommandCodecTest
             restored.Presentation
         );
         Assert.True(restored.CloseInputOnSuccess);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
     }
 }

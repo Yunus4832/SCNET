@@ -15,7 +15,7 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                 .EnsureBlockEntityObserved(client, block);
         }
 
-        NetworkSender.SendTo(client, new BlockEditPackage(inventory.Id));
+        NetworkSender.SendTo(client, new OpenInventoryPackage { InventoryId = inventory.Id });
     }
 
     public override void Handle(BlockEditPackage package, PackageReceiveContext context)
@@ -35,12 +35,13 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
         var project = GameManager.Project;
 
         var subsystemInventories = project.FindSubsystem<SubsystemInventories>(true)!;
-        switch (package.Type)
+        switch (package)
         {
-            case BlockEditPackage.EventType.OpenInventoryByID:
+            case OpenInventoryPackage message1:
+            {
                 if (isServer)
                 {
-                    var inventory = subsystemInventories.GetInventoryById(package.InventoryId);
+                    var inventory = subsystemInventories.GetInventoryById(message1.InventoryId);
                     if (inventory != null && SubsystemInventories.CanClientAccess(inventory, context.Sender))
                     {
                         ReplyOpenInventory(inventory, context.Sender);
@@ -48,7 +49,7 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                 }
                 else
                 {
-                    var inventory = subsystemInventories.GetInventoryById(package.InventoryId);
+                    var inventory = subsystemInventories.GetInventoryById(message1.InventoryId);
                     if (inventory != null)
                     {
                         var player = CommonLib.LocalCharacter;
@@ -89,18 +90,20 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                 }
 
                 break;
-            case BlockEditPackage.EventType.OpenInventoryByPoint:
+            }
+            case OpenBlockInventoryPackage message2:
+            {
                 if (isServer)
                 {
                     if (!project.FindSubsystem<SubsystemNetworkInterest>(true)!
-                            .IsPositionRelevant(context.Sender, new Vector2(package.Point3.X, package.Point3.Z)))
+                            .IsPositionRelevant(context.Sender, new Vector2(message2.Point3.X, message2.Point3.Z)))
                     {
                         break;
                     }
 
                     var subsystemBlockEntities = project.FindSubsystem<SubsystemBlockEntities>(true)!;
                     var blockEntity =
-                        subsystemBlockEntities.GetBlockEntity(package.Point3.X, package.Point3.Y, package.Point3.Z);
+                        subsystemBlockEntities.GetBlockEntity(message2.Point3.X, message2.Point3.Y, message2.Point3.Z);
                     var inventory = blockEntity?.Entity.FindComponent<IInventory>(false);
                     if (inventory != null)
                     {
@@ -109,49 +112,54 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                 }
 
                 break;
-            case BlockEditPackage.EventType.CrossbowPull:
+            }
+            case CrossbowPullPackage message3:
+            {
                 if (isServer)
                 {
-                    var inventory = subsystemInventories.GetInventoryById(package.InventoryId);
+                    var inventory = subsystemInventories.GetInventoryById(message3.InventoryId);
 
                     if (inventory != null &&
-                        package.SlotIndex >= 0 &&
-                        package.SlotIndex < inventory.SlotsCount &&
+                        message3.SlotIndex >= 0 &&
+                        message3.SlotIndex < inventory.SlotsCount &&
                         SubsystemInventories.CanClientAccess(inventory, context.Sender))
                     {
-                        var theItemValue = inventory.GetSlotValue(package.SlotIndex);
+                        var theItemValue = inventory.GetSlotValue(message3.SlotIndex);
                         if (Terrain.ExtractContents(theItemValue) == 200)
                         {
                             var data = Terrain.ExtractData(theItemValue);
                             var value = Terrain.MakeBlockValue(200, 0, CrossbowBlock.SetDraw(data, 15));
-                            inventory.RemoveSlotItems(package.SlotIndex, 1);
-                            inventory.AddSlotItems(package.SlotIndex, value, 1);
+                            inventory.RemoveSlotItems(message3.SlotIndex, 1);
+                            inventory.AddSlotItems(message3.SlotIndex, value, 1);
                         }
                     }
                 }
 
                 break;
-            case BlockEditPackage.EventType.EditSign:
+            }
+            case OpenSignEditorPackage message4:
+            {
                 if (isServer)
                 {
                     if (!project.FindSubsystem<SubsystemNetworkInterest>(true)!
-                            .IsPositionRelevant(context.Sender, new Vector2(package.Point3.X, package.Point3.Z)))
+                            .IsPositionRelevant(context.Sender, new Vector2(message4.Point3.X, message4.Point3.Z)))
                     {
                         break;
                     }
 
-                    CommonLib.Net.QueuePackage(package, PackageAudience.To(context.Sender));
+                    CommonLib.Net.QueuePackage(message4, PackageAudience.To(context.Sender));
                 }
                 else
                 {
                     if (CommonLib.LocalCharacter != null)
                     {
                         project.FindSubsystem<SubsystemSignBlockBehavior>(true)!
-                            .OpenEditor(CommonLib.LocalCharacter, package.Point3);
+                            .OpenEditor(CommonLib.LocalCharacter, message4.Point3);
                     }
                 }
 
                 break;
+            }
         }
     }
 }

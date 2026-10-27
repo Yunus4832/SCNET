@@ -1,8 +1,10 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
 namespace Game.Protocol.Terrain;
 
-public sealed record ChunkStateResetPackage(Point2 Chunk) : IProtocolMessage
+[MessagePackObject]
+public sealed record ChunkStateResetPackage([property: Key(0)] Point2 Chunk) : IProtocolMessage
 {
-    public byte ID => (byte)PackageType.ChunkStateReset;
 }

@@ -74,11 +74,11 @@ public sealed class MountDependencyBaselineTest
             else
             {
                 var outbound = Assert.Single(pending.Skip(start));
-                var baseline = Assert.IsType<EntityPackage>(outbound.Package);
+                var baseline = Assert.IsType<EntitySnapshotPackage>(outbound.Package);
                 Assert.Equal(expected.Select(entity => entity.EntityId), project.CapturedEntityIds);
                 Assert.NotEmpty(baseline.EntityData);
                 Assert.True(outbound.Audience.Includes(client));
-                var mountEvent = new ComponentMountPackage { Type = ComponentMountPackage.EventType.Mount };
+                var mountEvent = new MountedPackage();
                 Assert.Equal(
                     PackageTransportPolicy.Get(mountEvent).Channel,
                     PackageTransportPolicy.Get(baseline).Channel

@@ -118,10 +118,10 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
             _lastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex)
         {
             _lastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
-            var package = new ComponentInventoryPackage(
-                ComponentMiner.Inventory.Id,
-                ComponentMiner.Inventory.ActiveSlotIndex
-            );
+            var package = new InventoryActiveSlotPackage
+            {
+                InventoryID = ComponentMiner.Inventory.Id, ActiveSlot = ComponentMiner.Inventory.ActiveSlotIndex
+            };
             if (CommonLib.WorkType == WorkType.Server)
             {
                 NetworkSender.SendToObservers(Entity, package);
@@ -736,11 +736,9 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
         var chunk = _subsystemTerrain.AuthoritativeTerrain.GetChunkAtCell(cell.X, cell.Z, false);
         NetworkSender.SendTo(
             client,
-            new SubsystemTerrainPackage
+            new TerrainCellEditCompletedPackage
             {
-                Type = SubsystemTerrainPackage.DataType.CellEditCompleted,
-                EditRequestId = requestId,
-                EditedCell = cell,
+                EditRequestId = requestId, EditedCell = cell,
                 EditContentVersion = chunk?.NetworkContentRevision + 1 ?? 0
             }
         );

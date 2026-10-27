@@ -1,5 +1,8 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
 namespace Game.Protocol.Entities;
 
-public readonly record struct PickablePosition(ushort Id, Vector3 Position);
+[MessagePackObject]
+public readonly record struct PickablePosition([property: Key(0)] ushort Id, [property: Key(1)] Vector3 Position);

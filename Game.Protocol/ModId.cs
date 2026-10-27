@@ -1,5 +1,6 @@
 namespace Game.Protocol;
 
+[MessagePack.MessagePackFormatter(typeof(Serialization.Formatters.ProtocolValueFormatter))]
 public readonly record struct ModId
 {
     public string Value { get; }

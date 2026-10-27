@@ -15,16 +15,12 @@ public static class EntityStatePackageBuilder
         SneezeDuration = flu.SneezeDuration
     };
 
-    public static ComponentVitalStatPackage Capture(ComponentVitalStats stats) => new()
-    {
-        EntityId = stats.Entity.EntityId,
-        PackageEventType = ComponentVitalStatPackage.EventType.SyncStat,
-        Food = stats.Food,
-        Sleep = stats.Sleep,
-        Stamina = stats.Stamina,
-        Wetness = stats.Wetness,
-        Temperature = stats.Temperature
-    };
+    public static ComponentVitalStatPackage Capture(ComponentVitalStats stats) =>
+        new VitalStatePackage
+        {
+            EntityId = stats.Entity.EntityId, Food = stats.Food, Sleep = stats.Sleep, Stamina = stats.Stamina,
+            Wetness = stats.Wetness, Temperature = stats.Temperature
+        };
 
     public static ComponentFurnacePackage Capture(IEnumerable<ComponentFurnace> furnaces) => new()
     {
@@ -37,23 +33,16 @@ public static class EntityStatePackageBuilder
     };
 
     public static ComponentOnFirePackage Capture(ComponentOnFire target, ComponentCreature? attacker, float duration) =>
-        new()
+        new EntityFirePackage
         {
-            Type = ComponentOnFirePackage.EventType.ComponentOnFire,
-            EntityId = target.Entity.EntityId,
-            AttackerEntityId = attacker?.Entity.EntityId ?? 0,
-            Duration = duration
+            EntityId = target.Entity.EntityId, AttackerEntityId = attacker?.Entity.EntityId ?? 0, Duration = duration
         };
 
-    public static ComponentHealthPackage Capture(ComponentHealth health) => new()
-    {
-        Type = ComponentHealthPackage.EventType.SyncHealth, TargetId = health.Entity.EntityId, Health = health.Health
-    };
+    public static EntityHealthPackage Capture(ComponentHealth health) =>
+        new() { TargetId = health.Entity.EntityId, Health = health.Health };
 
-    public static ComponentHealthPackage Capture(ComponentDamage damage) => new()
-    {
-        Type = ComponentHealthPackage.EventType.Damage, TargetId = damage.Entity.EntityId, Health = damage.HitPoints
-    };
+    public static EntityDamagePackage Capture(ComponentDamage damage) =>
+        new() { TargetId = damage.Entity.EntityId, Health = damage.HitPoints };
 
     public static ComponentHealthPackage Capture(
         ComponentHealth target,
@@ -63,15 +52,16 @@ public static class EntityStatePackageBuilder
         bool ignoreInvulnerability = false,
         bool isRequest = false,
         ComponentHealthPackage.RequestInjureType requestInjureType = ComponentHealthPackage.RequestInjureType.Unknown
-    ) => new()
-    {
-        Type = isRequest ? ComponentHealthPackage.EventType.RequestInjure : ComponentHealthPackage.EventType.Injure,
-        TargetId = target.Entity.EntityId,
-        AttackerId = attacker?.Entity.EntityId ?? 0,
-        Amount = amount,
-        Cause = cause,
-        Health = target.Health,
-        IgnoreInvulnerability = ignoreInvulnerability,
-        InjureRequestType = requestInjureType
-    };
+    ) => isRequest
+        ? new EntityInjuryRequestPackage
+        {
+            TargetId = target.Entity.EntityId, AttackerId = attacker?.Entity.EntityId ?? 0, Amount = amount,
+            Cause = cause, Health = target.Health, IgnoreInvulnerability = ignoreInvulnerability,
+            InjureRequestType = requestInjureType
+        }
+        : new EntityInjuryPackage
+        {
+            TargetId = target.Entity.EntityId, AttackerId = attacker?.Entity.EntityId ?? 0, Amount = amount,
+            Cause = cause, Health = target.Health, IgnoreInvulnerability = ignoreInvulnerability
+        };
 }

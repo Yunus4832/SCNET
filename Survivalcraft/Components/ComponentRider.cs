@@ -178,17 +178,15 @@ public class ComponentRider : Component, IUpdateable
                 StartNetMounting(componentMount);
                 NetworkSender.SendToObservers(
                     Entity,
-                    new ComponentMountPackage(Entity.EntityId, componentMount.Entity.EntityId)
+                    new MountedPackage
+                        { FromId = Entity.EntityId, TargetId = componentMount.Entity.EntityId }
                 );
             }
             else
             {
                 NetworkSender.SendToServer(
-                    new ComponentMountPackage(
-                        Entity.EntityId,
-                        componentMount.Entity.EntityId,
-                        true
-                    )
+                    new MountRequestPackage
+                        { FromId = Entity.EntityId, TargetId = componentMount.Entity.EntityId }
                 );
             }
         }
@@ -249,11 +247,17 @@ public class ComponentRider : Component, IUpdateable
             if (CommonLib.WorkType != WorkType.Client)
             {
                 StartNetDismounting();
-                NetworkSender.SendToObservers(Entity, new ComponentMountPackage(Entity.EntityId));
+                NetworkSender.SendToObservers(
+                    Entity,
+                    new DismountedPackage { FromId = Entity.EntityId }
+                );
             }
             else
             {
-                NetworkSender.SendToServer(new ComponentMountPackage(Entity.EntityId, true));
+                NetworkSender.SendToServer(
+                    new DismountRequestPackage
+                        { FromId = Entity.EntityId }
+                );
             }
         }
     }

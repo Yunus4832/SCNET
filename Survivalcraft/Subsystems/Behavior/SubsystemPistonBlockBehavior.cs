@@ -69,7 +69,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 Project,
                 soundPosition,
                 64f,
-                new MovingBlockPackage { Type = MovingBlockPackage.EventType.PistonSound, Position = soundPosition }
+                new PistonSoundPackage { Position = soundPosition }
             );
         }
     }
@@ -91,14 +91,11 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                         return;
                     }
 
-                    var p = new EditableBlockPackage(
-                        BuiltInBlockEditKind.Piston,
-                        default,
-                        true,
-                        inventory.Id,
-                        slotIndex,
-                        newData
-                    );
+                    var p = new EditableBlockValuePackage
+                    {
+                        ItemType = BuiltInBlockEditKind.Piston,
+                        Target = new EditableInventorySlotTarget(inventory.Id, slotIndex), Value = newData
+                    };
                     EditableBlockPackageHandler.Submit(p);
                 }
             )
@@ -122,7 +119,11 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     }
 
                     var cell = new CellFace(x, y, z, 0);
-                    var p = new EditableBlockPackage(BuiltInBlockEditKind.Piston, cell, false, 0, 0, newData);
+                    var p = new EditableBlockValuePackage
+                    {
+                        ItemType = BuiltInBlockEditKind.Piston, Target = new EditableWorldBlockTarget(cell),
+                        Value = newData
+                    };
                     EditableBlockPackageHandler.Submit(p);
                 }
             )

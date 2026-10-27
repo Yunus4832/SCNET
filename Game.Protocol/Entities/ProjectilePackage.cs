@@ -1,8 +1,13 @@
-using Engine.Core.Mathematics;
+using MessagePack;
 
 namespace Game.Protocol.Entities;
 
-public sealed record ProjectilePackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(ProjectileAddedPackage))]
+[Union(1, typeof(ProjectileEffectPackage))]
+[Union(2, typeof(ProjectileRemovedPackage))]
+[Union(3, typeof(ProjectileStatePackage))]
+public abstract record ProjectilePackage : IProtocolMessage
 {
     public enum EventType : byte
     {
@@ -14,6 +19,7 @@ public sealed record ProjectilePackage : IProtocolMessage
 
         Effect = 3
     }
+
 
     public enum EffectType : byte
     {
@@ -28,39 +34,7 @@ public sealed record ProjectilePackage : IProtocolMessage
         Sizzle = 4
     }
 
-    public EffectType Effect { get; init; }
+    [IgnoreMember] public abstract EventType Type { get; }
 
-    public Vector3 AngularVelocity { get; init; }
-
-    public bool IsFireProjectile { get; init; }
-
-    public int NetworkId { get; init; }
-
-    public int OwnerId { get; init; }
-
-    public Vector3 Position { get; init; }
-
-    public Vector3 Rotation { get; init; }
-
-    public uint StateTick { get; init; }
-
-    public Vector3 TrailOffset { get; init; }
-
-    public int Value { get; init; }
-
-    public EventType Type { get; init; }
-
-    public Vector3 Velocity { get; init; }
-
-    public byte ID => (byte)PackageType.Projectile;
-
-    public ProjectilePackage()
-    {
-    }
-
-    public ProjectilePackage(int networkId)
-    {
-        NetworkId = networkId;
-        Type = EventType.Remove;
-    }
+    [Key(0)] public int NetworkId { get; init; }
 }

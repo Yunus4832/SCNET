@@ -8,10 +8,9 @@ public class SubsystemSeasonPackageTest
     public void RoundTripPreservesTimeOfYear()
     {
         var package = new SubsystemSeasonPackage(0.625f);
-        var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = (SubsystemSeasonPackage)ProtocolMessageCodec.Read(package.ID, reader);
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = (SubsystemSeasonPackage)ProtocolMessageCodec.Decode(reader);
 
         Assert.Equal(0.625f, clone.TimeOfYear);
     }

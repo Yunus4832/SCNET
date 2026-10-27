@@ -1,23 +1,55 @@
+using System.Buffers;
 using System.Buffers.Binary;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+using MessagePack;
 
 namespace Game.Protocol.Serialization;
 
 public static class ProtocolPacketCodec
 {
+    public const int MaximumMessagesPerPacket = 1024;
+
     public static byte[] Encode(
         IEnumerable<IProtocolMessage> messages,
-        CompressionPolicy compression = CompressionPolicy.Adaptive
+        CompressionPolicy compression = CompressionPolicy.Adaptive,
+        ProtocolPacketMeasurements? measurements = null
     )
     {
-        using var writer = new ProtocolWriter();
-        foreach (var message in messages)
+        var batch = messages as IReadOnlyCollection<IProtocolMessage> ?? messages.ToArray();
+        if (batch.Count > MaximumMessagesPerPacket) { throw new InvalidDataException("Too many protocol messages."); }
+
+        var start = Stopwatch.GetTimestamp();
+        var output = new ArrayBufferWriter<byte>();
+        var writer = new MessagePackWriter(output);
+        writer.WriteArrayHeader(batch.Count);
+        writer.Flush();
+        foreach (var message in batch)
         {
-            writer.Write((byte)0x88);
-            writer.Write(message.ID);
-            ProtocolMessageCodec.Write(message, writer);
+            ProtocolMessageValidation.Validate(message);
+            var before = output.WrittenCount;
+            MessagePackSerializer.Serialize(output, message, ProtocolMessageCodec.Options);
+            measurements?.Messages?.Add((message.GetType(), output.WrittenCount - before));
         }
 
-        return WrapFrame(writer.Data(compression));
+        if (output.WrittenCount > ProtocolFrameCodec.MaximumPayloadLength)
+        {
+            throw new InvalidDataException("Protocol payload is too large.");
+        }
+
+        var serialized = Stopwatch.GetTimestamp();
+        MemoryMarshal.TryGetArray(output.WrittenMemory, out var bytes);
+        using var stream = new MemoryStream(bytes.Array!, bytes.Offset, bytes.Count, false);
+        var result = WrapFrame(ProtocolFrameCodec.EncodeFrame(stream, compression));
+        if (measurements is not null)
+        {
+            measurements.PayloadBytes = output.WrittenCount;
+            measurements.SerializationTicks = serialized - start;
+            measurements.FramingTicks = Stopwatch.GetTimestamp() - serialized;
+        }
+
+        return result;
     }
 
     public static byte[] WrapFrame(ReadOnlySpan<byte> frame)
@@ -28,33 +60,39 @@ public static class ProtocolPacketCodec
         return packet;
     }
 
-    public static ProtocolReader CreateReader(ReadOnlyMemory<byte> packet)
-    {
-        if (packet.Length < sizeof(int))
-        {
-            throw new InvalidDataException("Protocol packet is missing its length prefix.");
-        }
-
-        var length = BinaryPrimitives.ReadInt32LittleEndian(packet.Span);
-        if (length < 0 || length != packet.Length - sizeof(int))
-        {
-            throw new InvalidDataException("Protocol packet length does not match its payload.");
-        }
-
-        return new ProtocolReader(packet.Span[sizeof(int)..].ToArray());
-    }
-
     public static IReadOnlyList<IProtocolMessage> Decode(ReadOnlyMemory<byte> packet)
     {
-        using var reader = CreateReader(packet);
-        var messages = new List<IProtocolMessage>();
-        while (reader.BaseStream.Position < reader.BaseStream.Length)
+        try
         {
-            if (reader.ReadByte() != 0x88) { throw new InvalidDataException("Invalid protocol message marker."); }
+            if (packet.Length < sizeof(int) ||
+                BinaryPrimitives.ReadInt32LittleEndian(packet.Span) != packet.Length - sizeof(int))
+            {
+                throw new InvalidDataException("Protocol packet length does not match its payload.");
+            }
 
-            messages.Add(ProtocolMessageCodec.Read(reader.ReadByte(), reader));
+            var payload = ProtocolFrameCodec.DecodeFrame(packet.Span[sizeof(int)..].ToArray());
+            var reader = new MessagePackReader(payload);
+            if (reader.ReadArrayHeader() > MaximumMessagesPerPacket)
+            {
+                throw new InvalidDataException("Too many protocol messages.");
+            }
+
+            ProtocolShapeGuard.Validate<IProtocolMessage[]>(payload);
+            reader = new MessagePackReader(payload);
+            var messages = MessagePackSerializer.Deserialize<IProtocolMessage[]>(
+                ref reader,
+                ProtocolMessageCodec.Options
+            );
+            if (messages is null || !reader.End) { throw new InvalidDataException("Invalid protocol batch."); }
+
+            foreach (var message in messages) { ProtocolMessageValidation.Validate(message); }
+
+            return messages;
         }
-
-        return messages;
+        catch (Exception exception) when (exception is MessagePackSerializationException or ArgumentException
+                                              or EndOfStreamException)
+        {
+            throw new InvalidDataException("Invalid protocol packet.", exception);
+        }
     }
 }

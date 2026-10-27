@@ -301,8 +301,7 @@ public class ModHostTest
         );
 
         host.LoadAndStart([descriptor]);
-        using var writer = new ProtocolWriter();
-        var payload = writer.Data();
+        byte[] payload = [];
         host.Network.Dispatch(
             new ModEnvelopePackage("example.net", "downed.sync", payload),
             new PackageReceiveContext(null, true, null)

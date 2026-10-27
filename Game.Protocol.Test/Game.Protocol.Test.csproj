@@ -9,7 +9,5 @@
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4"/>
         <Using Include="Xunit"/>
         <ProjectReference Include="../Game.Protocol/Game.Protocol.csproj"/>
-        <None Update="Fixtures/*.bin" CopyToOutputDirectory="PreserveNewest"/>
-        <None Update="Fixtures/*.json" CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 </Project>

@@ -12,60 +12,55 @@ public sealed class InventoryCodecTest
     [MemberData(nameof(Modes))]
     public void InventoryModesRoundTripWithoutLiveInventories(ComponentInventoryPackage.EventType type)
     {
-        var message = new ComponentInventoryPackage
+        var source = new InventorySlotReference { InventoryId = 42, SlotIndex = 3 };
+        var target = new InventorySlotReference { InventoryId = 43, SlotIndex = 5 };
+        ComponentInventoryPackage message = type switch
         {
-            PackageEventType = type,
-            InventoryID = 42,
-            ActiveSlot = 3,
-            DragMode = 1,
-            ProcessingOnly = true,
-            SourceInventorySlot = new InventorySlot { InventoryId = 42, SlotIndex = 3, Value = 7, Count = 4 },
-            TargetInventorySlot = new InventorySlot { InventoryId = 43, SlotIndex = 5, Count = 2 },
-            Slots = new Dictionary<int, IReadOnlyList<InventorySlotSnapshot>>
+            ComponentInventoryPackage.EventType.ActiveSlotChange => new InventoryActiveSlotPackage
+                { InventoryID = 42, ActiveSlot = 3 },
+            ComponentInventoryPackage.EventType.InventorySync => new InventorySnapshotPackage
             {
-                [42] = new InventorySlotSnapshot[]
+                Slots = new Dictionary<int, IReadOnlyList<InventorySlotSnapshot>>
                 {
-                    new() { SlotIndex = 3, Type = 0, Count = 4, Value = 7 },
-                    new() { SlotIndex = 5, Type = 1, ClothingList = new[] { 12, 15 } }
+                    [42] =
+                    [
+                        new ItemSlotSnapshot { SlotIndex = 3, Count = 4, Value = 7 },
+                        new ClothingSlotSnapshot { SlotIndex = 5, Clothes = [12, 15] }
+                    ]
                 }
-            }
+            },
+            ComponentInventoryPackage.EventType.QueryErrorInventoryInfo => new InventorySyncRequestPackage
+                { InventoryID = 42 },
+            ComponentInventoryPackage.EventType.SetSlotsItem => new InventorySetSlotPackage
+                { InventoryId = 42, SlotIndex = 3, Value = 7, Count = 4 },
+            ComponentInventoryPackage.EventType.HandleMoveItem => new InventoryMoveRequestPackage
+                { Source = source, Target = target, Count = 2 },
+            ComponentInventoryPackage.EventType.HandleDragDrop => new InventoryDragDropRequestPackage
+                { Source = source, Target = target, DragMode = 1, ProcessingOnly = true },
+            _ => throw new ArgumentOutOfRangeException(nameof(type))
         };
-        Assert.True(ProtocolMessageCodec.IsDefined(message.ID));
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        var bytes = writer.Data(CompressionPolicy.None);
-        using var reader = new ProtocolReader(bytes);
-        var restored = Assert.IsType<ComponentInventoryPackage>(ProtocolMessageCodec.Read(message.ID, reader));
+        Assert.True(ProtocolMessageCodec.IsDefined(message.GetType()));
+        var writer = ProtocolMessageCodec.Encode(message);
+        var bytes = writer;
+        var reader = bytes;
+        var restored = Assert.IsAssignableFrom<ComponentInventoryPackage>(ProtocolMessageCodec.Decode(reader));
         Assert.Equal(type, restored.PackageEventType);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
-        using var repeated = new ProtocolWriter();
-        ProtocolMessageCodec.Write(restored, repeated);
-        Assert.Equal(bytes, repeated.Data(CompressionPolicy.None));
+
+        var repeated = ProtocolMessageCodec.Encode(restored);
+        Assert.Equal(bytes, repeated);
     }
 
-    [Theory]
-    [InlineData(3)]
-    [InlineData(5)]
-    [InlineData(255)]
-    public void UnsupportedInventoryModesAreRejected(byte mode)
+    [Fact]
+    public void RequiredInventoryFieldsCannotBeNull()
     {
-        using var writer = new ProtocolWriter();
-        writer.Write(mode);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() =>
-            ProtocolMessageCodec.Read((byte)PackageType.ComponentInventory, reader)
-        );
+        var malformed = WireTestData.ReplaceField(new InventoryActiveSlotPackage(), 1, [0xc0]);
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(malformed));
     }
 
     [Fact]
     public void TruncatedInventoryCountIsRejectedBeforeAllocation()
     {
-        using var writer = new ProtocolWriter();
-        writer.WriteEnum(ComponentInventoryPackage.EventType.InventorySync);
-        writer.Write(int.MaxValue);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() =>
-            ProtocolMessageCodec.Read((byte)PackageType.ComponentInventory, reader)
-        );
+        var malformed = WireTestData.ReplaceField(new InventorySnapshotPackage(), 0, [0xdf, 0x7f, 0xff, 0xff, 0xff]);
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(malformed));
     }
 }

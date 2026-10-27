@@ -1,12 +1,18 @@
-using Engine.Core.Mathematics;
+using MessagePack;
 
 namespace Game.Protocol.Terrain;
 
-public sealed record SubsystemTerrainPackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(TerrainCellDeltaPackage))]
+[Union(1, typeof(TerrainCellEditCompletedPackage))]
+[Union(2, typeof(TerrainChunksRequestPackage))]
+[Union(3, typeof(TerrainFragmentPackage))]
+[Union(4, typeof(TerrainFragmentsRequestPackage))]
+public abstract record SubsystemTerrainPackage : IProtocolMessage
 {
-    public const int MaximumFragmentRequestsPerPackage = 1;
-
     public const int MaximumRequestedFragmentCount = ProtocolLimits.MaximumTerrainFragmentCount;
+
+    public const int MaximumFragmentRequestsPerPackage = 1;
 
     public enum DataType
     {
@@ -21,43 +27,11 @@ public sealed record SubsystemTerrainPackage : IProtocolMessage
         CellEditCompleted = 4
     }
 
-    public IReadOnlyList<ChunkContentRequest> ChunkRequests { get; init; } = [];
+    [IgnoreMember] public abstract DataType Type { get; }
 
-    public IReadOnlyList<TerrainChunkFragmentRequest> FragmentRequests { get; init; } = [];
 
-    public EncodedTerrainChunkFragment ChunkFragment { get; init; }
-
-    public TerrainCellDelta CellDelta { get; init; }
-
-    public int EditRequestId { get; init; }
-
-    public Point3 EditedCell { get; init; }
-
-    public long EditContentVersion { get; init; }
-
-    public DataType Type { get; init; }
-
-    public byte ID => (byte)PackageType.SubsystemTerrain;
-
-    public SubsystemTerrainPackage()
-    {
-    }
-
-    public SubsystemTerrainPackage(IReadOnlyList<ChunkContentRequest> requests) => ChunkRequests = requests.ToArray();
-
-    public SubsystemTerrainPackage(EncodedTerrainChunkFragment fragment)
-    {
-        Type = DataType.SyncTerrainChunkFragment;
-        ChunkFragment = fragment;
-    }
-
-    public SubsystemTerrainPackage(TerrainCellDelta delta)
-    {
-        Type = DataType.SyncTerrainCellDelta;
-        CellDelta = delta;
-    }
-
-    public static SubsystemTerrainPackage CreateFragmentRequest(IEnumerable<TerrainChunkFragmentRequest> requests) =>
-        new()
-            { Type = DataType.RequestTerrainChunkFragments, FragmentRequests = requests.ToArray() };
+    public static TerrainFragmentsRequestPackage CreateFragmentRequest(
+        IEnumerable<TerrainChunkFragmentRequest> requests
+    ) =>
+        new TerrainFragmentsRequestPackage { FragmentRequests = requests.ToArray() };
 }

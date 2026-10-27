@@ -494,7 +494,11 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         ClientTerrainDeltas?.Receive(delta);
         if (CommonLib.WorkType == WorkType.Server)
         {
-            NetworkSender.SendToChunkObservers(Project, authorityChunk.Coords, new SubsystemTerrainPackage(delta));
+            NetworkSender.SendToChunkObservers(
+                Project,
+                authorityChunk.Coords,
+                new TerrainCellDeltaPackage { CellDelta = delta }
+            );
         }
     }
 

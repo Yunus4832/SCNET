@@ -1,33 +1,42 @@
 using Engine.Input;
 
+using MessagePack;
+
 namespace Game.Commands;
 
+[MessagePackObject]
 public sealed record GetCommandCatalogCommand : IGameCommand;
 
-public sealed record ShowCommandHelpCommand(string? CommandName = null) : IGameCommand;
+[MessagePackObject]
+public sealed record ShowCommandHelpCommand([property: Key(0)] string? CommandName = null) : IGameCommand;
 
+[MessagePackObject]
 public sealed record GetWorldTimeCommand : IGameCommand;
 
-public sealed record SetWorldTimeCommand(string Preset) : IGameCommand;
+[MessagePackObject]
+public sealed record SetWorldTimeCommand([property: Key(0)] string Preset) : IGameCommand;
 
+[MessagePackObject]
 public sealed record AdvanceWorldTimeCommand : IGameCommand;
 
-public sealed record SetPrecipitationCommand(bool Enabled) : IGameCommand;
+[MessagePackObject]
+public sealed record SetPrecipitationCommand([property: Key(0)] bool Enabled) : IGameCommand;
 
-public sealed record SetFogCommand(bool Enabled) : IGameCommand;
+[MessagePackObject]
+public sealed record SetFogCommand([property: Key(0)] bool Enabled) : IGameCommand;
 
+[MessagePackObject]
 public sealed record TriggerPlayerLightningCommand : IGameCommand;
 
-public sealed record TriggerLightningCommand(
-    Vector3 Position,
-    Vector3 Direction
-) : IGameCommand;
+[MessagePackObject]
+public sealed record TriggerLightningCommand([property: Key(0)] Vector3 Position, [property: Key(1)] Vector3 Direction)
+    : IGameCommand;
 
-public sealed record SetSeasonCommand(
-    Season Season,
-    float Progress
-) : IGameCommand;
+[MessagePackObject]
+public sealed record SetSeasonCommand([property: Key(0)] Season Season, [property: Key(1)] float Progress)
+    : IGameCommand;
 
+[MessagePackObject]
 public sealed record ListPlayersCommand : IGameCommand;
 
 public sealed record GetRunModeCommand : IGameCommand;
@@ -58,6 +67,7 @@ public sealed record GetLanguageCommand : IGameCommand;
 
 public sealed record SetLanguageCommand(string LanguageType) : IGameCommand;
 
+[MessagePackObject]
 public sealed record StopServerCommand : IGameCommand;
 
 public sealed record GetAutomationUiContextCommand : IGameCommand;
@@ -114,43 +124,58 @@ public sealed record CancelAutomationActionCommand : IGameCommand;
 
 public sealed record EnterAutomationTextCommand(string Text) : IGameCommand;
 
+[MessagePackObject]
 public sealed record ShowServerAuthHelpCommand : IGameCommand;
 
-public sealed record ClaimServerAdministrationCommand(string Code) : IGameCommand;
+[MessagePackObject]
+public sealed record ClaimServerAdministrationCommand([property: Key(0)] string Code) : IGameCommand;
 
+[MessagePackObject]
 public sealed record GetServerAuthStatusCommand : IGameCommand;
 
+[MessagePackObject]
 public sealed record GetServerAuthCodeCommand : IGameCommand;
 
+[MessagePackObject]
 public sealed record RegenerateServerAuthCodeCommand : IGameCommand;
 
+[MessagePackObject]
 public sealed record ShowPermissionHelpCommand : IGameCommand;
 
+[MessagePackObject]
 public sealed record ListPermissionUsersCommand : IGameCommand;
 
+[MessagePackObject]
 public sealed record ListPermissionNodesCommand : IGameCommand;
 
+[MessagePackObject]
 public sealed record ListOwnPermissionsCommand : IGameCommand;
 
-public sealed record ListUserPermissionsCommand(string User) : IGameCommand;
+[MessagePackObject]
+public sealed record ListUserPermissionsCommand([property: Key(0)] string User) : IGameCommand;
 
+[MessagePackObject]
 public sealed record GrantUserPermissionCommand(
-    string User,
-    string Permission,
-    bool CanDelegate
+    [property: Key(0)] string User,
+    [property: Key(1)] string Permission,
+    [property: Key(2)] bool CanDelegate
 ) : IGameCommand;
 
-public sealed record RevokeUserPermissionCommand(
-    string User,
-    string Permission
-) : IGameCommand;
+[MessagePackObject]
+public sealed record RevokeUserPermissionCommand([property: Key(0)] string User, [property: Key(1)] string Permission)
+    : IGameCommand;
 
-public sealed record BanUserCommand(string User, string Reason) : IGameCommand;
+[MessagePackObject]
+public sealed record BanUserCommand([property: Key(0)] string User, [property: Key(1)] string Reason) : IGameCommand;
 
-public sealed record UnbanUserCommand(string User) : IGameCommand;
+[MessagePackObject]
+public sealed record UnbanUserCommand([property: Key(0)] string User) : IGameCommand;
 
+[MessagePackObject]
 public sealed record ListPlayerBansCommand : IGameCommand;
 
-public sealed record SetUserMuteCommand(string User, bool IsMuted) : IGameCommand;
+[MessagePackObject]
+public sealed record SetUserMuteCommand([property: Key(0)] string User, [property: Key(1)] bool IsMuted) : IGameCommand;
 
+[MessagePackObject]
 public sealed record ListMutedUsersCommand : IGameCommand;

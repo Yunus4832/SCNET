@@ -46,58 +46,37 @@ public interface ICommandDefinition
     IGameCommand Decode(byte[] payload);
 }
 
-public sealed class CommandDefinition<TCommand> : ICommandDefinition
+public sealed class CommandDefinition<TCommand>(
+    Func<CommandContext, TCommand, CommandResult> handler,
+    CommandDomain domain,
+    LocalizedText? description = null,
+    ResourceId? requiredPermission = null,
+    CommandHostRequirement hostRequirement = CommandHostRequirement.None,
+    CommandPrincipalKinds? allowedPrincipals = null,
+    bool supportsRemoteInvocation = false,
+    CommandPanelBehavior panelBehavior = CommandPanelBehavior.ReturnToMessage
+)
+    : ICommandDefinition
     where TCommand : IGameCommand
 {
-    private readonly Func<CommandContext, TCommand, CommandResult> _handler;
-
-    private readonly Func<ProtocolReader, TCommand>? _read;
-
-    private readonly Action<ProtocolWriter, TCommand>? _write;
+    private readonly Func<CommandContext, TCommand, CommandResult> _handler =
+        handler ?? throw new ArgumentNullException(nameof(handler));
 
     public Type CommandType => typeof(TCommand);
 
-    public LocalizedText Description { get; }
+    public LocalizedText Description { get; } = description ?? LocalizedText.Empty;
 
-    public CommandDomain Domain { get; }
+    public CommandDomain Domain { get; } = domain;
 
-    public CommandPanelBehavior PanelBehavior { get; }
+    public CommandPanelBehavior PanelBehavior { get; } = panelBehavior;
 
-    public ResourceId? RequiredPermission { get; }
+    public ResourceId? RequiredPermission { get; } = requiredPermission;
 
-    public CommandHostRequirement HostRequirement { get; }
+    public CommandHostRequirement HostRequirement { get; } = hostRequirement;
 
-    public CommandPrincipalKinds AllowedPrincipals { get; }
+    public CommandPrincipalKinds AllowedPrincipals { get; } = allowedPrincipals ?? GetDefaultPrincipals(domain);
 
-    public bool SupportsRemoteInvocation => _write is not null && _read is not null;
-
-    public CommandDefinition(
-        Func<CommandContext, TCommand, CommandResult> handler,
-        CommandDomain domain,
-        LocalizedText? description = null,
-        ResourceId? requiredPermission = null,
-        CommandHostRequirement hostRequirement = CommandHostRequirement.None,
-        CommandPrincipalKinds? allowedPrincipals = null,
-        Action<ProtocolWriter, TCommand>? write = null,
-        Func<ProtocolReader, TCommand>? read = null,
-        CommandPanelBehavior panelBehavior = CommandPanelBehavior.ReturnToMessage
-    )
-    {
-        _handler = handler ?? throw new ArgumentNullException(nameof(handler));
-        Domain = domain;
-        PanelBehavior = panelBehavior;
-        Description = description ?? LocalizedText.Empty;
-        RequiredPermission = requiredPermission;
-        HostRequirement = hostRequirement;
-        AllowedPrincipals = allowedPrincipals ?? GetDefaultPrincipals(domain);
-        if ((write is null) != (read is null))
-        {
-            throw new ArgumentException("Command definitions must provide both write and read delegates.");
-        }
-
-        _write = write;
-        _read = read;
-    }
+    public bool SupportsRemoteInvocation { get; } = supportsRemoteInvocation;
 
     public bool CanInvoke(CommandPrincipal principal, Project? project)
     {
@@ -190,31 +169,22 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
 
     public byte[] Encode(IGameCommand command)
     {
-        if (_write is null)
+        if (!SupportsRemoteInvocation)
         {
             throw new InvalidOperationException($"Command {typeof(TCommand).Name} does not support remote invocation.");
         }
 
-        using var writer = new ProtocolWriter();
-        _write(writer, (TCommand)command);
-        return writer.Data(CompressionPolicy.None);
+        return ProtocolPayloadCodec.Encode((TCommand)command);
     }
 
     public IGameCommand Decode(byte[] payload)
     {
-        if (_read is null)
+        if (!SupportsRemoteInvocation)
         {
             throw new InvalidOperationException($"Command {typeof(TCommand).Name} does not support remote invocation.");
         }
 
-        using var reader = new ProtocolReader(payload);
-        var command = _read(reader);
-        if (reader.BaseStream.Position != reader.BaseStream.Length)
-        {
-            throw new InvalidDataException($"Command {typeof(TCommand).Name} payload contains trailing data.");
-        }
-
-        return command;
+        return ProtocolPayloadCodec.Decode<TCommand>(payload);
     }
 
     private static CommandPrincipalKinds GetDefaultPrincipals(CommandDomain domain)

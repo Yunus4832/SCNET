@@ -507,7 +507,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 NetworkSender.SendToChunkObservers(
                     Project,
                     new Point2(x >> 4, z >> 4),
-                    new ComponentOnFirePackage(x, y, z, expandability)
+                    new BlockFireAddedPackage { X = x, Y = y, Z = z, Duration = expandability }
                 );
             }
 
@@ -550,7 +550,8 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         {
             NetworkSender.SendTo(
                 client,
-                new ComponentOnFirePackage(fire.Point.X, fire.Point.Y, fire.Point.Z, fire.FireExpandability)
+                new BlockFireAddedPackage
+                    { X = fire.Point.X, Y = fire.Point.Y, Z = fire.Point.Z, Duration = fire.FireExpandability }
             );
         }
     }
@@ -568,7 +569,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
             NetworkSender.SendToChunkObservers(
                 Project,
                 new Point2(x >> 4, z >> 4),
-                new ComponentOnFirePackage(x, y, z)
+                new BlockFireRemovedPackage { X = x, Y = y, Z = z }
             );
         }
 

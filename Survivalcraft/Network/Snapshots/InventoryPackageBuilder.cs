@@ -2,7 +2,7 @@ namespace Game.Network.Snapshots;
 
 public static class InventoryPackageBuilder
 {
-    public static ComponentInventoryPackage Capture(IReadOnlyDictionary<IInventory, List<int>> inventories)
+    public static InventorySnapshotPackage Capture(IReadOnlyDictionary<IInventory, List<int>> inventories)
     {
         var groups = new Dictionary<int, List<InventorySlotSnapshot>>();
         foreach (var (inventory, indices) in inventories)
@@ -15,14 +15,14 @@ public static class InventoryPackageBuilder
 
             foreach (var index in indices)
             {
-                var state = inventory is ComponentClothing clothing
-                    ? new InventorySlotSnapshot
+                InventorySlotSnapshot state = inventory is ComponentClothing clothing
+                    ? new ClothingSlotSnapshot
                     {
-                        Type = 1, SlotIndex = index, ClothingList = clothing.GetClothes((ClothingSlot)index).ToArray()
+                        SlotIndex = index, Clothes = clothing.GetClothes((ClothingSlot)index).ToArray()
                     }
-                    : new InventorySlotSnapshot
+                    : new ItemSlotSnapshot
                     {
-                        Type = 0, SlotIndex = index, Count = inventory.GetSlotCount(index),
+                        SlotIndex = index, Count = inventory.GetSlotCount(index),
                         Value = inventory.GetSlotValue(index)
                     };
                 var existing = slots.FindIndex(value => value.SlotIndex == index);
@@ -31,9 +31,8 @@ public static class InventoryPackageBuilder
             }
         }
 
-        return new ComponentInventoryPackage
+        return new InventorySnapshotPackage
         {
-            PackageEventType = ComponentInventoryPackage.EventType.InventorySync,
             Slots = groups.ToDictionary(
                 pair => pair.Key,
                 pair => (IReadOnlyList<InventorySlotSnapshot>)pair.Value.ToArray()

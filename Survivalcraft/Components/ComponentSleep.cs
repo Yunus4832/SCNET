@@ -212,11 +212,8 @@ public class ComponentSleep : Component, IUpdateable
         if (CommonLib.WorkType == WorkType.Client)
         {
             NetworkSender.SendToServer(
-                new ComponentSleepPackage(
-                    Entity.EntityId,
-                    ComponentSleepPackage.EventType.SleepRequest,
-                    allowManualWakeup
-                )
+                new SleepRequestPackage
+                    { EntityId = Entity.EntityId, AllowManualWakeup = allowManualWakeup }
             );
         }
         else
@@ -224,12 +221,8 @@ public class ComponentSleep : Component, IUpdateable
             NetSleep(allowManualWakeup);
             NetworkSender.SendToObservers(
                 Entity,
-                new ComponentSleepPackage(
-                    Entity.EntityId,
-                    ComponentSleepPackage.EventType.Sleep,
-                    allowManualWakeup,
-                    true
-                )
+                new SleepResultPackage
+                    { Reason = "", EntityId = Entity.EntityId, AllowManualWakeup = allowManualWakeup, Result = true }
             );
         }
     }
@@ -238,19 +231,14 @@ public class ComponentSleep : Component, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(
-                new ComponentSleepPackage(
-                    Entity.EntityId,
-                    ComponentSleepPackage.EventType.WakeupRequest
-                )
-            );
+            NetworkSender.SendToServer(new WakeupRequestPackage { EntityId = Entity.EntityId });
         }
         else
         {
             NetWakeUp();
             NetworkSender.SendToObservers(
                 Entity,
-                new ComponentSleepPackage(Entity.EntityId, ComponentSleepPackage.EventType.WakeUp)
+                new WakeupPackage { EntityId = Entity.EntityId }
             );
         }
     }

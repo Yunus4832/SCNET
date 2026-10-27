@@ -415,7 +415,9 @@ public partial class CharacterData : IDisposable
                 InitializeSpawnMarks();
                 if (CommonLib.WorkType == WorkType.Client)
                 {
-                    NetworkSender.SendToServer(new ClientPackage(CommonLib.Net.Self!.ID, ClientState.Playing));
+                    NetworkSender.SendToServer(
+                        new ClientStateChangedPackage { ClientId = CommonLib.Net.Self!.ID, State = ClientState.Playing }
+                    );
                 }
             },
             delegate

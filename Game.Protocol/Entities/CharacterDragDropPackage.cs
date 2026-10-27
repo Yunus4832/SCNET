@@ -2,17 +2,20 @@ using Engine.Core.Mathematics;
 
 using Game.Protocol.Characters;
 
+using MessagePack;
+
 namespace Game.Protocol.Entities;
 
+[MessagePackObject]
 public sealed record CharacterDragDropPackage : ComponentCharacterPackage
 {
-    public override CharacterAction Type => CharacterAction.DragDrop;
+    [IgnoreMember] public override CharacterAction Type => CharacterAction.DragDrop;
 
-    public int InventoryID { get; init; }
+    [Key(1)] public int InventoryID { get; init; }
 
-    public int ActiveSlot { get; init; }
+    [Key(2)] public int ActiveSlot { get; init; }
 
-    public Vector3 HitPosition { get; init; }
+    [Key(3)] public Vector3 HitPosition { get; init; }
 
-    public int Count { get; init; }
+    [Key(4)] public int Count { get; init; }
 }

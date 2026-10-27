@@ -13,7 +13,6 @@ using Game.Players;
 using Game.Protocol.Connection;
 using Game.Protocol.Identity;
 using Game.Protocol.Messaging;
-using Game.Protocol.Serialization;
 using Game.Rendering;
 using Game.Screens;
 using Game.Subsystems;
@@ -213,21 +212,24 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
         }
         else
         {
-            _network?.Send(
-                removed ? TerritoryMessages.AccessRequestRemoved : TerritoryMessages.AccessRequest,
-                writer =>
-                {
-                    writer.Write(request.Id);
-                    if (!removed)
-                    {
-                        PlayerAddressCodec.Write(writer, request.Owner);
-                        PlayerAddressCodec.Write(writer, request.User);
-                        writer.Write(request.UserName);
-                    }
-                },
-                PackageAudience.To(owner),
-                ClientState.ProjectLoaded
-            );
+            if (removed)
+            {
+                _network?.Send(
+                    TerritoryMessages.AccessRequestRemoved,
+                    new TerritoryAccessRequestRemoval(request.Id),
+                    PackageAudience.To(owner),
+                    ClientState.ProjectLoaded
+                );
+            }
+            else
+            {
+                _network?.Send(
+                    TerritoryMessages.AccessRequest,
+                    new TerritoryAccessRequestNotice(request.Id, request.Owner, request.User, request.UserName),
+                    PackageAudience.To(owner),
+                    ClientState.ProjectLoaded
+                );
+            }
         }
     }
 
@@ -422,7 +424,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
         {
             _network?.Send(
                 TerritoryMessages.Update,
-                writer => TerritoryMessages.Write(writer, territory),
+                TerritoryMessages.Capture(territory),
                 PackageAudience.Global,
                 ClientState.ProjectLoaded
             );
@@ -435,7 +437,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
         {
             _network?.Send(
                 TerritoryMessages.Remove,
-                writer => PlayerAddressCodec.Write(writer, owner),
+                new TerritoryRemoval(owner),
                 PackageAudience.Global,
                 ClientState.ProjectLoaded
             );
@@ -465,12 +467,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
             var requestId = SettingsRequestId;
             _network.Send(
                 TerritoryMessages.Settings,
-                writer =>
-                {
-                    writer.Write(requestId);
-                    PlayerAddressCodec.Write(writer, territory.Owner);
-                    TerritoryMessages.WriteSettings(writer, settings);
-                },
+                new TerritorySettingsRequest(requestId, territory.Owner, settings),
                 PackageAudience.To(server),
                 ClientState.ProjectLoaded
             );
@@ -507,7 +504,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
     {
         _network?.Send(
             TerritoryMessages.Snapshot,
-            writer => TerritoryMessages.WriteSnapshot(writer, Store.Territories),
+            new TerritoryWorldSnapshot(Store.Territories.Select(TerritoryMessages.Capture).ToArray()),
             PackageAudience.To(client),
             ClientState.ProjectLoaded
         );

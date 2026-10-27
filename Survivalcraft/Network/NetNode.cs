@@ -43,7 +43,6 @@ public class NetNode
         Connected = 2
     }
 
-    private const byte _verifyByte = 0x88;
 
     private NetworkHost? _broadcastHost;
 
@@ -427,7 +426,7 @@ public class NetNode
         }
 
         if (!_isStopping &&
-            result.Code is (AdmissionResultCode.Cancelled or AdmissionResultCode.Expired or AdmissionResultCode.Denied))
+            result.Code is AdmissionResultCode.Cancelled or AdmissionResultCode.Expired or AdmissionResultCode.Denied)
         {
             Stop("认证已取消、过期或被拒绝");
         }
@@ -499,7 +498,7 @@ public class NetNode
         {
             if (IsServer)
             {
-                QueuePackage(new ClientPackage(client.ID), PackageAudience.Global);
+                QueuePackage(new ClientRemovedPackage { ClientId = client.ID }, PackageAudience.Global);
             }
 
             client.State = ClientState.NotConnected;
@@ -649,7 +648,7 @@ public class NetNode
 
     public void AddPendingHandlePackage(ReceivedPackage package)
     {
-        Log.Debug("[排队]添加到处理队列：" + package.Package.ID);
+        Log.Debug("[排队]添加到处理队列：" + package.Package.GetType().Name);
         _pendingHandlePackages.Add(package);
     }
 
@@ -1233,11 +1232,7 @@ public class NetNode
 
     internal static byte[] CreateUnconnectedPayload(IProtocolMessage package)
     {
-        using var writer = new ProtocolWriter();
-        writer.Write(_verifyByte);
-        writer.Write(package.ID);
-        PackageManager.WriteMessage(package, writer);
-        return CommonLib.GetWriter(writer, out _).CopyData();
+        return ProtocolPacketCodec.Encode([package]);
     }
 
     public void Update()
@@ -1565,6 +1560,26 @@ public class NetNode
         PackageTransport transport
     )
     {
+        if (packages.Count > ProtocolPacketCodec.MaximumMessagesPerPacket)
+        {
+            var deferred = new List<OutboundPackage>();
+            var considered = transport.Coalesce && !CanFragment(transport.Delivery)
+                ? ProtocolPacketCodec.MaximumMessagesPerPacket
+                : packages.Count;
+            for (var offset = 0; offset < considered; offset += ProtocolPacketCodec.MaximumMessagesPerPacket)
+            {
+                var count = Math.Min(ProtocolPacketCodec.MaximumMessagesPerPacket, considered - offset);
+                deferred.AddRange(SendPackageBatches(client, packages.GetRange(offset, count), transport));
+            }
+
+            if (considered < packages.Count)
+            {
+                deferred.AddRange(packages.GetRange(considered, packages.Count - considered));
+            }
+
+            return deferred;
+        }
+
         var peer = client.Peer!;
         if (packages.Any(outboundPackage => IsTerrainChunkPackage(outboundPackage.Package)))
         {
@@ -1584,7 +1599,7 @@ public class NetNode
         var remainingPackages = new List<OutboundPackage>(packages.Count);
         foreach (var outboundPackage in packages)
         {
-            if (outboundPackage.Package is SubsystemBodyPackage
+            if (outboundPackage.Package is BodyStatesPackage
                 {
                     PackageEventType: SubsystemBodyPackage.EventType.BodyUpdate
                 } bodyPackage)
@@ -1710,13 +1725,13 @@ public class NetNode
         return deferredPackages;
     }
 
-    internal List<SubsystemBodyPackage> SplitOversizedBodyPackage(
-        SubsystemBodyPackage bodyPackage,
+    internal List<BodyStatesPackage> SplitOversizedBodyPackage(
+        BodyStatesPackage bodyPackage,
         PackageTransport transport,
         int maxPacketSize
     )
     {
-        var chunks = new List<SubsystemBodyPackage>();
+        var chunks = new List<BodyStatesPackage>();
         var items = new List<SubsystemBodyPackage.BodyItem>();
         var candidate = bodyPackage with { BodyList = items };
         foreach (var item in bodyPackage.BodyList)
@@ -1782,32 +1797,17 @@ public class NetNode
     )
     {
         var packageList = packages as IReadOnlyCollection<IProtocolMessage> ?? packages.ToArray();
-        var serializationStarted = Stopwatch.GetTimestamp();
-        using var writer = new ProtocolWriter();
-        foreach (var package in packageList)
-        {
-            writer.Write(_verifyByte);
-            writer.Write(package.ID);
-            var start = writer.BaseStream.Position;
-            PackageManager.WriteMessage(package, writer);
-            measurements?.Add((package.GetType(), checked((int)(writer.BaseStream.Position - start))));
-        }
-
-        var serializationFinished = Stopwatch.GetTimestamp();
-        var netWriter = CommonLib.GetWriter(
-            writer,
-            out var compressedSize,
-            GetCompressionPolicy(packageList, transport)
-        );
-        packetSize = compressedSize + sizeof(int);
+        var encoding = new ProtocolPacketMeasurements { Messages = measurements };
+        var data = ProtocolPacketCodec.Encode(packageList, GetCompressionPolicy(packageList, transport), encoding);
+        packetSize = data.Length;
         SendStatistics.RecordEncoding(
             packageList.Count,
-            writer.BaseStream.Length,
-            netWriter.Length,
-            serializationFinished - serializationStarted,
-            Stopwatch.GetTimestamp() - serializationFinished
+            encoding.PayloadBytes,
+            data.Length,
+            encoding.SerializationTicks,
+            encoding.FramingTicks
         );
-        return netWriter;
+        return CommonLib.GetWriter(data);
     }
 
     private static CompressionPolicy GetCompressionPolicy(

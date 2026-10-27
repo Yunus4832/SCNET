@@ -25,7 +25,7 @@ public sealed class PacketCodecTest
     [Fact]
     public void CapturedInnerFrameGetsTheLittleEndianEnvelope()
     {
-        var frame = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "connection-reject.bin"));
+        var frame = ProtocolPacketCodec.Encode([new ConnectionRejectPackage("test")], CompressionPolicy.None)[4..];
         using var stream = new MemoryStream();
         using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
         {
@@ -52,8 +52,8 @@ public sealed class PacketCodecTest
     public void EmptyModFingerprintIsTheCanonicalSha256OfNoData()
     {
         Assert.Equal(
-            Convert.ToHexString(SHA256.HashData(Array.Empty<byte>())).ToLowerInvariant(),
-            GameProtocol.EmptyModDataHash
+            GameProtocol.EmptyModDataHash,
+            Convert.ToHexString(SHA256.HashData(Array.Empty<byte>())).ToLowerInvariant()
         );
     }
 }

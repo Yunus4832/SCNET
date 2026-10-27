@@ -10,6 +10,7 @@
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
+        <PackageReference Include="MessagePack" Version="3.1.9"/>
         <AssemblyMetadata Include="GameProtocolVersion" Value="$(GameProtocolVersion)"/>
         <None Include="README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>

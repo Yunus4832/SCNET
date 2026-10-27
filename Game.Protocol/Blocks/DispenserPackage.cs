@@ -1,14 +1,15 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
 namespace Game.Protocol.Blocks;
 
+[MessagePackObject]
 public sealed record DispenserPackage : IProtocolMessage
 {
-    public byte Flag { get; init; }
+    [Key(0)] public byte Flag { get; init; }
 
-    public Point3 Point { get; init; }
-
-    public byte ID => (byte)PackageType.Dispenser;
+    [Key(1)] public Point3 Point { get; init; }
 
     public DispenserPackage()
     {

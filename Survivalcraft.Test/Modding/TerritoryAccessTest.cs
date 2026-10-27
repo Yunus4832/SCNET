@@ -104,10 +104,8 @@ public class TerritoryAccessTest
         restored.Load(store.Save());
         var saved = Assert.Single(restored.Territories);
         Assert.Equal(territory.Grants[player], saved.Grants[player]);
-        using var writer = new ProtocolWriter();
-        TerritoryMessages.Write(writer, saved);
-        using var reader = new ProtocolReader(writer.Data());
-        var received = TerritoryMessages.Read(reader);
+        var payload = ProtocolPayloadCodec.Encode(TerritoryMessages.Capture(saved));
+        var received = TerritoryMessages.Restore(ProtocolPayloadCodec.Decode<TerritorySnapshot>(payload));
         Assert.Equal(saved.Grants[player], received.Grants[player]);
         received.SetGrant(player, "Visitor", TerritoryPermission.None);
         Assert.Empty(received.Grants);

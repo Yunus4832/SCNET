@@ -1,12 +1,15 @@
+using MessagePack;
+
 namespace Game.Protocol.Characters;
 
+[MessagePackObject]
 public sealed record CharacterExperiencePackage : ComponentCharacterPackage
 {
-    public override CharacterAction Type => CharacterAction.AddExperience;
+    [IgnoreMember] public override CharacterAction Type => CharacterAction.AddExperience;
 
-    public int Count { get; init; }
+    [Key(1)] public int Count { get; init; }
 
-    public bool PlaySound { get; init; }
+    [Key(2)] public bool PlaySound { get; init; }
 
-    public float Level { get; init; }
+    [Key(3)] public float Level { get; init; }
 }

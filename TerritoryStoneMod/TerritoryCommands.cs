@@ -6,16 +6,26 @@ using Game.Players;
 using Game.Protocol;
 using Game.Protocol.Identity;
 using Game.Protocol.Localization;
-using Game.Protocol.Serialization;
 using Game.Subsystems;
+
+using MessagePack;
 
 namespace TerritoryStoneMod;
 
-public sealed record RequestTerritoryAccessCommand(string Owner) : IGameCommand;
+[MessagePackObject]
+public sealed record RequestTerritoryAccessCommand([property: Key(0)] string Owner) : IGameCommand;
 
-public sealed record DecideTerritoryAccessCommand(Guid Request, string Permissions) : IGameCommand;
+[MessagePackObject]
+public sealed record DecideTerritoryAccessCommand(
+    [property: Key(0)] Guid Request,
+    [property: Key(1)] string Permissions
+) : IGameCommand;
 
-public sealed record SetTerritoryGrantCommand(PlayerAddress User, string Permissions) : IGameCommand;
+[MessagePackObject]
+public sealed record SetTerritoryGrantCommand(
+    [property: Key(0)] PlayerAddress User,
+    [property: Key(1)] string Permissions
+) : IGameCommand;
 
 public static class TerritoryCommands
 {
@@ -31,8 +41,7 @@ public static class TerritoryCommands
                 CommandDomain.World,
                 Description("RequestDescription"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: (writer, command) => writer.Write(command.Owner),
-                read: reader => new RequestTerritoryAccessCommand(reader.ReadString())
+                supportsRemoteInvocation: true
             )
         );
         context.Commands.Register(
@@ -45,12 +54,7 @@ public static class TerritoryCommands
                 CommandDomain.World,
                 Description("DecideDescription"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: (writer, command) =>
-                {
-                    writer.Write(command.Request);
-                    writer.Write(command.Permissions);
-                },
-                read: reader => new DecideTerritoryAccessCommand(reader.ReadGuid(), reader.ReadString())
+                supportsRemoteInvocation: true
             )
         );
         context.Commands.Register(
@@ -63,12 +67,7 @@ public static class TerritoryCommands
                 CommandDomain.World,
                 Description("GrantDescription"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: (writer, command) =>
-                {
-                    PlayerAddressCodec.Write(writer, command.User);
-                    writer.Write(command.Permissions);
-                },
-                read: reader => new SetTerritoryGrantCommand(PlayerAddressCodec.Read(reader), reader.ReadString())
+                supportsRemoteInvocation: true
             )
         );
         context.Commands.Adapters.Register(

@@ -13,12 +13,9 @@ public sealed class PlayerSnapshotSizeTest
         {
             PackageChangeFlag = (ComponentCharacterPackage.ChangFlag)byte.MaxValue
         };
-        using var writer = new ProtocolWriter();
-        writer.Write((byte)0);
-        writer.Write(package.ID);
-        ProtocolMessageCodec.Write(package, writer);
+        var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
 
-        var datagram = CommonLib.GetWriter(writer, out _, CompressionPolicy.None);
+        var datagram = CommonLib.GetWriter(writer);
 
         Assert.InRange(datagram.Length, 1, 507);
         Assert.Equal(PackageTransportPolicy.Snapshot, PackageTransportPolicy.Get(package));

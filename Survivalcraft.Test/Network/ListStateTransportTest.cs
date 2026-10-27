@@ -16,10 +16,9 @@ public sealed class ListStateTransportTest
         {
             StateTick = uint.MaxValue
         };
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<PickablePackage>(ProtocolMessageCodec.Read((byte)PackageType.Pickable, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<PickablePositionsPackage>(ProtocolMessageCodec.Decode(reader));
         Assert.Equal(package.StateTick, clone.StateTick);
         Assert.Equal(package.Type, clone.Type);
         Assert.Equal(package.Positions[0].Id, Assert.Single(clone.Positions).Id);
@@ -32,11 +31,8 @@ public sealed class ListStateTransportTest
         var items = Enumerable.Range(1, PickablePackage.MaxPositionsPerSnapshot)
             .Select(id => new Pickable { Id = (ushort)id, Position = new Vector3(id, -id, id * 3) }).ToList();
         var package = PickablePackageBuilder.Capture(items) with { StateTick = uint.MaxValue };
-        using var writer = new ProtocolWriter();
-        writer.Write((byte)0);
-        writer.Write(package.ID);
-        ProtocolMessageCodec.Write(package, writer);
-        var datagram = CommonLib.GetWriter(writer, out _, CompressionPolicy.None);
+        var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
+        var datagram = CommonLib.GetWriter(writer);
         Assert.InRange(datagram.Length, 1, 507);
         Assert.Equal(DeliveryMode.Unreliable, PackageTransportPolicy.Get(package).Delivery);
         Assert.Equal(NetworkChannel.StateStream, PackageTransportPolicy.Get(package).Channel);
@@ -49,11 +45,8 @@ public sealed class ListStateTransportTest
             Enumerable.Range(1, 100)
                 .Select(id => new OnlineCharacterState(Guid.NewGuid(), new Vector3(id, -id, id * 3), 1f, false))
         );
-        using var writer = new ProtocolWriter();
-        writer.Write((byte)0);
-        writer.Write(package.ID);
-        ProtocolMessageCodec.Write(package, writer);
-        var datagram = CommonLib.GetWriter(writer, out _, CompressionPolicy.None);
+        var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
+        var datagram = CommonLib.GetWriter(writer);
         Assert.True(datagram.Length > 507);
         var transport = PackageTransportPolicy.Get(package);
         Assert.Equal(DeliveryMode.ReliableOrdered, transport.Delivery);

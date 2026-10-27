@@ -1,6 +1,5 @@
 using Game.Network;
 using Game.Protocol.Identity;
-using Game.Protocol.Serialization;
 
 namespace TerritoryStoneMod;
 
@@ -26,92 +25,34 @@ public static class TerritoryMessages
         sender.PlayerAddress == owner &&
         ReferenceEquals(CommonLib.Net.Clients.GetValueOrDefault(sender.ID), sender);
 
-    public static void Write(ProtocolWriter writer, Territory territory)
+    public static TerritorySnapshot Capture(Territory territory) => new(
+        territory.Owner,
+        territory.StonePoint,
+        territory.Settings,
+        territory.Grants.Select(pair => new TerritoryGrantSnapshot(pair.Key, pair.Value.Name, pair.Value.Permissions))
+            .ToArray()
+    );
+
+    public static Territory Restore(TerritorySnapshot snapshot)
     {
-        PlayerAddressCodec.Write(writer, territory.Owner);
-        writer.Write(territory.StonePoint);
-        WriteSettings(writer, territory.Settings);
-        writer.Write(territory.Grants.Count);
-        foreach (var (player, grant) in territory.Grants)
-        {
-            PlayerAddressCodec.Write(writer, player);
-            writer.Write(grant.Name);
-            writer.Write((int)grant.Permissions);
-        }
-    }
+        if (snapshot.Grants.Length > 128) { throw new InvalidDataException("Too many territory grants."); }
 
-    public static Territory Read(ProtocolReader reader)
-    {
-        var owner = PlayerAddressCodec.Read(reader);
-        var point = reader.ReadPoint3();
-        if (owner == default || point.Y is < 0 or > 255)
+        var territory = new Territory(snapshot.Owner, snapshot.StonePoint, snapshot.Settings);
+        var subjects = new HashSet<PlayerAddress>();
+        foreach (var grant in snapshot.Grants)
         {
-            throw new InvalidDataException("Invalid territory identity or stone height.");
-        }
+            if (!subjects.Add(grant.Subject)) { throw new InvalidDataException("Duplicate territory grant."); }
 
-        var territory = new Territory(owner, point, ReadSettings(reader));
-        var count = reader.ReadInt32();
-        if (count is < 0 or > 128)
-        {
-            throw new InvalidDataException("Invalid territory grant count.");
-        }
-
-        for (var index = 0; index < count; index++)
-        {
-            var player = PlayerAddressCodec.Read(reader);
-            if (territory.Grants.ContainsKey(player))
-            {
-                throw new InvalidDataException("Duplicate territory grant.");
-            }
-
-            territory.SetGrant(player, reader.ReadString(), (TerritoryPermission)reader.ReadInt32());
+            territory.SetGrant(grant.Subject, grant.Name, grant.Permissions);
         }
 
         return territory;
     }
 
-    public static void WriteSettings(ProtocolWriter writer, TerritorySettings settings)
+    public static Territory[] Restore(TerritoryWorldSnapshot snapshot)
     {
-        writer.Write(settings.Size);
-        writer.Write(settings.AllowEntry);
-        writer.Write(settings.AllowExit);
-        writer.Write(settings.AllowDigging);
-        writer.Write(settings.AllowPlacing);
-        writer.Write(settings.ShowBoundary);
-    }
+        if (snapshot.Territories.Length > 1024) { throw new InvalidDataException("Too many territories."); }
 
-    public static TerritorySettings ReadSettings(ProtocolReader reader) => new(
-        reader.ReadInt32(),
-        reader.ReadBoolean(),
-        reader.ReadBoolean(),
-        reader.ReadBoolean(),
-        reader.ReadBoolean(),
-        reader.ReadBoolean()
-    );
-
-    public static void WriteSnapshot(ProtocolWriter writer, IReadOnlyCollection<Territory> territories)
-    {
-        writer.Write(territories.Count);
-        foreach (var territory in territories)
-        {
-            Write(writer, territory);
-        }
-    }
-
-    public static Territory[] ReadSnapshot(ProtocolReader reader)
-    {
-        var count = reader.ReadInt32();
-        if (count is < 0 or > 1024)
-        {
-            throw new InvalidDataException("Invalid territory snapshot count.");
-        }
-
-        var territories = new Territory[count];
-        for (var index = 0; index < count; index++)
-        {
-            territories[index] = Read(reader);
-        }
-
-        return territories;
+        return snapshot.Territories.Select(Restore).ToArray();
     }
 }

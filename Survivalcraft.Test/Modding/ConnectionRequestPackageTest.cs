@@ -1,5 +1,4 @@
 using Game.Modding;
-using Game.World;
 
 namespace Survivalcraft.Test.Modding;
 
@@ -20,13 +19,9 @@ public class ConnectionRequestPackageTest
             "mod-data-hash"
         );
 
-        var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        var prefix = new ProtocolReader(writer.Data());
-        Assert.Equal(GameProtocol.ConnectionMagic, prefix.ReadInt32());
-        Assert.Equal(package.ProtocolVersion, prefix.ReadInt32());
-        var reader = new ProtocolReader(writer.Data());
-        var clone = (ConnectionRequestPackage)ProtocolMessageCodec.Read(package.ID, reader);
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = (ConnectionRequestPackage)ProtocolMessageCodec.Decode(reader);
 
         Assert.Equal(package.ModDataHash, clone.ModDataHash);
         Assert.Equal(package.ProtocolVersion, clone.ProtocolVersion);
@@ -38,10 +33,9 @@ public class ConnectionRequestPackageTest
     {
         var package = new ConnectionRejectPackage("客户端模组与服务器不一致，请刷新服务器信息后重试");
 
-        var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        var reader = new ProtocolReader(writer.Data());
-        var clone = (ConnectionRejectPackage)ProtocolMessageCodec.Read(package.ID, reader);
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = (ConnectionRejectPackage)ProtocolMessageCodec.Decode(reader);
 
         Assert.Equal(package.Reason, clone.Reason);
     }
@@ -88,11 +82,9 @@ public class ConnectionRequestPackageTest
     [Fact]
     public void ServerInfoPackageRoundTripsRequiredModProfile()
     {
-        var package = new ServerInfoPackage
+        var package = new ServerInfoResponsePackage
         {
-            RequestInfo = false,
-            ProtocolVersion = 1,
-            TemporaryRepositories =
+            ProtocolVersion = 1, TemporaryRepositories =
             [
                 new ContentRepositoryDescriptor(Guid.NewGuid(), "http://127.0.0.1:9527", 0)
             ],
@@ -104,13 +96,9 @@ public class ConnectionRequestPackageTest
             )
         };
 
-        var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        var reader = new ProtocolReader(writer.Data());
-        var prefix = new ProtocolReader(writer.Data());
-        Assert.False(prefix.ReadBoolean());
-        Assert.Equal(package.ProtocolVersion, prefix.ReadInt32());
-        var clone = Assert.IsType<ServerInfoPackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<ServerInfoResponsePackage>(ProtocolMessageCodec.Decode(reader));
 
         Assert.Equal(package.ProtocolVersion, clone.ProtocolVersion);
         var repository = Assert.Single(clone.TemporaryRepositories);
@@ -126,7 +114,7 @@ public class ConnectionRequestPackageTest
     [Fact]
     public void ServerInfoPackageRejectsInvalidRequirementsBeforeWriting()
     {
-        var package = new ServerInfoPackage
+        var package = new ServerInfoResponsePackage
         {
             RequiredModProfile = new RequiredModProfile(
                 "server",
@@ -136,56 +124,29 @@ public class ConnectionRequestPackageTest
             )
         };
 
-        Assert.Throws<ArgumentException>(() => ProtocolMessageCodec.Write(package, new ProtocolWriter()));
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Encode(package));
     }
 
     [Fact]
     public void ServerInfoPackageRejectsUnsafeRepositoryWhileReading()
     {
-        var writer = CreateServerInfoPrefix();
-        writer.Write((ushort)1);
-        writer.Write(Guid.NewGuid().ToString("D"));
-        writer.Write("file:///tmp/packages");
-        writer.Write(0);
-        writer.Write(false);
-        writer.Write((int)Season.Summer);
-        writer.Write(0f);
-
-        var package = new ServerInfoPackage();
-        Assert.Throws<InvalidDataException>(() =>
-            ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data()))
-        );
+        var invalid = new ServerInfoResponsePackage
+            { TemporaryRepositories = [new ContentRepositoryDescriptor(Guid.NewGuid(), "file:///tmp/packages", 0)] };
+        var payload = ProtocolPayloadCodec.Encode<IProtocolMessage>(invalid);
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(payload));
     }
 
     [Fact]
     public void ServerInfoPackageRejectsEmptyHashWhileReading()
     {
-        var writer = CreateServerInfoPrefix();
-        writer.Write((ushort)0);
-        writer.Write(true);
-        writer.Write("server");
-        writer.Write((ushort)1);
-        writer.Write("example.addon");
-        writer.Write("1.0.0");
-        writer.Write(string.Empty);
-        writer.Write((int)Season.Summer);
-        writer.Write(0f);
-
-        var package = new ServerInfoPackage();
-        Assert.Throws<InvalidDataException>(() =>
-            ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data()))
-        );
-    }
-
-    private static ProtocolWriter CreateServerInfoPrefix()
-    {
-        var writer = new ProtocolWriter();
-        writer.Write(false);
-        writer.Write(1);
-        writer.Write((ushort)0);
-        writer.Write((ushort)4);
-        writer.WriteEnum(GameMode.Survival);
-        writer.Write(0.5f);
-        return writer;
+        var invalid = new ServerInfoResponsePackage
+        {
+            RequiredModProfile = new RequiredModProfile(
+                "server",
+                [new RequiredModPackage("example.addon", "1.0.0", "")]
+            )
+        };
+        var payload = ProtocolPayloadCodec.Encode<IProtocolMessage>(invalid);
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(payload));
     }
 }

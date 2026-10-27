@@ -13,11 +13,12 @@ public sealed class ComponentVitalStatPackageHandler : PackageHandlerBase<Compon
         }
 
         var project = GameManager.Project;
-        switch (package.PackageEventType)
+        switch (package)
         {
-            case ComponentVitalStatPackage.EventType.SyncStat:
+            case VitalStatePackage message1:
+            {
                 project.FindEntityById(
-                    package.EntityId,
+                    message1.EntityId,
                     entity =>
                     {
                         var vitalStats = entity.FindComponent<ComponentVitalStats>();
@@ -29,19 +30,20 @@ public sealed class ComponentVitalStatPackageHandler : PackageHandlerBase<Compon
                         if (isServer)
                         {
                             // 服务器只同步耐力
-                            vitalStats.Stamina = package.Stamina;
+                            vitalStats.Stamina = message1.Stamina;
                         }
                         else
                         {
                             // 客户端不同步耐力
-                            vitalStats.Food = package.Food;
-                            vitalStats.Sleep = package.Sleep;
-                            vitalStats.Wetness = package.Wetness;
-                            vitalStats.Temperature = package.Temperature;
+                            vitalStats.Food = message1.Food;
+                            vitalStats.Sleep = message1.Sleep;
+                            vitalStats.Wetness = message1.Wetness;
+                            vitalStats.Temperature = message1.Temperature;
                         }
                     }
                 );
                 break;
+            }
         }
     }
 }

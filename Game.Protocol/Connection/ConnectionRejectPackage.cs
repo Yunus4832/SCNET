@@ -1,6 +1,8 @@
+using MessagePack;
+
 namespace Game.Protocol.Connection;
 
-public sealed record ConnectionRejectPackage(string Reason) : IProtocolMessage
+[MessagePackObject]
+public sealed record ConnectionRejectPackage([property: Key(0)] string Reason) : IProtocolMessage
 {
-    public byte ID => (byte)PackageType.ConnectionReject;
 }

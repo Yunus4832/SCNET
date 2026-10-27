@@ -118,16 +118,11 @@ public sealed class ElectricityCatchupTest : IDisposable
         }
 
         snapshot.Removed.AddRange(changes.Removed);
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)), writer);
-        using var reader = new ProtocolReader(writer.Data());
+        var writer =
+            ProtocolMessageCodec.Encode(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)));
+        var reader = writer;
         var received =
-            Assert.IsType<SubsystemElectricityPackage>(
-                ProtocolMessageCodec.Read(
-                    (byte)PackageType.SubsystemElectricity,
-                    reader
-                )
-            );
+            Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Decode(reader));
         electricity.ReceiveNetworkSnapshot(received.Snapshot);
     }
 

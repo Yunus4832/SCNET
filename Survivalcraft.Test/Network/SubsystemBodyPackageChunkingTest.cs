@@ -11,11 +11,9 @@ public sealed class SubsystemBodyPackageChunkingTest
     [Fact]
     public void BodySnapshotRoundTripsSnapshotIdAndFullState()
     {
-        var package = new SubsystemBodyPackage
+        var package = new BodyStatesPackage
         {
-            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
-            StateTick = 12345u,
-            BodyList =
+            StateTick = 12345u, BodyList =
             [
                 new SubsystemBodyPackage.BodyItem
                 {
@@ -34,14 +32,7 @@ public sealed class SubsystemBodyPackageChunkingTest
             ]
         };
 
-        var writer = new ProtocolWriter();
-        PackageManager.WriteMessage(package, writer);
-        var clone = Assert.IsType<SubsystemBodyPackage>(
-            ProtocolMessageCodec.Read(
-                package.ID,
-                new ProtocolReader(writer.Data())
-            )
-        );
+        var clone = Assert.IsType<BodyStatesPackage>(ProtocolMessageCodec.Decode(ProtocolMessageCodec.Encode(package)));
 
         Assert.Equal(package.StateTick, clone.StateTick);
         var item = Assert.Single(clone.BodyList);
@@ -61,12 +52,7 @@ public sealed class SubsystemBodyPackageChunkingTest
     public void FullBodySnapshotExceedingMtuCanBeSplitIntoFittingChunks(int maxPacketSize)
     {
         var items = new List<SubsystemBodyPackage.BodyItem>();
-        var full = new SubsystemBodyPackage
-        {
-            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
-            StateTick = 12345u,
-            BodyList = items
-        };
+        var full = new BodyStatesPackage { StateTick = 12345u, BodyList = items };
         for (var i = 0; i < 80; i++)
         {
             items.Add(
@@ -107,14 +93,6 @@ public sealed class SubsystemBodyPackageChunkingTest
 
     private static int SerializeSize(IEnumerable<IProtocolMessage> packages)
     {
-        var writer = new ProtocolWriter();
-        foreach (var package in packages)
-        {
-            writer.Write((byte)0x88);
-            writer.Write(package.ID);
-            PackageManager.WriteMessage(package, writer);
-        }
-
-        return writer.Data(CompressionPolicy.None).Length + sizeof(int);
+        return ProtocolPacketCodec.Encode(packages, CompressionPolicy.None).Length;
     }
 }

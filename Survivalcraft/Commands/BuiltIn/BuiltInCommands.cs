@@ -89,8 +89,7 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("MarkPrivate_Description", "保存个人标记"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (writer, command) => writer.Write(command.Name),
-                read: static reader => new MarkPrivatePositionCommand(reader.ReadString())
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -101,8 +100,7 @@ public static class BuiltInCommands
                 CommandDescription("MarkPublic_Description", "保存公共标记"),
                 publicMark,
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (writer, command) => writer.Write(command.Name),
-                read: static reader => new MarkPublicPositionCommand(reader.ReadString())
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -113,13 +111,8 @@ public static class BuiltInCommands
                 CommandDescription("TeleportMark_Description", "传送到命名标记"),
                 teleportSelf,
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.Name);
-                    writer.Write(command.Public);
-                },
-                read: static reader => new TeleportMarkCommand(reader.ReadString(), reader.ReadBoolean()),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -129,15 +122,8 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("TeleportOtherMark_Description", "传送指定玩家到标记"),
                 teleportOthers,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.Player);
-                    writer.Write(command.Name);
-                    writer.Write(command.Public);
-                },
-                read: static reader =>
-                    new TeleportPlayerMarkCommand(reader.ReadString(), reader.ReadString(), reader.ReadBoolean()),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -148,22 +134,8 @@ public static class BuiltInCommands
                 CommandDescription("TeleportSelf_Description", "传送自己"),
                 teleportSelf,
                 allowedPrincipals: CommandPrincipalKinds.Player | CommandPrincipalKinds.System,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.Position.HasValue);
-                    if (command.Position.HasValue)
-                    {
-                        writer.Write(command.Position.Value);
-                    }
-
-                    writer.Write(command.DestinationPlayer != null);
-                    if (command.DestinationPlayer != null)
-                    {
-                        writer.Write(command.DestinationPlayer);
-                    }
-                },
-                read: static reader => ReadTeleportSelf(reader),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -173,23 +145,8 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("TeleportOther_Description", "传送指定玩家"),
                 teleportOthers,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.Player);
-                    writer.Write(command.Position.HasValue);
-                    if (command.Position.HasValue)
-                    {
-                        writer.Write(command.Position.Value);
-                    }
-
-                    writer.Write(command.DestinationPlayer != null);
-                    if (command.DestinationPlayer != null)
-                    {
-                        writer.Write(command.DestinationPlayer);
-                    }
-                },
-                read: static reader => ReadTeleportPlayer(reader),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         RegisterPermission(
@@ -228,8 +185,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("P2PStart_Description", "开启 P2P 房间"),
                 p2pManage,
-                write: static (_, _) => { },
-                read: static _ => new StartP2PCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -239,8 +195,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("P2PStop_Description", "停止 P2P 房间"),
                 p2pManage,
-                write: static (_, _) => { },
-                read: static _ => new StopP2PCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -250,8 +205,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("P2PStatus_Description", "查询 P2P 房间状态"),
                 p2pManage,
-                write: static (_, _) => { },
-                read: static _ => new GetP2PStatusCommand()
+                supportsRemoteInvocation: true
             )
         );
 
@@ -277,8 +231,7 @@ public static class BuiltInCommands
                     }
                 },
                 CommandDomain.World,
-                write: static (_, _) => { },
-                read: static _ => new GetCommandCatalogCommand()
+                supportsRemoteInvocation: true
             )
         );
 
@@ -288,15 +241,7 @@ public static class BuiltInCommands
                 ExecuteHelp,
                 CommandDomain.World,
                 CommandDescription("Help_Description", "显示可用指令"),
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.CommandName is not null);
-                    if (command.CommandName is not null)
-                    {
-                        writer.Write(command.CommandName);
-                    }
-                },
-                read: static reader => new ShowCommandHelpCommand(reader.ReadBoolean() ? reader.ReadString() : null)
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -305,8 +250,7 @@ public static class BuiltInCommands
                 ExecuteTimeGet,
                 CommandDomain.World,
                 CommandDescription("TimeGet_Description", "显示当前世界时间"),
-                write: static (_, _) => { },
-                read: static _ => new GetWorldTimeCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -316,9 +260,8 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("TimeSet_Description", "设置世界时间"),
                 worldTimeSet,
-                write: static (writer, command) => writer.Write(command.Preset),
-                read: static reader => new SetWorldTimeCommand(reader.ReadString()),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -328,9 +271,8 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("TimeAdvance_Description", "前进到下一个时间节点"),
                 worldTimeSet,
-                write: static (_, _) => { },
-                read: static _ => new AdvanceWorldTimeCommand(),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -340,9 +282,8 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("WeatherRain_Description", "开启或停止降水"),
                 worldPrecipitationSet,
-                write: static (writer, command) => writer.Write(command.Enabled),
-                read: static reader => new SetPrecipitationCommand(reader.ReadBoolean()),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -352,9 +293,8 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("WeatherFog_Description", "开启或关闭雾气"),
                 worldFogSet,
-                write: static (writer, command) => writer.Write(command.Enabled),
-                read: static reader => new SetFogCommand(reader.ReadBoolean()),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -368,9 +308,8 @@ public static class BuiltInCommands
                 ),
                 worldLightningTrigger,
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (_, _) => { },
-                read: static _ => new TriggerPlayerLightningCommand(),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -380,16 +319,8 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("LightningTarget_Description", "在目标附近触发闪电"),
                 worldLightningTrigger,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.Position);
-                    writer.Write(command.Direction);
-                },
-                read: static reader => new TriggerLightningCommand(
-                    reader.ReadVector3(),
-                    reader.ReadVector3()
-                ),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -399,16 +330,8 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("SeasonSet_Description", "调整季节，环境将逐步更新"),
                 worldSeasonSet,
-                write: static (writer, command) =>
-                {
-                    writer.WriteEnum(command.Season);
-                    writer.Write(command.Progress);
-                },
-                read: static reader => new SetSeasonCommand(
-                    reader.ReadEnum<Season>(),
-                    reader.ReadSingle()
-                ),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess,
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -417,8 +340,7 @@ public static class BuiltInCommands
                 ExecutePlayerList,
                 CommandDomain.World,
                 CommandDescription("Players_Description", "列出已知角色及其在线状态"),
-                write: static (_, _) => { },
-                read: static _ => new ListPlayersCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -512,8 +434,7 @@ public static class BuiltInCommands
                 CommandDescription("StopAction_Description", "停止 Headless 服务端"),
                 serverStop,
                 CommandHostRequirement.HeadlessServer,
-                write: static (_, _) => { },
-                read: static _ => new StopServerCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -522,8 +443,7 @@ public static class BuiltInCommands
                 ExecuteAuthHelp,
                 CommandDomain.Server,
                 CommandDescription("AuthHelp_Description", "显示服务器认领帮助"),
-                write: static (_, _) => { },
-                read: static _ => new ShowServerAuthHelpCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -536,8 +456,7 @@ public static class BuiltInCommands
                     "使用认领码初始化在线玩家的管理权限"
                 ),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (writer, command) => writer.Write(command.Code),
-                read: static reader => new ClaimServerAdministrationCommand(reader.ReadString())
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -547,8 +466,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("AuthStatus_Description", "查看服务器认领状态"),
                 serverAuthManage,
-                write: static (_, _) => { },
-                read: static _ => new GetServerAuthStatusCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -558,8 +476,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("AuthCode_Description", "显示当前服务器认领码"),
                 serverAuthManage,
-                write: static (_, _) => { },
-                read: static _ => new GetServerAuthCodeCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -569,8 +486,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("AuthRegenerate_Description", "重新生成服务器认领码"),
                 serverAuthManage,
-                write: static (_, _) => { },
-                read: static _ => new RegenerateServerAuthCodeCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -579,8 +495,7 @@ public static class BuiltInCommands
                 ExecutePermissionHelp,
                 CommandDomain.Server,
                 CommandDescription("PermissionHelp_Description", "显示授权命令帮助"),
-                write: static (_, _) => { },
-                read: static _ => new ShowPermissionHelpCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -590,8 +505,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("PermissionUsers_Description", "列出当前可授权主体"),
                 permissionGrant,
-                write: static (_, _) => { },
-                read: static _ => new ListPermissionUsersCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -601,8 +515,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("PermissionNodes_Description", "列出当前可授权权限节点"),
                 permissionGrant,
-                write: static (_, _) => { },
-                read: static _ => new ListPermissionNodesCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -612,8 +525,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("PermissionListSelf_Description", "查看自己的命令权限"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (_, _) => { },
-                read: static _ => new ListOwnPermissionsCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -626,8 +538,7 @@ public static class BuiltInCommands
                     "查看指定主体的命令权限"
                 ),
                 permissionGrant,
-                write: static (writer, command) => writer.Write(command.User),
-                read: static reader => new ListUserPermissionsCommand(reader.ReadString())
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -637,17 +548,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("PermissionGrant_Description", "授予主体命令权限"),
                 permissionGrant,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.User);
-                    writer.Write(command.Permission);
-                    writer.Write(command.CanDelegate);
-                },
-                read: static reader => new GrantUserPermissionCommand(
-                    reader.ReadString(),
-                    reader.ReadString(),
-                    reader.ReadBoolean()
-                )
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -657,15 +558,7 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("PermissionRevoke_Description", "撤销主体命令权限"),
                 permissionGrant,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.User);
-                    writer.Write(command.Permission);
-                },
-                read: static reader => new RevokeUserPermissionCommand(
-                    reader.ReadString(),
-                    reader.ReadString()
-                )
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -678,17 +571,7 @@ public static class BuiltInCommands
                     "更新自己的角色资料"
                 ),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.Name);
-                    writer.Write(command.SkinName);
-                    writer.WriteEnum(command.CharacterSex);
-                },
-                read: static reader => new UpdateOwnPlayerProfileCommand(
-                    reader.ReadString(),
-                    reader.ReadString(),
-                    reader.ReadEnum<CharacterSex>()
-                )
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -701,19 +584,7 @@ public static class BuiltInCommands
                     "由服务器更新角色资料"
                 ),
                 playerProfileManage,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.PlayerId);
-                    writer.Write(command.Name);
-                    writer.Write(command.SkinName);
-                    writer.WriteEnum(command.CharacterSex);
-                },
-                read: static reader => new UpdatePlayerProfileCommand(
-                    reader.ReadGuid(),
-                    reader.ReadString(),
-                    reader.ReadString(),
-                    reader.ReadEnum<CharacterSex>()
-                )
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -723,15 +594,7 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("ChatSend_Description", "发送聊天消息"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (writer, command) =>
-                {
-                    writer.WriteEnum(command.Channel);
-                    writer.Write(command.Content);
-                },
-                read: static reader => new SendChatMessageCommand(
-                    reader.ReadEnum<GameMessageChannel>(),
-                    reader.ReadString()
-                )
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -741,8 +604,7 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("TeamCreate_Description", "创建队伍"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (writer, command) => writer.Write(command.Name),
-                read: static reader => new CreateTeamCommand(reader.ReadString())
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -752,8 +614,7 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("TeamJoin_Description", "申请加入队伍"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (writer, command) => writer.Write(command.TeamId),
-                read: static reader => new RequestJoinTeamCommand(reader.ReadGuid())
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -763,8 +624,7 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("TeamInvite_Description", "邀请玩家加入队伍"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (writer, command) => writer.Write(command.Player.Value),
-                read: static reader => new InvitePlayerToTeamCommand(new PlayerAddress(reader.ReadString()))
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -774,15 +634,7 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("TeamRespond_Description", "响应队伍请求"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (writer, command) =>
-                {
-                    writer.Write(command.OperationId);
-                    writer.Write(command.Accepted);
-                },
-                read: static reader => new RespondTeamRequestCommand(
-                    reader.ReadGuid(),
-                    reader.ReadBoolean()
-                )
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -792,8 +644,7 @@ public static class BuiltInCommands
                 CommandDomain.World,
                 CommandDescription("TeamLeave_Description", "退出当前队伍"),
                 allowedPrincipals: CommandPrincipalKinds.Player,
-                write: static (_, _) => { },
-                read: static _ => new LeaveTeamCommand()
+                supportsRemoteInvocation: true
             )
         );
         commands.Register(
@@ -1348,20 +1199,6 @@ public static class BuiltInCommands
             ],
             ["?"]
         );
-    }
-
-    private static TeleportPlayerCommand ReadTeleportPlayer(ProtocolReader reader)
-    {
-        var player = reader.ReadString();
-        var target = ReadTeleportSelf(reader);
-        return new TeleportPlayerCommand(player, target.Position, target.DestinationPlayer);
-    }
-
-    private static TeleportSelfCommand ReadTeleportSelf(ProtocolReader reader)
-    {
-        Vector3? position = reader.ReadBoolean() ? reader.ReadVector3() : null;
-        var destination = reader.ReadBoolean() ? reader.ReadString() : null;
-        return new TeleportSelfCommand(position, destination);
     }
 
     private static Vector3? ReadTeleportPosition(HttpCommandArguments arguments) =>

@@ -150,7 +150,27 @@ public sealed class ComponentCharacterPackageHandler : PackageHandlerBase<Compon
                     }
                 );
                 break;
-            case CharacterInteractionPackage message:
+            case CharacterUsePackage message:
+                PlayerEvent(player =>
+                    {
+                        player.AddInteractEvent(
+                            message.InteractEvent,
+                            message.NetInteractRay,
+                            CharacterPackageBuilder.RestoreHit(message.NetInteractRaycast),
+                            0,
+                            default,
+                            0
+                        );
+                        if (!isServer)
+                        {
+                            return;
+                        }
+
+                        NetworkSender.SendToObservers(player.Entity, message, context.Sender);
+                    }
+                );
+                break;
+            case CharacterPlacePackage message:
                 PlayerEvent(player =>
                     {
                         player.AddInteractEvent(

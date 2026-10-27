@@ -27,20 +27,18 @@ public class ConnectionBootstrapPackageTest
             Epoch = Guid.NewGuid(),
             BlockMapping = mapping.Entries.Select(pair => new BlockIndexEntry(pair.Key, checked((ushort)pair.Value)))
                 .ToArray(),
-            ClientList = new ClientPackage([]),
+            ClientList = new ClientListPackage { List = [] },
             ProjectData = [4, 5, 6]
         };
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        var payload = writer.Data();
+        var writer = ProtocolMessageCodec.Encode(package);
+        var payload = writer;
         await using var server = new NetworkHost();
         await using var client = new NetworkHost();
         server.ConnectionRequested += request => request.Accept();
         BootstrapPackage? received = null;
         server.Received += (_, message) =>
         {
-            using var reader = new ProtocolReader(message.Payload.ToArray());
-            received = (BootstrapPackage)ProtocolMessageCodec.Read((byte)PackageType.Bootstrap, reader);
+            received = (BootstrapPackage)ProtocolMessageCodec.Decode(message.Payload);
         };
         var connecting = client.ConnectAsync(
             new IPEndPoint(IPAddress.Loopback, server.LocalPort),
@@ -119,7 +117,7 @@ public class ConnectionBootstrapPackageTest
         {
             World = new WorldMetadata("Protocol test", 123, ProtocolEnum.Encode(Game.World.GameMode.Creative), 20),
             Epoch = epoch,
-            ClientList = new ClientPackage([]),
+            ClientList = new ClientListPackage { List = [] },
             TextureData = [1, 2, 3],
             ProjectData = [4, 5, 6]
         };
@@ -137,10 +135,9 @@ public class ConnectionBootstrapPackageTest
     {
         var epoch = Guid.NewGuid();
         var message = new ConnectionPhaseAckPackage(epoch, ConnectionPhase.BootstrapApplied);
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = (ConnectionPhaseAckPackage)ProtocolMessageCodec.Read(message.ID, reader);
+        var writer = ProtocolMessageCodec.Encode(message);
+        var reader = writer;
+        var clone = (ConnectionPhaseAckPackage)ProtocolMessageCodec.Decode(reader);
 
         Assert.Equal(epoch, clone.Epoch);
         Assert.Equal(ConnectionPhase.BootstrapApplied, clone.Phase);
@@ -155,7 +152,7 @@ public class ConnectionBootstrapPackageTest
         var package = new InitialWorldSnapshotPackage
         {
             Epoch = Guid.NewGuid(),
-            ClientList = new ClientPackage([]),
+            ClientList = new ClientListPackage { List = [] },
             EntityData = [7, 8, 9],
             Characters = [player.ToMessagePack()]
         };
@@ -170,9 +167,8 @@ public class ConnectionBootstrapPackageTest
 
     private static T RoundTrip<T>(T package) where T : IProtocolMessage
     {
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        return (T)ProtocolMessageCodec.Read(package.ID, reader);
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        return (T)ProtocolMessageCodec.Decode(reader);
     }
 }

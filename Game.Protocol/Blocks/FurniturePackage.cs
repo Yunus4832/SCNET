@@ -1,12 +1,19 @@
-using System.Collections.ObjectModel;
-
-using Engine.Core.Mathematics;
-
-using Game.Protocol.Terrain;
+using MessagePack;
 
 namespace Game.Protocol.Blocks;
 
-public sealed record FurniturePackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(FurnitureDesignAddedPackage))]
+[Union(1, typeof(FurnitureDesignAddRequestPackage))]
+[Union(2, typeof(FurnitureDesignChainPackage))]
+[Union(3, typeof(FurnitureDesignsRemovedPackage))]
+[Union(4, typeof(FurnitureSetAddDesignPackage))]
+[Union(5, typeof(FurnitureSetCreatedPackage))]
+[Union(6, typeof(FurnitureSetDeletedPackage))]
+[Union(7, typeof(FurnitureSetImportPackage))]
+[Union(8, typeof(FurnitureSetMovePackage))]
+[Union(9, typeof(FurnitureSetRenamedPackage))]
+public abstract record FurniturePackage : IProtocolMessage
 {
     public enum EventType
     {
@@ -31,44 +38,5 @@ public sealed record FurniturePackage : IProtocolMessage
         ImportFurnitureSet = 9
     }
 
-    public string AddXml { get; init; } = string.Empty;
-
-    public CellFace CellFace { get; init; }
-
-    public EventType PackageEventType { get; init; }
-
-    public string FromName { get; init; } = string.Empty;
-
-    public int FurnitureIndex { get; init; }
-
-    public IReadOnlyDictionary<Point3, int> PointDict { get; init; } = ReadOnlyDictionary<Point3, int>.Empty;
-
-    public int StartValue { get; init; }
-
-    public IReadOnlyList<int> ToRemoveList { get; init; } = [];
-
-    public byte ID => (byte)PackageType.Furniture;
-
-    public FurniturePackage()
-    {
-    }
-
-    public FurniturePackage(IEnumerable<int> ids)
-    {
-        PackageEventType = EventType.RemoveFurnitureDesigns;
-        ToRemoveList = ids.ToArray();
-    }
-
-    public FurniturePackage(string name)
-    {
-        PackageEventType = EventType.DeleteFurnitureSet;
-        AddXml = name;
-    }
-
-    public FurniturePackage(string oldName, string newName)
-    {
-        PackageEventType = EventType.RenameFurnitureSet;
-        AddXml = oldName;
-        FromName = newName;
-    }
+    [IgnoreMember] public abstract EventType PackageEventType { get; }
 }

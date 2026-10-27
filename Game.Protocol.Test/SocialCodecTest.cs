@@ -35,16 +35,29 @@ public sealed class SocialCodecTest
         {
             yield return
             [
-                new CharacterDataPackage
+                (mode switch
                 {
-                    Type = mode, CreationRequestId = _id, CreationError = CharacterCreationError.NameUnavailable,
-                    CharacterName = "Test", CharacterId = _id, SkinName = "test.png", CharacterSex = 1,
-                    UpdateLocation = new TerrainUpdateLocation
-                    {
-                        Center = new Vector2(-17, 5), ContentDistance = 64, VisibilityDistance = 32,
-                        LastChunksUpdateCenter = Vector2.One
-                    },
-                }
+                    CharacterDataPackage.DataType.Create => (CharacterDataPackage)
+                        new CharacterCreateRequestPackage
+                        {
+                            CreationRequestId = _id, CharacterName = "Test", SkinName = "test.png", CharacterSex = 1
+                        },
+                    CharacterDataPackage.DataType.Modify => new CharacterProfilePackage
+                        { CharacterName = "Test", CharacterId = _id, SkinName = "test.png", CharacterSex = 1 },
+                    CharacterDataPackage.DataType.CreationRejected => new
+                        CharacterCreateRejectedPackage
+                        { CreationRequestId = _id, CreationError = CharacterCreationError.NameUnavailable },
+                    CharacterDataPackage.DataType.SetUpdateLocation => new
+                        CharacterUpdateLocationPackage
+                        {
+                            UpdateLocation = new TerrainUpdateLocation
+                            {
+                                Center = new Vector2(-17, 5), ContentDistance = 64, VisibilityDistance = 32,
+                                LastChunksUpdateCenter = Vector2.One
+                            }
+                        },
+                    _ => throw new InvalidOperationException("Unsupported message operation.")
+                })
             ];
         }
 
@@ -52,15 +65,24 @@ public sealed class SocialCodecTest
         {
             yield return
             [
-                new TeamManagePackage
+                (mode switch
                 {
-                    Command = mode, OperationId = _id, Initiator = _address, Responder = _address, TeamId = _id,
-                    Teams =
-                    [
-                        new TeamManagePackage.TeamState
-                            { TeamId = _id, Name = "Test", Leader = _address, Members = [_address] }
-                    ]
-                }
+                    TeamManagePackage.CommandType.PromptJoinRequest => (TeamManagePackage)
+                        new TeamJoinPromptPackage
+                            { OperationId = _id, Initiator = _address, Responder = _address, TeamId = _id },
+                    TeamManagePackage.CommandType.PromptInvitation => new
+                        TeamInvitationPromptPackage
+                        { OperationId = _id, Initiator = _address, Responder = _address, TeamId = _id },
+                    TeamManagePackage.CommandType.SyncTeams => new TeamSnapshotPackage
+                    {
+                        Teams =
+                        [
+                            new TeamManagePackage.TeamState
+                                { TeamId = _id, Name = "Test", Leader = _address, Members = [_address] }
+                        ]
+                    },
+                    _ => throw new InvalidOperationException("Unsupported message operation.")
+                })
             ];
         }
     }
@@ -69,42 +91,32 @@ public sealed class SocialCodecTest
     [MemberData(nameof(Messages))]
     public void SocialMessagesRoundTripWithoutGameLocalizationOrSubsystems(IProtocolMessage message)
     {
-        Assert.True(ProtocolMessageCodec.IsDefined(message.ID));
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        var bytes = writer.Data(CompressionPolicy.None);
-        using var reader = new ProtocolReader(bytes);
-        var restored = ProtocolMessageCodec.Read(message.ID, reader);
+        Assert.True(ProtocolMessageCodec.IsDefined(message.GetType()));
+        var writer = ProtocolMessageCodec.Encode(message);
+        var bytes = writer;
+        var reader = bytes;
+        var restored = ProtocolMessageCodec.Decode(reader);
         Assert.Equal(message.GetType(), restored.GetType());
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
-        using var repeated = new ProtocolWriter();
-        ProtocolMessageCodec.Write(restored, repeated);
-        Assert.Equal(bytes, repeated.Data(CompressionPolicy.None));
+
+        var repeated = ProtocolMessageCodec.Encode(restored);
+        Assert.Equal(bytes, repeated);
     }
 
     [Fact]
     public void TruncatedGroupMembersAreRejectedBeforeAllocation()
     {
-        using var writer = new ProtocolWriter();
-        writer.WriteEnum(TeamManagePackage.CommandType.SyncTeams);
-        writer.Write((ushort)1);
-        writer.Write(_id);
-        writer.Write("Test");
-        PlayerAddressCodec.Write(writer, _address);
-        writer.Write(ushort.MaxValue);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read((byte)PackageType.TeamManage, reader));
+        var malformed = WireTestData.OversizedArray(new TeamSnapshotPackage(), 0);
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(malformed));
     }
 
     [Theory]
     [InlineData((byte)4)]
     [InlineData((byte)5)]
     [InlineData((byte)6)]
-    public void RetiredCharacterDataModesAreNotParsed(byte tag)
+    public void UnknownCreationErrorsAreRejected(byte tag)
     {
-        using var writer = new ProtocolWriter();
-        writer.Write(tag);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read((byte)PackageType.CharacterData, reader));
+        var message = new CharacterCreateRejectedPackage();
+        var malformed = WireTestData.ReplaceField(message, 1, MessagePack.MessagePackSerializer.Serialize(tag));
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(malformed));
     }
 }

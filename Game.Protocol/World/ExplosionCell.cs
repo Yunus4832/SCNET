@@ -1,5 +1,8 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
 namespace Game.Protocol.World;
 
-public readonly record struct ExplosionCell(Point3 Position, float Pressure);
+[MessagePackObject]
+public readonly record struct ExplosionCell([property: Key(0)] Point3 Position, [property: Key(1)] float Pressure);

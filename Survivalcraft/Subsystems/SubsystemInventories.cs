@@ -66,7 +66,8 @@ public class SubsystemInventories : Subsystem, IUpdateable
             {
                 NetworkSender.SendTo(
                     client,
-                    new ComponentInventoryPackage(inventory.Id, inventory.ActiveSlotIndex)
+                    new InventoryActiveSlotPackage
+                        { InventoryID = inventory.Id, ActiveSlot = inventory.ActiveSlotIndex }
                 );
             }
         }
@@ -112,12 +113,7 @@ public class SubsystemInventories : Subsystem, IUpdateable
 
         if (CommonLib.WorkType == WorkType.Client && Log.MinimumLogType is LogType.Debug)
         {
-            NetworkSender.SendToServer(
-                new ComponentInventoryPackage(
-                    id,
-                    ComponentInventoryPackage.EventType.QueryErrorInventoryInfo
-                )
-            );
+            NetworkSender.SendToServer(new InventorySyncRequestPackage { InventoryID = id });
         }
 
         return false;

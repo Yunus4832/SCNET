@@ -1,5 +1,3 @@
-using Engine.Core.Mathematics;
-
 using Game.Network;
 using Game.Network.Handling;
 using Game.Network.Transport;
@@ -21,10 +19,11 @@ public sealed class FurniturePackageTest
         node.SetValue("LinkedDesign", index);
         var values = new EntitySystem.TemplatesDatabase.ValuesDictionary();
         values.SetValue("0", node);
-        var package = new FurniturePackage { AddXml = CommonLib.SerializeVDict(values) };
+        var package = new FurnitureDesignAddRequestPackage
+            { DesignXml = CommonLib.SerializeVDict(values) };
 
         var error = Assert.Throws<InvalidOperationException>(() =>
-            FurnitureSnapshotSerializer.ReadDesignChain(package.AddXml, null)
+            FurnitureSnapshotSerializer.ReadDesignChain(package.DesignXml, null)
         );
 
         Assert.Equal("Invalid furniture design link index.", error.Message);
@@ -40,12 +39,11 @@ public sealed class FurniturePackageTest
         first.LinkedDesign = second;
         second.LinkedDesign = first;
         var package = FurniturePackageBuilder.Capture(first);
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<FurniturePackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<FurnitureDesignChainPackage>(ProtocolMessageCodec.Decode(reader));
 
-        var chain = FurnitureSnapshotSerializer.ReadDesignChain(clone.AddXml, null);
+        var chain = FurnitureSnapshotSerializer.ReadDesignChain(clone.DesignXml, null);
 
         Assert.Equal(2, chain.Count);
         Assert.Equal(7, chain[0].Index);
@@ -73,38 +71,30 @@ public sealed class FurniturePackageTest
     [Fact]
     public void DesignDefinitionDoesNotCarryWorldMutationCoordinates()
     {
-        var package = new FurniturePackage
-        {
-            PackageEventType = FurniturePackage.EventType.Add,
-            FurnitureIndex = 7,
-            AddXml = "definition",
-            StartValue = 123
-        };
-        package = package with { PointDict = new Dictionary<Point3, int> { [new Point3(1, 2, 3)] = 123 } };
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<FurniturePackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var package = new FurnitureDesignAddedPackage
+            { FurnitureIndex = 7, DesignXml = "definition" };
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<FurnitureDesignAddedPackage>(ProtocolMessageCodec.Decode(reader));
 
         Assert.Equal(7, clone.FurnitureIndex);
-        Assert.Equal("definition", clone.AddXml);
-        Assert.Empty(clone.PointDict);
-        Assert.Equal(0, clone.StartValue);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
+        Assert.Equal("definition", clone.DesignXml);
+        Assert.Null(typeof(FurnitureDesignAddedPackage).GetProperty("PointDict"));
+        Assert.Null(typeof(FurnitureDesignAddedPackage).GetProperty("StartValue"));
+
         Assert.Equal(PackageTransportPolicy.Bulk, PackageTransportPolicy.Get(clone));
     }
 
     [Fact]
     public void RenamePreservesDistinctOldAndNewNames()
     {
-        var package = new FurniturePackage("old", "new");
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<FurniturePackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var package = new FurnitureSetRenamedPackage { OldName = "old", NewName = "new" };
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<FurnitureSetRenamedPackage>(ProtocolMessageCodec.Decode(reader));
 
-        Assert.Equal("old", clone.AddXml);
-        Assert.Equal("new", clone.FromName);
+        Assert.Equal("old", clone.OldName);
+        Assert.Equal("new", clone.NewName);
     }
 
     [Fact]
@@ -121,14 +111,13 @@ public sealed class FurniturePackageTest
         first.LinkedDesign = second;
         second.LinkedDesign = first;
         var package = FurniturePackageBuilder.Capture([first, second, third], "imported");
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<FurniturePackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<FurnitureSetImportPackage>(ProtocolMessageCodec.Decode(reader));
 
-        var designs = FurnitureSnapshotSerializer.ReadDesignChain(clone.AddXml, null);
+        var designs = FurnitureSnapshotSerializer.ReadDesignChain(clone.DesignXml, null);
 
-        Assert.Equal("imported", clone.FromName);
+        Assert.Equal("imported", clone.Name);
         Assert.Equal(3, designs.Count);
         Assert.Same(designs[1], designs[0].LinkedDesign);
         Assert.Same(designs[0], designs[1].LinkedDesign);

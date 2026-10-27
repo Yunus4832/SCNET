@@ -15,17 +15,25 @@ public sealed class ChunkStateResetPackageTest
     public void ResetAndAllChunkBaselineRecordsShareOrderedChannel()
     {
         var package = new ChunkStateResetPackage(new Point2(-2, 3));
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = (ChunkStateResetPackage)ProtocolMessageCodec.Read(package.ID, reader);
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = (ChunkStateResetPackage)ProtocolMessageCodec.Decode(reader);
 
         Assert.Equal(package.Chunk, clone.Chunk);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
+
         Assert.Equal(PackageTransportPolicy.Bulk, PackageTransportPolicy.Get(clone));
         Assert.Equal(PackageTransportPolicy.Bulk, PackageTransportPolicy.Get(new SignBlockPackage()));
-        Assert.Equal(PackageTransportPolicy.Bulk, PackageTransportPolicy.Get(new EditableBlockPackage()));
-        Assert.Equal(PackageTransportPolicy.Bulk, PackageTransportPolicy.Get(new ComponentOnFirePackage(1, 2, 3)));
+        Assert.Equal(
+            PackageTransportPolicy.Bulk,
+            PackageTransportPolicy.Get(
+                new EditableBlockValuePackage
+                    { Target = new EditableWorldBlockTarget(default), ItemType = BuiltInBlockEditKind.Button }
+            )
+        );
+        Assert.Equal(
+            PackageTransportPolicy.Bulk,
+            PackageTransportPolicy.Get(new BlockFireRemovedPackage { X = 1, Y = 2, Z = 3 })
+        );
     }
 
     [Fact]

@@ -1,4 +1,10 @@
+using MessagePack;
+
 namespace Game.Commands;
 
-public sealed record TeleportPlayerCommand(string Player, Vector3? Position = null, string? DestinationPlayer = null)
-    : IGameCommand;
+[MessagePackObject]
+public sealed record TeleportPlayerCommand(
+    [property: Key(0)] string Player,
+    [property: Key(1)] Vector3? Position = null,
+    [property: Key(2)] string? DestinationPlayer = null
+) : IGameCommand;

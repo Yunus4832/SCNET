@@ -1,8 +1,14 @@
 using Game.Protocol.Identity;
 
+using MessagePack;
+
 namespace Game.Protocol.Teams;
 
-public sealed record TeamManagePackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(TeamInvitationPromptPackage))]
+[Union(1, typeof(TeamJoinPromptPackage))]
+[Union(2, typeof(TeamSnapshotPackage))]
+public abstract record TeamManagePackage : IProtocolMessage
 {
     public enum CommandType : byte
     {
@@ -13,28 +19,17 @@ public sealed record TeamManagePackage : IProtocolMessage
         SyncTeams = 2
     }
 
+    [MessagePackObject]
     public sealed record TeamState
     {
-        public Guid TeamId { get; init; }
+        [Key(0)] public Guid TeamId { get; init; }
 
-        public string Name { get; init; } = string.Empty;
+        [Key(1)] public string Name { get; init; } = string.Empty;
 
-        public PlayerAddress Leader { get; init; }
+        [Key(2)] public PlayerAddress Leader { get; init; }
 
-        public IReadOnlyList<PlayerAddress> Members { get; init; } = [];
+        [Key(3)] public IReadOnlyList<PlayerAddress> Members { get; init; } = [];
     }
 
-    public CommandType Command { get; init; }
-
-    public PlayerAddress Initiator { get; init; }
-
-    public PlayerAddress Responder { get; init; }
-
-    public Guid TeamId { get; init; }
-
-    public Guid OperationId { get; init; }
-
-    public IReadOnlyList<TeamState> Teams { get; init; } = [];
-
-    public byte ID => (byte)PackageType.TeamManage;
+    [IgnoreMember] public abstract CommandType Command { get; }
 }

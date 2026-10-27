@@ -13,16 +13,24 @@ public sealed class TeamManagePackageHandler : PackageHandlerBase<TeamManagePack
     {
         if (context.IsServer || context.Node is not { } node || GameManager.Project is not { } project) { return; }
 
-        switch (package.Command)
+        switch (package)
         {
-            case TeamManagePackage.CommandType.PromptJoinRequest:
-            case TeamManagePackage.CommandType.PromptInvitation:
-                if (node.Self?.PlayerAddress == package.Responder) { ShowPrompt(package, project); }
+            case TeamJoinPromptPackage message1:
+            {
+                if (node.Self?.PlayerAddress == message1.Responder) { ShowPrompt(message1, project); }
 
                 break;
-            case TeamManagePackage.CommandType.SyncTeams:
+            }
+            case TeamInvitationPromptPackage message2:
+            {
+                if (node.Self?.PlayerAddress == message2.Responder) { ShowPrompt(message2, project); }
+
+                break;
+            }
+            case TeamSnapshotPackage message3:
+            {
                 project.FindSubsystem<SubsystemTeams>(true)!.Store.Replace(
-                    package.Teams.Select(team =>
+                    message3.Teams.Select(team =>
                         new Team(team.TeamId, team.Name, team.Leader, team.Members)
                     )
                 );
@@ -30,10 +38,11 @@ public sealed class TeamManagePackageHandler : PackageHandlerBase<TeamManagePack
                     .Find(character => character.IsLocalCharacter)
                     ?.GameWidget.RefreshPlayerViews();
                 break;
+            }
         }
     }
 
-    internal static void ShowPrompt(TeamManagePackage package, Project project)
+    internal static void ShowPrompt(TeamPromptPackage package, Project project)
     {
         var team = project.FindSubsystem<SubsystemTeams>(true)!.Store.Find(package.TeamId);
         if (team is null || CommonLib.Net.Self is not { } session || session.PlayerAddress != package.Responder)

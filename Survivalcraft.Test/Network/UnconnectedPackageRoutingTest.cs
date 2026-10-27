@@ -12,7 +12,10 @@ public sealed class UnconnectedPackageRoutingTest
         await using var network = new NetworkHost();
 
         var exception = Assert.Throws<ArgumentNullException>(() =>
-            network.SendDatagram(null!, NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true)))
+            network.SendDatagram(
+                null!,
+                NetNode.CreateUnconnectedPayload(new ServerInfoRequestPackage())
+            )
         );
 
         Assert.Equal("endpoint", exception.ParamName);

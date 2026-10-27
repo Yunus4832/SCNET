@@ -1,5 +1,6 @@
 namespace Game.Protocol.Messaging;
 
+[MessagePack.MessagePackFormatter(typeof(Serialization.Formatters.ProtocolValueFormatter))]
 public sealed record MessageContent
 {
     private readonly MessageSegment[] _segments;
@@ -36,5 +37,5 @@ public sealed record MessageContent
     }
 
     public static MessageContent Plain(string text) =>
-        new([new MessageSegment(text ?? string.Empty)]);
+        new([new MessageSegment(text)]);
 }

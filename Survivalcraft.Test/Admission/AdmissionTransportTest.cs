@@ -45,10 +45,11 @@ public sealed class AdmissionTransportTest
         var previousProject = GameManager.Project;
         var previousWorkType = CommonLib.WorkType;
         var registrations = typeof(PackageManager).GetField(
-            "_packageRegistrations",
+            "_registeredOwners",
             BindingFlags.Static | BindingFlags.NonPublic
         )!;
-        var previousRegistrations = registrations.GetValue(null);
+        var owners = (Dictionary<Type, Type>)registrations.GetValue(null)!;
+        var previousRegistrations = owners.ToArray();
         var handlers = (Dictionary<Type, IPackageHandler>)typeof(PackageDispatcher)
             .GetField("_handlers", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
         var previousHandlers = handlers.ToArray();
@@ -176,11 +177,7 @@ public sealed class AdmissionTransportTest
             Assert.Single(node.Clients);
             Assert.Empty(project.Players.Store.Entries);
             Assert.Equal(0, admitted);
-            peer.Send(
-                ProtocolPacketCodec.Encode([new SubsystemTimePackage(0, 0)]),
-                (byte)NetworkChannel.Control,
-                DeliveryMode.ReliableOrdered
-            );
+            peer.Send(ProtocolPacketCodec.Encode([new SubsystemTimePackage(0, 0)]));
             if (saturateVerificationBudget)
             {
                 var budget = Assert.IsType<SemaphoreSlim>(
@@ -193,9 +190,7 @@ public sealed class AdmissionTransportTest
                 try
                 {
                     peer.Send(
-                        ProtocolPacketCodec.Encode([new AdmissionProofPackage(receivedChallenge.Nonce, "wrong")]),
-                        (byte)NetworkChannel.Control,
-                        DeliveryMode.ReliableOrdered
+                        ProtocolPacketCodec.Encode([new AdmissionProofPackage(receivedChallenge.Nonce, "wrong")])
                     );
                     await Until(() => replies.Count == 1);
                     Assert.Equal(AdmissionResultCode.RateLimited, replies[0].Code);
@@ -211,11 +206,7 @@ public sealed class AdmissionTransportTest
             // A control-channel barrier proves the forbidden packet was processed before the proof.
             if (mode != ServerAdmissionMode.Open)
             {
-                peer.Send(
-                    ProtocolPacketCodec.Encode([new AdmissionProofPackage(receivedChallenge.Nonce, "wrong")]),
-                    (byte)NetworkChannel.Control,
-                    DeliveryMode.ReliableOrdered
-                );
+                peer.Send(ProtocolPacketCodec.Encode([new AdmissionProofPackage(receivedChallenge.Nonce, "wrong")]));
                 await Until(() => replies.Count == 1);
                 Assert.Equal(
                     mode switch
@@ -246,9 +237,7 @@ public sealed class AdmissionTransportTest
                             new AdmissionProofPackage(receivedChallenge.Nonce, "transport-test-password"),
                             new AdmissionProofPackage(receivedChallenge.Nonce, Cancel: true)
                         ]
-                    ),
-                    (byte)NetworkChannel.Control,
-                    DeliveryMode.ReliableOrdered
+                    )
                 );
                 await Until(() => replies.Any(reply => reply.Code == AdmissionResultCode.Cancelled));
                 controller.Update();
@@ -363,7 +352,9 @@ public sealed class AdmissionTransportTest
         }
         finally
         {
-            registrations.SetValue(null, previousRegistrations);
+            owners.Clear();
+            foreach (var (type, owner) in previousRegistrations) { owners.Add(type, owner); }
+
             handlers.Clear();
             foreach (var entry in previousHandlers) { handlers.Add(entry.Key, entry.Value); }
 

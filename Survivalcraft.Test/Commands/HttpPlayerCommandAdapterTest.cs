@@ -13,6 +13,8 @@ using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 
+using MessagePack;
+
 namespace Survivalcraft.Test.Commands;
 
 public class HttpPlayerCommandAdapterTest
@@ -113,7 +115,7 @@ public class HttpPlayerCommandAdapterTest
     {
         using var cancellation = new CancellationTokenSource();
         var task = HttpPlayerCommandAdapter.SubmitAsync(null, cancellation.Token);
-        cancellation.Cancel();
+        await cancellation.CancelAsync();
         HttpPlayerCommandAdapter.Update();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
     }
@@ -157,11 +159,11 @@ public class HttpPlayerCommandAdapterTest
     }
 
     [Theory]
-    [InlineData("a", 4089, true)]
-    [InlineData("a", 4090, false)]
+    [InlineData("a", 4092, true)]
+    [InlineData("a", 4093, false)]
     [InlineData("a", 5000, false)]
-    [InlineData("中", 1363, true)]
-    [InlineData("中", 1364, false)]
+    [InlineData("中", 1364, true)]
+    [InlineData("中", 1365, false)]
     public void RemoteRequestsRejectOversizedEncodedArgumentsBeforeQueueing(string unit, int count, bool accepted)
     {
         var registry = new CommandRegistry();
@@ -257,12 +259,11 @@ public class HttpPlayerCommandAdapterTest
         }
     }
 
-    private static CommandPackage RoundTrip(CommandPackage package)
+    private static T RoundTrip<T>(T package) where T : CommandPackage
     {
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var result = Assert.IsType<CommandPackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var result = Assert.IsType<T>(ProtocolMessageCodec.Decode(reader));
         return result;
     }
 
@@ -278,8 +279,7 @@ public class HttpPlayerCommandAdapterTest
                 (_, _) => CommandResult.Ok("changed"),
                 CommandDomain.World,
                 requiredPermission: _permission,
-                write: static (_, _) => { },
-                read: static _ => new WorldCommand()
+                supportsRemoteInvocation: true
             )
         );
         registry.Adapters.Register(_owner, _identity, HttpCommandBinding.Create(_ => new WorldCommand()));
@@ -323,7 +323,8 @@ public class HttpPlayerCommandAdapterTest
         public TestProject() => subsystems.Add(new SubsystemPlayers());
     }
 
-    private sealed record WorldCommand : IGameCommand;
+    [MessagePackObject(AllowPrivate = true)]
+    internal sealed record WorldCommand : IGameCommand;
 
     private sealed record ApplicationCommand : IGameCommand;
 }

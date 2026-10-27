@@ -9,6 +9,8 @@ using Game.Managers;
 using Game.Protocol.Identity;
 using Game.World;
 
+using MessagePack;
+
 namespace Survivalcraft.Test.Commands;
 
 public class CommandDispatcherTest
@@ -94,8 +96,7 @@ public class CommandDispatcherTest
             new CommandDefinition<ScaleCommand>(
                 (_, command) => CommandResult.Ok(command.Value.ToString("0.0")),
                 CommandDomain.World,
-                write: static (writer, command) => writer.Write(command.Value),
-                read: static reader => new ScaleCommand(reader.ReadDouble())
+                supportsRemoteInvocation: true
             )
         );
         registry.Freeze();
@@ -1222,7 +1223,8 @@ public class CommandDispatcherTest
     private static LocalizedText Text(string value) =>
         LocalizedText.Literal(value);
 
-    private sealed record ScaleCommand(double Value) : IGameCommand;
+    [MessagePackObject(AllowPrivate = true)]
+    internal sealed record ScaleCommand([property: Key(0)] double Value) : IGameCommand;
 
     private sealed record EchoCommand(string Text) : IGameCommand;
 

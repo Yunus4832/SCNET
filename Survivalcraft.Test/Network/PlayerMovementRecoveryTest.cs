@@ -31,10 +31,9 @@ public sealed class PlayerMovementRecoveryTest
         // Discard the first packet just as a lost datagram would be discarded.
         _ = CharacterPackageBuilder.Capture(player, ComponentCharacterPackage.CharacterAction.BodyUpdate);
         var retry = CharacterPackageBuilder.Capture(player, ComponentCharacterPackage.CharacterAction.BodyUpdate);
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(retry, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var received = Assert.IsType<CharacterStatePackage>(ProtocolMessageCodec.Read(retry.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(retry);
+        var reader = writer;
+        var received = Assert.IsType<CharacterStatePackage>(ProtocolMessageCodec.Decode(reader));
 
         Assert.True(received.PackageChangeFlag.HasFlag(ComponentCharacterPackage.ChangFlag.PositionChange));
         Assert.True(received.PackageChangeFlag.HasFlag(ComponentCharacterPackage.ChangFlag.RotationChange));
@@ -44,6 +43,5 @@ public sealed class PlayerMovementRecoveryTest
         Assert.Equal(body.Rotation, received.Rotation);
         Assert.Equal(Vector3.Zero, received.Velocity);
         Assert.Equal(locomotion.LookAngles, mounted ? received.ChildLookAngles : received.LookAngles);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
     }
 }

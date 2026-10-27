@@ -28,16 +28,19 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
 
         var project = GameManager.Project;
         var subsystemTerrain = project.FindSubsystem<SubsystemTerrain>(true)!;
-        switch (package.Type)
+        switch (package)
         {
-            case SubsystemTerrainPackage.DataType.CellEditCompleted:
+            case TerrainCellEditCompletedPackage message1:
+            {
                 subsystemTerrain.CellPrediction?.Complete(
-                    package.EditRequestId,
-                    package.EditedCell,
-                    package.EditContentVersion
+                    message1.EditRequestId,
+                    message1.EditedCell,
+                    message1.EditContentVersion
                 );
                 break;
-            case SubsystemTerrainPackage.DataType.RequestSyncChunks:
+            }
+            case TerrainChunksRequestPackage message2:
+            {
                 if (context.Sender is null)
                 {
                     break;
@@ -47,9 +50,11 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
                                 throw new InvalidOperationException(
                                     "Terrain chunk requests require an authoritative server scheduler."
                                 );
-                scheduler.Enqueue(context.Sender, package.ChunkRequests);
+                scheduler.Enqueue(context.Sender, message2.ChunkRequests);
                 break;
-            case SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments:
+            }
+            case TerrainFragmentsRequestPackage message3:
+            {
                 if (context.Sender is null)
                 {
                     break;
@@ -59,23 +64,28 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
                                         throw new InvalidOperationException(
                                             "Terrain fragment requests require an authoritative server scheduler."
                                         );
-                fragmentScheduler.EnqueueMissing(context.Sender, package.FragmentRequests);
+                fragmentScheduler.EnqueueMissing(context.Sender, message3.FragmentRequests);
                 break;
-            case SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment:
+            }
+            case TerrainFragmentPackage message4:
+            {
                 var transport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
                                 throw new InvalidOperationException(
                                     "Remote terrain snapshots require a network chunk transport."
                                 );
-                transport.Receive(package.ChunkFragment);
+                transport.Receive(message4.ChunkFragment);
 
                 break;
-            case SubsystemTerrainPackage.DataType.SyncTerrainCellDelta:
+            }
+            case TerrainCellDeltaPackage message5:
+            {
                 var deltaTransport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
                                      throw new InvalidOperationException(
                                          "Remote terrain cell deltas require a network chunk transport."
                                      );
-                deltaTransport.Receive(package.CellDelta);
+                deltaTransport.Receive(message5.CellDelta);
                 break;
+            }
         }
     }
 }

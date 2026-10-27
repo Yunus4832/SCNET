@@ -1,8 +1,11 @@
+using MessagePack;
+
 namespace Game.Protocol.Characters;
 
+[MessagePackObject]
 public sealed record CharacterFlightPackage : ComponentCharacterPackage
 {
-    public override CharacterAction Type => CharacterAction.CreativeFlyChange;
+    [IgnoreMember] public override CharacterAction Type => CharacterAction.CreativeFlyChange;
 
-    public bool IsCreativeFly { get; init; }
+    [Key(1)] public bool IsCreativeFly { get; init; }
 }

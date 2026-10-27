@@ -60,17 +60,16 @@ public sealed class ProtocolEnumTest
     [InlineData((byte)0, (byte)255)]
     public void UnsupportedServerStateIsRejectedBeforeBecomingRuntimeStatus(byte mode, byte season)
     {
-        var package = new ServerInfoPackage { GameMode = mode, Season = season };
+        var package = new ServerInfoResponsePackage { GameMode = mode, Season = season };
         Assert.Throws<InvalidDataException>(() => ServerRuntimeStatus.FromPackage(package, 1));
     }
 
     [Fact]
     public void ServerStatusRestoresGameEnumsFromBytes()
     {
-        var package = new ServerInfoPackage
+        var package = new ServerInfoResponsePackage
         {
-            GameMode = ProtocolEnum.Encode(GameMode.Survival),
-            Season = ProtocolEnum.Encode(Season.Winter)
+            GameMode = ProtocolEnum.Encode(GameMode.Survival), Season = ProtocolEnum.Encode(Season.Winter)
         };
         var status = ServerRuntimeStatus.FromPackage(package, 1);
         Assert.Equal(GameMode.Survival, status.GameMode);

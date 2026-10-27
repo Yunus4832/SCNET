@@ -1,7 +1,5 @@
 using Engine.Core.Mathematics;
 
-using Game.Terrains;
-
 namespace Survivalcraft.Test.Network;
 
 public sealed class TerrainEditPredictionProtocolTest
@@ -11,30 +9,19 @@ public sealed class TerrainEditPredictionProtocolTest
     [InlineData(InteractionMessageKind.Place)]
     public void InteractionRoundTripPreservesPlacementCorrelationWithoutChangingUseEvents(InteractionMessageKind action)
     {
-        var package = new CharacterInteractionPackage
-        {
-            InteractEvent = action,
-            PlacementRequestId = 42,
-            PlacementCell = new Point3(-17, 64, 15),
-            PlacementExpectedValue = Terrain.MakeBlockValue(18, 12, 5),
-            NetInteractRay = new Ray3(new Vector3(1, 2, 3), Vector3.UnitZ)
-        };
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var restored = Assert.IsType<CharacterInteractionPackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        CharacterInteractionPackage package = action == InteractionMessageKind.Place
+            ? new CharacterPlacePackage
+            {
+                ControllerSessionId = 7, PlacementRequestId = 42, PlacementCell = new Point3(-3, 64, 2),
+                PlacementExpectedValue = 100
+            }
+            : new CharacterUsePackage { ControllerSessionId = 7 };
+        var encoded = ProtocolMessageCodec.Encode(package);
+        var restored = Assert.IsAssignableFrom<CharacterInteractionPackage>(ProtocolMessageCodec.Decode(encoded));
         Assert.Equal(action, restored.InteractEvent);
-        Assert.Equal(package.NetInteractRay.Position, restored.NetInteractRay.Position);
-        Assert.Equal(package.NetInteractRay.Direction, restored.NetInteractRay.Direction);
-        if (action == InteractionMessageKind.Place)
-        {
-            Assert.Equal(package.PlacementRequestId, restored.PlacementRequestId);
-            Assert.Equal(package.PlacementCell, restored.PlacementCell);
-            Assert.Equal(package.PlacementExpectedValue, restored.PlacementExpectedValue);
-        }
-        else
-        {
-            Assert.Equal(0, restored.PlacementRequestId);
-        }
+        Assert.Equal(package.ControllerSessionId, restored.ControllerSessionId);
+        Assert.Equal(encoded, ProtocolMessageCodec.Encode(restored));
+        if (restored is CharacterPlacePackage place) { Assert.Equal(42, place.PlacementRequestId); }
+        else { Assert.Null(typeof(CharacterUsePackage).GetProperty("PlacementRequestId")); }
     }
 }

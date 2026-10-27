@@ -578,11 +578,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
         NetworkSender.SendToObservers(
             Entity,
-            new SubsystemBodyPackage
-            {
-                PackageEventType = SubsystemBodyPackage.EventType.ApplyImpulse, CreatureId = Entity.EntityId,
-                Impulse = impulse
-            }
+            new BodyImpulsePackage { CreatureId = Entity.EntityId, Impulse = impulse }
         );
         ApplyImpulseNet(impulse);
     }
@@ -1163,11 +1159,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
             if (CommonLib.WorkType == WorkType.Client && Character is { CharacterData.IsLocalCharacter: true })
             {
                 NetworkSender.SendToServer(
-                    new SubsystemBodyPackage
+                    new BodyCollisionPackage
                     {
-                        PackageEventType = SubsystemBodyPackage.EventType.HandleAxisCollision,
-                        CreatureId = Entity.EntityId,
-                        TargetCreatureId = componentBody.Entity.EntityId, Impulse = componentBody._velocity
+                        CreatureId = Entity.EntityId, TargetCreatureId = componentBody.Entity.EntityId,
+                        Impulse = componentBody._velocity
                     }
                 );
             }

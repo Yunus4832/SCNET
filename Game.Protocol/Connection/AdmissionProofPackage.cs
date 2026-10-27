@@ -1,13 +1,16 @@
+using MessagePack;
+
+using MaxLengthAttribute = System.ComponentModel.DataAnnotations.MaxLengthAttribute;
+
 namespace Game.Protocol.Connection;
 
+[MessagePackObject]
 public sealed record AdmissionProofPackage(
-    string Nonce,
-    string Password = "",
-    string Approval = "",
-    bool Cancel = false
+    [property: Key(0), MaxLength(172)] string Nonce,
+    [property: Key(1), MaxLength(4096)] string Password = "",
+    [property: Key(2), MaxLength(65536)] string Approval = "",
+    [property: Key(3)] bool Cancel = false
 ) : IProtocolMessage
 {
-    public byte ID => (byte)PackageType.AdmissionProof;
-
     public override string ToString() => "AdmissionProofPackage { credentials redacted }";
 }

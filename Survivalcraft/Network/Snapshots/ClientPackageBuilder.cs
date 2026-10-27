@@ -10,7 +10,8 @@ public static class ClientPackageBuilder
         client.State
     );
 
-    public static ClientPackage Snapshot(IEnumerable<Client> clients) => new(clients.Select(Capture).ToArray());
+    public static ClientListPackage Snapshot(IEnumerable<Client> clients) =>
+        new() { List = clients.Select(Capture).ToArray() };
 
     public static Client Restore(ClientIdentity client) =>
         new(null, client.ID, client.TokenId, client.CharacterId, null)

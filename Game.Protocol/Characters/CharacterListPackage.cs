@@ -1,14 +1,11 @@
+using MessagePack;
+
 namespace Game.Protocol.Characters;
 
-public sealed record CharacterListPackage : IProtocolMessage
+[MessagePackObject]
+public sealed record CharacterListPackage() : IProtocolMessage
 {
-    public IReadOnlyList<CharacterListEntry> Characters { get; init; } = [];
+    [Key(0)] public IReadOnlyList<CharacterListEntry> Characters { get; init; } = [];
 
-    public byte ID => (byte)PackageType.CharacterList;
-
-    public CharacterListPackage()
-    {
-    }
-
-    public CharacterListPackage(IEnumerable<CharacterListEntry> players) => Characters = players.ToArray();
+    public CharacterListPackage(IEnumerable<CharacterListEntry> players) : this() => Characters = players.ToArray();
 }

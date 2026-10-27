@@ -56,17 +56,11 @@ public class NetNodeSnapshotCoalescingTest
     public void BodySnapshotsAreNotCoalescedToKeepIndependentPackages()
     {
         var packages = new List<OutboundPackage>();
-        var older = new SubsystemBodyPackage
-        {
-            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
-            BodyList = [new SubsystemBodyPackage.BodyItem { CreatureId = 1 }]
-        };
+        var older = new BodyStatesPackage
+            { BodyList = [new SubsystemBodyPackage.BodyItem { CreatureId = 1 }] };
 
-        var newer = new SubsystemBodyPackage
-        {
-            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
-            BodyList = [new SubsystemBodyPackage.BodyItem { CreatureId = 2 }]
-        };
+        var newer = new BodyStatesPackage
+            { BodyList = [new SubsystemBodyPackage.BodyItem { CreatureId = 2 }] };
 
         packages.Add(new OutboundPackage(older, PackageAudience.Global));
         // 生物快照按独立小包发送，不允许合并器吃掉其它分块。
@@ -84,17 +78,11 @@ public class NetNodeSnapshotCoalescingTest
     public void PickableSnapshotChunksAreNotCoalesced()
     {
         var packages = new List<OutboundPackage>();
-        var older = new PickablePackage
-        {
-            Type = PickablePackage.PickType.Update,
-            Positions = [new PickablePosition(1, new Vector3(1f, 2f, 3f))]
-        };
+        var older = new PickablePositionsPackage
+            { Positions = [new PickablePosition(1, new Vector3(1f, 2f, 3f))] };
 
-        var newer = new PickablePackage
-        {
-            Type = PickablePackage.PickType.Update,
-            Positions = [new PickablePosition(2, new Vector3(4f, 5f, 6f))]
-        };
+        var newer = new PickablePositionsPackage
+            { Positions = [new PickablePosition(2, new Vector3(4f, 5f, 6f))] };
 
         packages.Add(new OutboundPackage(older, PackageAudience.Global));
         Assert.False(
@@ -104,7 +92,7 @@ public class NetNodeSnapshotCoalescingTest
             )
         );
 
-        var package = Assert.IsType<PickablePackage>(Assert.Single(packages).Package);
+        var package = Assert.IsType<PickablePositionsPackage>(Assert.Single(packages).Package);
         Assert.Equal((ushort)1, Assert.Single(package.Positions).Id);
     }
 

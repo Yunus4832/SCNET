@@ -25,14 +25,11 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
                         return;
                     }
 
-                    var p = new EditableBlockPackage(
-                        BuiltInBlockEditKind.Button,
-                        default,
-                        true,
-                        inventory.Id,
-                        slotIndex,
-                        newVoltageLevel
-                    );
+                    var p = new EditableBlockValuePackage
+                    {
+                        ItemType = BuiltInBlockEditKind.Button,
+                        Target = new EditableInventorySlotTarget(inventory.Id, slotIndex), Value = newVoltageLevel
+                    };
                     EditableBlockPackageHandler.Submit(p);
                 }
             )
@@ -58,14 +55,11 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
 
                     const int face = 4;
                     var cell = new CellFace(x, y, z, face);
-                    var p = new EditableBlockPackage(
-                        BuiltInBlockEditKind.Button,
-                        cell,
-                        false,
-                        0,
-                        0,
-                        newVoltageLevel
-                    );
+                    var p = new EditableBlockValuePackage
+                    {
+                        ItemType = BuiltInBlockEditKind.Button, Target = new EditableWorldBlockTarget(cell),
+                        Value = newVoltageLevel
+                    };
                     EditableBlockPackageHandler.Submit(p);
                 }
             )

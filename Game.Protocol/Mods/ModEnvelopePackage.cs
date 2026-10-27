@@ -1,24 +1,21 @@
 using Game.Protocol.Connection;
 
+using MessagePack;
+
 namespace Game.Protocol.Mods;
 
-public sealed record ModEnvelopePackage : IProtocolMessage
+[MessagePackObject]
+public sealed record ModEnvelopePackage() : IProtocolMessage
 {
-    public string ModId { get; init; } = string.Empty;
+    [Key(0)] public string ModId { get; init; } = string.Empty;
 
-    public string MessageType { get; init; } = string.Empty;
+    [Key(1)] public string MessageType { get; init; } = string.Empty;
 
-    public byte[] Payload { get; init; } = [];
+    [Key(2)] public byte[] Payload { get; init; } = [];
 
-    public ClientState RequiredState { get; init; } = ClientState.Connected;
+    [Key(3)] public ClientState RequiredState { get; init; } = ClientState.Connected;
 
-    public byte ID => (byte)PackageType.ModEnvelope;
-
-    public ModEnvelopePackage()
-    {
-    }
-
-    public ModEnvelopePackage(string modId, string messageType, byte[] payload)
+    public ModEnvelopePackage(string modId, string messageType, byte[] payload) : this()
     {
         ModId = modId;
         MessageType = messageType;

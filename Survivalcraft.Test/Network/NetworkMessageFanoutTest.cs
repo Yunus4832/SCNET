@@ -12,14 +12,14 @@ public sealed class NetworkMessageFanoutTest
     public void FlushingWithoutRecipientsCountsEachLogicalEmission()
     {
         var node = new NetNode();
-        var package = new EntityPackage(42);
+        var package = new EntityRemovedPackage { EntityId = 42 };
         node.QueuePackage(package, PackageAudience.Global);
         node.QueuePackage(package, PackageAudience.Global);
         var flush = typeof(NetNode).GetMethod("FlushPendingPackages", BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(flush);
         flush.Invoke(node, null);
         var result = Assert.Single(node.SendStatistics.GetFanout());
-        Assert.Equal(typeof(EntityPackage), result.PackageType);
+        Assert.Equal(typeof(EntityRemovedPackage), result.PackageType);
         Assert.Equal(2, result.Messages);
         Assert.Equal(0, result.RecipientDeliveries);
         Assert.Equal(0d, result.AverageFanout);
@@ -63,7 +63,7 @@ public sealed class NetworkMessageFanoutTest
     public void ConcurrentContinuationsRecordOneMessageWithDistinctRecipients()
     {
         var statistics = new NetworkSendStatistics();
-        var message = new NetworkMessageFanout(statistics, typeof(EntityPackage), NetworkChannel.Bulk);
+        var message = new NetworkMessageFanout(statistics, typeof(EntityRemovedPackage), NetworkChannel.Bulk);
         var clients = Enumerable.Range(0, 64)
             .Select(_ => new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null)).ToArray();
         message.Advance(1, clients.Length);
@@ -86,7 +86,7 @@ public sealed class NetworkMessageFanoutTest
     public void DeferredCopiesFinishOneMessageAndDeduplicateRecipientFragments()
     {
         var statistics = new NetworkSendStatistics();
-        var message = new NetworkMessageFanout(statistics, typeof(EntityPackage), NetworkChannel.Bulk);
+        var message = new NetworkMessageFanout(statistics, typeof(EntityRemovedPackage), NetworkChannel.Bulk);
         var first = new Client(null, 7, Guid.NewGuid(), Guid.NewGuid(), null);
         var second = new Client(null, 7, Guid.NewGuid(), Guid.NewGuid(), null);
         message.DeliveredTo(first);
@@ -99,7 +99,7 @@ public sealed class NetworkMessageFanoutTest
         message.DeliveredTo(first);
         message.Advance(1, 0);
         Assert.Equal(
-            new NetworkPackageFanoutStatistics(typeof(EntityPackage), NetworkChannel.Bulk, 1, 2, 2),
+            new NetworkPackageFanoutStatistics(typeof(EntityRemovedPackage), NetworkChannel.Bulk, 1, 2, 2),
             Assert.Single(statistics.GetFanout())
         );
         Assert.Throws<InvalidOperationException>(() => message.Advance(1, 0));
@@ -110,12 +110,12 @@ public sealed class NetworkMessageFanoutTest
     public void CancelledContinuationsKeepOnlyActualRecipients()
     {
         var statistics = new NetworkSendStatistics();
-        var message = new NetworkMessageFanout(statistics, typeof(EntityPackage), NetworkChannel.Bulk);
+        var message = new NetworkMessageFanout(statistics, typeof(EntityRemovedPackage), NetworkChannel.Bulk);
         message.Advance(1, 2);
         message.DeliveredTo(new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null));
         message.Advance(2, 0);
         Assert.Equal(1, Assert.Single(statistics.GetFanout()).RecipientDeliveries);
-        var empty = new NetworkMessageFanout(statistics, typeof(EntityPackage), NetworkChannel.Bulk);
+        var empty = new NetworkMessageFanout(statistics, typeof(EntityRemovedPackage), NetworkChannel.Bulk);
         empty.Advance(1, 0);
         var result = Assert.Single(statistics.GetFanout());
         Assert.Equal(2, result.Messages);
@@ -126,7 +126,7 @@ public sealed class NetworkMessageFanoutTest
     public void InvalidContinuationCountsDoNotChangeMessage()
     {
         var statistics = new NetworkSendStatistics();
-        var message = new NetworkMessageFanout(statistics, typeof(EntityPackage), NetworkChannel.Bulk);
+        var message = new NetworkMessageFanout(statistics, typeof(EntityRemovedPackage), NetworkChannel.Bulk);
         Assert.Throws<ArgumentOutOfRangeException>(() => message.Advance(0, 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => message.Advance(1, -1));
         Assert.Throws<InvalidOperationException>(() => message.Advance(2, 0));

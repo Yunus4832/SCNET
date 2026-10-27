@@ -47,7 +47,7 @@ public sealed class ServerConnectionPreparationTest
     [Fact]
     public async Task ServerInfoAndHandshakeShareSocketAndConsumptionTransfersOwnershipOnce()
     {
-        PackageManager.RegisterPackage(() => new ServerInfoPackage(), new ServerInfoPackageHandler());
+        PackageManager.RegisterPackage(new ServerInfoPackageHandler());
         await using var server = new NetworkHost();
         using var http = new HttpClient();
         using var identity = NetworkIdentity.Create();
@@ -59,13 +59,7 @@ public sealed class ServerConnectionPreparationTest
             Assert.True(query.Package.RequestInfo);
             inspectedPort = source.TransportEndpoint.Port;
             source.Send(
-                NetNode.CreateUnconnectedPayload(
-                    new ServerInfoPackage
-                    {
-                        ProtocolVersion = 1,
-                        ClientCount = 3
-                    }
-                )
+                NetNode.CreateUnconnectedPayload(new ServerInfoResponsePackage { ProtocolVersion = 1, ClientCount = 3 })
             );
         };
         server.ConnectionRequested += request =>
@@ -118,7 +112,7 @@ public sealed class ServerConnectionPreparationTest
             {
             }
 
-            PackageManager.UnRegisterPackage(new ServerInfoPackage());
+            PackageManager.UnregisterPackage(typeof(ServerInfoPackage));
         }
     }
 }

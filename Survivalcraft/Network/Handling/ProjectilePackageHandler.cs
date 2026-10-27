@@ -21,42 +21,44 @@ public sealed class ProjectilePackageHandler : PackageHandlerBase<ProjectilePack
 
         var project = GameManager.Project;
         var subsystem = project.FindSubsystem<SubsystemProjectiles>(true)!;
-        if (package.Type == ProjectilePackage.EventType.Effect)
+        if (package is ProjectileEffectPackage message1)
         {
-            subsystem.PlayReplicatedEffect(package.Effect, package.Value, package.Position);
+            subsystem.PlayReplicatedEffect(message1.Effect, message1.Value, message1.Position);
             return;
         }
 
-        if (package.Type == ProjectilePackage.EventType.Update)
+        if (package is ProjectileStatePackage message2)
         {
-            if (subsystem.FindProjectile(package.NetworkId) is { } projectile)
+            if (subsystem.FindProjectile(message2.NetworkId) is { } projectile)
             {
-                SubsystemProjectiles.ApplyNetworkMotion(projectile, package);
+                SubsystemProjectiles.ApplyNetworkMotion(projectile, message2);
             }
 
             return;
         }
 
-        if (package.Type == ProjectilePackage.EventType.Remove)
+        if (package is ProjectileRemovedPackage message3)
         {
-            subsystem.RemoveProjectileNet(package.NetworkId);
+            subsystem.RemoveProjectileNet(message3.NetworkId);
             return;
         }
 
+        if (package is not ProjectileAddedPackage added) { return; }
+
         ComponentCreature? creature = null;
-        if (package.OwnerId != 0)
+        if (added.OwnerId != 0)
         {
             project.FindEntityById(
-                package.OwnerId,
+                added.OwnerId,
                 entity => { creature = entity.FindComponent<ComponentCreature>(); }
             );
         }
 
-        if (subsystem.FindProjectile(package.NetworkId) is not null)
+        if (subsystem.FindProjectile(added.NetworkId) is not null)
         {
             return;
         }
 
-        subsystem.AddReplicatedProjectile(package, creature);
+        subsystem.AddReplicatedProjectile(added, creature);
     }
 }

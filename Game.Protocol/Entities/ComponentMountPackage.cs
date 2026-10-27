@@ -1,6 +1,13 @@
+using MessagePack;
+
 namespace Game.Protocol.Entities;
 
-public sealed record ComponentMountPackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(DismountedPackage))]
+[Union(1, typeof(DismountRequestPackage))]
+[Union(2, typeof(MountedPackage))]
+[Union(3, typeof(MountRequestPackage))]
+public abstract record ComponentMountPackage : IProtocolMessage
 {
     public enum EventType
     {
@@ -13,28 +20,7 @@ public sealed record ComponentMountPackage : IProtocolMessage
         DismountRequest = 3
     }
 
-    public int FromId { get; init; }
+    [IgnoreMember] public abstract EventType Type { get; }
 
-    public int TargetId { get; init; }
-
-    public EventType Type { get; init; }
-
-    public byte ID => (byte)PackageType.ComponentMount;
-
-    public ComponentMountPackage()
-    {
-    }
-
-    public ComponentMountPackage(int fromId, int targetId, bool isRequest = false)
-    {
-        Type = isRequest ? EventType.MountRequest : EventType.Mount;
-        FromId = fromId;
-        TargetId = targetId;
-    }
-
-    public ComponentMountPackage(int fromId, bool isRequest = false)
-    {
-        Type = isRequest ? EventType.DismountRequest : EventType.Dismount;
-        FromId = fromId;
-    }
+    [Key(0)] public int FromId { get; init; }
 }

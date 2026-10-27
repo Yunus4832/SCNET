@@ -25,14 +25,11 @@ public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
                         return;
                     }
 
-                    var p = new EditableBlockPackage(
-                        BuiltInBlockEditKind.Battery,
-                        default,
-                        true,
-                        inventory.Id,
-                        slotIndex,
-                        newVoltageLevel
-                    );
+                    var p = new EditableBlockValuePackage
+                    {
+                        ItemType = BuiltInBlockEditKind.Battery,
+                        Target = new EditableInventorySlotTarget(inventory.Id, slotIndex), Value = newVoltageLevel
+                    };
                     EditableBlockPackageHandler.Submit(p);
                 }
             )
@@ -58,14 +55,11 @@ public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
 
                     const int face = 4;
                     var cell = new CellFace(x, y, z, face);
-                    var p = new EditableBlockPackage(
-                        BuiltInBlockEditKind.Battery,
-                        cell,
-                        false,
-                        0,
-                        0,
-                        newVoltageLevel
-                    );
+                    var p = new EditableBlockValuePackage
+                    {
+                        ItemType = BuiltInBlockEditKind.Battery, Target = new EditableWorldBlockTarget(cell),
+                        Value = newVoltageLevel
+                    };
                     EditableBlockPackageHandler.Submit(p);
                 }
             )

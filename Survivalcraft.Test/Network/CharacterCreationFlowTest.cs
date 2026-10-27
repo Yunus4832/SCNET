@@ -63,7 +63,7 @@ public sealed class CharacterCreationFlowTest
         finally
         {
             pending.RemoveAll(item =>
-                item.Package is CharacterDataPackage package && ids.Contains(package.CreationRequestId)
+                item.Package is CharacterCreateRequestPackage package && ids.Contains(package.CreationRequestId)
             );
             CommonLib.Net.Server = previousServer;
             CommonLib.WorkType = previousType;
@@ -78,10 +78,10 @@ public sealed class CharacterCreationFlowTest
         var store = new WorldPlayerStore();
         var user = store.GetOrCreate(address);
         var sender = new Client(null, 1, Guid.NewGuid(), Guid.Empty, null) { PlayerAddress = address };
-        var request = new CharacterDataPackage
+        var request = new CharacterCreateRequestPackage
         {
-            Type = CharacterDataPackage.DataType.Create, CreationRequestId = Guid.NewGuid(),
-            CharacterName = "Tester", SkinName = "$Male1", CharacterSex = ProtocolEnum.Encode(CharacterSex.Male)
+            CreationRequestId = Guid.NewGuid(), CharacterName = "Tester", SkinName = "$Male1",
+            CharacterSex = ProtocolEnum.Encode(CharacterSex.Male)
         };
         Assert.Null(CharacterDataPackageHandler.ValidateCreation(request, sender, players, store, out var name, out _));
         Assert.Equal("Tester", name);
@@ -140,15 +140,11 @@ public sealed class CharacterCreationFlowTest
     [InlineData(CharacterCreationError.NameUnavailable)]
     public void FailureRoundTripsItsCorrelationAndReason(CharacterCreationError error)
     {
-        var package = new CharacterDataPackage
-        {
-            Type = CharacterDataPackage.DataType.CreationRejected, CreationRequestId = Guid.NewGuid(),
-            CreationError = error
-        };
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var decoded = Assert.IsType<CharacterDataPackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var package = new CharacterCreateRejectedPackage
+            { CreationRequestId = Guid.NewGuid(), CreationError = error };
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var decoded = Assert.IsType<CharacterCreateRejectedPackage>(ProtocolMessageCodec.Decode(reader));
         Assert.Equal(package.CreationRequestId, decoded.CreationRequestId);
         Assert.Equal(error, decoded.CreationError);
     }

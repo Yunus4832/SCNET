@@ -9,7 +9,6 @@ using Game.Modding.Data;
 using Game.Network.Transport;
 using Game.Protocol;
 using Game.Protocol.Connection;
-using Game.Protocol.Serialization;
 
 namespace TerritoryStoneMod;
 
@@ -58,11 +57,12 @@ public sealed class ModEntry : IMod
                     return;
                 }
 
+                var notice = message.Read<TerritoryAccessRequestNotice>();
                 var request = new TerritoryAccessRequest(
-                    message.Reader.ReadGuid(),
-                    PlayerAddressCodec.Read(message.Reader),
-                    PlayerAddressCodec.Read(message.Reader),
-                    message.Reader.ReadString(),
+                    notice.Id,
+                    notice.Owner,
+                    notice.User,
+                    notice.UserName,
                     Engine.Core.Runtime.Time.RealTime + TerritoryAccessRequests.Lifetime
                 );
                 world.ReceiveAccessRequest(request);
@@ -74,7 +74,7 @@ public sealed class ModEntry : IMod
             {
                 if (!message.IsServer && ActiveWorld(message) is { } world)
                 {
-                    world.RemoveAccessRequest(message.Reader.ReadGuid());
+                    world.RemoveAccessRequest(message.Read<TerritoryAccessRequestRemoval>().Id);
                 }
             }
         );
@@ -87,7 +87,7 @@ public sealed class ModEntry : IMod
                     return;
                 }
 
-                var snapshot = TerritoryMessages.ReadSnapshot(message.Reader);
+                var snapshot = TerritoryMessages.Restore(message.Read<TerritoryWorldSnapshot>());
                 if (ActiveWorld(message) is { } world)
                 {
                     world.Store.ApplySnapshot(snapshot);
@@ -105,7 +105,7 @@ public sealed class ModEntry : IMod
             {
                 if (!message.IsServer && ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net))
                 {
-                    var territory = TerritoryMessages.Read(message.Reader);
+                    var territory = TerritoryMessages.Restore(message.Read<TerritorySnapshot>());
                     if (ActiveWorld(message) is { } world)
                     {
                         world.Store.ApplyUpdate(territory);
@@ -123,7 +123,7 @@ public sealed class ModEntry : IMod
             {
                 if (!message.IsServer && ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net))
                 {
-                    var owner = PlayerAddressCodec.Read(message.Reader);
+                    var owner = message.Read<TerritoryRemoval>().Owner;
                     if (ActiveWorld(message) is { } world)
                     {
                         world.Store.Remove(owner);
@@ -144,9 +144,10 @@ public sealed class ModEntry : IMod
                     return;
                 }
 
-                var requestId = message.Reader.ReadInt32();
-                var owner = PlayerAddressCodec.Read(message.Reader);
-                var settings = TerritoryMessages.ReadSettings(message.Reader);
+                var request = message.Read<TerritorySettingsRequest>();
+                var requestId = request.RequestId;
+                var owner = request.Owner;
+                var settings = request.Settings;
                 var exists = world.Store.TryGet(owner, out var territory);
                 var error = "OwnerOnly";
                 var accepted = exists && TerritoryMessages.CanChangeSettings(message.From, owner);
@@ -160,14 +161,13 @@ public sealed class ModEntry : IMod
                 {
                     context.Network.Send(
                         TerritoryMessages.SettingsResult,
-                        writer =>
-                        {
-                            writer.Write(requestId);
-                            PlayerAddressCodec.Write(writer, owner);
-                            writer.Write(accepted);
-                            writer.Write(error);
-                            TerritoryMessages.WriteSettings(writer, territory?.Settings ?? new TerritorySettings());
-                        },
+                        new TerritorySettingsResponse(
+                            requestId,
+                            owner,
+                            accepted,
+                            error,
+                            territory?.Settings ?? new TerritorySettings()
+                        ),
                         PackageAudience.To(message.From),
                         ClientState.ProjectLoaded
                     );
@@ -183,16 +183,13 @@ public sealed class ModEntry : IMod
                     return;
                 }
 
-                var requestId = message.Reader.ReadInt32();
-                var owner = PlayerAddressCodec.Read(message.Reader);
-                var accepted = message.Reader.ReadBoolean();
-                var error = message.Reader.ReadString();
+                var response = message.Read<TerritorySettingsResponse>();
                 world.ReceiveSettingsResponse(
-                    requestId,
-                    owner,
-                    accepted,
-                    TerritoryMessages.ReadSettings(message.Reader),
-                    error
+                    response.RequestId,
+                    response.Owner,
+                    response.Accepted,
+                    response.Settings,
+                    response.Error
                 );
             }
         );

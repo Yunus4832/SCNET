@@ -7,9 +7,9 @@ public interface IModNetwork
 {
     IDisposable OnMessage(string messageType, Action<ModNetworkMessageContext> handler, int priority = 0);
 
-    void Send(
+    void Send<T>(
         string messageType,
-        Action<ProtocolWriter> writePayload,
+        T payload,
         PackageAudience audience,
         ClientState minNeedState = ClientState.Connected
     );
@@ -59,12 +59,11 @@ public sealed class ModNetworkHooks
         {
             try
             {
-                using var reader = new ProtocolReader(package.Payload);
                 var context = new ModNetworkMessageContext(
                     this,
                     handler.Owner,
                     package.MessageType,
-                    reader,
+                    package.Payload,
                     receiveContext.Sender,
                     receiveContext.Node,
                     receiveContext.IsServer
@@ -92,20 +91,15 @@ public sealed class ModNetworkHooks
         RebuildRoutes();
     }
 
-    internal void Send(
+    internal void Send<T>(
         ModId owner,
         string messageType,
-        Action<ProtocolWriter> writePayload,
+        T payload,
         PackageAudience audience,
         ClientState minNeedState
     )
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(messageType);
-        ArgumentNullException.ThrowIfNull(writePayload);
-        ArgumentNullException.ThrowIfNull(audience);
-        using var writer = new ProtocolWriter();
-        writePayload(writer);
-        Send(owner, messageType, writer.Data(), audience, minNeedState);
+        Send(owner, messageType, ProtocolPayloadCodec.Encode(payload), audience, minNeedState);
     }
 
     internal void Send(
@@ -182,13 +176,13 @@ public sealed class ModNetworkHooks
         public IDisposable OnMessage(string messageType, Action<ModNetworkMessageContext> handler, int priority = 0) =>
             hooks.Register(owner, messageType, handler, priority);
 
-        public void Send(
+        public void Send<T>(
             string messageType,
-            Action<ProtocolWriter> writePayload,
+            T payload,
             PackageAudience audience,
             ClientState minNeedState = ClientState.Connected
         ) =>
-            hooks.Send(owner, messageType, writePayload, audience, minNeedState);
+            hooks.Send(owner, messageType, payload, audience, minNeedState);
 
         public void Send(
             string messageType,
@@ -230,7 +224,7 @@ public sealed class ModNetworkMessageContext(
     ModNetworkHooks hooks,
     ModId owner,
     string messageType,
-    ProtocolReader reader,
+    ReadOnlyMemory<byte> payload,
     Client? from,
     NetNode? netNode,
     bool isServer
@@ -240,7 +234,9 @@ public sealed class ModNetworkMessageContext(
 
     public string MessageType { get; } = messageType;
 
-    public ProtocolReader Reader { get; } = reader;
+    public ReadOnlyMemory<byte> Payload { get; } = payload;
+
+    public T Read<T>() => ProtocolPayloadCodec.Decode<T>(Payload);
 
     public Client? From { get; } = from;
 
@@ -248,8 +244,8 @@ public sealed class ModNetworkMessageContext(
 
     public bool IsServer { get; } = isServer;
 
-    public void Reply(
-        Action<ProtocolWriter> writePayload,
+    public void Reply<T>(
+        T value,
         ClientState minNeedState = ClientState.Connected
     )
     {
@@ -258,16 +254,16 @@ public sealed class ModNetworkMessageContext(
             return;
         }
 
-        hooks.Send(Owner, MessageType, writePayload, PackageAudience.To(From), minNeedState);
+        hooks.Send(Owner, MessageType, value, PackageAudience.To(From), minNeedState);
     }
 
-    public void Send(
+    public void Send<T>(
         string targetMessageType,
-        Action<ProtocolWriter> writePayload,
+        T value,
         PackageAudience audience,
         ClientState minNeedState = ClientState.Connected
     )
     {
-        hooks.Send(Owner, targetMessageType, writePayload, audience, minNeedState);
+        hooks.Send(Owner, targetMessageType, value, audience, minNeedState);
     }
 }

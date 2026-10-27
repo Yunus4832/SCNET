@@ -191,7 +191,7 @@ public static class CommandGateway
         CommandRegistry registry,
         IGameCommand command,
         string correlationId,
-        out CommandPackage? package,
+        out CommandRequestPackage? package,
         out CommandResult? error
     )
     {

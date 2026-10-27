@@ -69,16 +69,17 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
 
         var subsystemTerrain = project.FindSubsystem<SubsystemTerrain>();
         var subsystemFurnitureBlockBehavior = project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true)!;
-        switch (package.PackageEventType)
+        switch (package)
         {
-            case FurniturePackage.EventType.ImportFurnitureSet:
+            case FurnitureSetImportPackage message1:
+            {
                 if (subsystemFurnitureBlockBehavior.FurnitureSets.Count >= 32)
                 {
                     SendImportFeedback(context, "25", []);
                     return;
                 }
 
-                var imported = FurnitureSnapshotSerializer.ReadDesignChain(package.AddXml, subsystemTerrain);
+                var imported = FurnitureSnapshotSerializer.ReadDesignChain(message1.DesignXml, subsystemTerrain);
                 var importedRoots = new List<FurnitureDesign>();
                 var duplicateCount = 0;
                 var skippedCount = 0;
@@ -128,7 +129,7 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
                     return;
                 }
 
-                var importedSet = subsystemFurnitureBlockBehavior.NewFurnitureSet(package.FromName, string.Empty);
+                var importedSet = subsystemFurnitureBlockBehavior.NewFurnitureSet(message1.Name, string.Empty);
                 NetworkSender.SendGlobal(FurniturePackageBuilder.Capture(importedSet));
                 foreach (var root in importedRoots)
                 {
@@ -137,8 +138,10 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
                 }
 
                 break;
-            case FurniturePackage.EventType.DesignChain:
-                var chain = FurnitureSnapshotSerializer.ReadDesignChain(package.AddXml, subsystemTerrain);
+            }
+            case FurnitureDesignChainPackage message2:
+            {
+                var chain = FurnitureSnapshotSerializer.ReadDesignChain(message2.DesignXml, subsystemTerrain);
                 if (chain.Count == 0)
                 {
                     return;
@@ -150,10 +153,12 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
                 }
 
                 break;
-            case FurniturePackage.EventType.AddToFurnitureSet:
-                furnitureSet = subsystemFurnitureBlockBehavior.FurnitureSets.Find(f => f.Name == package.AddXml);
+            }
+            case FurnitureSetAddDesignPackage message3:
+            {
+                furnitureSet = subsystemFurnitureBlockBehavior.FurnitureSets.Find(f => f.Name == message3.SetName);
                 furniture = subsystemFurnitureBlockBehavior.FurnitureDesigns.FirstOrDefault(f =>
-                    f?.Index == package.FurnitureIndex
+                    f?.Index == message3.FurnitureIndex
                 );
                 if (furniture == null || furnitureSet == null)
                 {
@@ -163,43 +168,47 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
                 subsystemFurnitureBlockBehavior.AddToFurnitureSet(furniture, furnitureSet);
                 if (isServer)
                 {
-                    NetworkSender.SendGlobal(package);
+                    NetworkSender.SendGlobal(message3);
                 }
 
                 break;
-            case FurniturePackage.EventType.MoveFurnitureSet:
-                furnitureSet = subsystemFurnitureBlockBehavior.FurnitureSets.Find(f => f.Name == package.AddXml);
+            }
+            case FurnitureSetMovePackage message4:
+            {
+                furnitureSet = subsystemFurnitureBlockBehavior.FurnitureSets.Find(f => f.Name == message4.SetName);
                 if (furnitureSet != null)
                 {
-                    subsystemFurnitureBlockBehavior.MoveFurnitureSet(furnitureSet, package.FurnitureIndex);
+                    subsystemFurnitureBlockBehavior.MoveFurnitureSet(furnitureSet, message4.FurnitureIndex);
                 }
 
                 if (isServer)
                 {
-                    NetworkSender.SendGlobal(package);
+                    NetworkSender.SendGlobal(message4);
                 }
 
                 break;
-            case FurniturePackage.EventType.RenameFurnitureSet:
-                furnitureSet = subsystemFurnitureBlockBehavior.FurnitureSets.Find(f => f.Name == package.AddXml);
+            }
+            case FurnitureSetRenamedPackage message5:
+            {
+                furnitureSet = subsystemFurnitureBlockBehavior.FurnitureSets.Find(f => f.Name == message5.OldName);
                 if (furnitureSet != null)
                 {
-                    subsystemFurnitureBlockBehavior.RenameFurnitureSet(furnitureSet, package.FromName);
+                    subsystemFurnitureBlockBehavior.RenameFurnitureSet(furnitureSet, message5.NewName);
                 }
 
                 if (isServer)
                 {
                     NetworkSender.SendGlobal(
-                        new FurniturePackage(
-                            package.AddXml,
-                            furnitureSet?.Name ?? package.FromName
-                        )
+                        new FurnitureSetRenamedPackage
+                            { OldName = message5.OldName, NewName = furnitureSet?.Name ?? message5.NewName }
                     );
                 }
 
                 break;
-            case FurniturePackage.EventType.DeleteFurnitureSet:
-                furnitureSet = subsystemFurnitureBlockBehavior.FurnitureSets.Find(f => f.Name == package.AddXml);
+            }
+            case FurnitureSetDeletedPackage message6:
+            {
+                furnitureSet = subsystemFurnitureBlockBehavior.FurnitureSets.Find(f => f.Name == message6.Name);
                 if (furnitureSet != null)
                 {
                     subsystemFurnitureBlockBehavior.DeleteFurnitureSet(furnitureSet);
@@ -211,37 +220,43 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
 
                 if (isServer)
                 {
-                    NetworkSender.SendGlobal(package);
+                    NetworkSender.SendGlobal(message6);
                 }
 
                 break;
-            case FurniturePackage.EventType.NewFurnitureSet:
+            }
+            case FurnitureSetCreatedPackage message7:
+            {
                 if (isServer && subsystemFurnitureBlockBehavior.FurnitureSets.Count >= 32)
                 {
                     return;
                 }
 
-                var createdSet = subsystemFurnitureBlockBehavior.NewFurnitureSet(package.AddXml, package.FromName);
+                var createdSet = subsystemFurnitureBlockBehavior.NewFurnitureSet(message7.Name, message7.ImportedFrom);
                 if (isServer)
                 {
                     NetworkSender.SendGlobal(FurniturePackageBuilder.Capture(createdSet));
                 }
 
                 break;
-            case FurniturePackage.EventType.Add:
-                valuesDictionary = CommonLib.ReadVDict(package.AddXml);
-                furniture = new FurnitureDesign(package.FurnitureIndex, subsystemTerrain, valuesDictionary);
+            }
+            case FurnitureDesignAddedPackage message8:
+            {
+                valuesDictionary = CommonLib.ReadVDict(message8.DesignXml);
+                furniture = new FurnitureDesign(message8.FurnitureIndex, subsystemTerrain, valuesDictionary);
                 subsystemFurnitureBlockBehavior.InstallNetworkDesign(furniture);
 
                 break;
-            case FurniturePackage.EventType.RequestAdd:
+            }
+            case FurnitureDesignAddRequestPackage message9:
+            {
                 var interest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
-                if (package.PointDict.Count is 0 or > 4096 ||
+                if (message9.PointDict.Count is 0 or > 4096 ||
                     !interest.IsPositionRelevant(
                         context.Sender!,
-                        new Vector2(package.CellFace.X, package.CellFace.Z)
+                        new Vector2(message9.CellFace.X, message9.CellFace.Z)
                     ) ||
-                    package.PointDict.Any(point =>
+                    message9.PointDict.Any(point =>
                         !interest.IsPositionRelevant(context.Sender!, new Vector2(point.Key.X, point.Key.Z)) ||
                         subsystemTerrain!.Terrain.GetCellValue(point.Key.X, point.Key.Y, point.Key.Z) != point.Value
                     ))
@@ -249,7 +264,7 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
                     return;
                 }
 
-                valuesDictionary = CommonLib.ReadVDict(package.AddXml);
+                valuesDictionary = CommonLib.ReadVDict(message9.DesignXml);
                 furniture = new FurnitureDesign(0, subsystemTerrain, valuesDictionary);
                 subsystemCharacters.FindCharacterByClientId(
                     context.Sender!.ID,
@@ -258,24 +273,26 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
                         furniture = subsystemFurnitureBlockBehavior.CreateDesign(
                             player.ComponentMiner,
                             furniture,
-                            package.PointDict,
-                            package.CellFace,
-                            package.StartValue
+                            message9.PointDict,
+                            message9.CellFace,
+                            message9.StartValue
                         );
                         // 回复添加家具包
                         netNode.QueuePackage(
                             FurniturePackageBuilder.Capture(
                                 furniture,
-                                package.PointDict,
-                                package.CellFace,
-                                package.StartValue
+                                message9.PointDict,
+                                message9.CellFace,
+                                message9.StartValue
                             ),
                             PackageAudience.Global
                         );
                     }
                 );
                 break;
-            case FurniturePackage.EventType.RemoveFurnitureDesigns:
+            }
+            case FurnitureDesignsRemovedPackage message10:
+            {
                 for (var k = 0; k < subsystemFurnitureBlockBehavior.FurnitureDesigns.Length; k++)
                 {
                     var obj = subsystemFurnitureBlockBehavior.FurnitureDesigns[k];
@@ -284,7 +301,7 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
                         continue;
                     }
 
-                    if (package.ToRemoveList.All(item => obj.Index != item))
+                    if (message10.ToRemoveList.All(item => obj.Index != item))
                     {
                         continue;
                     }
@@ -294,6 +311,7 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
                 }
 
                 break;
+            }
         }
 
         subsystemFurnitureBlockBehavior.NotifyNetworkChange();

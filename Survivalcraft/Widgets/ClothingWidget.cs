@@ -94,11 +94,8 @@ public class ClothingWidget : CanvasWidget
         if (CommonLib.WorkType == WorkType.Client)
         {
             NetworkSender.SendToServer(
-                new ComponentSleepPackage(
-                    _componentCharacter.ComponentSleep.Entity.EntityId,
-                    ComponentSleepPackage.EventType.SleepRequest,
-                    true
-                )
+                new SleepRequestPackage
+                    { EntityId = _componentCharacter.ComponentSleep.Entity.EntityId, AllowManualWakeup = true }
             );
         }
         else

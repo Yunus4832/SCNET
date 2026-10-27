@@ -35,43 +35,55 @@ public sealed class ComponentBehaviorPackageHandler : PackageHandlerBase<Compone
             package.EntityId,
             entity =>
             {
-                switch (package.PackageEventType)
+                switch (package)
                 {
-                    case ComponentBehaviorPackage.EventType.ChaseBehavior:
+                    case CreatureChaseStatePackage message1:
+                    {
                         var chaseBehavior = entity.FindComponent<ComponentChaseBehavior>();
-                        chaseBehavior?.IsAttack = package.RowLeft;
+                        chaseBehavior?.IsAttack = message1.IsActive;
 
                         break;
-                    case ComponentBehaviorPackage.EventType.RandomFeed:
+                    }
+                    case CreatureFeedStatePackage message2:
+                    {
                         var randomFeedBehavior = entity.FindComponent<ComponentRandomFeedBehavior>();
-                        randomFeedBehavior?.IsFeed = package.RowLeft;
+                        randomFeedBehavior?.IsFeed = message2.IsActive;
 
                         break;
-
-                    case ComponentBehaviorPackage.EventType.RandomPeck:
+                    }
+                    case CreaturePeckStatePackage message3:
+                    {
                         var peck = entity.FindComponent<ComponentRandomPeckBehavior>();
-                        peck?.IsFeed = package.RowLeft;
+                        peck?.IsFeed = message3.IsActive;
 
                         break;
-                    case ComponentBehaviorPackage.EventType.EatPickable:
+                    }
+                    case CreatureEatStatePackage message4:
+                    {
                         var eatPickableBehavior = entity.FindComponent<ComponentEatPickableBehavior>();
-                        eatPickableBehavior?.IsFeed = package.RowLeft;
+                        eatPickableBehavior?.IsFeed = message4.IsActive;
                         break;
-                    case ComponentBehaviorPackage.EventType.DigInMud:
+                    }
+                    case CreatureDigStatePackage message5:
+                    {
                         var digInMudBehavior = entity.FindComponent<ComponentDigInMudBehavior>();
-                        digInMudBehavior?.IsDigIn = package.RowLeft;
+                        digInMudBehavior?.IsDigIn = message5.IsActive;
                         break;
-                    case ComponentBehaviorPackage.EventType.FishOutOfWater:
+                    }
+                    case CreatureOutOfWaterStatePackage message6:
+                    {
                         var fishOutOfWaterBehavior = entity.FindComponent<ComponentFishOutOfWaterBehavior>();
-                        fishOutOfWaterBehavior?.IsBend = package.RowLeft;
+                        fishOutOfWaterBehavior?.IsBend = message6.IsActive;
                         break;
-                    case ComponentBehaviorPackage.EventType.HumanRow:
+                    }
+                    case CreatureRowingStatePackage message7:
+                    {
                         var humanModel = entity.FindComponent<ComponentHumanModel>();
                         if (humanModel != null)
                         {
                             humanModel.HasData = true;
-                            humanModel.RowLeft = package.RowLeft;
-                            humanModel.RowRight = package.RowRight;
+                            humanModel.RowLeft = message7.RowLeft;
+                            humanModel.RowRight = message7.RowRight;
                             var random = new Random();
                             project.FindSubsystem<SubsystemAudio>(true)!.PlayRandomSound(
                                 "Audio/Rowing",
@@ -83,19 +95,21 @@ public sealed class ComponentBehaviorPackageHandler : PackageHandlerBase<Compone
                             );
                             if (isServer)
                             {
-                                NetworkSender.SendToObservers(entity, package, context.Sender);
+                                NetworkSender.SendToObservers(entity, message7, context.Sender);
                             }
                         }
 
                         break;
-                    case ComponentBehaviorPackage.EventType.CreatureSound:
+                    }
+                    case CreatureSoundPackage message8:
+                    {
                         var creatureSound = entity.FindComponent<ComponentCreatureSounds>();
                         if (creatureSound != null)
                         {
-                            switch (package.Type)
+                            switch (message8.SoundKind)
                             {
                                 case 0:
-                                    creatureSound.PlayIdleSoundLocal(package.RowLeft);
+                                    creatureSound.PlayIdleSoundLocal(message8.SkipIfRecentlyPlayed);
                                     break;
                                 case 1:
                                     creatureSound.PlayPainSoundLocal();
@@ -119,6 +133,7 @@ public sealed class ComponentBehaviorPackageHandler : PackageHandlerBase<Compone
                         }
 
                         break;
+                    }
                 }
             }
         );

@@ -1,5 +1,22 @@
+using MessagePack;
+
 namespace Game.Protocol.Characters;
 
+[MessagePackObject]
+[Union(0, typeof(CharacterAimPackage))]
+[Union(1, typeof(CharacterDigPackage))]
+[Union(2, typeof(CharacterExperiencePackage))]
+[Union(3, typeof(CharacterFlightPackage))]
+[Union(4, typeof(CharacterHitPackage))]
+[Union(5, typeof(CharacterPlacePackage))]
+[Union(6, typeof(CharacterPositionPackage))]
+[Union(7, typeof(CharacterRestartPackage))]
+[Union(8, typeof(CharacterStatePackage))]
+[Union(9, typeof(CharacterStatisticsPackage))]
+[Union(10, typeof(CharacterUsePackage))]
+[Union(11, typeof(Connection.CharacterReadyPackage))]
+[Union(12, typeof(Entities.CharacterDragDropPackage))]
+[Union(13, typeof(Entities.CharacterDropPackage))]
 public abstract record ComponentCharacterPackage : IProtocolMessage
 {
     [Flags]
@@ -53,9 +70,7 @@ public abstract record ComponentCharacterPackage : IProtocolMessage
         PositionSet = 12
     }
 
-    public byte ControllerSessionId { get; init; }
+    [Key(0)] public byte ControllerSessionId { get; init; }
 
-    public abstract CharacterAction Type { get; }
-
-    public byte ID => (byte)PackageType.ComponentCharacter;
+    [IgnoreMember] public abstract CharacterAction Type { get; }
 }

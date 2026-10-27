@@ -27,11 +27,10 @@ public sealed class PlayerCodecTest
             ChildLookAngles = Vector2.One, Position = new Vector3(-17, 64, 15), Rotation = Quaternion.Identity,
             Velocity = Vector3.UnitX, LadderValue = 10, Sneaking = true
         },
-        new CharacterInteractionPackage
+        new CharacterPlacePackage
         {
-            ControllerSessionId = 7, InteractEvent = InteractionMessageKind.Place, PlacementRequestId = 42,
-            PlacementCell = new Point3(-17, 64, 15), PlacementExpectedValue = 100, NetInteractRay = _hit.Ray,
-            NetInteractRaycast = _hit
+            ControllerSessionId = 7, PlacementRequestId = 42, PlacementCell = new Point3(-17, 64, 15),
+            PlacementExpectedValue = 100, NetInteractRay = _hit.Ray, NetInteractRaycast = _hit
         },
         new CharacterAimPackage { ControllerSessionId = 7, AimEvent = SyncAction.Complete, NetAimRay = _hit.Ray },
         new CharacterDigPackage
@@ -57,41 +56,39 @@ public sealed class PlayerCodecTest
     public void EachActionUsesItsOwnRecordWithExplicitIdentity(ComponentCharacterPackage message)
     {
         var encoded = Encode(message);
-        using var reader = new ProtocolReader(encoded);
+        var reader = encoded;
         var restored =
-            Assert.IsAssignableFrom<ComponentCharacterPackage>(ProtocolMessageCodec.Read(message.ID, reader));
+            Assert.IsAssignableFrom<ComponentCharacterPackage>(ProtocolMessageCodec.Decode(reader));
         Assert.Equal(message.GetType(), restored.GetType());
         Assert.Equal(message.Type, restored.Type);
         Assert.Equal(7, restored.ControllerSessionId);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
+
         Assert.Equal(encoded, Encode(restored));
     }
 
     [Fact]
-    public void ReadyIdentityAndActionHaveAnExplicitTwoByteWireLayout()
+    public void ReadyMessageUsesTheDeclaredUnionAndIdentityField()
     {
         var encoded = Encode(new CharacterReadyPackage { ControllerSessionId = 7 });
-        Assert.Equal(new byte[] { 7, 6 }, ProtocolFrameCodec.DecodeFrame(encoded));
+        var reader = new MessagePack.MessagePackReader(encoded);
+        Assert.Equal(2, reader.ReadArrayHeader());
+        Assert.Equal(WireTestData.Tag<CharacterReadyPackage>(), reader.ReadInt32());
+        Assert.Equal(1, reader.ReadArrayHeader());
+        Assert.Equal(7, reader.ReadByte());
+        Assert.True(reader.End);
     }
 
     [Fact]
     public void UnknownActionsAreRejected()
     {
-        using var writer = new ProtocolWriter();
-        writer.Write((byte)7);
-        writer.Write((byte)255);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read(
-                (byte)PackageType.ComponentCharacter,
-                reader
-            )
+        Assert.Throws<InvalidDataException>(() =>
+            ProtocolMessageCodec.Decode(new byte[] { 0x92, 0xcd, 0x7f, 0xff, 0x90 })
         );
     }
 
     private static byte[] Encode(ComponentCharacterPackage message)
     {
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        return writer.Data(CompressionPolicy.None);
+        var writer = ProtocolMessageCodec.Encode(message);
+        return writer;
     }
 }

@@ -8,21 +8,16 @@ namespace Game.Protocol.Test;
 public sealed class FrameCodecTest
 {
     [Theory]
-    [InlineData("connection-request")]
-    [InlineData("connection-reject")]
-    [InlineData("body-state")]
-    [InlineData("terrain-request")]
-    [InlineData("terrain-delta")]
-    [InlineData("terrain-fragment")]
-    [InlineData("initial-snapshot")]
-    [InlineData("mod-envelope")]
-    public void CapturedFramesPreserveBytes(string name)
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(1024)]
+    public void UncompressedFramesPreserveOpaqueBytes(int count)
     {
-        var bytes = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", name + ".bin"));
-        var payload = ProtocolFrameCodec.DecodeFrame(bytes);
-        Assert.Equal(0x88, payload[0]);
+        var payload = Enumerable.Range(0, count).Select(index => (byte)index).ToArray();
         using var stream = new MemoryStream(payload);
-        Assert.Equal(bytes, ProtocolFrameCodec.EncodeFrame(stream, CompressionPolicy.None));
+        var frame = ProtocolFrameCodec.EncodeFrame(stream, CompressionPolicy.None);
+        Assert.Equal(payload, ProtocolFrameCodec.DecodeFrame(frame));
+        Assert.Equal(5 + count, frame.Length);
     }
 
     [Theory]
@@ -56,18 +51,12 @@ public sealed class FrameCodecTest
     [Fact]
     public void BuffersAndGuidsCannotDecodePartialValues()
     {
-        using var raw = new MemoryStream();
-        using (var writer = new BinaryWriter(raw, System.Text.Encoding.UTF8, true))
-        {
-            writer.Write(8);
-            writer.Write((byte)1);
-        }
-
-        raw.Position = 0;
-        using var reader = new ProtocolReader(raw);
-        Assert.Throws<InvalidDataException>(() => reader.ReadBuff());
-        using var guid = new ProtocolReader(new MemoryStream([2, 0, 0]));
-        Assert.Throws<InvalidDataException>(() => guid.ReadGuid());
+        var message = new Connection.ConnectionPhaseAckPackage(
+            Guid.NewGuid(),
+            Connection.ConnectionPhase.BootstrapApplied
+        );
+        var malformed = WireTestData.ReplaceField(message, 0, [0xa3, 1, 2, 3]);
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(malformed));
     }
 
     [Fact]

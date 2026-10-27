@@ -15,28 +15,44 @@ public sealed class FurnitureCodecTest
     [MemberData(nameof(Modes))]
     public void FurnitureModesCarryOnlyPreparedPayload(FurniturePackage.EventType type)
     {
-        var message = new FurniturePackage
+        var message = (type switch
         {
-            PackageEventType = type,
-            AddXml = "opaque game design or set name",
-            FromName = "source",
-            FurnitureIndex = 42,
-            CellFace = new CellFace(-3, 64, 2, 1),
-            StartValue = 7,
-            PointDict = new Dictionary<Point3, int> { [new Point3(-3, 64, 2)] = 7 },
-            ToRemoveList = [4, 5]
-        };
-        Assert.True(ProtocolMessageCodec.IsDefined(message.ID));
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(message, writer);
-        var bytes = writer.Data(CompressionPolicy.None);
-        using var reader = new ProtocolReader(bytes);
-        var restored = Assert.IsType<FurniturePackage>(ProtocolMessageCodec.Read(message.ID, reader));
+            FurniturePackage.EventType.RequestAdd => (FurniturePackage)new
+                FurnitureDesignAddRequestPackage
+                {
+                    DesignXml = "opaque game design or set name", FurnitureIndex = 42,
+                    CellFace = new CellFace(-3, 64, 2, 1), StartValue = 7,
+                    PointDict = new Dictionary<Point3, int> { [new Point3(-3, 64, 2)] = 7 }
+                },
+            FurniturePackage.EventType.Add => new FurnitureDesignAddedPackage
+                { DesignXml = "opaque game design or set name", FurnitureIndex = 42 },
+            FurniturePackage.EventType.NewFurnitureSet => new FurnitureSetCreatedPackage
+                { Name = "opaque game design or set name", ImportedFrom = "source" },
+            FurniturePackage.EventType.DeleteFurnitureSet => new FurnitureSetDeletedPackage
+                { Name = "opaque game design or set name" },
+            FurniturePackage.EventType.RenameFurnitureSet => new FurnitureSetRenamedPackage
+                { OldName = "opaque game design or set name", NewName = "source" },
+            FurniturePackage.EventType.MoveFurnitureSet => new FurnitureSetMovePackage
+                { SetName = "opaque game design or set name", FurnitureIndex = 42 },
+            FurniturePackage.EventType.AddToFurnitureSet => new FurnitureSetAddDesignPackage
+                { SetName = "opaque game design or set name", FurnitureIndex = 42 },
+            FurniturePackage.EventType.DesignChain => new FurnitureDesignChainPackage
+                { DesignXml = "opaque game design or set name" },
+            FurniturePackage.EventType.RemoveFurnitureDesigns =>
+                new FurnitureDesignsRemovedPackage { ToRemoveList = [4, 5] },
+            FurniturePackage.EventType.ImportFurnitureSet => new FurnitureSetImportPackage
+                { DesignXml = "opaque game design or set name", Name = "source" },
+            _ => throw new InvalidOperationException("Unsupported message operation.")
+        });
+        Assert.True(ProtocolMessageCodec.IsDefined(message.GetType()));
+        var writer = ProtocolMessageCodec.Encode(message);
+        var bytes = writer;
+        var reader = bytes;
+        var restored = Assert.IsAssignableFrom<FurniturePackage>(ProtocolMessageCodec.Decode(reader));
         Assert.Equal(type, restored.PackageEventType);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
-        using var repeated = new ProtocolWriter();
-        ProtocolMessageCodec.Write(restored, repeated);
-        Assert.Equal(bytes, repeated.Data(CompressionPolicy.None));
+
+        var repeated = ProtocolMessageCodec.Encode(restored);
+        Assert.Equal(bytes, repeated);
     }
 
     [Theory]
@@ -44,10 +60,11 @@ public sealed class FurnitureCodecTest
     [InlineData(int.MaxValue)]
     public void RemovalCountIsBoundedBeforeAllocation(int count)
     {
-        using var writer = new ProtocolWriter();
-        writer.WriteEnum(FurniturePackage.EventType.RemoveFurnitureDesigns);
-        writer.Write(count);
-        using var reader = new ProtocolReader(writer.Data(CompressionPolicy.None));
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read((byte)PackageType.Furniture, reader));
+        var malformed = WireTestData.ReplaceField(
+            new FurnitureDesignsRemovedPackage(),
+            0,
+            count < 0 ? [0xff] : [0xdd, 0x7f, 0xff, 0xff, 0xff]
+        );
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(malformed));
     }
 }

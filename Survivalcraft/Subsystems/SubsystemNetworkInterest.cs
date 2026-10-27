@@ -206,7 +206,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
 
             foreach (var id in changes.Left)
             {
-                NetworkSender.SendTo(client, new EntityPackage(id));
+                NetworkSender.SendTo(client, new EntityRemovedPackage { EntityId = id });
             }
         }
     }

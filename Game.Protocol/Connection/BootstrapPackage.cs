@@ -1,21 +1,28 @@
 using Game.Protocol.Blocks;
 using Game.Protocol.World;
 
+using MessagePack;
+
+using MaxLengthAttribute = System.ComponentModel.DataAnnotations.MaxLengthAttribute;
+
 namespace Game.Protocol.Connection;
 
+[MessagePackObject]
 public sealed record BootstrapPackage : IProtocolMessage
 {
-    public required WorldMetadata World { get; init; }
+    [Key(0)] public required WorldMetadata World { get; init; }
 
-    public Guid Epoch { get; init; }
+    [Key(1)] public Guid Epoch { get; init; }
 
-    public IReadOnlyList<BlockIndexEntry> BlockMapping { get; init; } = [];
+    [Key(2), MaxLength(1024)] public IReadOnlyList<BlockIndexEntry> BlockMapping { get; init; } = [];
 
-    public ClientPackage ClientList { get; init; } = new([]);
+    [Key(3)]
+    public ClientListPackage ClientList { get; init; } = new()
+    {
+        List = []
+    };
 
-    public byte[] ProjectData { get; init; } = [];
+    [Key(4)] public byte[] ProjectData { get; init; } = [];
 
-    public byte[] TextureData { get; init; } = [];
-
-    public byte ID => (byte)PackageType.Bootstrap;
+    [Key(5)] public byte[] TextureData { get; init; } = [];
 }

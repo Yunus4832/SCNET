@@ -50,12 +50,16 @@ public sealed class ServerDiscoveryService
                     return;
                 }
 
-                var package = PackageManager.DecodePackage<ServerInfoPackage>(null, payload, new Client(remote));
+                var package =
+                    PackageManager.DecodePackage<ServerInfoResponsePackage>(null, payload, new Client(remote));
                 status = ServerRuntimeStatus.FromPackage(package.Package, stopwatch.ElapsedMilliseconds);
             };
 
             void SendProbe() =>
-                network.SendDatagram(endpoint!, NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true)));
+                network.SendDatagram(
+                    endpoint!,
+                    NetNode.CreateUnconnectedPayload(new ServerInfoRequestPackage())
+                );
 
             SendProbe();
             await PollAsync(network, timeout, cancellationToken, () => status is not null, SendProbe)
@@ -93,7 +97,11 @@ public sealed class ServerDiscoveryService
 
                 try
                 {
-                    var package = PackageManager.DecodePackage<ServerInfoPackage>(null, payload, new Client(remote));
+                    var package = PackageManager.DecodePackage<ServerInfoResponsePackage>(
+                        null,
+                        payload,
+                        new Client(remote)
+                    );
                     var address = remote.ToString();
                     items[address] = new ServerItem
                     {
@@ -113,7 +121,7 @@ public sealed class ServerDiscoveryService
                 }
             };
             network.BroadcastDatagram(
-                NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true)),
+                NetNode.CreateUnconnectedPayload(new ServerInfoRequestPackage()),
                 SettingsManager.Current.BroadcastPort
             );
             await PollAsync(network, timeout, cancellationToken, () => false).ConfigureAwait(false);

@@ -56,7 +56,7 @@ public sealed class PickableBaselineTest
 
         PickablePackageHandler.ApplyBaseline(
             pickable,
-            PickablePackageBuilder.Capture(authoritative, PickablePackage.PickType.Create) with { StateTick = 42 }
+            PickablePackageBuilder.Capture(authoritative) with { StateTick = 42 }
         );
 
         Assert.Equal(authoritative.Id, pickable.Id);

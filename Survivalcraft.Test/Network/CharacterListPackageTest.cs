@@ -68,19 +68,17 @@ public class CharacterListPackageTest
 
     private static CharacterListPackage RoundTrip(CharacterListPackage package)
     {
-        var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<CharacterListPackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<CharacterListPackage>(ProtocolMessageCodec.Decode(reader));
         return clone;
     }
 
     private static OnlineCharacterStatePackage RoundTrip(OnlineCharacterStatePackage package)
     {
-        var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var clone = Assert.IsType<OnlineCharacterStatePackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var clone = Assert.IsType<OnlineCharacterStatePackage>(ProtocolMessageCodec.Decode(reader));
         return clone;
     }
 }

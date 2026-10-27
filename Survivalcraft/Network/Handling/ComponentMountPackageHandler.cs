@@ -29,11 +29,12 @@ public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentM
             return;
         }
 
-        switch (package.Type)
+        switch (package)
         {
-            case ComponentMountPackage.EventType.Dismount:
+            case DismountedPackage message1:
+            {
                 project.FindEntityById(
-                    package.FromId,
+                    message1.FromId,
                     entity =>
                     {
                         var rider = entity.FindComponent<ComponentRider>();
@@ -55,9 +56,11 @@ public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentM
                     }
                 );
                 break;
-            case ComponentMountPackage.EventType.DismountRequest:
+            }
+            case DismountRequestPackage message2:
+            {
                 project.FindEntityById(
-                    package.FromId,
+                    message2.FromId,
                     entity =>
                     {
                         var rider = entity.FindComponent<ComponentRider>();
@@ -65,9 +68,11 @@ public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentM
                     }
                 );
                 break;
-            case ComponentMountPackage.EventType.Mount:
+            }
+            case MountedPackage message3:
+            {
                 project.FindEntityById(
-                    package.FromId,
+                    message3.FromId,
                     entity =>
                     {
                         var rider = entity.FindComponent<ComponentRider>();
@@ -77,7 +82,7 @@ public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentM
                         }
 
                         project.FindEntityById(
-                            package.TargetId,
+                            message3.TargetId,
                             entity2 =>
                             {
                                 var mount = entity2.FindComponent<ComponentMount>();
@@ -100,14 +105,16 @@ public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentM
                     }
                 );
                 break;
-            case ComponentMountPackage.EventType.MountRequest:
+            }
+            case MountRequestPackage message4:
+            {
                 project.FindEntityById(
-                    package.FromId,
+                    message4.FromId,
                     entity =>
                     {
                         var rider = entity.FindComponent<ComponentRider>();
                         project.FindEntityById(
-                            package.TargetId,
+                            message4.TargetId,
                             entity2 =>
                             {
                                 var mount = entity2.FindComponent<ComponentMount>();
@@ -124,6 +131,7 @@ public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentM
                     }
                 );
                 break;
+            }
         }
     }
 }

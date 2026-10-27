@@ -85,6 +85,11 @@ Project 并确认完成，不把完整映射放入连接前的服务器发现数
 
 ## 网络消息受众
 
+模组消息使用带 `[MessagePackObject]` 和数字 `[Key]` 的独立数据契约。
+`Send<T>(messageType, payload, audience)` 通过协议统一配置编码，处理上下文使用 `Read<T>()` 解码，
+`Reply<T>(payload)` 回复类型化载荷。传输前采集数据，不直接序列化运行时子系统或可变世界对象。
+原始 `byte[]` 重载只传递模组自行定义的 opaque 载荷，游戏不解析其内部结构。
+
 `context.Network.Send(messageType, payload, audience)` 与消息处理上下文的 `Send`
 要求显式传入 `Game.Network.PackageAudience`，没有默认广播或可选 `to/except` 参数。
 全局消息使用 `PackageAudience.Global`，定向消息使用 `PackageAudience.To(client)`，

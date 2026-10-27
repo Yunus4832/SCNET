@@ -1,6 +1,17 @@
+using MessagePack;
+
 namespace Game.Protocol.Entities;
 
-public sealed record ComponentBehaviorPackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(CreatureChaseStatePackage))]
+[Union(1, typeof(CreatureDigStatePackage))]
+[Union(2, typeof(CreatureEatStatePackage))]
+[Union(3, typeof(CreatureFeedStatePackage))]
+[Union(4, typeof(CreatureOutOfWaterStatePackage))]
+[Union(5, typeof(CreaturePeckStatePackage))]
+[Union(6, typeof(CreatureRowingStatePackage))]
+[Union(7, typeof(CreatureSoundPackage))]
+public abstract record ComponentBehaviorPackage : IProtocolMessage
 {
     public enum EventType
     {
@@ -21,15 +32,7 @@ public sealed record ComponentBehaviorPackage : IProtocolMessage
         FishOutOfWater = 7
     }
 
-    public EventType PackageEventType { get; init; }
+    [IgnoreMember] public abstract EventType PackageEventType { get; }
 
-    public int EntityId { get; init; }
-
-    public bool RowLeft { get; init; }
-
-    public bool RowRight { get; init; }
-
-    public byte Type { get; init; }
-
-    public byte ID => (byte)PackageType.ComponentBehavior;
+    [Key(0)] public int EntityId { get; init; }
 }

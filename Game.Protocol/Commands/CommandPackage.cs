@@ -1,9 +1,19 @@
 using Game.Protocol.Identity;
 
+using MessagePack;
+
 namespace Game.Protocol.Commands;
 
-public sealed record CommandPackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(CommandPermissionSnapshotPackage))]
+[Union(1, typeof(CommandRequestPackage))]
+[Union(2, typeof(CommandResultPackage))]
+[Union(3, typeof(CommandSuggestionsPackage))]
+[Union(4, typeof(CommandSuggestionsRequestPackage))]
+public abstract record CommandPackage : IProtocolMessage
 {
+    private const int _maximumPermissionCount = 256;
+
     public enum CommandPackageMode : byte
     {
         Request = 0,
@@ -17,87 +27,63 @@ public sealed record CommandPackage : IProtocolMessage
         Suggestions = 4
     }
 
-    private const int _maximumPermissionCount = 256;
+    [IgnoreMember] public abstract CommandPackageMode Mode { get; }
 
-    public byte ID => (byte)PackageType.Command;
+    [Key(0)] public string CorrelationId { get; init; } = string.Empty;
 
-    public CommandPackageMode Mode { get; init; }
+    public static CommandSuggestionsRequestPackage CreateSuggestionRequest(string input, string correlationId) =>
+        new()
+        {
+            CorrelationId = correlationId,
+            Input = input
+        };
 
-    public string CorrelationId { get; init; } = string.Empty;
-
-    public string Input { get; init; } = string.Empty;
-
-    public ResourceId CommandId { get; init; }
-
-    public byte[] Payload { get; init; } = [];
-
-    public PlayerAddress? PlayerAddress { get; init; }
-
-    public CommandResponse? Result { get; init; }
-
-    public IReadOnlyList<CommandPermissionGrant> PermissionGrants { get; init; } = [];
-
-    public IReadOnlyList<CommandSuggestion> Suggestions { get; init; } = [];
-
-    public static CommandPackage CreateSuggestionRequest(string input, string correlationId) =>
-        new(CommandPackageMode.SuggestionRequest, correlationId) { Input = input };
-
-    public static CommandPackage CreateSuggestions(
+    public static CommandSuggestionsPackage CreateSuggestions(
         string input,
         string correlationId,
         IEnumerable<CommandSuggestion> suggestions
-    ) =>
-        new(CommandPackageMode.Suggestions, correlationId)
-            { Input = input, Suggestions = suggestions.Take(64).ToArray() };
-
-    public CommandPackage()
+    ) => new()
     {
-    }
+        CorrelationId = correlationId,
+        Input = input,
+        Suggestions = suggestions.Take(64).ToArray()
+    };
 
-    public CommandPackage(CommandPackageMode mode, string correlationId)
-    {
-        Mode = mode;
-        CorrelationId = correlationId;
-    }
-
-    public static CommandPackage CreateRequest(
+    public static CommandRequestPackage CreateRequest(
         ResourceId commandId,
         byte[] payload,
         string? correlationId = null
     )
     {
         ArgumentNullException.ThrowIfNull(payload);
-        return new CommandPackage(
-            CommandPackageMode.Request,
-            correlationId ?? Guid.NewGuid().ToString("N")
-        )
+        return new CommandRequestPackage
         {
+            CorrelationId = correlationId ?? Guid.NewGuid().ToString("N"),
             CommandId = commandId,
             Payload = payload
         };
     }
 
-    public static CommandPackage CreatePermissionSnapshot(
+    public static CommandPermissionSnapshotPackage CreatePermissionSnapshot(
         PlayerAddress address,
         IEnumerable<CommandPermissionGrant> grants
     )
     {
         ArgumentNullException.ThrowIfNull(grants);
-        return new CommandPackage(CommandPackageMode.PermissionSnapshot, string.Empty)
+        return new CommandPermissionSnapshotPackage
         {
+            CorrelationId = string.Empty,
             PlayerAddress = address,
             PermissionGrants = grants.Take(_maximumPermissionCount).ToArray()
         };
     }
 
-    public static CommandPackage CreateResult(
-        CommandResponse result,
-        string correlationId
-    )
+    public static CommandResultPackage CreateResult(CommandResponse result, string correlationId)
     {
         ArgumentNullException.ThrowIfNull(result);
-        return new CommandPackage(CommandPackageMode.Result, correlationId)
+        return new CommandResultPackage
         {
+            CorrelationId = correlationId,
             Result = result
         };
     }

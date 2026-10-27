@@ -299,7 +299,7 @@ public class TerrainUpdater
         _pendingLocations[locationIndex] = location;
         if (_subsystemTerrain.UsesRemoteChunkTransport)
         {
-            NetworkSender.SendToServer(new CharacterDataPackage(location));
+            NetworkSender.SendToServer(new CharacterUpdateLocationPackage { UpdateLocation = location });
         }
     }
 

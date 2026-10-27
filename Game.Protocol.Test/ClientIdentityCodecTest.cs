@@ -23,25 +23,23 @@ public sealed class ClientIdentityCodecTest
         var token = Guid.NewGuid();
         var character = Guid.NewGuid();
         var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
-        var package = new ClientPackage([new ClientIdentity(1, token, character, address, ClientState.Playing)]);
-        using var writer = new ProtocolWriter();
-        ProtocolMessageCodec.Write(package, writer);
-        using var reader = new ProtocolReader(writer.Data());
-        var restored = Assert.IsType<ClientPackage>(ProtocolMessageCodec.Read(package.ID, reader));
+        var package = new ClientListPackage
+            { List = [new ClientIdentity(1, token, character, address, ClientState.Playing)] };
+        var writer = ProtocolMessageCodec.Encode(package);
+        var reader = writer;
+        var restored = Assert.IsType<ClientListPackage>(ProtocolMessageCodec.Decode(reader));
         var client = Assert.Single(restored.List);
         Assert.Equal(address, client.PlayerAddress);
         Assert.Equal(character, client.CharacterId);
         Assert.Equal(token, client.TokenId);
         Assert.Equal(ClientState.Playing, client.State);
-        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
     }
 
     [Fact]
     public void RemoteDirectoryEntryCannotContainOnlyACharacterIdentifier()
     {
-        var package = new ClientPackage(1, Guid.NewGuid(), Guid.NewGuid(), null);
-        using var writer = new ProtocolWriter();
-        Assert.Throws<ArgumentException>(() => ProtocolMessageCodec.Write(package, writer));
+        var package = new ClientAddedPackage { Client = new ClientIdentity(1, Guid.NewGuid(), Guid.NewGuid(), null) };
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Encode(package));
     }
 
     [Theory]
@@ -51,13 +49,19 @@ public sealed class ClientIdentityCodecTest
     [InlineData(255)]
     public void InvalidAddressLengthsAreRejectedBeforeReadingAddressData(byte size)
     {
-        using var writer = new ProtocolWriter();
-        writer.WriteEnum(ClientPackage.EventType.Add);
-        writer.Write((byte)1);
-        writer.Write(Guid.NewGuid());
-        writer.Write(Guid.NewGuid());
-        writer.Write(size);
-        using var reader = new ProtocolReader(writer.Data());
-        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read((byte)PackageType.Client, reader));
+        var payload = MessagePack.MessagePackSerializer.Serialize(
+            new object[] { 1, Guid.NewGuid(), Guid.NewGuid(), new string('a', size), (byte)ClientState.NotConnected }
+        );
+        var package = new ClientAddedPackage
+        {
+            Client = new ClientIdentity(
+                1,
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                new PlayerAddress(IdentityAddress.Encode(new byte[32]))
+            )
+        };
+        var malformed = WireTestData.ReplaceField(package, 0, payload);
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Decode(malformed));
     }
 }

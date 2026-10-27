@@ -1,8 +1,14 @@
-using Engine.Core.Mathematics;
+using MessagePack;
 
 namespace Game.Protocol.Blocks;
 
-public sealed record MovingBlockPackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(MovingBlockAddedPackage))]
+[Union(1, typeof(MovingBlockRemovedPackage))]
+[Union(2, typeof(MovingBlockStatePackage))]
+[Union(3, typeof(MovingBlockStoppedPackage))]
+[Union(4, typeof(PistonSoundPackage))]
+public abstract record MovingBlockPackage : IProtocolMessage
 {
     public enum EventType
     {
@@ -17,19 +23,9 @@ public sealed record MovingBlockPackage : IProtocolMessage
         PistonSound = 4
     }
 
-    public byte[]? AddData { get; init; }
+    [IgnoreMember] public abstract EventType Type { get; }
 
-    public EventType Type { get; init; }
+    [Key(0)] public int NetworkId { get; init; }
 
-    public int NetworkId { get; init; }
-
-    public uint StateTick { get; init; }
-
-    public Vector3 Position { get; init; }
-
-    public Vector3 Velocity { get; init; }
-
-    public float Speed { get; init; }
-
-    public byte ID => (byte)PackageType.MovingBlockSet;
+    [Key(1)] public uint StateTick { get; init; }
 }

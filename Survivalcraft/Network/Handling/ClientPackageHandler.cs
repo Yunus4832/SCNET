@@ -31,17 +31,17 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
         }
 
         if (context.IsServer &&
-            (package.PackageEventType != ClientPackage.EventType.StateChange ||
-             package.Client is null ||
-             !netNode.Clients.TryGetValue(package.Client.ID, out var target) ||
+            (package is not ClientStateChangedPackage change ||
+             !netNode.Clients.TryGetValue(change.ClientId, out var target) ||
              !ReferenceEquals(context.Sender, target)))
         {
             return;
         }
 
-        switch (package.PackageEventType)
+        switch (package)
         {
-            case ClientPackage.EventType.Add:
+            case ClientAddedPackage message1:
+            {
                 if (GameManager.Project is null)
                 {
                     return;
@@ -51,25 +51,29 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
                 netNode.AddClient(
                     new Client(
                         context.Sender?.Peer,
-                        package.Client!.ID,
-                        package.Client.TokenId,
-                        package.Client.CharacterId,
+                        message1.Client!.ID,
+                        message1.Client.TokenId,
+                        message1.Client.CharacterId,
                         project
-                    ) { PlayerAddress = package.Client.PlayerAddress }
+                    ) { PlayerAddress = message1.Client.PlayerAddress }
                 );
                 break;
-            case ClientPackage.EventType.Remove:
-                if (netNode.Clients.ContainsKey(package.Client!.ID))
+            }
+            case ClientRemovedPackage message2:
+            {
+                if (netNode.Clients.ContainsKey(message2.ClientId))
                 {
-                    var client = netNode.Clients[package.Client.ID];
+                    var client = netNode.Clients[message2.ClientId];
                     client.State = ClientState.NotConnected;
                     netNode.OnClientStateChanged?.Invoke(client);
-                    netNode.Clients.Remove(package.Client.ID);
+                    netNode.Clients.Remove(message2.ClientId);
                 }
 
                 break;
-            case ClientPackage.EventType.SyncList:
-                foreach (var c in package.List)
+            }
+            case ClientListPackage message3:
+            {
+                foreach (var c in message3.List)
                 {
                     var client = ClientPackageBuilder.Restore(c);
                     if (c.ID == 0)
@@ -95,17 +99,20 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
 
                 netNode.CurrentStage = NetNode.Stage.Connected;
                 break;
-            case ClientPackage.EventType.StateChange:
-                if (netNode.Clients.TryGetValue(package.Client!.ID, out var nodeClient))
+            }
+            case ClientStateChangedPackage message4:
+            {
+                if (netNode.Clients.TryGetValue(message4.ClientId, out var nodeClient))
                 {
-                    if (nodeClient.State != package.Client.State)
+                    if (nodeClient.State != message4.State)
                     {
-                        nodeClient.State = package.Client.State;
+                        nodeClient.State = message4.State;
                         netNode.OnClientStateChanged?.Invoke(nodeClient);
                     }
                 }
 
                 break;
+            }
         }
     }
 }

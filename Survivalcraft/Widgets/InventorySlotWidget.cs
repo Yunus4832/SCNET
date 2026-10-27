@@ -617,25 +617,21 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         }
 
 
-        var sourceInventorySlot = new InventorySlot
+        var sourceInventorySlot = new InventorySlotReference
         {
             InventoryId = sourceInventory.Id,
             SlotIndex = sourceSlotIndex
         };
-        var targetInventorySlot = new InventorySlot
+        var targetInventorySlot = new InventorySlotReference
         {
             InventoryId = targetInventory.Id,
-            SlotIndex = targetSlotIndex,
-            Count = count
+            SlotIndex = targetSlotIndex
         };
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            IProtocolMessage package = new ComponentInventoryPackage(
-                sourceInventorySlot,
-                targetInventorySlot,
-                ComponentInventoryPackage.EventType.HandleMoveItem
-            );
+            IProtocolMessage package = new InventoryMoveRequestPackage
+                { Source = sourceInventorySlot, Target = targetInventorySlot, Count = count };
             NetworkSender.SendToServer(package);
             //return false; // 这样搞的话客户端太难受了
         }
@@ -697,12 +693,12 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             return false;
         }
 
-        var sourceInventorySlot = new InventorySlot
+        var sourceInventorySlot = new InventorySlotReference
         {
             InventoryId = sourceInventory.Id,
             SlotIndex = sourceSlotIndex
         };
-        var targetInventorySlot = new InventorySlot
+        var targetInventorySlot = new InventorySlotReference
         {
             InventoryId = targetInventory.Id,
             SlotIndex = targetSlotIndex
@@ -710,13 +706,9 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            var package = new ComponentInventoryPackage(
-                sourceInventorySlot,
-                targetInventorySlot,
-                ComponentInventoryPackage.EventType.HandleDragDrop
-            )
+            var package = new InventoryDragDropRequestPackage
             {
-                DragMode = ProtocolEnum.Encode(dragMode),
+                Source = sourceInventorySlot, Target = targetInventorySlot, DragMode = ProtocolEnum.Encode(dragMode),
                 ProcessingOnly = processingOnly
             };
             NetworkSender.SendToServer(package);

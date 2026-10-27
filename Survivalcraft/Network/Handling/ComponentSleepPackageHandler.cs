@@ -46,22 +46,21 @@ public sealed class ComponentSleepPackageHandler : PackageHandlerBase<ComponentS
                     return;
                 }
 
-                switch (package.Type)
+                switch (package)
                 {
-                    case ComponentSleepPackage.EventType.SleepRequest:
+                    case SleepRequestPackage message1:
+                    {
                         if (sleep.CanSleep(out var reason2))
                         {
-                            sleep.Sleep(package.AllowManualWakeup);
+                            sleep.Sleep(message1.AllowManualWakeup);
                         }
                         else
                         {
-                            var response = new ComponentSleepPackage(
-                                sleep.Entity.EntityId,
-                                ComponentSleepPackage.EventType.Sleep,
-                                package.AllowManualWakeup,
-                                false,
-                                reason2
-                            );
+                            var response = new SleepResultPackage
+                            {
+                                Reason = reason2, EntityId = sleep.Entity.EntityId,
+                                AllowManualWakeup = message1.AllowManualWakeup, Result = false
+                            };
                             if (context.Sender is not null)
                             {
                                 netNode.QueuePackage(response, PackageAudience.To(context.Sender));
@@ -69,24 +68,31 @@ public sealed class ComponentSleepPackageHandler : PackageHandlerBase<ComponentS
                         }
 
                         break;
-                    case ComponentSleepPackage.EventType.Sleep:
-                        if (package.Result)
+                    }
+                    case SleepResultPackage message2:
+                    {
+                        if (message2.Result)
                         {
-                            sleep.NetSleep(package.AllowManualWakeup);
+                            sleep.NetSleep(message2.AllowManualWakeup);
                         }
                         else
                         {
                             var player = sleep.Entity.FindComponent<ComponentCharacter>();
-                            player?.ComponentGui.DisplaySmallMessage(package.Reason, Color.White, false, true);
+                            player?.ComponentGui.DisplaySmallMessage(message2.Reason, Color.White, false, true);
                         }
 
                         break;
-                    case ComponentSleepPackage.EventType.WakeupRequest:
+                    }
+                    case WakeupRequestPackage message3:
+                    {
                         sleep.WakeUp();
                         break;
-                    case ComponentSleepPackage.EventType.WakeUp:
+                    }
+                    case WakeupPackage message4:
+                    {
                         sleep.NetWakeUp();
                         break;
+                    }
                 }
             }
         );

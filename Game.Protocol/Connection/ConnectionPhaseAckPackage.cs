@@ -1,6 +1,11 @@
+using MessagePack;
+
 namespace Game.Protocol.Connection;
 
-public sealed record ConnectionPhaseAckPackage(Guid Epoch, ConnectionPhase Phase) : IProtocolMessage
+[MessagePackObject]
+public sealed record ConnectionPhaseAckPackage(
+    [property: Key(0)] Guid Epoch,
+    [property: Key(1)] ConnectionPhase Phase
+) : IProtocolMessage
 {
-    public byte ID => (byte)PackageType.ConnectionPhaseAck;
 }

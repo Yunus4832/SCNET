@@ -1,20 +1,19 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
 namespace Game.Protocol.Characters;
 
-public sealed record CharacterInteractionPackage : ComponentCharacterPackage
+[MessagePackObject]
+[Union(0, typeof(CharacterPlacePackage))]
+[Union(1, typeof(CharacterUsePackage))]
+public abstract record CharacterInteractionPackage : ComponentCharacterPackage
 {
-    public override CharacterAction Type => CharacterAction.InteractEvent;
+    [IgnoreMember] public abstract InteractionMessageKind InteractEvent { get; }
 
-    public InteractionMessageKind InteractEvent { get; init; }
+    [IgnoreMember] public override CharacterAction Type => CharacterAction.InteractEvent;
 
-    public int PlacementRequestId { get; init; }
+    [Key(1)] public Ray3 NetInteractRay { get; init; }
 
-    public Point3 PlacementCell { get; init; }
-
-    public int PlacementExpectedValue { get; init; }
-
-    public Ray3 NetInteractRay { get; init; }
-
-    public CharacterTerrainHit? NetInteractRaycast { get; init; }
+    [Key(2)] public CharacterTerrainHit? NetInteractRaycast { get; init; }
 }

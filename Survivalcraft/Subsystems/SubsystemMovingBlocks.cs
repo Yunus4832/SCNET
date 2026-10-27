@@ -418,9 +418,8 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             {
                 var movingBlockSet = movingBlocks[networkId];
                 CommonLib.Net.QueuePackage(
-                    MovingBlockPackageBuilder.Capture(movingBlockSet, false) with
+                    MovingBlockPackageBuilder.CaptureState(movingBlockSet) with
                     {
-                        Type = MovingBlockPackage.EventType.Update,
                         StateTick = _networkStateTick
                     },
                     PackageAudience.To(client)

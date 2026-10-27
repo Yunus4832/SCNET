@@ -11,16 +11,13 @@ public sealed class PackageDecodingTest
     [Fact]
     public void FrameReaderRespectsMemorySliceAndRejectsTruncatedOrTrailingBytes()
     {
-        using var writer = new ProtocolWriter();
-        writer.Write((byte)0x88);
-        var frame = CommonLib.GetWriter(writer, out _).CopyData();
+        var frame = ProtocolPacketCodec.Encode([new ConnectionRejectPackage("test")]);
         var padded = new byte[frame.Length + 8];
         frame.CopyTo(padded, 4);
-        using var reader = CommonLib.GetReader(padded.AsMemory(4, frame.Length));
-        Assert.Equal(0x88, reader.ReadByte());
-        Assert.Throws<InvalidDataException>(() => CommonLib.GetReader(padded.AsMemory(4, frame.Length - 1)));
-        Assert.Throws<InvalidDataException>(() => CommonLib.GetReader(padded.AsMemory(4, frame.Length + 1)));
-        Assert.Throws<InvalidDataException>(() => CommonLib.GetReader(new byte[3]));
+        Assert.Single(ProtocolPacketCodec.Decode(padded.AsMemory(4, frame.Length)));
+        Assert.Throws<InvalidDataException>(() => ProtocolPacketCodec.Decode(padded.AsMemory(4, frame.Length - 1)));
+        Assert.Throws<InvalidDataException>(() => ProtocolPacketCodec.Decode(padded.AsMemory(4, frame.Length + 1)));
+        Assert.Throws<InvalidDataException>(() => ProtocolPacketCodec.Decode(new byte[3]));
     }
 
     [Fact]
@@ -28,17 +25,11 @@ public sealed class PackageDecodingTest
     {
         Assert.Empty(PackageManager.DecodePackages(null, ReadOnlyMemory<byte>.Empty));
         var package = new ConnectionRejectPackage("world-unavailable");
-        PackageManager.RegisterPackage(
-            () => new ConnectionRejectPackage(string.Empty),
-            new ConnectionRejectPackageHandler()
-        );
+        PackageManager.RegisterPackage(new ConnectionRejectPackageHandler());
         try
         {
-            using var writer = new ProtocolWriter();
-            writer.Write((byte)0x88);
-            writer.Write(package.ID);
-            ProtocolMessageCodec.Write(package, writer);
-            var payload = CommonLib.GetWriter(writer, out _).CopyData();
+            var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
+            var payload = CommonLib.GetWriter(writer).CopyData();
             var sender = new Client(new IPEndPoint(IPAddress.Loopback, 30000));
             var decoded = PackageManager.DecodePackage<ConnectionRejectPackage>(null, payload, sender);
             Assert.Equal(package.Reason, decoded.Package.Reason);
@@ -48,7 +39,7 @@ public sealed class PackageDecodingTest
         }
         finally
         {
-            PackageManager.UnRegisterPackage(package);
+            PackageManager.UnregisterPackage(package.GetType());
         }
     }
 
@@ -56,23 +47,17 @@ public sealed class PackageDecodingTest
     public void InvalidBatchDoesNotDeliverItsValidPrefix()
     {
         var package = new ConnectionRejectPackage("valid-prefix");
-        PackageManager.RegisterPackage(
-            () => new ConnectionRejectPackage(string.Empty),
-            new ConnectionRejectPackageHandler()
-        );
+        PackageManager.RegisterPackage(new ConnectionRejectPackageHandler());
         try
         {
-            using var writer = new ProtocolWriter();
-            writer.Write((byte)0x88);
-            writer.Write(package.ID);
-            ProtocolMessageCodec.Write(package, writer);
-            writer.Write((byte)0x87);
-            var bytes = CommonLib.GetWriter(writer, out _).CopyData();
+            var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
+            writer = [.. writer, 0x87];
+            var bytes = CommonLib.GetWriter(writer).CopyData();
             Assert.Empty(PackageManager.DecodePackages(null, bytes));
         }
         finally
         {
-            PackageManager.UnRegisterPackage(package);
+            PackageManager.UnregisterPackage(package.GetType());
         }
     }
 }

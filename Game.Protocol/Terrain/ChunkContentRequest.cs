@@ -1,3 +1,9 @@
+using MessagePack;
+
 namespace Game.Protocol.Terrain;
 
-public readonly record struct ChunkContentRequest(ChunkAllocationId Allocation, long KnownContentVersion = 0);
+[MessagePackObject]
+public readonly record struct ChunkContentRequest(
+    [property: Key(0)] ChunkAllocationId Allocation,
+    [property: Key(1)] long KnownContentVersion = 0
+);

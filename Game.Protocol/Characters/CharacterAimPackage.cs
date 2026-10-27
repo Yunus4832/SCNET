@@ -1,12 +1,15 @@
 using Engine.Core.Mathematics;
 
+using MessagePack;
+
 namespace Game.Protocol.Characters;
 
+[MessagePackObject]
 public sealed record CharacterAimPackage : ComponentCharacterPackage
 {
-    public override CharacterAction Type => CharacterAction.AimEvent;
+    [IgnoreMember] public override CharacterAction Type => CharacterAction.AimEvent;
 
-    public SyncAction AimEvent { get; init; }
+    [Key(1)] public SyncAction AimEvent { get; init; }
 
-    public Ray3? NetAimRay { get; init; }
+    [Key(2)] public Ray3? NetAimRay { get; init; }
 }

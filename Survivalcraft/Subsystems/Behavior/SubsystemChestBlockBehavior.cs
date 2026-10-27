@@ -47,10 +47,10 @@ public class SubsystemChestBlockBehavior : SubsystemBlockBehavior
         if (CommonLib.WorkType == WorkType.Client && CommonLib.LocalCharacter == componentMiner.ComponentCharacter)
         {
             IProtocolMessage package =
-                new BlockEditPackage(
-                    new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z),
-                    BlockEditPackage.EventType.OpenInventoryByPoint
-                );
+                new OpenBlockInventoryPackage
+                {
+                    Point3 = new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z)
+                };
             NetworkSender.SendToServer(package);
             return true;
         }

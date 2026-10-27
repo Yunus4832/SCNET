@@ -4,6 +4,7 @@ namespace Game.Protocol.Localization;
 ///     A lazily resolved text resource that can be safely stored by long-lived
 ///     registrations such as widgets, commands and mods.
 /// </summary>
+[MessagePack.MessagePackFormatter(typeof(Serialization.Formatters.ProtocolValueFormatter))]
 public sealed record LocalizedText
 {
     public static LocalizedText Empty { get; } = new(string.Empty);

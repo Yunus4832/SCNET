@@ -15,8 +15,10 @@ namespace Survivalcraft.Test.Network;
 [Collection(ConfigFileCollection.Name)]
 public sealed class SnapshotBudgetTransportTest
 {
-    [Fact]
-    public async Task OversizedSnapshotBatchDefersWithoutBlockingLifecycleAndThenDrains()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(1300)]
+    public async Task OversizedSnapshotBatchDefersWithoutBlockingLifecycleAndThenDrains(int lifecycleCount)
     {
         var node = new NetNode();
         await using var sender = new NetworkHost();
@@ -32,23 +34,10 @@ public sealed class SnapshotBudgetTransportTest
         receiver.Received += (_, data) =>
         {
             receivedDatagrams++;
-            using var reader = CommonLib.GetReader(data.Payload);
-            while (reader.BaseStream.Position < reader.BaseStream.Length)
+            foreach (var message in ProtocolPacketCodec.Decode(data.Payload))
             {
-                Assert.Equal(0x88, reader.ReadByte());
-                var id = reader.ReadByte();
-                if (id == (byte)PackageType.ComponentCharacter)
-                {
-                    var package = Assert.IsType<CharacterStatePackage>(ProtocolMessageCodec.Read(id, reader));
-                    receivedPlayers.Add(package.ControllerSessionId);
-                }
-                else
-                {
-                    Assert.Equal((byte)PackageType.Entity, id);
-                    var package = (EntityPackage)ProtocolMessageCodec.Read((byte)PackageType.Entity, reader);
-                    Assert.Equal(EntityPackage.EventType.Remove, package.Type);
-                    receivedRemovals.Add(package.EntityId);
-                }
+                if (message is CharacterStatePackage character) { receivedPlayers.Add(character.ControllerSessionId); }
+                else { receivedRemovals.Add(Assert.IsType<EntityRemovedPackage>(message).EntityId); }
             }
         };
 
@@ -106,15 +95,19 @@ public sealed class SnapshotBudgetTransportTest
                 expectedPlayers.Add(id);
             }
 
-            node.QueuePackage(new EntityPackage(4242), PackageAudience.To(observer));
+            for (var index = 0; index < lifecycleCount; index++)
+            {
+                node.QueuePackage(new EntityRemovedPackage { EntityId = 4242 + index }, PackageAudience.To(observer));
+            }
+
             var flush = typeof(NetNode).GetMethod(
                 "FlushPendingPackages",
                 BindingFlags.Instance | BindingFlags.NonPublic
             )!;
             flush.Invoke(node, null);
             Assert.InRange(node.PendingPackageCount, 1, 31);
-            PumpUntil(() => receivedRemovals.Count == 1 && receivedPlayers.Count > 0);
-            Assert.Equal(4242, Assert.Single(receivedRemovals));
+            PumpUntil(() => receivedRemovals.Count == lifecycleCount && receivedPlayers.Count > 0);
+            Assert.Equal(Enumerable.Range(4242, lifecycleCount), receivedRemovals);
             Assert.True(receivedPlayers.Count < expectedPlayers.Count);
 
             for (var attempt = 0; node.PendingPackageCount > 0 && attempt < 32; attempt++)

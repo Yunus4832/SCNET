@@ -2,166 +2,105 @@ using Game.Network.Transport;
 
 namespace Game.Network.Handling;
 
-public class PackageManager
+public static class PackageManager
 {
-    private sealed class PackageRegistration
-    {
-        public required string Name { get; init; }
-
-        public required Func<ProtocolReader, IProtocolMessage> Read { get; init; }
-    }
-
-    private static PackageRegistration?[] _packageRegistrations = new PackageRegistration[byte.MaxValue + 1];
+    private static readonly Dictionary<Type, Type> _registeredOwners = new();
 
     public static void Initialize()
     {
-        _packageRegistrations = new PackageRegistration?[byte.MaxValue + 1];
-
+        _registeredOwners.Clear();
+        PackageDispatcher.Clear();
         RegisterBuiltInPackages();
     }
 
     private static void RegisterBuiltInPackages()
     {
-        RegisterProtocolPackage<ServerInfoPackage, ServerInfoPackageHandler>(PackageType.ServerInfo);
-        RegisterProtocolPackage<AdmissionChallengePackage, AdmissionChallengePackageHandler>(
-            PackageType.AdmissionChallenge
-        );
-        RegisterProtocolPackage<AdmissionProofPackage, AdmissionProofPackageHandler>(PackageType.AdmissionProof);
-        RegisterProtocolPackage<AdmissionResultPackage, AdmissionResultPackageHandler>(PackageType.AdmissionResult);
-        RegisterProtocolPackage<ConnectionRequestPackage, ConnectionRequestPackageHandler>(
-            PackageType
-                .ConnectionRequest
-        );
-        RegisterProtocolPackage<ConnectionRejectPackage, ConnectionRejectPackageHandler>(PackageType.ConnectionReject);
-        RegisterProtocolPackage<ClientPackage, ClientPackageHandler>(PackageType.Client);
-        RegisterProtocolPackage<PickablePackage, PickablePackageHandler>(PackageType.Pickable);
-        RegisterProtocolPackage<SubsystemBodyPackage, SubsystemBodyPackageHandler>(PackageType.SubsystemBody);
-        RegisterProtocolPackage<SubsystemTerrainPackage, SubsystemTerrainPackageHandler>(PackageType.SubsystemTerrain);
-        RegisterProtocolPackage<SubsystemTimePackage, SubsystemTimePackageHandler>(PackageType.SubsystemTime);
-        RegisterProtocolPackage<SubsystemSkyPackage, SubsystemSkyPackageHandler>(PackageType.SubsystemSky);
-        RegisterProtocolPackage<SubsystemWeatherPackage, SubsystemWeatherPackageHandler>(PackageType.SubsystemWeather);
-        RegisterProtocolPackage<SubsystemElectricityPackage, SubsystemElectricityPackageHandler>(
-            PackageType
-                .SubsystemElectricity
-        );
-        RegisterPlayerPackages();
-        RegisterProtocolPackage<ComponentInventoryPackage, ComponentInventoryPackageHandler>(
-            PackageType
-                .ComponentInventory
-        );
-        RegisterProtocolPackage<ComponentVitalStatPackage, ComponentVitalStatPackageHandler>(
-            PackageType
-                .ComponentVitalStat
-        );
-        RegisterProtocolPackage<ComponentClothingPackage, ComponentClothingPackageHandler>(
-            PackageType
-                .ComponentClothing
-        );
-        RegisterProtocolPackage<ComponentBehaviorPackage, ComponentBehaviorPackageHandler>(
-            PackageType
-                .ComponentBehavior
-        );
-        RegisterProtocolPackage<ComponentHealthPackage, ComponentHealthPackageHandler>(PackageType.ComponentHealth);
-        RegisterProtocolPackage<ComponentMountPackage, ComponentMountPackageHandler>(PackageType.ComponentMount);
-        RegisterProtocolPackage<ComponentSicknessPackage, ComponentSicknessPackageHandler>(
-            PackageType
-                .ComponentSickness
-        );
-        RegisterProtocolPackage<ComponentFluPackage, ComponentFluPackageHandler>(PackageType.ComponentFlu);
-        RegisterProtocolPackage<ComponentOnFirePackage, ComponentOnFirePackageHandler>(PackageType.ComponentOnFire);
-        RegisterProtocolPackage<ComponentSleepPackage, ComponentSleepPackageHandler>(PackageType.ComponentSleep);
-        RegisterProtocolPackage<ComponentFurnacePackage, ComponentFurnacePackageHandler>(PackageType.ComponentFurnace);
-        RegisterProtocolPackage<CharacterDataPackage, CharacterDataPackageHandler>(PackageType.CharacterData);
-        RegisterProtocolPackage<MessagePackage, MessagePackageHandler>(PackageType.Message);
-        RegisterProtocolPackage<EntityPackage, EntityPackageHandler>(PackageType.Entity);
-        RegisterProtocolPackage<ProjectilePackage, ProjectilePackageHandler>(PackageType.Projectile);
-        RegisterProtocolPackage<FurniturePackage, FurniturePackageHandler>(PackageType.Furniture);
-        RegisterProtocolPackage<ExplosionsPackage, ExplosionsPackageHandler>(PackageType.Explosion);
-        RegisterProtocolPackage<MovingBlockPackage, MovingBlockPackageHandler>(PackageType.MovingBlockSet);
-        RegisterProtocolPackage<BlockEditPackage, BlockEditPackageHandler>(PackageType.BlockEdit);
-        RegisterProtocolPackage<SignBlockPackage, SignBlockPackageHandler>(PackageType.SignBlock);
-        RegisterProtocolPackage<DispenserPackage, DispenserPackageHandler>(PackageType.Dispenser);
-        RegisterProtocolPackage<EditableBlockPackage, EditableBlockPackageHandler>(PackageType.EditableBlock);
-        RegisterProtocolPackage<TeamManagePackage, TeamManagePackageHandler>(PackageType.TeamManage);
-        RegisterProtocolPackage<SubsystemSeasonPackage, SubsystemSeasonPackageHandler>(PackageType.SubsystemSeason);
-        RegisterProtocolPackage<CommandPackage, CommandPackageHandler>(PackageType.Command);
-        RegisterProtocolPackage<CharacterListPackage, CharacterListPackageHandler>(PackageType.CharacterList);
-        RegisterProtocolPackage<OnlineCharacterStatePackage, OnlineCharacterStatePackageHandler>(
-            PackageType.OnlineCharacterState
-        );
-        RegisterProtocolPackage<BootstrapPackage, BootstrapPackageHandler>(PackageType.Bootstrap);
-        RegisterProtocolPackage<ConnectionPhaseAckPackage, ConnectionPhaseAckPackageHandler>(
-            PackageType.ConnectionPhaseAck
-        );
-        RegisterProtocolPackage<InitialWorldSnapshotPackage, InitialWorldSnapshotPackageHandler>(
-            PackageType.InitialWorldSnapshot
-        );
-        RegisterProtocolPackage<ChunkStateResetPackage, ChunkStateResetPackageHandler>(PackageType.ChunkStateReset);
-        RegisterProtocolPackage<ModEnvelopePackage, ModEnvelopePackageHandler>(PackageType.ModEnvelope);
+        RegisterPackage<ServerInfoPackage, ServerInfoPackageHandler>();
+        RegisterPackage<AdmissionChallengePackage, AdmissionChallengePackageHandler>();
+        RegisterPackage<AdmissionProofPackage, AdmissionProofPackageHandler>();
+        RegisterPackage<AdmissionResultPackage, AdmissionResultPackageHandler>();
+        RegisterPackage<ConnectionRequestPackage, ConnectionRequestPackageHandler>();
+        RegisterPackage<ConnectionRejectPackage, ConnectionRejectPackageHandler>();
+        RegisterPackage<ClientPackage, ClientPackageHandler>();
+        RegisterPackage<PickablePackage, PickablePackageHandler>();
+        RegisterPackage<SubsystemBodyPackage, SubsystemBodyPackageHandler>();
+        RegisterPackage<SubsystemTerrainPackage, SubsystemTerrainPackageHandler>();
+        RegisterPackage<SubsystemTimePackage, SubsystemTimePackageHandler>();
+        RegisterPackage<SubsystemSkyPackage, SubsystemSkyPackageHandler>();
+        RegisterPackage<SubsystemWeatherPackage, SubsystemWeatherPackageHandler>();
+        RegisterPackage<SubsystemElectricityPackage, SubsystemElectricityPackageHandler>();
+        RegisterPackage<ComponentInventoryPackage, ComponentInventoryPackageHandler>();
+        RegisterPackage<ComponentVitalStatPackage, ComponentVitalStatPackageHandler>();
+        RegisterPackage<ComponentClothingPackage, ComponentClothingPackageHandler>();
+        RegisterPackage<ComponentBehaviorPackage, ComponentBehaviorPackageHandler>();
+        RegisterPackage<ComponentHealthPackage, ComponentHealthPackageHandler>();
+        RegisterPackage<ComponentMountPackage, ComponentMountPackageHandler>();
+        RegisterPackage<ComponentSicknessPackage, ComponentSicknessPackageHandler>();
+        RegisterPackage<ComponentFluPackage, ComponentFluPackageHandler>();
+        RegisterPackage<ComponentOnFirePackage, ComponentOnFirePackageHandler>();
+        RegisterPackage<ComponentSleepPackage, ComponentSleepPackageHandler>();
+        RegisterPackage<ComponentFurnacePackage, ComponentFurnacePackageHandler>();
+        RegisterPackage<CharacterDataPackage, CharacterDataPackageHandler>();
+        RegisterPackage<MessagePackage, MessagePackageHandler>();
+        RegisterPackage<EntityPackage, EntityPackageHandler>();
+        RegisterPackage<ProjectilePackage, ProjectilePackageHandler>();
+        RegisterPackage<FurniturePackage, FurniturePackageHandler>();
+        RegisterPackage<ExplosionsPackage, ExplosionsPackageHandler>();
+        RegisterPackage<MovingBlockPackage, MovingBlockPackageHandler>();
+        RegisterPackage<BlockEditPackage, BlockEditPackageHandler>();
+        RegisterPackage<SignBlockPackage, SignBlockPackageHandler>();
+        RegisterPackage<DispenserPackage, DispenserPackageHandler>();
+        RegisterPackage<EditableBlockPackage, EditableBlockPackageHandler>();
+        RegisterPackage<TeamManagePackage, TeamManagePackageHandler>();
+        RegisterPackage<SubsystemSeasonPackage, SubsystemSeasonPackageHandler>();
+        RegisterPackage<CommandPackage, CommandPackageHandler>();
+        RegisterPackage<CharacterListPackage, CharacterListPackageHandler>();
+        RegisterPackage<OnlineCharacterStatePackage, OnlineCharacterStatePackageHandler>();
+        RegisterPackage<BootstrapPackage, BootstrapPackageHandler>();
+        RegisterPackage<ConnectionPhaseAckPackage, ConnectionPhaseAckPackageHandler>();
+        RegisterPackage<InitialWorldSnapshotPackage, InitialWorldSnapshotPackageHandler>();
+        RegisterPackage<ChunkStateResetPackage, ChunkStateResetPackageHandler>();
+        RegisterPackage<ModEnvelopePackage, ModEnvelopePackageHandler>();
+        RegisterPackage<ComponentCharacterPackage, ComponentCharacterPackageHandler>();
     }
 
-    public static void RegisterPackage<TPackage>(Func<TPackage> factory, IPackageHandler<TPackage> handler)
-        where TPackage : IProtocolMessage
-    {
-        var message = factory();
-        if (!ProtocolMessageCodec.IsDefined(message.ID) || handler.PackageType != typeof(TPackage))
-        {
-            throw new ArgumentException("The handler must match a defined protocol message.");
-        }
-
-        if (_packageRegistrations[message.ID] != null)
-        {
-            throw new InvalidOperationException("Duplicate protocol message ID.");
-        }
-
-        _packageRegistrations[message.ID] = new PackageRegistration
-            { Name = typeof(TPackage).Name, Read = reader => ProtocolMessageCodec.Read(message.ID, reader) };
-        PackageDispatcher.Register(handler);
-    }
-
-    private static THandler RegisterProtocolPackage<TPackage, THandler>(PackageType id)
+    private static void RegisterPackage<TPackage, THandler>()
         where TPackage : IProtocolMessage
         where THandler : IPackageHandler<TPackage>, new()
     {
-        var key = (byte)id;
-        if (_packageRegistrations[key] != null)
+        RegisterPackage(new THandler());
+    }
+
+    public static void RegisterPackage<TPackage>(IPackageHandler<TPackage> handler)
+        where TPackage : IProtocolMessage
+    {
+        var types = ProtocolMessageCodec.MessageTypes.Where(typeof(TPackage).IsAssignableFrom).ToArray();
+        if (types.Length == 0 || handler.PackageType != typeof(TPackage))
         {
-            throw new InvalidOperationException($"Duplicate protocol message ID: {key}.");
+            throw new ArgumentException("The handler must match a known protocol message or family.");
         }
 
-        _packageRegistrations[key] = new PackageRegistration
+        foreach (var type in types)
         {
-            Name = typeof(TPackage).Name,
-            Read = reader => ProtocolMessageCodec.Read(key, reader)
-        };
-        var handler = new THandler();
-        PackageDispatcher.Register(handler);
-        return handler;
+            if (!_registeredOwners.TryAdd(type, typeof(TPackage)))
+            {
+                throw new InvalidOperationException($"Duplicate message handler: {type.Name}.");
+            }
+
+            PackageDispatcher.Register(type, handler);
+        }
     }
 
-    private static void RegisterPlayerPackages()
+    public static void UnregisterPackage(Type messageType)
     {
-        var handler =
-            RegisterProtocolPackage<ComponentCharacterPackage, ComponentCharacterPackageHandler>(
-                PackageType.ComponentCharacter
-            );
-        PackageDispatcher.Register(typeof(CharacterStatePackage), handler);
-        PackageDispatcher.Register(typeof(CharacterInteractionPackage), handler);
-        PackageDispatcher.Register(typeof(CharacterAimPackage), handler);
-        PackageDispatcher.Register(typeof(CharacterDigPackage), handler);
-        PackageDispatcher.Register(typeof(CharacterHitPackage), handler);
-        PackageDispatcher.Register(typeof(CharacterFlightPackage), handler);
-        PackageDispatcher.Register(typeof(CharacterReadyPackage), handler);
-        PackageDispatcher.Register(typeof(CharacterRestartPackage), handler);
-        PackageDispatcher.Register(typeof(CharacterExperiencePackage), handler);
-        PackageDispatcher.Register(typeof(CharacterDropPackage), handler);
-        PackageDispatcher.Register(typeof(CharacterDragDropPackage), handler);
-        PackageDispatcher.Register(typeof(CharacterStatisticsPackage), handler);
-        PackageDispatcher.Register(typeof(CharacterPositionPackage), handler);
-    }
+        var owner = _registeredOwners.GetValueOrDefault(messageType, messageType);
+        foreach (var type in _registeredOwners.Where(pair => pair.Value == owner).Select(pair => pair.Key).ToArray())
+        {
+            _registeredOwners.Remove(type);
+        }
 
-    public static void WriteMessage(IProtocolMessage message, ProtocolWriter writer) =>
-        ProtocolMessageCodec.Write(message, writer);
+        PackageDispatcher.Unregister(messageType);
+    }
 
     public static ClientState MinimumState(IProtocolMessage message) => message switch
     {
@@ -189,17 +128,6 @@ public class PackageManager
         _ => ClientState.NotConnected
     };
 
-    public static void UnRegisterPackage(IProtocolMessage package)
-    {
-        var basePackage = _packageRegistrations[package.ID];
-        if (basePackage == null)
-        {
-            return;
-        }
-
-        _packageRegistrations[package.ID] = null;
-        PackageDispatcher.Unregister(package.GetType());
-    }
 
     public static (T Package, PackageReceiveContext Context) DecodePackage<T>(
         NetNode? netNode,
@@ -207,8 +135,8 @@ public class PackageManager
         Client? sender = null
     ) where T : class, IProtocolMessage
     {
-        var obj = DecodePackages(netNode, payload, sender)[0];
-        return ((T)obj.Package, obj.Context);
+        var message = DecodePackages(netNode, payload, sender)[0];
+        return ((T)message.Package, message.Context);
     }
 
     public static List<ReceivedPackage> DecodePackages(
@@ -217,48 +145,23 @@ public class PackageManager
         Client? sender = null
     )
     {
-        var packages = new List<ReceivedPackage>();
         var context = new PackageReceiveContext(netNode, netNode?.IsServer ?? false, sender);
-        byte packageID = 99;
-        if (payload.IsEmpty)
-        {
-            return packages;
-        }
+        if (payload.IsEmpty) { return []; }
 
         try
         {
-            using var packageReader = CommonLib.GetReader(payload);
-            IProtocolMessage? last = null;
-            while (packageReader.BaseStream.Position < packageReader.BaseStream.Length)
+            var messages = ProtocolPacketCodec.Decode(payload);
+            if (messages.Any(message => !_registeredOwners.ContainsKey(message.GetType())))
             {
-                var check = packageReader.ReadByte();
-                if (check != 0x88)
-                {
-                    throw new InvalidDataException("Invalid message marker after " + last?.GetType().Name);
-                }
-
-                var id = packageReader.ReadByte();
-                packageID = id;
-                var registration = _packageRegistrations[id];
-                if (registration != null)
-                {
-                    var package = registration.Read(packageReader);
-                    last = package;
-                    packages.Add(new ReceivedPackage(package, context));
-                }
-                else
-                {
-                    throw new InvalidDataException($"Unknown message ID: {id}.");
-                }
+                throw new InvalidDataException("A protocol message has no registered handler.");
             }
-        }
-        catch (Exception e)
-        {
-            packages.Clear();
-            Log.Error(e.ToString());
-            Log.Information("接收到不规范的数据包" + packageID);
-        }
 
-        return packages;
+            return messages.Select(message => new ReceivedPackage(message, context)).ToList();
+        }
+        catch (Exception exception) when (exception is InvalidDataException or EndOfStreamException)
+        {
+            Log.Error(exception.ToString());
+            return [];
+        }
     }
 }

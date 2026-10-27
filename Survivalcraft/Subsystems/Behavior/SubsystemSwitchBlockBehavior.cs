@@ -22,14 +22,11 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
                     var num = Terrain.ReplaceData(value, data2);
                     if (num != value)
                     {
-                        var p = new EditableBlockPackage(
-                            BuiltInBlockEditKind.Switch,
-                            default,
-                            true,
-                            inventory.Id,
-                            slotIndex,
-                            newVoltageLevel
-                        );
+                        var p = new EditableBlockValuePackage
+                        {
+                            ItemType = BuiltInBlockEditKind.Switch,
+                            Target = new EditableInventorySlotTarget(inventory.Id, slotIndex), Value = newVoltageLevel
+                        };
                         EditableBlockPackageHandler.Submit(p);
                     }
                 }
@@ -56,14 +53,11 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
 
                     const int face = 4;
                     var cell = new CellFace(x, y, z, face);
-                    var p = new EditableBlockPackage(
-                        BuiltInBlockEditKind.Switch,
-                        cell,
-                        false,
-                        0,
-                        0,
-                        newVoltageLevel
-                    );
+                    var p = new EditableBlockValuePackage
+                    {
+                        ItemType = BuiltInBlockEditKind.Switch, Target = new EditableWorldBlockTarget(cell),
+                        Value = newVoltageLevel
+                    };
                     EditableBlockPackageHandler.Submit(p);
                 }
             )

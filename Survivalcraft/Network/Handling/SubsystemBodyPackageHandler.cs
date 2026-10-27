@@ -29,25 +29,26 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
         }
 
         var project = GameManager.Project;
-        switch (package.PackageEventType)
+        switch (package)
         {
-            case SubsystemBodyPackage.EventType.BodyUpdate:
+            case BodyStatesPackage message1:
+            {
                 var bodies = project.FindSubsystem<SubsystemBodies>(true)!;
                 var ml = new List<int>();
                 // 服务器的动物列表
-                foreach (var item in package.BodyList)
+                foreach (var item in message1.BodyList)
                 {
                     bodies.FindBodyByCreatureID(
                         item.CreatureId,
                         body =>
                         {
                             // 应用层最新优先：同一实体的旧轮次快照到达时直接丢弃。
-                            if (!IsNewer(package.StateTick, body.LastBodyStateTick))
+                            if (!IsNewer(message1.StateTick, body.LastBodyStateTick))
                             {
                                 return;
                             }
 
-                            body.LastBodyStateTick = package.StateTick;
+                            body.LastBodyStateTick = message1.StateTick;
                             if (item.ChangeFlag.HasFlag(SubsystemBodyPackage.ChangeFlag.PositionChange))
                             {
                                 body.NetPosition.SetNext(item.Position);
@@ -88,13 +89,15 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
 
                 if (ml.Count > 0)
                 {
-                    NetworkSender.SendToServer(new EntityPackage(ml));
+                    NetworkSender.SendToServer(new EntitySyncRequestPackage { EntityIdList = ml });
                 }
 
                 break;
-            case SubsystemBodyPackage.EventType.HandleAxisCollision:
+            }
+            case BodyCollisionPackage message2:
+            {
                 project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(
-                    package.CreatureId,
+                    message2.CreatureId,
                     from =>
                     {
                         if (isServer && !OwnsCollisionSource(context.Sender, from.Character?.CharacterData.Client))
@@ -103,7 +106,7 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
                         }
 
                         project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(
-                            package.TargetCreatureId,
+                            message2.TargetCreatureId,
                             target =>
                             {
                                 if (isServer &&
@@ -113,8 +116,8 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
                                     return;
                                 }
 
-                                target.Velocity = package.Impulse;
-                                target.NetVelocity.SetNext(package.Impulse);
+                                target.Velocity = message2.Impulse;
+                                target.NetVelocity.SetNext(message2.Impulse);
                                 from.CollidedWithBody?.Invoke(target);
                                 target.CollidedWithBody?.Invoke(from);
                             }
@@ -122,10 +125,13 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
                     }
                 );
                 break;
-            case SubsystemBodyPackage.EventType.ApplyImpulse:
+            }
+            case BodyImpulsePackage message3:
+            {
                 project.FindSubsystem<SubsystemBodies>(true)!
-                    .FindBodyByCreatureID(package.CreatureId, body => { body.ApplyImpulseNet(package.Impulse); });
+                    .FindBodyByCreatureID(message3.CreatureId, body => { body.ApplyImpulseNet(message3.Impulse); });
                 break;
+            }
         }
     }
 

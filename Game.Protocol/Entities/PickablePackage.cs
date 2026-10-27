@@ -1,46 +1,21 @@
-using Engine.Core.Mathematics;
+using MessagePack;
 
 namespace Game.Protocol.Entities;
 
-public sealed record PickablePackage : IProtocolMessage
+[MessagePackObject]
+[Union(0, typeof(PickableAddedPackage))]
+[Union(1, typeof(PickablePositionsPackage))]
+[Union(2, typeof(PickableRemovedPackage))]
+[Union(3, typeof(PickablesAddedPackage))]
+[Union(4, typeof(PickablesRemovedPackage))]
+[Union(5, typeof(PickableSyncRequestPackage))]
+public abstract record PickablePackage : IProtocolMessage
 {
     public const int MaxPositionsPerSnapshot = 24;
 
     public enum PickType { Create = 0, Update = 1, Delete = 2, RequestSync = 3, CreateList = 4, DeleteList = 5 }
 
-    public byte Count { get; init; }
+    [IgnoreMember] public abstract PickType Type { get; }
 
-    public ushort Id { get; init; }
-
-    public Vector3 Position { get; init; }
-
-    public PickType Type { get; init; }
-
-    public uint StateTick { get; init; }
-
-    public int Value { get; init; }
-
-    public Vector3 Velocity { get; init; }
-
-    public bool PlaySound { get; init; }
-
-    public Matrix? StuckMatrix { get; init; }
-
-    public IReadOnlyList<PickableSnapshot> Pickables { get; init; } = [];
-
-    public IReadOnlyList<PickablePosition> Positions { get; init; } = [];
-
-    public IReadOnlyList<ushort> RemovedIds { get; init; } = [];
-
-    public byte ID => (byte)PackageType.Pickable;
-
-    public PickablePackage()
-    {
-    }
-
-    public PickablePackage(ushort id)
-    {
-        Id = id;
-        Type = PickType.Delete;
-    }
+    [Key(0)] public uint StateTick { get; init; }
 }

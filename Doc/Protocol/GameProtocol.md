@@ -3,9 +3,9 @@
 当前线格式由 `SCNET.Game.Protocol` 定义，协议整数为 `GameProtocol.CurrentVersion=1`，
 与包的 SemVer 无关。协议库不依赖游戏运行时、图形窗口或具体传输宿主。
 
-完整消息编号见 [PackageType](../../Game.Protocol/PackageType.cs) 和
-[固定编号清单](../../Game.Protocol.Test/Fixtures/package-ids.json)；字段顺序以
-[ProtocolMessageCodec](../../Game.Protocol/Serialization/ProtocolMessageCodec.cs) 及其分文件为准。
+具体消息及其固定数字标签见 [IProtocolMessage](../../Game.Protocol/IProtocolMessage.cs) 的 MessagePack Union 声明；
+字段顺序以各契约的数字 `Key` 为准。[ProtocolMessageCodec](../../Game.Protocol/Serialization/ProtocolMessageCodec.cs)
+统一管理协议序列化配置与校验。
 本文补充连接与准入、帧格式及授权边界，不重复全部状态同步字段。
 
 ## 分层与准备
@@ -51,22 +51,22 @@ sequenceDiagram
 
 ## 准入消息
 
-| 消息 | byte 编号 | 按序字段 |
-|---|---:|---|
-| `AdmissionChallengePackage` | 44 | 模式 byte、nonce string、expiresAt Int64；仅 External 再携带 authorityName、authorityUrl、authorityPublicKey |
-| `AdmissionProofPackage` | 45 | nonce string、password string、approval string、cancel bool |
-| `AdmissionResultPackage` | 46 | nonce string、结果 byte、retryAfterSeconds Int32 |
+| 消息 | 按序字段 |
+|---|---|
+| `AdmissionChallengePackage` | 模式、nonce、expiresAt、authorityName、authorityUrl、authorityPublicKey |
+| `AdmissionProofPackage` | nonce string、password string、approval string、cancel bool |
+| `AdmissionResultPackage` | nonce string、结果 byte、retryAfterSeconds Int32 |
 
 模式数值为 `Open=0`、`Password=1`、`External=2`。
 非外部模式不得附带认证方资料。游戏挑战只传 nonce 和期限；外部 HTTPS 挑战的玩家、服务器身份及
 `channelBinding` 由客户端从实际持钥连接补齐，不接受其他玩家同步资料提供的身份。
 
 nonce 上限 43 字符，密码上限 1024，批准上限 16384；认证方名称、URL、公钥上限分别为 128、2048、256。
-准入字符串使用严格 UTF-8，7-bit 编码整数表示字节长度，同时限制解码后 UTF-16 字符数与最大字节数。
+准入字符串使用 MessagePack UTF-8 字符串，读取前限制字节长度，解码后限制 UTF-16 字符数。
 合法长度不表示语义合法，nonce、时间、签名和字段组合仍需准入处理器校验。
 
 | 结果 | byte 值 | 处理含义 |
-|---|---:|---|
+|---|---|
 | Accepted | 0 | 本次准入通过，后续仍按连接阶段同步 |
 | IncorrectPassword | 1 | 重新询问；拒绝的已保存密码不循环自动提交 |
 | ApprovalRejected | 2 | 批准无效，不能改用开放模式 |
@@ -94,10 +94,17 @@ bytes payload          未压缩或 Deflate 数据
 `frameLength` 必须恰好等于其后剩余字节数；`rawLength` 上限为 64 MiB。
 未压缩数据长度必须与声明一致；压缩数据必须恰好解出该长度，截断、超出、未知压缩码均失败。
 
-解压后的 payload 由零个或多个顺序消息构成：`0x88 | messageId byte | messageFields`。
-消息没有通用的独立长度前缀；必须按对应 codec 读完字段，不能遇到未知编号后猜测跳过。
-基本整数和浮点读写沿用 .NET BinaryReader/Writer 的小端表示，字符串使用 UTF-8 与 7-bit 长度前缀。
-GUID 编码为长度 byte（16）及 `Guid.ToByteArray()` 字节序，不能与中继头的大端 GUID 布局混用。
+解压后的 payload 是一个 MessagePack 消息数组，每项为 `[unionTag, fields]`。
+`unionTag` 是协议显式声明的整数，`fields` 是按数字 `Key` 排列的数组；不传输 CLR 类型名称。
+一批最多 1024 条消息。各具体消息携带自身需要的字段，发送方在入队前选择具体类型；
+业务处理器可以按领域处理同一家族的多种消息，序列化器不根据业务操作标志选择字段。
+嵌套变体同样使用显式 Union，集合、字典和二进制值使用 MessagePack 对应类型；
+GUID 使用 MessagePack 标准 GUID 字符串编码，数学值由协议层格式化为固定宽度数组。
+
+解码前按声明的契约检查字段数量、必填值、已知 Union、枚举、集合长度和最大 64 层深度，
+随后执行协议语义校验。未知标签、截断、尾随数据或非法字段导致整个批次失败；不猜测或跳过。
+MessagePack 依赖、格式化器及配置归属 `Game.Protocol`，`Engine.Serialization` 和 `Engine.Network`
+不依赖这一游戏线格式。游戏、工具、命令参数和模组的类型化载荷使用同一协议配置。
 
 Adaptive 压缩是发送优化，不改变消息含义；接收端必须接受当前定义的两种压缩码。
 实际可发送的数据报预算还受路径与传输限制，不能将 64 MiB 解压上限理解为单个 UDP 可用长度。
