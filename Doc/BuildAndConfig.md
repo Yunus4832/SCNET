@@ -336,8 +336,10 @@ dotnet test Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.cspr
 ContentTool 将完整运行输出打入工具目录，独立运行时不依赖模组项目的资产。
 许可声明统一维护在根目录的 `ThirdPartyNotices.txt`；桌面应用发布时携带，Android 加入 APK assets。
 
-原生库版本、许可证和重编译方法见 [Native.ImageCodecs](../Native.ImageCodecs/README.md)
-和 [Native.OpenAL](../Native.OpenAL/README.md)。
+原生库版本、许可证和重编译方法见 [Native.ImageCodecs](../Native.ImageCodecs/README.md)、
+[Native.OpenAL](../Native.OpenAL/README.md) 和 [Native.SDL](../Native.SDL/README.md)。
+SDL 由 Engine 统一引用 `SCNET.Native.SDL`，资产位于 `Native.SDL/runtimes/<rid>/native`；
+包内的传递构建 target 排除 `Ultz.Native.SDL` 的资产，Android 同时替换 Silk AAR 的 Java 类和原生库，统一使用 SDL 2.32.10。
 仓库已包含稳定、验证可用的预编译原生库，日常开发、首次构建和发布均直接复用；
 准备本地 NuGet 包只是打包这些现有文件，不需要重新编译。只有升级版本或明确需要修复、
 补充原生产物时，才执行原生库构建脚本，并在替换前验证对应平台或 ABI。

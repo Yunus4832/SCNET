@@ -7,6 +7,7 @@
     <Folder Name="/01 NativeLibraries/">
         <Project Path="Native.ImageCodecs/Native.ImageCodecs.csproj"/>
         <Project Path="Native.OpenAL/Native.OpenAL.csproj"/>
+        <Project Path="Native.SDL/Native.SDL.csproj"/>
     </Folder>
 
     <Folder Name="/02 Engine/">

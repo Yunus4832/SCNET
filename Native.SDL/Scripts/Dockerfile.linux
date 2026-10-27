@@ -1,0 +1,7 @@
+FROM ubuntu:22.04
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    build-essential cmake ripgrep pkg-config \
+    libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev libxfixes-dev \
+    libwayland-dev wayland-protocols libxkbcommon-dev libasound2-dev libpulse-dev \
+    libudev-dev libdrm-dev libgbm-dev libegl1-mesa-dev libgl1-mesa-dev libdbus-1-dev \
+    && rm -rf /var/lib/apt/lists/*

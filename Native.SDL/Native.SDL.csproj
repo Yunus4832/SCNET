@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(SDLVersion)</Version>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Native.SDL</PackageId>
+        <Description>SDL2 native libraries for Windows, Linux and Android.</Description>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Update="README.md;SHA256SUMS" Pack="true" PackagePath="/"/>
+        <None Include="../ThirdPartyNotices.txt" Pack="true" PackagePath="/"/>
+        <None Update="runtimes/**/*" Pack="true" PackagePath="%(Identity)"/>
+        <None Update="buildTransitive/java/SDL2.jar" Pack="true" PackagePath="buildTransitive/java/SDL2.jar"/>
+        <None Update="buildTransitive/SCNET.Native.SDL.targets" Pack="true" PackagePath="buildTransitive/SCNET.Native.SDL.targets"/>
+    </ItemGroup>
+</Project>

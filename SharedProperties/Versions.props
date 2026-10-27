@@ -5,6 +5,7 @@
         <EngineVersion>0.2.1</EngineVersion>
         <ImageCodecsVersion>0.1.1</ImageCodecsVersion>
         <OpenALVersion>0.1.0</OpenALVersion>
+        <SDLVersion>0.1.0</SDLVersion>
         <ContentPackagingVersion>0.1.5</ContentPackagingVersion>
         <ContentToolVersion>0.1.5</ContentToolVersion>
         <ModTemplatesVersion>0.1.8</ModTemplatesVersion>

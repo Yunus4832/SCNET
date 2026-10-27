@@ -1,0 +1,25 @@
+<Project>
+    <!-- A project-local ExcludeAssets does not exclude a package from every consuming application's graph. -->
+    <Target Name="SCNETExcludeUpstreamSdlNativeAssets" AfterTargets="ResolvePackageAssets">
+        <ItemGroup>
+            <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)"
+                                  Condition="'%(NativeCopyLocalItems.NuGetPackageId)' == 'Ultz.Native.SDL'"/>
+            <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)"
+                                          Condition="'%(RuntimeTargetsCopyLocalItems.NuGetPackageId)' == 'Ultz.Native.SDL'"/>
+        </ItemGroup>
+    </Target>
+    <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'android' and '$(AndroidApplication)' == 'true'">
+        <AndroidLibrary Include="$(MSBuildThisFileDirectory)java/SDL2.jar" Bind="false"/>
+    </ItemGroup>
+    <!-- Keep Silk's managed bindings; replace the companion AAR's Java and native implementations together. -->
+    <Target Name="SCNETReplaceSilkSdlNativeLibraries"
+            AfterTargets="_GetLibraryImports"
+            Condition="'$(TargetPlatformIdentifier)' == 'android' and '$(AndroidApplication)' == 'true'">
+        <ItemGroup>
+            <ExtractedJarImports Remove="@(ExtractedJarImports)"
+                                 Condition="Exists('%(ExtractedJarImports.RootDir)%(ExtractedJarImports.Directory)jni/arm64-v8a/libSDL2.so')"/>
+            <AndroidNativeLibrary Remove="@(ExtractedNativeLibraryImports)"
+                                  Condition="'%(ExtractedNativeLibraryImports.Filename)' == 'libSDL2' or '%(ExtractedNativeLibraryImports.Filename)' == 'libmain'"/>
+        </ItemGroup>
+    </Target>
+</Project>

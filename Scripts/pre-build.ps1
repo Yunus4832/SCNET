@@ -10,6 +10,7 @@ try {
     $packages = @(
         @{ Id = "SCNET.Native.ImageCodecs"; Project = "Native.ImageCodecs/Native.ImageCodecs.csproj" },
         @{ Id = "SCNET.Native.OpenAL"; Project = "Native.OpenAL/Native.OpenAL.csproj" },
+        @{ Id = "SCNET.Native.SDL"; Project = "Native.SDL/Native.SDL.csproj" },
         @{ Id = "SCNET.Engine.Core"; Project = "Engine.Core/Engine.Core.csproj" },
         @{ Id = "SCNET.Engine.Media"; Project = "Engine.Media/Engine.Media.csproj" },
         @{ Id = "SCNET.Engine.Serialization"; Project = "Engine.Serialization/Engine.Serialization.csproj" },
