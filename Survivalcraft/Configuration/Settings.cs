@@ -1,8 +1,10 @@
 using Engine.Graphics;
 using Engine.Network;
 
+using Game.Characters;
 using Game.Controls;
 using Game.Network.Chunks;
+using Game.Rendering;
 
 namespace Game.Configuration;
 
@@ -34,19 +36,7 @@ public class Settings
 
     public float UIScale { get; set; } = 1f;
 
-    public ResolutionMode ResolutionMode
-    {
-        get;
-        set
-        {
-            if (Equals(value, field))
-            {
-                return;
-            }
-
-            field = value;
-        }
-    } = ResolutionMode.High;
+    public ResolutionMode ResolutionMode { get; set; } = ResolutionMode.High;
 
     public float ViewAngle { get; set; } = 1f;
 
@@ -56,21 +46,7 @@ public class Settings
 
     public bool ObjectsShadowsEnabled { get; set; } = true;
 
-    public float Brightness
-    {
-        get;
-        set
-        {
-            value = MathUtils.Clamp(value, 0f, 1f);
-            if (value.CloseTo(field))
-            {
-                return;
-            }
-
-            field = value;
-            SettingsManager.NotifyBrightnessChanged();
-        }
-    } = 0.5f;
+    public float Brightness { get; set => field = MathUtils.Clamp(value, 0f, 1f); } = 0.5f;
 
     public bool VSync { get; set; } = true;
 
@@ -134,8 +110,8 @@ public class Settings
 
     public bool ShowCharacterInformationOverlay { get; set; } = true;
 
-    public PlayerListFilter CharacterInformationFilter { get; set; } =
-        PlayerListFilter.All;
+    public CharacterListFilter CharacterInformationFilter { get; set; } =
+        CharacterListFilter.All;
 
     public bool ShowMessageHistoryOverlay { get; set; } = true;
 

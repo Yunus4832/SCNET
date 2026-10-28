@@ -1,8 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-using Game.Configuration;
-
 namespace Game.Managers;
 
 public static class LanguageManager
@@ -66,7 +64,7 @@ public static class LanguageManager
     public static void Initialize(string languageType)
     {
         KeyWords.Clear();
-        AppConfigStore.Set("Language", languageType);
+        AppConfigManager.Set("Language", languageType);
     }
 
     public static void ClearLanguageDisplayNames()

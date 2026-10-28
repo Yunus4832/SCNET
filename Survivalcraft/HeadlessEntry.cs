@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Globalization;
 
 using Game.Commands;
-using Game.Configuration;
 using Game.Diagnostics;
 using Game.Network;
 using Game.Network.Handling;
@@ -430,7 +429,7 @@ public static class HeadlessEntry
         );
         CurrentModRuntime.Set(_modRuntime);
         _modRuntime.InitializeLanguage(
-            AppConfigStore.Values.TryGetValue("Language", out var language)
+            AppConfigManager.Values.TryGetValue("Language", out var language)
                 ? language
                 : "zh-CN"
         );

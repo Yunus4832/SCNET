@@ -1,7 +1,7 @@
 using System.Xml.Linq;
 
+using Game.Characters;
 using Game.Commands;
-using Game.Configuration;
 using Game.Network;
 
 namespace Game.Widgets;
@@ -68,7 +68,7 @@ public sealed class MultiplayerPanelWidget : CanvasWidget
 
     private Guid _lastTeamId = Guid.Empty;
 
-    private PlayerListFilter _playerFilter;
+    private CharacterListFilter _playerFilter;
 
     public MultiplayerPanelWidget(
         CharacterData characterData,
@@ -139,9 +139,9 @@ public sealed class MultiplayerPanelWidget : CanvasWidget
         if (_playerFilterButton.IsClicked)
         {
             SetPlayerFilter(
-                _playerFilter == PlayerListFilter.All
-                    ? PlayerListFilter.SameTeam
-                    : PlayerListFilter.All
+                _playerFilter == CharacterListFilter.All
+                    ? CharacterListFilter.SameTeam
+                    : CharacterListFilter.All
             );
         }
 
@@ -208,14 +208,14 @@ public sealed class MultiplayerPanelWidget : CanvasWidget
         _observationButton.IsChecked = _observationWidget.DisplayEnabled;
         MultiplayerUiStyle.SetButtonText(
             _playerFilterButton,
-            _playerFilter == PlayerListFilter.SameTeam
+            _playerFilter == CharacterListFilter.SameTeam
                 ? MultiplayerUiStyle.Text("FilterTeam")
                 : MultiplayerUiStyle.Text("FilterAll")
         );
-        _playerFilterButton.IsChecked = _playerFilter == PlayerListFilter.SameTeam;
+        _playerFilterButton.IsChecked = _playerFilter == CharacterListFilter.SameTeam;
     }
 
-    private void SetPlayerFilter(PlayerListFilter filter)
+    private void SetPlayerFilter(CharacterListFilter filter)
     {
         _playerFilter = filter;
         SettingsManager.Current.CharacterInformationFilter = filter;
@@ -225,9 +225,9 @@ public sealed class MultiplayerPanelWidget : CanvasWidget
         UpdateActionButtons();
     }
 
-    private static CharacterListWidget.ListKind GetPlayerListKind(PlayerListFilter filter)
+    private static CharacterListWidget.ListKind GetPlayerListKind(CharacterListFilter filter)
     {
-        return filter == PlayerListFilter.SameTeam
+        return filter == CharacterListFilter.SameTeam
             ? CharacterListWidget.ListKind.SameTeamCharacters
             : CharacterListWidget.ListKind.Characters;
     }

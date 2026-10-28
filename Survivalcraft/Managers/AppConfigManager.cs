@@ -1,8 +1,8 @@
 using System.Xml.Linq;
 
-namespace Game.Configuration;
+namespace Game.Managers;
 
-public static class AppConfigStore
+public static class AppConfigManager
 {
     public static readonly Dictionary<string, string> Values = new();
 

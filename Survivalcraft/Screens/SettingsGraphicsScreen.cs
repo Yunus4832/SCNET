@@ -48,7 +48,7 @@ public class SettingsGraphicsScreen : Screen
 
         if (_brightnessSlider.IsSliding)
         {
-            SettingsManager.Current.Brightness = _brightnessSlider.Value;
+            SettingsManager.SetBrightness(_brightnessSlider.Value);
         }
 
         _virtualRealityButton.IsEnabled = VrManager.IsVrAvailable;

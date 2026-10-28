@@ -1,4 +1,4 @@
-namespace Game.Configuration;
+namespace Game.Rendering;
 
 public enum ResolutionMode
 {

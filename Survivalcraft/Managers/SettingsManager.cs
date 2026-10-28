@@ -15,8 +15,12 @@ public static class SettingsManager
 
     public static event Action? BrightnessChanged;
 
-    internal static void NotifyBrightnessChanged()
+    public static void SetBrightness(float value)
     {
+        value = MathUtils.Clamp(value, 0f, 1f);
+        if (value.CloseTo(Current.Brightness)) { return; }
+
+        Current.Brightness = value;
         BrightnessChanged?.Invoke();
     }
 
@@ -64,7 +68,7 @@ public static class SettingsManager
                 using (var stream = Storage.OpenFile(GamePaths.SettingsFile, OpenFileMode.Read))
                 {
                     var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
-                    AppConfigStore.ReadFromXml(xElement);
+                    AppConfigManager.ReadFromXml(xElement);
                     foreach (var item in xElement.Elements())
                     {
                         var name = "<unknown>";
@@ -167,7 +171,7 @@ public static class SettingsManager
             }
         }
 
-        AppConfigStore.WriteToXml(xElement);
+        AppConfigManager.WriteToXml(xElement);
         var temporaryPath = GamePaths.SettingsFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {

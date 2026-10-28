@@ -2,9 +2,9 @@ using System.Xml.Linq;
 
 using Engine.Graphics;
 
-using Game.Configuration;
 using Game.Furniture;
 using Game.Network;
+using Game.Rendering;
 
 namespace Game.Dialogs;
 

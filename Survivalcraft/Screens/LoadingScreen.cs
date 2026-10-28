@@ -1,7 +1,6 @@
 using Engine.Audio;
 using Engine.Graphics;
 
-using Game.Configuration;
 using Game.Network.Handling;
 
 namespace Game.Screens;
@@ -101,7 +100,7 @@ public class LoadingScreen : Screen
             {
                 Log.Information("初始化语言资源");
                 CurrentModRuntime.Value!.InitializeLanguage(
-                    AppConfigStore.Values.TryGetValue("Language", out var language) ? language : "zh-CN"
+                    AppConfigManager.Values.TryGetValue("Language", out var language) ? language : "zh-CN"
                 );
             }
         );

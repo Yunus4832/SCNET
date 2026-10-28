@@ -1,8 +1,8 @@
 using Engine.Graphics;
 
-using Game.Configuration;
 using Game.Network;
 using Game.Network.Transport;
+using Game.Rendering;
 
 namespace Game.Widgets;
 

@@ -82,6 +82,11 @@ Starter 统一通过 `PlatformManager` 注册平台能力，避免直接操作�
 不表示类型应全部位于根名称空间。没有 `Game.Data`、`Game.Enums` 或 `Game.Interface` 这样的通用集合：
 值对象、枚举、查询和接口随其职责模块放置。
 
+配置数据与管理服务分别归属：`Game.Configuration` 只保留实例偏好数据 `Settings`，
+分辨率模式位于 `Rendering`，角色列表筛选位于 `Characters`。配置类不调用 Manager 或发出运行时通知；
+运行时亮度调整通过 `SettingsManager.SetBrightness` 完成钳制、变更判断和通知。
+`AppConfigManager` 管理 `Settings.xml` 中的扩展字符串配置。
+
 | 模块 | 负责的类型与边界 |
 |---|---|
 | `Startup` / `Configuration` / `Platforms` | 启动请求及会话、实例设置、平台类别识别；不保存游戏角色状态 |

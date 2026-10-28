@@ -1,4 +1,4 @@
-using Game.Configuration;
+using Game.Characters;
 
 namespace Game.Widgets;
 
@@ -29,7 +29,7 @@ public sealed class CharacterInformationOverlayWidget : CanvasWidget
 
     public bool DisplayEnabled { get; private set; }
 
-    public PlayerListFilter Filter { get; private set; }
+    public CharacterListFilter Filter { get; private set; }
 
     public CharacterInformationOverlayWidget(GameWidget gameWidget)
     {
@@ -65,7 +65,7 @@ public sealed class CharacterInformationOverlayWidget : CanvasWidget
         SetDisplayEnabled(!DisplayEnabled);
     }
 
-    public void SetFilter(PlayerListFilter filter)
+    public void SetFilter(CharacterListFilter filter)
     {
         Filter = filter;
         SettingsManager.Current.CharacterInformationFilter = filter;
@@ -84,7 +84,7 @@ public sealed class CharacterInformationOverlayWidget : CanvasWidget
 
     public override void Update()
     {
-        if (Filter != PlayerListFilter.SameTeam || _lastTeamId == CurrentTeamId)
+        if (Filter != CharacterListFilter.SameTeam || _lastTeamId == CurrentTeamId)
         {
             return;
         }
@@ -93,9 +93,9 @@ public sealed class CharacterInformationOverlayWidget : CanvasWidget
         RefreshView();
     }
 
-    private static CharacterListWidget.ListKind GetListKind(PlayerListFilter filter)
+    private static CharacterListWidget.ListKind GetListKind(CharacterListFilter filter)
     {
-        return filter == PlayerListFilter.SameTeam
+        return filter == CharacterListFilter.SameTeam
             ? CharacterListWidget.ListKind.SameTeamCharacters
             : CharacterListWidget.ListKind.Characters;
     }
