@@ -81,7 +81,7 @@ public class Texture2D : GraphicsResource
         {
             var width = MathUtils.Max(Width >> mipLevel, 1);
             var height = MathUtils.Max(Height >> mipLevel, 1);
-            var pixels = gCHandle.AddrOfPinnedObject() + sourceStartIndex * Utilities.SizeOf<T>();
+            var pixels = gCHandle.AddrOfPinnedObject() + sourceStartIndex * Marshal.SizeOf<T>();
             GLWrapper.BindTexture(TextureTarget.Texture2D, (uint)texture, false);
             unsafe
             {
@@ -298,7 +298,7 @@ public class Texture2D : GraphicsResource
         }
 
         VerifyNotDisposed();
-        var num = Utilities.SizeOf<T>();
+        var num = Marshal.SizeOf<T>();
         var size = ColorFormat.GetSize();
         var num2 = MathUtils.Max(Width >> mipLevel, 1);
         var num3 = MathUtils.Max(Height >> mipLevel, 1);

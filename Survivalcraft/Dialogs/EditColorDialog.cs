@@ -1,4 +1,4 @@
-using Engine.Core.Text.Conversion;
+using Engine.Core.Serialization;
 using Engine.Graphics;
 
 namespace Game.Dialogs;

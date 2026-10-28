@@ -20,8 +20,10 @@ public class TerrainChunkGeometry
 
         public void Dispose()
         {
-            Utilities.Dispose(ref VertexBuffer!);
-            Utilities.Dispose(ref IndexBuffer!);
+            VertexBuffer?.Dispose();
+            VertexBuffer = null!;
+            IndexBuffer?.Dispose();
+            IndexBuffer = null!;
         }
     }
 }

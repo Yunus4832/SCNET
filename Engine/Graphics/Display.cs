@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 
 using Engine.Core.Mathematics;
-using Engine.Core.Runtime;
 using Engine.Windowing;
 
 using Silk.NET.OpenGLES;
@@ -306,7 +305,7 @@ public static class Display
     ) where T : struct
     {
         shader.VerifyNotDisposed();
-        var num = Utilities.SizeOf<T>();
+        var num = Marshal.SizeOf<T>();
 
         if (vertexDeclaration.VertexStride / num * num != vertexDeclaration.VertexStride)
         {
@@ -334,7 +333,7 @@ public static class Display
     ) where T : struct
     {
         shader.VerifyNotDisposed();
-        var num = Utilities.SizeOf<T>();
+        var num = Marshal.SizeOf<T>();
         if (vertexDeclaration.VertexStride / num * num != vertexDeclaration.VertexStride)
         {
             throw new InvalidOperationException(

@@ -540,16 +540,16 @@ public class BlockMesh
             throw new InvalidOperationException("VertexBuffer does not contain source data in Tag.");
         }
 
-        if (array.Length % Utilities.SizeOf<T>() != 0)
+        if (array.Length % Marshal.SizeOf<T>() != 0)
         {
             throw new InvalidOperationException("VertexBuffer data size is not a whole multiply of target type size.");
         }
 
-        var array2 = new T[array.Length / Utilities.SizeOf<T>()];
+        var array2 = new T[array.Length / Marshal.SizeOf<T>()];
         var gCHandle = GCHandle.Alloc(array2, GCHandleType.Pinned);
         try
         {
-            Marshal.Copy(array, 0, gCHandle.AddrOfPinnedObject(), Utilities.SizeOf<T>() * array2.Length);
+            Marshal.Copy(array, 0, gCHandle.AddrOfPinnedObject(), Marshal.SizeOf<T>() * array2.Length);
             return array2;
         }
         finally
@@ -565,16 +565,16 @@ public class BlockMesh
             throw new InvalidOperationException("IndexBuffer does not contain source data in Tag.");
         }
 
-        if (array.Length % Utilities.SizeOf<T>() != 0)
+        if (array.Length % Marshal.SizeOf<T>() != 0)
         {
             throw new InvalidOperationException("IndexBuffer data size is not a whole multiply of target type size.");
         }
 
-        var array2 = new T[array.Length / Utilities.SizeOf<T>()];
+        var array2 = new T[array.Length / Marshal.SizeOf<T>()];
         var gCHandle = GCHandle.Alloc(array2, GCHandleType.Pinned);
         try
         {
-            Marshal.Copy(array, 0, gCHandle.AddrOfPinnedObject(), Utilities.SizeOf<T>() * array2.Length);
+            Marshal.Copy(array, 0, gCHandle.AddrOfPinnedObject(), Marshal.SizeOf<T>() * array2.Length);
             return array2;
         }
         finally

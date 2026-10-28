@@ -1,4 +1,5 @@
-using Engine.Core.Runtime;
+using System.Runtime.InteropServices;
+
 using Engine.FileStorage;
 using Engine.Media.Audio;
 
@@ -155,7 +156,7 @@ public sealed class SoundBuffer : IDisposable
 
     private void Initialize<T>(T[] data, int startIndex, int itemsCount, int channelsCount, int samplingFrequency)
     {
-        var num = Utilities.SizeOf<T>();
+        var num = Marshal.SizeOf<T>();
         InitializeProperties(itemsCount * num / channelsCount / 2, channelsCount, samplingFrequency);
         ArgumentNullException.ThrowIfNull(data);
 

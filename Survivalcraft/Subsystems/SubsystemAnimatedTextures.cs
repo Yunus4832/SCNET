@@ -80,7 +80,8 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
             _animatedBlocksTexture.MipLevelsCount > 1 !=
             SettingsManager.Current.TerrainMipmapsEnabled)
         {
-            Utilities.Dispose(ref _animatedBlocksTexture);
+            _animatedBlocksTexture?.Dispose();
+            _animatedBlocksTexture = null;
             _animatedBlocksTexture = new RenderTarget2D(
                 blocksTexture.Width,
                 blocksTexture.Height,
@@ -146,7 +147,8 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
 
     public override void Dispose()
     {
-        Utilities.Dispose(ref _animatedBlocksTexture);
+        _animatedBlocksTexture?.Dispose();
+        _animatedBlocksTexture = null;
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
             return;

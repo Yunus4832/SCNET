@@ -119,7 +119,8 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
     public override void Dispose()
     {
         base.Dispose();
-        Utilities.Dispose(ref _scalingRenderTarget!);
+        _scalingRenderTarget?.Dispose();
+        _scalingRenderTarget = null!;
     }
 
     public void NetDragDrop(Vector3 worldPos, InventoryDragData inventoryDragData, int count)
@@ -155,7 +156,8 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
                 _scalingRenderTarget.Width != point2.X ||
                 _scalingRenderTarget.Height != point2.Y)
             {
-                Utilities.Dispose(ref _scalingRenderTarget);
+                _scalingRenderTarget?.Dispose();
+                _scalingRenderTarget = null!;
                 _scalingRenderTarget = new RenderTarget2D(
                     point2.X,
                     point2.Y,
@@ -170,7 +172,8 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
         }
         else
         {
-            Utilities.Dispose(ref _scalingRenderTarget);
+            _scalingRenderTarget?.Dispose();
+            _scalingRenderTarget = null!;
         }
     }
 

@@ -9,12 +9,11 @@ SCNET 的基础类型与通用运行支持，面向 .NET 10。不引用窗口、
 | `Logging/` / `Engine.Core.Logging` | 日志入口、级别、输出接口及日志接收器 |
 | `Text/` / `Engine.Core.Text` | Bech32m 编解码和校验（[BIP 350](https://bips.dev/350/)） |
 | `Security/` / `Engine.Core.Security` | 固定 SCNET 身份地址规则：32 字节指纹、`scnet` 前缀、64 字符 Bech32m |
-| `Text/Conversion/` / `Engine.Core.Text.Conversion` | 基础类型、集合文本及数学值的可读文本转换，支持 Attribute 标注的扩展转换器 |
+| `Serialization/` / `Engine.Core.Serialization` | 基础类型、集合文本及数学值的可读文本转换，支持 Attribute 标注的扩展转换器 |
 | `Reflection/` / `Engine.Core.Reflection` | 按完整运行时名称解析类型，不管理模板持久化短名 |
-| `Runtime/` / `Engine.Core.Runtime` | 运行模式、时钟、主线程调度及通用运行辅助 |
+| `Runtime/` / `Engine.Core.Runtime` | 运行模式、时钟、主线程调度及状态机 |
 
 独立公共类型各自保存于同名文件；随机数、常量扩展和运行模式枚举不与其他公共类型混放。
-`Utilities` 的现有资源释放、结构体互操作等方法保留原有行为，位于 Runtime。
 
 窗口异常事件数据 `UnhandledExceptionInfo` 和垂直同步枚举 `PresentationIntervalEnum` 属于
 `Engine.Windowing`，不由 Core 管理。数学数据、序列化及无界面工具不需要为此依赖窗口层。

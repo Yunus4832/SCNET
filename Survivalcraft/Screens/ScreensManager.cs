@@ -128,7 +128,8 @@ public static class ScreensManager
 
     public static void Draw()
     {
-        Utilities.Dispose(ref _uiRenderTarget);
+        _uiRenderTarget?.Dispose();
+        _uiRenderTarget = null;
         LayoutAndDrawWidgets();
     }
 

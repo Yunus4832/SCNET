@@ -61,7 +61,8 @@ public class TerrainSerializer129 : IDisposable
 
     public void Dispose()
     {
-        Utilities.Dispose(ref _stream!);
+        _stream?.Dispose();
+        _stream = null!;
     }
 
     public bool LoadChunk(TerrainChunk chunk)

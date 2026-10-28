@@ -41,7 +41,7 @@ public sealed class IndexBuffer : GraphicsResource
         var gCHandle = GCHandle.Alloc(source, GCHandleType.Pinned);
         try
         {
-            var num = Utilities.SizeOf<T>();
+            var num = Marshal.SizeOf<T>();
             var size = IndexFormat.GetSize();
             var data = gCHandle.AddrOfPinnedObject() + sourceStartIndex * num;
             GLWrapper.BindBuffer(BufferTargetARB.ElementArrayBuffer, buffer);
@@ -124,7 +124,7 @@ public sealed class IndexBuffer : GraphicsResource
         where T : struct
     {
         VerifyNotDisposed();
-        var num = Utilities.SizeOf<T>();
+        var num = Marshal.SizeOf<T>();
         var size = IndexFormat.GetSize();
         if (sourceStartIndex < 0 || sourceCount < 0 || sourceStartIndex + sourceCount > source.Length)
         {

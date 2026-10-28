@@ -41,7 +41,7 @@ public sealed class VertexBuffer : GraphicsResource
         var gCHandle = GCHandle.Alloc(source, GCHandleType.Pinned);
         try
         {
-            var num = Utilities.SizeOf<T>();
+            var num = Marshal.SizeOf<T>();
             var vertexStride = VertexDeclaration.VertexStride;
             GLWrapper.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
             var data = gCHandle.AddrOfPinnedObject() + sourceStartIndex * num;
@@ -129,7 +129,7 @@ public sealed class VertexBuffer : GraphicsResource
     ) where T : struct
     {
         VerifyNotDisposed();
-        var num = Utilities.SizeOf<T>();
+        var num = Marshal.SizeOf<T>();
         var vertexStride = VertexDeclaration.VertexStride;
         if (sourceStartIndex < 0 || sourceCount < 0 || sourceStartIndex + sourceCount > source.Length)
         {

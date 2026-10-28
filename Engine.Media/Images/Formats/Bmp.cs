@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 
 using Engine.Core.Mathematics;
-using Engine.Core.Runtime;
 
 namespace Engine.Media.Images.Formats;
 
@@ -132,7 +131,8 @@ public static class Bmp
             structure.BitCount = 24;
         }
 
-        var array = Utilities.StructureToArray(structure);
+        var array = new byte[Marshal.SizeOf<BitmapHeader>()];
+        MemoryMarshal.Write(array, in structure);
         stream.Write(array, 0, array.Length);
         if (format == Format.RGBA8)
         {
@@ -185,7 +185,7 @@ public static class Bmp
         var array = new byte[54];
         stream.ReadExactly(array);
 
-        var result = Utilities.ArrayToStructure<BitmapHeader>(array);
+        var result = MemoryMarshal.Read<BitmapHeader>(array);
         if (result.Type1 != 66 || result.Type2 != 77)
         {
             throw new InvalidOperationException("Invalid BMP header.");

@@ -393,7 +393,8 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         }
 
         var renderTarget2D = RenderTarget;
-        Utilities.Dispose(ref renderTarget2D);
+        renderTarget2D?.Dispose();
+        renderTarget2D = null;
         Display.DeviceReset -= DisplayDeviceReset;
     }
 

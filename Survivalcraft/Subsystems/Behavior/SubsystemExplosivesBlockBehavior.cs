@@ -182,7 +182,8 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
 
     public override void Dispose()
     {
-        Utilities.Dispose(ref _fuseSound!);
+        _fuseSound?.Dispose();
+        _fuseSound = null!;
     }
 
     private void AddExplosive(Point3 point, float timeToExplosion, CharacterData? miner = null)

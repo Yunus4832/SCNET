@@ -43,7 +43,8 @@ public class TerrainSerializer24 : IDisposable
 
     public virtual void Dispose()
     {
-        Utilities.Dispose(ref storage!);
+        storage?.Dispose();
+        storage = null!;
     }
 
     /// <summary>

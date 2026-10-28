@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Xml.Linq;
 
-using Engine.Core.Text.Conversion;
+using Engine.Core.Serialization;
 
 using EntitySystem.XmlUtilities;
 

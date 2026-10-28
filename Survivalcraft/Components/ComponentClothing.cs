@@ -1,4 +1,4 @@
-using Engine.Core.Text.Conversion;
+using Engine.Core.Serialization;
 using Engine.Graphics;
 
 using EntitySystem.Core;
@@ -726,8 +726,10 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             {
                 _skinTexture = CharacterSkinsManager.LoadTexture(_componentCharacter.CharacterData.CharacterSkinName);
                 _skinTextureName = _componentCharacter.CharacterData.CharacterSkinName;
-                Utilities.Dispose(ref _innerClothedTexture);
-                Utilities.Dispose(ref _outerClothedTexture);
+                _innerClothedTexture?.Dispose();
+                _innerClothedTexture = null;
+                _outerClothedTexture?.Dispose();
+                _outerClothedTexture = null;
             }
             else
             {

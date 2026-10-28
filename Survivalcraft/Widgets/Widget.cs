@@ -1,7 +1,7 @@
 using System.Xml.Linq;
 
 using Engine.Core.Reflection;
-using Engine.Core.Text.Conversion;
+using Engine.Core.Serialization;
 using Engine.Graphics;
 using Engine.Input;
 

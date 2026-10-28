@@ -146,14 +146,14 @@ public class RectangleWidget : Widget
 
                 if (FlipHorizontal)
                 {
-                    Utilities.Swap(ref zero.X, ref texCoord.X);
-                    Utilities.Swap(ref texCoord2.X, ref texCoord3.X);
+                    (zero.X, texCoord.X) = (texCoord.X, zero.X);
+                    (texCoord2.X, texCoord3.X) = (texCoord3.X, texCoord2.X);
                 }
 
                 if (FlipVertical)
                 {
-                    Utilities.Swap(ref zero.Y, ref texCoord2.Y);
-                    Utilities.Swap(ref texCoord.Y, ref texCoord3.Y);
+                    (zero.Y, texCoord2.Y) = (texCoord2.Y, zero.Y);
+                    (texCoord.Y, texCoord3.Y) = (texCoord3.Y, texCoord.Y);
                 }
 
                 texturedBatch2D.QueueQuad(

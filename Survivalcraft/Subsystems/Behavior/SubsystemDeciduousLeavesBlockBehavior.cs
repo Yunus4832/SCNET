@@ -70,7 +70,7 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
             }
         }
 
-        Utilities.Swap(ref _leafParticles, ref _tmpLeafParticles);
+        (_leafParticles, _tmpLeafParticles) = (_tmpLeafParticles, _leafParticles);
         _tmpLeafParticles.Clear();
     }
 

@@ -557,8 +557,10 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         }
 
         Display.DeviceReset -= DisplayDeviceReset;
-        Utilities.Dispose(ref _starsVertexBuffer);
-        Utilities.Dispose(ref _starsIndexBuffer);
+        _starsVertexBuffer?.Dispose();
+        _starsVertexBuffer = null;
+        _starsIndexBuffer?.Dispose();
+        _starsIndexBuffer = null;
         foreach (var value in _skyDomes.Values)
         {
             value.Dispose();
@@ -569,8 +571,10 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
 
     public void DisplayDeviceReset()
     {
-        Utilities.Dispose(ref _starsVertexBuffer);
-        Utilities.Dispose(ref _starsIndexBuffer);
+        _starsVertexBuffer?.Dispose();
+        _starsVertexBuffer = null;
+        _starsIndexBuffer?.Dispose();
+        _starsIndexBuffer = null;
         foreach (var value in _skyDomes.Values)
         {
             value.Dispose();
@@ -589,8 +593,10 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
 
         if (value.VertexBuffer == null || value.IndexBuffer == null)
         {
-            Utilities.Dispose(ref value.VertexBuffer);
-            Utilities.Dispose(ref value.IndexBuffer);
+            value.VertexBuffer?.Dispose();
+            value.VertexBuffer = null;
+            value.IndexBuffer?.Dispose();
+            value.IndexBuffer = null;
             value.VertexBuffer = new VertexBuffer(_skyVertexDeclaration, value.Vertices.Length);
             value.IndexBuffer = new IndexBuffer(IndexFormat.SixteenBits, value.Indices.Length);
             FillSkyIndexBuffer(value);
@@ -656,8 +662,10 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         var timeOfDay = SubsystemTimeOfDay.TimeOfDay;
         if (_starsVertexBuffer == null || _starsIndexBuffer == null)
         {
-            Utilities.Dispose(ref _starsVertexBuffer);
-            Utilities.Dispose(ref _starsIndexBuffer);
+            _starsVertexBuffer?.Dispose();
+            _starsVertexBuffer = null;
+            _starsIndexBuffer?.Dispose();
+            _starsIndexBuffer = null;
             _starsVertexBuffer = new VertexBuffer(_starsVertexDeclaration, 1000);
             _starsIndexBuffer = new IndexBuffer(IndexFormat.SixteenBits, 1500);
             FillStarsBuffers();
@@ -1210,8 +1218,10 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
 
         public void Dispose()
         {
-            Utilities.Dispose(ref VertexBuffer);
-            Utilities.Dispose(ref IndexBuffer);
+            VertexBuffer?.Dispose();
+            VertexBuffer = null;
+            IndexBuffer?.Dispose();
+            IndexBuffer = null;
         }
     }
 

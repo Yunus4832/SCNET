@@ -2,7 +2,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
-using Engine.Core.Text.Conversion;
+using Engine.Core.Serialization;
 
 namespace EntitySystem.XmlUtilities;
 

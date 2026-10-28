@@ -1,5 +1,6 @@
+using System.Runtime.InteropServices;
+
 using Engine.Core.Mathematics;
-using Engine.Core.Runtime;
 using Engine.Media.Images;
 
 using Silk.NET.OpenGLES;
@@ -164,7 +165,7 @@ public sealed class RenderTarget2D : Texture2D
     {
         VerifyNotDisposed();
         var size = ColorFormat.GetSize();
-        var num = Utilities.SizeOf<T>();
+        var num = Marshal.SizeOf<T>();
         if (num > size)
         {
             throw new InvalidOperationException("Target array element size can not greater than Pixel size");
