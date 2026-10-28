@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 
+using Engine.Network.Rendezvous;
+
 using Rendezvous.Protocol;
 
-namespace Engine.Network.Test;
+namespace Engine.Network.Test.Rendezvous;
 
 public sealed class RendezvousClientTest
 {

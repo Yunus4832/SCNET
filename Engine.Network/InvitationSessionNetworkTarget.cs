@@ -1,3 +1,5 @@
+using Engine.Network.Rendezvous;
+
 namespace Engine.Network;
 
 public sealed record InvitationSessionNetworkTarget : NetworkTarget

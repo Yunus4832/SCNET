@@ -1,4 +1,6 @@
-namespace Engine.Network.Test;
+using Engine.Network.Transport;
+
+namespace Engine.Network.Test.Transport;
 
 public sealed class NetworkNotificationQueueTest
 {

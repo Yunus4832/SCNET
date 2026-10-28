@@ -1,6 +1,6 @@
 using Rendezvous.Protocol;
 
-namespace Engine.Network;
+namespace Engine.Network.Rendezvous;
 
 /// <summary>Maintains an optional room registration without owning the game listener or its connections.</summary>
 public sealed class NetworkRoomRegistration : IAsyncDisposable

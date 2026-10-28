@@ -1,6 +1,8 @@
+using Engine.Network.Diagnostics;
+
 using LiteNetLib;
 
-namespace Engine.Network.Test;
+namespace Engine.Network.Test.Diagnostics;
 
 public sealed class LiteNetLoggingTest
 {

@@ -1,4 +1,4 @@
-namespace Engine.Network;
+namespace Engine.Network.Transport;
 
 /// <summary>Preserves notification order while reserving independent capacity for lifecycle events.</summary>
 internal sealed class NetworkNotificationQueue(int dataCapacity, int byteCapacity, int controlCapacity)

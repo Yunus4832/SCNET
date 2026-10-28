@@ -4,7 +4,7 @@ using System.Text.Json;
 
 using Rendezvous.Protocol;
 
-namespace Engine.Network;
+namespace Engine.Network.Rendezvous;
 
 /// <summary>Exchanges invitation credentials over the configured control endpoint.</summary>
 public sealed class RendezvousClient

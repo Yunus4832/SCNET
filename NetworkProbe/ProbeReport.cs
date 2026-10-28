@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 
 using Engine.Network;
+using Engine.Network.Rendezvous;
 
 namespace NetworkProbe;
 

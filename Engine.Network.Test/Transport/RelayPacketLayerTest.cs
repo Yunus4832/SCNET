@@ -1,9 +1,11 @@
 using System.Net;
 using System.Security.Cryptography;
 
+using Engine.Network.Transport;
+
 using Rendezvous.Protocol;
 
-namespace Engine.Network.Test;
+namespace Engine.Network.Test.Transport;
 
 public sealed class RelayPacketLayerTest
 {

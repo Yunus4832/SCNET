@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Xml.Linq;
 
 using Engine.Network;
+using Engine.Network.Rendezvous;
 
 using Game.Admission;
 using Game.Authentication;

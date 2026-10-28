@@ -1,6 +1,8 @@
+using Engine.Network.Rendezvous;
+
 using Rendezvous.Protocol;
 
-namespace Engine.Network.Test;
+namespace Engine.Network.Test.Rendezvous;
 
 public sealed class NetworkRoomRegistrationTest
 {

@@ -1,4 +1,4 @@
-namespace Engine.Network;
+namespace Engine.Network.Rendezvous;
 
 public enum RendezvousFailureKind
 {

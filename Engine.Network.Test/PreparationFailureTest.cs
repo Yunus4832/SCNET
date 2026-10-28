@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 
+using Engine.Network.Rendezvous;
+
 using Rendezvous.Protocol;
 
 namespace Engine.Network.Test;

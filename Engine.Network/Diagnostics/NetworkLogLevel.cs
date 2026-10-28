@@ -1,4 +1,4 @@
-namespace Engine.Network;
+namespace Engine.Network.Diagnostics;
 
 public enum NetworkLogLevel
 {

@@ -2,11 +2,13 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Security.Cryptography;
 
+using Engine.Network.Diagnostics;
+
 using LiteNetLib.Layers;
 
 using Rendezvous.Protocol;
 
-namespace Engine.Network;
+namespace Engine.Network.Transport;
 
 /// <summary>Wraps only assigned relay endpoints; ordinary transport packets remain unchanged.</summary>
 internal sealed class RelayPacketLayer() : PacketLayerBase(RelayDatagramCodec.Overhead)

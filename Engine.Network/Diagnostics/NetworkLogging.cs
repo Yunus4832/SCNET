@@ -1,6 +1,6 @@
 using LiteNetLib;
 
-namespace Engine.Network;
+namespace Engine.Network.Diagnostics;
 
 /// <summary>Configures the process-wide transport log output independently of host lifetimes.</summary>
 public static class NetworkLogging

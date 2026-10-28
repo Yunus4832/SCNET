@@ -1,8 +1,10 @@
 using System.Net;
 
+using Engine.Network.Transport;
+
 using Rendezvous.Protocol;
 
-namespace Engine.Network.Test;
+namespace Engine.Network.Test.Transport;
 
 public sealed class CandidateProbeTest
 {

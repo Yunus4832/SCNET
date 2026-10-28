@@ -6,6 +6,20 @@
 业务通过 Engine 类型访问网络；LiteNetLib 由模块内部使用。
 游戏协议、玩家权限、世界、模组配置和 UI 由调用方负责。
 
+## 代码组织
+
+| 名称空间 | 职责 |
+| --- | --- |
+| `Engine.Network` | 宿主、连接、连接准备、逻辑目标、数据报及投递契约 |
+| `Engine.Network.Security` | 传输身份、DTLS 会话和安全数据报封装 |
+| `Engine.Network.Rendezvous` | 信令客户端、服务地址、房间注册及信令失败分类 |
+| `Engine.Network.Transport` | 内部候选探测、路径竞争、中继封装、投递跟踪及通知队列 |
+| `Engine.Network.Diagnostics` | 日志接入、LiteNetLib 日志适配及传输诊断事件 |
+
+`Transport` 中的类型是内部实现，调用方继续通过根名称空间的宿主和连接接口操作。
+使用信令服务或配置网络日志时，分别导入 `Engine.Network.Rendezvous` 或
+`Engine.Network.Diagnostics`。
+
 ## 默认安全传输
 
 连接流量在 LiteNetLib 数据报外使用 Bouncy Castle 2.7.0 DTLS 1.2，固定 ECDHE-ECDSA / ChaCha20-Poly1305，

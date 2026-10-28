@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 
 using LiteNetLib;
 
-namespace Engine.Network;
+namespace Engine.Network.Diagnostics;
 
 internal sealed class LiteNetLog(Action<NetworkLogLevel, string> write, TimeProvider? clock = null) : INetLogger
 {

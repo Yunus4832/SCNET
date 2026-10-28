@@ -1,6 +1,8 @@
 using System.Net.Sockets;
 
-namespace Engine.Network;
+using Engine.Network.Rendezvous;
+
+namespace Engine.Network.Transport;
 
 /// <summary>Selects a confirmed candidate only after all losing preparations have ended.</summary>
 internal static class CandidatePreparationRace

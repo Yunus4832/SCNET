@@ -1,4 +1,4 @@
-namespace Engine.Network;
+namespace Engine.Network.Transport;
 
 internal sealed class PendingDelivery(int bytes, DeliveryReceipt? receipt)
 {

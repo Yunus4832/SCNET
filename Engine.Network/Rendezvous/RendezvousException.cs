@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace Engine.Network;
+namespace Engine.Network.Rendezvous;
 
 public sealed class RendezvousException(
     string operation,

@@ -1,6 +1,6 @@
 using System.Diagnostics.Tracing;
 
-namespace Engine.Network;
+namespace Engine.Network.Diagnostics;
 
 /// <summary>Optional transport diagnostics; never emits credentials or packet contents.</summary>
 [EventSource(Name = "SCNET-Engine-Network")]

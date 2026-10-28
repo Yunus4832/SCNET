@@ -2,7 +2,7 @@ using System.Net;
 
 using Rendezvous.Protocol;
 
-namespace Engine.Network;
+namespace Engine.Network.Transport;
 
 internal sealed class CandidateProbe(SignalMessage candidate, IPEndPoint[] endpoints)
 {
