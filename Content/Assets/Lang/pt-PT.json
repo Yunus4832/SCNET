@@ -4377,9 +4377,9 @@
     },
     "CharacterData": {
         "1": "Os dados do jogador não podem ser alterados enquanto os dados do jogador estão presentes.",
-        "2": "Renascer no mundo de {0} (nível {1})",
+        "2": "A renascer a personagem {0} (Nível {1})",
         "3": "Seus itens permanecerão por algum tempo após sua morte.",
-        "4": "Gera o mundo de {0} (nível {1})",
+        "4": "A criar a personagem {0} (Nível {1})",
         "5": "Modo de construção inválido",
         "6": "Você está morto!",
         "7": "{0} (em inglês)\n\nNão pode renascer no modo '{1}'",
@@ -4389,7 +4389,7 @@
         "11": "Não há visão de jogador correspondente",
         "12": "Desconhecido",
         "13": "Causa da morte: {0}",
-        "14": "A ligar ao mundo de {0} (Nível {1})",
+        "14": "A entrar no mundo com a personagem {0} (Nível {1})",
         "15": "A aguardar a entidade da personagem enviada pelo servidor",
         "16": "Morreste no modo Cruel e não podes renascer.",
         "17": "O servidor desativou o reaparecimento de personagens!"

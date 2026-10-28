@@ -130,8 +130,8 @@ public static class DebugOverlayManager
             }
         }
 
-        var player = GetLocalCharacter();
-        if (player?.ComponentGui.ModalPanelWidget is { } panel)
+        var character = GetLocalCharacter();
+        if (character?.ComponentGui.ModalPanelWidget is { } panel)
         {
             lines.Add($"HUD Panel   {panel.GetType().Name}");
         }
@@ -238,7 +238,7 @@ public static class DebugOverlayManager
 
     private static string BuildWorldText()
     {
-        if (GameManager.Project is not { } project || GetLocalCharacter() is not { } player)
+        if (GameManager.Project is not { } project || GetLocalCharacter() is not { } character)
         {
             return string.Empty;
         }
@@ -251,7 +251,7 @@ public static class DebugOverlayManager
             return string.Empty;
         }
 
-        var position = player.ComponentBody.Position;
+        var position = character.ComponentBody.Position;
         var cell = new Point3(Terrain.ToCell(position.X), Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
         var chunk = Terrain.ToChunk(cell.X, cell.Z);
         var terrain = subsystemTerrain.Terrain;
@@ -263,8 +263,8 @@ public static class DebugOverlayManager
 
         return string.Join(
             '\n',
-            "PLAYER",
-            $"Name        {player.CharacterData.Name}",
+            "CHARACTER",
+            $"Name        {character.CharacterData.Name}",
             $"Position    {position.X:0.00}, {position.Y:0.00}, {position.Z:0.00}",
             $"Cell        {cell.X}, {cell.Y}, {cell.Z}",
             $"Chunk       {chunk.X}, {chunk.Y}",

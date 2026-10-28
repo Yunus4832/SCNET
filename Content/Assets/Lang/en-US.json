@@ -4377,9 +4377,9 @@
     },
     "CharacterData": {
         "1": "Cannot change player class when player data already exists.",
-        "2": "Respawning {0} (Level {1})",
+        "2": "Respawning character {0} (Level {1})",
         "3": "Your items will remain for a short time at the place of death.",
-        "4": "Spawning {0} (Level {1})",
+        "4": "Spawning character {0} (Level {1})",
         "5": "Invalid spawn mode.",
         "6": "YOU HAVE DIED",
         "7": "{0}\n\nCannot respawn in \"{1}\" game mode",
@@ -4389,7 +4389,7 @@
         "11": "No GameWidget found for player.",
         "12": "Unknown",
         "13": "Cause of death: {0}",
-        "14": "Connecting to {0}'s world (Level {1})",
+        "14": "Entering the world as character {0} (Level {1})",
         "15": "Waiting for the server to provide the character entity",
         "16": "You died in Cruel mode and cannot respawn.",
         "17": "Character respawning is disabled by the server!"

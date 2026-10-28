@@ -259,7 +259,7 @@ public partial class CharacterData : IDisposable
                 if (_spawnMode == SpawnMode.Respawn)
                 {
                     ShowSpawnDialog(
-                        CommonLib.WorkType != WorkType.Client
+                        _respawnAfterDeath
                             ? string.Format(LanguageManager.Get(TypeName, 2), Name, MathUtils.Floor(Level))
                             : string.Format(LanguageManager.Get(TypeName, 14), Name, MathUtils.Floor(Level)),
                         // 死亡物品提示只在真正死亡重生时显示；进入世界/客户端连接
