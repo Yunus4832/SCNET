@@ -3,7 +3,6 @@ using System.Xml.Linq;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Admission;
-using Game.Managers;
 
 namespace Game.Screens;
 

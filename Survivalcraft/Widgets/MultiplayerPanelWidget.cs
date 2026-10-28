@@ -1,6 +1,5 @@
 using System.Xml.Linq;
 
-using Game.Characters;
 using Game.Commands;
 using Game.Network;
 

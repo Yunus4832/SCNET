@@ -1,10 +1,8 @@
 using Engine.Graphics;
 using Engine.Network;
 
-using Game.Characters;
 using Game.Controls;
 using Game.Network.Chunks;
-using Game.Rendering;
 
 namespace Game.Configuration;
 

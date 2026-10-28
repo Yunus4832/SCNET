@@ -1,5 +1,3 @@
-using Game.Characters;
-
 namespace Game.Widgets;
 
 /// <summary>

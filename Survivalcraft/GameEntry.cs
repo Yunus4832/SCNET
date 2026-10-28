@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 
 using Engine.Graphics;
 using Engine.Input;
-using Engine.Network;
 using Engine.Network.Diagnostics;
 
 using Game.Automation;
