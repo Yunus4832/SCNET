@@ -11,7 +11,9 @@ public class MainMenuScreen : Screen
 {
     private readonly VerticalTabMenuWidget _mainMenuTabs;
 
-    private readonly RectangleWidget _logo;
+    private readonly CanvasWidget _logo;
+
+    private readonly ClickableWidget _logoClickable;
 
     private readonly RectangleWidget _musicButtonIcon;
 
@@ -42,7 +44,8 @@ public class MainMenuScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/MainMenuScreen");
         LoadContents(this, node);
         _mainMenuTabs = Children.Find<VerticalTabMenuWidget>("MainMenuTabs")!;
-        _logo = Children.Find<RectangleWidget>("Logo")!;
+        _logo = Children.Find<CanvasWidget>("Logo")!;
+        _logoClickable = Children.Find<ClickableWidget>("Logo.Clickable")!;
         _musicButtonIcon = Children.Find<RectangleWidget>("MusicButton.Icon")!;
         _musicButtonClickable = Children.Find<ClickableWidget>("MusicButton.Clickable")!;
         _announcementTicker = Children.Find<CanvasWidget>("AnnouncementTicker")!;
@@ -137,8 +140,8 @@ public class MainMenuScreen : Screen
             )
         );
         _mainMenuTabs.AddNavigationTab(
-            "Textures/Atlas/Instance",
-            () => ScreensManager.SwitchScreen("InstanceManagement")
+            "Textures/Atlas/Identity",
+            () => ScreensManager.SwitchScreen("SettingsIdentity")
         );
         _mainMenuTabs.AddTab(
             new VerticalTabMenu(
@@ -291,6 +294,11 @@ public class MainMenuScreen : Screen
         UpdateMusicButton();
         UpdateLogoAnimation();
         UpdateAnnouncementTickerAnimation();
+
+        if (_logoClickable.IsClicked)
+        {
+            ScreensManager.SwitchScreen("InstanceManagement");
+        }
 
         // 处理按钮点击事件
         if (Children.Find<ButtonWidget>("Play")!.IsClicked)

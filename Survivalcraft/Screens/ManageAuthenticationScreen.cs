@@ -71,7 +71,8 @@ public sealed class ManageAuthenticationScreen : Screen
     public ManageAuthenticationScreen(AuthenticationManager manager, Func<string>? currentSubject = null)
     {
         _manager = manager;
-        _currentSubject = currentSubject ?? (() => LocalIdentityManager.Current.GetAddress(IdentityPurpose.Player)!);
+        _currentSubject = currentSubject ??
+                          (() => LocalIdentityManager.Current.GetSelectedAddress(IdentityPurpose.Player)!);
         LoadContents(this, ContentManager.Get<XElement>("Screens/ManageAuthenticationScreen"));
         _actions = Children.Find<ActionPanelWidget>("Actions")!;
         _list = Children.Find<ListPanelWidget>("Services")!;

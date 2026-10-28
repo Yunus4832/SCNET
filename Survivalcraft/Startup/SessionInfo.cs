@@ -24,6 +24,8 @@ public sealed class SessionInfo
 
     public NetworkTarget? RemoteTarget { get; set; }
 
+    public string? ServerIdentityAddress { get; set; }
+
     public int ServerPort { get; set; }
 
     public int BroadcastPort { get; set; }

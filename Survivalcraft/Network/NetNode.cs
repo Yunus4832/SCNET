@@ -1,6 +1,7 @@
 using System.Net;
 
 using Engine.Network;
+using Engine.Network.Security;
 
 using EntitySystem.Core;
 
@@ -156,7 +157,11 @@ public class NetNode
 
     internal SessionInfo? ActiveHostSession { get; set; }
 
-    internal void BeginLocalAdmission(string worldDirectory, ServerAdmissionConfiguration configuration)
+    internal void BeginLocalAdmission(
+        string worldDirectory,
+        ServerAdmissionPolicy configuration,
+        string? serverAddress = null
+    )
     {
         if (_host is not null)
         {
@@ -165,7 +170,7 @@ public class NetNode
 
         StartLocal();
         using var player = LocalIdentityManager.Current.OpenPlayerIdentity();
-        using var server = LocalIdentityManager.Current.OpenServerIdentity();
+        using var server = LocalIdentityManager.Current.OpenServerIdentity(serverAddress);
         _isStopping = false;
         _localAdmission = new LocalHostAdmissionSession(
             worldDirectory,
@@ -763,9 +768,8 @@ public class NetNode
         AddClient(Self);
     }
 
-    private NetworkHost CreateHost(int port)
+    private NetworkHost CreateHost(int port, NetworkIdentity identity)
     {
-        using var identity = LocalIdentityManager.Current.OpenServerIdentity();
         var host = new NetworkHost(
             port,
             new NetworkHostOptions
@@ -799,7 +803,8 @@ public class NetNode
         int? broadcastPort,
         int maxParticipants,
         P2PRoomSettings room,
-        ServerAdmissionConfiguration? policyOverride = null
+        ServerAdmissionPolicy? policyOverride = null,
+        string? serverAddress = null
     )
     {
         if (_host is not null)
@@ -813,8 +818,8 @@ public class NetNode
             var project = GameManager.Project ??
                           throw new InvalidOperationException("Load the admitted world before starting its listener.");
             var policy = policyOverride ??
-                         ServerAdmissionConfiguration.Load(project.ExtensionData.Get("game", "admission"));
-            using (var identity = LocalIdentityManager.Current.OpenServerIdentity())
+                         ServerAdmissionPolicy.Load(project.ExtensionData.Get("game", "admission"));
+            using (var identity = LocalIdentityManager.Current.OpenServerIdentity(serverAddress))
             {
                 if (RunMode.Value == RunModeType.Gui &&
                     policy.Mode != ServerAdmissionMode.Open &&
@@ -841,10 +846,10 @@ public class NetNode
                     policy,
                     identity.PublicIdentity.Address
                 );
+                _host = CreateHost(port, identity);
             }
 
             _localAdmission = null;
-            _host = CreateHost(port);
             if (broadcastPort.HasValue)
             {
                 _broadcastHost = new NetworkHost(
@@ -858,6 +863,7 @@ public class NetNode
             }
 
             Log.Information($"开启服务器成功，端口 {_host.LocalPort}");
+            Log.Information($"Server identity: {_host.LocalIdentity.Address}");
             Window.Frame += Update;
             Window.Closed += StopImmediate;
             CurrentStage = Stage.Connected;

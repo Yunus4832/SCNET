@@ -7,8 +7,11 @@
         <CanvasWidget Size="0, Infinity"/>
 
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
-            <RectangleWidget Name="Logo" Size="800, 100" OutlineColor="0, 0, 0, 0" HorizontalAlignment="Center"
-                             FillColor="255, 255, 255" Margin="0, 0" Subtexture="{Textures/Branding/MainLogo}"/>
+            <CanvasWidget Name="Logo" Size="800, 100" HorizontalAlignment="Center">
+                <RectangleWidget Name="Logo.Icon" OutlineColor="0, 0, 0, 0"
+                                 FillColor="255, 255, 255" Subtexture="{Textures/Branding/MainLogo}"/>
+                <ClickableWidget Name="Logo.Clickable" SoundName="Audio/UI/ButtonClick"/>
+            </CanvasWidget>
             <CanvasWidget Size="0, 5"/>
             <CanvasWidget Size="800, 30" HorizontalAlignment="Center">
                 <LabelWidget Name="Version" FontScale="0.5" HorizontalAlignment="Center"

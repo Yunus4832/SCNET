@@ -425,7 +425,7 @@ public static class WorldsManager
     public static WorldInfo CreateWorld(
         WorldSettings worldSettings,
         string customWorldDirectoryName = "",
-        Admission.ServerAdmissionConfiguration? admission = null
+        Admission.ServerAdmissionPolicy? admission = null
     )
     {
         string unusedWorldDirectoryName;
@@ -470,7 +470,7 @@ public static class WorldsManager
         projectData.Save(projectNode);
         if (admission is not null)
         {
-            Admission.ServerAdmissionConfiguration.ApplyWorldXml(projectNode, admission);
+            WorldsManager.WriteAdmissionPolicy(projectNode, admission);
         }
 
         projectNode.Add(BlockIndexMapping.Empty.ToXml());
@@ -538,7 +538,7 @@ public static class WorldsManager
     public static void ChangeWorld(
         string directoryName,
         WorldSettings worldSettings,
-        Admission.ServerAdmissionConfiguration? admission = null
+        Admission.ServerAdmissionPolicy? admission = null
     )
     {
         var xmlFile = Storage.CombinePaths(directoryName, "Project.xml");
@@ -563,7 +563,7 @@ public static class WorldsManager
 
         if (admission is not null)
         {
-            Admission.ServerAdmissionConfiguration.ApplyWorldXml(projectNode, admission);
+            WorldsManager.WriteAdmissionPolicy(projectNode, admission);
         }
 
         SaveWorldMetadata(xmlFile, projectNode);
@@ -815,5 +815,42 @@ public static class WorldsManager
         {
             return false;
         }
+    }
+
+    public static Admission.ServerAdmissionPolicy ReadAdmissionPolicy(string directory)
+    {
+        using var stream = Storage.OpenFile(Storage.CombinePaths(directory, "Project.xml"), OpenFileMode.Read);
+        var root = System.Xml.Linq.XElement.Load(stream);
+        var node = root.Element("ExtensionData")?.Elements("Values")
+            .SingleOrDefault(value => (string?)value.Attribute("Name") == "game")?
+            .Elements("Values").SingleOrDefault(value => (string?)value.Attribute("Name") == "admission");
+        var data = new ValuesDictionary();
+        if (node is not null) { data.ApplyOverrides(node); }
+
+        return Admission.ServerAdmissionPolicy.Load(data);
+    }
+
+    internal static void WriteAdmissionPolicy(System.Xml.Linq.XElement root, Admission.ServerAdmissionPolicy policy)
+    {
+        var extension = root.Element("ExtensionData");
+        if (extension is null)
+        {
+            extension = new System.Xml.Linq.XElement("ExtensionData");
+            root.Add(extension);
+        }
+
+        var game = extension.Elements("Values").SingleOrDefault(value => (string?)value.Attribute("Name") == "game");
+        if (game is null)
+        {
+            game = new System.Xml.Linq.XElement("Values", new System.Xml.Linq.XAttribute("Name", "game"));
+            extension.Add(game);
+        }
+
+        var previous = game.Elements("Values")
+            .SingleOrDefault(value => (string?)value.Attribute("Name") == "admission");
+        var admission = new System.Xml.Linq.XElement("Values", new System.Xml.Linq.XAttribute("Name", "admission"));
+        policy.Save().Save(admission);
+        if (previous is not null) { previous.ReplaceWith(admission); }
+        else { game.Add(admission); }
     }
 }

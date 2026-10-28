@@ -87,6 +87,14 @@ Starter 统一通过 `PlatformManager` 注册平台能力，避免直接操作�
 运行时亮度调整通过 `SettingsManager.SetBrightness` 完成钳制、变更判断和通知。
 `AppConfigManager` 管理 `Settings.xml` 中的扩展字符串配置。
 
+身份持久化数据为 `Game.Identity.LocalIdentitySettings` 与 `StoredLocalIdentity`，后者包含私钥，
+不用于 UI 或诊断输出。`LocalIdentityManager` 负责创建、默认选择、重命名、删除、备份恢复及事务保存，
+向界面提供不含私钥的 `LocalIdentityEntry` 快照。保存回调可以注入，配置数据本身不执行操作。
+准入的 `ServerAdmissionPolicy` 是不可变运行时策略，`ServerAdmissionOverrides` 是可恢复的覆盖数据；
+`ServerAdmissionManager` 校验、合并和解析策略，`WorldsManager` 读写世界的准入扩展，
+`AdmissionAttempt` 构造连接挑战。启动解析只读取参数及环境输入，不读取密码文件或访问认证服务。
+
+
 | 模块 | 负责的类型与边界 |
 |---|---|
 | `Startup` / `Configuration` / `Platforms` | 启动请求及会话、实例设置、平台类别识别；不保存游戏角色状态 |

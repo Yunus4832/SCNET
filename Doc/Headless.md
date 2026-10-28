@@ -54,6 +54,7 @@ Android 同样通过 `RunningSettingManager` 选择 GUI 或 Headless。正常应
 ## 常用参数
 
 - `--instance <实例名>`: 选择或创建 `Instances/<实例名>` 数据实例；省略时由 `Starter.xml` 选择
+- `--server-identity <完整身份标识>`：使用所选实例中已有的服务器身份，覆盖 session 和存档选择；未指定时依次使用 session、存档选择和实例默认。使用 `--save` 可保存到命名会话，不接收私钥参数。
 - `--server-port <端口>`: 仅覆盖本次运行的游戏端口
 - `--broadcast-port <端口>`: 仅覆盖本次运行的广播端口
 - `--no-broadcast`: 禁用当前会话的局域网发现广播，容器部署默认使用

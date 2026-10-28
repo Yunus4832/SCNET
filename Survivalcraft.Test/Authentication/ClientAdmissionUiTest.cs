@@ -243,7 +243,7 @@ public sealed class ClientAdmissionUiTest
             var ui = new ClientAdmissionUi(Node, new Screen(), Scope, temporary);
             var local = new LocalHostAdmissionSession(
                 "fixture-world",
-                ServerAdmissionConfiguration.WithAuthority(endpoint),
+                ServerAdmissionPolicy.WithAuthority(endpoint),
                 subject,
                 server,
                 now

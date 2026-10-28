@@ -41,16 +41,14 @@ public sealed class WorldMetadataPersistenceTest
                 new XElement("ExtensionData", extension)
             );
             root.Save(Path.Combine(directory, "Project.xml"));
-            var policy = ServerAdmissionConfiguration.WithPassword("fixture-password");
+            var policy = ServerAdmissionPolicy.WithPassword("fixture-password");
             settings.Name = "Updated";
             WorldsManager.ChangeWorld("system:" + directory, settings, policy);
             var saved = XElement.Load(Path.Combine(directory, "Project.xml"));
             var savedInfo = new ValuesDictionary();
             savedInfo.ApplyOverrides(saved.Element("Subsystems")!.Element("Values")!);
             Assert.Equal("Updated", savedInfo.GetValue<string>("WorldName"));
-            Assert.True(
-                ServerAdmissionConfiguration.ReadWorld("system:" + directory).VerifyPassword("fixture-password")
-            );
+            Assert.True(WorldsManager.ReadAdmissionPolicy("system:" + directory).VerifyPassword("fixture-password"));
             Assert.True(
                 XNode.DeepEquals(
                     extension,

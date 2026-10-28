@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Admission;
+using Game.Managers;
 
 namespace Game.Screens;
 
@@ -77,7 +78,7 @@ public class ModifyWorldScreen : Screen
         if (!isReturningFromServerSettings)
         {
             _admission = new WorldAdmissionDraft
-                { Configuration = ServerAdmissionConfiguration.ReadWorld(_directoryName) };
+                { Configuration = WorldsManager.ReadAdmissionPolicy(_directoryName) };
             _originalAdmission = _admission.Configuration.Fingerprint();
             _originalWorldSettingsData.Clear();
             WorldSettings.Save(_originalWorldSettingsData, true);

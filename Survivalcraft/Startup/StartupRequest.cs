@@ -26,6 +26,8 @@ public sealed class StartupRequest
 
     public bool ForceWorldRunServer { get; set; }
 
+    public string? ServerIdentityAddress { get; set; }
+
     public int? ServerPort { get; set; }
 
     public int? BroadcastPort { get; set; }

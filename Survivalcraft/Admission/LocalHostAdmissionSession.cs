@@ -3,7 +3,7 @@ namespace Game.Admission;
 /// <summary>Trusted in-process admission uses the same policy; no UDP or world/player creation is involved.</summary>
 internal sealed class LocalHostAdmissionSession(
     string worldDirectory,
-    ServerAdmissionConfiguration configuration,
+    ServerAdmissionPolicy configuration,
     string subject,
     string server,
     DateTimeOffset now
@@ -66,7 +66,7 @@ internal sealed class LocalHostAdmissionSession(
 
     internal bool Authorizes(
         string directory,
-        ServerAdmissionConfiguration policy,
+        ServerAdmissionPolicy policy,
         string player,
         string serverIdentity,
         DateTimeOffset timestamp

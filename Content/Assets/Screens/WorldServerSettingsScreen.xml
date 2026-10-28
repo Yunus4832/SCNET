@@ -29,8 +29,16 @@
 
                         <StackPanelWidget Name="ServerOptions" Direction="Vertical" IsEnabled="false">
                             <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
+                                <ClickableTextRowWidget Text="[WorldServerSettingsScreen:ServerIdentity]" HorizontalAlignment="Far" VerticalAlignment="Center" TextHorizontalAlignment="Far" Margin="20, 0"/>
+                                <BevelledButtonWidget Name="ServerIdentity" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0"/>
+                            </UniformSpacingPanelWidget>
+                            <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
                                 <ClickableTextRowWidget Text="[ServerAdmission:Title]" HorizontalAlignment="Far" VerticalAlignment="Center" TextHorizontalAlignment="Far" Margin="20, 0"/>
                                 <BevelledButtonWidget Name="Admission" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0"/>
+                            </UniformSpacingPanelWidget>
+                            <UniformSpacingPanelWidget Name="AuthenticationServiceRow" Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3" IsVisible="false">
+                                <ClickableTextRowWidget Text="[WorldServerSettingsScreen:AuthenticationService]" HorizontalAlignment="Far" VerticalAlignment="Center" TextHorizontalAlignment="Far" Margin="20, 0"/>
+                                <BevelledButtonWidget Name="AuthenticationService" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0"/>
                             </UniformSpacingPanelWidget>
                             <LabelWidget Name="AdmissionSummary" Size="600, -1" FontScale="0.55" WordWrap="true" HorizontalAlignment="Far" Margin="20, 3"/>
 

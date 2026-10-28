@@ -77,9 +77,9 @@ public sealed class AdmissionTransportTest
             using var provider = ECDsa.Create(ECCurve.NamedCurves.nistP256);
             var policy = mode switch
             {
-                ServerAdmissionMode.Open => ServerAdmissionConfiguration.Open,
-                ServerAdmissionMode.Password => ServerAdmissionConfiguration.WithPassword("transport-test-password"),
-                _ => ServerAdmissionConfiguration.WithAuthority(
+                ServerAdmissionMode.Open => ServerAdmissionPolicy.Open,
+                ServerAdmissionMode.Password => ServerAdmissionPolicy.WithPassword("transport-test-password"),
+                _ => ServerAdmissionPolicy.WithAuthority(
                     new AuthenticationServiceEndpoint(
                         new AuthenticationServiceDescription(
                             AuthenticationProtocol.Version,

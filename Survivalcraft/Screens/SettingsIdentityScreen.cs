@@ -2,22 +2,46 @@ using System.Security.Cryptography;
 using System.Xml.Linq;
 
 using Game.Identity;
+using Game.Managers;
 
 namespace Game.Screens;
 
 public sealed class SettingsIdentityScreen : Screen
 {
-    private readonly SelectionDrawerWidget _purpose;
+    private enum IdentityAction
+    {
+        Use = 0,
 
-    private readonly LabelWidget _address;
+        Create = 1,
+
+        Import = 2,
+
+        Export = 3,
+
+        Rename = 4,
+
+        Details = 5,
+
+        Delete = 6,
+
+        ForgetPasswords = 7
+    }
+
+    private readonly LocalIdentityManager _identities;
+
+    private readonly AuthenticationManager _authentication;
+
+    private readonly ButtonWidget _playerTab;
+
+    private readonly ButtonWidget _serverTab;
+
+    private readonly ListPanelWidget _list;
+
+    private readonly ActionPanelWidget _actions;
 
     private readonly LabelWidget _hint;
 
-    private readonly ButtonWidget _copy;
-
-    private readonly ButtonWidget _export;
-
-    private readonly ButtonWidget _import;
+    private IdentityPurpose _purpose = IdentityPurpose.Player;
 
     private bool _busy;
 
@@ -29,28 +53,46 @@ public sealed class SettingsIdentityScreen : Screen
 
     private PasswordDialog? _passwordDialog;
 
-    public SettingsIdentityScreen()
+    public SettingsIdentityScreen() : this(LocalIdentityManager.Current, AuthenticationManager.Current)
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/SettingsIdentityScreen"));
-        _purpose = Children.Find<SelectionDrawerWidget>("Purpose")!;
-        _address = Children.Find<LabelWidget>("Address")!;
-        _hint = Children.Find<LabelWidget>("Hint")!;
-        _copy = Children.Find<ButtonWidget>("Copy")!;
-        _export = Children.Find<ButtonWidget>("Export")!;
-        _import = Children.Find<ButtonWidget>("Import")!;
-        _purpose.ItemTextProvider = item => Text(item is IdentityPurpose.Player ? "Player" : "Server");
-        _purpose.SetItems([IdentityPurpose.Player, IdentityPurpose.Server]);
-        _purpose.SelectedItem = IdentityPurpose.Player;
     }
 
-    private IdentityPurpose Purpose => (IdentityPurpose)_purpose.SelectedItem!;
+    public SettingsIdentityScreen(LocalIdentityManager identities, AuthenticationManager authentication)
+    {
+        _identities = identities;
+        _authentication = authentication;
+        LoadContents(this, ContentManager.Get<XElement>("Screens/SettingsIdentityScreen"));
+        _playerTab = Children.Find<ButtonWidget>("PlayerTab")!;
+        _serverTab = Children.Find<ButtonWidget>("ServerTab")!;
+        _list = Children.Find<ListPanelWidget>("Identities")!;
+        _actions = Children.Find<ActionPanelWidget>("Actions")!;
+        _hint = Children.Find<LabelWidget>("Hint")!;
+        _list.ItemWidgetFactory = CreateIdentityRow;
+        _actions.ItemTextProvider = item => Text(item.ToString()!);
+        _actions.ItemEnabledProvider = IsActionEnabled;
+        _actions.ItemColorProvider = item => item is IdentityAction.Delete ? new Color(150, 50, 35) :
+            item is IdentityAction.Use ? new Color(45, 110, 60) : null;
+        _actions.ItemClicked += ExecuteAction;
+        _actions.SetPrimaryItems(
+            [IdentityAction.Use, IdentityAction.Create, IdentityAction.Import, IdentityAction.Export]
+        );
+        _actions.SetSecondaryItems(
+            [IdentityAction.Rename, IdentityAction.Details, IdentityAction.Delete, IdentityAction.ForgetPasswords]
+        );
+        RefreshIdentities();
+    }
+
+    private IdentityPurpose Purpose => _purpose;
+
+    private LocalIdentityEntry? Selected => _list.SelectedItem as LocalIdentityEntry;
 
     private static string Text(string key) => LanguageManager.GetContentWidgets(nameof(SettingsIdentityScreen), key);
 
     public override void Enter(object[] parameters)
     {
         _generation++;
-        Refresh();
+        _actions.ShowPrimaryItems();
+        RefreshIdentities();
     }
 
     public override void Leave()
@@ -67,60 +109,201 @@ public sealed class SettingsIdentityScreen : Screen
         Refresh();
         if (_busy) { return; }
 
-        if (_copy.IsClicked)
-        {
-            ClipboardManager.ClipboardString = LocalIdentityManager.Current.GetAddress(Purpose) ?? string.Empty;
-        }
+        if (_playerTab.IsClicked) { SelectTab(IdentityPurpose.Player); }
 
-        if (Children.Find<ButtonWidget>("Details")!.IsClicked)
-        {
-            DialogsManager.Alert(LocalIdentityManager.Current.GetAddress(Purpose) ?? Text("NotCreated"));
-        }
-
-        var forget = Children.Find<ButtonWidget>("ForgetPasswords")!;
-        forget.IsEnabled = AuthenticationManager.Current.ServerCredentials.Count > 0;
-        if (forget.IsClicked)
-        {
-            DialogsManager.ShowDialog(
-                this,
-                new MessageDialog(
-                    Text("ForgetPasswords"),
-                    Text("ForgetPasswordsConfirm"),
-                    LanguageManager.Get("Usual", "ok"),
-                    LanguageManager.Get("Usual", "cancel"),
-                    button =>
-                    {
-                        if (button != MessageDialogButton.Button1) { return; }
-
-                        try { AuthenticationManager.Current.ServerCredentials.Clear(); }
-                        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-                        {
-                            DialogsManager.Alert(Text("ForgetPasswordsFailed"));
-                        }
-                    }
-                )
-            );
-        }
-
-        if (_export.IsClicked) { BeginExport(); }
-
-        if (_import.IsClicked) { BeginImport(); }
+        if (_serverTab.IsClicked) { SelectTab(IdentityPurpose.Server); }
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            ScreensManager.SwitchScreen("Settings");
+            ScreensManager.SwitchScreen("MainMenu");
         }
+    }
+
+    private void SelectTab(IdentityPurpose purpose)
+    {
+        _purpose = purpose;
+        _list.SelectedItem = null;
+        _actions.ShowPrimaryItems();
+        RefreshIdentities();
+    }
+
+    private Widget CreateIdentityRow(object item)
+    {
+        var identity = (LocalIdentityEntry)item;
+        var row = (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/IdentityItem"), null);
+        row.Children.Find<LabelWidget>("Name")!.Text = IdentityName(identity);
+        row.Children.Find<LabelWidget>("Address")!.Text = IdentityAddressDisplay.Abbreviate(identity.Address);
+        row.Children.Find<LabelWidget>("Current")!.Text = identity.Address == _identities.GetSelectedAddress(Purpose)
+            ? Text("Current")
+            : string.Empty;
+        return row;
+    }
+
+    private static string IdentityName(LocalIdentityEntry identity) => identity.Name.Length > 0
+        ? identity.Name
+        : Text(identity.Purpose == IdentityPurpose.Player ? "Player" : "Server");
+
+    private void RefreshIdentities(string? selectAddress = null)
+    {
+        selectAddress ??= Selected?.Address ?? _identities.GetSelectedAddress(Purpose);
+        _list.ClearItems();
+        foreach (var identity in _identities.GetIdentities(Purpose))
+        {
+            _list.AddItem(identity);
+            if (identity.Address == selectAddress) { _list.SelectedItem = identity; }
+        }
+
+        Refresh();
     }
 
     private void Refresh()
     {
-        var address = LocalIdentityManager.Current.GetAddress(Purpose);
-        _address.Text = address is null ? Text("NotCreated") : IdentityAddressDisplay.Abbreviate(address);
-        _hint.Text = !LocalIdentityManager.CanImport ? Text("OfflineRequired") : Text("SecurityHint");
-        _copy.IsEnabled = !_busy && address is not null;
-        _export.IsEnabled = !_busy && address is not null && FilePicker.IsAvailable;
-        _import.IsEnabled = !_busy && LocalIdentityManager.CanImport && FilePicker.IsAvailable;
-        _purpose.IsEnabled = !_busy;
+        _playerTab.IsChecked = Purpose == IdentityPurpose.Player;
+        _serverTab.IsChecked = Purpose == IdentityPurpose.Server;
+        _playerTab.IsEnabled = !_busy;
+        _serverTab.IsEnabled = !_busy;
+        _list.IsEnabled = !_busy;
+        _hint.Text = Text(!LocalIdentityManager.CanManage ? "OfflineRequired" : "SecurityHint");
+        _actions.Refresh();
+    }
+
+    private bool IsActionEnabled(object item)
+    {
+        if (_busy) { return false; }
+
+        var editable = LocalIdentityManager.CanManage;
+        return (IdentityAction)item switch
+        {
+            IdentityAction.Create => editable &&
+                                     _identities.GetIdentities(Purpose).Count <
+                                     LocalIdentityManager.MaximumIdentityCount,
+            IdentityAction.Import => editable &&
+                                     FilePicker.IsAvailable &&
+                                     _identities.GetIdentities(Purpose).Count <
+                                     LocalIdentityManager.MaximumIdentityCount,
+            IdentityAction.Export => Selected is not null && FilePicker.IsAvailable,
+            IdentityAction.Use or IdentityAction.Delete => editable &&
+                                                           Selected is { } selected &&
+                                                           selected.Address != _identities.GetSelectedAddress(Purpose),
+            IdentityAction.Rename => editable && Selected is not null,
+            IdentityAction.Details => Selected is not null,
+            IdentityAction.ForgetPasswords => _authentication.ServerCredentials.Count > 0,
+            _ => false
+        };
+    }
+
+    private void ExecuteAction(object item)
+    {
+        if (!IsActionEnabled(item)) { return; }
+
+        var selected = Selected;
+        var purpose = Purpose;
+        var generation = _generation;
+        switch ((IdentityAction)item)
+        {
+            case IdentityAction.Create:
+                AskName(string.Empty, name => RefreshIdentities(_identities.Create(purpose, name)));
+                break;
+            case IdentityAction.Use:
+                try
+                {
+                    _identities.Select(purpose, selected!.Address);
+                    RefreshIdentities();
+                }
+                catch { DialogsManager.Alert(Text("OperationFailed")); }
+
+                break;
+            case IdentityAction.Rename:
+                AskName(
+                    selected!.Name,
+                    name =>
+                    {
+                        _identities.Rename(purpose, selected.Address, name);
+                        RefreshIdentities();
+                    }
+                );
+                break;
+            case IdentityAction.Delete:
+                DialogsManager.Confirm(
+                    string.Format(Text("DeleteConfirm"), IdentityName(selected!)),
+                    button =>
+                    {
+                        if (button != MessageDialogButton.Button1 ||
+                            !IsCurrent(generation) ||
+                            !LocalIdentityManager.CanManage) { return; }
+
+                        try
+                        {
+                            _identities.Delete(purpose, selected!.Address);
+                            RefreshIdentities();
+                        }
+                        catch { DialogsManager.Alert(Text("OperationFailed")); }
+                    },
+                    this
+                );
+                break;
+            case IdentityAction.Details:
+                DialogsManager.ShowDialog(
+                    this,
+                    new MessageDialog(
+                        IdentityName(selected!),
+                        selected!.Address,
+                        Text("Copy"),
+                        LanguageManager.Get("Usual", "close"),
+                        button =>
+                        {
+                            if (button == MessageDialogButton.Button1)
+                            {
+                                ClipboardManager.ClipboardString = selected.Address;
+                            }
+                        }
+                    )
+                );
+                break;
+            case IdentityAction.Export:
+                BeginExport();
+                break;
+            case IdentityAction.Import:
+                BeginImport();
+                break;
+            case IdentityAction.ForgetPasswords:
+                DialogsManager.Confirm(
+                    Text("ForgetPasswordsConfirm"),
+                    button =>
+                    {
+                        if (button != MessageDialogButton.Button1 || !IsCurrent(generation)) { return; }
+
+                        try { _authentication.ServerCredentials.Clear(); }
+                        catch { DialogsManager.Alert(Text("ForgetPasswordsFailed")); }
+                    },
+                    this
+                );
+                break;
+        }
+    }
+
+    private void AskName(string initial, Action<string> accepted)
+    {
+        var generation = _generation;
+        DialogsManager.ShowDialog(
+            this,
+            new TextBoxDialog(
+                Text("Name"),
+                initial,
+                LocalIdentityManager.MaximumNameLength,
+                name =>
+                {
+                    if (string.IsNullOrWhiteSpace(name) || !IsCurrent(generation) || !LocalIdentityManager.CanManage)
+                    {
+                        return;
+                    }
+
+                    try { accepted(name.Trim()); }
+                    catch { DialogsManager.Alert(Text("OperationFailed")); }
+                },
+                false
+            )
+        );
     }
 
     private bool IsCurrent(int generation) => generation == _generation && ScreensManager.CurrentScreen == this;
@@ -130,6 +313,7 @@ public sealed class SettingsIdentityScreen : Screen
         _busy = true;
         var generation = _generation;
         var purpose = Purpose;
+        var address = Selected!.Address;
         _passwordDialog = new PasswordDialog(
             Text("ExportPassword"),
             true,
@@ -148,23 +332,23 @@ public sealed class SettingsIdentityScreen : Screen
                     return;
                 }
 
-                Export(purpose, password, generation);
+                Export(purpose, address, password, generation);
             }
         );
         DialogsManager.ShowDialog(this, _passwordDialog);
     }
 
-    private async void Export(IdentityPurpose purpose, char[] password, int generation)
+    private async void Export(IdentityPurpose purpose, string address, char[] password, int generation)
     {
         byte[]? backup = null;
         try
         {
-            try { backup = await Task.Run(() => LocalIdentityManager.Current.ExportBackup(purpose, password)); }
+            try { backup = await Task.Run(() => _identities.ExportBackup(purpose, address, password)); }
             finally { Array.Clear(password); }
 
             if (!IsCurrent(generation)) { return; }
 
-            var target = await PickExportTarget(purpose, generation);
+            var target = await PickExportTarget(purpose, address, generation);
             if (target is null || !IsCurrent(generation)) { return; }
 
             await using var stream = await target.OpenWriteAsync(CancellationToken.None);
@@ -189,7 +373,7 @@ public sealed class SettingsIdentityScreen : Screen
         }
     }
 
-    private Task<PickedSaveTarget?> PickExportTarget(IdentityPurpose purpose, int generation)
+    private Task<PickedSaveTarget?> PickExportTarget(IdentityPurpose purpose, string address, int generation)
     {
         var completion =
             new TaskCompletionSource<PickedSaveTarget?>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -205,7 +389,7 @@ public sealed class SettingsIdentityScreen : Screen
 
                     var target = await FilePicker.PickSaveTargetAsync(
                         new FileSaveRequest(
-                            $"scnet-{purpose.ToString().ToLowerInvariant()}-identity.p8",
+                            $"{purpose.ToString().ToLowerInvariant()}-{address}.p8",
                             "application/octet-stream",
                             Text("Export")
                         )
@@ -299,25 +483,41 @@ public sealed class SettingsIdentityScreen : Screen
                 try
                 {
                     var backup = _importBackup!;
-                    var address = LocalIdentityManager.Current.InspectBackup(purpose, backup, password);
-                    var expected = LocalIdentityManager.Current.GetAddress(purpose);
+                    var address = LocalIdentityManager.InspectBackup(backup, password);
                     DialogsManager.Confirm(
-                        string.Format(
-                            Text("ImportConfirm"),
-                            expected is null ? Text("NotCreated") : IdentityAddressDisplay.Abbreviate(expected),
-                            IdentityAddressDisplay.Abbreviate(address)
-                        ),
+                        string.Format(Text("ImportConfirm"), IdentityAddressDisplay.Abbreviate(address)),
                         button =>
                         {
-                            try
+                            if (button != MessageDialogButton.Button1 || !IsCurrent(generation))
                             {
-                                if (button != MessageDialogButton.Button1 || !IsCurrent(generation)) { return; }
-
-                                LocalIdentityManager.ImportBackup(purpose, backup, password, expected);
-                                DialogsManager.Alert(Text("ImportComplete"));
+                                FinishImport(generation);
+                                return;
                             }
-                            catch { ShowError(generation, "ImportFailed"); }
-                            finally { FinishImport(generation); }
+
+                            DialogsManager.ShowDialog(
+                                this,
+                                new TextBoxDialog(
+                                    Text("Name"),
+                                    Text("RestoredName"),
+                                    LocalIdentityManager.MaximumNameLength,
+                                    name =>
+                                    {
+                                        try
+                                        {
+                                            if (!IsCurrent(generation) ||
+                                                string.IsNullOrWhiteSpace(name) ||
+                                                !LocalIdentityManager.CanManage) { return; }
+
+                                            var imported = _identities.ImportBackup(purpose, backup, password, name);
+                                            RefreshIdentities(imported);
+                                            DialogsManager.Alert(Text("ImportComplete"));
+                                        }
+                                        catch { ShowError(generation, "ImportFailed"); }
+                                        finally { FinishImport(generation); }
+                                    },
+                                    false
+                                )
+                            );
                         },
                         this
                     );

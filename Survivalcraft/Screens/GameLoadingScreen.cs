@@ -7,6 +7,7 @@ using Engine.Network;
 
 using Game.Admission;
 using Game.Authentication;
+using Game.Managers;
 using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Handling;
@@ -27,9 +28,9 @@ public class GameLoadingScreen : Screen
 
     private TemporaryJoinAuthorization? _temporaryAuthorization;
 
-    private HostedWorldStartup? _hostStartup;
+    private HostedWorldLoadRequest? _hostLoadRequest;
 
-    private ServerAdmissionConfiguration? _hostPolicy;
+    private ServerAdmissionPolicy? _hostPolicy;
 
     private bool _isAdventureRestart;
 
@@ -177,7 +178,7 @@ public class GameLoadingScreen : Screen
                     var gamesWidget = ScreensManager.FindScreen<GameScreen>("Game", true)!.Children
                         .Find<ContainerWidget>("GamesWidget")!;
                     GameManager.LoadProject(_worldInfo, gamesWidget);
-                    if (_hostStartup is { } host)
+                    if (_hostLoadRequest is { } host)
                     {
                         if (host.Session is { } session)
                         {
@@ -256,6 +257,8 @@ public class GameLoadingScreen : Screen
                 GameManager.DisposeProject();
                 CommonLib.Net.StartLocal();
                 WorldsManager.RestoreWorldFromSnapshot(_worldInfo.DirectoryName, _worldSnapshotName);
+                _worldInfo = WorldsManager.GetWorldInfo(_worldInfo.DirectoryName) ??
+                             throw new InvalidDataException("The restored world cannot be read.");
                 BeginLocalWorldLoad();
             },
             Actions.Empty
@@ -264,7 +267,7 @@ public class GameLoadingScreen : Screen
 
     private void BeginLocalWorldLoad()
     {
-        if (_hostStartup is null)
+        if (_hostLoadRequest is null)
         {
             _temporaryAuthorization = null;
             _stateMachine.TransitionTo("Loading");
@@ -278,10 +281,20 @@ public class GameLoadingScreen : Screen
             _temporaryAuthorization
         );
         _temporaryAuthorization = null;
-        var saved = ServerAdmissionConfiguration.ReadWorld(_worldInfo.DirectoryName);
-        _hostPolicy = _hostStartup.Session?.AdmissionOverrides.Apply(saved) ?? saved;
+        var saved = WorldsManager.ReadAdmissionPolicy(_worldInfo.DirectoryName);
+        _hostPolicy = _hostLoadRequest.Session is { } session
+            ? ServerAdmissionManager.Resolve(session.AdmissionOverrides, saved)
+            : saved;
         DialogsManager.ShowDialog(this, SpawnDialog);
-        CommonLib.Net.BeginLocalAdmission(_worldInfo.DirectoryName, _hostPolicy);
+        CommonLib.Net.BeginLocalAdmission(
+            _worldInfo.DirectoryName,
+            _hostPolicy,
+            ServerIdentitySelection.Resolve(
+                LocalIdentityManager.Current,
+                _hostLoadRequest.Session,
+                _worldInfo.WorldSettings
+            )
+        );
         _stateMachine.TransitionTo("WaitLocalAdmission");
     }
 
@@ -462,7 +475,7 @@ public class GameLoadingScreen : Screen
             CommonLib.Net.StartLocal();
         }
 
-        _hostStartup = null;
+        _hostLoadRequest = null;
         _hostPolicy = null;
         if (parameters.Length >= 3 && parameters[2] is ServerConnectionPreparation prepared)
         {
@@ -481,15 +494,15 @@ public class GameLoadingScreen : Screen
             _worldSnapshotName = (string)parameters[1];
             _serverPreparation = null;
             _isAdventureRestart = _worldSnapshotName == "AdventureRestart";
-            _hostStartup = parameters.Length >= 3 ? parameters[2] as HostedWorldStartup : null;
+            _hostLoadRequest = parameters.Length >= 3 ? parameters[2] as HostedWorldLoadRequest : null;
             if (_isAdventureRestart && CommonLib.Net.IsServer)
             {
                 _temporaryAuthorization = CommonLib.Net.TemporaryAuthentication;
-                _hostStartup = new HostedWorldStartup(CommonLib.Net.ActiveHostSession);
+                _hostLoadRequest = new HostedWorldLoadRequest(CommonLib.Net.ActiveHostSession);
             }
-            else if (_hostStartup is null && _worldInfo.WorldSettings.RunServer)
+            else if (_hostLoadRequest is null && _worldInfo.WorldSettings.RunServer)
             {
-                _hostStartup = new HostedWorldStartup();
+                _hostLoadRequest = new HostedWorldLoadRequest();
             }
         }
 

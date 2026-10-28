@@ -11,7 +11,7 @@ public sealed class AdmissionAttempt
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
 
-    private readonly ServerAdmissionConfiguration _configuration;
+    private readonly ServerAdmissionPolicy _configuration;
 
     private bool _completed;
 
@@ -20,7 +20,7 @@ public sealed class AdmissionAttempt
     private int _failures;
 
     public AdmissionAttempt(
-        ServerAdmissionConfiguration configuration,
+        ServerAdmissionPolicy configuration,
         string subject,
         string server,
         ReadOnlySpan<byte> channelBinding,
@@ -47,7 +47,17 @@ public sealed class AdmissionAttempt
         return (int)Math.Max(0, Interlocked.Read(ref _nextAttempt) - now.ToUnixTimeSeconds());
     }
 
-    public AdmissionChallengePackage Describe() => _configuration.Describe(Challenge.Nonce, Challenge.ExpiresAt);
+    public AdmissionChallengePackage Describe()
+    {
+        return new AdmissionChallengePackage(
+            _configuration.Mode,
+            Challenge.Nonce,
+            Challenge.ExpiresAt,
+            _configuration.Authority?.Description.DisplayName ?? string.Empty,
+            _configuration.Authority?.Description.ServiceUrl ?? string.Empty,
+            _configuration.Authority?.Description.PublicKey ?? string.Empty
+        );
+    }
 
     public async Task<AdmissionResultPackage> AuthorizeAsync(
         AdmissionProofPackage proof,

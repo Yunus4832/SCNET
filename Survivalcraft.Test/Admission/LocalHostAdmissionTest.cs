@@ -4,6 +4,7 @@ using System.Xml.Linq;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Admission;
+using Game.Managers;
 
 using SCNET.Authentication.Protocol;
 using SCNET.Authentication.Protocol.Contracts;
@@ -29,9 +30,9 @@ public sealed class LocalHostAdmissionTest
         var audience = AuthenticationPublicKey.From(server).Address;
         var configuration = mode switch
         {
-            ServerAdmissionMode.Open => ServerAdmissionConfiguration.Open,
-            ServerAdmissionMode.Password => ServerAdmissionConfiguration.WithPassword("gui-host-password"),
-            _ => ServerAdmissionConfiguration.WithAuthority(
+            ServerAdmissionMode.Open => ServerAdmissionPolicy.Open,
+            ServerAdmissionMode.Password => ServerAdmissionPolicy.WithPassword("gui-host-password"),
+            _ => ServerAdmissionPolicy.WithAuthority(
                 new AuthenticationServiceEndpoint(
                     new AuthenticationServiceDescription(
                         AuthenticationProtocol.Version,
@@ -70,7 +71,7 @@ public sealed class LocalHostAdmissionTest
         Assert.True(
             session.Authorizes(
                 "world-one",
-                ServerAdmissionConfiguration.Load(configuration.Save()),
+                ServerAdmissionPolicy.Load(configuration.Save()),
                 subject,
                 audience,
                 DateTimeOffset.UtcNow
@@ -82,7 +83,7 @@ public sealed class LocalHostAdmissionTest
         Assert.False(
             session.Authorizes(
                 "world-one",
-                ServerAdmissionConfiguration.WithPassword("changed"),
+                ServerAdmissionPolicy.WithPassword("changed"),
                 subject,
                 audience,
                 DateTimeOffset.UtcNow
@@ -101,7 +102,7 @@ public sealed class LocalHostAdmissionTest
         var address = AuthenticationPublicKey.From(key).Address;
         var session = new LocalHostAdmissionSession(
             "world",
-            ServerAdmissionConfiguration.Open,
+            ServerAdmissionPolicy.Open,
             address,
             address,
             DateTimeOffset.UtcNow
@@ -113,9 +114,7 @@ public sealed class LocalHostAdmissionTest
 
         Assert.Equal(AdmissionResultCode.Cancelled, result.Code);
         Assert.False(session.Approved);
-        Assert.False(
-            session.Authorizes("world", ServerAdmissionConfiguration.Open, address, address, DateTimeOffset.UtcNow)
-        );
+        Assert.False(session.Authorizes("world", ServerAdmissionPolicy.Open, address, address, DateTimeOffset.UtcNow));
     }
 
     [Fact]
@@ -125,7 +124,7 @@ public sealed class LocalHostAdmissionTest
         try
         {
             Directory.CreateDirectory(directory);
-            var settings = ServerAdmissionConfiguration.WithPassword("preflight-password");
+            var settings = ServerAdmissionPolicy.WithPassword("preflight-password");
             var admission = new ValuesDictionary();
             admission.SetValue("admission", settings.Save());
             var values = new ValuesDictionary();
@@ -133,7 +132,7 @@ public sealed class LocalHostAdmissionTest
             var extension = new XElement("ExtensionData");
             values.Save(extension);
             new XElement("Project", extension).Save(Path.Combine(directory, "Project.xml"));
-            var loaded = ServerAdmissionConfiguration.ReadWorld("system:" + directory);
+            var loaded = WorldsManager.ReadAdmissionPolicy("system:" + directory);
             Assert.Equal(settings.Fingerprint(), loaded.Fingerprint());
             Assert.Equal(ServerAdmissionMode.Password, loaded.Mode);
         }

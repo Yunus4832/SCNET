@@ -9,6 +9,7 @@ using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
 
 using Game.Admission;
+using Game.Servers;
 
 using LiteNetLib.Utils;
 
@@ -56,7 +57,7 @@ public static class CommonLib
         }
     }
 
-    public static bool StartServer(WorldSettings worldSettings, ServerAdmissionConfiguration? policyOverride = null)
+    public static bool StartServer(WorldSettings worldSettings, ServerAdmissionPolicy? policyOverride = null)
     {
         var started = Net.StartServer(
             SettingsManager.Current.ServerPort,
@@ -66,7 +67,8 @@ public static class CommonLib
             {
                 Name = string.IsNullOrEmpty(worldSettings.P2P.Name) ? worldSettings.Name : worldSettings.P2P.Name
             },
-            policyOverride
+            policyOverride,
+            ServerIdentitySelection.Resolve(LocalIdentityManager.Current, null, worldSettings)
         );
         if (started) { Net.ActiveHostSession = null; }
 
@@ -76,7 +78,7 @@ public static class CommonLib
     public static bool StartServer(
         SessionInfo sessionInfo,
         WorldSettings worldSettings,
-        ServerAdmissionConfiguration? policyOverride = null
+        ServerAdmissionPolicy? policyOverride = null
     )
     {
         var serverPort = sessionInfo.ServerPort > 0
@@ -89,8 +91,9 @@ public static class CommonLib
             _ => SettingsManager.Current.BroadcastPort
         };
         var effectivePolicy = policyOverride ??
-                              sessionInfo.AdmissionOverrides.Apply(
-                                  ServerAdmissionConfiguration.Load(
+                              ServerAdmissionManager.Resolve(
+                                  sessionInfo.AdmissionOverrides,
+                                  ServerAdmissionPolicy.Load(
                                       GameManager.Project!.ExtensionData.Get("game", "admission")
                                   )
                               );
@@ -99,7 +102,8 @@ public static class CommonLib
             broadcastPort,
             worldSettings.MaxOnlinePlayerCount,
             sessionInfo.P2POverrides.Apply(worldSettings.P2P, worldSettings.Name),
-            effectivePolicy
+            effectivePolicy,
+            ServerIdentitySelection.Resolve(LocalIdentityManager.Current, sessionInfo, worldSettings)
         );
         if (started) { Net.ActiveHostSession = sessionInfo; }
 

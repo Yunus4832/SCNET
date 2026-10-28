@@ -12,7 +12,7 @@ namespace Game.Network;
 internal sealed class ServerAdmissionController(
     NetNode node,
     Project project,
-    ServerAdmissionConfiguration configuration,
+    ServerAdmissionPolicy configuration,
     string serverAddress
 )
 {

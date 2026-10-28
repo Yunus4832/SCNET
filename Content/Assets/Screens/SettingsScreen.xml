@@ -80,11 +80,6 @@
                     </StackPanelWidget>
 
                     <StackPanelWidget Direction="Horizontal">
-                        <CanvasWidget Size="350, 90"><LabelWidget Text="[SettingsIdentityScreen:SettingsDescription]" Color="128, 128, 128" WordWrap="true" HorizontalAlignment="Far" VerticalAlignment="Center" TextAnchor="VerticalCenter, HorizontalCenter"/></CanvasWidget>
-                        <CanvasWidget Size="10, 0"/>
-                        <BevelledButtonWidget Name="Identity" Text="[SettingsIdentityScreen:Title]" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center"/>
-                    </StackPanelWidget>
-                    <StackPanelWidget Direction="Horizontal">
                         <CanvasWidget Size="350, 90"><LabelWidget Text="[ManageAuthenticationScreen:SettingsDescription]" Color="128, 128, 128" WordWrap="true" HorizontalAlignment="Far" VerticalAlignment="Center" TextAnchor="VerticalCenter, HorizontalCenter"/></CanvasWidget>
                         <CanvasWidget Size="10, 0"/>
                         <BevelledButtonWidget Name="Authentication" Text="[ManageAuthenticationScreen:Title]" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center"/>

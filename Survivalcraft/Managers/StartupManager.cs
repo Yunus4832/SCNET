@@ -1,3 +1,5 @@
+using Game.Admission;
+
 namespace Game.Managers;
 
 public static class StartupManager
@@ -127,6 +129,15 @@ public static class StartupManager
             if (string.Equals(arg, "--player", StringComparison.OrdinalIgnoreCase))
             {
                 request.AutoJoinCharacterName = ReadOptionValue(args, ref i, "--player")?.Trim();
+                continue;
+            }
+
+            if (string.Equals(arg, "--server-identity", StringComparison.OrdinalIgnoreCase))
+            {
+                request.ServerIdentityAddress = Engine.Core.Security.IdentityAddress.Normalize(
+                    ReadOptionValue(args, ref i, "--server-identity") ??
+                    throw new ArgumentException("--server-identity requires an address.")
+                );
                 continue;
             }
 
@@ -322,8 +333,8 @@ public static class StartupManager
             ? null
             : request.AutoJoinCharacterName;
         request.AdmissionOverrides =
-            Admission.ServerAdmissionOverrides.FromEnvironment().Merge(request.AdmissionOverrides);
-        request.AdmissionOverrides.Validate();
+            ServerAdmissionManager.Merge(ReadAdmissionEnvironment(), request.AdmissionOverrides);
+        ServerAdmissionManager.Validate(request.AdmissionOverrides);
         settings.RemainingArgs = remainingArgs.ToArray();
         return request;
     }
@@ -516,4 +527,37 @@ public static class StartupManager
 
     private static string NormalizeSessionName(string? value) =>
         string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+
+    private static ServerAdmissionOverrides ReadAdmissionEnvironment()
+    {
+        static string? Read(string name)
+        {
+            return Environment.GetEnvironmentVariable(name) is { Length: > 0 } value ? value : null;
+        }
+
+        if (Read("SCNET_SERVER_PASSWORD") is not null)
+        {
+            throw new AdmissionConfigurationException(
+                "Use SCNET_SERVER_PASSWORD_FILE, not a plaintext environment password."
+            );
+        }
+
+        var mode = Read("SCNET_ADMISSION")?.ToLowerInvariant();
+        var file = Read("SCNET_SERVER_PASSWORD_FILE");
+        var result = new ServerAdmissionOverrides
+        {
+            Mode = mode switch
+            {
+                null => null, "open" => ServerAdmissionMode.Open, "password" => ServerAdmissionMode.Password,
+                "external" => ServerAdmissionMode.External,
+                _ => throw new AdmissionConfigurationException("SCNET_ADMISSION requires open, password or external.")
+            },
+            PasswordFile = file is null ? null :
+                Path.IsPathRooted(file) || !file.Contains(':') ? Path.GetFullPath(file) : file,
+            AuthenticationUrl = Read("SCNET_AUTHENTICATION_URL"), AuthenticationKey = Read("SCNET_AUTHENTICATION_KEY"),
+            AuthenticationName = Read("SCNET_AUTHENTICATION_NAME")
+        };
+        ServerAdmissionManager.Validate(result);
+        return result;
+    }
 }

@@ -46,9 +46,10 @@ public static class SessionInfoManager
             PopulateFromElement(sessionInfo, sessionElement);
         }
         catch (Admission.AdmissionConfigurationException) { throw; }
-        catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        catch (Exception error) when (error is System.Xml.XmlException or IOException or InvalidDataException
+                                          or UnauthorizedAccessException)
         {
-            throw new Admission.AdmissionConfigurationException(
+            throw new InvalidDataException(
                 "Startup session configuration is unreadable or malformed; refusing fallback.",
                 error
             );
@@ -90,9 +91,10 @@ public static class SessionInfoManager
             return sessionInfo;
         }
         catch (Admission.AdmissionConfigurationException) { throw; }
-        catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        catch (Exception error) when (error is System.Xml.XmlException or IOException or InvalidDataException
+                                          or UnauthorizedAccessException)
         {
-            throw new Admission.AdmissionConfigurationException(
+            throw new InvalidDataException(
                 "Startup session configuration is unreadable or malformed; refusing fallback.",
                 error
             );
@@ -146,9 +148,10 @@ public static class SessionInfoManager
             root.Save(stream);
         }
         catch (Admission.AdmissionConfigurationException) { throw; }
-        catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        catch (Exception error) when (error is System.Xml.XmlException or IOException or InvalidDataException
+                                          or UnauthorizedAccessException)
         {
-            throw new Admission.AdmissionConfigurationException(
+            throw new InvalidDataException(
                 "Startup session configuration is unreadable or malformed; refusing fallback.",
                 error
             );
@@ -422,7 +425,7 @@ public static class SessionInfoManager
                 "GameLoading",
                 worldInfo!,
                 string.Empty,
-                new Admission.HostedWorldStartup(sessionInfo)
+                new Screens.HostedWorldLoadRequest(sessionInfo)
             );
         }
         else { ScreensManager.SwitchScreen("GameLoading", worldInfo!, string.Empty); }
@@ -503,9 +506,10 @@ public static class SessionInfoManager
             return true;
         }
         catch (Admission.AdmissionConfigurationException) { throw; }
-        catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        catch (Exception error) when (error is System.Xml.XmlException or IOException or InvalidDataException
+                                          or UnauthorizedAccessException)
         {
-            throw new Admission.AdmissionConfigurationException(
+            throw new InvalidDataException(
                 "Startup session configuration is unreadable or malformed; refusing fallback.",
                 error
             );
@@ -597,7 +601,15 @@ public static class SessionInfoManager
             new XAttribute(nameof(SessionInfo.ServerPort), sessionInfo.ServerPort),
             new XAttribute(nameof(SessionInfo.BroadcastPort), sessionInfo.BroadcastPort)
         );
-        if (!sessionInfo.AdmissionOverrides.IsEmpty) { element.Add(sessionInfo.AdmissionOverrides.ToXml()); }
+        if (sessionInfo.ServerIdentityAddress is not null)
+        {
+            element.SetAttributeValue(nameof(SessionInfo.ServerIdentityAddress), sessionInfo.ServerIdentityAddress);
+        }
+
+        if (!sessionInfo.AdmissionOverrides.IsEmpty)
+        {
+            element.Add(ServerAdmissionManager.SerializeOverrides(sessionInfo.AdmissionOverrides));
+        }
 
         if (sessionInfo.RemoteTarget is not null)
         {
@@ -685,8 +697,25 @@ public static class SessionInfoManager
 
     private static void PopulateFromElement(SessionInfo sessionInfo, XElement element)
     {
+        sessionInfo.ServerIdentityAddress = element.Attribute(nameof(SessionInfo.ServerIdentityAddress))?.Value;
+        if (sessionInfo.ServerIdentityAddress is not null)
+        {
+            try
+            {
+                sessionInfo.ServerIdentityAddress =
+                    Engine.Core.Security.IdentityAddress.Normalize(sessionInfo.ServerIdentityAddress);
+            }
+            catch (FormatException error)
+            {
+                throw new InvalidDataException(
+                    "The startup session contains an invalid server identity address.",
+                    error
+                );
+            }
+        }
+
         sessionInfo.AdmissionOverrides =
-            Admission.ServerAdmissionOverrides.FromXml(element.Element("AdmissionOverrides"));
+            ServerAdmissionManager.DeserializeOverrides(element.Element("AdmissionOverrides"));
         sessionInfo.SessionId = NormalizeSessionId(element.Attribute(nameof(SessionInfo.SessionId))?.Value);
         sessionInfo.Name = NormalizeSessionName(element.Attribute(nameof(SessionInfo.Name))?.Value);
         sessionInfo.Target = ParseTarget(element.Attribute(nameof(SessionInfo.Target))?.Value);
@@ -819,7 +848,16 @@ public static class SessionInfoManager
         }
 
         sessionInfo.P2POverrides = sessionInfo.P2POverrides.Merge(request.P2POverrides);
-        sessionInfo.AdmissionOverrides = sessionInfo.AdmissionOverrides.Merge(request.AdmissionOverrides);
+        if (request.ServerIdentityAddress is not null)
+        {
+            sessionInfo.ServerIdentityAddress =
+                Engine.Core.Security.IdentityAddress.Normalize(request.ServerIdentityAddress);
+        }
+
+        sessionInfo.AdmissionOverrides = ServerAdmissionManager.Merge(
+            sessionInfo.AdmissionOverrides,
+            request.AdmissionOverrides
+        );
 
         if (request.HttpCommandEnabled is { } httpCommandEnabled)
         {
@@ -862,7 +900,13 @@ public static class SessionInfoManager
 
     private static void Normalize(SessionInfo sessionInfo)
     {
-        sessionInfo.AdmissionOverrides.Validate();
+        ServerAdmissionManager.Validate(sessionInfo.AdmissionOverrides);
+        if (sessionInfo.ServerIdentityAddress is not null)
+        {
+            sessionInfo.ServerIdentityAddress =
+                Engine.Core.Security.IdentityAddress.Normalize(sessionInfo.ServerIdentityAddress);
+        }
+
         if (sessionInfo.Target != SessionTarget.RemoteServer)
         {
             sessionInfo.RemoteTarget = null;
@@ -1019,6 +1063,7 @@ public static class SessionInfoManager
             RemoteTarget = source.RemoteTarget,
             P2POverrides = source.P2POverrides,
             AdmissionOverrides = source.AdmissionOverrides,
+            ServerIdentityAddress = source.ServerIdentityAddress,
             ServerPort = source.ServerPort,
             BroadcastPort = source.BroadcastPort,
             AutoJoinCharacterName = source.AutoJoinCharacterName,
@@ -1076,9 +1121,10 @@ public static class SessionInfoManager
             root.Save(stream);
         }
         catch (Admission.AdmissionConfigurationException) { throw; }
-        catch (Exception error) when (error is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        catch (Exception error) when (error is System.Xml.XmlException or IOException or InvalidDataException
+                                          or UnauthorizedAccessException)
         {
-            throw new Admission.AdmissionConfigurationException(
+            throw new InvalidDataException(
                 "Startup session configuration is unreadable or malformed; refusing fallback.",
                 error
             );

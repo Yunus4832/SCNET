@@ -3,6 +3,7 @@ using System.Reflection;
 using Engine.Core.Runtime;
 using Engine.FileStorage;
 using Engine.Network;
+using Engine.Network.Security;
 
 using Game;
 using Game.Commands;
@@ -25,6 +26,48 @@ public sealed class StartupManagerTest : IDisposable
     {
         DeleteIfExists(RunningSettingManager.RunningSettingPath);
         DeleteIfExists(SessionInfoManager.SessionInfoPath);
+    }
+
+    [Fact]
+    public void ServerIdentityOverridePersistsOnlyWhenSavedAndSurvivesRestart()
+    {
+        using var first = NetworkIdentity.Create();
+        using var second = NetworkIdentity.Create();
+        var firstAddress = first.PublicIdentity.Address;
+        var secondAddress = second.PublicIdentity.Address;
+        StartupManager.Load(
+            ["--session", "server-key", "--world", "World", "--server-identity", firstAddress, "--save"]
+        );
+        Assert.Equal(firstAddress, SessionInfoManager.LoadByName("server-key")!.ServerIdentityAddress);
+        var restored = StartupManager.Load(["--session", "server-key"]);
+        Assert.Equal(firstAddress, restored.Session.ServerIdentityAddress);
+        var overridden = StartupManager.Load(["--session", "server-key", "--server-identity", secondAddress]);
+        Assert.Equal(secondAddress, overridden.Session.ServerIdentityAddress);
+        Assert.Equal(firstAddress, SessionInfoManager.LoadByName("server-key")!.ServerIdentityAddress);
+        var captured = SessionInfoManager.CaptureCurrentSession();
+        var pending = SessionInfoManager.PrepareRestartSession(captured);
+        Assert.Equal(secondAddress, SessionInfoManager.Load(pending.SessionId).ServerIdentityAddress);
+    }
+
+    [Fact]
+    public void InvalidServerIdentityOverrideFailsInsteadOfUsingDefault()
+    {
+        Assert.Throws<FormatException>(() => StartupManager.Load(["--server-identity", "invalid"]));
+        Assert.Throws<ArgumentException>(() => StartupManager.Load(["--server-identity"]));
+    }
+
+    [Fact]
+    public void CorruptSavedServerIdentityDoesNotSilentlyFallback()
+    {
+        using var identity = NetworkIdentity.Create();
+        var startup = StartupManager.Load(
+            ["--session", "bad-key", "--server-identity", identity.PublicIdentity.Address, "--save"]
+        );
+        var xml = System.Xml.Linq.XElement.Parse(Storage.ReadAllText(SessionInfoManager.SessionInfoPath));
+        xml.Elements("SessionInfo").Single(item => item.Attribute("SessionId")!.Value == startup.Session.SessionId)
+            .SetAttributeValue(nameof(SessionInfo.ServerIdentityAddress), "invalid");
+        Storage.WriteAllText(SessionInfoManager.SessionInfoPath, xml.ToString());
+        Assert.Throws<InvalidDataException>(() => SessionInfoManager.LoadByName("bad-key"));
     }
 
     [Fact]
@@ -95,10 +138,9 @@ public sealed class StartupManagerTest : IDisposable
             FileAccess.ReadWrite,
             FileShare.None
         );
-        Assert.Throws<Game.Admission.AdmissionConfigurationException>(() => SessionInfoManager.Load(session.SessionId));
-        Assert.Throws<Game.Admission.AdmissionConfigurationException>(() => SessionInfoManager.LoadByName(session.Name)
-        );
-        Assert.Throws<Game.Admission.AdmissionConfigurationException>(() =>
+        Assert.Throws<InvalidDataException>(() => SessionInfoManager.Load(session.SessionId));
+        Assert.Throws<InvalidDataException>(() => SessionInfoManager.LoadByName(session.Name));
+        Assert.Throws<InvalidDataException>(() =>
             SessionInfoManager.SessionExists(session.SessionId)
         );
     }
@@ -108,7 +150,7 @@ public sealed class StartupManagerTest : IDisposable
     {
         var session = SaveSession("malformed-policy");
         File.WriteAllText(Storage.GetSystemPath(SessionInfoManager.SessionInfoPath), "<Sessions><SessionInfo");
-        Assert.Throws<Game.Admission.AdmissionConfigurationException>(() =>
+        Assert.Throws<InvalidDataException>(() =>
             StartupManager.Load(["--session", session.Name])
         );
     }

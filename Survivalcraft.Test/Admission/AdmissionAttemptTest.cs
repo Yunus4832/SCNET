@@ -19,7 +19,7 @@ public sealed class AdmissionAttemptTest
     [Fact]
     public async Task OpenAdmissionStillConsumesItsBoundConnectionAttemptExactlyOnce()
     {
-        var attempt = Attempt(ServerAdmissionConfiguration.Open);
+        var attempt = Attempt(ServerAdmissionPolicy.Open);
         var proof = new AdmissionProofPackage(attempt.Challenge.Nonce);
         var replies = await Task.WhenAll(attempt.AuthorizeAsync(proof, _now), attempt.AuthorizeAsync(proof, _now));
         Assert.Single(replies, reply => reply.Code == AdmissionResultCode.Accepted);
@@ -30,14 +30,14 @@ public sealed class AdmissionAttemptTest
     public async Task PasswordIsPrivateAndWrongPasswordIsRateLimitedBeforeRetry()
     {
         const string password = "a-test-join-password";
-        var configuration = ServerAdmissionConfiguration.WithPassword(password);
+        var configuration = ServerAdmissionPolicy.WithPassword(password);
         var data = configuration.Save();
         var xml = new XElement("Admission");
         data.Save(xml);
         Assert.DoesNotContain(password, xml.ToString());
         var reloaded = new ValuesDictionary();
         reloaded.ApplyOverrides(XElement.Parse(xml.ToString()));
-        var attempt = Attempt(ServerAdmissionConfiguration.Load(reloaded));
+        var attempt = Attempt(ServerAdmissionPolicy.Load(reloaded));
         Assert.Equal(ServerAdmissionMode.Password, attempt.Describe().Mode);
         Assert.Empty(attempt.Describe().AuthorityPublicKey);
         var proof = new AdmissionProofPackage(attempt.Challenge.Nonce, "wrong");
@@ -61,7 +61,7 @@ public sealed class AdmissionAttemptTest
             )
         );
         var configuration =
-            ServerAdmissionConfiguration.Load(ServerAdmissionConfiguration.WithAuthority(endpoint).Save());
+            ServerAdmissionPolicy.Load(ServerAdmissionPolicy.WithAuthority(endpoint).Save());
         var attempt = Attempt(configuration);
         var approval = AdmissionApprovalTokens.Issue(provider, attempt.Challenge, _now);
         var accepted = await attempt.AuthorizeAsync(
@@ -89,14 +89,14 @@ public sealed class AdmissionAttemptTest
     [Fact]
     public async Task CancelledAndExpiredAttemptsNeverGrantAdmission()
     {
-        var cancelled = Attempt(ServerAdmissionConfiguration.Open);
+        var cancelled = Attempt(ServerAdmissionPolicy.Open);
         var proof = new AdmissionProofPackage(cancelled.Challenge.Nonce, Cancel: true);
         Assert.Equal(AdmissionResultCode.Cancelled, (await cancelled.AuthorizeAsync(proof, _now)).Code);
         Assert.Equal(
             AdmissionResultCode.Denied,
             (await cancelled.AuthorizeAsync(proof with { Cancel = false }, _now)).Code
         );
-        var expired = Attempt(ServerAdmissionConfiguration.Open);
+        var expired = Attempt(ServerAdmissionPolicy.Open);
         Assert.Equal(
             AdmissionResultCode.Expired,
             (await expired.AuthorizeAsync(new AdmissionProofPackage(expired.Challenge.Nonce), _now.AddMinutes(10))).Code
@@ -108,15 +108,15 @@ public sealed class AdmissionAttemptTest
     {
         var data = new ValuesDictionary();
         data.SetValue("Mode", 255);
-        Assert.Throws<InvalidDataException>(() => ServerAdmissionConfiguration.Load(data));
+        Assert.Throws<InvalidDataException>(() => ServerAdmissionPolicy.Load(data));
         data.SetValue("Mode", (int)ServerAdmissionMode.Password);
-        Assert.Throws<InvalidDataException>(() => ServerAdmissionConfiguration.Load(data));
+        Assert.Throws<InvalidDataException>(() => ServerAdmissionPolicy.Load(data));
         data.SetValue("Mode", (int)ServerAdmissionMode.Open);
         data.SetValue("PasswordSalt", "unexpected");
-        Assert.Throws<InvalidDataException>(() => ServerAdmissionConfiguration.Load(data));
+        Assert.Throws<InvalidDataException>(() => ServerAdmissionPolicy.Load(data));
     }
 
-    private static AdmissionAttempt Attempt(ServerAdmissionConfiguration configuration)
+    private static AdmissionAttempt Attempt(ServerAdmissionPolicy configuration)
     {
         using var user = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         using var server = ECDsa.Create(ECCurve.NamedCurves.nistP256);

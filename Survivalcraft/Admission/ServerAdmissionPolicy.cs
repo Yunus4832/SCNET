@@ -6,11 +6,11 @@ using SCNET.Authentication.Protocol.Http;
 namespace Game.Admission;
 
 /// <summary>Private world admission policy; only its public challenge is sent to clients.</summary>
-public sealed class ServerAdmissionConfiguration
+public sealed class ServerAdmissionPolicy
 {
     private readonly ServerPasswordVerifier? _password;
 
-    private ServerAdmissionConfiguration(
+    private ServerAdmissionPolicy(
         ServerAdmissionMode mode,
         ServerPasswordVerifier? password = null,
         AuthenticationServiceEndpoint? authority = null
@@ -25,14 +25,14 @@ public sealed class ServerAdmissionConfiguration
 
     public AuthenticationServiceEndpoint? Authority { get; }
 
-    public static ServerAdmissionConfiguration Open { get; } = new(ServerAdmissionMode.Open);
+    public static ServerAdmissionPolicy Open { get; } = new(ServerAdmissionMode.Open);
 
-    public static ServerAdmissionConfiguration WithPassword(string password)
+    public static ServerAdmissionPolicy WithPassword(string password)
     {
         return new(ServerAdmissionMode.Password, ServerPasswordVerifier.Create(password));
     }
 
-    public static ServerAdmissionConfiguration WithAuthority(AuthenticationServiceEndpoint authority)
+    public static ServerAdmissionPolicy WithAuthority(AuthenticationServiceEndpoint authority)
     {
         return new(ServerAdmissionMode.External, authority: authority);
     }
@@ -59,7 +59,7 @@ public sealed class ServerAdmissionConfiguration
         return data;
     }
 
-    public static ServerAdmissionConfiguration Load(ValuesDictionary data)
+    public static ServerAdmissionPolicy Load(ValuesDictionary data)
     {
         if (data.Count == 0) { return Open; }
 
@@ -67,7 +67,7 @@ public sealed class ServerAdmissionConfiguration
         return mode switch
         {
             ServerAdmissionMode.Open when data.Count == 1 => Open,
-            ServerAdmissionMode.Password when data.Count == 3 => new ServerAdmissionConfiguration(
+            ServerAdmissionMode.Password when data.Count == 3 => new ServerAdmissionPolicy(
                 mode,
                 new ServerPasswordVerifier(
                     data.GetValue<string>("PasswordSalt"),
@@ -96,55 +96,6 @@ public sealed class ServerAdmissionConfiguration
             System.Security.Cryptography.SHA256.HashData(
                 System.Text.Encoding.UTF8.GetBytes(node.ToString(System.Xml.Linq.SaveOptions.DisableFormatting))
             )
-        );
-    }
-
-    public static ServerAdmissionConfiguration ReadWorld(string directory)
-    {
-        using var stream = Storage.OpenFile(Storage.CombinePaths(directory, "Project.xml"), OpenFileMode.Read);
-        var root = System.Xml.Linq.XElement.Load(stream);
-        var node = root.Element("ExtensionData")?.Elements("Values")
-            .SingleOrDefault(value => (string?)value.Attribute("Name") == "game")?
-            .Elements("Values").SingleOrDefault(value => (string?)value.Attribute("Name") == "admission");
-        var data = new ValuesDictionary();
-        if (node is not null) { data.ApplyOverrides(node); }
-
-        return Load(data);
-    }
-
-    internal static void ApplyWorldXml(System.Xml.Linq.XElement root, ServerAdmissionConfiguration policy)
-    {
-        var extension = root.Element("ExtensionData");
-        if (extension is null)
-        {
-            extension = new System.Xml.Linq.XElement("ExtensionData");
-            root.Add(extension);
-        }
-
-        var game = extension.Elements("Values").SingleOrDefault(value => (string?)value.Attribute("Name") == "game");
-        if (game is null)
-        {
-            game = new System.Xml.Linq.XElement("Values", new System.Xml.Linq.XAttribute("Name", "game"));
-            extension.Add(game);
-        }
-
-        var previous = game.Elements("Values")
-            .SingleOrDefault(value => (string?)value.Attribute("Name") == "admission");
-        var admission = new System.Xml.Linq.XElement("Values", new System.Xml.Linq.XAttribute("Name", "admission"));
-        policy.Save().Save(admission);
-        if (previous is not null) { previous.ReplaceWith(admission); }
-        else { game.Add(admission); }
-    }
-
-    public AdmissionChallengePackage Describe(string nonce, long expiresAt)
-    {
-        return new AdmissionChallengePackage(
-            Mode,
-            nonce,
-            expiresAt,
-            Authority?.Description.DisplayName ?? string.Empty,
-            Authority?.Description.ServiceUrl ?? string.Empty,
-            Authority?.Description.PublicKey ?? string.Empty
         );
     }
 }

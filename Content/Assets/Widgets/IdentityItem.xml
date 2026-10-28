@@ -1,0 +1,11 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="Infinity, 76">
+    <StackPanelWidget Direction="Horizontal" IsInverted="true" VerticalAlignment="Center" Margin="14, 0">
+        <LabelWidget Name="Current" Size="180, 64" FontScale="0.7" Color="96, 220, 96" TextAnchor="HorizontalCenter, VerticalCenter"/>
+        <CanvasWidget Size="Infinity, 64">
+            <StackPanelWidget Direction="Vertical" VerticalAlignment="Center">
+                <LabelWidget Name="Name" FontScale="0.9" Ellipsis="true" MaxLines="1"/>
+                <LabelWidget Name="Address" FontScale="0.65" Color="170, 170, 170"/>
+            </StackPanelWidget>
+        </CanvasWidget>
+    </StackPanelWidget>
+</CanvasWidget>

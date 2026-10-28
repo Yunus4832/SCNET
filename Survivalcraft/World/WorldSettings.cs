@@ -75,6 +75,8 @@ public class WorldSettings
 
     public bool RunServer;
 
+    public string? ServerIdentityAddress;
+
     public P2PRoomSettings P2P = new();
 
     public int SeaLevelOffset;
@@ -190,6 +192,10 @@ public class WorldSettings
         SeaLevelOffset = valuesDictionary.GetValue("SeaLevelOffset", 0);
         BiomeSize = valuesDictionary.GetValue("BiomeSize", 1f);
         RunServer = valuesDictionary.GetValue("RunServer", false);
+        var serverIdentity = valuesDictionary.GetValue(nameof(ServerIdentityAddress), string.Empty);
+        ServerIdentityAddress = serverIdentity.Length == 0
+            ? null
+            : Engine.Core.Security.IdentityAddress.Normalize(serverIdentity);
         P2P = P2PRoomSettings.Load(valuesDictionary.GetValue(nameof(P2P), new ValuesDictionary()));
         MaxOnlinePlayerCount = valuesDictionary.GetValue("MaxOnlinePlayerCount", MaxOnlinePlayerCount);
         ModProfileResolutionStrategy = valuesDictionary.GetValue(
@@ -246,6 +252,7 @@ public class WorldSettings
         valuesDictionary.SetValue("AreSupernaturalCreaturesEnabled", AreSupernaturalCreaturesEnabled);
         valuesDictionary.SetValue("IsFriendlyFireEnabled", IsFriendlyFireEnabled);
         valuesDictionary.SetValue("RunServer", RunServer);
+        valuesDictionary.SetValue(nameof(ServerIdentityAddress), ServerIdentityAddress ?? string.Empty);
         valuesDictionary.SetValue(nameof(P2P), P2P.Save(Name));
         valuesDictionary.SetValue("KeywordBlocking", XmlConvert.EncodeName(KeywordBlocking));
         valuesDictionary.SetValue(nameof(ModProfileResolutionStrategy), ModProfileResolutionStrategy);

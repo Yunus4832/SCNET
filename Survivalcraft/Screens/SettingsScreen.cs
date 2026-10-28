@@ -4,8 +4,6 @@ namespace Game.Screens;
 
 public class SettingsScreen : Screen
 {
-    private readonly ButtonWidget _identityButton;
-
     private readonly ButtonWidget _authenticationButton;
 
     private readonly ButtonWidget _audioButton;
@@ -32,7 +30,6 @@ public class SettingsScreen : Screen
         _diagnosticsButton = Children.Find<ButtonWidget>("Diagnostics")!;
         _audioButton = Children.Find<ButtonWidget>("Audio")!;
         _controlsButton = Children.Find<ButtonWidget>("Controls")!;
-        _identityButton = Children.Find<ButtonWidget>("Identity")!;
         _authenticationButton = Children.Find<ButtonWidget>("Authentication")!;
     }
 
@@ -68,8 +65,6 @@ public class SettingsScreen : Screen
         {
             ScreensManager.SwitchScreen("SettingsAudio");
         }
-
-        if (_identityButton.IsClicked) { ScreensManager.SwitchScreen("SettingsIdentity"); }
 
         if (_authenticationButton.IsClicked) { ScreensManager.SwitchScreen("ManageAuthentication"); }
 
