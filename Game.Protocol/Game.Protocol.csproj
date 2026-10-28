@@ -7,6 +7,8 @@
         <IsPackable>true</IsPackable>
         <PackageId>SCNET.Game.Protocol</PackageId>
         <Description>SCNET game message contracts and binary wire codecs.</Description>
+        <!-- 解码入口先由 ProtocolShapeGuard 拒绝缺失字段，保留 init 属性及其构造默认值。 -->
+        <NoWarn>$(NoWarn);MsgPack017</NoWarn>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>

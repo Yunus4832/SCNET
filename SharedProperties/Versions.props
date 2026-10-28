@@ -1,26 +1,26 @@
 <Project>
     <!-- Release versions are independent; change only the units being released. -->
     <PropertyGroup>
-        <GameVersion>0.2.1</GameVersion>
-        <EngineVersion>0.2.1</EngineVersion>
+        <GameVersion>0.2.2</GameVersion>
+        <EngineVersion>0.2.2</EngineVersion>
         <ImageCodecsVersion>0.1.1</ImageCodecsVersion>
         <OpenALVersion>0.1.0</OpenALVersion>
         <SDLVersion>0.1.0</SDLVersion>
-        <ContentPackagingVersion>0.1.5</ContentPackagingVersion>
-        <ContentToolVersion>0.1.5</ContentToolVersion>
-        <ModTemplatesVersion>0.1.8</ModTemplatesVersion>
+        <ContentPackagingVersion>0.1.6</ContentPackagingVersion>
+        <ContentToolVersion>0.1.6</ContentToolVersion>
+        <ModTemplatesVersion>0.1.9</ModTemplatesVersion>
         <InitialModVersion>0.1.0</InitialModVersion>
         <ServerSourceProtocolVersion>0.1.0</ServerSourceProtocolVersion>
         <RendezvousProtocolVersion>0.1.1</RendezvousProtocolVersion>
-        <ContentServerVersion>0.1.6</ContentServerVersion>
+        <ContentServerVersion>0.1.7</ContentServerVersion>
         <RendezvousServerVersion>0.1.1</RendezvousServerVersion>
-        <TerritoryStoneVersion>0.1.9</TerritoryStoneVersion>
-        <BeaconVersion>0.1.6</BeaconVersion>
-        <UiPreviewToolVersion>0.1.6</UiPreviewToolVersion>
-        <ToolsVersion>0.1.6</ToolsVersion>
-        <AuthenticationServerVersion>0.1.0</AuthenticationServerVersion>
-        <AuthenticationProtocolPackageVersion>0.1.0</AuthenticationProtocolPackageVersion>
-        <GameProtocolPackageVersion>0.1.2</GameProtocolPackageVersion>
+        <TerritoryStoneVersion>0.1.10</TerritoryStoneVersion>
+        <BeaconVersion>0.1.7</BeaconVersion>
+        <UiPreviewToolVersion>0.1.7</UiPreviewToolVersion>
+        <ToolsVersion>0.1.7</ToolsVersion>
+        <AuthenticationServerVersion>0.1.1</AuthenticationServerVersion>
+        <AuthenticationProtocolPackageVersion>0.1.1</AuthenticationProtocolPackageVersion>
+        <GameProtocolPackageVersion>0.1.3</GameProtocolPackageVersion>
         <GameProtocolVersion>1</GameProtocolVersion>
         <AndroidReleaseCode>8</AndroidReleaseCode>
     </PropertyGroup>
