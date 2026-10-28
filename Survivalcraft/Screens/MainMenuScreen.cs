@@ -141,7 +141,7 @@ public class MainMenuScreen : Screen
         );
         _mainMenuTabs.AddNavigationTab(
             "Textures/Atlas/Identity",
-            () => ScreensManager.SwitchScreen("SettingsIdentity")
+            () => ScreensManager.SwitchScreen("ManageIdentities")
         );
         _mainMenuTabs.AddTab(
             new VerticalTabMenu(

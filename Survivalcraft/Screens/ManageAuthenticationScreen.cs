@@ -83,7 +83,7 @@ public sealed class ManageAuthenticationScreen : Screen
             : Text(action.ToString()!);
         _actions.ItemEnabledProvider = IsActionEnabled;
         _actions.ItemColorProvider = action => action is ServiceAction.Remove ? new Color(150, 50, 35) :
-            action is ServiceAction.Login ? new Color(45, 110, 60) : null;
+            action is ServiceAction.Login ? new Color(50, 150, 35) : null;
         _actions.ItemClicked += Execute;
         _actions.SetPrimaryItems([ServiceAction.Catalog, ServiceAction.Add, ServiceAction.Login, ServiceAction.Info]);
         _actions.SetSecondaryItems(

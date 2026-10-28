@@ -49,7 +49,7 @@ public sealed class AuthenticationConsentDialog : Dialog
                 new MessageDialog(
                     Text("Details"),
                     _identityDetails,
-                    LanguageManager.GetContentWidgets("SettingsIdentityScreen", "Copy"),
+                    LanguageManager.GetContentWidgets("ManageIdentitiesScreen", "Copy"),
                     LanguageManager.Get("Usual", "ok"),
                     button =>
                     {

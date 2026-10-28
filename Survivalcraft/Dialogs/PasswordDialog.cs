@@ -8,6 +8,10 @@ public sealed class PasswordDialog : Dialog
 
     private readonly TextBoxWidget _repeat;
 
+    private readonly LabelWidget _passwordPlaceholder;
+
+    private readonly LabelWidget _repeatPlaceholder;
+
     private readonly ButtonWidget _confirm;
 
     private readonly ButtonWidget _cancel;
@@ -42,11 +46,14 @@ public sealed class PasswordDialog : Dialog
         LoadContents(this, ContentManager.Get<XElement>("Dialogs/PasswordDialog"));
         Children.Find<CanvasWidget>("Surface")!.Size = new Vector2(
             600,
-            confirmPassword ? 360 : allowRemember ? 310 : 260
+            confirmPassword || allowRemember ? 300 : 240
         );
-        Children.Find<LabelWidget>("PasswordLabel")!.Text = string.Format(
-            LanguageManager.GetContentWidgets(nameof(PasswordDialog), "PasswordMinimum"),
-            minimumLength
+        _passwordPlaceholder = Children.Find<LabelWidget>("PasswordPlaceholder")!;
+        _repeatPlaceholder = Children.Find<LabelWidget>("RepeatPlaceholder")!;
+        _passwordPlaceholder.Text = string.Format(
+            LanguageManager.GetContentWidgets(nameof(PasswordDialog), "PasswordLengthHint"),
+            minimumLength,
+            maximumLength
         );
         Children.Find<LabelWidget>("Title")!.Text = title;
         _remember = Children.Find<CheckboxWidget>("Remember")!;
@@ -69,6 +76,8 @@ public sealed class PasswordDialog : Dialog
 
     public override void Update()
     {
+        _passwordPlaceholder.IsVisible = !_password.HasDisplayText;
+        _repeatPlaceholder.IsVisible = !_repeat.HasDisplayText;
         _confirm.IsEnabled = _password.Text.Length >= _minimumLength &&
                              (!_confirmPassword || _password.Text == _repeat.Text);
         if (Input.Back || Input.Cancel || _cancel.IsClicked) { Complete(false); }
@@ -97,6 +106,8 @@ public sealed class PasswordDialog : Dialog
         _repeat.HasFocus = false;
         _password.Text = string.Empty;
         _repeat.Text = string.Empty;
+        _passwordPlaceholder.IsVisible = true;
+        _repeatPlaceholder.IsVisible = true;
     }
 
     public override void Dispose()

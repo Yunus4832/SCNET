@@ -764,7 +764,8 @@
         "gameName": "Sobrevivência da guerra",
         "debug": "Debugging",
         "api": "API Plug-in Versão",
-        "info": "Informação"
+        "info": "Informação",
+        "close": "Fechar"
     },
     "CRMessage": {
         "0": "Por favor, faça um machado de pedra em vez disso.",
@@ -3609,38 +3610,6 @@
             "Copy": "Copiar",
             "Retrying": "Os convites estão temporariamente indisponíveis. A tentar novamente."
         },
-        "SettingsIdentityScreen": {
-            "Title": "A minha identidade",
-            "Server": "Identidade do servidor",
-            "Address": "Identificador de identidade",
-            "NotCreated": "Identidade não inicializada",
-            "Copy": "Copiar identificador",
-            "Export": "Guardar cópia",
-            "Import": "Restaurar",
-            "OfflineRequired": "Sai do mundo e desliga a ligação para criar, mudar, restaurar ou eliminar identidades. Podes consultar e guardar cópias.",
-            "SecurityHint": "As identidades são independentes das personagens. A identidade do jogador predefinida é usada para jogar; a do servidor é escolhida por mundo. Restaurar adiciona uma identidade. Muda a predefinição antes de a eliminar. Guarda as cópias em segurança.",
-            "ExportPassword": "Definir palavra-passe da cópia",
-            "ImportPassword": "Introduzir palavra-passe da cópia",
-            "ExportComplete": "Cópia de segurança da identidade guardada. Guarda o ficheiro e a palavra-passe em segurança.",
-            "ExportFailed": "Não foi possível guardar a identidade. Verifica as permissões de leitura da identidade e de escrita no destino.",
-            "ImportFailed": "O restauro falhou: palavra-passe incorreta, identidade duplicada, limite atingido ou permissões do ficheiro. As identidades existentes não mudaram.",
-            "ImportComplete": "Identidade adicionada. Define-a como predefinida ou seleciona-a nas definições do servidor.",
-            "ImportConfirm": "Restaurar esta identidade como nova entrada?\nIdentificador: {0}\nAs identidades e predefinições existentes não serão substituídas.",
-            "Player": "Identidade do jogador",
-            "Details": "Detalhes",
-            "ForgetPasswords": "Limpar senhas",
-            "ForgetPasswordsConfirm": "Remover todas as palavras-passe dos servidores guardadas nesta instância? As identidades e autorizações externas serão mantidas.",
-            "ForgetPasswordsFailed": "Não foi possível remover as palavras-passe guardadas.",
-            "Create": "Criar",
-            "Use": "Predefinir",
-            "Current": "Predefinida",
-            "Name": "Nome da identidade",
-            "Rename": "Mudar nome",
-            "Delete": "Eliminar",
-            "RestoredName": "Identidade restaurada",
-            "OperationFailed": "A operação falhou. Verifica o nome, a identidade e as permissões do ficheiro.",
-            "DeleteConfirm": "Eliminar a identidade «{0}» e a chave privada? Mundos ou sessões que a referenciem não a poderão usar até ser restaurada. Os dados das personagens serão mantidos. Guarda uma cópia primeiro."
-        },
         "CharacterScreen": {
             "1": "Criar personagem",
             "2": "Sexo da personagem",
@@ -3658,9 +3627,11 @@
             "3": "Nome da personagem"
         },
         "PasswordDialog": {
-            "PasswordMinimum": "Senha (comprimento mínimo: {0})",
-            "Repeat": "Confirmar senha",
-            "Remember": "Guardar nesta instância"
+            "Repeat": "Confirmar",
+            "Remember": "Guardar nesta instância",
+            "PasswordLengthHint": "{0}–{1} caracteres",
+            "Password": "Palavra-passe",
+            "RepeatPlaceholder": "Repita a palavra-passe"
         },
         "AuthenticationConsentDialog": {
             "Title": "Confirmar serviço de autenticação",
@@ -3702,7 +3673,7 @@
             "Info": "Detalhes",
             "Address": "Endereço",
             "Logout": "Sair",
-            "Remove": "Remover",
+            "Remove": "Eliminar",
             "Enabled": "Ativado",
             "Disabled": "Desativado",
             "NotLoggedIn": "Não conectado",
@@ -3712,7 +3683,7 @@
             "UpdateAddress": "Nova URL base HTTPS deste serviço",
             "InstallOnly": "Instalar este serviço? Isso não efetua o login",
             "AddressWarning": "Usar esta URL? A chave deve ser igual. A autorização local será apagada; entre novamente",
-            "RemoveConfirm": "Remove apenas o serviço e a autorização local. Identidade e personagens permanecem. Para revogar remotamente, saia primeiro",
+            "RemoveConfirm": "Eliminar apenas a configuração deste serviço e a autorização local. A identidade e as personagens são mantidas. Termine a sessão primeiro para revogar a autorização remota",
             "LoggedIn": "Login efetuado; autorização salva",
             "LoggedOut": "Saiu e a autorização remota foi revogada",
             "LocalLogoutOnly": "Autorização local apagada; não foi possível confirmar a revogação remota. Verifique o serviço depois",
@@ -3763,12 +3734,41 @@
             "Unavailable": "Diretório de autenticação indisponível."
         },
         "HostedWorldScreen": {
-            "Title": "Servidor em execução",
             "Join": "Entrar no jogo",
             "Stop": "Parar servidor",
             "Running": "Mundo: {0}\nJogadores ligados: {1}",
             "NotJoined": "O servidor está em execução. Ainda não entraste no jogo.",
             "ConfirmStop": "Parar o servidor e voltar à lista de mundos? Todos os jogadores serão desligados."
+        },
+        "ManageIdentitiesScreen": {
+            "Title": "A minha identidade",
+            "Server": "Identidade do servidor",
+            "Address": "Identificador de identidade",
+            "NotCreated": "Identidade não inicializada",
+            "Copy": "Copiar",
+            "Export": "Guardar cópia",
+            "Import": "Restaurar",
+            "ExportPassword": "Definir palavra-passe da cópia",
+            "ImportPassword": "Introduzir palavra-passe da cópia",
+            "ExportComplete": "Cópia de segurança da identidade guardada. Guarda o ficheiro e a palavra-passe em segurança.",
+            "ExportFailed": "Não foi possível guardar a identidade. Verifica as permissões de leitura da identidade e de escrita no destino.",
+            "ImportFailed": "O restauro falhou: palavra-passe incorreta, identidade duplicada, limite atingido ou permissões do ficheiro. As identidades existentes não mudaram.",
+            "ImportComplete": "Identidade adicionada. Define-a como predefinida ou seleciona-a nas definições do servidor.",
+            "ImportConfirm": "Restaurar esta identidade como nova entrada?\nIdentificador: {0}\nAs identidades e predefinições existentes não serão substituídas.",
+            "Player": "Identidade do jogador",
+            "Details": "Ver ID",
+            "ForgetPasswords": "Lim. sen.",
+            "ForgetPasswordsConfirm": "Remover todas as palavras-passe dos servidores guardadas nesta instância? As identidades e autorizações externas serão mantidas.",
+            "ForgetPasswordsFailed": "Não foi possível remover as palavras-passe guardadas.",
+            "Create": "Criar",
+            "Use": "Predefinir",
+            "Current": "Predefinida",
+            "Name": "Nome da identidade",
+            "Rename": "Renom.",
+            "Delete": "Eliminar",
+            "RestoredName": "Identidade restaurada",
+            "OperationFailed": "A operação falhou. Verifica o nome, a identidade e as permissões do ficheiro.",
+            "DeleteConfirm": "Eliminar a identidade «{0}» e a chave privada? Mundos ou sessões que a referenciem não a poderão usar até ser restaurada. Os dados das personagens serão mantidos. Guarda uma cópia primeiro."
         }
     },
     "FireworksBlock": {

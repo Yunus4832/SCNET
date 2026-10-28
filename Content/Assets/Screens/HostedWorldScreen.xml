@@ -1,15 +1,11 @@
 <Screen xmlns="runtime-namespace:Game.Widgets">
     <PanoramaWidget/>
-    <StackPanelWidget Direction="Horizontal">
-        <CanvasWidget Style="{Widgets/TopBarContents}">
-            <LabelWidget Name="TopBar.Label" Text="[HostedWorldScreen:Title]"/>
-        </CanvasWidget>
-        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
-            <CanvasWidget Style="{Styles/ScreenContentArea}">
-                <BevelledRectangleWidget Style="{Styles/Area}"/>
-                <LabelWidget Name="Status" WordWrap="true" FontScale="0.85" TextAnchor="HorizontalCenter, VerticalCenter" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="20, 20"/>
-            </CanvasWidget>
-            <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24, 24">
+        <LabelWidget Name="Status" WordWrap="true" FontScale="1.2" FontSpacing="0, 4" DropShadow="true" TextAnchor="HorizontalCenter, VerticalCenter" HorizontalAlignment="Center"/>
+        <CanvasWidget Size="0, 48"/>
+        <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+            <BevelledButtonWidget Name="Join" Style="{Styles/ButtonStyle_310x60}" Size="240, 60" Text="[HostedWorldScreen:Join]" CenterColor="50, 150, 35" BevelColor="50, 150, 35" Margin="12, 0"/>
+            <BevelledButtonWidget Name="Stop" Style="{Styles/ButtonStyle_310x60}" Size="240, 60" Text="[HostedWorldScreen:Stop]" CenterColor="150, 50, 35" BevelColor="150, 50, 35" Margin="12, 0"/>
         </StackPanelWidget>
     </StackPanelWidget>
 </Screen>

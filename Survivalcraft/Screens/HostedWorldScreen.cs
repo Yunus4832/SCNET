@@ -10,7 +10,9 @@ public sealed class HostedWorldScreen : Screen
 {
     private readonly LabelWidget _status;
 
-    private readonly ActionPanelWidget _actions;
+    private readonly ButtonWidget _joinButton;
+
+    private readonly ButtonWidget _stopButton;
 
     private ClientAdmissionUi? _admission;
 
@@ -22,17 +24,8 @@ public sealed class HostedWorldScreen : Screen
     {
         LoadContents(this, ContentManager.Get<XElement>("Screens/HostedWorldScreen"));
         _status = Children.Find<LabelWidget>("Status")!;
-        _actions = Children.Find<ActionPanelWidget>("Actions")!;
-        _actions.ItemTextProvider = item => Text((string)item);
-        _actions.ItemEnabledProvider = item =>
-            (string)item != "Join" || !_joining && CommonLib.Net.Self?.PlayerAddress is null;
-        _actions.ItemColorProvider = item => (string)item == "Join" ? new Color(45, 110, 60) : new Color(150, 50, 35);
-        _actions.SetPrimaryItems(["Join", "Stop"]);
-        _actions.ItemClicked += item =>
-        {
-            if ((string)item == "Join") { Join(); }
-            else { ConfirmStop(); }
-        };
+        _joinButton = Children.Find<ButtonWidget>("Join")!;
+        _stopButton = Children.Find<ButtonWidget>("Stop")!;
     }
 
     private static string Text(string key) => LanguageManager.GetContentWidgets(nameof(HostedWorldScreen), key);
@@ -115,8 +108,10 @@ public sealed class HostedWorldScreen : Screen
                        ) +
                        "\n" +
                        (_joining ? _admission?.Status : _failure.Length > 0 ? _failure : Text("NotJoined"));
-        _actions.Refresh();
-        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked) { ConfirmStop(); }
+        _joinButton.IsEnabled = !_joining && node.Self?.PlayerAddress is null;
+        if (_joinButton.IsClicked) { Join(); }
+
+        if (_stopButton.IsClicked || Input.Back || Input.Cancel) { ConfirmStop(); }
     }
 
     private void Join()

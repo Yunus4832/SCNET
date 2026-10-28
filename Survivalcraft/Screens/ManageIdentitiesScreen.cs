@@ -5,7 +5,7 @@ using Game.Identity;
 
 namespace Game.Screens;
 
-public sealed class SettingsIdentityScreen : Screen
+public sealed class ManageIdentitiesScreen : Screen
 {
     private enum IdentityAction
     {
@@ -38,8 +38,6 @@ public sealed class SettingsIdentityScreen : Screen
 
     private readonly ActionPanelWidget _actions;
 
-    private readonly LabelWidget _hint;
-
     private IdentityPurpose _purpose = IdentityPurpose.Player;
 
     private bool _busy;
@@ -52,25 +50,28 @@ public sealed class SettingsIdentityScreen : Screen
 
     private PasswordDialog? _passwordDialog;
 
-    public SettingsIdentityScreen() : this(LocalIdentityManager.Current, AuthenticationManager.Current)
+    public ManageIdentitiesScreen() : this(LocalIdentityManager.Current, AuthenticationManager.Current)
     {
     }
 
-    public SettingsIdentityScreen(LocalIdentityManager identities, AuthenticationManager authentication)
+    public ManageIdentitiesScreen(LocalIdentityManager identities, AuthenticationManager authentication)
     {
         _identities = identities;
         _authentication = authentication;
-        LoadContents(this, ContentManager.Get<XElement>("Screens/SettingsIdentityScreen"));
+        LoadContents(this, ContentManager.Get<XElement>("Screens/ManageIdentitiesScreen"));
         _playerTab = Children.Find<ButtonWidget>("PlayerTab")!;
         _serverTab = Children.Find<ButtonWidget>("ServerTab")!;
         _list = Children.Find<ListPanelWidget>("Identities")!;
         _actions = Children.Find<ActionPanelWidget>("Actions")!;
-        _hint = Children.Find<LabelWidget>("Hint")!;
         _list.ItemWidgetFactory = CreateIdentityRow;
         _actions.ItemTextProvider = item => Text(item.ToString()!);
         _actions.ItemEnabledProvider = IsActionEnabled;
-        _actions.ItemColorProvider = item => item is IdentityAction.Delete ? new Color(150, 50, 35) :
-            item is IdentityAction.Use ? new Color(45, 110, 60) : null;
+        _actions.ItemColorProvider = item => item switch
+        {
+            IdentityAction.Delete or IdentityAction.ForgetPasswords => new Color(150, 50, 35),
+            IdentityAction.Use => new Color(50, 150, 35),
+            _ => null
+        };
         _actions.ItemClicked += ExecuteAction;
         _actions.SetPrimaryItems(
             [IdentityAction.Use, IdentityAction.Create, IdentityAction.Import, IdentityAction.Export]
@@ -85,7 +86,7 @@ public sealed class SettingsIdentityScreen : Screen
 
     private LocalIdentityEntry? Selected => _list.SelectedItem as LocalIdentityEntry;
 
-    private static string Text(string key) => LanguageManager.GetContentWidgets(nameof(SettingsIdentityScreen), key);
+    private static string Text(string key) => LanguageManager.GetContentWidgets(nameof(ManageIdentitiesScreen), key);
 
     public override void Enter(object[] parameters)
     {
@@ -162,7 +163,6 @@ public sealed class SettingsIdentityScreen : Screen
         _playerTab.IsEnabled = !_busy;
         _serverTab.IsEnabled = !_busy;
         _list.IsEnabled = !_busy;
-        _hint.Text = Text(!LocalIdentityManager.CanManage ? "OfflineRequired" : "SecurityHint");
         _actions.Refresh();
     }
 

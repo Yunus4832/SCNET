@@ -1,18 +1,15 @@
 <Screen xmlns="runtime-namespace:Game.Widgets">
     <PanoramaWidget/>
     <StackPanelWidget Direction="Horizontal">
-        <CanvasWidget Style="{Widgets/TopBarContents}"><LabelWidget Name="TopBar.Label" Text="[SettingsIdentityScreen:Title]"/></CanvasWidget>
+        <CanvasWidget Style="{Widgets/TopBarContents}"><LabelWidget Name="TopBar.Label" Text="[ManageIdentitiesScreen:Title]"/></CanvasWidget>
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
             <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="10, 6">
-                <BevelledButtonWidget Name="PlayerTab" Text="[SettingsIdentityScreen:Player]" Style="{Styles/ButtonStyle_310x60}"/>
-                <BevelledButtonWidget Name="ServerTab" Text="[SettingsIdentityScreen:Server]" Style="{Styles/ButtonStyle_310x60}"/>
+                <BevelledButtonWidget Name="PlayerTab" Text="[ManageIdentitiesScreen:Player]" Style="{Styles/ButtonStyle_310x60}"/>
+                <BevelledButtonWidget Name="ServerTab" Text="[ManageIdentitiesScreen:Server]" Style="{Styles/ButtonStyle_310x60}"/>
             </StackPanelWidget>
             <CanvasWidget Style="{Styles/ScreenContentArea}">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ListPanelWidget Name="Identities" Direction="Vertical" Margin="3, 3" ItemSize="76" SelectionColor="10, 70, 0, 90"/>
-            </CanvasWidget>
-            <CanvasWidget Style="{Styles/ScreenDescriptionArea}" Size="Infinity, 80">
-                <LabelWidget Name="Hint" FontScale="0.65" WordWrap="true" TextAnchor="HorizontalCenter, VerticalCenter" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
             </CanvasWidget>
             <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
         </StackPanelWidget>

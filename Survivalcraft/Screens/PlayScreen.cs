@@ -37,7 +37,7 @@ public class PlayScreen : Screen
         _actionPanel.ItemEnabledProvider = IsActionEnabled;
         _actionPanel.ItemColorProvider = item => item switch
         {
-            WorldAction.Play => new Color(50, 150, 35),
+            WorldAction.Play or WorldAction.RunServer => new Color(50, 150, 35),
             WorldAction.Delete => new Color(150, 50, 35),
             _ => null
         };
