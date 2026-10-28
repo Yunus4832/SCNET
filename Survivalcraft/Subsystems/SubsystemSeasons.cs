@@ -41,13 +41,13 @@ public class SubsystemSeasons : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client) //如果是客户端，不执行更新季节
+        if (GameManager.Role == WorldRole.RemoteClient) //如果是客户端，不执行更新季节
         {
             return;
         }
 
         UpdateSeasonState();
-        if (Time.PeriodicEvent(10, 0.0) && CommonLib.WorkType == WorkType.Server)
+        if (Time.PeriodicEvent(10, 0.0) && GameManager.Role == WorldRole.Server)
         {
             CommonLib.Net.QueuePackage(
                 new SubsystemSeasonPackage(_subsystemGameInfo.WorldSettings.TimeOfYear),

@@ -16,7 +16,7 @@ public class SubsystemInventories : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType != WorkType.Server || !Time.PeriodicEvent(0.1, 0))
+        if (GameManager.Role != WorldRole.Server || !Time.PeriodicEvent(0.1, 0))
         {
             return;
         }
@@ -93,7 +93,7 @@ public class SubsystemInventories : Subsystem, IUpdateable
             return inventory.Id;
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             _inventories[inventory.Id] = inventory;
             return inventory.Id;
@@ -111,7 +111,7 @@ public class SubsystemInventories : Subsystem, IUpdateable
             return true;
         }
 
-        if (CommonLib.WorkType == WorkType.Client && Log.MinimumLogType is LogType.Debug)
+        if (GameManager.Role == WorldRole.RemoteClient && Log.MinimumLogType is LogType.Debug)
         {
             NetworkSender.SendToServer(new InventorySyncRequestPackage { InventoryID = id });
         }
@@ -186,7 +186,7 @@ public class SubsystemInventories : Subsystem, IUpdateable
             return;
         }
 
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             var batches = new Dictionary<Client, Dictionary<IInventory, List<int>>>(ReferenceEqualityComparer.Instance);
             foreach (var (inventory, slots) in _syncItems)

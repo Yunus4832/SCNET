@@ -1,5 +1,3 @@
-using Game.Network;
-
 namespace Game.ElectricElements;
 
 public class SRLatchElectricElement : RotateableElectricElement
@@ -31,7 +29,7 @@ public class SRLatchElectricElement : RotateableElectricElement
 
     public override bool Simulate()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return RestorePersistentVoltage(SubsystemElectricity.ReadPersistentVoltage(CellFaces[0].Point) ?? _voltage);
         }

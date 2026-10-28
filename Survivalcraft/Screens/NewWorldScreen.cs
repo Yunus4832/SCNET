@@ -118,14 +118,7 @@ public class NewWorldScreen : Screen
                 _worldSettings.ResetOptionsForNonCreativeMode();
             }
 
-            if (_worldSettings.RunServer)
-            {
-                PrepareWorldModsAndPlay(worldInfo, runServer: true);
-            }
-            else
-            {
-                PrepareWorldModsAndPlay(worldInfo, runServer: false);
-            }
+            PrepareWorldModsAndPlay(worldInfo);
         }
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
@@ -134,7 +127,7 @@ public class NewWorldScreen : Screen
         }
     }
 
-    private void PrepareWorldModsAndPlay(WorldInfo worldInfo, bool runServer)
+    private void PrepareWorldModsAndPlay(WorldInfo worldInfo)
     {
         var busyDialog = new BusyDialog("准备世界模组", "正在检查所需模组...");
         DialogsManager.ShowDialog(null, busyDialog);
@@ -151,7 +144,7 @@ public class NewWorldScreen : Screen
                             DialogsManager.HideDialog(busyDialog);
                             if (!result.RequiresRestart)
                             {
-                                PlayPreparedWorld(worldInfo, runServer);
+                                PlayPreparedWorld(worldInfo);
                                 return;
                             }
 
@@ -197,17 +190,8 @@ public class NewWorldScreen : Screen
         );
     }
 
-    private void PlayPreparedWorld(WorldInfo worldInfo, bool runServer)
+    private void PlayPreparedWorld(WorldInfo worldInfo)
     {
-        if (runServer)
-        {
-            ScreensManager.SwitchScreen(
-                "GameLoading",
-                worldInfo,
-                string.Empty,
-                new HostedWorldLoadRequest()
-            );
-        }
-        else { ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty); }
+        ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
     }
 }

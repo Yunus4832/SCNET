@@ -3,7 +3,6 @@ using EntitySystem.TemplatesDatabase;
 
 using Game.Commands;
 using Game.Controls;
-using Game.Network;
 using Game.Network.Transport;
 using Game.Platforms;
 
@@ -234,7 +233,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     private void PlayMessageNotification(bool playNotificationSound)
     {
-        if (CommonLib.WorkType != WorkType.Local)
+        if (GameManager.Role != WorldRole.SinglePlayer)
         {
             playNotificationSound = ComponentCharacter.CharacterData.IsLocalCharacter;
         }
@@ -866,7 +865,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 }
             }
 
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 NetworkSender.SendToObservers(
                     ComponentCharacter.Entity,
@@ -877,7 +876,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                     ComponentCharacter.CharacterData.Client
                 );
             }
-            else if (CommonLib.WorkType == WorkType.Client)
+            else if (GameManager.Role == WorldRole.RemoteClient)
             {
                 NetworkSender.SendToServer(
                     CharacterPackageBuilder.Capture(

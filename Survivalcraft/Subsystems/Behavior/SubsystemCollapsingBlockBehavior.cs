@@ -1,7 +1,5 @@
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Subsystems;
 
 public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
@@ -88,7 +86,7 @@ public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
 
     private void TryCollapseColumn(Point3 p)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

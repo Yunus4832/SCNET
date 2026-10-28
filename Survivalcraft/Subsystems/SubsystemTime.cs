@@ -1,8 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Subsystems;
 
 public class SubsystemTime : Subsystem
@@ -69,7 +67,7 @@ public class SubsystemTime : Subsystem
         }
 
         // A client's entity set is AOI-filtered, not the authoritative online player set.
-        if (CommonLib.WorkType != WorkType.Client &&
+        if (GameManager.Role != WorldRole.RemoteClient &&
             num2 + num3 == _subsystemCharacters.ComponentCharacters.Count &&
             num2 >= 1)
         {
@@ -82,7 +80,7 @@ public class SubsystemTime : Subsystem
             _subsystemUpdate.UpdatesPerFrame = 1;
         }
 
-        var flag = true;
+        var flag = GameManager.Role == WorldRole.SinglePlayer;
         foreach (var componentCharacter2 in _subsystemCharacters.ComponentCharacters)
         {
             if (!componentCharacter2.ComponentGui.IsGameMenuDialogVisible())

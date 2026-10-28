@@ -1,6 +1,5 @@
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Subsystems;
@@ -77,7 +76,7 @@ public class SubsystemCactusBlockBehavior : SubsystemPollableBlockBehavior, IUpd
 
         const string cuase = "被仙人掌刺入";
         var amount = 0.01f * MathUtils.Abs(velocity);
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             creature.ComponentHealth.Injure(amount, null, false, cuase);
         }

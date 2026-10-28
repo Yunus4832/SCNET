@@ -43,7 +43,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -187,7 +187,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
             }
         }
 
-        if (!_isRun || CommonLib.WorkType == WorkType.Client)
+        if (!_isRun || GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -198,7 +198,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
         }
 
         _isRun = false;
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             var observers = SubsystemInventories.GetObservers(this)
                 .Where(client => client.IsConnected && client.State == ClientState.Playing).ToArray();

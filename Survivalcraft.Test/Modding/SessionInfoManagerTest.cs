@@ -25,6 +25,28 @@ public sealed class SessionInfoManagerTest : IDisposable
         }
     }
 
+    [Fact]
+    public void HostedWorldRestartPreservesTargetAndExplicitSessionSelection()
+    {
+        var restart = SessionInfoManager.PrepareRestartSession(
+            new SessionInfo
+            {
+                Name = "HostedTest", Target = SessionTarget.HostedWorld, World = "HostedWorld"
+            }
+        );
+        var restored = SessionInfoManager.Load(restart.SessionId);
+        Assert.Equal(SessionTarget.HostedWorld, restored.Target);
+        Assert.Equal("HostedWorld", restored.World);
+        restored.Name = "HostedTest";
+        SessionInfoManager.Save(restored);
+        var selected = SessionInfoManager.ResolveStartupSession(
+            new RunningSetting(),
+            new StartupRequest { HasExplicitSession = true, SessionName = "HostedTest" },
+            restart.SessionId
+        );
+        Assert.Equal(SessionTarget.HostedWorld, selected.Target);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

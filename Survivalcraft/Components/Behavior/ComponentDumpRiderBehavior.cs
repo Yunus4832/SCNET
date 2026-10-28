@@ -1,8 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Components;
 
 public class ComponentDumpRiderBehavior : ComponentBehavior, IUpdateable
@@ -114,7 +112,7 @@ public class ComponentDumpRiderBehavior : ComponentBehavior, IUpdateable
                         if (_random.Float(0f, 1f) < 0.05f)
                         {
                             _componentMount.Rider.StartDismounting();
-                            if (CommonLib.WorkType != WorkType.Client)
+                            if (GameManager.Role != WorldRole.RemoteClient)
                             {
                                 _componentMount.Rider.ComponentCreature.ComponentHealth.Injure(
                                     _random.Float(0.05f, 0.2f),
@@ -127,7 +125,7 @@ public class ComponentDumpRiderBehavior : ComponentBehavior, IUpdateable
 
                         if (_random.Float(0f, 1f) < 0.25f)
                         {
-                            if (CommonLib.WorkType != WorkType.Client)
+                            if (GameManager.Role != WorldRole.RemoteClient)
                             {
                                 _componentMount.Rider.ComponentCreature.ComponentHealth.Injure(
                                     0.05f,

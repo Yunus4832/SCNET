@@ -296,7 +296,7 @@ public static class ModProfileManager
     {
         context = default;
         if (sessionInfo == null ||
-            sessionInfo.Target != SessionTarget.World ||
+            sessionInfo.Target is not (SessionTarget.World or SessionTarget.HostedWorld) ||
             string.IsNullOrWhiteSpace(sessionInfo.World))
         {
             return false;

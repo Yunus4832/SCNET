@@ -5,9 +5,11 @@ using Engine.Network;
 using EntitySystem.Core;
 
 using Game.Authentication;
+using Game.Managers;
 using Game.Network;
 using Game.Network.Transport;
 using Game.Screens;
+using Game.World;
 
 using SCNET.Authentication.Protocol;
 using SCNET.Authentication.Protocol.Contracts;
@@ -42,8 +44,8 @@ public sealed class NetNodeLifecycleTest
             endpoint,
             null
         );
-        var previousMode = CommonLib.WorkType;
-        CommonLib.WorkType = WorkType.Local;
+        var previousMode = GameManager.Role;
+        CommonLib.Net.Role = WorldRole.SinglePlayer;
         try
         {
             var node = new NetNode
@@ -55,17 +57,17 @@ public sealed class NetNodeLifecycleTest
             node.StopImmediate();
             Assert.Null(node.TemporaryAuthentication);
         }
-        finally { CommonLib.WorkType = previousMode; }
+        finally { CommonLib.Net.Role = previousMode; }
     }
 
     [Fact]
     public void AdmissionRecoveryClosesTransportWithoutNavigatingAndCannotCloseAnAdmittedSession()
     {
-        var previousMode = CommonLib.WorkType;
+        var previousMode = GameManager.Role;
         var previousScreen = ScreensManager.CurrentScreen;
         try
         {
-            CommonLib.WorkType = WorkType.Client;
+            CommonLib.Net.Role = WorldRole.RemoteClient;
             var loading = new Screen();
             ScreensManager.CurrentScreen = loading;
             var node = new NetNode { CurrentStage = NetNode.Stage.Bootstrapping };
@@ -79,7 +81,7 @@ public sealed class NetNodeLifecycleTest
         }
         finally
         {
-            CommonLib.WorkType = previousMode;
+            CommonLib.Net.Role = previousMode;
             ScreensManager.CurrentScreen = previousScreen;
         }
     }
@@ -87,8 +89,8 @@ public sealed class NetNodeLifecycleTest
     [Fact]
     public void StoppedNodeDoesNotRetainClientsOrTheirWorldReferences()
     {
-        var previousMode = CommonLib.WorkType;
-        CommonLib.WorkType = WorkType.Local;
+        var previousMode = GameManager.Role;
+        CommonLib.Net.Role = WorldRole.SinglePlayer;
         try
         {
             using var project = new Project();
@@ -110,7 +112,7 @@ public sealed class NetNodeLifecycleTest
         }
         finally
         {
-            CommonLib.WorkType = previousMode;
+            CommonLib.Net.Role = previousMode;
         }
     }
 }

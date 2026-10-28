@@ -10,6 +10,8 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
 {
     private GameMode? _persistedGameMode;
 
+    private bool? _persistedRunServer;
+
     private double? _lastTotalElapsedGameTime;
 
     private SubsystemTime _subsystemTime = null!;
@@ -44,12 +46,12 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
         }
 
         //客户端禁用时间计算
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
 
-        if (CommonLib.WorkType == WorkType.Server && _subsystemTime.PeriodicGameTimeEvent(1.0, 0.0))
+        if (GameManager.Role == WorldRole.Server && _subsystemTime.PeriodicGameTimeEvent(1.0, 0.0))
         {
             CommonLib.Net.QueuePackage(
                 new SubsystemTimePackage(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset),
@@ -73,14 +75,25 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
     public override void Save(ValuesDictionary valuesDictionary)
     {
         WorldSettings.Save(valuesDictionary, false);
-        if (_persistedGameMode is { } persistedGameMode)
+        if (!Project.SendToClientMode && _persistedGameMode is { } persistedGameMode)
         {
             valuesDictionary.SetValue("GameMode", persistedGameMode);
+        }
+
+        if (!Project.SendToClientMode && _persistedRunServer is { } persistedRunServer)
+        {
+            valuesDictionary.SetValue("RunServer", persistedRunServer);
         }
 
         valuesDictionary.SetValue("WorldSeed", WorldSeed);
         valuesDictionary.SetValue("TotalElapsedGameTime", TotalElapsedGameTime);
         valuesDictionary.SetValue("ServerAdministrationClaimed", ServerAdministrationClaimed);
+    }
+
+    public void ApplyRunServerOverride(bool runServer)
+    {
+        _persistedRunServer ??= WorldSettings.RunServer;
+        WorldSettings.RunServer = runServer;
     }
 
     public void ApplyGameModeOverride(GameMode gameMode)

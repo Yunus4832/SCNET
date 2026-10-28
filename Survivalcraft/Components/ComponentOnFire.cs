@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -117,7 +116,7 @@ public class ComponentOnFire : Component, IUpdateable
 
     public void SetOnFire(ComponentCreature? attacker, float duration)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

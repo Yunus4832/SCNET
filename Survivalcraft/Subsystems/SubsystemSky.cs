@@ -369,10 +369,10 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
 
     public void MakeLightningStrike(Vector3 targetPosition)
     {
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             NetMakeLightingStrike(targetPosition);
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 CommonLib.Net.QueuePackage(new SubsystemSkyPackage(targetPosition), PackageAudience.Global);
             }
@@ -413,7 +413,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         }
 
         // 客户端只重放闪电和雷声。生物状态、统计及爆炸由服务端权威复制。
-        if (CommonLib.WorkType == WorkType.Client ||
+        if (GameManager.Role == WorldRole.RemoteClient ||
             _subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != 0)
         {
             return;

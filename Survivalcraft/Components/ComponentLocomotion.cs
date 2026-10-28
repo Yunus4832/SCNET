@@ -2,7 +2,6 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Modding.Blocks;
-using Game.Network;
 using Game.Network.Interpolation;
 
 namespace Game.Components;
@@ -182,7 +181,7 @@ public class ComponentLocomotion : Component, IUpdateable
 
     public virtual void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             //非玩家
             if (_componentCharacter == null)
@@ -211,7 +210,7 @@ public class ComponentLocomotion : Component, IUpdateable
                 return;
             }
         }
-        else if (CommonLib.WorkType == WorkType.Server)
+        else if (GameManager.Role == WorldRole.Server)
         {
             //非玩家
             if (_componentCharacter == null)

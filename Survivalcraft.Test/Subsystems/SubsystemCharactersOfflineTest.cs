@@ -11,6 +11,7 @@ using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 using Game.Terrains;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 
@@ -25,13 +26,13 @@ public sealed class SubsystemCharactersOfflineTest
     public void OfflineRequestsRunAfterAllPlayersUpdateAndOnlyOnce(RunModeType mode)
     {
         var previousMode = RunMode.Value;
-        var previousWorkType = CommonLib.WorkType;
+        var previousWorldRole = GameManager.Role;
         var previousClients = CommonLib.Net.Clients;
         var previousGarbageCollect = SettingsManager.Current.AutoGarbageCollect;
         try
         {
             RunMode.Value = mode;
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
             CommonLib.Net.Clients = [];
             SettingsManager.Current.AutoGarbageCollect = false;
             var subsystem = new SubsystemCharacters();
@@ -92,7 +93,7 @@ public sealed class SubsystemCharactersOfflineTest
         {
             SettingsManager.Current.AutoGarbageCollect = previousGarbageCollect;
             CommonLib.Net.Clients = previousClients;
-            CommonLib.WorkType = previousWorkType;
+            CommonLib.Net.Role = previousWorldRole;
             RunMode.Value = previousMode;
         }
     }

@@ -5,9 +5,7 @@ using Engine.Graphics;
 using Engine.Media.Images;
 using Engine.Network;
 
-using Game.Admission;
 using Game.Authentication;
-using Game.Managers;
 using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Handling;
@@ -28,9 +26,9 @@ public class GameLoadingScreen : Screen
 
     private TemporaryJoinAuthorization? _temporaryAuthorization;
 
-    private HostedWorldLoadRequest? _hostLoadRequest;
+    private SessionInfo? _worldSession;
 
-    private ServerAdmissionPolicy? _hostPolicy;
+    private LocalGameReturnTarget? _localReturnTarget;
 
     private bool _isAdventureRestart;
 
@@ -55,6 +53,8 @@ public class GameLoadingScreen : Screen
     private Stopwatch _timer = null!;
 
     public WorldInfo? CurrentWorldInfo => _serverPreparation == null ? _worldInfo : null;
+
+    public SessionInfo? CurrentWorldSession => _serverPreparation is null ? _worldSession : null;
 
     public NetworkTarget? CurrentRemoteTarget => _serverPreparation?.Target;
 
@@ -146,10 +146,15 @@ public class GameLoadingScreen : Screen
                     return;
                 }
 
+                if (CommonLib.Net.LocalAdmissionError is { } error)
+                {
+                    ReturnFromLocalWorld(error);
+                    return;
+                }
+
                 if (CommonLib.Net.AdmissionAccepted)
                 {
-                    CommonLib.Net.PrepareLocalHostWorld();
-                    _stateMachine.TransitionTo("Loading");
+                    ScreensManager.SwitchScreen("Game");
                 }
             },
             Actions.Empty
@@ -177,25 +182,29 @@ public class GameLoadingScreen : Screen
                 {
                     var gamesWidget = ScreensManager.FindScreen<GameScreen>("Game", true)!.Children
                         .Find<ContainerWidget>("GamesWidget")!;
-                    GameManager.LoadProject(_worldInfo, gamesWidget);
-                    if (_hostLoadRequest is { } host)
+                    GameManager.LoadProject(_worldInfo, gamesWidget, _worldSession);
+                    GameManager.LocalPlayerReturnTarget = _localReturnTarget;
+                    if (_worldInfo.WorldSettings.RunServer)
                     {
-                        if (host.Session is { } session)
+                        var saved = WorldsManager.ReadAdmissionPolicy(_worldInfo.DirectoryName);
+                        var hostPolicy = _worldSession is { } session
+                            ? ServerAdmissionManager.Resolve(session.AdmissionOverrides, saved)
+                            : saved;
+                        var started = _worldSession is { } hostSession
+                            ? CommonLib.StartServer(hostSession, _worldInfo.WorldSettings, hostPolicy)
+                            : CommonLib.StartServer(_worldInfo.WorldSettings, hostPolicy);
+                        if (!started) { throw new InvalidOperationException(CommonLib.Net.Error); }
+
+                        if (_worldSession?.Target == SessionTarget.HostedWorld && !_isAdventureRestart)
                         {
-                            CommonLib.StartServer(session, _worldInfo.WorldSettings, _hostPolicy);
+                            ScreensManager.SwitchScreen("HostedWorld");
                         }
-                        else { CommonLib.StartServer(_worldInfo.WorldSettings, _hostPolicy); }
+                        else { BeginLocalPlayerJoin(); }
+
+                        return;
                     }
 
-                    if (_isAdventureRestart && CommonLib.WorkType == WorkType.Client)
-                    {
-                        NetworkSender.SendToServer(
-                            CharacterPackageBuilder.Capture(
-                                CommonLib.LocalCharacter!,
-                                ComponentCharacterPackage.CharacterAction.IntoPlaying
-                            )
-                        );
-                    }
+                    CommonLib.Net.JoinSinglePlayerWorld();
 
                     ScreensManager.SwitchScreen("Game");
                 }
@@ -255,10 +264,11 @@ public class GameLoadingScreen : Screen
             {
                 CommonLib.Net.StopImmediate();
                 GameManager.DisposeProject();
-                CommonLib.Net.StartLocal();
+                var runServer = _worldInfo.WorldSettings.RunServer;
                 WorldsManager.RestoreWorldFromSnapshot(_worldInfo.DirectoryName, _worldSnapshotName);
                 _worldInfo = WorldsManager.GetWorldInfo(_worldInfo.DirectoryName) ??
                              throw new InvalidDataException("The restored world cannot be read.");
+                _worldInfo.WorldSettings.RunServer = runServer;
                 BeginLocalWorldLoad();
             },
             Actions.Empty
@@ -267,34 +277,23 @@ public class GameLoadingScreen : Screen
 
     private void BeginLocalWorldLoad()
     {
-        if (_hostLoadRequest is null)
-        {
-            _temporaryAuthorization = null;
-            _stateMachine.TransitionTo("Loading");
-            return;
-        }
+        if (_worldInfo.WorldSettings.RunServer) { CommonLib.Net.PrepareServerWorld(); }
+        else { CommonLib.Net.PrepareSinglePlayerWorld(); }
 
-        _admissionUi ??= new ClientAdmissionUi(
+        _stateMachine.TransitionTo("Loading");
+    }
+
+    private void BeginLocalPlayerJoin()
+    {
+        _admissionUi = new ClientAdmissionUi(
             CommonLib.Net,
             this,
             AuthenticationJoinScope.ForWorld(_worldInfo.DirectoryName),
             _temporaryAuthorization
         );
         _temporaryAuthorization = null;
-        var saved = WorldsManager.ReadAdmissionPolicy(_worldInfo.DirectoryName);
-        _hostPolicy = _hostLoadRequest.Session is { } session
-            ? ServerAdmissionManager.Resolve(session.AdmissionOverrides, saved)
-            : saved;
         DialogsManager.ShowDialog(this, SpawnDialog);
-        CommonLib.Net.BeginLocalAdmission(
-            _worldInfo.DirectoryName,
-            _hostPolicy,
-            ServerIdentitySelection.Resolve(
-                LocalIdentityManager.Current,
-                _hostLoadRequest.Session,
-                _worldInfo.WorldSettings
-            )
-        );
+        CommonLib.Net.BeginLocalAdmission();
         _stateMachine.TransitionTo("WaitLocalAdmission");
     }
 
@@ -429,9 +428,41 @@ public class GameLoadingScreen : Screen
         }
     }
 
+    private void OnLocalPlayerRemoved(string reason)
+    {
+        if (ScreensManager.CurrentScreen == this) { ReturnFromLocalWorld(reason); }
+    }
+
+    private static void ReturnFromLocalWorld(string? error = null)
+    {
+        if (GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
+        {
+            GameManager.LeaveLocalPlayer();
+            ScreensManager.SwitchScreen("HostedWorld", error ?? string.Empty);
+        }
+        else
+        {
+            GameManager.CloseWorld();
+            ScreensManager.SwitchScreen("Play");
+            if (!string.IsNullOrEmpty(error)) { DialogsManager.Alert(error); }
+        }
+    }
+
     private void AbortLoading()
     {
         var previous = ScreensManager.PreviousScreen;
+        if (_serverPreparation is null &&
+            CommonLib.Net.IsServer &&
+            !CommonLib.Net.IsClosing &&
+            CommonLib.Net.IsTransportRunning &&
+            GameManager.Project is not null)
+        {
+            ReturnFromLocalWorld();
+            return;
+        }
+
+        if (_serverPreparation is null && GameManager.Project is not null) { GameManager.SaveProject(true, true); }
+
         CommonLib.Net.StopImmediate();
         GameManager.DisposeProject();
         if (previous is null or LoadingScreen or GameLoadingScreen or GameScreen)
@@ -443,6 +474,7 @@ public class GameLoadingScreen : Screen
 
     public override void Leave()
     {
+        CommonLib.Net.LocalPlayerRemoved -= OnLocalPlayerRemoved;
         _temporaryAuthorization = null;
         _admissionUi?.Dispose();
         _admissionUi = null;
@@ -470,15 +502,10 @@ public class GameLoadingScreen : Screen
         _admissionUi = null;
         _isServerReply = false;
         _isWorldSnapshotApplied = false;
-        if (CommonLib.WorkType == WorkType.Local)
-        {
-            CommonLib.Net.StartLocal();
-        }
-
-        _hostLoadRequest = null;
-        _hostPolicy = null;
+        _worldSession = null;
         if (parameters.Length >= 3 && parameters[2] is ServerConnectionPreparation prepared)
         {
+            GameManager.LocalPlayerReturnTarget = null;
             _worldSnapshotName = string.Empty;
             _serverPreparation = prepared;
             _admissionUi = new ClientAdmissionUi(
@@ -494,19 +521,25 @@ public class GameLoadingScreen : Screen
             _worldSnapshotName = (string)parameters[1];
             _serverPreparation = null;
             _isAdventureRestart = _worldSnapshotName == "AdventureRestart";
-            _hostLoadRequest = parameters.Length >= 3 ? parameters[2] as HostedWorldLoadRequest : null;
-            if (_isAdventureRestart && CommonLib.Net.IsServer)
+            _worldSession = parameters.OfType<SessionInfo>().FirstOrDefault() ??
+                            SessionInfoManager.CreateWorldSession(_worldInfo);
+            _localReturnTarget = _worldSession.Target == SessionTarget.World
+                ? LocalGameReturnTarget.WorldList
+                : null;
+
+            if (_isAdventureRestart)
             {
+                _localReturnTarget = GameManager.LocalPlayerReturnTarget;
                 _temporaryAuthorization = CommonLib.Net.TemporaryAuthentication;
-                _hostLoadRequest = new HostedWorldLoadRequest(CommonLib.Net.ActiveHostSession);
+                _worldSession = GameManager.WorldSession ?? _worldSession;
+                if (CommonLib.Net.IsServer) { _worldInfo.WorldSettings.RunServer = true; }
             }
-            else if (_hostLoadRequest is null && _worldInfo.WorldSettings.RunServer)
-            {
-                _hostLoadRequest = new HostedWorldLoadRequest();
-            }
+
+            if (_worldSession.Target == SessionTarget.HostedWorld) { _worldInfo.WorldSettings.RunServer = true; }
         }
 
         _stateMachine.TransitionTo("WaitingForFadeIn");
         ProgressManager.UpdateProgress("Loading World", 0f);
+        CommonLib.Net.LocalPlayerRemoved += OnLocalPlayerRemoved;
     }
 }

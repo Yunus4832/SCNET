@@ -4,27 +4,23 @@ using Engine.Core.Runtime;
 
 using Game.Characters;
 using Game.Components;
+using Game.Managers;
 using Game.Network;
 using Game.Subsystems;
+using Game.World;
 
 namespace Survivalcraft.Test.Subsystems;
 
-[CollectionDefinition(Name, DisableParallelization = true)]
-public sealed class NetworkWorkTypeCollection
-{
-    public const string Name = nameof(NetworkWorkTypeCollection);
-}
-
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public sealed class LocalPlayerComponentSchedulingTest : IDisposable
 {
-    private readonly WorkType _previousWorkType = CommonLib.WorkType;
+    private readonly WorldRole _previousWorldRole = GameManager.Role;
 
     private readonly RunModeType _previousRunMode = RunMode.Value;
 
     public void Dispose()
     {
-        CommonLib.WorkType = _previousWorkType;
+        CommonLib.Net.Role = _previousWorldRole;
         RunMode.Value = _previousRunMode;
     }
 
@@ -32,7 +28,7 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
     public void RemoteClientGuiAndInputAreExcludedFromScheduling()
     {
         RunMode.Value = RunModeType.Gui;
-        CommonLib.WorkType = WorkType.Client;
+        CommonLib.Net.Role = WorldRole.RemoteClient;
         var player = CreatePlayer(false);
         var gui = CreateGui(player);
         var input = new ComponentInput { ComponentCharacter = player };
@@ -47,7 +43,7 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
     public void OnlyMainGuiPlayerKeepsLocalScheduling()
     {
         RunMode.Value = RunModeType.Gui;
-        CommonLib.WorkType = WorkType.Client;
+        CommonLib.Net.Role = WorldRole.RemoteClient;
         var localCharacter = CreatePlayer(true);
         var mainGui = CreateGui(localCharacter);
         var mainInput = new ComponentInput { ComponentCharacter = localCharacter };
@@ -56,7 +52,7 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
         Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(mainInput));
         Assert.True(SubsystemDrawing.ShouldScheduleDrawable(mainGui));
 
-        CommonLib.WorkType = WorkType.Local;
+        CommonLib.Net.Role = WorldRole.SinglePlayer;
         var localLocalCharacter = CreatePlayer(true);
         Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(localLocalCharacter)));
         var additionalLocalPlayer = CreatePlayer(false);
@@ -67,7 +63,7 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
     public void GuiServerSchedulesOnlyLocalCharacterGuiAndInput()
     {
         RunMode.Value = RunModeType.Gui;
-        CommonLib.WorkType = WorkType.Server;
+        CommonLib.Net.Role = WorldRole.Server;
         var localCharacter = CreatePlayer(true);
         var remotePlayer = CreatePlayer(false);
 
@@ -88,7 +84,7 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
     public void HeadlessPlayersDoNotScheduleGuiOrInputEvenWhenMarkedMain()
     {
         RunMode.Value = RunModeType.HeadlessServer;
-        CommonLib.WorkType = WorkType.Server;
+        CommonLib.Net.Role = WorldRole.Server;
         var player = CreatePlayer(true);
         var gui = CreateGui(player);
         var input = new ComponentInput { ComponentCharacter = player };

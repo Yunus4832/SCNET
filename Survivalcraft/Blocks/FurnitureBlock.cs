@@ -3,7 +3,6 @@ using Engine.Graphics;
 using Game.Crafting;
 using Game.Furniture;
 using Game.Modding.Blocks;
-using Game.Network;
 
 namespace Game.Blocks;
 
@@ -115,7 +114,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
     public int Paint(SubsystemTerrain? terrain, int value, int? color)
     {
-        if (terrain is null || CommonLib.WorkType == WorkType.Client)
+        if (terrain is null || GameManager.Role == WorldRole.RemoteClient)
         {
             return value;
         }

@@ -1,7 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
 using Game.Entities;
-using Game.Network;
 
 namespace Game.Subsystems;
 
@@ -158,7 +157,7 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
                     }
                 }
 
-                if (CommonLib.WorkType != WorkType.Client)
+                if (GameManager.Role != WorldRole.RemoteClient)
                 {
                     inventory.RemoveSlotItems(activeSlotIndex, 1);
                     var value3 = Terrain.MakeBlockValue(num, 0, CrossbowBlock.SetDraw(data, 0));

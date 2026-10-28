@@ -1,7 +1,5 @@
 using EntitySystem.Core;
 
-using Game.Network;
-
 namespace Game.Commands;
 
 /// <summary>
@@ -27,7 +25,7 @@ public interface ICommandDefinition
 
     bool CanInvoke(CommandPrincipal principal, Project? project);
 
-    bool CanExecuteHere(RunModeType runMode, WorkType workType);
+    bool CanExecuteHere(RunModeType runMode, WorldRole worldRole);
 
     bool IsAuthorized(CommandContext context, IGameCommand command);
 
@@ -87,7 +85,7 @@ public sealed class CommandDefinition<TCommand>(
         }
 
         if (HostRequirement is CommandHostRequirement.HeadlessServer &&
-            (CommonLib.WorkType is not WorkType.Server ||
+            (GameManager.Role is not WorldRole.Server ||
              RunMode.Value is not RunModeType.HeadlessServer))
         {
             return false;
@@ -114,10 +112,10 @@ public sealed class CommandDefinition<TCommand>(
         return (AllowedPrincipals & flag) != 0;
     }
 
-    public bool CanExecuteHere(RunModeType runMode, WorkType workType)
+    public bool CanExecuteHere(RunModeType runMode, WorldRole worldRole)
     {
         if (HostRequirement is CommandHostRequirement.HeadlessServer &&
-            (workType is not WorkType.Server ||
+            (worldRole is not WorldRole.Server ||
              runMode is not RunModeType.HeadlessServer))
         {
             return false;
@@ -131,8 +129,8 @@ public sealed class CommandDefinition<TCommand>(
         return Domain switch
         {
             CommandDomain.Application => true,
-            CommandDomain.World => workType is WorkType.Local or WorkType.Server,
-            CommandDomain.Server => workType is WorkType.Server,
+            CommandDomain.World => worldRole is WorldRole.SinglePlayer or WorldRole.Server,
+            CommandDomain.Server => worldRole is WorldRole.Server,
             _ => false
         };
     }

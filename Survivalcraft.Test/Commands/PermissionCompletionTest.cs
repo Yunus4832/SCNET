@@ -1,22 +1,24 @@
 using Game.Commands;
+using Game.Managers;
 using Game.Network;
+using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public class PermissionCompletionTest
 {
     [Theory]
-    [InlineData(WorkType.Client)]
-    [InlineData(WorkType.Server)]
-    public void GrantAndDelegationUseTheirOwnPoliciesAndPermissionDescriptions(WorkType workType)
+    [InlineData(WorldRole.RemoteClient)]
+    [InlineData(WorldRole.Server)]
+    public void GrantAndDelegationUseTheirOwnPoliciesAndPermissionDescriptions(WorldRole worldRole)
     {
-        var previous = CommonLib.WorkType;
+        var previous = GameManager.Role;
         try
         {
-            CommonLib.WorkType = workType;
+            CommonLib.Net.Role = worldRole;
             var registry = new CommandRegistry();
             BuiltInCommands.Register(registry, new ModId("game"));
             registry.Freeze();
@@ -57,7 +59,7 @@ public class PermissionCompletionTest
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 }

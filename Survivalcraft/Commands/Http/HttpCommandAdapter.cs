@@ -4,7 +4,6 @@ using System.Text.Json.Nodes;
 using EntitySystem.Core;
 
 using Game.Localization;
-using Game.Network;
 
 namespace Game.Commands;
 
@@ -189,7 +188,7 @@ public sealed class HttpCommandAdapter(CommandRegistry registry)
             .Where(entry => _registry.TryGetDefinition(entry.Id, out var command) &&
                             command is not null &&
                             command.Definition.CanInvoke(principal, project) &&
-                            command.Definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) &&
+                            command.Definition.CanExecuteHere(RunMode.Value, GameManager.Role) &&
                             command.Definition.IsPotentiallyAuthorized(_registry.Permissions, principal, project)
             )
             .Select(entry =>

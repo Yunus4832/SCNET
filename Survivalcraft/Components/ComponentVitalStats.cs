@@ -6,7 +6,6 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -90,11 +89,11 @@ public class ComponentVitalStats : Component, IUpdateable
             if (_componentCharacter.ComponentSleep.SubsystemUpdate.IsLastUpdateInFrame &&
                 Time.PeriodicEvent(1.0, 0.5))
             {
-                if (CommonLib.WorkType == WorkType.Server && _componentCharacter.CharacterData.Client is { } owner)
+                if (GameManager.Role == WorldRole.Server && _componentCharacter.CharacterData.Client is { } owner)
                 {
                     NetworkSender.SendTo(owner, EntityStatePackageBuilder.Capture(this));
                 }
-                else if (CommonLib.WorkType == WorkType.Client)
+                else if (GameManager.Role == WorldRole.RemoteClient)
                 {
                     NetworkSender.SendToServer(EntityStatePackageBuilder.Capture(this));
                 }
@@ -335,7 +334,7 @@ public class ComponentVitalStats : Component, IUpdateable
         {
             var hungerFactor = _componentCharacter.ComponentLevel.HungerFactor;
             //开服后，睡觉饥饿速度加快5倍
-            if (CommonLib.WorkType == WorkType.Server &&
+            if (GameManager.Role == WorldRole.Server &&
                 _componentCharacter.ComponentSleep.SubsystemUpdate.UpdatesPerFrame == 1 &&
                 _componentCharacter.ComponentSleep.IsSleeping)
             {

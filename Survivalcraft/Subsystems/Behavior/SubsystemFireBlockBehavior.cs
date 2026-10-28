@@ -90,7 +90,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
                     // Chunk baselines do not necessarily replay every historical neighbor change.
                     // Revalidate fuel on the authority so orphan fire cells cannot survive indefinitely.
-                    if (CommonLib.WorkType != WorkType.Client && HasLoadedFuelNeighbors(x, z))
+                    if (GameManager.Role != WorldRole.RemoteClient && HasLoadedFuelNeighbors(x, z))
                     {
                         OnNeighborBlockChanged(x, y, z, x, y, z);
                         if (SubsystemTerrain.Terrain.GetCellContents(x, y, z) !=
@@ -500,9 +500,9 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private void AddFire(int x, int y, int z, float expandability)
     {
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 NetworkSender.SendToChunkObservers(
                     Project,
@@ -564,7 +564,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private void RemoveFire(int x, int y, int z)
     {
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             NetworkSender.SendToChunkObservers(
                 Project,

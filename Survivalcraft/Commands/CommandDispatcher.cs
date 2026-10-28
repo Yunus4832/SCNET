@@ -1,5 +1,3 @@
-using Game.Network;
-
 namespace Game.Commands;
 
 public sealed class CommandDispatcher(CommandRegistry registry)
@@ -24,7 +22,7 @@ public sealed class CommandDispatcher(CommandRegistry registry)
 
         var definition = registered.Definition;
         context.Registry = _registry;
-        if (!definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) ||
+        if (!definition.CanExecuteHere(RunMode.Value, GameManager.Role) ||
             !definition.CanInvoke(context.Principal, context.Project))
         {
             return CommandResult.LocalizedFail(

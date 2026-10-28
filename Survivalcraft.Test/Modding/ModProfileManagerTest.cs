@@ -184,8 +184,10 @@ public sealed class ModProfileManagerTest : IDisposable
         Assert.Equal(Path.GetFileName(worldDirectoryName), root.Attribute(nameof(ModProfile.Id))?.Value);
     }
 
-    [Fact]
-    public void LoadEffectiveProfileUsesWorldOnlyStrategyWhenNoSessionProfileExists()
+    [Theory]
+    [InlineData(SessionTarget.World)]
+    [InlineData(SessionTarget.HostedWorld)]
+    public void LoadEffectiveProfileUsesWorldOnlyStrategyWhenNoSessionProfileExists(SessionTarget target)
     {
         DeleteIfExists(ModProfileManager.GlobalProfilePath);
         var worldDirectoryName = CreateWorldDirectory("WorldOnly", ModProfileResolutionStrategy.WorldOnly);

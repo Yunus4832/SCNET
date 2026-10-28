@@ -1,8 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Components;
 
 public class ComponentBehaviorSelector : Component, IUpdateable
@@ -75,7 +73,7 @@ public class ComponentBehaviorSelector : Component, IUpdateable
     {
         base.Load(valuesDictionary, idToEntityMap);
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             IsDisableBehavior = true;
         }

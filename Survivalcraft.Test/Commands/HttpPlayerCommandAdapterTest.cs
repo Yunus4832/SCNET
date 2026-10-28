@@ -9,14 +9,19 @@ using EntitySystem.Core;
 
 using Game.Characters;
 using Game.Commands;
+using Game.Managers;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
+using Game.World;
 
 using MessagePack;
 
+using Survivalcraft.Test.Subsystems;
+
 namespace Survivalcraft.Test.Commands;
 
+[Collection(WorldRoleCollection.Name)]
 public class HttpPlayerCommandAdapterTest
 {
     private static readonly ModId _owner = new("test.playerhttp");
@@ -28,10 +33,10 @@ public class HttpPlayerCommandAdapterTest
     [Fact]
     public void CatalogIsAnOrdinaryCommandAndContainsOnlyAuthorizedCommandIdentities()
     {
-        var previous = CommonLib.WorkType;
+        var previous = GameManager.Role;
         try
         {
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
             using var project = new TestProject();
             var player = Player(project);
             var registry = Registry();
@@ -75,7 +80,7 @@ public class HttpPlayerCommandAdapterTest
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 
@@ -193,10 +198,10 @@ public class HttpPlayerCommandAdapterTest
     [Fact]
     public void BindingBeforeTransportDoesNotGrantServerPermission()
     {
-        var previous = CommonLib.WorkType;
+        var previous = GameManager.Role;
         try
         {
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
             using var project = new TestProject();
             var player = Player(project);
             var registry = Registry();
@@ -255,7 +260,7 @@ public class HttpPlayerCommandAdapterTest
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 

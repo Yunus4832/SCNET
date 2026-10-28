@@ -1,5 +1,3 @@
-using EntitySystem.Core;
-
 using Game.Protocol.Identity;
 
 namespace Game.Network;
@@ -11,7 +9,7 @@ internal static class PlayerSessionBinding
     // Ownership is not an authentication proof and no player record is created here.
     internal static void BindInitialCharacter(PlayerAddress owner, Guid characterId)
     {
-        if (CommonLib.WorkType != WorkType.Client || PlayerSessionQuery.Find(owner) is not { } session) { return; }
+        if (GameManager.Role != WorldRole.RemoteClient || PlayerSessionQuery.Find(owner) is not { } session) { return; }
 
         if (session.CharacterId != Guid.Empty && session.CharacterId != characterId)
         {
@@ -19,18 +17,5 @@ internal static class PlayerSessionBinding
         }
 
         session.CharacterId = characterId;
-    }
-
-    internal static void PrepareLocalPlayer(Project project)
-    {
-        if (CommonLib.WorkType == WorkType.Client || CommonLib.Net.Self is not { PlayerAddress: { } address } session)
-        {
-            return;
-        }
-
-        var player = project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(address);
-        if (player.Ban is not null) { throw new InvalidOperationException("该玩家已被此存档封禁。"); }
-
-        session.CharacterId = player.CharacterId;
     }
 }

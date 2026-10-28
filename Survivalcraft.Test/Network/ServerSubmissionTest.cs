@@ -1,5 +1,7 @@
+using Game.Managers;
 using Game.Network;
 using Game.Network.Transport;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 
@@ -9,17 +11,17 @@ namespace Survivalcraft.Test.Network;
 public sealed class ServerSubmissionTest
 {
     [Theory]
-    [InlineData(WorkType.Local)]
-    [InlineData(WorkType.Server)]
-    [InlineData(WorkType.Client)]
-    public void InvalidSubmissionCannotFallBackToGlobalBroadcast(WorkType mode)
+    [InlineData(WorldRole.SinglePlayer)]
+    [InlineData(WorldRole.Server)]
+    [InlineData(WorldRole.RemoteClient)]
+    public void InvalidSubmissionCannotFallBackToGlobalBroadcast(WorldRole mode)
     {
-        var previousMode = CommonLib.WorkType;
+        var previousMode = GameManager.Role;
         var previousServer = CommonLib.Net.Server;
         try
         {
-            CommonLib.WorkType = mode;
-            CommonLib.Net.Server = mode == WorkType.Client
+            CommonLib.Net.Role = mode;
+            CommonLib.Net.Server = mode == WorldRole.RemoteClient
                 ? null
                 : new Client(null, 0, Guid.NewGuid(), Guid.NewGuid(), null);
 
@@ -29,7 +31,7 @@ public sealed class ServerSubmissionTest
         }
         finally
         {
-            CommonLib.WorkType = previousMode;
+            CommonLib.Net.Role = previousMode;
             CommonLib.Net.Server = previousServer;
         }
     }

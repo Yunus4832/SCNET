@@ -1,8 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Components;
 
 public class ComponentLayEggBehavior : ComponentBehavior, IUpdateable
@@ -149,7 +147,7 @@ public class ComponentLayEggBehavior : ComponentBehavior, IUpdateable
                         }
 
                         //客户端禁止下蛋
-                        if (CommonLib.WorkType == WorkType.Client)
+                        if (GameManager.Role == WorldRole.RemoteClient)
                         {
                             return;
                         }

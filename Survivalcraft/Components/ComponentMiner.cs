@@ -4,7 +4,6 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Entities;
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -260,7 +259,7 @@ public class ComponentMiner : Component, IUpdateable
 
             var digValue = block.GetDigValue(_subsystemTerrain, this, cellValue, activeBlockValue, raycastResult);
 
-            if (CommonLib.WorkType == WorkType.Client &&
+            if (GameManager.Role == WorldRole.RemoteClient &&
                 ComponentCharacter is { CharacterData.IsLocalCharacter: true } &&
                 digValue.CellFace.Point == cellFace.Point)
             {
@@ -328,7 +327,7 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             Inventory.RemoveSlotItems(Inventory.ActiveSlotIndex, 1);
         }
@@ -429,7 +428,8 @@ public class ComponentMiner : Component, IUpdateable
             behavior.OnBlockPlaced(this, num2, num3, num4, ref placementData, value);
         }
 
-        if (CommonLib.WorkType == WorkType.Client && ComponentCharacter is { CharacterData.IsLocalCharacter: true })
+        if (GameManager.Role == WorldRole.RemoteClient &&
+            ComponentCharacter is { CharacterData.IsLocalCharacter: true })
         {
             PlacementCell = new Point3(num2, num3, num4);
             PlacementExpectedValue = _subsystemTerrain.Terrain.GetCellValue(num2, num3, num4);
@@ -592,7 +592,7 @@ public class ComponentMiner : Component, IUpdateable
             var position = hitPoint + 0.75f * hitDirection;
             var velocity = 1f * hitDirection + ComponentCreature.ComponentBody.Velocity;
             var text = LanguageManager.Get(Name, 2);
-            if (CommonLib.WorkType != WorkType.Client)
+            if (GameManager.Role != WorldRole.RemoteClient)
             {
                 NetworkSender.SendNearPoint(
                     Project,
@@ -746,7 +746,7 @@ public class ComponentMiner : Component, IUpdateable
 
     public void RemoveActiveTool(int removeCount)
     {
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             Inventory.RemoveSlotItems(Inventory.ActiveSlotIndex, removeCount);
         }
@@ -755,7 +755,7 @@ public class ComponentMiner : Component, IUpdateable
     public void DamageActiveTool(int damageCount)
     {
         if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ||
-            CommonLib.WorkType == WorkType.Client)
+            GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -856,7 +856,7 @@ public class ComponentMiner : Component, IUpdateable
                         var text2 = (0f - num2).ToString("0", CultureInfo.InvariantCulture);
                         var position = hitPoint + 0.75f * hitDirection;
                         var velocity = 1f * hitDirection + attacker.ComponentBody.Velocity;
-                        if (CommonLib.WorkType != WorkType.Client)
+                        if (GameManager.Role != WorldRole.RemoteClient)
                         {
                             NetworkSender.SendNearPoint(
                                 target.Project,

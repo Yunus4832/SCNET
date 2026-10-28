@@ -3177,7 +3177,8 @@
             "Cloning": "正在克隆世界",
             "CloneFailed": "克隆世界失败",
             "DeleteTitle": "删除世界",
-            "DeleteQuestion": "确定要删除世界“{0}”吗？此操作无法撤销。"
+            "DeleteQuestion": "确定要删除世界“{0}”吗？此操作无法撤销。",
+            "RunServer": "运行服务器"
         },
         "RecipaediaDescriptionScreen": {
             "1": "方块描述"
@@ -3760,6 +3761,14 @@
             "Confirm": "身份由认证服务直接提供，请自行核对地址和公钥。仅安装配置，不登录。是否继续？",
             "AddressWarning": "同一公钥的新地址。更新将清除旧授权，保留停用状态。是否继续？",
             "Unavailable": "认证服务目录暂不可用。"
+        },
+        "HostedWorldScreen": {
+            "Title": "服务器运行中",
+            "Join": "加入游戏",
+            "Stop": "停止服务器",
+            "Running": "世界：{0}\n在线玩家：{1}",
+            "NotJoined": "服务器正在运行，你尚未加入游戏。",
+            "ConfirmStop": "停止服务器并返回世界列表？所有在线玩家将断开连接。"
         }
     },
     "FireworksBlock": {

@@ -4,7 +4,6 @@ using Engine.Graphics;
 
 using Game.Furniture;
 using Game.Network;
-using Game.Rendering;
 
 namespace Game.Dialogs;
 
@@ -27,7 +26,7 @@ public class GameMenuDialog : Dialog
         LoadContents(this, node);
         var statsPanel = Children.Find<StackPanelWidget>("StatsPanel")!;
         _componentCharacter = componentCharacter;
-        if (CommonLib.WorkType != WorkType.Client && GameManager.WorldInfo != null)
+        if (GameManager.Role != WorldRole.RemoteClient && GameManager.WorldInfo != null)
         {
             _adventureRestartExists =
                 WorldsManager.SnapshotExists(GameManager.WorldInfo.DirectoryName, "AdventureRestart");
@@ -92,7 +91,8 @@ public class GameMenuDialog : Dialog
                 Color = white
             }
         );
-        if (CommonLib.WorkType == WorkType.Client && CommonLib.Net.Server?.Peer is { IsConnected: true } connection)
+        if (GameManager.Role == WorldRole.RemoteClient &&
+            CommonLib.Net.Server?.Peer is { IsConnected: true } connection)
         {
             AddStat(
                 stackPanelWidget,
@@ -581,16 +581,23 @@ public class GameMenuDialog : Dialog
         }
 
         DialogsManager.HideDialog(this);
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
-            ScreensManager.SwitchScreen("NetPlay");
-        }
-        else
-        {
-            GameManager.SaveProject(true, true);
-            ScreensManager.SwitchScreen("Play");
+            if (GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
+            {
+                GameManager.LeaveLocalPlayer();
+                ScreensManager.SwitchScreen("HostedWorld");
+            }
+            else
+            {
+                GameManager.CloseWorld();
+                ScreensManager.SwitchScreen("Play");
+            }
+
+            return;
         }
 
+        ScreensManager.SwitchScreen("NetPlay");
         CommonLib.Net.StopImmediate();
         GameManager.DisposeProject();
     }

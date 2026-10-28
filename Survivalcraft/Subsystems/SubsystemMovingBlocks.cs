@@ -132,7 +132,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         _canGenerateGeometry = true;
         foreach (var movingBlockSet in MovingBlockSets)
         {
-            if (CommonLib.WorkType == WorkType.Client && movingBlockSet.NetworkStopped)
+            if (GameManager.Role == WorldRole.RemoteClient && movingBlockSet.NetworkStopped)
             {
                 continue;
             }
@@ -179,7 +179,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                 movingBlockSet.Position += movingBlockSet.CurrentVelocity * _subsystemTime.GameTimeDelta;
             }
 
-            if (CommonLib.WorkType == WorkType.Client)
+            if (GameManager.Role == WorldRole.RemoteClient)
             {
                 continue;
             }
@@ -223,7 +223,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             }
         }
 
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             foreach (var item in _stopped)
             {
@@ -286,7 +286,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             GenerateGeometry(movingBlockSet);
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return movingBlockSet;
         }
@@ -298,7 +298,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
 
     public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

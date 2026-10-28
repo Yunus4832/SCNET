@@ -4,7 +4,6 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Modding.Blocks;
-using Game.Network;
 
 namespace Game.Components;
 
@@ -41,7 +40,7 @@ public class ComponentLoot : Component, IUpdateable
         _lootDropped = true;
 
         //客户端禁止掉落
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

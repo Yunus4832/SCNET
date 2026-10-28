@@ -1,7 +1,5 @@
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Subsystems;
 
 public class SubsystemRotBlockBehavior : SubsystemPollableBlockBehavior
@@ -43,7 +41,7 @@ public class SubsystemRotBlockBehavior : SubsystemPollableBlockBehavior
 
     public override void OnPoll(int value, int x, int y, int z, int pollPass)
     {
-        if (!_isRotEnabled || CommonLib.WorkType == WorkType.Client)
+        if (!_isRotEnabled || GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -69,7 +67,7 @@ public class SubsystemRotBlockBehavior : SubsystemPollableBlockBehavior
             return;
         }
 
-        if (_isRotEnabled && CommonLib.WorkType != WorkType.Client)
+        if (_isRotEnabled && GameManager.Role != WorldRole.RemoteClient)
         {
             foreach (var item in items)
             {

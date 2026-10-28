@@ -2,26 +2,28 @@ using Engine.Core.Security;
 
 using EntitySystem.Core;
 
+using Game.Managers;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
+using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Network;
 
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public sealed class PlayerSessionQueryTest
 {
     [Fact]
     public void TrustedRoleMetadataCanInitializeControlWithoutCreatingAPlayerRecord()
     {
         var previous = CommonLib.Net.Clients;
-        var previousType = CommonLib.WorkType;
+        var previousType = GameManager.Role;
         using var project = new QueryProject();
         try
         {
-            CommonLib.WorkType = WorkType.Client;
+            CommonLib.Net.Role = WorldRole.RemoteClient;
             var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
             var session = new Client(null, 1, Guid.NewGuid(), Guid.Empty, project) { PlayerAddress = address };
             CommonLib.Net.Clients = new Dictionary<int, Client> { [1] = session };
@@ -35,7 +37,7 @@ public sealed class PlayerSessionQueryTest
         finally
         {
             CommonLib.Net.Clients = previous;
-            CommonLib.WorkType = previousType;
+            CommonLib.Net.Role = previousType;
         }
     }
 
@@ -43,10 +45,10 @@ public sealed class PlayerSessionQueryTest
     public void InitialMetadataCannotReplaceAnExistingControlAssignment()
     {
         var previous = CommonLib.Net.Clients;
-        var previousType = CommonLib.WorkType;
+        var previousType = GameManager.Role;
         try
         {
-            CommonLib.WorkType = WorkType.Client;
+            CommonLib.Net.Role = WorldRole.RemoteClient;
             var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
             var role = Guid.NewGuid();
             var session = new Client(null, 1, Guid.NewGuid(), role, null) { PlayerAddress = address };
@@ -58,7 +60,7 @@ public sealed class PlayerSessionQueryTest
         finally
         {
             CommonLib.Net.Clients = previous;
-            CommonLib.WorkType = previousType;
+            CommonLib.Net.Role = previousType;
         }
     }
 

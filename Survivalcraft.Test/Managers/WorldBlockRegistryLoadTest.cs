@@ -5,6 +5,7 @@ using Game.Blocks;
 using Game.Managers;
 using Game.Modding;
 using Game.Modding.Blocks;
+using Game.Network;
 using Game.Widgets;
 using Game.World;
 
@@ -25,6 +26,8 @@ public sealed class WorldBlockRegistryLoadTest
         const string rootName = "block-registry-write-test";
         Storage.RegisterFileSystemRoot(rootName, directory, readOnly: true);
         var previousMode = RunMode.Value;
+        var previousRole = GameManager.Role;
+        CommonLib.Net.Role = WorldRole.Server;
         var previousRuntime = CurrentModRuntime.Value;
         RunMode.Value = RunModeType.HeadlessServer;
         try
@@ -58,6 +61,7 @@ public sealed class WorldBlockRegistryLoadTest
             GameManager.DisposeProject();
             CurrentModRuntime.Set(previousRuntime);
             RunMode.Value = previousMode;
+            CommonLib.Net.Role = previousRole;
             Storage.RegisterFileSystemRoot(rootName, AppContext.BaseDirectory, readOnly: true);
             Directory.Delete(directory, true);
         }

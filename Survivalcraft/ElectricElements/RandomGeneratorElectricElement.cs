@@ -1,5 +1,3 @@
-using Game.Network;
-
 namespace Game.ElectricElements;
 
 public class RandomGeneratorElectricElement : RotateableElectricElement
@@ -26,7 +24,7 @@ public class RandomGeneratorElectricElement : RotateableElectricElement
 
     public override bool Simulate()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return RestorePersistentVoltage(SubsystemElectricity.ReadPersistentVoltage(CellFaces[0].Point) ?? _voltage);
         }
@@ -85,7 +83,7 @@ public class RandomGeneratorElectricElement : RotateableElectricElement
     public float GetRandomVoltage()
     {
         float v = 0;
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             return _innerRandom.Int(0, 15) / 15f;
         }

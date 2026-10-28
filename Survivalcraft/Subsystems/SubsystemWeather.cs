@@ -192,7 +192,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         if (_subsystemGameInfo.TotalElapsedGameTime > PrecipitationEndTime)
             //客户端禁用天气生成
         {
-            if (CommonLib.WorkType != WorkType.Client)
+            if (GameManager.Role != WorldRole.RemoteClient)
             {
                 if (PrecipitationEndTime == 0.0)
                 {
@@ -216,7 +216,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                 }
 
                 PrecipitationEndTime = PrecipitationStartTime + 60f * _random.Float(3f, 6f);
-                if (CommonLib.WorkType == WorkType.Server)
+                if (GameManager.Role == WorldRole.Server)
                 {
                     CommonLib.Net.QueuePackage(WorldSnapshotBuilder.Capture(this), PackageAudience.Global);
                 }
@@ -439,7 +439,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
     {
         if (_subsystemGameInfo.TotalElapsedGameTime > FogEndTime)
         {
-            if (CommonLib.WorkType != WorkType.Client)
+            if (GameManager.Role != WorldRole.RemoteClient)
             {
                 var num = _subsystemSeasons.Season is Season.Autumn or Season.Winter
                     ? 1.75f
@@ -464,7 +464,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                     $"雾气信息: 开始时间={FogStartTime}, 结束={FogEndTime},当前时间={_subsystemGameInfo.TotalElapsedGameTime}"
                 );
 
-                if (CommonLib.WorkType == WorkType.Server)
+                if (GameManager.Role == WorldRole.Server)
                 {
                     CommonLib.Net.QueuePackage(WorldSnapshotBuilder.Capture(this), PackageAudience.Global);
                 }

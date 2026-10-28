@@ -1,10 +1,12 @@
 using System.Security.Cryptography;
 using System.Xml.Linq;
 
+using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Admission;
 using Game.Managers;
+using Game.Network;
 
 using SCNET.Authentication.Protocol;
 using SCNET.Authentication.Protocol.Contracts;
@@ -13,112 +15,94 @@ using SCNET.Authentication.Protocol.Security;
 
 namespace Survivalcraft.Test.Admission;
 
-public sealed class LocalHostAdmissionTest
+public sealed class LocalPlayerAdmissionTest
 {
     [Theory]
     [InlineData(ServerAdmissionMode.Open)]
     [InlineData(ServerAdmissionMode.Password)]
     [InlineData(ServerAdmissionMode.External)]
-    public async Task GuiHostMustPassTheSamePolicyAndAuthorizationCannotMoveBetweenWorldsOrIdentities(
-        ServerAdmissionMode mode
-    )
+    public async Task LocalJoinUsesTheSamePolicyProofAndIsBoundToOneLoadedWorld(ServerAdmissionMode mode)
     {
+        using var world = new Project();
+        using var provider = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         using var user = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         using var server = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-        using var provider = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var subject = AuthenticationPublicKey.From(user).Address;
         var audience = AuthenticationPublicKey.From(server).Address;
-        var configuration = mode switch
+        var policy = mode switch
         {
             ServerAdmissionMode.Open => ServerAdmissionPolicy.Open,
-            ServerAdmissionMode.Password => ServerAdmissionPolicy.WithPassword("gui-host-password"),
+            ServerAdmissionMode.Password => ServerAdmissionPolicy.WithPassword("fixture-password"),
             _ => ServerAdmissionPolicy.WithAuthority(
                 new AuthenticationServiceEndpoint(
                     new AuthenticationServiceDescription(
                         AuthenticationProtocol.Version,
-                        "Provider",
+                        "Fixture",
                         "https://auth.example/",
                         AuthenticationPublicKey.From(provider).EncodedKey
                     )
                 )
             )
         };
-        var session = new LocalHostAdmissionSession(
-            "world-one",
-            configuration,
-            subject,
-            audience,
-            DateTimeOffset.UtcNow
-        );
-        Assert.False(session.Authorizes("world-one", configuration, subject, audience, DateTimeOffset.UtcNow));
+        var now = DateTimeOffset.UtcNow;
+        var attempt = new AdmissionAttempt(policy, subject, audience, new byte[32], now);
+        var session = new LocalPlayerAdmission(world, attempt);
+        Assert.Same(world, session.World);
+        Assert.False(session.Approved);
         var approval = mode == ServerAdmissionMode.External
-            ? AdmissionApprovalTokens.Issue(provider, session.Challenge, DateTimeOffset.UtcNow)
+            ? AdmissionApprovalTokens.Issue(provider, attempt.Challenge, now)
             : string.Empty;
         Assert.True(
             session.Submit(
                 new AdmissionProofPackage(
                     session.Challenge.Nonce,
-                    mode == ServerAdmissionMode.Password ? "gui-host-password" : string.Empty,
+                    mode == ServerAdmissionMode.Password ? "fixture-password" : string.Empty,
                     approval
                 )
             )
         );
-        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         AdmissionResultPackage? result;
-        while ((result = session.Poll(DateTimeOffset.UtcNow)) is null) { await Task.Delay(1, deadline.Token); }
+        while ((result = session.Poll(DateTimeOffset.UtcNow)) is null) { await Task.Delay(1, timeout.Token); }
 
         Assert.Equal(AdmissionResultCode.Accepted, result.Code);
-        Assert.True(
-            session.Authorizes(
-                "world-one",
-                ServerAdmissionPolicy.Load(configuration.Save()),
-                subject,
-                audience,
-                DateTimeOffset.UtcNow
-            )
-        );
-        Assert.False(session.Authorizes("world-two", configuration, subject, audience, DateTimeOffset.UtcNow));
-        Assert.False(session.Authorizes("world-one", configuration, audience, audience, DateTimeOffset.UtcNow));
-        Assert.False(session.Authorizes("world-one", configuration, subject, subject, DateTimeOffset.UtcNow));
-        Assert.False(
-            session.Authorizes(
-                "world-one",
-                ServerAdmissionPolicy.WithPassword("changed"),
-                subject,
-                audience,
-                DateTimeOffset.UtcNow
-            )
-        );
-        Assert.False(
-            session.Authorizes("world-one", configuration, subject, audience, DateTimeOffset.UtcNow.AddMinutes(11))
-        );
+        Assert.True(session.Approved);
+        Assert.Equal(subject, session.Challenge.Subject);
+        Assert.Equal(audience, session.Challenge.Server);
         Assert.False(session.Submit(new AdmissionProofPackage(session.Challenge.Nonce)));
     }
 
     [Fact]
-    public async Task CancelledLocalHostNeverReceivesAStartPermit()
+    public async Task CancelledJoinDoesNotApproveAndUnansweredJoinExpires()
     {
+        using var world = new Project();
         using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var address = AuthenticationPublicKey.From(key).Address;
-        var session = new LocalHostAdmissionSession(
-            "world",
-            ServerAdmissionPolicy.Open,
-            address,
-            address,
-            DateTimeOffset.UtcNow
+        var now = DateTimeOffset.UtcNow;
+        var local = new LocalPlayerAdmission(
+            world,
+            new AdmissionAttempt(ServerAdmissionPolicy.Open, address, address, new byte[32], now)
         );
-        Assert.True(session.Submit(new AdmissionProofPackage(session.Challenge.Nonce, Cancel: true)));
-        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        Assert.True(local.Submit(new AdmissionProofPackage(local.Challenge.Nonce, Cancel: true)));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         AdmissionResultPackage? result;
-        while ((result = session.Poll(DateTimeOffset.UtcNow)) is null) { await Task.Delay(1, deadline.Token); }
+        while ((result = local.Poll(DateTimeOffset.UtcNow)) is null) { await Task.Delay(1, timeout.Token); }
 
         Assert.Equal(AdmissionResultCode.Cancelled, result.Code);
-        Assert.False(session.Approved);
-        Assert.False(session.Authorizes("world", ServerAdmissionPolicy.Open, address, address, DateTimeOffset.UtcNow));
+        Assert.False(local.Approved);
+        var unanswered = new LocalPlayerAdmission(
+            world,
+            new AdmissionAttempt(ServerAdmissionPolicy.Open, address, address, new byte[32], now)
+        );
+        Assert.Equal(
+            AdmissionResultCode.Expired,
+            unanswered.Poll(now.AddSeconds(AuthenticationProtocol.MaximumChallengeLifetimeSeconds + 1))!.Code
+        );
+        Assert.False(unanswered.Approved);
     }
 
     [Fact]
-    public void PreflightReadsOnlyPrivateWorldMetadataWithoutCreatingAProjectOrRole()
+    public void WorldPolicyReadOnlyRequiresMetadataWithoutCreatingAProjectOrRole()
     {
         var directory = Path.Combine(Path.GetTempPath(), "scnet-host-policy-" + Guid.NewGuid().ToString("N"));
         try

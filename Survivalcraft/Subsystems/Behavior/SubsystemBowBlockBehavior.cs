@@ -1,7 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
 using Game.Entities;
-using Game.Network;
 
 namespace Game.Subsystems;
 
@@ -108,7 +107,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                     new Vector3(0f, -0.2f, 0f);
                 if (_subsystemTime.PeriodicGameTimeEvent(0.1, 0.0))
                 {
-                    if (CommonLib.WorkType != WorkType.Client)
+                    if (GameManager.Role != WorldRole.RemoteClient)
                     {
                         var draw2 = MathUtils.Min(BowBlock.GetDraw(data) + 1, 15);
                         inventory.RemoveSlotItems(activeSlotIndex, 1);
@@ -123,7 +122,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                 break;
             }
             case AimState.Cancelled:
-                if (CommonLib.WorkType != WorkType.Client)
+                if (GameManager.Role != WorldRole.RemoteClient)
                 {
                     inventory.RemoveSlotItems(activeSlotIndex, 1);
                     inventory.AddSlotItems(
@@ -203,7 +202,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                     );
                 }
 
-                if (CommonLib.WorkType != WorkType.Client)
+                if (GameManager.Role != WorldRole.RemoteClient)
                 {
                     inventory.RemoveSlotItems(activeSlotIndex, 1);
                     var value3 = Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, 0));

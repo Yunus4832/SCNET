@@ -36,7 +36,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
 
     public Guid RequestOwnCharacterCreation(CharacterData profile)
     {
-        if (CommonLib.WorkType != WorkType.Client || CommonLib.Net.Server is null)
+        if (GameManager.Role != WorldRole.RemoteClient || CommonLib.Net.Server is null)
         {
             throw new InvalidOperationException("Character requests require a remote authority.");
         }
@@ -46,6 +46,19 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         PendingCharacterCreationId = Guid.NewGuid();
         NetworkSender.SendToServer(CharacterPackageBuilder.CaptureCreation(profile, PendingCharacterCreationId));
         return PendingCharacterCreationId;
+    }
+
+    internal CharacterCreationError? CreateOwnCharacter(CharacterData profile)
+    {
+        var request = CharacterPackageBuilder.CaptureCreation(profile, Guid.NewGuid());
+        return CharacterCreation.TryCreate(
+            request,
+            CommonLib.Net.Self,
+            Project,
+            CommonLib.Net,
+            out _,
+            profile.InputDevice
+        );
     }
 
     public void ClearCharacterCreationRequest()
@@ -91,13 +104,14 @@ public class SubsystemCharacters : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client &&
+        if (GameManager.Role == WorldRole.RemoteClient &&
             CommonLib.Net.CurrentConnectionPhase != ConnectionPhase.Live)
         {
             return;
         }
 
         if (RunMode.Value is RunModeType.Gui &&
+            CommonLib.Net.Self?.PlayerAddress is not null &&
             (_characters.Count == 0 ||
              _characters.All(p => !p.IsLocalCharacter)))
         {
@@ -109,12 +123,12 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         else if (_startupCharacterCreateRequested && _characters.Any(player => player.IsLocalCharacter))
         {
             _startupCharacterCreateRequested = false;
-            ScreensManager.SwitchScreen("Game", CommonLib.WorkType);
+            ScreensManager.SwitchScreen("Game");
         }
 
         foreach (var playersDatum in _characters) // 断开连接离线
         {
-            if (CommonLib.WorkType == WorkType.Server && playersDatum.Client is null)
+            if (GameManager.Role == WorldRole.Server && playersDatum.Client is null)
             {
                 if (RunMode.Value is RunModeType.Gui)
                 {
@@ -136,7 +150,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
 
         _toRemove.Clear();
 
-        if (CommonLib.WorkType == WorkType.Server && Time.PeriodicEvent(0.25, 0.0))
+        if (GameManager.Role == WorldRole.Server && Time.PeriodicEvent(0.25, 0.0))
         {
             SendOnlineCharacterStates();
         }
@@ -234,7 +248,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
             return false;
         }
 
-        if (CommonLib.WorkType == WorkType.Client &&
+        if (GameManager.Role == WorldRole.RemoteClient &&
             _characterList.Values.Any(entry =>
                 entry.CharacterId != exceptCharacterId &&
                 _characters.All(player => player.CharacterId != entry.CharacterId) &&
@@ -259,7 +273,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
             throw new InvalidOperationException("The character name is invalid or already used in this world.");
         }
 
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             Project.FindSubsystem<SubsystemPlayers>(true)!.Store.BindCharacter(
                 characterData.OwnerAddress,
@@ -297,7 +311,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
             characterData.TransitionTo("FirstUpdate");
         }
 
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             var client = characterData.Client;
             if (client is not null)
@@ -324,7 +338,9 @@ public class SubsystemCharacters : Subsystem, IUpdateable
 
     private bool TryPrepareStartupCharacter()
     {
-        var requestedName = StartupManager.Current.Session.AutoJoinCharacterName;
+        var requestedName = GameManager.WorldSession is { } session
+            ? session.AutoJoinCharacterName
+            : StartupManager.Current.Session.AutoJoinCharacterName;
         if (_startupCharacterCreateFailed || string.IsNullOrWhiteSpace(requestedName))
         {
             return false;
@@ -346,14 +362,19 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         }
 
         _startupCharacterCreateRequested = true;
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             RequestOwnCharacterCreation(characterData);
         }
         else
         {
-            characterData.SetMain();
-            AddCharacterData(characterData);
+            if (CreateOwnCharacter(characterData) is { } error)
+            {
+                _startupCharacterCreateFailed = true;
+                _startupCharacterCreateRequested = false;
+                CharacterCreationRejected?.Invoke(error);
+                return false;
+            }
         }
 
         return true;
@@ -423,7 +444,6 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemGameWidgets = Project.FindSubsystem<SubsystemGameWidgets>(true)!;
         GlobalSpawnPosition = valuesDictionary.GetValue<Vector3>("GlobalSpawnPosition");
-        PlayerSessionBinding.PrepareLocalPlayer(Project);
 
         foreach (ValuesDictionary item in valuesDictionary.GetValue("Characters", new ValuesDictionary()).Values)
         {
@@ -556,7 +576,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
 
         // A committed character can disconnect before its first entity is spawned.
         // Persist the profile even when there is no entity snapshot to restore.
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             ValuesDictionary? entityValues = null;
             if (pd.ComponentCharacter is { } character)
@@ -581,7 +601,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         var componentCharacter = pd.ComponentCharacter;
         if (componentCharacter != null)
         {
-            if (showMsg && CommonLib.WorkType == WorkType.Server)
+            if (showMsg && GameManager.Role == WorldRole.Server)
             {
                 _subsystemGameWidgets.Messages.Publish(
                     GameMessageLocalization.System(
@@ -619,7 +639,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
     /// <returns></returns>
     public bool MakeCharacterOnline(Guid playerGuid, out CharacterData? characterData, out Entity? entity)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             characterData = null;
             entity = null;

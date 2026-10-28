@@ -3177,7 +3177,8 @@
             "Cloning": "A clonar mundo",
             "CloneFailed": "Falha ao clonar mundo",
             "DeleteTitle": "Eliminar mundo",
-            "DeleteQuestion": "Eliminar o mundo “{0}”? Esta ação não pode ser anulada."
+            "DeleteQuestion": "Eliminar o mundo “{0}”? Esta ação não pode ser anulada.",
+            "RunServer": "Iniciar servidor"
         },
         "RecipaediaDescriptionScreen": {
             "1": "Descrição do bloco"
@@ -3760,6 +3761,14 @@
             "Confirm": "A identidade é obtida diretamente do serviço. Verifique o endereço e a chave pública. Instalar a configuração sem iniciar sessão?",
             "AddressWarning": "Novo endereço para a mesma chave. A atualização limpa autorizações e mantém o estado desativado. Continuar?",
             "Unavailable": "Diretório de autenticação indisponível."
+        },
+        "HostedWorldScreen": {
+            "Title": "Servidor em execução",
+            "Join": "Entrar no jogo",
+            "Stop": "Parar servidor",
+            "Running": "Mundo: {0}\nJogadores ligados: {1}",
+            "NotJoined": "O servidor está em execução. Ainda não entraste no jogo.",
+            "ConfirmStop": "Parar o servidor e voltar à lista de mundos? Todos os jogadores serão desligados."
         }
     },
     "FireworksBlock": {

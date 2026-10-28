@@ -1,0 +1,15 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+    <PanoramaWidget/>
+    <StackPanelWidget Direction="Horizontal">
+        <CanvasWidget Style="{Widgets/TopBarContents}">
+            <LabelWidget Name="TopBar.Label" Text="[HostedWorldScreen:Title]"/>
+        </CanvasWidget>
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+            <CanvasWidget Style="{Styles/ScreenContentArea}">
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
+                <LabelWidget Name="Status" WordWrap="true" FontScale="0.85" TextAnchor="HorizontalCenter, VerticalCenter" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="20, 20"/>
+            </CanvasWidget>
+            <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
+        </StackPanelWidget>
+    </StackPanelWidget>
+</Screen>

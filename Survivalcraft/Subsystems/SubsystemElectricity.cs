@@ -292,13 +292,13 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             FrameStartCircuitStep = CircuitStep;
             SimulatedElectricElements = 0;
             _remainingSimulationTime = MathUtils.Min(_remainingSimulationTime + dt, 0.1f);
             var sendFlag = Time.PeriodicEvent(0.05, 0.0);
-            if (sendFlag && CommonLib.WorkType == WorkType.Server)
+            if (sendFlag && GameManager.Role == WorldRole.Server)
             {
                 var interest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
                 var clients = CommonLib.Net.Clients.Values.Where(client => client != CommonLib.Net.Self &&
@@ -613,7 +613,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
     public void WritePersistentVoltage(Point3 point, float voltage)
     {
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             _persistentElementsVoltages[point] = voltage;
         }

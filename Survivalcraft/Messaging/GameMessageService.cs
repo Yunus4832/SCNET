@@ -31,7 +31,10 @@ public sealed class GameMessageService(Project project)
         var normalizedMessage = Normalize(message);
         var recipientList = recipients?.Distinct().ToArray();
         QueueMessage(normalizedMessage, recipientList);
-        if (includePublisher && (CommonLib.Net.IsServer || !CommonLib.Net.IsConnected))
+        var localRecipient = RunMode.Value == RunModeType.HeadlessServer ||
+                             recipientList is null ||
+                             CommonLib.Net.Self is { } self && recipientList.Contains(self.ID);
+        if (includePublisher && localRecipient && (CommonLib.Net.IsServer || !CommonLib.Net.IsConnected))
         {
             Insert(normalizedMessage);
         }

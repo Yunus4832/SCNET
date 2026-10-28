@@ -1,5 +1,3 @@
-using Game.Network;
-
 namespace Game.Subsystems;
 
 public class SubsystemBottomSuckerBlockBehavior : SubsystemInWaterBlockBehavior
@@ -25,7 +23,7 @@ public class SubsystemBottomSuckerBlockBehavior : SubsystemInWaterBlockBehavior
             return;
         }
 
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             componentBody.Entity.FindComponent<ComponentCreature>()?.ComponentHealth
                 .Injure(0.01f * MathUtils.Abs(velocity), null, false, "Spiked by a sea creature");

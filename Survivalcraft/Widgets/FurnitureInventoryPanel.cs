@@ -383,7 +383,7 @@ public class FurnitureInventoryPanel : CanvasWidget
         var num = 0;
         var num2 = 0;
         var designs = FurniturePacksManager.LoadFurniturePack(subsystemTerrain, text);
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             FurniturePackageHandler.Submit(
                 FurniturePackageBuilder.Capture(
@@ -418,7 +418,7 @@ public class FurnitureInventoryPanel : CanvasWidget
         {
             var furnitureSet =
                 SubsystemFurnitureBlockBehavior.NewFurnitureSet(FurniturePacksManager.GetDisplayName(text), text);
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 CommonLib.Net.QueuePackage(FurniturePackageBuilder.Capture(furnitureSet), PackageAudience.Global);
             }
@@ -426,7 +426,7 @@ public class FurnitureInventoryPanel : CanvasWidget
             foreach (var item2 in list2)
             {
                 SubsystemFurnitureBlockBehavior.AddToFurnitureSet(item2, furnitureSet);
-                if (CommonLib.WorkType == WorkType.Server)
+                if (GameManager.Role == WorldRole.Server)
                 {
                     CommonLib.Net.QueuePackage(
                         FurniturePackageBuilder.Capture(item2, furnitureSet),

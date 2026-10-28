@@ -5,8 +5,10 @@ using System.Reflection;
 using Engine.Core.Mathematics;
 using Engine.Network;
 
+using Game.Managers;
 using Game.Network;
 using Game.Network.Transport;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 
@@ -24,7 +26,7 @@ public sealed class SnapshotBudgetTransportTest
         await using var sender = new NetworkHost();
         await using var receiver = new NetworkHost();
         var previousClients = CommonLib.Net.Clients;
-        var previousMode = CommonLib.WorkType;
+        var previousMode = GameManager.Role;
         var receivedPlayers = new HashSet<byte>();
         var receivedRemovals = new List<int>();
         var receivedDatagrams = 0;
@@ -70,8 +72,9 @@ public sealed class SnapshotBudgetTransportTest
             };
             node.Clients.Add(observer.ID, observer);
             node.Self = node.Server = new Client(null, 0, Guid.NewGuid(), Guid.NewGuid(), null);
+            node.Role = WorldRole.Server;
             node.CurrentStage = NetNode.Stage.Connected;
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
             CommonLib.Net.Clients = new Dictionary<int, Client>();
             var expectedPlayers = new HashSet<byte>();
             for (byte id = 10; id < 42; id++)
@@ -130,7 +133,7 @@ public sealed class SnapshotBudgetTransportTest
         finally
         {
             CommonLib.Net.Clients = previousClients;
-            CommonLib.WorkType = previousMode;
+            CommonLib.Net.Role = previousMode;
         }
     }
 }

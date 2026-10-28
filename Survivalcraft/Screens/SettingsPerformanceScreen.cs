@@ -1,8 +1,6 @@
 using System.Xml.Linq;
 
-using Game.Network;
 using Game.Network.Chunks;
-using Game.Rendering;
 
 namespace Game.Screens;
 
@@ -53,7 +51,7 @@ public class SettingsPerformanceScreen : Screen
     public override void Enter(object[] parameters)
     {
         _enterVisibilityRange = SettingsManager.Current.VisibilityRange;
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             _visibilityRangeSlider.MaxValue = _visibilityRanges.FindLastIndex(range =>
                 range <= NetworkTerrainPolicy.DefaultMaxClientVisibilityRange

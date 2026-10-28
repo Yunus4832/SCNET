@@ -5,9 +5,11 @@ using Engine.Core.Mathematics;
 
 using Game.Cameras;
 using Game.Characters;
+using Game.Managers;
 using Game.Network;
 using Game.Subsystems;
 using Game.Widgets;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 
@@ -17,12 +19,12 @@ namespace Survivalcraft.Test.Subsystems;
 public sealed class AudioListenerTest
 {
     [Theory]
-    [InlineData(WorkType.Server)]
-    [InlineData(WorkType.Client)]
-    public void RemotePlayerViewDoesNotBecomeLocalAudioListener(WorkType mode)
+    [InlineData(WorldRole.Server)]
+    [InlineData(WorldRole.RemoteClient)]
+    public void RemotePlayerViewDoesNotBecomeLocalAudioListener(WorldRole mode)
     {
-        var previous = CommonLib.WorkType;
-        CommonLib.WorkType = mode;
+        var previous = GameManager.Role;
+        CommonLib.Net.Role = mode;
         try
         {
             var localPosition = new Vector3(1000, 70, 1000);
@@ -44,7 +46,7 @@ public sealed class AudioListenerTest
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 

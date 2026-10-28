@@ -1,7 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
 using Game.Modding.Blocks;
-using Game.Network;
 using Game.Network.Handling;
 using Game.Network.Transport;
 
@@ -62,7 +61,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         var soundPosition = new Vector3(position);
         _subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, soundPosition, 2f, true);
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             // 距离衰减在 21 格达到 0.05 的听觉阈值；保守候选范围为镜头偏移留余量。
             NetworkSender.SendNearPoint(
@@ -133,7 +132,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override void OnBlockRemoved(int value, int newValue, int x, int y, int z)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -349,7 +348,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public bool MovePiston(Point3 position, int length)
     {
-        return CommonLib.WorkType == WorkType.Client || MovePistonNet(position, length);
+        return GameManager.Role == WorldRole.RemoteClient || MovePistonNet(position, length);
     }
 
     public bool MovePistonNet(Point3 position, int length)
@@ -594,7 +593,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public void StopPiston(Point3 position)
     {
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             StopPistonNet(position);
         }

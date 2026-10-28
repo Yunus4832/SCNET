@@ -43,7 +43,7 @@ public sealed class AdmissionTransportTest
     )
     {
         var previousProject = GameManager.Project;
-        var previousWorkType = CommonLib.WorkType;
+        var previousWorldRole = GameManager.Role;
         var registrations = typeof(PackageManager).GetField(
             "_registeredOwners",
             BindingFlags.Static | BindingFlags.NonPublic
@@ -56,7 +56,7 @@ public sealed class AdmissionTransportTest
         try
         {
             PackageManager.Initialize();
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
             using var project = new AdmissionProject();
             typeof(GameManager).GetProperty(nameof(GameManager.Project))!.SetValue(null, project);
             using var serverKey = NetworkIdentity.Create();
@@ -73,6 +73,7 @@ public sealed class AdmissionTransportTest
             var self = new Client(Guid.Empty, project);
             node.Self = self;
             node.Server = self;
+            node.Role = WorldRole.Server;
             node.AddClient(self);
             using var provider = ECDsa.Create(ECCurve.NamedCurves.nistP256);
             var policy = mode switch
@@ -359,7 +360,7 @@ public sealed class AdmissionTransportTest
             foreach (var entry in previousHandlers) { handlers.Add(entry.Key, entry.Value); }
 
             typeof(GameManager).GetProperty(nameof(GameManager.Project))!.SetValue(null, previousProject);
-            CommonLib.WorkType = previousWorkType;
+            CommonLib.Net.Role = previousWorldRole;
         }
     }
 
@@ -371,6 +372,7 @@ public sealed class AdmissionTransportTest
         var self = new Client(Guid.Empty, project);
         node.Self = self;
         node.Server = self;
+        node.Role = WorldRole.Server;
         node.AddClient(self);
         var provisional = new Client(null, 0, Guid.NewGuid(), Guid.Empty, project);
         Assert.False(node.CanReceiveFromSession(provisional, new SubsystemTimePackage(0, 0)));

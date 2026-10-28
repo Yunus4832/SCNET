@@ -1,7 +1,5 @@
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Subsystems;
 
 public class SubsystemHammerBlockBehavior : SubsystemBlockBehavior
@@ -19,7 +17,7 @@ public class SubsystemHammerBlockBehavior : SubsystemBlockBehavior
         }
 
         if (componentMiner.ComponentCharacter != null &&
-            (CommonLib.WorkType == WorkType.Local ||
+            (GameManager.Role == WorldRole.SinglePlayer ||
              componentMiner.ComponentCharacter.CharacterData.IsLocalCharacter))
         {
             _subsystemFurnitureBlockBehavior.ScanDesign(

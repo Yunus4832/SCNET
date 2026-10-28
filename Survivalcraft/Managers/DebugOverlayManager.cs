@@ -150,9 +150,9 @@ public static class DebugOverlayManager
 
         lines.Add(string.Empty);
         lines.Add("NETWORK");
-        lines.Add($"Mode        {CommonLib.WorkType}");
+        lines.Add($"Mode        {GameManager.Role}");
         var node = CommonLib.Net;
-        if (CommonLib.WorkType == WorkType.Client && node.Server?.Peer is { } peer)
+        if (GameManager.Role == WorldRole.RemoteClient && node.Server?.Peer is { } peer)
         {
             lines.Add($"Path        {GetPathText(peer.PathKind)}");
             lines.Add(
@@ -176,7 +176,7 @@ public static class DebugOverlayManager
             lines.Add($"Packet Loss {peer.PacketLossPercent:0.##}%");
             lines.Add($"Pending ACK {peer.PendingReliableBytes / 1024f:0.##} KB");
         }
-        else if (CommonLib.WorkType == WorkType.Server)
+        else if (GameManager.Role == WorldRole.Server)
         {
             var connections = node.Peers.Select(client => client.Peer).Where(peer => peer?.IsConnected == true)
                 .ToArray();

@@ -186,9 +186,9 @@ public partial class CharacterData : IDisposable
             delegate
             {
                 //说明：没有在线的玩家让其离线
-                if ((CommonLib.WorkType != WorkType.Local &&
+                if ((GameManager.Role != WorldRole.SinglePlayer &&
                      CommonLib.Net.GetClientByCharacterId(CharacterId) == null) ||
-                    (CommonLib.WorkType == WorkType.Local && !IsLocalCharacter))
+                    (GameManager.Role == WorldRole.SinglePlayer && !IsLocalCharacter))
                 {
                     _stateMachine.TransitionTo("MakeCharacterOffline");
                 }
@@ -220,7 +220,8 @@ public partial class CharacterData : IDisposable
             {
                 if (SpawnPosition == Vector3.Zero)
                 {
-                    if (CommonLib.WorkType != WorkType.Local && SubsystemGameInfo.WorldSettings.RandomSpawnPosition)
+                    if (GameManager.Role != WorldRole.SinglePlayer &&
+                        SubsystemGameInfo.WorldSettings.RandomSpawnPosition)
                     {
                         SubsystemCharacters.GlobalSpawnPosition = Vector3.Zero;
                     }
@@ -229,7 +230,7 @@ public partial class CharacterData : IDisposable
                     {
                         var characterData =
                             SubsystemCharacters.Characters.FirstOrDefault(pd => pd.SpawnPosition != Vector3.Zero);
-                        if (characterData != null && CommonLib.WorkType == WorkType.Local)
+                        if (characterData != null && GameManager.Role == WorldRole.SinglePlayer)
                         {
                             SpawnPosition = characterData.SpawnPosition;
                             _spawnMode = SpawnMode.InitialNoIntro;
@@ -238,7 +239,7 @@ public partial class CharacterData : IDisposable
                         {
                             SpawnPosition = _subsystemTerrain.TerrainContentsGenerator.FindCoarseSpawnPosition();
                             Log.Debug($"生成出生点{SpawnPosition}");
-                            _spawnMode = CommonLib.WorkType == WorkType.Server
+                            _spawnMode = GameManager.Role == WorldRole.Server
                                 ? SpawnMode.InitialNoIntro
                                 : SpawnMode.InitialIntro;
                         }
@@ -276,7 +277,7 @@ public partial class CharacterData : IDisposable
                 }
 
                 //说明，客户端非主玩家不执行updateLocation
-                if (!(CommonLib.WorkType == WorkType.Client && !IsLocalCharacter))
+                if (!(GameManager.Role == WorldRole.RemoteClient && !IsLocalCharacter))
                 {
                     var initialVisibility =
                         MathUtils.Max(32f, MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f));
@@ -334,7 +335,7 @@ public partial class CharacterData : IDisposable
                 }
 
                 //说明，客户端非主玩家不执行UpdateLocation
-                if (!(CommonLib.WorkType == WorkType.Client && !IsLocalCharacter))
+                if (!(GameManager.Role == WorldRole.RemoteClient && !IsLocalCharacter))
                 {
                     _subsystemTerrain.TerrainUpdater.SetUpdateLocation(
                         CharacterIndex,
@@ -365,7 +366,7 @@ public partial class CharacterData : IDisposable
 
                 if (ComponentCharacter == null || ComponentCharacter.CharacterData.CharacterId == Guid.Empty)
                 {
-                    if (CommonLib.WorkType != WorkType.Client)
+                    if (GameManager.Role != WorldRole.RemoteClient)
                     {
                         SpawnPlayer(SpawnPosition, _spawnMode);
                     }
@@ -413,11 +414,16 @@ public partial class CharacterData : IDisposable
                 }
 
                 InitializeSpawnMarks();
-                if (CommonLib.WorkType == WorkType.Client)
+                if (GameManager.Role == WorldRole.RemoteClient)
                 {
                     NetworkSender.SendToServer(
                         new ClientStateChangedPackage { ClientId = CommonLib.Net.Self!.ID, State = ClientState.Playing }
                     );
+                }
+                else if (GameManager.Role == WorldRole.Server && IsLocalCharacter && Client is { } local)
+                {
+                    local.State = ClientState.Playing;
+                    CommonLib.Net.OnClientStateChanged?.Invoke(local);
                 }
             },
             delegate
@@ -449,7 +455,7 @@ public partial class CharacterData : IDisposable
                 }
 
                 //服务器更新客户端玩家的区域
-                if (IsLocalCharacter || CommonLib.WorkType == WorkType.Client)
+                if (IsLocalCharacter || GameManager.Role == WorldRole.RemoteClient)
                 {
                     return;
                 }
@@ -484,12 +490,12 @@ public partial class CharacterData : IDisposable
             delegate
             {
                 //死掉后也继续更新
-                if (CommonLib.WorkType != WorkType.Client && !IsLocalCharacter)
+                if (GameManager.Role != WorldRole.RemoteClient && !IsLocalCharacter)
                 {
                     _ = ComponentCharacter != null ? ComponentCharacter.ComponentBody.Position.XZ : SpawnPosition.XZ;
                 }
 
-                if (CommonLib.WorkType == WorkType.Client && !IsLocalCharacter)
+                if (GameManager.Role == WorldRole.RemoteClient && !IsLocalCharacter)
                 {
                     NetRestart();
                     _stateMachine.TransitionTo("PrepareSpawn");
@@ -511,7 +517,7 @@ public partial class CharacterData : IDisposable
                           ComponentCharacter.GameWidget.Input.Any) ||
                          ReadyToRestart)
                 {
-                    if (CommonLib.WorkType == WorkType.Client && IsLocalCharacter)
+                    if (GameManager.Role == WorldRole.RemoteClient && IsLocalCharacter)
                     {
                         NetworkSender.SendToServer(
                             CharacterPackageBuilder.Capture(
@@ -673,7 +679,7 @@ public partial class CharacterData : IDisposable
     public void Update()
     {
         // 客户端的远端玩家仅是复制元数据，不能驱动本地出生/死亡状态机。
-        if (CommonLib.WorkType == WorkType.Client && !IsLocalCharacter)
+        if (GameManager.Role == WorldRole.RemoteClient && !IsLocalCharacter)
         {
             return;
         }
@@ -683,7 +689,7 @@ public partial class CharacterData : IDisposable
 
     internal void InitializeSpawnMarks()
     {
-        if (CommonLib.WorkType == WorkType.Client || SpawnPosition == Vector3.Zero)
+        if (GameManager.Role == WorldRole.RemoteClient || SpawnPosition == Vector3.Zero)
         {
             return;
         }
@@ -708,7 +714,7 @@ public partial class CharacterData : IDisposable
         CharacterId = valuesDictionary.GetValue<Guid>("CharacterId");
         OwnerAddress = new PlayerAddress(valuesDictionary.GetValue<string>("OwnerAddress"));
         if (CharacterId == Guid.Empty ||
-            CommonLib.WorkType != WorkType.Client &&
+            GameManager.Role != WorldRole.RemoteClient &&
             Project.FindSubsystem<SubsystemPlayers>(true)!.Store.Find(OwnerAddress)?.CharacterId != CharacterId)
         {
             throw new InvalidDataException("Character ownership does not match the world subject record.");
@@ -765,7 +771,7 @@ public partial class CharacterData : IDisposable
             FirstSpawnTime = SubsystemGameInfo.TotalElapsedGameTime;
         }
 
-        if (CommonLib.WorkType != WorkType.Client ||
+        if (GameManager.Role != WorldRole.RemoteClient ||
             !IsLocalCharacter ||
             _stateMachine.CurrentState != "PrepareSpawn")
         {
@@ -1145,7 +1151,7 @@ public partial class CharacterData : IDisposable
         var body = entity2.FindComponent<ComponentBody>(true)!;
         body.Position = position;
         body.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, Vector2.Angle(v, -Vector2.UnitY));
-        if (CommonLib.WorkType != WorkType.Local)
+        if (GameManager.Role != WorldRole.SinglePlayer)
         {
             body.NetPosition = new NetPosition(body.Position);
             body.NetRotation = new NetRotation(body.Rotation);
@@ -1279,7 +1285,7 @@ public partial class CharacterData : IDisposable
                 }
             }
 
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 SubsystemGameWidgets.Messages.Publish(
                     GameMessage.System(

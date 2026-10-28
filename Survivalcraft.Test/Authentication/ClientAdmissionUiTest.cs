@@ -6,6 +6,7 @@ using Game.Authentication;
 using Game.Managers;
 using Game.Network;
 using Game.Screens;
+using Game.World;
 
 using SCNET.Authentication.Protocol;
 using SCNET.Authentication.Protocol.Contracts;
@@ -93,12 +94,20 @@ public sealed class ClientAdmissionUiTest
         var deadline = DateTimeOffset.UtcNow.AddSeconds(3);
         while (!fixture.Node.AdmissionAccepted && DateTimeOffset.UtcNow < deadline)
         {
-            fixture.Node.PumpLocalAdmission();
+            var local = (LocalPlayerAdmission)typeof(NetNode).GetField(
+                "_localAdmission",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            )!.GetValue(fixture.Node)!;
+            if (local.Poll(DateTimeOffset.UtcNow) is { } result)
+            {
+                typeof(NetNode).GetMethod("ApplyAdmissionResult", BindingFlags.Instance | BindingFlags.NonPublic)!
+                    .Invoke(fixture.Node, [result]);
+            }
+
             await Task.Delay(5);
         }
 
         Assert.True(fixture.Node.AdmissionAccepted);
-        fixture.Node.PrepareLocalHostWorld();
         Assert.Same(context, fixture.Node.TemporaryAuthentication);
         fixture.Node.Stop();
         Assert.Null(fixture.Node.TemporaryAuthentication);
@@ -197,7 +206,9 @@ public sealed class ClientAdmissionUiTest
 
     private sealed class Fixture : IDisposable
     {
-        private readonly WorkType _previousMode = CommonLib.WorkType;
+        private readonly WorldRole _previousMode = GameManager.Role;
+
+        private readonly EntitySystem.Core.Project _world = new();
 
         private readonly ECDsa _provider = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
@@ -241,12 +252,15 @@ public sealed class ClientAdmissionUiTest
             );
             // Prepare completed HTTP login input independently of widgets; the real local admission still verifies its signed proof.
             var ui = new ClientAdmissionUi(Node, new Screen(), Scope, temporary);
-            var local = new LocalHostAdmissionSession(
-                "fixture-world",
-                ServerAdmissionPolicy.WithAuthority(endpoint),
-                subject,
-                server,
-                now
+            var local = new LocalPlayerAdmission(
+                _world,
+                new AdmissionAttempt(
+                    ServerAdmissionPolicy.WithAuthority(endpoint),
+                    subject,
+                    server,
+                    new byte[32],
+                    now
+                )
             );
             Set(Node, "_localAdmission", local);
             typeof(NetNode).GetProperty(nameof(NetNode.PendingAdmissionChallenge))!.SetValue(Node, local.Describe());
@@ -262,7 +276,8 @@ public sealed class ClientAdmissionUiTest
 
         public void Dispose()
         {
-            CommonLib.WorkType = _previousMode;
+            _world.Dispose();
+            CommonLib.Net.Role = _previousMode;
             _provider.Dispose();
             _user.Dispose();
             _server.Dispose();

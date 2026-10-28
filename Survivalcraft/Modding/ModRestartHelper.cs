@@ -59,16 +59,13 @@ public static class ModRestartHelper
 
     public static RemoteModSessionPreparation PrepareWorldSession(
         WorldInfo worldInfo,
-        Action<string>? log = null
+        Action<string>? log = null,
+        SessionInfo? session = null
     )
     {
         ArgumentNullException.ThrowIfNull(worldInfo);
 
-        var worldSession = new SessionInfo
-        {
-            Target = SessionTarget.World,
-            World = worldInfo.DirectoryName
-        };
+        var worldSession = session ?? SessionInfoManager.CreateWorldSession(worldInfo);
         var desiredProfile = ModProfileManager.ResolveProfileForSessionTarget(worldSession);
         var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, desiredProfile);
         var downloadedAny = desiredProfile.Packages.Count > 0 &&

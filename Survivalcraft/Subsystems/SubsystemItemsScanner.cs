@@ -1,8 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Subsystems;
 
 public class SubsystemItemsScanner : Subsystem, IUpdateable
@@ -17,7 +15,7 @@ public class SubsystemItemsScanner : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

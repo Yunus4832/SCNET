@@ -8,10 +8,10 @@ using Game.Commands;
 using Game.Components;
 using Game.Managers;
 using Game.Modding;
-using Game.Network;
 using Game.Protocol;
 using Game.Protocol.Identity;
 using Game.Terrains;
+using Game.World;
 
 namespace TerritoryStoneMod;
 
@@ -93,7 +93,7 @@ public static class TerritoryProtection
         );
         context.BlockBehaviors.OnBlockAdded(added =>
             {
-                if (CommonLib.WorkType == WorkType.Client ||
+                if (GameManager.Role == WorldRole.RemoteClient ||
                     Terrain.ExtractContents(added.Value) !=
                     CurrentModRuntime.Value!.RequireWorldCatalog().GetBlock(TerritoryBlock.Id).BlockIndex)
                 {
@@ -113,7 +113,7 @@ public static class TerritoryProtection
         );
         context.BlockBehaviors.OnBlockRemoved(removed =>
             {
-                if (CommonLib.WorkType != WorkType.Client &&
+                if (GameManager.Role != WorldRole.RemoteClient &&
                     Terrain.ExtractContents(removed.Value) ==
                     CurrentModRuntime.Value!.RequireWorldCatalog().GetBlock(TerritoryBlock.Id).BlockIndex)
                 {

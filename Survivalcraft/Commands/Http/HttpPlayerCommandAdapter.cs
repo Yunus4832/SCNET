@@ -83,7 +83,7 @@ public static class HttpPlayerCommandAdapter
             .Where(entry => identities.Contains(entry.Id.ToString()) &&
                             registry.TryGetDefinition(entry.Id, out var registered) &&
                             registered!.Definition.Domain is not CommandDomain.Application &&
-                            (CommonLib.WorkType is not WorkType.Client ||
+                            (GameManager.Role is not WorldRole.RemoteClient ||
                              registered.Definition.SupportsRemoteInvocation)
             )
             .Select(entry =>
@@ -156,7 +156,7 @@ public static class HttpPlayerCommandAdapter
             }
 
             var id = Guid.NewGuid().ToString("N");
-            if (CommonLib.WorkType is WorkType.Client)
+            if (GameManager.Role is WorldRole.RemoteClient)
             {
                 if (CommonLib.Net.Server is not { IsConnected: true } server)
                 {
@@ -216,7 +216,7 @@ public static class HttpPlayerCommandAdapter
         return RunMode.Value is RunModeType.Gui &&
                ReferenceEquals(CommonLib.LocalCharacter?.CharacterData, pending.Character) &&
                ReferenceEquals(GameManager.Project, pending.Character.Project) &&
-               CommonLib.WorkType is WorkType.Client &&
+               GameManager.Role is WorldRole.RemoteClient &&
                ReferenceEquals(CommonLib.Net.Server, pending.Server) &&
                pending.Server.IsConnected;
     }

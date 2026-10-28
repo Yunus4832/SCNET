@@ -6,7 +6,6 @@ using EntitySystem.TemplatesDatabase;
 using Game.Components;
 using Game.Managers;
 using Game.Modding;
-using Game.Network;
 using Game.Protocol;
 using Game.Protocol.Terrain;
 using Game.Rendering;
@@ -73,7 +72,7 @@ public sealed class TerritoryBlockBehavior : SubsystemBlockBehavior
 
     public override void OnHitByProjectile(CellFace cellFace, WorldItem worldItem)
     {
-        if (CommonLib.WorkType == WorkType.Client ||
+        if (GameManager.Role == WorldRole.RemoteClient ||
             _models == null ||
             worldItem.Value == 0 ||
             !TerritoryBlock.IsTerritoryValue(

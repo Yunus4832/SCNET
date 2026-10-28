@@ -1,13 +1,11 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Components;
 
 public class ComponentShapeshifter : Component, IUpdateable
 {
-    public readonly static Random Random2 = new();
+    public static readonly Random Random2 = new();
 
     private ComponentBody _componentBody = null!;
 
@@ -123,7 +121,7 @@ public class ComponentShapeshifter : Component, IUpdateable
     {
         if (_componentHealth.Health > 0f &&
             !string.IsNullOrEmpty(_spawnEntityTemplateName) &&
-            CommonLib.WorkType != WorkType.Client)
+            GameManager.Role != WorldRole.RemoteClient)
         {
             var entity = DatabaseManager.CreateEntity(Project, _spawnEntityTemplateName, true)!;
             var componentBody = entity.FindComponent<ComponentBody>(true)!;

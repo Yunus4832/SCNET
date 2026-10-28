@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -54,7 +53,7 @@ public class ComponentCreatureSounds : Component
 
     public void PlayIdleSound(bool skipIfRecentlyPlayed)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -87,7 +86,7 @@ public class ComponentCreatureSounds : Component
 
     public void PlayPainSound()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -119,7 +118,7 @@ public class ComponentCreatureSounds : Component
 
     public void PlayMoanSound()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -151,7 +150,7 @@ public class ComponentCreatureSounds : Component
 
     public void PlaySneezeSound()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -183,7 +182,7 @@ public class ComponentCreatureSounds : Component
 
     public void PlayCoughSound()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -215,7 +214,7 @@ public class ComponentCreatureSounds : Component
 
     public void PlayPukeSound()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -247,7 +246,7 @@ public class ComponentCreatureSounds : Component
 
     public void PlayAttackSound()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

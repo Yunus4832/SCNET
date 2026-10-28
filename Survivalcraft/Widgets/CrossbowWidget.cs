@@ -1,6 +1,5 @@
 using System.Xml.Linq;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Widgets;
@@ -111,7 +110,7 @@ public class CrossbowWidget : CanvasWidget
                 _dragStartOffset = null;
                 if (draw == 15)
                 {
-                    if (CommonLib.WorkType == WorkType.Client)
+                    if (GameManager.Role == WorldRole.RemoteClient)
                     {
                         NetworkSender.SendToServer(
                             new CrossbowPullPackage

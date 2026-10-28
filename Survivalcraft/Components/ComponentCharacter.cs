@@ -2,7 +2,6 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Entities;
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -122,11 +121,11 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
             {
                 InventoryID = ComponentMiner.Inventory.Id, ActiveSlot = ComponentMiner.Inventory.ActiveSlotIndex
             };
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 NetworkSender.SendToObservers(Entity, package);
             }
-            else if (CommonLib.WorkType == WorkType.Client)
+            else if (GameManager.Role == WorldRole.RemoteClient)
             {
                 NetworkSender.SendToServer(package);
             }
@@ -233,7 +232,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
 
         if (_subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1f, 0.0))
         {
-            if (CommonLib.WorkType != WorkType.Client)
+            if (GameManager.Role != WorldRole.RemoteClient)
                 //服务器广播玩家数据
             {
                 NetworkSender.SendToObservers(
@@ -257,7 +256,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
 
         #region 服务器处理Interact，Aim，Dig事件
 
-        if (CommonLib.WorkType != WorkType.Local && !CharacterData.IsLocalCharacter)
+        if (GameManager.Role != WorldRole.SinglePlayer && !CharacterData.IsLocalCharacter)
         {
             if (_digEvents.Count > 0)
             {
@@ -382,8 +381,8 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
 
         #region 本地处理Interact，Aim，Dig事件
 
-        if (CommonLib.WorkType != WorkType.Local &&
-            (CommonLib.WorkType == WorkType.Local || !CharacterData.IsLocalCharacter))
+        if (GameManager.Role != WorldRole.SinglePlayer &&
+            (GameManager.Role == WorldRole.SinglePlayer || !CharacterData.IsLocalCharacter))
         {
             return;
         }
@@ -553,7 +552,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
                     var hitPosition = bodyRaycastResult.Value.HitPoint();
                     var hitDirection = playerInput.Hit.Value.Direction;
                     ComponentMiner.Hit(bodyRaycastResult.Value.ComponentBody, hitPosition, hitDirection);
-                    if (CommonLib.WorkType == WorkType.Client)
+                    if (GameManager.Role == WorldRole.RemoteClient)
                     {
                         NetworkSender.SendToServer(
                             CharacterPackageBuilder.Capture(
@@ -577,7 +576,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
 
         if (playerInput.Drop && ComponentMiner.Inventory is not InventoryDefault)
         {
-            if (CommonLib.WorkType != WorkType.Client)
+            if (GameManager.Role != WorldRole.RemoteClient)
             {
                 DoDrop();
             }
@@ -716,11 +715,11 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
 
     private void PublishAction(ComponentCharacterPackage.CharacterAction action)
     {
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             NetworkSender.SendToObservers(Entity, CharacterPackageBuilder.Capture(this, action), CharacterData.Client);
         }
-        else if (CommonLib.WorkType == WorkType.Client)
+        else if (GameManager.Role == WorldRole.RemoteClient)
         {
             NetworkSender.SendToServer(CharacterPackageBuilder.Capture(this, action));
         }
@@ -728,7 +727,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
 
     private void CompleteCellPrediction(int requestId, Point3 cell)
     {
-        if (CommonLib.WorkType != WorkType.Server || requestId <= 0 || CharacterData.Client is not { } client)
+        if (GameManager.Role != WorldRole.Server || requestId <= 0 || CharacterData.Client is not { } client)
         {
             return;
         }

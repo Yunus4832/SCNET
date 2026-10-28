@@ -225,7 +225,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         }
 
         var point = new Point3(x, y, z);
-        if (CommonLib.WorkType == WorkType.Client && componentCharacter == CommonLib.LocalCharacter)
+        if (GameManager.Role == WorldRole.RemoteClient && componentCharacter == CommonLib.LocalCharacter)
         {
             NetworkSender.SendToServer(new OpenSignEditorPackage { Point3 = point });
             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
@@ -255,11 +255,11 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
             {
                 SetSignData(point, signData.Lines, signData.Colors, signData.Url);
                 var package = new SignBlockPackage(point, signData.Lines, signData.Colors, signData.Url);
-                if (CommonLib.WorkType == WorkType.Server)
+                if (GameManager.Role == WorldRole.Server)
                 {
                     NetworkSender.SendToChunkObservers(Project, new Point2(point.X >> 4, point.Z >> 4), package);
                 }
-                else if (CommonLib.WorkType == WorkType.Client)
+                else if (GameManager.Role == WorldRole.RemoteClient)
                 {
                     NetworkSender.SendToServer(package);
                 }

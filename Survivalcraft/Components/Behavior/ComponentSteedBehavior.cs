@@ -1,8 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Components;
 
 public class ComponentSteedBehavior : ComponentBehavior, IUpdateable
@@ -193,7 +191,7 @@ public class ComponentSteedBehavior : ComponentBehavior, IUpdateable
 
     private void ProcessRidingOrders()
     {
-        if (CommonLib.WorkType != WorkType.Local)
+        if (GameManager.Role != WorldRole.SinglePlayer)
         {
             if (_componentCreature.ComponentBody.ChildBodies.Count > 0)
             {

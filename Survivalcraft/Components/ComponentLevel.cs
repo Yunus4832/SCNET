@@ -3,7 +3,6 @@ using System.Globalization;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -74,13 +73,13 @@ public class ComponentLevel : Component, IUpdateable
 
     public void AddExperience(int count, bool playSound)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
 
         NetAddExperience(count, playSound);
-        if (CommonLib.WorkType == WorkType.Server && _componentCharacter.CharacterData.Client is { } owner)
+        if (GameManager.Role == WorldRole.Server && _componentCharacter.CharacterData.Client is { } owner)
         {
             NetworkSender.SendTo(
                 owner,

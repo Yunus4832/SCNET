@@ -185,6 +185,7 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("ModifyWorld", new ModifyWorldScreen()); });
         AddLoadAction(delegate { AddScreen("WorldOptions", new WorldOptionsScreen()); });
         AddLoadAction(delegate { AddScreen("GameLoading", new GameLoadingScreen()); });
+        AddLoadAction(delegate { AddScreen("HostedWorld", new HostedWorldScreen()); });
         AddLoadAction(delegate { AddScreen("Game", new GameScreen()); });
         AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
         AddLoadAction(delegate { AddScreen("OnlineContent", new OnlineContentScreen()); });

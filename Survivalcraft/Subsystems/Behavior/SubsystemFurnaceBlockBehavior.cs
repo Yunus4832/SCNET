@@ -21,7 +21,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public void Update(float dt)
     {
-        if (!Time.PeriodicEvent(0.1, 0.0) || CommonLib.WorkType != WorkType.Server)
+        if (!Time.PeriodicEvent(0.1, 0.0) || GameManager.Role != WorldRole.Server)
         {
             return;
         }
@@ -84,7 +84,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
             RemoveFire(x, y, z);
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -141,7 +141,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
     {
-        if (CommonLib.WorkType == WorkType.Client && CommonLib.LocalCharacter == componentMiner.ComponentCharacter)
+        if (GameManager.Role == WorldRole.RemoteClient && CommonLib.LocalCharacter == componentMiner.ComponentCharacter)
         {
             IProtocolMessage package =
                 new OpenBlockInventoryPackage

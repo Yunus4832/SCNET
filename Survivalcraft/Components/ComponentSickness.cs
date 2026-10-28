@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -53,7 +52,7 @@ public class ComponentSickness : Component, IUpdateable
         {
             //开服后，睡觉疾病恢复速度x5
             if (_componentCharacter.ComponentSleep is { IsSleeping: true, SubsystemUpdate.UpdatesPerFrame: 1 } &&
-                CommonLib.WorkType == WorkType.Server)
+                GameManager.Role == WorldRole.Server)
             {
                 dt *= _subsystemGameInfo.WorldSettings.RecoverFactor;
             }
@@ -65,7 +64,7 @@ public class ComponentSickness : Component, IUpdateable
                 (!_lastNauseaTime.HasValue ||
                  _subsystemTime.GameTime - _lastNauseaTime > 15.0))
             {
-                if (CommonLib.WorkType != WorkType.Client)
+                if (GameManager.Role != WorldRole.RemoteClient)
                 {
                     NauseaEffect();
                     NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
@@ -116,7 +115,7 @@ public class ComponentSickness : Component, IUpdateable
 
     public void StartSickness()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -136,7 +135,7 @@ public class ComponentSickness : Component, IUpdateable
 
     public void EndSickness()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

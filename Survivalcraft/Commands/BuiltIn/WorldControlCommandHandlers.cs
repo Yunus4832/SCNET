@@ -172,7 +172,7 @@ internal static class WorldControlCommandHandlers
         var timeOfYear = IntervalUtils.Normalize(start + command.Progress * 0.25f);
         var seasons = context.Project.FindSubsystem<SubsystemSeasons>(true)!;
         seasons.SetTimeOfYear(timeOfYear);
-        if (CommonLib.WorkType is WorkType.Server)
+        if (GameManager.Role is WorldRole.Server)
         {
             CommonLib.Net.QueuePackage(new SubsystemSeasonPackage(timeOfYear), PackageAudience.Global);
         }
@@ -222,7 +222,7 @@ internal static class WorldControlCommandHandlers
 
     private static void BroadcastWeather(SubsystemWeather weather)
     {
-        if (CommonLib.WorkType is WorkType.Server)
+        if (GameManager.Role is WorldRole.Server)
         {
             CommonLib.Net.QueuePackage(WorldSnapshotBuilder.Capture(weather), PackageAudience.Global);
         }

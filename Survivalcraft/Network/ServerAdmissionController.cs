@@ -16,6 +16,10 @@ internal sealed class ServerAdmissionController(
     string serverAddress
 )
 {
+    internal ServerAdmissionPolicy Policy => configuration;
+
+    internal Project World => project;
+
     private sealed class Pending(Client client, ConnectionRequestPackage request, AdmissionAttempt attempt)
     {
         internal Client Client { get; } = client;

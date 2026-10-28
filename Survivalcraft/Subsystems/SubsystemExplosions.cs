@@ -102,7 +102,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             _surroundingPressureByPoint = null!;
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -120,7 +120,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         CharacterData? miner = null
     )
     {
-        return CommonLib.WorkType != WorkType.Client && TryNetExplodeBlock(x, y, z, value, miner);
+        return GameManager.Role != WorldRole.RemoteClient && TryNetExplodeBlock(x, y, z, value, miner);
     }
 
     public virtual bool TryNetExplodeBlock(
@@ -154,7 +154,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         CharacterData? miner = null
     )
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -491,7 +491,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                 continue;
             }
 
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 var chunk = new Point2(item.Key.X >> 4, item.Key.Z >> 4);
                 if (!_explosionCells.ContainsKey(chunk))
@@ -631,7 +631,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             }
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

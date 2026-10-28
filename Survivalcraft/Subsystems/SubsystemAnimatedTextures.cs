@@ -43,7 +43,7 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
     {
         get
         {
-            if (CommonLib.WorkType == WorkType.Client && CommonLib.BlockTexture != null)
+            if (GameManager.Role == WorldRole.RemoteClient && CommonLib.BlockTexture != null)
             {
                 return CommonLib.BlockTexture;
             }

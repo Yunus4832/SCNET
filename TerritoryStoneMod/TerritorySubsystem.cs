@@ -260,7 +260,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType != WorkType.Client && Time.RealTime >= _nextRequestCleanup)
+        if (GameManager.Role != WorldRole.RemoteClient && Time.RealTime >= _nextRequestCleanup)
         {
             _nextRequestCleanup = Time.RealTime + 1;
             foreach (var request in AccessRequests.Expire(
@@ -377,12 +377,12 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             Store.Load(Project.ExtensionData.Get(ModEntry.ModId, DataKey));
         }
 
-        if (CommonLib.WorkType == WorkType.Server && _network != null)
+        if (GameManager.Role == WorldRole.Server && _network != null)
         {
             _node = CommonLib.Net;
             _node.OnClientBecameLive += SendSnapshot;
@@ -391,7 +391,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
 
     public override void Save(ValuesDictionary valuesDictionary)
     {
-        if (Project.SendToClientMode || CommonLib.WorkType == WorkType.Client)
+        if (Project.SendToClientMode || GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -420,7 +420,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
 
     public void PublishUpdate(Territory territory)
     {
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             _network?.Send(
                 TerritoryMessages.Update,
@@ -433,7 +433,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
 
     public void PublishRemoval(PlayerAddress owner)
     {
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             _network?.Send(
                 TerritoryMessages.Remove,
@@ -455,7 +455,7 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
             return "OwnerOnly";
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             var server = CommonLib.Net.Server;
             if (server == null || _network == null)

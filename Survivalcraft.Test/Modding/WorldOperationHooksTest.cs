@@ -4,11 +4,13 @@ using Engine.Core.Collections;
 using Engine.Core.Mathematics;
 
 using Game.Components;
+using Game.Managers;
 using Game.Modding;
 using Game.Network;
 using Game.Subsystems;
 using Game.Terrains;
 using Game.Terrains.Distribution;
+using Game.World;
 
 namespace Survivalcraft.Test.Modding;
 
@@ -217,7 +219,7 @@ public sealed class WorldOperationHooksTest
     {
         private readonly GameModRuntime? _previous = CurrentModRuntime.Value;
 
-        private readonly WorkType _previousWorkType = CommonLib.WorkType;
+        private readonly WorldRole _previousWorldRole = GameManager.Role;
 
         private readonly GameModRuntime _runtime;
 
@@ -232,13 +234,13 @@ public sealed class WorldOperationHooksTest
                 ]
             );
             CurrentModRuntime.Set(_runtime);
-            CommonLib.WorkType = WorkType.Local;
+            CommonLib.Net.Role = WorldRole.SinglePlayer;
         }
 
         public void Dispose()
         {
             CurrentModRuntime.Set(_previous);
-            CommonLib.WorkType = _previousWorkType;
+            CommonLib.Net.Role = _previousWorldRole;
             _runtime.Dispose();
         }
     }

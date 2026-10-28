@@ -628,7 +628,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             SlotIndex = targetSlotIndex
         };
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             IProtocolMessage package = new InventoryMoveRequestPackage
                 { Source = sourceInventorySlot, Target = targetInventorySlot, Count = count };
@@ -704,7 +704,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             SlotIndex = targetSlotIndex
         };
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             var package = new InventoryDragDropRequestPackage
             {

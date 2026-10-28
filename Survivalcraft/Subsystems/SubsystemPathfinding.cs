@@ -3,7 +3,6 @@ using Engine.Core.Pathfinding;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Pathfinding;
 
 namespace Game.Subsystems;
@@ -90,7 +89,7 @@ public class SubsystemPathfinding : Subsystem
     {
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _stopRequested = false;
-        var isServer = CommonLib.WorkType == WorkType.Server;
+        var isServer = GameManager.Role == WorldRole.Server;
         var workerCount = CalculateWorkerCount(Environment.ProcessorCount, isServer);
         for (var i = 0; i < workerCount; i++)
         {

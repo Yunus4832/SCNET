@@ -75,7 +75,7 @@ internal sealed class ClientAdmissionUi : IDisposable
     private void Fail(string message)
     {
         if (_detached) { DetachedFailure = message; }
-        else { _node.Stop(message); }
+        else { _node.EndAdmission(message); }
     }
 
     private BrowserRequest? _browserRequest;
@@ -121,7 +121,7 @@ internal sealed class ClientAdmissionUi : IDisposable
 
     public void Update()
     {
-        if (_disposed || !_detached && _node.CurrentStage != NetNode.Stage.Bootstrapping) { return; }
+        if (_disposed || !_detached && !_node.HasPendingAdmission) { return; }
 
         if (!_detached &&
             _challenge is not null &&
@@ -319,7 +319,7 @@ internal sealed class ClientAdmissionUi : IDisposable
             var installed = registry.Find(_endpoint.Identity.Address);
             if (installed is { Enabled: false })
             {
-                _node.Stop(Text("Disabled"));
+                _node.EndAdmission(Text("Disabled"));
                 return;
             }
 
@@ -362,7 +362,7 @@ internal sealed class ClientAdmissionUi : IDisposable
         catch (Exception error) when (error is AuthenticationProtocolException or CryptographicException
                                           or FormatException or ArgumentException)
         {
-            _node.Stop(Text("KeyConflict"));
+            _node.EndAdmission(Text("KeyConflict"));
         }
     }
 
@@ -499,7 +499,7 @@ internal sealed class ClientAdmissionUi : IDisposable
             _passwordPending = true;
             _statusKey = _incorrectPassword ? "IncorrectPassword" : "WaitPassword";
         }
-        else if (result.Code == AdmissionResultCode.ApprovalRejected) { _node.Stop(Text("Denied")); }
+        else if (result.Code == AdmissionResultCode.ApprovalRejected) { _node.EndAdmission(Text("Denied")); }
     }
 
     private void Cancel()
@@ -511,7 +511,7 @@ internal sealed class ClientAdmissionUi : IDisposable
             _node.TrySubmitAdmission(new AdmissionProofPackage(_challenge!.Nonce, Cancel: true));
         }
 
-        _node.Stop();
+        _node.EndAdmission();
     }
 
     private static string ErrorText(AuthenticationError error)

@@ -49,6 +49,18 @@
 `FilePicker.IsAvailable` 表明该能力不可用。远程内容查询与下载使用独立的 ContentServer API，
 不实现或复用文件选择接口。
 
+世界执行角色由 `NetNode.Role` 持有，通过只读 `GameManager.Role` 查询：`SinglePlayer`、`Server`、
+`RemoteClient` 和未加载世界的 `None`。执行角色与传输连接阶段分别表达不同状态。
+单机与服务器均先加载世界，再接纳玩家并绑定角色；加载时将存档中的在线角色置为离线。
+单机直接信任实例选中的本机身份，不建立网络监听或认证事务。
+GUI 与 Headless 共用权威服务器的加载和监听流程；服务器端点独立于玩家会话。
+GUI 本机玩家通过进程内准入适配器加入，远端通过网络协议加入，两者共用 `PlayerAdmission` 的存档业务检查
+和 `CharacterCreation` 的角色创建规则。世界模拟和自动保存不依赖本机玩家或游戏画面。
+`SessionTarget.World` 表达直接进入游戏，`HostedWorld` 表达仅开服并进入服务器页；它们用于启动与恢复。
+GUI 返回目标由 `GameManager.LocalPlayerReturnTarget` 持有：直接游戏退出时关闭世界，从服务器页加入后退出则保留服务器。
+游戏菜单和相关页面读取返回目标，调用 `GameManager.LeaveLocalPlayer/CloseWorld` 执行生命周期操作，然后通过 `ScreensManager.SwitchScreen` 切换页面；ScreensManager 不持有游戏流程状态，也不执行世界清理。
+网络节点仅通过 `LocalPlayerRemoved` 通知本机玩家被移除，由当前页面响应。
+
 Windows GUI Starter 在 Windows 项目内直接使用 WinForms `OpenFileDialog`/`SaveFileDialog`，对话框在专用 STA 线程运行，不启动 PowerShell 子进程；Linux GUI Starter 通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，具体对话框由桌面 portal backend 提供；Android GameActivity 使用 Storage Access Framework 的 `ACTION_OPEN_DOCUMENT` 与 `ACTION_CREATE_DOCUMENT`，并持久化授权后的 URI 访问。Headless 分支均在注册之前返回或进入独立 Activity，因此不会暴露交互式 picker。Linux GUI 不依赖 `zenity` 可执行文件；会话总线、portal 服务或桌面 backend 不可用时，实际选择请求失败并返回明确错误。
 
 Starter 统一通过 `PlatformManager` 注册平台能力，避免直接操作各子系统的全局入口。GUI 的文本输入和文本剪贴板均由 SDL2 backend 提供，FilePicker 仍使用上述平台原生实现；Headless 不注册这些交互能力。

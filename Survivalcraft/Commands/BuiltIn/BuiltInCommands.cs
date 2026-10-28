@@ -219,7 +219,7 @@ public static class BuiltInCommands
                         ["commands"] = new JsonArray(
                             context.Registry.Definitions
                                 .Where(entry => entry.Definition.Domain is not CommandDomain.Application &&
-                                                entry.Definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) &&
+                                                entry.Definition.CanExecuteHere(RunMode.Value, GameManager.Role) &&
                                                 entry.Definition.IsPotentiallyAuthorized(
                                                     context.Registry.Permissions,
                                                     context.Principal,
@@ -2840,7 +2840,7 @@ public static class BuiltInCommands
             _ => throw new InvalidOperationException($"Unsupported time value {value}.")
         };
         time.TimeOfDayOffset += target - time.CalculateTimeOfDay();
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             CommonLib.Net.QueuePackage(
                 new SubsystemTimePackage(
@@ -2884,7 +2884,7 @@ public static class BuiltInCommands
             )
             .MinBy(target => target.Offset);
         time.TimeOfDayOffset += next.Offset;
-        if (CommonLib.WorkType is WorkType.Server)
+        if (GameManager.Role is WorldRole.Server)
         {
             CommonLib.Net.QueuePackage(
                 new SubsystemTimePackage(
@@ -2922,7 +2922,7 @@ public static class BuiltInCommands
     )
     {
         if (RunMode.Value is not RunModeType.HeadlessServer ||
-            CommonLib.WorkType is not WorkType.Server)
+            GameManager.Role is not WorldRole.Server)
         {
             return CommandResult.LocalizedFail(
                 "server.not_headless",
@@ -2950,7 +2950,7 @@ public static class BuiltInCommands
 
     private static bool EnsureServer(out CommandResult failure)
     {
-        if (CommonLib.WorkType is WorkType.Server)
+        if (GameManager.Role is WorldRole.Server)
         {
             failure = null!;
             return true;

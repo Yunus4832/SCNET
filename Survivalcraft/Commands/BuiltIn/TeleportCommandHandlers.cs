@@ -158,7 +158,7 @@ internal static class TeleportCommandHandlers
         if (target?.ComponentCharacter is not { } player ||
             !target.IsReadyForPlaying ||
             !context.Project.FindSubsystem<SubsystemCharacters>(true)!.Characters.Contains(target) ||
-            (CommonLib.WorkType == WorkType.Server &&
+            (GameManager.Role == WorldRole.Server &&
              !target.IsLocalCharacter &&
              target.Client is not { IsConnected: true }) ||
             player.ComponentHealth.Health <= 0f)
@@ -283,7 +283,7 @@ internal static class TeleportCommandHandlers
         location.Center = position.XZ;
         location.VisibilityDistance = Math.Max(32f, location.VisibilityDistance);
         location.ContentDistance = Math.Max(32f, location.ContentDistance);
-        if (CommonLib.WorkType == WorkType.Server && target.Client is { } client)
+        if (GameManager.Role == WorldRole.Server && target.Client is { } client)
         {
             context.Project.FindSubsystem<SubsystemNetworkInterest>(true)!.SetRequestedLocation(
                 client,
@@ -301,7 +301,7 @@ internal static class TeleportCommandHandlers
             );
         }
 
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             if (target.Client != null)
             {

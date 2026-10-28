@@ -98,6 +98,12 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
         }
     }
 
+    internal void SelectLocalCharacter(CharacterData character)
+    {
+        MainCharacterData = character;
+        LocalCharacterWidget = character.GameWidget;
+    }
+
     private void AddGameWidgetForPlayer(CharacterData characterData)
     {
         var gameWidget = new GameWidget(characterData, characterData.CharacterIndex);

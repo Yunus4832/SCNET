@@ -3,7 +3,6 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -214,14 +213,14 @@ public class ComponentHumanModel : ComponentCreatureModel
             MathUtils.Floor(1.1000000238418579 * subsystemTime.GameTime) !=
             MathUtils.Floor(1.1000000238418579 * (subsystemTime.GameTime - subsystemTime.GameTimeDelta)))
         {
-            if (CommonLib.WorkType == WorkType.Client)
+            if (GameManager.Role == WorldRole.RemoteClient)
             {
                 if (Entity.FindComponent<ComponentCharacter>()?.CharacterData.IsLocalCharacter == true)
                 {
                     NetworkSender.SendToServer(BehaviorPackageBuilder.Capture(this));
                 }
             }
-            else if (CommonLib.WorkType == WorkType.Server)
+            else if (GameManager.Role == WorldRole.Server)
             {
                 NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this));
             }

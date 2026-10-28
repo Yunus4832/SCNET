@@ -1,10 +1,15 @@
 using Engine.Core.Runtime;
 
 using Game.Commands;
+using Game.Managers;
 using Game.Network;
+using Game.World;
+
+using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
+[Collection(WorldRoleCollection.Name)]
 public class CommandAuthorityTest
 {
     private static readonly ModId _owner = new("test.authority");
@@ -27,28 +32,28 @@ public class CommandAuthorityTest
     }
 
     [Theory]
-    [InlineData(CommandDomain.Application, WorkType.Local, true)]
-    [InlineData(CommandDomain.Application, WorkType.Client, true)]
-    [InlineData(CommandDomain.World, WorkType.Local, true)]
-    [InlineData(CommandDomain.World, WorkType.Client, false)]
-    [InlineData(CommandDomain.Server, WorkType.Local, false)]
-    [InlineData(CommandDomain.Server, WorkType.Client, false)]
-    [InlineData(CommandDomain.Server, WorkType.Server, true)]
+    [InlineData(CommandDomain.Application, WorldRole.SinglePlayer, true)]
+    [InlineData(CommandDomain.Application, WorldRole.RemoteClient, true)]
+    [InlineData(CommandDomain.World, WorldRole.SinglePlayer, true)]
+    [InlineData(CommandDomain.World, WorldRole.RemoteClient, false)]
+    [InlineData(CommandDomain.Server, WorldRole.SinglePlayer, false)]
+    [InlineData(CommandDomain.Server, WorldRole.RemoteClient, false)]
+    [InlineData(CommandDomain.Server, WorldRole.Server, true)]
     public void ScopeControlsExecutionEnvironment(
         CommandDomain domain,
-        WorkType workType,
+        WorldRole worldRole,
         bool expected
     )
     {
         var definition = new CommandDefinition<TestCommand>((_, _) => CommandResult.Ok("ok"), domain);
 
-        Assert.Equal(expected, definition.CanExecuteHere(RunModeType.Gui, workType));
+        Assert.Equal(expected, definition.CanExecuteHere(RunModeType.Gui, worldRole));
     }
 
     [Fact]
     public void LocalHttpCanManageHostedServerButCannotManageRemoteServer()
     {
-        var previous = CommonLib.WorkType;
+        var previous = GameManager.Role;
         try
         {
             var registry = new CommandRegistry();
@@ -76,7 +81,7 @@ public class CommandAuthorityTest
             registry.Freeze();
             var adapter = new HttpCommandAdapter(registry);
             var request = new HttpCommandRequest(identity, new System.Text.Json.Nodes.JsonObject());
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
 
             Assert.True(
                 adapter.Execute(
@@ -101,7 +106,7 @@ public class CommandAuthorityTest
                 ).Success
             );
 
-            CommonLib.WorkType = WorkType.Client;
+            CommonLib.Net.Role = WorldRole.RemoteClient;
             Assert.Equal(
                 "command.unavailable",
                 adapter.Execute(
@@ -112,7 +117,7 @@ public class CommandAuthorityTest
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 

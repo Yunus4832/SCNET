@@ -7,13 +7,15 @@ using Engine.Core.Security;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Characters;
+using Game.Managers;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
+using Game.World;
 
 namespace Survivalcraft.Test.Subsystems;
 
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public sealed class CharacterNameUniquenessTest
 {
     [Fact]
@@ -46,10 +48,10 @@ public sealed class CharacterNameUniquenessTest
     [Fact]
     public void ClientPrevalidationIncludesOfflineNamesFromThePublicRoster()
     {
-        var previous = CommonLib.WorkType;
+        var previous = GameManager.Role;
         try
         {
-            CommonLib.WorkType = WorkType.Client;
+            CommonLib.Net.Role = WorldRole.RemoteClient;
             var subsystem = new SubsystemCharacters();
             var id = Guid.NewGuid();
             subsystem.ApplyCharacterList(
@@ -59,7 +61,7 @@ public sealed class CharacterNameUniquenessTest
             Assert.True(subsystem.IsCharacterNameAvailable("Offline", id));
             Assert.True(subsystem.IsCharacterNameAvailable("Available"));
         }
-        finally { CommonLib.WorkType = previous; }
+        finally { CommonLib.Net.Role = previous; }
     }
 
     private static CharacterData AddActive(SubsystemCharacters subsystem, string name)

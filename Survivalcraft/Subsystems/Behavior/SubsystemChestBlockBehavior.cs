@@ -44,7 +44,7 @@ public class SubsystemChestBlockBehavior : SubsystemBlockBehavior
 
     public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
     {
-        if (CommonLib.WorkType == WorkType.Client && CommonLib.LocalCharacter == componentMiner.ComponentCharacter)
+        if (GameManager.Role == WorldRole.RemoteClient && CommonLib.LocalCharacter == componentMiner.ComponentCharacter)
         {
             IProtocolMessage package =
                 new OpenBlockInventoryPackage

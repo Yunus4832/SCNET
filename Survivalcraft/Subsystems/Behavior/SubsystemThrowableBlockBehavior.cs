@@ -1,7 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
 using Game.Entities;
-using Game.Network;
 
 namespace Game.Subsystems;
 
@@ -81,7 +80,7 @@ public class SubsystemThrowableBlockBehavior : SubsystemBlockBehavior
                     return true;
                 }
 
-                if (CommonLib.WorkType != WorkType.Client)
+                if (GameManager.Role != WorldRole.RemoteClient)
                 {
                     componentMiner.Inventory.RemoveSlotItems(activeSlotIndex, 1);
                 }

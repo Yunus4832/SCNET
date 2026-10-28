@@ -1,7 +1,9 @@
 using Game.Components;
 using Game.Furniture;
+using Game.Managers;
 using Game.Network;
 using Game.Subsystems;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 
@@ -10,12 +12,12 @@ namespace Survivalcraft.Test.Network;
 [Collection(ConfigFileCollection.Name)]
 public sealed class FurnitureAuthorityTest : IDisposable
 {
-    private readonly WorkType _previousWorkType = CommonLib.WorkType;
+    private readonly WorldRole _previousWorldRole = GameManager.Role;
 
     [Fact]
     public void ClientCannotAllocateDesignFromLocalPreview()
     {
-        CommonLib.WorkType = WorkType.Client;
+        CommonLib.Net.Role = WorldRole.RemoteClient;
         var behavior = new SubsystemFurnitureBlockBehavior();
         var design = new FurnitureDesign(null) { Index = -1 };
         design.SetValues(2, new int[8]);
@@ -28,7 +30,7 @@ public sealed class FurnitureAuthorityTest : IDisposable
     [Fact]
     public void ClientCanReuseInstalledAuthoritativeDesign()
     {
-        CommonLib.WorkType = WorkType.Client;
+        CommonLib.Net.Role = WorldRole.RemoteClient;
         var behavior = new SubsystemFurnitureBlockBehavior();
         var authoritative = new FurnitureDesign(null) { Index = 7 };
         authoritative.SetValues(2, new int[8]);
@@ -43,7 +45,7 @@ public sealed class FurnitureAuthorityTest : IDisposable
     [Fact]
     public void ClientDoesNotCalculateCraftingResultFromPartialInventory()
     {
-        CommonLib.WorkType = WorkType.Client;
+        CommonLib.Net.Role = WorldRole.RemoteClient;
         var table = new ComponentCraftingTable();
 
         table.UpdateCraftingResult();
@@ -51,6 +53,6 @@ public sealed class FurnitureAuthorityTest : IDisposable
 
     public void Dispose()
     {
-        CommonLib.WorkType = _previousWorkType;
+        CommonLib.Net.Role = _previousWorldRole;
     }
 }

@@ -98,7 +98,7 @@ public class GameWidget : CanvasWidget
         GuiWidget = Children.Find<ContainerWidget>("Gui")!;
         _controlsWidget = GuiWidget.Children.Find<CanvasWidget>("ControlsContainer")!;
         var hasMultiplayerMessaging =
-            CommonLib.WorkType is not WorkType.Local &&
+            GameManager.Role is not WorldRole.SinglePlayer &&
             CommonLib.Net.IsConnected;
         if (characterData.IsLocalCharacter)
         {
@@ -192,7 +192,7 @@ public class GameWidget : CanvasWidget
 
     protected override void MeasureOverride(Vector2 parentAvailableSize)
     {
-        if (CommonLib.WorkType != WorkType.Local)
+        if (GameManager.Role != WorldRole.SinglePlayer)
         {
             IsVisible = CharacterData.IsLocalCharacter;
         }
@@ -329,7 +329,8 @@ public class GameWidget : CanvasWidget
     private WidgetInputDevice DetermineInputDevices()
     {
         if ((CharacterData.SubsystemCharacters.Characters.Count > 0 && CharacterData.IsLocalCharacter) ||
-            (CommonLib.WorkType == WorkType.Local && CharacterData == CharacterData.SubsystemCharacters.Characters[0]))
+            (GameManager.Role == WorldRole.SinglePlayer &&
+             CharacterData == CharacterData.SubsystemCharacters.Characters[0]))
         {
             var widgetInputDevice = WidgetInputDevice.None;
             foreach (var playersDatum in CharacterData.SubsystemCharacters.Characters)

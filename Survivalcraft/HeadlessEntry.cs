@@ -142,9 +142,9 @@ public static class HeadlessEntry
             };
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
             Log.Information($"Server ports: game={serverPort}, broadcast={broadcastPort}");
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.PrepareServerWorld();
             var gamesWidget = new GamesWidget();
-            GameManager.LoadProject(world, gamesWidget);
+            GameManager.LoadProject(world, gamesWidget, startupSession);
             if (!CommonLib.StartServer(startupSession, world.WorldSettings))
             {
                 Log.Error("Failed to start server (port may be in use).");

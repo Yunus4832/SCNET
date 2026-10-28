@@ -105,6 +105,8 @@ public class CharacterScreen : Screen
             throw new InvalidOperationException("Only the current session's character can be edited here.");
         }
 
+        _playerModel.CharacterSex = _characterData.CharacterSex;
+        _playerModel.CharacterSkinName = _characterData.CharacterSkinName;
         _characterData.SubsystemCharacters.CharacterCreationRejected += OnCharacterCreationRejected;
         _creatingCharacter = _characterData.SubsystemCharacters.PendingCharacterCreationId != Guid.Empty;
         _creationStartedAt = Time.RealTime;
@@ -123,16 +125,36 @@ public class CharacterScreen : Screen
             _characterSexButton.IsEnabled = false;
             _playButton.IsVisible = false;
         }
+
+        CommonLib.Net.LocalPlayerRemoved += OnLocalPlayerRemoved;
     }
 
     public override void Leave()
     {
+        CommonLib.Net.LocalPlayerRemoved -= OnLocalPlayerRemoved;
         _characterData.SubsystemCharacters.CharacterCreationRejected -= OnCharacterCreationRejected;
         _characterData.SubsystemCharacters.ClearCharacterCreationRequest();
         DialogsManager.HideDialog(_fetchingPlayerDialog);
         _creatingCharacter = false;
         _characterSkinsCache.Clear();
         _characterData = null!;
+    }
+
+    private void OnLocalPlayerRemoved(string reason)
+    {
+        if (ScreensManager.CurrentScreen != this) { return; }
+
+        if (GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
+        {
+            GameManager.LeaveLocalPlayer();
+            ScreensManager.SwitchScreen("HostedWorld", reason);
+        }
+        else
+        {
+            GameManager.CloseWorld();
+            ScreensManager.SwitchScreen("Play");
+            if (reason.Length > 0) { DialogsManager.Alert(reason); }
+        }
     }
 
     public override void Update()
@@ -151,7 +173,7 @@ public class CharacterScreen : Screen
             _characterData.SubsystemCharacters.FindCharacterData(player => player.IsLocalCharacter) is not null)
         {
             DialogsManager.HideDialog(_fetchingPlayerDialog);
-            ScreensManager.SwitchScreen("Game", CommonLib.WorkType);
+            ScreensManager.SwitchScreen("Game", GameManager.Role);
             return;
         }
 
@@ -241,7 +263,7 @@ public class CharacterScreen : Screen
         {
             if (_mode == Mode.Initial)
             {
-                if (CommonLib.WorkType == WorkType.Client)
+                if (GameManager.Role == WorldRole.RemoteClient)
                 {
                     _characterData.SubsystemCharacters.RequestOwnCharacterCreation(_characterData);
                     _creatingCharacter = true;
@@ -250,9 +272,11 @@ public class CharacterScreen : Screen
                 }
                 else
                 {
-                    _characterData.SetMain();
-                    _characterData.SubsystemCharacters.AddCharacterData(_characterData);
-                    ScreensManager.SwitchScreen("Game");
+                    if (_characterData.SubsystemCharacters.CreateOwnCharacter(_characterData) is { } error)
+                    {
+                        OnCharacterCreationRejected(error);
+                    }
+                    else { ScreensManager.SwitchScreen("Game"); }
                 }
             }
         }
@@ -262,10 +286,17 @@ public class CharacterScreen : Screen
         {
             if (_mode == Mode.Initial)
             {
-                GameManager.SaveProject(true, true);
-                GameManager.DisposeProject();
-                CommonLib.Net.Stop();
-                ScreensManager.SwitchScreen("Play");
+                if (GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
+                {
+                    GameManager.LeaveLocalPlayer();
+                    ScreensManager.SwitchScreen("HostedWorld");
+                }
+                else
+                {
+                    var remote = GameManager.Role == WorldRole.RemoteClient;
+                    GameManager.CloseWorld();
+                    ScreensManager.SwitchScreen(remote ? "NetPlay" : "Play");
+                }
             }
             else
             {

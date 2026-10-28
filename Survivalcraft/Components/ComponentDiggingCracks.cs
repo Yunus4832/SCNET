@@ -3,8 +3,6 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Components;
 
 public class ComponentDiggingCracks : Component, IDrawable
@@ -52,7 +50,7 @@ public class ComponentDiggingCracks : Component, IDrawable
         }
 
         var point = _componentMiner.DigCellFace.Value.Point;
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             if (_players.LocalCharacter != null)
             {

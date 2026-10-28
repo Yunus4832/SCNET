@@ -36,7 +36,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType != WorkType.Server || !Time.PeriodicEvent(0.25, 0))
+        if (GameManager.Role != WorldRole.Server || !Time.PeriodicEvent(0.25, 0))
         {
             return;
         }

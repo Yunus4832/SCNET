@@ -1,6 +1,5 @@
 using System.Xml.Linq;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Widgets;
@@ -91,7 +90,7 @@ public class ClothingWidget : CanvasWidget
             return;
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             NetworkSender.SendToServer(
                 new SleepRequestPackage

@@ -63,7 +63,8 @@ internal sealed class PlayerTeleportRequest : IDisposable
             {
                 if (!_target.SubsystemCharacters.Characters.Contains(requester) ||
                     (_requesterClient != null &&
-                     (!ReferenceEquals(requester.Client, _requesterClient) || !_requesterClient.IsConnected)))
+                     (!ReferenceEquals(requester.Client, _requesterClient) ||
+                      !CommonLib.Net.IsPlayerOnline(_requesterClient))))
                 {
                     Cancel();
                     return;
@@ -79,7 +80,7 @@ internal sealed class PlayerTeleportRequest : IDisposable
             if (principal.Subject is { Ban: not null } ||
                 !context.Registry.TryGetDefinition(_command.GetType(), out var registered) ||
                 registered == null ||
-                !registered.Definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) ||
+                !registered.Definition.CanExecuteHere(RunMode.Value, GameManager.Role) ||
                 !registered.Definition.CanInvoke(principal, context.Project) ||
                 !registered.Definition.IsAuthorized(context, _command))
             {
@@ -141,9 +142,13 @@ internal sealed class PlayerTeleportRequest : IDisposable
         Log.Information(
             $"Teleport completed: code={result.Code}, success={result.Success}, correlation={_context.CorrelationId}: {result.Message}"
         );
-        if (CommonLib.WorkType == WorkType.Server && _requesterClient != null)
+        if (GameManager.Role == WorldRole.Server && _requesterClient != null)
         {
-            if (_requesterClient.IsConnected)
+            if (ReferenceEquals(_requesterClient, CommonLib.Net.Self))
+            {
+                CommandResultPublisher.DisplayLocal(_context.Project!, result, _context.CorrelationId);
+            }
+            else if (CommonLib.Net.IsPlayerOnline(_requesterClient))
             {
                 CommandResultPublisher.PublishRemote(
                     _context.Project!,

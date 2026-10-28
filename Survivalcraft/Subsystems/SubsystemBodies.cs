@@ -46,7 +46,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             var flag = _subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1, 0.0);
             _toSendList.Clear();

@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Spawning;
 
 namespace Game.Subsystems;
@@ -66,7 +65,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -141,7 +140,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             throw new ArgumentException(nameof(templateName));
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

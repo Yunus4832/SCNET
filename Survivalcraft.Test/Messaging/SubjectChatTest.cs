@@ -1,12 +1,14 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+using Engine.Core.Runtime;
 using Engine.Core.Security;
 
 using EntitySystem.Core;
 
 using Game.Characters;
 using Game.Commands;
+using Game.Managers;
 using Game.Messaging;
 using Game.Network;
 using Game.Network.Transport;
@@ -20,10 +22,12 @@ using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Messaging;
 
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public sealed class SubjectChatTest : IDisposable
 {
-    private readonly WorkType _previousWorkType = CommonLib.WorkType;
+    private readonly WorldRole _previousWorldRole = GameManager.Role;
+
+    private readonly RunModeType _previousRunMode = RunMode.Value;
 
     private readonly Dictionary<int, Client> _previousClients = CommonLib.Net.Clients;
 
@@ -42,9 +46,29 @@ public sealed class SubjectChatTest : IDisposable
 
     public SubjectChatTest()
     {
-        CommonLib.WorkType = WorkType.Server;
-        CommonLib.Net.Clients = [];
+        CommonLib.Net.Role = WorldRole.Server;
+        RunMode.Value = RunModeType.Gui;
+        CommonLib.Net.Self = null;
+        CommonLib.Net.Server = new Client(Guid.Empty, _project);
+        CommonLib.Net.Clients = new Dictionary<int, Client> { [0] = CommonLib.Net.Server };
         CommonLib.Net.CurrentStage = NetNode.Stage.Connected;
+    }
+
+    [Fact]
+    public void GUIWithoutAnAdmittedLocalRecipientDoesNotReceiveOtherPlayersPrivateMessages()
+    {
+        var recipient = Session(2, User());
+        var sender = new MessageSender(recipient.PlayerAddress!.Value, "Fixture", null, string.Empty);
+        _project.Messages.Publish(GameMessage.Chat(GameMessageChannel.Team, sender, "private fixture"), [recipient.ID]);
+        Assert.Empty(_project.Messages.History);
+        var local = Session(1, User());
+        _project.Messages.Publish(
+            GameMessage.Chat(GameMessageChannel.Team, sender, "another private fixture"),
+            [recipient.ID]
+        );
+        Assert.Empty(_project.Messages.History);
+        _project.Messages.Publish(GameMessage.Chat(GameMessageChannel.Team, sender, "addressed to local"), [local.ID]);
+        Assert.Single(_project.Messages.History);
     }
 
     [Fact]
@@ -209,12 +233,12 @@ public sealed class SubjectChatTest : IDisposable
 
     private Client Session(byte id, WorldPlayer subject, Guid characterId = default)
     {
-        var session = new Client(null, id, Guid.NewGuid(), characterId, _project) { PlayerAddress = subject.Address };
+        var session = new Client(null, id, Guid.NewGuid(), characterId, _project)
+            { PlayerAddress = subject.Address, State = ClientState.Connected };
         CommonLib.Net.Clients[id] = session;
         if (id == 1)
         {
             CommonLib.Net.Self = session;
-            CommonLib.Net.Server = session;
         }
 
         return session;
@@ -231,7 +255,8 @@ public sealed class SubjectChatTest : IDisposable
         CommonLib.Net.Server = _previousServer;
         CommonLib.Net.CurrentStage = _previousStage;
         CommonLib.Net.Clients = _previousClients;
-        CommonLib.WorkType = _previousWorkType;
+        CommonLib.Net.Role = _previousWorldRole;
+        RunMode.Value = _previousRunMode;
         _project.Dispose();
     }
 

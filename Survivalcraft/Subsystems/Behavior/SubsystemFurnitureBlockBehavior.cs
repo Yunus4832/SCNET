@@ -120,7 +120,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             return furnitureDesign;
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return null;
         }
@@ -156,7 +156,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             throw new InvalidOperationException("public error.");
         }
 
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             NetworkSender.SendGlobal(FurniturePackageBuilder.Capture(design));
         }
@@ -314,7 +314,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                     return;
                 }
 
-                if (CommonLib.WorkType != WorkType.Client)
+                if (GameManager.Role != WorldRole.RemoteClient)
                 {
                     CreateDesign(componentMiner, design, valuesDictionary, start, startValue);
                 }
@@ -324,13 +324,13 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                     valuesDictionary,
                     start,
                     startValue,
-                    CommonLib.WorkType == WorkType.Client
+                    GameManager.Role == WorldRole.RemoteClient
                 );
-                if (CommonLib.WorkType == WorkType.Client)
+                if (GameManager.Role == WorldRole.RemoteClient)
                 {
                     NetworkSender.SendToServer(package);
                 }
-                else if (CommonLib.WorkType == WorkType.Server)
+                else if (GameManager.Role == WorldRole.Server)
                 {
                     CommonLib.Net.QueuePackage(package, PackageAudience.Global);
                 }
@@ -763,7 +763,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
     private void GarbageCollectDesigns(ReadOnlyList<ScannedItemData> allExistingItems)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -815,7 +815,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             }
         }
 
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             CommonLib.Net.QueuePackage(
                 new FurnitureDesignsRemovedPackage { ToRemoveList = list.ToArray() },

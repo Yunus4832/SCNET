@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -50,7 +49,7 @@ public class ComponentFlu : Component, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType != WorkType.Client && Time.PeriodicEvent(1.0, 0.5))
+        if (GameManager.Role != WorldRole.RemoteClient && Time.PeriodicEvent(1.0, 0.5))
         {
             if (_componentCharacter.CharacterData.Client is { } owner)
             {
@@ -85,7 +84,7 @@ public class ComponentFlu : Component, IUpdateable
                 _subsystemTime.PeriodicGameTimeEvent(5.0, -0.0099999997764825821) &&
                 _subsystemTime.GameTime - _lastEffectTime > 13.0)
             {
-                if (CommonLib.WorkType != WorkType.Client)
+                if (GameManager.Role != WorldRole.RemoteClient)
                 {
                     FluEffect();
                     NetworkSender.SendToObservers(
@@ -104,7 +103,7 @@ public class ComponentFlu : Component, IUpdateable
                 num2 = 9f;
                 if (_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0) && _random.Bool(0.025f))
                 {
-                    if (CommonLib.WorkType != WorkType.Client)
+                    if (GameManager.Role != WorldRole.RemoteClient)
                     {
                         StartFlu();
                         NetworkSender.SendToObservers(
@@ -130,7 +129,7 @@ public class ComponentFlu : Component, IUpdateable
                 _subsystemTime.PeriodicGameTimeEvent(num2, -0.0099999997764825821) &&
                 _random.Bool(0.75f))
             {
-                if (CommonLib.WorkType != WorkType.Client)
+                if (GameManager.Role != WorldRole.RemoteClient)
                 {
                     Sneeze();
                     NetworkSender.SendToObservers(
@@ -162,7 +161,7 @@ public class ComponentFlu : Component, IUpdateable
                 _componentCharacter.ComponentLocomotion.LookOrder.X,
                 MathUtils.Clamp(num3 - _componentCharacter.ComponentLocomotion.LookAngles.Y, -3f, 3f)
             );
-            if (_random.Bool(2f * dt) && CommonLib.WorkType != WorkType.Client)
+            if (_random.Bool(2f * dt) && GameManager.Role != WorldRole.RemoteClient)
             {
                 var vector = -1.2f * _componentCharacter.ComponentCreatureModel.EyeRotation.GetForwardVector();
                 _componentCharacter.ComponentBody.ApplyImpulse(vector);

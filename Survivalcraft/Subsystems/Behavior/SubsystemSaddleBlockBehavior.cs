@@ -1,7 +1,5 @@
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Subsystems;
 
 public class SubsystemSaddleBlockBehavior : SubsystemBlockBehavior
@@ -29,7 +27,7 @@ public class SubsystemSaddleBlockBehavior : SubsystemBlockBehavior
         var entityTemplateName =
             bodyRaycastResult.Value.ComponentBody.Entity.ValuesDictionary.DatabaseObject.Name + "_Saddled";
         var entity = DatabaseManager.CreateEntity(Project, entityTemplateName, false);
-        if (entity == null || CommonLib.WorkType == WorkType.Client)
+        if (entity == null || GameManager.Role == WorldRole.RemoteClient)
         {
             return true;
         }

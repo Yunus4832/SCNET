@@ -2,6 +2,7 @@ using Engine.Network;
 
 using EntitySystem.Core;
 
+using Game.Admission;
 using Game.Network.Transport;
 using Game.Protocol.Identity;
 
@@ -60,10 +61,24 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
             return;
         }
 
+        if (!PlayerAdmission.TryCreateSession(
+                project,
+                node,
+                address,
+                package.TmpToken,
+                character => node.CreateClient(peer, package.TmpToken, character),
+                out var admitted,
+                out error
+            ))
+        {
+            node.SendWriterFromPackage(new ConnectionRejectPackage(error!), peer);
+            node.RemoveClient(node.ResolveSender(peer: peer), error!);
+            return;
+        }
+
+        var client = admitted!;
         node.SendWriterFromPackage(new AdmissionResultPackage(nonce, AdmissionResultCode.Accepted), peer);
-        var user = project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(address);
         node.PendingPeer = peer;
-        var client = node.CreateClient(peer, package.TmpToken, user.CharacterId);
         var notification = new ClientAddedPackage
         {
             Client = new ClientIdentity(client.ID, client.TokenId, client.CharacterId, client.PlayerAddress)
@@ -94,22 +109,6 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
             return "客户端模组与服务器不一致，请刷新服务器信息后重试";
         }
 
-        if (package.TmpToken == Guid.Empty) { return "连接关联标识无效"; }
-
-        if (node.Clients.Values.Any(client => client.PlayerAddress == address)) { return "该用户已经在线"; }
-
-        if (node.Clients.Values.Any(client => client.TokenId == package.TmpToken)) { return "连接关联标识已被占用"; }
-
-        if (project.FindSubsystem<SubsystemPlayers>(true)!.Store.Find(address)?.Ban is not null)
-        {
-            return "你被禁止加入该服务器";
-        }
-
-        if (node.ClientCount >= project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.MaxOnlinePlayerCount)
-        {
-            return "在线人数达到最大，拒绝加入";
-        }
-
-        return null;
+        return PlayerAdmission.Rejection(project, node, address, package.TmpToken);
     }
 }

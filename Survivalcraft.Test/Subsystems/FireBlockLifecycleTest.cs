@@ -4,10 +4,12 @@ using System.Reflection;
 using Engine.Core.Mathematics;
 
 using Game.Blocks;
+using Game.Managers;
 using Game.Modding.Blocks;
 using Game.Network;
 using Game.Subsystems;
 using Game.Terrains;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 
@@ -19,9 +21,9 @@ public sealed class FireBlockLifecycleTest
     [Fact]
     public void ClientTerrainRemovalAndChunkDiscardClearOnlyTheirFireRecords()
     {
-        var mode = CommonLib.WorkType;
+        var mode = GameManager.Role;
         using var scope = new WorldCatalogScope();
-        CommonLib.WorkType = WorkType.Client;
+        CommonLib.Net.Role = WorldRole.RemoteClient;
 
         try
         {
@@ -51,7 +53,7 @@ public sealed class FireBlockLifecycleTest
         }
         finally
         {
-            CommonLib.WorkType = mode;
+            CommonLib.Net.Role = mode;
         }
     }
 }

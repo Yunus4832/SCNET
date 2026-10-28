@@ -1,6 +1,5 @@
 using System.Xml.Linq;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Widgets;
@@ -109,7 +108,7 @@ public class DispenserWidget : CanvasWidget
         }
 
         var mode = DispenserBlock.GetMode(data);
-        if (flag && CommonLib.WorkType == WorkType.Client)
+        if (flag && GameManager.Role == WorldRole.RemoteClient)
         {
             var tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) |
                              (DispenserBlock.GetAcceptsDrops(data) ? 1 << 1 : 0));

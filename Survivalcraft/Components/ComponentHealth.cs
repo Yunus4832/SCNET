@@ -2,7 +2,6 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Creatures;
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -70,7 +69,7 @@ public class ComponentHealth : Component, IUpdateable
         var position = _componentCreature.ComponentBody.Position;
         if (Health is > 0f and < 1f)
         {
-            if (CommonLib.WorkType != WorkType.Client && Time.PeriodicEvent(2.0, 0.0))
+            if (GameManager.Role != WorldRole.RemoteClient && Time.PeriodicEvent(2.0, 0.0))
             {
                 NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
             }
@@ -146,12 +145,12 @@ public class ComponentHealth : Component, IUpdateable
                                     { CharacterData.IsLocalCharacter: true };
             var flagLocalCharacter = _componentCharacter is { CharacterData.IsLocalCharacter: true };
             var flagNoRider = _componentCreature.ComponentBody.ChildBodies.Count == 0;
-            if (CommonLib.WorkType == WorkType.Local)
+            if (GameManager.Role == WorldRole.SinglePlayer)
             {
                 Injure(num4, null, false, cause);
             }
 
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 //是(主玩家、主玩家骑乘的生物、没有被玩家骑乘的生物)计算伤害
                 if (flagLocalCharacter || flagMainRider || flagNoRider)
@@ -159,7 +158,7 @@ public class ComponentHealth : Component, IUpdateable
                     Injure(num4, null, false, cause);
                 }
             }
-            else if (CommonLib.WorkType == WorkType.Client)
+            else if (GameManager.Role == WorldRole.RemoteClient)
             {
                 //是(主玩家、被主玩家骑乘的生物)计算伤害，请求给服务器
                 if (flagLocalCharacter || flagMainRider)
@@ -221,7 +220,7 @@ public class ComponentHealth : Component, IUpdateable
 
             var cause = LanguageManager.Get(Name, 5);
             //玩家 TouchesFire 伤害由客户端计算
-            if (CommonLib.WorkType == WorkType.Client)
+            if (GameManager.Role == WorldRole.RemoteClient)
             {
                 if (flagLocalCharacter || flagMainRider)
                 {
@@ -239,7 +238,7 @@ public class ComponentHealth : Component, IUpdateable
                 }
             }
 
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 if (flagLocalCharacter || flagMainRider || flagNoRider)
                 {
@@ -329,13 +328,13 @@ public class ComponentHealth : Component, IUpdateable
 
     public void Heal(float amount)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
 
         //开服后，睡觉恢复速度加快5倍
-        if (CommonLib.WorkType == WorkType.Server &&
+        if (GameManager.Role == WorldRole.Server &&
             _componentCharacter is
                 { ComponentSleep: { SubsystemUpdate.UpdatesPerFrame: 1, IsSleeping: true } })
         {
@@ -350,7 +349,7 @@ public class ComponentHealth : Component, IUpdateable
 
     public void Injure(float amount, ComponentCreature? attacker, bool ignoreInvulnerability, string cause)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -394,7 +393,7 @@ public class ComponentHealth : Component, IUpdateable
             if (Health == 0f)
             {
                 CauseOfDeath = cause;
-                if (CommonLib.WorkType != WorkType.Client)
+                if (GameManager.Role != WorldRole.RemoteClient)
                 {
                     var componentHealthPackage = EntityStatePackageBuilder.Capture(this) with
                     {

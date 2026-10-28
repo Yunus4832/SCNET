@@ -306,7 +306,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                     }
                 }
 
-                if (flag && CommonLib.WorkType != WorkType.Client)
+                if (flag && GameManager.Role != WorldRole.RemoteClient)
                 {
                     var slot = (ClothingSlot)enumValue;
                     SetClothes(slot, _clothesList);
@@ -380,7 +380,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                     }
 
                     //服务器计算耐久
-                    if (!flag2 || CommonLib.WorkType == WorkType.Client)
+                    if (!flag2 || GameManager.Role == WorldRole.RemoteClient)
                     {
                         continue;
                     }
@@ -735,7 +735,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             {
                 if (Time.PeriodicEvent(1.0, 0.0))
                 {
-                    if (CommonLib.WorkType == WorkType.Client)
+                    if (GameManager.Role == WorldRole.RemoteClient)
                     {
                         NetworkSender.SendToServer(
                             ClothingPackageBuilder.Capture(
@@ -744,7 +744,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                             )
                         );
                     }
-                    else if (CommonLib.WorkType == WorkType.Server)
+                    else if (GameManager.Role == WorldRole.Server)
                     {
                         CommonLib.Net.QueuePackage(
                             ClothingPackageBuilder.Capture(

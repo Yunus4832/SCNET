@@ -2,8 +2,10 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using Game.Components;
+using Game.Managers;
 using Game.Network;
 using Game.Subsystems;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 
@@ -13,20 +15,20 @@ namespace Survivalcraft.Test.Network;
 public sealed class SleepTimeAuthorityTest
 {
     [Theory]
-    [InlineData(WorkType.Client, false, false)]
-    [InlineData(WorkType.Client, true, false)]
-    [InlineData(WorkType.Server, false, true)]
-    [InlineData(WorkType.Server, true, false)]
-    [InlineData(WorkType.Local, false, true)]
-    [InlineData(WorkType.Local, true, false)]
+    [InlineData(WorldRole.RemoteClient, false, false)]
+    [InlineData(WorldRole.RemoteClient, true, false)]
+    [InlineData(WorldRole.Server, false, true)]
+    [InlineData(WorldRole.Server, true, false)]
+    [InlineData(WorldRole.SinglePlayer, false, true)]
+    [InlineData(WorldRole.SinglePlayer, true, false)]
     public void ClientNeverAcceleratesSleepFromItsPartialPlayerSet(
-        WorkType mode,
+        WorldRole mode,
         bool includeAwakePlayer,
         bool accelerated
     )
     {
-        var previous = CommonLib.WorkType;
-        CommonLib.WorkType = mode;
+        var previous = GameManager.Role;
+        CommonLib.Net.Role = mode;
         try
         {
             var players = new SubsystemCharacters();
@@ -70,7 +72,7 @@ public sealed class SleepTimeAuthorityTest
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 }

@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -37,7 +36,7 @@ public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable
             }
 
             field = value;
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, field));
             }
@@ -48,7 +47,7 @@ public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             if (IsBend)
             {

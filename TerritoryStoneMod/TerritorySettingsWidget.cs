@@ -5,9 +5,9 @@ using Game.Commands;
 using Game.Components;
 using Game.Dialogs;
 using Game.Managers;
-using Game.Network;
 using Game.Protocol.Identity;
 using Game.Widgets;
+using Game.World;
 
 namespace TerritoryStoneMod;
 
@@ -270,7 +270,7 @@ public sealed class TerritorySettingsWidget : CanvasWidget, IGameInputCapturingW
                 ShowSettings(territory!.Settings);
                 Notify(error);
             }
-            else if (CommonLib.WorkType == WorkType.Client)
+            else if (GameManager.Role == WorldRole.RemoteClient)
             {
                 _pendingRequestId = _subsystem.SettingsRequestId;
                 _pendingUntil = Time.RealTime + 10;

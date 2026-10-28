@@ -1,8 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Subsystems;
 
 public class SubsystemBlockEntities : Subsystem
@@ -17,7 +15,7 @@ public class SubsystemBlockEntities : Subsystem
 
     public void CreateBlockEntity(string entityName, Point3 point, ComponentMiner miner)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

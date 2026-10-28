@@ -10,7 +10,7 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
 {
     public static void Submit(FurniturePackage package)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             NetworkSender.SendToServer(package);
             return;
@@ -18,7 +18,7 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
 
         PackageDispatcher.Handle(
             package,
-            new PackageReceiveContext(CommonLib.Net, CommonLib.WorkType == WorkType.Server, CommonLib.Net.Self)
+            new PackageReceiveContext(CommonLib.Net, GameManager.Role == WorldRole.Server, CommonLib.Net.Self)
         );
     }
 
@@ -212,7 +212,7 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
                 if (furnitureSet != null)
                 {
                     subsystemFurnitureBlockBehavior.DeleteFurnitureSet(furnitureSet);
-                    if (CommonLib.WorkType != WorkType.Client)
+                    if (GameManager.Role != WorldRole.RemoteClient)
                     {
                         subsystemFurnitureBlockBehavior.GarbageCollectDesigns();
                     }

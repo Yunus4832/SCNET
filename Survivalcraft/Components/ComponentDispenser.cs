@@ -1,8 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Components;
 
 public class ComponentDispenser : ComponentInventoryBase
@@ -44,7 +42,7 @@ public class ComponentDispenser : ComponentInventoryBase
             num++;
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             var num2 = GetSlotCount(num) > 0 ? 1 : 0;
             for (var i = 0; i < num2; i++)

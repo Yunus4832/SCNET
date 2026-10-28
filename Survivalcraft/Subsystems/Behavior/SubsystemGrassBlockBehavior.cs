@@ -1,7 +1,5 @@
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Subsystems;
 
 public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpdateable
@@ -20,7 +18,7 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -30,7 +28,7 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
             return;
         }
 
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             NetUpdate();
         }

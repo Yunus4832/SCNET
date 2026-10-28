@@ -4,6 +4,7 @@ using Engine.Core.Mathematics;
 using Engine.Core.Security;
 
 using Game.Characters;
+using Game.Managers;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
@@ -13,20 +14,20 @@ using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public class SpawnMarksTest
 {
     [Theory]
-    [InlineData(WorkType.Local, true)]
-    [InlineData(WorkType.Server, true)]
-    [InlineData(WorkType.Client, false)]
-    public void SpawnCopiesAreAuthoritativeOrdinaryMarksAndNeverTrackLaterChanges(WorkType workType, bool initialized)
+    [InlineData(WorldRole.SinglePlayer, true)]
+    [InlineData(WorldRole.Server, true)]
+    [InlineData(WorldRole.RemoteClient, false)]
+    public void SpawnCopiesAreAuthoritativeOrdinaryMarksAndNeverTrackLaterChanges(WorldRole worldRole, bool initialized)
     {
-        var previous = CommonLib.WorkType;
+        var previous = GameManager.Role;
         var previousClients = CommonLib.Net.Clients;
         try
         {
-            CommonLib.WorkType = workType;
+            CommonLib.Net.Role = worldRole;
             using var project = new MarkProject();
             var marksSubsystem = project.Marks;
             var players = new SubsystemCharacters { GlobalSpawnPosition = new Vector3(1f, 60f, 1f) };
@@ -87,7 +88,7 @@ public class SpawnMarksTest
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
             CommonLib.Net.Clients = previousClients;
         }
     }

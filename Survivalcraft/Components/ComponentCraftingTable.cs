@@ -4,7 +4,6 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Crafting;
-using Game.Network;
 
 namespace Game.Components;
 
@@ -100,7 +99,7 @@ public class ComponentCraftingTable : ComponentInventoryBase
 
     public void UpdateCraftingResult()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

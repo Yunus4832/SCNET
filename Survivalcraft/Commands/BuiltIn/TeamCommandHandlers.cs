@@ -152,7 +152,7 @@ internal static class TeamCommandHandlers
             !ReferenceEquals(Players(context).Store.Find(actor.Address), actor) ||
             actor.Ban is not null ||
             PlayerSessionQuery.Find(actor.Address) is null ||
-            CommonLib.WorkType == WorkType.Client)
+            GameManager.Role == WorldRole.RemoteClient)
         {
             failure = CommandResult.LocalizedFail(
                 "team.player_required",

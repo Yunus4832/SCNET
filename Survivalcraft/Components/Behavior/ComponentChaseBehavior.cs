@@ -2,7 +2,6 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Creatures;
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -88,7 +87,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
             }
 
             _isAttack = value;
-            if (CommonLib.WorkType != WorkType.Client)
+            if (GameManager.Role != WorldRole.RemoteClient)
             {
                 NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, value));
             }
@@ -100,7 +99,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
     public void Update(float dt)
     {
         // 客户端逻辑
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             _componentCreatureModel.AttackOrder = IsAttack;
         }

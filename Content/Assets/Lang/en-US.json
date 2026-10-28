@@ -3177,7 +3177,8 @@
             "Cloning": "Cloning World",
             "CloneFailed": "Failed to Clone World",
             "DeleteTitle": "Delete World",
-            "DeleteQuestion": "Delete world “{0}”? This cannot be undone."
+            "DeleteQuestion": "Delete world “{0}”? This cannot be undone.",
+            "RunServer": "Run server"
         },
         "RecipaediaDescriptionScreen": {
             "1": "Block Description"
@@ -3760,6 +3761,14 @@
             "Confirm": "Identity comes directly from the authentication service. Verify its address and public key yourself. Install configuration without logging in?",
             "AddressWarning": "New address for the same key. Updating clears cached grants and preserves disabled status. Continue?",
             "Unavailable": "Authentication directory is unavailable."
+        },
+        "HostedWorldScreen": {
+            "Title": "Server running",
+            "Join": "Join game",
+            "Stop": "Stop server",
+            "Running": "World: {0}\nPlayers online: {1}",
+            "NotJoined": "The server is running. You have not joined the game.",
+            "ConfirmStop": "Stop the server and return to the world list? All online players will be disconnected."
         }
     },
     "FireworksBlock": {

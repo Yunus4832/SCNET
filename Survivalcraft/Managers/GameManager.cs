@@ -15,17 +15,37 @@ public static class GameManager
 {
     private static SubsystemUpdate? _subsystemUpdate;
 
+    private static double _lastAutosaveTime;
+
     private static readonly ManualResetEvent _saveCompleted = new(true);
 
     public static Project? Project { get; private set; }
 
+    /// <summary>Runtime world role; startup intent and network connection stage are separate.</summary>
+    public static WorldRole Role => CommonLib.Net.Role;
+
     public static WorldInfo? WorldInfo { get; private set; }
+
+    public static SessionInfo? WorldSession { get; private set; }
+
+    public static LocalGameReturnTarget? LocalPlayerReturnTarget { get; internal set; }
 
     public static event Action<Project>? ProjectDisposed;
 
-    public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget)
+    public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget, SessionInfo? session = null)
     {
+        if (Role is not (WorldRole.SinglePlayer or WorldRole.Server))
+        {
+            throw new InvalidOperationException("Select the local world execution role before loading its project.");
+        }
+
+        if (CommonLib.Net.IsTransportRunning)
+        {
+            throw new InvalidOperationException("Stop the existing transport before replacing an authoritative world.");
+        }
+
         DisposeProject();
+        WorldSession = session ?? SessionInfoManager.CreateWorldSession(worldInfo);
         try
         {
             if (worldInfo.ProjectFormatVersion != WorldVersions.ProjectFormatVersion)
@@ -85,6 +105,14 @@ public static class GameManager
                 );
             }
 
+            Project.FindSubsystem<SubsystemGameInfo>(true)!.ApplyRunServerOverride(worldInfo.WorldSettings.RunServer);
+            _lastAutosaveTime = Time.RealTime;
+            var characters = Project.FindSubsystem<SubsystemCharacters>(true)!;
+            foreach (var character in characters.Characters.ToArray())
+            {
+                characters.MakeCharacterOffline(character.CharacterId, false);
+            }
+
             SetupNetworkHandlers(Project);
             WorldInfo = worldInfo;
             Log.Information(
@@ -124,6 +152,7 @@ public static class GameManager
             var projectData = new ProjectData(DatabaseManager.GameDatabase, messagePackData, valuesDictionary, true);
             Project = new Project(DatabaseManager.GameDatabase, projectData);
             _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
+            _lastAutosaveTime = Time.RealTime;
             SetupNetworkHandlers(Project);
             WorldInfo = new WorldInfo();
             Log.Information("加载NetProject");
@@ -138,7 +167,7 @@ public static class GameManager
 
     public static void SaveProject(bool waitForCompletion, bool showErrorDialog)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -199,7 +228,7 @@ public static class GameManager
                             delegate
                             {
                                 Log.Error(e);
-                                if (CommonLib.WorkType != WorkType.Client)
+                                if (Role != WorldRole.RemoteClient)
                                 {
                                     DialogsManager.ShowDialog(
                                         null,
@@ -233,6 +262,11 @@ public static class GameManager
     public static void UpdateProject()
     {
         _subsystemUpdate?.Update();
+        if (Project is not null && Role != WorldRole.RemoteClient && Time.RealTime - _lastAutosaveTime > 120)
+        {
+            _lastAutosaveTime = Time.RealTime;
+            SaveProject(false, RunMode.Value == RunModeType.Gui);
+        }
     }
 
     private static void SaveProjectMetadata(string directory, XElement node)
@@ -250,6 +284,22 @@ public static class GameManager
         }
 
         Storage.MoveFile(temporary, path);
+    }
+
+    public static void LeaveLocalPlayer()
+    {
+        CommonLib.Net.EndAdmission();
+        CommonLib.Net.LeaveLocalPlayer();
+        SaveProject(true, true);
+        LocalPlayerReturnTarget = null;
+    }
+
+    public static void CloseWorld()
+    {
+        if (Project is not null) { SaveProject(true, true); }
+
+        CommonLib.Net.StopImmediate();
+        DisposeProject();
     }
 
     public static void DisposeProject()
@@ -276,6 +326,8 @@ public static class GameManager
             CurrentModRuntime.Value?.ReleaseWorldCatalog();
             _subsystemUpdate = null;
             WorldInfo = null;
+            WorldSession = null;
+            LocalPlayerReturnTarget = null;
         }
 
         GC.Collect();
@@ -288,30 +340,37 @@ public static class GameManager
 
         netNode.TurnOnPackageHandle(project);
 
-        if (CommonLib.WorkType == WorkType.Server)
+        if (Role == WorldRole.Server)
         {
             SetupServerNetworkHandlers(project, netNode);
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (Role == WorldRole.RemoteClient)
         {
             SetupClientNetworkHandlers(project, netNode);
         }
-        else if (RunMode.Value is RunModeType.Gui &&
-                 netNode.Self?.Subject is { CharacterId: var characterId } &&
-                 characterId != Guid.Empty)
-        {
-            var players = project.FindSubsystem<SubsystemCharacters>(true)!;
-            if (players.FindCharacterData(player => player.CharacterId == characterId) is null)
-            {
-                if (!players.MakeCharacterOnline(characterId, out _, out var entity))
-                {
-                    throw new InvalidDataException("The local subject's character data is missing.");
-                }
+    }
 
-                if (entity is not null) { project.AddEntity(entity); }
+    internal static void ActivateLocalPlayer(Project project, Client session)
+    {
+        session.SetProject(project);
+        if (session.CharacterId == Guid.Empty) { return; }
+
+        var characters = project.FindSubsystem<SubsystemCharacters>(true)!;
+        var character = characters.FindCharacterData(data => data.CharacterId == session.CharacterId);
+        Entity? restoredEntity = null;
+        if (character is null)
+        {
+            if (!characters.MakeCharacterOnline(session.CharacterId, out character, out restoredEntity))
+            {
+                throw new InvalidDataException("The local subject's character data is missing.");
             }
         }
+
+        character!.SetMain();
+        if (restoredEntity is not null && !restoredEntity.IsAddedToProject) { project.AddEntity(restoredEntity); }
+
+        project.FindSubsystem<SubsystemGameWidgets>(true)!.SelectLocalCharacter(character);
     }
 
     private static void SetupServerNetworkHandlers(Project project, NetNode net)

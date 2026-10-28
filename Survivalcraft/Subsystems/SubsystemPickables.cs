@@ -180,7 +180,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
         foreach (var pickable in _pickables)
         {
-            if (CommonLib.WorkType == WorkType.Client)
+            if (GameManager.Role == WorldRole.RemoteClient)
             {
                 UpdateClientPosition(pickable, dt);
                 _subsystemFluidBlockBehavior.GetSurfaceHeight(
@@ -237,7 +237,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                         pickable.GetPickPlayer = tmpPlayer.CharacterData.ClientId;
                         pickable.PositionFix = v;
                         pickable.Distance = num6;
-                        if (CommonLib.WorkType != WorkType.Client)
+                        if (GameManager.Role != WorldRole.RemoteClient)
                         {
                             OnPlayerGetPickable(pickable, tmpPlayer, v, num6);
                         }
@@ -485,7 +485,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             }
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -522,7 +522,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
     public Pickable? AddPickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return null;
         }
@@ -648,7 +648,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             else
             {
                 pickable.Count = ComponentInventoryBase.AcquireItems(inventory, pickable.Value, pickable.Count);
-                if (pickable.Count != 0 && CommonLib.WorkType != WorkType.Client)
+                if (pickable.Count != 0 && GameManager.Role != WorldRole.RemoteClient)
                 {
                     return;
                 }
@@ -678,7 +678,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             action.Invoke(pickable!);
         }
 
-        if (!found && CommonLib.WorkType == WorkType.Client && requestSync)
+        if (!found && GameManager.Role == WorldRole.RemoteClient && requestSync)
         {
             NetworkSender.SendToServer(
                 new PickableSyncRequestPackage

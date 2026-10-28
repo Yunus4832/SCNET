@@ -25,23 +25,6 @@ public static class CommonLib
 
     public static bool IsOfflineMode;
 
-    public static WorkType WorkType { get; set; }
-
-    public static bool IsWorkTypeValid()
-    {
-        return WorkType == GetCurrentWorkType();
-    }
-
-    private static WorkType GetCurrentWorkType()
-    {
-        if (Net.IsServer)
-        {
-            return WorkType.Server;
-        }
-
-        return Net.CurrentStage == NetNode.Stage.Connected ? WorkType.Client : WorkType.Local;
-    }
-
     public static ComponentCharacter? LocalCharacter
     {
         get
@@ -70,7 +53,6 @@ public static class CommonLib
             policyOverride,
             ServerIdentitySelection.Resolve(LocalIdentityManager.Current, null, worldSettings)
         );
-        if (started) { Net.ActiveHostSession = null; }
 
         return started;
     }
@@ -105,7 +87,6 @@ public static class CommonLib
             effectivePolicy,
             ServerIdentitySelection.Resolve(LocalIdentityManager.Current, sessionInfo, worldSettings)
         );
-        if (started) { Net.ActiveHostSession = sessionInfo; }
 
         return started;
     }

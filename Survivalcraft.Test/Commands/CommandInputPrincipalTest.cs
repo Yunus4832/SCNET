@@ -4,23 +4,25 @@ using Engine.Core.Security;
 
 using Game.Characters;
 using Game.Commands;
+using Game.Managers;
 using Game.Network;
 using Game.Protocol.Identity;
+using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public sealed class CommandInputPrincipalTest
 {
     [Theory]
-    [InlineData(WorkType.Client)]
-    [InlineData(WorkType.Local)]
-    [InlineData(WorkType.Server)]
-    public void OnlyRemoteClientInputCanUseMetadataWithoutAnAuthoritativeSubject(WorkType workType)
+    [InlineData(WorldRole.RemoteClient)]
+    [InlineData(WorldRole.SinglePlayer)]
+    [InlineData(WorldRole.Server)]
+    public void OnlyRemoteClientInputCanUseMetadataWithoutAnAuthoritativeSubject(WorldRole worldRole)
     {
-        var previousType = CommonLib.WorkType;
+        var previousType = GameManager.Role;
         var previousClients = CommonLib.Net.Clients;
         var player = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
         player.CharacterId = Guid.NewGuid();
@@ -31,11 +33,11 @@ public sealed class CommandInputPrincipalTest
         };
         try
         {
-            CommonLib.WorkType = workType;
+            CommonLib.Net.Role = worldRole;
             CommonLib.Net.Clients = new Dictionary<int, Client> { [1] = session };
             Assert.Null(session.Subject);
             Assert.Throws<InvalidOperationException>(() => CommandPrincipal.FromPlayer(player));
-            if (workType != WorkType.Client)
+            if (worldRole != WorldRole.RemoteClient)
             {
                 Assert.Throws<InvalidOperationException>(() => CommandPrincipal.ForInput(player));
                 return;
@@ -65,7 +67,7 @@ public sealed class CommandInputPrincipalTest
         finally
         {
             CommonLib.Net.Clients = previousClients;
-            CommonLib.WorkType = previousType;
+            CommonLib.Net.Role = previousType;
         }
     }
 }

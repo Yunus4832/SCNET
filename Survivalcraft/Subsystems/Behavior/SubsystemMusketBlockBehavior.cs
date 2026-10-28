@@ -1,7 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
 using Game.Entities;
-using Game.Network;
 
 namespace Game.Subsystems;
 
@@ -298,7 +297,7 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                 }
 
                 _aimStartTimes.Remove(componentMiner);
-                if (CommonLib.WorkType == WorkType.Client)
+                if (GameManager.Role == WorldRole.RemoteClient)
                 {
                     return true;
                 }
@@ -318,7 +317,7 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
             }
         }
 
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             if (num2 != slotValue)
             {

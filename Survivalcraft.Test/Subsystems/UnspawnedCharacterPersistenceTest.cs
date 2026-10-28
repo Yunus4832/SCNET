@@ -14,6 +14,7 @@ using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 using Game.Terrains;
+using Game.World;
 
 using Survivalcraft.Test.Modding;
 
@@ -30,13 +31,13 @@ public sealed class UnspawnedCharacterPersistenceTest
     public void DisconnectBeforeFirstSpawnPreservesCharacterAndResumesSpawn(RunModeType mode, bool reload)
     {
         var previousMode = RunMode.Value;
-        var previousWorkType = CommonLib.WorkType;
+        var previousWorldRole = GameManager.Role;
         var previousClients = CommonLib.Net.Clients;
         var previousGarbageCollect = SettingsManager.Current.AutoGarbageCollect;
         try
         {
             RunMode.Value = mode;
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
             CommonLib.Net.Clients = [];
             SettingsManager.Current.AutoGarbageCollect = false;
             CharacterSkinsManager.Initialize();
@@ -95,7 +96,7 @@ public sealed class UnspawnedCharacterPersistenceTest
         {
             SettingsManager.Current.AutoGarbageCollect = previousGarbageCollect;
             CommonLib.Net.Clients = previousClients;
-            CommonLib.WorkType = previousWorkType;
+            CommonLib.Net.Role = previousWorldRole;
             RunMode.Value = previousMode;
         }
     }

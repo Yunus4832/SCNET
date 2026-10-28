@@ -6,15 +6,12 @@ using EntitySystem.Core;
 
 using Game.Commands;
 using Game.Network;
-using Game.Rendering;
 
 namespace Game.Screens;
 
 public class GameScreen : Screen
 {
     private Project? _administrationDialogProject;
-
-    private double _lastAutosaveTime;
 
     public GameScreen()
     {
@@ -34,10 +31,12 @@ public class GameScreen : Screen
         GameManager.Project.FindSubsystem<SubsystemAudio>(true)!.Unmute();
         MusicManager.CurrentMix = MusicManager.Mix.None;
         TryShowAdministrationBootstrap();
+        CommonLib.Net.LocalPlayerRemoved += OnLocalPlayerRemoved;
     }
 
     public override void Leave()
     {
+        CommonLib.Net.LocalPlayerRemoved -= OnLocalPlayerRemoved;
         if (GameManager.Project is not null)
         {
             GameManager.Project.FindSubsystem<SubsystemAudio>(true)!.Mute();
@@ -48,13 +47,31 @@ public class GameScreen : Screen
         MusicManager.CurrentMix = MusicManager.Mix.Menu;
     }
 
+    private void OnLocalPlayerRemoved(string reason)
+    {
+        if (ScreensManager.CurrentScreen != this) { return; }
+
+        if (GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
+        {
+            GameManager.LeaveLocalPlayer();
+            ScreensManager.SwitchScreen("HostedWorld", reason);
+        }
+        else
+        {
+            GameManager.CloseWorld();
+            ScreensManager.SwitchScreen("Play");
+            if (reason.Length > 0) { DialogsManager.Alert(reason); }
+        }
+    }
+
     public override void Update()
     {
-        var realTime = Time.RealTime;
-        if (realTime - _lastAutosaveTime > 120.0)
+        if (GameManager.Role == WorldRole.None && GameManager.Project is not null)
         {
-            _lastAutosaveTime = realTime;
-            GameManager.SaveProject(false, true);
+            GameManager.SaveProject(true, true);
+            GameManager.DisposeProject();
+            ScreensManager.SwitchScreen("Play");
+            return;
         }
 
         GameManager.UpdateProject();
@@ -85,7 +102,7 @@ public class GameScreen : Screen
     private void TryShowAdministrationBootstrap()
     {
         if (RunMode.Value is not RunModeType.Gui ||
-            CommonLib.WorkType is not WorkType.Server ||
+            GameManager.Role is not WorldRole.Server ||
             GameManager.Project is not { } project ||
             ReferenceEquals(_administrationDialogProject, project) ||
             ServerAdministrationBootstrap.IsClaimed(project) ||

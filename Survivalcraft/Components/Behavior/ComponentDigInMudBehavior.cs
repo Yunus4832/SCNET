@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -53,7 +52,7 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
             }
 
             _isDigIn = value;
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, _isDigIn));
             }
@@ -64,7 +63,7 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             _componentFishModel.DigInOrder = IsDigIn ? _maxDigInDepth : 0f;
         }

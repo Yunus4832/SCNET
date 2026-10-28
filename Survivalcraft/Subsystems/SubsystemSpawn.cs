@@ -6,7 +6,6 @@ using Engine.Core.Serialization;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Spawning;
 
 namespace Game.Subsystems;
@@ -267,7 +266,7 @@ public class SubsystemSpawn : Subsystem, IUpdateable
 
     private void DespawnChunks()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -320,7 +319,7 @@ public class SubsystemSpawn : Subsystem, IUpdateable
 
     private void SpawnEntity(SpawnEntityData data)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

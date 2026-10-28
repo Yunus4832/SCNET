@@ -3,7 +3,6 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 using Game.Terrains.Distribution;
 using Game.TerrainSerializers;
@@ -363,7 +362,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
     )
     {
         CellPrediction?.OnCellChanged(new Point3(x, y, z));
-        var authorityChunk = CommonLib.WorkType != WorkType.Client
+        var authorityChunk = GameManager.Role != WorldRole.RemoteClient
             ? CellAuthority.Terrain.GetChunkAtCell(x, z, false)
             : null;
         var baseContentVersion = authorityChunk?.NetworkContentRevision + 1 ?? 0;
@@ -492,7 +491,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             resultContentVersion
         );
         ClientTerrainDeltas?.Receive(delta);
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             NetworkSender.SendToChunkObservers(
                 Project,
@@ -511,7 +510,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         ComponentMiner? miner = null
     )
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -554,7 +553,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         ComponentMiner? miner = null
     )
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -677,17 +676,17 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             TerrainRenderer = new TerrainRenderer(this);
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             ClientChunkContents = new ClientChunkContentCoordinator(Terrain);
             ChunkContentTransport = new NetworkChunkContentTransport();
             ClientChunkDerivation = new ClientChunkDerivationPipeline(Terrain);
         }
 
-        TerrainSerializer = CommonLib.WorkType != WorkType.Client
+        TerrainSerializer = GameManager.Role != WorldRole.RemoteClient
             ? new TerrainSerializer24(SubsystemGameInfo.DirectoryName)
             : new TerrainSerializerNet();
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             TerrainSaveCoordinator = new TerrainSaveCoordinator(TerrainSerializer.SaveSnapshot);
         }
@@ -702,7 +701,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         );
         TerrainContentsGenerator = CreateTerrainContentsGenerator(Terrain);
 
-        if (CommonLib.WorkType == WorkType.Local)
+        if (GameManager.Role == WorldRole.SinglePlayer)
         {
             var authorityTerrain = new Terrain();
             TerrainContentsGenerator = CreateTerrainContentsGenerator(authorityTerrain);
@@ -722,7 +721,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             ChunkContentTransport = LocalChunkHost;
             ClientChunkDerivation = new ClientChunkDerivationPipeline(Terrain);
         }
-        else if (CommonLib.WorkType != WorkType.Client)
+        else if (GameManager.Role != WorldRole.RemoteClient)
         {
             AuthoritativeChunkGeneration = new AuthoritativeChunkGenerationPipeline(this);
             ChunkContentAuthority = new TerrainChunkContentAuthority(Terrain);
@@ -730,7 +729,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
         // Start the worker only after every service it can reach has been composed.
         TerrainUpdater = new TerrainUpdater(this);
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             CellPrediction = new ClientTerrainPrediction(
                 Terrain,

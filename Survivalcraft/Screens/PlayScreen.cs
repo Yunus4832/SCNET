@@ -18,7 +18,9 @@ public class PlayScreen : Screen
 
         Clone = 3,
 
-        Delete = 4
+        Delete = 4,
+
+        RunServer = 5
     }
 
     private readonly ActionPanelWidget _actionPanel;
@@ -44,7 +46,10 @@ public class PlayScreen : Screen
             [WorldAction.Play, WorldAction.Create, WorldAction.Settings],
             [3f, 2f, 2f, 0f]
         );
-        _actionPanel.SetSecondaryItems([WorldAction.Clone, WorldAction.Delete]);
+        _actionPanel.SetSecondaryItems(
+            [WorldAction.RunServer, WorldAction.Clone, WorldAction.Delete],
+            [3f, 2f, 2f, 0f]
+        );
         var worldsListWidget = _worldsListWidget;
         worldsListWidget.ItemWidgetFactory = (Func<object, Widget>)Delegate.Combine(
             worldsListWidget.ItemWidgetFactory,
@@ -178,6 +183,9 @@ public class PlayScreen : Screen
             case WorldAction.Play when worldInfo is not null:
                 Play(worldInfo);
                 break;
+            case WorldAction.RunServer when worldInfo is not null:
+                Play(worldInfo, SessionTarget.HostedWorld);
+                break;
             case WorldAction.Create:
                 CreateWorld();
                 break;
@@ -308,15 +316,15 @@ public class PlayScreen : Screen
             : worldInfos.FirstOrDefault(world => world.DirectoryName == selectedDirectoryName);
     }
 
-    private void Play(object item)
+    private void Play(object item, SessionTarget target = SessionTarget.World)
     {
         DialogsManager.HideAllDialogs();
         var worldInfo = (WorldInfo)item;
-        PrepareWorldModsAndPlay(worldInfo);
+        PrepareWorldModsAndPlay(worldInfo, SessionInfoManager.CreateWorldSession(worldInfo, target));
         _worldsListWidget.SelectedItem = null;
     }
 
-    private void PrepareWorldModsAndPlay(WorldInfo worldInfo)
+    private void PrepareWorldModsAndPlay(WorldInfo worldInfo, SessionInfo session)
     {
         var busyDialog = new BusyDialog(
             LanguageManager.GetContentWidgets(_typeName, 12),
@@ -329,14 +337,15 @@ public class PlayScreen : Screen
                 {
                     var result = ModRestartHelper.PrepareWorldSession(
                         worldInfo,
-                        message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message)
+                        message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message),
+                        session
                     );
                     Dispatcher.Dispatch(() =>
                         {
                             DialogsManager.HideDialog(busyDialog);
                             if (!result.RequiresRestart)
                             {
-                                PlayPreparedWorld(worldInfo);
+                                PlayPreparedWorld(worldInfo, session);
                                 return;
                             }
 
@@ -382,8 +391,8 @@ public class PlayScreen : Screen
         );
     }
 
-    private void PlayPreparedWorld(WorldInfo worldInfo)
+    private void PlayPreparedWorld(WorldInfo worldInfo, SessionInfo session)
     {
-        ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
+        ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty, session);
     }
 }

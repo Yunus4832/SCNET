@@ -2,7 +2,6 @@ using System.Xml.Linq;
 
 using Game.Commands;
 using Game.Messaging;
-using Game.Network;
 using Game.Network.Transport;
 using Game.Platforms;
 
@@ -363,7 +362,7 @@ public sealed class MessagePanelWidget : CanvasWidget
             return;
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             _suggestionRequestId = Guid.NewGuid().ToString("N");
             _suggestionPending = true;

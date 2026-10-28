@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -45,7 +44,7 @@ public class ComponentDamage : Component, IUpdateable
         var position = _componentBody.Position;
         if (HitPoints <= 0f)
         {
-            if (CommonLib.WorkType != WorkType.Client)
+            if (GameManager.Role != WorldRole.RemoteClient)
             {
                 NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
             }
@@ -87,7 +86,7 @@ public class ComponentDamage : Component, IUpdateable
 
     public void Damage(float amount)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }

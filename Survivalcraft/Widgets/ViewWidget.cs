@@ -1,8 +1,6 @@
 using Engine.Graphics;
 
-using Game.Network;
 using Game.Network.Transport;
-using Game.Rendering;
 
 namespace Game.Widgets;
 
@@ -59,7 +57,7 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
             return;
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             NetworkSender.SendToServer(
                 CharacterPackageBuilder.Capture(
@@ -110,7 +108,7 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
             return;
         }
 
-        if (CommonLib.WorkType == WorkType.Local || GameWidget.CharacterData.IsLocalCharacter)
+        if (GameManager.Role == WorldRole.SinglePlayer || GameWidget.CharacterData.IsLocalCharacter)
         {
             DrawToScreen(dc);
         }

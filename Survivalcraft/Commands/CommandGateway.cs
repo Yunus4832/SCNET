@@ -114,7 +114,7 @@ public static class CommandGateway
             throw new InvalidOperationException("Session commands require a registered world or server command.");
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             if (!ReferenceEquals(session, CommonLib.Net.Self))
             {
@@ -173,7 +173,7 @@ public static class CommandGateway
             return CommandExecutor.ExecuteLocal(command, player.Project, correlationId);
         }
 
-        if (CommonLib.WorkType is WorkType.Local or WorkType.Server)
+        if (GameManager.Role is WorldRole.SinglePlayer or WorldRole.Server)
         {
             return CommandExecutor.ExecutePlayer(command, player, correlationId);
         }

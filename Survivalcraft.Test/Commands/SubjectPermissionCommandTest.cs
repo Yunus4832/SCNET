@@ -11,21 +11,22 @@ using Game.Managers;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
+using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public sealed class SubjectPermissionCommandTest
 {
     [Fact]
     public void OfflineSubjectWithoutCharacterCanBeGrantedListedAndRevoked()
     {
-        var previous = CommonLib.WorkType;
+        var previous = GameManager.Role;
         try
         {
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
             using var project = new SubjectProject();
             var address = Address("offline");
             var user = project.Players.Store.GetOrCreate(address);
@@ -50,19 +51,19 @@ public sealed class SubjectPermissionCommandTest
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 
     [Fact]
     public void CompletionUsesSubjectAddressesAndDoesNotCreateUnknownSubjects()
     {
-        var previous = CommonLib.WorkType;
+        var previous = GameManager.Role;
         var previousProject = GameManager.Project;
         using var project = new SubjectProject();
         try
         {
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
             typeof(GameManager).GetProperty(nameof(GameManager.Project))!.SetValue(null, project);
             var user = project.Players.Store.GetOrCreate(Address("known"));
             user.DisplayName = "An account without a character";
@@ -84,7 +85,7 @@ public sealed class SubjectPermissionCommandTest
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
             typeof(GameManager).GetProperty(nameof(GameManager.Project))!.SetValue(null, previousProject);
         }
     }
@@ -92,7 +93,7 @@ public sealed class SubjectPermissionCommandTest
     [Fact]
     public void BansUseSubjectAuthorizationAndPreserveCharacterAndPermissions()
     {
-        var previous = CommonLib.WorkType;
+        var previous = GameManager.Role;
         var previousClients = CommonLib.Net.Clients;
         var pending = (Dictionary<Client, string>)typeof(NetNode)
             .GetField("_clientsToRemove", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(CommonLib.Net)!;
@@ -107,7 +108,7 @@ public sealed class SubjectPermissionCommandTest
         var unrelated = new Client(null, 2, Guid.NewGuid(), characterId, null) { PlayerAddress = Address("other") };
         try
         {
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
             CommonLib.Net.Clients = new Dictionary<int, Client> { [1] = session, [2] = unrelated };
             var dispatcher = new CommandDispatcher(Registry());
             var unauthorized = new CommandContext(
@@ -150,17 +151,17 @@ public sealed class SubjectPermissionCommandTest
             pending.Remove(session);
             pending.Remove(unrelated);
             CommonLib.Net.Clients = previousClients;
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 
     [Fact]
     public void MuteManagementSupportsOfflineCharacterlessSubjectsAndUsesItsOwnPermission()
     {
-        var previous = CommonLib.WorkType;
+        var previous = GameManager.Role;
         try
         {
-            CommonLib.WorkType = WorkType.Server;
+            CommonLib.Net.Role = WorldRole.Server;
             using var project = new SubjectProject();
             var user = project.Players.Store.GetOrCreate(Address("muted"));
             var dispatcher = new CommandDispatcher(Registry());
@@ -182,7 +183,7 @@ public sealed class SubjectPermissionCommandTest
             Assert.False(user.IsMuted);
             Assert.DoesNotContain(user.Address.Value, dispatcher.Execute(new ListMutedUsersCommand(), context).Message);
         }
-        finally { CommonLib.WorkType = previous; }
+        finally { CommonLib.Net.Role = previous; }
     }
 
     private static PlayerAddress Address(string text) => new(

@@ -6,12 +6,14 @@ using Engine.Core.Mathematics;
 using EntitySystem.Core;
 
 using Game.Characters;
+using Game.Managers;
 using Game.Modding;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 using Game.Teams;
 using Game.Terrains;
+using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 
@@ -54,8 +56,8 @@ public class TerritoryProtectionTest : IDisposable
     [Fact]
     public void OwnerAndAdministratorAreAllowedButUnrelatedPlayerIsDenied()
     {
-        var previousWorkType = CommonLib.WorkType;
-        CommonLib.WorkType = WorkType.Local;
+        var previousWorldRole = GameManager.Role;
+        CommonLib.Net.Role = WorldRole.SinglePlayer;
         try
         {
             var territory = new Territory(Address(), new Point3(0, 64, 0));
@@ -73,7 +75,7 @@ public class TerritoryProtectionTest : IDisposable
         }
         finally
         {
-            CommonLib.WorkType = previousWorkType;
+            CommonLib.Net.Role = previousWorldRole;
         }
     }
 
@@ -145,8 +147,8 @@ public class TerritoryProtectionTest : IDisposable
         bool place
     )
     {
-        var previous = CommonLib.WorkType;
-        CommonLib.WorkType = WorkType.Local;
+        var previous = GameManager.Role;
+        CommonLib.Net.Role = WorldRole.SinglePlayer;
         try
         {
             var territory = new Territory(
@@ -164,15 +166,15 @@ public class TerritoryProtectionTest : IDisposable
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 
     [Fact]
     public void RevokedAccessStillAllowsLeavingWithoutAnEntryCollision()
     {
-        var previous = CommonLib.WorkType;
-        CommonLib.WorkType = WorkType.Local;
+        var previous = GameManager.Role;
+        CommonLib.Net.Role = WorldRole.SinglePlayer;
         try
         {
             var territory = new Territory(Address(), new Point3(0, 64, 0));
@@ -198,7 +200,7 @@ public class TerritoryProtectionTest : IDisposable
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 

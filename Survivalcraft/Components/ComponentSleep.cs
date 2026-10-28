@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -47,7 +46,7 @@ public class ComponentSleep : Component, IUpdateable
         {
             //开服后，睡觉恢复速度加快5倍
             var amount = 0.33f * Time.FrameDuration;
-            if (CommonLib.WorkType == WorkType.Server &&
+            if (GameManager.Role == WorldRole.Server &&
                 _componentCharacter.ComponentSleep.SubsystemUpdate.UpdatesPerFrame == 1 &&
                 _componentCharacter.ComponentSleep.IsSleeping)
             {
@@ -209,7 +208,7 @@ public class ComponentSleep : Component, IUpdateable
 
     public void Sleep(bool allowManualWakeup)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             NetworkSender.SendToServer(
                 new SleepRequestPackage
@@ -229,7 +228,7 @@ public class ComponentSleep : Component, IUpdateable
 
     public void WakeUp()
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             NetworkSender.SendToServer(new WakeupRequestPackage { EntityId = Entity.EntityId });
         }

@@ -123,8 +123,6 @@ public class NetNode
 
     internal event Func<bool>? AdmissionTransportInterrupted;
 
-    private bool _leaveWorldOnStop;
-
     public Action<Client>? OnClientStateChanged;
 
     public Action<Client>? OnClientTransportConnected;
@@ -149,64 +147,134 @@ public class NetNode
 
     public Stage CurrentStage { get; set; } = Stage.NotConnected;
 
+    public WorldRole Role { get; internal set; } = WorldRole.None;
+
     public bool IsConnected => CurrentStage == Stage.Connected;
 
-    public bool IsServer => CurrentStage == Stage.Connected && Self == Server;
+    public bool IsServer => Role == WorldRole.Server;
 
-    private LocalHostAdmissionSession? _localAdmission;
+    private LocalPlayerAdmission? _localAdmission;
 
-    internal SessionInfo? ActiveHostSession { get; set; }
+    private Guid _localAdmissionToken;
 
-    internal void BeginLocalAdmission(
-        string worldDirectory,
-        ServerAdmissionPolicy configuration,
-        string? serverAddress = null
-    )
+
+    internal void BeginLocalAdmission()
     {
-        if (_host is not null)
+        if (!IsServer ||
+            _host is null ||
+            GameManager.Project is not { } world ||
+            AdmissionController is not { } controller ||
+            !ReferenceEquals(controller.World, world) ||
+            Self?.PlayerAddress is not null)
         {
-            throw new InvalidOperationException("A hosted world must authenticate before listening.");
+            throw new InvalidOperationException("Start the server world before joining a local player.");
         }
 
-        StartLocal();
+        LocalAdmissionError = null;
         using var player = LocalIdentityManager.Current.OpenPlayerIdentity();
-        using var server = LocalIdentityManager.Current.OpenServerIdentity(serverAddress);
+        _localAdmissionToken = Guid.NewGuid();
+        if (PlayerAdmission.Rejection(
+                world,
+                this,
+                new PlayerAddress(player.PublicIdentity.Address),
+                _localAdmissionToken
+            ) is { } error)
+        {
+            EndAdmission(error);
+            return;
+        }
+
         _isStopping = false;
-        _localAdmission = new LocalHostAdmissionSession(
-            worldDirectory,
-            configuration,
-            player.PublicIdentity.Address,
-            server.PublicIdentity.Address,
-            DateTimeOffset.UtcNow
+        _localAdmission = new LocalPlayerAdmission(
+            world,
+            new AdmissionAttempt(
+                controller.Policy,
+                player.PublicIdentity.Address,
+                _host.LocalIdentity.Address,
+                System.Security.Cryptography.RandomNumberGenerator.GetBytes(32),
+                DateTimeOffset.UtcNow
+            )
         );
-        CurrentStage = Stage.Bootstrapping;
         AdmissionAccepted = false;
         PendingAdmissionChallenge = _localAdmission.Describe();
         AdmissionDeadline = DateTimeOffset.FromUnixTimeSeconds(_localAdmission.Challenge.ExpiresAt);
-        if (configuration.Mode == ServerAdmissionMode.Open)
+        if (controller.Policy.Mode == ServerAdmissionMode.Open)
         {
             TrySubmitAdmission(new AdmissionProofPackage(PendingAdmissionChallenge.Nonce));
         }
         else { AdmissionRequired?.Invoke(PendingAdmissionChallenge); }
     }
 
+    internal string? LocalAdmissionError { get; private set; }
+
+    internal bool HasPendingAdmission => _localAdmission is not null || CurrentStage == Stage.Bootstrapping;
+
+    internal void EndAdmission(string error = "")
+    {
+        if (IsServer)
+        {
+            _localAdmission = null;
+            PendingAdmissionChallenge = null;
+            AdmissionDeadline = null;
+            AdmissionAccepted = false;
+            LocalAdmissionError = error;
+            return;
+        }
+
+        Stop(error);
+    }
+
     internal void PumpLocalAdmission()
     {
         if (_isStopping || _localAdmission is null) { return; }
 
-        if (_localAdmission.Poll(DateTimeOffset.UtcNow) is { } result) { ApplyAdmissionResult(result); }
-    }
-
-    internal void PrepareLocalHostWorld()
-    {
-        if (_localAdmission is not { Approved: true })
+        if (!ReferenceEquals(_localAdmission.World, GameManager.Project))
         {
-            throw new InvalidOperationException("Local host is not admitted.");
+            EndAdmission("世界已变化，请重新加入");
+            return;
         }
 
-        CurrentStage = Stage.Connected;
-        Server = Self;
-        CommonLib.WorkType = WorkType.Server;
+        if (_localAdmission.Poll(DateTimeOffset.UtcNow) is not { } result) { return; }
+
+        if (result.Code == AdmissionResultCode.Accepted)
+        {
+            var project = GameManager.Project!;
+            var subject = new PlayerAddress(_localAdmission.Challenge.Subject);
+            var token = _localAdmissionToken;
+            try
+            {
+                if (!TryAdmitLocalPlayer(project, subject, token, out var error))
+                {
+                    EndAdmission(error!);
+                    return;
+                }
+
+                QueuePackage(
+                    new ClientAddedPackage { Client = ClientPackageBuilder.Capture(Self!) },
+                    PackageAudience.Global
+                );
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception);
+                LeaveLocalPlayer();
+                EndAdmission("玩家数据加载失败，请稍后重试");
+                return;
+            }
+        }
+
+        ApplyAdmissionResult(result);
+        if (result.Code == AdmissionResultCode.Accepted) { _localAdmission = null; }
+    }
+
+    public void LeaveLocalPlayer(string reason = "")
+    {
+        if (!IsServer || Self is not { } client) { return; }
+
+        Self = null;
+        RemoveClientImmediate(client, reason);
+        AdmissionAccepted = false;
+        TemporaryAuthentication = null;
     }
 
     internal bool IsClosing => _isStopping;
@@ -229,6 +297,16 @@ public class NetNode
 
     public int ClientCount => Clients.Values.Count(client => client.PlayerAddress is not null);
 
+    public bool IsPlayerOnline(Client client)
+    {
+        return client.PlayerAddress is not null &&
+               client.State != ClientState.NotConnected &&
+               Clients.TryGetValue(client.ID, out var registered) &&
+               ReferenceEquals(client, registered) &&
+               (client.Peer is null || client.Peer.IsConnected);
+    }
+
+
     internal Client? ResolveSender(
         NetworkConnection? peer = null,
         NetworkConnectionRequest? request = null,
@@ -249,9 +327,11 @@ public class NetNode
         return request is not null ? new Client(request) : endpoint is not null ? new Client(endpoint) : null;
     }
 
+    internal Client? PendingPlayer => PendingClient;
+
     private Client? PendingClient => PendingPeer is null ? null : ResolveSender(peer: PendingPeer);
 
-    public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
+    public IEnumerable<Client> Peers => Clients.Values.Where(client => client.Peer is not null);
 
     // 当一个客户端收到一个消息
     public event Action<NetNode, IEnumerable<ReceivedPackage>>? OnReceive;
@@ -386,7 +466,7 @@ public class NetNode
     internal bool CanSubmitAdmission(string nonce)
     {
         return !_isStopping &&
-               CurrentStage == Stage.Bootstrapping &&
+               HasPendingAdmission &&
                PendingAdmissionChallenge?.Nonce == nonce &&
                (_localAdmission is not null || _admissionServerPeer is { IsConnected: true });
     }
@@ -433,7 +513,7 @@ public class NetNode
         if (!_isStopping &&
             result.Code is AdmissionResultCode.Cancelled or AdmissionResultCode.Expired or AdmissionResultCode.Denied)
         {
-            Stop("认证已取消、过期或被拒绝");
+            EndAdmission("认证已取消、过期或被拒绝");
         }
     }
 
@@ -465,15 +545,18 @@ public class NetNode
     }
 
     // 删除客户
+    public event Action<string>? LocalPlayerRemoved;
+
     public void RemoveClientImmediate(Client client, string reason = "")
     {
-        if (client == Self)
+        var localPlayer = ReferenceEquals(client, Self);
+        if (localPlayer && !IsServer)
         {
-            // A removed GUI host must leave its authoritative world as well as stop transport.
-            _leaveWorldOnStop = RunMode.Value == RunModeType.Gui && CommonLib.WorkType == WorkType.Server;
             Stop(reason);
             return;
         }
+
+        if (localPlayer) { Self = null; }
 
         if (client.Peer != null && client.Peer.IsConnected)
         {
@@ -510,6 +593,8 @@ public class NetNode
             OnClientStateChanged?.Invoke(client);
             Clients.Remove(client.ID);
         }
+
+        if (localPlayer && !_isStopping) { LocalPlayerRemoved?.Invoke(reason); }
     }
 
     /// <summary>
@@ -582,7 +667,7 @@ public class NetNode
         Log.Information($"{peer.TransportEndpoint}连接关闭: " + disconnectInfo.Reason);
         var str = DecodeDisconnectReason(disconnectInfo);
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (Role == WorldRole.RemoteClient)
         {
             Log.Debug(
                 $"Client transport disconnected: stage={CurrentStage}, admitted={AdmissionAccepted}, admissionOwner={AdmissionTransportInterrupted is not null}."
@@ -752,20 +837,67 @@ public class NetNode
         }
     }
 
-    public void StartLocal()
+    public void PrepareSinglePlayerWorld()
     {
+        Role = WorldRole.SinglePlayer;
         TemporaryAuthentication = null;
-        _leaveWorldOnStop = false;
         _isStopping = false;
         Clients.Clear();
-        Self = new Client(Guid.Empty, GameManager.Project!);
-        if (RunMode.Value is RunModeType.Gui)
+        Self = null;
+        Server = null;
+        CurrentStage = Stage.NotConnected;
+    }
+
+    internal void JoinSinglePlayerWorld()
+    {
+        if (Role != WorldRole.SinglePlayer || GameManager.Project is not { } world || Self is not null)
         {
-            using var identity = LocalIdentityManager.Current.OpenPlayerIdentity();
-            Self.PlayerAddress = new PlayerAddress(identity.PublicIdentity.Address);
+            throw new InvalidOperationException("Load the single-player world before joining its local player.");
         }
 
-        AddClient(Self);
+        using var identity = LocalIdentityManager.Current.OpenPlayerIdentity();
+        if (!TryAdmitLocalPlayer(
+                world,
+                new PlayerAddress(identity.PublicIdentity.Address),
+                Guid.NewGuid(),
+                out var error
+            ))
+        {
+            throw new InvalidOperationException(error);
+        }
+    }
+
+    private bool TryAdmitLocalPlayer(Project world, PlayerAddress subject, Guid token, out string? error)
+    {
+        if (!PlayerAdmission.TryCreateSession(
+                world,
+                this,
+                subject,
+                token,
+                character => new Client(null, FindUnusedIndex(), token, character, world) { PlayerAddress = subject },
+                out var client,
+                out error
+            ))
+        {
+            return false;
+        }
+
+        Self = client;
+        AddClient(client!);
+        GameManager.ActivateLocalPlayer(world, client!);
+        return true;
+    }
+
+    public void PrepareServerWorld()
+    {
+        TemporaryAuthentication = null;
+        _isStopping = false;
+        Clients.Clear();
+        Self = null;
+        Server = new Client(Guid.Empty, GameManager.Project!);
+        AddClient(Server);
+        Role = WorldRole.Server;
+        CurrentStage = Stage.NotConnected;
     }
 
     private NetworkHost CreateHost(int port, NetworkIdentity identity)
@@ -821,25 +953,14 @@ public class NetNode
                          ServerAdmissionPolicy.Load(project.ExtensionData.Get("game", "admission"));
             using (var identity = LocalIdentityManager.Current.OpenServerIdentity(serverAddress))
             {
-                if (RunMode.Value == RunModeType.Gui &&
-                    policy.Mode != ServerAdmissionMode.Open &&
-                    (_localAdmission is null ||
-                     !_localAdmission.Authorizes(
-                         project.FindSubsystem<SubsystemGameInfo>(true)!.DirectoryName,
-                         policy,
-                         Self?.PlayerAddress?.Value ?? string.Empty,
-                         identity.PublicIdentity.Address,
-                         DateTimeOffset.UtcNow
-                     )))
+                if (Server is null || Role != WorldRole.Server)
                 {
                     throw new InvalidOperationException(
-                        "GUI host must complete admission for this world and policy before listening."
+                        "Prepare the authoritative server world before opening its listener."
                     );
                 }
 
-                if (Self is null) { StartLocal(); }
-
-                Self!.SetProject(project);
+                Server.SetProject(project);
                 AdmissionController = new ServerAdmissionController(
                     this,
                     project,
@@ -867,8 +988,7 @@ public class NetNode
             Window.Frame += Update;
             Window.Closed += StopImmediate;
             CurrentStage = Stage.Connected;
-            Server = Self;
-            CommonLib.WorkType = WorkType.Server;
+            Role = WorldRole.Server;
             _p2p.Bind(_host, room, maxParticipants);
             return true;
         }
@@ -906,7 +1026,7 @@ public class NetNode
                 CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash
             );
             CurrentStage = Stage.Bootstrapping;
-            CommonLib.WorkType = WorkType.Client;
+            Role = WorldRole.RemoteClient;
             _connecting = _preparedPath.ConnectAsync(CreateUnconnectedPayload(request), _connectingCancellation.Token);
             Window.Frame += Update;
             Window.Closed += StopImmediate;
@@ -979,9 +1099,7 @@ public class NetNode
     private void StopImmediate(bool keepAdmissionScreen)
     {
         TemporaryAuthentication = null;
-        var wasClient = CommonLib.WorkType == WorkType.Client;
-        var leaveWorld = _leaveWorldOnStop;
-        _leaveWorldOnStop = false;
+        var wasClient = Role == WorldRole.RemoteClient;
         _isStopping = true;
         try
         {
@@ -1001,7 +1119,7 @@ public class NetNode
             StopHost(ref _broadcastHost);
 
             // 先发送提示，然后再关闭服务器
-            if (CommonLib.WorkType == WorkType.Server)
+            if (Role == WorldRole.Server)
             {
                 RemoveAllClients("服务器主动关闭");
             }
@@ -1056,7 +1174,7 @@ public class NetNode
             _transportClients.Clear();
             AdmissionController = null;
             _localAdmission = null;
-            ActiveHostSession = null;
+            LocalAdmissionError = null;
             PendingAdmissionChallenge = null;
             AdmissionDeadline = null;
             _admissionServerPeer = null;
@@ -1078,16 +1196,10 @@ public class NetNode
             OnClientBecameLive = null;
             ConnectionEpoch = Guid.Empty;
             CurrentConnectionPhase = ConnectionPhase.TransportConnected;
-            if (leaveWorld)
-            {
-                try { GameManager.SaveProject(true, true); }
-                catch (Exception e) { Log.Error(e); }
-            }
-
             CurrentStage = Stage.NotConnected;
-            CommonLib.WorkType = WorkType.Local;
+            Role = WorldRole.None;
             _keepAdmissionScreenOnStop = false;
-            if (!keepAdmissionScreen && (wasClient || leaveWorld))
+            if (!keepAdmissionScreen && wasClient)
             {
                 try
                 {
@@ -1098,7 +1210,7 @@ public class NetNode
                     Log.Error(e);
                 }
 
-                ScreensManager.SwitchScreen(wasClient ? "NetPlay" : "Play");
+                ScreensManager.SwitchScreen("NetPlay");
             }
 
             Clients.Clear();
@@ -1415,7 +1527,7 @@ public class NetNode
             };
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (Role == WorldRole.RemoteClient)
         {
             if (Clients.Count > 0)
             {

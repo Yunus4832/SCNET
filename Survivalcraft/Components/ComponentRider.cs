@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Components;
@@ -102,7 +101,7 @@ public class ComponentRider : Component, IUpdateable
             ComponentCreature.ComponentHealth.Health <= 0f)
             //服务器和客户端都由自己控制下马
         {
-            if (CommonLib.WorkType == WorkType.Local ||
+            if (GameManager.Role == WorldRole.SinglePlayer ||
                 ComponentCreature.ComponentBody.Character is not { CharacterData.IsLocalCharacter: false })
             {
                 StartDismounting();
@@ -173,7 +172,7 @@ public class ComponentRider : Component, IUpdateable
                 return;
             }
 
-            if (CommonLib.WorkType != WorkType.Client)
+            if (GameManager.Role != WorldRole.RemoteClient)
             {
                 StartNetMounting(componentMount);
                 NetworkSender.SendToObservers(
@@ -244,7 +243,7 @@ public class ComponentRider : Component, IUpdateable
     {
         if (!_isAnimating && Mount != null)
         {
-            if (CommonLib.WorkType != WorkType.Client)
+            if (GameManager.Role != WorldRole.RemoteClient)
             {
                 StartNetDismounting();
                 NetworkSender.SendToObservers(

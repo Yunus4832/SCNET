@@ -2,7 +2,6 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Entities;
-using Game.Network;
 using Game.Network.Interpolation;
 using Game.Network.Transport;
 
@@ -275,7 +274,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             if (Character is { CharacterData.IsLocalCharacter: false, ComponentBody.ParentBody: null } ||
                 (Character == null && ChildBodies.Count == 0) ||
@@ -295,7 +294,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
             }
         }
 
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             if (Character is { CharacterData.IsLocalCharacter: false, ComponentBody.ParentBody: null } ||
                 (Character == null &&
@@ -571,7 +570,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
     public void ApplyImpulse(Vector3 impulse)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return;
         }
@@ -1156,7 +1155,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
                     break;
             }
 
-            if (CommonLib.WorkType == WorkType.Client && Character is { CharacterData.IsLocalCharacter: true })
+            if (GameManager.Role == WorldRole.RemoteClient && Character is { CharacterData.IsLocalCharacter: true })
             {
                 NetworkSender.SendToServer(
                     new BodyCollisionPackage

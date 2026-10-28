@@ -164,7 +164,8 @@ public static class SessionInfoManager
 
     public static SessionInfo CaptureCurrentSession()
     {
-        var sessionInfo = Clone(StartupManager.Current.Session);
+        var loading = (ScreensManager.CurrentScreen as GameLoadingScreen)?.CurrentWorldSession;
+        var sessionInfo = Clone(loading ?? GameManager.WorldSession ?? StartupManager.Current.Session);
         PopulateFromCurrentState(sessionInfo);
         Normalize(sessionInfo);
         return sessionInfo;
@@ -178,6 +179,11 @@ public static class SessionInfoManager
         Normalize(effective);
         Save(effective);
         return effective;
+    }
+
+    public static SessionInfo CreateWorldSession(WorldInfo world, SessionTarget target = SessionTarget.World)
+    {
+        return new SessionInfo { Target = target, World = world.DirectoryName };
     }
 
     public static SessionInfo CreateRemoteClientSession(NetworkTarget target)
@@ -199,7 +205,7 @@ public static class SessionInfoManager
             SessionTarget.MainMenu => SwitchTo("MainMenu"),
             SessionTarget.WorldList => SwitchTo("Play"),
             SessionTarget.ServerBrowser => SwitchTo("NetPlay"),
-            SessionTarget.World => RestoreWorldSession(
+            SessionTarget.World or SessionTarget.HostedWorld => RestoreWorldSession(
                 sessionInfo,
                 createIfMissing: context.Request.HasExplicitSession
             ),
@@ -305,7 +311,7 @@ public static class SessionInfoManager
             return;
         }
 
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             if (CommonLib.Net.RemoteTarget is { } remoteTarget)
             {
@@ -348,8 +354,8 @@ public static class SessionInfoManager
             return false;
         }
 
-        sessionInfo.Target = SessionTarget.World;
-        sessionInfo.World = NormalizeWorld(GameManager.WorldInfo.WorldSettings.Name);
+        sessionInfo.Target = GameManager.WorldSession?.Target ?? SessionTarget.World;
+        sessionInfo.World = GameManager.WorldInfo.DirectoryName;
         sessionInfo.Seed = GameManager.WorldInfo.WorldSettings.Seed;
         sessionInfo.GameMode = GameManager.WorldInfo.WorldSettings.GameMode;
         return true;
@@ -374,8 +380,8 @@ public static class SessionInfoManager
             return false;
         }
 
-        sessionInfo.Target = SessionTarget.World;
-        sessionInfo.World = NormalizeWorld(loadingScreen.CurrentWorldInfo.WorldSettings.Name);
+        sessionInfo.Target = loadingScreen.CurrentWorldSession?.Target ?? SessionTarget.World;
+        sessionInfo.World = loadingScreen.CurrentWorldInfo.DirectoryName;
         sessionInfo.Seed = loadingScreen.CurrentWorldInfo.WorldSettings.Seed;
         sessionInfo.GameMode = loadingScreen.CurrentWorldInfo.WorldSettings.GameMode;
 
@@ -418,17 +424,9 @@ public static class SessionInfoManager
             }
         }
 
-        var startServer = CommonLib.WorkType == WorkType.Server || worldInfo!.WorldSettings.RunServer;
-        if (startServer)
-        {
-            ScreensManager.SwitchScreen(
-                "GameLoading",
-                worldInfo!,
-                string.Empty,
-                new Screens.HostedWorldLoadRequest(sessionInfo)
-            );
-        }
-        else { ScreensManager.SwitchScreen("GameLoading", worldInfo!, string.Empty); }
+        if (sessionInfo.Target == SessionTarget.HostedWorld) { worldInfo!.WorldSettings.RunServer = true; }
+
+        ScreensManager.SwitchScreen("GameLoading", worldInfo!, string.Empty, sessionInfo);
 
         return true;
     }
@@ -803,7 +801,8 @@ public static class SessionInfoManager
         }
         else if (request.HasExplicitSession)
         {
-            sessionInfo.Target = SessionTarget.World;
+            if (sessionInfo.Target != SessionTarget.HostedWorld) { sessionInfo.Target = SessionTarget.World; }
+
             sessionInfo.RemoteTarget = null;
         }
 

@@ -5,7 +5,9 @@ using Engine.Core.Mathematics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Managers;
 using Game.Network;
+using Game.World;
 
 using TerritoryStoneMod;
 
@@ -19,8 +21,8 @@ public class TerritorySubsystemTest
     [Fact]
     public void ExternalSubsystemLoadsSavesAndDisposesWorldOwnedData()
     {
-        var previousWorkType = CommonLib.WorkType;
-        CommonLib.WorkType = WorkType.Local;
+        var previousWorldRole = GameManager.Role;
+        CommonLib.Net.Role = WorldRole.SinglePlayer;
         try
         {
             var (database, template) = CreateDatabase();
@@ -52,7 +54,7 @@ public class TerritorySubsystemTest
         }
         finally
         {
-            CommonLib.WorkType = previousWorkType;
+            CommonLib.Net.Role = previousWorldRole;
         }
     }
 

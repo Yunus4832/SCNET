@@ -11,7 +11,7 @@ using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Teams;
 
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public sealed class CharacterTeamQueryTest
 {
     [Fact]

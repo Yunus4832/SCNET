@@ -11,7 +11,7 @@ public static class StartupModProfileBootstrapper
     {
         ArgumentNullException.ThrowIfNull(startupSession);
 
-        if (startupSession.Target != SessionTarget.World)
+        if (startupSession.Target is not (SessionTarget.World or SessionTarget.HostedWorld))
         {
             return false;
         }

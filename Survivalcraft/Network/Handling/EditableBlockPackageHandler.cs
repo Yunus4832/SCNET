@@ -9,14 +9,14 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
 {
     public static void Submit(EditableBlockPackage package)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             NetworkSender.SendToServer(package);
             return;
         }
 
         PackageDispatcher.Handle(package, new PackageReceiveContext(CommonLib.Net, false, null));
-        if (CommonLib.WorkType == WorkType.Server && GameManager.Project is { } project)
+        if (GameManager.Role == WorldRole.Server && GameManager.Project is { } project)
         {
             Publish(project, package);
         }

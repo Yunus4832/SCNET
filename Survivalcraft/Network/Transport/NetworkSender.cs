@@ -8,7 +8,7 @@ public static class NetworkSender
 {
     public static void SendToServer(IProtocolMessage package)
     {
-        if (CommonLib.WorkType != WorkType.Client || CommonLib.Net.Server is not { } server)
+        if (GameManager.Role != WorldRole.RemoteClient || CommonLib.Net.Server is not { } server)
         {
             throw new InvalidOperationException("Only a network client can submit a package to its server.");
         }

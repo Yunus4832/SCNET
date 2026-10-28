@@ -1,8 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Subsystems;
 
 public class SubsystemSpikesBlockBehavior : SubsystemBlockBehavior, IUpdateable
@@ -89,7 +87,7 @@ public class SubsystemSpikesBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
 
         _lastInjuryTimes[componentCreature] = _subsystemTime.GameTime;
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             componentCreature.ComponentHealth.Injure(0.1f, null, false, LanguageManager.Get(GetType().Name, 0));
         }

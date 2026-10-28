@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Xml.Linq;
 
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Game.Widgets;
@@ -333,7 +332,7 @@ public class VitalStatsWidget : CanvasWidget
 
         if (_chokeButton.IsClicked)
         {
-            if (CommonLib.WorkType == WorkType.Client)
+            if (GameManager.Role == WorldRole.RemoteClient)
             {
                 NetworkSender.SendToServer(
                     EntityStatePackageBuilder.Capture(

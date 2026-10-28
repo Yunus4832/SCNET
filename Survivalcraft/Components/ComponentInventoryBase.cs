@@ -3,8 +3,6 @@ using System.Globalization;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Components;
 
 public abstract class ComponentInventoryBase : Component, IInventory
@@ -137,7 +135,7 @@ public abstract class ComponentInventoryBase : Component, IInventory
     public virtual void OnSlotChange(int slotIndex)
     {
         // 只有服务器能够发同步，禁止客户端的数据来同步服务器
-        if (CommonLib.WorkType == WorkType.Server)
+        if (GameManager.Role == WorldRole.Server)
         {
             SubsystemInventories.PushSyncItem(this, slotIndex);
         }
@@ -246,7 +244,7 @@ public abstract class ComponentInventoryBase : Component, IInventory
 
     public static int AcquireItems(IInventory inventory, int value, int count)
     {
-        if (CommonLib.WorkType != WorkType.Client)
+        if (GameManager.Role != WorldRole.RemoteClient)
         {
             while (count > 0)
             {

@@ -1,8 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Components;
 
 public class ComponentSpawn : Component, IUpdateable
@@ -58,7 +56,7 @@ public class ComponentSpawn : Component, IUpdateable
         var value = valuesDictionary.GetValue<double>("SpawnTime");
         var value2 = valuesDictionary.GetValue<double>("DespawnTime");
         //解决客户端动物隐形问题
-        SpawnDuration = CommonLib.WorkType == WorkType.Client ? 0f : 2f;
+        SpawnDuration = GameManager.Role == WorldRole.RemoteClient ? 0f : 2f;
         DespawnDuration = 2f;
         SpawnTime = value < 0.0 ? _subsystemGameInfo.TotalElapsedGameTime : value;
         DespawnTime = value2 >= 0.0 ? new double?(value2) : null;

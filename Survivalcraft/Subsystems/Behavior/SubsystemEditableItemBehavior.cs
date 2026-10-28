@@ -108,7 +108,7 @@ public abstract class SubsystemEditableItemBehavior<T>(int contents)
             var num = FindFreeItemId();
             ItemsData.Add(num, (T)blockData.Copy());
             dropValue.Value = Terrain.ReplaceData(dropValue.Value, num);
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 if (blockData is MemoryBankData memory)
                 {

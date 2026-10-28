@@ -6,15 +6,25 @@ using Engine.Core.Security;
 using Game.Characters;
 using Game.Commands;
 using Game.Managers;
+using Game.Network;
 using Game.Protocol.Identity;
 using Game.World;
 
 using MessagePack;
 
+using Survivalcraft.Test.Subsystems;
+
 namespace Survivalcraft.Test.Commands;
 
-public class CommandDispatcherTest
+[Collection(WorldRoleCollection.Name)]
+public class CommandDispatcherTest : IDisposable
 {
+    private readonly WorldRole _previousRole = GameManager.Role;
+
+    public CommandDispatcherTest() => CommonLib.Net.Role = WorldRole.SinglePlayer;
+
+    public void Dispose() => CommonLib.Net.Role = _previousRole;
+
     private static readonly ModId _owner = new("example.commands");
 
     [Theory]

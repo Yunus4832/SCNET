@@ -7,24 +7,25 @@ using Engine.Core.Security;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Characters;
+using Game.Managers;
 using Game.Network;
-using Game.Network.Handling;
 using Game.Network.Transport;
 using Game.Players;
 using Game.Protocol.Identity;
 using Game.Subsystems;
+using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Network;
 
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public sealed class CharacterCreationFlowTest
 {
     [Fact]
     public void RejectionsOnlyCompleteTheMatchingRequestAndPermitRetry()
     {
-        var previousType = CommonLib.WorkType;
+        var previousType = GameManager.Role;
         var previousServer = CommonLib.Net.Server;
         var server = new Client(null, 0, Guid.NewGuid(), Guid.Empty, null);
         var pending = (List<OutboundPackage>)typeof(NetNode).GetField(
@@ -34,7 +35,7 @@ public sealed class CharacterCreationFlowTest
         var ids = new HashSet<Guid>();
         try
         {
-            CommonLib.WorkType = WorkType.Client;
+            CommonLib.Net.Role = WorldRole.RemoteClient;
             CommonLib.Net.Server = server;
             var players = new SubsystemCharacters();
             var profile = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
@@ -66,7 +67,7 @@ public sealed class CharacterCreationFlowTest
                 item.Package is CharacterCreateRequestPackage package && ids.Contains(package.CreationRequestId)
             );
             CommonLib.Net.Server = previousServer;
-            CommonLib.WorkType = previousType;
+            CommonLib.Net.Role = previousType;
         }
     }
 
@@ -83,11 +84,11 @@ public sealed class CharacterCreationFlowTest
             CreationRequestId = Guid.NewGuid(), CharacterName = "Tester", SkinName = "$Male1",
             CharacterSex = ProtocolEnum.Encode(CharacterSex.Male)
         };
-        Assert.Null(CharacterDataPackageHandler.ValidateCreation(request, sender, players, store, out var name, out _));
+        Assert.Null(CharacterCreation.Validate(request, sender, players, store, out var name, out _));
         Assert.Equal("Tester", name);
         Assert.Equal(
             CharacterCreationError.Unavailable,
-            CharacterDataPackageHandler.ValidateCreation(
+            CharacterCreation.Validate(
                 request with { CreationRequestId = Guid.Empty },
                 sender,
                 players,
@@ -98,7 +99,7 @@ public sealed class CharacterCreationFlowTest
         );
         Assert.Equal(
             CharacterCreationError.InvalidProfile,
-            CharacterDataPackageHandler.ValidateCreation(
+            CharacterCreation.Validate(
                 request with { CharacterName = "!" },
                 sender,
                 players,
@@ -118,18 +119,18 @@ public sealed class CharacterCreationFlowTest
         offline.Add(Guid.NewGuid(), record);
         Assert.Equal(
             CharacterCreationError.NameUnavailable,
-            CharacterDataPackageHandler.ValidateCreation(request, sender, players, store, out _, out _)
+            CharacterCreation.Validate(request, sender, players, store, out _, out _)
         );
         Assert.Equal(Guid.Empty, user.CharacterId);
         store.BindCharacter(address, Guid.NewGuid());
         Assert.Equal(
             CharacterCreationError.ExistingCharacter,
-            CharacterDataPackageHandler.ValidateCreation(request, sender, players, store, out _, out _)
+            CharacterCreation.Validate(request, sender, players, store, out _, out _)
         );
         store.Ban(address, "rule", null, DateTimeOffset.UtcNow);
         Assert.Equal(
             CharacterCreationError.Unavailable,
-            CharacterDataPackageHandler.ValidateCreation(request, sender, players, store, out _, out _)
+            CharacterCreation.Validate(request, sender, players, store, out _, out _)
         );
     }
 

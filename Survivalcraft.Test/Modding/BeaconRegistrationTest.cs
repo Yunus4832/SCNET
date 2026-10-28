@@ -14,6 +14,7 @@ using Game.Network;
 using Game.Subsystems;
 using Game.Terrains;
 using Game.Terrains.Distribution;
+using Game.World;
 
 namespace Survivalcraft.Test.Modding;
 
@@ -147,7 +148,7 @@ public sealed class BeaconRegistrationTest
     {
         ContentManager.Initialize();
         var previousRuntime = CurrentModRuntime.Value;
-        var previousWorkType = CommonLib.WorkType;
+        var previousWorldRole = GameManager.Role;
         int? changed = null;
         using var runtime = GameModRuntime.Start(
             [
@@ -165,7 +166,7 @@ public sealed class BeaconRegistrationTest
         try
         {
             CurrentModRuntime.Set(runtime);
-            CommonLib.WorkType = WorkType.Local;
+            CommonLib.Net.Role = WorldRole.SinglePlayer;
             using var terrain = new Terrain();
             terrain.AllocateChunk(0, 0);
             var oldValue = Terrain.MakeBlockValue(300, 0, 5);
@@ -211,7 +212,7 @@ public sealed class BeaconRegistrationTest
         finally
         {
             CurrentModRuntime.Set(previousRuntime);
-            CommonLib.WorkType = previousWorkType;
+            CommonLib.Net.Role = previousWorldRole;
         }
     }
 

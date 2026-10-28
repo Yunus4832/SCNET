@@ -133,7 +133,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
 
     public void Update(float dt)
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             UpdateReplicatedMotion(dt);
             return;
@@ -525,7 +525,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             }
 
             _projectiles.Remove(item);
-            if (CommonLib.WorkType == WorkType.Server)
+            if (GameManager.Role == WorldRole.Server)
             {
                 SendProjectileRemoval(item);
             }
@@ -534,7 +534,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         }
 
         _projectilesToRemove.Clear();
-        if (CommonLib.WorkType == WorkType.Server && Time.PeriodicEvent(0.1, 0.0))
+        if (GameManager.Role == WorldRole.Server && Time.PeriodicEvent(0.1, 0.0))
         {
             UpdateClientProjectileInterests();
         }
@@ -542,7 +542,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
 
     private void SendEffect(ProjectilePackage.EffectType effect, int value, Vector3 position)
     {
-        if (CommonLib.WorkType != WorkType.Server)
+        if (GameManager.Role != WorldRole.Server)
         {
             return;
         }
@@ -661,7 +661,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         ComponentCreature? owner
     )
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return null;
         }
@@ -694,7 +694,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         };
         _projectiles.Add(projectile);
         ProjectileAdded?.Invoke(projectile);
-        if (CommonLib.WorkType != WorkType.Client && owner is { CharacterStats: not null })
+        if (GameManager.Role != WorldRole.RemoteClient && owner is { CharacterStats: not null })
         {
             owner.CharacterStats.RangedAttacks++;
         }
@@ -710,7 +710,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         ComponentCreature? owner
     )
     {
-        if (CommonLib.WorkType == WorkType.Client)
+        if (GameManager.Role == WorldRole.RemoteClient)
         {
             return null;
         }

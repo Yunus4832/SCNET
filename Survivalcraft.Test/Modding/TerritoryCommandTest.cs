@@ -14,6 +14,7 @@ using Game.Modding;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
+using Game.World;
 
 using TerritoryStoneMod;
 
@@ -78,8 +79,8 @@ public class TerritoryCommandTest : IDisposable
     [Fact]
     public void RequestApprovalNotificationAndRevocationUseAuthoritativePlayerIdentity()
     {
-        var previous = CommonLib.WorkType;
-        CommonLib.WorkType = WorkType.Local;
+        var previous = GameManager.Role;
+        CommonLib.Net.Role = WorldRole.SinglePlayer;
         try
         {
             ContentManager.Initialize();
@@ -231,15 +232,15 @@ public class TerritoryCommandTest : IDisposable
         }
         finally
         {
-            CommonLib.WorkType = previous;
+            CommonLib.Net.Role = previous;
         }
     }
 
     [Fact]
     public void CharacterlessSubjectsCanRequestApproveAndRevokeAccess()
     {
-        var previous = CommonLib.WorkType;
-        CommonLib.WorkType = WorkType.Local;
+        var previous = GameManager.Role;
+        CommonLib.Net.Role = WorldRole.SinglePlayer;
         try
         {
             ContentManager.Initialize();
@@ -276,7 +277,7 @@ public class TerritoryCommandTest : IDisposable
             Assert.Null(ownerSession.CharacterData);
             Assert.Null(visitorSession.CharacterData);
         }
-        finally { CommonLib.WorkType = previous; }
+        finally { CommonLib.Net.Role = previous; }
     }
 
     private sealed class AccessProject : Project

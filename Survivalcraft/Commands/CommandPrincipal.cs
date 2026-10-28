@@ -72,7 +72,7 @@ public sealed class CommandPrincipal
     internal static CommandPrincipal ForInput(CharacterData player)
     {
         ArgumentNullException.ThrowIfNull(player);
-        return CommonLib.WorkType == WorkType.Client ? CreatePlayer(player.Name, player) : FromPlayer(player);
+        return GameManager.Role == WorldRole.RemoteClient ? CreatePlayer(player.Name, player) : FromPlayer(player);
     }
 
     public static CommandPrincipal FromSession(Client session)

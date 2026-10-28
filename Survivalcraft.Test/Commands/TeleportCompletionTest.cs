@@ -19,7 +19,7 @@ using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(NetworkWorkTypeCollection.Name)]
+[Collection(WorldRoleCollection.Name)]
 public class TeleportCompletionTest : IDisposable
 {
     private readonly Dictionary<int, Client> _previousClients = CommonLib.Net.Clients;

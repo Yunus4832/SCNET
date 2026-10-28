@@ -31,7 +31,7 @@ public static class ServerAdministrationBootstrap
         var state = GetState(project);
         lock (state.SyncRoot)
         {
-            if (CommonLib.WorkType is not WorkType.Server ||
+            if (GameManager.Role is not WorldRole.Server ||
                 EnsureClaimedState(project, state))
             {
                 code = string.Empty;
@@ -50,7 +50,7 @@ public static class ServerAdministrationBootstrap
         var state = GetState(project);
         lock (state.SyncRoot)
         {
-            if (CommonLib.WorkType is not WorkType.Server ||
+            if (GameManager.Role is not WorldRole.Server ||
                 EnsureClaimedState(project, state))
             {
                 code = string.Empty;
@@ -71,7 +71,7 @@ public static class ServerAdministrationBootstrap
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(user);
-        if (CommonLib.WorkType is not WorkType.Server)
+        if (GameManager.Role is not WorldRole.Server)
         {
             return BootstrapClaimResult.LocalizedFail(
                 "auth.server_only",

@@ -1,7 +1,7 @@
 using Engine.Network.Security;
 
+using Game.Characters;
 using Game.Network;
-using Game.Network.Handling;
 using Game.Protocol.Identity;
 
 namespace Survivalcraft.Test.Network;
@@ -35,20 +35,18 @@ public sealed class PlayerCreationAuthorityTest
         {
             PlayerAddress = new PlayerAddress(identity.PublicIdentity.Address)
         };
-        Assert.True(CharacterDataPackageHandler.CanCreateCharacter(sender, []));
+        Assert.True(CharacterCreation.CanCreate(sender, []));
         sender.CharacterId = Guid.NewGuid();
-        Assert.False(CharacterDataPackageHandler.CanCreateCharacter(sender, [sender.CharacterId]));
+        Assert.False(CharacterCreation.CanCreate(sender, [sender.CharacterId]));
         var replacement = new Client(null, 1, Guid.NewGuid(), sender.CharacterId, null)
             { PlayerAddress = sender.PlayerAddress };
-        Assert.False(CharacterDataPackageHandler.CanCreateCharacter(replacement, [sender.CharacterId]));
+        Assert.False(CharacterCreation.CanCreate(replacement, [sender.CharacterId]));
     }
 
     [Fact]
     public void MissingOrEmptyConnectionIdentityCannotCreatePlayer()
     {
-        Assert.False(CharacterDataPackageHandler.CanCreateCharacter(null, []));
-        Assert.False(
-            CharacterDataPackageHandler.CanCreateCharacter(new Client(null, 1, Guid.NewGuid(), Guid.Empty, null), [])
-        );
+        Assert.False(CharacterCreation.CanCreate(null, []));
+        Assert.False(CharacterCreation.CanCreate(new Client(null, 1, Guid.NewGuid(), Guid.Empty, null), []));
     }
 }
