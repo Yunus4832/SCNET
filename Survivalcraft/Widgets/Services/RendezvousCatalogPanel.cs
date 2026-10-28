@@ -5,13 +5,17 @@ using Engine.Network.Rendezvous;
 using Game.Content;
 using Game.Servers;
 
-namespace Game.Screens;
+namespace Game.Widgets.Services;
 
-public sealed class RendezvousCatalogScreen : Screen
+public sealed class RendezvousCatalogPanel : ServicePanelWidget
 {
     private enum CatalogAction
     {
-        Install = 0
+        Install = 0,
+
+        Info = 1,
+
+        Refresh = 2
     }
 
     private sealed record RepositoryFilterOption(Guid? RepositoryId, string Name);
@@ -38,9 +42,9 @@ public sealed class RendezvousCatalogScreen : Screen
 
     private CancellableBusyDialog? _busyDialog;
 
-    public RendezvousCatalogScreen()
+    public RendezvousCatalogPanel()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/RendezvousCatalogScreen"));
+        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/RendezvousCatalogPanel"));
         _searchTextBox = Children.Find<TextBoxWidget>("Search")!;
         _searchPlaceholder = Children.Find<LabelWidget>("SearchPlaceholder")!;
         _repositoryDrawer = Children.Find<SelectionDrawerWidget>("RepositoryFilter")!;
@@ -56,16 +60,41 @@ public sealed class RendezvousCatalogScreen : Screen
         };
         _repositoryDrawer.ItemTextProvider = item => ((RepositoryFilterOption)item).Name;
         _repositoryDrawer.SelectionChanged += () => ApplySearch();
-        _actionPanel.ItemTextProvider = _ => Text("Install");
-        _actionPanel.ItemEnabledProvider = _ =>
-            !_busy &&
-            _sourceList.SelectedItem is RegisteredRendezvousService source &&
-            !IsInstalled(source);
-        _actionPanel.ItemClicked += _ => Install();
-        _actionPanel.SetPrimaryItems([CatalogAction.Install]);
+        _actionPanel.ItemTextProvider = item => Text(item.ToString()!);
+        _actionPanel.ItemEnabledProvider = item => !_busy &&
+                                                   (item is CatalogAction.Refresh ||
+                                                    _sourceList.SelectedItem is RegisteredRendezvousService source &&
+                                                    (item is CatalogAction.Info || !IsInstalled(source)));
+        _actionPanel.ItemColorProvider = item => item is CatalogAction.Install ? new Color(50, 150, 35) : null;
+        _actionPanel.ItemClicked += item =>
+        {
+            if (item is CatalogAction.Refresh) { LoadSources(); }
+            else if (item is CatalogAction.Info && _sourceList.SelectedItem is RegisteredRendezvousService source)
+            {
+                DialogsManager.ShowDialog(
+                    null,
+                    new MessageDialog(
+                        Text("Info"),
+                        source.Name +
+                        "\n" +
+                        source.ControlUrl +
+                        "\n" +
+                        source.RepositoryName +
+                        "\n" +
+                        source.Description,
+                        LanguageManager.Ok
+                    )
+                );
+            }
+            else { Install(); }
+        };
+        _actionPanel.SetPrimaryItems(
+            [CatalogAction.Install, CatalogAction.Info, CatalogAction.Refresh],
+            [1f, 1f, 1f, 0f]
+        );
     }
 
-    public override void Enter(object[] parameters)
+    public override void Activate()
     {
         _searchPlaceholder.Text = Text("SearchPlaceholder");
         _searchTextBox.Text = string.Empty;
@@ -74,7 +103,7 @@ public sealed class RendezvousCatalogScreen : Screen
         LoadSources();
     }
 
-    public override void Leave()
+    public override void Deactivate()
     {
         _loadCancellation?.Cancel();
         _loadCancellation = null;
@@ -93,10 +122,6 @@ public sealed class RendezvousCatalogScreen : Screen
     public override void Update()
     {
         _actionPanel.Refresh();
-        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
-        {
-            ScreensManager.SwitchScreen("Content");
-        }
     }
 
     private static Widget CreateSourceWidget(object item)
@@ -292,6 +317,6 @@ public sealed class RendezvousCatalogScreen : Screen
 
     private static string Text(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(RendezvousCatalogScreen), key);
+        return LanguageManager.GetContentWidgets(nameof(RendezvousCatalogPanel), key);
     }
 }

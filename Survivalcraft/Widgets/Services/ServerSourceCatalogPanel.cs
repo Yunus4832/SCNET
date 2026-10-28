@@ -3,13 +3,17 @@ using System.Xml.Linq;
 using Game.Content;
 using Game.Servers;
 
-namespace Game.Screens;
+namespace Game.Widgets.Services;
 
-public sealed class ServerSourceScreen : Screen
+public sealed class ServerSourceCatalogPanel : ServicePanelWidget
 {
     private enum CatalogAction
     {
-        Install = 0
+        Install = 0,
+
+        Info = 1,
+
+        Refresh = 2
     }
 
     private sealed record RepositoryFilterOption(Guid? RepositoryId, string Name);
@@ -32,9 +36,9 @@ public sealed class ServerSourceScreen : Screen
 
     private bool _busy;
 
-    public ServerSourceScreen()
+    public ServerSourceCatalogPanel()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/ServerSourceScreen"));
+        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/ServerSourceCatalogPanel"));
         _searchTextBox = Children.Find<TextBoxWidget>("Search")!;
         _searchPlaceholder = Children.Find<LabelWidget>("SearchPlaceholder")!;
         _repositoryDrawer = Children.Find<SelectionDrawerWidget>("RepositoryFilter")!;
@@ -50,15 +54,35 @@ public sealed class ServerSourceScreen : Screen
         };
         _repositoryDrawer.ItemTextProvider = item => ((RepositoryFilterOption)item).Name;
         _repositoryDrawer.SelectionChanged += () => ApplySearch();
-        _actionPanel.ItemTextProvider = _ => Text("Install");
-        _actionPanel.ItemEnabledProvider = _ => !_busy &&
-                                                _sourceList.SelectedItem is RegisteredServerSource source &&
-                                                !IsInstalled(source);
-        _actionPanel.ItemClicked += _ => Install();
-        _actionPanel.SetPrimaryItems([CatalogAction.Install]);
+        _actionPanel.ItemTextProvider = item => Text(item.ToString()!);
+        _actionPanel.ItemEnabledProvider = item => !_busy &&
+                                                   (item is CatalogAction.Refresh ||
+                                                    _sourceList.SelectedItem is RegisteredServerSource source &&
+                                                    (item is CatalogAction.Info || !IsInstalled(source)));
+        _actionPanel.ItemColorProvider = item => item is CatalogAction.Install ? new Color(50, 150, 35) : null;
+        _actionPanel.ItemClicked += item =>
+        {
+            if (item is CatalogAction.Refresh) { LoadSources(); }
+            else if (item is CatalogAction.Info && _sourceList.SelectedItem is RegisteredServerSource source)
+            {
+                DialogsManager.ShowDialog(
+                    null,
+                    new MessageDialog(
+                        Text("Info"),
+                        source.Name + "\n" + source.ApiUrl + "\n" + source.RepositoryName + "\n" + source.Description,
+                        LanguageManager.Ok
+                    )
+                );
+            }
+            else { Install(); }
+        };
+        _actionPanel.SetPrimaryItems(
+            [CatalogAction.Install, CatalogAction.Info, CatalogAction.Refresh],
+            [1f, 1f, 1f, 0f]
+        );
     }
 
-    public override void Enter(object[] parameters)
+    public override void Activate()
     {
         _searchPlaceholder.Text = Text("SearchPlaceholder");
         _searchTextBox.Text = string.Empty;
@@ -67,10 +91,9 @@ public sealed class ServerSourceScreen : Screen
         LoadSources();
     }
 
-    public override void Leave()
+    public override void Deactivate()
     {
         _loadCancellation?.Cancel();
-        _loadCancellation?.Dispose();
         _loadCancellation = null;
         _busy = false;
         _sources = [];
@@ -81,10 +104,6 @@ public sealed class ServerSourceScreen : Screen
     public override void Update()
     {
         _actionPanel.Refresh();
-        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
-        {
-            ScreensManager.SwitchScreen("Content");
-        }
     }
 
     private static Widget CreateSourceWidget(object item)
@@ -102,7 +121,6 @@ public sealed class ServerSourceScreen : Screen
     private void LoadSources()
     {
         _loadCancellation?.Cancel();
-        _loadCancellation?.Dispose();
         var cancellation = new CancellationTokenSource();
         _loadCancellation = cancellation;
         _busy = true;
@@ -114,7 +132,7 @@ public sealed class ServerSourceScreen : Screen
                 () => catalog.QueryAsync(ContentRepositoryManager.Current.Snapshot(), cancellation.Token),
                 cancellation.Token
             )
-            .ContinueWith(task => Dispatcher.Dispatch(() => CompleteLoad(cancellation, task)), cancellation.Token);
+            .ContinueWith(task => Dispatcher.Dispatch(() => CompleteLoad(cancellation, task)));
     }
 
     private void CompleteLoad(
@@ -124,6 +142,7 @@ public sealed class ServerSourceScreen : Screen
     {
         if (!ReferenceEquals(_loadCancellation, cancellation))
         {
+            _ = task.Exception;
             cancellation.Dispose();
             return;
         }
@@ -234,6 +253,6 @@ public sealed class ServerSourceScreen : Screen
 
     private static string Text(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(ServerSourceScreen), key);
+        return LanguageManager.GetContentWidgets(nameof(ServerSourceCatalogPanel), key);
     }
 }

@@ -1,0 +1,10 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+    <PanoramaWidget/>
+    <StackPanelWidget Direction="Horizontal">
+        <CanvasWidget Style="{Widgets/TopBarContents}"><LabelWidget Name="TopBar.Label" Text="[ServiceCatalogScreen:Title]"/></CanvasWidget>
+        <CanvasWidget>
+            <CanvasWidget Name="Panels"/>
+            <SelectionDrawerWidget Name="ServiceType" Size="152, 56" Margin="14, 2" HorizontalAlignment="Far" VerticalAlignment="Near" MaxVisibleItems="3"/>
+        </CanvasWidget>
+    </StackPanelWidget>
+</Screen>

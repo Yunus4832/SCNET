@@ -7,9 +7,9 @@ using Game.Identity;
 
 using SCNET.Authentication.Protocol.Http;
 
-namespace Game.Screens;
+namespace Game.Widgets.Services;
 
-public sealed class AuthenticationCatalogScreen : Screen
+public sealed class AuthenticationCatalogPanel : ServicePanelWidget
 {
     private enum CatalogAction { Refresh = 0, Install = 1, Info = 2 }
 
@@ -51,14 +51,14 @@ public sealed class AuthenticationCatalogScreen : Screen
 
     private int _operationGeneration;
 
-    public AuthenticationCatalogScreen() : this(AuthenticationManager.Current)
+    public AuthenticationCatalogPanel() : this(AuthenticationManager.Current)
     {
     }
 
-    public AuthenticationCatalogScreen(AuthenticationManager manager)
+    public AuthenticationCatalogPanel(AuthenticationManager manager)
     {
         _manager = manager;
-        LoadContents(this, ContentManager.Get<XElement>("Screens/AuthenticationCatalogScreen"));
+        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/AuthenticationCatalogPanel"));
         _actions = Children.Find<ActionPanelWidget>("Actions")!;
         _repositories = Children.Find<SelectionDrawerWidget>("RepositoryFilter")!;
         _search = Children.Find<TextBoxWidget>("Search")!;
@@ -73,19 +73,22 @@ public sealed class AuthenticationCatalogScreen : Screen
         _repositories.SelectionChanged += ApplySearch;
         _actions.ItemTextProvider = item => Text(item.ToString()!);
         _actions.ItemEnabledProvider =
-            item => _operation is null && (item is CatalogAction.Refresh || Selected is not null);
+            item => _operation is null &&
+                    (item is CatalogAction.Refresh ||
+                     Selected is { } source && (item is CatalogAction.Info || !IsInstalled(source)));
+        _actions.ItemColorProvider = item => item is CatalogAction.Install ? new Color(50, 150, 35) : null;
         _actions.ItemClicked += item =>
         {
             if (item is CatalogAction.Refresh) { Load(); }
             else if (item is CatalogAction.Info && Selected is { } source) { ShowMessage(Details(source), null); }
             else { Install(); }
         };
-        _actions.SetPrimaryItems([CatalogAction.Refresh, CatalogAction.Install, CatalogAction.Info]);
+        _actions.SetPrimaryItems([CatalogAction.Install, CatalogAction.Info, CatalogAction.Refresh], [1f, 1f, 1f, 0f]);
     }
 
     private RegisteredAuthenticationService? Selected => _list.SelectedItem as RegisteredAuthenticationService;
 
-    public override void Enter(object[] parameters)
+    public override void Activate()
     {
         _generation++;
         _placeholder.Text = Text("SearchPlaceholder");
@@ -93,7 +96,7 @@ public sealed class AuthenticationCatalogScreen : Screen
         Load();
     }
 
-    public override void Leave()
+    public override void Deactivate()
     {
         _generation++;
         _cancel?.Cancel();
@@ -120,7 +123,6 @@ public sealed class AuthenticationCatalogScreen : Screen
 
     public override void Update()
     {
-        GameManager.UpdateProject();
         if (_operation is { IsCompleted: true } task)
         {
             var cancelled = _cancel!.IsCancellationRequested;
@@ -143,10 +145,6 @@ public sealed class AuthenticationCatalogScreen : Screen
         }
 
         _actions.Refresh();
-        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
-        {
-            ScreensManager.SwitchScreen("ManageAuthentication");
-        }
     }
 
     private void Load()
@@ -210,8 +208,16 @@ public sealed class AuthenticationCatalogScreen : Screen
         var row = (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/ServerSourceItem"), null);
         row.Children.Find<LabelWidget>("ServerSourceItem.Name")!.Text = source.Name;
         row.Children.Find<LabelWidget>("ServerSourceItem.Address")!.Text = source.ServiceUrl;
-        row.Children.Find<LabelWidget>("ServerSourceItem.State")!.Text = source.RepositoryName;
+        row.Children.Find<LabelWidget>("ServerSourceItem.State")!.Text =
+            IsInstalled(source) ? Text("Installed") : source.RepositoryName;
         return row;
+    }
+
+    private bool IsInstalled(RegisteredAuthenticationService source)
+    {
+        return _manager.Services.Services.Any(service =>
+            service.Endpoint.BaseUri == new Uri(source.ServiceUrl)
+        );
     }
 
     private string Details(RegisteredAuthenticationService source)
@@ -276,7 +282,7 @@ public sealed class AuthenticationCatalogScreen : Screen
         _ = task.ContinueWith(failed => { _ = failed.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
         _busy = new CancellableBusyDialog(Text("Working"), false);
         _busy.CancelRequested += () => _cancel?.Cancel();
-        DialogsManager.ShowDialog(this, _busy);
+        DialogsManager.ShowDialog(null, _busy);
     }
 
     private void ShowMessage(string description, Action? accepted)
@@ -300,9 +306,9 @@ public sealed class AuthenticationCatalogScreen : Screen
                 }
             }
         );
-        DialogsManager.ShowDialog(this, _message);
+        DialogsManager.ShowDialog(null, _message);
     }
 
     private static string Text(string key) =>
-        LanguageManager.GetContentWidgets(nameof(AuthenticationCatalogScreen), key);
+        LanguageManager.GetContentWidgets(nameof(AuthenticationCatalogPanel), key);
 }

@@ -4,9 +4,9 @@ using Engine.Network.Rendezvous;
 
 using Game.Servers;
 
-namespace Game.Screens;
+namespace Game.Widgets.Services;
 
-public sealed class ManageRendezvousScreen : Screen
+public sealed class RendezvousManagementPanel : ServicePanelWidget
 {
     private enum SourceAction
     {
@@ -31,19 +31,15 @@ public sealed class ManageRendezvousScreen : Screen
 
     private bool _busy;
 
-    private string _returnScreen = "Content";
-
-    private object[] _returnParameters = [];
-
     private CancellableBusyDialog? _busyDialog;
 
     private ContentRepositoryDialog? _editor;
 
     private CancellationTokenSource? _testCancellation;
 
-    public ManageRendezvousScreen()
+    public RendezvousManagementPanel()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/ManageRendezvousScreen"));
+        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/RendezvousManagementPanel"));
         _sourceList = Children.Find<ListPanelWidget>("SourceList")!;
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _statusLabel = Children.Find<LabelWidget>("Status")!;
@@ -55,17 +51,15 @@ public sealed class ManageRendezvousScreen : Screen
         _actionPanel.SetPrimaryItems(
             [SourceAction.AddOrEdit, SourceAction.MoveUp, SourceAction.MoveDown, SourceAction.Test]
         );
-        _actionPanel.SetSecondaryItems([SourceAction.Toggle, SourceAction.Delete]);
+        _actionPanel.SetSecondaryItems([SourceAction.Toggle, SourceAction.Delete], [1f, 1f, 0f, 0f]);
     }
 
-    public override void Enter(object[] parameters)
+    public override void Activate()
     {
-        _returnScreen = parameters.Length > 0 && parameters[0] is string screen ? screen : "Content";
-        _returnParameters = parameters.Length > 1 && parameters[1] is object[] arguments ? arguments : [];
         Refresh();
     }
 
-    public override void Leave()
+    public override void Deactivate()
     {
         _testCancellation?.Cancel();
         _testCancellation = null;
@@ -90,10 +84,6 @@ public sealed class ManageRendezvousScreen : Screen
     {
         _actionPanel.IsEnabled = !_busy;
         _actionPanel.Refresh();
-        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
-        {
-            ScreensManager.SwitchScreen(_returnScreen, _returnParameters);
-        }
     }
 
     private static Widget CreateSourceWidget(object item)
@@ -371,11 +361,11 @@ public sealed class ManageRendezvousScreen : Screen
 
     private static string CommonText(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(ContentRepositoryScreen), key);
+        return LanguageManager.GetContentWidgets("ContentRepositoryScreen", key);
     }
 
     private static string Text(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(ManageRendezvousScreen), key);
+        return LanguageManager.GetContentWidgets(nameof(RendezvousManagementPanel), key);
     }
 }

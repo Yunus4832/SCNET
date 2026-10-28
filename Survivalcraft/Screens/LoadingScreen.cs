@@ -177,8 +177,6 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("SettingsAudio", new SettingsAudioScreen()); });
         AddLoadAction(delegate { AddScreen("SettingsControls", new SettingsControlsScreen()); });
         AddLoadAction(delegate { AddScreen("ManageIdentities", new ManageIdentitiesScreen()); });
-        AddLoadAction(delegate { AddScreen("ManageAuthentication", new ManageAuthenticationScreen()); });
-        AddLoadAction(delegate { AddScreen("AuthenticationCatalog", new AuthenticationCatalogScreen()); });
         AddLoadAction(delegate { AddScreen("Play", new PlayScreen()); });
         AddLoadAction(delegate { AddScreen("NewWorld", new NewWorldScreen()); });
         AddLoadAction(delegate { AddScreen("WorldServerSettings", new WorldServerSettingsScreen()); });
@@ -187,13 +185,11 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("GameLoading", new GameLoadingScreen()); });
         AddLoadAction(delegate { AddScreen("HostedWorld", new HostedWorldScreen()); });
         AddLoadAction(delegate { AddScreen("Game", new GameScreen()); });
+        AddLoadAction(delegate { AddScreen("ServiceCatalog", new ServiceCatalogScreen()); });
+        AddLoadAction(delegate { AddScreen("ManageServices", new ManageServicesScreen()); });
         AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
         AddLoadAction(delegate { AddScreen("OnlineContent", new OnlineContentScreen()); });
         AddLoadAction(delegate { AddScreen("ContentRepositories", new ContentRepositoryScreen()); });
-        AddLoadAction(delegate { AddScreen("ServerSources", new ServerSourceScreen()); });
-        AddLoadAction(delegate { AddScreen("ManageServerSources", new ManageServerSourcesScreen()); });
-        AddLoadAction(delegate { AddScreen("RendezvousCatalog", new RendezvousCatalogScreen()); });
-        AddLoadAction(delegate { AddScreen("ManageRendezvous", new ManageRendezvousScreen()); });
         AddLoadAction(delegate { AddScreen("ContentPackages", new ContentPackageScreen()); });
         AddLoadAction(delegate { AddScreen("ModManagement", new ModManagementScreen()); });
         AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });

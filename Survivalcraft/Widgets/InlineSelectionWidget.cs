@@ -57,6 +57,8 @@ public sealed class InlineSelectionWidget : CanvasWidget
 
     public event Action? SelectionChanged;
 
+    public event Action? EmptySelectionRequested;
+
     public Vector2 CollapsedSize
     {
         get;
@@ -223,6 +225,7 @@ public sealed class InlineSelectionWidget : CanvasWidget
     {
         if (_items.Count == 0)
         {
+            EmptySelectionRequested?.Invoke();
             return;
         }
 

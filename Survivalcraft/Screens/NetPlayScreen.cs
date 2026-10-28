@@ -376,7 +376,7 @@ public sealed class NetPlayScreen : Screen
         {
             _refreshCancellation = null;
             _busy = false;
-            _statusLabel.Text = LanguageManager.GetContentWidgets("ManageRendezvousScreen", "NoSources");
+            _statusLabel.Text = LanguageManager.GetContentWidgets("RendezvousManagementPanel", "NoSources");
             _actionPanel.Refresh();
             return;
         }
@@ -574,7 +574,7 @@ public sealed class NetPlayScreen : Screen
                 : _hadSourceErrors
                     ? Text("LoadFailed")
                     : !RendezvousManager.Current.Snapshot().Any(service => service.IsEnabled)
-                        ? LanguageManager.GetContentWidgets("ManageRendezvousScreen", "NoSources")
+                        ? LanguageManager.GetContentWidgets("RendezvousManagementPanel", "NoSources")
                         : visible.Length == 0
                             ? Text("Empty")
                             : string.Empty;

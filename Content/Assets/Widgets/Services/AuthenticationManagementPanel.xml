@@ -1,0 +1,10 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets">
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+        <CanvasWidget Style="{Styles/ScreenContentArea}">
+            <BevelledRectangleWidget Style="{Styles/Area}"/>
+            <ListPanelWidget Name="Services" Direction="Vertical" Margin="3, 3" ItemSize="76" SelectionColor="10, 70, 0, 90"/>
+            <LabelWidget Name="Empty" Text="[AuthenticationManagementPanel:Empty]" FontScale="0.85" Color="160, 160, 160" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </CanvasWidget>
+        <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
+    </StackPanelWidget>
+</CanvasWidget>

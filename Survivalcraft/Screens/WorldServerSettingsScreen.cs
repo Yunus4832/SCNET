@@ -22,9 +22,9 @@ public class WorldServerSettingsScreen : Screen
 
     private readonly ContainerWidget _authenticationServiceRow;
 
-    private ButtonWidget _admissionButton = null!;
+    private readonly ButtonWidget _admissionButton;
 
-    private LabelWidget _admissionSummary = null!;
+    private readonly LabelWidget _admissionSummary;
 
     private PasswordDialog? _admissionPassword;
 
@@ -103,8 +103,11 @@ public class WorldServerSettingsScreen : Screen
         _p2pService = Children.Find<InlineSelectionWidget>("P2PService")!;
         _p2pService.ItemTextProvider = item => item is InstalledRendezvousService service
             ? service.Name
-            : LanguageManager.GetContentWidgets(nameof(ContentScreen), "ManageRendezvous");
+            : string.Empty;
         _p2pService.SelectionChanged += SelectP2PService;
+        _p2pService.EmptySelectionRequested += () => DialogsManager.Alert(
+            LanguageManager.GetContentWidgets("Services", "NoRendezvous")
+        );
         _p2pPublic = Children.Find<ButtonWidget>("P2PPublic")!;
         _p2pName = Children.Find<TextBoxWidget>("P2PName")!;
         _p2pDescription = Children.Find<TextBoxWidget>("P2PDescription")!;
@@ -191,7 +194,11 @@ public class WorldServerSettingsScreen : Screen
                 : GetText("MissingIdentity");
         _authenticationServiceRow.IsVisible = _admission.Configuration.Mode == ServerAdmissionMode.External;
         _authenticationServiceButton.Text = _admission.Configuration.Authority?.Description.DisplayName ??
-                                            AdmissionText("ChooseService");
+                                            (AuthenticationManager.Current.Services.Services.Any(service =>
+                                                service.Enabled
+                                            )
+                                                ? AdmissionText("ChooseService")
+                                                : LanguageManager.GetContentWidgets("Services", "NotConfigured"));
         if (_serverIdentityButton.IsClicked) { SelectServerIdentity(); }
 
         if (_authenticationServiceButton.IsClicked) { SelectAuthenticationService(_generation); }
@@ -407,7 +414,7 @@ public class WorldServerSettingsScreen : Screen
             _p2pService.Close();
             _p2pService.SelectedItem = null;
             var services = RendezvousManager.Current.Snapshot().Where(item => item.IsEnabled).ToArray();
-            _p2pService.SetItems(services.Cast<object>().Append("manage"));
+            _p2pService.SetItems(services);
             _p2pService.SelectedItem = services.FirstOrDefault(item =>
                 item.ControlUrl == _worldSettings.P2P.ControlUrl && item.Name == _worldSettings.P2P.ServiceName
             );
@@ -428,12 +435,6 @@ public class WorldServerSettingsScreen : Screen
         if (_p2pService.SelectedItem is InstalledRendezvousService selected)
         {
             _worldSettings.P2P = _worldSettings.P2P.SelectService(selected);
-        }
-        else if (_p2pService.SelectedItem is string)
-        {
-            SaveSettings();
-            var arguments = new object[] { _worldSettings, _returnScreenName }.Concat(_returnParameters).ToArray();
-            ScreensManager.SwitchScreen("ManageRendezvous", "WorldServerSettings", arguments);
         }
     }
 
@@ -486,11 +487,13 @@ public class WorldServerSettingsScreen : Screen
         }
 
         _p2pPublic.Text = LanguageManager.Get("Usual", _worldSettings.P2P.IsPublic ? "yes" : "no");
-        _p2pService.PlaceholderText = string.IsNullOrEmpty(_worldSettings.P2P.ControlUrl)
-            ? GetText("P2PSelectService")
-            : string.IsNullOrEmpty(_worldSettings.P2P.ServiceName)
-                ? _worldSettings.P2P.ControlUrl
-                : _worldSettings.P2P.ServiceName;
+        _p2pService.PlaceholderText = !RendezvousManager.Current.Snapshot().Any(service => service.IsEnabled)
+            ? LanguageManager.GetContentWidgets("Services", "NotConfigured")
+            : string.IsNullOrEmpty(_worldSettings.P2P.ControlUrl)
+                ? GetText("P2PSelectService")
+                : string.IsNullOrEmpty(_worldSettings.P2P.ServiceName)
+                    ? _worldSettings.P2P.ControlUrl
+                    : _worldSettings.P2P.ServiceName;
         _p2pButton.Text = _worldSettings.P2P.Enabled
             ? LanguageManager.Get("Usual", "on")
             : LanguageManager.Get("Usual", "off");

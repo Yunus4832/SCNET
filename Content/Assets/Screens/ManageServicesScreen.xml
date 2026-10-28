@@ -1,0 +1,16 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+    <PanoramaWidget/>
+    <StackPanelWidget Direction="Horizontal">
+        <CanvasWidget Style="{Widgets/TopBarContents}"><LabelWidget Name="TopBar.Label" Text="[ManageServicesScreen:Title]"/></CanvasWidget>
+        <CanvasWidget>
+            <StackPanelWidget Direction="Vertical">
+                <StackPanelWidget Direction="Horizontal" Margin="10, 6">
+                    <BevelledButtonWidget Name="ServerSource" Text="[Services:ServerSource]" Style="{Styles/ButtonStyle_160x60}" Size="Infinity, 60" Margin="4, 0"/>
+                    <BevelledButtonWidget Name="Rendezvous" Text="[Services:Rendezvous]" Style="{Styles/ButtonStyle_160x60}" Size="Infinity, 60" Margin="4, 0"/>
+                    <BevelledButtonWidget Name="Authentication" Text="[Services:Authentication]" Style="{Styles/ButtonStyle_160x60}" Size="Infinity, 60" Margin="4, 0"/>
+                </StackPanelWidget>
+                <CanvasWidget Name="Panels"/>
+            </StackPanelWidget>
+        </CanvasWidget>
+    </StackPanelWidget>
+</Screen>

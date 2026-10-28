@@ -16,13 +16,9 @@ public class ContentScreen : Screen
 
     private readonly ButtonWidget _repositoriesButton;
 
-    private readonly ButtonWidget _serverSourcesButton;
+    private readonly ButtonWidget _serviceCatalogButton;
 
-    private readonly ButtonWidget _manageServerSourcesButton;
-
-    private readonly ButtonWidget _rendezvousCatalogButton;
-
-    private readonly ButtonWidget _manageRendezvousButton;
+    private readonly ButtonWidget _manageServicesButton;
 
     public ContentScreen()
     {
@@ -33,10 +29,8 @@ public class ContentScreen : Screen
         _remoteButton = Children.Find<ButtonWidget>("Remote")!;
         _packagesButton = Children.Find<ButtonWidget>("Packages")!;
         _repositoriesButton = Children.Find<ButtonWidget>("Repositories")!;
-        _serverSourcesButton = Children.Find<ButtonWidget>("ServerSources")!;
-        _manageServerSourcesButton = Children.Find<ButtonWidget>("ManageServerSources")!;
-        _rendezvousCatalogButton = Children.Find<ButtonWidget>("RendezvousCatalog")!;
-        _manageRendezvousButton = Children.Find<ButtonWidget>("ManageRendezvous")!;
+        _serviceCatalogButton = Children.Find<ButtonWidget>("ServiceCatalog")!;
+        _manageServicesButton = Children.Find<ButtonWidget>("ManageServices")!;
     }
 
     public void OpenManageSelectDialog()
@@ -66,24 +60,14 @@ public class ContentScreen : Screen
             ScreensManager.SwitchScreen("ContentRepositories");
         }
 
-        if (_serverSourcesButton.IsClicked)
+        if (_serviceCatalogButton.IsClicked)
         {
-            ScreensManager.SwitchScreen("ServerSources");
+            ScreensManager.SwitchScreen("ServiceCatalog");
         }
 
-        if (_manageServerSourcesButton.IsClicked)
+        if (_manageServicesButton.IsClicked)
         {
-            ScreensManager.SwitchScreen("ManageServerSources");
-        }
-
-        if (_rendezvousCatalogButton.IsClicked)
-        {
-            ScreensManager.SwitchScreen("RendezvousCatalog");
-        }
-
-        if (_manageRendezvousButton.IsClicked)
-        {
-            ScreensManager.SwitchScreen("ManageRendezvous");
+            ScreensManager.SwitchScreen("ManageServices");
         }
 
         if (_manageButton.IsClicked)

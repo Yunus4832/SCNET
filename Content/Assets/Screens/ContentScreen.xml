@@ -59,44 +59,26 @@
 
             <StackPanelWidget Direction="Horizontal">
                 <CanvasWidget Size="350, 90">
-                    <LabelWidget Text="[ContentScreen:ServerSourcesDescription]" Color="128, 128, 128"
+                    <LabelWidget Text="[ContentScreen:ServicesDescription]" Color="128, 128, 128"
                                  WordWrap="true" HorizontalAlignment="Far" VerticalAlignment="Center"
                                  TextAnchor="VerticalCenter, HorizontalCenter"/>
                 </CanvasWidget>
                 <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="ServerSources" Text="[ContentScreen:ServerSources]"
+                <BevelledButtonWidget Name="ServiceCatalog" Text="[ContentScreen:ServiceCatalog]"
                                       Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center"/>
             </StackPanelWidget>
 
             <StackPanelWidget Direction="Horizontal">
                 <CanvasWidget Size="350, 90">
-                    <LabelWidget Text="[ContentScreen:ManageServerSourcesDescription]" Color="128, 128, 128"
+                    <LabelWidget Text="[ContentScreen:ManageServicesDescription]" Color="128, 128, 128"
                                  WordWrap="true" HorizontalAlignment="Far" VerticalAlignment="Center"
                                  TextAnchor="VerticalCenter, HorizontalCenter"/>
                 </CanvasWidget>
                 <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="ManageServerSources" Text="[ContentScreen:ManageServerSources]"
+                <BevelledButtonWidget Name="ManageServices" Text="[ContentScreen:ManageServices]"
                                       Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center"/>
             </StackPanelWidget>
 
-            <StackPanelWidget Direction="Horizontal">
-                <CanvasWidget Size="350, 90">
-                    <LabelWidget Text="[ContentScreen:RendezvousDescription]" Color="128, 128, 128" WordWrap="true"
-                                 HorizontalAlignment="Far" VerticalAlignment="Center" TextAnchor="VerticalCenter, HorizontalCenter"/>
-                </CanvasWidget>
-                <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="RendezvousCatalog" Text="[ContentScreen:RendezvousCatalog]"
-                                      Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center"/>
-            </StackPanelWidget>
-            <StackPanelWidget Direction="Horizontal">
-                <CanvasWidget Size="350, 90">
-                    <LabelWidget Text="[ContentScreen:ManageRendezvousDescription]" Color="128, 128, 128" WordWrap="true"
-                                 HorizontalAlignment="Far" VerticalAlignment="Center" TextAnchor="VerticalCenter, HorizontalCenter"/>
-                </CanvasWidget>
-                <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="ManageRendezvous" Text="[ContentScreen:ManageRendezvous]"
-                                      Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center"/>
-            </StackPanelWidget>
 
             <StackPanelWidget Direction="Horizontal">
                 <CanvasWidget Size="350, 90">

@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Xml.Linq;
 
 using Game.Authentication;
@@ -7,9 +6,9 @@ using Game.Identity;
 using SCNET.Authentication.Protocol;
 using SCNET.Authentication.Protocol.Http;
 
-namespace Game.Screens;
+namespace Game.Widgets.Services;
 
-public sealed class ManageAuthenticationScreen : Screen
+public sealed class AuthenticationManagementPanel : ServicePanelWidget
 {
     private enum ServiceAction
     {
@@ -25,9 +24,7 @@ public sealed class ManageAuthenticationScreen : Screen
 
         Logout = 5,
 
-        Remove = 6,
-
-        Catalog = 7
+        Remove = 6
     }
 
     private sealed record BrowserRequest(Uri Url, CancellationToken Token, TaskCompletionSource Completion);
@@ -39,8 +36,6 @@ public sealed class ManageAuthenticationScreen : Screen
     private readonly ActionPanelWidget _actions;
 
     private readonly ListPanelWidget _list;
-
-    private readonly LabelWidget _status;
 
     private readonly Lock _browserGate = new();
 
@@ -64,19 +59,18 @@ public sealed class ManageAuthenticationScreen : Screen
 
     private int _languageRevision = -1;
 
-    public ManageAuthenticationScreen() : this(AuthenticationManager.Current)
+    public AuthenticationManagementPanel() : this(AuthenticationManager.Current)
     {
     }
 
-    public ManageAuthenticationScreen(AuthenticationManager manager, Func<string>? currentSubject = null)
+    public AuthenticationManagementPanel(AuthenticationManager manager, Func<string>? currentSubject = null)
     {
         _manager = manager;
         _currentSubject = currentSubject ??
                           (() => LocalIdentityManager.Current.GetSelectedAddress(IdentityPurpose.Player)!);
-        LoadContents(this, ContentManager.Get<XElement>("Screens/ManageAuthenticationScreen"));
+        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/AuthenticationManagementPanel"));
         _actions = Children.Find<ActionPanelWidget>("Actions")!;
         _list = Children.Find<ListPanelWidget>("Services")!;
-        _status = Children.Find<LabelWidget>("Status")!;
         _list.ItemWidgetFactory = CreateRow;
         _actions.ItemTextProvider = action => action is ServiceAction.Toggle
             ? Text(Selected?.Enabled == true ? "Disable" : "Enable")
@@ -85,7 +79,7 @@ public sealed class ManageAuthenticationScreen : Screen
         _actions.ItemColorProvider = action => action is ServiceAction.Remove ? new Color(150, 50, 35) :
             action is ServiceAction.Login ? new Color(50, 150, 35) : null;
         _actions.ItemClicked += Execute;
-        _actions.SetPrimaryItems([ServiceAction.Catalog, ServiceAction.Add, ServiceAction.Login, ServiceAction.Info]);
+        _actions.SetPrimaryItems([ServiceAction.Add, ServiceAction.Login, ServiceAction.Info], [1f, 1f, 1f, 0f]);
         _actions.SetSecondaryItems(
             [ServiceAction.Toggle, ServiceAction.Address, ServiceAction.Logout, ServiceAction.Remove]
         );
@@ -96,13 +90,13 @@ public sealed class ManageAuthenticationScreen : Screen
 
     private string Subject => _currentSubject();
 
-    public override void Enter(object[] parameters)
+    public override void Activate()
     {
         _generation++;
         Refresh();
     }
 
-    public override void Leave()
+    public override void Deactivate()
     {
         _generation++;
         _cancel?.Cancel();
@@ -138,7 +132,6 @@ public sealed class ManageAuthenticationScreen : Screen
 
     public override void Update()
     {
-        GameManager.UpdateProject();
         if (_languageRevision != LanguageManager.Revision) { Refresh(Selected?.Endpoint.Identity.Address); }
 
         lock (_browserGate)
@@ -193,27 +186,6 @@ public sealed class ManageAuthenticationScreen : Screen
 
         _actions.Refresh();
         _actions.IsEnabled = _operation is null;
-        if (Selected is { } selected)
-        {
-            var grant = _manager.Grants.Find(Subject, selected.Endpoint);
-            _status.Text = IdentityAddressDisplay.Abbreviate(selected.Endpoint.Identity.Address) +
-                           "\n" +
-                           (grant is null
-                               ? Text("NotLoggedIn")
-                               : string.Format(
-                                   Text(grant.IsValid(DateTimeOffset.UtcNow) ? "ValidUntil" : "ExpiredAt"),
-                                   DateTimeOffset.FromUnixTimeSeconds(grant.ExpiresAt).ToLocalTime().ToString(
-                                       "yyyy-MM-dd HH:mm zzz",
-                                       CultureInfo.InvariantCulture
-                                   )
-                               ));
-        }
-        else { _status.Text = Text("Description"); }
-
-        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
-        {
-            ScreensManager.SwitchScreen("Settings");
-        }
     }
 
     private Widget CreateRow(object item)
@@ -240,7 +212,7 @@ public sealed class ManageAuthenticationScreen : Screen
     {
         if (_operation is not null) { return false; }
 
-        if (action is ServiceAction.Add or ServiceAction.Catalog) { return true; }
+        if (action is ServiceAction.Add) { return true; }
 
         if (Selected is not { } selected) { return false; }
 
@@ -260,7 +232,6 @@ public sealed class ManageAuthenticationScreen : Screen
         var selected = Selected;
         switch (action)
         {
-            case ServiceAction.Catalog: ScreensManager.SwitchScreen("AuthenticationCatalog"); break;
             case ServiceAction.Add: EditAddress(null); break;
             case ServiceAction.Address: EditAddress(selected); break;
             case ServiceAction.Login:
@@ -393,7 +364,7 @@ public sealed class ManageAuthenticationScreen : Screen
                 );
             }
         );
-        DialogsManager.ShowDialog(this, _editor);
+        DialogsManager.ShowDialog(null, _editor);
     }
 
     private void Run<T>(Func<CancellationToken, Task<T>> operation, Action<T> finish)
@@ -407,7 +378,7 @@ public sealed class ManageAuthenticationScreen : Screen
         _ = task.ContinueWith(failed => { _ = failed.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
         _busy = new CancellableBusyDialog(Text("Working"), false);
         _busy.CancelRequested += () => _cancel?.Cancel();
-        DialogsManager.ShowDialog(this, _busy);
+        DialogsManager.ShowDialog(null, _busy);
     }
 
     private async Task OpenBrowser(Uri uri, CancellationToken token)
@@ -448,7 +419,7 @@ public sealed class ManageAuthenticationScreen : Screen
                 }
             }
         );
-        DialogsManager.ShowDialog(this, _message);
+        DialogsManager.ShowDialog(null, _message);
     }
 
     private void Notify(string text)
@@ -460,7 +431,7 @@ public sealed class ManageAuthenticationScreen : Screen
             string.Empty,
             _ => _message = null
         );
-        DialogsManager.ShowDialog(this, _message);
+        DialogsManager.ShowDialog(null, _message);
     }
 
     private static string Error(Exception? error)
@@ -474,5 +445,5 @@ public sealed class ManageAuthenticationScreen : Screen
     }
 
     private static string Text(string key) =>
-        LanguageManager.GetContentWidgets(nameof(ManageAuthenticationScreen), key);
+        LanguageManager.GetContentWidgets(nameof(AuthenticationManagementPanel), key);
 }

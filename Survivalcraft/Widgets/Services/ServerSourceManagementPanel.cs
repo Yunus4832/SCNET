@@ -4,9 +4,9 @@ using Game.Servers;
 
 using ServerSource.Protocol;
 
-namespace Game.Screens;
+namespace Game.Widgets.Services;
 
-public sealed class ManageServerSourcesScreen : Screen
+public sealed class ServerSourceManagementPanel : ServicePanelWidget
 {
     private enum SourceAction
     {
@@ -31,11 +31,15 @@ public sealed class ManageServerSourcesScreen : Screen
 
     private bool _busy;
 
+    private CancellableBusyDialog? _busyDialog;
+
+    private ContentRepositoryDialog? _editor;
+
     private CancellationTokenSource? _testCancellation;
 
-    public ManageServerSourcesScreen()
+    public ServerSourceManagementPanel()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/ManageServerSourcesScreen"));
+        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/ServerSourceManagementPanel"));
         _sourceList = Children.Find<ListPanelWidget>("SourceList")!;
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _statusLabel = Children.Find<LabelWidget>("Status")!;
@@ -47,18 +51,30 @@ public sealed class ManageServerSourcesScreen : Screen
         _actionPanel.SetPrimaryItems(
             [SourceAction.AddOrEdit, SourceAction.MoveUp, SourceAction.MoveDown, SourceAction.Test]
         );
-        _actionPanel.SetSecondaryItems([SourceAction.Toggle, SourceAction.Delete]);
+        _actionPanel.SetSecondaryItems([SourceAction.Toggle, SourceAction.Delete], [1f, 1f, 0f, 0f]);
     }
 
-    public override void Enter(object[] parameters)
+    public override void Activate()
     {
         Refresh();
     }
 
-    public override void Leave()
+    public override void Deactivate()
     {
         _testCancellation?.Cancel();
         _testCancellation = null;
+        if (_busyDialog is not null)
+        {
+            DialogsManager.HideDialog(_busyDialog);
+            _busyDialog = null;
+        }
+
+        if (_editor is not null)
+        {
+            DialogsManager.HideDialog(_editor);
+            _editor = null;
+        }
+
         _busy = false;
         _actionPanel.ShowPrimaryItems();
         _sourceList.SelectedItem = null;
@@ -68,10 +84,6 @@ public sealed class ManageServerSourcesScreen : Screen
     {
         _actionPanel.IsEnabled = !_busy;
         _actionPanel.Refresh();
-        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
-        {
-            ScreensManager.SwitchScreen("Content");
-        }
     }
 
     private static Widget CreateSourceWidget(object item)
@@ -103,18 +115,16 @@ public sealed class ManageServerSourcesScreen : Screen
 
     private void ShowEditor(InstalledServerSource? source)
     {
-        DialogsManager.ShowDialog(
-            null,
-            new ContentRepositoryDialog(
-                source is null ? Text("AddTitle") : Text("EditTitle"),
-                CommonText("NameLabel"),
-                CommonText("AddressLabel"),
-                source is null ? CommonText("Add") : CommonText("Save"),
-                source?.Name ?? string.Empty,
-                source?.ApiUrl ?? string.Empty,
-                (name, address) => SaveEditor(source, name, address)
-            )
+        _editor = new ContentRepositoryDialog(
+            source is null ? Text("AddTitle") : Text("EditTitle"),
+            CommonText("NameLabel"),
+            CommonText("AddressLabel"),
+            source is null ? CommonText("Add") : CommonText("Save"),
+            source?.Name ?? string.Empty,
+            source?.ApiUrl ?? string.Empty,
+            (name, address) => SaveEditor(source, name, address)
         );
+        DialogsManager.ShowDialog(null, _editor);
     }
 
     private bool SaveEditor(InstalledServerSource? source, string name, string address)
@@ -242,7 +252,9 @@ public sealed class ManageServerSourcesScreen : Screen
         var cancellation = new CancellationTokenSource();
         _testCancellation = cancellation;
         _busy = true;
-        var busyDialog = new BusyDialog(Text("Testing"), source.Name);
+        var busyDialog = new CancellableBusyDialog(Text("Testing"), true);
+        busyDialog.CancelRequested += cancellation.Cancel;
+        _busyDialog = busyDialog;
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(
                 async () =>
@@ -255,13 +267,16 @@ public sealed class ManageServerSourcesScreen : Screen
             )
             .ContinueWith(task => Dispatcher.Dispatch(() =>
                     {
+                        busyDialog.CancelRequested -= cancellation.Cancel;
                         cancellation.Dispose();
                         if (!ReferenceEquals(_testCancellation, cancellation))
                         {
+                            _ = task.Exception;
                             return;
                         }
 
                         _testCancellation = null;
+                        _busyDialog = null;
                         _busy = false;
                         DialogsManager.HideDialog(busyDialog);
                         if (task.IsCanceled)
@@ -326,11 +341,11 @@ public sealed class ManageServerSourcesScreen : Screen
 
     private static string CommonText(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(ContentRepositoryScreen), key);
+        return LanguageManager.GetContentWidgets("ContentRepositoryScreen", key);
     }
 
     private static string Text(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(ManageServerSourcesScreen), key);
+        return LanguageManager.GetContentWidgets(nameof(ServerSourceManagementPanel), key);
     }
 }
