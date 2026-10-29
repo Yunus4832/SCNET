@@ -148,7 +148,7 @@ public class GameLoadingScreen : Screen
 
                 if (CommonLib.Net.LocalAdmissionError is { } error)
                 {
-                    ReturnFromLocalWorld(error);
+                    GameManager.LeaveGameplay(error);
                     return;
                 }
 
@@ -430,22 +430,7 @@ public class GameLoadingScreen : Screen
 
     private void OnLocalPlayerRemoved(string reason)
     {
-        if (ScreensManager.CurrentScreen == this) { ReturnFromLocalWorld(reason); }
-    }
-
-    private static void ReturnFromLocalWorld(string? error = null)
-    {
-        if (GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
-        {
-            GameManager.LeaveLocalPlayer();
-            ScreensManager.SwitchScreen("HostedWorld", error ?? string.Empty);
-        }
-        else
-        {
-            GameManager.CloseWorld();
-            ScreensManager.SwitchScreen("Play");
-            if (!string.IsNullOrEmpty(error)) { DialogsManager.Alert(error); }
-        }
+        if (ScreensManager.CurrentScreen == this) { GameManager.LeaveGameplay(reason); }
     }
 
     private void AbortLoading()
@@ -457,7 +442,7 @@ public class GameLoadingScreen : Screen
             CommonLib.Net.IsTransportRunning &&
             GameManager.Project is not null)
         {
-            ReturnFromLocalWorld();
+            GameManager.LeaveGameplay();
             return;
         }
 

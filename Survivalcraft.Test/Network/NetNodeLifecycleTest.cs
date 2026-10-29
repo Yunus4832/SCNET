@@ -11,6 +11,8 @@ using Game.Network.Transport;
 using Game.Screens;
 using Game.World;
 
+using LiteNetLib.Utils;
+
 using SCNET.Authentication.Protocol;
 using SCNET.Authentication.Protocol.Contracts;
 using SCNET.Authentication.Protocol.Http;
@@ -70,7 +72,7 @@ public sealed class NetNodeLifecycleTest
             CommonLib.Net.Role = WorldRole.RemoteClient;
             var loading = new Screen();
             ScreensManager.CurrentScreen = loading;
-            var node = new NetNode { CurrentStage = NetNode.Stage.Bootstrapping };
+            var node = new NetNode { Role = WorldRole.RemoteClient, CurrentStage = NetNode.Stage.Bootstrapping };
             node.StopForAdmissionRecovery();
             Assert.Same(loading, ScreensManager.CurrentScreen);
             Assert.Equal(NetNode.Stage.NotConnected, node.CurrentStage);
@@ -84,6 +86,76 @@ public sealed class NetNodeLifecycleTest
             CommonLib.Net.Role = previousMode;
             ScreensManager.CurrentScreen = previousScreen;
         }
+    }
+
+    [Fact]
+    public void RemoteCloseReasonUsesTheTransportStringFormat()
+    {
+        const string reason = "服务器主动关闭";
+        var information = new NetworkDisconnectInfo(
+            NetworkDisconnectReason.RemoteClose,
+            NetDataWriter.FromString(reason).CopyData(),
+            0
+        );
+        Assert.Equal(reason, NetNode.DecodeDisconnectReason(information));
+    }
+
+    [Fact]
+    public void ConnectionRejectionReasonUsesTheProtocolPacketFormat()
+    {
+        const string reason = "服务器拒绝连接";
+        var information = new NetworkDisconnectInfo(
+            NetworkDisconnectReason.Rejected,
+            NetNode.CreateUnconnectedPayload(new ConnectionRejectPackage(reason)),
+            0
+        );
+        Assert.Equal(reason, NetNode.DecodeDisconnectReason(information));
+    }
+
+    [Theory]
+    [InlineData(WorldRole.SinglePlayer)]
+    [InlineData(WorldRole.Server)]
+    [InlineData(WorldRole.RemoteClient)]
+    public void DeferredStopNotifiesOnceAfterCleanupWithThePreviousRole(WorldRole role)
+    {
+        using var project = new Project();
+        var node = new NetNode { Role = role, CurrentStage = NetNode.Stage.Connected };
+        var client = new Client(Guid.NewGuid(), project);
+        node.Clients.Add(0, client);
+        node.Self = client;
+        var notifications = new List<(WorldRole Role, string Reason)>();
+        node.Stopped += (previousRole, reason) =>
+        {
+            Assert.Equal(WorldRole.None, node.Role);
+            Assert.Equal(NetNode.Stage.NotConnected, node.CurrentStage);
+            Assert.Empty(node.Clients);
+            Assert.Null(node.Self);
+            notifications.Add((previousRole, reason));
+        };
+
+        node.Stop("fixture disconnect");
+        Assert.Empty(notifications);
+        node.Update();
+        node.Update();
+        Assert.Equal([(role, "fixture disconnect")], notifications);
+    }
+
+    [Fact]
+    public void ImmediateStopIsLifecycleOnlyAndDoesNotNotifyOrNavigate()
+    {
+        var previousScreen = ScreensManager.CurrentScreen;
+        try
+        {
+            var screen = new Screen();
+            ScreensManager.CurrentScreen = screen;
+            var node = new NetNode { Role = WorldRole.RemoteClient, CurrentStage = NetNode.Stage.Connected };
+            node.Stopped += (_, _) => throw new InvalidOperationException("Explicit callers own the transition.");
+            node.StopImmediate();
+            node.Update();
+            Assert.Same(screen, ScreensManager.CurrentScreen);
+            Assert.Equal(WorldRole.None, node.Role);
+        }
+        finally { ScreensManager.CurrentScreen = previousScreen; }
     }
 
     [Fact]

@@ -581,25 +581,7 @@ public class GameMenuDialog : Dialog
         }
 
         DialogsManager.HideDialog(this);
-        if (GameManager.Role != WorldRole.RemoteClient)
-        {
-            if (GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
-            {
-                GameManager.LeaveLocalPlayer();
-                ScreensManager.SwitchScreen("HostedWorld");
-            }
-            else
-            {
-                GameManager.CloseWorld();
-                ScreensManager.SwitchScreen("Play");
-            }
-
-            return;
-        }
-
-        ScreensManager.SwitchScreen("NetPlay");
-        CommonLib.Net.StopImmediate();
-        GameManager.DisposeProject();
+        GameManager.LeaveGameplay();
     }
 
     public static string FormatDistance(double value)

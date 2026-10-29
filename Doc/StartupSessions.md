@@ -193,8 +193,9 @@ Headless 没有可玩本地玩家。
 次要操作首项“运行服务器”使用 `SessionTarget.HostedWorld`：本次强制监听，加载后直接进入服务器页，不自动接纳玩家，也不修改存档的开服选项。
 从服务器页加入游戏后，离开角色返回服务器页，监听和远程玩家继续运行；显式停止服务器才关闭世界并回到存档列表。
 
-退出行为由本机玩家流程决定：`GameManager.LocalPlayerReturnTarget` 在发起加入时记录返回目标；游戏菜单、加载页和角色页面分别处理退出及取消，调用生命周期方法后再切换页面。
-`GameManager.LeaveLocalPlayer()` 结束本机玩家并保存世界，`GameManager.CloseWorld()` 保存、停止网络并释放世界；生命周期操作不选择页面。
+退出行为由本机玩家流程决定：`GameManager.LocalPlayerReturnTarget` 在发起加入时记录返回目标；游戏菜单、加载页和角色页面统一调用 `GameManager.LeaveGameplay(reason)`，由它执行清理、选择返回页面并呈现退出原因。
+`GameManager.LeaveLocalPlayer()` 结束本机玩家并保存世界，`GameManager.CloseWorld()` 保存、停止网络并释放世界；这些底层生命周期操作不选择页面。
+网络的立即停止同样只清理连接；异步断线完成后通知 GameManager，由其按停止前的角色处理 GUI 退出，避免网络层释放世界或重复跳页。认证断线恢复不触发普通退出；Headless 和应用关闭仍由各自入口完成清理。
 Session 目标只表达启动和恢复意图，不能用来反查当前玩家的退出行为。模组准备重启、有效 session 捕获及快照恢复保留运行入口；
 当前世界的 `GameManager.WorldSession` 保留有效启动覆盖，避免从菜单打开另一世界后误用进程启动时的 session。
 世界模拟和自动保存不依赖玩家进入游戏画面。

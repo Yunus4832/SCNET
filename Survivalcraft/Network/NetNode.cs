@@ -119,7 +119,7 @@ public class NetNode
 
     private bool _isStopping;
 
-    private bool _keepAdmissionScreenOnStop;
+    private bool _preserveAdmissionOnStop;
 
     internal event Func<bool>? AdmissionTransportInterrupted;
 
@@ -547,6 +547,9 @@ public class NetNode
     // 删除客户
     public event Action<string>? LocalPlayerRemoved;
 
+    // Explicit StopImmediate callers own their transition; deferred stops notify the world owner.
+    internal event Action<WorldRole, string>? Stopped;
+
     public void RemoveClientImmediate(Client client, string reason = "")
     {
         var localPlayer = ReferenceEquals(client, Self);
@@ -676,7 +679,7 @@ public class NetNode
                 !AdmissionAccepted &&
                 AdmissionTransportInterrupted?.Invoke() == true)
             {
-                _keepAdmissionScreenOnStop = true;
+                _preserveAdmissionOnStop = true;
                 Stop();
             }
             else { Stop(str); }
@@ -1084,8 +1087,6 @@ public class NetNode
         }
     }
 
-    public void StopImmediate() => StopImmediate(false);
-
     internal void StopForAdmissionRecovery()
     {
         if (AdmissionAccepted || CurrentStage == Stage.Connected)
@@ -1093,13 +1094,12 @@ public class NetNode
             throw new InvalidOperationException("An admitted world session cannot resume a pending authentication.");
         }
 
-        StopImmediate(true);
+        StopImmediate();
     }
 
-    private void StopImmediate(bool keepAdmissionScreen)
+    public void StopImmediate()
     {
         TemporaryAuthentication = null;
-        var wasClient = Role == WorldRole.RemoteClient;
         _isStopping = true;
         try
         {
@@ -1198,30 +1198,11 @@ public class NetNode
             CurrentConnectionPhase = ConnectionPhase.TransportConnected;
             CurrentStage = Stage.NotConnected;
             Role = WorldRole.None;
-            _keepAdmissionScreenOnStop = false;
-            if (!keepAdmissionScreen && wasClient)
-            {
-                try
-                {
-                    GameManager.DisposeProject();
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                }
-
-                ScreensManager.SwitchScreen("NetPlay");
-            }
-
+            _preserveAdmissionOnStop = false;
             Clients.Clear();
             Self = null;
             Server = null;
             _pendingHandlePackages.Clear();
-
-            if (!keepAdmissionScreen && !string.IsNullOrEmpty(Error))
-            {
-                DialogsManager.Alert(Error);
-            }
         }
     }
 
@@ -1376,7 +1357,11 @@ public class NetNode
 
         if (_isStopping)
         {
-            StopImmediate(_keepAdmissionScreenOnStop);
+            var previousRole = Role;
+            var error = Error;
+            var preserveAdmission = _preserveAdmissionOnStop;
+            StopImmediate();
+            if (!preserveAdmission && previousRole != WorldRole.None) { Stopped?.Invoke(previousRole, error); }
         }
         else
         {
@@ -1475,22 +1460,29 @@ public class NetNode
         return NetDataWriter.FromString("连接已关闭").CopyData();
     }
 
-    private string DecodeDisconnectReason(NetworkDisconnectInfo information)
+    internal static string DecodeDisconnectReason(NetworkDisconnectInfo information)
     {
         if (!information.Data.IsEmpty)
         {
             try
             {
-                var reject = PackageManager.DecodePackage<ConnectionRejectPackage>(this, information.Data);
-                return reject.Package.Reason;
-            }
-            catch (Exception)
-            {
-                var reader = new NetDataReader(information.Data.ToArray());
-                if (reader.TryGetString(out var reason))
+                if (information.Reason == NetworkDisconnectReason.Rejected)
                 {
-                    return reason;
+                    if (ProtocolPacketCodec.Decode(information.Data) is [ConnectionRejectPackage reject])
+                    {
+                        return reject.Reason;
+                    }
                 }
+                else if (information.Reason == NetworkDisconnectReason.RemoteClose)
+                {
+                    var reader = new NetDataReader(information.Data.ToArray());
+                    if (reader.TryGetString(out var reason)) { return reason; }
+                }
+            }
+            catch (Exception exception) when (exception is InvalidDataException or ArgumentException
+                                                  or EndOfStreamException)
+            {
+                // Malformed optional reasons use the transport's localized fallback.
             }
         }
 

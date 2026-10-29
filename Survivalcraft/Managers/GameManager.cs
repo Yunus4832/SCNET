@@ -15,6 +15,8 @@ public static class GameManager
 {
     private static SubsystemUpdate? _subsystemUpdate;
 
+    private static bool _leavingGameplay;
+
     private static double _lastAutosaveTime;
 
     private static readonly ManualResetEvent _saveCompleted = new(true);
@@ -31,6 +33,16 @@ public static class GameManager
     public static LocalGameReturnTarget? LocalPlayerReturnTarget { get; internal set; }
 
     public static event Action<Project>? ProjectDisposed;
+
+    static GameManager()
+    {
+        CommonLib.Net.Stopped += OnNetworkStopped;
+    }
+
+    private static void OnNetworkStopped(WorldRole previousRole, string reason)
+    {
+        if (RunMode.Value == RunModeType.Gui && Window.IsCreated) { LeaveGameplay(previousRole, reason); }
+    }
 
     public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget, SessionInfo? session = null)
     {
@@ -284,6 +296,31 @@ public static class GameManager
         }
 
         Storage.MoveFile(temporary, path);
+    }
+
+    /// <summary>Ends GUI gameplay and returns according to the current player's runtime entry flow.</summary>
+    public static void LeaveGameplay(string? reason = null) => LeaveGameplay(Role, reason);
+
+    private static void LeaveGameplay(WorldRole previousRole, string? reason)
+    {
+        if (_leavingGameplay) { return; }
+
+        _leavingGameplay = true;
+        try
+        {
+            if (LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
+            {
+                LeaveLocalPlayer();
+                ScreensManager.SwitchScreen("HostedWorld", reason ?? string.Empty);
+            }
+            else
+            {
+                CloseWorld();
+                ScreensManager.SwitchScreen(previousRole == WorldRole.RemoteClient ? "NetPlay" : "Play");
+                if (!string.IsNullOrEmpty(reason)) { DialogsManager.Alert(reason); }
+            }
+        }
+        finally { _leavingGameplay = false; }
     }
 
     public static void LeaveLocalPlayer()

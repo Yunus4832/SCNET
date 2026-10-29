@@ -144,17 +144,7 @@ public class CharacterScreen : Screen
     {
         if (ScreensManager.CurrentScreen != this) { return; }
 
-        if (GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
-        {
-            GameManager.LeaveLocalPlayer();
-            ScreensManager.SwitchScreen("HostedWorld", reason);
-        }
-        else
-        {
-            GameManager.CloseWorld();
-            ScreensManager.SwitchScreen("Play");
-            if (reason.Length > 0) { DialogsManager.Alert(reason); }
-        }
+        GameManager.LeaveGameplay(reason);
     }
 
     public override void Update()
@@ -286,17 +276,7 @@ public class CharacterScreen : Screen
         {
             if (_mode == Mode.Initial)
             {
-                if (GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
-                {
-                    GameManager.LeaveLocalPlayer();
-                    ScreensManager.SwitchScreen("HostedWorld");
-                }
-                else
-                {
-                    var remote = GameManager.Role == WorldRole.RemoteClient;
-                    GameManager.CloseWorld();
-                    ScreensManager.SwitchScreen(remote ? "NetPlay" : "Play");
-                }
+                GameManager.LeaveGameplay();
             }
             else
             {

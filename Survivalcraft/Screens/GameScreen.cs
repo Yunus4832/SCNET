@@ -51,26 +51,14 @@ public class GameScreen : Screen
     {
         if (ScreensManager.CurrentScreen != this) { return; }
 
-        if (GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
-        {
-            GameManager.LeaveLocalPlayer();
-            ScreensManager.SwitchScreen("HostedWorld", reason);
-        }
-        else
-        {
-            GameManager.CloseWorld();
-            ScreensManager.SwitchScreen("Play");
-            if (reason.Length > 0) { DialogsManager.Alert(reason); }
-        }
+        GameManager.LeaveGameplay(reason);
     }
 
     public override void Update()
     {
         if (GameManager.Role == WorldRole.None && GameManager.Project is not null)
         {
-            GameManager.SaveProject(true, true);
-            GameManager.DisposeProject();
-            ScreensManager.SwitchScreen("Play");
+            GameManager.LeaveGameplay();
             return;
         }
 
