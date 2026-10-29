@@ -54,6 +54,8 @@
 
 ## 快速开始
 
+完整解决方案构建需要 Node.js 与 npm；首次构建先安装 ContentWebUI 的前端依赖，见[外部依赖](Doc/Dependencies.md)。
+
 首次从源码运行前，先按下方构建步骤生成本地原生资产和 Mod SDK 包。
 
 ### Headless 启动
@@ -93,6 +95,7 @@ dotnet build TerritoryStoneMod/TerritoryStoneMod.csproj -c Debug
 
 ```bash
 # 首次构建：准备本地包并还原依赖
+npm --prefix ContentWebUI ci
 ./Scripts/pre-build.sh
 
 # Debug 构建

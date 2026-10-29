@@ -23,8 +23,10 @@ address-family, MTU or loss experiment. Use `scnet-agent-workspace` for retained
   For code regressions select relevant Rendezvous.Protocol.Test, Engine.Network.Test or
   RendezvousServer.Test tests directly.
 - For ordinary loopback use `scripts/local-lab.py`; it owns temporary signaling and probe processes,
-  checks readiness and convergence, and saves logs/results. Select `--mode` for direct, relay,
-  session, lease or cancellation. See the reference for supported options.
+  checks readiness and convergence, and saves logs/results. `--mode` accepts `scenario`,
+  `scenario-relay`, `scenario-session`, `scenario-lease` or `scenario-candidate-lease`.
+  Cancellation uses `--cancel-after-path` with either lease mode, not a separate mode value.
+  See the reference for supported options.
 - For isolated address families use `scripts/local-lab.sh`; for calibrated NAT use
   `scripts/nat-lab.sh`. Never invoke the namespace-mutating Python implementation directly.
   Wrappers verify that networking changes occur outside the host namespace.

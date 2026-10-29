@@ -43,6 +43,12 @@
 - [内容创建协议](Protocol/ContentCreationProtocol.md)：游戏内创建内容包的流程。
 - [服务器源协议](Protocol/ServerSourceProtocol.md)：只读目录契约，与临时 P2P 房间发现分离。
 
+内容工具和示例入口见 [Content.Packaging](../Content.Packaging/README.md)、
+[ContentTool](../ContentTool/README.md)、[模组模板包](../Survivalcraft.ModTemplates/README.md)、
+[生成的模组模板](../Survivalcraft.ModTemplates/Survivalcraft.Mod/README.md)及
+[BeaconMod 示例](../BeaconMod/README.md)。模型测试样本来源见
+[模型测试资产](../Engine.Test/TestAssets/Models/README.md)。
+
 ## 服务与部署
 
 - [ContentServer](ContentServer.md)：领域职责、投稿审核、公告、版本与 API。
@@ -66,5 +72,10 @@
 行为说明以对应源码、项目文件和配置模板为核对依据。命令示例应标明执行目录与必要前提；
 部署文档使用示例地址和占位值，实际机器信息与凭据不进入仓库。修改行为时同步维护其所属文档，
 其他页面通过链接引用，避免复制多份完整操作说明。
+
+游戏内帮助位于 `Content/Assets/Lang/*.json` 的 `Help` 节点，使用 LanguageTool 同步维护四种语言。
+`Name` 是运行时主题标识，不能翻译；`Title` 和 `value` 是显示文字。键盘、手柄主题打开对应的帮助对话框，
+`About` 主题正文由运行程序集动态生成。帮助列表自动读取主题，免责声明排在最后，数字键无需连续。
+用户操作变化时应同时核对这些帮助内容；Markdown 检查不覆盖语言资源。
 
 [免责声明](Disclaimer.md)

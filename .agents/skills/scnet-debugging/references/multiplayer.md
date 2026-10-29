@@ -23,10 +23,11 @@ terminal; Windows uses process arguments and Android uses an Intent extra.
 
 ## Automated startup contract
 
-Start the server with transient ports:
+From the repository root after building the Linux launcher, start the server with transient ports.
+For Windows use the resolved executable in [windows.md](windows.md).
 
 ```bash
-SurvivalcraftStarter \
+./Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter \
   --instance debug-server \
   --server \
   --session debug-server \
@@ -39,7 +40,7 @@ SurvivalcraftStarter \
 Start the GUI client with a transient remote session and explicit player automation:
 
 ```bash
-SurvivalcraftStarter \
+./Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter \
   --instance debug-client \
   --gui \
   --session debug-client \

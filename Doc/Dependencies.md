@@ -5,6 +5,7 @@
 - [.NET 10 SDK](https://dotnet.microsoft.com/zh-cn/download/dotnet/10.0)
 - 支持 .NET 10 SDK 和所用 Android 工作负载的 IDE（例如 Rider）；以 IDE 对目标 SDK 的支持为准
 - Android SDK
+- Node.js 与 npm：构建 ContentServer/Web 工作台前，在仓库根目录执行 `npm --prefix ContentWebUI ci` 安装前端依赖；完整解决方案构建会调用 `npm run build`，详见 [Web 工作台](../ContentWebUI/README.md)
 - Linux 桌面运行时需要可用的图形桌面环境
 - Windows WebP 编解码需要 Microsoft Visual C++ 2015–2022 x64 Redistributable
 

@@ -112,7 +112,7 @@ POST 外层只有 `publicKey` 与 `proof`，即 `SignedAuthenticationRequest`。
 | 请求 JWT 字段 | 含义 |
 |---|---|
 | `alg` / `typ`（header） | 固定 `ES256` / `scnet-auth-request+jwt` |
-| `kid`（header，可选） | 密钥提示；信任仍来自实际验签公钥 |
+| `kid`（header，必需） | 必须等于请求签名者的完整主体地址；信任仍来自实际验签公钥 |
 | `iss`、`sub` | 同一个请求签名者地址，且必须由所附公钥导出 |
 | `aud` | 认证方公钥地址，只允许单个字符串 audience |
 | `jti` | 新的 32 字节随机值，规范 base64url |
@@ -183,7 +183,7 @@ HTTP 框架可能在协议处理前拒绝超大或格式错误的请求；无法
 
 ## 游戏批准与会话
 
-批准为 `typ=scnet-admission+jwt`、`alg=ES256` 的 JWS，认证方签名。
+批准为 `typ=scnet-admission+jwt`、`alg=ES256` 的 JWS，认证方签名；header 的 `kid` 必须等于认证方的完整主体地址。
 声明包含认证方 `iss`、玩家 `sub`、游戏服务器 `aud`、随机 `jti`、`iat`/`nbf`/`exp`、
 `purpose=join`、挑战 `nonce` 及连接绑定 `cb`。最长 120 秒，同时不能晚于挑战截止时间。
 

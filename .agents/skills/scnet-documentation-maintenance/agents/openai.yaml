@@ -1,4 +1,4 @@
 interface:
   display_name: "SCNET Documentation Maintenance"
-  short_description: "Audit SCNET docs, references and agent guidance."
+  short_description: "Audit SCNET docs, in-game help and agent guidance."
   default_prompt: "Use $scnet-documentation-maintenance to review the requested SCNET documentation scope, verify claims against source, and maintain clear document and skill boundaries."

@@ -136,56 +136,67 @@ data.SetValue("enabled", true);
 模组在 `Configure` 阶段分别注册类型化命令和需要支持的前端绑定：
 
 ```csharp
+using Game.Commands;
 using Game.Localization;
+using Game.Modding;
+using Game.Protocol;
 using Game.Protocol.Localization;
-using Game.Protocol.Commands;
+using MessagePack;
 
-public sealed record EchoCommand(string Text) : IGameCommand;
+[MessagePackObject]
+public sealed record EchoCommand([property: Key(0)] string Text) : IGameCommand;
 
-public void Configure(IModContext context)
+public sealed class EchoMod : IMod
 {
-    var identity = new ResourceId(context.Manifest.ModId, "echo");
-    var permission = new ResourceId(
-        context.Manifest.ModId,
-        "world.echo");
-    context.Commands.Permissions.Register(
-        permission,
-        new CommandPermissionDefinition(
-            CommandDomain.World,
-            PermissionGrantPolicy.Standard));
+    public void Configure(IModContext context)
+    {
+        var identity = new ResourceId(context.Manifest.ModId, "echo");
+        var permission = new ResourceId(
+            context.Manifest.ModId,
+            "world.echo");
+        context.Commands.Permissions.Register(
+            permission,
+            new CommandPermissionDefinition(
+                CommandDomain.World,
+                PermissionGrantPolicy.Standard));
 
-    context.Commands.Register(
-        identity,
-        new CommandDefinition<EchoCommand>(
-            (_, command) => CommandResult.Ok(command.Text),
-            CommandDomain.World,
-            requiredPermission: permission,
-            write: static (writer, command) => writer.Write(command.Text),
-            read: static reader => new EchoCommand(reader.ReadString())));
+        context.Commands.Register(
+            identity,
+            new CommandDefinition<EchoCommand>(
+                (_, command) => CommandResult.Ok(command.Text),
+                CommandDomain.World,
+                requiredPermission: permission,
+                supportsRemoteInvocation: true));
 
-    context.Commands.Adapters.Register(
-        new ResourceId(context.Manifest.ModId, "text/echo"),
-        new TextCommand(
-            "echo",
-            new LocalizedText(
-                "Commands",
-                "ExampleEcho_Description",
-                "输出文本"),
-            [
-                new CommandRoute(
-                    [new CommandArgument("text")],
-                    typeof(EchoCommand),
-                    arguments => new EchoCommand(arguments.Get<string>("text")))
-            ]));
+        context.Commands.Adapters.Register(
+            new ResourceId(context.Manifest.ModId, "text/echo"),
+            new TextCommand(
+                "echo",
+                new LocalizedText(
+                    "Commands",
+                    "ExampleEcho_Description",
+                    "输出文本"),
+                [
+                    new CommandRoute(
+                        [new CommandArgument("text")],
+                        typeof(EchoCommand),
+                        arguments => new EchoCommand(arguments.Get<string>("text")))
+                ]));
 
-    context.Commands.Adapters.Register(
-        identity,
-        HttpCommandBinding.Create<EchoCommand>(
-            arguments => new EchoCommand(arguments.Get<string>("text"))));
+        context.Commands.Adapters.Register(
+            identity,
+            HttpCommandBinding.Create<EchoCommand>(
+                arguments => new EchoCommand(arguments.Get<string>("text")),
+                new HttpCommandArgumentDefinition("text", "string")));
+    }
+
+    public void Start(IModContext context) { }
+
+    public void Stop() { }
 }
 ```
 
-HTTP、文本和 UI 入口均先构造命令对象，远程执行共用命令定义的 `write`／`read` 编解码；服务端不会重新解释 HTTP 或文本参数。需要远程调用的命令必须同时提供这两个委托；未提供时仅能在权威进程本地执行。客户端构造和编码不代表授权，服务端仍按实际连接玩家的权限执行。
+HTTP、文本和 UI 入口均先构造命令对象，远程执行共用 `ProtocolPayloadCodec` 的 MessagePack 编解码；服务端不会重新解释 HTTP 或文本参数。需要远程调用的命令须设置 `supportsRemoteInvocation: true`，并为命令数据声明 `[MessagePackObject]` 与连续的数字 `[Key]`；默认不支持远程调用，只能在权威进程本地执行。客户端构造和编码不代表授权，服务端仍按实际连接玩家的权限执行。
 
 命令定义拥有执行逻辑、命令域、权限和必要的宿主环境约束。绑定只负责把某个前端的参数转换为命令，不能创建身份或绕过 `CommandDispatcher`。模组也可以实现自己的
 `ICommandAdapterBinding`，通过 `context.Commands.Adapters` 注册、查询，并由对应前端消费。

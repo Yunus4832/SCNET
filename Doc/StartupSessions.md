@@ -73,7 +73,7 @@
 - `--terrain-level <高度>`: 和 `--session` 一起使用，设置新世界平坦地形高度，范围 2–252，默认 64
 - `--game-mode <模式>`: 和 `--session` 一起使用，覆盖 session 游戏模式
 - `--log-level <级别>`: 设置日志级别
-- `--window-mode <模式>`: GUI 窗口模式，可取 `Resizable`、`Borderless` 或 `Fullscreen`
+- `--window-mode <模式>`: GUI 窗口模式，可取 `Fixed`、`Resizable`、`Borderless` 或 `Fullscreen`
 - `--window-size <宽x高>`: GUI 窗口尺寸，例如 `1280x720`
 - `--save`: 保存合并后的启动设置
 

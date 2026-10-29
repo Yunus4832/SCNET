@@ -31,7 +31,7 @@ dotnet run --project LanguageTool -- overview Help --culture all --depth 2 --lim
 dotnet run --project LanguageTool -- children ContentWidgets.ModManagementScreen
 dotnet run --project LanguageTool -- show ContentWidgets.ModManagementScreen --culture zh-CN --depth 1 --limit 80
 dotnet run --project LanguageTool -- list --culture zh-CN --prefix ContentWidgets.ModManagementScreen
-dotnet run --project LanguageTool -- get ContentWidgets.ModManagementScreen.Refresh --culture en-US
+dotnet run --project LanguageTool -- get ContentWidgets.ModManagementScreen.Title --culture en-US
 ```
 
 2. Search without opening large JSON files:
@@ -96,8 +96,8 @@ dotnet run --project LanguageTool -- check
 - Use `overview` for level/depth navigation before opening large language files.
 - Use `table` before reading large language files when diagnosing cross-language section mapping.
 - Treat fields like `Help.*.Name` as invariant runtime identifiers; use `sync-field` to keep them identical across cultures.
-- Use JSON path dots only as path separators, for example `ContentWidgets.PlayScreen.12` or `ContentWidgets.WorldServerSettingsScreen.PortDescription`.
-- `LanguageManager.Get("PlayScreen", 12)` usually corresponds to `ContentWidgets.PlayScreen.12` in the JSON files.
+- Use JSON path dots only as path separators, for example `ContentWidgets.PlayScreen.12` or `ContentWidgets.WorldServerSettingsScreen.RunServerDescription`.
+- `LanguageManager.Get("PlayScreen", 12)` reads `PlayScreen.12`; it does not prepend `ContentWidgets`. To read `ContentWidgets.PlayScreen.12`, use `LanguageManager.GetContentWidgets("PlayScreen", 12)`.
 - `LanguageManager.Get(section, key)` corresponds to `{section}.{key}`.
 - `LanguageManager.GetContentWidgets(name, key)` corresponds to `ContentWidgets.{name}.{key}`.
 - XML text like `[ScreenName:Key]` is resolved through `ContentWidgets.ScreenName.Key`.

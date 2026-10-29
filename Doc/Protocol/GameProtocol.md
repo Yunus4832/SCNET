@@ -55,7 +55,7 @@ sequenceDiagram
 |---|---|
 | `AdmissionChallengePackage` | 模式、nonce、expiresAt、authorityName、authorityUrl、authorityPublicKey |
 | `AdmissionProofPackage` | nonce string、password string、approval string、cancel bool |
-| `AdmissionResultPackage` | nonce string、结果 byte、retryAfterSeconds Int32 |
+| `AdmissionResultPackage` | nonce string、结果 AdmissionResultCode、retryAfterSeconds Int32 |
 
 模式数值为 `Open=0`、`Password=1`、`External=2`。
 非外部模式不得附带认证方资料。游戏挑战只传 nonce 和期限；外部 HTTPS 挑战的玩家、服务器身份及
@@ -65,7 +65,7 @@ nonce 上限 43 字符，密码上限 1024，批准上限 16384；认证方名�
 准入字符串使用 MessagePack UTF-8 字符串，读取前限制字节长度，解码后限制 UTF-16 字符数。
 合法长度不表示语义合法，nonce、时间、签名和字段组合仍需准入处理器校验。
 
-| 结果 | byte 值 | 处理含义 |
+| 结果 | 枚举值 | 处理含义 |
 |---|---|
 | Accepted | 0 | 本次准入通过，后续仍按连接阶段同步 |
 | IncorrectPassword | 1 | 重新询问；拒绝的已保存密码不循环自动提交 |
@@ -76,6 +76,7 @@ nonce 上限 43 字符，密码上限 1024，批准上限 16384；认证方名�
 | Busy | 6 | 服务端容量不足 |
 | Denied | 7 | 拒绝准入 |
 
+`AdmissionResultCode` 的 CLR 底层类型为 `int`，以 MessagePack 整数编码；不规定为固定一字节线宽。
 `retryAfterSeconds` 接受范围为 0–3600。用户主动取消应回到服务器列表，不再追加“已取消”错误弹窗；
 真实过期、拒绝和网络故障仍显示原因。开放模式也必须证明持有玩家密钥，不等于匿名任意声明玩家 ID。
 外部批准的签名、期限和连接绑定见[认证协议](AuthenticationProtocol.md)。

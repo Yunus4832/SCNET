@@ -1,6 +1,6 @@
 ---
 name: scnet-documentation-maintenance
-description: "Audit and maintain SCNET project documentation, README files, links and agent guidance, or assess documentation impact when changes affect documented behavior, configuration, commands, architecture, persistence, networking, modding, build, deployment, platform support, or development workflows. Use while completing such changes or reviewing their documentation impact; do not invoke for edits that clearly cannot affect existing documentation or instructions."
+description: "Audit and maintain SCNET project documentation, README files, in-game help, links and agent guidance, or assess documentation impact when changes affect documented behavior, configuration, commands, architecture, persistence, networking, modding, build, deployment, platform support, or development workflows. Use while completing such changes or reviewing their documentation impact; do not invoke for edits that clearly cannot affect existing documentation or instructions."
 ---
 
 # SCNET Documentation Maintenance
@@ -42,7 +42,11 @@ After editing, search for stale names and contradictory descriptions in `README.
 ## Repository-wide reviews
 
 For an explicit full review, inventory tracked Markdown, project README files, skill entrypoints and
-references, plus non-Markdown specifications or examples. Exclude generated outputs, dependency
+references, non-Markdown specifications or examples, and the localized in-game help under
+`Content/Assets/Lang/*.json`. Use `scnet-language-management` to inspect and update `Help` topics,
+keyboard/gamepad help and `About` text when user-facing operations change. Markdown link checks do
+not cover these resources; verify four-language structure, runtime topic IDs and actual UI entrypoints.
+Exclude generated outputs, dependency
 copies, licenses and game data from prose review, but validate referenced schemas/vectors as data.
 Keep coverage and unresolved findings in `.agent-work/`; a successful link scan is not evidence that
 the documents were read or their behavior verified.

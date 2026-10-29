@@ -7,7 +7,7 @@ debug against the default instance.
 
 ```powershell
 dotnet build .\Survivalcraft.Windows\Survivalcraft.Windows.csproj --no-restore
-$Starter = (Resolve-Path .\Survivalcraft.Windows\bin\Debug\net10.0\win-x64\SurvivalcraftStarter.exe).Path
+$Starter = (Resolve-Path .\Survivalcraft.Windows\bin\Debug\net10.0-windows\win-x64\SurvivalcraftStarter.exe).Path
 $Output = Split-Path $Starter
 ```
 
@@ -103,9 +103,9 @@ Resolve and read each instance's own newest log. Repeat with `debug-client-b` an
 client. Verify all of these in logs:
 
 - the server reports `开启服务器成功` on the requested port;
-- every process reaches `Entered screen "Game"`;
-- the server accepts each connection and reports `已完成加入过程`;
-- the expected player names report `加入游戏`.
+- each GUI client reaches `Entered screen "Game"`; Headless has no game screen;
+- the server reports `Client[<id>]已应用初始世界快照，进入Live` at Debug level;
+- query the server with `permission players` and confirm the expected player identities; correlate the IDs with each client’s observations rather than assuming a display-name join log exists.
 
 ## Process and evidence handling
 

@@ -59,10 +59,12 @@ read [references/gameplay-fixtures.md](references/gameplay-fixtures.md) before i
 
 Use a distinct `--instance` for every concurrently running process. The Starter consumes this
 argument before loading game settings and maps each process to `Instances/<name>`.
+The following Linux examples run from the repository root after building the Linux launcher;
+for Windows executable resolution, see [references/windows.md](references/windows.md).
 
 ```bash
-SurvivalcraftStarter --instance debug-server --server --session debug-server --world DebugWorld --game-mode Creative
-SurvivalcraftStarter --instance debug-client --gui --player Codex
+./Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter --instance debug-server --server --session debug-server --world DebugWorld --game-mode Creative
+./Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter --instance debug-client --gui --player Codex
 ```
 
 Read [references/multiplayer.md](references/multiplayer.md) before starting a GUI + Headless lab.

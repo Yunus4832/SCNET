@@ -70,7 +70,7 @@ Versions:
 正式发布时可另用带发行单元名称的标签定位源码，开发提交不自动打标签。
 
 
-游戏帮助中的“关于 SCNET”从运行程序集读取产品与构建版本（页面中的提交 hash 显示前 8 位，日志保留完整值），并展示游戏联机、服务器源、P2P 信令与中继数据报及内容包格式的实际版本。这些协议/格式标识独立于相应 NuGet 包的发布版本，不应混用；页面无需联网。
+游戏帮助中的“关于 SCNET”从运行程序集读取产品与构建版本（页面中的提交 hash 显示前 8 位，完整值可通过 `VersionsManager.BuildVersion` 读取），并展示游戏联机、服务器源、P2P 信令与中继数据报及内容包格式的实际版本。这些协议/格式标识独立于相应 NuGet 包的发布版本，不应混用；页面无需联网。
 
 ### `Directory.Build.targets`
 
@@ -88,7 +88,11 @@ Versions:
 
 这是全局 `using` 的集中入口。它为许多常用命名空间做了隐式导入，例如：
 
-- `Engine.Core`
+- `Engine.Core.Mathematics`
+- `Engine.Core.Collections`
+- `Engine.Core.Logging`
+- `Engine.Core.Runtime`
+- `Engine.Core.Text`
 - `Engine.FileStorage`
 - `Engine.Windowing`
 - `Game.Managers`
@@ -137,7 +141,10 @@ Arm32、x64 和 x86 变体通过这份配置链接 `Survivalcraft.Android/` 中�
 ## 构建
 
 ```bash
-# 首次构建：准备本地 NuGet 包并还原依赖
+# 首次构建：安装 ContentServer 的前端依赖（需要 Node.js 与 npm）
+npm --prefix ContentWebUI ci
+
+# 准备本地 NuGet 包并还原依赖
 ./Scripts/pre-build.sh
 
 # Debug 构建
@@ -264,7 +271,7 @@ Agent 使用的本机、地址族隔离与 NAT 实验脚本集中在 `scnet-netw
 `Authentication.Server` 使用独立 `AuthenticationServerVersion`，新发行单元初始为 `0.1.0`；不跟随普通开发构建递增。
 通过 `Scripts/publish.sh --project Authentication.Server` 或 PowerShell 同名入口生成
 `authentication-server-<版本>-portable.zip`；Linux 另生成 `authentication-server-<版本>-linux-amd64.tar.gz` 容器 bundle。
-便携服务依赖 ASP.NET Core 10 运行时。包内含运行脚本、空数据目录模板、配置示例及第三方许可，
+便携服务依赖 ASP.NET Core 10 运行时。包内含运行脚本、配置示例及第三方许可；数据目录由运行时按配置创建，
 不包含本机 appsettings、身份私钥、授权状态或账号运行配置；已有发布目录夹带这些文件时拒绝打包。
 普通 `dotnet build` 不执行打包或容器组装。容器基础镜像默认只用本地缓存，和信令服务相同的
 `CONTAINER_ENGINE`、`IMAGE_PULL_POLICY` 覆盖适用。配置与备份见 [认证服务部署](../Authentication.Server/README.md#linux-容器部署)。

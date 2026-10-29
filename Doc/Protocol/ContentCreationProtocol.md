@@ -91,11 +91,11 @@ updatedAt           ISO 8601 UTC
 
 1. `validate-source`：接收 type、PNG 流，返回权威宽高、媒体类型、源字节 SHA-256 和错误；不保存服务器状态。
 2. `build-package`：接收 type、identifier、name、version、必填 summary、description 和 PNG 流；生成并 verify `.scpkg` 后流式返回下载，服务器不保存草稿或源 Blob。
-3. `submit-generated`：接收与 build 相同的输入；在同一请求内生成一次包，把该制品提交为 Pending，并返回 ContentId、VersionId、PackageHash 和审核状态。不得先返回一个包再用第二次重打包结果提交。
-4. `submit-package`：接收任意官方入口产生的完整 `.scpkg`，返回权威 manifest、PackageHash、冲突或 Pending 结果；不重新制造。
+3. `submit-generated`：`POST /api/v1/publisher/packages/image/submit`，接收与 build 相同的输入；在同一请求内生成一次包并提交，返回 `ContentVersionResponse`。不得先返回一个包再用第二次重打包结果提交。
+4. `submit-package`：`POST /api/v1/publisher/submissions`，通过 multipart 的 `package` 文件字段接收任意官方入口产生的完整 `.scpkg`；检查制品后返回 `ContentVersionResponse`，不重新制造，也不返回完整 manifest。
 
-这些操作分别由 `ContentServer.Endpoints.Publisher.Packages` 下的 FastEndpoint 实现；Endpoint 负责读取请求和发送命令，制造与提交规则由应用层和领域层执行。HTTP 请求取消令牌用于中止读取和构建；临时文件应清理。已经提交的业务事务不因浏览器断开而撤销，
-重试前应查询投稿状态，不能把连接中断等同于未创建 Pending 记录。summary 和 description 均来自包内 manifest，预览和提交响应必须原样展示。
+图片操作由 `ContentServer.Endpoints.Publisher.Packages`、完整包投稿由 `ContentServer.Endpoints.Publisher.Contents` 下的 FastEndpoint 实现；Endpoint 负责读取请求和发送命令，制造与提交规则由应用层和领域层执行。HTTP 请求取消令牌用于中止读取和构建；临时文件应清理。已经提交的业务事务不因浏览器断开而撤销，
+重试前应查询投稿状态，不能把连接中断等同于未创建 Pending 记录。新投稿成功返回 HTTP 201；已存在的同一制品返回 HTTP 200，冲突则拒绝。JSON 的 `data` 为 `ContentVersionResponse`，包含 `contentId`、`versionId`、`packageHash`、`contentStatus`、版本审核 `status` 及 `name`、`summary`、`description` 等字段，不等同于原始 manifest。新版本进入 Pending；重复提交返回既有版本的当前状态。summary 和 description 均来自包内 manifest，预览和提交响应必须原样展示。
 
 ## 6. 实现约束
 

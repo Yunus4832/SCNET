@@ -39,7 +39,7 @@ PowerShell 使用同样的参数，命令可写在一行。
 
 ## 输出与判定
 
-每种语言输出 `<culture>.png` 和 `<culture>.xml`，总索引为 `preview.xml`。
+每种语言输出 `<culture>.xml`；该语言的布局没有错误（`sceneErrors == 0`）时才输出 `<culture>.png`。布局错误时保留 XML 报告并返回退出码 3，总索引为 `preview.xml`。
 XML 保存控件类型、名称、路径、文本、实际尺寸、屏幕边界、可见/禁用状态、裁切范围，
 以及 Label 的换行、截断和字号。坐标为实际输出像素，尺寸另记录控件的逻辑大小。
 

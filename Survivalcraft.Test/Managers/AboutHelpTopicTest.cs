@@ -82,6 +82,30 @@ public sealed class AboutHelpTopicTest
     }
 
     [Theory]
+    [InlineData("zh-CN")]
+    [InlineData("en-US")]
+    [InlineData("pt-PT")]
+    [InlineData("ru-RU")]
+    public void LocalizedHelpBodiesRenderWithoutBrokenEscapeSequences(string culture)
+    {
+        ContentManager.Initialize();
+        using var runtime = GameModRuntime.Start();
+        runtime.InitializeLanguage(culture);
+        var topics = (JsonObject)LanguageManager.KeyWords["Help"]!;
+        foreach (var (key, topic) in topics)
+        {
+            if (topic?["Name"]?.GetValue<string>() is "Keyboard" or "Gamepad")
+            {
+                continue;
+            }
+
+            var text = LanguageManager.GetHelpTopic(key, "value");
+            Assert.False(string.IsNullOrWhiteSpace(text));
+            Assert.DoesNotMatch(@"\\(?:\s|[nrt])", text);
+        }
+    }
+
+    [Theory]
     [InlineData("0.1.2+123456789abcdef", "0.1.2+12345678")]
     [InlineData("0.1.2-beta.1+abcdef0123456789", "0.1.2-beta.1+abcdef01")]
     [InlineData("0.1.2+1234", "0.1.2+1234")]
