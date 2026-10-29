@@ -238,7 +238,7 @@ public sealed class AuthenticationManagementPanel : ServicePanelWidget
                 Run(
                     async token =>
                     {
-                        using var key = AuthenticationUserKey.Open();
+                        using var key = AuthenticationPlayerKey.Open();
                         var client = new AuthenticationLoginClient(_manager.Grants);
                         return await client.AuthenticateAsync(key, selected!.Endpoint, null, true, OpenBrowser, token);
                     },
@@ -259,7 +259,7 @@ public sealed class AuthenticationManagementPanel : ServicePanelWidget
                 Run(
                     async token =>
                     {
-                        using var key = AuthenticationUserKey.Open();
+                        using var key = AuthenticationPlayerKey.Open();
                         return await _manager.LogoutAsync(key, selected!, token);
                     },
                     revoked => Notify(Text(revoked ? "LoggedOut" : "LocalLogoutOnly"))

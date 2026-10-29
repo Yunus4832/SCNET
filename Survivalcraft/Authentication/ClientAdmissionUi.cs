@@ -423,7 +423,7 @@ internal sealed class ClientAdmissionUi : IDisposable
             async () =>
             {
                 token.ThrowIfCancellationRequested();
-                using var key = AuthenticationUserKey.Open();
+                using var key = AuthenticationPlayerKey.Open();
                 var client = new AuthenticationLoginClient(AuthenticationManager.Current.Grants);
                 return await client.AuthenticateAsync(
                     key,

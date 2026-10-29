@@ -65,12 +65,12 @@ public static class ServerAdministrationBootstrap
 
     public static BootstrapClaimResult TryClaim(
         Project project,
-        WorldPlayer user,
+        WorldPlayer player,
         string claimCode
     )
     {
         ArgumentNullException.ThrowIfNull(project);
-        ArgumentNullException.ThrowIfNull(user);
+        ArgumentNullException.ThrowIfNull(player);
         if (GameManager.Role is not WorldRole.Server)
         {
             return BootstrapClaimResult.LocalizedFail(
@@ -80,8 +80,8 @@ public static class ServerAdministrationBootstrap
             );
         }
 
-        var owner = CommonLib.Net.Clients.Values.FirstOrDefault(client => ReferenceEquals(client.Subject, user));
-        if (!ReferenceEquals(project.FindSubsystem<SubsystemPlayers>(true)!.Store.Find(user.Address), user) ||
+        var owner = CommonLib.Net.Clients.Values.FirstOrDefault(client => ReferenceEquals(client.Subject, player));
+        if (!ReferenceEquals(project.FindSubsystem<SubsystemPlayers>(true)!.Store.Find(player.Address), player) ||
             owner is not { State: not ClientState.NotConnected })
         {
             return BootstrapClaimResult.LocalizedFail(
@@ -113,7 +113,7 @@ public static class ServerAdministrationBootstrap
                 );
             }
 
-            user.Permissions.Grant(
+            player.Permissions.Grant(
                 BuiltInPermissionIds.ManageStandard,
                 canDelegate: true
             );
@@ -123,7 +123,7 @@ public static class ServerAdministrationBootstrap
             return BootstrapClaimResult.LocalizedOk(
                 "AuthClaimSuccess_Message",
                 "玩家 {0} 已成为首位权限管理员，可管理和再授权标准指令权限。",
-                owner.CharacterData?.Name ?? (user.DisplayName.Length > 0 ? user.DisplayName : user.Address.Value)
+                owner.CharacterData?.Name ?? (player.DisplayName.Length > 0 ? player.DisplayName : player.Address.Value)
             );
         }
     }
@@ -137,8 +137,8 @@ public static class ServerAdministrationBootstrap
     {
         var gameInfo = project.FindSubsystem<SubsystemGameInfo>(true)!;
         var players = project.FindSubsystem<SubsystemPlayers>(true)!;
-        var hasAdministrator = players.Store.Entries.Any(user =>
-            user.Permissions.Grants.Any(grant =>
+        var hasAdministrator = players.Store.Entries.Any(player =>
+            player.Permissions.Grants.Any(grant =>
                 grant.CanDelegate &&
                 grant.Permission == BuiltInPermissionIds.ManageStandard
             )

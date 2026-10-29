@@ -509,7 +509,7 @@ public class CommandDispatcherTest : IDisposable
         Assert.Equal(PermissionGrantPolicy.Standard, teleportPermission!.Definition.GrantPolicy);
         AssertDomain<CreateTeamCommand>(registry, CommandDomain.World);
         AssertDomain<StopServerCommand>(registry, CommandDomain.Server);
-        AssertDomain<GrantUserPermissionCommand>(registry, CommandDomain.Server);
+        AssertDomain<GrantPlayerPermissionCommand>(registry, CommandDomain.Server);
 
         Assert.True(registry.TryGetDefinition<StopServerCommand>(out var stop));
         var stopPermission = Assert.IsType<ResourceId>(stop!.Definition.RequiredPermission);

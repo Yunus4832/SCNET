@@ -99,7 +99,7 @@ public sealed class LocalIdentityManager
                     Identities =
                     [
                         .. replacement.Identities,
-                        WriteIdentity(purpose, purpose == IdentityPurpose.Player ? "UserId" : "ServerId", identity)
+                        WriteIdentity(purpose, purpose == IdentityPurpose.Player ? "PlayerId" : "ServerId", identity)
                     ]
                 };
                 replacement = SelectDefault(replacement, purpose, identity.PublicIdentity.Address);

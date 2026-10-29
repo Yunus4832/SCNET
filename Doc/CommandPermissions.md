@@ -53,20 +53,20 @@ POST 使用相同的 identity/arguments 格式；返回 success/code/message/sta
 GUI 房主、首位连接者及角色归属不提供领地权限。调试相机不检查玩家管理权限，沿用创造模式的可用条件。
 
 
-## 主体管理目标与封禁
+## 玩家管理目标与封禁
 
-主体管理命令使用公钥主体地址，不把角色名称、角色 ID 或连接短编号当成账户身份。
-`/permission users` 列出存档中的主体，包含离线及尚未创建角色的账户；
-`/permission list <user>`、`grant <user> <permission>`、`delegate <user> <permission>` 和
-`revoke <user> <permission>` 均按已有主体地址定位。省略 `list` 的目标时查询实际调用主体。
+玩家管理命令使用完整玩家身份地址，不把角色名称、角色 ID 或连接短编号当成玩家身份。
+`/permission players` 列出存档中的玩家，包含离线及尚未创建角色的玩家；
+`/permission list <player>`、`grant <player> <permission>`、`delegate <player> <permission>` 和
+`revoke <player> <permission>` 均按已有主体地址定位。省略 `list` 的目标时查询实际调用主体。
 传送等角色业务命令继续使用角色名称或角色 ID。
 
-旧玩家面板黑名单已移除。主体业务封禁使用标准权限 `game:server.users.ban`，本地操作者亦可执行：
+旧玩家面板黑名单已移除。主体业务封禁使用标准权限 `game:server.players.ban`，本地操作者亦可执行：
 
 ```text
-/user ban <主体地址> "违反存档规则的原因"
-/user unban <主体地址>
-/user bans
+/player ban <主体地址> "违反存档规则的原因"
+/player unban <主体地址>
+/player bans
 ```
 
 封禁原因长度为 1–512 个字符，不允许控制字符；包含空格时需加引号。
@@ -95,12 +95,12 @@ GUI 房主、首位连接者及角色归属不提供领地权限。调试相机�
 不会因之后改名或切换控制角色而改变。界面显示角色名（如有）、主体昵称（如有）及地址缩写；
 地址缩写只用于显示，业务授权和管理仍使用完整地址。队聊按主体队籍选择实际会话，包含尚无角色的在线成员。
 
-主体禁言使用独立标准权限 `game:server.users.mute`，支持离线及尚无角色的账户：
+主体禁言使用独立标准权限 `game:server.players.mute`，支持离线及尚无角色的玩家：
 
 ```text
-/user mute <主体地址>
-/user unmute <主体地址>
-/user muted
+/player mute <主体地址>
+/player unmute <主体地址>
+/player muted
 ```
 
 禁言随本存档主体记录保存，限制全局聊天和队聊，不会因更换受控角色而绕过，也不继承角色所有者的禁言状态。

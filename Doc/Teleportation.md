@@ -53,7 +53,7 @@ M 不授予传送权限，F6 仍受传送权限与落点检查约束。
 | 传送指定玩家 | `game:player.teleport.others`，创造模式不自动授予 |
 
 以上管理权限使用标准授权策略。认领服务器获得权限管理能力，不自动获得传送他人的使用权。
-有授权能力的调用者可按主体地址授予使用权，或同时授予再授权能力。`/permission users` 列出存档中的主体，包含离线及尚无角色的账户：
+有授权能力的调用者可按主体地址授予使用权，或同时授予再授权能力。`/permission players` 列出存档中的玩家，包含离线及尚无角色的玩家：
 
 ```text
 /permission grant <主体地址> game:player.teleport.others

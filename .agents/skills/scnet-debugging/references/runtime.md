@@ -110,7 +110,7 @@ their frontend. Commands that require an online player are filtered by `AllowedP
 not appear in server-control suggestions.
 
 For stdin discovery, enter `permission` to print usage plus the stored subject and permission-node
-lists. `permission users` and `permission nodes` print each list separately.
+lists. `permission players` and `permission nodes` print each list separately.
 
 Expected result lines start with:
 

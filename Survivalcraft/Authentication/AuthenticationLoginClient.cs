@@ -26,7 +26,7 @@ public sealed class AuthenticationLoginClient(
         var subject = AuthenticationPublicKey.From(subjectKey).Address;
         if (challenge is not null && challenge.Subject != subject)
         {
-            throw new AuthenticationProtocolException("Admission challenge belongs to another user identity.");
+            throw new AuthenticationProtocolException("Admission challenge belongs to another player identity.");
         }
 
         if (temporaryGrant is { } transient &&

@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 
 namespace Game.Authentication;
 
-internal static class AuthenticationUserKey
+internal static class AuthenticationPlayerKey
 {
     internal static ECDsa Open()
     {

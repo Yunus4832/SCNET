@@ -499,11 +499,11 @@ public static class BuiltInCommands
             )
         );
         commands.Register(
-            new ResourceId(owner, "permission/users"),
-            new CommandDefinition<ListPermissionUsersCommand>(
-                ExecutePermissionUsers,
+            new ResourceId(owner, "permission/players"),
+            new CommandDefinition<ListPermissionPlayersCommand>(
+                ExecutePermissionPlayers,
                 CommandDomain.Server,
-                CommandDescription("PermissionUsers_Description", "列出当前可授权主体"),
+                CommandDescription("PermissionPlayers_Description", "列出当前可授权主体"),
                 permissionGrant,
                 supportsRemoteInvocation: true
             )
@@ -529,12 +529,12 @@ public static class BuiltInCommands
             )
         );
         commands.Register(
-            new ResourceId(owner, "permission/list_user"),
-            new CommandDefinition<ListUserPermissionsCommand>(
-                ExecutePermissionListUser,
+            new ResourceId(owner, "permission/list_player"),
+            new CommandDefinition<ListPlayerPermissionsCommand>(
+                ExecutePermissionListPlayer,
                 CommandDomain.Server,
                 CommandDescription(
-                    "PermissionListUser_Description",
+                    "PermissionListPlayer_Description",
                     "查看指定主体的命令权限"
                 ),
                 permissionGrant,
@@ -543,7 +543,7 @@ public static class BuiltInCommands
         );
         commands.Register(
             new ResourceId(owner, "permission/grant"),
-            new CommandDefinition<GrantUserPermissionCommand>(
+            new CommandDefinition<GrantPlayerPermissionCommand>(
                 ExecutePermissionGrant,
                 CommandDomain.Server,
                 CommandDescription("PermissionGrant_Description", "授予主体命令权限"),
@@ -553,7 +553,7 @@ public static class BuiltInCommands
         );
         commands.Register(
             new ResourceId(owner, "permission/revoke"),
-            new CommandDefinition<RevokeUserPermissionCommand>(
+            new CommandDefinition<RevokePlayerPermissionCommand>(
                 ExecutePermissionRevoke,
                 CommandDomain.Server,
                 CommandDescription("PermissionRevoke_Description", "撤销主体命令权限"),
@@ -1238,7 +1238,7 @@ public static class BuiltInCommands
                 ),
                 new CommandRoute(
                     [
-                        playerTarget, new CommandArgument("player", SuggestionProvider: SuggestPlayers),
+                        playerTarget, new CommandArgument("player", SuggestionProvider: SuggestCharacters),
                         new CommandLiteral("position"), .. coordinates
                     ],
                     typeof(TeleportPlayerCommand),
@@ -1247,7 +1247,7 @@ public static class BuiltInCommands
                 ),
                 new CommandRoute(
                     [
-                        playerTarget, new CommandArgument("player", SuggestionProvider: SuggestPlayers),
+                        playerTarget, new CommandArgument("player", SuggestionProvider: SuggestCharacters),
                         new CommandLiteral("player"),
                         new CommandArgument("destination", SuggestionProvider: SuggestTeleportDestinations)
                     ],
@@ -1260,7 +1260,7 @@ public static class BuiltInCommands
                 ),
                 new CommandRoute(
                     [
-                        playerTarget, new CommandArgument("player", SuggestionProvider: SuggestPlayers),
+                        playerTarget, new CommandArgument("player", SuggestionProvider: SuggestCharacters),
                         new CommandLiteral("private"),
                         new CommandArgument("name", SuggestionProvider: SuggestTargetPrivateMarks)
                     ],
@@ -1275,7 +1275,7 @@ public static class BuiltInCommands
                 ),
                 new CommandRoute(
                     [
-                        playerTarget, new CommandArgument("player", SuggestionProvider: SuggestPlayers),
+                        playerTarget, new CommandArgument("player", SuggestionProvider: SuggestCharacters),
                         new CommandLiteral("public"),
                         new CommandArgument("name", SuggestionProvider: SuggestPublicMarks)
                     ],
@@ -1643,10 +1643,10 @@ public static class BuiltInCommands
                 ),
                 new CommandRoute(
                     [new CommandLiteral("players")],
-                    typeof(ListPermissionUsersCommand),
-                    _ => new ListPermissionUsersCommand(),
+                    typeof(ListPermissionPlayersCommand),
+                    _ => new ListPermissionPlayersCommand(),
                     CommandDescription(
-                        "PermissionUsers_Description",
+                        "PermissionPlayers_Description",
                         "列出当前可授权主体"
                     )
                 ),
@@ -1671,24 +1671,24 @@ public static class BuiltInCommands
                 new CommandRoute(
                     [
                         new CommandLiteral("list"),
-                        new CommandArgument("user", SuggestionProvider: SuggestUsers)
+                        new CommandArgument("player", SuggestionProvider: SuggestPlayers)
                     ],
-                    typeof(ListUserPermissionsCommand),
-                    arguments => new ListUserPermissionsCommand(arguments.Get<string>("user")),
+                    typeof(ListPlayerPermissionsCommand),
+                    arguments => new ListPlayerPermissionsCommand(arguments.Get<string>("player")),
                     CommandDescription(
-                        "PermissionListUser_Description",
+                        "PermissionListPlayer_Description",
                         "查看指定主体的指令权限"
                     )
                 ),
                 new CommandRoute(
                     [
                         new CommandLiteral("grant"),
-                        new CommandArgument("user", SuggestionProvider: SuggestUsers),
+                        new CommandArgument("player", SuggestionProvider: SuggestPlayers),
                         PermissionArgument(SuggestGrantablePermissionNodes)
                     ],
-                    typeof(GrantUserPermissionCommand),
-                    arguments => new GrantUserPermissionCommand(
-                        arguments.Get<string>("user"),
+                    typeof(GrantPlayerPermissionCommand),
+                    arguments => new GrantPlayerPermissionCommand(
+                        arguments.Get<string>("player"),
                         arguments.Get<string>("permission"),
                         false
                     ),
@@ -1700,12 +1700,12 @@ public static class BuiltInCommands
                 new CommandRoute(
                     [
                         new CommandLiteral("delegate"),
-                        new CommandArgument("user", SuggestionProvider: SuggestUsers),
+                        new CommandArgument("player", SuggestionProvider: SuggestPlayers),
                         PermissionArgument(SuggestDelegablePermissionNodes)
                     ],
-                    typeof(GrantUserPermissionCommand),
-                    arguments => new GrantUserPermissionCommand(
-                        arguments.Get<string>("user"),
+                    typeof(GrantPlayerPermissionCommand),
+                    arguments => new GrantPlayerPermissionCommand(
+                        arguments.Get<string>("player"),
                         arguments.Get<string>("permission"),
                         true
                     ),
@@ -1717,12 +1717,12 @@ public static class BuiltInCommands
                 new CommandRoute(
                     [
                         new CommandLiteral("revoke"),
-                        new CommandArgument("user", SuggestionProvider: SuggestUsers),
+                        new CommandArgument("player", SuggestionProvider: SuggestPlayers),
                         PermissionArgument(SuggestRevocablePermissionNodes)
                     ],
-                    typeof(RevokeUserPermissionCommand),
-                    arguments => new RevokeUserPermissionCommand(
-                        arguments.Get<string>("user"),
+                    typeof(RevokePlayerPermissionCommand),
+                    arguments => new RevokePlayerPermissionCommand(
+                        arguments.Get<string>("player"),
                         arguments.Get<string>("permission")
                     ),
                     CommandDescription(
@@ -1776,7 +1776,7 @@ public static class BuiltInCommands
     {
         return new CommandArgument(
             "player",
-            SuggestionProvider: SuggestPlayers
+            SuggestionProvider: SuggestCharacters
         );
     }
 
@@ -1913,7 +1913,7 @@ public static class BuiltInCommands
             return NoWorld();
         }
 
-        var players = GetPlayers(context.Project)
+        var players = GetCharacters(context.Project)
             .Select(player => new
                 {
                     player.Name,
@@ -2440,9 +2440,9 @@ public static class BuiltInCommands
         if (context.Principal.Subject is null)
         {
             return CommandResult.LocalizedFail(
-                "permission.user_required",
-                "PermissionConsoleUserRequired_Message",
-                "服务器控制台请指定主体地址：permission list <user>。"
+                "permission.player_required",
+                "PermissionConsolePlayerRequired_Message",
+                "服务器控制台请指定主体地址：permission list <player>。"
             );
         }
 
@@ -2493,7 +2493,7 @@ public static class BuiltInCommands
             return NoWorld();
         }
 
-        if (context.Principal.Subject is not { } user)
+        if (context.Principal.Subject is not { } player)
         {
             return CommandResult.LocalizedFail(
                 "auth.player_required",
@@ -2504,7 +2504,7 @@ public static class BuiltInCommands
 
         var result = ServerAdministrationBootstrap.TryClaim(
             context.Project,
-            user,
+            player,
             command.Code
         );
         if (!result.Success)
@@ -2518,7 +2518,7 @@ public static class BuiltInCommands
             );
         }
 
-        SynchronizePermissions(user);
+        SynchronizePermissions(player);
         GameManager.SaveProject(
             waitForCompletion: false,
             showErrorDialog: RunMode.Value is RunModeType.Gui
@@ -2608,7 +2608,7 @@ public static class BuiltInCommands
         ShowPermissionHelpCommand command
     )
     {
-        var users = GetUsers(context.Project).Select(user => user.Address.Value).ToArray();
+        var players = GetPlayers(context.Project).Select(player => player.Address.Value).ToArray();
         var nodes = context.Registry.Permissions.Definitions
             .Select(node => node.Id)
             .Where(node => context.Registry.Permissions.CanGrant(
@@ -2622,31 +2622,31 @@ public static class BuiltInCommands
         return CommandResult.LocalizedHistoryOk(
             "permission.help",
             "PermissionHelp_Message",
-            "授权用法：\n- /permission users（列出存档主体）\n- /permission grant <user> <permission>（仅使用）\n- /permission delegate <user> <permission>（允许再授权）\n- /permission revoke <user> <permission>\n- /permission list [user]\nuser 为主体地址，支持离线及尚无角色的主体。\n当前主体：\n{0}\n可授权节点：\n{1}",
-            FormatItems(users),
+            "授权用法：\n- /permission players（列出存档玩家）\n- /permission grant <player> <permission>（仅使用）\n- /permission delegate <player> <permission>（允许再授权）\n- /permission revoke <player> <permission>\n- /permission list [player]\nplayer 为玩家身份地址，支持离线及尚无角色的玩家。\n当前玩家：\n{0}\n可授权节点：\n{1}",
+            FormatItems(players),
             FormatItems(nodes)
         );
     }
 
-    private static CommandResult ExecutePermissionUsers(
+    private static CommandResult ExecutePermissionPlayers(
         CommandContext context,
-        ListPermissionUsersCommand command
+        ListPermissionPlayersCommand command
     )
     {
-        var users = GetUsers(context.Project).ToArray();
-        return users.Length == 0
+        var players = GetPlayers(context.Project).ToArray();
+        return players.Length == 0
             ? CommandResult.LocalizedOk(
-                "permission.users",
-                "PermissionUsersEmpty_Message",
+                "permission.players",
+                "PermissionPlayersEmpty_Message",
                 "当前没有可授权的主体。"
             )
             : CommandResult.LocalizedOk(
-                "permission.users",
-                "PermissionUsersHeading_Message",
+                "permission.players",
+                "PermissionPlayersHeading_Message",
                 "当前主体：\n{0}",
                 FormatItems(
-                    users.Select(user =>
-                        $"{user.Address} ({user.DisplayName})"
+                    players.Select(player =>
+                        $"{player.Address} ({player.DisplayName})"
                     )
                 )
             );
@@ -2681,19 +2681,19 @@ public static class BuiltInCommands
             );
     }
 
-    private static CommandResult ExecutePermissionListUser(
+    private static CommandResult ExecutePermissionListPlayer(
         CommandContext context,
-        ListUserPermissionsCommand command
+        ListPlayerPermissionsCommand command
     )
     {
-        return TryFindUser(context, command.User, out var user, out var failure)
-            ? FormatPermissionList(user!)
+        return TryFindPlayer(context, command.Player, out var player, out var failure)
+            ? FormatPermissionList(player!)
             : failure!;
     }
 
     private static CommandResult ExecutePermissionGrant(
         CommandContext context,
-        GrantUserPermissionCommand command
+        GrantPlayerPermissionCommand command
     )
     {
         if (!EnsureServer(out var failure))
@@ -2725,15 +2725,15 @@ public static class BuiltInCommands
             );
         }
 
-        if (!TryFindUser(context, command.User, out var user, out failure))
+        if (!TryFindPlayer(context, command.Player, out var player, out failure))
         {
             return failure!;
         }
 
-        var changed = user!.Permissions.Grant(permission, command.CanDelegate);
+        var changed = player!.Permissions.Grant(permission, command.CanDelegate);
         if (changed)
         {
-            SynchronizePermissions(user);
+            SynchronizePermissions(player);
         }
 
         if (!changed)
@@ -2742,7 +2742,7 @@ public static class BuiltInCommands
                 "permission.unchanged",
                 "PermissionUnchanged_Message",
                 "{0} 已拥有相同或更高范围的 {1} 权限。",
-                user.Address.Value,
+                player.Address.Value,
                 permission.ToString()
             );
         }
@@ -2755,14 +2755,14 @@ public static class BuiltInCommands
             command.CanDelegate
                 ? "已授予 {0} 权限 {1}（允许再授权）。"
                 : "已授予 {0} 权限 {1}（仅允许使用）。",
-            user.Address.Value,
+            player.Address.Value,
             permission.ToString()
         );
     }
 
     private static CommandResult ExecutePermissionRevoke(
         CommandContext context,
-        RevokeUserPermissionCommand command
+        RevokePlayerPermissionCommand command
     )
     {
         if (!EnsureServer(out var failure))
@@ -2793,28 +2793,28 @@ public static class BuiltInCommands
             );
         }
 
-        if (!TryFindUser(context, command.User, out var user, out failure))
+        if (!TryFindPlayer(context, command.Player, out var player, out failure))
         {
             return failure!;
         }
 
-        if (!user!.Permissions.Revoke(permission))
+        if (!player!.Permissions.Revoke(permission))
         {
             return CommandResult.LocalizedFail(
                 "permission.not_found",
                 "PermissionNotHeld_Message",
                 "{0} 没有直接持有权限 {1}。",
-                user.Address.Value,
+                player.Address.Value,
                 permission.ToString()
             );
         }
 
-        SynchronizePermissions(user);
+        SynchronizePermissions(player);
         return CommandResult.LocalizedOk(
             "permission.revoked",
             "PermissionRevoked_Message",
             "已撤销 {0} 的权限 {1}。",
-            user.Address.Value,
+            player.Address.Value,
             permission.ToString()
         );
     }
@@ -2964,37 +2964,37 @@ public static class BuiltInCommands
         return false;
     }
 
-    private static bool TryFindUser(
+    private static bool TryFindPlayer(
         CommandContext context,
         string value,
-        out WorldPlayer? user,
+        out WorldPlayer? player,
         out CommandResult? failure
     )
     {
-        user = null;
+        player = null;
         if (context.Project is null)
         {
             failure = NoWorld();
             return false;
         }
 
-        user = FindUser(context.Project, value);
-        if (user is not null)
+        player = FindPlayer(context.Project, value);
+        if (player is not null)
         {
             failure = null;
             return true;
         }
 
         failure = CommandResult.LocalizedFail(
-            "permission.user_not_found",
-            "UserNotFound_Message",
+            "permission.player_not_found",
+            "PlayerIdentityNotFound_Message",
             "找不到主体地址：{0}。",
             value
         );
         return false;
     }
 
-    private static WorldPlayer? FindUser(Project? project, string value)
+    private static WorldPlayer? FindPlayer(Project? project, string value)
     {
         if (project is null) { return null; }
 
@@ -3008,19 +3008,19 @@ public static class BuiltInCommands
         }
     }
 
-    private static IEnumerable<WorldPlayer> GetUsers(Project? project) =>
+    private static IEnumerable<WorldPlayer> GetPlayers(Project? project) =>
         project?.FindSubsystem<SubsystemPlayers>(true)!.Store.Entries ?? [];
 
-    private static IEnumerable<CommandArgumentSuggestion> SuggestUsers(CommandSuggestionContext context)
+    private static IEnumerable<CommandArgumentSuggestion> SuggestPlayers(CommandSuggestionContext context)
     {
-        return GetUsers(context.Project).Select(user => new CommandArgumentSuggestion(
-                user.Address.Value,
-                LocalizedText.Literal(user.DisplayName)
+        return GetPlayers(context.Project).Select(player => new CommandArgumentSuggestion(
+                player.Address.Value,
+                LocalizedText.Literal(player.DisplayName)
             )
         );
     }
 
-    private static CharacterData? FindPlayer(Project? project, string value)
+    private static CharacterData? FindCharacter(Project? project, string value)
     {
         if (project is null)
         {
@@ -3065,7 +3065,7 @@ public static class BuiltInCommands
         }
     }
 
-    private static IEnumerable<CharacterData> GetPlayers(Project? project)
+    private static IEnumerable<CharacterData> GetCharacters(Project? project)
     {
         return project?.FindSubsystem<SubsystemCharacters>(true)?.Characters ?? [];
     }
@@ -3087,7 +3087,7 @@ public static class BuiltInCommands
     {
         if (context.CompletedTokens.Count < 2 ||
             context.Project is not { } project ||
-            FindPlayer(project, context.CompletedTokens[1]) is not { } target)
+            FindCharacter(project, context.CompletedTokens[1]) is not { } target)
         {
             return [];
         }
@@ -3101,7 +3101,7 @@ public static class BuiltInCommands
 
     private static IEnumerable<CommandArgumentSuggestion> SuggestTeleportDestinations(CommandSuggestionContext context)
     {
-        var players = GetPlayers(context.Project).ToArray();
+        var players = GetCharacters(context.Project).ToArray();
         var target = context.CompletedTokens.Count >= 2 &&
                      string.Equals(context.CompletedTokens[0], "player", StringComparison.OrdinalIgnoreCase)
             ? players.FirstOrDefault(player =>
@@ -3113,9 +3113,9 @@ public static class BuiltInCommands
         );
     }
 
-    private static IEnumerable<CommandArgumentSuggestion> SuggestPlayers(CommandSuggestionContext context)
+    private static IEnumerable<CommandArgumentSuggestion> SuggestCharacters(CommandSuggestionContext context)
     {
-        return GetPlayers(context.Project).Select(player =>
+        return GetCharacters(context.Project).Select(player =>
             new CommandArgumentSuggestion(
                 player.Name,
                 LocalizedText.Literal(player.CharacterId.ToString())
@@ -3177,12 +3177,12 @@ public static class BuiltInCommands
     )
     {
         if (context.CompletedTokens.Count < 2 ||
-            FindUser(context.Project, context.CompletedTokens[1]) is not { } user)
+            FindPlayer(context.Project, context.CompletedTokens[1]) is not { } player)
         {
             return [];
         }
 
-        return user.Permissions.Grants
+        return player.Permissions.Grants
             .Where(grant => context.Registry.Permissions.CanGrant(
                     grant.Permission,
                     context.Principal,
@@ -3204,16 +3204,16 @@ public static class BuiltInCommands
             );
     }
 
-    private static CommandResult FormatPermissionList(WorldPlayer user)
+    private static CommandResult FormatPermissionList(WorldPlayer player)
     {
-        var grants = user.Permissions.Grants;
+        var grants = player.Permissions.Grants;
         if (grants.Count == 0)
         {
             return CommandResult.LocalizedOk(
                 "permission.list",
                 "PermissionListEmpty_Message",
                 "{0} 当前没有任何指令权限。",
-                user.Address.Value
+                player.Address.Value
             );
         }
 
@@ -3224,7 +3224,7 @@ public static class BuiltInCommands
             "permission.list",
             "PermissionListHeading_Message",
             "{0} 的指令权限：\n{1}",
-            user.Address.Value,
+            player.Address.Value,
             FormatItems(values)
         );
     }
@@ -3239,12 +3239,12 @@ public static class BuiltInCommands
             : string.Join("\n", values.Select(item => $"- {item}"));
     }
 
-    internal static void SynchronizePermissions(WorldPlayer user)
+    internal static void SynchronizePermissions(WorldPlayer player)
     {
-        var session = CommonLib.Net.Clients.Values.FirstOrDefault(client => client.PlayerAddress == user.Address);
+        var session = CommonLib.Net.Clients.Values.FirstOrDefault(client => client.PlayerAddress == player.Address);
         if (session is null) { return; }
 
-        var package = CommandPackage.CreatePermissionSnapshot(user.Address, user.Permissions.Grants);
+        var package = CommandPackage.CreatePermissionSnapshot(player.Address, player.Permissions.Grants);
         CommonLib.Net.QueuePackage(package, PackageAudience.To(session));
     }
 

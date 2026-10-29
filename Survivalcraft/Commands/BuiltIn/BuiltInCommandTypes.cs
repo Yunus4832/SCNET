@@ -143,7 +143,7 @@ public sealed record RegenerateServerAuthCodeCommand : IGameCommand;
 public sealed record ShowPermissionHelpCommand : IGameCommand;
 
 [MessagePackObject]
-public sealed record ListPermissionUsersCommand : IGameCommand;
+public sealed record ListPermissionPlayersCommand : IGameCommand;
 
 [MessagePackObject]
 public sealed record ListPermissionNodesCommand : IGameCommand;
@@ -152,30 +152,35 @@ public sealed record ListPermissionNodesCommand : IGameCommand;
 public sealed record ListOwnPermissionsCommand : IGameCommand;
 
 [MessagePackObject]
-public sealed record ListUserPermissionsCommand([property: Key(0)] string User) : IGameCommand;
+public sealed record ListPlayerPermissionsCommand([property: Key(0)] string Player) : IGameCommand;
 
 [MessagePackObject]
-public sealed record GrantUserPermissionCommand(
-    [property: Key(0)] string User,
+public sealed record GrantPlayerPermissionCommand(
+    [property: Key(0)] string Player,
     [property: Key(1)] string Permission,
     [property: Key(2)] bool CanDelegate
 ) : IGameCommand;
 
 [MessagePackObject]
-public sealed record RevokeUserPermissionCommand([property: Key(0)] string User, [property: Key(1)] string Permission)
+public sealed record RevokePlayerPermissionCommand(
+    [property: Key(0)] string Player,
+    [property: Key(1)] string Permission
+)
     : IGameCommand;
 
 [MessagePackObject]
-public sealed record BanUserCommand([property: Key(0)] string User, [property: Key(1)] string Reason) : IGameCommand;
+public sealed record BanPlayerCommand([property: Key(0)] string Player, [property: Key(1)] string Reason)
+    : IGameCommand;
 
 [MessagePackObject]
-public sealed record UnbanUserCommand([property: Key(0)] string User) : IGameCommand;
+public sealed record UnbanPlayerCommand([property: Key(0)] string Player) : IGameCommand;
 
 [MessagePackObject]
 public sealed record ListPlayerBansCommand : IGameCommand;
 
 [MessagePackObject]
-public sealed record SetUserMuteCommand([property: Key(0)] string User, [property: Key(1)] bool IsMuted) : IGameCommand;
+public sealed record SetPlayerMuteCommand([property: Key(0)] string Player, [property: Key(1)] bool IsMuted)
+    : IGameCommand;
 
 [MessagePackObject]
-public sealed record ListMutedUsersCommand : IGameCommand;
+public sealed record ListMutedPlayersCommand : IGameCommand;

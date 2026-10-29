@@ -63,7 +63,7 @@ $Server = Start-Process -FilePath $Starter -PassThru -ArgumentList @(
 
 The Windows Starter allocates a separate console for Headless mode. Observe it through the runtime log
 and require `Headless server started. Press Ctrl+C to stop.` before claiming readiness. Use the separate
-console only to enter commands such as `permission users` or `stop`.
+console only to enter commands such as `permission players` or `stop`.
 
 PowerShell redirection is not equivalent to the Linux PTY/FIFO helper because the process calls
 `AllocConsole()`. Do not claim automated stdin control unless it has been independently verified.
