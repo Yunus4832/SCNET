@@ -31,7 +31,7 @@ public sealed class AboutHelpTopicTest
         ContentManager.Initialize();
         using var runtime = GameModRuntime.Start();
         runtime.InitializeLanguage(culture);
-        var topic = HelpTopic.Create("50", new JsonObject { ["Name"] = "About" });
+        var topic = HelpTopic.Create("52", new JsonObject { ["Name"] = "About" });
         var text = topic.Text;
         Assert.Contains(AboutHelpTopic.ShortBuildVersion(VersionsManager.BuildVersion), text);
         Assert.Contains(
@@ -55,8 +55,30 @@ public sealed class AboutHelpTopicTest
         Assert.Contains(AboutHelpTopic.SourceUrl, text);
         Assert.DoesNotContain("[Help:", text);
         Assert.Equal("[Help:5:value]", HelpTopic.Create("5", new JsonObject { ["Name"] = "Keyboard" }).Text);
-        Assert.Equal("About", LanguageManager.GetHelpTopic("50", "Name"));
-        Assert.Equal("Disclaimer", LanguageManager.GetHelpTopic("49", "Name"));
+        Assert.Equal("About", LanguageManager.GetHelpTopic("52", "Name"));
+        Assert.Equal("Disclaimer", LanguageManager.GetHelpTopic("51", "Name"));
+    }
+
+    [Theory]
+    [InlineData("zh-CN")]
+    [InlineData("en-US")]
+    [InlineData("pt-PT")]
+    [InlineData("ru-RU")]
+    public void AdmissionAndIdentityHelpFollowP2PInEveryLanguage(string culture)
+    {
+        ContentManager.Initialize();
+        using var runtime = GameModRuntime.Start();
+        runtime.InitializeLanguage(culture);
+        var topics = (JsonObject)LanguageManager.KeyWords["Help"]!;
+        var names = topics.Select(pair => (string?)pair.Value?["Name"]).ToArray();
+        var p2p = Array.IndexOf(names, "P2P");
+        Assert.True(p2p >= 0);
+        Assert.Equal(new[] { "P2P", "Admission", "PlayerIdentity" }, names.Skip(p2p).Take(3));
+        foreach (var key in new[] { "49", "50" })
+        {
+            Assert.False(string.IsNullOrWhiteSpace(LanguageManager.GetHelpTopic(key, "Title")));
+            Assert.False(string.IsNullOrWhiteSpace(LanguageManager.GetHelpTopic(key, "value")));
+        }
     }
 
     [Theory]
