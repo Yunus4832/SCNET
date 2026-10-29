@@ -1,23 +1,27 @@
 <Dialog xmlns="runtime-namespace:Game.Widgets">
-    <CanvasWidget Size="680, 490" HorizontalAlignment="Center" VerticalAlignment="Center" ClampToBounds="true">
+    <CanvasWidget Name="Surface" Size="600, 340" HorizontalAlignment="Center" VerticalAlignment="Center" ClampToBounds="true">
         <BevelledRectangleWidget Style="{Styles/DialogArea}"/>
-        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <LabelWidget Text="[AuthenticationConsentDialog:Title]" Size="630, 36" FontScale="0.95" TextAnchor="HorizontalCenter, VerticalCenter"/>
-            <LabelWidget Name="Description" Size="630, 52" FontScale="0.7" WordWrap="true"/>
-            <CanvasWidget Size="630, 136" Margin="0, 4">
-                <ScrollPanelWidget Direction="Vertical" ScrollPosition="0" ScrollSpeed="0">
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="20, 10">
+            <LabelWidget Text="[AuthenticationConsentDialog:Title]" Size="540, -1" WordWrap="true" Color="255, 255, 255" TextAnchor="HorizontalCenter" HorizontalAlignment="Center" Margin="0, 5"/>
+            <CanvasWidget Size="528, Infinity" HorizontalAlignment="Center" Margin="0, 6">
+                <ScrollPanelWidget Name="Information" Direction="Vertical" ScrollPosition="0" ScrollSpeed="0">
                     <StackPanelWidget Direction="Vertical">
-                        <LabelWidget Name="Service" Size="620, 26" FontScale="0.85" Ellipsis="true"/>
-                        <LabelWidget Name="Url" Size="620, -1" FontScale="0.7" WordWrap="true"/>
-                        <LabelWidget Name="Fingerprint" Size="620, -1" FontScale="0.7" WordWrap="true" Margin="0, 8"/>
-                        <LabelWidget Name="Server" Size="620, -1" FontScale="0.65" WordWrap="true"/>
+                        <LabelWidget Name="Description" Size="528, -1" FontScale="0.8" Color="200, 200, 200" WordWrap="true" Margin="0, 3"/>
+                        <LabelWidget Name="Service" Size="528, -1" Ellipsis="true" MaxLines="1" Margin="0, 3"/>
+                        <LabelWidget Name="Url" Size="528, -1" FontScale="0.75" Color="180, 180, 180" Ellipsis="true" MaxLines="1" Margin="0, 1"/>
+                        <LabelWidget Name="Fingerprint" Size="528, -1" FontScale="0.7" Color="180, 180, 180" WordWrap="true" Margin="0, 1"/>
+                        <LabelWidget Name="Server" Size="528, -1" FontScale="0.7" Color="180, 180, 180" WordWrap="true" Margin="0, 1"/>
                     </StackPanelWidget>
                 </ScrollPanelWidget>
             </CanvasWidget>
-            <BevelledButtonWidget Name="Details" Text="[AuthenticationConsentDialog:Details]" Style="{Styles/ButtonStyle_160x60}" Size="620, 44" Margin="0, 3"/>
-            <BevelledButtonWidget Name="Save" Text="[AuthenticationConsentDialog:Save]" Style="{Styles/ButtonStyle_160x60}" Size="620, 60" Margin="0, 3" Color="120, 255, 120"/>
-            <BevelledButtonWidget Name="Once" Text="[AuthenticationConsentDialog:Once]" Style="{Styles/ButtonStyle_160x60}" Size="620, 60" Margin="0, 3"/>
-            <BevelledButtonWidget Name="Reject" Text="[AuthenticationConsentDialog:Reject]" Style="{Styles/ButtonStyle_160x60}" Size="620, 60" Margin="0, 3"/>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+                <BevelledButtonWidget Name="Save" Text="[AuthenticationConsentDialog:Save]" Size="270, 56" CenterColor="50, 150, 35" BevelColor="50, 150, 35"/>
+                <BevelledButtonWidget Name="Once" Text="[AuthenticationConsentDialog:Once]" Size="270, 56"/>
+            </StackPanelWidget>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+                <BevelledButtonWidget Name="Details" Text="[AuthenticationConsentDialog:Details]" Size="270, 56"/>
+                <BevelledButtonWidget Name="Reject" Text="[AuthenticationConsentDialog:Reject]" Size="270, 56"/>
+            </StackPanelWidget>
         </StackPanelWidget>
     </CanvasWidget>
 </Dialog>

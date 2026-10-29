@@ -1,36 +1,25 @@
 <CanvasWidget xmlns="runtime-namespace:Game.Widgets">
-    <CanvasWidget Name="Surface" Size="560, 324" HorizontalAlignment="Center" VerticalAlignment="Center" ClampToBounds="true">
+    <CanvasWidget Name="Surface" Size="600, 324" HorizontalAlignment="Center" VerticalAlignment="Center" ClampToBounds="true">
         <BevelledRectangleWidget Style="{Styles/DialogArea}"/>
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" Margin="16, 10">
             <LabelWidget Text="[JoinCodeDialog:Title]" HorizontalAlignment="Center" Margin="0, 4"/>
             <CanvasWidget Size="0, 6"/>
-            <StackPanelWidget Direction="Horizontal" Margin="0, 3">
-                <LabelWidget Text="[JoinCodeDialog:Address]" Size="120, 44" FontScale="0.7"
-                             WordWrap="true" TextAnchor="Right, VerticalCenter" Color="180, 180, 180"/>
-                <CanvasWidget Size="10, 0"/>
-                <CanvasWidget Size="390, 44">
-                    <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                    <TextBoxWidget Name="Address" Margin="10, 0" VerticalAlignment="Center"
-                                   HorizontalAlignment="Stretch"/>
+            <CanvasWidget Size="532, 44" HorizontalAlignment="Center" Margin="0, 3">
+                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                <CanvasWidget Size="Infinity, Infinity" Margin="10, 0">
+                    <LabelWidget Name="AddressPlaceholder" Text="[JoinCodeDialog:Address]" Color="128, 128, 128" Ellipsis="true" MaxLines="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" IsHitTestVisible="false"/>
+                    <TextBoxWidget Name="Address" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
                 </CanvasWidget>
-            </StackPanelWidget>
-            <StackPanelWidget Direction="Horizontal" Margin="0, 3">
-                <LabelWidget Text="[JoinCodeDialog:Code]" Size="120, 44" FontScale="0.7"
-                             WordWrap="true" TextAnchor="Right, VerticalCenter" Color="180, 180, 180"/>
-                <CanvasWidget Size="10, 0"/>
-                <CanvasWidget Size="390, 44">
-                    <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                    <TextBoxWidget Name="Code" Margin="10, 0" VerticalAlignment="Center"
-                                   HorizontalAlignment="Stretch"/>
+            </CanvasWidget>
+            <CanvasWidget Size="532, 44" HorizontalAlignment="Center" Margin="0, 3">
+                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                <CanvasWidget Size="Infinity, Infinity" Margin="10, 0">
+                    <LabelWidget Name="CodePlaceholder" Text="[JoinCodeDialog:Code]" Color="128, 128, 128" Ellipsis="true" MaxLines="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" IsHitTestVisible="false"/>
+                    <TextBoxWidget Name="Code" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
                 </CanvasWidget>
-            </StackPanelWidget>
-            <StackPanelWidget Direction="Horizontal" Margin="0, 3">
-                <LabelWidget Text="[JoinCodeDialog:Relay]" Size="120, 60" FontScale="0.7"
-                             WordWrap="true" TextAnchor="Right, VerticalCenter" Color="180, 180, 180"/>
-                <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="Relay" Style="{Styles/ButtonStyle_310x60}" Size="390, 60"/>
-            </StackPanelWidget>
-            <LabelWidget Name="Error" Size="520, 28" IsVisible="false" FontScale="0.65" Color="255, 120, 120"
+            </CanvasWidget>
+            <BevelledButtonWidget Name="Relay" Style="{Styles/ButtonStyle_310x60}" Size="532, 60" HorizontalAlignment="Center" Margin="0, 3"/>
+            <LabelWidget Name="Error" Size="532, 28" IsVisible="false" FontScale="0.65" Color="255, 120, 120"
                          WordWrap="true" TextAnchor="HorizontalCenter"/>
             <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
                 <BevelledButtonWidget Name="Connect" Text="[NetPlayScreen:Connect]" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"/>

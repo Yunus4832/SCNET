@@ -369,12 +369,7 @@ internal sealed class ClientAdmissionUi : IDisposable
     private void AskPassword()
     {
         _passwordPending = false;
-        var title = _incorrectPassword
-            ? Text("IncorrectPassword")
-            : string.Format(
-                Text("PasswordTitle"),
-                IdentityAddressDisplay.Abbreviate(_node.AdmissionServerAddress ?? string.Empty)
-            );
+        var title = Text(_incorrectPassword ? "IncorrectPassword" : "PasswordTitle");
         _passwordDialog = new PasswordDialog(
             title,
             false,
@@ -406,7 +401,10 @@ internal sealed class ClientAdmissionUi : IDisposable
             },
             1,
             1024,
-            allowRemember: true
+            allowRemember: true,
+            description: string.IsNullOrEmpty(_node.AdmissionServerAddress)
+                ? null
+                : string.Format(Text("ServerIdentity"), IdentityAddressDisplay.Abbreviate(_node.AdmissionServerAddress))
         );
         DialogsManager.ShowDialog(_owner, _passwordDialog);
     }

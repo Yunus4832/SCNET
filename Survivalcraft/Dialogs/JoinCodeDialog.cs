@@ -7,6 +7,10 @@ namespace Game.Dialogs;
 
 public sealed class JoinCodeDialog : Dialog
 {
+    private readonly LabelWidget _addressPlaceholder;
+
+    private readonly LabelWidget _codePlaceholder;
+
     private readonly TextBoxWidget _address;
 
     private readonly TextBoxWidget _code;
@@ -25,6 +29,8 @@ public sealed class JoinCodeDialog : Dialog
     {
         _connect = connect;
         LoadContents(this, ContentManager.Get<XElement>("Dialogs/JoinCodeDialog"));
+        _addressPlaceholder = Children.Find<LabelWidget>("AddressPlaceholder")!;
+        _codePlaceholder = Children.Find<LabelWidget>("CodePlaceholder")!;
         _address = Children.Find<TextBoxWidget>("Address")!;
         _code = Children.Find<TextBoxWidget>("Code")!;
         _relay = Children.Find<ButtonWidget>("Relay")!;
@@ -42,6 +48,8 @@ public sealed class JoinCodeDialog : Dialog
 
     public override void Update()
     {
+        _addressPlaceholder.IsVisible = !_address.HasDisplayText;
+        _codePlaceholder.IsVisible = !_code.HasDisplayText;
         if (_relay.IsClicked)
         {
             _relayPolicy = (RelayPolicy)(((int)_relayPolicy + 1) % Enum.GetValues<RelayPolicy>().Length);
@@ -49,7 +57,7 @@ public sealed class JoinCodeDialog : Dialog
 
         _relay.Text = P2PRoomStatusDialog.Text($"Relay{_relayPolicy}");
         _error.IsVisible = !string.IsNullOrEmpty(_error.Text);
-        _surface.Size = new Vector2(560f, _error.IsVisible ? 352f : 324f);
+        _surface.Size = new Vector2(600f, _error.IsVisible ? 352f : 324f);
         if (Children.Find<ButtonWidget>("Connect")!.IsClicked)
         {
             TryConnect();

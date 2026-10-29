@@ -39,6 +39,11 @@ SCNET must work on desktop windows and mobile displays wider than 16:9.
 - Bottom action buttons should remain comfortably sized. Reduce unused container height and gaps before shrinking the buttons themselves.
 - Large editor panels may use available space to make tables and controls readable, but their internal rows should still follow a deliberate rhythm.
 
+## Conditional settings
+
+- Reflect setting dependencies through visibility: hide server sub-options when the server switch is off, and hide P2P children when its switch is off. Preserve entered configuration while hidden; a visibility change should not silently reset data.
+- Show only the selected admission mode's sub-options. Close expanded selectors when their parent section becomes hidden. Keep disabled-but-visible controls for temporary unavailability or a state the user still needs to understand, rather than using that presentation for every inactive branch.
+
 ## Text and localization
 
 - All user-facing text must use the localization system and update correctly when the language changes during the process lifetime.

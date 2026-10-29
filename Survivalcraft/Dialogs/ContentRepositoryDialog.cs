@@ -6,6 +6,10 @@ namespace Game.Dialogs;
 
 public sealed class ContentRepositoryDialog : Dialog
 {
+    private readonly LabelWidget _namePlaceholder;
+
+    private readonly LabelWidget _addressPlaceholder;
+
     private readonly TextBoxWidget _addressTextBox;
 
     private readonly ButtonWidget _cancelButton;
@@ -18,8 +22,8 @@ public sealed class ContentRepositoryDialog : Dialog
 
     public ContentRepositoryDialog(
         string title,
-        string nameLabel,
-        string addressLabel,
+        string namePlaceholder,
+        string addressPlaceholder,
         string saveButtonText,
         string name,
         string address,
@@ -32,8 +36,10 @@ public sealed class ContentRepositoryDialog : Dialog
         LoadContents(this, ContentManager.Get<XElement>("Dialogs/ContentRepositoryDialog"));
 
         Children.Find<LabelWidget>("ContentRepositoryDialog.Title")!.Text = title;
-        Children.Find<LabelWidget>("ContentRepositoryDialog.NameLabel")!.Text = nameLabel;
-        Children.Find<LabelWidget>("ContentRepositoryDialog.AddressLabel")!.Text = addressLabel;
+        _namePlaceholder = Children.Find<LabelWidget>("ContentRepositoryDialog.NamePlaceholder")!;
+        _addressPlaceholder = Children.Find<LabelWidget>("ContentRepositoryDialog.AddressPlaceholder")!;
+        _namePlaceholder.Text = namePlaceholder;
+        _addressPlaceholder.Text = addressPlaceholder;
         _nameTextBox = Children.Find<TextBoxWidget>("ContentRepositoryDialog.Name")!;
         _addressTextBox = Children.Find<TextBoxWidget>("ContentRepositoryDialog.Address")!;
         _saveButton = Children.Find<ButtonWidget>("ContentRepositoryDialog.Save")!;
@@ -44,6 +50,7 @@ public sealed class ContentRepositoryDialog : Dialog
         _addressTextBox.MaximumLength = TemporaryContentRepositories.MaximumUrlLength;
         _addressTextBox.Text = address;
         _saveButton.Text = saveButtonText;
+        UpdatePlaceholders();
         _nameTextBox.HasFocus = true;
         _nameTextBox.Enter += delegate { _addressTextBox.HasFocus = true; };
         _addressTextBox.Enter += delegate { TrySave(); };
@@ -51,6 +58,7 @@ public sealed class ContentRepositoryDialog : Dialog
 
     public override void Update()
     {
+        UpdatePlaceholders();
         if (_saveButton.IsClicked)
         {
             TrySave();
@@ -59,6 +67,12 @@ public sealed class ContentRepositoryDialog : Dialog
         {
             DialogsManager.HideDialog(this);
         }
+    }
+
+    private void UpdatePlaceholders()
+    {
+        _namePlaceholder.IsVisible = !_nameTextBox.HasDisplayText;
+        _addressPlaceholder.IsVisible = !_addressTextBox.HasDisplayText;
     }
 
     private void TrySave()

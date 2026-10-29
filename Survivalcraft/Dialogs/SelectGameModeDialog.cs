@@ -1,5 +1,3 @@
-using System.Xml.Linq;
-
 namespace Game.Dialogs;
 
 public class SelectGameModeDialog : ListSelectionDialog
@@ -7,26 +5,22 @@ public class SelectGameModeDialog : ListSelectionDialog
     public SelectGameModeDialog(
         string title,
         bool allowAdventure,
-        Action<GameMode> selectionHandler
+        Action<GameMode> selectionHandler,
+        GameMode? currentGameMode = null
     ) : base(
         title,
         GetAllowedGameModes(allowAdventure),
-        140f,
-        delegate(object item)
-        {
-            var gameMode = (GameMode)item;
-            var node = ContentManager.Get<XElement>("Widgets/SelectGameModeItem");
-            var obj = (ContainerWidget)LoadWidget(null, node, null);
-            obj.Children.Find<LabelWidget>("SelectGameModeItem.Name")!.Text =
-                LanguageManager.Get("GameMode", gameMode.ToString());
-            obj.Children.Find<LabelWidget>("SelectGameModeItem.Description")!.Text =
-                StringsManager.GetString("GameMode", gameMode, "Description");
-            return obj;
-        },
-        delegate(object item) { selectionHandler((GameMode)item); }
+        120f,
+        item => CreateTextItem(
+            LanguageManager.Get("GameMode", ((GameMode)item).ToString()),
+            StringsManager.GetString("GameMode", (GameMode)item, "Description"),
+            true
+        ),
+        item => selectionHandler((GameMode)item),
+        currentGameMode
     )
     {
-        ContentSize = new Vector2(750f, 420f);
+        ContentSize = new Vector2(680f, 420f);
     }
 
     private static IEnumerable<GameMode> GetAllowedGameModes(bool allowAdventure)

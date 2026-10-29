@@ -24,6 +24,8 @@ public class ScrollPanelWidget : ContainerWidget
 
     public virtual float ScrollSpeed { get; set; }
 
+    public bool IsScrollBarVisible { get; set; } = true;
+
     public void StartInitialScroll()
     {
         ScrollPosition = 12f;
@@ -195,6 +197,8 @@ public class ScrollPanelWidget : ContainerWidget
 
     public override void Draw(DrawContext dc)
     {
+        if (!IsScrollBarVisible) { return; }
+
         var color = new Color((byte)128, (byte)128, (byte)128) *
                     GlobalColorTransform *
                     MathUtils.Saturate(_scrollBarAlpha);

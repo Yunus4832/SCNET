@@ -3140,9 +3140,10 @@
             "P2PSelectService": "Selecionar serviço",
             "P2PInvalidSettings": "P2P requer um endereço e nome de sala válidos",
             "ServerIdentity": "Identidade do servidor",
-            "DefaultIdentity": "Usar predefinição",
+            "DefaultIdentity": "Predefinida",
             "MissingIdentity": "A identidade selecionada não existe. Seleciona outra ou restaura a cópia",
-            "AuthenticationService": "Serviço de autenticação"
+            "AuthenticationService": "Serviço de autenticação",
+            "ChangePassword": "Alterar senha"
         },
         "PlayScreen": {
             "1": "Lista do mundo",
@@ -3155,7 +3156,7 @@
             "8": "Você pode criar no máximo {0} mundos",
             "9": "{0} personagens",
             "10": "{0} personagem",
-            "11": " [Servidor]",
+            "11": "[Servidor]",
             "12": "Preparando mods do mundo",
             "13": "Verificando mods necessários...",
             "14": "Falha ao preparar mods",
@@ -3540,7 +3541,6 @@
             "Title": "Ligar por código",
             "Address": "URL de sinalização",
             "Code": "Código",
-            "Relay": "Política de retransmissão",
             "InvalidAddress": "Introduza um URL HTTPS de sinalização válido."
         },
         "P2PRoomStatusDialog": {
@@ -3574,10 +3574,8 @@
             "3": "Nome da personagem"
         },
         "PasswordDialog": {
-            "Repeat": "Confirmar",
             "Remember": "Guardar nesta instância",
             "PasswordLengthHint": "{0}–{1} caracteres",
-            "Password": "Palavra-passe",
             "RepeatPlaceholder": "Repita a palavra-passe"
         },
         "AuthenticationConsentDialog": {
@@ -3589,11 +3587,11 @@
             "Server": "Servidor solicitante: {0}",
             "Save": "Entrar e salvar",
             "Once": "Entrar só desta vez",
-            "Reject": "Recusar e voltar",
-            "Details": "Ver identidades completas"
+            "Reject": "Recusar",
+            "Details": "Ver ID"
         },
         "ClientAdmissionUi": {
-            "PasswordTitle": "Digite a senha do servidor\n{0}",
+            "PasswordTitle": "Introduza a palavra-passe do servidor",
             "WaitPassword": "Aguardando a senha do servidor",
             "WaitApproval": "Solicitando aprovação de autenticação",
             "WaitBrowser": "Conclua o login no navegador",
@@ -3608,7 +3606,8 @@
             "SaveFailed": "Login concluído, mas não foi possível salvar. Tente novamente ou entre só desta vez",
             "BrowserFailed": "Não foi possível abrir a página. Verifique o navegador padrão",
             "NetworkInterrupted": "A ligação de rede foi interrompida. Volte a entrar no servidor.",
-            "PasswordSaveFailed": "Não foi possível guardar a palavra-passe. Esta ligação pode continuar."
+            "PasswordSaveFailed": "Não foi possível guardar a palavra-passe. Esta ligação pode continuar.",
+            "ServerIdentity": "ID do servidor: {0}"
         },
         "ServerAdmission": {
             "Title": "Admissão",

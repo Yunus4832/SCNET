@@ -3140,9 +3140,10 @@
             "P2PSelectService": "选择信令服务器",
             "P2PInvalidSettings": "开启 P2P 需要有效的信令地址和房间名称",
             "ServerIdentity": "服务器身份",
-            "DefaultIdentity": "使用实例默认身份",
+            "DefaultIdentity": "默认",
             "MissingIdentity": "所选服务器身份不存在，请重新选择或恢复身份备份",
-            "AuthenticationService": "认证服务器"
+            "AuthenticationService": "认证服务器",
+            "ChangePassword": "修改密码"
         },
         "PlayScreen": {
             "1": "世界列表",
@@ -3155,7 +3156,7 @@
             "8": "你最多只能创建{0}个世界",
             "9": "{0} 个角色",
             "10": "{0} 个角色",
-            "11": "[联机档]",
+            "11": "[服务器]",
             "12": "准备世界模组",
             "13": "正在检查所需模组...",
             "14": "模组准备失败",
@@ -3540,7 +3541,6 @@
             "Title": "联机码连接",
             "Address": "信令地址",
             "Code": "联机码",
-            "Relay": "中继策略",
             "InvalidAddress": "请输入有效的 HTTPS 信令地址。"
         },
         "P2PRoomStatusDialog": {
@@ -3574,10 +3574,8 @@
             "3": "角色名称"
         },
         "PasswordDialog": {
-            "Repeat": "确认密码",
             "Remember": "在此实例记住密码",
             "PasswordLengthHint": "{0}–{1} 个字符",
-            "Password": "密码",
             "RepeatPlaceholder": "再次输入密码"
         },
         "AuthenticationConsentDialog": {
@@ -3589,11 +3587,11 @@
             "Server": "请求认证的游戏服务器：{0}",
             "Save": "登录并保存",
             "Once": "仅此次登录",
-            "Reject": "拒绝并返回",
-            "Details": "核对完整身份"
+            "Reject": "拒绝",
+            "Details": "查看标识"
         },
         "ClientAdmissionUi": {
-            "PasswordTitle": "输入服务器密码\n{0}",
+            "PasswordTitle": "输入服务器密码",
             "WaitPassword": "等待输入服务器密码",
             "WaitApproval": "正在请求认证批准",
             "WaitBrowser": "请在浏览器中完成认证",
@@ -3608,7 +3606,8 @@
             "SaveFailed": "已完成登录，但无法保存。请重试或选择仅此次登录",
             "BrowserFailed": "无法打开认证网页，请检查默认浏览器",
             "NetworkInterrupted": "网络连接已中断，请重新加入服务器。",
-            "PasswordSaveFailed": "无法保存服务器密码，本次连接仍可继续。"
+            "PasswordSaveFailed": "无法保存服务器密码，本次连接仍可继续。",
+            "ServerIdentity": "服务器标识：{0}"
         },
         "ServerAdmission": {
             "Title": "准入方式",

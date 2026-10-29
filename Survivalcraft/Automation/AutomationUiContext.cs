@@ -119,11 +119,7 @@ public static class AutomationUiContext
                     continue;
                 }
 
-                var text = row is LabelWidget label
-                    ? label.Text
-                    : row is ContainerWidget panel
-                        ? string.Join(" | ", panel.Children.OfType<LabelWidget>().Select(item => item.Text))
-                        : row.Title;
+                var text = GetListItemText(row);
                 yield return new AutomationTarget(
                     $"{path}/Item[{index}]",
                     row.GetType().Name,
@@ -196,5 +192,18 @@ public static class AutomationUiContext
 
         var screen = ScreensManager.CurrentScreen;
         return (screen, "screen/" + ScreensManager.GetCurrentScreenName());
+    }
+
+    private static string GetListItemText(Widget widget)
+    {
+        if (widget is LabelWidget label) { return label.Text; }
+
+        return widget is ContainerWidget container
+            ? string.Join(
+                " | ",
+                container.Children.Where(child => child.IsVisible)
+                    .Select(GetListItemText).Where(text => !string.IsNullOrEmpty(text))
+            )
+            : widget.Title;
     }
 }

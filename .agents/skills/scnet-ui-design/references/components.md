@@ -13,6 +13,25 @@ Use `ActionPanelWidget` for a Screen's primary and secondary bottom operations.
 
 Read the current `ActionPanelWidget` implementation and `ActionPanelWidget.xml` before relying on its slot, weight, accessory, or trailing-action behavior.
 
+## Button appearance and sizing
+
+Use the existing role-specific baseline rather than choosing a new shade or height for each Screen.
+These values describe the current implementation; the linked widget/style remains authoritative if it changes.
+
+| Role | Current baseline | Owner/reference |
+| --- | --- | --- |
+| Ordinary form/dialog button | Outer height 60 | [ButtonStyle_160x60](../../../../Content/Assets/Styles/ButtonStyle_160x60.xml), [ButtonStyle_310x60](../../../../Content/Assets/Styles/ButtonStyle_310x60.xml) |
+| Top tab | Outer height 56, shared horizontal margins | [ScreenTopTabButton](../../../../Content/Assets/Styles/ScreenTopTabButton.xml), [ScreenTopTabs](../../../../Content/Assets/Styles/ScreenTopTabs.xml) |
+| Bottom action bar | Outer height 56 | [ActionPanelWidget](../../../../Content/Assets/Widgets/ActionPanelWidget.xml) |
+| Positive action | RGB 50, 150, 35 for both center and bevel | [PlayScreen action colors](../../../../Survivalcraft/Screens/PlayScreen.cs), [HostedWorldScreen](../../../../Content/Assets/Screens/HostedWorldScreen.xml) |
+| Destructive action | RGB 150, 50, 35 for both center and bevel | [ManageIdentitiesScreen action colors](../../../../Survivalcraft/Screens/ManageIdentitiesScreen.cs), [HostedWorldScreen](../../../../Content/Assets/Screens/HostedWorldScreen.xml) |
+
+- Use green for forward actions such as start/run, join, install, login, and making an identity the default. Use red for delete, stop, or forgetting saved credentials. Ordinary selectors, cancel/back, and routine dialog confirmation can retain the standard neutral treatment; do not make every affirmative dialog button green.
+- Set both `CenterColor` and `BevelColor` when applying a semantic color. Do not introduce a near-matching green/red or recolor label text as a substitute. Enabled active tabs retain legible light text; checking/pressing a tab should not turn its text black.
+- Use `ScreenTopTabButton`/`ScreenTopTabs` for peer top tabs. Do not give management pages taller tabs than neighboring Screens. Match button heights within a row; use an existing compact dialog/grid pattern when that role needs it, rather than treating every button as height 60.
+- Dimensions above are logical outer layout units, not physical display pixels. [BevelledButtonContents](../../../../Content/Assets/Widgets/BevelledButtonContents.xml) currently adds a 6-unit inset on each side, so outer heights 60/56 have visible heights 48/44. Compare actual visible borders against fields and selectors before adding offsets; equal outer sizes alone do not prove alignment.
+- Keep disabled actions visibly disabled. Recover space by reducing unnecessary panel height and gaps before shrinking touch targets or text.
+
 ## Selection controls
 
 - Use `SelectionDrawerWidget` for selectors near Screen edges or where the expanded list should escape its layout container and overlay surrounding content.
@@ -23,6 +42,16 @@ Read the current `ActionPanelWidget` implementation and `ActionPanelWidget.xml` 
 
 Do not reintroduce local clipping or overflow workarounds without checking whether the shared selector already owns popup placement and bounds handling.
 
+## List-selection dialogs
+
+Use `ListSelectionDialog` for a lightweight choice that takes effect immediately. The current design keeps the title inside the shared surface, uses a compact title-to-list gap, and has no row dividers or extra confirmation bar.
+
+- Plain text choices are centered. Use `CreateTextItem(name, description, wrapDescription)` for a consistent centered name/details layout; a service endpoint can go on its own subordinate line. Server identity choices keep the name and abbreviated identifier together on one line. Simple choices use a narrower panel than descriptive or illustrated lists.
+- Pass `currentItem` when the caller knows the active business value. Its rounded, borderless green fill identifies the current option independently of transient click selection. Keep the fill clearly distinguishable from the black panel and omit a separate right-side tick. Opening the dialog must not invoke the selection callback. The dialog initially brings the current item into view.
+- Keep rows equal in height within a list and fit complete rows into the available viewport when possible. `ContentSize` sets preferred panel width and maximum list height; available space still takes precedence. Do not restore oversized fixed panels or erase user scrolling each frame.
+- Text rows use ellipsis; descriptions can wrap with a bounded line count. Custom illustrated rows remain supported through the widget factory and should retain readable image/text grouping within the shared item padding.
+- Selection closes the dialog; Escape/back or a tap outside cancels without invoking the callback. A tap on the internal title is not an outside tap. Keep these behaviors distinct from marking the current item.
+
 ## Dialogs and notifications
 
 - Use shared dialog surfaces and rounded borders; do not hand-build a slightly different frame for each feature.
@@ -30,6 +59,16 @@ Do not reintroduce local clipping or overflow workarounds without checking wheth
 - Choose cancel behavior explicitly. Escape/back must dismiss or invoke the intended cancellation path without activating an affirmative action or leaking input to the underlying Screen.
 - Use an in-game toast for successful, informational, or transient events that do not require a decision. Do not interrupt play with a confirmation dialog merely to report completion.
 - Use dialogs for decisions, destructive confirmation, required input, or errors that the user must acknowledge.
+
+## Input-dialog composition
+
+- For simple name/address/code/password dialogs, prefer centered fields with placeholders over a separate left-hand label column. Keep fields equal in width and center them with the title and bottom action group. Existing `ContentRepositoryDialog`, `JoinCodeDialog`, and `PasswordDialog` are the references for this composition.
+- Place field purpose in the placeholder when the title alone does not identify it. A password dialog can use the first placeholder for its length/format and the second for repeat entry; keep masks and validation unchanged.
+- Omit a separate label for a self-explanatory choice button, such as the relay-policy button in `JoinCodeDialog`. Keep its selected text understandable on its own and align its visible border with the fields.
+- Placeholders disappear after entry. Keep a persistent label or short description when users must identify similar filled values, understand units, or consult essential instructions. This recommendation is for simple dialogs, not a blanket removal of labels from settings Screens or complex forms.
+- Reuse localized field strings where they still express the purpose. Keep long instructions out of titles: use a concise title plus a placeholder or subordinate description. Do not shrink every title to accommodate one long translation.
+- Determine placeholder visibility from display content, including IME composition (`TextBoxWidget.HasDisplayText` in the current implementation), rather than focus or committed text alone. Show the hint for an empty focused field, hide it while entering/composing text, and restore it after clearing. Placeholder text is display-only and must not enter saved values, validation, password masks, or callbacks.
+- Reuse the existing placeholder composition before introducing another input abstraction. Check empty, prefilled, focused, filled/cleared, password-confirmation, optional remember-password, and error states as applicable. A render fixture can verify layout and prepared states; use real interaction when claiming IME or soft-keyboard correctness.
 
 ## Inputs, sliders, and checkboxes
 

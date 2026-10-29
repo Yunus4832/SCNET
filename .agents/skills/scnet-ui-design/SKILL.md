@@ -5,7 +5,7 @@ description: "Design, implement, preview, or review SCNET game and mod UI layout
 
 # SCNET UI Design
 
-Preserve a coherent game UI across desktop, Android, window resizing, and localization. Treat existing shared widgets and style assets as the source of truth for concrete dimensions and colors; this skill records design intent and selection criteria, not duplicated constants.
+Preserve a coherent game UI across desktop, Android, window resizing, and localization. Treat existing shared widgets and style assets as the source of truth for concrete dimensions and colors; this skill records design intent and selection criteria; references identify current style baselines without creating a second source of UI constants.
 
 ## Working method
 
@@ -33,6 +33,8 @@ Choose checks proportional to the change. A successful screenshot or exit code d
 - Aim for an overall centered composition with a modest rightward visual bias on wide screens, not a column pinned to the right edge. Balance secondary information on the left when the page naturally supports it.
 - Reuse the shared Screen area styles and standard widgets. Neighboring Screens should not visibly jump in top margin, content width, description height, or bottom action spacing.
 - Align the visible edges of controls, not only their outer layout boxes. Internal padding, labels, checkboxes, sliders, and text fields must form a stable pixel-level column when presented together.
+- Prefer centered, placeholder-led input dialogs over a separate left label column; keep persistent labels where users need them after entering a value. See the component guidance for exceptions and input-state checks.
+- Reuse semantic button colors and role-specific heights from existing styles; top tabs and action bars should remain compact and mutually consistent.
 - Keep controls comfortably usable without wasting vertical space. Favor consistent heights and compact gaps over shrinking primary buttons or leaving large dead bands.
 - Design for localization and resizing from the start. Use concise localized labels, ellipsis where identity remains clear, and stable widths where changing window size would otherwise make adjacent controls drift.
 - Preserve the user's explicit design direction over these defaults. If a request conflicts with an existing preference, implement the request and update this skill only when the new choice is intended as a reusable convention.

@@ -3,5 +3,5 @@
     <BlockIconWidget Name="SelectBlockItem.Block" Size="64, 64" VerticalAlignment="Center"
                      HorizontalAlignment="Center"/>
     <CanvasWidget Size="20, 0"/>
-    <LabelWidget Name="SelectBlockItem.Text" Color="255, 255, 255" VerticalAlignment="Center"/>
+    <LabelWidget Name="SelectBlockItem.Text" Size="Infinity, -1" Ellipsis="true" MaxLines="1" Color="255, 255, 255" VerticalAlignment="Center"/>
 </StackPanelWidget>

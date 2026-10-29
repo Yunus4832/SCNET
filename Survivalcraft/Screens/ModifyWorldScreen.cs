@@ -94,9 +94,10 @@ public class ModifyWorldScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new SelectGameModeDialog(
-                    string.Empty,
+                    LanguageManager.GetContentWidgets(_typeName, 3),
                     _cruelAllowed,
-                    delegate(GameMode gameMode) { WorldSettings.GameMode = gameMode; }
+                    delegate(GameMode gameMode) { WorldSettings.GameMode = gameMode; },
+                    WorldSettings.GameMode
                 )
             );
         }

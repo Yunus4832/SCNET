@@ -6,7 +6,7 @@
                            HorizontalAlignment="Center"/>
     </CanvasWidget>
     <StackPanelWidget Direction="Vertical" VerticalAlignment="Center">
-        <LabelWidget Name="CharacterSkinItem.Text" Text="[CharacterSkinItem:1]" Color="255, 255, 255"/>
+        <LabelWidget Name="CharacterSkinItem.Text" Size="Infinity, -1" Ellipsis="true" MaxLines="1" Text="[CharacterSkinItem:1]" Color="255, 255, 255"/>
         <LabelWidget Name="CharacterSkinItem.Details" Color="128, 128, 128" VerticalAlignment="Center"/>
     </StackPanelWidget>
 </StackPanelWidget>

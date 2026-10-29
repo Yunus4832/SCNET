@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Engine.Graphics;
+
 using EntitySystem.Core;
 
 namespace Game.Widgets;
@@ -124,6 +126,10 @@ public class CreativeInventoryWidget : CanvasWidget
                         c => new LabelWidget
                         {
                             Text = LanguageManager.Get("BlocksManager", ((Category)c).Name),
+                            Size = new Vector2(float.PositiveInfinity, -1f),
+                            Ellipsis = true,
+                            MaxLines = 1,
+                            TextAnchor = TextAnchor.HorizontalCenter,
                             Color = ((Category)c).Color,
                             HorizontalAlignment = WidgetAlignment.Center,
                             VerticalAlignment = WidgetAlignment.Center
@@ -131,7 +137,8 @@ public class CreativeInventoryWidget : CanvasWidget
                         delegate(object c)
                         {
                             _componentCreativeInventory.CategoryIndex = _categories.IndexOf((Category)c);
-                        }
+                        },
+                        _categories[_componentCreativeInventory.CategoryIndex]
                     )
                 );
             }

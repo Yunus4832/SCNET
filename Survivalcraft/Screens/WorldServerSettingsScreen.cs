@@ -24,7 +24,9 @@ public class WorldServerSettingsScreen : Screen
 
     private readonly ButtonWidget _admissionButton;
 
-    private readonly LabelWidget _admissionSummary;
+    private readonly ContainerWidget _passwordRow;
+
+    private readonly ButtonWidget _changePasswordButton;
 
     private PasswordDialog? _admissionPassword;
 
@@ -97,7 +99,8 @@ public class WorldServerSettingsScreen : Screen
             label.MaxLines = 1;
         }
 
-        _admissionSummary = Children.Find<LabelWidget>("AdmissionSummary")!;
+        _passwordRow = Children.Find<ContainerWidget>("PasswordRow")!;
+        _changePasswordButton = Children.Find<ButtonWidget>("ChangePassword")!;
         _p2pButton = Children.Find<ButtonWidget>("P2P")!;
         _p2pOptions = Children.Find<ContainerWidget>("P2POptions")!;
         _p2pService = Children.Find<InlineSelectionWidget>("P2PService")!;
@@ -139,6 +142,11 @@ public class WorldServerSettingsScreen : Screen
     {
         _generation++;
         _admission = parameters.OfType<WorldAdmissionDraft>().FirstOrDefault() ?? new WorldAdmissionDraft();
+        if (_admission.Configuration.Mode == ServerAdmissionMode.Password)
+        {
+            _admission.PasswordConfiguration = _admission.Configuration;
+        }
+
         _worldSettings = parameters.Length > 0 && parameters[0] is WorldSettings worldSettings
             ? worldSettings
             : new WorldSettings { RunServer = true };
@@ -190,8 +198,14 @@ public class WorldServerSettingsScreen : Screen
             : LocalIdentityManager.Current.GetIdentities(IdentityPurpose.Server)
                     .FirstOrDefault(identity => identity.Address == _worldSettings.ServerIdentityAddress) is
                 { } selectedIdentity
-                ? IdentityLabel(selectedIdentity)
+                ? selectedIdentity.Name.Length > 0
+                    ? selectedIdentity.Name
+                    : IdentityAddressDisplay.Abbreviate(selectedIdentity.Address)
                 : GetText("MissingIdentity");
+        _passwordRow.IsVisible = _admission.Configuration.Mode == ServerAdmissionMode.Password;
+        _changePasswordButton.IsEnabled = _passwordDerivation is null;
+        if (_changePasswordButton.IsClicked) { ChangePassword(_generation); }
+
         _authenticationServiceRow.IsVisible = _admission.Configuration.Mode == ServerAdmissionMode.External;
         _authenticationServiceButton.Text = _admission.Configuration.Authority?.Description.DisplayName ??
                                             (AuthenticationManager.Current.Services.Services.Any(service =>
@@ -205,10 +219,6 @@ public class WorldServerSettingsScreen : Screen
 
         _admissionButton.Text = AdmissionText(_admission.Configuration.Mode.ToString());
         _admissionButton.IsEnabled = _passwordDerivation is null;
-        _admissionSummary.Text = _admission.Configuration.Authority is { } authority
-            ? authority.BaseUri.AbsoluteUri + "\n" + IdentityAddressDisplay.Abbreviate(authority.Identity.Address)
-            : string.Empty;
-        _admissionSummary.IsVisible = _admissionSummary.Text.Length > 0;
         if (_passwordDerivation is { IsCompleted: true } derivation)
         {
             _passwordDerivation = null;
@@ -271,64 +281,77 @@ public class WorldServerSettingsScreen : Screen
                 if (mode == ServerAdmissionMode.Open) { SetAdmission(ServerAdmissionPolicy.Open); }
                 else if (mode == ServerAdmissionMode.Password)
                 {
-                    _admissionPassword = new PasswordDialog(
-                        AdmissionText("Password"),
-                        true,
-                        password =>
-                        {
-                            _admissionPassword = null;
-                            if (password is null) { return; }
-
-                            if (generation != _generation)
-                            {
-                                Array.Clear(password);
-                                return;
-                            }
-
-                            _derivationGeneration = generation;
-                            _passwordDerivation = Task.Run(() =>
-                                {
-                                    try { return ServerAdmissionPolicy.WithPassword(new string(password)); }
-                                    finally { Array.Clear(password); }
-                                }
-                            );
-                        },
-                        1,
-                        1024
-                    );
-                    DialogsManager.ShowDialog(this, _admissionPassword);
+                    if (_admission.PasswordConfiguration is { } passwordPolicy) { SetAdmission(passwordPolicy); }
+                    else { ChangePassword(generation); }
                 }
                 else
                 {
                     SelectAuthenticationService(generation);
                 }
-            }
+            },
+            _admission.Configuration.Mode
         );
         DialogsManager.ShowDialog(this, _admissionSelection);
     }
 
-    private static string IdentityLabel(LocalIdentityEntry identity) =>
-        (identity.Name.Length > 0 ? identity.Name : GetText("ServerIdentity")) +
-        " · " +
-        IdentityAddressDisplay.Abbreviate(identity.Address);
+    private void ChangePassword(int generation)
+    {
+        _admissionPassword = new PasswordDialog(
+            AdmissionText("Password"),
+            true,
+            password =>
+            {
+                _admissionPassword = null;
+                if (password is null) { return; }
+
+                if (generation != _generation)
+                {
+                    Array.Clear(password);
+                    return;
+                }
+
+                _derivationGeneration = generation;
+                _passwordDerivation = Task.Run(() =>
+                    {
+                        try { return ServerAdmissionPolicy.WithPassword(new string(password)); }
+                        finally { Array.Clear(password); }
+                    }
+                );
+            },
+            1,
+            1024
+        );
+        DialogsManager.ShowDialog(this, _admissionPassword);
+    }
 
     private void SelectServerIdentity()
     {
         var generation = _generation;
         var choices = new object[] { GetText("DefaultIdentity") }
             .Concat(LocalIdentityManager.Current.GetIdentities(IdentityPurpose.Server)).ToArray();
+        var current = _worldSettings.ServerIdentityAddress is null
+            ? choices[0]
+            : choices.OfType<LocalIdentityEntry>()
+                .FirstOrDefault(identity => identity.Address == _worldSettings.ServerIdentityAddress);
         _admissionSelection = new ListSelectionDialog(
             GetText("ServerIdentity"),
             choices,
             60,
-            item => item is LocalIdentityEntry identity ? IdentityLabel(identity) : (string)item,
+            item => item is LocalIdentityEntry identity
+                ? ListSelectionDialog.CreateTextItem(
+                    identity.Name.Length > 0
+                        ? identity.Name + " · " + IdentityAddressDisplay.Abbreviate(identity.Address)
+                        : IdentityAddressDisplay.Abbreviate(identity.Address)
+                )
+                : ListSelectionDialog.CreateTextItem((string)item),
             item =>
             {
                 _admissionSelection = null;
                 if (generation != _generation) { return; }
 
                 _worldSettings.ServerIdentityAddress = (item as LocalIdentityEntry)?.Address;
-            }
+            },
+            current
         );
         DialogsManager.ShowDialog(this, _admissionSelection);
     }
@@ -362,17 +385,21 @@ public class WorldServerSettingsScreen : Screen
         _admissionSelection = new ListSelectionDialog(
             AdmissionText("ChooseService"),
             providers,
-            60,
-            provider => ((InstalledAuthenticationService)provider).Endpoint.Description.DisplayName +
-                        " · " +
-                        ((InstalledAuthenticationService)provider).Endpoint.BaseUri.Host,
+            76,
+            provider => ListSelectionDialog.CreateTextItem(
+                ((InstalledAuthenticationService)provider).Endpoint.Description.DisplayName,
+                ((InstalledAuthenticationService)provider).Endpoint.BaseUri.Host
+            ),
             provider =>
             {
                 _admissionSelection = null;
                 if (generation != _generation) { return; }
 
                 SetAdmission(ServerAdmissionPolicy.WithAuthority(((InstalledAuthenticationService)provider).Endpoint));
-            }
+            },
+            providers.FirstOrDefault(provider =>
+                provider.Endpoint.Identity.Address == _admission.Configuration.Authority?.Identity.Address
+            )
         );
         DialogsManager.ShowDialog(this, _admissionSelection);
     }
@@ -382,7 +409,7 @@ public class WorldServerSettingsScreen : Screen
         if (_admission.Configuration.Mode == ServerAdmissionMode.Open ||
             _admission.Configuration.Fingerprint() == policy.Fingerprint())
         {
-            _admission.Configuration = policy;
+            ApplyAdmission(policy);
             return;
         }
 
@@ -397,11 +424,17 @@ public class WorldServerSettingsScreen : Screen
                 _admissionConfirmation = null;
                 if (generation == _generation && button == MessageDialogButton.Button1)
                 {
-                    _admission.Configuration = policy;
+                    ApplyAdmission(policy);
                 }
             }
         );
         DialogsManager.ShowDialog(this, _admissionConfirmation);
+    }
+
+    private void ApplyAdmission(ServerAdmissionPolicy policy)
+    {
+        _admission.Configuration = policy;
+        if (policy.Mode == ServerAdmissionMode.Password) { _admission.PasswordConfiguration = policy; }
     }
 
     private static string AdmissionText(string key) => LanguageManager.GetContentWidgets("ServerAdmission", key);
@@ -479,8 +512,8 @@ public class WorldServerSettingsScreen : Screen
 
     private void UpdateControlTexts()
     {
-        _serverOptions.IsEnabled = _worldSettings.RunServer;
-        _p2pOptions.IsEnabled = _worldSettings.P2P.Enabled;
+        _serverOptions.IsVisible = _worldSettings.RunServer;
+        _p2pOptions.IsVisible = _worldSettings.P2P.Enabled;
         if (!_worldSettings.RunServer || !_worldSettings.P2P.Enabled)
         {
             _p2pService.Close();

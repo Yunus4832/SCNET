@@ -3140,9 +3140,10 @@
             "P2PSelectService": "Select a service",
             "P2PInvalidSettings": "P2P requires a valid signaling address and room name",
             "ServerIdentity": "Server identity",
-            "DefaultIdentity": "Use instance default",
+            "DefaultIdentity": "Default",
             "MissingIdentity": "Selected server identity is missing. Select another or restore its backup",
-            "AuthenticationService": "Authentication service"
+            "AuthenticationService": "Authentication service",
+            "ChangePassword": "Change password"
         },
         "PlayScreen": {
             "1": "Existing Worlds",
@@ -3155,7 +3156,7 @@
             "8": "A maximum of {0} worlds is allowed on a device. Delete some to make space for new ones.",
             "9": "{0} characters",
             "10": "{0} character",
-            "11": " [Server]",
+            "11": "[Server]",
             "12": "Preparing World Mods",
             "13": "Checking required mods...",
             "14": "Failed to Prepare Mods",
@@ -3540,7 +3541,6 @@
             "Title": "Join by Code",
             "Address": "Signaling URL",
             "Code": "Join Code",
-            "Relay": "Relay Policy",
             "InvalidAddress": "Enter a valid HTTPS signaling URL."
         },
         "P2PRoomStatusDialog": {
@@ -3574,10 +3574,8 @@
             "3": "Character name"
         },
         "PasswordDialog": {
-            "Repeat": "Confirm",
             "Remember": "Remember on this instance",
             "PasswordLengthHint": "{0}–{1} characters",
-            "Password": "Password",
             "RepeatPlaceholder": "Re-enter password"
         },
         "AuthenticationConsentDialog": {
@@ -3589,11 +3587,11 @@
             "Server": "Requesting game server: {0}",
             "Save": "Sign in and save",
             "Once": "Sign in once",
-            "Reject": "Decline and return",
-            "Details": "Inspect full identities"
+            "Reject": "Decline",
+            "Details": "View ID"
         },
         "ClientAdmissionUi": {
-            "PasswordTitle": "Enter server password\n{0}",
+            "PasswordTitle": "Enter server password",
             "WaitPassword": "Waiting for server password",
             "WaitApproval": "Requesting authentication approval",
             "WaitBrowser": "Complete sign-in in your browser",
@@ -3608,7 +3606,8 @@
             "SaveFailed": "Signed in, but saving failed. Retry or choose sign in once",
             "BrowserFailed": "Cannot open the sign-in page. Check your default browser",
             "NetworkInterrupted": "The network connection was interrupted. Please join the server again.",
-            "PasswordSaveFailed": "Could not save the server password. This connection can continue."
+            "PasswordSaveFailed": "Could not save the server password. This connection can continue.",
+            "ServerIdentity": "Server ID: {0}"
         },
         "ServerAdmission": {
             "Title": "Admission",

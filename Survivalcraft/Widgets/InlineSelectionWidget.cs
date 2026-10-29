@@ -8,6 +8,8 @@ public sealed class InlineSelectionWidget : CanvasWidget
 
     private const float _separatorThickness = 2f;
 
+    private float _availableWidth = float.PositiveInfinity;
+
     private readonly BevelledRectangleWidget _background;
 
     private readonly CanvasWidget _header;
@@ -264,6 +266,7 @@ public sealed class InlineSelectionWidget : CanvasWidget
 
     protected override void MeasureOverride(Vector2 parentAvailableSize)
     {
+        _availableWidth = parentAvailableSize.X;
         UpdateVisualState();
         base.MeasureOverride(parentAvailableSize);
     }
@@ -333,7 +336,11 @@ public sealed class InlineSelectionWidget : CanvasWidget
 
     private Vector2 CalculateHeaderSize()
     {
-        return Vector2.Max(CollapsedSize - new Vector2(2f * SurfaceMargin), Vector2.Zero);
+        return Vector2.Max(
+            new Vector2(Math.Min(CollapsedSize.X, _availableWidth), CollapsedSize.Y) -
+            new Vector2(2f * SurfaceMargin),
+            Vector2.Zero
+        );
     }
 
     private float CalculateListHeight()

@@ -33,6 +33,8 @@ public sealed class LocalIdentityManagerTest
         using var player = configuration.OpenPlayerIdentity();
         using var server = configuration.OpenServerIdentity();
         Assert.NotEqual(player.PublicIdentity.Address, server.PublicIdentity.Address);
+        Assert.Equal("UserId", Assert.Single(configuration.GetIdentities(IdentityPurpose.Player)).Name);
+        Assert.Equal("ServerId", Assert.Single(configuration.GetIdentities(IdentityPurpose.Server)).Name);
         var reloaded = new LocalIdentityManager(
             LocalIdentityManager.ReadSettings(saved),
             _ => throw new Exception("Unexpected write")

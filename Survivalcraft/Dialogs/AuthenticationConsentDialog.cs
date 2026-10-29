@@ -23,7 +23,11 @@ public sealed class AuthenticationConsentDialog : Dialog
     )
     {
         _complete = complete;
-        _identityDetails = string.Format(Text("Fingerprint"), endpoint.Identity.Address) +
+        _identityDetails = endpoint.Description.DisplayName +
+                           "\n" +
+                           endpoint.BaseUri.AbsoluteUri +
+                           "\n" +
+                           string.Format(Text("Fingerprint"), endpoint.Identity.Address) +
                            "\n" +
                            string.Format(Text("Server"), serverAddress);
         LoadContents(this, ContentManager.Get<XElement>("Dialogs/AuthenticationConsentDialog"));

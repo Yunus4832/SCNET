@@ -96,7 +96,11 @@ public sealed class LocalIdentityManager
                 using var identity = NetworkIdentity.Create();
                 replacement = replacement with
                 {
-                    Identities = [.. replacement.Identities, WriteIdentity(purpose, string.Empty, identity)]
+                    Identities =
+                    [
+                        .. replacement.Identities,
+                        WriteIdentity(purpose, purpose == IdentityPurpose.Player ? "UserId" : "ServerId", identity)
+                    ]
                 };
                 replacement = SelectDefault(replacement, purpose, identity.PublicIdentity.Address);
             }

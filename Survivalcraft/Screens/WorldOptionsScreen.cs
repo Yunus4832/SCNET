@@ -416,7 +416,8 @@ public class WorldOptionsScreen : Screen
                             .GetDisplayName(null, Terrain.MakeBlockValue((int)index));
                         return obj2;
                     },
-                    delegate(object index) { _worldSettings.TerrainBlockIndex = (int)index; }
+                    delegate(object index) { _worldSettings.TerrainBlockIndex = (int)index; },
+                    _worldSettings.TerrainBlockIndex
                 )
             );
         }
@@ -467,7 +468,8 @@ public class WorldOptionsScreen : Screen
                         new Subtexture(texture2, Vector2.Zero, Vector2.One);
                     return obj;
                 },
-                delegate(object item) { _worldSettings.BlocksTextureName = (string)item; }
+                delegate(object item) { _worldSettings.BlocksTextureName = (string)item; },
+                _worldSettings.BlocksTextureName
             );
             DialogsManager.ShowDialog(null, dialog);
         }

@@ -3,9 +3,9 @@
     <StackPanelWidget Direction="Horizontal">
         <CanvasWidget Style="{Widgets/TopBarContents}"><LabelWidget Name="TopBar.Label" Text="[ManageIdentitiesScreen:Title]"/></CanvasWidget>
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="10, 6">
-                <BevelledButtonWidget Name="PlayerTab" Text="[ManageIdentitiesScreen:Player]" Style="{Styles/ButtonStyle_310x60}"/>
-                <BevelledButtonWidget Name="ServerTab" Text="[ManageIdentitiesScreen:Server]" Style="{Styles/ButtonStyle_310x60}"/>
+            <StackPanelWidget Style="{Styles/ScreenTopTabs}">
+                <BevelledButtonWidget Name="PlayerTab" Text="[ManageIdentitiesScreen:Player]" Style="{Styles/ScreenTopTabButton}"/>
+                <BevelledButtonWidget Name="ServerTab" Text="[ManageIdentitiesScreen:Server]" Style="{Styles/ScreenTopTabButton}"/>
             </StackPanelWidget>
             <CanvasWidget Style="{Styles/ScreenContentArea}">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>

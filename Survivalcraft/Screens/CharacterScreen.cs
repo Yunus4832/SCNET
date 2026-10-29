@@ -244,7 +244,8 @@ public class CharacterScreen : Screen
                     {
                         _characterData.ResetName();
                     }
-                }
+                },
+                _characterData.CharacterSkinName
             );
             DialogsManager.ShowDialog(null, dialog);
         }

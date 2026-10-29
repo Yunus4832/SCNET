@@ -34,7 +34,8 @@ public sealed class PasswordDialog : Dialog
         Action<char[]?> complete,
         int minimumLength = 8,
         int maximumLength = 128,
-        bool allowRemember = false
+        bool allowRemember = false,
+        string? description = null
     )
     {
         if (minimumLength < 1 || maximumLength < minimumLength || maximumLength > 1024)
@@ -56,6 +57,9 @@ public sealed class PasswordDialog : Dialog
             maximumLength
         );
         Children.Find<LabelWidget>("Title")!.Text = title;
+        var descriptionLabel = Children.Find<LabelWidget>("Description")!;
+        descriptionLabel.Text = description ?? string.Empty;
+        descriptionLabel.IsVisible = !string.IsNullOrWhiteSpace(description);
         _remember = Children.Find<CheckboxWidget>("Remember")!;
         _remember.IsVisible = allowRemember;
         _remember.IsChecked = false;

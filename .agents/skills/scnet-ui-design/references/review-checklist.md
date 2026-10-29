@@ -13,6 +13,8 @@ Use the relevant items; do not turn a small change into a mandatory full-applica
 
 - Are primary and secondary operations separated by frequency and consequence?
 - Are action order, weights, enabled state, and green/red semantic colors appropriate?
+- Do button colors match the established center/bevel colors, and do role-specific heights reuse the top-tab, action-bar, or ordinary button style?
+- Do inactive setting branches hide without clearing their values?
 - Are destructive actions confirmed where data loss is meaningful?
 - Does returning from a secondary action restore the primary action layout correctly?
 
@@ -22,6 +24,8 @@ Use the relevant items; do not turn a small change into a mandatory full-applica
 - Do selected labels and dynamic items refresh after language or source changes?
 - Do long names truncate without hiding the meaning or changing row height?
 - Are help and description text subordinate and compact?
+- Are simple input dialogs centered without an unnecessary left label column? Are placeholders meaningful, visible when empty, hidden when filled/composing, and restored after clearing?
+- Do fields that need persistent context retain a label or description after entry?
 
 ## Expansion and resizing
 
