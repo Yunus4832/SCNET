@@ -85,7 +85,7 @@ Starter 统一通过 `PlatformManager` 注册平台能力，避免直接操作�
 - `Managers/`：设置、内容、世界、版本、资源与运行配置
 - 项目根目录：保留 `GameEntry`、`HeadlessEntry` 和 `GamePaths`，作为启动交接入口与路径定义，不再设置额外的 `Game/` 目录
 - `Authentication/`、`Admission/`、`Identity/`、`Players/`、`Teams/`：对应 `Game.Authentication` 等子名称空间的独立职责模块
-- `Network/`：服务端、客户端、包协议、序列化和网络调度
+- `Network/`：游戏连接、消息处理、状态快照、复制与网络调度；消息契约和线格式由独立的 `Game.Protocol` 定义
 - `Subsystems/`：世界更新、天气、光照、爆炸、动画、移动方块等系统
 - `Components/`：玩家、实体、行为、交互、装备、生命等组件
 - `Screens/`：游戏主菜单、加载、设置、联机界面等 UI

@@ -12,7 +12,8 @@
 
 ## 桌面端支持的预定义路径
 
-- `app:`: 应用目录，通常对应程序入口所在目录
+- `app:`: 只读应用目录，通常对应程序入口所在目录
+- `starter:`: 程序基础目录，保存 `Starter.xml` 和 `Instances/`
 - `external:`: 当前数据实例根目录
 - `data:`: 当前数据实例的数据目录
 - `config:`: 当前数据实例的配置目录
@@ -23,7 +24,7 @@
 - `app:`: 应用资源目录，对应 APK 内部资源访问
 - `external:`: 当前 Android 数据实例根目录
 - `data:`: 当前 Android 数据实例的数据目录
-- `android:`: Android 外部存储目录下的 `scnet` 子目录
+- `starter:`: Android 外部存储目录下的 `scnet` 子目录，保存 `Starter.xml` 和 `Instances/`
 - `config:`: 配置目录，位于 Android 运行环境下的配置路径
 
 ## 典型用法
@@ -96,5 +97,5 @@ Starter 会先注册程序基础目录并读取 `Starter.xml`，再把选中的 
 - `external:` 是当前实例根目录，通常由 Starter 管理
 - `data:` 适合保存当前实例的运行时数据、日志、世界和缓存
 - `config:` 适合保存当前实例的启动设置、session、游戏设置和模组设置
-- `android:` 主要用于 Android 平台上的外部存储访问
+- `starter:` 是实例选择之前的基础目录，不随当前实例切换
 - `system:` 仅在桌面端可用，用于直接访问系统路径

@@ -50,6 +50,7 @@
 - `--player <名称>`: 显式请求自动使用当前身份角色；若服务器没有该身份角色则按名称创建
 - `--host`: GUI 模式下强制将目标世界设置为 `WorldSettings.RunServer=true`
 - `--server-port <端口>` / `--broadcast-port <端口>`: 覆盖本次运行端口
+- `--no-broadcast`: 禁用本次有效 session 的局域网发现广播
 - `--server-identity <完整身份标识>`: 使用当前实例中已有的服务器身份；随命名 session 保存和恢复，不接受私钥参数
 - `--p2p true|false`: 覆盖本次会话的世界P2P开关
 - `--rendezvous <URL>`: 覆盖信令控制地址，单独指定不启用P2P
@@ -256,6 +257,9 @@ Windows/Linux Starter 保留 Headless 返回的进程退出码：正常停止为
 - `World`
 - `Seed`
 - `GameMode`（可选的运行期覆盖）
+- `TerrainGenerationMode` / `TerrainLevel`（可选的新世界地形覆盖）
+- `ServerIdentityAddress`（可选的服务器身份选择）
+- `AdmissionOverrides` / `P2POverrides`（可选的开服覆盖）
 - `RemoteTarget`（远程地址或邀请会话的逻辑目标）
 - `ServerPort`
 - `BroadcastPort`
@@ -268,6 +272,7 @@ Windows/Linux Starter 保留 Headless 返回的进程退出码：正常停止为
 - `MainMenu`
 - `WorldList`
 - `World`
+- `HostedWorld`（GUI 服务器页入口，不自动接纳本机玩家）
 - `ServerBrowser`
 - `RemoteServer`
 

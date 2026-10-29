@@ -49,7 +49,7 @@ dotnet run --project Survivalcraft.Linux/Survivalcraft.Linux.csproj -- --server
 
 ### Android
 
-Android 同样通过 `RunningSettingManager` 选择 GUI 或 Headless。正常应用重启会读取 `config:RunningSetting.xml`；ADB 调试也可以通过 `Survivalcraft.Android.CommandLine` Intent Extra 临时传入 `--server`、`--session`、`--world`、`--game-mode` 等同一套参数。`Survivalcraft.Android.InstanceId` 用于选择隔离的数据实例。
+Android 同样通过 `StartupManager` 解析有效运行模式，选择 GUI 或 Headless。正常应用重启会读取 `config:RunningSetting.xml`；ADB 调试也可以通过 `Survivalcraft.Android.CommandLine` Intent Extra 临时传入 `--server`、`--session`、`--world`、`--game-mode` 等同一套参数。`Survivalcraft.Android.InstanceId` 用于选择隔离的数据实例。
 
 ## 常用参数
 
@@ -231,7 +231,6 @@ Headless 使用的会话通常是：
     World="World"
     Seed="123456"
     GameMode="Creative"
-    ServerHost=""
     ServerPort="0"
     BroadcastPort="0" />
 </Sessions>
@@ -289,7 +288,7 @@ Headless 进程运行期间不会像 GUI 一样在进入 world 前弹窗请求�
 
 邀请是现有监听 Host 上的可选能力，开启后仍接受 IP/DNS 直连及已启用的 LAN 发现。游戏不内置
 信令地址。房主配置保存在世界的 `P2P` 值组中，包含 `Enabled`、`ControlUrl`、`ServiceName`、
-`Name`、`Description` 和 `IsPublic`。GUI 的世界服务器设置在页面末尾提供 P2P 开关，信令服务、房间名称、简介和公开房间选项始终显示，服务器总开关关闭时禁用全部服务器配置，开启后再由 P2P 开关控制其配置项，已有值保留。
+`Name`、`Description` 和 `IsPublic`。GUI 的世界服务器设置关闭开服时隐藏服务器子项；开启后提供 P2P 开关，关闭 P2P 时隐藏信令服务、房间名称、简介和公开房间子项，已有值保留。
 选择实例已安装的信令服务会复制其地址和名称；
 修改或删除安装记录不会改变世界配置。Headless 与 GUI 共用这份世界开服配置。
 

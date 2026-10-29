@@ -6,11 +6,12 @@ SCNET 游戏运行时及模组开发契约，支持 .NET 10 和 .NET 10 for Andr
 ## 模组引用
 
 ```xml
-<PackageReference Include="SCNET.Survivalcraft" Version="0.1.0" ExcludeAssets="runtime" />
-<PackageReference Include="SCNET.ContentTool" Version="0.1.0" PrivateAssets="all" />
+<PackageReference Include="SCNET.Survivalcraft" Version="0.2.2" ExcludeAssets="runtime" />
+<PackageReference Include="SCNET.ContentTool" Version="0.1.6" PrivateAssets="all" />
 ```
 
 游戏 SDK 及引擎用于编译；实际运行时由游戏宿主提供，不应复制进 `.scpkg`。
+示例版本对应当前仓库；更新依赖时以 `SharedProperties/Versions.props` 和模组模板为准。
 ContentTool 是独立的构建工具，负责生成内容包，不会成为游戏 SDK 的运行时依赖。
 依赖通过 NuGet 传递，模组项目无需逐一引用 Engine、EntitySystem 或原生资产包。
 

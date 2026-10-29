@@ -22,6 +22,10 @@
 - [网络复制](NetworkReplication.md)：游戏状态同步与复制职责。
 - [地形分发](TerrainDistribution.md)：区块权威内容、版本和线程所有权。
 
+基础组件的消费与 API 边界见 [Engine.Core](../Engine.Core/README.md)、
+[Engine.Media](../Engine.Media/README.md)、[Engine](../Engine/README.md)、
+[EntitySystem](../EntitySystem/README.md) 和[游戏 SDK](../Survivalcraft/README.md)。
+
 ## 协议
 
 - [协议索引](Protocol/README.md)：来源、信令、传输、游戏准入和认证的分层及接入顺序。

@@ -87,4 +87,4 @@ territory request <领主主体地址>
 - 卸载模组不等于自动清理存档中的模组方块或扩展数据。
 
 版本由 `SharedProperties/Versions.props` 的 `TerritoryStoneVersion` 维护；构建从
-`manifest.template.json` 生成清单。当前改动只升级模组，不更改游戏联机协议。
+`manifest.template.json` 生成清单。模组消息格式独立于游戏联机协议；联机双方仍须加载同一个精确模组包。

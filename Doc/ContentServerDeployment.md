@@ -36,7 +36,8 @@ podman pull mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled
 IMAGE_PULL_POLICY=missing ./Scripts/publish.sh --project ContentServer
 ```
 
-可以通过 `IMAGE_NAME`、`IMAGE_TAG`、`PLATFORM` 和发行输出属性覆盖镜像与输出设置。Git revision
+可以通过 `IMAGE_NAME`、`IMAGE_TAG` 和发行输出属性覆盖镜像与输出设置。统一发布流程固定生成
+`linux-x64` 应用和 `linux/amd64` 镜像；内部镜像脚本的 `PLATFORM` 参数不会改变应用发布 RID。Git revision
 记录在 OCI Label 中；工作区不干净时 revision 带 `-dirty`，不会改变发行版本标签。
 
 `ContentServer/Deployment/build-image.sh` 只组装项目发布流程提供的 Linux 输出，不是独立发行入口。
@@ -110,7 +111,7 @@ ContentServer__PackageStoragePath=/data
 持久化单元备份和恢复。当前存储模型只支持单副本部署，不得让多个容器或 Pod 并发写入同一份数据。
 
 Chiseled 镜像没有 shell、curl 或包管理器。健康检查应由宿主、反向代理或集群请求
-`/api/v1/health`。当前镜像不固定运行 UID；部署环境增加非 root 限制时，需要同时保证挂载目录权限正确。
+`/api/v1/health`。当前 Dockerfile 显式使用 `USER 0`（root）；部署环境改为非 root 运行时，需要同时保证挂载目录权限正确。
 
 ## 升级
 

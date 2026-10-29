@@ -87,7 +87,7 @@ named session. Do not make downstream subsystems repeatedly merge request values
 ### `SessionInfo`
 
 `SessionInfo` represents a complete, recoverable startup session, not merely a world selection.
-Its `Target` can restore startup into `MainMenu`, `WorldList`, `World`, `ServerBrowser`, or
+Its `Target` can restore startup into `MainMenu`, `WorldList`, `World`, `HostedWorld`, `ServerBrowser`, or
 `RemoteServer`. A named session may therefore contain any parameter that should be restored when
 that session is selected again, including optional service overrides.
 

@@ -169,8 +169,8 @@ metadata 字段顺序为 `side`、`entrypoints`、`dependencies`。`side` 为 `c
 }
 ```
 
-World 只能包含 `payload/world/Project.xml`、`payload/world/Regions/*.dat` 以及由项目格式明确引用的
-`payload/world/` 下文件。不得包含 `EmbeddedContent/`、`.snapshot`、`backup/` 或任何独立内容包。所有引用路径必须保持在 `payload/world/` 内。
+World 只能包含 `payload/world/Project.xml` 和 `payload/world/Regions/*.dat`；当前 codec 不接受其他文件，即使
+`Project.xml` 中存在相应引用。不得包含 `EmbeddedContent/`、`.snapshot`、`backup/` 或任何独立内容包。所有引用路径必须保持在 `payload/world/` 内。
 
 `scnet-project-xml-v1` 是独立 XML 文件，不是旧 `.scworld` 容器。它使用 UTF-8、无 DTD、无 XML namespace，根节点精确为
 `Project`，并具有 `Version="SCNET-1"`、`Guid="9e9a67f8-79df-4d05-8cfa-61bd8095661e"`、

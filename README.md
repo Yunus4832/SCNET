@@ -34,6 +34,7 @@
 | `Engine.Media/` | 独立的图像、音频、模型数据与编解码，使用流接口，无窗口和设备依赖 |
 | `Native.ImageCodecs/` | 图像原生资产 NuGet 包，按 RID 提供依赖 |
 | `Native.OpenAL/` | Windows、Linux 和 Android 的 OpenAL 原生资产 NuGet 包 |
+| `Native.SDL/` | Windows、Linux 和 Android 的 SDL 原生资产包及 Android Java 资源 |
 | `EntitySystem/` | 实体、组件和模板数据库 |
 | `Survivalcraft.Windows/` | Windows 启动器，支持客户端和服务器模式 |
 | `Survivalcraft.Linux/` | Linux 启动器，适合部署 Headless 服务器 |
@@ -43,6 +44,9 @@
 | `Survivalcraft.Android.X86/` | Android x86 变体 |
 | `Engine.Test/`、`EntitySystem.Test/`、`Survivalcraft.Test/` | 单元测试工程 |
 | `Engine.Network/` | 独立网络宿主、连接生命周期、邀请与中继路径 |
+| `Game.Protocol/` | 游戏消息契约、帧格式和显式编解码 |
+| `Authentication.Protocol/` | 外部认证的签名事务、授权和准入契约 |
+| `Authentication.Server/` | 可独立部署的外部认证参考服务 |
 | `Rendezvous.Protocol/` | 邀请信令及认证中继报文契约 |
 | `RendezvousServer/` | 独立信令与中继服务 |
 | `NetworkProbe/` | 基于 Engine API 的网络验证驱动器 |

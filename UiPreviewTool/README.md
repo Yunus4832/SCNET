@@ -2,7 +2,7 @@
 
 `UiPreviewTool` 使用游戏现有的控件、字体、图集和图形后端，构造最小图形运行环境，
 不启动游戏主循环、不创建玩家或加载世界，也不读取或修改游戏实例配置。
-工具版本独立维护在 `SharedProperties/Versions.props` 的 `UiPreviewToolVersion`，初始为 `0.1.0`。
+工具版本独立维护在 `SharedProperties/Versions.props` 的 `UiPreviewToolVersion`。
 游戏、引擎及模组的版本不随工具更新。
 
 ## 运行

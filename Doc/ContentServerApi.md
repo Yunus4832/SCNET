@@ -173,11 +173,43 @@ POST   /api/v1/admin/servers/{id}/suspend
 PUT    /api/v1/admin/servers/{id}
 ```
 
-
 ## 认证服务目录
 
-独立目录入口为 `GET /api/v1/authentication-services`，发布者和管理员入口分别位于
-`/api/v1/publisher/authentication-services` 与 `/api/v1/admin/authentication-services`。
-公开、管理和审计列表均使用分页结构；修改、审核及删除携带修订号。完整端点表、字段、所有权及重审规则见
-[认证服务目录](ContentServer.md#认证服务目录)，外部登录协议见 [认证协议](Protocol/AuthenticationProtocol.md)。
+公开接口为 `GET /api/v1/authentication-services`，仅返回未删除且已批准的条目，并要求所属发布者有效。
+每项提供 `id`、`name`、`serviceUrl`、可选 `description` 和 `reviewedAt`；
+条目不提供认证公钥或身份地址。
+公开列表不返回内部审核意见或发布者管理数据。客户端在安装时直接发现公钥并由玩家确认；后续连接核对本地固定公钥；目录不是信任根。
+
+发布者使用自己的 Bearer API Key，管理员使用管理员 Key。路径角色由现有认证中间件检查，
+发布者不能操作他人的条目或调用管理员入口。有效发布者才能投稿、修改；已停用发布者仍可查看、撤回或删除自己的条目。
+
+| 操作 | 方法及路径 | 请求 |
+|---|---|---|
+| 发布者列表 | `GET /api/v1/publisher/authentication-services` | 可选 `status` 与分页参数 |
+| 投稿 | `POST /api/v1/publisher/authentication-services` | `name`、`serviceUrl`、可选 `description` |
+| 修改并重审 | `POST /api/v1/publisher/authentication-services/{id}/edit` | 同投稿，并提供 `revision` |
+| 撤回 | `POST /api/v1/publisher/authentication-services/{id}/withdraw` | `revision` |
+| 发布者删除 | `DELETE /api/v1/publisher/authentication-services/{id}?revision=N` | 无请求体 |
+| 管理员列表 | `GET /api/v1/admin/authentication-services` | 可选 `status` 与分页参数 |
+| 批准 / 拒绝 | `POST /api/v1/admin/authentication-services/{id}/approve` 或 `/reject` | `revision`、可选 `message` |
+| 停用 | `POST /api/v1/admin/authentication-services/{id}/disable` | `revision`、可选 `reason` |
+| 管理员删除 | `DELETE /api/v1/admin/authentication-services/{id}?revision=N` | 无请求体 |
+| 操作历史 | `GET /api/v1/admin/authentication-services/{id}/audit` | 分页参数；删除后仍可查询 |
+
+名称不超过 100 字符，说明及审核意见不超过 1000 字符；入口必须是以 `/` 结尾、无用户信息、查询或片段的 HTTPS 基址。
+投稿、修改和批准检查来源地址的发现协议是否可用；不固定或比较认证服务公钥，公钥变化不由目录裁定。探测在事务之外，
+审核命令再次核对修订号，防止探测期间编辑的内容被误批准。探测失败返回 422，不创建或批准条目。
+目录状态为 `pending`、`active`、`rejected`、`withdrawn`、`disabled`；所有公开描述的修改都会下架并进入待审核，
+不保留未经复核的新公开描述。停用或撤回后须修改并重新审核才能上架。
+
+管理列表返回条目的 `revision`、状态、发布者及审核信息。每次变更递增修订号；缺少有效修订号返回 400，
+旧修订、重复地址及数据库并发冲突返回 409，不自动重试审核。越权访问他人的发布者条目返回 404。
+删除为软删除，不能通过编辑复活；历史快照保留来源地址、公开描述、操作人、审核意见与时间。
+管理员动作同时进入通用审核记录。数据库写入冲突使用通用 `resource_conflict` 错误标识。
+
+公开、管理及历史列表均返回 `items`、`total`、`pageIndex`、`pageSize`，页码从 1 开始，每页最多 100 项，
+页码超过 100 返回 400。条目按 ID 降序，历史按修订号降序；`status` 不区分大小写，未知状态返回 400。
+目录下架或离线不自动删除客户端已经安装的认证服务，也不撤销用户在认证服务处的授权。
+
+外部登录协议见 [认证协议](Protocol/AuthenticationProtocol.md)。
 目录不接收玩家私钥、grant 或游戏服务器密码。
