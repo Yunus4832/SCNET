@@ -185,7 +185,7 @@ ContentServer__DatabasePath
 ```
 
 `AllowedOrigins` 只用于独立部署的浏览器 SPA，必须填写完整来源（协议、域名和端口），不使用通配符，
-也不允许跨域凭据。匿名下载和 Bearer API Key 请求均可跨域；响应暴露 `Content-Disposition` 供前端取得文件名。
+也不启用 Cookie 等浏览器跨域凭据。允许的方法为 `GET`、`POST`、`PUT`、`DELETE`、`OPTIONS`，请求头为 `Authorization` 与 `Content-Type`。配置的来源可以匿名下载，或通过 `Authorization: Bearer ...` 调用 API（包括编辑使用的 PUT）；响应暴露 `Content-Disposition` 供前端取得文件名。
 `PublicBaseUrl` 用于生成内置服务器源的公开协议地址；反向代理部署时应显式配置，避免依据内部请求地址生成 URL。
 `BuiltInServerDirectoryId` 必须符合服务器源协议的稳定 ID 规则，部署后不应随显示名称或域名变化。
 

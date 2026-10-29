@@ -43,17 +43,18 @@ builder.Services.AddOptions<ContentServerOptions>()
         "ContentServer PublicBaseUrl must be an absolute HTTP URL without credentials, query, or fragment."
     )
     .ValidateOnStart();
-var allowedOrigins = builder.Configuration
-                         .GetSection($"{ContentServerOptions.SectionName}:AllowedOrigins").Get<string[]>() ??
-                     [];
 builder.Services.AddCors(options => options.AddPolicy(
         "ContentWebUI",
         policy =>
         {
+            var allowedOrigins = builder.Configuration
+                                     .GetSection($"{ContentServerOptions.SectionName}:AllowedOrigins")
+                                     .Get<string[]>() ??
+                                 [];
             if (allowedOrigins.Length > 0)
             {
                 policy.WithOrigins(allowedOrigins)
-                    .WithMethods("GET", "POST", "DELETE", "OPTIONS")
+                    .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                     .WithHeaders("Authorization", "Content-Type")
                     .WithExposedHeaders("Content-Disposition");
             }

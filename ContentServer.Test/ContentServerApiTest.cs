@@ -46,6 +46,39 @@ public sealed class ContentServerApiTest : IDisposable
 
     private readonly string _storagePath = Path.Combine(Path.GetTempPath(), $"content-server-files-{Guid.NewGuid():N}");
 
+    [Theory]
+    [InlineData("GET")]
+    [InlineData("POST")]
+    [InlineData("PUT")]
+    [InlineData("DELETE")]
+    public async Task ConfiguredWebOriginCanPreflightApiMethods(string method)
+    {
+        const string origin = "https://workbench.example.test";
+        await using var factory = CreateFactory(allowedOrigin: origin);
+        using var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Options, "/api/v1/admin/announcements/example");
+        request.Headers.Add("Origin", origin);
+        request.Headers.Add("Access-Control-Request-Method", method);
+        request.Headers.Add("Access-Control-Request-Headers", "authorization,content-type");
+        using var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(origin, Assert.Single(response.Headers.GetValues("Access-Control-Allow-Origin")));
+        Assert.Contains(method, string.Join(",", response.Headers.GetValues("Access-Control-Allow-Methods")));
+        Assert.False(response.Headers.Contains("Access-Control-Allow-Credentials"));
+    }
+
+    [Fact]
+    public async Task UnconfiguredWebOriginCannotPreflightUpdates()
+    {
+        await using var factory = CreateFactory(allowedOrigin: "https://workbench.example.test");
+        using var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Options, "/api/v1/admin/announcements/example");
+        request.Headers.Add("Origin", "https://untrusted.example.test");
+        request.Headers.Add("Access-Control-Request-Method", "PUT");
+        using var response = await client.SendAsync(request);
+        Assert.False(response.Headers.Contains("Access-Control-Allow-Origin"));
+    }
+
     [Fact]
     public async Task PublishedGameReleasesUseSemanticPrereleaseOrdering()
     {
@@ -1643,19 +1676,27 @@ public sealed class ContentServerApiTest : IDisposable
 
     private WebApplicationFactory<Program> CreateFactory(
         bool useStubServerSourceInspection = false,
-        bool useStubRendezvousInspection = false
+        bool useStubRendezvousInspection = false,
+        string? allowedOrigin = null
     )
     {
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
             {
                 builder.UseEnvironment("Testing");
-                builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
-                        new Dictionary<string, string?>
+                builder.ConfigureAppConfiguration((_, configuration) =>
+                    {
+                        var settings = new Dictionary<string, string?>
                         {
                             ["ContentServer:DatabasePath"] = _databasePath,
                             ["ContentServer:PackageStoragePath"] = _storagePath
+                        };
+                        if (allowedOrigin is not null)
+                        {
+                            settings["ContentServer:AllowedOrigins:0"] = allowedOrigin;
                         }
-                    )
+
+                        configuration.AddInMemoryCollection(settings);
+                    }
                 );
                 if (useStubRendezvousInspection)
                 {
