@@ -4365,7 +4365,7 @@
         "PickerUnavailable": "File selection is unavailable on this platform.",
         "SelectType": "Select package type",
         "SelectSource": "Select creation source",
-        "SelectImage": "Select a PNG source image",
+        "SelectImage": "Select a PNG or WebP source image",
         "NoSources": "No local assets are available for creating this package type.",
         "Name": "Content name",
         "NameRequired": "Content name cannot be empty.",

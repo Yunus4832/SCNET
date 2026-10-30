@@ -12,7 +12,7 @@ export interface ContentDraft {
   baselineHash?: string;
   sourceBlobId: string;
   sourceFileName: string;
-  sourceMediaType: 'image/png';
+  sourceMediaType: 'image/png' | 'image/webp';
   createdAt: string;
   updatedAt: string;
 }
@@ -62,7 +62,7 @@ export async function listDrafts(): Promise<ContentDraft[]> {
   const database = await openDatabase();
   try {
     const transaction = database.transaction('drafts', 'readonly');
-    const drafts = await result(transaction.objectStore('drafts').getAll()) as ContentDraft[];
+    const drafts = (await result(transaction.objectStore('drafts').getAll())) as ContentDraft[];
     return drafts.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
   } finally {
     database.close();
@@ -73,9 +73,11 @@ export async function loadDraft(draftId: string): Promise<{ draft: ContentDraft;
   const database = await openDatabase();
   try {
     const transaction = database.transaction(['drafts', 'sources'], 'readonly');
-    const draft = await result(transaction.objectStore('drafts').get(draftId)) as ContentDraft | undefined;
+    const draft = (await result(transaction.objectStore('drafts').get(draftId))) as
+      ContentDraft | undefined;
     if (!draft) throw new Error('草稿不存在');
-    const source = await result(transaction.objectStore('sources').get(draft.sourceBlobId)) as SourceRecord | undefined;
+    const source = (await result(transaction.objectStore('sources').get(draft.sourceBlobId))) as
+      SourceRecord | undefined;
     if (!source) throw new Error('草稿源文件不存在');
     return { draft, source: source.blob };
   } finally {

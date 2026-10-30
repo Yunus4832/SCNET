@@ -128,7 +128,7 @@ internal static class PngPayloadValidator
             BinaryPrimitives.ReadInt32BigEndian(data[4..8]) != expectedHeight ||
             data[10] != 0 ||
             data[11] != 0 ||
-            data[12] != 0 ||
+            data[12] > 1 ||
             !IsValidColorDepth(data[8], data[9]))
         {
             throw new ContentPackageException(

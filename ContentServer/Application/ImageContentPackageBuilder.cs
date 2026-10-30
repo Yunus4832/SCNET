@@ -2,10 +2,9 @@ using System.Security.Cryptography;
 using System.Text.Json;
 
 using Content.Packaging;
+using Content.Packaging.Payloads;
 
 using ContentServer.Infrastructure;
-
-using Engine.Media.Images;
 
 namespace ContentServer.Application;
 
@@ -20,12 +19,11 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         CancellationToken cancellationToken
     )
     {
-        var path = packageStore.CreateTemporaryPath(".png-source");
+        var path = packageStore.CreateTemporaryPath(".image-source");
         try
         {
             await CopySourceAsync(source, path, maximumBytes, cancellationToken);
             var inspection = await InspectSourceAsync(path, type, cancellationToken);
-            ValidateDimensions(type, inspection.Width, inspection.Height);
             return inspection;
         }
         finally
@@ -51,19 +49,17 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
             throw new ContentPackageException("Web image manufacturing only supports texture and skin packages.");
         }
 
-        var sourcePath = packageStore.CreateTemporaryPath(".png-source");
+        var sourcePath = packageStore.CreateTemporaryPath(".image-source");
         var packagePath = packageStore.CreateTemporaryPath(ContentPackageReader.FileExtension);
         try
         {
             await CopySourceAsync(source, sourcePath, maximumBytes, cancellationToken);
             var sourceInspection = await InspectSourceAsync(sourcePath, type, cancellationToken);
-            ValidateDimensions(type, sourceInspection.Width, sourceInspection.Height);
-            var payloadPath = type == ContentPackageType.BlocksTexture
-                ? "payload/texture.png"
-                : "payload/skin.png";
-            var payload = type == ContentPackageType.BlocksTexture
-                ? new ContentPackagePayload("scnet.blocks-texture.png-v1", payloadPath, "image/png")
-                : new ContentPackagePayload("scnet.character-skin.png-v1", payloadPath, "image/png");
+            var payload = ImagePayloadCodec.CreatePayload(
+                type,
+                ImagePayloadCodec.GetImageFormat(sourceInspection.MediaType)
+            );
+            var payloadPath = payload.Entry;
             var metadata = JsonSerializer.SerializeToElement(
                 new
                 {
@@ -143,9 +139,9 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
         {
             total += read;
-            if (total > maximumBytes)
+            if (total > Math.Min(maximumBytes, ContentPackageReader.MaxEntryBytes))
             {
-                throw new ContentPackageException("PNG source exceeds the size limit.");
+                throw new ContentPackageException("Image source exceeds the size limit.");
             }
 
             await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
@@ -161,47 +157,10 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
     )
     {
         var data = await File.ReadAllBytesAsync(path, cancellationToken);
-        try
-        {
-            if (!data.AsSpan().StartsWith((ReadOnlySpan<byte>)[137, 80, 78, 71, 13, 10, 26, 10]))
-            {
-                throw new ContentPackageException("Image source must be PNG.");
-            }
-
-            var info = ImageCodec.Identify(data);
-            if (info.Format != ImageFormat.Png || info.Frames != 1)
-            {
-                throw new ContentPackageException("Image source must be a single-frame PNG.");
-            }
-
-            ValidateDimensions(type, info.Width, info.Height);
-            using var decoded = ImageCodec.Decode(data);
-            cancellationToken.ThrowIfCancellationRequested();
-            var hash = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
-            return new ImageSourceInspection(info.Width, info.Height, data.Length, hash, "image/png");
-        }
-        catch (InvalidDataException exception)
-        {
-            throw new ContentPackageException("Image source contains invalid encoded PNG data.", exception);
-        }
-    }
-
-    private static void ValidateDimensions(ContentPackageType type, int width, int height)
-    {
-        var maximum = type switch
-        {
-            ContentPackageType.BlocksTexture => 8192,
-            ContentPackageType.CharacterSkin => 1024,
-            _ => throw new ContentPackageException("Web image manufacturing only supports texture and skin packages.")
-        };
-        if (width <= 0 ||
-            height <= 0 ||
-            (width & (width - 1)) != 0 ||
-            (height & (height - 1)) != 0 ||
-            width > maximum ||
-            height > maximum)
-        {
-            throw new ContentPackageException("PNG source dimensions are invalid for the selected content type.");
-        }
+        var info = ImagePayloadCodec.ValidateSource(data, type);
+        cancellationToken.ThrowIfCancellationRequested();
+        var hash = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
+        var mediaType = ImagePayloadCodec.CreatePayload(type, info.Format).MediaType;
+        return new ImageSourceInspection(info.Width, info.Height, data.Length, hash, mediaType);
     }
 }

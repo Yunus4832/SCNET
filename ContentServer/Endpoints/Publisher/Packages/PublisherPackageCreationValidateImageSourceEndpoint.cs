@@ -60,7 +60,7 @@ public sealed class PublisherPackageCreationValidateImageSourceEndpoint(
         }
         catch (Exception exception) when (exception is ContentPackageException)
         {
-            throw new KnownException("invalid_png_source", 400);
+            throw new KnownException("invalid_image_source", 400);
         }
     }
 

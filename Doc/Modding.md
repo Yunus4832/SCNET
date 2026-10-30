@@ -266,3 +266,5 @@ GUI 的 `GET/POST /player/commands` 使用当前真实玩家，而不是 LocalOp
 GUI 自动化的操作合同见 [游戏自动化](Automation.md)，Agent 工作流程见项目的
 `scnet-debugging` 技能。Mod 适合准备确定性场景和补充观测，不应通过直接改位置、库存
 或调用交互回调代替被测操作。
+
+材质包与皮肤包也接受静态 PNG/WebP，推荐无损 WebP；创建、上传和安装都保留原始图片编码及字节，不自动转码，资源作者无需预乘。

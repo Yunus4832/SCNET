@@ -121,7 +121,7 @@ Writer 必须用 UTF-8 无 BOM、两空格缩进、LF 换行和上表字段顺�
 
 `payload` 固定包含 `format`、`entry` 和 `mediaType`，字段顺序也固定为此顺序。`entry` 是下列类型定义的主入口，必须以 `payload/` 开头，且必须指向一个实际文件。每一种类型都精确规定其允许的 payload 文件集合；不允许附带 README、缩略图、原始创作素材、旧格式包或任意 ZIP。
 
-压缩策略不是身份的一部分：PNG 条目必须 `Store`；XML、JSON、文本和二进制世界区块使用 Deflate。实现可以选择不同 Deflate 等级。
+压缩策略不是身份的一部分：PNG 和 WebP 条目必须 `Store`；XML、JSON、文本和二进制世界区块使用 Deflate。实现可以选择不同 Deflate 等级。
 
 ## 6. 类型规范
 
@@ -202,7 +202,10 @@ metadata 字段顺序为 `projectFormat`、`regionsDirectory`。v1 不携带世�
 }
 ```
 
-仅允许 `payload/texture.png`，必须是非交错、无动画的 PNG。权威 PNG 解码得到的宽高必须与 metadata 相同，宽和高均为 1–8192 的 2 的幂。metadata 字段顺序为 `width`、`height`。游戏只从 PNG 解码后的图像创建独立材质资产，不保存包身份。
+支持静态 PNG 和 WebP，推荐无损 WebP。PNG 使用上述描述；WebP 对应 `scnet.blocks-texture.webp-v1`、`payload/texture.webp`、`image/webp`。
+每个包只能有一个图片载荷，格式标识、扩展名、MIME 和实际编码必须一致。PNG 可以交错；两种格式均禁止动画。
+实际解码宽高必须与 metadata 相同，宽和高均为 1–8192 的 2 的幂。metadata 字段顺序为 `width`、`height`。
+安装时原样保存图片，不转码、不修改图片字节，按实际编码使用 `.png` 或 `.webp` 扩展名；不保存包身份。
 
 ### 6.4 CharacterSkin
 
@@ -218,7 +221,10 @@ metadata 字段顺序为 `projectFormat`、`regionsDirectory`。v1 不携带世�
 }
 ```
 
-仅允许 `payload/skin.png`，必须是非交错、无动画 PNG。权威解码宽高必须与 metadata 相同，宽和高均为 1–1024 的 2 的幂。metadata 字段顺序为 `width`、`height`。协议不以文件名推断男性/女性或皮肤类型；这类显示和选择信息属于安装后的本地资产。
+支持静态 PNG 和 WebP，推荐无损 WebP。PNG 使用上述描述；WebP 对应 `scnet.character-skin.webp-v1`、`payload/skin.webp`、`image/webp`。
+格式标识、扩展名、MIME 和实际编码必须一致，包内只能有一个图片载荷；PNG 可以交错，两种格式均禁止动画。
+实际解码宽高必须与 metadata 相同，宽和高均为 1–1024 的 2 的幂。metadata 字段顺序为 `width`、`height`。
+安装时保留图片原始编码与字节，使用对应扩展名，不自动转码。协议不以文件名推断男性/女性或皮肤类型；这类显示和选择信息属于安装后的本地资产。
 
 ### 6.5 FurniturePack
 
@@ -250,8 +256,8 @@ metadata 字段顺序为 `designCount`，其值必须等于直接 `Values` 子�
 | 类型 | Manager 拥有的逻辑布局 | 安装提交条件 |
 |---|---|---|
 | World | `<AssetKey>/Project.xml` 与 `<AssetKey>/Regions/*.dat` | 完整项目可预加载；创建生成新 AssetKey，替换保留目标 AssetKey |
-| BlocksTexture | AssetKey、可变显示名和一份已解码验证的 PNG | 暂存 PNG 可再次解码且目标不是内置只读资产 |
-| CharacterSkin | AssetKey、可变显示名和一份已解码验证的 PNG | 暂存 PNG 可再次解码且目标不是内置只读资产 |
+| BlocksTexture | AssetKey、可变显示名和一份已解码验证的 PNG/WebP 原始图片 | 暂存图片可再次解码且目标不是内置只读资产 |
+| CharacterSkin | AssetKey、可变显示名和一份已解码验证的 PNG/WebP 原始图片 | 暂存图片可再次解码且目标不是内置只读资产 |
 | FurniturePack | AssetKey、可变显示名和游戏可加载的家具设计集合 | 全部设计和链接可预加载且目标不是内置只读资产 |
 
 物理目录名、索引文件和事务日志属于各 Manager 的内部存储协议，不属于 `.scpkg`。但 Manager 必须提供按 AssetKey 的创建、显式替换、

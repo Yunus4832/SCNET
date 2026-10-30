@@ -4,12 +4,15 @@ using System.Text.Json;
 using Content.Packaging;
 
 using Engine.FileStorage;
+using Engine.Media.Images;
 
 using Game;
 using Game.Content;
 using Game.Managers;
 
 using Survivalcraft.Test.Modding;
+
+using Color = Engine.Core.Mathematics.Color;
 
 namespace Survivalcraft.Test.Content;
 
@@ -173,6 +176,119 @@ public sealed class ContentInstallationManagerTest : IDisposable
         Assert.Contains("Value=\"new-key\"", reader.ReadToEnd());
     }
 
+    [Theory]
+    [InlineData(ImageFormat.Png)]
+    [InlineData(ImageFormat.WebP)]
+    public void NetworkSkinStorageAndRepliesPreserveTheReceivedEncoding(ImageFormat format)
+    {
+        using var image = new ImageBuffer(16, 16);
+        Array.Fill(image.Pixels, new Color(200, 100, 50, 128));
+        var encoded = ImageCodec.Encode(image, format);
+        var name = Guid.NewGuid().ToString("N");
+        CharacterSkinsManager.SaveSkinToFile(name, encoded);
+        _installedAssets.Add((ContentType.CharacterSkin, name));
+        Assert.True(CharacterSkinsManager.GetFileName(name, out var path));
+        Assert.EndsWith(format == ImageFormat.WebP ? ".webp" : ".png", path, StringComparison.Ordinal);
+        var reply = Assert.IsType<Game.Protocol.Entities.SkinReplyPackage>(
+            Game.Network.Snapshots.ClothingPackageBuilder.Capture(
+                name,
+                Game.Protocol.Entities.ComponentClothingPackage.DataType.ReplySkin
+            )
+        );
+        Assert.Equal(encoded, reply.SkinData);
+    }
+
+    [Theory]
+    [InlineData(ContentPackageType.BlocksTexture)]
+    [InlineData(ContentPackageType.CharacterSkin)]
+    public void ReplacingAnImageCanChangeEncodingWithoutChangingItsBytesOrKey(ContentPackageType type)
+    {
+        using var image = new ImageBuffer(16, 16);
+        Array.Fill(image.Pixels, new Color(200, 100, 50, 128));
+        string? key = null;
+        foreach (var format in new[] { ImageFormat.Png, ImageFormat.WebP, ImageFormat.Png })
+        {
+            var encoded = ImageCodec.Encode(image, format);
+            using var source = new MemoryStream(encoded);
+            using var artifact = ContentPackageCreationManager.CreateImage(
+                type,
+                new ContentCreationIdentity("Changing encoding", "Summary", "Description", "1.0.0"),
+                source
+            );
+            using var package = artifact.OpenRead();
+            var installed = ContentInstallationManager.Install(package, new ContentInstallOptions(key));
+            if (key is null)
+            {
+                key = installed.AssetKey!;
+                _installedAssets.Add(
+                    (type == ContentPackageType.BlocksTexture ? ContentType.BlocksTexture : ContentType.CharacterSkin,
+                        key)
+                );
+            }
+
+            Assert.Equal(key, installed.AssetKey);
+            var directory = type == ContentPackageType.BlocksTexture
+                ? GamePaths.BlockTextures
+                : GamePaths.CharacterSkins;
+            var extension = format == ImageFormat.Png ? ".png" : ".webp";
+            var path = Storage.CombinePaths(directory, key + extension);
+            using var input = Storage.OpenFile(path, OpenFileMode.Read);
+            using var bytes = new MemoryStream();
+            input.CopyTo(bytes);
+            Assert.Equal(encoded, bytes.ToArray());
+            Assert.False(
+                Storage.FileExists(
+                    Storage.CombinePaths(directory, key + (format == ImageFormat.Png ? ".webp" : ".png"))
+                )
+            );
+        }
+    }
+
+    [Theory]
+    [InlineData(ContentPackageType.BlocksTexture, ImageFormat.Png)]
+    [InlineData(ContentPackageType.BlocksTexture, ImageFormat.WebP)]
+    [InlineData(ContentPackageType.CharacterSkin, ImageFormat.Png)]
+    [InlineData(ContentPackageType.CharacterSkin, ImageFormat.WebP)]
+    public void ImageCreationAndInstallationAcceptBothEncodings(ContentPackageType type, ImageFormat format)
+    {
+        using var image = new ImageBuffer(16, 16);
+        var expected = new Color(200, 100, 50, 128);
+        Array.Fill(image.Pixels, expected);
+        var encoded = ImageCodec.Encode(image, format);
+        using var source = new MemoryStream(encoded);
+        using var artifact = ContentPackageCreationManager.CreateImage(
+            type,
+            new ContentCreationIdentity("Image encodings", "Summary", "Description", "1.0.0"),
+            source
+        );
+        using var package = artifact.OpenRead();
+        var inspection = ContentPackageReader.Inspect(package);
+        Assert.Equal(format == ImageFormat.WebP ? "image/webp" : "image/png", inspection.Manifest.Payload.MediaType);
+        var installed = ContentInstallationManager.Install(package);
+        _installedAssets.Add(
+            (type == ContentPackageType.BlocksTexture ? ContentType.BlocksTexture : ContentType.CharacterSkin,
+                installed.AssetKey!)
+        );
+        string path;
+        if (type == ContentPackageType.BlocksTexture)
+        {
+            path = BlocksTexturesManager.GetFileName(installed.AssetKey!);
+        }
+        else
+        {
+            Assert.True(CharacterSkinsManager.GetFileName(installed.AssetKey!, out path));
+        }
+
+        Assert.EndsWith(format == ImageFormat.WebP ? ".webp" : ".png", path, StringComparison.Ordinal);
+        using var input = Storage.OpenFile(path, OpenFileMode.Read);
+        using var installedBytes = new MemoryStream();
+        input.CopyTo(installedBytes);
+        Assert.Equal(encoded, installedBytes.ToArray());
+        installedBytes.Position = 0;
+        using var decoded = Image.Load(installedBytes, format);
+        Assert.Equal(expected, decoded.Pixels[0]);
+    }
+
     [Fact]
     public void ImageCreationProducesTemporaryValidatedPackageAndBaselineVersionKeepsIdentifier()
     {
@@ -201,7 +317,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
     }
 
     [Fact]
-    public void ImageCreationRejectsNonPngAndCleansTemporaryInput()
+    public void ImageCreationRejectsUnsupportedFormatAndCleansTemporaryInput()
     {
         if (!Storage.DirectoryExists(GamePaths.ContentPackageCreationTemp))
         {

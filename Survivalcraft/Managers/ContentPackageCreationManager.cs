@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Xml.Linq;
 
 using Content.Packaging;
+using Content.Packaging.Payloads;
 
 using Engine.Media.Images;
 
@@ -45,36 +46,41 @@ public static class ContentPackageCreationManager
 
         ArgumentNullException.ThrowIfNull(source);
         Storage.CreateDirectory(GamePaths.ContentPackageCreationTemp);
-        var sourcePath = Storage.CombinePaths(GamePaths.ContentPackageCreationTemp, $"{Guid.NewGuid():N}.png.temp");
+        var sourcePath = Storage.CombinePaths(GamePaths.ContentPackageCreationTemp, $"{Guid.NewGuid():N}.image.temp");
         try
         {
             using (var output = Storage.OpenFile(sourcePath, OpenFileMode.Create))
             {
-                source.CopyTo(output);
+                var buffer = new byte[64 * 1024];
+                long total = 0;
+                int read;
+                while ((read = source.Read(buffer)) > 0)
+                {
+                    total += read;
+                    if (total > ContentPackageReader.MaxEntryBytes)
+                    {
+                        throw new ContentPackageException("Image source exceeds the size limit.");
+                    }
+
+                    output.Write(buffer, 0, read);
+                }
             }
 
-            int width;
-            int height;
+            ImageInfo info;
             using (var input = Storage.OpenFile(sourcePath, OpenFileMode.Read))
             {
-                var image = Image.Load(input, ImageFormat.Png);
-                width = image.Width;
-                height = image.Height;
+                info = ImagePayloadCodec.ValidateSource(input, type);
             }
 
-            var isTexture = type == ContentPackageType.BlocksTexture;
-            var entry = isTexture ? "payload/texture.png" : "payload/skin.png";
+            var payload = ImagePayloadCodec.CreatePayload(type, info.Format);
+            var entry = payload.Entry;
             var manifest = CreateManifest(
                 type,
                 identity,
-                new ContentPackagePayload(
-                    isTexture ? "scnet.blocks-texture.png-v1" : "scnet.character-skin.png-v1",
-                    entry,
-                    "image/png"
-                ),
+                payload,
                 JsonSerializer.SerializeToElement(
                     new Dictionary<string, object>
-                        { ["width"] = width, ["height"] = height }
+                        { ["width"] = info.Width, ["height"] = info.Height }
                 )
             );
             return Write(

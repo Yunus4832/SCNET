@@ -41,7 +41,7 @@ describe('ContentSubmissionDialog', () => {
     )!;
     imageMode.click();
     await wrapper.vm.$nextTick();
-    expect(document.body.textContent).toContain('上传 PNG 皮肤或方块材质');
+    expect(document.body.textContent).toContain('上传 PNG/WebP 皮肤或方块材质');
     expect(document.body.textContent).toContain('草稿仅保存在当前浏览器');
     expect(
       Array.from(document.body.querySelectorAll('option')).map((option) => option.value),

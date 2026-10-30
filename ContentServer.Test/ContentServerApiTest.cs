@@ -133,12 +133,15 @@ public sealed class ContentServerApiTest : IDisposable
         Assert.Equal("0.1.0", latest.GetProperty("version").GetString());
     }
 
-    [Fact]
-    public async Task ImageUploadAcceptsPngAfterFormatDetection()
+    [Theory]
+    [InlineData(ImageFormat.Png, "image/png")]
+    [InlineData(ImageFormat.WebP, "image/webp")]
+    public async Task ImageUploadAcceptsSupportedFormatsAfterDetection(ImageFormat format, string mediaType)
     {
         await using var factory = CreateFactory();
         var builder = factory.Services.GetRequiredService<ImageContentPackageBuilder>();
-        using var input = new MemoryStream(CreatePng());
+        using var image = new ImageBuffer(16, 16);
+        using var input = new MemoryStream(ImageCodec.Encode(image, format));
         var inspection = await builder.ValidateSourceAsync(
             input,
             ContentPackageType.BlocksTexture,
@@ -148,7 +151,7 @@ public sealed class ContentServerApiTest : IDisposable
 
         Assert.Equal(16, inspection.Width);
         Assert.Equal(16, inspection.Height);
-        Assert.Equal("image/png", inspection.MediaType);
+        Assert.Equal(mediaType, inspection.MediaType);
     }
 
     [Fact]
@@ -170,13 +173,12 @@ public sealed class ContentServerApiTest : IDisposable
             builder.ValidateSourceAsync(input, ContentPackageType.BlocksTexture, 1024, CancellationToken.None)
         );
 
-        Assert.Equal("Image source must be PNG.", exception.Message);
+        Assert.Equal("Image source must contain a valid static PNG or WebP.", exception.Message);
     }
 
     [Theory]
     [InlineData(ImageFormat.Bmp)]
-    [InlineData(ImageFormat.WebP)]
-    public async Task ImageUploadStillRejectsOtherSupportedImageFormats(ImageFormat format)
+    public async Task ImageUploadRejectsUnsupportedImageFormats(ImageFormat format)
     {
         await using var factory = CreateFactory();
         var builder = factory.Services.GetRequiredService<ImageContentPackageBuilder>();
@@ -185,7 +187,7 @@ public sealed class ContentServerApiTest : IDisposable
         var exception = await Assert.ThrowsAsync<ContentPackageException>(() =>
             builder.ValidateSourceAsync(input, ContentPackageType.BlocksTexture, 1024 * 1024, CancellationToken.None)
         );
-        Assert.Equal("Image source must be PNG.", exception.Message);
+        Assert.Equal("Image source must be PNG or WebP.", exception.Message);
     }
 
     [Fact]
@@ -413,8 +415,10 @@ public sealed class ContentServerApiTest : IDisposable
         Assert.Equal("invalid_request", (await ReadJsonAsync(response)).GetProperty("message").GetString());
     }
 
-    [Fact]
-    public async Task PublisherApprovalContentApprovalAndAnonymousDownloadFormOneFlow()
+    [Theory]
+    [InlineData(ImageFormat.Png)]
+    [InlineData(ImageFormat.WebP)]
+    public async Task PublisherApprovalContentApprovalAndAnonymousDownloadFormOneFlow(ImageFormat format)
     {
         await using var factory = CreateFactory();
         using var client = factory.CreateClient();
@@ -525,12 +529,15 @@ public sealed class ContentServerApiTest : IDisposable
         var application = await ReadDataAsync(applicationResponse);
         var publisherId = application.GetProperty("publisherId").GetString()!;
         var publisherKey = application.GetProperty("apiKey").GetString()!;
-        var imageSource = CreatePng();
+        using var sourcePixels = new ImageBuffer(16, 16);
+        var imageSource = ImageCodec.Encode(sourcePixels, format);
+        var sourceMediaType = format == ImageFormat.WebP ? "image/webp" : "image/png";
+        var sourceExtension = format == ImageFormat.WebP ? "webp" : "png";
 
         using (var anonymousImageValidation = new MultipartFormDataContent
                {
                    { new StringContent("CharacterSkin"), "type" },
-                   { new ByteArrayContent(imageSource), "source", "source.png" }
+                   { new ByteArrayContent(imageSource), "source", "source." + sourceExtension }
                })
         {
             Assert.Equal(
@@ -554,7 +561,7 @@ public sealed class ContentServerApiTest : IDisposable
             pendingImageRequest.Content = new MultipartFormDataContent
             {
                 { new StringContent("CharacterSkin"), "type" },
-                { new ByteArrayContent(imageSource), "source", "source.png" }
+                { new ByteArrayContent(imageSource), "source", "source." + sourceExtension }
             };
             Assert.Equal(HttpStatusCode.Forbidden, (await client.SendAsync(pendingImageRequest)).StatusCode);
         }
@@ -889,12 +896,12 @@ public sealed class ContentServerApiTest : IDisposable
             validationRequest.Content = new MultipartFormDataContent
             {
                 { new StringContent("CharacterSkin"), "type" },
-                { new ByteArrayContent(imageSource), "source", "skin.png" }
+                { new ByteArrayContent(imageSource), "source", "skin." + sourceExtension }
             };
             var validation = await ReadDataAsync(await client.SendAsync(validationRequest));
             Assert.Equal(16, validation.GetProperty("width").GetInt32());
             Assert.Equal(16, validation.GetProperty("height").GetInt32());
-            Assert.Equal("image/png", validation.GetProperty("mediaType").GetString());
+            Assert.Equal(sourceMediaType, validation.GetProperty("mediaType").GetString());
         }
 
         var imageIdentifier = Guid.NewGuid().ToString();
@@ -907,7 +914,7 @@ public sealed class ContentServerApiTest : IDisposable
             { new StringContent("1.0.0"), "version" },
             { new StringContent("Integration skin"), "summary" },
             { new StringContent("Generated in the API integration test"), "description" },
-            { new ByteArrayContent(imageSource), "source", "skin.png" }
+            { new ByteArrayContent(imageSource), "source", "skin." + sourceExtension }
         };
 
         byte[] builtImagePackage;
@@ -928,9 +935,21 @@ public sealed class ContentServerApiTest : IDisposable
         {
             var inspection = ContentPackageReader.Inspect(stream);
             Assert.Equal(ContentPackageType.CharacterSkin, inspection.Manifest.Type);
+            Assert.Equal(sourceMediaType, inspection.Manifest.Payload.MediaType);
+            Assert.EndsWith("." + sourceExtension, inspection.Manifest.Payload.Entry);
             Assert.Equal("Integration skin", inspection.Manifest.Summary);
             Assert.Equal("Generated in the API integration test", inspection.Manifest.Description);
             builtImageHash = inspection.PackageHash;
+            stream.Position = 0;
+            using var archive = new System.IO.Compression.ZipArchive(
+                stream,
+                System.IO.Compression.ZipArchiveMode.Read,
+                true
+            );
+            using var entry = archive.GetEntry(inspection.Manifest.Payload.Entry)!.Open();
+            using var sourceBytes = new MemoryStream();
+            entry.CopyTo(sourceBytes);
+            Assert.Equal(imageSource, sourceBytes.ToArray());
         }
 
         using (var generatedSubmitRequest = CreateAuthorizedRequest(

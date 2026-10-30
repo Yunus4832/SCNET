@@ -1,5 +1,14 @@
+/// <reference types="node" />
+import { Blob as NodeBlob } from 'node:buffer';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { clearDrafts, deleteDraft, listDrafts, saveDraft, type ContentDraft } from './contentDraftStore';
+import {
+  clearDrafts,
+  deleteDraft,
+  listDrafts,
+  loadDraft,
+  saveDraft,
+  type ContentDraft,
+} from './contentDraftStore';
 
 const draft: ContentDraft = {
   schemaVersion: 1,
@@ -35,10 +44,31 @@ describe('content draft store', () => {
     expect(await listDrafts()).toEqual([]);
   });
 
+  it('restores WebP drafts without relabeling the source as PNG', async () => {
+    const webpDraft: ContentDraft = {
+      ...draft,
+      sourceFileName: 'skin.webp',
+      sourceMediaType: 'image/webp',
+    };
+    // Node's Blob supports structured cloning in fake-indexeddb.
+    const source = new NodeBlob([new Uint8Array([82, 73, 70, 70])], {
+      type: 'image/webp',
+    }) as unknown as Blob;
+    await saveDraft(webpDraft, source, 'source-hash');
+    const loaded = await loadDraft(webpDraft.draftId);
+    expect(loaded.draft.sourceMediaType).toBe('image/webp');
+    expect(loaded.source.type).toBe('image/webp');
+    expect(await loaded.source.arrayBuffer()).toEqual(await source.arrayBuffer());
+  });
+
   it('clears all drafts and source records', async () => {
     const source = new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' });
     await saveDraft(draft, source, 'source-hash');
-    await saveDraft({ ...draft, draftId: 'draft-2', sourceBlobId: 'blob-2' }, source, 'source-hash');
+    await saveDraft(
+      { ...draft, draftId: 'draft-2', sourceBlobId: 'blob-2' },
+      source,
+      'source-hash',
+    );
     await clearDrafts();
     expect(await listDrafts()).toEqual([]);
   });

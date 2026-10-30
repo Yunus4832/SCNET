@@ -1,5 +1,7 @@
 using System.Text.Json;
 
+using Engine.Media.Images;
+
 namespace Game.Managers;
 
 internal static class ContentAssetStore
@@ -8,19 +10,26 @@ internal static class ContentAssetStore
 
     public static string Install(
         string directory,
-        string extension,
+        string? extension,
         string displayName,
         Stream source,
-        Action<Stream> validate
+        Action<Stream> validate,
+        string? assetKey = null
     )
     {
         Storage.CreateDirectory(directory);
-        var assetKey = Guid.NewGuid().ToString("N");
-        var name = assetKey + extension;
-        var target = Storage.CombinePaths(directory, name);
-        var metadataTarget = target + ".json";
+        assetKey ??= Guid.NewGuid().ToString("N");
+        if (!Guid.TryParseExact(assetKey, "N", out _))
+        {
+            throw new InvalidOperationException($"AssetKey '{assetKey}' is reserved or invalid.");
+        }
+
+        string? target = null;
+        string? metadataTarget = null;
         var temporaryData = Storage.CombinePaths(directory, $".{assetKey}.data.temp");
         var temporaryMetadata = Storage.CombinePaths(directory, $".{assetKey}.metadata.temp");
+        var dataInstalled = false;
+        var metadataInstalled = false;
         try
         {
             using (var output = Storage.OpenFile(temporaryData, OpenFileMode.Create))
@@ -31,30 +40,47 @@ internal static class ContentAssetStore
             using (var input = Storage.OpenFile(temporaryData, OpenFileMode.Read))
             {
                 validate(input);
+                if (extension is null)
+                {
+                    input.Position = 0;
+                    extension = ReadImageExtension(input);
+                }
             }
 
+            target = Storage.CombinePaths(directory, assetKey + extension);
+            metadataTarget = target + ".json";
             using (var output = Storage.OpenFile(temporaryMetadata, OpenFileMode.Create))
             {
                 JsonSerializer.Serialize(output, new Metadata(assetKey, displayName));
             }
 
             Storage.MoveFile(temporaryData, target);
+            dataInstalled = true;
             Storage.MoveFile(temporaryMetadata, metadataTarget);
+            metadataInstalled = true;
             return assetKey;
         }
         catch
         {
             DeleteIfExists(temporaryData);
             DeleteIfExists(temporaryMetadata);
-            DeleteIfExists(target);
-            DeleteIfExists(metadataTarget);
+            if (dataInstalled)
+            {
+                DeleteIfExists(target);
+            }
+
+            if (metadataInstalled)
+            {
+                DeleteIfExists(metadataTarget);
+            }
+
             throw;
         }
     }
 
     public static string Replace(
         string directory,
-        string extension,
+        string? extension,
         string assetKey,
         string displayName,
         Stream source,
@@ -66,9 +92,12 @@ internal static class ContentAssetStore
             throw new InvalidOperationException($"AssetKey '{assetKey}' is reserved or invalid.");
         }
 
-        var target = Storage.CombinePaths(directory, assetKey + extension);
-        var metadataTarget = target + ".json";
-        if (!Storage.FileExists(target) || !Storage.FileExists(metadataTarget))
+        var previousExtension = extension ?? FindImageExtension(directory, assetKey);
+        var previousTarget = Storage.CombinePaths(directory, assetKey + previousExtension);
+        var previousMetadata = previousTarget + ".json";
+        var target = previousTarget;
+        var metadataTarget = previousMetadata;
+        if (!Storage.FileExists(previousTarget) || !Storage.FileExists(previousMetadata))
         {
             throw new InvalidOperationException($"Asset '{assetKey}' does not exist.");
         }
@@ -77,6 +106,8 @@ internal static class ContentAssetStore
         var temporaryMetadata = Storage.CombinePaths(directory, $".{assetKey}.metadata.temp");
         var backupData = Storage.CombinePaths(directory, $".{assetKey}.data.backup");
         var backupMetadata = Storage.CombinePaths(directory, $".{assetKey}.metadata.backup");
+        var dataInstalled = false;
+        var metadataInstalled = false;
         try
         {
             using (var output = Storage.OpenFile(temporaryData, OpenFileMode.Create))
@@ -87,17 +118,26 @@ internal static class ContentAssetStore
             using (var input = Storage.OpenFile(temporaryData, OpenFileMode.Read))
             {
                 validate(input);
+                if (extension is null)
+                {
+                    input.Position = 0;
+                    extension = ReadImageExtension(input);
+                }
             }
 
+            target = Storage.CombinePaths(directory, assetKey + extension);
+            metadataTarget = target + ".json";
             using (var output = Storage.OpenFile(temporaryMetadata, OpenFileMode.Create))
             {
                 JsonSerializer.Serialize(output, new Metadata(assetKey, displayName));
             }
 
-            Storage.MoveFile(target, backupData);
-            Storage.MoveFile(metadataTarget, backupMetadata);
+            Storage.MoveFile(previousTarget, backupData);
+            Storage.MoveFile(previousMetadata, backupMetadata);
             Storage.MoveFile(temporaryData, target);
+            dataInstalled = true;
             Storage.MoveFile(temporaryMetadata, metadataTarget);
+            metadataInstalled = true;
             DeleteIfExists(backupData);
             DeleteIfExists(backupMetadata);
             return assetKey;
@@ -106,14 +146,24 @@ internal static class ContentAssetStore
         {
             DeleteIfExists(temporaryData);
             DeleteIfExists(temporaryMetadata);
+            if (dataInstalled)
+            {
+                DeleteIfExists(target);
+            }
+
+            if (metadataInstalled)
+            {
+                DeleteIfExists(metadataTarget);
+            }
+
             if (Storage.FileExists(backupData))
             {
-                Storage.MoveFile(backupData, target);
+                Storage.MoveFile(backupData, previousTarget);
             }
 
             if (Storage.FileExists(backupMetadata))
             {
-                Storage.MoveFile(backupMetadata, metadataTarget);
+                Storage.MoveFile(backupMetadata, previousMetadata);
             }
 
             throw;
@@ -140,9 +190,31 @@ internal static class ContentAssetStore
         DeleteIfExists(Storage.CombinePaths(directory, assetKey + extension + ".json"));
     }
 
-    private static void DeleteIfExists(string path)
+    public static string? FindImageExtension(string directory, string assetKey) =>
+        new[] { ".png", ".webp" }.SingleOrDefault(extension =>
+            Storage.FileExists(Storage.CombinePaths(directory, assetKey + extension)) &&
+            IsComplete(directory, assetKey + extension, extension)
+        );
+
+    public static bool IsImageComplete(string directory, string name) =>
+        (Storage.GetExtension(name) is ".png" or ".webp") &&
+        Storage.FileExists(Storage.CombinePaths(directory, name + ".json"));
+
+    private static string ReadImageExtension(Stream input)
     {
-        if (Storage.FileExists(path))
+        Span<byte> header = stackalloc byte[12];
+        var count = input.ReadAtLeast(header, header.Length, false);
+        return ImageCodec.DetectFormat(header[..count]) switch
+        {
+            ImageFormat.Png => ".png",
+            ImageFormat.WebP => ".webp",
+            _ => throw new InvalidDataException("Image assets must be PNG or WebP.")
+        };
+    }
+
+    private static void DeleteIfExists(string? path)
+    {
+        if (path is not null && Storage.FileExists(path))
         {
             Storage.DeleteFile(path);
         }

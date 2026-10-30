@@ -4365,7 +4365,7 @@
         "PickerUnavailable": "当前平台未提供文件选择功能。",
         "SelectType": "选择内容包类型",
         "SelectSource": "选择制造素材",
-        "SelectImage": "选择 PNG 图像素材",
+        "SelectImage": "选择 PNG 或 WebP 源图片",
         "NoSources": "没有可用于制造此类内容包的本地资产。",
         "Name": "内容名称",
         "NameRequired": "内容名称不能为空。",

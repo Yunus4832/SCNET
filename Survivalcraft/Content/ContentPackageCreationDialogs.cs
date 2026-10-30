@@ -106,7 +106,7 @@ public static class ContentPackageCreationDialogs
         {
             var files = await FilePicker.PickFilesAsync(
                 new FilePickerRequest(
-                    [".png"],
+                    [".webp", ".png"],
                     false,
                     LanguageManager.Get(_typeName, "SelectImage")
                 )

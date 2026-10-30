@@ -13,3 +13,6 @@ SCNET `.scpkg` 内容包的协议、读写与校验库，面向 .NET 10，命名
 需要命令行打包时使用 `SCNET.ContentTool`，而不是直接运行此类库。
 
 [内容包协议](https://gitee.com/Yunus0712/scnet/blob/main/Doc/Protocol/ContentPackageProtocol.md)
+
+图片内容包支持静态 PNG 和 WebP，推荐无损 WebP。包内扩展名、MIME、格式标识和实际编码必须一致。
+两种格式均保留尺寸、大小、元数据和完整性校验，不接受动画或其他图片格式。PNG 支持交错。

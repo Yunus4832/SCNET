@@ -30,7 +30,7 @@ interface SourceInspection {
   height: number;
   size: number;
   sha256: string;
-  mediaType: string;
+  mediaType: 'image/png' | 'image/webp';
 }
 interface ExistingContentTarget {
   contentId: string;
@@ -65,7 +65,8 @@ const form = reactive({
   createdAt: new Date().toISOString(),
 });
 const imageModeAvailable = computed(
-  () => !props.target || props.target.type === 'CharacterSkin' || props.target.type === 'BlocksTexture',
+  () =>
+    !props.target || props.target.type === 'CharacterSkin' || props.target.type === 'BlocksTexture',
 );
 const canCreate = computed(
   () =>
@@ -82,9 +83,10 @@ function resetImageIdentity() {
   Object.assign(form, {
     draftId: createUuid(),
     sourceBlobId: createUuid(),
-    type: imageModeAvailable.value && props.target
-      ? props.target.type as ImageContentType
-      : 'CharacterSkin',
+    type:
+      imageModeAvailable.value && props.target
+        ? (props.target.type as ImageContentType)
+        : 'CharacterSkin',
     identifier: props.target?.identifier ?? createUuid(),
     name: props.target?.name ?? '',
     version: '1.0.0',
@@ -193,7 +195,7 @@ async function persistDraft() {
     description: form.description,
     sourceBlobId: form.sourceBlobId,
     sourceFileName: sourceFile.value.name,
-    sourceMediaType: 'image/png',
+    sourceMediaType: sourceInspection.value.mediaType,
     createdAt: form.createdAt,
     updatedAt: now,
   };
@@ -214,7 +216,7 @@ async function restoreDraft(id: string) {
       throw new Error('该草稿不属于当前内容，无法作为新版本恢复');
     }
     Object.assign(form, draft);
-    sourceFile.value = new File([source], draft.sourceFileName, { type: 'image/png' });
+    sourceFile.value = new File([source], draft.sourceFileName, { type: draft.sourceMediaType });
     setPreviewUrl(source);
     await validateSource();
   });
@@ -278,7 +280,7 @@ onUnmounted(() => {
           <div>
             <span class="modal-title">{{ props.target ? '提交新版本' : '提交新内容' }}</span>
             <p v-if="props.target">为 {{ props.target.name }} 提交一个版本号不同的新内容包。</p>
-            <p v-else>上传完整内容包，或从 PNG 图片创建皮肤与方块材质包。</p>
+            <p v-else>上传完整内容包，或从 PNG/WebP 图片创建皮肤与方块材质包。</p>
           </div>
           <button class="button ghost" :disabled="busy" @click="close"><X :size="16" />关闭</button>
         </div>
@@ -291,7 +293,7 @@ onUnmounted(() => {
             :disabled="!imageModeAvailable"
             @click="mode = 'image'"
           >
-            <strong>从图片创建</strong><small>上传 PNG 皮肤或方块材质</small>
+            <strong>从图片创建</strong><small>上传 PNG/WebP 皮肤或方块材质</small>
           </button>
         </div>
 
@@ -309,7 +311,10 @@ onUnmounted(() => {
           </div>
           <div class="submission-notes">
             <p>包内类型、Identifier、名称和版本由 ContentServer 权威解析，提交时不会重新打包。</p>
-            <p v-if="props.target">包内 Identifier 必须为 <code>{{ props.target.identifier }}</code>，且版本号不能重复。</p>
+            <p v-if="props.target">
+              包内 Identifier 必须为 <code>{{ props.target.identifier }}</code
+              >，且版本号不能重复。
+            </p>
           </div>
           <div class="modal-actions">
             <button
@@ -335,9 +340,14 @@ onUnmounted(() => {
             <label>版本<input v-model="form.version" placeholder="1.0.0" /></label>
           </div>
           <label>简短说明<input v-model.trim="form.summary" maxlength="160" required /></label>
-          <label>详细描述<textarea v-model.trim="form.description" rows="4" maxlength="4000" required /></label>
+          <label
+            >详细描述<textarea v-model.trim="form.description" rows="4" maxlength="4000" required />
+          </label>
           <label class="file-field"
-            >PNG 源文件<input type="file" accept="image/png,.png" @change="selectSource"
+            >PNG/WebP 源文件<input
+              type="file"
+              accept="image/webp,image/png,.webp,.png"
+              @change="selectSource"
           /></label>
           <div v-if="sourceInspection" class="state package-preview">
             <img v-if="previewUrl" :src="previewUrl" alt="源图片预览" />

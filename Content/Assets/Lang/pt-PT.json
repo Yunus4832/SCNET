@@ -4365,7 +4365,7 @@
         "PickerUnavailable": "A seleção de ficheiros não está disponível nesta plataforma.",
         "SelectType": "Selecionar tipo de pacote",
         "SelectSource": "Selecionar origem de criação",
-        "SelectImage": "Selecionar uma imagem PNG de origem",
+        "SelectImage": "Selecionar uma imagem PNG ou WebP",
         "NoSources": "Não existem recursos locais disponíveis para criar este tipo de pacote.",
         "Name": "Nome do conteúdo",
         "NameRequired": "O nome do conteúdo não pode estar vazio.",

@@ -6,10 +6,10 @@ public static class ClothingPackageBuilder
     {
         var data = Array.Empty<byte>();
         if (type is ComponentClothingPackage.DataType.ReplySkin or ComponentClothingPackage.DataType.WhoHasReply &&
-            CharacterSkinsManager.HasSkinRes(skinName))
+            CharacterSkinsManager.GetFileName(skinName, out var fileName))
         {
             using var stream = Storage.OpenFile(
-                Storage.CombinePaths(GamePaths.CharacterSkins, skinName),
+                fileName,
                 OpenFileMode.Read
             );
             data = StreamUtils.ReadBytes(stream);

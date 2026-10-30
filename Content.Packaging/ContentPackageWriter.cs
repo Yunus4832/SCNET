@@ -45,7 +45,8 @@ public static class ContentPackageWriter
             foreach (var entry in entries)
             {
                 AppendHeader(hash, entry.Path, entry.Length);
-                var compression = entry.Path.EndsWith(".png", StringComparison.Ordinal)
+                var compression = entry.Path.EndsWith(".png", StringComparison.Ordinal) ||
+                                  entry.Path.EndsWith(".webp", StringComparison.Ordinal)
                     ? CompressionLevel.NoCompression
                     : CompressionLevel.Optimal;
                 var zipEntry = archive.CreateEntry(entry.Path, compression);
