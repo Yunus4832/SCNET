@@ -21,7 +21,8 @@
         <!-- 可空警告视为错误-->
         <WarningsAsErrors>Nullable</WarningsAsErrors>
         <!-- 忽略的警告列表-->
-        <NoWarn>$(NoWarn);CA1416;CA1422</NoWarn>
+        <!-- XA0033：Android 工具链暂时无法解析 Arch JDK 的五段版本号。 -->
+        <NoWarn>$(NoWarn);CA1416;CA1422;XA0033</NoWarn>
         <!-- 启用隐式 Using-->
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
