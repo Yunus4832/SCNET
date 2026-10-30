@@ -6,7 +6,7 @@
 | 目录 / 命名空间 | 职责 |
 | --- | --- |
 | `Images/` / `Engine.Media.Images` | 图像、像素缓冲、格式识别及编解码入口 |
-| `Images/Formats/` / `Engine.Media.Images.Formats` | PNG、BMP 等具体格式接口 |
+| `Images/Formats/` / `Engine.Media.Images.Formats` | 内部 PNG、WebP、BMP 格式实现，不作为公共调用入口 |
 | `Images/Native/` / `Engine.Media.Images.Native` | 内部原生图像编解码绑定 |
 | `Audio/` / `Engine.Media.Audio` | 音频数据、流式解码入口及音频内部的探测流 |
 | `Audio/Formats/` / `Engine.Media.Audio.Formats` | WAV、Ogg、FLAC、MP3 具体格式接口 |
@@ -17,6 +17,20 @@
 连续 RGBA8 数组，采用非预乘 Alpha。音频支持 WAV、Ogg、FLAC、MP3 读取和流式解码，
 以及 WAV 写入；不负责音频播放。模型数据不创建 GPU 缓冲。顶点声明、元素格式与语义属于 `Engine.Graphics`，
 由图形层在准备渲染数据时使用；媒体库只保留模型文件中的访问器与几何数据。
+
+## 图像 API
+
+图像格式统一使用 `ImageFormat`（`Png`、`WebP`、`Bmp`）。`ImageCodec` 提供公共识别、元数据与编解码入口：
+
+- `DetectFormat` 根据扩展名或编码字节识别格式；扩展名识别不验证文件内容。
+- `Identify` 返回统一的 `ImageInfo`：尺寸、文件格式和帧信息，不暴露各格式的源色型枚举；WebP 只以大于 1 的值标记动画，不枚举实际帧数。
+- `Decode` 返回顶行优先、非预乘 Alpha 的 RGBA8 `ImageBuffer`；可指定预期格式，不匹配时拒绝读取。
+- `Encode` 根据格式编码，`saveAlpha=false` 输出不透明像素，不修改源缓冲。
+
+`Image.Load/Save` 是同一条编解码路径的对象便捷入口。三种格式都接受非定位流和短读流；
+`Identify(Stream)` 在流可定位时恢复原位置，否则消耗输入；解码从当前位置读取并消耗编码数据。
+这些方法不关闭调用方传入的流。PNG 和 WebP 使用原生库，BMP 支持未压缩的 24/32 位像素、
+四字节行对齐和正负高度。动画帧可被识别，但不能解码为单张图像。
 
 API 接受 `Stream`，调用方负责打开文件和解析游戏存储路径。纹理、模型上传、声音播放和
 `BitmapFont` 留在 `Engine` 的 Graphics/Audio 层。托管依赖包括 Engine.Core、

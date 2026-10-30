@@ -4,5 +4,7 @@ public enum ImageFormat
 {
     Png = 0,
 
-    WebP = 1
+    WebP = 1,
+
+    Bmp = 2
 }

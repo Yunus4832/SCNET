@@ -21,7 +21,7 @@
 - `Silk.NET.OpenAL`、`Silk.NET.OpenGLES`、`Silk.NET.OpenGL`、`Silk.NET.Input.Common`、`Silk.NET.Input.Sdl`、`Silk.NET.Windowing.Common`、`Silk.NET.Windowing.Sdl`：窗口、输入与图形抽象
 - `SCNET.Native.OpenAL`：Windows、Linux 和 Android 四种 ABI 的 OpenAL Soft 原生资产，由 Engine 统一引用
 - `Silk.NET.SDL`：桌面与 Android 的 SDL 平台适配
-- 图像编解码采用项目内的 P/Invoke 薄绑定；`Engine.Media` 使用 libpng 与 libwebp 编解码图像，图像公共 API 位于 `Engine.Media.Images`，具体格式接口位于 `Engine.Media.Images.Formats`。内容服务器图片上传在解析元数据前限定为 PNG；游戏支持 PNG、WebP 和 BMP，不提供 TIFF 入口。
+- 图像公共 API 位于 `Engine.Media.Images`，通过 `ImageCodec` 和单一 `ImageFormat` 统一处理 PNG、WebP、BMP；`Images.Formats` 只保存内部格式实现。PNG 与 WebP 使用 libpng、libwebp 的 P/Invoke 薄绑定，BMP 为托管实现。内容服务器图片上传在解析元数据前限定为 PNG；不提供 TIFF 入口。详见 [媒体库](../Engine.Media/README.md#图像-api)。
 - 原生图像库的版本、来源和构建说明见 [Native.ImageCodecs](../Native.ImageCodecs/README.md)。
 - `Svg.Skia`、`SkiaSharp`：构建期 SVG 栅格化、PNG 处理与 GUI 图集生成
 - `Xamarin.AndroidX.Core`：Android 兼容支持

@@ -133,7 +133,7 @@ public sealed class RenderTarget2D : Texture2D
         }
     }
 
-    public static void Save(RenderTarget2D renderTarget, Stream stream, ImageFileFormat format, bool saveAlpha)
+    public static void Save(RenderTarget2D renderTarget, Stream stream, ImageFormat format, bool saveAlpha)
     {
         if (renderTarget.ColorFormat != 0)
         {

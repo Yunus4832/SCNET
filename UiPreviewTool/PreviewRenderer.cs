@@ -192,7 +192,7 @@ internal static class PreviewRenderer
             Display.Clear(new Color(35, 45, 55), 1f, 0);
             Widget.DrawWidgetsHierarchy(root);
             using var output = File.Create(path);
-            RenderTarget2D.Save(target, output, ImageFileFormat.Png, false);
+            RenderTarget2D.Save(target, output, ImageFormat.Png, false);
         }
         finally
         {

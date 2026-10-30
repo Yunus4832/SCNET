@@ -24,7 +24,7 @@ public sealed class MediaTypeRoutingTest
             var color = new Color(12, 34, 56, 255);
             expected.SetPixel(0, 0, color);
             using var encoded = new MemoryStream();
-            Image.Save(expected, encoded, ImageFileFormat.Png, true);
+            Image.Save(expected, encoded, ImageFormat.Png, true);
             var content = new ContentInfo("media-namespaces/pixel.png");
             content.SetContentStream(new MemoryStream(encoded.ToArray()));
             ContentManager.Add(content);

@@ -1,5 +1,4 @@
 using Engine.Core.Mathematics;
-using Engine.Media.Images.Formats;
 
 namespace Engine.Media.Images;
 
@@ -51,103 +50,14 @@ public sealed class Image : IDisposable
         }
     }
 
-    public static ImageFileFormat DetermineFileFormat(string extension) => extension.ToLowerInvariant() switch
+    public static Image Load(Stream stream) => new(ImageCodec.Decode(stream));
+
+    public static Image Load(Stream stream, ImageFormat format) => new(ImageCodec.Decode(stream, format));
+
+    public static void Save(Image image, Stream stream, ImageFormat format, bool saveAlpha)
     {
-        ".png" => ImageFileFormat.Png,
-        ".webp" => ImageFileFormat.WebP,
-        ".bmp" => ImageFileFormat.Bmp,
-        _ => throw new InvalidOperationException("Unsupported image file format.")
-    };
-
-    public static ImageFileFormat DetermineFileFormat(Stream stream)
-    {
-        if (stream.CanSeek && Bmp.IsBmpStream(stream))
-        {
-            return ImageFileFormat.Bmp;
-        }
-
-        return ImageCodec.Identify(stream).Format switch
-        {
-            ImageFormat.Png => ImageFileFormat.Png,
-            ImageFormat.WebP => ImageFileFormat.WebP,
-            _ => throw new InvalidDataException("Unsupported image format.")
-        };
-    }
-
-    public static Image Load(Stream stream)
-    {
-        if (!stream.CanSeek)
-        {
-            using var buffered = BufferEncoded(stream);
-            return Load(buffered);
-        }
-
-        if (stream.CanSeek && Bmp.IsBmpStream(stream))
-        {
-            return Bmp.Load(stream);
-        }
-
-        return new Image(ImageCodec.Decode(stream));
-    }
-
-    public static Image Load(Stream stream, ImageFileFormat format)
-    {
-        if (!stream.CanSeek)
-        {
-            using var buffered = BufferEncoded(stream);
-            return Load(buffered, format);
-        }
-
-        if (DetermineFileFormat(stream) != format)
-        {
-            throw new FormatException($"Image does not have the requested format: {format}.");
-        }
-
-        return Load(stream);
-    }
-
-    public static void Save(Image image, Stream stream, ImageFileFormat format, bool saveAlpha)
-    {
-        if (format == ImageFileFormat.Bmp)
-        {
-            Bmp.Save(image, stream, saveAlpha ? Bmp.Format.RGBA8 : Bmp.Format.RGB8);
-            return;
-        }
-
-        var codecFormat = format switch
-        {
-            ImageFileFormat.Png => ImageFormat.Png,
-            ImageFileFormat.WebP => ImageFormat.WebP,
-            _ => throw new ArgumentOutOfRangeException(nameof(format))
-        };
-        ImageCodec.Encode(image.Buffer, stream, codecFormat, saveAlpha);
-    }
-
-    private static MemoryStream BufferEncoded(Stream stream)
-    {
-        var result = new MemoryStream();
-        try
-        {
-            var buffer = new byte[64 * 1024];
-            int read;
-            while ((read = stream.Read(buffer)) > 0)
-            {
-                if (result.Length + read > 512 * 1024 * 1024)
-                {
-                    throw new InvalidDataException("Encoded image exceeds the size limit.");
-                }
-
-                result.Write(buffer, 0, read);
-            }
-
-            result.Position = 0;
-            return result;
-        }
-        catch
-        {
-            result.Dispose();
-            throw;
-        }
+        ArgumentNullException.ThrowIfNull(image);
+        ImageCodec.Encode(image.Buffer, stream, format, saveAlpha);
     }
 
     private void ValidateCoordinates(int x, int y)

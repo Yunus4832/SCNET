@@ -1,12 +1,22 @@
-using System.Buffers.Binary;
-
-using Engine.Media.Images.Native;
+using Engine.Media.Images.Formats;
 
 namespace Engine.Media.Images;
 
 public static class ImageCodec
 {
     private const int _maximumEncodedBytes = 512 * 1024 * 1024;
+
+    public static ImageFormat DetectFormat(string extension)
+    {
+        ArgumentNullException.ThrowIfNull(extension);
+        return extension.ToLowerInvariant() switch
+        {
+            ".png" => ImageFormat.Png,
+            ".webp" => ImageFormat.WebP,
+            ".bmp" => ImageFormat.Bmp,
+            _ => throw new InvalidOperationException("Unsupported image file format.")
+        };
+    }
 
     public static ImageFormat DetectFormat(ReadOnlySpan<byte> data)
     {
@@ -20,15 +30,26 @@ public static class ImageCodec
             return ImageFormat.WebP;
         }
 
-        throw new InvalidDataException("Unsupported image format. Expected PNG or WebP.");
+        if (data.StartsWith("BM"u8))
+        {
+            return ImageFormat.Bmp;
+        }
+
+        throw new InvalidDataException("Unsupported image format. Expected PNG, WebP or BMP.");
     }
 
     public static ImageInfo Identify(ReadOnlySpan<byte> data)
     {
+        if (data.Length > _maximumEncodedBytes)
+        {
+            throw new InvalidDataException("Encoded image exceeds the size limit.");
+        }
+
         var info = DetectFormat(data) switch
         {
-            ImageFormat.Png => IdentifyPng(data),
+            ImageFormat.Png => PngCodec.Identify(data),
             ImageFormat.WebP => WebPCodec.Identify(data),
+            ImageFormat.Bmp => BmpCodec.Identify(data),
             _ => throw new InvalidDataException("Unsupported image format.")
         };
         ImageBuffer.ValidateDimensions(info.Width, info.Height);
@@ -37,6 +58,7 @@ public static class ImageCodec
 
     public static ImageInfo Identify(Stream stream)
     {
+        ArgumentNullException.ThrowIfNull(stream);
         var position = stream.CanSeek ? stream.Position : 0;
         try
         {
@@ -51,9 +73,14 @@ public static class ImageCodec
         }
     }
 
-    public static ImageBuffer Decode(ReadOnlySpan<byte> data)
+    public static ImageBuffer Decode(ReadOnlySpan<byte> data, ImageFormat? expectedFormat = null)
     {
         var info = Identify(data);
+        if (expectedFormat is { } expected && info.Format != expected)
+        {
+            throw new FormatException($"Image does not have the requested format: {expected}.");
+        }
+
         if (info.Frames != 1)
         {
             throw new InvalidDataException("Animated images are not supported.");
@@ -63,30 +90,24 @@ public static class ImageCodec
         {
             ImageFormat.Png => PngCodec.Decode(data),
             ImageFormat.WebP => WebPCodec.Decode(data, info),
+            ImageFormat.Bmp => BmpCodec.Decode(data),
             _ => throw new InvalidDataException("Unsupported image format.")
         };
     }
 
-    public static ImageBuffer Decode(Stream stream) => Decode(ReadEncoded(stream));
+    public static ImageBuffer Decode(Stream stream, ImageFormat? expectedFormat = null)
+    {
+        return Decode(ReadEncoded(stream), expectedFormat);
+    }
 
     public static byte[] Encode(ImageBuffer image, ImageFormat format, bool saveAlpha = true)
     {
         ArgumentNullException.ThrowIfNull(image);
-        if (format == ImageFormat.WebP && !saveAlpha)
-        {
-            using var opaque = image.Clone();
-            for (var index = 0; index < opaque.Pixels.Length; index++)
-            {
-                opaque.Pixels[index].A = 255;
-            }
-
-            return WebPCodec.Encode(opaque);
-        }
-
         return format switch
         {
             ImageFormat.Png => PngCodec.Encode(image, saveAlpha),
-            ImageFormat.WebP => WebPCodec.Encode(image),
+            ImageFormat.WebP => WebPCodec.Encode(image, saveAlpha),
+            ImageFormat.Bmp => BmpCodec.Encode(image, saveAlpha),
             _ => throw new ArgumentOutOfRangeException(nameof(format))
         };
     }
@@ -119,63 +140,5 @@ public static class ImageCodec
         }
 
         return memory.ToArray();
-    }
-
-    private static ImageInfo IdentifyPng(ReadOnlySpan<byte> data)
-    {
-        if (data.Length < 33 ||
-            BinaryPrimitives.ReadUInt32BigEndian(data.Slice(8, 4)) != 13 ||
-            !data.Slice(12, 4).SequenceEqual("IHDR"u8))
-        {
-            throw new InvalidDataException("Invalid PNG header.");
-        }
-
-        var width = BinaryPrimitives.ReadUInt32BigEndian(data.Slice(16, 4));
-        var height = BinaryPrimitives.ReadUInt32BigEndian(data.Slice(20, 4));
-        if (width > int.MaxValue || height > int.MaxValue)
-        {
-            throw new InvalidDataException("Invalid PNG dimensions.");
-        }
-
-        var frames = 1;
-        var offset = 8;
-        var sawEnd = false;
-        while (offset <= data.Length - 12)
-        {
-            var length = BinaryPrimitives.ReadUInt32BigEndian(data.Slice(offset, 4));
-            if (length > int.MaxValue || offset + length + 12 > data.Length)
-            {
-                throw new InvalidDataException("Truncated PNG chunk.");
-            }
-
-            var type = data.Slice(offset + 4, 4);
-            if (type.SequenceEqual("acTL"u8))
-            {
-                if (length != 8)
-                {
-                    throw new InvalidDataException("Invalid PNG animation header.");
-                }
-
-                frames = Math.Max(
-                    2,
-                    (int)Math.Min(int.MaxValue, BinaryPrimitives.ReadUInt32BigEndian(data.Slice(offset + 8, 4)))
-                );
-            }
-
-            if (type.SequenceEqual("IEND"u8))
-            {
-                sawEnd = true;
-                break;
-            }
-
-            offset = checked(offset + (int)length + 12);
-        }
-
-        if (!sawEnd)
-        {
-            throw new InvalidDataException("PNG end chunk is missing.");
-        }
-
-        return new ImageInfo((int)width, (int)height, ImageFormat.Png, frames);
     }
 }

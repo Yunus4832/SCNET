@@ -145,6 +145,6 @@ public static class ScreenCaptureManager
             Storage.CombinePaths(_screenshotDir, filename),
             OpenFileMode.CreateOrOpen
         );
-        Image.Save(image, stream, ImageFileFormat.Png, false);
+        Image.Save(image, stream, ImageFormat.Png, false);
     }
 }

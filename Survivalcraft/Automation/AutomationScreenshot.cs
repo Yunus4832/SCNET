@@ -41,7 +41,7 @@ public static class AutomationScreenshot
         }
 
         using var stream = Storage.OpenFile(path, OpenFileMode.Create);
-        RenderTarget2D.Save(target, stream, ImageFileFormat.Png, saveAlpha: false);
+        RenderTarget2D.Save(target, stream, ImageFormat.Png, saveAlpha: false);
         return new AutomationScreenshotResult(path, width, height);
     }
 }

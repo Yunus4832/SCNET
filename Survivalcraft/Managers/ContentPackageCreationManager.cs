@@ -57,7 +57,7 @@ public static class ContentPackageCreationManager
             int height;
             using (var input = Storage.OpenFile(sourcePath, OpenFileMode.Read))
             {
-                var image = Image.Load(input, ImageFileFormat.Png);
+                var image = Image.Load(input, ImageFormat.Png);
                 width = image.Width;
                 height = image.Height;
             }

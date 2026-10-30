@@ -1,9 +1,70 @@
+using System.Buffers.Binary;
 using System.Text;
 
-namespace Engine.Media.Images.Native;
+using Engine.Media.Images.Native;
+
+namespace Engine.Media.Images.Formats;
 
 internal static unsafe class PngCodec
 {
+    public static ImageInfo Identify(ReadOnlySpan<byte> data)
+    {
+        if (data.Length < 33 ||
+            BinaryPrimitives.ReadUInt32BigEndian(data.Slice(8, 4)) != 13 ||
+            !data.Slice(12, 4).SequenceEqual("IHDR"u8))
+        {
+            throw new InvalidDataException("Invalid PNG header.");
+        }
+
+        var width = BinaryPrimitives.ReadUInt32BigEndian(data.Slice(16, 4));
+        var height = BinaryPrimitives.ReadUInt32BigEndian(data.Slice(20, 4));
+        if (width > int.MaxValue || height > int.MaxValue)
+        {
+            throw new InvalidDataException("Invalid PNG dimensions.");
+        }
+
+        var frames = 1;
+        var offset = 8;
+        var sawEnd = false;
+        while (offset <= data.Length - 12)
+        {
+            var length = BinaryPrimitives.ReadUInt32BigEndian(data.Slice(offset, 4));
+            if (length > int.MaxValue || offset + length + 12 > data.Length)
+            {
+                throw new InvalidDataException("Truncated PNG chunk.");
+            }
+
+            var type = data.Slice(offset + 4, 4);
+            if (type.SequenceEqual("acTL"u8))
+            {
+                if (length != 8)
+                {
+                    throw new InvalidDataException("Invalid PNG animation header.");
+                }
+
+                frames = Math.Max(
+                    2,
+                    (int)Math.Min(int.MaxValue, BinaryPrimitives.ReadUInt32BigEndian(data.Slice(offset + 8, 4)))
+                );
+            }
+
+            if (type.SequenceEqual("IEND"u8))
+            {
+                sawEnd = true;
+                break;
+            }
+
+            offset = checked(offset + (int)length + 12);
+        }
+
+        if (!sawEnd)
+        {
+            throw new InvalidDataException("PNG end chunk is missing.");
+        }
+
+        return new ImageInfo((int)width, (int)height, ImageFormat.Png, frames);
+    }
+
     public static ImageBuffer Decode(ReadOnlySpan<byte> data)
     {
         var image = new PngImage { Version = 1 };

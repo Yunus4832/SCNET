@@ -173,6 +173,21 @@ public sealed class ContentServerApiTest : IDisposable
         Assert.Equal("Image source must be PNG.", exception.Message);
     }
 
+    [Theory]
+    [InlineData(ImageFormat.Bmp)]
+    [InlineData(ImageFormat.WebP)]
+    public async Task ImageUploadStillRejectsOtherSupportedImageFormats(ImageFormat format)
+    {
+        await using var factory = CreateFactory();
+        var builder = factory.Services.GetRequiredService<ImageContentPackageBuilder>();
+        using var image = new ImageBuffer(16, 16);
+        using var input = new MemoryStream(ImageCodec.Encode(image, format));
+        var exception = await Assert.ThrowsAsync<ContentPackageException>(() =>
+            builder.ValidateSourceAsync(input, ContentPackageType.BlocksTexture, 1024 * 1024, CancellationToken.None)
+        );
+        Assert.Equal("Image source must be PNG.", exception.Message);
+    }
+
     [Fact]
     public async Task AnnouncementsAndReleasesArePublicOnlyWhenPublished()
     {

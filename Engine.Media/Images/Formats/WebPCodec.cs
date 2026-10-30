@@ -1,4 +1,6 @@
-namespace Engine.Media.Images.Native;
+using Engine.Media.Images.Native;
+
+namespace Engine.Media.Images.Formats;
 
 internal static unsafe class WebPCodec
 {
@@ -39,7 +41,23 @@ internal static unsafe class WebPCodec
         return result;
     }
 
-    public static byte[] Encode(ImageBuffer image)
+    public static byte[] Encode(ImageBuffer image, bool saveAlpha)
+    {
+        if (!saveAlpha)
+        {
+            using var opaque = image.Clone();
+            for (var index = 0; index < opaque.Pixels.Length; index++)
+            {
+                opaque.Pixels[index].A = 255;
+            }
+
+            return EncodePixels(opaque);
+        }
+
+        return EncodePixels(image);
+    }
+
+    private static byte[] EncodePixels(ImageBuffer image)
     {
         fixed (byte* pixels = image.Bytes)
         {
