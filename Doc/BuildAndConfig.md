@@ -25,6 +25,27 @@
 仍须硬编码，平台引用的 RID 也按现有约定固定，不应将这些缺陷规避改为属性引用。
 框架升级时需同步检查这些引用、独立模组模板及 NuGet 包内工具路径。
 
+### 应用图标与 Android 资源
+
+Android、Linux 和 Windows Starter 共用 `SharedResources/AppIcon/icon.png`，
+桌面 Starter 另外共用同目录下的 `icon.ico`，
+平台项目直接引用共享文件，不各自保存副本：
+
+- Android 将 PNG 链接为 `Resources/mipmap/icon.png`，继续使用 `@mipmap/icon`。
+- 桌面 PNG 嵌入 Starter，资源名为 `Starter.Resources.icon.png`，用于引擎窗口图标；
+  Linux 还将它安装到用户图标目录，供 `.desktop` 入口使用。
+- ICO 通过 `ApplicationIcon` 嵌入两个平台的托管 DLL，Windows 还将资源带入 EXE，
+  支持文件管理器预览。Linux ELF 启动程序不因此获得文件图标。
+
+桌面 PNG 保留标准格式：[Linux 图标主题规范](https://specifications.freedesktop.org/icon-theme/latest/)
+推荐 PNG，没有将 WebP 列为桌面图标格式。游戏纹理默认 WebP 的约定不适用于这类系统集成资源。
+桌面图标由 Starter 加载，不经过游戏 `Content/Assets` 资源系统。
+
+Android 专属的 `AndroidManifest.xml`、`values/colors.xml`、`values/styles.xml` 和 `xml/update_paths.xml`
+集中在 `SharedResources/Android`。四个 Android 架构项目都由 `AndroidApplication.props`
+引用同一份平台资源和应用图标；Manifest 通过专用 `AndroidManifest` 属性引用，
+不作为普通 `AndroidResource` 编译。`AndroidVariant.props` 仅为非主架构项目复用源码。
+
 ### `SharedProperties/Versions.props`
 
 所有自主发布单元从 `0.1.0` 开始，使用 `MAJOR.MINOR.PATCH[-prerelease]`。
@@ -123,19 +144,20 @@ Android 的几个变体项目会复用这份配置，只在自己的 `.csproj` �
 ### `SharedProperties/AndroidApplication.props`
 
 这是 Android 可运行启动器的公共项目配置，集中定义目标框架、程序集名称、最低系统版本、
-`Content.zip` 资产声明、共享 Manifest 和全局 `using`。每个架构项目仍显式声明自己的
+`Content.zip` 资产声明、共享图标与 Android 资源、共享 Manifest 和全局 `using`。每个架构项目仍显式声明自己的
 `RuntimeIdentifier`、APK 名称，并在 `ProjectReference` 中硬编码相同 RID，以避免 Rider 设计时
 构建和 MSBuild 项目引用求值产生架构偏差。
 
-公共 Manifest 位于 `SharedProperties/AndroidManifest.xml`，所有 Android 启动器使用同一个模板。
+公共 Manifest 位于 `SharedResources/Android/AndroidManifest.xml`，所有 Android 启动器使用同一个模板。
 应用通过限制到缓存 `updates/` 子目录的 FileProvider 把已校验 APK 交给 Android 系统安装器；各架构变体必须链接同一份 `update_paths.xml`。
 架构项目不应保存独立副本；需要平台级声明时修改公共模板，需要真正的架构差异时再使用条件配置
 或 Manifest Overlay。
 
 ### `SharedProperties/AndroidVariant.props`
 
-Arm32、x64 和 x86 变体通过这份配置链接 `Survivalcraft.Android/` 中的公共启动器源码与 Android
-资源。各变体继续保留独立的项目、`bin/obj`、`Content.zip` 和对应 ABI 的 OpenAL 库，使 Rider
+Arm32、x64 和 x86 变体通过这份配置链接 `Survivalcraft.Android/` 中的公共启动器源码。
+平台资源由四个架构共同导入的 `AndroidApplication.props` 引用，不再从主架构项目转引。
+各变体继续保留独立的项目、`bin/obj`、`Content.zip` 和对应 ABI 的 OpenAL 库，使 Rider
 可以直接选择匹配设备架构的项目运行，同时避免不同 RID 的中间产物互相污染。
 
 ## 构建

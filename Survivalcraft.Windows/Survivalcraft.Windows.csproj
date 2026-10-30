@@ -9,7 +9,7 @@
         <UseWindowsForms>true</UseWindowsForms>
         <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-        <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+        <ApplicationIcon>..\SharedResources\AppIcon\icon.ico</ApplicationIcon>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <StartProgram>Starter</StartProgram>
     </PropertyGroup>
@@ -39,7 +39,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Resources\icon.png" LogicalName="Starter.Resources.icon.png"/>
+        <EmbeddedResource Include="..\SharedResources\AppIcon\icon.png"
+                          Link="Resources\icon.png" LogicalName="Starter.Resources.icon.png"/>
     </ItemGroup>
 
     <ItemGroup>
