@@ -1,57 +1,42 @@
 # GUI 图集源文件
 
-工具使用 SkiaSharp 完成栅格图片处理和 PNG 编解码，Svg.Skia 负责 SVG 解析。
-SVG 以两倍尺寸栅格化，在预乘 Alpha 状态下使用 SkiaSharp 线性采样缩小，再转回未预乘像素
-进入统一的图集预乘步骤，避免半透明区域插值产生黑边；PNG 源按原始像素合入。
+工具接受 PNG、WebP 和 SVG 源资产，统一输出无损 WebP 图集。
+源位图和输出图集都使用普通直通 Alpha，资源作者无需预乘。
+SVG 按声明的尺寸转为图集条目，与位图一起排版合成。
 
-`Assets/` 中的每个 SVG 或 PNG 都是一个完整、独立且背景透明的图集条目。文件名会直接成为
-`Textures/Atlas/` 后的资源名。
+`Assets/` 中每个文件都是独立图集条目，文件名成为 `Textures/Atlas/` 后的资源名。
 
-源文件要求：
+- 位图默认使用无损 WebP，也支持普通 PNG；不要保存预乘像素。
+- SVG 不依赖外部图片、字体或工程文件，根元素使用整数像素 `width`、`height` 和对应 `viewBox`。
+- 同一名称只能提供一种源格式，不能并存同名 PNG、WebP、SVG。
+- 不包含编辑器背景、隐藏图层或页面底色；普通态和按下态分别保存。
+- 可编辑的几何图标和 HUD 按钮继续使用 SVG；位图保留最终尺寸的像素质量。
 
-- SVG 使用标准格式，不依赖外部图片、字体或其他工程文件；
-- SVG 根元素使用整数像素声明 `width` 和 `height`，并提供与画布对应的 `viewBox`；
-- PNG 使用未预乘 Alpha 的 RGBA 数据，生成器会在输出图集时统一预乘一次；
-- 不包含编辑器背景、隐藏设计图层或页面底色；
-- 同一条目不能同时提供 SVG 和 PNG；普通和按下状态分别保存，例如 `CharacterList.svg` 与
-  `CharacterList_Pressed.svg`。
+该工具只生成 GUI 图集。需要独立加载、独立生命周期或采样参数的纹理放在 `Content/Assets/Textures/`。
+生成命令和构建期增量行为见 [构建配置](../Doc/BuildAndConfig.md#gui-图集)。
 
-新增 GUI 资产默认优先使用 SVG，以便保持几何结构可编辑并获得可控的缩放效果。只有小尺寸图标
-在最终尺寸下经过视觉比较，确认 PNG 的像素对齐、线宽或抗锯齿效果更好时，才优先保留 PNG。
-Inkscape 工程、下载资源或其他绘图工具可以作为源文件的上游，但不属于图集生成协议。
-`Assets/` 中的独立 SVG 和 PNG 才是仓库中的权威源文件。
+## 位图转换与提取
 
-该工具只生成 GUI 图集。必须按名称单独加载、生命周期不同、尺寸较大或需要独立采样参数的
-纹理继续保留在 `Content/Assets/Textures/` 中。
-
-生成命令和构建期增量行为见 [`Doc/BuildAndConfig.md`](../Doc/BuildAndConfig.md)。
-
-## PNG 预处理
-
-普通未预乘 PNG 可以直接标准化到源目录：
+普通 PNG/WebP 可以直接放入源目录，无需预处理。需要转换为默认的无损 WebP 时使用：
 
 ```bash
-dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- prepare-png \
-  input.png GuiAtlasTool/Assets/EntryName.png
+dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
+  input.png GuiAtlasTool/Assets/EntryName.webp
 ```
 
-从旧版游戏资源恢复的 PNG 如果已经预乘 Alpha，增加 `--premultiplied`，工具会在保存源资产前
-反预乘：
+仅在一次性导入已知的历史预乘图片时使用 `--premultiplied`，工具先反预乘再输出普通 WebP。
+这不是常规资产制作步骤，工具不会猜测输入的 Alpha 状态。
 
-```bash
-dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- prepare-png \
-  input.png GuiAtlasTool/Assets/EntryName.png --premultiplied
-```
-
-从已生成的预乘图集中提取一个或多个条目时，使用 `extract`。该命令读取映射、裁切并自动
-反预乘：
+从当前图集中提取一个或多个条目：
 
 ```bash
 dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- extract \
-  AtlasTexture.png Atlas.txt GuiAtlasTool/Assets Entry1 Entry2
+  AtlasTexture.webp Atlas.txt GuiAtlasTool/Assets Entry1 Entry2
 ```
 
-预处理命令默认拒绝覆盖已有文件；明确需要替换时增加 `--overwrite`。
+提取默认输出 `.webp`。转换和提取命令拒绝覆盖已有文件；需要替换时增加 `--overwrite`。
+图集生成只允许 `.webp` 输出路径。栅格输入不支持动画。
+同一组输出的并发生成会串行处理，已是最新的输出会直接复用，避免多个项目同时改写图集。
 
 ## 组合游戏内 HUD 操作按钮
 
@@ -84,6 +69,6 @@ dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- compose-game-button \
 现有文件；确认需要成对替换时使用 `--overwrite`。生成后应重新生成图集，并在最终尺寸下检查
 图标的视觉大小、居中和线条质量。
 
-该命令有意只接受 SVG 图标并输出 SVG 按钮。PNG 图标继续作为独立的像素资产管理；不要为了
-套用游戏内按钮边框而自动重采样 PNG。确实需要 PNG 按钮时，应先根据目标尺寸和 Alpha 来源
+该命令有意只接受 SVG 图标并输出 SVG 按钮。PNG/WebP 图标继续作为独立的像素资产管理；不要为了
+套用游戏内按钮边框而自动重采样位图。确实需要位图按钮时，应先根据目标尺寸和 Alpha 来源
 评估其像素质量，再决定是否增加单独的光栅合成流程。

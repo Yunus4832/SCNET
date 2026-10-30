@@ -113,6 +113,9 @@
             <Build Solution="Release|*" Project="false"/>
         </Project>
         <Project Path="GuiAtlasTool/GuiAtlasTool.csproj"/>
+        <Project Path="GuiAtlasTool.Test/GuiAtlasTool.Test.csproj">
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
         <Project Path="ContentTool/ContentTool.csproj"/>
         <Project Path="LanguageTool/LanguageTool.csproj"/>
         <Project Path="WorldUpgradeTool/WorldUpgradeTool.csproj"/>

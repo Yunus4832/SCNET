@@ -34,3 +34,11 @@ SCNET 的跨平台引擎运行时，提供图形、窗口、输入、音频、�
 
 通用子纹理、纹理图集、路径/斜面绘图及基础天空 shader 位于 `Engine.Graphics`。
 依赖游戏相机、内容管理器或世界状态的渲染与缓存仍属于游戏模块，不由引擎反向加载。
+
+## 纹理 Alpha
+
+颜色图片使用直通 Alpha。`Texture2D.Load` 和 `SetData(Image)` 在上传前复制并预乘，不修改源图片；mipmap 在预乘后生成。
+`RenderTarget2D.Save` 反预乘后输出普通图片，支持 PNG、WebP、BMP。
+预乘透明绘制使用 `BlendState.AlphaBlend`，预乘纹理的加法绘制使用 `PremultipliedAdditive`。
+`NonPremultiplied` 和 `Additive` 仍用于明确输出直通颜色的自定义绘制，不应直接用于预乘纹理。
+底层数组、指针上传及 GPU 读回表示 GPU 像素，调用方自行维护此约定；它们不是图片解码入口。

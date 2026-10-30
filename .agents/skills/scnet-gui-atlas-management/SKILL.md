@@ -1,55 +1,53 @@
 ---
 name: scnet-gui-atlas-management
-description: Compose SCNET gameplay HUD button textures, manage GUI atlas SVG and PNG sources, import historical premultiplied images, generate the atlas, and validate visual or alpha-sensitive replacements. Use when adding, replacing, extracting, reorganizing, or diagnosing resources under GuiAtlasTool/Assets or the generated GUI atlas; do not use gameplay button composition for general Widget, Screen, Dialog, or ActionPanel buttons.
+description: Compose SCNET gameplay HUD button textures, manage GUI atlas SVG, PNG and WebP sources, import historical premultiplied images, generate the atlas, and validate visual or alpha-sensitive replacements. Use when adding, replacing, extracting, reorganizing, or diagnosing resources under GuiAtlasTool/Assets or the generated GUI atlas; do not use gameplay button composition for general Widget, Screen, Dialog, or ActionPanel buttons.
 ---
 
 # SCNET GUI Atlas Management
 
-Treat `GuiAtlasTool/Assets/` as the source of truth. `Content/Assets/Atlases/AtlasTexture.png` and
+Treat `GuiAtlasTool/Assets/` as the source of truth. `Content/Assets/Atlases/AtlasTexture.webp` and
 `Atlas.txt` are ignored build products; never edit or commit them as source assets.
 
 ## Choose the source format
 
-- Prefer SVG for new GUI assets by default. It keeps geometry editable, scales predictably, and
-  works with the maintained gameplay-button composition workflow.
+- Prefer lossless WebP for raster GUI assets. Use SVG for editable geometry, scalable icons, and
+  the maintained gameplay-button composition workflow.
 - Use PNG selectively for small icons when final-size pixel alignment, hinting, line weight, or
   antialiasing has been visually compared and the raster result is better. This includes status
   symbols, cursors, compact flags, and small glyphs recovered from a verified atlas.
 - A nominally large canvas does not make an icon suitable for SVG when the visible symbol occupies
   only a small area. Judge the rendered feature size.
-- Do not keep SVG and PNG files with the same stem. The filename stem is the atlas entry name.
+- Do not keep SVG, PNG and WebP files with the same stem. The filename stem is the atlas entry name.
 
 ## Preserve the Alpha contract
 
-Source PNG files must contain standard straight (unassociated) RGBA. The generator premultiplies
-every SVG and PNG exactly once when writing the atlas.
+All source PNG/WebP files and the generated lossless WebP atlas contain straight (unassociated) RGBA.
+Do not premultiply authoring assets or the atlas output. SVG entries use their declared dimensions
+and are composed with the raster entries into one atlas.
 
-Keep SVG supersampling and resizing in premultiplied space; convert to straight RGBA only after
-resizing for the shared atlas premultiply step. Resizing straight RGB creates dark fringes where
-opaque icons meet translucent backgrounds.
-
-- Normalize an ordinary straight-alpha PNG with `prepare-png`.
-- Pass `--premultiplied` when importing a PNG recovered from an existing game atlas or another
-  source known to contain premultiplied channels.
-- Use `extract` for an existing generated atlas; it reads the mapping, crops requested entries, and
-  automatically converts the premultiplied pixels back to straight RGBA.
-- Do not manually copy a premultiplied crop into `Assets/`, and do not change the generator to accept
-  mixed Alpha conventions.
+- Prefer lossless WebP for new raster assets; PNG remains supported. Keep editable geometry in SVG.
+- Never keep PNG, WebP or SVG files with the same stem: the stem is the entry name.
+- Ordinary straight-alpha files can be placed directly into `Assets/`; no preparation is required.
+- `prepare-image input.png output.webp` optionally converts a raster file to default lossless WebP.
+- Only when importing an explicitly known historical premultiplied file, use `prepare-image` with
+  `--premultiplied` to undo that representation once. Do not infer alpha representation from pixels.
+- `extract` reads the current straight-alpha atlas and directly crops entries into WebP files.
+  It does not unpremultiply. Historical premultiplied atlases must first be explicitly normalized.
 
 ```bash
-dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- prepare-png \
-  input.png GuiAtlasTool/Assets/EntryName.png
+dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
+  input.png GuiAtlasTool/Assets/EntryName.webp
 
-dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- prepare-png \
-  historical.png GuiAtlasTool/Assets/EntryName.png --premultiplied
+dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
+  historical.png GuiAtlasTool/Assets/EntryName.webp --premultiplied
 
 dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- extract \
-  AtlasTexture.png Atlas.txt GuiAtlasTool/Assets EntryName AnotherEntry
+  AtlasTexture.webp Atlas.txt GuiAtlasTool/Assets EntryName AnotherEntry
 ```
 
-These commands refuse to replace files unless `--overwrite` is present. Resolve and inspect a
-same-name source-format replacement before authorizing the overwrite; remove the superseded source
-format in the same change.
+Conversion/extraction refuse replacements without `--overwrite`. Inspect a same-name replacement
+and remove the superseded source format in the same change. Atlas generation accepts PNG, WebP and
+SVG sources and only permits `.webp` image output. Still images only; animated raster inputs are rejected.
 
 ## Compose gameplay HUD buttons
 
@@ -78,7 +76,7 @@ normal and pressed templates, then validate generated buttons. Do not make the c
 external Inkscape project at runtime.
 
 The command intentionally accepts SVG icons only. When a small icon has a demonstrated reason to
-remain PNG, keep it as a pixel-sensitive atlas source; do not route it through this command or
+remain raster, keep it as a pixel-sensitive atlas source; do not route it through this command or
 convert it to an SVG wrapper. A future raster compositor would be a separate workflow with explicit
 target-size, resampling, straight-Alpha input, and normal/pressed output rules.
 
@@ -89,7 +87,7 @@ Generate the atlas directly when focused inspection is useful:
 ```bash
 dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- generate \
   GuiAtlasTool/Assets \
-  Content/Assets/Atlases/AtlasTexture.png \
+  Content/Assets/Atlases/AtlasTexture.webp \
   Content/Assets/Atlases/Atlas.txt
 ```
 
@@ -97,9 +95,9 @@ After changing sources or the tool:
 
 1. Build `GuiAtlasTool` and generate the atlas.
 2. Confirm the entry dimensions and mapping name are unchanged unless the change is intentional.
-3. For a recovered PNG, compare the generated atlas crop with its premultiplied reference. Exact
-   equality is preferred; a maximum channel difference of one can result from reversible integer
-   rounding and is visually equivalent.
+3. Verify straight-alpha raster inputs survive atlas encoding/extraction with identical visible pixels
+   and alpha. Compare engine-premultiplied crops with the previous rendered reference when migrating
+   known premultiplied assets; integer conversion can produce a channel difference of one.
 4. Inspect transparent edges, target-size line weight, normal/pressed pairs, and any attached-edge
    orientation affected by the asset.
 5. Run `git diff --check`. When C# changed, also use `scnet-code-style` and proportional build

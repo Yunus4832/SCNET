@@ -140,8 +140,9 @@ public sealed class RenderTarget2D : Texture2D
             throw new InvalidOperationException("Unsupported color format.");
         }
 
-        var image = new Image(renderTarget.Width, renderTarget.Height);
+        using var image = new Image(renderTarget.Width, renderTarget.Height);
         renderTarget.GetData(image.Pixels, 0, new Rectangle(0, 0, renderTarget.Width, renderTarget.Height));
+        Image.UnpremultiplyAlpha(image);
         Image.Save(image, stream, format, saveAlpha);
     }
 

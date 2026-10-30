@@ -105,7 +105,7 @@ public class ComponentDiggingCracks : Component, IDrawable
                     camera.ProjectionMatrix;
         try
         {
-            Display.BlendState = BlendState.NonPremultiplied;
+            Display.BlendState = BlendState.AlphaBlend;
             Display.DepthStencilState = DepthStencilState.Default;
             Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
             _shader.GetParameter("u_origin").SetValue(v.XZ);
@@ -113,7 +113,6 @@ public class ComponentDiggingCracks : Component, IDrawable
             _shader.GetParameter("u_viewPosition").SetValue(camera.ViewPosition);
             _shader.GetParameter("u_samplerState").SetValue(SamplerState.PointWrap);
             _shader.GetParameter("u_fogColor").SetValue(new Vector3(_subsystemSky.ViewFogColor));
-            //new
             _shader.GetParameter("u_fogYMultiplier").SetValue(_subsystemSky.VisibilityRangeYMultiplier);
             _shader.GetParameter("u_fogBottomTopDensity").SetValue(
                 new Vector3(

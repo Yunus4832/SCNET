@@ -377,4 +377,4 @@ ContentServer/wwwroot/
 
 # Generated GUI atlas
 /Content/Assets/Atlases/Atlas.txt
-/Content/Assets/Atlases/AtlasTexture.png
+/Content/Assets/Atlases/AtlasTexture.webp

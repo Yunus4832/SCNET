@@ -4,7 +4,7 @@ namespace Game.ContentReaders;
 
 public class SubtextureReader : IContentReader
 {
-    public override string[] DefaultSuffix => ["png", "txt"];
+    public override string[] DefaultSuffix => ["webp", "png", "txt"];
 
     public override string Type => "Engine.Graphics.Subtexture";
 

@@ -42,6 +42,11 @@ payload/assets/<mod-id>/**
 模组可以在 `payload/assets/<mod-id>/lang/<语言代码>.json` 中补充翻译。可选语言及其显示名称只由游戏内置语言文件定义；
 模组提供的其他语言代码不会新增语言选项，也不会在运行时加载。
 
+图像资产使用普通直通 Alpha，默认采用无损 WebP，也支持 PNG。默认内容查找优先选择 WebP。
+`Image` 保留原始像素；`Texture2D.Load` 在上传 GPU 前由 CPU 预乘，不修改输入图片，资源作者无需预乘。
+GUI 图集也输出直通 Alpha 的 WebP，约定见 [图集工具](../GuiAtlasTool/README.md)。
+自定义着色器应使用预乘纹理的混合约定；对纹理数据的底层指针或数组上传仍由图形调用方保证 GPU 像素表示。
+
 模板项目引用 `SCNET.Survivalcraft` 作为编译期 API，并私有引用 `SCNET.ContentTool`。
 工具包携带的构建目标会在构建后创建和验证 `.scpkg`，宿主运行时程序集不会复制进包。
 

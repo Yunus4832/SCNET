@@ -680,13 +680,13 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
             return;
         }
 
-        Display.BlendState = BlendState.Additive;
+        Display.BlendState = BlendState.PremultipliedAdditive;
         _shaderTextured!.Transforms.World[0] = Matrix.CreateRotationZ(-2f * timeOfDay * (float)Math.PI) *
                                                Matrix.CreateRotationX(CalculateSeasonAngle()) *
                                                Matrix.CreateTranslation(camera.ViewPosition) *
                                                camera.ViewProjectionMatrix;
 
-        _shaderTextured.Color = new Vector4(1f, 1f, 1f, num);
+        _shaderTextured.Color = new Vector4(num);
         _shaderTextured.Texture = ContentManager.Get<Texture2D>("Textures/Star");
         _shaderTextured.SamplerState = SamplerState.LinearClamp;
         Display.DrawIndexed(
@@ -722,7 +722,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
             0,
             DepthStencilState.DepthRead,
             null,
-            BlendState.Additive
+            BlendState.PremultipliedAdditive
         );
         var batch2 = _primitivesRenderer3D.TexturedBatch(
             _sunTexture,
@@ -1113,7 +1113,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
             v = Vector3.Normalize(v);
             var num = 9f * random.NormalFloat(1f, 0.1f);
             var w = MathUtils.Saturate(random.NormalFloat(0.6f, 0.4f));
-            var color = new Color(new Vector4(random.Float(0.6f, 1f), 0.7f, random.Float(0.8f, 1f), w));
+            var color = new Color(new Vector4(random.Float(0.6f, 1f) * w, 0.7f * w, random.Float(0.8f, 1f) * w, w));
             var vector = 900f * v;
             var vector2 = Vector3.Normalize(Vector3.Cross(v.X > v.Y ? Vector3.UnitY : Vector3.UnitX, v));
             var vector3 = Vector3.Normalize(Vector3.Cross(vector2, v));

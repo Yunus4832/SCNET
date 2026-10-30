@@ -6,7 +6,7 @@ public class ImageReader : IContentReader
 {
     public override string Type => "Engine.Media.Images.Image";
 
-    public override string[] DefaultSuffix => ["png"];
+    public override string[] DefaultSuffix => ["webp", "png"];
 
     public override object Get(ContentInfo[] contents)
     {

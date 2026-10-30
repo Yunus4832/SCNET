@@ -7,7 +7,7 @@
 
     <PropertyGroup>
         <_GuiAtlasSourceDirectory>$(SolutionRoot)GuiAtlasTool\Assets</_GuiAtlasSourceDirectory>
-        <_GuiAtlasTexture>$(SolutionRoot)Content\Assets\Atlases\AtlasTexture.png</_GuiAtlasTexture>
+        <_GuiAtlasTexture>$(SolutionRoot)Content\Assets\Atlases\AtlasTexture.webp</_GuiAtlasTexture>
         <_GuiAtlasDefinition>$(SolutionRoot)Content\Assets\Atlases\Atlas.txt</_GuiAtlasDefinition>
         <_GuiAtlasToolProject>$(SolutionRoot)GuiAtlasTool\GuiAtlasTool.csproj</_GuiAtlasToolProject>
         <_GuiAtlasToolAssembly>$(SolutionRoot)GuiAtlasTool\bin\$(Configuration)\$(GlobalTargetFramework)\SCNET.GuiAtlasTool.dll</_GuiAtlasToolAssembly>
@@ -17,7 +17,7 @@
         <MyContentFiles Include="$(MSBuildProjectDirectory)\..\Content\**\*.*"
                         Exclude="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
         <MyContentFiles Include="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
-        <_GuiAtlasSources Include="$(_GuiAtlasSourceDirectory)\**\*.svg;$(_GuiAtlasSourceDirectory)\**\*.png"/>
+        <_GuiAtlasSources Include="$(_GuiAtlasSourceDirectory)\**\*.svg;$(_GuiAtlasSourceDirectory)\**\*.png;$(_GuiAtlasSourceDirectory)\**\*.webp"/>
         <_GuiAtlasToolSources Include="$(SolutionRoot)GuiAtlasTool\**\*.cs;$(SolutionRoot)GuiAtlasTool\GuiAtlasTool.csproj"
                               Exclude="$(SolutionRoot)GuiAtlasTool\bin\**\*;$(SolutionRoot)GuiAtlasTool\obj\**\*"/>
     </ItemGroup>
@@ -25,9 +25,11 @@
     <Target Name="GenerateGuiAtlas"
             BeforeTargets="GenerateContentManifest"
             Condition="'$(UsePackResourceTarget)' == 'true'"
-            Inputs="@(_GuiAtlasSources);@(_GuiAtlasToolSources)"
+            Inputs="@(_GuiAtlasSources);$(_GuiAtlasSourceDirectory);@(_GuiAtlasToolSources)"
             Outputs="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)">
+        <!-- 图集工具在构建主机运行，不继承应用的目标平台和输出路径。 -->
         <MSBuild Projects="$(_GuiAtlasToolProject)" Targets="Build"
+                 RemoveProperties="NoBuild;DeployOnBuild;TargetFramework;TargetFrameworks;RuntimeIdentifier;RuntimeIdentifiers;SelfContained;TargetPlatformIdentifier;TargetPlatformVersion;TargetPlatformMinVersion;SupportedOSPlatformVersion;OutputPath;IntermediateOutputPath;BaseOutputPath;BaseIntermediateOutputPath"
                  Properties="Configuration=$(Configuration)"/>
         <Exec Command="dotnet &quot;$(_GuiAtlasToolAssembly)&quot; generate &quot;$(_GuiAtlasSourceDirectory)&quot; &quot;$(_GuiAtlasTexture)&quot; &quot;$(_GuiAtlasDefinition)&quot;"/>
     </Target>

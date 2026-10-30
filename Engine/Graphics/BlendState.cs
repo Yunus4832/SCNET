@@ -27,11 +27,20 @@ public sealed class BlendState : LockOnFirstUse
         isLocked = true
     };
 
+    public static readonly BlendState PremultipliedAdditive = new()
+    {
+        ColorSourceBlend = Blend.One,
+        ColorDestinationBlend = Blend.One,
+        AlphaSourceBlend = Blend.One,
+        AlphaDestinationBlend = Blend.One,
+        isLocked = true
+    };
+
     public static readonly BlendState NonPremultiplied = new()
     {
         ColorSourceBlend = Blend.SourceAlpha,
         ColorDestinationBlend = Blend.InverseSourceAlpha,
-        AlphaSourceBlend = Blend.SourceAlpha,
+        AlphaSourceBlend = Blend.One,
         AlphaDestinationBlend = Blend.InverseSourceAlpha,
         isLocked = true
     };

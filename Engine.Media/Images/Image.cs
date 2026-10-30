@@ -38,15 +38,51 @@ public sealed class Image : IDisposable
 
     public static void PremultiplyAlpha(Image image)
     {
-        for (var index = 0; index < image.Pixels.Length; index++)
+        var pixels = image.Pixels;
+        for (var index = 0; index < pixels.Length; index++)
         {
-            var pixel = image.Pixels[index];
-            image.Pixels[index] = new Color(
-                pixel.R * pixel.A / 255,
-                pixel.G * pixel.A / 255,
-                pixel.B * pixel.A / 255,
-                pixel.A
+            ref var pixel = ref pixels[index];
+            var alpha = pixel.A;
+            if (alpha == 255)
+            {
+                continue;
+            }
+
+            if (alpha == 0)
+            {
+                pixel = Color.Transparent;
+                continue;
+            }
+
+            pixel = new Color(
+                (byte)(pixel.R * alpha / 255),
+                (byte)(pixel.G * alpha / 255),
+                (byte)(pixel.B * alpha / 255),
+                alpha
             );
+        }
+    }
+
+    public static void UnpremultiplyAlpha(Image image)
+    {
+        var pixels = image.Pixels;
+        for (var index = 0; index < pixels.Length; index++)
+        {
+            ref var pixel = ref pixels[index];
+            var alpha = pixel.A;
+            if (alpha == 255)
+            {
+                continue;
+            }
+
+            pixel = alpha == 0
+                ? Color.Transparent
+                : new Color(
+                    (byte)Math.Min(255, (pixel.R * 255 + alpha / 2) / alpha),
+                    (byte)Math.Min(255, (pixel.G * 255 + alpha / 2) / alpha),
+                    (byte)Math.Min(255, (pixel.B * 255 + alpha / 2) / alpha),
+                    alpha
+                );
         }
     }
 

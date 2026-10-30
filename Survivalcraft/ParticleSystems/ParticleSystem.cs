@@ -53,7 +53,7 @@ public class ParticleSystem<T> : ParticleSystemBase where T : Particle, new()
                 0,
                 DepthStencilState.DepthRead,
                 null,
-                BlendState.Additive,
+                BlendState.PremultipliedAdditive,
                 SamplerState.PointClamp
             );
             _alphaBlendedBatch = SubsystemParticles.PrimitivesRenderer.TexturedBatch(

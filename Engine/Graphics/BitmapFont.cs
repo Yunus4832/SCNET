@@ -199,8 +199,7 @@ public class BitmapFont : IDisposable
         Vector2 spacing,
         float scale,
         Vector2 offset,
-        int mipLevelsCount = 1,
-        bool premultiplyAlpha = true
+        int mipLevelsCount = 1
     )
     {
         return InternalLoad(
@@ -211,7 +210,6 @@ public class BitmapFont : IDisposable
             scale,
             offset,
             mipLevelsCount,
-            premultiplyAlpha,
             true
         );
     }
@@ -223,8 +221,7 @@ public class BitmapFont : IDisposable
         Vector2 spacing,
         float scale,
         Vector2 offset,
-        int mipLevelsCount = 1,
-        bool premultiplyAlpha = true
+        int mipLevelsCount = 1
     )
     {
         return Load(
@@ -234,8 +231,7 @@ public class BitmapFont : IDisposable
             spacing,
             scale,
             offset,
-            mipLevelsCount,
-            premultiplyAlpha
+            mipLevelsCount
         );
     }
 
@@ -246,14 +242,11 @@ public class BitmapFont : IDisposable
         Vector2 spacing,
         float scale,
         Vector2 offset,
-        int mipLevelsCount = 1,
-        bool premultiplyAlpha = true
+        int mipLevelsCount = 1
     )
     {
-        using (var stream = Storage.OpenFile(fileName, OpenFileMode.Read))
-        {
-            return Load(stream, firstCode, fallbackCode, spacing, scale, offset, mipLevelsCount, premultiplyAlpha);
-        }
+        using var stream = Storage.OpenFile(fileName, OpenFileMode.Read);
+        return Load(stream, firstCode, fallbackCode, spacing, scale, offset, mipLevelsCount);
     }
 
     internal static BitmapFont InternalLoad(
@@ -264,7 +257,6 @@ public class BitmapFont : IDisposable
         float scale,
         Vector2 offset,
         int mipLevelsCount,
-        bool premultiplyAlpha,
         bool createTexture
     )
     {
@@ -325,11 +317,6 @@ public class BitmapFont : IDisposable
         for (var k = 0; k < image.Pixels.Length; k++)
         {
             image2.Pixels[k] = image.Pixels[k] == Color.Magenta ? Color.Transparent : image.Pixels[k];
-        }
-
-        if (premultiplyAlpha)
-        {
-            Image.PremultiplyAlpha(image2);
         }
 
         var texture = createTexture ? Texture2D.Load(image2, mipLevelsCount) : null;

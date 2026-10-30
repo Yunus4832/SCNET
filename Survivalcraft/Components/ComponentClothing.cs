@@ -809,7 +809,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 num++,
                 DepthStencilState.None,
                 null,
-                BlendState.NonPremultiplied,
+                BlendState.AlphaBlend,
                 SamplerState.PointClamp
             );
             texturedBatch2D.QueueQuad(
@@ -836,7 +836,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                         num++,
                         DepthStencilState.None,
                         null,
-                        BlendState.NonPremultiplied,
+                        BlendState.AlphaBlend,
                         SamplerState.PointClamp
                     );
                     if (!clothingData.IsOuter)
@@ -873,7 +873,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                         num++,
                         DepthStencilState.None,
                         null,
-                        BlendState.NonPremultiplied,
+                        BlendState.AlphaBlend,
                         SamplerState.PointClamp
                     );
                     if (clothingData2.IsOuter)

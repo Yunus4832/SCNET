@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -25,8 +27,8 @@ internal static class GuiAtlasProgram
                 case ["generate", var sourceDirectory, var texturePath, var definitionPath]:
                     Generate(sourceDirectory, texturePath, definitionPath);
                     return 0;
-                case ["prepare-png", var inputPath, var outputPath, .. var options]:
-                    PreparePng(inputPath, outputPath, options);
+                case ["prepare-image", var inputPath, var outputPath, .. var options]:
+                    PrepareImage(inputPath, outputPath, options);
                     return 0;
                 case ["extract", var texturePath, var definitionPath, var outputDirectory, .. var entries]:
                     Extract(texturePath, definitionPath, outputDirectory, entries);
@@ -47,17 +49,17 @@ internal static class GuiAtlasProgram
         }
     }
 
-    private static void PreparePng(string inputPath, string outputPath, string[] options)
+    private static void PrepareImage(string inputPath, string outputPath, string[] options)
     {
         var (premultiplied, overwrite) = ParsePrepareOptions(options);
-        using var image = LoadPng(inputPath);
+        using var image = LoadRaster(inputPath);
         if (premultiplied)
         {
             UnpremultiplyAlpha(image);
         }
 
-        SaveSourcePng(image, outputPath, overwrite);
-        Console.WriteLine($"Prepared PNG source: {Path.GetFullPath(outputPath)}");
+        SaveSourceImage(image, outputPath, overwrite);
+        Console.WriteLine($"Prepared WebP source: {Path.GetFullPath(outputPath)}");
     }
 
     private static void Extract(
@@ -83,7 +85,7 @@ internal static class GuiAtlasProgram
         }
 
         var regions = ReadDefinition(definitionPath);
-        using var atlas = LoadPng(texturePath);
+        using var atlas = LoadRaster(texturePath);
         var selections = names.Select(name =>
             {
                 ValidateEntryName(name);
@@ -102,7 +104,7 @@ internal static class GuiAtlasProgram
                     throw new InvalidDataException($"Atlas entry is outside the texture: {name}");
                 }
 
-                var outputPath = Path.Combine(outputDirectory, $"{name}.png");
+                var outputPath = Path.Combine(outputDirectory, $"{name}.webp");
                 if (!overwrite && File.Exists(outputPath))
                 {
                     throw new InvalidDataException(
@@ -130,9 +132,8 @@ internal static class GuiAtlasProgram
                     selection.Region.Height
                 )
             );
-            UnpremultiplyAlpha(image);
-            SaveSourcePng(image, selection.OutputPath, overwrite);
-            Console.WriteLine($"Extracted PNG source: {Path.GetFullPath(selection.OutputPath)}");
+            SaveSourceImage(image, selection.OutputPath, overwrite);
+            Console.WriteLine($"Extracted WebP source: {Path.GetFullPath(selection.OutputPath)}");
         }
     }
 
@@ -150,6 +151,39 @@ internal static class GuiAtlasProgram
 
     private static void Generate(string sourceDirectory, string texturePath, string definitionPath)
     {
+        ValidateWebPOutput(texturePath);
+        var identity = Path.GetFullPath(texturePath) + "|" + Path.GetFullPath(definitionPath);
+        if (OperatingSystem.IsWindows())
+        {
+            identity = identity.ToUpperInvariant();
+        }
+
+        var name = "SCNET.GuiAtlas." + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity)));
+        using var mutex = new Mutex(false, name);
+        try
+        {
+            if (!mutex.WaitOne(TimeSpan.FromSeconds(60)))
+            {
+                throw new IOException("Timed out waiting for another atlas generation.");
+            }
+        }
+        catch (AbandonedMutexException)
+        {
+            // Ownership is acquired; regenerate any incomplete output left by the previous process.
+        }
+
+        try
+        {
+            GenerateCore(sourceDirectory, texturePath, definitionPath);
+        }
+        finally
+        {
+            mutex.ReleaseMutex();
+        }
+    }
+
+    private static void GenerateCore(string sourceDirectory, string texturePath, string definitionPath)
+    {
         var fullSourceDirectory = Path.GetFullPath(sourceDirectory);
         if (!Directory.Exists(fullSourceDirectory))
         {
@@ -157,7 +191,7 @@ internal static class GuiAtlasProgram
         }
 
         var sources = Directory.EnumerateFiles(fullSourceDirectory, "*", SearchOption.AllDirectories)
-            .Where(path => Path.GetExtension(path) is ".svg" or ".png")
+            .Where(path => Path.GetExtension(path).ToLowerInvariant() is ".svg" or ".png" or ".webp")
             .Select(ReadSource)
             .OrderByDescending(source => source.Height)
             .ThenByDescending(source => source.Width)
@@ -165,7 +199,7 @@ internal static class GuiAtlasProgram
             .ToArray();
         if (sources.Length == 0)
         {
-            throw new InvalidDataException($"No SVG or PNG files were found in {fullSourceDirectory}.");
+            throw new InvalidDataException($"No SVG, PNG or WebP files were found in {fullSourceDirectory}.");
         }
 
         var duplicate = sources.GroupBy(source => source.Name, StringComparer.Ordinal)
@@ -173,6 +207,23 @@ internal static class GuiAtlasProgram
         if (duplicate != null)
         {
             throw new InvalidDataException($"Duplicate atlas entry name: {duplicate.Key}");
+        }
+
+        var newestInput = sources.Select(source => File.GetLastWriteTimeUtc(source.Path))
+            .Concat(
+                Directory.EnumerateDirectories(fullSourceDirectory, "*", SearchOption.AllDirectories)
+                    .Append(fullSourceDirectory)
+                    .Select(Directory.GetLastWriteTimeUtc)
+            )
+            .Append(File.GetLastWriteTimeUtc(typeof(GuiAtlasProgram).Assembly.Location))
+            .Max();
+        if (File.Exists(texturePath) &&
+            File.Exists(definitionPath) &&
+            File.GetLastWriteTimeUtc(texturePath) >= newestInput &&
+            File.GetLastWriteTimeUtc(definitionPath) >= newestInput)
+        {
+            Console.WriteLine("Atlas outputs are up to date.");
+            return;
         }
 
         var entries = Pack(sources);
@@ -187,7 +238,6 @@ internal static class GuiAtlasProgram
         foreach (var entry in entries)
         {
             using var image = Render(entry.Source);
-            PremultiplyAlpha(image);
             CopyImage(image, atlas, entry.X, entry.Y, SKRectI.Create(image.Width, image.Height));
         }
 
@@ -210,10 +260,10 @@ internal static class GuiAtlasProgram
         var name = Path.GetFileNameWithoutExtension(path);
         ValidateEntryName(name);
 
-        return Path.GetExtension(path) switch
+        return Path.GetExtension(path).ToLowerInvariant() switch
         {
             ".svg" => ReadSvgSource(name, path),
-            ".png" => ReadPngSource(name, path),
+            ".png" or ".webp" => ReadRasterSource(name, path),
             _ => throw new InvalidDataException($"Unsupported atlas source: {path}")
         };
     }
@@ -245,10 +295,10 @@ internal static class GuiAtlasProgram
         return new AtlasSource(name, path, width, height, AtlasSourceKind.Svg);
     }
 
-    private static AtlasSource ReadPngSource(string name, string path)
+    private static AtlasSource ReadRasterSource(string name, string path)
     {
-        using var codec = OpenPng(path);
-        return new AtlasSource(name, path, codec.Info.Width, codec.Info.Height, AtlasSourceKind.Png);
+        using var codec = OpenRaster(path);
+        return new AtlasSource(name, path, codec.Info.Width, codec.Info.Height, AtlasSourceKind.Raster);
     }
 
     private static SKRect ParseViewBox(string? value, int width, int height, string path)
@@ -322,7 +372,7 @@ internal static class GuiAtlasProgram
         return source.Kind switch
         {
             AtlasSourceKind.Svg => RenderSvg(source),
-            AtlasSourceKind.Png => LoadPng(source.Path),
+            AtlasSourceKind.Raster => LoadRaster(source.Path),
             _ => throw new InvalidDataException($"Unsupported atlas source: {source.Path}")
         };
     }
@@ -380,46 +430,29 @@ internal static class GuiAtlasProgram
     private static SKBitmap CreateBitmap(int width, int height) =>
         new(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Unpremul));
 
-    private static SKCodec OpenPng(string path)
+    private static SKCodec OpenRaster(string path)
     {
-        var codec = SKCodec.Create(path) ?? throw new InvalidDataException($"Unable to read PNG: {path}");
-        if (codec.EncodedFormat != SKEncodedImageFormat.Png)
+        var codec = SKCodec.Create(path) ?? throw new InvalidDataException($"Unable to read image: {path}");
+        if (codec.EncodedFormat is not (SKEncodedImageFormat.Png or SKEncodedImageFormat.Webp) || codec.FrameCount > 1)
         {
             codec.Dispose();
-            throw new InvalidDataException($"Image source is not PNG: {path}");
+            throw new InvalidDataException($"Image source must be a still PNG or WebP: {path}");
         }
 
         return codec;
     }
 
-    private static SKBitmap LoadPng(string path)
+    private static SKBitmap LoadRaster(string path)
     {
-        using var codec = OpenPng(path);
+        using var codec = OpenRaster(path);
         var image = CreateBitmap(codec.Info.Width, codec.Info.Height);
         if (codec.GetPixels(image.Info, image.GetPixels()) != SKCodecResult.Success)
         {
             image.Dispose();
-            throw new InvalidDataException($"Unable to decode PNG: {path}");
+            throw new InvalidDataException($"Unable to decode image: {path}");
         }
 
         return image;
-    }
-
-    private static void PremultiplyAlpha(SKBitmap image)
-    {
-        var pixels = image.GetPixelSpan();
-        for (var y = 0; y < image.Height; y++)
-        {
-            var row = pixels.Slice(y * image.RowBytes, image.Width * 4);
-            for (var x = 0; x < row.Length; x += 4)
-            {
-                var alpha = row[x + 3];
-                for (var channel = 0; channel < 3; channel++)
-                {
-                    row[x + channel] = (byte)((row[x + channel] * alpha + 127) / 255);
-                }
-            }
-        }
     }
 
     private static void UnpremultiplyAlpha(SKBitmap image)
@@ -470,8 +503,9 @@ internal static class GuiAtlasProgram
         return regions;
     }
 
-    private static void SaveSourcePng(SKBitmap image, string outputPath, bool overwrite)
+    private static void SaveSourceImage(SKBitmap image, string outputPath, bool overwrite)
     {
+        ValidateWebPOutput(outputPath);
         var fullOutputPath = Path.GetFullPath(outputPath);
         if (!overwrite && File.Exists(fullOutputPath))
         {
@@ -482,7 +516,7 @@ internal static class GuiAtlasProgram
         var temporaryPath = $"{fullOutputPath}.{Guid.NewGuid():N}.tmp";
         try
         {
-            SavePng(image, temporaryPath);
+            SaveWebP(image, temporaryPath);
             File.Move(temporaryPath, fullOutputPath, overwrite);
         }
         finally
@@ -491,16 +525,23 @@ internal static class GuiAtlasProgram
         }
     }
 
-    private static void SavePng(SKBitmap image, string path)
+    private static void SaveWebP(SKBitmap image, string path)
     {
-        // Keep Unpremul storage even for atlas pixels: they have already been premultiplied
-        // explicitly and must be written without another alpha conversion.
+        // Source and output files contain straight alpha; the engine premultiplies on upload.
         using var pixels = image.PeekPixels();
         using var output = File.Create(path);
         using var stream = new SKManagedWStream(output);
-        if (!pixels.Encode(stream, new SKPngEncoderOptions(SKPngEncoderFilterFlags.AllFilters, 9)))
+        if (!pixels.Encode(stream, new SKWebpEncoderOptions(SKWebpEncoderCompression.Lossless, 100)))
         {
-            throw new InvalidDataException($"Unable to encode PNG: {path}");
+            throw new InvalidDataException($"Unable to encode WebP: {path}");
+        }
+    }
+
+    private static void ValidateWebPOutput(string path)
+    {
+        if (!Path.GetExtension(path).Equals(".webp", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException("Output image must use the .webp extension.");
         }
     }
 
@@ -539,7 +580,7 @@ internal static class GuiAtlasProgram
         var definitionTemporaryPath = $"{fullDefinitionPath}.{Guid.NewGuid():N}.tmp";
         try
         {
-            SavePng(atlas, textureTemporaryPath);
+            SaveWebP(atlas, textureTemporaryPath);
             File.WriteAllText(definitionTemporaryPath, definition);
             File.Move(textureTemporaryPath, fullTexturePath, true);
             File.Move(definitionTemporaryPath, fullDefinitionPath, true);
@@ -566,13 +607,13 @@ internal static class GuiAtlasProgram
     {
         Console.Error.WriteLine("Usage:");
         Console.Error.WriteLine(
-            "  SCNET.GuiAtlasTool generate <asset-directory> <atlas-texture.png> <atlas-definition.txt>"
+            "  SCNET.GuiAtlasTool generate <asset-directory> <atlas-texture.webp> <atlas-definition.txt>"
         );
         Console.Error.WriteLine(
-            "  SCNET.GuiAtlasTool prepare-png <input.png> <output.png> [--premultiplied] [--overwrite]"
+            "  SCNET.GuiAtlasTool prepare-image <input.png|webp> <output.webp> [--premultiplied] [--overwrite]"
         );
         Console.Error.WriteLine(
-            "  SCNET.GuiAtlasTool extract <atlas.png> <atlas.txt> <output-directory> <entry>... [--overwrite]"
+            "  SCNET.GuiAtlasTool extract <atlas.webp> <atlas.txt> <output-directory> <entry>... [--overwrite]"
         );
         Console.Error.WriteLine(
             "  SCNET.GuiAtlasTool compose-game-button <floating|left-attached|right-attached> " +
@@ -591,6 +632,6 @@ internal static class GuiAtlasProgram
     {
         Svg = 0,
 
-        Png = 1
+        Raster = 1
     }
 }

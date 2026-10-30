@@ -192,7 +192,7 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
             0,
             DepthStencilState.None,
             null,
-            BlendState.Additive,
+            BlendState.PremultipliedAdditive,
             SamplerState.PointWrap
         );
         var count = texturedBatch2D.TriangleVertices.Count;

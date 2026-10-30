@@ -117,7 +117,8 @@ public class Texture2D : GraphicsResource
             return;
         }
 
-        fixed (Color* pixels = source.Pixels)
+        using var prepared = PrepareImageForUpload(source);
+        fixed (Color* pixels = prepared.Pixels)
         {
             SetDataInternal(mipLevel, pixels);
         }
@@ -252,21 +253,22 @@ public class Texture2D : GraphicsResource
         return texture2D;
     }
 
-    public static Texture2D Load(Stream stream, bool premultiplyAlpha = false, int mipLevelsCount = 1)
+    internal static Image PrepareImageForUpload(Image source)
     {
-        var image = Image.Load(stream);
-        if (premultiplyAlpha)
-        {
-            Image.PremultiplyAlpha(image);
-        }
-
-        return Load(image, mipLevelsCount);
+        var prepared = new Image(source);
+        Image.PremultiplyAlpha(prepared);
+        return prepared;
     }
 
-    public static Texture2D Load(string fileName, bool premultiplyAlpha = false, int mipLevelsCount = 1)
+    public static Texture2D Load(Stream stream, int mipLevelsCount = 1)
+    {
+        return Load(Image.Load(stream), mipLevelsCount);
+    }
+
+    public static Texture2D Load(string fileName, int mipLevelsCount = 1)
     {
         using var stream = Storage.OpenFile(fileName, OpenFileMode.Read);
-        return Load(stream, premultiplyAlpha, mipLevelsCount);
+        return Load(stream, mipLevelsCount);
     }
 
     internal void InitializeTexture2D(int width, int height, int mipLevelsCount, ColorFormat colorFormat)

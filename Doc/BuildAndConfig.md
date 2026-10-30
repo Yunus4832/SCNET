@@ -220,7 +220,7 @@ NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scr
 
 仓库使用 `Directory.Build.targets` 统一处理资源和发布结果：
 
-- `GuiAtlasTool/Assets/` 中任一 SVG、PNG 或 `GuiAtlasTool` 源码发生变化时，会先重新生成 GUI 图集
+- `GuiAtlasTool/Assets/` 中任一 SVG、PNG 或 WebP 发生变化时，会先重新生成 GUI 图集
 - 构建前会把 `Content/` 打成 `Content.zip`
 - 桌面发布会将 `$(PublishDir)` 生成的发布输出压缩到仓库根目录下的 `Publish/` 目录
 - Android 发布会生成并重命名 APK 到 `Publish/`
@@ -229,31 +229,30 @@ NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scr
 
 ### GUI 图集
 
-`GuiAtlasTool/Assets/` 保存独立、透明且可直接渲染的 SVG 和 PNG。文件名就是图集条目名；例如
-`CharacterList.svg` 会生成 `Textures/Atlas/CharacterList`。SVG 必须使用整数像素声明 `width` 和
-`height`，并应提供对应的 `viewBox`；PNG 必须使用未预乘 Alpha 的 RGBA 数据。同一条目不能同时
-存在 SVG 和 PNG。不要把 Inkscape 工程文件、隐藏设计图层或背景画布放入该目录。
+`GuiAtlasTool/Assets/` 保存独立的 PNG、WebP 和 SVG，文件名就是图集条目名。
+位图默认使用无损 WebP，也接受普通 PNG；两者都应使用直通 Alpha，不需要作者预乘。
+SVG 使用整数像素 `width`、`height` 和对应 `viewBox`。同一条目只能提供一种格式。
 
-`GuiAtlasTool` 会按尺寸和名称稳定排序源文件，自动排版、栅格化 SVG，并对所有条目统一预乘
-Alpha。SVG 的缩小采样在预乘状态下完成，避免半透明边缘被压暗，然后生成：
+工具按尺寸和名称稳定排序，将 SVG 和位图排版合成为无损 WebP 图集，生成以下忽略的构建产物：
 
-- `Content/Assets/Atlases/AtlasTexture.png`
+- `Content/Assets/Atlases/AtlasTexture.webp`
 - `Content/Assets/Atlases/Atlas.txt`
-
-这两个文件是忽略的构建产物，不应提交。使用以下命令可以手动重新生成：
 
 ```bash
 dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- generate \
   GuiAtlasTool/Assets \
-  Content/Assets/Atlases/AtlasTexture.png \
+  Content/Assets/Atlases/AtlasTexture.webp \
   Content/Assets/Atlases/Atlas.txt
 ```
 
-需要导入普通 PNG、反预乘旧 PNG，或从已有预乘图集提取条目时，使用 `GuiAtlasTool` 的
-`prepare-png` 和 `extract` 命令；具体命令见 [`GuiAtlasTool/README.md`](../GuiAtlasTool/README.md)。
+`prepare-image` 将 PNG/WebP 转为普通无损 WebP，`extract` 从当前图集中直接提取 WebP 条目；
+仅历史预乘输入的一次性导入需要显式指定 `--premultiplied`。详见 [图集工具](../GuiAtlasTool/README.md)。
 
-启用了 `UsePackResourceTarget` 的平台项目会在 `PackResource` 前自动执行相同流程。MSBuild 使用
-SVG、PNG 和工具源码作为输入、图集文件作为输出，因此输入没有变化时不会重复生成。
+启用 `UsePackResourceTarget` 的项目在 `PackResource` 前生成图集。
+MSBuild 将 SVG、PNG、WebP 和工具源码作为增量输入；没有变化时不会重复生成。
+图集工具在构建主机上以 `net10.0` 运行，嵌套构建会移除应用的目标框架、RID、平台及输出路径参数，
+不会将工具改为 Android 项目，也不需要为它还原 Android 目标。
+IDE 安装阶段的 `NoBuild` 和 `DeployOnBuild` 也不会传给主机工具，避免已构建应用的安装流程阻止工具生成图集。
 
 ### 信令服务与探针
 
