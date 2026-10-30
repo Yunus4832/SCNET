@@ -211,7 +211,7 @@ public sealed class ModProfileManagerTest : IDisposable
             "missing-session",
             new SessionInfo
             {
-                Target = SessionTarget.World,
+                Target = target,
                 World = "WorldOnly"
             }
         );
