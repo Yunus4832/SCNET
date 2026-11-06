@@ -11,7 +11,9 @@ namespace Game.Screens;
 
 public class MainMenuScreen : Screen
 {
-    private readonly VerticalTabMenuWidget _mainMenuTabs;
+    private readonly ExpandableButtonWidget _powerButton;
+
+    private readonly ExpandableButtonWidget _languageButton;
 
     private readonly CanvasWidget _logo;
 
@@ -45,7 +47,8 @@ public class MainMenuScreen : Screen
     {
         var node = ContentManager.Get<XElement>("Screens/MainMenuScreen");
         LoadContents(this, node);
-        _mainMenuTabs = Children.Find<VerticalTabMenuWidget>("MainMenuTabs")!;
+        _powerButton = Children.Find<ExpandableButtonWidget>("PowerButton")!;
+        _languageButton = Children.Find<ExpandableButtonWidget>("LanguageButton")!;
         _logo = Children.Find<CanvasWidget>("Logo")!;
         _logoClickable = Children.Find<ClickableWidget>("Logo.Clickable")!;
         _musicButtonIcon = Children.Find<RectangleWidget>("MusicButton.Icon")!;
@@ -58,7 +61,7 @@ public class MainMenuScreen : Screen
         _announcementTickerText.MaxLines = 1;
         Children.Find<LabelWidget>("Version")!.Text = _versionString;
 
-        ConfigureMainMenuTabs();
+        ConfigureMenuButtons();
     }
 
     public override void Enter(object[] parameters)
@@ -76,6 +79,8 @@ public class MainMenuScreen : Screen
 
     public override void Leave()
     {
+        _powerButton.Close();
+        _languageButton.Close();
         GameInformationManager.AnnouncementsChanged -= UpdateAnnouncementTicker;
         Keyboard.BackButtonQuitsApp = false;
     }
@@ -114,47 +119,24 @@ public class MainMenuScreen : Screen
         _announcementTicker.SetWidgetPosition(_announcementTickerText, new Vector2(offset, 0f));
     }
 
-    private void ConfigureMainMenuTabs()
+    private void ConfigureMenuButtons()
     {
-        _mainMenuTabs.AddTab(
-            new VerticalTabMenu(
-                "Textures/Atlas/Exit",
-                () =>
-                [
-                    new VerticalTabMenuItem(
-                        MainMenuText("Restart"),
-                        () => ExecutePowerMenuAction(PowerMenuAction.Restart)
-                    ),
-                    new VerticalTabMenuItem(
-                        MainMenuText("SwitchInstance"),
-                        () => ExecutePowerMenuAction(PowerMenuAction.SwitchInstance)
-                    ),
-
-                    new VerticalTabMenuItem(
-                        MainMenuText("Exit"),
-                        () => ExecutePowerMenuAction(PowerMenuAction.Exit)
-                    )
-                ],
-                new Vector2(180f, 44f)
+        _powerButton.Items = () =>
+        [
+            new ExpandableButtonItem(MainMenuText("Restart"), () => ExecutePowerMenuAction(PowerMenuAction.Restart)),
+            new ExpandableButtonItem(
+                MainMenuText("SwitchInstance"),
+                () => ExecutePowerMenuAction(PowerMenuAction.SwitchInstance)
+            ),
+            new ExpandableButtonItem(MainMenuText("Exit"), () => ExecutePowerMenuAction(PowerMenuAction.Exit))
+        ];
+        _languageButton.Items = () => Localization.ClientLanguage.Catalog.LanguageTypes
+            .Select(languageType => new ExpandableButtonItem(
+                    Localization.ClientLanguage.Catalog.GetLanguageDisplayName(languageType),
+                    () => SettingsUiScreen.ChangeLanguage(languageType)
+                )
             )
-        );
-        _mainMenuTabs.AddNavigationTab(
-            "Textures/Atlas/Identity",
-            () => ScreensManager.SwitchScreen("ManageIdentities")
-        );
-        _mainMenuTabs.AddTab(
-            new VerticalTabMenu(
-                "Textures/Atlas/Earth",
-                () => Game.Localization.ClientLanguage.Catalog.LanguageTypes
-                    .Select(languageType => new VerticalTabMenuItem(
-                            Game.Localization.ClientLanguage.Catalog.GetLanguageDisplayName(languageType),
-                            () => SettingsUiScreen.ChangeLanguage(languageType)
-                        )
-                    )
-                    .ToArray(),
-                new Vector2(180f, 44f)
-            )
-        );
+            .ToArray();
     }
 
     private static void ExecutePowerMenuAction(PowerMenuAction action)
@@ -198,7 +180,7 @@ public class MainMenuScreen : Screen
                 new MessageDialog(
                     MainMenuText("SelectInstance"),
                     MainMenuText("NoOtherInstances"),
-                    Game.Localization.ClientLanguage.Catalog.Ok
+                    Localization.ClientLanguage.Catalog.Ok
                 )
             );
             return;
@@ -236,9 +218,9 @@ public class MainMenuScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    Game.Localization.ClientLanguage.Catalog.Error,
+                    Localization.ClientLanguage.Catalog.Error,
                     CommandText.Resolve(result),
-                    Game.Localization.ClientLanguage.Catalog.Ok
+                    Localization.ClientLanguage.Catalog.Ok
                 )
             );
         }
@@ -246,6 +228,13 @@ public class MainMenuScreen : Screen
 
     public override void Update()
     {
+        if (Children.Find<ButtonWidget>("IdentityButton")!.IsClicked)
+        {
+            _powerButton.Close();
+            _languageButton.Close();
+            ScreensManager.SwitchScreen("ManageIdentities");
+        }
+
         UpdateMusicButton();
         UpdateLogoAnimation();
         UpdateAnnouncementTickerAnimation();
@@ -299,9 +288,10 @@ public class MainMenuScreen : Screen
                 return;
             }
 
-            if (_mainMenuTabs.IsOpen)
+            if (_powerButton.IsOpen || _languageButton.IsOpen)
             {
-                _mainMenuTabs.Close();
+                _powerButton.Close();
+                _languageButton.Close();
             }
             else
             {
@@ -366,7 +356,7 @@ public class MainMenuScreen : Screen
     }
 
     private static string MainMenuText(string key) =>
-        Game.Localization.ClientLanguage.Catalog.GetContentWidgets("MainMenuScreen", key);
+        Localization.ClientLanguage.Catalog.GetContentWidgets("MainMenuScreen", key);
 
     private enum PowerMenuAction
     {

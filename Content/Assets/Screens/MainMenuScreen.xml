@@ -69,7 +69,13 @@
     </StackPanelWidget>
     <StackPanelWidget Name="LeftBottomBar" Direction="Vertical" HorizontalAlignment="Near" VerticalAlignment="Far"
                       Margin="8, 8" IsHitTestVisible="false">
-        <VerticalTabMenuWidget Name="MainMenuTabs"/>
+        <ExpandableButtonWidget Name="PowerButton" Icon="Textures/Atlas/Exit"/>
+        <BevelledButtonWidget Name="IdentityButton" Size="60, 60">
+            <RectangleWidget Size="28, 28" HorizontalAlignment="Center" VerticalAlignment="Center"
+                             Subtexture="{Textures/Atlas/Identity}" FillColor="255, 255, 255"
+                             OutlineColor="0, 0, 0, 0" IsHitTestVisible="false"/>
+        </BevelledButtonWidget>
+        <ExpandableButtonWidget Name="LanguageButton" Icon="Textures/Atlas/Earth"/>
     </StackPanelWidget>
     <CanvasWidget Name="MusicButton" Size="50, 50" HorizontalAlignment="Far" VerticalAlignment="Far"
                   Margin="8, 8">
