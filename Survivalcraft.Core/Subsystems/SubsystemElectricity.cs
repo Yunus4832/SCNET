@@ -504,10 +504,13 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         int y,
         int z,
         int mountingFace,
-        DynamicArray<ElectricConnectionPath> list
+        DynamicArray<ElectricConnectionPath> list,
+        Func<int, int, int, int>? readCell = null
     )
     {
-        var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
+        var cellValue = readCell is null
+            ? SubsystemTerrain.Terrain.GetCellValue(x, y, z)
+            : readCell(x, y, z);
         if (WorldContentBinding.For(Project).Catalog
                 .Blocks[Terrain.ExtractContents(cellValue)] is not
             IElectricElementBlock electricElementBlock)
@@ -545,7 +548,9 @@ public class SubsystemElectricity : Subsystem, IUpdateable
                 var x2 = x + electricConnectionPath.NeighborOffsetX;
                 var y2 = y + electricConnectionPath.NeighborOffsetY;
                 var z2 = z + electricConnectionPath.NeighborOffsetZ;
-                var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
+                var cellValue2 = readCell is null
+                    ? SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2)
+                    : readCell(x2, y2, z2);
                 var electricElementBlock2 =
                     WorldContentBinding.For(Project).Catalog
                             .Blocks[Terrain.ExtractContents(cellValue2)] as

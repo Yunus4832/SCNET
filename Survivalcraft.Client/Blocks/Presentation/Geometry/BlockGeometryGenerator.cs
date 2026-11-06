@@ -19,6 +19,8 @@ public class BlockGeometryGenerator
 
     private readonly SubsystemElectricity _subsystemElectricity;
 
+    private readonly Func<int, int, int, int> _readGeometryCell;
+
     public readonly SubsystemFurnitureBlockBehavior SubsystemFurnitureBlockBehavior;
 
     public readonly SubsystemMetersBlockBehavior SubsystemMetersBlockBehavior;
@@ -51,6 +53,7 @@ public class BlockGeometryGenerator
     )
     {
         Terrain = terrain;
+        _readGeometryCell = terrain.GetCellValueForGeometry;
         _subsystemTerrain = subsystemTerrain;
         Presentations = subsystemTerrain.Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog;
         _subsystemElectricity = subsystemElectricity;
@@ -1677,7 +1680,7 @@ public class BlockGeometryGenerator
         var v2 = new Vector2(0.9376f, 0.0001f);
         var v3 = new Vector2(0.03125f, 0.00550781237f);
         var point = CellFace.FaceToPoint3(mountingFace);
-        var cellContents = Terrain.GetCellContents(x - point.X, y - point.Y, z - point.Z);
+        var cellContents = Terrain.ExtractContents(_readGeometryCell(x - point.X, y - point.Y, z - point.Z));
         var flag = cellContents == 2 ||
                    cellContents == 7 ||
                    cellContents == 8 ||
@@ -1695,7 +1698,7 @@ public class BlockGeometryGenerator
             v4 * centerOffset.Y;
         var num4 = 0;
         _tmpConnectionPaths.Clear();
-        _subsystemElectricity.GetAllConnectedNeighbors(x, y, z, mountingFace, _tmpConnectionPaths);
+        _subsystemElectricity.GetAllConnectedNeighbors(x, y, z, mountingFace, _tmpConnectionPaths, _readGeometryCell);
         foreach (var tmpConnectionPath in _tmpConnectionPaths)
         {
             if ((num4 & (1 << tmpConnectionPath.ConnectorFace)) == 0)
@@ -1708,7 +1711,7 @@ public class BlockGeometryGenerator
                     var color3 = color;
                     if (num != 133)
                     {
-                        var cellValue = Terrain.GetCellValue(
+                        var cellValue = _readGeometryCell(
                             x + tmpConnectionPath.NeighborOffsetX,
                             y + tmpConnectionPath.NeighborOffsetY,
                             z + tmpConnectionPath.NeighborOffsetZ
@@ -1757,7 +1760,7 @@ public class BlockGeometryGenerator
                     var vector14 = v2 + v3 * new Vector2(centerBoxSize, 0.5f);
                     var vector15 = v2 + v3 * new Vector2(num6 * 2f, 0.5f);
                     var num7 = Terrain.ExtractLight(
-                        Terrain.GetCellValue(
+                        _readGeometryCell(
                             x + tmpConnectionPath.NeighborOffsetX,
                             y + tmpConnectionPath.NeighborOffsetY,
                             z + tmpConnectionPath.NeighborOffsetZ
