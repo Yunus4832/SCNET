@@ -1,6 +1,6 @@
 ---
 name: scnet-debugging
-description: Diagnose and smoke-test SCNET game, Android client, and Headless server changes, or control normal gameplay through built-in automation. Use for runtime reproduction, gameplay interaction, networking or Mod validation, test fixtures, crashes, hangs, and verification beyond unit tests on Linux, Windows, or Android.
+description: Diagnose and smoke-test SCNET game, Android client, and server changes, or control normal gameplay through built-in automation. Use for runtime reproduction, gameplay interaction, networking or Mod validation, test fixtures, crashes, hangs, and verification beyond unit tests on Linux, Windows, or Android.
 ---
 
 # SCNET Debugging
@@ -14,13 +14,13 @@ their authoritative logs in their runtime-owned locations.
 ## Workflow
 
 1. Check `git status --short` and preserve unrelated changes.
-2. Read [references/runtime.md](references/runtime.md) before starting GUI or Headless sessions. On Windows, also read [references/windows.md](references/windows.md) and use its PowerShell commands instead of Bash scripts. For an Android client, read [references/android.md](references/android.md) before using ADB.
+2. Read [references/runtime.md](references/runtime.md) before starting GUI or server sessions. On Windows, also read [references/windows.md](references/windows.md) and use its PowerShell commands instead of Bash scripts. For an Android client, read [references/android.md](references/android.md) before using ADB.
 3. For GUI runtime tests that do not specifically exercise player creation, pass an explicit stable player name such as `--player Codex`. This skips the first-player screen and enters the world directly. Omit `--player` only when the player creation or selection UI is itself under test. Treat this as the default for gameplay, terrain, rendering, input, and world-loading diagnostics.
 4. Build the narrowest affected project and run focused tests.
-5. On Linux, run the repeatable Headless helper:
+5. On Linux, run the repeatable server helper:
 
 ```bash
-.agents/skills/scnet-debugging/scripts/smoke-headless.sh \
+.agents/skills/scnet-debugging/scripts/smoke-server.sh \
   --session codex-smoke \
   --world TestWorld \
   --game-mode Creative
@@ -30,7 +30,7 @@ The script creates a dedicated data instance by default. It records whether the 
 before the run, copies instance logs into the artifact directory, and deletes a newly created
 instance after a successful run. It preserves failed runs for diagnosis. Pass `--keep-instance`
 only when a successful run must remain reproducible. Never run automated checks against the default instance.
-Its default artifact directory is a unique run under `.agent-work/headless-smoke/artifacts/`;
+Its default artifact directory is a unique run under `.agent-work/server-smoke/artifacts/`;
 pass `--artifacts .agent-work/<task-id>/artifacts/<run-id>` to attach it to an existing task.
 On Windows, follow the equivalent log-driven procedure in [references/windows.md](references/windows.md).
 
@@ -38,7 +38,7 @@ On Windows, follow the equivalent log-driven procedure in [references/windows.md
    `Instances/<instance>/Logs` as the authoritative runtime record on both platforms.
 7. Search for `ERROR:`, unhandled exceptions, command failures, disconnects, and missing readiness markers.
 8. Correlate a failure with the operation immediately before it. Preserve the complete exception and relevant preceding log context.
-9. Stop all started processes cleanly. Never leave a Headless server running after validation unless the user explicitly asks for an interactive session.
+9. Stop all started processes cleanly. Never leave a server running after validation unless the user explicitly asks for an interactive session.
 10. Review every instance created during the task. Delete it after evidence has been copied unless it
    is still required for reproduction, comparison, or explicit user inspection. Report the path and
    reason for every retained instance. Never delete an instance that existed before the task.
@@ -47,10 +47,10 @@ On Windows, follow the equivalent log-driven procedure in [references/windows.md
 ## Choose the test surface
 
 - Use unit tests for parsers, registries, serialization, permissions, Mod lifecycle, and deterministic state.
-- Use Headless smoke tests for startup, world loading, server networking, stdin commands, save/stop, and server-side Mods.
+- Use server smoke tests for startup, world loading, server networking, stdin commands, save/stop, and server-side Mods.
 - Use a GUI client only for rendering, input, screen transitions, widgets, and client/server interaction.
 - Use an Android client with ADB for Android startup, networking, lifecycle, graphics, and device-specific failures.
-- Use both Headless and GUI for network protocol or multiplayer behavior.
+- Use both server and GUI for network protocol or multiplayer behavior.
 
 For temporary Mod fixtures, multi-stage gameplay scenarios, or persistence/lifecycle regressions,
 read [references/gameplay-fixtures.md](references/gameplay-fixtures.md) before implementing the test.
@@ -63,11 +63,11 @@ The following Linux examples run from the repository root after building the Lin
 for Windows executable resolution, see [references/windows.md](references/windows.md).
 
 ```bash
-./Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter --instance debug-server --server --session debug-server --world DebugWorld --game-mode Creative
-./Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter --instance debug-client --gui --player Codex
+./Survivalcraft.Server/bin/Debug/net10.0/linux-x64/Survivalcraft.Server --instance debug-server --session debug-server --world DebugWorld --game-mode Creative
+./Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter --instance debug-client --player Codex
 ```
 
-Read [references/multiplayer.md](references/multiplayer.md) before starting a GUI + Headless lab.
+Read [references/multiplayer.md](references/multiplayer.md) before starting a GUI + server lab.
 Record whether each server and client instance existed before the lab. At teardown, stop every
 process, preserve required logs, and remove only the instances created by the current lab. A retained
 instance requires an explicit reason in the final report.
@@ -75,8 +75,8 @@ instance requires an explicit reason in the final report.
 ## Interactive sessions
 
 On Linux, use a PTY when the user needs to interact with a live server. On Windows, read the instance
-log for observation and use the allocated Headless console only for command input. Wait for the exact
-`Headless server started` marker in the runtime log before reporting readiness. Send stdin commands
+log for observation and use the allocated server console only for command input. Wait for the exact
+`Server started` marker in the runtime log before reporting readiness. Send stdin commands
 without a leading slash or with one; both are accepted by the dispatcher. Stop gracefully and verify process exit.
 
 Do not mutate `RunningSetting.xml` with `--save` for temporary tests. Always provide a named `--session`; provide `--world` only together with `--session`.

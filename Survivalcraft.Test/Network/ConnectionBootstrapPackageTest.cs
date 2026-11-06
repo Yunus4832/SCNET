@@ -80,12 +80,17 @@ public class ConnectionBootstrapPackageTest
     public void BootstrapOnlyAppliesToTheCurrentUninitializedConnectionAttempt()
     {
         var token = Guid.NewGuid();
-        var node = new NetNode { TokenId = token, CurrentStage = NetNode.Stage.Bootstrapping };
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        ) { TokenId = token, CurrentStage = NetNode.Stage.Bootstrapping };
         var package = new BootstrapPackage
         {
             World = new WorldMetadata("Protocol test", 123, ProtocolEnum.Encode(Game.World.GameMode.Creative), 20),
             Epoch = Guid.NewGuid(),
-            ClientList = ClientPackageBuilder.Snapshot([new Client(null, 1, token, Guid.NewGuid(), null)])
+            ClientList = ClientPackageBuilder.Snapshot([new Client(null, 1, token, Guid.NewGuid())])
         };
         Assert.False(BootstrapPackageHandler.CanApply(package, node));
         typeof(NetNode).GetProperty(nameof(NetNode.AdmissionAccepted))!.SetValue(node, true);
@@ -99,12 +104,13 @@ public class ConnectionBootstrapPackageTest
         node.TokenId = Guid.NewGuid();
         Assert.False(BootstrapPackageHandler.CanApply(package, node));
         node.TokenId = token;
-        node.ConnectionEpoch = Guid.NewGuid();
+        node.Server = new Client(null, 0, Guid.NewGuid(), Guid.Empty);
+        node.Server.ConnectionEpoch = Guid.NewGuid();
         Assert.False(BootstrapPackageHandler.CanApply(package, node));
-        node.ConnectionEpoch = Guid.Empty;
-        node.CurrentConnectionPhase = ConnectionPhase.BootstrapSent;
+        node.Server!.ConnectionEpoch = Guid.Empty;
+        node.Server!.ConnectionPhase = ConnectionPhase.BootstrapSent;
         Assert.False(BootstrapPackageHandler.CanApply(package, node));
-        node.CurrentConnectionPhase = ConnectionPhase.TransportConnected;
+        node.Server!.ConnectionPhase = ConnectionPhase.TransportConnected;
         node.CurrentStage = NetNode.Stage.NotConnected;
         Assert.False(BootstrapPackageHandler.CanApply(package, node));
     }

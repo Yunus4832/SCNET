@@ -2,11 +2,16 @@ using Engine.Core.Mathematics;
 
 using Game.Network;
 using Game.Network.Transport;
+using Game.World;
 
 namespace Survivalcraft.Test.Network;
 
-public class NetNodeSnapshotCoalescingTest
+public class NetNodeSnapshotCoalescingTest : IDisposable
 {
+    private readonly WorldRuntimeContext _runtime = new(RuntimeSide.Authority, false);
+
+    public void Dispose() => _runtime.Close();
+
     [Fact]
     public void PlayerSnapshotsReplaceOldStateWithoutRetainingOldOptionalFields()
     {
@@ -15,7 +20,7 @@ public class NetNodeSnapshotCoalescingTest
             new(
                 new CharacterStatePackage
                 {
-                    ControllerSessionId = 7,
+                    ControllerClientId = 7,
 
                     PackageChangeFlag = ComponentCharacterPackage.ChangFlag.PositionChange |
                                         ComponentCharacterPackage.ChangFlag.VelocityChange |
@@ -24,12 +29,13 @@ public class NetNodeSnapshotCoalescingTest
                     Position = new Vector3(1f, 2f, 3f),
                     Velocity = new Vector3(4f, 5f, 6f)
                 },
-                PackageAudience.Global
+                PackageAudience.Global,
+                _runtime
             )
         };
         var newer = new CharacterStatePackage
         {
-            ControllerSessionId = 7,
+            ControllerClientId = 7,
 
             PackageChangeFlag = ComponentCharacterPackage.ChangFlag.PositionChange |
                                 ComponentCharacterPackage.ChangFlag.VelocityChange,
@@ -39,7 +45,7 @@ public class NetNodeSnapshotCoalescingTest
         Assert.True(
             SnapshotPackageCoalescer.TryCoalesce(
                 packages,
-                new OutboundPackage(newer, PackageAudience.Global)
+                new OutboundPackage(newer, PackageAudience.Global, _runtime)
             )
         );
 
@@ -62,12 +68,12 @@ public class NetNodeSnapshotCoalescingTest
         var newer = new BodyStatesPackage
             { BodyList = [new SubsystemBodyPackage.BodyItem { CreatureId = 2 }] };
 
-        packages.Add(new OutboundPackage(older, PackageAudience.Global));
+        packages.Add(new OutboundPackage(older, PackageAudience.Global, _runtime));
         // 生物快照按独立小包发送，不允许合并器吃掉其它分块。
         Assert.False(
             SnapshotPackageCoalescer.TryCoalesce(
                 packages,
-                new OutboundPackage(newer, PackageAudience.Global)
+                new OutboundPackage(newer, PackageAudience.Global, _runtime)
             )
         );
         Assert.Single(packages);
@@ -84,11 +90,11 @@ public class NetNodeSnapshotCoalescingTest
         var newer = new PickablePositionsPackage
             { Positions = [new PickablePosition(2, new Vector3(4f, 5f, 6f))] };
 
-        packages.Add(new OutboundPackage(older, PackageAudience.Global));
+        packages.Add(new OutboundPackage(older, PackageAudience.Global, _runtime));
         Assert.False(
             SnapshotPackageCoalescer.TryCoalesce(
                 packages,
-                new OutboundPackage(newer, PackageAudience.Global)
+                new OutboundPackage(newer, PackageAudience.Global, _runtime)
             )
         );
 
@@ -99,13 +105,14 @@ public class NetNodeSnapshotCoalescingTest
     [Fact]
     public void SnapshotsForDifferentAudiencesAreNotCoalesced()
     {
-        var firstClient = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var secondClient = new Client(null, 2, Guid.NewGuid(), Guid.NewGuid(), null);
+        var firstClient = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        var secondClient = new Client(null, 2, Guid.NewGuid(), Guid.NewGuid());
         var packages = new List<OutboundPackage>
         {
             new(
                 new OnlineCharacterStatePackage(),
-                PackageAudience.To(firstClient)
+                PackageAudience.To(firstClient),
+                _runtime
             )
         };
 
@@ -114,7 +121,8 @@ public class NetNodeSnapshotCoalescingTest
                 packages,
                 new OutboundPackage(
                     new OnlineCharacterStatePackage(),
-                    PackageAudience.To(secondClient)
+                    PackageAudience.To(secondClient),
+                    _runtime
                 )
             )
         );
@@ -126,13 +134,14 @@ public class NetNodeSnapshotCoalescingTest
     [InlineData(true)]
     public void SnapshotsDoNotMergeAcrossReusedConnectionIds(bool exclusion)
     {
-        var oldClient = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var newClient = new Client(null, 1, Guid.NewGuid(), oldClient.CharacterId, null);
+        var oldClient = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        var newClient = new Client(null, 1, Guid.NewGuid(), oldClient.CharacterId);
         var packages = new List<OutboundPackage>
         {
             new(
                 new OnlineCharacterStatePackage(),
-                exclusion ? PackageAudience.Except(oldClient) : PackageAudience.To(oldClient)
+                exclusion ? PackageAudience.Except(oldClient) : PackageAudience.To(oldClient),
+                _runtime
             )
         };
 
@@ -141,7 +150,8 @@ public class NetNodeSnapshotCoalescingTest
                 packages,
                 new OutboundPackage(
                     new OnlineCharacterStatePackage(),
-                    exclusion ? PackageAudience.Except(newClient) : PackageAudience.To(newClient)
+                    exclusion ? PackageAudience.Except(newClient) : PackageAudience.To(newClient),
+                    _runtime
                 )
             )
         );
@@ -150,16 +160,16 @@ public class NetNodeSnapshotCoalescingTest
     [Fact]
     public void EquivalentRecipientSetsCoalesceRegardlessOfOrderOrDuplicates()
     {
-        var first = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var second = new Client(null, 2, Guid.NewGuid(), Guid.NewGuid(), null);
+        var first = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        var second = new Client(null, 2, Guid.NewGuid(), Guid.NewGuid());
         var older = new OnlineCharacterStatePackage();
         var newer = new OnlineCharacterStatePackage();
-        var packages = new List<OutboundPackage> { new(older, PackageAudience.To([first, second])) };
+        var packages = new List<OutboundPackage> { new(older, PackageAudience.To([first, second]), _runtime) };
 
         Assert.True(
             SnapshotPackageCoalescer.TryCoalesce(
                 packages,
-                new OutboundPackage(newer, PackageAudience.To([second, first, first]))
+                new OutboundPackage(newer, PackageAudience.To([second, first, first]), _runtime)
             )
         );
         Assert.Same(newer, Assert.Single(packages).Package);

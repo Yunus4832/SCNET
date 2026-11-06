@@ -45,7 +45,6 @@ public sealed class ManageServicesScreen : Screen
 
     public override void Update()
     {
-        GameManager.UpdateProject();
         foreach (var (kind, tab) in _tabs)
         {
             tab.IsChecked = kind == _kind;

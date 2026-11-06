@@ -77,7 +77,14 @@ public sealed class ProjectilePackageTest
             Position = new Vector3(12f, 64f, 18f),
             Velocity = new Vector3(2f, 3f, 4f),
             AngularVelocity = new Vector3(5f, 6f, 7f),
-            TrailOffset = new Vector3(0f, 0.5f, 0f),
+            Trail = new ProjectileTrailDescription(
+                ProjectileTrailKind.Smoke,
+                new Vector3(0f, 0.5f, 0f),
+                20,
+                0.5f,
+                100d,
+                Color.White
+            ),
             IsFireProjectile = true
         };
 
@@ -89,7 +96,7 @@ public sealed class ProjectilePackageTest
         Assert.Equal(projectile.Position, clone.Position);
         Assert.Equal(projectile.Velocity, clone.Velocity);
         Assert.Equal(projectile.AngularVelocity, clone.AngularVelocity);
-        Assert.Equal(projectile.TrailOffset, clone.TrailOffset);
+        Assert.Equal(projectile.Trail!.Offset, clone.TrailOffset);
         Assert.True(clone.IsFireProjectile);
         Assert.Equal(PackageTransportPolicy.ReliableEvent, PackageTransportPolicy.Get(clone));
     }

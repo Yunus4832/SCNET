@@ -93,7 +93,12 @@ internal static class ProtocolShapeGuard
             else if (type == typeof(LocalizedText))
             {
                 shape.Kind = Kind.Object;
-                shape.Fields = Enumerable.Repeat(new Edge(Schema(typeof(string)), false), 3).ToArray();
+                shape.Fields =
+                [
+                    new Edge(Schema(typeof(LocalizedTextKind)), false), new Edge(Schema(typeof(string)), false),
+                    new Edge(Schema(typeof(string)), false), new Edge(Schema(typeof(string)), false),
+                    new Edge(shape, true), new Edge(Schema(typeof(LocalizedText[])), false)
+                ];
             }
             else if (MathWidth(type) is var width && width > 0)
             {

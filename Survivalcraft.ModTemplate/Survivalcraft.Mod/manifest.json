@@ -1,0 +1,19 @@
+{
+  "formatVersion": 1,
+  "type": "mod",
+  "identifier": "example.mod",
+  "name": "Example Mod",
+  "summary": "A sample content package.",
+  "description": "A sample mod project. Replace this text with a clear description of its features and usage.",
+  "version": "__SCNET_MOD_VERSION__",
+  "payload": {
+    "format": "scnet.mod-v1",
+    "entry": "payload/mod.json",
+    "mediaType": "application/json"
+  },
+  "metadata": {
+    "entrypoint": "Survivalcraft.ModTemplate.ModEntry, Survivalcraft.ModTemplate",
+    "dependencies": [],
+    "clientContentEntrypoint": "Survivalcraft.ModTemplate.Client.ClientContentModule, Survivalcraft.ModTemplate.Client"
+  }
+}

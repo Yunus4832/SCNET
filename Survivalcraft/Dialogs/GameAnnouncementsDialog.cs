@@ -29,7 +29,7 @@ public sealed class GameAnnouncementsDialog : Dialog
         _dateLabel = Children.Find<LabelWidget>("GameAnnouncementsDialog.Date")!;
         _bodyLabel = Children.Find<LabelWidget>("GameAnnouncementsDialog.Body")!;
         _closeButton = Children.Find<ButtonWidget>("GameAnnouncementsDialog.Close")!;
-        _closeButton.Text = LanguageManager.Get("Usual", "ok");
+        _closeButton.Text = Localization.ClientLanguage.Catalog.Get("Usual", "ok");
         _listPanel.ItemSize = 48f;
         _listPanel.ItemWidgetFactory = item => new LabelWidget
         {

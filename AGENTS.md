@@ -40,6 +40,8 @@ are immutable. Do not reset existing versions.
 When advancing release versions, summarize cumulative changes since the previous release in the
 root `CHANGELOG.md` (create it on the first such release), identifying each affected release unit
 and its version. Keep the changelog in the same change as the version updates.
+Existing versioned changelog entries are historical records: do not rewrite them for later refactors
+or terminology changes. Add changes under the next release when the user authorizes that release.
 For commits changing `SharedProperties/Versions.props`, include a `Versions:` body block listing
 exact property names and staged before/after values; omit it when no version properties change.
 

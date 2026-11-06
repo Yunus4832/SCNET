@@ -2,6 +2,7 @@ using System.Xml.Linq;
 
 using Content.Packaging;
 
+using Game.Application;
 using Game.Content;
 
 namespace Game.Screens;
@@ -51,7 +52,7 @@ public sealed class ContentPackageScreen : Screen
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _pickerUnavailableLabel = Children.Find<LabelWidget>("PickerUnavailable")!;
         _actionPanel.ItemTextProvider = item =>
-            LanguageManager.GetContentWidgets(_typeName, item.ToString()!);
+            Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, item.ToString()!);
         _actionPanel.ItemEnabledProvider = IsActionEnabled;
         _actionPanel.ItemColorProvider = item => item is PackageAction.Delete ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
@@ -165,7 +166,7 @@ public sealed class ContentPackageScreen : Screen
             {
                 if (IsCurrentOperation(generation))
                 {
-                    DialogsManager.Alert(LanguageManager.Get(_typeName, "CreationSaved"));
+                    DialogsManager.Alert(Localization.ClientLanguage.Catalog.Get(_typeName, "CreationSaved"));
                 }
             },
             exception => ShowError(generation, exception)
@@ -182,7 +183,7 @@ public sealed class ContentPackageScreen : Screen
             {
                 if (IsCurrentOperation(generation))
                 {
-                    DialogsManager.Alert(LanguageManager.Get(_typeName, "Installed"));
+                    DialogsManager.Alert(Localization.ClientLanguage.Catalog.Get(_typeName, "Installed"));
                 }
             },
             exception => ShowError(generation, exception)
@@ -216,7 +217,7 @@ public sealed class ContentPackageScreen : Screen
                 new FilePickerRequest(
                     [ContentPackageReader.FileExtension],
                     true,
-                    LanguageManager.Get(_typeName, "SelectPackages")
+                    Localization.ClientLanguage.Catalog.Get(_typeName, "SelectPackages")
                 )
             );
             if (files.Count == 0)
@@ -246,7 +247,12 @@ public sealed class ContentPackageScreen : Screen
                     }
 
                     Refresh();
-                    DialogsManager.Alert(string.Format(LanguageManager.Get(_typeName, "ImportComplete"), imported));
+                    DialogsManager.Alert(
+                        string.Format(
+                            Localization.ClientLanguage.Catalog.Get(_typeName, "ImportComplete"),
+                            imported
+                        )
+                    );
                 }
             );
         }
@@ -279,7 +285,7 @@ public sealed class ContentPackageScreen : Screen
                 new FileSaveRequest(
                     fileName,
                     "application/vnd.scnet.content-package",
-                    LanguageManager.Get(_typeName, "ExportTitle")
+                    Localization.ClientLanguage.Catalog.Get(_typeName, "ExportTitle")
                 )
             );
             if (target is null)
@@ -298,7 +304,10 @@ public sealed class ContentPackageScreen : Screen
                 {
                     if (IsCurrentOperation(generation))
                     {
-                        DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name);
+                        DialogsManager.Alert(
+                            Localization.ClientLanguage.Catalog.Get(_typeName, "ExportComplete"),
+                            target.Name
+                        );
                     }
                 }
             );
@@ -319,10 +328,14 @@ public sealed class ContentPackageScreen : Screen
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.Get(_typeName, "DeleteTitle"),
-                string.Format(LanguageManager.Get(_typeName, "DeleteQuestion"), package.Name, package.Version),
-                LanguageManager.Get("Usual", "yes"),
-                LanguageManager.Get("Usual", "no"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "DeleteTitle"),
+                string.Format(
+                    Localization.ClientLanguage.Catalog.Get(_typeName, "DeleteQuestion"),
+                    package.Name,
+                    package.Version
+                ),
+                Localization.ClientLanguage.Catalog.Get("Usual", "yes"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "no"),
                 button =>
                 {
                     if (button != MessageDialogButton.Button1 || !IsCurrentOperation(generation))
@@ -344,7 +357,7 @@ public sealed class ContentPackageScreen : Screen
     }
 
     private static ContentPackageCache CreateCache() =>
-        new(Storage.GetSystemPath(GamePaths.ContentPackageCache));
+        new(Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache));
 
     private bool IsCurrentOperation(int generation)
     {
@@ -372,9 +385,9 @@ public sealed class ContentPackageScreen : Screen
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.Get("Usual", "error"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "error"),
                 exception.Message,
-                LanguageManager.Get("Usual", "ok")
+                Localization.ClientLanguage.Catalog.Get("Usual", "ok")
             )
         );
     }

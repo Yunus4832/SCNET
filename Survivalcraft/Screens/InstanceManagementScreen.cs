@@ -1,6 +1,8 @@
 using System.Xml.Linq;
 
+using Game.Application;
 using Game.Commands;
+using Game.Commands.BuiltIn;
 
 namespace Game.Screens;
 
@@ -84,7 +86,7 @@ public class InstanceManagementScreen : Screen
             InstanceAction.Delete => selected is { IsCurrent: false, IsRunning: false },
             InstanceAction.Switch => selected is { IsCurrent: false },
             InstanceAction.Launch => PlatformManager.CanLaunchInstance &&
-                                     selected is { IsCurrent: false, IsRunning: false, RunMode: RunModeType.Gui },
+                                     selected is { IsCurrent: false, IsRunning: false },
             _ => false
         };
     }
@@ -107,7 +109,7 @@ public class InstanceManagementScreen : Screen
                 ConfirmSwitch(selected);
                 break;
             case InstanceAction.Launch
-                when selected is { IsCurrent: false, IsRunning: false, RunMode: RunModeType.Gui }:
+                when selected is { IsCurrent: false, IsRunning: false }:
                 ConfirmLaunch(selected);
                 break;
         }
@@ -136,9 +138,6 @@ public class InstanceManagementScreen : Screen
                 ? Text("RunningElsewhere")
                 : Text("NotRunning");
         statusLabel.Color = statusColor;
-        widget.Children.Find<LabelWidget>("InstanceItem.RunMode")!.Text = instance.RunMode == RunModeType.HeadlessServer
-            ? Text("HeadlessMode")
-            : Text("GuiMode");
         return widget;
     }
 
@@ -150,8 +149,7 @@ public class InstanceManagementScreen : Screen
                     instanceId,
                     string.Equals(instanceId, StarterInstanceManager.Current.Id, StringComparison.OrdinalIgnoreCase),
                     StarterInstanceManager.IsInstanceRunning(instanceId),
-                    StarterInstanceManager.CanCloneInstance(instanceId),
-                    StarterInstanceManager.GetRunMode(instanceId)
+                    StarterInstanceManager.CanCloneInstance(instanceId)
                 )
             )
             .ToArray();
@@ -261,8 +259,7 @@ public class InstanceManagementScreen : Screen
                     return;
                 }
 
-                if (StarterInstanceManager.IsInstanceRunning(instance.Id) ||
-                    StarterInstanceManager.GetRunMode(instance.Id) is not RunModeType.Gui)
+                if (StarterInstanceManager.IsInstanceRunning(instance.Id))
                 {
                     RefreshInstances();
                     return;
@@ -278,7 +275,11 @@ public class InstanceManagementScreen : Screen
                     Log.Error($"Failed to launch instance '{instance.Id}': {ex}");
                     DialogsManager.ShowDialog(
                         null,
-                        new MessageDialog(LanguageManager.Error, Text("LaunchFailed"), LanguageManager.Ok)
+                        new MessageDialog(
+                            Localization.ClientLanguage.Catalog.Error,
+                            Text("LaunchFailed"),
+                            Localization.ClientLanguage.Catalog.Ok
+                        )
                     );
                 }
             }
@@ -287,7 +288,11 @@ public class InstanceManagementScreen : Screen
 
     private static bool Execute(IGameCommand command)
     {
-        var result = CommandExecutor.ExecuteLocal(command, GameManager.Project);
+        var result = CommandExecutor.ExecuteLocal(
+            CurrentModRuntime.Value?.Commands,
+            command,
+            ClientApplication.World?.Project
+        );
         if (result.Success)
         {
             return true;
@@ -296,9 +301,9 @@ public class InstanceManagementScreen : Screen
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.Error,
+                Localization.ClientLanguage.Catalog.Error,
                 CommandText.Resolve(result),
-                LanguageManager.Ok
+                Localization.ClientLanguage.Catalog.Ok
             )
         );
         return false;
@@ -314,7 +319,12 @@ public class InstanceManagementScreen : Screen
             IsCancelButtonEnabled = false
         };
         DialogsManager.ShowDialog(null, busyDialog);
-        Task.Run(() => CommandExecutor.ExecuteLocal(command, GameManager.Project))
+        Task.Run(() => CommandExecutor.ExecuteLocal(
+                    CurrentModRuntime.Value?.Commands,
+                    command,
+                    ClientApplication.World?.Project
+                )
+            )
             .ContinueWith(task => Dispatcher.Dispatch(() =>
                     {
                         DialogsManager.HideDialog(busyDialog);
@@ -324,9 +334,9 @@ public class InstanceManagementScreen : Screen
                             DialogsManager.ShowDialog(
                                 null,
                                 new MessageDialog(
-                                    LanguageManager.Error,
+                                    Localization.ClientLanguage.Catalog.Error,
                                     Text("OperationFailed"),
-                                    LanguageManager.Ok
+                                    Localization.ClientLanguage.Catalog.Ok
                                 )
                             );
                             return;
@@ -338,9 +348,9 @@ public class InstanceManagementScreen : Screen
                             DialogsManager.ShowDialog(
                                 null,
                                 new MessageDialog(
-                                    LanguageManager.Error,
+                                    Localization.ClientLanguage.Catalog.Error,
                                     CommandText.Resolve(result),
-                                    LanguageManager.Ok
+                                    Localization.ClientLanguage.Catalog.Ok
                                 )
                             );
                             return;
@@ -353,13 +363,12 @@ public class InstanceManagementScreen : Screen
     }
 
     private static string Text(string key) =>
-        LanguageManager.GetContentWidgets(nameof(InstanceManagementScreen), key);
+        Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(InstanceManagementScreen), key);
 
     private sealed record InstanceItem(
         string Id,
         bool IsCurrent,
         bool IsRunning,
-        bool CanClone,
-        RunModeType RunMode
+        bool CanClone
     );
 }

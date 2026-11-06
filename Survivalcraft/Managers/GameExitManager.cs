@@ -16,6 +16,7 @@ public static class GameExitManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(packagePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(downloadUrl);
+        SaveWorldBeforeExit();
         UpdatePackagePath = packagePath;
         UpdateDownloadUrl = downloadUrl;
         ExitAction = GameExitAction.Update;
@@ -35,6 +36,7 @@ public static class GameExitManager
 
     public static void RequestInstanceSwitch(string instanceId)
     {
+        SaveWorldBeforeExit();
         StarterInstanceManager.RequestSwitch(instanceId);
         SwitchInstanceId = instanceId;
         ExitAction = GameExitAction.SwitchInstance;
@@ -44,6 +46,7 @@ public static class GameExitManager
 
     public static void RequestExit()
     {
+        SaveWorldBeforeExit();
         ExitAction = GameExitAction.Exit;
         ExitRequested?.Invoke(ExitAction);
         RequestApplicationExit();
@@ -59,6 +62,7 @@ public static class GameExitManager
 
     private static void RequestRestartInternal(SessionInfo? sessionInfo, ModProfile? sessionProfile)
     {
+        SaveWorldBeforeExit();
         var pendingSessionId = string.Empty;
         if (sessionInfo != null)
         {
@@ -71,21 +75,23 @@ public static class GameExitManager
             }
         }
 
-        RunningSettingManager.SaveCurrent(runningSetting => { runningSetting.PendingSessionId = pendingSessionId; });
+        StartupManager.Profiles.UpdateRunningSettings(runningSetting =>
+            {
+                runningSetting.PendingSessionId = pendingSessionId;
+            }
+        );
         ExitAction = GameExitAction.Restart;
         ExitRequested?.Invoke(ExitAction);
         RequestApplicationExit();
     }
 
+    private static void SaveWorldBeforeExit()
+    {
+        GameManager.SaveProject(waitForCompletion: true, showErrorDialog: true);
+    }
+
     private static void RequestApplicationExit()
     {
-        if (RunMode.Value is RunModeType.Gui)
-        {
-            Window.Close();
-        }
-        else
-        {
-            HeadlessEntry.RequestStop();
-        }
+        if (Window.IsCreated) { Window.Close(); }
     }
 }

@@ -77,9 +77,9 @@ public static class AutomationUiContext
                     inventorySlot.SlotCount
                 )
                 : null;
-            if (slot is { Value: not 0 })
+            if (slot is { Value: not 0 } && widget is InventorySlotWidget boundSlot)
             {
-                text = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(slot.Value)]
+                text = boundSlot.PresentationCatalog.Get(Terrain.ExtractContents(slot.Value))
                     .GetDisplayName(null, slot.Value);
             }
 

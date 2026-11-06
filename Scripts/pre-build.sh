@@ -26,8 +26,11 @@ packages=(
     "SCNET.ContentTool|ContentTool/ContentTool.csproj"
     "SCNET.Authentication.Protocol|Authentication.Protocol/Authentication.Protocol.csproj"
     "SCNET.Game.Protocol|Game.Protocol/Game.Protocol.csproj"
+    "SCNET.Survivalcraft.Core|Survivalcraft.Core/Survivalcraft.Core.csproj"
+    "SCNET.Survivalcraft.Hosting|Survivalcraft.Hosting/Survivalcraft.Hosting.csproj"
+    "SCNET.Survivalcraft.Client|Survivalcraft.Client/Survivalcraft.Client.csproj"
     "SCNET.Survivalcraft|Survivalcraft/Survivalcraft.csproj"
-    "SCNET.ModTemplates|Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj"
+    "SCNET.ModTemplates|Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj"
 )
 versions=()
 needs_pack="$refresh"
@@ -44,12 +47,17 @@ if [[ "$needs_pack" == true ]]; then
     cache_root="$(dotnet nuget locals global-packages --list --force-english-output)"
     cache_root="${cache_root#global-packages: }"
     [[ "$cache_root" == /* ]] || { echo "Invalid NuGet cache path: $cache_root" >&2; exit 1; }
-    for index in "${!packages[@]}"; do
-        package_id="${packages[$index]%%|*}"
-        package_id="$(printf '%s' "$package_id" | tr '[:upper:]' '[:lower:]')"
-        rm -rf -- "$cache_root/$package_id/${versions[$index]}"
-    done
+    clear_prepared_package_cache() {
+        for index in "${!packages[@]}"; do
+            package_id="${packages[$index]%%|*}"
+            package_id="$(printf '%s' "$package_id" | tr '[:upper:]' '[:lower:]')"
+            rm -rf -- "$cache_root/$package_id/${versions[$index]}"
+        done
+    }
+    clear_prepared_package_cache
     bash Scripts/pack-nuget.sh
+    # Restore during packing can rehydrate a package before its replacement is written.
+    clear_prepared_package_cache
 fi
 dotnet restore SCNET.slnx --force
 echo "[SCNET Pre-build] Dependencies are ready. Run dotnet build or build in your IDE."

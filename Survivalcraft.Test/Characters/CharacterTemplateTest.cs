@@ -1,12 +1,15 @@
 using System.Xml.Linq;
 
+using Engine.Core.Reflection;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Components;
+using Game.Hosting;
 using Game.Subsystems;
 
-namespace Game.Test.Characters;
+namespace Survivalcraft.Test.Characters;
 
 public sealed class CharacterTemplateTest
 {
@@ -80,7 +83,17 @@ public sealed class CharacterTemplateTest
                     var name = component.GetValue<string>("Class");
                     if (string.IsNullOrEmpty(name)) { continue; }
 
-                    var binding = typeof(ComponentCharacter).Assembly.GetType(name, true)!;
+                    var owners = new[]
+                    {
+                        typeof(SubsystemTime).Assembly, typeof(SubsystemWorldHosting).Assembly,
+                        typeof(ComponentGui).Assembly, typeof(Game.Managers.ContentManager).Assembly
+                    }.Distinct();
+                    var candidates = owners.Select(owner => owner.GetType(name, false)).Where(type => type is not null)
+                        .ToArray();
+                    var expectedOwner = Assert.Single(candidates);
+                    var binding = RuntimeTypeResolver.FindType(name)!;
+                    Assert.Same(expectedOwner, binding);
+                    Assert.Same(binding, RuntimeTypeResolver.FindType(name));
                     Assert.True(
                         typeof(Component).IsAssignableFrom(binding) || typeof(Subsystem).IsAssignableFrom(binding),
                         $"{template.Name}/{component.DatabaseObject.Name} has invalid class binding {name}."

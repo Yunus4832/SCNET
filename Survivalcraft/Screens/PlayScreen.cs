@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Game.Application;
+
 namespace Game.Screens;
 
 public class PlayScreen : Screen
@@ -61,20 +63,21 @@ public class PlayScreen : Screen
                 var labelWidget = containerWidget.Children.Find<LabelWidget>("WorldItem.Name")!;
                 var labelWidget2 = containerWidget.Children.Find<LabelWidget>("WorldItem.Details")!;
                 containerWidget.Tag = worldInfo;
-                labelWidget.Text = worldInfo.WorldSettings.RunServer
-                    ? worldInfo.WorldSettings.Name + LanguageManager.GetContentWidgets(_typeName, 11)
+                labelWidget.Text = worldInfo.Hosting.RunServer
+                    ? worldInfo.WorldSettings.Name +
+                      Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 11)
                     : worldInfo.WorldSettings.Name;
                 labelWidget2.Text =
                     $"{DataSizeFormatter.Format(worldInfo.Size)} | {worldInfo.LastSaveTime.ToLocalTime():dd MMM yyyy HH:mm} | {(worldInfo.CharacterInfos.Count > 1
-                        ? string.Format(LanguageManager.GetContentWidgets(_typeName, 9), worldInfo.CharacterInfos.Count)
-                        : string.Format(LanguageManager.GetContentWidgets(_typeName, 10), 1))} | {LanguageManager.Get("GameMode", worldInfo.WorldSettings.GameMode.ToString())} | {LanguageManager.Get("EnvironmentBehaviorMode",
+                        ? string.Format(Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 9), worldInfo.CharacterInfos.Count)
+                        : string.Format(Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 10), 1))} | {Localization.ClientLanguage.Catalog.Get("GameMode", worldInfo.WorldSettings.GameMode.ToString())} | {Localization.ClientLanguage.Catalog.Get("EnvironmentBehaviorMode",
                         worldInfo.WorldSettings.EnvironmentBehaviorMode.ToString())}";
                 if (worldInfo.ProjectFormatVersion != WorldVersions.ProjectFormatVersion)
                 {
                     labelWidget2.Text = labelWidget2.Text +
                                         " | " +
                                         (string.IsNullOrEmpty(worldInfo.ProjectFormatVersion)
-                                            ? LanguageManager.Get("Usual", "unknown")
+                                            ? Localization.ClientLanguage.Catalog.Get("Usual", "unknown")
                                             : "(" + worldInfo.ProjectFormatVersion + ")");
                 }
 
@@ -95,14 +98,17 @@ public class PlayScreen : Screen
 
     public override void Enter(object[] parameters)
     {
-        var dialog = new BusyDialog(LanguageManager.GetContentWidgets(_typeName, 5), string.Empty);
+        var dialog = new BusyDialog(
+            Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 5),
+            string.Empty
+        );
         DialogsManager.ShowDialog(null, dialog);
         Task.Run(
             delegate
             {
                 var selectedItem = (WorldInfo?)_worldsListWidget.SelectedItem;
-                WorldsManager.UpdateWorldsList();
-                var worldInfos = new List<WorldInfo>(WorldsManager.WorldInfos);
+                ClientApplication.Worlds.UpdateWorldsList();
+                var worldInfos = new List<WorldInfo>(ClientApplication.Worlds.WorldInfos);
                 worldInfos.Sort((w1, w2) => DateTime.Compare(w2.LastSaveTime, w1.LastSaveTime));
                 Dispatcher.Dispatch(
                     delegate
@@ -134,13 +140,13 @@ public class PlayScreen : Screen
     public override void Update()
     {
         if (_worldsListWidget.SelectedItem != null &&
-            WorldsManager.WorldInfos.IndexOf((WorldInfo)_worldsListWidget.SelectedItem) < 0)
+            ClientApplication.Worlds.WorldInfos.IndexOf((WorldInfo)_worldsListWidget.SelectedItem) < 0)
         {
             _worldsListWidget.SelectedItem = null;
         }
 
         Children.Find<LabelWidget>("TopBar.Label")!.Text = string.Format(
-            LanguageManager.GetContentWidgets(_typeName, 6),
+            Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 6),
             _worldsListWidget.Items.Count
         );
         _actionPanel.Refresh();
@@ -156,7 +162,7 @@ public class PlayScreen : Screen
     private string GetActionText(object item)
     {
         return item is WorldAction action
-            ? LanguageManager.GetContentWidgets(_typeName, action.ToString())
+            ? Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, action.ToString())
             : string.Empty;
     }
 
@@ -190,7 +196,12 @@ public class PlayScreen : Screen
                 CreateWorld();
                 break;
             case WorldAction.Settings when worldInfo is not null:
-                ScreensManager.SwitchScreen("ModifyWorld", worldInfo.DirectoryName, worldInfo.WorldSettings);
+                ScreensManager.SwitchScreen(
+                    "ModifyWorld",
+                    worldInfo.DirectoryName,
+                    worldInfo.WorldSettings,
+                    worldInfo.Hosting
+                );
                 break;
             case WorldAction.Clone when worldInfo is not null:
                 ShowCloneDialog(worldInfo);
@@ -203,14 +214,14 @@ public class PlayScreen : Screen
 
     private void CreateWorld()
     {
-        if (WorldsManager.WorldInfos.Count >= _maxWorlds)
+        if (ClientApplication.Worlds.WorldInfos.Count >= _maxWorlds)
         {
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageManager.GetContentWidgets(_typeName, 7),
-                    string.Format(LanguageManager.GetContentWidgets(_typeName, 8), _maxWorlds),
-                    LanguageManager.Get("Usual", "ok")
+                    Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 7),
+                    string.Format(Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 8), _maxWorlds),
+                    Localization.ClientLanguage.Catalog.Get("Usual", "ok")
                 )
             );
             return;
@@ -222,11 +233,11 @@ public class PlayScreen : Screen
 
     private void ShowCloneDialog(WorldInfo worldInfo)
     {
-        var defaultName = WorldsManager.GetUnusedWorldName();
+        var defaultName = ClientApplication.Worlds.GetUnusedWorldName();
         DialogsManager.ShowDialog(
             null,
             new TextBoxDialog(
-                LanguageManager.GetContentWidgets(_typeName, "CloneTitle"),
+                Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "CloneTitle"),
                 defaultName,
                 128,
                 name => CloneWorld(worldInfo, string.IsNullOrWhiteSpace(name) ? defaultName : name.Trim()),
@@ -237,20 +248,23 @@ public class PlayScreen : Screen
 
     private void CloneWorld(WorldInfo source, string name)
     {
-        if (!WorldsManager.ValidateWorldName(name))
+        if (!ClientApplication.Worlds.ValidateWorldName(name))
         {
-            DialogsManager.Alert(LanguageManager.GetContentWidgets(_typeName, "InvalidName"));
+            DialogsManager.Alert(Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "InvalidName"));
             return;
         }
 
-        var busyDialog = new BusyDialog(LanguageManager.GetContentWidgets(_typeName, "Cloning"), name);
+        var busyDialog = new BusyDialog(
+            Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "Cloning"),
+            name
+        );
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() =>
             {
                 try
                 {
-                    var clone = WorldsManager.CloneWorld(source.DirectoryName, name);
-                    WorldsManager.UpdateWorldsList();
+                    var clone = ClientApplication.Worlds.CloneWorld(source.DirectoryName, name);
+                    ClientApplication.Worlds.UpdateWorldsList();
                     Dispatcher.Dispatch(() =>
                         {
                             DialogsManager.HideDialog(busyDialog);
@@ -264,7 +278,7 @@ public class PlayScreen : Screen
                         {
                             DialogsManager.HideDialog(busyDialog);
                             DialogsManager.Alert(
-                                LanguageManager.GetContentWidgets(_typeName, "CloneFailed"),
+                                Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "CloneFailed"),
                                 exception.Message
                             );
                         }
@@ -279,13 +293,13 @@ public class PlayScreen : Screen
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.GetContentWidgets(_typeName, "DeleteTitle"),
+                Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "DeleteTitle"),
                 string.Format(
-                    LanguageManager.GetContentWidgets(_typeName, "DeleteQuestion"),
+                    Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "DeleteQuestion"),
                     worldInfo.WorldSettings.Name
                 ),
-                LanguageManager.Get("Usual", "yes"),
-                LanguageManager.Get("Usual", "no"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "yes"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "no"),
                 button =>
                 {
                     if (button != MessageDialogButton.Button1)
@@ -293,8 +307,8 @@ public class PlayScreen : Screen
                         return;
                     }
 
-                    WorldsManager.DeleteWorld(worldInfo.DirectoryName);
-                    WorldsManager.UpdateWorldsList();
+                    ClientApplication.Worlds.DeleteWorld(worldInfo.DirectoryName);
+                    ClientApplication.Worlds.UpdateWorldsList();
                     PopulateWorldsList(null);
                 }
             )
@@ -303,7 +317,7 @@ public class PlayScreen : Screen
 
     private void PopulateWorldsList(string? selectedDirectoryName)
     {
-        var worldInfos = new List<WorldInfo>(WorldsManager.WorldInfos);
+        var worldInfos = new List<WorldInfo>(ClientApplication.Worlds.WorldInfos);
         worldInfos.Sort((w1, w2) => DateTime.Compare(w2.LastSaveTime, w1.LastSaveTime));
         _worldsListWidget.ClearItems();
         foreach (var worldInfo in worldInfos)
@@ -327,8 +341,8 @@ public class PlayScreen : Screen
     private void PrepareWorldModsAndPlay(WorldInfo worldInfo, SessionInfo session)
     {
         var busyDialog = new BusyDialog(
-            LanguageManager.GetContentWidgets(_typeName, 12),
-            LanguageManager.GetContentWidgets(_typeName, 13)
+            Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 12),
+            Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 13)
         );
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() =>
@@ -359,8 +373,11 @@ public class PlayScreen : Screen
                         {
                             DialogsManager.HideDialog(busyDialog);
                             DialogsManager.Alert(
-                                LanguageManager.GetContentWidgets(_typeName, 14),
-                                string.Format(LanguageManager.GetContentWidgets(_typeName, 15), ex.Message)
+                                Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 14),
+                                string.Format(
+                                    Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 15),
+                                    ex.Message
+                                )
                             );
                         }
                     );
@@ -374,10 +391,13 @@ public class PlayScreen : Screen
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.GetContentWidgets(_typeName, 16),
-                string.Format(LanguageManager.GetContentWidgets(_typeName, 17), result.RestartReason),
-                LanguageManager.GetContentWidgets(_typeName, 18),
-                LanguageManager.Get("Usual", "cancel"),
+                Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 16),
+                string.Format(
+                    Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 17),
+                    result.RestartReason
+                ),
+                Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 18),
+                Localization.ClientLanguage.Catalog.Get("Usual", "cancel"),
                 button =>
                 {
                     if (button != MessageDialogButton.Button1)

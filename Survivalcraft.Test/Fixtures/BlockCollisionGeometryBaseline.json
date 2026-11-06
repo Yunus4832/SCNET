@@ -1,0 +1,292 @@
+{
+  "game:adjustable_delay_gate": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "8828951210BB005C874E51591C5CB1F55C9B2B596E3A4593AB62CC45308CFA46"
+  },
+  "game:analog_to_digital_converter": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "47F00B70781B0171BF3F1BE18328EBF87FCCBFDBC49633EDEB6F2DA580AD558E"
+  },
+  "game:and_gate": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "2A34CCA5B995ECAB14E4BDF9B79C7566E9DD58B641CA63ED513E07CDE412E9D0"
+  },
+  "game:basalt_fence": {
+    "FenceBlock.CollisionBoxes": "1E748ED47146F6C509C36E089299558AB49B147BCA68D4368333C4F31C471A60"
+  },
+  "game:basalt_slab": {
+    "SlabBlock.CollisionBoxes": "74CE15146197D874B5AC9E2D8E5918C083B2CE324E2523BB2A67328CC87DABEF"
+  },
+  "game:basalt_stairs": {
+    "StairsBlock.CollisionBoxes": "B509821A360C112309BDF5F16FDC0383B213D379CA2EC69FA4219C13D0570620"
+  },
+  "game:battery": {
+    "BatteryBlock.CollisionBoxes": "EAA1CDFB645360EED154B334D8B7192A3F7581C624C28AE8F54C7ABD508488E5"
+  },
+  "game:brick_fence": {
+    "FenceBlock.CollisionBoxes": "1E748ED47146F6C509C36E089299558AB49B147BCA68D4368333C4F31C471A60"
+  },
+  "game:brick_slab": {
+    "SlabBlock.CollisionBoxes": "74CE15146197D874B5AC9E2D8E5918C083B2CE324E2523BB2A67328CC87DABEF"
+  },
+  "game:brick_stairs": {
+    "StairsBlock.CollisionBoxes": "B509821A360C112309BDF5F16FDC0383B213D379CA2EC69FA4219C13D0570620"
+  },
+  "game:button": {
+    "ButtonBlock.CollisionBoxesByFace": "06BEA977B616F5FE1BCBDCAF54EA6B4D3C6F0BEF135A55E3916C18E7087A9123"
+  },
+  "game:cairn": {
+    "CairnBlock._collisionBoxes": "A4E0FFD383C6BD0AD65DBD7133842CADB2A278AE12D333762A17243F5369F302"
+  },
+  "game:campfire": {
+    "CampfireBlock.CollisionBoxesByData": "EDED4CF16F27C30DEBB05883274FAC3D96A8DF30A90FB9E369BB0A20557DA8EB"
+  },
+  "game:carpet": {
+    "CarpetBlock.CollisionBoxes": "1D14CECB1E8B6ED9D33626826B152F5A63531BD4CD21707D17B9031106176A94"
+  },
+  "game:cell_door": {
+    "DoorBlock.CollisionBoxesByData": "D89FB4AD74B7645F6A8CBFC30FBA2AE8E90F244CCAE8D2AFFB1A5042C76EB2DB"
+  },
+  "game:cell_trapdoor": {
+    "TrapdoorBlock.CollisionBoxesByData": "CCBA77A4F9C88BD4A5C91EBE1B63AACC7BD09ACD8A7B5B568FDCF40527ABA22C"
+  },
+  "game:cobblestone_slab": {
+    "SlabBlock.CollisionBoxes": "74CE15146197D874B5AC9E2D8E5918C083B2CE324E2523BB2A67328CC87DABEF"
+  },
+  "game:cobblestone_stairs": {
+    "StairsBlock.CollisionBoxes": "B509821A360C112309BDF5F16FDC0383B213D379CA2EC69FA4219C13D0570620"
+  },
+  "game:counter": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "47F00B70781B0171BF3F1BE18328EBF87FCCBFDBC49633EDEB6F2DA580AD558E"
+  },
+  "game:delay_gate": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "8828951210BB005C874E51591C5CB1F55C9B2B596E3A4593AB62CC45308CFA46"
+  },
+  "game:detonator": {
+    "DetonatorBlock.CollisionBoxesByData": "046176FE969C5C668A4145F5BB9DCD17BE81AA03533DA04F14C36BA943661372"
+  },
+  "game:digital_to_analog_converter": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "47F00B70781B0171BF3F1BE18328EBF87FCCBFDBC49633EDEB6F2DA580AD558E"
+  },
+  "game:dirt_slab": {
+    "SlabBlock.CollisionBoxes": "74CE15146197D874B5AC9E2D8E5918C083B2CE324E2523BB2A67328CC87DABEF"
+  },
+  "game:dirt_stairs": {
+    "StairsBlock.CollisionBoxes": "B509821A360C112309BDF5F16FDC0383B213D379CA2EC69FA4219C13D0570620"
+  },
+  "game:fallen_leaves": {
+    "FallenLeavesBlock._collisionBoxes": "1D14CECB1E8B6ED9D33626826B152F5A63531BD4CD21707D17B9031106176A94"
+  },
+  "game:four_led": {
+    "FourLedBlock.CollisionBoxesByFace": "6CEC8E2479502F3D865F65B003A6F6221537A7F1CC6705E8505767A58DD58146"
+  },
+  "game:grass_trap": {
+    "GrassTrapBlock.CollisionBoxes": "9EA9D8793062C5E8EBA9D4586B54B248227401FB109DE9506731DED0A73262E1"
+  },
+  "game:gravestone": {
+    "GravestoneBlock.CollisionBoxes": "943DED40128CE69A5E5F69361DAE4A675E534351A5CF07BDD8421951455B8BF5"
+  },
+  "game:hygrometer": {
+    "HygrometerBlock.CollisionBoxesByData": "C0063B49DDBFA4E7F8FA362551494FE032748C484D46F8300E0EE9AD38A99275"
+  },
+  "game:iron_attached_sign": {
+    "AttachedSignBlock.CollisionBoxes": "C374642EC42F7D81233D1AB1703B1BDD16EC611E6531F493B3BE2E2731763FD8"
+  },
+  "game:iron_door": {
+    "DoorBlock.CollisionBoxesByData": "D89FB4AD74B7645F6A8CBFC30FBA2AE8E90F244CCAE8D2AFFB1A5042C76EB2DB"
+  },
+  "game:iron_fence": {
+    "FenceBlock.CollisionBoxes": "B75E17CB1AC57639B6D637218CA9610B1C779B0529F554CBD33A3F71FE51B3DA"
+  },
+  "game:iron_fence_gate": {
+    "FenceGateBlock.CollisionBoxes": "D4AB950F079B62BC07501E2005206FEEB6EA4EED9C5AF1149D09E366B1AE5B2E"
+  },
+  "game:iron_ladder": {
+    "LadderBlock.CollisionBoxesByData": "68466DCC80BB8194826FEBE44482D21134039DA85A2C3C041B0D3897586CEB50"
+  },
+  "game:iron_posted_sign": {
+    "PostedSignBlock.CollisionBoxes": "94EF83E4EBBEE16E13442F35BBC0A60672450CEE56CA4657373B4B9E66E4640C"
+  },
+  "game:ivy": {
+    "IvyBlock.BoundingBoxes": "D641B68318BE6C911EC2EA587E5BEDAEEBC3CB9343FBEA5CF1E1B04A0A65E6F4"
+  },
+  "game:jack_o_lantern": {
+    "JackOLanternBlock.CollisionBoxes": "2E368A28C80BBA211AB1FBC732017F900120C3BCABDE418D42F0E7F70100410F"
+  },
+  "game:kelp": {
+    "FluidBlock.BoundingBoxesByLevel": "CF3C1BD4E110878B8E572385890794879E68724A6F2064C071C35C669631CDCE"
+  },
+  "game:large_gunpowder_keg": {
+    "GunpowderKegBlock.CollisionBoxes": "6BB51F3DB0AAD3BDF418054C3C19951F8BB79AEE5ABEBFE7D36E9B71B56F31E0"
+  },
+  "game:large_incendiary_keg": {
+    "GunpowderKegBlock.CollisionBoxes": "6BB51F3DB0AAD3BDF418054C3C19951F8BB79AEE5ABEBFE7D36E9B71B56F31E0"
+  },
+  "game:led": {
+    "LedBlock.CollisionBoxesByData": "93784FB3825F785901C1B09867AFE53DC90142D9B2267F9528867119AA8DECC2"
+  },
+  "game:lightbulb": {
+    "LightbulbBlock.CollisionBoxes": "81053B9D09AB6D6B2F939C59111C8B3CDC8123CE7075CC6879AAA8D55D0892C5"
+  },
+  "game:magma": {
+    "FluidBlock.BoundingBoxesByLevel": "69A833D4DF51C7DA5D72639427734371C06A10EC72121FBAF129BE31465846DB"
+  },
+  "game:magnet": {
+    "MagnetBlock.CollisionBoxesByData": "4CE8C1963FEAE4397F2B994F23E74B2D24CDBA597B9733762FC34E4DD0E893DF"
+  },
+  "game:marble_slab": {
+    "SlabBlock.CollisionBoxes": "74CE15146197D874B5AC9E2D8E5918C083B2CE324E2523BB2A67328CC87DABEF"
+  },
+  "game:marble_stairs": {
+    "StairsBlock.CollisionBoxes": "B509821A360C112309BDF5F16FDC0383B213D379CA2EC69FA4219C13D0570620"
+  },
+  "game:medium_gunpowder_keg": {
+    "GunpowderKegBlock.CollisionBoxes": "27409123033A922EC87F59D76DFEA9142F2025802214385F014987E33A72EDB6"
+  },
+  "game:medium_incendiary_keg": {
+    "GunpowderKegBlock.CollisionBoxes": "27409123033A922EC87F59D76DFEA9142F2025802214385F014987E33A72EDB6"
+  },
+  "game:memory_bank": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "31153E45B41886031408F0D775CF3C9C1FC0BF72FC8E9A8AD558EB4655FAF624"
+  },
+  "game:motion_detector": {
+    "MotionDetectorBlock.CollisionBoxesByData": "8A8FCABD6AB982B746CE3C3961884CF788BC7CDB6EC6CC64D43680511441345C"
+  },
+  "game:multicolored_led": {
+    "MulticoloredLedBlock.CollisionBoxesByData": "EEA422D77018F17BF12A93B10A522CA05DDBF0A9957BAC3B6EFD11084B6F8E4D"
+  },
+  "game:nand_gate": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "3EDEA46413B5463B491C05476A9E5E7F712A3CE1116E4F2814505775E8EAB36E"
+  },
+  "game:nor_gate": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "D1060BC7C6104B5F43A7FD8EB333C08BB097D0A548BB0BFA5A78941FA325EC97"
+  },
+  "game:not_gate": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "E26724B7911092E91D76143750514A7490309CB1CD033FC4B42954B3C783CEF8"
+  },
+  "game:one_led": {
+    "OneLedBlock.CollisionBoxesByFace": "6CEC8E2479502F3D865F65B003A6F6221537A7F1CC6705E8505767A58DD58146"
+  },
+  "game:or_gate": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "C501E8EFECE3A824FEAF0053A7C26EF63005697BC79D5D20E2FE8FF6C9541379"
+  },
+  "game:photodiode": {
+    "PhotodiodeBlock.CollisionBoxesByData": "8A8FCABD6AB982B746CE3C3961884CF788BC7CDB6EC6CC64D43680511441345C"
+  },
+  "game:pressure_plate": {
+    "PressurePlateBlock.CollisionBoxesByData": "70D599B0328BBCECBB94C26078C40A7348EACA9D3E415BAC1AFC252405165DAB"
+  },
+  "game:pumpkin": {
+    "BasePumpkinBlock.CollisionBoxesBySize": "13FB07B9FB19614CE301C264DF610F002AAF28F519665DB6D8FD1F48F9FD0CE4"
+  },
+  "game:random_generator": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "B2F1F07DC784E8764E708A7B09F38FB991BEFC4AF05868EA2E63C0B6C0ACBCE1"
+  },
+  "game:real_time_clock": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "47F00B70781B0171BF3F1BE18328EBF87FCCBFDBC49633EDEB6F2DA580AD558E"
+  },
+  "game:rotten_pumpkin": {
+    "BasePumpkinBlock.CollisionBoxesBySize": "13FB07B9FB19614CE301C264DF610F002AAF28F519665DB6D8FD1F48F9FD0CE4"
+  },
+  "game:sandstone_slab": {
+    "SlabBlock.CollisionBoxes": "74CE15146197D874B5AC9E2D8E5918C083B2CE324E2523BB2A67328CC87DABEF"
+  },
+  "game:sandstone_stairs": {
+    "StairsBlock.CollisionBoxes": "B509821A360C112309BDF5F16FDC0383B213D379CA2EC69FA4219C13D0570620"
+  },
+  "game:sea_urchin": {
+    "FluidBlock.BoundingBoxesByLevel": "CF3C1BD4E110878B8E572385890794879E68724A6F2064C071C35C669631CDCE",
+    "SeaUrchinBlock.CollisionBoxes": "5341D4D0FBBD21C705B36E6224F458B966244CEFFED4ED2AD09E114B999D2882"
+  },
+  "game:seagrass": {
+    "FluidBlock.BoundingBoxesByLevel": "CF3C1BD4E110878B8E572385890794879E68724A6F2064C071C35C669631CDCE"
+  },
+  "game:seven_segment_display": {
+    "SevenSegmentDisplayBlock.CollisionBoxesByFace": "2BD705289894F95FDAEF7E17F41D15C8797DFAA62F8B8603977B3DD880CF44EB"
+  },
+  "game:small_gunpowder_keg": {
+    "GunpowderKegBlock.CollisionBoxes": "07C307F14FDD9FCAD3C1523F8091FDF8B18EE330BC9659EBEAF288ABA1318758"
+  },
+  "game:small_incendiary_keg": {
+    "GunpowderKegBlock.CollisionBoxes": "07C307F14FDD9FCAD3C1523F8091FDF8B18EE330BC9659EBEAF288ABA1318758"
+  },
+  "game:snow": {
+    "SnowBlock.CollisionBoxes": "4CED5208382B1491908BB36A2DB544D83157E27B45278BD1CED87CC02EB871A9"
+  },
+  "game:sound_generator": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "55BE844546F1760D568493D1CA78213156372723C5BCC8D8FFA763952FE80D3A"
+  },
+  "game:spiked_plank": {
+    "SpikedPlankBlock.CollisionBoxesByData": "268B2CDD412C548B24E54488EB04136C82FA6F09BD03FAE32677086620CF7749"
+  },
+  "game:sr_latch": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "D44B5DED3D7CFA93C1E575907C418935126F6E264E94A92529823552D20B4929"
+  },
+  "game:starfish": {
+    "FluidBlock.BoundingBoxesByLevel": "CF3C1BD4E110878B8E572385890794879E68724A6F2064C071C35C669631CDCE",
+    "StarfishBlock.CollisionBoxes": "0E48B7E875134F20C83B031AD62A092D80CECC7C8516FD03A639831D9A747523"
+  },
+  "game:stone_brick_slab": {
+    "SlabBlock.CollisionBoxes": "74CE15146197D874B5AC9E2D8E5918C083B2CE324E2523BB2A67328CC87DABEF"
+  },
+  "game:stone_brick_stairs": {
+    "StairsBlock.CollisionBoxes": "B509821A360C112309BDF5F16FDC0383B213D379CA2EC69FA4219C13D0570620"
+  },
+  "game:stone_fence": {
+    "FenceBlock.CollisionBoxes": "1E748ED47146F6C509C36E089299558AB49B147BCA68D4368333C4F31C471A60"
+  },
+  "game:stone_slab": {
+    "SlabBlock.CollisionBoxes": "74CE15146197D874B5AC9E2D8E5918C083B2CE324E2523BB2A67328CC87DABEF"
+  },
+  "game:stone_stairs": {
+    "StairsBlock.CollisionBoxes": "B509821A360C112309BDF5F16FDC0383B213D379CA2EC69FA4219C13D0570620"
+  },
+  "game:switch": {
+    "SwitchBlock.CollisionBoxesByIndex": "B0189AF6667F352A2846B8CCE4C7FB6F5F14E9304258BC6E4BFA7CA40D9DF1F6"
+  },
+  "game:target": {
+    "TargetBlock.BoundingBoxes": "68B48A0F2AEB00168FF04DDE6A552AF1FB89C93359881F15CEF259BA11F3803F"
+  },
+  "game:thermometer": {
+    "ThermometerBlock.CollisionBoxesByData": "DBDF7B9E76C62DF342B54E2073C82EDA41D115947D4291C958582ECAD3777E54"
+  },
+  "game:torch": {
+    "TorchBlock.CollisionBoxes": "4B7AAE915B7793D6AF6EAAF37AFF2C3123D25894496B483F7044DD430FD6645D"
+  },
+  "game:truth_table_circuit": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "BFA7F657944D7A2EE324A99572461A4DA174B016593DA6A4D1BED24E6CDA24DC"
+  },
+  "game:water": {
+    "FluidBlock.BoundingBoxesByLevel": "CF3C1BD4E110878B8E572385890794879E68724A6F2064C071C35C669631CDCE"
+  },
+  "game:wire": {
+    "WireBlock.CollisionBoxesByFace": "AFADEA9786AB5034993D5E6B935FB9488C9E205AF2551855CC1A18FD29DE4E3F"
+  },
+  "game:wooden_attached_sign": {
+    "AttachedSignBlock.CollisionBoxes": "C374642EC42F7D81233D1AB1703B1BDD16EC611E6531F493B3BE2E2731763FD8"
+  },
+  "game:wooden_door": {
+    "DoorBlock.CollisionBoxesByData": "D89FB4AD74B7645F6A8CBFC30FBA2AE8E90F244CCAE8D2AFFB1A5042C76EB2DB"
+  },
+  "game:wooden_fence": {
+    "FenceBlock.CollisionBoxes": "6D3EFE3F77A483CE720D4F47D5107BB782EE7485B720A6112CE122C8A2B1F723"
+  },
+  "game:wooden_fence_gate": {
+    "FenceGateBlock.CollisionBoxes": "F847250D37855195D7BC966C505D548B9A70A78DEEC4713275BA6F13EF1AB78F"
+  },
+  "game:wooden_ladder": {
+    "LadderBlock.CollisionBoxesByData": "FD1FE717344936763E836C809F8AB87E2D240AD57977E91229C9293A6FAE6098"
+  },
+  "game:wooden_posted_sign": {
+    "PostedSignBlock.CollisionBoxes": "94EF83E4EBBEE16E13442F35BBC0A60672450CEE56CA4657373B4B9E66E4640C"
+  },
+  "game:wooden_slab": {
+    "SlabBlock.CollisionBoxes": "74CE15146197D874B5AC9E2D8E5918C083B2CE324E2523BB2A67328CC87DABEF"
+  },
+  "game:wooden_stairs": {
+    "StairsBlock.CollisionBoxes": "B509821A360C112309BDF5F16FDC0383B213D379CA2EC69FA4219C13D0570620"
+  },
+  "game:wooden_trapdoor": {
+    "TrapdoorBlock.CollisionBoxesByData": "CCBA77A4F9C88BD4A5C91EBE1B63AACC7BD09ACD8A7B5B568FDCF40527ABA22C"
+  },
+  "game:xor_gate": {
+    "RotatableMountedElectricElementBlock.CollisionBoxes": "C501E8EFECE3A824FEAF0053A7C26EF63005697BC79D5D20E2FE8FF6C9541379"
+  }
+}

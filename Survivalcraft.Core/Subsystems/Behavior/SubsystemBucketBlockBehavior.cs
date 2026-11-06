@@ -1,0 +1,213 @@
+using EntitySystem.TemplatesDatabase;
+
+namespace Game.Subsystems.Behavior;
+
+public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
+{
+    private readonly Random _random = new();
+
+    private SubsystemSpatialSoundRequests _soundRequests = null!;
+
+    public event Action<SubsystemBucketBlockBehavior, PaintEffectRequest>? PaintEffectRequested;
+
+    public override ResourceId[] HandledBlocks =>
+    [
+        ResourceId.Parse("game:empty_bucket"), ResourceId.Parse("game:water_bucket"),
+        ResourceId.Parse("game:magma_bucket"), ResourceId.Parse("game:milk_bucket"),
+        ResourceId.Parse("game:rotten_milk_bucket"), ResourceId.Parse("game:pumpkin_soup_bucket"),
+        ResourceId.Parse("game:rotten_pumpkin_soup_bucket"), ResourceId.Parse("game:paint_bucket"),
+        ResourceId.Parse("game:paint_stripper_bucket")
+    ];
+
+    public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
+    {
+        var inventory = componentMiner.Inventory;
+        var activeBlockValue = componentMiner.ActiveBlockValue;
+        var num = Terrain.ExtractContents(activeBlockValue);
+        switch (num)
+        {
+            case var emptyBucketContents when emptyBucketContents == BuiltInBlockRegistry.GetIndex<EmptyBucketBlock>():
+                var obj = componentMiner.Raycast(ray, RaycastMode.Gathering);
+                if (obj is TerrainRaycastResult result)
+                {
+                    var cellFace = result.CellFace;
+                    var cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
+                    var num2 = Terrain.ExtractContents(cellValue);
+                    var data = Terrain.ExtractData(cellValue);
+                    var block = WorldContentBinding.For(Project).Catalog.Blocks[num2];
+                    if (block is WaterBlock && FluidBlock.GetLevel(data) == 0)
+                    {
+                        var value = Terrain.ReplaceContents(activeBlockValue, 91);
+                        inventory.RemoveNetSlotItems(
+                            inventory.ActiveSlotIndex,
+                            inventory.GetSlotCount(inventory.ActiveSlotIndex)
+                        );
+                        if (inventory.GetSlotCount(inventory.ActiveSlotIndex) == 0)
+                        {
+                            inventory.AddNetSlotItems(inventory.ActiveSlotIndex, value, 1);
+                        }
+
+                        SubsystemTerrain.DestroyCell(
+                            0,
+                            cellFace.X,
+                            cellFace.Y,
+                            cellFace.Z,
+                            0,
+                            false,
+                            false,
+                            componentMiner
+                        );
+                        return true;
+                    }
+
+                    if (block is MagmaBlock && FluidBlock.GetLevel(data) == 0)
+                    {
+                        var value2 = Terrain.ReplaceContents(activeBlockValue, 93);
+                        inventory.RemoveNetSlotItems(
+                            inventory.ActiveSlotIndex,
+                            inventory.GetSlotCount(inventory.ActiveSlotIndex)
+                        );
+                        if (inventory.GetSlotCount(inventory.ActiveSlotIndex) == 0)
+                        {
+                            inventory.AddNetSlotItems(inventory.ActiveSlotIndex, value2, 1);
+                        }
+
+                        SubsystemTerrain.DestroyCell(
+                            0,
+                            cellFace.X,
+                            cellFace.Y,
+                            cellFace.Z,
+                            0,
+                            false,
+                            false,
+                            componentMiner
+                        );
+                        return true;
+                    }
+                }
+                else if (obj is BodyRaycastResult raycastResult)
+                {
+                    var componentUdder = raycastResult.ComponentBody.Entity.FindComponent<ComponentUdder>();
+                    if (componentUdder == null || !componentUdder.Milk(componentMiner))
+                    {
+                        return true;
+                    }
+
+                    var value3 = Terrain.ReplaceContents(activeBlockValue, 110);
+                    inventory.RemoveNetSlotItems(
+                        inventory.ActiveSlotIndex,
+                        inventory.GetSlotCount(inventory.ActiveSlotIndex)
+                    );
+                    if (inventory.GetSlotCount(inventory.ActiveSlotIndex) == 0)
+                    {
+                        inventory.AddNetSlotItems(inventory.ActiveSlotIndex, value3, 1);
+                    }
+
+                    _soundRequests.RequestSound("Audio/Milked", 1f, 0f, ray.Position, 2f, true);
+
+                    return true;
+                }
+
+                break;
+            case var waterBucketContents when waterBucketContents == BuiltInBlockRegistry.GetIndex<WaterBucketBlock>():
+                var terrainRaycastResult = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Interaction);
+                if (terrainRaycastResult.HasValue &&
+                    componentMiner.Place(terrainRaycastResult.Value, Terrain.MakeBlockValue(18)))
+                {
+                    inventory.RemoveNetSlotItems(inventory.ActiveSlotIndex, 1);
+                    if (inventory.GetSlotCount(inventory.ActiveSlotIndex) != 0)
+                    {
+                        return true;
+                    }
+
+                    var value4 = Terrain.ReplaceContents(activeBlockValue, 90);
+                    inventory.AddNetSlotItems(inventory.ActiveSlotIndex, value4, 1);
+
+                    return true;
+                }
+
+                break;
+            case var magmaBucketContents when magmaBucketContents == BuiltInBlockRegistry.GetIndex<MagmaBucketBlock>():
+                var terrainRaycastResult2 = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Interaction);
+                if (terrainRaycastResult2.HasValue)
+                {
+                    if (!componentMiner.Place(terrainRaycastResult2.Value, Terrain.MakeBlockValue(92)))
+                    {
+                        return true;
+                    }
+
+                    inventory.RemoveNetSlotItems(inventory.ActiveSlotIndex, 1);
+                    if (inventory.GetSlotCount(inventory.ActiveSlotIndex) != 0)
+                    {
+                        return true;
+                    }
+
+                    var value5 = Terrain.ReplaceContents(activeBlockValue, 90);
+                    inventory.AddNetSlotItems(inventory.ActiveSlotIndex, value5, 1);
+
+                    return true;
+                }
+
+                break;
+            case var milkBucketContents when milkBucketContents == BuiltInBlockRegistry.GetIndex<MilkBucketBlock>():
+            case var rottenMilkBucketContents
+                when rottenMilkBucketContents == BuiltInBlockRegistry.GetIndex<RottenMilkBucketBlock>():
+                return true;
+            case var pumpkinSoupBucketContents
+                when pumpkinSoupBucketContents == BuiltInBlockRegistry.GetIndex<PumpkinSoupBucketBlock>():
+            case var rottenPumpkinSoupBucketContents when rottenPumpkinSoupBucketContents ==
+                                                          BuiltInBlockRegistry.GetIndex<RottenPumpkinSoupBucketBlock>():
+                return true;
+            case var paintStripperBucketContents when paintStripperBucketContents ==
+                                                      BuiltInBlockRegistry.GetIndex<PaintStripperBucketBlock>():
+            case var paintBucketContents when paintBucketContents == BuiltInBlockRegistry.GetIndex<PaintBucketBlock>():
+            {
+                var terrainRaycastResult3 = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Digging);
+                if (terrainRaycastResult3.HasValue)
+                {
+                    var cellFace2 = terrainRaycastResult3.Value.CellFace;
+                    var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
+                    var num3 = Terrain.ExtractContents(cellValue2);
+                    var block2 = WorldContentBinding.For(Project).Catalog.Blocks[num3];
+                    if (block2 is not IPaintableBlock block)
+                    {
+                        return true;
+                    }
+
+                    var normal = CellFace.FaceToVector3(terrainRaycastResult3.Value.CellFace.Face);
+                    var position = terrainRaycastResult3.Value.HitPoint();
+                    var num4 = num == 128
+                        ? null
+                        : new int?(PaintBucketBlock.GetColor(Terrain.ExtractData(activeBlockValue)));
+                    var value6 = block.Paint(SubsystemTerrain, cellValue2, num4);
+                    SubsystemTerrain.ChangeCell(cellFace2.X, cellFace2.Y, cellFace2.Z, value6);
+                    componentMiner.DamageActiveTool(1);
+                    _soundRequests.RequestRandomSound(
+                        "Audio/Paint",
+                        0.4f,
+                        _random.Float(-0.1f, 0.1f),
+                        componentMiner.ComponentCreature.ComponentBody.Position,
+                        2f,
+                        true
+                    );
+                    if (WorldRuntimeContext.IsProjectActive(Project))
+                    {
+                        PaintEffectRequested?.Invoke(this, new PaintEffectRequest(position, normal, num4));
+                    }
+
+                    return true;
+                }
+
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    public override void Load(ValuesDictionary valuesDictionary)
+    {
+        base.Load(valuesDictionary);
+        _soundRequests = Project.FindSubsystem<SubsystemSpatialSoundRequests>(true)!;
+    }
+}

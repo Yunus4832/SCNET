@@ -8,12 +8,13 @@ debug against the default instance.
 ```powershell
 dotnet build .\Survivalcraft.Windows\Survivalcraft.Windows.csproj --no-restore
 $Starter = (Resolve-Path .\Survivalcraft.Windows\bin\Debug\net10.0-windows\win-x64\SurvivalcraftStarter.exe).Path
-$Output = Split-Path $Starter
+dotnet build .\Survivalcraft.Server\Survivalcraft.Server.csproj -r win-x64
+$ServerExecutable = (Resolve-Path .\Survivalcraft.Server\bin\Debug\net10.0\win-x64\Survivalcraft.Server.exe).Path
+$Output = Split-Path $ServerExecutable
 ```
 
 Instance data is stored below `$Output\Instances\<instance>`. Use the instance log as the authoritative
-source for startup, networking, commands, exceptions, saving, and shutdown. Do not depend on capturing
-the separate Headless console output.
+source for startup, networking, commands, exceptions, saving, and shutdown. GUI logs are under the GUI executable directory; standalone-server logs are under the server executable directory.
 
 Resolve the newest log for an instance after starting its process:
 
@@ -38,21 +39,20 @@ while ((Get-Date) -lt $Deadline) {
     $Log = Get-ChildItem $Logs -Filter 'Game*.log' -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
-    if ($Log -and (Select-String -Path $Log.FullName -SimpleMatch 'Headless server started' -Quiet)) {
+    if ($Log -and (Select-String -Path $Log.FullName -SimpleMatch 'Server started' -Quiet)) {
         $Ready = $true
         break
     }
     Start-Sleep -Milliseconds 250
 }
-if (-not $Ready) { throw 'Headless readiness marker was not observed before timeout.' }
+if (-not $Ready) { throw 'server readiness marker was not observed before timeout.' }
 ```
 
-## Headless server
+## server
 
 ```powershell
-$Server = Start-Process -FilePath $Starter -PassThru -ArgumentList @(
+$Server = Start-Process -FilePath $ServerExecutable -PassThru -ArgumentList @(
     '--instance', 'debug-server',
-    '--server',
     '--session', 'debug-server',
     '--world', 'DebugWorld',
     '--server-port', '28987',
@@ -61,22 +61,17 @@ $Server = Start-Process -FilePath $Starter -PassThru -ArgumentList @(
 )
 ```
 
-The Windows Starter allocates a separate console for Headless mode. Observe it through the runtime log
-and require `Headless server started. Press Ctrl+C to stop.` before claiming readiness. Use the separate
-console only to enter commands such as `permission players` or `stop`.
-
-PowerShell redirection is not equivalent to the Linux PTY/FIFO helper because the process calls
-`AllocConsole()`. Do not claim automated stdin control unless it has been independently verified.
+The standalone server is a console executable. Observe its runtime log and require `Server started. Press Ctrl+C to stop.` before claiming readiness. Use its console for normal commands such as `permission players` or `stop`; redirected stdin/stdout is available when the process is explicitly started with redirection.
 
 ## GUI server and clients
 
 Create or start a GUI-hosted server with its local player and transient Session ports. The debugging
-`--host` override forces and persists `WorldSettings.RunServer=true` for new or existing worlds:
+`--host` override forces and persists `WorldHostingSettings.RunServer=true` for new or existing worlds:
 
 ```powershell
 $GuiServer = Start-Process -FilePath $Starter -PassThru -ArgumentList @(
     '--instance', 'debug-gui-server',
-    '--gui', '--host',
+    '--host',
     '--session', 'debug-gui-server',
     '--world', 'DebugGuiWorld',
     '--player', 'DebugHost',
@@ -91,7 +86,6 @@ Start each client with another instance and identity:
 ```powershell
 $ClientA = Start-Process -FilePath $Starter -PassThru -ArgumentList @(
     '--instance', 'debug-client-a',
-    '--gui',
     '--session', 'debug-client-a',
     '--connect', '127.0.0.1:29987',
     '--player', 'ClientA',
@@ -103,7 +97,7 @@ Resolve and read each instance's own newest log. Repeat with `debug-client-b` an
 client. Verify all of these in logs:
 
 - the server reports `开启服务器成功` on the requested port;
-- each GUI client reaches `Entered screen "Game"`; Headless has no game screen;
+- each GUI client reaches `Entered screen "Game"`; server has no game screen;
 - the server reports `Client[<id>]已应用初始世界快照，进入Live` at Debug level;
 - query the server with `permission players` and confirm the expected player identities; correlate the IDs with each client’s observations rather than assuming a display-name join log exists.
 
@@ -118,7 +112,7 @@ Get-CimInstance Win32_Process |
     Select-Object ProcessId, CommandLine
 ```
 
-Close GUI windows normally and enter `stop` in a Headless console. If graceful control is unavailable,
+Close GUI windows normally and enter `stop` in a server console. If graceful control is unavailable,
 preserve logs first, then stop only the verified PID and report that shutdown was forced:
 
 ```powershell

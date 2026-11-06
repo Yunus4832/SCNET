@@ -1,11 +1,23 @@
+using EntitySystem.Core;
+
 using Game.Commands;
+using Game.Commands.Text;
 using Game.Modding;
 using Game.Network.Transport;
+using Game.World;
+
+using Survivalcraft.Test.Fixtures;
 
 namespace Survivalcraft.Test.Modding;
 
 public class ModHostTest
 {
+    private static T Bind<T>(RuntimeTestProject project, T component) where T : Component
+    {
+        project.InitializeComponent(component);
+        return component;
+    }
+
     [Fact]
     public void HostConfiguresStartsAndStopsInDependencyOrder()
     {
@@ -64,7 +76,7 @@ public class ModHostTest
         host.LoadAndStart([descriptor]);
 
         Assert.True(host.Commands.IsFrozen);
-        var textAdapter = new TextCommandAdapter(host.Commands);
+        var textAdapter = new TextCommandAdapter(host.Commands, Game.Managers.GameManager.AuthorityProject);
         Assert.True(textAdapter.TryFind("hello", out var registered));
         Assert.Equal("example.commands:text/hello", registered!.Id.ToString());
         Assert.True(host.Commands.TryGetDefinition<CommandMod.HelloCommand>(out var definition));
@@ -114,6 +126,7 @@ public class ModHostTest
     [Fact]
     public void GameplayHooksRunByPriorityAndAreRemovedWithOwner()
     {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
@@ -122,7 +135,13 @@ public class ModHostTest
         );
 
         host.LoadAndStart([descriptor]);
-        var context = new CreatureInjuringContext(new Game.Components.ComponentHealth(), 4f, null, false, "test");
+        var context = new CreatureInjuringContext(
+            Bind(project, new Game.Components.ComponentHealth()),
+            4f,
+            null,
+            false,
+            LocalizedText.Literal("test")
+        );
 
         host.Gameplay.Invoke(context);
 
@@ -132,7 +151,13 @@ public class ModHostTest
         host.StopAll();
         calls.Clear();
         host.Gameplay.Invoke(
-            new CreatureInjuringContext(new Game.Components.ComponentHealth(), 4f, null, false, "test")
+            new CreatureInjuringContext(
+                Bind(project, new Game.Components.ComponentHealth()),
+                4f,
+                null,
+                false,
+                LocalizedText.Literal("test")
+            )
         );
         Assert.Empty(calls);
     }
@@ -140,6 +165,9 @@ public class ModHostTest
     [Fact]
     public void TerrainChunkHooksRunByPriorityAndAreRemovedWithOwner()
     {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
+        var terrain = new Game.Subsystems.SubsystemTerrain();
+        project.InitializeSubsystem(terrain);
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
@@ -148,20 +176,21 @@ public class ModHostTest
         );
 
         host.LoadAndStart([descriptor]);
-        var context = new TerrainChunkGeneratedContext(null!, new Game.Terrains.TerrainChunk(null!, 0, 0));
+        var context = new TerrainChunkGeneratedContext(terrain, new Game.Terrains.TerrainChunk(null!, 0, 0));
 
         host.Gameplay.Invoke(context);
 
         Assert.Equal(["high", "normal"], calls);
         host.StopAll();
         calls.Clear();
-        host.Gameplay.Invoke(new TerrainChunkGeneratedContext(null!, new Game.Terrains.TerrainChunk(null!, 0, 0)));
+        host.Gameplay.Invoke(new TerrainChunkGeneratedContext(terrain, new Game.Terrains.TerrainChunk(null!, 0, 0)));
         Assert.Empty(calls);
     }
 
     [Fact]
     public void BlockBehaviorHooksRunByPriorityAndAreRemovedWithOwner()
     {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
@@ -170,20 +199,23 @@ public class ModHostTest
         );
 
         host.LoadAndStart([descriptor]);
-        var context = new BlockEditContext(1, 2, 3, 4, new Game.Components.ComponentCharacter());
+        var context = new BlockEditContext(1, 2, 3, 4, Bind(project, new Game.Components.ComponentCharacter()));
 
         host.BlockBehaviors.Invoke(context);
 
         Assert.Equal(["high", "normal"], calls);
         host.StopAll();
         calls.Clear();
-        host.BlockBehaviors.Invoke(new BlockEditContext(1, 2, 3, 4, new Game.Components.ComponentCharacter()));
+        host.BlockBehaviors.Invoke(
+            new BlockEditContext(1, 2, 3, 4, Bind(project, new Game.Components.ComponentCharacter()))
+        );
         Assert.Empty(calls);
     }
 
     [Fact]
     public void PlayerLifecycleHooksRunByPriorityAndAreRemovedWithOwner()
     {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
@@ -194,7 +226,7 @@ public class ModHostTest
         host.LoadAndStart([descriptor]);
         var context = new PlayerRespawnRequestedContext(
             null!,
-            new Game.Components.ComponentCharacter(),
+            Bind(project, new Game.Components.ComponentCharacter()),
             PlayerRespawnRequestKind.StandardRespawn
         );
 
@@ -208,7 +240,7 @@ public class ModHostTest
         host.Gameplay.Invoke(
             new PlayerRespawnRequestedContext(
                 null!,
-                new Game.Components.ComponentCharacter(),
+                Bind(project, new Game.Components.ComponentCharacter()),
                 PlayerRespawnRequestKind.StandardRespawn
             )
         );
@@ -218,6 +250,8 @@ public class ModHostTest
     [Fact]
     public void ContextActionHooksResolveByPriorityAndAreRemovedWithOwner()
     {
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
+        var character = Bind(project, new Game.Components.ComponentCharacter());
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
@@ -226,37 +260,21 @@ public class ModHostTest
         );
 
         host.LoadAndStart([descriptor]);
-        var action = host.ContextActions.Resolve(
-            new PlayerContextActionQueryContext(
-                new Game.Components.ComponentCharacter(),
-                null!
-            )
-        );
+        var action = host.ContextActions.Resolve(new PlayerContextActionQueryContext(character));
 
         Assert.NotNull(action);
         Assert.Equal("救援", action!.Label);
-        action.Execute(
-            new PlayerContextActionExecutionContext(
-                new Game.Components.ComponentCharacter(),
-                null!
-            )
-        );
+        action.Execute(new PlayerContextActionExecutionContext(character));
         Assert.Equal(["query:high", "execute:high"], calls);
 
         host.StopAll();
-        Assert.Null(
-            host.ContextActions.Resolve(
-                new PlayerContextActionQueryContext(
-                    new Game.Components.ComponentCharacter(),
-                    null!
-                )
-            )
-        );
+        Assert.Null(host.ContextActions.Resolve(new PlayerContextActionQueryContext(character)));
     }
 
     [Fact]
     public void CreatureTargetScoringHooksRunByPriorityAndAreRemovedWithOwner()
     {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
@@ -266,8 +284,8 @@ public class ModHostTest
 
         host.LoadAndStart([descriptor]);
         var context = new CreatureTargetScoringContext(
-            new Game.Components.ComponentCreature(),
-            new Game.Components.ComponentCreature(),
+            Bind(project, new Game.Components.ComponentCreature()),
+            Bind(project, new Game.Components.ComponentCreature()),
             CreatureTargetingKind.Chase,
             10f
         );
@@ -281,8 +299,8 @@ public class ModHostTest
         calls.Clear();
         host.Gameplay.Invoke(
             new CreatureTargetScoringContext(
-                new Game.Components.ComponentCreature(),
-                new Game.Components.ComponentCreature(),
+                Bind(project, new Game.Components.ComponentCreature()),
+                Bind(project, new Game.Components.ComponentCreature()),
                 CreatureTargetingKind.Chase,
                 10f
             )
@@ -304,7 +322,7 @@ public class ModHostTest
         byte[] payload = [];
         host.Network.Dispatch(
             new ModEnvelopePackage("example.net", "downed.sync", payload),
-            new PackageReceiveContext(null, true, null)
+            new PackageReceiveContext(null, new WorldRuntimeContext(RuntimeSide.Authority, false), null)
         );
 
         Assert.Equal(["high", "normal"], calls);
@@ -313,7 +331,7 @@ public class ModHostTest
         calls.Clear();
         host.Network.Dispatch(
             new ModEnvelopePackage("example.net", "downed.sync", payload),
-            new PackageReceiveContext(null, true, null)
+            new PackageReceiveContext(null, new WorldRuntimeContext(RuntimeSide.Authority, false), null)
         );
         Assert.Empty(calls);
     }

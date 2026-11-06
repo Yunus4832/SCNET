@@ -1,7 +1,6 @@
 using System.Xml.Linq;
 
-using Engine.Core.Runtime;
-using Engine.FileStorage;
+using Engine.Core.FileStorage;
 
 using Game.Managers;
 
@@ -40,13 +39,11 @@ public sealed class StarterInstanceManagerTest : IDisposable
             "<Starter CurrentInstance=\"default\" NextInstance=\"pending\" />"
         );
 
-        var context = StarterInstanceManager.Initialize(
-            ["--server", "--instance", "debug_server", "--session", "smoke"]
-        );
+        var context = StarterInstanceManager.Initialize(["--instance", "debug_server", "--session", "smoke"]);
 
         Assert.Equal("debug_server", context.Id);
         Assert.Equal("debug_server", StarterInstanceManager.Current.Id);
-        Assert.Equal(["--server", "--session", "smoke"], context.GameArguments);
+        Assert.Equal(["--session", "smoke"], context.GameArguments);
         Assert.True(Directory.Exists(Path.Combine(_directory, "Instances", "debug_server")));
     }
 
@@ -76,21 +73,6 @@ public sealed class StarterInstanceManagerTest : IDisposable
         var settings = XElement.Load(Path.Combine(_directory, "Starter.xml"));
         Assert.Equal("target", settings.Attribute("NextInstance")?.Value);
         Assert.Throws<InvalidOperationException>(() => StarterInstanceManager.RequestSwitch("missing"));
-    }
-
-    [Fact]
-    public void GetRunModeReadsTheTargetInstanceSettings()
-    {
-        StarterInstanceManager.Initialize(["--instance", "server"]);
-        var configDirectory = Path.Combine(_directory, "Instances", "server", "Config");
-        Directory.CreateDirectory(configDirectory);
-        File.WriteAllText(
-            Path.Combine(configDirectory, "RunningSetting.xml"),
-            "<RunningSetting RunMode=\"HeadlessServer\" />"
-        );
-
-        Assert.Equal(RunModeType.HeadlessServer, StarterInstanceManager.GetRunMode("server"));
-        Assert.Equal(RunModeType.Gui, StarterInstanceManager.GetRunMode("default"));
     }
 
     [Fact]

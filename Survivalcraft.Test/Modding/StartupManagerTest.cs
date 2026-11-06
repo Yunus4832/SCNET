@@ -1,12 +1,13 @@
 using System.Reflection;
 
-using Engine.Core.Runtime;
-using Engine.FileStorage;
+using Engine.Core.FileStorage;
 using Engine.Network;
 using Engine.Network.Security;
 
-using Game;
+using Game.Application;
 using Game.Commands;
+using Game.Commands.BuiltIn;
+using Game.FileStorage;
 using Game.Managers;
 using Game.Modding;
 using Game.Startup;
@@ -18,14 +19,101 @@ namespace Survivalcraft.Test.Modding;
 [Collection(ConfigFileCollection.Name)]
 public sealed class StartupManagerTest : IDisposable
 {
-    private readonly FileBackup _runningSettingBackup = FileBackup.Create(RunningSettingManager.RunningSettingPath);
+    private readonly FileBackup _runningSettingBackup = FileBackup.Create(StartupManager.Profiles.RunningSettingsPath);
 
-    private readonly FileBackup _sessionInfoBackup = FileBackup.Create(SessionInfoManager.SessionInfoPath);
+    private readonly FileBackup _sessionInfoBackup = FileBackup.Create(StartupManager.Profiles.SessionsPath);
 
     public StartupManagerTest()
     {
-        DeleteIfExists(RunningSettingManager.RunningSettingPath);
-        DeleteIfExists(SessionInfoManager.SessionInfoPath);
+        DeleteIfExists(StartupManager.Profiles.RunningSettingsPath);
+        DeleteIfExists(StartupManager.Profiles.SessionsPath);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void StartupProfileRestartPreservesAndConsumesWorldCreationAndHostingIntent(bool existingWorld)
+    {
+        using var globalProfile = FileBackup.Create(ModProfileManager.GlobalProfilePath);
+
+        var name = "RestartIntent" + Guid.NewGuid().ToString("N");
+        var directory = Path.Combine(Path.GetTempPath(), "scnet-restart-profile-" + Guid.NewGuid().ToString("N"));
+        string? initialSessionId = null;
+        string? pendingSessionId = null;
+        WorldInfo? world = null;
+        try
+        {
+            using var mods = GameModRuntime.Start();
+            mods.InitializeContentData();
+            var startup = StartupManager.Load(
+                [
+                    "--session", name, "--world", name, "--host", "--player", "RestartPlayer"
+                ]
+            );
+            initialSessionId = startup.Session.SessionId;
+            if (existingWorld)
+            {
+                world = SessionInfoManager.ResolveWorldSession(startup.Session, true, false);
+                Assert.NotNull(world);
+                Assert.False(world.Hosting.RunServer);
+            }
+
+            ModProfileManager.SaveGlobalProfile(new ModProfile());
+            ModProfileManager.SaveSessionProfile(
+                new ModProfile
+                {
+                    Id = initialSessionId,
+                    Packages =
+                    [
+                        new ModPackageRequirement
+                        {
+                            ModId = "test.previous", Version = "1.0.0", PackageHash = new string('a', 64)
+                        }
+                    ]
+                }
+            );
+            // Exercise the same restart handoff without opening a test window.
+
+            GameExitManager.BeginSession();
+            Assert.True(
+                StartupModProfileBootstrapper.EnsureStartupSessionProfile(initialSessionId, startup.Session, directory)
+            );
+            pendingSessionId = StartupManager.Profiles.LoadRunningSettings().PendingSessionId;
+            Assert.False(string.IsNullOrWhiteSpace(pendingSessionId));
+            var resumed = StartupManager.Load([]);
+            Assert.False(resumed.Request.HasExplicitSession);
+            Assert.False(resumed.Request.ForceWorldRunServer);
+            Assert.True(resumed.Session.CreateWorldIfMissing);
+            Assert.True(resumed.Session.ForceWorldRunServer);
+            Assert.Equal(SessionTarget.World, resumed.Session.Target);
+            Assert.Equal("RestartPlayer", resumed.Session.AutoJoinCharacterName);
+            Assert.False(startup.Session.CreateWorldIfMissing);
+            Assert.False(startup.Session.ForceWorldRunServer);
+            world = SessionInfoManager.ResolveWorldSession(resumed.Session, false, false);
+            Assert.NotNull(world);
+            Assert.True(world.Hosting.RunServer);
+            Assert.False(resumed.Session.CreateWorldIfMissing);
+            Assert.False(resumed.Session.ForceWorldRunServer);
+            Assert.True(ClientApplication.Worlds.GetWorldInfo(world.DirectoryName)!.Hosting.RunServer);
+            world.Hosting.RunServer = false;
+            ClientApplication.Worlds.ChangeWorld(world.DirectoryName, world.WorldSettings, world.Hosting);
+            Assert.False(SessionInfoManager.ResolveWorldSession(resumed.Session, false, false)!.Hosting.RunServer);
+            ClientApplication.Worlds.DeleteWorld(world.DirectoryName);
+            world = null;
+            Assert.Null(SessionInfoManager.ResolveWorldSession(resumed.Session, false, false));
+        }
+        finally
+        {
+            if (world is not null) { ClientApplication.Worlds.DeleteWorld(world.DirectoryName); }
+
+            if (initialSessionId is not null) { ModProfileManager.DeleteSessionProfile(initialSessionId); }
+
+            if (pendingSessionId is not null) { ModProfileManager.DeleteSessionProfile(pendingSessionId); }
+
+            if (Directory.Exists(directory)) { Directory.Delete(directory, true); }
+
+            GameExitManager.BeginSession();
+        }
     }
 
     [Fact]
@@ -38,15 +126,15 @@ public sealed class StartupManagerTest : IDisposable
         StartupManager.Load(
             ["--session", "server-key", "--world", "World", "--server-identity", firstAddress, "--save"]
         );
-        Assert.Equal(firstAddress, SessionInfoManager.LoadByName("server-key")!.ServerIdentityAddress);
+        Assert.Equal(firstAddress, StartupManager.Profiles.LoadSessionByName("server-key")!.ServerIdentityAddress);
         var restored = StartupManager.Load(["--session", "server-key"]);
         Assert.Equal(firstAddress, restored.Session.ServerIdentityAddress);
         var overridden = StartupManager.Load(["--session", "server-key", "--server-identity", secondAddress]);
         Assert.Equal(secondAddress, overridden.Session.ServerIdentityAddress);
-        Assert.Equal(firstAddress, SessionInfoManager.LoadByName("server-key")!.ServerIdentityAddress);
+        Assert.Equal(firstAddress, StartupManager.Profiles.LoadSessionByName("server-key")!.ServerIdentityAddress);
         var captured = SessionInfoManager.CaptureCurrentSession();
         var pending = SessionInfoManager.PrepareRestartSession(captured);
-        Assert.Equal(secondAddress, SessionInfoManager.Load(pending.SessionId).ServerIdentityAddress);
+        Assert.Equal(secondAddress, StartupManager.Profiles.LoadSession(pending.SessionId).ServerIdentityAddress);
     }
 
     [Fact]
@@ -63,11 +151,11 @@ public sealed class StartupManagerTest : IDisposable
         var startup = StartupManager.Load(
             ["--session", "bad-key", "--server-identity", identity.PublicIdentity.Address, "--save"]
         );
-        var xml = System.Xml.Linq.XElement.Parse(Storage.ReadAllText(SessionInfoManager.SessionInfoPath));
+        var xml = System.Xml.Linq.XElement.Parse(Storage.ReadAllText(StartupManager.Profiles.SessionsPath));
         xml.Elements("SessionInfo").Single(item => item.Attribute("SessionId")!.Value == startup.Session.SessionId)
             .SetAttributeValue(nameof(SessionInfo.ServerIdentityAddress), "invalid");
-        Storage.WriteAllText(SessionInfoManager.SessionInfoPath, xml.ToString());
-        Assert.Throws<InvalidDataException>(() => SessionInfoManager.LoadByName("bad-key"));
+        Storage.WriteAllText(StartupManager.Profiles.SessionsPath, xml.ToString());
+        Assert.Throws<InvalidDataException>(() => StartupManager.Profiles.LoadSessionByName("bad-key"));
     }
 
     [Fact]
@@ -85,7 +173,7 @@ public sealed class StartupManagerTest : IDisposable
         Assert.Equal("ResumeTester", captured.AutoJoinCharacterName);
         Assert.Equal(startup.Session.P2POverrides, captured.P2POverrides);
         var pending = SessionInfoManager.PrepareRestartSession(captured);
-        var restored = SessionInfoManager.Load(pending.SessionId);
+        var restored = StartupManager.Profiles.LoadSession(pending.SessionId);
         Assert.True(restored.HttpCommandEnabled);
         Assert.Equal(35711, restored.HttpCommandPort);
         Assert.Equal("ResumeTester", restored.AutoJoinCharacterName);
@@ -100,7 +188,7 @@ public sealed class StartupManagerTest : IDisposable
             BindingFlags.Static | BindingFlags.NonPublic
         )!;
         var previousManager = currentField.GetValue(null);
-        var previousMode = RunMode.Value;
+
         var pending = string.Empty;
         try
         {
@@ -108,10 +196,10 @@ public sealed class StartupManagerTest : IDisposable
             var startup = StartupManager.Load(
                 ["--session", "mod-restart", "--connect", "game.example:28887", "--player", "ResumeTester"]
             );
-            RunMode.Value = RunModeType.HeadlessServer;
+
             GameExitManager.BeginSession();
             GameExitManager.RequestRestart(startup.Session, new ModProfile());
-            pending = RunningSettingManager.Current.PendingSessionId;
+            pending = StartupManager.Profiles.CurrentRunningSettings.PendingSessionId;
             Assert.NotEmpty(pending);
             Assert.Equal(GameExitAction.Restart, GameExitManager.ExitAction);
             var restored = StartupManager.Load([]);
@@ -122,7 +210,7 @@ public sealed class StartupManagerTest : IDisposable
         finally
         {
             currentField.SetValue(null, previousManager);
-            RunMode.Value = previousMode;
+
             GameExitManager.BeginSession();
             if (pending.Length > 0) { ModProfileManager.DeleteSessionProfile(pending); }
         }
@@ -133,15 +221,15 @@ public sealed class StartupManagerTest : IDisposable
     {
         var session = SaveSession("locked-policy");
         using var locked = new FileStream(
-            Storage.GetSystemPath(SessionInfoManager.SessionInfoPath),
+            Storage.GetSystemPath(StartupManager.Profiles.SessionsPath),
             FileMode.Open,
             FileAccess.ReadWrite,
             FileShare.None
         );
-        Assert.Throws<InvalidDataException>(() => SessionInfoManager.Load(session.SessionId));
-        Assert.Throws<InvalidDataException>(() => SessionInfoManager.LoadByName(session.Name));
+        Assert.Throws<InvalidDataException>(() => StartupManager.Profiles.LoadSession(session.SessionId));
+        Assert.Throws<InvalidDataException>(() => StartupManager.Profiles.LoadSessionByName(session.Name));
         Assert.Throws<InvalidDataException>(() =>
-            SessionInfoManager.SessionExists(session.SessionId)
+            StartupManager.Profiles.SessionExists(session.SessionId)
         );
     }
 
@@ -149,7 +237,7 @@ public sealed class StartupManagerTest : IDisposable
     public void MalformedSessionDoesNotCreateAnOpenReplacement()
     {
         var session = SaveSession("malformed-policy");
-        File.WriteAllText(Storage.GetSystemPath(SessionInfoManager.SessionInfoPath), "<Sessions><SessionInfo");
+        File.WriteAllText(Storage.GetSystemPath(StartupManager.Profiles.SessionsPath), "<Sessions><SessionInfo");
         Assert.Throws<InvalidDataException>(() =>
             StartupManager.Load(["--session", session.Name])
         );
@@ -168,16 +256,16 @@ public sealed class StartupManagerTest : IDisposable
         var transient = StartupManager.Load(args);
         Assert.False(transient.Session.P2POverrides.Enabled);
         Assert.Equal(string.Empty, transient.Session.P2POverrides.Description);
-        Assert.Null(SessionInfoManager.Load(session.SessionId).P2POverrides.Enabled);
+        Assert.Null(StartupManager.Profiles.LoadSession(session.SessionId).P2POverrides.Enabled);
         StartupManager.Load([.. args, "--save"]);
         var restored = StartupManager.Load(["--session", "room-overrides"]);
         Assert.Equal(transient.Session.P2POverrides, restored.Session.P2POverrides);
         var changed = StartupManager.Load(["--session", "room-overrides", "--p2p", "true"]);
         Assert.True(changed.Session.P2POverrides.Enabled);
         Assert.Equal("Room", changed.Session.P2POverrides.Name);
-        Assert.False(SessionInfoManager.Load(session.SessionId).P2POverrides.Enabled);
+        Assert.False(StartupManager.Profiles.LoadSession(session.SessionId).P2POverrides.Enabled);
         var restart = SessionInfoManager.PrepareRestartSession(changed.Session);
-        Assert.Equal(changed.Session.P2POverrides, SessionInfoManager.Load(restart.SessionId).P2POverrides);
+        Assert.Equal(changed.Session.P2POverrides, StartupManager.Profiles.LoadSession(restart.SessionId).P2POverrides);
     }
 
     [Fact]
@@ -189,20 +277,20 @@ public sealed class StartupManagerTest : IDisposable
         var temporary = StartupManager.Load(args);
         Assert.Equal(ServerAdmissionMode.Password, temporary.Session.AdmissionOverrides.Mode);
         Assert.Equal(path, temporary.Session.AdmissionOverrides.PasswordFile);
-        Assert.True(SessionInfoManager.Load(saved.SessionId).AdmissionOverrides.IsEmpty);
+        Assert.True(StartupManager.Profiles.LoadSession(saved.SessionId).AdmissionOverrides.IsEmpty);
         StartupManager.Load([.. args, "--save"]);
         var restored = StartupManager.Load(["--session", "admission-config"]);
         Assert.Equal(path, restored.Session.AdmissionOverrides.PasswordFile);
         var changed = StartupManager.Load(["--session", "admission-config", "--admission", "open"]);
         Assert.Equal(ServerAdmissionMode.Open, changed.Session.AdmissionOverrides.Mode);
         Assert.Null(changed.Session.AdmissionOverrides.PasswordFile);
-        Assert.Equal(path, SessionInfoManager.Load(saved.SessionId).AdmissionOverrides.PasswordFile);
+        Assert.Equal(path, StartupManager.Profiles.LoadSession(saved.SessionId).AdmissionOverrides.PasswordFile);
         var pending = SessionInfoManager.PrepareRestartSession(restored.Session);
         Assert.Equal(
             restored.Session.AdmissionOverrides,
-            SessionInfoManager.Load(pending.SessionId).AdmissionOverrides
+            StartupManager.Profiles.LoadSession(pending.SessionId).AdmissionOverrides
         );
-        var running = Storage.ReadAllText(RunningSettingManager.RunningSettingPath);
+        var running = Storage.ReadAllText(StartupManager.Profiles.RunningSettingsPath);
         Assert.DoesNotContain("server-password-file", running);
         Assert.DoesNotContain(path, running);
     }
@@ -268,7 +356,7 @@ public sealed class StartupManagerTest : IDisposable
     {
         var defaultSession = SaveSession("default-session");
         var pendingSession = SaveSession("pending-session");
-        RunningSettingManager.Save(
+        StartupManager.Profiles.SaveRunningSettings(
             new RunningSetting
             {
                 DefaultSessionId = defaultSession.SessionId,
@@ -294,7 +382,7 @@ public sealed class StartupManagerTest : IDisposable
         var transient = StartupManager.Load(args);
         Assert.Equal(TerrainGenerationMode.FlatContinent, transient.Session.TerrainGenerationMode);
         Assert.Equal(72, transient.Session.TerrainLevel);
-        Assert.Null(SessionInfoManager.Load(session.SessionId).TerrainGenerationMode);
+        Assert.Null(StartupManager.Profiles.LoadSession(session.SessionId).TerrainGenerationMode);
         StartupManager.Load([.. args, "--save"]);
         var restored = StartupManager.Load(["--session", "flat-automation"]);
         Assert.Equal(TerrainGenerationMode.FlatContinent, restored.Session.TerrainGenerationMode);
@@ -315,7 +403,7 @@ public sealed class StartupManagerTest : IDisposable
     public void ExplicitSessionOverridesAreTransientWithoutSave()
     {
         var defaultSession = SaveSession("default-session");
-        RunningSettingManager.Save(new RunningSetting { DefaultSessionId = defaultSession.SessionId });
+        StartupManager.Profiles.SaveRunningSettings(new RunningSetting { DefaultSessionId = defaultSession.SessionId });
         var alpha = SaveSession("alpha", SessionTarget.World, "AlphaWorld");
 
         var startup = StartupManager.Load(
@@ -335,7 +423,7 @@ public sealed class StartupManagerTest : IDisposable
         Assert.Equal("42", startup.Request.Seed);
         Assert.Equal(GameMode.Creative, startup.Request.GameMode);
         Assert.Equal(GameMode.Creative, startup.Session.GameMode);
-        Assert.Equal("AlphaWorld", SessionInfoManager.Load(alpha.SessionId).World);
+        Assert.Equal("AlphaWorld", StartupManager.Profiles.LoadSession(alpha.SessionId).World);
     }
 
     [Fact]
@@ -358,7 +446,7 @@ public sealed class StartupManagerTest : IDisposable
         Assert.Equal("DebugPlayer", startup.Session.AutoJoinCharacterName);
         Assert.Equal(28988, startup.Session.BroadcastPort);
         Assert.False(startup.Request.Save);
-        Assert.Null(SessionInfoManager.LoadByName("client-smoke"));
+        Assert.Null(StartupManager.Profiles.LoadSessionByName("client-smoke"));
     }
 
     [Fact]
@@ -382,7 +470,7 @@ public sealed class StartupManagerTest : IDisposable
     public void SavePersistsEffectiveSessionButDoesNotReplaceDefaultSession()
     {
         var defaultSession = SaveSession("default-session");
-        RunningSettingManager.Save(new RunningSetting { DefaultSessionId = defaultSession.SessionId });
+        StartupManager.Profiles.SaveRunningSettings(new RunningSetting { DefaultSessionId = defaultSession.SessionId });
 
         var startup = StartupManager.Load(
             [
@@ -393,8 +481,8 @@ public sealed class StartupManagerTest : IDisposable
             ]
         );
 
-        var persistedSettings = RunningSettingManager.Load();
-        var saved = SessionInfoManager.LoadByName("saved-session");
+        var persistedSettings = StartupManager.Profiles.LoadRunningSettings();
+        var saved = StartupManager.Profiles.LoadSessionByName("saved-session");
         Assert.Equal(defaultSession.SessionId, persistedSettings.DefaultSessionId);
         Assert.True(startup.Request.Save);
         Assert.NotNull(saved);
@@ -410,7 +498,7 @@ public sealed class StartupManagerTest : IDisposable
     {
         var startup = StartupManager.Load(
             [
-                "--gui", "--host",
+                "--host",
                 "--session", "gui-server",
                 "--world", "GuiServerWorld",
                 "--player", "HostPlayer",
@@ -419,7 +507,6 @@ public sealed class StartupManagerTest : IDisposable
             ]
         );
 
-        Assert.Equal(RunModeType.Gui, startup.Settings.RunMode);
         Assert.True(startup.Request.ForceWorldRunServer);
         Assert.Equal("HostPlayer", startup.Request.AutoJoinCharacterName);
         Assert.Equal("HostPlayer", startup.Session.AutoJoinCharacterName);
@@ -427,7 +514,7 @@ public sealed class StartupManagerTest : IDisposable
         Assert.Equal("GuiServerWorld", startup.Session.World);
         Assert.Equal(30987, startup.Session.ServerPort);
         Assert.Equal(30988, startup.Session.BroadcastPort);
-        Assert.Null(SessionInfoManager.LoadByName("gui-server"));
+        Assert.Null(StartupManager.Profiles.LoadSessionByName("gui-server"));
     }
 
     [Fact]
@@ -435,7 +522,7 @@ public sealed class StartupManagerTest : IDisposable
     {
         var startup = StartupManager.Load(
             [
-                "--gui", "--host",
+                "--host",
                 "--session", "remote-client",
                 "--connect", "127.0.0.1:31987"
             ]
@@ -457,24 +544,22 @@ public sealed class StartupManagerTest : IDisposable
         Assert.True(Guid.TryParse(startup.Session.SessionId, out _));
     }
 
-    [Theory]
-    [InlineData(RunModeType.Gui)]
-    [InlineData(RunModeType.HeadlessServer)]
-    public void LoadWithoutConfiguredSessionGeneratesTransientSession(RunModeType runMode)
+    [Fact]
+    public void LoadWithoutConfiguredSessionGeneratesTransientSession()
     {
-        RunningSettingManager.Save(new RunningSetting { RunMode = runMode });
+        StartupManager.Profiles.SaveRunningSettings(new RunningSetting());
 
         var startup = StartupManager.Load([]);
 
         Assert.True(Guid.TryParse(startup.Session.SessionId, out _));
-        Assert.Equal(string.Empty, RunningSettingManager.Load().DefaultSessionId);
+        Assert.Equal(string.Empty, StartupManager.Profiles.LoadRunningSettings().DefaultSessionId);
     }
 
     [Fact]
     public void LoadUsesConfiguredDefaultSession()
     {
         var defaultSession = SaveSession("default-session");
-        RunningSettingManager.Save(new RunningSetting { DefaultSessionId = defaultSession.SessionId });
+        StartupManager.Profiles.SaveRunningSettings(new RunningSetting { DefaultSessionId = defaultSession.SessionId });
 
         var startup = StartupManager.Load([]);
 
@@ -487,26 +572,25 @@ public sealed class StartupManagerTest : IDisposable
         var startup = StartupManager.Load(["--save"]);
 
         Assert.True(Guid.TryParse(startup.Session.SessionId, out _));
-        var saved = SessionInfoManager.Load(startup.Session.SessionId);
+        var saved = StartupManager.Profiles.LoadSession(startup.Session.SessionId);
         Assert.Equal(startup.Session.SessionId, saved.SessionId);
         Assert.Equal(SessionTarget.MainMenu, saved.Target);
     }
 
     [Fact]
-    public void RunModeCommandWithoutSessionUsesDefaultRestartLogic()
+    public void RestartCommandWithoutSessionUsesDefaultRestartLogic()
     {
-        var previousRunMode = RunMode.Value;
         try
         {
-            RunningSettingManager.Save(new RunningSetting { RunMode = RunModeType.HeadlessServer });
-            RunMode.Value = RunModeType.HeadlessServer;
+            StartupManager.Profiles.SaveRunningSettings(new RunningSetting());
+
             GameExitManager.BeginSession();
             var registry = new CommandRegistry();
-            BuiltInCommands.Register(registry, new ModId("game"));
+            Fixtures.BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
             registry.Freeze();
 
             var result = new CommandDispatcher(registry).Execute(
-                new SetRunModeCommand(RunModeType.Gui),
+                new RestartApplicationCommand(),
                 new CommandContext(
                     CommandInvocationChannel.UserInterface,
                     CommandPrincipal.LocalOperator,
@@ -515,39 +599,36 @@ public sealed class StartupManagerTest : IDisposable
                 )
             );
 
-            var settings = RunningSettingManager.Load();
-            Assert.True(result.Success, result.Message);
+            var settings = StartupManager.Profiles.LoadRunningSettings();
+            Assert.True(result.Success, Game.Localization.ClientLanguage.Resolver.Resolve(result.Message));
             Assert.Equal(GameExitAction.Restart, GameExitManager.ExitAction);
-            Assert.Equal(RunModeType.Gui, settings.RunMode);
+
             Assert.Equal(string.Empty, settings.PendingSessionId);
         }
         finally
         {
-            RunMode.Value = previousRunMode;
             GameExitManager.BeginSession();
         }
     }
 
     [Fact]
-    public void RunModeCommandUsesProvidedRestartSession()
+    public void RestartCommandUsesProvidedRestartSession()
     {
-        var previousRunMode = RunMode.Value;
         try
         {
-            RunningSettingManager.Save(new RunningSetting { RunMode = RunModeType.HeadlessServer });
-            RunMode.Value = RunModeType.HeadlessServer;
+            StartupManager.Profiles.SaveRunningSettings(new RunningSetting());
+
             GameExitManager.BeginSession();
             var registry = new CommandRegistry();
-            BuiltInCommands.Register(registry, new ModId("game"));
+            Fixtures.BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
             registry.Freeze();
 
             var result = new CommandDispatcher(registry).Execute(
-                new SetRunModeCommand(
-                    RunModeType.Gui,
+                new RestartApplicationCommand(
                     new SessionInfo
                     {
                         Target = SessionTarget.World,
-                        World = "HeadlessWorld"
+                        World = "RestartWorld"
                     }
                 ),
                 new CommandContext(
@@ -558,17 +639,16 @@ public sealed class StartupManagerTest : IDisposable
                 )
             );
 
-            var settings = RunningSettingManager.Load();
-            var pendingSession = SessionInfoManager.Load(settings.PendingSessionId);
-            Assert.True(result.Success, result.Message);
+            var settings = StartupManager.Profiles.LoadRunningSettings();
+            var pendingSession = StartupManager.Profiles.LoadSession(settings.PendingSessionId);
+            Assert.True(result.Success, Game.Localization.ClientLanguage.Resolver.Resolve(result.Message));
             Assert.Equal(GameExitAction.Restart, GameExitManager.ExitAction);
-            Assert.Equal(RunModeType.Gui, settings.RunMode);
+
             Assert.Equal(SessionTarget.World, pendingSession.Target);
-            Assert.Equal("HeadlessWorld", pendingSession.World);
+            Assert.Equal("RestartWorld", pendingSession.World);
         }
         finally
         {
-            RunMode.Value = previousRunMode;
             GameExitManager.BeginSession();
         }
     }
@@ -576,7 +656,7 @@ public sealed class StartupManagerTest : IDisposable
     [Fact]
     public void LoadClearsInvalidOrMissingPersistedSessionReferences()
     {
-        RunningSettingManager.Save(
+        StartupManager.Profiles.SaveRunningSettings(
             new RunningSetting
             {
                 DefaultSessionId = "not-a-guid",
@@ -610,7 +690,7 @@ public sealed class StartupManagerTest : IDisposable
             Target = target,
             World = world
         };
-        SessionInfoManager.Save(session);
+        StartupManager.Profiles.SaveSession(session);
         return session;
     }
 

@@ -1,9 +1,20 @@
+using System.Text.Json;
+
 using Game.Modding;
 
 namespace Survivalcraft.Test.Modding;
 
 public class ModManifestTest
 {
+    [Theory]
+    [InlineData("\"side\":\"client\"")]
+    [InlineData("\"entrypoints\":{\"server\":\"Example.Server, Example\"}")]
+    public void ProcessSpecificEntrypointsAreRejected(string field)
+    {
+        var json = "{\"id\":\"example.test\",\"name\":\"Test\",\"version\":\"1.0.0\"," + field + "}";
+        Assert.Throws<JsonException>(() => ModManifest.Parse(json));
+    }
+
     [Fact]
     public void ParseReadsManifestPropertiesAndDependencies()
     {
@@ -12,7 +23,7 @@ public class ModManifestTest
                               "id": "example.content",
                               "name": "Example Content",
                               "version": "1.2.0",
-                              "side": "server",
+                              "entrypoint": "Example.ModEntry, Example",
                               "dependencies": [
                                 { "id": "game.content", "minimumVersion": "1.0.0" }
                               ]
@@ -22,7 +33,7 @@ public class ModManifestTest
         var manifest = ModManifest.Parse(json);
 
         Assert.Equal(new ModId("example.content"), manifest.ModId);
-        Assert.Equal(ModSide.Server, manifest.Side);
+        Assert.Equal("Example.ModEntry, Example", manifest.Entrypoint);
         Assert.Equal("game.content", Assert.Single(manifest.RequiredDependencies).Id);
     }
 

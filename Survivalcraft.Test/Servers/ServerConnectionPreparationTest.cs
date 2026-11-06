@@ -2,7 +2,6 @@ using Engine.Network;
 using Engine.Network.Security;
 
 using Game.Network;
-using Game.Network.Handling;
 using Game.Servers;
 
 using Survivalcraft.Test.Network;
@@ -47,7 +46,6 @@ public sealed class ServerConnectionPreparationTest
     [Fact]
     public async Task ServerInfoAndHandshakeShareSocketAndConsumptionTransfersOwnershipOnce()
     {
-        PackageManager.RegisterPackage(new ServerInfoPackageHandler());
         await using var server = new NetworkHost();
         using var http = new HttpClient();
         using var identity = NetworkIdentity.Create();
@@ -55,8 +53,7 @@ public sealed class ServerConnectionPreparationTest
         int? inspectedPort = null;
         server.DatagramReceived += (source, payload) =>
         {
-            var query = PackageManager.DecodePackage<ServerInfoPackage>(null, payload);
-            Assert.True(query.Package.RequestInfo);
+            Assert.IsType<ServerInfoRequestPackage>(Assert.Single(ProtocolPacketCodec.Decode(payload)));
             inspectedPort = source.TransportEndpoint.Port;
             source.Send(
                 NetNode.CreateUnconnectedPayload(new ServerInfoResponsePackage { ProtocolVersion = 1, ClientCount = 3 })
@@ -111,8 +108,6 @@ public sealed class ServerConnectionPreparationTest
             catch (OperationCanceledException)
             {
             }
-
-            PackageManager.UnregisterPackage(typeof(ServerInfoPackage));
         }
     }
 }

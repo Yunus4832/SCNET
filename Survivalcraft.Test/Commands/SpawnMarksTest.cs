@@ -4,7 +4,6 @@ using Engine.Core.Mathematics;
 using Engine.Core.Security;
 
 using Game.Characters;
-using Game.Managers;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
@@ -14,21 +13,20 @@ using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(WorldRoleCollection.Name)]
+[Collection(NodeRoleCollection.Name)]
 public class SpawnMarksTest
 {
     [Theory]
-    [InlineData(WorldRole.SinglePlayer, true)]
-    [InlineData(WorldRole.Server, true)]
-    [InlineData(WorldRole.RemoteClient, false)]
-    public void SpawnCopiesAreAuthoritativeOrdinaryMarksAndNeverTrackLaterChanges(WorldRole worldRole, bool initialized)
+    [InlineData(NodeRole.Authority, true)]
+    [InlineData(NodeRole.Client, false)]
+    public void SpawnCopiesAreAuthoritativeOrdinaryMarksAndNeverTrackLaterChanges(NodeRole worldRole, bool initialized)
     {
-        var previous = GameManager.Role;
-        var previousClients = CommonLib.Net.Clients;
+        var previous = CommonLib.Net.Role;
+        var previousClients = CommonLib.Net.Clients.Values.ToArray();
         try
         {
             CommonLib.Net.Role = worldRole;
-            using var project = new MarkProject();
+            using var project = new MarkProject(worldRole);
             var marksSubsystem = project.Marks;
             var players = new SubsystemCharacters { GlobalSpawnPosition = new Vector3(1f, 60f, 1f) };
             var player = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
@@ -38,9 +36,12 @@ public class SpawnMarksTest
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic
             )!.SetValue(player, project);
             player.CharacterId = Guid.NewGuid();
-            player.OwnerAddress = new PlayerAddress(
-                IdentityAddress.Encode(
-                    Convert.FromHexString("0000000000000000000000000000000000000000000000000000000000000000")
+            Fixtures.CharacterTestEnvironment.SetSyntheticOwner(
+                player,
+                new PlayerAddress(
+                    IdentityAddress.Encode(
+                        Convert.FromHexString("0000000000000000000000000000000000000000000000000000000000000000")
+                    )
                 )
             );
             var controller = new PlayerAddress(
@@ -48,8 +49,12 @@ public class SpawnMarksTest
                     Convert.FromHexString("0100000000000000000000000000000000000000000000000000000000000000")
                 )
             );
-            CommonLib.Net.Clients = new Dictionary<int, Client>
-                { [1] = new Client(null, 1, Guid.NewGuid(), player.CharacterId, null) { PlayerAddress = controller } };
+            Fixtures.ConnectionTestEnvironment.SetRoster(
+                project.Node,
+                (new Dictionary<int, Client>
+                    { [1] = new Client(null, 1, Guid.NewGuid(), player.CharacterId) { PlayerAddress = controller } })
+                .Values
+            );
             var marks = marksSubsystem.GetPrivateMarks(controller);
             player.InitializeSpawnMarks();
             Assert.Empty(marks.Names);
@@ -89,7 +94,7 @@ public class SpawnMarksTest
         finally
         {
             CommonLib.Net.Role = previous;
-            CommonLib.Net.Clients = previousClients;
+            Fixtures.ConnectionTestEnvironment.SetRoster(CommonLib.Net, previousClients);
         }
     }
 
@@ -97,6 +102,19 @@ public class SpawnMarksTest
     {
         public SubsystemPositionMarks Marks { get; } = new();
 
-        public MarkProject() => subsystems.Add(Marks);
+        public NetNode Node { get; }
+
+        public MarkProject(NodeRole role)
+        {
+            Node = new NetNode(
+                NetNodeOptions.Default,
+                true,
+                Game.Network.Handling.PackageHandlerCatalog.Empty,
+                role
+            );
+            Node.Runtime.BindProject(this);
+            Fixtures.RuleHookTestEnvironment.BindEmpty(this);
+            subsystems.Add(Marks);
+        }
     }
 }

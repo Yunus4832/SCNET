@@ -1,0 +1,50 @@
+namespace Game.FileStorage;
+
+public static class GamePaths
+{
+    private static readonly string _gameDataPath = "data:";
+
+    public static string External => "external:";
+
+    public static string Config => "config:";
+
+    public static string ScreenCaptures => $"{External}/ScreenCapture";
+
+    public static string Worlds => $"{_gameDataPath}/Worlds";
+
+    public static string CharacterSkins => $"{_gameDataPath}/CharacterSkins";
+
+    public static string FurniturePacks => $"{_gameDataPath}/FurniturePacks";
+
+    public static string BlockTextures => $"{_gameDataPath}/TexturePacks";
+
+    public static string ContentPackageCache => $"{_gameDataPath}/ContentPackageCache";
+
+    public static string ContentPackageCreationTemp => $"{_gameDataPath}/ContentPackageCreationTemp";
+
+    public static string Logs => $"{External}/Logs";
+
+    public static string RunningSettingFile => "config:RunningSetting.xml";
+
+    public static string SessionInfoFile => "config:SessionInfo.xml";
+
+    public static string SettingsFile => "config:Settings.xml";
+
+    public static string AuthenticationServicesFile => "config:AuthenticationServices.xml";
+
+    public static string ServerCredentialsFile => "config:Private/ServerCredentials.xml";
+
+    public static string AuthenticationGrantsFile => "config:Private/AuthenticationGrants.xml";
+
+    public static string LocalIdentitiesFile => "config:LocalIdentities.xml";
+
+    public static string ContentRepositoriesFile => "config:ContentRepositories.xml";
+
+    public static string ServerDirectoryFile => "config:ServerDirectory.xml";
+
+    public static string RendezvousFile => "config:RendezvousServices.xml";
+
+    public static string GlobalModProfileFile => "config:ModProfile.xml";
+
+    public static string SessionProfilesDirectory => Storage.CombinePaths(Config, "SessionProfiles");
+}

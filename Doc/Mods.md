@@ -25,15 +25,13 @@ payload/assets/<mod-id>/**
 - `name`
 - `version`
 - `payload`
-- `metadata.side`
-- `metadata.entrypoints`
+- `metadata.entrypoint`
 - `metadata.dependencies`
 
-`side` 可为：
-
-- `common`
-- `client`
-- `server`
+每个代码模组只有一个程序集限定类型名入口；纯数据或资源包的 `entrypoint` 为 `null`。
+单机、GUI 开服、远程客户端和 独立服务器加载同一套定义，不按进程选择另一套入口。
+入口的注册每个模组环境只执行一次，世界业务与表现分别由所属世界的职责决定，见
+[模组开发](./Modding.md#模组定义与世界状态)。
 
 ### 本地缓存
 
@@ -109,7 +107,7 @@ GUI 启动时：
 
 如果 profile 为空或缺失，则只加载内置内容。空 profile 也会参与比较；例如当前 runtime 已加载模组，而目标 world 不启用模组时，也需要重启来卸载模组。
 
-Headless 启动时没有 GUI 中途切换流程。它会直接解析启动 session 对应的有效 profile，下载缺失包，并以服务端侧 runtime 启动。
+独立服务器启动时没有 GUI 中途切换流程。它会直接解析启动 session 对应的有效 profile，下载缺失包，并以服务端侧 runtime 启动。
 
 ## 联机加载流程
 

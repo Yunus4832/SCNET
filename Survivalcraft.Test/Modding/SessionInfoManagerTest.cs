@@ -1,8 +1,7 @@
-using Engine.Core.Runtime;
-using Engine.FileStorage;
+using Engine.Core.FileStorage;
 using Engine.Network;
 
-using Game;
+using Game.FileStorage;
 using Game.Managers;
 using Game.Servers;
 using Game.Startup;
@@ -15,13 +14,13 @@ namespace Survivalcraft.Test.Modding;
 [Collection(ConfigFileCollection.Name)]
 public sealed class SessionInfoManagerTest : IDisposable
 {
-    private readonly FileBackup _sessionInfoBackup = FileBackup.Create(SessionInfoManager.SessionInfoPath);
+    private readonly FileBackup _sessionInfoBackup = FileBackup.Create(StartupManager.Profiles.SessionsPath);
 
     public SessionInfoManagerTest()
     {
-        if (Storage.FileExists(SessionInfoManager.SessionInfoPath))
+        if (Storage.FileExists(StartupManager.Profiles.SessionsPath))
         {
-            Storage.DeleteFile(SessionInfoManager.SessionInfoPath);
+            Storage.DeleteFile(StartupManager.Profiles.SessionsPath);
         }
     }
 
@@ -34,12 +33,12 @@ public sealed class SessionInfoManagerTest : IDisposable
                 Name = "HostedTest", Target = SessionTarget.HostedWorld, World = "HostedWorld"
             }
         );
-        var restored = SessionInfoManager.Load(restart.SessionId);
+        var restored = StartupManager.Profiles.LoadSession(restart.SessionId);
         Assert.Equal(SessionTarget.HostedWorld, restored.Target);
         Assert.Equal("HostedWorld", restored.World);
         restored.Name = "HostedTest";
-        SessionInfoManager.Save(restored);
-        var selected = SessionInfoManager.ResolveStartupSession(
+        StartupManager.Profiles.SaveSession(restored);
+        var selected = StartupManager.Profiles.ResolveStartupSession(
             new RunningSetting(),
             new StartupRequest { HasExplicitSession = true, SessionName = "HostedTest" },
             restart.SessionId
@@ -67,10 +66,10 @@ public sealed class SessionInfoManagerTest : IDisposable
                 RemoteTarget = target
             }
         );
-        var restored = SessionInfoManager.Load(restart.SessionId);
+        var restored = StartupManager.Profiles.LoadSession(restart.SessionId);
         Assert.Equal(SessionTarget.RemoteServer, restored.Target);
         Assert.Equal(target, restored.RemoteTarget);
-        var xml = Storage.ReadAllText(SessionInfoManager.SessionInfoPath);
+        var xml = Storage.ReadAllText(StartupManager.Profiles.SessionsPath);
         Assert.DoesNotContain("Credential", xml);
         Assert.DoesNotContain("Ticket", xml);
         Assert.DoesNotContain("Description", xml);
@@ -91,8 +90,8 @@ public sealed class SessionInfoManagerTest : IDisposable
             Target = SessionTarget.RemoteServer,
             RemoteTarget = target
         };
-        SessionInfoManager.Save(session);
-        var restored = SessionInfoManager.LoadByName("Invitation");
+        StartupManager.Profiles.SaveSession(session);
+        var restored = StartupManager.Profiles.LoadSessionByName("Invitation");
         Assert.NotNull(restored);
         Assert.Equal(target, restored.RemoteTarget);
         Assert.Equal(SessionTarget.RemoteServer, restored.Target);
@@ -102,7 +101,7 @@ public sealed class SessionInfoManagerTest : IDisposable
     public void DnsTargetRoundTripDoesNotResolveOrStoreAListenerPortOverride()
     {
         var target = new AddressNetworkTarget("unresolved.example.test", 28887);
-        SessionInfoManager.Save(
+        StartupManager.Profiles.SaveSession(
             new SessionInfo
             {
                 SessionId = Guid.NewGuid().ToString("N"),
@@ -112,7 +111,7 @@ public sealed class SessionInfoManagerTest : IDisposable
                 ServerPort = 31987
             }
         );
-        var restored = SessionInfoManager.LoadByName("DnsClient");
+        var restored = StartupManager.Profiles.LoadSessionByName("DnsClient");
         Assert.NotNull(restored);
         Assert.Equal(target, restored.RemoteTarget);
         Assert.Equal(31987, restored.ServerPort);
@@ -121,7 +120,7 @@ public sealed class SessionInfoManagerTest : IDisposable
     [Fact]
     public void SavePersistsMultipleNamedSessions()
     {
-        SessionInfoManager.Save(
+        StartupManager.Profiles.SaveSession(
             new SessionInfo
             {
                 SessionId = Guid.NewGuid().ToString("N"),
@@ -132,7 +131,7 @@ public sealed class SessionInfoManagerTest : IDisposable
                 GameMode = GameMode.Creative
             }
         );
-        SessionInfoManager.Save(
+        StartupManager.Profiles.SaveSession(
             new SessionInfo
             {
                 SessionId = Guid.NewGuid().ToString("N"),
@@ -143,8 +142,8 @@ public sealed class SessionInfoManagerTest : IDisposable
             }
         );
 
-        var alpha = SessionInfoManager.LoadByName("Alpha");
-        var beta = SessionInfoManager.LoadByName("Beta");
+        var alpha = StartupManager.Profiles.LoadSessionByName("Alpha");
+        var beta = StartupManager.Profiles.LoadSessionByName("Beta");
 
         Assert.NotNull(alpha);
         Assert.NotNull(beta);
@@ -169,12 +168,12 @@ public sealed class SessionInfoManagerTest : IDisposable
             World = "AlphaWorld"
         };
 
-        SessionInfoManager.Save(sessionInfo);
+        StartupManager.Profiles.SaveSession(sessionInfo);
 
         Assert.True(Guid.TryParse(sessionInfo.SessionId, out _));
         Assert.Equal(string.Empty, sessionInfo.Name);
 
-        var reloaded = SessionInfoManager.Load(sessionInfo.SessionId);
+        var reloaded = StartupManager.Profiles.LoadSession(sessionInfo.SessionId);
         Assert.Equal("AlphaWorld", reloaded.World);
         Assert.Equal(string.Empty, reloaded.Name);
         Assert.Equal(SessionTarget.World, reloaded.Target);
@@ -193,9 +192,9 @@ public sealed class SessionInfoManagerTest : IDisposable
             HttpCommandAccessToken = "access-token"
         };
 
-        SessionInfoManager.Save(sessionInfo);
+        StartupManager.Profiles.SaveSession(sessionInfo);
 
-        var reloaded = SessionInfoManager.Load(sessionInfo.SessionId);
+        var reloaded = StartupManager.Profiles.LoadSession(sessionInfo.SessionId);
         Assert.Equal("DebugPlayer", reloaded.AutoJoinCharacterName);
         Assert.True(reloaded.HttpCommandEnabled);
         Assert.Equal(30989, reloaded.HttpCommandPort);
@@ -207,7 +206,6 @@ public sealed class SessionInfoManagerTest : IDisposable
     {
         var startup = StartupManager.Load(
             [
-                "--gui",
                 "--session", "client",
                 "--player", "DebugPlayer",
                 "--http-command",
@@ -231,7 +229,7 @@ public sealed class SessionInfoManagerTest : IDisposable
     [Fact]
     public void LoadByNameFindsNamedSession()
     {
-        SessionInfoManager.Save(
+        StartupManager.Profiles.SaveSession(
             new SessionInfo
             {
                 SessionId = Guid.NewGuid().ToString("N"),
@@ -241,7 +239,7 @@ public sealed class SessionInfoManagerTest : IDisposable
             }
         );
 
-        var sessionInfo = SessionInfoManager.LoadByName("named-session");
+        var sessionInfo = StartupManager.Profiles.LoadSessionByName("named-session");
 
         Assert.NotNull(sessionInfo);
         Assert.True(Guid.TryParse(sessionInfo!.SessionId, out _));
@@ -252,8 +250,8 @@ public sealed class SessionInfoManagerTest : IDisposable
     public void ResolveStartupSessionCreatesMainMenuSessionForGuiWhenNotEnteringSession()
     {
         var sessionId = Guid.NewGuid().ToString("N");
-        var sessionInfo = SessionInfoManager.ResolveStartupSession(
-            new RunningSetting { RunMode = RunModeType.Gui },
+        var sessionInfo = StartupManager.Profiles.ResolveStartupSession(
+            new RunningSetting(),
             new StartupRequest(),
             sessionId
         );
@@ -267,8 +265,8 @@ public sealed class SessionInfoManagerTest : IDisposable
     public void ResolveStartupSessionCreatesWorldLoadingSessionForExplicitGuiSessionWithWorldOverride()
     {
         var sessionId = Guid.NewGuid().ToString("N");
-        var sessionInfo = SessionInfoManager.ResolveStartupSession(
-            new RunningSetting { RunMode = RunModeType.Gui },
+        var sessionInfo = StartupManager.Profiles.ResolveStartupSession(
+            new RunningSetting(),
             new StartupRequest
             {
                 HasExplicitSession = true,
@@ -288,8 +286,8 @@ public sealed class SessionInfoManagerTest : IDisposable
     public void ResolveStartupSessionCreatesNamedWorldWhenExplicitGuiSessionDoesNotExistAndWorldIsMissing()
     {
         var sessionId = Guid.NewGuid().ToString("N");
-        var sessionInfo = SessionInfoManager.ResolveStartupSession(
-            new RunningSetting { RunMode = RunModeType.Gui },
+        var sessionInfo = StartupManager.Profiles.ResolveStartupSession(
+            new RunningSetting(),
             new StartupRequest
             {
                 HasExplicitSession = true,
@@ -308,7 +306,7 @@ public sealed class SessionInfoManagerTest : IDisposable
     public void ResolveStartupSessionUpgradesExistingNamedGuiSessionToWorldLoadingWhenWorldOverrideExists()
     {
         var sessionId = Guid.NewGuid().ToString("N");
-        SessionInfoManager.Save(
+        StartupManager.Profiles.SaveSession(
             new SessionInfo
             {
                 SessionId = sessionId,
@@ -317,8 +315,8 @@ public sealed class SessionInfoManagerTest : IDisposable
             }
         );
 
-        var sessionInfo = SessionInfoManager.ResolveStartupSession(
-            new RunningSetting { RunMode = RunModeType.Gui },
+        var sessionInfo = StartupManager.Profiles.ResolveStartupSession(
+            new RunningSetting(),
             new StartupRequest
             {
                 HasExplicitSession = true,

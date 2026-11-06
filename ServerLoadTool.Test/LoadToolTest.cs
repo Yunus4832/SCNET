@@ -48,7 +48,7 @@ public class LoadToolTest
         };
         var encoded = LoadWire.Encode(package, 7);
         var decoded = Assert.IsType<CharacterStatePackage>(Assert.Single(LoadWire.Decode(encoded)));
-        Assert.Equal(7, decoded.ControllerSessionId);
+        Assert.Equal(7, decoded.ControllerClientId);
         Assert.Equal(package.Position, decoded.Position);
         Assert.Equal(package.PackageChangeFlag, decoded.PackageChangeFlag);
     }

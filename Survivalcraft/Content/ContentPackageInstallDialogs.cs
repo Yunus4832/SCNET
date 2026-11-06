@@ -1,5 +1,8 @@
 using Content.Packaging;
 
+using Game.Application;
+using Game.FileStorage;
+
 namespace Game.Content;
 
 public static class ContentPackageInstallDialogs
@@ -30,12 +33,12 @@ public static class ContentPackageInstallDialogs
             return;
         }
 
-        var create = LanguageManager.Get(_typeName, "CreateNew");
-        var replace = LanguageManager.Get(_typeName, "ReplaceExisting");
+        var create = Localization.ClientLanguage.Catalog.Get(_typeName, "CreateNew");
+        var replace = Localization.ClientLanguage.Catalog.Get(_typeName, "ReplaceExisting");
         DialogsManager.ShowDialog(
             null,
             new ListSelectionDialog(
-                LanguageManager.Get(_typeName, "InstallModeTitle"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "InstallModeTitle"),
                 new[] { create, replace },
                 64f,
                 item => (string)item,
@@ -64,10 +67,10 @@ public static class ContentPackageInstallDialogs
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.Get(_typeName, "InstallModeTitle"),
-                string.Format(LanguageManager.Get(_typeName, "ConfirmCreate"), cached.Name),
-                LanguageManager.Get("Usual", "yes"),
-                LanguageManager.Get("Usual", "no"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "InstallModeTitle"),
+                string.Format(Localization.ClientLanguage.Catalog.Get(_typeName, "ConfirmCreate"), cached.Name),
+                Localization.ClientLanguage.Catalog.Get("Usual", "yes"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "no"),
                 button =>
                 {
                     if (button == MessageDialogButton.Button1)
@@ -90,7 +93,7 @@ public static class ContentPackageInstallDialogs
         DialogsManager.ShowDialog(
             null,
             new ListSelectionDialog(
-                LanguageManager.Get(_typeName, "SelectReplacement"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "SelectReplacement"),
                 targets,
                 64f,
                 item => ((ReplacementTarget)item).DisplayName,
@@ -110,15 +113,15 @@ public static class ContentPackageInstallDialogs
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.Get(_typeName, "ReplaceExisting"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "ReplaceExisting"),
                 string.Format(
-                    LanguageManager.Get(_typeName, "ConfirmReplace"),
+                    Localization.ClientLanguage.Catalog.Get(_typeName, "ConfirmReplace"),
                     cached.Name,
                     target.DisplayName,
                     target.ReferenceCount
                 ),
-                LanguageManager.Get("Usual", "yes"),
-                LanguageManager.Get("Usual", "no"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "yes"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "no"),
                 button =>
                 {
                     if (button == MessageDialogButton.Button1)
@@ -170,9 +173,9 @@ public static class ContentPackageInstallDialogs
     {
         if (type == ContentPackageType.World)
         {
-            WorldsManager.UpdateWorldsList();
-            var running = GameManager.Project?.FindSubsystem<SubsystemGameInfo>()?.DirectoryName;
-            return WorldsManager.WorldInfos.Where(world =>
+            ClientApplication.Worlds.UpdateWorldsList();
+            var running = GameManager.ClientProject?.FindSubsystem<SubsystemGameInfo>()?.DirectoryName;
+            return ClientApplication.Worlds.WorldInfos.Where(world =>
                     !string.Equals(world.DirectoryName, running, StringComparison.OrdinalIgnoreCase)
                 )
                 .Select(world => new ReplacementTarget(
@@ -185,28 +188,29 @@ public static class ContentPackageInstallDialogs
 
         if (type == ContentPackageType.BlocksTexture)
         {
-            WorldsManager.UpdateWorldsList();
+            ClientApplication.Worlds.UpdateWorldsList();
             BlocksTexturesManager.UpdateBlocksTexturesList();
             return BlocksTexturesManager.ReadOnlyBlockTexturesNames
                 .Where(name => !BlocksTexturesManager.IsBuiltIn(name))
                 .Select(name => new ReplacementTarget(
                         name,
                         BlocksTexturesManager.GetDisplayName(name),
-                        WorldsManager.WorldInfos.Count(world => world.WorldSettings.BlocksTextureName == name)
+                        ClientApplication.Worlds.WorldInfos.Count(world => world.WorldSettings.BlocksTextureName == name
+                        )
                     )
                 ).ToArray();
         }
 
         if (type == ContentPackageType.CharacterSkin)
         {
-            WorldsManager.UpdateWorldsList();
+            ClientApplication.Worlds.UpdateWorldsList();
             CharacterSkinsManager.UpdateCharacterSkinsList();
             return CharacterSkinsManager.ReadOnlyCharacterSkinsNames
                 .Where(name => !CharacterSkinsManager.IsBuiltIn(name))
                 .Select(name => new ReplacementTarget(
                         name,
                         CharacterSkinsManager.GetDisplayName(name),
-                        WorldsManager.WorldInfos.Count(world =>
+                        ClientApplication.Worlds.WorldInfos.Count(world =>
                             world.CharacterInfos.Any(player => player.CharacterSkinName == name)
                         )
                     )
@@ -224,7 +228,7 @@ public static class ContentPackageInstallDialogs
         switch (type)
         {
             case ContentPackageType.World:
-                WorldsManager.UpdateWorldsList();
+                ClientApplication.Worlds.UpdateWorldsList();
                 break;
             case ContentPackageType.BlocksTexture:
                 BlocksTexturesManager.UpdateBlocksTexturesList();

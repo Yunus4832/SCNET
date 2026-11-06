@@ -1,4 +1,3 @@
-using Game.Managers;
 using Game.Modding;
 using Game.Modding.Content;
 
@@ -43,9 +42,9 @@ public sealed class ContentCatalogLanguageTest
 
         var catalog = ContentCatalog.Compile(extensions);
         Assert.Equal(["en-US"], catalog.LanguageTypes);
-        catalog.InitializeLanguage("fr-FR");
+        var language = catalog.CreateLanguageCatalog("fr-FR");
 
-        Assert.Equal("en-US", LanguageManager.CurrentLanguage);
-        Assert.Equal("English", LanguageManager.GetLanguageDisplayName("en-US"));
+        Assert.Equal("en-US", language.CurrentLanguage);
+        Assert.Equal("English", language.GetLanguageDisplayName("en-US"));
     }
 }

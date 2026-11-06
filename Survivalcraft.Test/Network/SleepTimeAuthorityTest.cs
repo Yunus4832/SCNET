@@ -1,12 +1,12 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 using Game.Components;
-using Game.Managers;
 using Game.Network;
 using Game.Subsystems;
 using Game.World;
+using Game.World.Timing;
 
+using Survivalcraft.Test.Fixtures;
 using Survivalcraft.Test.Modding;
 
 namespace Survivalcraft.Test.Network;
@@ -15,19 +15,20 @@ namespace Survivalcraft.Test.Network;
 public sealed class SleepTimeAuthorityTest
 {
     [Theory]
-    [InlineData(WorldRole.RemoteClient, false, false)]
-    [InlineData(WorldRole.RemoteClient, true, false)]
-    [InlineData(WorldRole.Server, false, true)]
-    [InlineData(WorldRole.Server, true, false)]
-    [InlineData(WorldRole.SinglePlayer, false, true)]
-    [InlineData(WorldRole.SinglePlayer, true, false)]
+    [InlineData(RuntimeSide.Client, NodeRole.Client, false, false)]
+    [InlineData(RuntimeSide.Client, NodeRole.Client, true, false)]
+    [InlineData(RuntimeSide.Authority, NodeRole.Authority, false, true)]
+    [InlineData(RuntimeSide.Authority, NodeRole.Authority, true, false)]
+    [InlineData(RuntimeSide.Client, NodeRole.Authority, false, false)]
+    [InlineData(RuntimeSide.Authority, NodeRole.Client, false, true)]
     public void ClientNeverAcceleratesSleepFromItsPartialPlayerSet(
-        WorldRole mode,
+        RuntimeSide side,
+        NodeRole mode,
         bool includeAwakePlayer,
         bool accelerated
     )
     {
-        var previous = GameManager.Role;
+        var previous = CommonLib.Net.Role;
         CommonLib.Net.Role = mode;
         try
         {
@@ -42,8 +43,7 @@ public sealed class SleepTimeAuthorityTest
                 new ComponentCharacter
                 {
                     ComponentHealth = new ComponentHealth { Health = 1f },
-                    ComponentSleep = sleeper,
-                    ComponentGui = (ComponentGui)RuntimeHelpers.GetUninitializedObject(typeof(ComponentGui))
+                    ComponentSleep = sleeper
                 }
             );
             if (includeAwakePlayer)
@@ -52,20 +52,16 @@ public sealed class SleepTimeAuthorityTest
                     new ComponentCharacter
                     {
                         ComponentHealth = new ComponentHealth { Health = 1f },
-                        ComponentSleep = new ComponentSleep(),
-                        ComponentGui = (ComponentGui)RuntimeHelpers.GetUninitializedObject(typeof(ComponentGui))
+                        ComponentSleep = new ComponentSleep()
                     }
                 );
             }
 
             var updates = new SubsystemUpdate { UpdatesPerFrame = 20 };
             var time = new SubsystemTime { FixedTimeStep = 0.05f };
-            typeof(SubsystemTime).GetField("_subsystemCharacters", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .SetValue(time, players);
-            typeof(SubsystemTime).GetField("_subsystemUpdate", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .SetValue(time, updates);
-
-            time.NextFrame();
+            using var project = new RuntimeTestProject(side);
+            project.InitializeSubsystem(time);
+            updates.UpdatesPerFrame = time.NextFrame(0f, new CharacterSleepPopulationSource(players).ReadPopulation);
 
             Assert.Equal(accelerated ? 20 : 1, updates.UpdatesPerFrame);
             Assert.Equal(accelerated ? 0.05f : null, time.FixedTimeStep);

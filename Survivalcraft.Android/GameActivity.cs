@@ -1,6 +1,8 @@
 using Android.Content;
 using Android.Content.PM;
 
+using Engine.Windowing;
+
 using Game;
 using Game.Platforms;
 
@@ -77,8 +79,7 @@ public class GameActivity : EngineActivity
             return;
         }
 
-        GamePlatformManager.RegisterPlatform(Platform.Android);
-        RunMode.Value = RunModeType.Gui;
+        ClientPlatform.Configure(Platform.Android);
         GamePlatformManager.RegisterWebBrowserLauncher(OpenLink);
         GamePlatformManager.RegisterTextInput(new EngineSdlTextInputBackend(processEditingKeyEvents: true));
         GamePlatformManager.RegisterClipboard(new SdlClipboardBackend());
@@ -91,19 +92,9 @@ public class GameActivity : EngineActivity
         );
         LoadAssetAssemblies();
 
-        GameExitManager.ExitRequested += OnExitRequested;
-        try
-        {
-            var gameArguments = Intent?.GetStringArrayExtra(MainActivity.gameArgumentsExtra) ?? [];
-            var exitAction = GameEntry.EntryPoint(StartupManager.Load(gameArguments));
-            var resultCode = GetResultCode(exitAction);
-            SetResult(resultCode);
-            MainActivity.CompleteGameRun((int)resultCode);
-        }
-        finally
-        {
-            GameExitManager.ExitRequested -= OnExitRequested;
-        }
+        var gameArguments = Intent?.GetStringArrayExtra(MainActivity.gameArgumentsExtra) ?? [];
+        var exitAction = GameEntry.EntryPoint(StartupManager.Load(gameArguments));
+        MainActivity.CompleteGameRun((int)GetResultCode(exitAction));
     }
 
     protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
@@ -116,10 +107,6 @@ public class GameActivity : EngineActivity
         base.OnActivityResult(requestCode, resultCode, data);
     }
 
-    private void OnExitRequested(GameExitAction exitAction)
-    {
-        SetResult(GetResultCode(exitAction));
-    }
 
     private static Result GetResultCode(GameExitAction exitAction)
     {

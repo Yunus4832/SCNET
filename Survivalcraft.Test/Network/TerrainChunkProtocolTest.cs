@@ -65,9 +65,9 @@ public sealed class TerrainChunkProtocolTest
     {
         var expected = new TerrainCellDelta(new Point3(4, 5, 6), 7, 8, 9);
 
-        var clone = RoundTrip(new TerrainCellDeltaPackage { CellDelta = expected });
+        var clone = RoundTrip(new TerrainCellDeltaPackage { CellDeltas = [expected] });
 
-        Assert.Equal(expected, clone.CellDelta);
+        Assert.Equal(expected, Assert.Single(clone.CellDeltas));
     }
 
     private static T RoundTrip<T>(T package) where T : SubsystemTerrainPackage

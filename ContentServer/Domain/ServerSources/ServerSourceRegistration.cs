@@ -14,7 +14,7 @@ public enum ServerSourceRegistrationStatus
     Rejected = 2
 }
 
-public partial record ServerSourceRegistrationId : IGuidStronglyTypedId;
+public record ServerSourceRegistrationId : IGuidStronglyTypedId;
 
 public sealed class ServerSourceRegistration : Entity<ServerSourceRegistrationId>, IAggregateRoot
 {

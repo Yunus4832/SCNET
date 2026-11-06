@@ -11,12 +11,9 @@
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Using Include="Xunit"/>
-    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="../ContentServer/ContentServer.csproj"/>
-        <ProjectReference Include="../Survivalcraft/Survivalcraft.csproj"/>
+        <ProjectReference Include="../Survivalcraft.Hosting/Survivalcraft.Hosting.csproj"/>
     </ItemGroup>
 </Project>

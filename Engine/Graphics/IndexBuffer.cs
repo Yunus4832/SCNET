@@ -1,7 +1,5 @@
 using System.Runtime.InteropServices;
 
-using Engine.Core.Runtime;
-
 using Silk.NET.OpenGLES;
 
 namespace Engine.Graphics;
@@ -33,7 +31,7 @@ public sealed class IndexBuffer : GraphicsResource
     public void SetData<T>(T[] source, int sourceStartIndex, int sourceCount, int targetStartIndex = 0) where T : struct
     {
         VerifyParametersSetData(source, sourceStartIndex, sourceCount, targetStartIndex);
-        if (RunMode.Value is RunModeType.HeadlessServer)
+        if (!Display.IsDeviceAvailable)
         {
             return;
         }
@@ -73,7 +71,7 @@ public sealed class IndexBuffer : GraphicsResource
 
     public void AllocateBuffer()
     {
-        if (RunMode.Value is RunModeType.HeadlessServer)
+        if (!Display.IsDeviceAvailable)
         {
             buffer = 0;
             return;

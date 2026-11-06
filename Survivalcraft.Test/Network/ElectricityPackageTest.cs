@@ -12,7 +12,7 @@ public sealed class ElectricityPackageTest
     public void QueuedDeltaPayloadIsIndependentOfLaterSimulationTicks()
     {
         var tracker = new ElectricityReplicationTracker();
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
         var voltages = new Dictionary<Point3, float> { [new Point3(1, 2, 3)] = 0.5f };
         var changes = tracker.Capture(client, voltages);
         var package = new SubsystemElectricityPackage(
@@ -32,7 +32,7 @@ public sealed class ElectricityPackageTest
     public void UnchangedVisibleCircuitSendsOnlyClockAfterBaseline()
     {
         var tracker = new ElectricityReplicationTracker();
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
         var values = Enumerable.Range(0, 1024).ToDictionary(index => new Point3(index, 0, 0), _ => 1f);
         var baseline = tracker.Capture(client, values);
         var snapshot = new SubsystemElectricity.NetSimulate { StartStep = 10, IsBaseline = baseline.IsBaseline };
@@ -140,7 +140,7 @@ public sealed class ElectricityPackageTest
     [Fact]
     public void InterestFilteringReducesPayloadWithoutDroppingClock()
     {
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
         var voltages = new Dictionary<Point3, float>();
         for (var i = 0; i < 1024; i++)
         {

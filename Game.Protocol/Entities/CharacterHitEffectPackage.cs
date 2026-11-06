@@ -1,5 +1,7 @@
 using Engine.Core.Mathematics;
 
+using Game.Protocol.Localization;
+
 using MessagePack;
 
 namespace Game.Protocol.Entities;
@@ -15,5 +17,9 @@ public sealed record CharacterHitEffectPackage : ComponentHealthPackage
 
     [Key(2)] public Color Color { get; init; }
 
-    [Key(3)] public string Text { get; init; } = string.Empty;
+    [Key(3)] public LocalizedText Text { get; init; } = LocalizedText.Empty;
+
+    [Key(4)] public bool PlayBodyImpact { get; init; }
+
+    [Key(5)] public Vector3 BodyPosition { get; init; }
 }

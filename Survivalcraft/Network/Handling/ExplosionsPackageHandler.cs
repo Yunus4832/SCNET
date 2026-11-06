@@ -8,34 +8,20 @@ public sealed class ExplosionsPackageHandler : PackageHandlerBase<ExplosionsPack
 
     public override void Handle(ExplosionsPackage package, PackageReceiveContext context)
     {
-        if (GameManager.Project is null || !AcceptsDirection(context.IsServer))
-        {
-            return;
-        }
+        if (context.Project is not { } project ||
+            context.Runtime.IsClosed ||
+            !context.Runtime.HasPresentation ||
+            !AcceptsDirection(context.IsServer)) { return; }
 
-        var project = GameManager.Project;
-        var sub = project.FindSubsystem<SubsystemExplosions>(true)!;
+        var presentation = project.FindSubsystem<SubsystemExplosionPresentation>(true)!;
         switch (package)
         {
-            case ExplosionCellsPackage message1:
-            {
-                if ((ExplosionParticleSystem?)sub.ExplosionParticleSystem is null)
-                {
-                    break;
-                }
-
-                foreach (var j in message1.Cells.SelectMany(i => i.Value))
-                {
-                    sub.ExplosionParticleSystem.SetExplosionCell(j.Position, j.Pressure);
-                }
-
+            case ExplosionCellsPackage cells:
+                presentation.ApplyCells(cells.Cells.SelectMany(pair => pair.Value));
                 break;
-            }
-            case ExplosionSoundPackage message2:
-            {
-                sub.PlayExplosionSound(message2.Position, message2.Level, message2.Delay, true);
+            case ExplosionSoundPackage sound:
+                presentation.PlaySound(sound.Position, sound.Level, sound.Pitch);
                 break;
-            }
         }
     }
 }

@@ -13,5 +13,5 @@ public sealed record ExplosionSoundPackage : ExplosionsPackage
 
     [Key(1)] public float Level { get; init; }
 
-    [Key(2)] public float Delay { get; init; }
+    [Key(2)] public float Pitch { get; init; }
 }

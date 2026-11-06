@@ -11,7 +11,7 @@ public sealed class ElectricityBoundaryReplicationTest
     [Fact]
     public void LeavingAndReenteringChunksRebuildsLatestAuthorityThroughWireProtocol()
     {
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
         var tracker = new ElectricityReplicationTracker();
         var receiver = new SubsystemElectricity();
         var left = new Point3(-1, 20, 0);

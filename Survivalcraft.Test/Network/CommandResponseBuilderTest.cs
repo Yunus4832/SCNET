@@ -15,7 +15,7 @@ public sealed class CommandResponseBuilderTest
                      typeof(CommandResultPresentation), typeof(CommandPanelBehavior)
                  })
         {
-            Assert.Equal(typeof(CommandExecutor).Assembly, type.Assembly);
+            Assert.Equal(typeof(CommandDispatcher).Assembly, type.Assembly);
             Assert.Equal("Game.Commands", type.Namespace);
             Assert.Null(typeof(GameProtocol).Assembly.GetType("Game.Protocol.Commands." + type.Name));
         }
@@ -25,13 +25,18 @@ public sealed class CommandResponseBuilderTest
     public void CaptureFreezesMutableDataBeforeQueueing()
     {
         var data = new JsonObject { ["value"] = 1 };
-        var arguments = new[] { "before" };
-        var result = CommandResult.Ok("test") with { Data = data, MessageArguments = arguments };
+        var arguments = new[] { LocalizedText.Literal("before") };
+        var result = new CommandResult(
+            true,
+            "test",
+            LocalizedText.Format(LocalizedText.Literal("test {0}"), arguments),
+            Data: data
+        );
         var response = CommandResponseBuilder.Capture(result);
         data["value"] = 2;
-        arguments[0] = "after";
+        arguments[0] = LocalizedText.Literal("after");
         Assert.Equal(1, response.Data!["value"]!.GetValue<int>());
-        Assert.Equal("before", Assert.Single(response.MessageArguments!));
+        Assert.Equal("before", Assert.Single(response.Message.Arguments).Fallback);
     }
 
     [Fact]
@@ -45,8 +50,8 @@ public sealed class CommandResponseBuilderTest
         };
         var response = CommandResponseBuilder.Capture(result);
         Assert.True(response.IsPending);
-        Assert.Equal("key", response.MessageKey);
-        Assert.Equal("Alice", Assert.Single(response.MessageArguments!));
+        Assert.Equal("key", response.Message.Template!.Key);
+        Assert.Equal("Alice", Assert.Single(response.Message.Arguments).Fallback);
         Assert.Equal(GameMessagePresentation.Toast, response.Presentation);
         Assert.True(response.CloseInputOnSuccess);
         var restored = CommandResponseBuilder.Restore(response);

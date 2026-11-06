@@ -4,24 +4,52 @@ namespace Game.Protocol.Terrain;
 
 public sealed class TerrainChunkFragmentReassembler
 {
+    public const int DefaultMaximumPendingTransfers = 64;
+
+    public const long DefaultMaximumPendingBytes = 16L * 1024 * 1024;
+
     private const int _maximumCompletedTransfers = 4096;
 
-    private readonly Dictionary<TransferKey, Assembly> _assemblies = [];
+    private readonly int _maximumPendingTransfers;
 
-    private readonly HashSet<TransferKey> _completed = [];
+    private readonly long _maximumPendingBytes;
+
+    private readonly Dictionary<ChunkAllocationId, Assembly> _assemblies = [];
+
+    private readonly Dictionary<ChunkAllocationId, (long Version, long Sequence)> _completed = [];
 
     private readonly Queue<TransferKey> _completedOrder = [];
 
     private readonly Lock _lock = new();
 
+    private long _reservedBytes;
+
+    private long _completionSequence;
+
+    public TerrainChunkFragmentReassembler(
+        int maximumPendingTransfers = DefaultMaximumPendingTransfers,
+        long maximumPendingBytes = DefaultMaximumPendingBytes
+    )
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumPendingTransfers);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumPendingBytes);
+        _maximumPendingTransfers = maximumPendingTransfers;
+        _maximumPendingBytes = maximumPendingBytes;
+    }
+
     public int PendingCount
     {
         get
         {
-            lock (_lock)
-            {
-                return _assemblies.Count;
-            }
+            lock (_lock) { return _assemblies.Count; }
+        }
+    }
+
+    public long ReservedBytes
+    {
+        get
+        {
+            lock (_lock) { return _reservedBytes; }
         }
     }
 
@@ -30,55 +58,56 @@ public sealed class TerrainChunkFragmentReassembler
         lock (_lock)
         {
             Validate(fragment);
-            var key = new TransferKey(fragment.Allocation, fragment.ContentVersion);
-            if (_completed.Contains(key))
+            encoded = null!;
+            if (_completed.TryGetValue(fragment.Allocation, out var completedVersion) &&
+                fragment.ContentVersion <= completedVersion.Version)
             {
-                encoded = null!;
                 return false;
             }
 
-            foreach (var obsolete in _assemblies.Keys.Where(candidate =>
-                         candidate.Allocation == fragment.Allocation && candidate != key
-                     ).ToArray())
+            if (_assemblies.TryGetValue(fragment.Allocation, out var assembly))
             {
-                _assemblies.Remove(obsolete);
+                if (fragment.ContentVersion < assembly.ContentVersion) { return false; }
+
+                if (fragment.ContentVersion > assembly.ContentVersion)
+                {
+                    RemoveAssembly(fragment.Allocation);
+                    assembly = null;
+                }
+                else if (assembly.TotalLength != fragment.TotalLength ||
+                         assembly.Fragments.Length != fragment.FragmentCount)
+                {
+                    throw new InvalidDataException(
+                        "A terrain transfer changed shape without changing its content version."
+                    );
+                }
             }
 
-            foreach (var obsolete in _completed.Where(candidate =>
-                         candidate.Allocation == fragment.Allocation && candidate != key
-                     ).ToArray())
+            if (assembly == null)
             {
-                _completed.Remove(obsolete);
-            }
+                var reserved = 2L * fragment.TotalLength + fragment.FragmentCount * (IntPtr.Size + 32L) + 128;
+                if (_assemblies.Count >= _maximumPendingTransfers || reserved > _maximumPendingBytes - _reservedBytes)
+                {
+                    return false;
+                }
 
-            if (!_assemblies.TryGetValue(key, out var assembly) ||
-                assembly.TotalLength != fragment.TotalLength ||
-                assembly.Fragments.Length != fragment.FragmentCount)
-            {
-                assembly = new Assembly(fragment.TotalLength, fragment.FragmentCount);
-                _assemblies[key] = assembly;
-            }
-
-            if (assembly.Fragments[fragment.FragmentIndex] is null)
-            {
-                assembly.Fragments[fragment.FragmentIndex] = fragment.Payload;
-                assembly.ReceivedCount++;
-                assembly.ReceivedLength += fragment.Payload.Length;
-            }
-
-            if (assembly.ReceivedCount != assembly.Fragments.Length)
-            {
-                encoded = null!;
-                return false;
-            }
-
-            if (assembly.ReceivedLength != assembly.TotalLength)
-            {
-                _assemblies.Remove(key);
-                throw new InvalidDataException(
-                    $"Terrain fragment length mismatch: {assembly.ReceivedLength}/{assembly.TotalLength}."
+                assembly = new Assembly(
+                    fragment.ContentVersion,
+                    fragment.TotalLength,
+                    fragment.FragmentCount,
+                    reserved
                 );
+                _assemblies.Add(fragment.Allocation, assembly);
+                _reservedBytes += reserved;
             }
+
+            if (assembly.Fragments[fragment.FragmentIndex] == null)
+            {
+                assembly.Fragments[fragment.FragmentIndex] = fragment.Payload.ToArray();
+                assembly.ReceivedCount++;
+            }
+
+            if (assembly.ReceivedCount != assembly.Fragments.Length) { return false; }
 
             var payload = new byte[assembly.TotalLength];
             var offset = 0;
@@ -88,12 +117,17 @@ public sealed class TerrainChunkFragmentReassembler
                 offset += part.Length;
             }
 
-            _assemblies.Remove(key);
-            _completed.Add(key);
-            _completedOrder.Enqueue(key);
+            RemoveAssembly(fragment.Allocation);
+            var sequence = ++_completionSequence;
+            _completed[fragment.Allocation] = (fragment.ContentVersion, sequence);
+            _completedOrder.Enqueue(new TransferKey(fragment.Allocation, sequence));
             while (_completedOrder.Count > _maximumCompletedTransfers)
             {
-                _completed.Remove(_completedOrder.Dequeue());
+                var old = _completedOrder.Dequeue();
+                if (_completed.TryGetValue(old.Allocation, out var value) && value.Sequence == old.Sequence)
+                {
+                    _completed.Remove(old.Allocation);
+                }
             }
 
             encoded = new EncodedTerrainChunk(fragment.Allocation.Coords, fragment.ContentVersion, payload);
@@ -101,101 +135,119 @@ public sealed class TerrainChunkFragmentReassembler
         }
     }
 
-    public bool TryCreateMissingFragmentRequest(
-        ChunkAllocationId allocation,
-        out TerrainChunkFragmentRequest request
-    )
+    public bool TryCreateMissingFragmentRequest(ChunkAllocationId allocation, out TerrainChunkFragmentRequest request)
     {
         lock (_lock)
         {
-            var entry = _assemblies.FirstOrDefault(item => item.Key.Allocation == allocation);
-            if (entry.Value is null)
+            if (!_assemblies.TryGetValue(allocation, out var assembly))
             {
                 request = default;
                 return false;
             }
 
-            var missing = entry.Value.Fragments
-                .Select((payload, index) => (payload, index))
-                .Where(item => item.payload is null)
-                .Select(item => checked((ushort)item.index))
-                .ToArray();
-            if (missing.Length == 0)
-            {
-                request = default;
-                return false;
-            }
-
+            var missing = assembly.Fragments.Select((payload, index) => (payload, index))
+                .Where(item => item.payload == null).Select(item => checked((ushort)item.index)).ToArray();
             request = new TerrainChunkFragmentRequest(
                 allocation,
-                entry.Key.ContentVersion,
-                checked((ushort)entry.Value.Fragments.Length),
+                assembly.ContentVersion,
+                checked((ushort)assembly.Fragments.Length),
                 missing
             );
-            return true;
+            return missing.Length > 0;
+        }
+    }
+
+    public void Discard(ChunkAllocationId allocation)
+    {
+        lock (_lock)
+        {
+            RemoveAssembly(allocation);
+            _completed.Remove(allocation);
+        }
+    }
+
+    public void Clear()
+    {
+        lock (_lock)
+        {
+            _assemblies.Clear();
+            _completed.Clear();
+            _completedOrder.Clear();
+            _reservedBytes = 0;
         }
     }
 
     public int DiscardOtherGenerations(IEnumerable<ChunkAllocationId> allocations)
     {
+        ArgumentNullException.ThrowIfNull(allocations);
         lock (_lock)
         {
             var current = new Dictionary<Point2, ChunkAllocationId>();
             foreach (var allocation in allocations)
             {
-                current[allocation.Coords] = allocation;
+                if (!current.TryGetValue(allocation.Coords, out var existing) ||
+                    allocation.Generation > existing.Generation)
+                {
+                    current[allocation.Coords] = allocation;
+                }
             }
 
-            var obsolete = _assemblies.Keys.Where(key =>
-                    current.TryGetValue(key.Allocation.Coords, out var allocation) &&
-                    allocation != key.Allocation
-                )
-                .ToArray();
-            foreach (var key in obsolete)
-            {
-                _assemblies.Remove(key);
-            }
+            var obsolete = _assemblies.Keys.Where(allocation =>
+                current.TryGetValue(allocation.Coords, out var active) && active != allocation
+            ).ToArray();
+            foreach (var allocation in obsolete) { RemoveAssembly(allocation); }
 
-            foreach (var key in _completed.Where(key =>
-                         current.TryGetValue(key.Allocation.Coords, out var allocation) &&
-                         allocation != key.Allocation
+            foreach (var allocation in _completed.Keys.Where(allocation =>
+                         current.TryGetValue(allocation.Coords, out var active) && active != allocation
                      ).ToArray())
             {
-                _completed.Remove(key);
+                _completed.Remove(allocation);
             }
 
             return obsolete.Length;
         }
     }
 
+    private void RemoveAssembly(ChunkAllocationId allocation)
+    {
+        if (_assemblies.Remove(allocation, out var assembly)) { _reservedBytes -= assembly.ReservedBytes; }
+    }
+
     private static void Validate(EncodedTerrainChunkFragment fragment)
     {
-        var expectedFragmentCount = Math.Max(
+        var expectedCount = Math.Max(
             1,
             (fragment.TotalLength + ProtocolLimits.TerrainFragmentPayloadSize - 1) /
             ProtocolLimits.TerrainFragmentPayloadSize
         );
-        if (fragment.TotalLength is < 0 or > ProtocolLimits.MaximumTerrainPayloadLength ||
-            fragment.FragmentCount is 0 or > ProtocolLimits.MaximumTerrainFragmentCount ||
-            fragment.FragmentCount != expectedFragmentCount ||
+        var expectedLength = Math.Min(
+            ProtocolLimits.TerrainFragmentPayloadSize,
+            fragment.TotalLength - fragment.FragmentIndex * ProtocolLimits.TerrainFragmentPayloadSize
+        );
+        if (fragment.Allocation.Generation == 0 ||
+            fragment.ContentVersion <= 0 ||
+            fragment.TotalLength is < 0 or > ProtocolLimits.MaximumTerrainPayloadLength ||
+            fragment.FragmentCount != expectedCount ||
             fragment.FragmentIndex >= fragment.FragmentCount ||
-            fragment.Payload is null ||
-            fragment.Payload.Length > ProtocolLimits.TerrainFragmentPayloadSize)
+            fragment.Payload == null ||
+            fragment.Payload.Length != expectedLength)
         {
             throw new InvalidDataException("Invalid terrain chunk fragment metadata.");
         }
     }
 
-    private readonly record struct TransferKey(ChunkAllocationId Allocation, long ContentVersion);
+    private readonly record struct TransferKey(ChunkAllocationId Allocation, long Sequence);
 
-    private sealed class Assembly(int totalLength, ushort fragmentCount)
+    private sealed class Assembly(long contentVersion, int totalLength, ushort fragmentCount, long reservedBytes)
     {
+        public long ContentVersion { get; } = contentVersion;
+
+        public int TotalLength { get; } = totalLength;
+
+        public long ReservedBytes { get; } = reservedBytes;
+
         public byte[][] Fragments { get; } = new byte[fragmentCount][];
 
         public int ReceivedCount;
-
-        public int ReceivedLength;
-
-        public int TotalLength { get; } = totalLength;
     }
 }

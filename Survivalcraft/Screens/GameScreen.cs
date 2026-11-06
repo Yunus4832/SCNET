@@ -4,8 +4,9 @@ using Engine.Graphics;
 
 using EntitySystem.Core;
 
+using Game.Application;
 using Game.Commands;
-using Game.Network;
+using Game.Commands.BuiltIn;
 
 namespace Game.Screens;
 
@@ -18,63 +19,61 @@ public class GameScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/GameScreen");
         LoadContents(this, node);
         IsDrawRequired = true;
-        Window.Deactivated += delegate { GameManager.SaveProject(true, false); };
+        Window.Deactivated += delegate
+        {
+            if (!Window.IsClosing) { ClientApplication.World?.RequestSave(false, false); }
+        };
     }
 
     public override void Enter(object[] parameters)
     {
-        if (GameManager.Project is null)
+        if (ClientApplication.World?.Project is null)
         {
-            throw new InvalidOperationException("GameManager.Project is not initialized");
+            throw new InvalidOperationException("ClientApplication.World?.Project is not initialized");
         }
 
-        GameManager.Project.FindSubsystem<SubsystemAudio>(true)!.Unmute();
+        ClientApplication.World?.Project.FindSubsystem<SubsystemAudio>(true)!.Unmute();
         MusicManager.CurrentMix = MusicManager.Mix.None;
         TryShowAdministrationBootstrap();
-        CommonLib.Net.LocalPlayerRemoved += OnLocalPlayerRemoved;
     }
 
     public override void Leave()
     {
-        CommonLib.Net.LocalPlayerRemoved -= OnLocalPlayerRemoved;
-        if (GameManager.Project is not null)
+        if (ClientApplication.World?.Project is not null)
         {
-            GameManager.Project.FindSubsystem<SubsystemAudio>(true)!.Mute();
-            GameManager.SaveProject(true, true);
+            ClientApplication.World?.Project.FindSubsystem<SubsystemAudio>(true)!.Mute();
         }
 
         ShowHideCursors(true);
         MusicManager.CurrentMix = MusicManager.Mix.Menu;
     }
 
-    private void OnLocalPlayerRemoved(string reason)
-    {
-        if (ScreensManager.CurrentScreen != this) { return; }
-
-        GameManager.LeaveGameplay(reason);
-    }
 
     public override void Update()
     {
-        if (GameManager.Role == WorldRole.None && GameManager.Project is not null)
+        if (GameManager.Runtime?.Client is { IsClosed: true })
         {
-            GameManager.LeaveGameplay();
+            ClientApplication.World?.RequestLeave();
             return;
         }
 
-        GameManager.UpdateProject();
         TryShowAdministrationBootstrap();
 
         ShowHideCursors(
             DialogsManager.HasDialogs(this) ||
             DialogsManager.HasDialogs(RootWidget) ||
+            DialogsManager.HasDialogs(
+                ClientApplication.World?.LocalCharacter?.Entity.FindComponent<ComponentCharacterPresentation>(true)
+                    ?.GuiWidget
+            ) ||
             ScreensManager.CurrentScreen != this
         );
     }
 
     public override void Draw(DrawContext dc)
     {
-        if (!ScreensManager.IsAnimating && SettingsManager.Current.ResolutionMode == ResolutionMode.High)
+        if (!ScreensManager.IsAnimating &&
+            Configuration.ClientConfiguration.Preferences.ResolutionMode == ResolutionMode.High)
         {
             Display.Clear(Color.Black, 1f, 0);
         }
@@ -89,12 +88,10 @@ public class GameScreen : Screen
 
     private void TryShowAdministrationBootstrap()
     {
-        if (RunMode.Value is not RunModeType.Gui ||
-            GameManager.Role is not WorldRole.Server ||
-            GameManager.Project is not { } project ||
+        if (GameManager.Runtime is not { IsMultiplayer: true, Authority.Project: { } project } ||
             ReferenceEquals(_administrationDialogProject, project) ||
             ServerAdministrationBootstrap.IsClaimed(project) ||
-            CommonLib.LocalCharacter is not { } player ||
+            ClientApplication.World?.LocalCharacter is not { } player ||
             !ServerAdministrationBootstrap.TryGetClaimCode(project, out var code))
         {
             return;
@@ -103,7 +100,7 @@ public class GameScreen : Screen
         _administrationDialogProject = project;
         var claimCommand = $"/auth claim {code}";
         DialogsManager.ShowDialog(
-            player.GuiWidget,
+            player.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,
             new MessageDialog(
                 CommandText.Get(
                     "AuthDialogTitle",
@@ -130,7 +127,7 @@ public class GameScreen : Screen
                     {
                         ClipboardManager.ClipboardString = claimCommand;
                         DisplayToast(
-                            project,
+                            player.Project,
                             CommandText.Get(
                                 "AuthDialogCopied",
                                 "已复制：{0}",
@@ -141,11 +138,7 @@ public class GameScreen : Screen
                         return;
                     }
 
-                    var result = CommandExecutor.ExecutePlayer(claimCommand, player.CharacterData);
-                    CommandResultPublisher.DisplayLocal(
-                        project,
-                        result with { Presentation = CommandResultPresentation.Toast }
-                    );
+                    CommandGateway.Submit(player.CharacterData, claimCommand);
                 }
             )
         );
@@ -157,13 +150,12 @@ public class GameScreen : Screen
         bool success
     )
     {
-        project.FindSubsystem<SubsystemGameWidgets>(true)!
-            .Messages.DisplayLocal(
-                GameMessage.System(
-                    message,
-                    success ? GameMessageTone.Success : GameMessageTone.Error,
-                    GameMessagePresentation.Toast
-                )
-            );
+        project.FindSubsystem<SubsystemMessages>(true)!.Service.DisplayLocal(
+            GameMessage.System(
+                message,
+                success ? GameMessageTone.Success : GameMessageTone.Error,
+                GameMessagePresentation.Toast
+            )
+        );
     }
 }

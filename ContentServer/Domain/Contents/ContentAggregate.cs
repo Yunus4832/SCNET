@@ -22,9 +22,9 @@ public enum ContentVersionStatus
     Rejected = 2
 }
 
-public partial record ContentId : IGuidStronglyTypedId;
+public record ContentId : IGuidStronglyTypedId;
 
-public partial record ContentVersionId : IGuidStronglyTypedId;
+public record ContentVersionId : IGuidStronglyTypedId;
 
 public class ContentItem : Entity<ContentId>, IAggregateRoot
 {

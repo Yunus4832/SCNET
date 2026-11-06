@@ -2,6 +2,7 @@ using System.Xml.Linq;
 
 using Content.Packaging;
 
+using Game.Application;
 using Game.Content;
 
 namespace Game.Screens;
@@ -169,7 +170,7 @@ public sealed class ModManagementScreen : Screen
         var selected = _modsList.SelectedItem as ManagedModItem;
         return action switch
         {
-            ModAction.Global => LanguageManager.Get(
+            ModAction.Global => Localization.ClientLanguage.Catalog.Get(
                 _typeName,
                 selected?.IsGlobal == true
                     ? "RemoveGlobal"
@@ -180,9 +181,9 @@ public sealed class ModManagementScreen : Screen
                         ? "ReplaceGlobal"
                         : "AddGlobal"
             ),
-            ModAction.DeleteCache => LanguageManager.Get(_typeName, "DeleteCacheShort"),
-            ModAction.Refresh => LanguageManager.Get(_typeName, "RefreshLocal"),
-            _ => LanguageManager.Get(_typeName, action.ToString())
+            ModAction.DeleteCache => Localization.ClientLanguage.Catalog.Get(_typeName, "DeleteCacheShort"),
+            ModAction.Refresh => Localization.ClientLanguage.Catalog.Get(_typeName, "RefreshLocal"),
+            _ => Localization.ClientLanguage.Catalog.Get(_typeName, action.ToString())
         };
     }
 
@@ -203,9 +204,9 @@ public sealed class ModManagementScreen : Screen
 
     private void RefreshState()
     {
-        WorldsManager.UpdateWorldsList();
+        ClientApplication.Worlds.UpdateWorldsList();
         _globalProfile = ModProfileManager.LoadGlobalProfile();
-        var worldProfiles = WorldsManager.WorldInfos
+        var worldProfiles = ClientApplication.Worlds.WorldInfos
             .Select(world => ModProfileManager.LoadWorldProfile(world.DirectoryName))
             .OfType<ModProfile>()
             .ToArray();
@@ -233,17 +234,17 @@ public sealed class ModManagementScreen : Screen
     private void ConfirmDeleteCache(ManagedModItem item)
     {
         var message = string.Format(
-            LanguageManager.Get(_typeName, "DeleteCacheQuestion"),
+            Localization.ClientLanguage.Catalog.Get(_typeName, "DeleteCacheQuestion"),
             item.ModId,
             item.Version
         );
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.Get(_typeName, "DeleteCacheTitle"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "DeleteCacheTitle"),
                 message,
-                LanguageManager.Yes,
-                LanguageManager.No,
+                Localization.ClientLanguage.Catalog.Yes,
+                Localization.ClientLanguage.Catalog.No,
                 button =>
                 {
                     if (button == MessageDialogButton.Button1)
@@ -270,12 +271,12 @@ public sealed class ModManagementScreen : Screen
         catch (InvalidOperationException exception)
         {
             Log.Warning($"Referenced mod cache removal was rejected: {exception.Message}");
-            DialogsManager.Alert(LanguageManager.Get(_typeName, "ReferencedCannotDelete"));
+            DialogsManager.Alert(Localization.ClientLanguage.Catalog.Get(_typeName, "ReferencedCannotDelete"));
         }
         catch (Exception exception)
         {
             Log.Error($"Mod cache removal failed: {exception}");
-            DialogsManager.Alert(LanguageManager.Get(_typeName, "DeleteCacheFailed"));
+            DialogsManager.Alert(Localization.ClientLanguage.Catalog.Get(_typeName, "DeleteCacheFailed"));
         }
     }
 
@@ -289,7 +290,7 @@ public sealed class ModManagementScreen : Screen
                 new FilePickerRequest(
                     [ContentPackageReader.FileExtension],
                     AllowMultiple: true,
-                    Title: LanguageManager.Get(_typeName, "SelectPackages")
+                    Title: Localization.ClientLanguage.Catalog.Get(_typeName, "SelectPackages")
                 )
             );
             if (files.Count == 0)
@@ -302,7 +303,10 @@ public sealed class ModManagementScreen : Screen
                 return;
             }
 
-            var busyDialog = new BusyDialog(LanguageManager.Get(_typeName, "Importing"), string.Empty);
+            var busyDialog = new BusyDialog(
+                Localization.ClientLanguage.Catalog.Get(_typeName, "Importing"),
+                string.Empty
+            );
             _operationDialog = busyDialog;
             Dispatcher.Dispatch(() =>
                 {
@@ -312,7 +316,7 @@ public sealed class ModManagementScreen : Screen
                     }
                 }
             );
-            var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
+            var cache = new ContentPackageCache(Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache));
             var imported = 0;
             try
             {
@@ -344,7 +348,12 @@ public sealed class ModManagementScreen : Screen
                     }
 
                     RefreshState();
-                    DialogsManager.Alert(string.Format(LanguageManager.Get(_typeName, "ImportComplete"), imported));
+                    DialogsManager.Alert(
+                        string.Format(
+                            Localization.ClientLanguage.Catalog.Get(_typeName, "ImportComplete"),
+                            imported
+                        )
+                    );
                 }
             );
         }
@@ -354,7 +363,10 @@ public sealed class ModManagementScreen : Screen
                 {
                     if (IsCurrentOperation(generation))
                     {
-                        DialogsManager.Alert(LanguageManager.Get(_typeName, "ImportModFailed"), exception.Message);
+                        DialogsManager.Alert(
+                            Localization.ClientLanguage.Catalog.Get(_typeName, "ImportModFailed"),
+                            exception.Message
+                        );
                     }
                 }
             );
@@ -383,7 +395,7 @@ public sealed class ModManagementScreen : Screen
                 new FileSaveRequest(
                     $"{item.ModId}-{item.Version}{ContentPackageReader.FileExtension}",
                     "application/vnd.scnet.content-package",
-                    LanguageManager.Get(_typeName, "ExportTitle")
+                    Localization.ClientLanguage.Catalog.Get(_typeName, "ExportTitle")
                 )
             );
             if (target is null)
@@ -402,7 +414,10 @@ public sealed class ModManagementScreen : Screen
                 {
                     if (IsCurrentOperation(generation))
                     {
-                        DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name);
+                        DialogsManager.Alert(
+                            Localization.ClientLanguage.Catalog.Get(_typeName, "ExportComplete"),
+                            target.Name
+                        );
                     }
                 }
             );
@@ -413,7 +428,10 @@ public sealed class ModManagementScreen : Screen
                 {
                     if (IsCurrentOperation(generation))
                     {
-                        DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportModFailed"), exception.Message);
+                        DialogsManager.Alert(
+                            Localization.ClientLanguage.Catalog.Get(_typeName, "ExportModFailed"),
+                            exception.Message
+                        );
                     }
                 }
             );
@@ -429,12 +447,12 @@ public sealed class ModManagementScreen : Screen
 
     private void SelectWorldsForPackage(ManagedModItem item)
     {
-        WorldsManager.UpdateWorldsList();
-        if (WorldsManager.WorldInfos.Count == 0)
+        ClientApplication.Worlds.UpdateWorldsList();
+        if (ClientApplication.Worlds.WorldInfos.Count == 0)
         {
             DialogsManager.Alert(
-                LanguageManager.Get(_typeName, "NoWorldTitle"),
-                LanguageManager.Get(_typeName, "NoWorldMessage")
+                Localization.ClientLanguage.Catalog.Get(_typeName, "NoWorldTitle"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "NoWorldMessage")
             );
             return;
         }
@@ -443,7 +461,7 @@ public sealed class ModManagementScreen : Screen
             null,
             new ModWorldSelectionDialog(
                 $"{item.ModId}@{item.Version}",
-                WorldsManager.WorldInfos,
+                ClientApplication.Worlds.WorldInfos,
                 world => ModProfileManager.LoadWorldProfile(world.DirectoryName) is { } profile &&
                          ModManagementCatalog.ContainsExact(profile, item),
                 selections =>
@@ -485,7 +503,7 @@ public sealed class ModManagementScreen : Screen
 
     private static LocalModRepository CreateRepository()
     {
-        return new LocalModRepository(Storage.GetSystemPath(GamePaths.ContentPackageCache));
+        return new LocalModRepository(Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache));
     }
 
     private bool IsCurrentOperation(int generation)
@@ -504,20 +522,22 @@ public sealed class ModManagementScreen : Screen
     {
         var mod = (ManagedModItem)item;
         var status = new List<string>();
-        status.Add(LanguageManager.Get(_typeName, mod.IsMissing ? "StatusMissing" : "StatusCached"));
+        status.Add(
+            Localization.ClientLanguage.Catalog.Get(_typeName, mod.IsMissing ? "StatusMissing" : "StatusCached")
+        );
         if (mod.IsGlobal)
         {
-            status.Add(LanguageManager.Get(_typeName, "StatusGlobal"));
+            status.Add(Localization.ClientLanguage.Catalog.Get(_typeName, "StatusGlobal"));
         }
 
         if (mod.IsWorld)
         {
-            status.Add(LanguageManager.Get(_typeName, "StatusWorld"));
+            status.Add(Localization.ClientLanguage.Catalog.Get(_typeName, "StatusWorld"));
         }
 
         if (mod.IsRuntime)
         {
-            status.Add(LanguageManager.Get(_typeName, "StatusRuntime"));
+            status.Add(Localization.ClientLanguage.Catalog.Get(_typeName, "StatusRuntime"));
         }
 
         var widget = (ContainerWidget)LoadWidget(

@@ -14,6 +14,84 @@ namespace Survivalcraft.Test.Modding;
 public sealed class TemplateTypeResolutionTest
 {
     [Fact]
+    public void AllCreatureDefinitionsHaveIndependentGameplayPoseAndMatchingBodyProfile()
+    {
+        var root = XElement.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Database.xml"));
+        var database = new GameDatabase(XmlDatabaseSerializer.LoadDatabase(root));
+        var profiles = new Dictionary<string, string>
+        {
+            ["HumanModel"] = "Human", ["FourLeggedModel"] = "FourLegged", ["FishModel"] = "Fish",
+            ["BirdModel"] = "Bird", ["FlightlessBirdModel"] = "FlightlessBird"
+        };
+        var count = 0;
+        foreach (var definition in database.Database.Root.GetExplicitNestingChildren(
+                     database.EntityTemplateType,
+                     false
+                 ))
+        {
+            var values = new ValuesDictionary();
+            values.PopulateFromDatabaseObject(definition);
+            if (!values.ContainsKey("Creature")) { continue; }
+
+            var pose = values.GetValue<ValuesDictionary>("CreaturePose");
+            Assert.Equal("Game.Components.ComponentCreaturePose", pose.GetValue<string>("Class"));
+            foreach (var profile in profiles)
+            {
+                if (values.ContainsKey(profile.Key))
+                {
+                    Assert.Equal(profile.Value, pose.GetValue<object>("Kind").ToString());
+                    if (profile.Key == "HumanModel")
+                    {
+                        Assert.Equal(
+                            values.GetValue<ValuesDictionary>(profile.Key).GetValue<float>("WalkAnimationSpeed"),
+                            pose.GetValue<float>("FootstepRate")
+                        );
+                    }
+                }
+            }
+
+            count++;
+        }
+
+        Assert.True(count > 0);
+    }
+
+    [Fact]
+    public void EveryBuiltInEffectStateHasItsPresentationComponent()
+    {
+        var root = XElement.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Database.xml"));
+        var database = new GameDatabase(XmlDatabaseSerializer.LoadDatabase(root));
+        var covered = new Dictionary<string, int>
+        {
+            ["OnFire"] = 0, ["Shapeshifter"] = 0, ["Health"] = 0, ["Damage"] = 0, ["Sickness"] = 0, ["Flu"] = 0,
+            ["Sleep"] = 0, ["VitalStats"] = 0, ["CreatureSounds"] = 0, ["Body"] = 0, ["Miner"] = 0, ["Level"] = 0,
+            ["Clothing"] = 0, ["Boat"] = 0, ["Character"] = 0, ["Intro"] = 0, ["Locomotion"] = 0,
+            ["CetaceanBreatheBehavior"] = 0
+        };
+        foreach (var template in database.Database.Root.GetExplicitNestingChildren(database.EntityTemplateType, false))
+        {
+            var values = new ValuesDictionary();
+            values.PopulateFromDatabaseObject(template);
+            foreach (var name in covered.Keys.ToArray())
+            {
+                if (!values.ContainsKey(name)) { continue; }
+
+                var state = values.GetValue<ValuesDictionary>(name);
+                var presentationName = name.EndsWith("Behavior", StringComparison.Ordinal) ? name[..^8] : name;
+                var presentation = values.GetValue<ValuesDictionary>(presentationName + "Presentation");
+                Assert.Equal(
+                    "Game.Components.Component" + presentationName + "Presentation",
+                    presentation.GetValue<string>("Class")
+                );
+                Assert.True(presentation.GetValue<int>("LoadOrder") > state.GetValue<int>("LoadOrder"));
+                covered[name]++;
+            }
+        }
+
+        Assert.All(covered.Values, count => Assert.True(count > 0));
+    }
+
+    [Fact]
     public void BuiltInTemplateDatabaseResolvesStoredValuesAndRequiredTemplateImplementations()
     {
         _ = typeof(GameEntry).Assembly.GetTypes();

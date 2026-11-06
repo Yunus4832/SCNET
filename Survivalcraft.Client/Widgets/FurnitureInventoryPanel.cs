@@ -1,0 +1,480 @@
+using System.Xml.Linq;
+
+using Game.Modding.Blocks;
+using Game.Network.Handling;
+
+namespace Game.Widgets;
+
+public class FurnitureInventoryPanel : CanvasWidget
+{
+    private const string _typeName = nameof(FurnitureInventoryPanel);
+
+    private readonly ButtonWidget _addButton;
+
+    private int _assignedPage;
+
+    private int _networkRevision;
+
+    private readonly ComponentCharacter _componentCharacter;
+
+    private readonly CreativeInventoryWidget _creativeInventoryWidget;
+
+    private readonly ListPanelWidget _furnitureSetList;
+
+    private bool _ignoreSelectionChanged;
+
+    private readonly GridPanelWidget _inventoryGrid;
+
+    private readonly ButtonWidget _moreButton;
+
+    private int _pagesCount;
+
+    private bool _populateNeeded;
+
+    public FurnitureInventoryPanel(CreativeInventoryWidget creativeInventoryWidget)
+    {
+        _creativeInventoryWidget = creativeInventoryWidget;
+        ComponentFurnitureInventory = creativeInventoryWidget.Entity.FindComponent<ComponentFurnitureInventory>(true)!;
+        _componentCharacter = creativeInventoryWidget.Entity.FindComponent<ComponentCharacter>(true)!;
+        SubsystemFurnitureBlockBehavior =
+            ComponentFurnitureInventory.Project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true)!;
+        SubsystemTerrain = ComponentFurnitureInventory.Project.FindSubsystem<SubsystemTerrain>(true)!;
+        var node = ContentManager.Get<XElement>("Widgets/FurnitureInventoryPanel");
+        LoadContents(this, node);
+        _furnitureSetList = Children.Find<ListPanelWidget>("FurnitureSetList")!;
+        _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
+        _addButton = Children.Find<ButtonWidget>("AddButton")!;
+        _moreButton = Children.Find<ButtonWidget>("MoreButton")!;
+        for (var i = 0; i < _inventoryGrid.RowsCount; i++)
+        {
+            for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)
+            {
+                var widget = new InventorySlotWidget();
+                _inventoryGrid.Children.Add(widget);
+                _inventoryGrid.SetWidgetCell(widget, new Point2(j, i));
+            }
+        }
+
+        var furnitureSetList = _furnitureSetList;
+        furnitureSetList.ItemWidgetFactory = (Func<object, Widget>)Delegate.Combine(
+            furnitureSetList.ItemWidgetFactory,
+            (Func<object, Widget>)(item => new FurnitureSetItemWidget(this, (FurnitureSet)item))
+        );
+        _furnitureSetList.SelectionChanged += delegate
+        {
+            if (_ignoreSelectionChanged ||
+                ComponentFurnitureInventory.FurnitureSet ==
+                _furnitureSetList.SelectedItem as FurnitureSet)
+            {
+                return;
+            }
+
+            ComponentFurnitureInventory.PageIndex = 0;
+            ComponentFurnitureInventory.FurnitureSet =
+                _furnitureSetList.SelectedItem as FurnitureSet ?? FurnitureSetDefault.Default;
+            if (ComponentFurnitureInventory.FurnitureSet is FurnitureSetDefault)
+            {
+                _furnitureSetList.SelectedIndex = 0;
+            }
+
+            AssignInventorySlots();
+        };
+        _populateNeeded = true;
+    }
+
+    public SubsystemTerrain SubsystemTerrain { get; set; }
+
+    public SubsystemFurnitureBlockBehavior SubsystemFurnitureBlockBehavior { get; set; }
+
+    public ComponentFurnitureInventory ComponentFurnitureInventory { get; set; }
+
+    public override void Update()
+    {
+        if (_networkRevision != SubsystemFurnitureBlockBehavior.NetworkRevision)
+        {
+            _networkRevision = SubsystemFurnitureBlockBehavior.NetworkRevision;
+            if (ComponentFurnitureInventory.FurnitureSet is not FurnitureSetDefault &&
+                !SubsystemFurnitureBlockBehavior.FurnitureSets.Contains(ComponentFurnitureInventory.FurnitureSet))
+            {
+                ComponentFurnitureInventory.FurnitureSet = FurnitureSetDefault.Default;
+            }
+
+            Invalidate();
+        }
+
+        if (_populateNeeded)
+        {
+            Populate();
+            _populateNeeded = false;
+        }
+
+        if (ComponentFurnitureInventory.PageIndex != _assignedPage)
+        {
+            AssignInventorySlots();
+        }
+
+        _creativeInventoryWidget.PageUpButton.IsEnabled = ComponentFurnitureInventory.PageIndex > 0;
+        _creativeInventoryWidget.PageDownButton.IsEnabled = ComponentFurnitureInventory.PageIndex < _pagesCount - 1;
+        _creativeInventoryWidget.PageLabel.Text = _pagesCount > 0
+            ? $"{ComponentFurnitureInventory.PageIndex + 1}/{_pagesCount}"
+            : string.Empty;
+        _moreButton.IsEnabled = ComponentFurnitureInventory.FurnitureSet is not FurnitureSetDefault;
+        if (Input.Scroll.HasValue)
+        {
+            var widget = HitTestGlobal(Input.Scroll.Value.XY);
+            if (widget != null && widget.IsChildWidgetOf(_inventoryGrid))
+            {
+                ComponentFurnitureInventory.PageIndex -= (int)Input.Scroll.Value.Z;
+            }
+        }
+
+        if (_creativeInventoryWidget.PageUpButton.IsClicked)
+        {
+            --ComponentFurnitureInventory.PageIndex;
+        }
+
+        if (_creativeInventoryWidget.PageDownButton.IsClicked)
+        {
+            ++ComponentFurnitureInventory.PageIndex;
+        }
+
+        ComponentFurnitureInventory.PageIndex = _pagesCount > 0
+            ? MathUtils.Clamp(ComponentFurnitureInventory.PageIndex, 0, _pagesCount - 1)
+            : 0;
+        if (_addButton.IsClicked)
+        {
+            var list = new List<Tuple<string, Action>>
+            {
+                new(
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 6),
+                    delegate
+                    {
+                        if (SubsystemFurnitureBlockBehavior.FurnitureSets.Count < 32)
+                        {
+                            NewFurnitureSet();
+                        }
+                        else
+                        {
+                            DialogsManager.ShowDialog(
+                                _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!
+                                    .GuiWidget,
+                                new MessageDialog(
+                                    Localization.ClientLanguage.Catalog.Get(_typeName, 24),
+                                    Localization.ClientLanguage.Catalog.Get(_typeName, 25),
+                                    Localization.ClientLanguage.Catalog.Get("Usual", "ok")
+                                )
+                            );
+                        }
+                    }
+                ),
+                new(
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 7),
+                    delegate { ImportFurnitureSet(SubsystemTerrain); }
+                )
+            };
+            DialogsManager.ShowDialog(
+                _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,
+                new ListSelectionDialog(
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 8),
+                    list,
+                    64f,
+                    t => ((Tuple<string, Action>)t).Item1,
+                    delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
+                )
+            );
+        }
+
+        if (!_moreButton.IsClicked || ComponentFurnitureInventory.FurnitureSet is FurnitureSetDefault)
+        {
+            return;
+        }
+
+        var list2 = new List<Tuple<string, Action>>
+        {
+            new(Localization.ClientLanguage.Catalog.Get(_typeName, 9), RenameFurnitureSet),
+            new(
+                Localization.ClientLanguage.Catalog.Get(_typeName, 28),
+                delegate
+                {
+                    if (SubsystemFurnitureBlockBehavior
+                        .GetFurnitureSetDesigns(ComponentFurnitureInventory.FurnitureSet)
+                        .Any()
+                       )
+                    {
+                        DialogsManager.ShowDialog(
+                            _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,
+                            new MessageDialog(
+                                Localization.ClientLanguage.Catalog.Get("Usual", "warning"),
+                                Localization.ClientLanguage.Catalog.Get(_typeName, 26),
+                                Localization.ClientLanguage.Catalog.Get(_typeName, 27),
+                                Localization.ClientLanguage.Catalog.Get(_typeName, 28),
+                                delegate(MessageDialogButton b)
+                                {
+                                    if (b == MessageDialogButton.Button1)
+                                    {
+                                        DeleteFurnitureSet();
+                                    }
+                                }
+                            )
+                        );
+                    }
+                    else
+                    {
+                        DeleteFurnitureSet();
+                    }
+                }
+            ),
+            new(Localization.ClientLanguage.Catalog.Get(_typeName, 11), delegate { MoveFurnitureSet(-1); }),
+            new(Localization.ClientLanguage.Catalog.Get(_typeName, 12), delegate { MoveFurnitureSet(1); }),
+            new(Localization.ClientLanguage.Catalog.Get(_typeName, 13), ExportFurnitureSet)
+        };
+        DialogsManager.ShowDialog(
+            _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,
+            new ListSelectionDialog(
+                Localization.ClientLanguage.Catalog.Get(_typeName, 14),
+                list2,
+                64f,
+                t => ((Tuple<string, Action>)t).Item1,
+                delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
+            )
+        );
+    }
+
+    public override void UpdateCeases()
+    {
+        base.UpdateCeases();
+        ComponentFurnitureInventory.ClearSlots();
+        _populateNeeded = true;
+    }
+
+    public void Invalidate()
+    {
+        _populateNeeded = true;
+    }
+
+    public void Populate()
+    {
+        ComponentFurnitureInventory.FillSlots();
+        try
+        {
+            _ignoreSelectionChanged = true;
+            _furnitureSetList.ClearItems();
+            _furnitureSetList.AddItem(FurnitureSetDefault.Default);
+            foreach (var furnitureSet in SubsystemFurnitureBlockBehavior.FurnitureSets)
+            {
+                _furnitureSetList.AddItem(furnitureSet);
+            }
+        }
+        finally
+        {
+            _ignoreSelectionChanged = false;
+        }
+
+        _furnitureSetList.SelectedItem = ComponentFurnitureInventory.FurnitureSet;
+        AssignInventorySlots();
+    }
+
+    public void AssignInventorySlots()
+    {
+        var list = new List<int>();
+        for (var i = 0; i < ComponentFurnitureInventory.SlotsCount; i++)
+        {
+            var slotValue = ComponentFurnitureInventory.GetSlotValue(i);
+            var slotCount = ComponentFurnitureInventory.GetSlotCount(i);
+            if (slotValue == 0 ||
+                slotCount <= 0 ||
+                Terrain.ExtractContents(slotValue) != BuiltInBlockRegistry.GetIndex<FurnitureBlock>())
+            {
+                continue;
+            }
+
+            var designIndex = FurnitureBlock.GetDesignIndex(Terrain.ExtractData(slotValue));
+            var design = SubsystemFurnitureBlockBehavior.GetDesign(designIndex);
+            if (design != null && design.FurnitureSet == ComponentFurnitureInventory.FurnitureSet)
+            {
+                list.Add(i);
+            }
+        }
+
+        var list2 = new List<InventorySlotWidget>(
+            (from w in _inventoryGrid.Children
+                select w as InventorySlotWidget
+                into w
+                where w != null
+                select w)
+        );
+        var num = ComponentFurnitureInventory.PageIndex * list2.Count;
+        foreach (var item in list2)
+        {
+            if (num < list.Count)
+            {
+                item.AssignInventorySlot(ComponentFurnitureInventory, list[num]);
+            }
+            else
+            {
+                item.AssignInventorySlot(null, 0);
+            }
+
+            num++;
+        }
+
+        _pagesCount = (list.Count + list2.Count - 1) / list2.Count;
+        _assignedPage = ComponentFurnitureInventory.PageIndex;
+    }
+
+    public void NewFurnitureSet()
+    {
+        _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget.Input.EnterText(
+            _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 15),
+            Localization.ClientLanguage.Catalog.Get(_typeName, 16),
+            20,
+            delegate(string s)
+            {
+                FurniturePackageHandler.Submit(
+                    ComponentFurnitureInventory.Project,
+                    FurniturePackageBuilder.Capture(new FurnitureSet { Name = s })
+                );
+            }
+        );
+    }
+
+    public void DeleteFurnitureSet()
+    {
+        var furnitureSet = _furnitureSetList.SelectedItem as FurnitureSet;
+        if (furnitureSet is null or FurnitureSetDefault)
+        {
+            return;
+        }
+
+        FurniturePackageHandler.Submit(
+            ComponentFurnitureInventory.Project,
+            new FurnitureSetDeletedPackage { Name = furnitureSet.Name }
+        );
+    }
+
+    public void RenameFurnitureSet()
+    {
+        var furnitureSet = _furnitureSetList.SelectedItem as FurnitureSet;
+        if (furnitureSet is null or FurnitureSetDefault)
+        {
+            return;
+        }
+
+        _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget.Input.EnterText(
+            _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 17),
+            furnitureSet.Name,
+            20,
+            delegate(string s)
+            {
+                FurniturePackageHandler.Submit(
+                    ComponentFurnitureInventory.Project,
+                    new FurnitureSetRenamedPackage { OldName = furnitureSet.Name, NewName = s }
+                );
+            }
+        );
+    }
+
+    public void MoveFurnitureSet(int move)
+    {
+        if (_furnitureSetList.SelectedItem is not FurnitureSet furnitureSet)
+        {
+            return;
+        }
+
+        FurniturePackageHandler.Submit(
+            ComponentFurnitureInventory.Project,
+            FurniturePackageBuilder.Capture(furnitureSet, move)
+        );
+    }
+
+    private void ImportFurnitureSet(SubsystemTerrain subsystemTerrain, string text)
+    {
+        var designs = FurniturePacksManager.LoadFurniturePack(subsystemTerrain.Catalog, subsystemTerrain, text);
+        FurniturePackageHandler.Submit(
+            ComponentFurnitureInventory.Project,
+            FurniturePackageBuilder.Capture(designs.ToList(), FurniturePacksManager.GetDisplayName(text))
+        );
+    }
+
+    public void ImportFurnitureSet(SubsystemTerrain subsystemTerrain)
+    {
+        FurniturePacksManager.UpdateFurniturePacksList();
+        if (FurniturePacksManager.ReadOnlyFurniturePackNames.Count == 0)
+        {
+            DialogsManager.ShowDialog(
+                _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,
+                new MessageDialog(
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 18),
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 19),
+                    Localization.ClientLanguage.Catalog.Ok
+                )
+            );
+        }
+        else
+        {
+            DialogsManager.ShowDialog(
+                _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,
+                new ListSelectionDialog(
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 20),
+                    FurniturePacksManager.ReadOnlyFurniturePackNames,
+                    64f,
+                    s => FurniturePacksManager.GetDisplayName((string)s),
+                    delegate(object s)
+                    {
+                        try
+                        {
+                            var text = (string)s;
+                            ImportFurnitureSet(subsystemTerrain, text);
+                        }
+                        catch (Exception ex)
+                        {
+                            DialogsManager.ShowDialog(
+                                _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!
+                                    .GuiWidget,
+                                new MessageDialog(
+                                    Localization.ClientLanguage.Catalog.Get(_typeName, 5),
+                                    ex.Message,
+                                    Localization.ClientLanguage.Catalog.Ok
+                                )
+                            );
+                        }
+                    }
+                )
+            );
+        }
+    }
+
+    public void ExportFurnitureSet()
+    {
+        try
+        {
+            var designs =
+                SubsystemFurnitureBlockBehavior.GetFurnitureSetDesigns(ComponentFurnitureInventory.FurnitureSet)
+                    .ToArray();
+            var displayName = FurniturePacksManager.GetDisplayName(
+                FurniturePacksManager.CreateFurniturePack(ComponentFurnitureInventory.FurnitureSet.Name, designs)
+            );
+            DialogsManager.ShowDialog(
+                _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,
+                new MessageDialog(
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 21),
+                    string.Format(Localization.ClientLanguage.Catalog.Get(_typeName, 22), displayName),
+                    Localization.ClientLanguage.Catalog.Get("Usual", "ok")
+                )
+            );
+        }
+        catch (Exception ex)
+        {
+            DialogsManager.ShowDialog(
+                _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,
+                new MessageDialog(
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 23),
+                    ex.Message,
+                    Localization.ClientLanguage.Catalog.Get("Usual", "ok")
+                )
+            );
+        }
+    }
+}

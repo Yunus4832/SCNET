@@ -1,7 +1,6 @@
 using Engine.Core.Mathematics;
 using Engine.Network;
 
-using Game.Network;
 using Game.Network.Transport;
 using Game.World;
 
@@ -32,7 +31,7 @@ public sealed class ListStateTransportTest
             .Select(id => new Pickable { Id = (ushort)id, Position = new Vector3(id, -id, id * 3) }).ToList();
         var package = PickablePackageBuilder.Capture(items) with { StateTick = uint.MaxValue };
         var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
-        var datagram = CommonLib.GetWriter(writer);
+        var datagram = NetworkWireFraming.Wrap(writer);
         Assert.InRange(datagram.Length, 1, 507);
         Assert.Equal(DeliveryMode.Unreliable, PackageTransportPolicy.Get(package).Delivery);
         Assert.Equal(NetworkChannel.StateStream, PackageTransportPolicy.Get(package).Channel);
@@ -46,7 +45,7 @@ public sealed class ListStateTransportTest
                 .Select(id => new OnlineCharacterState(Guid.NewGuid(), new Vector3(id, -id, id * 3), 1f, false))
         );
         var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
-        var datagram = CommonLib.GetWriter(writer);
+        var datagram = NetworkWireFraming.Wrap(writer);
         Assert.True(datagram.Length > 507);
         var transport = PackageTransportPolicy.Get(package);
         Assert.Equal(DeliveryMode.ReliableOrdered, transport.Delivery);

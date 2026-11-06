@@ -86,10 +86,22 @@ public sealed class ProtocolValueFormatter :
             return;
         }
 
-        writer.WriteArrayHeader(3);
+        LocalizedTextLimits.Validate(value);
+        WriteText(ref writer, value);
+    }
+
+    private static void WriteText(ref MessagePackWriter writer, LocalizedText value)
+    {
+        writer.WriteArrayHeader(6);
+        writer.Write((int)value.Kind);
         writer.Write(value.Section);
         writer.Write(value.Key);
         writer.Write(value.Fallback);
+        if (value.Template is null) { writer.WriteNil(); }
+        else { WriteText(ref writer, value.Template); }
+
+        writer.WriteArrayHeader(value.Arguments.Count);
+        foreach (var argument in value.Arguments) { WriteText(ref writer, argument); }
     }
 
     LocalizedText? IMessagePackFormatter<LocalizedText?>.Deserialize(
@@ -99,17 +111,54 @@ public sealed class ProtocolValueFormatter :
     {
         if (reader.TryReadNil()) { return null; }
 
-        if (reader.ReadArrayHeader() != 3)
+        var nodes = 0;
+        var bytes = 0;
+        return ReadText(ref reader, 0, ref nodes, ref bytes);
+    }
+
+    private static LocalizedText ReadText(ref MessagePackReader reader, int depth, ref int nodes, ref int bytes)
+    {
+        if (depth > LocalizedTextLimits.MaximumDepth ||
+            ++nodes > LocalizedTextLimits.MaximumNodes ||
+            reader.ReadArrayHeader() != 6)
         {
-            throw new MessagePackSerializationException("Invalid localized text length.");
+            throw new MessagePackSerializationException("Invalid localized text tree.");
         }
 
-        var section = reader.ReadString() ?? throw new MessagePackSerializationException("Missing text section.");
-        var key = reader.ReadString() ?? throw new MessagePackSerializationException("Missing text key.");
-        var fallback = reader.ReadString() ?? throw new MessagePackSerializationException("Missing text fallback.");
-        return section.Length == 0 && key.Length == 0
-            ? LocalizedText.Literal(fallback)
-            : new LocalizedText(section, key, fallback);
+        var kind = (LocalizedTextKind)reader.ReadInt32();
+        var section = ReadTextString(ref reader, ref bytes);
+        var key = ReadTextString(ref reader, ref bytes);
+        var fallback = ReadTextString(ref reader, ref bytes);
+        var template = reader.TryReadNil() ? null : ReadText(ref reader, depth + 1, ref nodes, ref bytes);
+        var count = reader.ReadArrayHeader();
+        if (count > LocalizedTextLimits.MaximumNodes - nodes)
+        {
+            throw new MessagePackSerializationException("Too many text arguments.");
+        }
+
+        var arguments = new LocalizedText[count];
+        for (var i = 0; i < count; i++) { arguments[i] = ReadText(ref reader, depth + 1, ref nodes, ref bytes); }
+
+        return LocalizedTextLimits.Create(kind, section, key, fallback, template, arguments);
+    }
+
+    private static string ReadTextString(ref MessagePackReader reader, ref int bytes)
+    {
+        var sequence = reader.ReadStringSequence() ??
+                       throw new MessagePackSerializationException("Missing text value.");
+        if (sequence.Length > LocalizedTextLimits.MaximumStringBytes - bytes)
+        {
+            throw new MessagePackSerializationException("Text is too large.");
+        }
+
+        var value = System.Text.Encoding.UTF8.GetString(System.Buffers.BuffersExtensions.ToArray(sequence));
+        bytes += checked((int)sequence.Length);
+        if (bytes > LocalizedTextLimits.MaximumStringBytes)
+        {
+            throw new MessagePackSerializationException("Text is too large.");
+        }
+
+        return value;
     }
 
     void IMessagePackFormatter<MessageContent?>.Serialize(

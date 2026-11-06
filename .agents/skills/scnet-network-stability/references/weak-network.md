@@ -5,7 +5,7 @@
 Use an explicit remote session through one proxy:
 
 ```text
-GUI client -> 127.0.0.1:28989 NetworkDamageTool -> 127.0.0.1:28987 Headless server
+GUI client -> 127.0.0.1:28989 NetworkDamageTool -> 127.0.0.1:28987 server
 ```
 
 Build and verify the proxy first when current-build evidence is absent or invalidated:

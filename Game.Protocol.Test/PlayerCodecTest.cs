@@ -22,34 +22,50 @@ public sealed class PlayerCodecTest
     {
         new CharacterStatePackage
         {
-            ControllerSessionId = 7, PackageChangeFlag = (ComponentCharacterPackage.ChangFlag)255,
+            ControllerClientId = 7, PackageChangeFlag = (ComponentCharacterPackage.ChangFlag)255,
             LookAngles = Vector2.One,
             ChildLookAngles = Vector2.One, Position = new Vector3(-17, 64, 15), Rotation = Quaternion.Identity,
             Velocity = Vector3.UnitX, LadderValue = 10, Sneaking = true
         },
         new CharacterPlacePackage
         {
-            ControllerSessionId = 7, PlacementRequestId = 42, PlacementCell = new Point3(-17, 64, 15),
+            ControllerClientId = 7, PlacementRequestId = 42, PlacementCell = new Point3(-17, 64, 15),
             PlacementExpectedValue = 100, NetInteractRay = _hit.Ray, NetInteractRaycast = _hit
         },
-        new CharacterAimPackage { ControllerSessionId = 7, AimEvent = SyncAction.Complete, NetAimRay = _hit.Ray },
+        new CharacterAimPackage { ControllerClientId = 7, AimEvent = SyncAction.Complete, NetAimRay = _hit.Ray },
         new CharacterDigPackage
         {
-            ControllerSessionId = 7, DigEvent = SyncAction.Complete, DigRequestId = 42, DigExpectedValue = 100,
+            ControllerClientId = 7, DigEvent = SyncAction.Complete, DigRequestId = 42, DigExpectedValue = 100,
             NetDigRay = _hit.Ray, NetDigRaycast = _hit
         },
         new CharacterHitPackage
-            { ControllerSessionId = 7, BodyId = 42, HitPosition = Vector3.One, HitDirection = Vector3.UnitX },
-        new CharacterFlightPackage { ControllerSessionId = 7, IsCreativeFly = true },
-        new CharacterReadyPackage { ControllerSessionId = 7 }, new CharacterRestartPackage { ControllerSessionId = 7 },
-        new CharacterExperiencePackage { ControllerSessionId = 7, Count = 2, PlaySound = true, Level = 3.5f },
-        new CharacterDropPackage { ControllerSessionId = 7 },
+            { ControllerClientId = 7, BodyId = 42, HitPosition = Vector3.One, HitDirection = Vector3.UnitX },
+        new CharacterFlightPackage { ControllerClientId = 7, IsCreativeFly = true },
+        new CharacterReadyPackage { ControllerClientId = 7 }, new CharacterRestartPackage { ControllerClientId = 7 },
+        new CharacterExperiencePackage { ControllerClientId = 7, LevelUps = 2, PlaySound = true, Level = 3.5f },
+        new CharacterDropPackage { ControllerClientId = 7 },
         new CharacterDragDropPackage
-            { ControllerSessionId = 7, InventoryID = 10, ActiveSlot = 3, HitPosition = Vector3.One, Count = 4 },
-        new CharacterStatisticsPackage { ControllerSessionId = 7, Stat = [1, 2, 3] },
+            { ControllerClientId = 7, InventoryID = 10, ActiveSlot = 3, HitPosition = Vector3.One, Count = 4 },
+        new CharacterStatisticsPackage { ControllerClientId = 7, Stat = [1, 2, 3] },
         new CharacterPositionPackage
-            { ControllerSessionId = 7, Position = new Vector3(-17, 64, 15), Velocity = Vector3.UnitY }
+            { ControllerClientId = 7, Position = new Vector3(-17, 64, 15), Velocity = Vector3.UnitY }
     };
+
+    [Theory]
+    [InlineData(float.NaN, 0)]
+    [InlineData(0f, 0)]
+    [InlineData(2f, -1)]
+    [InlineData(2f, 3)]
+    public void ExperienceStateRejectsInvalidLevelOrCrossingCount(float level, int levelUps)
+    {
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Encode(
+                new CharacterExperiencePackage
+                {
+                    Level = level, LevelUps = levelUps
+                }
+            )
+        );
+    }
 
     [Theory]
     [MemberData(nameof(Messages))]
@@ -61,7 +77,7 @@ public sealed class PlayerCodecTest
             Assert.IsAssignableFrom<ComponentCharacterPackage>(ProtocolMessageCodec.Decode(reader));
         Assert.Equal(message.GetType(), restored.GetType());
         Assert.Equal(message.Type, restored.Type);
-        Assert.Equal(7, restored.ControllerSessionId);
+        Assert.Equal(7, restored.ControllerClientId);
 
         Assert.Equal(encoded, Encode(restored));
     }
@@ -69,7 +85,7 @@ public sealed class PlayerCodecTest
     [Fact]
     public void ReadyMessageUsesTheDeclaredUnionAndIdentityField()
     {
-        var encoded = Encode(new CharacterReadyPackage { ControllerSessionId = 7 });
+        var encoded = Encode(new CharacterReadyPackage { ControllerClientId = 7 });
         var reader = new MessagePack.MessagePackReader(encoded);
         Assert.Equal(2, reader.ReadArrayHeader());
         Assert.Equal(WireTestData.Tag<CharacterReadyPackage>(), reader.ReadInt32());

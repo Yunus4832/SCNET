@@ -1,7 +1,7 @@
 using Engine.Network;
 
 using Game.Network;
-using Game.Network.Handling;
+using Game.Network.Transport;
 using Game.Servers;
 using Game.World;
 
@@ -19,13 +19,11 @@ public sealed class ServerDiscoveryServiceTest
         {
             ProtocolVersion = 1, ClientCount = 2, MaxPlayerCount = 20, GameMode = ProtocolEnum.Encode(GameMode.Creative)
         };
-        PackageManager.RegisterPackage(new ServerInfoPackageHandler());
         await using var server = new NetworkHost();
         using var stop = new CancellationTokenSource();
         server.DatagramReceived += (source, payload) =>
         {
-            var request = PackageManager.DecodePackage<ServerInfoPackage>(null, payload);
-            Assert.True(request.Package.RequestInfo);
+            Assert.IsType<ServerInfoRequestPackage>(Assert.Single(ProtocolPacketCodec.Decode(payload)));
             source.Send(NetNode.CreateUnconnectedPayload(response));
         };
         var polling = Task.Run(
@@ -61,8 +59,6 @@ public sealed class ServerDiscoveryServiceTest
             catch (OperationCanceledException)
             {
             }
-
-            PackageManager.UnregisterPackage(typeof(ServerInfoPackage));
         }
     }
 
@@ -71,7 +67,7 @@ public sealed class ServerDiscoveryServiceTest
     {
         await using var network = new NetworkHost();
         var attempts = 1;
-        await ServerDiscoveryService.PollAsync(
+        await NetworkEventPump.PollAsync(
             network,
             TimeSpan.FromSeconds(5),
             CancellationToken.None,
@@ -85,7 +81,7 @@ public sealed class ServerDiscoveryServiceTest
     public async Task CompletedProbeDoesNotRetry()
     {
         await using var network = new NetworkHost();
-        await ServerDiscoveryService.PollAsync(
+        await NetworkEventPump.PollAsync(
             network,
             TimeSpan.FromSeconds(5),
             CancellationToken.None,
@@ -98,7 +94,7 @@ public sealed class ServerDiscoveryServiceTest
     public async Task ShortDeadlineDoesNotRetryAfterTimeout()
     {
         await using var network = new NetworkHost();
-        await ServerDiscoveryService.PollAsync(
+        await NetworkEventPump.PollAsync(
             network,
             TimeSpan.FromMilliseconds(20),
             CancellationToken.None,
@@ -114,7 +110,7 @@ public sealed class ServerDiscoveryServiceTest
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            ServerDiscoveryService.PollAsync(
+            NetworkEventPump.PollAsync(
                 network,
                 TimeSpan.FromSeconds(5),
                 cancellation.Token,

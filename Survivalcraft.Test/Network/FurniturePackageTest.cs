@@ -1,4 +1,3 @@
-using Game.Network;
 using Game.Network.Handling;
 using Game.Network.Transport;
 
@@ -12,7 +11,7 @@ public sealed class FurniturePackageTest
     [InlineData(int.MaxValue)]
     public void DesignChainRejectsInvalidLinkIndex(int index)
     {
-        var design = new Game.Furniture.FurnitureDesign(null) { Index = 7 };
+        var design = new Game.Furniture.FurnitureDesign(null, null) { Index = 7 };
         design.SetValues(2, new int[8]);
         var node = design.Save();
         node.SetValue("NetworkIndex", 7);
@@ -20,7 +19,7 @@ public sealed class FurniturePackageTest
         var values = new EntitySystem.TemplatesDatabase.ValuesDictionary();
         values.SetValue("0", node);
         var package = new FurnitureDesignAddRequestPackage
-            { DesignXml = CommonLib.SerializeVDict(values) };
+            { DesignXml = ValuesDictionaryXmlCodec.Serialize(values) };
 
         var error = Assert.Throws<InvalidOperationException>(() =>
             FurnitureSnapshotSerializer.ReadDesignChain(package.DesignXml, null)
@@ -32,8 +31,8 @@ public sealed class FurniturePackageTest
     [Fact]
     public void DesignChainPreservesIdsAndCircularLinks()
     {
-        var first = new Game.Furniture.FurnitureDesign(null) { Index = 7 };
-        var second = new Game.Furniture.FurnitureDesign(null) { Index = 12 };
+        var first = new Game.Furniture.FurnitureDesign(null, null) { Index = 7 };
+        var second = new Game.Furniture.FurnitureDesign(null, null) { Index = 12 };
         first.SetValues(2, new int[8]);
         second.SetValues(2, new int[8]);
         first.LinkedDesign = second;
@@ -100,9 +99,9 @@ public sealed class FurniturePackageTest
     [Fact]
     public void ImportPreservesDisconnectedChainsWithUnassignedIds()
     {
-        var first = new Game.Furniture.FurnitureDesign(null) { Index = -1 };
-        var second = new Game.Furniture.FurnitureDesign(null) { Index = -1 };
-        var third = new Game.Furniture.FurnitureDesign(null) { Index = -1 };
+        var first = new Game.Furniture.FurnitureDesign(null, null) { Index = -1 };
+        var second = new Game.Furniture.FurnitureDesign(null, null) { Index = -1 };
+        var third = new Game.Furniture.FurnitureDesign(null, null) { Index = -1 };
         foreach (var design in new[] { first, second, third })
         {
             design.SetValues(2, new int[8]);

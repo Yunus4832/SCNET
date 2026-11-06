@@ -28,11 +28,6 @@ public class MessagePackageTest
                 GameMessageTone.Warning,
                 GameMessagePresentation.Default | GameMessagePresentation.Toast
             )
-            {
-                LocalizationSection = "MultiplayerUI",
-                LocalizationKey = "PlayerJoined",
-                LocalizationArguments = ["Lily"]
-            }
         );
 
         var clone = RoundTrip(package);
@@ -47,9 +42,17 @@ public class MessagePackageTest
         Assert.Equal("位置：出生点", clone.GameMessage.Content.PlainText);
         Assert.Null(clone.GameMessage.Content.Segments[0].Color);
         Assert.Equal(new Color(12, 34, 56, 78), clone.GameMessage.Content.Segments[1].Color);
-        Assert.Equal("MultiplayerUI", clone.GameMessage.LocalizationSection);
-        Assert.Equal("PlayerJoined", clone.GameMessage.LocalizationKey);
-        Assert.Equal(["Lily"], clone.GameMessage.LocalizationArguments);
+    }
+
+    [Fact]
+    public void MessageCarriesSingleCanonicalLocalizedSource()
+    {
+        var source = LocalizedText.Format(
+            new LocalizedText("MultiplayerUI", "PlayerJoined", "{0} joined"),
+            LocalizedText.Literal("Lily")
+        );
+        var clone = RoundTrip(new MessagePackage(GameMessage.System([new MessageSegment(source)])));
+        Assert.Equal(source, Assert.Single(clone.GameMessage.Content.Segments).Text);
     }
 
     [Theory]

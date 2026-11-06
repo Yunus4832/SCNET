@@ -6,13 +6,13 @@ using Engine.Core.Security;
 
 using Game.Characters;
 using Game.Extensions;
-using Game.Managers;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 using Game.Terrains;
 using Game.World;
 
+using Survivalcraft.Test.Fixtures;
 using Survivalcraft.Test.Modding;
 
 namespace Survivalcraft.Test.Subsystems;
@@ -20,22 +20,20 @@ namespace Survivalcraft.Test.Subsystems;
 [Collection(ConfigFileCollection.Name)]
 public sealed class SubsystemCharactersOfflineTest
 {
-    [Theory]
-    [InlineData(RunModeType.Gui)]
-    [InlineData(RunModeType.HeadlessServer)]
-    public void OfflineRequestsRunAfterAllPlayersUpdateAndOnlyOnce(RunModeType mode)
+    [Fact]
+    public void OfflineRequestsRunAfterAllPlayersUpdateAndOnlyOnce()
     {
-        var previousMode = RunMode.Value;
-        var previousWorldRole = GameManager.Role;
-        var previousClients = CommonLib.Net.Clients;
-        var previousGarbageCollect = SettingsManager.Current.AutoGarbageCollect;
+        var previousNodeRole = CommonLib.Net.Role;
+        var previousClients = CommonLib.Net.Clients.Values.ToArray();
+        var previousGarbageCollect = Game.Configuration.HostingConfiguration.Preferences.AutoGarbageCollect;
         try
         {
-            RunMode.Value = mode;
-            CommonLib.Net.Role = WorldRole.Server;
-            CommonLib.Net.Clients = [];
-            SettingsManager.Current.AutoGarbageCollect = false;
+            CommonLib.Net.Role = NodeRole.Authority;
+            ConnectionTestEnvironment.SetRoster(CommonLib.Net, []);
+            Game.Configuration.HostingConfiguration.Preferences.AutoGarbageCollect = false;
+            using var project = new RuntimeTestProject(RuntimeSide.Authority);
             var subsystem = new SubsystemCharacters();
+            project.InitializeSubsystem(subsystem);
             var updater = (TerrainUpdater)RuntimeHelpers.GetUninitializedObject(typeof(TerrainUpdater));
             SetField(updater, "_pendingLocations", new Dictionary<int, TerrainUpdateLocation?>());
             var parametersField = typeof(TerrainUpdater).GetField(
@@ -55,10 +53,17 @@ public sealed class SubsystemCharactersOfflineTest
             for (byte id = 1; id <= 2; id++)
             {
                 var player = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
+                typeof(CharacterData).GetField(
+                    "<Project>k__BackingField",
+                    BindingFlags.Instance | BindingFlags.NonPublic
+                )!.SetValue(player, project);
                 player.CharacterId = Guid.NewGuid();
                 player.CharacterIndex = id;
                 player.Name = $"Player {id}";
-                player.OwnerAddress = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
+                CharacterTestEnvironment.SetSyntheticOwner(
+                    player,
+                    new PlayerAddress(IdentityAddress.Encode(new byte[32]))
+                );
                 player.CharacterSkinName = "$Male1";
                 typeof(CharacterData).GetProperty(nameof(CharacterData.IsLocalCharacter))!.SetValue(player, id == 1);
                 var machine = new StateMachine();
@@ -78,7 +83,8 @@ public sealed class SubsystemCharactersOfflineTest
                 machine.TransitionTo("RequestOffline");
                 SetField(player, "_stateMachine", machine);
                 records.Add(player);
-                CommonLib.Net.Clients.Add(id, new Client(null, id, Guid.NewGuid(), player.CharacterId, null));
+                WorldNetworkBinding.For(project).RequireNode()
+                    .AddClient(new Client(null, id, Guid.NewGuid(), player.CharacterId));
             }
 
             subsystem.Update(0.05f);
@@ -91,10 +97,9 @@ public sealed class SubsystemCharactersOfflineTest
         }
         finally
         {
-            SettingsManager.Current.AutoGarbageCollect = previousGarbageCollect;
-            CommonLib.Net.Clients = previousClients;
-            CommonLib.Net.Role = previousWorldRole;
-            RunMode.Value = previousMode;
+            Game.Configuration.HostingConfiguration.Preferences.AutoGarbageCollect = previousGarbageCollect;
+            ConnectionTestEnvironment.SetRoster(CommonLib.Net, previousClients);
+            CommonLib.Net.Role = previousNodeRole;
         }
     }
 

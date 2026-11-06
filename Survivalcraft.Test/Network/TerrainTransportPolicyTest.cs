@@ -1,7 +1,6 @@
 using Engine.Core.Mathematics;
 using Engine.Network;
 
-using Game.Network;
 using Game.Network.Chunks;
 using Game.Network.Transport;
 
@@ -33,7 +32,7 @@ public sealed class TerrainTransportPolicyTest
         var package = new TerrainFragmentPackage { ChunkFragment = fragment };
         var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
 
-        var datagram = CommonLib.GetWriter(writer);
+        var datagram = NetworkWireFraming.Wrap(writer);
 
         Assert.InRange(datagram.Length, 1, 419);
     }
@@ -71,7 +70,7 @@ public sealed class TerrainTransportPolicyTest
     public void CellDeltasUseReliableOrderedControlMessages()
     {
         var package = new TerrainCellDeltaPackage
-            { CellDelta = new TerrainCellDelta(new Point3(1, 2, 3), 4, 5, 6) };
+            { CellDeltas = [new TerrainCellDelta(new Point3(1, 2, 3), 4, 5, 6)] };
 
         var transport = PackageTransportPolicy.Get(package);
 

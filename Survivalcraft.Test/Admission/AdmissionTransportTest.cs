@@ -9,6 +9,7 @@ using EntitySystem.Core;
 
 using Game.Admission;
 using Game.Managers;
+using Game.Modding;
 using Game.Network;
 using Game.Network.Handling;
 using Game.Subsystems;
@@ -42,325 +43,335 @@ public sealed class AdmissionTransportTest
         bool saturateVerificationBudget
     )
     {
-        var previousProject = GameManager.Project;
-        var previousWorldRole = GameManager.Role;
-        var registrations = typeof(PackageManager).GetField(
-            "_registeredOwners",
-            BindingFlags.Static | BindingFlags.NonPublic
-        )!;
-        var owners = (Dictionary<Type, Type>)registrations.GetValue(null)!;
-        var previousRegistrations = owners.ToArray();
-        var handlers = (Dictionary<Type, IPackageHandler>)typeof(PackageDispatcher)
-            .GetField("_handlers", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
-        var previousHandlers = handlers.ToArray();
-        try
-        {
-            PackageManager.Initialize();
-            CommonLib.Net.Role = WorldRole.Server;
-            using var project = new AdmissionProject();
-            typeof(GameManager).GetProperty(nameof(GameManager.Project))!.SetValue(null, project);
-            using var serverKey = NetworkIdentity.Create();
-            using var userKey = NetworkIdentity.Create();
-            await using var server = new NetworkHost(
-                options: new NetworkHostOptions
-                    { Identity = serverKey, DisconnectTimeout = TimeSpan.FromMilliseconds(CommonLib.DisconnectTimeout) }
-            );
-            await using var remote = new NetworkHost(
-                options: new NetworkHostOptions
-                    { Identity = userKey, DisconnectTimeout = TimeSpan.FromMilliseconds(CommonLib.DisconnectTimeout) }
-            );
-            var node = new NetNode { CurrentStage = NetNode.Stage.Connected };
-            var self = new Client(Guid.Empty, project);
-            node.Self = self;
-            node.Server = self;
-            node.Role = WorldRole.Server;
-            node.AddClient(self);
-            using var provider = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-            var policy = mode switch
+        using var project = new AdmissionProject();
+        using var serverKey = NetworkIdentity.Create();
+        using var userKey = NetworkIdentity.Create();
+        await using var server = new NetworkHost(
+            options: new NetworkHostOptions
             {
-                ServerAdmissionMode.Open => ServerAdmissionPolicy.Open,
-                ServerAdmissionMode.Password => ServerAdmissionPolicy.WithPassword("transport-test-password"),
-                _ => ServerAdmissionPolicy.WithAuthority(
-                    new AuthenticationServiceEndpoint(
-                        new AuthenticationServiceDescription(
-                            AuthenticationProtocol.Version,
-                            "Test",
-                            "https://auth.test/",
-                            AuthenticationPublicKey.From(provider).EncodedKey
-                        )
+                Identity = serverKey,
+                DisconnectTimeout = TimeSpan.FromMilliseconds(
+                    Game.Network.Transport.NetworkTransportLimits.DisconnectTimeoutMilliseconds
+                )
+            }
+        );
+        await using var remote = new NetworkHost(
+            options: new NetworkHostOptions
+            {
+                Identity = userKey,
+                DisconnectTimeout = TimeSpan.FromMilliseconds(
+                    Game.Network.Transport.NetworkTransportLimits.DisconnectTimeoutMilliseconds
+                )
+            }
+        );
+        var serverHandlers = new PackageHandlerCatalogBuilder();
+        serverHandlers.RegisterFamily(() => new AdmissionProofPackageHandler());
+        serverHandlers.RegisterFamily(() =>
+            new ConnectionRequestPackageHandler(ModProfileManager.EmptyDataHash)
+        );
+        var serverCatalog = serverHandlers.Build();
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            serverCatalog,
+            NodeRole.Authority
+        ) { CurrentStage = NetNode.Stage.Connected };
+        var self = new Client(Guid.Empty);
+        node.Self = self;
+        node.Server = self;
+        WorldNetworkBinding.For(node.Runtime).InstallHandlers(serverCatalog);
+        node.Runtime.BindProject(project);
+        node.AddClient(self);
+        using var provider = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var policy = mode switch
+        {
+            ServerAdmissionMode.Open => ServerAdmissionPolicy.Open,
+            ServerAdmissionMode.Password => ServerAdmissionPolicy.WithPassword("transport-test-password"),
+            _ => ServerAdmissionPolicy.WithAuthority(
+                new AuthenticationServiceEndpoint(
+                    new AuthenticationServiceDescription(
+                        AuthenticationProtocol.Version,
+                        "Test",
+                        "https://auth.test/",
+                        AuthenticationPublicKey.From(provider).EncodedKey
                     )
                 )
-            };
-            var controller = new ServerAdmissionController(node, project, policy, serverKey.PublicIdentity.Address);
-            typeof(NetNode).GetProperty("AdmissionController", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .SetValue(node, controller);
-            var gameplay = 0;
-            var admitted = 0;
-            node.OnReceive += (_, messages) =>
+            )
+        };
+        var controller = new ServerAdmissionController(node, project, policy, serverKey.PublicIdentity.Address);
+        typeof(NetNode).GetProperty("AdmissionController", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(node, controller);
+        var gameplay = 0;
+        var admitted = 0;
+        node.OnReceive += (_, messages) =>
+        {
+            foreach (var received in messages)
             {
-                foreach (var received in messages)
+                if (received.Package is AdmissionProofPackage)
                 {
-                    if (received.Package is AdmissionProofPackage) { PackageDispatcher.Handle(received); }
-                    else { gameplay++; }
+                    WorldNetworkBinding.For(node.Runtime).Dispatch(received);
                 }
-            };
-            node.OnClientTransportConnected += _ => admitted++;
-            var receive = typeof(NetNode).GetMethod(
-                    "NetworkReceiveEvent",
-                    BindingFlags.Instance | BindingFlags.NonPublic
-                )!
-                .CreateDelegate<Action<NetworkConnection, NetworkMessage>>(node);
-            server.Received += receive;
-            server.ConnectionRequested += request =>
-            {
-                var metadata = ProtocolPacketCodec.Decode(request.Handshake).OfType<ConnectionRequestPackage>()
-                    .Single();
-                new ConnectionRequestPackageHandler().Handle(metadata, new(node, true, new Client(request)));
-            };
-            AdmissionChallengePackage? challenge = null;
-            var replies = new List<AdmissionResultPackage>();
-            var rejects = new List<ConnectionRejectPackage>();
-            var token = Guid.NewGuid();
-            var clientNode = new NetNode { CurrentStage = NetNode.Stage.Bootstrapping, TokenId = token };
-            var bootstraps = new List<BootstrapPackage>();
-            clientNode.OnReceive += (_, messages) =>
-                bootstraps.AddRange(messages.Select(message => message.Package).OfType<BootstrapPackage>());
-            remote.Received += (source, message) =>
-            {
-                foreach (var package in ProtocolPacketCodec.Decode(message.Payload))
-                {
-                    if (package is AdmissionChallengePackage found) { challenge = found; }
-
-                    if (package is ConnectionRejectPackage reject)
-                    {
-                        rejects.Add(reject);
-                        new ConnectionRejectPackageHandler().Handle(reject, new(clientNode, false, new Client(source)));
-                    }
-
-                    if (package is AdmissionResultPackage result)
-                    {
-                        replies.Add(result);
-                        clientNode.ReceiveAdmissionResult(new Client(source), result);
-                    }
-                }
-            };
-            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            var connecting = remote.ConnectAsync(
-                new IPEndPoint(IPAddress.Loopback, server.LocalPort),
-                ProtocolPacketCodec.Encode(
-                    [
-                        new ConnectionRequestPackage(
-                            Guid.NewGuid(),
-                            VersionsManager.ProtocolVersion,
-                            GameProtocol.EmptyModDataHash
-                        )
-                    ]
-                ),
-                cancellation.Token
-            );
-
-            async Task Until(Func<bool> condition)
-            {
-                while (!condition())
-                {
-                    cancellation.Token.ThrowIfCancellationRequested();
-                    server.DispatchEvents();
-                    remote.DispatchEvents();
-                    controller.Update();
-                    await Task.Delay(2, cancellation.Token);
-                }
+                else { gameplay++; }
             }
-
-            await Until(() => challenge is not null && connecting.IsCompleted);
-            var peer = await connecting;
-            var receivedChallenge = Assert.IsType<AdmissionChallengePackage>(challenge);
-            var subject = new Game.Protocol.Identity.PlayerAddress(userKey.PublicIdentity.Address);
-            Assert.Single(node.Clients);
-            Assert.Empty(project.Players.Store.Entries);
-            Assert.Equal(0, admitted);
-            peer.Send(ProtocolPacketCodec.Encode([new SubsystemTimePackage(0, 0)]));
-            if (saturateVerificationBudget)
+        };
+        node.OnClientTransportConnected += _ => admitted++;
+        var receive = typeof(NetNode).GetMethod(
+                "NetworkReceiveEvent",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            )!
+            .CreateDelegate<Action<NetworkConnection, NetworkMessage>>(node);
+        server.Received += receive;
+        server.ConnectionRequested += request =>
+        {
+            var metadata = ProtocolPacketCodec.Decode(request.Handshake).OfType<ConnectionRequestPackage>()
+                .Single();
+            WorldNetworkBinding.For(node.Runtime).Resolve<ConnectionRequestPackage>()
+                .Handle(metadata, node.CreateReceiveContext(new Client(request)));
+        };
+        AdmissionChallengePackage? challenge = null;
+        var replies = new List<AdmissionResultPackage>();
+        var rejects = new List<ConnectionRejectPackage>();
+        var token = Guid.NewGuid();
+        var clientNode = new NetNode(
+                NetNodeOptions.Default,
+                true,
+                PackageHandlerCatalog.Empty,
+                NodeRole.Inactive
+            )
+            { CurrentStage = NetNode.Stage.Bootstrapping, TokenId = token };
+        var bootstraps = new List<BootstrapPackage>();
+        clientNode.OnReceive += (_, messages) =>
+            bootstraps.AddRange(messages.Select(message => message.Package).OfType<BootstrapPackage>());
+        remote.Received += (source, message) =>
+        {
+            foreach (var package in ProtocolPacketCodec.Decode(message.Payload))
             {
-                var budget = Assert.IsType<SemaphoreSlim>(
-                    typeof(ServerAdmissionController)
-                        .GetField("_verificationSlots", BindingFlags.Instance | BindingFlags.NonPublic)
-                        ?.GetValue(controller)
-                );
-                for (var index = 0; index < 32; index++) { Assert.True(budget.Wait(0)); }
+                if (package is AdmissionChallengePackage found) { challenge = found; }
 
-                try
+                if (package is ConnectionRejectPackage reject)
                 {
-                    peer.Send(
-                        ProtocolPacketCodec.Encode([new AdmissionProofPackage(receivedChallenge.Nonce, "wrong")])
+                    rejects.Add(reject);
+                    new ConnectionRejectPackageHandler().Handle(
+                        reject,
+                        clientNode.CreateReceiveContext(new Client(source))
                     );
-                    await Until(() => replies.Count == 1);
-                    Assert.Equal(AdmissionResultCode.RateLimited, replies[0].Code);
-                    Assert.Equal(0, admitted);
-                    Assert.Empty(project.Players.Store.Entries);
-                    Assert.Single(node.Clients);
                 }
-                finally { budget.Release(32); }
 
-                replies.Clear();
+                if (package is AdmissionResultPackage result)
+                {
+                    replies.Add(result);
+                    clientNode.ReceiveAdmissionResult(new Client(source), result);
+                }
             }
+        };
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var connecting = remote.ConnectAsync(
+            new IPEndPoint(IPAddress.Loopback, server.LocalPort),
+            ProtocolPacketCodec.Encode(
+                [
+                    new ConnectionRequestPackage(
+                        Guid.NewGuid(),
+                        VersionsManager.ProtocolVersion,
+                        GameProtocol.EmptyModDataHash
+                    )
+                ]
+            ),
+            cancellation.Token
+        );
 
-            // A control-channel barrier proves the forbidden packet was processed before the proof.
-            if (mode != ServerAdmissionMode.Open)
+        async Task Until(Func<bool> condition)
+        {
+            while (!condition())
+            {
+                cancellation.Token.ThrowIfCancellationRequested();
+                server.DispatchEvents();
+                node.PumpReceivedPackages();
+                remote.DispatchEvents();
+                clientNode.PumpReceivedPackages();
+                controller.Update();
+                await Task.Delay(2, cancellation.Token);
+            }
+        }
+
+        await Until(() => challenge is not null && connecting.IsCompleted);
+        var peer = await connecting;
+        var receivedChallenge = Assert.IsType<AdmissionChallengePackage>(challenge);
+        var subject = new Game.Protocol.Identity.PlayerAddress(userKey.PublicIdentity.Address);
+        Assert.Single(node.Clients);
+        Assert.Empty(project.Players.Store.Entries);
+        Assert.Equal(0, admitted);
+        peer.Send(ProtocolPacketCodec.Encode([new SubsystemTimePackage(0, 0)]));
+        if (saturateVerificationBudget)
+        {
+            var budget = Assert.IsType<SemaphoreSlim>(
+                typeof(ServerAdmissionController)
+                    .GetField("_verificationSlots", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.GetValue(controller)
+            );
+            for (var index = 0; index < 32; index++) { Assert.True(budget.Wait(0)); }
+
+            try
             {
                 peer.Send(ProtocolPacketCodec.Encode([new AdmissionProofPackage(receivedChallenge.Nonce, "wrong")]));
                 await Until(() => replies.Count == 1);
-                Assert.Equal(
-                    mode switch
-                    {
-                        ServerAdmissionMode.Password => AdmissionResultCode.IncorrectPassword,
-                        ServerAdmissionMode.External => AdmissionResultCode.ApprovalRejected,
-                        _ => AdmissionResultCode.Denied
-                    },
-                    replies[0].Code
-                );
-                Assert.Equal(0, gameplay);
-                Assert.Empty(project.Players.Store.Entries);
-            }
-
-            if (banDuringWait) { project.Players.Store.Ban(subject, "test", null, DateTimeOffset.UtcNow); }
-
-            // Respect the actual retry deadline; this also keeps the DTLS transport alive while awaiting input.
-            if (replies.Count > 0)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(replies[0].RetryAfterSeconds), cancellation.Token);
-            }
-
-            if (cancelBeforeCompletion)
-            {
-                peer.Send(
-                    ProtocolPacketCodec.Encode(
-                        [
-                            new AdmissionProofPackage(receivedChallenge.Nonce, "transport-test-password"),
-                            new AdmissionProofPackage(receivedChallenge.Nonce, Cancel: true)
-                        ]
-                    )
-                );
-                await Until(() => replies.Any(reply => reply.Code == AdmissionResultCode.Cancelled));
-                controller.Update();
+                Assert.Equal(AdmissionResultCode.RateLimited, replies[0].Code);
                 Assert.Equal(0, admitted);
                 Assert.Empty(project.Players.Store.Entries);
                 Assert.Single(node.Clients);
-                Assert.DoesNotContain(replies, reply => reply.Code == AdmissionResultCode.Accepted);
-                return;
             }
+            finally { budget.Release(32); }
 
-            if (mode == ServerAdmissionMode.Open)
-            {
-                // Force bulk/control reordering at the receive boundary without relying on network scheduling.
-                var receiveClient = typeof(NetNode).GetMethod(
-                        "NetworkReceiveEvent",
-                        BindingFlags.Instance | BindingFlags.NonPublic
-                    )!
-                    .CreateDelegate<Action<NetworkConnection, NetworkMessage>>(clientNode);
-                var early = new BootstrapPackage
+            replies.Clear();
+        }
+
+        // A control-channel barrier proves the forbidden packet was processed before the proof.
+        if (mode != ServerAdmissionMode.Open)
+        {
+            peer.Send(ProtocolPacketCodec.Encode([new AdmissionProofPackage(receivedChallenge.Nonce, "wrong")]));
+            await Until(() => replies.Count == 1);
+            Assert.Equal(
+                mode switch
                 {
-                    Epoch = Guid.NewGuid(),
-                    World = new WorldMetadata("early", 1, ProtocolEnum.Encode(GameMode.Creative), 20),
-                    ClientList = ClientPackageBuilder.Snapshot(
-                        [new Client(null, 1, token, Guid.Empty, null) { PlayerAddress = subject }]
-                    )
-                };
-                receiveClient(
-                    peer,
-                    new NetworkMessage(ProtocolPacketCodec.Encode([early]), DeliveryMode.ReliableOrdered)
-                );
-                receiveClient(
-                    peer,
-                    new NetworkMessage(
-                        ProtocolPacketCodec.Encode([early with { Epoch = Guid.NewGuid() }]),
-                        DeliveryMode.ReliableOrdered
-                    )
-                );
-                Assert.Empty(bootstraps);
-            }
+                    ServerAdmissionMode.Password => AdmissionResultCode.IncorrectPassword,
+                    ServerAdmissionMode.External => AdmissionResultCode.ApprovalRejected,
+                    _ => AdmissionResultCode.Denied
+                },
+                replies[0].Code
+            );
+            Assert.Equal(0, gameplay);
+            Assert.Empty(project.Players.Store.Entries);
+        }
 
-            clientNode.ReceiveAdmissionChallenge(new Client(peer), receivedChallenge);
-            if (mode != ServerAdmissionMode.Open)
+        if (banDuringWait) { project.Players.Store.Ban(subject, "test", null, DateTimeOffset.UtcNow); }
+
+        // Respect the actual retry deadline; this also keeps the DTLS transport alive while awaiting input.
+        if (replies.Count > 0)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(replies[0].RetryAfterSeconds), cancellation.Token);
+        }
+
+        if (cancelBeforeCompletion)
+        {
+            peer.Send(
+                ProtocolPacketCodec.Encode(
+                    [
+                        new AdmissionProofPackage(receivedChallenge.Nonce, "transport-test-password"),
+                        new AdmissionProofPackage(receivedChallenge.Nonce, Cancel: true)
+                    ]
+                )
+            );
+            await Until(() => replies.Any(reply => reply.Code == AdmissionResultCode.Cancelled));
+            controller.Update();
+            Assert.Equal(0, admitted);
+            Assert.Empty(project.Players.Store.Entries);
+            Assert.Single(node.Clients);
+            Assert.DoesNotContain(replies, reply => reply.Code == AdmissionResultCode.Accepted);
+            return;
+        }
+
+        if (mode == ServerAdmissionMode.Open)
+        {
+            // Force bulk/control reordering at the receive boundary without relying on network scheduling.
+            var receiveClient = typeof(NetNode).GetMethod(
+                    "NetworkReceiveEvent",
+                    BindingFlags.Instance | BindingFlags.NonPublic
+                )!
+                .CreateDelegate<Action<NetworkConnection, NetworkMessage>>(clientNode);
+            var earlyWorld = new WorldRuntimeContext(RuntimeSide.Authority, false);
+            using var earlyRoster = new WorldConnections(earlyWorld);
+            var earlyPlayer = new Client(null, 1, token, Guid.Empty) { PlayerAddress = subject };
+            earlyRoster.Register(earlyPlayer);
+            var early = new BootstrapPackage
             {
-                if (mode == ServerAdmissionMode.External && !banDuringWait)
-                {
-                    var waiting = System.Diagnostics.Stopwatch.StartNew();
-                    while (waiting.Elapsed < TimeSpan.FromSeconds(12))
-                    {
-                        server.DispatchEvents();
-                        remote.DispatchEvents();
-                        controller.Update();
-                        await Task.Delay(20, cancellation.Token);
-                    }
+                Epoch = Guid.NewGuid(),
+                World = new WorldMetadata("early", 1, ProtocolEnum.Encode(GameMode.Creative), 20),
+                ClientList = ClientPackageBuilder.Snapshot([earlyPlayer])
+            };
+            earlyWorld.Close();
+            receiveClient(
+                peer,
+                new NetworkMessage(ProtocolPacketCodec.Encode([early]), DeliveryMode.ReliableOrdered)
+            );
+            receiveClient(
+                peer,
+                new NetworkMessage(
+                    ProtocolPacketCodec.Encode([early with { Epoch = Guid.NewGuid() }]),
+                    DeliveryMode.ReliableOrdered
+                )
+            );
+            Assert.Empty(bootstraps);
+        }
 
-                    Assert.True(peer.IsConnected);
-                    Assert.True(clientNode.AdmissionDeadline > DateTimeOffset.UtcNow);
+        clientNode.ReceiveAdmissionChallenge(new Client(peer), receivedChallenge);
+        if (mode != ServerAdmissionMode.Open)
+        {
+            if (mode == ServerAdmissionMode.External && !banDuringWait)
+            {
+                var waiting = System.Diagnostics.Stopwatch.StartNew();
+                while (waiting.Elapsed < TimeSpan.FromSeconds(12))
+                {
+                    server.DispatchEvents();
+                    remote.DispatchEvents();
+                    controller.Update();
+                    await Task.Delay(20, cancellation.Token);
                 }
 
-                var approval = mode == ServerAdmissionMode.External
-                    ? AdmissionApprovalTokens.Issue(
-                        provider,
-                        new AdmissionChallenge(
-                            userKey.PublicIdentity.Address,
-                            peer.PeerIdentity.Address,
-                            receivedChallenge.Nonce,
-                            AuthenticationNonce.Encode(peer.ChannelBinding.Span),
-                            receivedChallenge.ExpiresAt
-                        ),
-                        DateTimeOffset.UtcNow
-                    )
-                    : string.Empty;
-                var proof = new AdmissionProofPackage(
-                    receivedChallenge.Nonce,
-                    mode == ServerAdmissionMode.Password ? "transport-test-password" : string.Empty,
-                    approval
-                );
-                clientNode.TrySubmitAdmission(proof);
+                Assert.True(peer.IsConnected);
+                Assert.True(clientNode.AdmissionDeadline > DateTimeOffset.UtcNow);
             }
 
-            await Until(() =>
-                banDuringWait ? rejects.Count > 0 : replies.Any(reply => reply.Code == AdmissionResultCode.Accepted)
+            var approval = mode == ServerAdmissionMode.External
+                ? AdmissionApprovalTokens.Issue(
+                    provider,
+                    new AdmissionChallenge(
+                        userKey.PublicIdentity.Address,
+                        peer.PeerIdentity.Address,
+                        receivedChallenge.Nonce,
+                        AuthenticationNonce.Encode(peer.ChannelBinding.Span),
+                        receivedChallenge.ExpiresAt
+                    ),
+                    DateTimeOffset.UtcNow
+                )
+                : string.Empty;
+            var proof = new AdmissionProofPackage(
+                receivedChallenge.Nonce,
+                mode == ServerAdmissionMode.Password ? "transport-test-password" : string.Empty,
+                approval
             );
-            if (banDuringWait)
-            {
-                Assert.Contains("禁止", Assert.Single(rejects).Reason);
-                Assert.DoesNotContain(replies, reply => reply.Code == AdmissionResultCode.Accepted);
-                Assert.False(clientNode.AdmissionAccepted);
-                Assert.Equal(0, admitted);
-                Assert.Single(node.Clients);
-                return;
-            }
-
-            server.DispatchEvents();
-            controller.Update();
-            Assert.Null(clientNode.PendingAdmissionChallenge);
-            Assert.NotNull(clientNode.AdmissionDeadline);
-            Assert.True(clientNode.AdmissionAccepted);
-            if (mode == ServerAdmissionMode.Open)
-            {
-                Assert.True(BootstrapPackageHandler.CanApply(Assert.Single(bootstraps), clientNode));
-            }
-
-            Assert.Same(self, node.Clients[0]);
-            Assert.Equal(0, gameplay);
-            Assert.Equal(banDuringWait ? 0 : 1, admitted);
-            Assert.Equal(banDuringWait ? 1 : 2, node.Clients.Count);
-            if (!banDuringWait)
-            {
-                Assert.Equal(subject, node.Clients.Values.Single(client => client != self).PlayerAddress);
-                Assert.Single(project.Players.Store.Entries);
-            }
+            clientNode.TrySubmitAdmission(proof);
         }
-        finally
+
+        await Until(() =>
+            banDuringWait ? rejects.Count > 0 : replies.Any(reply => reply.Code == AdmissionResultCode.Accepted)
+        );
+        if (banDuringWait)
         {
-            owners.Clear();
-            foreach (var (type, owner) in previousRegistrations) { owners.Add(type, owner); }
+            Assert.Contains("禁止", Assert.Single(rejects).Reason);
+            Assert.DoesNotContain(replies, reply => reply.Code == AdmissionResultCode.Accepted);
+            Assert.False(clientNode.AdmissionAccepted);
+            Assert.Equal(0, admitted);
+            Assert.Single(node.Clients);
+            return;
+        }
 
-            handlers.Clear();
-            foreach (var entry in previousHandlers) { handlers.Add(entry.Key, entry.Value); }
+        server.DispatchEvents();
+        controller.Update();
+        Assert.Null(clientNode.PendingAdmissionChallenge);
+        Assert.NotNull(clientNode.AdmissionDeadline);
+        Assert.True(clientNode.AdmissionAccepted);
+        if (mode == ServerAdmissionMode.Open)
+        {
+            Assert.True(BootstrapPackageHandler.CanApply(Assert.Single(bootstraps), clientNode));
+        }
 
-            typeof(GameManager).GetProperty(nameof(GameManager.Project))!.SetValue(null, previousProject);
-            CommonLib.Net.Role = previousWorldRole;
+        Assert.Same(self, node.Clients[0]);
+        Assert.Equal(0, gameplay);
+        Assert.Equal(banDuringWait ? 0 : 1, admitted);
+        Assert.Equal(banDuringWait ? 1 : 2, node.Clients.Count);
+        if (!banDuringWait)
+        {
+            Assert.Equal(subject, node.Clients.Values.Single(client => client != self).PlayerAddress);
+            Assert.Single(project.Players.Store.Entries);
         }
     }
 
@@ -368,13 +379,17 @@ public sealed class AdmissionTransportTest
     public void UnregisteredRoutingSlotZeroCannotRemoveTheActualHostOrDispatchGameplay()
     {
         using var project = new Project();
-        var node = new NetNode { CurrentStage = NetNode.Stage.Connected };
-        var self = new Client(Guid.Empty, project);
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            PackageHandlerCatalog.Empty,
+            NodeRole.Authority
+        ) { CurrentStage = NetNode.Stage.Connected };
+        var self = new Client(Guid.Empty);
         node.Self = self;
         node.Server = self;
-        node.Role = WorldRole.Server;
         node.AddClient(self);
-        var provisional = new Client(null, 0, Guid.NewGuid(), Guid.Empty, project);
+        var provisional = new Client(null, 0, Guid.NewGuid(), Guid.Empty);
         Assert.False(node.CanReceiveFromSession(provisional, new SubsystemTimePackage(0, 0)));
         node.RemoveClientImmediate(provisional);
         Assert.Same(self, node.Clients[0]);
@@ -384,12 +399,18 @@ public sealed class AdmissionTransportTest
     [Fact]
     public void RemoteClientsCannotStopAServerWithAConnectionRejectionMessage()
     {
-        var node = new NetNode { CurrentStage = NetNode.Stage.Connected };
+        var node = new NetNode(
+                NetNodeOptions.Default,
+                true,
+                PackageHandlerCatalog.Empty,
+                NodeRole.Authority
+            )
+            { CurrentStage = NetNode.Stage.Connected };
         new ConnectionRejectPackageHandler().Handle(
             new ConnectionRejectPackage("untrusted stop"),
-            new(node, true, null)
+            node.CreateReceiveContext()
         );
-        Assert.Equal(string.Empty, node.Error);
+        Assert.Equal(string.Empty, node.StopReason.Message);
     }
 
     private sealed class AdmissionProject : Project

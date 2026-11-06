@@ -1,0 +1,13 @@
+global using Game.Protocol;
+global using Game.Protocol.Blocks;
+global using Game.Protocol.Characters;
+global using Game.Protocol.Commands;
+global using Game.Protocol.Connection;
+global using Game.Protocol.Entities;
+global using Game.Protocol.Localization;
+global using Game.Protocol.Messaging;
+global using Game.Protocol.Mods;
+global using Game.Protocol.Serialization;
+global using Game.Protocol.Teams;
+global using Game.Protocol.Terrain;
+global using Game.Protocol.World;

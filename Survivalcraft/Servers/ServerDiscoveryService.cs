@@ -3,7 +3,6 @@ using System.Net.Sockets;
 using Engine.Network;
 
 using Game.Network;
-using Game.Network.Handling;
 
 namespace Game.Servers;
 
@@ -50,9 +49,9 @@ public sealed class ServerDiscoveryService
                     return;
                 }
 
-                var package =
-                    PackageManager.DecodePackage<ServerInfoResponsePackage>(null, payload, new Client(remote));
-                status = ServerRuntimeStatus.FromPackage(package.Package, stopwatch.ElapsedMilliseconds);
+                if (!ServerInspectionProtocol.TryDecodeResponse(payload, out var response)) { return; }
+
+                status = ServerRuntimeStatus.FromPackage(response, stopwatch.ElapsedMilliseconds);
             };
 
             void SendProbe() =>
@@ -62,7 +61,13 @@ public sealed class ServerDiscoveryService
                 );
 
             SendProbe();
-            await PollAsync(network, timeout, cancellationToken, () => status is not null, SendProbe)
+            await Network.Transport.NetworkEventPump.PollAsync(
+                    network,
+                    timeout,
+                    cancellationToken,
+                    () => status is not null,
+                    SendProbe
+                )
                 .ConfigureAwait(false);
             return status ?? new ServerRuntimeStatus { Availability = ServerAvailability.Unavailable };
         }
@@ -97,11 +102,8 @@ public sealed class ServerDiscoveryService
 
                 try
                 {
-                    var package = PackageManager.DecodePackage<ServerInfoResponsePackage>(
-                        null,
-                        payload,
-                        new Client(remote)
-                    );
+                    if (!ServerInspectionProtocol.TryDecodeResponse(payload, out var response)) { return; }
+
                     var address = remote.ToString();
                     items[address] = new ServerItem
                     {
@@ -112,7 +114,7 @@ public sealed class ServerDiscoveryService
                         Address = address,
                         DisplayName = address,
                         Order = items.Count,
-                        RuntimeStatus = ServerRuntimeStatus.FromPackage(package.Package, stopwatch.ElapsedMilliseconds)
+                        RuntimeStatus = ServerRuntimeStatus.FromPackage(response, stopwatch.ElapsedMilliseconds)
                     };
                 }
                 catch (Exception exception)
@@ -122,9 +124,10 @@ public sealed class ServerDiscoveryService
             };
             network.BroadcastDatagram(
                 NetNode.CreateUnconnectedPayload(new ServerInfoRequestPackage()),
-                SettingsManager.Current.BroadcastPort
+                Configuration.HostingConfiguration.Preferences.BroadcastPort
             );
-            await PollAsync(network, timeout, cancellationToken, () => false).ConfigureAwait(false);
+            await Network.Transport.NetworkEventPump.PollAsync(network, timeout, cancellationToken, () => false)
+                .ConfigureAwait(false);
             return items.Values.ToArray();
         }
         catch (OperationCanceledException)
@@ -135,31 +138,6 @@ public sealed class ServerDiscoveryService
         {
             Log.Warning($"LAN discovery failed: {exception.Message}");
             return [];
-        }
-    }
-
-    internal static async Task PollAsync(
-        NetworkHost network,
-        TimeSpan timeout,
-        CancellationToken cancellationToken,
-        Func<bool> completed,
-        Action? retry = null
-    )
-    {
-        var stopwatch = Stopwatch.StartNew();
-        var nextRetry = TimeSpan.FromMilliseconds(250);
-        while (stopwatch.Elapsed < timeout && !completed())
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            network.DispatchEvents();
-            if (retry is not null && !completed() && stopwatch.Elapsed < timeout && stopwatch.Elapsed >= nextRetry)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                retry();
-                nextRetry = stopwatch.Elapsed + TimeSpan.FromMilliseconds(250);
-            }
-
-            await Task.Delay(2, cancellationToken).ConfigureAwait(false);
         }
     }
 }

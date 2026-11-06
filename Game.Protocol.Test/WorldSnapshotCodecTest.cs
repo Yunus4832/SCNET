@@ -25,7 +25,15 @@ public sealed class WorldSnapshotCodecTest
             {
                 List =
                 [
-                    new ClientIdentity(1, _identity, _identity, new PlayerAddress(IdentityAddress.Encode(new byte[32])))
+                    new ClientIdentity(
+                        1,
+                        _identity,
+                        _identity,
+                        new PlayerAddress(IdentityAddress.Encode(new byte[32])),
+                        ClientState.Connected,
+                        _identity,
+                        1
+                    )
                 ]
             },
             Characters = [new byte[] { 1, 2, 3 }],
@@ -49,7 +57,15 @@ public sealed class WorldSnapshotCodecTest
             {
                 List =
                 [
-                    new ClientIdentity(1, _identity, _identity, new PlayerAddress(IdentityAddress.Encode(new byte[32])))
+                    new ClientIdentity(
+                        1,
+                        _identity,
+                        _identity,
+                        new PlayerAddress(IdentityAddress.Encode(new byte[32])),
+                        ClientState.Connected,
+                        _identity,
+                        1
+                    )
                 ]
             },
             EntityData = Enumerable.Range(0, 4096).Select(index => (byte)index).ToArray()
@@ -71,7 +87,15 @@ public sealed class WorldSnapshotCodecTest
             {
                 List =
                 [
-                    new ClientIdentity(1, _identity, _identity, new PlayerAddress(IdentityAddress.Encode(new byte[32])))
+                    new ClientIdentity(
+                        1,
+                        _identity,
+                        _identity,
+                        new PlayerAddress(IdentityAddress.Encode(new byte[32])),
+                        ClientState.Connected,
+                        _identity,
+                        1
+                    )
                 ]
             },
             BlockMapping = [new BlockIndexEntry(ResourceId.Parse("example:block"), 300)],
@@ -95,7 +119,14 @@ public sealed class WorldSnapshotCodecTest
         {
             new CharacterSnapshot(
                 [1, 2],
-                new ClientIdentity(1, _identity, _identity, new PlayerAddress(IdentityAddress.Encode(new byte[32])))
+                new CharacterControllerSnapshot(
+                    1,
+                    _identity,
+                    new PlayerAddress(IdentityAddress.Encode(new byte[32])),
+                    ClientState.Connected,
+                    _identity,
+                    1
+                )
             )
         };
         var summaries = new[] { new CharacterEntitySnapshot(_identity, 42, Vector3.One, 0) };

@@ -1,8 +1,7 @@
 using System.Runtime.InteropServices;
 
+using Engine.Core.FileStorage;
 using Engine.Core.Mathematics;
-using Engine.Core.Runtime;
-using Engine.FileStorage;
 
 using Silk.NET.OpenGLES;
 
@@ -71,7 +70,7 @@ public class Texture2D : GraphicsResource
     public void SetData<T>(int mipLevel, T[] source, int sourceStartIndex = 0) where T : struct
     {
         VerifyParametersSetData(mipLevel, source, sourceStartIndex);
-        if (RunMode.Value == RunModeType.HeadlessServer)
+        if (!Display.IsDeviceAvailable)
         {
             return;
         }
@@ -112,7 +111,7 @@ public class Texture2D : GraphicsResource
     public virtual unsafe void SetData(int mipLevel, Image source)
     {
         VerifyParametersSetData(mipLevel, source);
-        if (RunMode.Value == RunModeType.HeadlessServer)
+        if (!Display.IsDeviceAvailable)
         {
             return;
         }
@@ -126,7 +125,7 @@ public class Texture2D : GraphicsResource
 
     public virtual void SetDataInternal(int mipLevel, nint source)
     {
-        if (RunMode.Value == RunModeType.HeadlessServer)
+        if (!Display.IsDeviceAvailable)
         {
             return;
         }
@@ -149,7 +148,7 @@ public class Texture2D : GraphicsResource
 
     public virtual unsafe void SetDataInternal(int mipLevel, void* source)
     {
-        if (RunMode.Value == RunModeType.HeadlessServer)
+        if (!Display.IsDeviceAvailable)
         {
             return;
         }
@@ -182,7 +181,7 @@ public class Texture2D : GraphicsResource
 
     public void AllocateTexture()
     {
-        if (RunMode.Value == RunModeType.HeadlessServer)
+        if (!Display.IsDeviceAvailable)
         {
             texture = 0;
             return;
@@ -240,7 +239,7 @@ public class Texture2D : GraphicsResource
     {
         var texture2D = new Texture2D(image.Width, image.Height, mipLevelsCount, ColorFormat.Rgba8888);
         texture2D.SetData(image);
-        if (RunMode.Value is RunModeType.Gui)
+        if (Display.IsDeviceAvailable)
         {
             if (mipLevelsCount > 1)
             {

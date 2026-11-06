@@ -7,7 +7,7 @@ public sealed record CharacterExperiencePackage : ComponentCharacterPackage
 {
     [IgnoreMember] public override CharacterAction Type => CharacterAction.AddExperience;
 
-    [Key(1)] public int Count { get; init; }
+    [Key(1)] public int LevelUps { get; init; }
 
     [Key(2)] public bool PlaySound { get; init; }
 

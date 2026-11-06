@@ -8,7 +8,10 @@ using EntitySystem.TemplatesDatabase;
 using Game.ElectricElements;
 using Game.Network;
 using Game.Subsystems;
+using Game.Subsystems.Behavior;
 using Game.World;
+
+using Survivalcraft.Test.Fixtures;
 
 namespace Survivalcraft.Test.Network;
 
@@ -33,7 +36,7 @@ public sealed class SpatialBootstrapStateTest
     public void NetworkBootstrapOmitsBlocksButRetainsItemDefinitions(bool network, int blockCount)
     {
         var behavior = new SubsystemMemoryBankBlockBehavior();
-        Attach(behavior, network);
+        using var project = Attach(behavior, network);
         var data = new MemoryBankData();
         behavior.SetBlockData(new Point3(1, 2, 3), data);
         behavior.ItemsData[7] = data;
@@ -51,7 +54,7 @@ public sealed class SpatialBootstrapStateTest
     public void NetworkBootstrapOmitsVoltageStateWithoutChangingDiskSave(bool network, string expected)
     {
         var electricity = new SubsystemElectricity();
-        Attach(electricity, network);
+        using var project = Attach(electricity, network);
         electricity.WritePersistentVoltage(new Point3(1, 2, 3), 0.5f);
         var values = new ValuesDictionary();
 
@@ -61,12 +64,11 @@ public sealed class SpatialBootstrapStateTest
         Assert.Equal(0, values.GetValue<int>("Step"));
     }
 
-    private static void Attach(Subsystem subsystem, bool network)
+    private static RuntimeTestProject Attach(Subsystem subsystem, bool network)
     {
-        typeof(Subsystem).GetProperty(nameof(Subsystem.Project))!
-            .SetValue(subsystem, new Project { SendToClientMode = network });
-        typeof(Subsystem).GetField("_initialized", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .SetValue(subsystem, true);
+        var project = new RuntimeTestProject(RuntimeSide.Authority) { SendToClientMode = network };
+        project.InitializeSubsystem(subsystem);
+        return project;
     }
 
     [Theory]
@@ -75,7 +77,7 @@ public sealed class SpatialBootstrapStateTest
     public void NetworkBootstrapOmitsSignTextWithoutChangingDiskSave(bool network, int count)
     {
         var behavior = new SubsystemSignBlockBehavior();
-        Attach(behavior, network);
+        using var project = Attach(behavior, network);
         typeof(SubsystemSignBlockBehavior).GetField(
                 "_subsystemGameInfo",
                 BindingFlags.Instance | BindingFlags.NonPublic

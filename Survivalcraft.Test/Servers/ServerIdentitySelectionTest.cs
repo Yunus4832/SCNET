@@ -23,7 +23,7 @@ public sealed class ServerIdentitySelectionTest
     {
         var worldAddress = _identities.Create(IdentityPurpose.Server, "World");
         var sessionAddress = _identities.Create(IdentityPurpose.Server, "Session");
-        var world = new WorldSettings();
+        var world = new WorldHostingSettings();
         Assert.Equal(
             _identities.GetSelectedAddress(IdentityPurpose.Server),
             ServerIdentitySelection.Resolve(_identities, null, world)
@@ -42,12 +42,12 @@ public sealed class ServerIdentitySelectionTest
     public void WorldStoresOnlyPublicIdentitySelection()
     {
         var address = _identities.Create(IdentityPurpose.Server, "World");
-        var world = new WorldSettings { ServerIdentityAddress = address };
+        var world = new WorldHostingSettings { ServerIdentityAddress = address };
         var values = new ValuesDictionary();
-        world.Save(values, false);
-        Assert.Equal(address, values.GetValue<string>(nameof(WorldSettings.ServerIdentityAddress)));
+        world.Save(values, "World");
+        Assert.Equal(address, values.GetValue<string>(nameof(WorldHostingSettings.ServerIdentityAddress)));
         Assert.False(values.ContainsKey("PrivateKey"));
-        var restored = new WorldSettings();
+        var restored = new WorldHostingSettings();
         restored.Load(values);
         Assert.Equal(address, restored.ServerIdentityAddress);
     }

@@ -6,6 +6,8 @@ using Content.Packaging.Payloads;
 
 using Engine.Media.Images;
 
+using Game.FileStorage;
+
 namespace Game.Managers;
 
 public sealed record ContentCreationIdentity(

@@ -2,7 +2,7 @@
 
 ## 三种身份
 
-- `LocalOperator`：本地进程控制者。GUI 管理操作、Headless 控制台及经过 Bearer 认证的本机 HTTP 使用同一身份，控制本进程。
+- `LocalOperator`：本地进程控制者。GUI 管理操作、独立服务器控制台及经过 Bearer 认证的本机 HTTP 使用同一身份，控制本进程。
 - `Player`：世界中的玩家。本地房主与远程玩家没有身份或权限差别；从连接已验证的存档主体读取权限，不根据连接顺序、设备或 IsLocalCharacter 提权。
 - `System`：内部自动流程。网络及 HTTP 请求不能自行声明该身份。
 
@@ -16,7 +16,7 @@
 | World | 单机世界或本机权威服务端世界 | LocalOperator、Player、System |
 | Server | 本机正在运行的服务器 | LocalOperator、Player、System |
 
-调用者的 `CommandPrincipalKind` 是单一身份；命令的 `AllowedPrincipals` 使用独立的 `CommandPrincipalKinds` 集合，可进一步声明需要具体玩家数据等身份约束。`HostRequirement` 限定 GUI 或 Headless 环境；`CanExecuteHere` 判断实际执行范围。具备权限不代表世界已加载或服务器已经监听，业务处理器仍检查动态条件。
+调用者的 `CommandPrincipalKind` 是单一身份；命令的 `AllowedPrincipals` 使用独立的 `CommandPrincipalKinds` 集合，可进一步声明需要具体玩家数据等身份约束。`HostRequirement` 限定 GUI 或 独立服务器环境；`CanExecuteHere` 根据传入 Project 的运行时判断实际执行范围，不读取进程全局角色：世界和服务器命令只能在尚未关闭的 Authority 世界执行；应用命令允许没有世界。客户端可构造并提交远程请求，不代表能在本地执行该命令。具备权限不代表世界已加载或服务器已经监听，业务处理器仍检查动态条件。
 
 玩家请求通过 CommandGateway：Application 在玩家所在进程执行，World／Server 在本机权威世界执行或通过 CommandPackage 发往服务器。服务器使用连接绑定的真实 Player 身份与服务器保存的权限。不能由客户端提供操作者身份或授权集合。
 
@@ -24,8 +24,8 @@
 
 HTTP 宿主提供两组独立入口，沿用 Bearer、显式启用及 loopback 监听：
 
-- `GET/POST /commands`：GUI 与 Headless 的本进程控制入口，使用 LocalOperator。客户端不转发此入口的世界／服务器命令。
-- `GET/POST /player/commands`：仅 GUI 提供，要求当前有活动玩家，使用真实 Player。单机／GUI 服务端在本地执行，客户端经 CommandGateway 和 CommandPackage 请求远程服务器。Headless 返回 404，不代表在线的远程玩家调用。
+- `GET/POST /commands`：GUI 与 独立服务器的本进程控制入口，使用 LocalOperator。客户端不转发此入口的世界／服务器命令。
+- `GET/POST /player/commands`：仅 GUI 提供，要求当前有活动玩家，使用真实 Player。单机／GUI 服务端在本地执行，客户端经 CommandGateway 和 CommandPackage 请求远程服务器。独立服务器返回 404，不代表在线的远程玩家调用。
 
 两组入口只暴露显式 HTTP binding。玩家入口只查询及调用 World／Server 命令；远程目录查询通过普通命令取得服务器按该玩家权限过滤的命令标识，再由本地 HTTP 适配器补充参数定义。HTTP 和文本适配器均先构造命令，再通过统一二进制请求发送，服务端按实际连接玩家重新校验。请求体不接受身份、权限或玩家 GUID 来替换当前调用者。客户端文本解析与补全使用不含存档主体记录或授权的输入上下文；它不能作为服务端执行身份，远程补全仍由服务端按实际会话过滤。玩家切换、退出世界或连接断开时尚未完成的请求失效。
 
@@ -72,7 +72,7 @@ GUI 房主、首位连接者及角色归属不提供领地权限。调试相机�
 封禁原因长度为 1–512 个字符，不允许控制字符；包含空格时需加引号。
 封禁保存于本存档的主体记录，记录原因、操作者主体（本地操作者为空）及时间。
 服务端在接受连接、恢复角色及下发世界快照前检查封禁，并断开该主体当前会话。
-解封保留角色归属、背包及权限，不会恢复已断开的连接，用户需重新连接。GUI 主机玩家的会话被封禁操作断开时，会保存并退出世界，同时停止该 GUI 托管的服务器；可通过 Headless 控制台等可信管理入口解封。
+解封保留角色归属、背包及权限，不会恢复已断开的连接，用户需重新连接。GUI 主机玩家的会话被封禁操作断开时，会保存并退出世界，同时停止该 GUI 托管的服务器；可通过 独立服务器控制台等可信管理入口解封。
 这些命令不操作外部认证服务的封禁。
 
 
@@ -132,5 +132,13 @@ GUI 房主、首位连接者及角色归属不提供领地权限。调试相机�
 
 
 玩家记录通过 `SubsystemPlayers.Store` 访问；角色查询通过 `SubsystemCharacters` 访问。
-会话身份和实际控制者通过 `PlayerSessionQuery` 查询，不能从角色所有者推断命令执行者。
+会话身份和实际控制者通过显式传入所属 `Project` 的 `PlayerSessionQuery` 查询，
+不能从角色所有者推断命令执行者，也不能从全局节点取得另一份世界的会话。
+客户端初始角色元数据只初始化该客户端世界的控制绑定，不创建玩家主体记录，不覆盖已有控制对象；
+权威世界的准入绑定不走这条客户端元数据路径。世界关闭后不再查询或修改后续运行时的会话。
 公共和私有位置标记由 `SubsystemPositionMarks` 保存；传送等命令仍按实际执行玩家及其权限判定访问。
+
+认领码由当前活跃的权威世界生成和验证，不读取应用的全局网络角色，也不在客户端副本上创建
+认领状态。GUI 显示权威世界的认领提示，并通过同一玩家命令网关提交；提示和反馈属于客户端界面。
+
+本地 HTTP 运维入口按命令域选择上下文：应用命令使用当前界面 Project，世界和服务器命令使用当前会话的 Authority Project。GUI 开服不会把运维操作落到客户端副本；仅连接远程服务器的客户端不通过这个入口远程执行运维命令。`/player/commands` 仍使用实际玩家身份向其权威服务器提交请求。

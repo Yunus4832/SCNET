@@ -71,7 +71,6 @@ fi
 args=(
     "$starter"
     --instance "$instance_name"
-    --gui
     --host
     --session "$session_name"
     --world "$world_name"

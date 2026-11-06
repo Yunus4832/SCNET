@@ -110,7 +110,7 @@ Writer 必须用 UTF-8 无 BOM、两空格缩进、LF 换行和上表字段顺�
 公开的逐字节测试向量位于 [PackageHashVectors.json](./PackageHashVectors.json)，其他语言实现必须得到其中记录的
 `packageHash`，不能仅以同一实现内 Writer/Reader 结果相等作为互操作证据。
 可由 Writer 直接打包的最小 Mod 黄金源位于 `Content.Packaging.Test/Assets/GoldenMod/`，其固定 PackageHash 为
-`337794900c515803f0cb6cd93d4862997c73c74cb19165508cf31c6da5753c18`。测试程序集还固定了五类最小逻辑包的 manifest、payload
+`31e5363e2ad6ec1e3e934fae5995be26066d286d2cc8fe041db90759803ca831`。测试程序集还固定了五类最小逻辑包的 manifest、payload
 字节和预期 PackageHash，任何协议实现变更都必须显式更新并审查这些值，不能由测试在运行时自行接受新 hash。
 
 长度前缀和排序消除了连接歧义；ZIP 条目顺序、压缩等级、压缩方式、时间戳、extra fields 和 ZIP 注释不参与。manifest 的空白或字段顺序变化会改变 `PackageHash`，因为它改变了实际 manifest 字节。ContentServer 可另存原始 ZIP 的 `BlobHash`，但它不是公开包身份，不能替代 `PackageHash`。
@@ -134,8 +134,7 @@ Writer 必须用 UTF-8 无 BOM、两空格缩进、LF 换行和上表字段顺�
   "mediaType": "application/json"
 },
 "metadata": {
-  "side": "common",
-  "entrypoints": { "common": "Example.ModEntry, Example" },
+  "entrypoint": "Example.ModEntry, Example",
   "dependencies": [
     { "identifier": "example.core", "minimumVersion": "1.2.0", "optional": false }
   ]
@@ -153,7 +152,11 @@ payload/assets/<identifier>/**
 程序集只允许文件名为 `*.dll` 的直接子项；data 与 assets 中只允许文件。`assets/<identifier>/` 的 Identifier 必须与 manifest 精确一致。模组贡献、程序集加载和资源命名空间见 [模组开发](../Modding.md)；权威字段由
 统一 `manifest.json` 和 metadata 提供，不另外读取旧模组清单格式。
 
-metadata 字段顺序为 `side`、`entrypoints`、`dependencies`。`side` 为 `common`、`client` 或 `server`。`entrypoints` 仅可含 `common`、`client`、`server`，值是非空程序集限定类型名；至少存在适用于声明 side 的入口，或包至少含一项 data/assets 贡献。dependencies 按 identifier ordinal 升序写出；每项字段顺序为 `identifier`、`minimumVersion`、`optional`，不得依赖自身、不得重复，minimumVersion 使用上述 SemVer 规则。
+metadata 字段顺序为 `entrypoint`、`dependencies`。`entrypoint` 必须存在，其值为非空程序集限定类型名，
+或纯数据/资源包使用的 `null`；为 `null` 时包必须至少含一项 data/assets 贡献。一个包只声明一个定义入口，
+不按宿主进程选择客户端或服务端版本；世界职责见 [模组开发](../Modding.md#模组定义与世界状态)。
+dependencies 按 identifier ordinal 升序写出；每项字段顺序为 `identifier`、`minimumVersion`、`optional`，
+不得依赖自身、不得重复，minimumVersion 使用上述 SemVer 规则。
 
 ### 6.2 World
 
@@ -277,7 +280,7 @@ World 安装默认创建新世界。高级替换必须确认目标未运行、�
 - manifest 字节、任一 payload 字节、路径、文件长度改变，PackageHash 改变。
 - 缺失/重复 manifest、大小写冲突路径、`..`、压缩炸弹、未声明 payload、嵌套 ZIP 和各限额均被拒绝。
 - 每种类型的 metadata 与权威 payload 不一致时被拒绝。
-- Mod 的 namespace、side、依赖和入口规则，World 的非嵌入内容规则，以及图片/家具的专属限制均被拒绝或接受。
+- Mod 的 namespace、依赖和单入口规则，World 的非嵌入内容规则，以及图片/家具的专属限制均被拒绝或接受。
 - Writer 对相同规范输入产生字节稳定的 manifest 和相同 PackageHash；Reader 对其重新压缩版本得到相同 PackageHash。
 
 ## 9. ContentTool

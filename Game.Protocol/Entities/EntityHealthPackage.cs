@@ -1,3 +1,5 @@
+using Game.Protocol.Localization;
+
 using MessagePack;
 
 namespace Game.Protocol.Entities;
@@ -11,5 +13,7 @@ public sealed record EntityHealthPackage : ComponentHealthPackage
 
     [Key(1)] public float Health { get; init; }
 
-    [Key(2)] public string Cause { get; init; } = string.Empty;
+    [Key(2)] public LocalizedText Cause { get; init; } = LocalizedText.Empty;
+
+    [Key(3)] public double? DeathTime { get; init; }
 }

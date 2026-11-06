@@ -105,24 +105,25 @@ Versions:
 通用资源与压缩包流程由此文件处理；容器镜像、服务发行物等专属行为由各项目的
 `Directory.Build.targets` 和部署脚本负责。
 
-### `SharedProperties/GlobalUsing.props`
+### 项目级程序集边界
 
-这是全局 `using` 的集中入口。它为许多常用命名空间做了隐式导入，例如：
+Core、Hosting 和 Client 在各自 `.csproj` 的 `ValidateAssemblyBoundary` 目标中维护自己的禁止引用清单。构建在引用解析后检查实际程序集引用，包含解析到的传递依赖：
 
-- `Engine.Core.Mathematics`
-- `Engine.Core.Collections`
-- `Engine.Core.Logging`
-- `Engine.Core.Runtime`
-- `Engine.Core.Text`
-- `Engine.FileStorage`
-- `Engine.Windowing`
-- `Game.Managers`
-- `Game.Screens`
-- `Game.Subsystems`
-- `Game.Components`
-- `Game.Modding`
+- Core 禁止依赖综合应用、Hosting、Client、Engine 和 Engine.Media。
+- Hosting 禁止依赖综合应用、Client 和 Engine；允许使用 Core 和 CPU 媒体处理库 Engine.Media。
+- Client 禁止反向依赖综合应用；允许使用 Hosting 和 Engine。
 
-这也是仓库里许多代码文件可以省略大量 `using` 声明的原因——目的是降低共享代码中的重复成本。
+违规引用直接使构建失败。这些约束由项目自身声明，不需要共享规则文件或按项目名称分支。
+
+### 项目级 `GlobalUsings.cs`
+
+SDK 默认的基础命名空间由 `Directory.Build.props` 中的 `ImplicitUsings` 提供。自定义全局导入统一写在各项目根目录的 `GlobalUsings.cs`，不放在项目文件或跨层共享 props 中。
+
+- 每个项目只拥有自己的导入清单；Core、Hosting、Client 和应用装配层分别维护，不继承上层导入。
+- 全局导入只用于项目中普遍使用的命名空间；窄领域和平台专属依赖保留文件级 `using`。
+- 别名与项目的其他全局导入集中声明；跨目标框架需要一致解析的 `GameMode` 等别名不随平台改变含义。
+- 测试项目在自己的文件中导入 `Xunit`。Android 四个启动器通过共享源代码编译同一份 `Survivalcraft.Android/GlobalUsings.cs`。
+- 文件级声明不重复全局导入。全局导入不会增加程序集引用，也不能绕过项目引用方向约束。
 
 ### `SharedProperties/Android.props`
 
@@ -144,7 +145,7 @@ Android 的几个变体项目会复用这份配置，只在自己的 `.csproj` �
 ### `SharedProperties/AndroidApplication.props`
 
 这是 Android 可运行启动器的公共项目配置，集中定义目标框架、程序集名称、最低系统版本、
-`Content.zip` 资产声明、共享图标与 Android 资源、共享 Manifest 和全局 `using`。每个架构项目仍显式声明自己的
+`Content.zip` 资产声明、共享图标与 Android 资源、共享 Manifest；全局 `using` 随共享启动器源码维护。每个架构项目仍显式声明自己的
 `RuntimeIdentifier`、APK 名称，并在 `ProjectReference` 中硬编码相同 RID，以避免 Rider 设计时
 构建和 MSBuild 项目引用求值产生架构偏差。
 
@@ -194,6 +195,7 @@ dotnet build SCNET.slnx --configuration Release
 本次 SCNET 包集合当前版本的 NuGet 缓存，避免旧 SDK 被再次使用；其他依赖缓存保留。
 打包默认使用 Release，Bash 可通过 `CONFIGURATION` 环境变量调整，PowerShell 使用 `-Configuration`。
 准备工作仍需要安装解决方案使用的 .NET SDK、Android 工作负载及相应构建依赖。
+打包前与打包完成后都会清理本次第一方包版本的缓存，最终还原从准备好的本地包读取，避免打包过程中的还原提前填回旧版本内容。
 
 ### 可选构建配置
 
@@ -216,12 +218,13 @@ dotnet build Survivalcraft.Android/Survivalcraft.Android.csproj
 - 测试工程在 `Release` 下会被排除，部分 Android 变体也会在 `Release` 下被排除
 - 当前代码库大量使用反射，因此不启用 `trim`，也不支持通过裁剪方式进行发布优化
 
-`Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口启动独立、串行的 `dotnet publish`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、Windows、Android Arm64、Android Arm32、ContentServer、RendezvousServer、Authentication.Server 和 NetworkProbe。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
+`Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口启动独立、串行的 `dotnet publish`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、独立游戏服务端 Survivalcraft.Server、Windows、Android Arm64、Android Arm32、ContentServer、RendezvousServer、Authentication.Server 和 NetworkProbe。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
 
-不指定项目时发布全部。指定项目时只发布选中的入口；多个项目仍按脚本中的固定顺序发布。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32`、`ContentServer`、`RendezvousServer`、`Authentication.Server` 和 `NetworkProbe`。例如：
+不指定项目时发布全部。指定项目时只发布选中的入口；多个项目仍按脚本中的固定顺序发布。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Server`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32`、`ContentServer`、`RendezvousServer`、`Authentication.Server` 和 `NetworkProbe`。例如：
 
 ```bash
 ./Scripts/publish.sh --project ContentServer
+./Scripts/publish.sh --project Survivalcraft.Server
 ./Scripts/publish.sh --project Survivalcraft.Linux --project ContentServer
 ./Scripts/publish.sh --project ContentServer -- --no-restore
 ./Scripts/publish.sh --project RendezvousServer --project NetworkProbe
@@ -234,9 +237,9 @@ dotnet build Survivalcraft.Android/Survivalcraft.Android.csproj
 
 Bash 脚本接受重复的 `--project` 或 `--project=名称`；`--` 后面的参数会传给所选项目的 `dotnet publish`。PowerShell 脚本使用 `-Project` 指定一个或多个项目，其他参数仍通过剩余参数传给 `dotnet publish`。
 
-NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scripts/pack-nuget.sh` 或 `Scripts/pack-nuget.ps1`，具体包边界和使用方式见 [NuGet 包](./NuGet.md)。不要使用解决方案级 `dotnet publish` 或 `dotnet pack` 代替这些脚本；多目标共享项目应由下游入口按顺序独立处理。
+NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scripts/pack-nuget.sh` 或 `Scripts/pack-nuget.ps1`，具体包边界和使用方式见 [NuGet 包](./NuGet.md)。共享游戏规则包 `SCNET.Survivalcraft.Core` 、宿主包 `SCNET.Survivalcraft.Hosting` 和客户端包 `SCNET.Survivalcraft.Client` 在游戏 SDK 之前打包，普通构建直接使用项目引用；内置模组通过游戏 SDK 的传递依赖获得它们。不要使用解决方案级 `dotnet publish` 或 `dotnet pack` 代替这些脚本；多目标共享项目应由下游入口按顺序独立处理。
 
-根目录 `Publish` 中的桌面压缩包、重命名后的 Android APK、ContentServer 的 portable 和容器镜像包，以及 Linux 游戏服务器镜像包只在 `Publish` 阶段生成；普通 `Build` 不会更新这些发行产物。Linux 游戏服务器部署方式见 [Headless 模式](./Headless.md#容器部署)。
+根目录 `Publish` 中的桌面压缩包、重命名后的 Android APK、ContentServer 的 portable 和容器镜像包，以及 Linux 游戏服务器镜像包只在 `Publish` 阶段生成；普通 `Build` 不会更新这些发行产物。Linux 游戏服务器部署方式见 [独立服务器](./Server.md#容器部署)。
 
 ### 打包行为
 
@@ -395,3 +398,21 @@ IDE/MCP 返回成功不能代替检查实际结果。
 ```bash
 dotnet run --file .agents/skills/scnet-code-style/scripts/check_explicit_enum_values.cs -- --all
 ```
+
+`Game.Protocol.Generators` 是协议项目的编译期分析器依赖，由普通构建准备并在 `obj/` 下生成消息
+所有权复制代码；无需单独运行工具或准备另一个 SDK。它不随游戏作为运行时依赖分发。
+
+## 独立示例模组
+
+主解决方案负责游戏、SDK、工具和通用测试。两个示例模组各自在独立解决方案中开发，
+通过 NuGet 使用已准备的 SDK。完成依赖准备后可运行：
+
+```bash
+dotnet build Mods/Beacon/Beacon.slnx
+dotnet test Mods/Beacon/Beacon.slnx
+dotnet build Mods/TerritoryStone/TerritoryStone.slnx
+dotnet test Mods/TerritoryStone/TerritoryStone.slnx
+```
+
+每个解决方案包含规则、客户端表现和模组专属测试项目。客户端项目构建会将两份程序集
+打入一个 `.scpkg`。模组测试直接检查自身逻辑。游戏实例验证使用已构建游戏与 `.scpkg`，流程见 [模组开发](Modding.md#测试)。

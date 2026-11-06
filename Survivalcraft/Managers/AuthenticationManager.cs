@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 
 using Game.Authentication;
+using Game.FileStorage;
 
 using SCNET.Authentication.Protocol;
 using SCNET.Authentication.Protocol.Http;

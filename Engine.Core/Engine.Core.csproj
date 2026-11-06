@@ -9,9 +9,6 @@
         <PackageTags>scnet;engine;core</PackageTags>
     </PropertyGroup>
 
-    <ItemGroup>
-        <Using Include="System.Reflection"/>
-    </ItemGroup>
 
     <ItemGroup>
         <None Update="README.md" Pack="true" PackagePath="\"/>

@@ -1,101 +1,71 @@
 using System.Net;
 using System.Net.Sockets;
-using System.Xml.Linq;
-
-using Engine.Graphics;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using EntitySystem.XmlUtilities;
 
 using Game.Admission;
 using Game.Servers;
-
-using LiteNetLib.Utils;
 
 namespace Game.Network;
 
 public static class CommonLib
 {
-    public const int DisconnectTimeout = 10000;
+    private static NetNode? _net;
 
-    public static readonly NetNode Net = new();
+    public static bool IsNetworkInitialized => _net != null;
 
-    public static Texture2D? BlockTexture;
+    public static NetNode Net => _net ??
+                                 throw new InvalidOperationException(
+                                     "Initialize network ownership after loading application settings."
+                                 );
 
-    public static bool IsOfflineMode;
-
-    public static ComponentCharacter? LocalCharacter
+    public static void InitializeNetwork(NetNodeOptions options, bool clientPresentation)
     {
-        get
-        {
-            if (Net.Self == null)
-            {
-                return null;
-            }
+        if (_net != null) { throw new InvalidOperationException("Network ownership is already initialized."); }
 
-            var project = GameManager.Project;
-            return project?.FindSubsystem<SubsystemCharacters>(true)?.ComponentCharacters
-                .FirstOrDefault(p => p.CharacterData.CharacterId == Net.Self.CharacterId);
-        }
+        _net = new NetNode(
+            options,
+            clientPresentation,
+            Handling.ApplicationMessageHandlers.CreatePreWorld(NodeRole.Inactive, clientPresentation),
+            NodeRole.Inactive
+        );
+        GameManager.ObserveEndpoint(_net);
     }
 
-    public static bool StartServer(WorldSettings worldSettings, ServerAdmissionPolicy? policyOverride = null)
+    public static bool StartServer(
+        WorldSettings worldSettings,
+        WorldHostingSettings hosting,
+        ServerAdmissionPolicy? policyOverride = null
+    )
     {
-        var started = Net.StartServer(
-            SettingsManager.Current.ServerPort,
-            SettingsManager.Current.BroadcastPort,
-            worldSettings.MaxOnlinePlayerCount,
-            worldSettings.P2P with
-            {
-                Name = string.IsNullOrEmpty(worldSettings.P2P.Name) ? worldSettings.Name : worldSettings.P2P.Name
-            },
-            policyOverride,
-            ServerIdentitySelection.Resolve(LocalIdentityManager.Current, null, worldSettings)
+        return ServerListener.Start(
+            Net,
+            Configuration.HostingConfiguration.Preferences,
+            LocalIdentityManager.Current,
+            new SessionInfo(),
+            worldSettings,
+            hosting,
+            policyOverride
         );
-
-        return started;
     }
 
     public static bool StartServer(
         SessionInfo sessionInfo,
         WorldSettings worldSettings,
+        WorldHostingSettings hosting,
         ServerAdmissionPolicy? policyOverride = null
     )
     {
-        var serverPort = sessionInfo.ServerPort > 0
-            ? sessionInfo.ServerPort
-            : SettingsManager.Current.ServerPort;
-        int? broadcastPort = sessionInfo.BroadcastPort switch
-        {
-            < 0 => null,
-            > 0 => sessionInfo.BroadcastPort,
-            _ => SettingsManager.Current.BroadcastPort
-        };
-        var effectivePolicy = policyOverride ??
-                              ServerAdmissionManager.Resolve(
-                                  sessionInfo.AdmissionOverrides,
-                                  ServerAdmissionPolicy.Load(
-                                      GameManager.Project!.ExtensionData.Get("game", "admission")
-                                  )
-                              );
-        var started = Net.StartServer(
-            serverPort,
-            broadcastPort,
-            worldSettings.MaxOnlinePlayerCount,
-            sessionInfo.P2POverrides.Apply(worldSettings.P2P, worldSettings.Name),
-            effectivePolicy,
-            ServerIdentitySelection.Resolve(LocalIdentityManager.Current, sessionInfo, worldSettings)
+        return ServerListener.Start(
+            Net,
+            Configuration.HostingConfiguration.Preferences,
+            LocalIdentityManager.Current,
+            sessionInfo,
+            worldSettings,
+            hosting,
+            policyOverride
         );
-
-        return started;
-    }
-
-    public static NetDataWriter GetWriter(byte[] packet)
-    {
-        var writer = new NetDataWriter();
-        writer.Put(packet);
-        return writer;
     }
 
     public static string GetInnerIp()
@@ -116,7 +86,7 @@ public static class CommonLib
     {
         if (Uri.TryCreate("tcp://" + ip, UriKind.Absolute, out var uri))
         {
-            var port = uri.Port < 1 ? SettingsManager.Current.ServerPort : uri.Port;
+            var port = uri.Port < 1 ? Configuration.HostingConfiguration.Preferences.ServerPort : uri.Port;
             if (IPAddress.TryParse(uri.Host, out var addr))
             {
                 ep = new IPEndPoint(addr, port);
@@ -152,22 +122,6 @@ public static class CommonLib
             project.SendToClientMode = previousMode;
         }
     }
-
-    public static string SerializeVDict(ValuesDictionary dict)
-    {
-        var elem = new XElement("Values");
-        dict.Save(elem);
-        return XmlUtils.SaveXmlToString(elem, true);
-    }
-
-    public static ValuesDictionary ReadVDict(string str)
-    {
-        var dict = new ValuesDictionary();
-        var elem = XmlUtils.LoadXmlFromString(str, true);
-        dict.ApplyOverrides(elem);
-        return dict;
-    }
-
 
     /// <summary>
     ///     获取时间戳，单位0.1ms

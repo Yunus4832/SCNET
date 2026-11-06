@@ -6,6 +6,4 @@ namespace Game.Protocol.Entities;
 public sealed record SleepRequestPackage : ComponentSleepPackage
 {
     [IgnoreMember] public override EventType Type => EventType.SleepRequest;
-
-    [Key(1)] public bool AllowManualWakeup { get; init; }
 }

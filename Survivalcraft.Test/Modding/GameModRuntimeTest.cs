@@ -1,21 +1,58 @@
+using System.Reflection;
 using System.Xml.Linq;
 
 using Engine.Core.Runtime;
+using Engine.Graphics;
+
+using EntitySystem.Core;
 
 using Game;
 using Game.Blocks;
+using Game.ClientContent;
 using Game.Content;
 using Game.Managers;
 using Game.Modding;
 using Game.Modding.Blocks;
+using Game.Modding.Content;
 using Game.Terrains;
 using Game.Widgets;
+using Game.World;
 
 namespace Survivalcraft.Test.Modding;
 
 [Collection(ConfigFileCollection.Name)]
 public class GameModRuntimeTest
 {
+    [Fact]
+    public void AuthorityCatalogInGuiModeInitializesSimulationDataWithoutAWindow()
+    {
+        Dispatcher.Initialize();
+        ContentManager.Initialize();
+        using var mods = GameModRuntime.Start();
+        mods.InitializeDatabase();
+        var runtime = new WorldRuntimeContext(RuntimeSide.Authority, false);
+        try
+        {
+            var catalog = mods.CreateWorldCatalog(runtime, BlockIndexMapping.Empty);
+            var cache = (Dictionary<string, List<object>>)typeof(ContentManager)
+                .GetField("_caches", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+            Assert.DoesNotContain(
+                cache.Values.SelectMany(contents => contents),
+                content => content is Texture2D or Model or BitmapFont
+            );
+            Assert.NotEmpty(catalog.Recipes.ReadonlyRecipes);
+            Assert.All(
+                catalog.RegisteredBlocks.OfType<ClothingBlock>(),
+                block =>
+                    Assert.NotEmpty(block.GetCreativeValues())
+            );
+            var experience = Assert.Single(catalog.RegisteredBlocks.OfType<ExperienceBlock>());
+            Assert.Same(catalog, experience.Catalog);
+            Assert.Null(typeof(ExperienceBlock).GetProperty("Texture"));
+        }
+        finally { runtime.Close(); }
+    }
+
     [Fact]
     public void RuntimeIncludesRequiredBuiltInContentMod()
     {
@@ -48,8 +85,9 @@ public class GameModRuntimeTest
         ContentManager.Initialize();
         using var runtime = GameModRuntime.Start();
 
-        runtime.InitializeAssets();
-        runtime.InitializeLanguage("zh-CN");
+        using var client = new ClientContentRuntime([]);
+        client.InstallResources(runtime.Content.RegisteredResources);
+        client.PublishLanguage(runtime.Content.CreateLanguageCatalog("zh-CN"));
 
         Assert.True(ContentManager.ContainsKey("BlocksData.txt"));
         Assert.True(ContentManager.ContainsKey("Fonts/Pericles.lst"));
@@ -75,92 +113,127 @@ public class GameModRuntimeTest
             .Single(element => element.Attribute("Name")?.Value == "TranscriptHost");
         new CanvasWidget().LoadProperties(null, transcriptHostTemplate);
         Assert.Contains("zh-CN", runtime.Content.LanguageTypes);
-        Assert.False(string.IsNullOrWhiteSpace(LanguageManager.Ok));
+        Assert.False(string.IsNullOrWhiteSpace(Game.Localization.ClientLanguage.Catalog.Ok));
     }
 
     [Fact]
-    public void HeadlessBuildsAndReleasesWorldContentWithoutPreview()
+    public void RuntimeBuildsAndReleasesWorldContentWithoutPreview()
     {
-        var previousMode = RunMode.Value;
-        RunMode.Value = RunModeType.HeadlessServer;
-        try
+        Dispatcher.Initialize();
+        ContentManager.Initialize();
+        using var runtime = GameModRuntime.Start();
+        runtime.InitializeContentData();
+        Assert.NotNull(DatabaseManager.DatabaseNodeField);
+        Assert.Null(
+            typeof(GameModRuntime).GetField(
+                "_previewCatalog",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            )!.GetValue(runtime)
+        );
+        var worldRuntime = new WorldRuntimeContext(RuntimeSide.Authority, false);
+        var world = runtime.CreateWorldCatalog(worldRuntime, BlockIndexMapping.Empty);
+        Assert.NotEmpty(world.Recipes.ReadonlyRecipes);
+        Assert.True(world.TryGetBlockId(0, out var id));
+        Assert.Equal(ResourceId.Parse("game:air"), id);
+        worldRuntime.Close();
+        Assert.Empty(runtime.WorldCatalogs);
+    }
+
+    [Fact]
+    public void WorldsHaveIndependentBlocksAndCanBeReleasedIndependently()
+    {
+        Dispatcher.Initialize();
+        ContentManager.Initialize();
+        using var runtime = GameModRuntime.Start();
+        runtime.InitializeContentData();
+        var authorityRuntime = new WorldRuntimeContext(RuntimeSide.Authority, false);
+        var clientRuntime = new WorldRuntimeContext(
+            RuntimeSide.Client,
+            (true)
+        );
+        var authority = runtime.CreateWorldCatalog(authorityRuntime, BlockIndexMapping.Empty);
+        var client = runtime.CreateWorldCatalog(clientRuntime, authority.Registry.Mapping, true);
+        Assert.Same(authority, WorldContentBinding.For(authorityRuntime).Catalog);
+        Assert.Same(client, WorldContentBinding.For(clientRuntime).Catalog);
+        using var authorityProject = new Project();
+        authorityRuntime.BindProject(authorityProject);
+        Assert.Same(authority, WorldContentBinding.For(authorityProject).Catalog);
+        Assert.Equal(2, runtime.WorldCatalogs.Count);
+        foreach (var entry in authority.Registry.ById.Values)
         {
-            Dispatcher.Initialize();
-            ContentManager.Initialize();
-            using var runtime = GameModRuntime.Start();
-            runtime.InitializeLanguage("zh-CN");
-            runtime.InitializeContentData();
-            Assert.NotNull(DatabaseManager.DatabaseNodeField);
-            Assert.Throws<InvalidOperationException>(() => runtime.PreviewCatalog);
-            var world = runtime.CreateWorldCatalog(BlockIndexMapping.Empty);
-            Assert.NotEmpty(world.Recipes.ReadonlyRecipes);
-            Assert.True(world.TryGetBlockId(0, out var id));
-            Assert.Equal(ResourceId.Parse("game:air"), id);
-            runtime.ReleaseWorldCatalog();
-            Assert.Null(runtime.WorldCatalog);
+            var replica = client.GetBlock(entry.Id);
+            Assert.Equal(entry.RuntimeIndex, replica.BlockIndex);
+            Assert.NotSame(entry.Block, replica);
+            Assert.Same(authority, entry.Block.Catalog);
+            Assert.Same(client, replica.Catalog);
         }
-        finally
-        {
-            RunMode.Value = previousMode;
-        }
+
+        using var clientProject = new Project();
+        clientRuntime.BindProject(clientProject);
+        clientRuntime.Close();
+        Assert.Same(client, WorldContentBinding.For(clientRuntime).Catalog);
+        Assert.Equal(2, runtime.WorldCatalogs.Count);
+        Assert.Throws<InvalidOperationException>(() => runtime.Dispose());
+        clientProject.Dispose();
+        Assert.Throws<InvalidOperationException>(() =>
+            WorldContentBinding.For(clientRuntime).Catalog
+        );
+        Assert.Same(authority, Assert.Single(runtime.WorldCatalogs));
+        Assert.NotEmpty(authority.Recipes.ReadonlyRecipes);
+        Assert.Same(authority, WorldContentBinding.For(authorityProject).Catalog);
+        clientRuntime.Close();
+        Assert.Same(authority, Assert.Single(runtime.WorldCatalogs));
+        authorityRuntime.Close();
+        authorityProject.Dispose();
+        Assert.Empty(runtime.WorldCatalogs);
     }
 
     [Fact]
     public void BuiltInFactoriesRegisteredAsModBlocksKeepTheirOwnCreativeIndices()
     {
-        var previousMode = RunMode.Value;
-        RunMode.Value = RunModeType.HeadlessServer;
-        try
+        Dispatcher.Initialize();
+        ContentManager.Initialize();
+        using var runtime = GameModRuntime.Start(
+            [
+                new ModDescriptor(
+                    new ModManifest("clone", "Cloned blocks", "1.0.0", [new ModDependency("game")]),
+                    static () => new CloneBlocksMod()
+                )
+            ]
+        );
+        runtime.InitializeContentData();
+        var world = runtime.CreateWorldCatalog(
+            new WorldRuntimeContext(RuntimeSide.Authority, false),
+            BlockIndexMapping.Empty
+        );
+        var count = 0;
+        foreach (var entry in world.Registry.ById.Values.Where(entry => entry.Id.Namespace == new ModId("clone")))
         {
-            Dispatcher.Initialize();
-            ContentManager.Initialize();
-            using var runtime = GameModRuntime.Start(
-                [
-                    new ModDescriptor(
-                        new ModManifest("clone", "Cloned blocks", "1.0.0"),
-                        static () => new CloneBlocksMod()
-                    )
-                ]
-            );
-            runtime.InitializeLanguage("zh-CN");
-            runtime.InitializeContentData();
-            var world = runtime.CreateWorldCatalog(BlockIndexMapping.Empty);
-            var count = 0;
-            foreach (var entry in world.Registry.ById.Values.Where(entry => entry.Id.Namespace == new ModId("clone")))
+            foreach (var value in entry.Block.GetCreativeValues())
             {
-                foreach (var value in entry.Block.GetCreativeValues())
-                {
-                    Assert.True(
-                        entry.RuntimeIndex == Terrain.ExtractContents(value),
-                        $"{entry.Id} emitted {Terrain.ExtractContents(value)} instead of {entry.RuntimeIndex}."
-                    );
-                    count++;
-                }
-
-                foreach (var recipe in entry.Block.GetProceduralCraftingRecipes())
-                {
-                    Assert.True(
-                        recipe.ResultValue == 0 || entry.RuntimeIndex == Terrain.ExtractContents(recipe.ResultValue),
-                        $"{entry.Id} recipe emitted {Terrain.ExtractContents(recipe.ResultValue)} instead of {entry.RuntimeIndex}."
-                    );
-                }
+                Assert.True(
+                    entry.RuntimeIndex == Terrain.ExtractContents(value),
+                    $"{entry.Id} emitted {Terrain.ExtractContents(value)} instead of {entry.RuntimeIndex}."
+                );
+                count++;
             }
 
-            Assert.True(count > 1000);
+            foreach (var recipe in entry.Block.GetProceduralCraftingRecipes())
+            {
+                Assert.True(
+                    recipe.ResultValue == 0 || entry.RuntimeIndex == Terrain.ExtractContents(recipe.ResultValue),
+                    $"{entry.Id} recipe emitted {Terrain.ExtractContents(recipe.ResultValue)} instead of {entry.RuntimeIndex}."
+                );
+            }
         }
-        finally
-        {
-            RunMode.Value = previousMode;
-        }
+
+        Assert.True(count > 1000);
     }
 
     [Fact]
     public void FailedWorldInitializationDisposesBlocksWithoutPublishingCatalog()
     {
-        var previousMode = RunMode.Value;
-        RunMode.Value = RunModeType.HeadlessServer;
         var mod = new BrokenBlockMod();
-        try
         {
             Dispatcher.Initialize();
             ContentManager.Initialize();
@@ -169,18 +242,16 @@ public class GameModRuntimeTest
                     new ModDescriptor(new ModManifest("test", "Broken", "1.0.0"), () => mod)
                 ]
             );
-            runtime.InitializeLanguage("zh-CN");
             runtime.InitializeContentData();
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                runtime.CreateWorldCatalog(BlockIndexMapping.Empty)
+                runtime.CreateWorldCatalog(
+                    new WorldRuntimeContext(RuntimeSide.Authority, false),
+                    BlockIndexMapping.Empty
+                )
             );
             Assert.Equal("Intentional block initialization failure.", exception.Message);
-            Assert.Null(runtime.WorldCatalog);
+            Assert.Empty(runtime.WorldCatalogs);
             Assert.Equal(1, mod.Block!.DisposeCount);
-        }
-        finally
-        {
-            RunMode.Value = previousMode;
         }
     }
 
@@ -223,14 +294,14 @@ public class GameModRuntimeTest
                 }
             );
 
-            var descriptors = ModPackageCatalog.CreateLoadPlan(directory, ModSide.Server);
+            var descriptors = ModPackageCatalog.CreateLoadPlan(directory);
             using var runtime = GameModRuntime.Start(descriptors);
 
             var requirement = Assert.Single(runtime.EffectiveProfile.Packages);
             Assert.Equal("example.addon", requirement.ModId);
             Assert.Equal("1.0.0", requirement.Version);
             Assert.False(string.IsNullOrWhiteSpace(requirement.PackageHash));
-            Assert.Equal(ModProfileManager.ComputeDataHash(runtime.EffectiveProfile), runtime.ModDataHash);
+            Assert.Equal(ModProfileFingerprint.Compute(runtime.EffectiveProfile), runtime.ModDataHash);
         }
         finally
         {
@@ -274,8 +345,7 @@ public class GameModRuntimeTest
                         }
                     ]
                 },
-                directory,
-                ModSide.Server
+                directory
             );
 
             var requirement = Assert.Single(runtime.CreateServerRequiredProfile()!.Packages);
@@ -306,6 +376,15 @@ public class GameModRuntimeTest
     {
         public void Configure(IModContext context)
         {
+            Assert.True(
+                context.Extensions.TryGet<ContentRegistration>(
+                    ContentExtensions.RegistryName,
+                    new ResourceId(new ModId("game"), "BlocksData.txt"),
+                    out var asset
+                )
+            );
+            using var reader = new StreamReader(asset!.OpenRead());
+            var blocksData = reader.ReadToEnd();
             foreach (var entry in BuiltInBlockRegistry.Entries)
             {
                 context.Extensions.Register(
@@ -317,10 +396,10 @@ public class GameModRuntimeTest
 
             context.Extensions.RegisterBlockData(
                 ResourceId.Parse("clone:base"),
-                static () =>
+                () =>
                     string.Join(
                         '\n',
-                        ContentManager.Get<string>("BlocksData").Split('\n').Select(line =>
+                        blocksData.Split('\n').Select(line =>
                             line.StartsWith("game:", StringComparison.Ordinal)
                                 ? "clone:" + line["game:".Length..]
                                 : line

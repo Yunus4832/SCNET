@@ -1,7 +1,8 @@
 # SCNET.Survivalcraft
 
 SCNET 游戏运行时及模组开发契约，支持 .NET 10 和 .NET 10 for Android，主命名空间为 `Game`。
-包含世界、方块、生物、联网、模组和界面等游戏逻辑；平台启动器与内容发布服务不在本包中。
+综合应用装配 Core、Hosting 与 Client，处理平台生命周期、应用服务和启动导航。
+共享规则、无图形宿主和客户端表现的实际 API 分别由对应程序集提供。
 
 ## 模组引用
 
@@ -26,7 +27,7 @@ ContentTool 是独立的构建工具，负责生成内容包，不会成为游�
 - `SubsystemPlayers.Store` 管理存档玩家；`SubsystemCharacters` 管理角色集合、实体、生成、重生和在线／离线状态；`SubsystemTeams` 管理玩家队籍。
 - `SubsystemPositionMarks` 独立管理世界公共标记和按玩家地址划分的私有标记，不依赖角色是否存在。
 - `CommandPrincipal.Subject` 是执行操作的存档玩家；`Character` 是可为空的当前角色。权限来自玩家，不来自角色。
-- 角色界面与展示使用 `CharacterScreen`、`CharacterModelWidget`；`PlayerInput` 仍表示玩家输入，Headless 或未控制角色的玩家不因此获得角色实体。
+- 角色界面与展示使用 `CharacterScreen`、`CharacterModelWidget`；`PlayerInput` 仍表示玩家输入，独立服务器 或未控制角色的玩家不因此获得角色实体。
 
 开发阶段不保留旧类型别名或旧存档字段解析；修改 API、资源注册和序列化字段时同步更新游戏、模组和工具。
 

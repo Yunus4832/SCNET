@@ -1,6 +1,6 @@
 using Engine.Input;
 
-using Game.Platforms;
+using Game.Application;
 
 namespace Game.Managers;
 
@@ -16,20 +16,13 @@ public static class PlatformManager
 
     private static string? _updateDownloadDirectory;
 
-    public static Platform Platform { get; private set; } = Platform.Desktop;
-
-    public static void RegisterPlatform(Platform platform)
-    {
-        Platform = platform;
-    }
-
     public static void QueueLaunchUris(IEnumerable<string> args)
     {
         foreach (var arg in args)
         {
             if (TryCreateKnownUri(arg, out var uri))
             {
-                GameEntry.HandleUriHandler(uri);
+                ClientApplication.EnqueueUri(uri);
             }
         }
     }

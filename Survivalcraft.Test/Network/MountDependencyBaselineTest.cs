@@ -5,6 +5,7 @@ using EntitySystem.Core;
 
 using Game.Components;
 using Game.Network;
+using Game.Network.Handling;
 using Game.Network.Replication;
 using Game.Network.Transport;
 using Game.Subsystems;
@@ -33,7 +34,27 @@ public sealed class MountDependencyBaselineTest
             interest,
             true
         );
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            PackageHandlerCatalog.Empty,
+            NodeRole.Authority
+        );
+        node.Runtime.BindProject(project);
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid())
+        {
+            State = ClientState.Playing, ConnectionPhase = ConnectionPhase.Live
+        };
+        node.AddClient(client);
+        var receivingNode = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            PackageHandlerCatalog.Empty,
+            NodeRole.Client
+        );
+        var pair = InProcessMessageConnection.CreatePair(node, client, receivingNode, new Client(Guid.Empty));
+        using var toClient = pair.ToClient;
+        using var toAuthority = pair.ToAuthority;
         var mount = CreateBody(project, 10);
         var rider = CreateBody(project, 11);
         rider.ParentBody = mount;
@@ -47,9 +68,9 @@ public sealed class MountDependencyBaselineTest
             interest.Entities.AddObserved(client, EntityInterestGroup.Creatures, 10);
         }
 
-        var pending = (List<OutboundPackage>)typeof(NetNode)
+        var pending = (PendingLogicalMessages)typeof(NetNode)
             .GetField("_pendingPackages", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(CommonLib.Net)!;
+            .GetValue(node)!;
         var start = pending.Count;
         try
         {
@@ -90,7 +111,7 @@ public sealed class MountDependencyBaselineTest
         }
         finally
         {
-            pending.RemoveRange(start, pending.Count - start);
+            while (pending.Count > start) { pending.RemoveAt(pending.Count - 1); }
         }
     }
 

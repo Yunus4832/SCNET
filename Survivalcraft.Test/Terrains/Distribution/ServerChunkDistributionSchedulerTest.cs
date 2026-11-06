@@ -1,51 +1,190 @@
+using System.Reflection;
+
 using Engine.Core.Mathematics;
 
+using EntitySystem.Core;
+
 using Game.Network;
-using Game.Network.Chunks;
 using Game.Network.Replication;
+using Game.Network.Transport;
 using Game.Terrains.Distribution;
+using Game.World;
+
+using Survivalcraft.Test.Modding;
 
 namespace Survivalcraft.Test.Terrains.Distribution;
 
-public sealed class ServerChunkDistributionSchedulerTest
+[Collection(ConfigFileCollection.Name)]
+public sealed class ServerChunkDistributionSchedulerTest : IDisposable
 {
+    private readonly Project _project = new();
+
+    private readonly NetNode _node = new NetNode(
+        NetNodeOptions.Default,
+        true,
+        Game.Network.Handling.PackageHandlerCatalog.Empty,
+        NodeRole.Authority
+    );
+
+    public ServerChunkDistributionSchedulerTest() => _node.Runtime.BindProject(_project);
+
+    public void Dispose() => _project.Dispose();
+
+    [Fact]
+    public void ReplacementAllocationsCancelOwnedOutboxDataAndRejectLateOlderRequests()
+    {
+        using var scheduler = new ServerChunkDistributionScheduler(_project, new SnapshotAuthority());
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.Empty);
+        _node.AddClient(client);
+        var old = new ChunkAllocationId(new Point2(0, 0), 1);
+        scheduler.UpdateClientLocation(client, Vector2.Zero, 64);
+        scheduler.Enqueue(client, [new ChunkContentRequest(old)]);
+        scheduler.Update();
+        Assert.Equal(1, _node.PendingPackageCount);
+        var current = old with { Generation = 2 };
+        Assert.Equal(1, scheduler.Enqueue(client, [new ChunkContentRequest(current)]));
+        Assert.Equal(0, _node.PendingPackageCount);
+        scheduler.Update();
+        Assert.Equal(0, scheduler.Enqueue(client, [new ChunkContentRequest(old)]));
+        Assert.True(scheduler.IsCurrentAllocation(client, current));
+        Assert.False(scheduler.IsCurrentAllocation(client, old));
+        var pending = (PendingLogicalMessages)typeof(NetNode)
+            .GetField("_pendingPackages", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(_node)!;
+        Assert.Equal(
+            current,
+            Assert.IsType<TerrainSnapshotMessage>(Assert.Single(pending).Package).Snapshot.Allocation
+        );
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void BothConnectionKindsPublishOwnedLogicalSnapshotsWithoutEncoding(bool inProcess)
+    {
+        var authority = new SnapshotAuthority();
+        using var scheduler = new ServerChunkDistributionScheduler(_project, authority);
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.Empty);
+        _node.AddClient(client);
+        client.Connection = new ConnectedStub(inProcess);
+        scheduler.UpdateClientLocation(client, new Vector2(8), 256);
+        scheduler.Enqueue(
+            client,
+            Enumerable.Range(0, 8).Select(x =>
+                new ChunkContentRequest(new ChunkAllocationId(new Point2(x, 0), 1))
+            )
+        );
+        scheduler.Update();
+        var queued = (PendingLogicalMessages)typeof(NetNode)
+            .GetField("_pendingPackages", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(_node)!;
+        var snapshots = queued.Select(value => value.Package)
+            .OfType<TerrainSnapshotMessage>().ToArray();
+        Assert.Equal(4, snapshots.Length);
+        Assert.DoesNotContain(queued, value => value.Package is TerrainFragmentPackage);
+        Assert.Equal(0, _node.OutstandingChunkEncodes);
+        Assert.Equal(4, scheduler.GetPendingCount(client));
+        authority.Cells[0] = 99;
+        authority.Shafts[0] = 88;
+        Assert.All(
+            snapshots,
+            message =>
+            {
+                Assert.Equal(0, message.Snapshot.Cells.Span[0]);
+                Assert.Equal(0, message.Snapshot.Shafts.Span[0]);
+                Assert.Equal(1, message.Snapshot.ContentVersion);
+            }
+        );
+        scheduler.Update();
+        Assert.Equal(4, scheduler.GetPendingCount(client));
+        Assert.Equal(4, queued.Count);
+    }
+
+    private sealed class ConnectedStub(bool inProcess) : IMessageConnection
+    {
+        public bool IsConnected => true;
+
+        public bool IsInProcess => inProcess;
+
+        public ConnectionSendResult TrySendOwned(OutboundPackage message) => ConnectionSendResult.Accepted;
+
+        public void Disconnect(string reason)
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private sealed class SnapshotAuthority : IChunkContentAuthority
+    {
+        public int[] Cells { get; } = new int[AuthorityChunkSnapshot.CellCount];
+
+        public long[] Shafts { get; } = new long[AuthorityChunkSnapshot.ShaftCount];
+
+        public bool TryGetDescriptor(Point2 coords, out AuthorityChunkDescriptor descriptor)
+        {
+            descriptor = new AuthorityChunkDescriptor(coords, 1);
+            return true;
+        }
+
+        public bool TryGetSnapshot(Point2 coords, out AuthorityChunkSnapshot snapshot)
+        {
+            snapshot = new AuthorityChunkSnapshot(coords, 1, Cells, Shafts);
+            return true;
+        }
+    }
+
+    [Fact]
+    public void AClientWorldCannotCreateAnAuthorityScheduler()
+    {
+        using var project = new Project();
+        new WorldRuntimeContext(
+            RuntimeSide.Client,
+            (true)
+        ).BindProject(project);
+        Assert.Throws<InvalidOperationException>(() =>
+            new ServerChunkDistributionScheduler(project, new EmptyAuthority())
+        );
+    }
+
     [Fact]
     public void UnreadyContentRetainsRequestsUntilInterestMovesAway()
     {
-        using var scheduler = new ServerChunkDistributionScheduler(new EmptyAuthority(), 1);
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        using var scheduler = new ServerChunkDistributionScheduler(_project, new EmptyAuthority());
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        _node.AddClient(client);
         var request = new ChunkContentRequest(new ChunkAllocationId(new Point2(0, 0), 1));
         scheduler.UpdateClientLocation(client, Vector2.Zero, 64f);
         scheduler.Enqueue(client, [request]);
-        scheduler.EnqueueMissing(client, [new TerrainChunkFragmentRequest(request.Allocation, 1, 1, [0])]);
 
-        scheduler.Update(true);
+        scheduler.Update();
 
-        Assert.Equal(2, scheduler.GetPendingCount(client));
-        Assert.Equal((1, 1, 0), scheduler.GetBacklog());
+        Assert.Equal(1, scheduler.GetPendingCount(client));
+        Assert.Equal((1, 1), scheduler.GetBacklog());
         scheduler.UpdateClientLocation(client, new Vector2(1000f), 64f);
         Assert.Equal(0, scheduler.GetPendingCount(client));
     }
 
     [Fact]
-    public void ContentCanStartEncodingBetweenSendWindows()
+    public void ReadyContentCanBeCapturedWithoutWaitingForAWholeSecond()
     {
         var authority = new CountingAuthority();
-        using var scheduler = new ServerChunkDistributionScheduler(authority, 1);
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        using var scheduler = new ServerChunkDistributionScheduler(_project, authority);
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        _node.AddClient(client);
         scheduler.UpdateClientLocation(client, Vector2.Zero, 64f);
         scheduler.Enqueue(client, [new ChunkContentRequest(new ChunkAllocationId(new Point2(0, 0), 1))]);
 
-        scheduler.Update(true);
+        scheduler.Update();
         Assert.Equal(1, scheduler.GetPendingCount(client));
         Assert.Equal(0, authority.SnapshotAttempts);
 
         authority.Ready = true;
-        scheduler.Update(false);
+        scheduler.Update();
 
         Assert.Equal(1, scheduler.GetPendingCount(client));
         Assert.Equal(1, authority.SnapshotAttempts);
-        Assert.Equal((1, 0, 0), scheduler.GetBacklog());
+        Assert.Equal((1, 0), scheduler.GetBacklog());
     }
 
     [Theory]
@@ -55,20 +194,18 @@ public sealed class ServerChunkDistributionSchedulerTest
     [InlineData(-3, -2, false)]
     public void RequestsAndQueueCleanupMatchSharedChunkInterest(int x, int z, bool expected)
     {
-        using var scheduler = new ServerChunkDistributionScheduler(new EmptyAuthority(), 1);
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        using var scheduler = new ServerChunkDistributionScheduler(_project, new EmptyAuthority());
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        _node.AddClient(client);
         var coords = new Point2(x, z);
         var request = new ChunkContentRequest(new ChunkAllocationId(coords, 1));
-        var fragmentRequest = new TerrainChunkFragmentRequest(request.Allocation, 1, 1, [0]);
-        Assert.Equal(0, scheduler.EnqueueMissing(client, [fragmentRequest]));
         var index = new SpatialInterestIndex();
         index.SetLocation(client, Vector2.Zero, 32f);
         scheduler.UpdateClientLocation(client, Vector2.Zero, 32f);
 
         Assert.Equal(expected, index.GetChunkObservers(coords).Contains(client));
         Assert.Equal(expected ? 1 : 0, scheduler.Enqueue(client, [request]));
-        Assert.Equal(expected ? 1 : 0, scheduler.EnqueueMissing(client, [fragmentRequest]));
-        Assert.Equal(expected ? 2 : 0, scheduler.GetPendingCount(client));
+        Assert.Equal(expected ? 1 : 0, scheduler.GetPendingCount(client));
         var queue = new PendingChunkRequestQueue();
         queue.Enqueue(request);
         Assert.Equal(expected ? 0 : 1, queue.RemoveOutside(Vector2.Zero, 32f));
@@ -80,14 +217,16 @@ public sealed class ServerChunkDistributionSchedulerTest
     [Fact]
     public void ReusedConnectionIdentityKeepsIndependentQueuesAndDisconnectCleanup()
     {
-        using var scheduler = new ServerChunkDistributionScheduler(new EmptyAuthority(), 1);
-        var old = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var current = new Client(null, old.ID, Guid.NewGuid(), old.CharacterId, null);
+        using var scheduler = new ServerChunkDistributionScheduler(_project, new EmptyAuthority());
+        var old = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        var current = new Client(null, old.ID, Guid.NewGuid(), old.CharacterId);
         var request = new ChunkContentRequest(new ChunkAllocationId(new Point2(0, 0), 1));
+        _node.AddClient(old);
         scheduler.UpdateClientLocation(old, Vector2.Zero, 64f);
-        scheduler.UpdateClientLocation(current, Vector2.Zero, 64f);
-
         Assert.Equal(1, scheduler.Enqueue(old, [request]));
+        // A new transport record takes the routing slot while the old scheduler lease awaits cleanup.
+        _node.AddClient(current);
+        scheduler.UpdateClientLocation(current, Vector2.Zero, 64f);
         Assert.Equal(1, scheduler.Enqueue(current, [request]));
         Assert.Equal(2, scheduler.ClientCount);
         scheduler.RemoveClient(old);
@@ -101,8 +240,9 @@ public sealed class ServerChunkDistributionSchedulerTest
     [Fact]
     public void RequestsRequireApprovedLocationAndRejectDistantChunks()
     {
-        using var scheduler = new ServerChunkDistributionScheduler(new EmptyAuthority(), 1);
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        using var scheduler = new ServerChunkDistributionScheduler(_project, new EmptyAuthority());
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        _node.AddClient(client);
         var near = new ChunkContentRequest(new ChunkAllocationId(new Point2(0, 0), 1));
         var far = new ChunkContentRequest(new ChunkAllocationId(new Point2(100, 100), 1));
 
@@ -115,8 +255,9 @@ public sealed class ServerChunkDistributionSchedulerTest
     [Fact]
     public void EmptyQueueRetainsApprovedLocationUntilDisconnect()
     {
-        using var scheduler = new ServerChunkDistributionScheduler(new EmptyAuthority(), 1);
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        using var scheduler = new ServerChunkDistributionScheduler(_project, new EmptyAuthority());
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        _node.AddClient(client);
         var request = new ChunkContentRequest(new ChunkAllocationId(new Point2(0, 0), 1));
         Assert.False(scheduler.TryGetClientLocation(client, out _, out _));
         scheduler.UpdateClientLocation(client, Vector2.Zero, 64f);
@@ -151,52 +292,17 @@ public sealed class ServerChunkDistributionSchedulerTest
         Assert.Equal(new Point2(2, 0), selected.Allocation.Coords);
     }
 
-    [Fact]
-    public void SelectiveRetransmissionReturnsOnlyRequestedFragments()
-    {
-        var allocation = new ChunkAllocationId(new Point2(4, 5), 6);
-        var encoded = new EncodedTerrainChunk(allocation.Coords, 7, new byte[3200]);
-        var count = (ushort)EncodedTerrainChunkFragmenter.Split(encoded, allocation).Count();
-        var request = new TerrainChunkFragmentRequest(allocation, 7, count, [1, 3, 3]);
-
-        Assert.True(
-            ServerChunkDistributionScheduler.TrySelectMissingFragments(
-                encoded,
-                request,
-                out var selected
-            )
-        );
-
-        Assert.Equal([1, 3], selected.Select(fragment => (int)fragment.FragmentIndex));
-    }
-
-    [Fact]
-    public void SelectiveRetransmissionRejectsStaleContentVersion()
-    {
-        var allocation = new ChunkAllocationId(new Point2(4, 5), 6);
-        var encoded = new EncodedTerrainChunk(allocation.Coords, 8, new byte[1800]);
-        var count = (ushort)EncodedTerrainChunkFragmenter.Split(encoded, allocation).Count();
-        var request = new TerrainChunkFragmentRequest(allocation, 7, count, [1]);
-
-        Assert.False(
-            ServerChunkDistributionScheduler.TrySelectMissingFragments(
-                encoded,
-                request,
-                out var selected
-            )
-        );
-        Assert.Empty(selected);
-    }
-
     private sealed class CountingAuthority : IChunkContentAuthority
     {
         public bool Ready { get; set; }
 
         public int SnapshotAttempts { get; private set; }
 
+        public long ContentVersion { get; set; } = 1;
+
         public bool TryGetDescriptor(Point2 coords, out AuthorityChunkDescriptor descriptor)
         {
-            descriptor = new AuthorityChunkDescriptor(coords, 1);
+            descriptor = new AuthorityChunkDescriptor(coords, ContentVersion);
             return Ready;
         }
 

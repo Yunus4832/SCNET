@@ -13,9 +13,9 @@ public enum AdministratorStatus
     Suspended = 3
 }
 
-public partial record AdministratorId : IGuidStronglyTypedId;
+public record AdministratorId : IGuidStronglyTypedId;
 
-public partial record AdministratorKeyId : IGuidStronglyTypedId;
+public record AdministratorKeyId : IGuidStronglyTypedId;
 
 public class Administrator : Entity<AdministratorId>, IAggregateRoot
 {

@@ -7,7 +7,6 @@
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
         <ApplicationIcon>..\SharedResources\AppIcon\icon.ico</ApplicationIcon>
-        <StartProgram>Starter</StartProgram>
     </PropertyGroup>
 
     <!-- Release 配置 -->
@@ -51,12 +50,6 @@
         </ProjectReference>
     </ItemGroup>
 
-    <Target Name="BuildLinuxServerImage"
-            AfterTargets="PackOutput"
-            Condition="'$(Configuration)' == 'Release' AND '$(BuildLinuxServerImage)' != 'false' AND $([MSBuild]::IsOSPlatform('Linux'))">
-        <Exec Command="bash &quot;$(MSBuildProjectDirectory)/Deployment/build-image.sh&quot;"
-              EnvironmentVariables="SCNET_PUBLISH_DIR=$(PublishDir);GAME_VERSION=$(GameVersion);OUTPUT_DIR=$(SolutionRoot)Publish"/>
-    </Target>
 
     <ItemGroup>
         <Content Include="..\ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt"

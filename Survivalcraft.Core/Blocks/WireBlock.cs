@@ -1,0 +1,274 @@
+namespace Game.Blocks;
+
+public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock, IPaintableBlock
+{
+    public static readonly Color WireColor = new(79, 36, 21);
+
+    public readonly BoundingBox[] CollisionBoxesByFace = CreateCollisionBoxes();
+
+
+    public ElectricElement CreateElectricElement(
+        SubsystemElectricity subsystemElectricity,
+        int value,
+        int x,
+        int y,
+        int z
+    )
+    {
+        throw new InvalidOperationException("WireBlock not support CreateElectricElement");
+    }
+
+    public ElectricConnectorType? GetConnectorType(
+        SubsystemTerrain terrain,
+        int value,
+        int face,
+        int connectorFace,
+        int x,
+        int y,
+        int z
+    )
+    {
+        if (!WireExistsOnFace(value, face))
+        {
+            return null;
+        }
+
+        return ElectricConnectorType.InputOutput;
+    }
+
+    public int GetConnectionMask(int value)
+    {
+        var color = GetColor(Terrain.ExtractData(value));
+        if (!color.HasValue)
+        {
+            return int.MaxValue;
+        }
+
+        return 1 << color.Value;
+    }
+
+    public int GetConnectedWireFacesMask(int value, int face)
+    {
+        var num = 0;
+        if (!WireExistsOnFace(value, face))
+        {
+            return num;
+        }
+
+        var num2 = CellFace.OppositeFace(face);
+        var flag = false;
+        for (var i = 0; i < 6; i++)
+        {
+            if (i == face)
+            {
+                num |= 1 << i;
+            }
+            else if (i != num2 && WireExistsOnFace(value, i))
+            {
+                num |= 1 << i;
+                flag = true;
+            }
+        }
+
+        if (flag && WireExistsOnFace(value, num2))
+        {
+            num |= 1 << num2;
+        }
+
+        return num;
+    }
+
+    public int? GetPaintColor(int value)
+    {
+        return GetColor(Terrain.ExtractData(value));
+    }
+
+    public int Paint(SubsystemTerrain? subsystemTerrain, int value, int? color)
+    {
+        var data = Terrain.ExtractData(value);
+        return Terrain.ReplaceData(value, SetColor(data, color));
+    }
+
+    private static BoundingBox[] CreateCollisionBoxes()
+    {
+        var boxes = new BoundingBox[6];
+        for (var i = 0; i < 6; i++)
+        {
+            var v = CellFace.FaceToVector3(i);
+            var v2 = new Vector3(0.5f, 0.5f, 0.5f) - 0.5f * v;
+            Vector3 v3;
+            Vector3 v4;
+            if (v.X != 0f)
+            {
+                v3 = new Vector3(0f, 1f, 0f);
+                v4 = new Vector3(0f, 0f, 1f);
+            }
+            else if (v.Y != 0f)
+            {
+                v3 = new Vector3(1f, 0f, 0f);
+                v4 = new Vector3(0f, 0f, 1f);
+            }
+            else
+            {
+                v3 = new Vector3(1f, 0f, 0f);
+                v4 = new Vector3(0f, 1f, 0f);
+            }
+
+            var v5 = v2 - 0.5f * v3 - 0.5f * v4;
+            var v6 = v2 + 0.5f * v3 + 0.5f * v4 + 0.05f * v;
+            boxes[i] = new BoundingBox(Vector3.Min(v5, v6), Vector3.Max(v5, v6));
+        }
+
+        return boxes;
+    }
+
+    public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
+    {
+        var array = new BoundingBox[6];
+        for (var i = 0; i < 6; i++)
+        {
+            array[i] = WireExistsOnFace(value, i) ? CollisionBoxesByFace[i] : default;
+        }
+
+        return array;
+    }
+
+
+    public override BlockPlacementData GetPlacementValue(
+        SubsystemTerrain subsystemTerrain,
+        Vector3 eyeForward,
+        int value,
+        TerrainRaycastResult raycastResult
+    )
+    {
+        var point = CellFace.FaceToPoint3(raycastResult.CellFace.Face);
+        var cellValue = subsystemTerrain.Terrain.GetCellValue(
+            raycastResult.CellFace.X + point.X,
+            raycastResult.CellFace.Y + point.Y,
+            raycastResult.CellFace.Z + point.Z
+        );
+        var num = Terrain.ExtractContents(cellValue);
+        var block = Catalog.Blocks[num];
+        var wireFacesBitmask = GetWireFacesBitmask(cellValue);
+        var num2 = wireFacesBitmask | (1 << raycastResult.CellFace.Face);
+        BlockPlacementData result;
+        if (num2 != wireFacesBitmask || !(block is WireBlock))
+        {
+            result = default;
+            result.Value = SetWireFacesBitmask(value, num2);
+            result.CellFace = raycastResult.CellFace;
+            return result;
+        }
+
+        result = default;
+        return result;
+    }
+
+    public override BlockDigData GetDigValue(
+        SubsystemTerrain subsystemTerrain,
+        int value,
+        int toolValue,
+        TerrainRaycastResult raycastResult
+    )
+    {
+        var wireFacesBitmask = GetWireFacesBitmask(value);
+        wireFacesBitmask &= ~(1 << raycastResult.CollisionBoxIndex);
+        BlockDigData result = default;
+        result.Value = SetWireFacesBitmask(value, wireFacesBitmask);
+        result.CellFace = raycastResult.CellFace;
+        return result;
+    }
+
+    public override bool AllowsDestructionDebris(int oldValue, int newValue)
+    {
+        for (var face = 0; face < 6; face++)
+        {
+            if (WireExistsOnFace(oldValue, face) && !WireExistsOnFace(newValue, face)) { return true; }
+        }
+
+        return false;
+    }
+
+    public override void GetDropValues(
+        SubsystemTerrain subsystemTerrain,
+        int oldValue,
+        int newValue,
+        int toolLevel,
+        List<BlockDropValue> dropValues,
+        out bool showDebris
+    )
+    {
+        var paintColor = GetPaintColor(oldValue);
+        for (var i = 0; i < 6; i++)
+        {
+            if (WireExistsOnFace(oldValue, i) && !WireExistsOnFace(newValue, i))
+            {
+                dropValues.Add(
+                    new BlockDropValue
+                    {
+                        Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, paintColor)),
+                        Count = 1
+                    }
+                );
+            }
+        }
+
+        showDebris = AllowsDestructionDebris(oldValue, newValue);
+    }
+
+    public override IEnumerable<int> GetCreativeValues()
+    {
+        yield return Terrain.MakeBlockValue(BlockIndex);
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 0));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 8));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 15));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 11));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 12));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 13));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 14));
+    }
+
+
+    public bool WireExistsOnFace(int value, int face)
+    {
+        return (GetWireFacesBitmask(value) & (1 << face)) != 0;
+    }
+
+    public int GetWireFacesBitmask(int value)
+    {
+        if (Terrain.ExtractContents(value) == BlockIndex)
+        {
+            return Terrain.ExtractData(value) & 0x3F;
+        }
+
+        return 0;
+    }
+
+    public int SetWireFacesBitmask(int value, int bitmask)
+    {
+        var num = Terrain.ExtractData(value);
+        num &= -64;
+        num |= bitmask & 0x3F;
+        return Terrain.ReplaceData(Terrain.ReplaceContents(value, BlockIndex), num);
+    }
+
+    public static int? GetColor(int data)
+    {
+        if ((data & 0x40) != 0)
+        {
+            return (data >> 7) & 0xF;
+        }
+
+        return null;
+    }
+
+    public static int SetColor(int data, int? color)
+    {
+        if (color.HasValue)
+        {
+            return (data & -1985) | 0x40 | ((color.Value & 0xF) << 7);
+        }
+
+        return data & -1985;
+    }
+}

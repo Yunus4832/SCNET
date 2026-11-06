@@ -11,6 +11,8 @@
         <NoWarn>$(NoWarn);MsgPack017</NoWarn>
     </PropertyGroup>
     <ItemGroup>
+        <ProjectReference Include="../Game.Protocol.Generators/Game.Protocol.Generators.csproj"
+                          OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all"/>
         <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
         <PackageReference Include="MessagePack" Version="3.1.9"/>
         <AssemblyMetadata Include="GameProtocolVersion" Value="$(GameProtocolVersion)"/>

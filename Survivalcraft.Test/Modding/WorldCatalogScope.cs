@@ -1,36 +1,54 @@
-using System.Reflection;
-
 using Game.Modding;
 using Game.Modding.Blocks;
+using Game.Network;
+using Game.World;
+
+using Survivalcraft.Test.Fixtures;
 
 namespace Survivalcraft.Test.Modding;
 
 internal sealed class WorldCatalogScope : IDisposable
 {
-    private readonly GameModRuntime? _previous = CurrentModRuntime.Value;
-
     private readonly GameModRuntime _runtime;
 
-    public WorldCatalogScope(params ModDescriptor[] mods)
+    public WorldCatalogScope(params ModDescriptor[] mods) : this(RuntimeSide.Authority, mods)
+    {
+    }
+
+    public WorldCatalogScope(RuntimeSide side, params ModDescriptor[] mods) : this(
+        new WorldRuntimeContext(
+            side,
+            (side == RuntimeSide.Client && true)
+        ),
+        mods
+    )
+    {
+    }
+
+    public WorldCatalogScope(NetNode node, params ModDescriptor[] mods) : this(node.Runtime, mods)
+    {
+    }
+
+    private WorldCatalogScope(WorldRuntimeContext runtime, params ModDescriptor[] mods)
     {
         _runtime = GameModRuntime.Start(mods);
         var registry = BlockRuntimeCatalog.Compile(
-            _runtime.Host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName)
+            _runtime.Host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName).Entries
         );
         Catalog = new BlockContentCatalog(registry);
-        typeof(GameModRuntime).GetProperty(
-                nameof(GameModRuntime.WorldCatalog),
-                BindingFlags.Public | BindingFlags.Instance
-            )!
-            .SetValue(_runtime, Catalog);
-        CurrentModRuntime.Set(_runtime);
+        _runtime.AdoptWorldCatalog(runtime, Catalog);
+        Project = new RuntimeTestProject(runtime.Side, runtime);
     }
+
+    public GameModRuntime Runtime => _runtime;
 
     public BlockContentCatalog Catalog { get; }
 
+    public RuntimeTestProject Project { get; }
+
     public void Dispose()
     {
-        _runtime.Dispose();
-        CurrentModRuntime.Set(_previous);
+        try { Project.Dispose(); }
+        finally { _runtime.Dispose(); }
     }
 }

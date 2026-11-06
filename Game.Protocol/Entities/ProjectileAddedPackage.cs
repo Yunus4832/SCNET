@@ -26,4 +26,6 @@ public sealed record ProjectileAddedPackage : ProjectilePackage
     [Key(8)] public int OwnerId { get; init; }
 
     [Key(9)] public bool IsFireProjectile { get; init; }
+
+    [Key(10)] public ProjectileSmokeTrailSnapshot? SmokeTrail { get; init; }
 }

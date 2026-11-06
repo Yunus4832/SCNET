@@ -6,20 +6,20 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Using Include="Game.Network.Snapshots"/>
-        <Using Include="Game.Protocol"/>
-        <Using Include="Game.Protocol.Terrain"/>
-        <Using Include="Game.Protocol.Blocks"/>
-        <Using Include="Game.Protocol.Connection"/>
-        <Using Include="Game.Protocol.Entities"/>
-        <Using Include="Game.Protocol.Mods"/>
-        <Using Include="Game.Protocol.Characters"/>
-        <Using Include="Game.Protocol.Teams"/>
-        <Using Include="Game.Protocol.World"/>
-        <Using Include="Game.Protocol.Commands"/>
-        <Using Include="Game.Protocol.Localization"/>
-        <Using Include="Game.Protocol.Messaging"/>
-        <Using Include="Game.Protocol.Serialization"/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         <PackageReference Include="coverlet.collector" Version="6.0.4"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
         <PackageReference Include="xunit" Version="2.9.3"/>
@@ -27,8 +27,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="Xunit"/>
+
+        <Compile Include="../Engine.Network.Test/Security/DatagramSecurityProxy.cs"
+                 Link="Fixtures/DatagramSecurityProxy.cs"/>
         <None Update="Fixtures/BuiltInBlocks.txt" CopyToOutputDirectory="PreserveNewest"/>
+        <None Update="Fixtures/BlockCollisionGeometryBaseline.json" CopyToOutputDirectory="PreserveNewest"/>
         <None Include="..\Content\Assets\Database.xml" Link="Fixtures\Database.xml"
               CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
@@ -36,8 +39,6 @@
     <ItemGroup>
         <ProjectReference Include="../Content.Packaging/Content.Packaging.csproj"/>
         <ProjectReference Include="../Survivalcraft/Survivalcraft.csproj"/>
-        <ProjectReference Include="../BeaconMod/BeaconMod.csproj"/>
-        <ProjectReference Include="../TerritoryStoneMod/TerritoryStoneMod.csproj"/>
     </ItemGroup>
 
 </Project>

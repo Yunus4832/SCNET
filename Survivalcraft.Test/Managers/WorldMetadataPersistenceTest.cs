@@ -3,7 +3,6 @@ using System.Xml.Linq;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Admission;
-using Game.Managers;
 using Game.World;
 
 using Survivalcraft.Test.Modding;
@@ -43,12 +42,20 @@ public sealed class WorldMetadataPersistenceTest
             root.Save(Path.Combine(directory, "Project.xml"));
             var policy = ServerAdmissionPolicy.WithPassword("fixture-password");
             settings.Name = "Updated";
-            WorldsManager.ChangeWorld("system:" + directory, settings, policy);
+            Game.Application.ClientApplication.Worlds.ChangeWorld(
+                "system:" + directory,
+                settings,
+                new WorldHostingSettings(),
+                policy
+            );
             var saved = XElement.Load(Path.Combine(directory, "Project.xml"));
             var savedInfo = new ValuesDictionary();
             savedInfo.ApplyOverrides(saved.Element("Subsystems")!.Element("Values")!);
             Assert.Equal("Updated", savedInfo.GetValue<string>("WorldName"));
-            Assert.True(WorldsManager.ReadAdmissionPolicy("system:" + directory).VerifyPassword("fixture-password"));
+            Assert.True(
+                Game.Application.ClientApplication.Worlds.ReadAdmissionPolicy("system:" + directory)
+                    .VerifyPassword("fixture-password")
+            );
             Assert.True(
                 XNode.DeepEquals(
                     extension,

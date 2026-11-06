@@ -1,4 +1,4 @@
-using Game.Subsystems;
+using Game.Subsystems.Behavior;
 
 namespace Survivalcraft.Test.Network;
 

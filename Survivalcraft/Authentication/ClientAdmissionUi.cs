@@ -525,5 +525,6 @@ internal sealed class ClientAdmissionUi : IDisposable
         );
     }
 
-    private static string Text(string key) => LanguageManager.GetContentWidgets(nameof(ClientAdmissionUi), key);
+    private static string Text(string key) =>
+        Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(ClientAdmissionUi), key);
 }

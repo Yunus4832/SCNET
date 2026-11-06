@@ -26,7 +26,10 @@ public static class StartupModProfileBootstrapper
         }
 
         var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, desiredProfile);
-        GameExitManager.RequestRestart(startupSession, sessionProfile);
+        var restart = SessionInfoSerializer.Clone(startupSession);
+        restart.CreateWorldIfMissing |= StartupManager.Current.Request.HasExplicitSession;
+        restart.ForceWorldRunServer |= StartupManager.Current.Request.ForceWorldRunServer;
+        GameExitManager.RequestRestart(restart, sessionProfile);
         return true;
     }
 }

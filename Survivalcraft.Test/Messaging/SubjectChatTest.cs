@@ -1,14 +1,13 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-using Engine.Core.Runtime;
 using Engine.Core.Security;
 
 using EntitySystem.Core;
 
 using Game.Characters;
 using Game.Commands;
-using Game.Managers;
+using Game.Commands.BuiltIn;
 using Game.Messaging;
 using Game.Network;
 using Game.Network.Transport;
@@ -22,53 +21,54 @@ using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Messaging;
 
-[Collection(WorldRoleCollection.Name)]
+[Collection(NodeRoleCollection.Name)]
 public sealed class SubjectChatTest : IDisposable
 {
-    private readonly WorldRole _previousWorldRole = GameManager.Role;
-
-    private readonly RunModeType _previousRunMode = RunMode.Value;
-
-    private readonly Dictionary<int, Client> _previousClients = CommonLib.Net.Clients;
-
-    private readonly Client? _previousSelf = CommonLib.Net.Self;
-
-    private readonly Client? _previousServer = CommonLib.Net.Server;
-
-    private readonly NetNode.Stage _previousStage = CommonLib.Net.CurrentStage;
+    private readonly NetNode _node = new NetNode(
+        NetNodeOptions.Default,
+        true,
+        Game.Network.Handling.PackageHandlerCatalog.Empty,
+        NodeRole.Authority
+    );
 
     private readonly ChatProject _project = new();
 
-    private readonly List<OutboundPackage> _pending = (List<OutboundPackage>)typeof(NetNode)
-        .GetField("_pendingPackages", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(CommonLib.Net)!;
-
-    private readonly HashSet<PlayerAddress> _ownedSubjects = [];
+    private readonly PendingLogicalMessages _pending;
 
     public SubjectChatTest()
     {
-        CommonLib.Net.Role = WorldRole.Server;
-        RunMode.Value = RunModeType.Gui;
-        CommonLib.Net.Self = null;
-        CommonLib.Net.Server = new Client(Guid.Empty, _project);
-        CommonLib.Net.Clients = new Dictionary<int, Client> { [0] = CommonLib.Net.Server };
-        CommonLib.Net.CurrentStage = NetNode.Stage.Connected;
+        _node.Runtime.BindProject(_project);
+        _pending = (PendingLogicalMessages)typeof(NetNode)
+            .GetField("_pendingPackages", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(_node)!;
+
+        _node.Server = new Client(Guid.Empty);
+        _node.AddClient(_node.Server);
+        _node.CurrentStage = NetNode.Stage.Connected;
     }
 
     [Fact]
-    public void GUIWithoutAnAdmittedLocalRecipientDoesNotReceiveOtherPlayersPrivateMessages()
+    public void AuthorityRecordsPrivateMessagesWithoutDeliveringThemToUnaddressedPlayers()
     {
         var recipient = Session(2, User());
         var sender = new MessageSender(recipient.PlayerAddress!.Value, "Fixture", null, string.Empty);
         _project.Messages.Publish(GameMessage.Chat(GameMessageChannel.Team, sender, "private fixture"), [recipient.ID]);
-        Assert.Empty(_project.Messages.History);
+        Assert.Single(_project.Messages.History);
         var local = Session(1, User());
         _project.Messages.Publish(
             GameMessage.Chat(GameMessageChannel.Team, sender, "another private fixture"),
             [recipient.ID]
         );
-        Assert.Empty(_project.Messages.History);
+        Assert.Equal(2, _project.Messages.History.Count);
+        Assert.All(
+            _pending.Where(package => package.Package is MessagePackage),
+            package =>
+            {
+                Assert.True(package.Audience.Includes(recipient));
+                Assert.False(package.Audience.Includes(local));
+            }
+        );
         _project.Messages.Publish(GameMessage.Chat(GameMessageChannel.Team, sender, "addressed to local"), [local.ID]);
-        Assert.Single(_project.Messages.History);
+        Assert.Equal(3, _project.Messages.History.Count);
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public sealed class SubjectChatTest : IDisposable
         Assert.NotEqual(owner.Address, sender.SubjectAddress);
         actor.DisplayName = "Renamed account";
         role.Name = "Renamed character";
-        actorSession.CharacterId = Guid.Empty;
+        actorSession.SetControlledCharacter(Guid.Empty);
         Assert.Equal("Account", sender.SubjectName);
         Assert.Equal("Character before rename", sender.CharacterName);
     }
@@ -211,15 +211,16 @@ public sealed class SubjectChatTest : IDisposable
     {
         var bytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
         var address = new PlayerAddress(IdentityAddress.Encode(bytes));
-        _ownedSubjects.Add(address);
         return _project.Players.Store.GetOrCreate(address);
     }
 
     private CharacterData Role(WorldPlayer owner, string name)
     {
         var player = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
+        typeof(CharacterData).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(player, _project);
         player.CharacterId = Guid.NewGuid();
-        player.OwnerAddress = owner.Address;
+        Fixtures.CharacterTestEnvironment.SetSyntheticOwner(player, owner.Address);
         player.Name = name;
         player.SubsystemCharacters = _project.Characters;
         var records =
@@ -233,12 +234,12 @@ public sealed class SubjectChatTest : IDisposable
 
     private Client Session(byte id, WorldPlayer subject, Guid characterId = default)
     {
-        var session = new Client(null, id, Guid.NewGuid(), characterId, _project)
+        var session = new Client(null, id, Guid.NewGuid(), characterId)
             { PlayerAddress = subject.Address, State = ClientState.Connected };
-        CommonLib.Net.Clients[id] = session;
+        _node.AddClient(session);
         if (id == 1)
         {
-            CommonLib.Net.Self = session;
+            _node.Self = session;
         }
 
         return session;
@@ -246,18 +247,8 @@ public sealed class SubjectChatTest : IDisposable
 
     public void Dispose()
     {
-        _pending.RemoveAll(package =>
-            package.Package is MessagePackage message &&
-            message.GameMessage.Sender is { } sender &&
-            _ownedSubjects.Contains(sender.SubjectAddress)
-        );
-        CommonLib.Net.Self = _previousSelf;
-        CommonLib.Net.Server = _previousServer;
-        CommonLib.Net.CurrentStage = _previousStage;
-        CommonLib.Net.Clients = _previousClients;
-        CommonLib.Net.Role = _previousWorldRole;
-        RunMode.Value = _previousRunMode;
         _project.Dispose();
+        _node.StopImmediate();
     }
 
     private sealed class ChatProject : Project
@@ -274,10 +265,9 @@ public sealed class SubjectChatTest : IDisposable
 
         public ChatProject()
         {
-            Messages = new GameMessageService(this);
-            var widgets = new SubsystemGameWidgets();
-            typeof(SubsystemGameWidgets).GetField("_messages", BindingFlags.NonPublic | BindingFlags.Instance)!
-                .SetValue(widgets, Messages);
+            var messages = new SubsystemMessages();
+            WorldSubsystemTestSupport.Attach(this, messages);
+            Messages = messages.Service;
             Teams = TeamTestSupport.CreateSubsystem(Players.Store);
             subsystems.Add(Teams);
             subsystems.Add(Players);
@@ -286,7 +276,7 @@ public sealed class SubjectChatTest : IDisposable
             WorldSubsystemTestSupport.Attach(this, Players);
             WorldSubsystemTestSupport.Attach(this, Characters);
             WorldSubsystemTestSupport.Attach(this, Marks);
-            subsystems.Add(widgets);
+            subsystems.Add(messages);
             subsystems.Add(new SubsystemGameInfo { WorldSettings = new WorldSettings() });
         }
     }

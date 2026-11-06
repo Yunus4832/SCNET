@@ -21,6 +21,8 @@ public static partial class Window
 
     private static bool _closing;
 
+    private static bool _closeCancelled;
+
     private static bool _hasPresentedFrame;
 
     private static State _state;
@@ -32,6 +34,8 @@ public static partial class Window
     public static event Action? Activated;
 
     public static event Action? Deactivated;
+
+    public static event Func<bool>? Closing;
 
     public static event Action? Closed;
 
@@ -48,6 +52,8 @@ public static partial class Window
     public static bool IsCreated => _state != State.Uncreated;
 
     public static bool IsActive => _state == State.Active;
+
+    public static bool IsClosing => _closing;
 
     public static bool HasWideNotch { get; private set; }
 
@@ -127,7 +133,21 @@ public static partial class Window
 
         try
         {
-            View!.Run();
+            View!.Initialize();
+            do
+            {
+                _closeCancelled = false;
+                View.Run(() =>
+                    {
+                        View.DoEvents();
+                        if (!View.IsClosing) { View.DoUpdate(); }
+
+                        if (!View.IsClosing) { View.DoRender(); }
+                    }
+                );
+                // SDL sets its close flag after invoking Closing. Resume only after Run has returned.
+                if (_closeCancelled) { ((IWindow)View).IsClosing = false; }
+            } while (_closeCancelled);
         }
         catch (Exception e)
         {
@@ -140,6 +160,7 @@ public static partial class Window
             DisposePlatformView();
             View = null!;
             _closing = false;
+            _closeCancelled = false;
             _hasPresentedFrame = false;
             _state = State.Uncreated;
         }
@@ -148,7 +169,30 @@ public static partial class Window
     public static void Close()
     {
         VerifyWindowOpened();
-        _closing = true;
+        if (TryPrepareClose(true)) { _closing = true; }
+    }
+
+    internal static bool TryPrepareClose(bool canCancel)
+    {
+        var allowed = true;
+        if (Closing is { } handlers)
+        {
+            foreach (var handler in handlers.GetInvocationList().Cast<Func<bool>>())
+            {
+                try { allowed &= handler(); }
+                catch (Exception exception)
+                {
+                    Log.Error($"Window close guard failed: {exception}");
+                    allowed = false;
+                }
+            }
+        }
+
+        if (allowed) { return true; }
+
+        if (!canCancel) { Log.Warning("The platform is destroying the view and cannot cancel its closure."); }
+
+        return !canCancel;
     }
 
     public static void LoadHandler()
@@ -183,6 +227,14 @@ public static partial class Window
 
     private static void ClosedHandler()
     {
+        if (!TryPrepareClose(View is IWindow))
+        {
+            _closing = false;
+            _closeCancelled = true;
+            return;
+        }
+
+        _closing = true;
         if (_state == State.Active)
         {
             _state = State.Inactive;

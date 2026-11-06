@@ -42,7 +42,7 @@ public sealed class ServerAdmissionOverridesTest
                 new XElement("ExtensionData", new XElement("Values", new XAttribute("Name", "game"), players), other)
             );
             var policy = ServerAdmissionPolicy.WithPassword("private-setting");
-            WorldsManager.WriteAdmissionPolicy(root, policy);
+            Game.World.WorldRepository.WriteAdmissionPolicy(root, policy);
             Assert.True(XNode.DeepEquals(other, root.Element("ExtensionData")!.Elements("Values").Last()));
             Assert.True(
                 XNode.DeepEquals(
@@ -51,7 +51,7 @@ public sealed class ServerAdmissionOverridesTest
                 )
             );
             root.Save(Path.Combine(directory, "Project.xml"));
-            var read = WorldsManager.ReadAdmissionPolicy("system:" + directory);
+            var read = Game.Application.ClientApplication.Worlds.ReadAdmissionPolicy("system:" + directory);
             Assert.Equal(policy.Fingerprint(), read.Fingerprint());
         }
         finally
@@ -69,9 +69,9 @@ public sealed class ServerAdmissionOverridesTest
             const string password = "private-value-with-spaces ";
             File.WriteAllText(path, password + "\n");
             var overrides = new ServerAdmissionOverrides { Mode = ServerAdmissionMode.Password, PasswordFile = path };
-            var xml = ServerAdmissionManager.SerializeOverrides(overrides);
+            var xml = AdmissionOverridesSerializer.Serialize(overrides);
             Assert.DoesNotContain(password, xml.ToString());
-            var restored = ServerAdmissionManager.DeserializeOverrides(XElement.Parse(xml.ToString()));
+            var restored = AdmissionOverridesSerializer.Deserialize(XElement.Parse(xml.ToString()));
             Assert.Equal(overrides, restored);
             var policy = ServerAdmissionManager.Resolve(restored, ServerAdmissionPolicy.Open);
             Assert.Equal(ServerAdmissionMode.Password, policy.Mode);
@@ -96,7 +96,7 @@ public sealed class ServerAdmissionOverridesTest
             AuthenticationKey = AuthenticationPublicKey.From(key).EncodedKey
         };
         var policy = ServerAdmissionManager.Resolve(
-            ServerAdmissionManager.DeserializeOverrides(ServerAdmissionManager.SerializeOverrides(overrides)),
+            AdmissionOverridesSerializer.Deserialize(AdmissionOverridesSerializer.Serialize(overrides)),
             ServerAdmissionPolicy.Open
         );
         Assert.Equal(ServerAdmissionMode.External, policy.Mode);
@@ -108,7 +108,7 @@ public sealed class ServerAdmissionOverridesTest
     {
         var saved = new ServerAdmissionOverrides
             { Mode = ServerAdmissionMode.Password, PasswordFile = "/private/path" };
-        var replacement = ServerAdmissionManager.Merge(
+        var replacement = AdmissionOverridesPolicy.Merge(
             saved,
             new ServerAdmissionOverrides { Mode = ServerAdmissionMode.Open }
         );
@@ -117,7 +117,7 @@ public sealed class ServerAdmissionOverridesTest
             ServerAdmissionMode.Open,
             ServerAdmissionManager.Resolve(replacement, ServerAdmissionPolicy.Open).Mode
         );
-        Assert.Throws<AdmissionConfigurationException>(() => ServerAdmissionManager.DeserializeOverrides(
+        Assert.Throws<AdmissionConfigurationException>(() => AdmissionOverridesSerializer.Deserialize(
                 new XElement("AdmissionOverrides", new XAttribute("Mode", "invalid"))
             )
         );

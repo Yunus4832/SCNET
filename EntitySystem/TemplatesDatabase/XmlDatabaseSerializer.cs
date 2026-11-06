@@ -291,7 +291,7 @@ public static class XmlDatabaseSerializer
         object? value = null;
         if (!string.IsNullOrEmpty(attributeValue5))
         {
-            var type = TemplateTypeNames.Resolve(attributeValue5, true)!;
+            var type = TemplateTypeNames.Resolve(attributeValue5)!;
             value = XmlUtils.GetAttributeValue(node, "Value", type);
         }
 

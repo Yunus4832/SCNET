@@ -19,7 +19,7 @@ public sealed class HumanReadableConverterTest
     [Theory]
     [InlineData(typeof(int), "not-an-integer")]
     [InlineData(typeof(Guid), "not-a-guid")]
-    [InlineData(typeof(Vector3), "one,two,three")]
+    [InlineData(typeof(Vector3), "one, two, three")]
     public void InvalidValuesThrowWithTypeContextAndTryReturnsFailure(Type type, string text)
     {
         var error = Assert.Throws<InvalidOperationException>(() => HumanReadableConverter.ConvertFromString(type, text)

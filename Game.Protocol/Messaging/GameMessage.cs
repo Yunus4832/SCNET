@@ -1,54 +1,19 @@
 using MessagePack;
 
-using MaxLengthAttribute = System.ComponentModel.DataAnnotations.MaxLengthAttribute;
-
 namespace Game.Protocol.Messaging;
 
 [MessagePackObject]
-public sealed record GameMessage
+[method: SerializationConstructor]
+public sealed record GameMessage(
+    [property: Key(0)] GameMessageKind Kind,
+    [property: Key(1)] GameMessageChannel Channel,
+    [property: Key(2)] MessageSender? Sender,
+    [property: Key(3)] MessageContent Content,
+    [property: Key(4)] GameMessageTone Tone = GameMessageTone.Normal,
+    [property: Key(5)] GameMessagePresentation Presentation = GameMessagePresentation.Default,
+    [property: Key(6)] GameMessageToastStyle? ToastStyle = null
+)
 {
-    [Key(0)] public GameMessageKind Kind { get; init; }
-
-    [Key(1)] public GameMessageChannel Channel { get; init; }
-
-    [Key(2)] public MessageSender? Sender { get; init; }
-
-    [Key(3)] public MessageContent Content { get; init; }
-
-    [Key(4)] public GameMessageTone Tone { get; init; }
-
-    [Key(5)] public GameMessagePresentation Presentation { get; init; }
-
-    [Key(6)] public string LocalizationSection { get; init; }
-
-    [Key(7)] public string LocalizationKey { get; init; }
-
-    [Key(8), MaxLength(16)] public IReadOnlyList<string> LocalizationArguments { get; init; }
-
-    [SerializationConstructor]
-    public GameMessage(
-        GameMessageKind Kind,
-        GameMessageChannel Channel,
-        MessageSender? Sender,
-        MessageContent Content,
-        GameMessageTone Tone = GameMessageTone.Normal,
-        GameMessagePresentation Presentation = GameMessagePresentation.Default,
-        string LocalizationSection = "",
-        string LocalizationKey = "",
-        IReadOnlyList<string>? LocalizationArguments = null
-    )
-    {
-        this.Kind = Kind;
-        this.Channel = Channel;
-        this.Sender = Sender;
-        this.Content = Content;
-        this.Tone = Tone;
-        this.Presentation = Presentation;
-        this.LocalizationSection = LocalizationSection;
-        this.LocalizationKey = LocalizationKey;
-        this.LocalizationArguments = LocalizationArguments ?? [];
-    }
-
     public static GameMessage Chat(
         GameMessageChannel channel,
         MessageSender sender,

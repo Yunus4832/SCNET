@@ -7,7 +7,7 @@ using SCNET.Authentication.Protocol.Http;
 
 namespace ContentServer.Domain.AuthenticationServices;
 
-public partial record AuthenticationServiceRegistrationId : IGuidStronglyTypedId;
+public record AuthenticationServiceRegistrationId : IGuidStronglyTypedId;
 
 /// <summary>A reviewed source address. Authentication identities and grants are owned by the service and its clients.</summary>
 public sealed class AuthenticationServiceRegistration : Entity<AuthenticationServiceRegistrationId>, IAggregateRoot

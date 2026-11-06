@@ -6,9 +6,9 @@
 - `RunningSetting`: 可序列化的启动入口设置
 - `StartupRequest`: 本次命令行或 Intent 提供的临时请求
 - `SessionInfo`: 可恢复的具体目标，例如世界、服务器浏览器或远程服务器
-- `StartupContext`: 启动解析完成后提供给 GUI 或 Headless 的有效上下文
+- `StartupContext`: 启动解析完成后提供给 GUI 或 独立服务器的有效上下文
 
-这样 GUI、Headless、远程联机重启和模组下载后的恢复都可以走同一套流程。
+这样 GUI、独立服务器、远程联机重启和模组下载后的恢复都可以走同一套流程。
 
 ## RunningSetting
 
@@ -16,7 +16,6 @@
 
 职责：
 
-- 记录 `RunMode`
 - 记录日志级别
 - 记录 GUI 窗口模式与尺寸
 - 指向默认或 pending session
@@ -26,7 +25,6 @@
 
 当前字段：
 
-- `RunMode`
 - `LogLevel`
 - `WindowMode`
 - `WindowWidth`
@@ -35,20 +33,20 @@
 - `PendingSessionId`
 - `RemainingArgs`
 
-`RunningSettingManager` 只负责读取、规范化和保存这些字段，不再解析命令行，也不承载 session 临时字段。
+Hosting 中的实例 `StartupProfileStore` 负责启动配置和会话文件的读取、规范化、保存及选择；文件路径由宿主显式提供，不依赖 UI 或存档装配，也不把 session 临时字段写入 `RunningSetting.xml`。
 
 ## StartupRequest 与 StartupContext
 
-`StartupManager` 读取 `RunningSetting` 并解析命令行，生成一次性的 `StartupRequest`。其中包含 `SessionName`、`World`、`Seed`、`GameMode`、连接地址、玩家名、端口和 `Save` 等临时意图；该对象不会序列化。
+`StartupManager` 装配共享 `StartupProfileStore`，由它读取 `RunningSetting` 并调用 `StartupArgumentsParser` 解析命令行，生成一次性的 `StartupRequest`。其中包含 `SessionName`、`World`、`Seed`、`GameMode`、连接地址、玩家名、端口和 `Save` 等临时意图；该对象不会序列化。
 
-随后 `StartupManager` 按“显式 session、pending session、default session、临时新 session”的顺序选出 session id，将请求覆盖合并到 `SessionInfo`，最终生成 `StartupContext(Settings, Request, Session)`。GUI、Headless、玩家初始化和模组加载只消费这个已经解析好的上下文，不再各自重复合并启动参数。
+随后 `StartupManager` 按“显式 session、pending session、default session、临时新 session”的顺序选出 session id，将请求覆盖合并到 `SessionInfo`，最终生成 `StartupContext(Settings, Request, Session)`。GUI、独立服务器、玩家初始化和模组加载只消费这个已经解析好的上下文，不再各自重复合并启动参数。
 
 命令行参数：
 
 - `--instance <实例名>`: 在加载 `RunningSetting` 之前选择或创建数据实例
 - `--connect <主机:端口>`: 将本次有效 session 覆盖为远程服务器
 - `--player <名称>`: 显式请求自动使用当前身份角色；若服务器没有该身份角色则按名称创建
-- `--host`: GUI 模式下强制将目标世界设置为 `WorldSettings.RunServer=true`
+- `--host`: GUI 模式下强制将目标世界设置为 `WorldHostingSettings.RunServer=true`
 - `--server-port <端口>` / `--broadcast-port <端口>`: 覆盖本次运行端口
 - `--no-broadcast`: 禁用本次有效 session 的局域网发现广播
 - `--server-identity <完整身份标识>`: 使用当前实例中已有的服务器身份；随命名 session 保存和恢复，不接受私钥参数
@@ -64,8 +62,6 @@
 - `--no-http-command`: 为本次有效 session 禁用 loopback HTTP 命令宿主
 - `--http-command-port <端口>`: 覆盖 loopback HTTP 命令宿主的默认端口 `28889`
 - `--http-command-access-token <Token>`: 覆盖本次运行使用的 HTTP Bearer Token
-- `-d` / `--server`: 设置 `RunMode=HeadlessServer`
-- `--gui`: 设置 `RunMode=Gui`
 - `--session <名称>`: 按名称选择或创建 session
 - `--world <名称>`: 和 `--session` 一起使用，设置 session 的目标世界
 - `--seed <种子>`: 和 `--session` 一起使用，设置新世界种子
@@ -80,9 +76,9 @@
 `--world`、`--seed`、`--terrain`、`--terrain-level` 和 `--game-mode` 没有 `--session` 时会被忽略。
 地形类型和高度随命名会话通过 `--save` 保存；只作用于新世界，已有世界会报告忽略，不修改存档地形。
 
-`--window-mode` 和 `--window-size` 只在 GUI 模式生效；Headless 会忽略它们，也不会因 `--save` 将其覆盖值持久化。
+`--window-mode` 和 `--window-size` 由图形入口消费；独立服务器不创建窗口。入口由所运行的程序决定，不写入实例配置。
 
-`--connect`、`--host`、`--player`、`--game-mode` 和端口覆盖不写入 `RunningSetting.xml`。玩家名和 HTTP 命令覆盖由 `StartupRequest` 解析后合并进本次有效 `SessionInfo`，以便模组准备触发进程重启时完整恢复；使用 `--save` 时也会随命名 session 写入 `SessionInfo.xml`。HTTP 命令宿主的实例默认开关、端口和 access token 保存在 `Settings.xml`，其中开关默认关闭；session 覆盖具有更高优先级。`.runtime` 目录只用于 Starter 的实例进程存活登记，不承载 HTTP 配置或凭证。`--host` 是强制调试参数：新世界直接创建为联机世界，已有非联机世界则更新并持久化其 `WorldSettings.RunServer=true`，之后统一走正常联机世界启动流程。未传 `--player` 时保持现有角色界面流程。`--connect` 与 `--host` 同时出现时按远程连接处理并忽略 `--host`。
+`--connect`、`--host`、`--player`、`--game-mode` 和端口覆盖不写入 `RunningSetting.xml`。玩家名和 HTTP 命令覆盖由 `StartupRequest` 解析后合并进本次有效 `SessionInfo`，以便模组准备触发进程重启时完整恢复；使用 `--save` 时也会随命名 session 写入 `SessionInfo.xml`。HTTP 命令宿主的实例默认开关、端口和 access token 保存在 `Settings.xml`，其中开关默认关闭；session 覆盖具有更高优先级。`.runtime` 目录只用于 Starter 的实例进程存活登记，不承载 HTTP 配置或凭证。`--host` 是强制调试参数：新世界直接创建为联机世界，已有非联机世界则更新并持久化其 `WorldHostingSettings.RunServer=true`，之后统一走正常联机世界启动流程。未传 `--player` 时保持现有角色界面流程。`--connect` 与 `--host` 同时出现时按远程连接处理并忽略 `--host`。
 
 `--save` 会保存 `RunningSetting` 中适用的入口设置，并把 `StartupContext.Session` 保存到 `SessionInfo.xml`。因此 `--connect`、端口和 `--game-mode` 默认只存在于 `StartupRequest` 和本次有效 session 中，与 `--save` 同用时才成为具名 session 的后续默认值。
 
@@ -101,22 +97,22 @@ Starter 使用两阶段 Storage 注册：先将程序基础目录注册为 `star
 3. `CurrentInstance`
 4. `default`
 
-命令行选择实例不会修改 `CurrentInstance`，因此可以同时启动互不干扰的 GUI 和 Headless 调试实例。普通应用重启保持当前进程的实例；`GameExitAction.SwitchInstance` 则消费 `NextInstance` 并进入目标实例。实例内部的 `RunningSetting` 和 session 不保存实例 ID。
+命令行选择实例不会修改 `CurrentInstance`，因此可以同时启动互不干扰的 GUI 和 独立服务器调试实例。普通应用重启保持当前进程的实例；`GameExitAction.SwitchInstance` 则消费 `NextInstance` 并进入目标实例。实例内部的 `RunningSetting` 和 session 不保存实例 ID。
 
-桌面端实例管理可将未运行的 GUI 实例在新窗口中启动。启动器向新进程显式传入 `--gui --instance <实例名>`，保留当前窗口，也不改写 `Starter.xml` 的当前或下次实例。当前实例、已运行实例和 Headless 实例不提供此操作；Headless 实例仍可通过切换或命令行启动。
+桌面端实例管理可将未运行的实例在新 GUI 窗口中启动。启动器向新进程显式传入 `--instance <实例名>`，保留当前窗口，也不改写 `Starter.xml` 的当前或下次实例。当前实例和已运行实例不提供此操作。独立服务器从自己的可执行文件启动并使用相同的实例隔离规则。
 
 Starter 还负责注册平台能力。交互式文件打开与保存统一通过 `Engine.FileStorage.FilePicker` 暴露，
 具体 `IFilePicker` 由 Windows、Linux 或 Android Starter 提供；它不参与实例选择、Storage 根目录
-注册或 session 持久化。未注册实现时 `FilePicker.IsAvailable` 为 `false`，Headless 不提供交互式
+注册或 session 持久化。未注册实现时 `FilePicker.IsAvailable` 为 `false`，独立服务器不提供交互式
 文件选择。
 
-Windows 和 Linux 只在 `RunMode.Gui` 分支注册；Linux 实现通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，不依赖 `zenity`，portal 或桌面 backend 不可用时在发起选择请求时报错。Android 仅由 GameActivity 注册 Storage Access Framework 实现，ServerActivity 不注册。
+Windows 和 Linux 图形入口注册文件选择器；Linux 实现通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，不依赖 `zenity`，portal 或桌面 backend 不可用时在发起选择请求时报错。Android 由 GameActivity 注册 Storage Access Framework 实现。
 
-所有平台能力通过 `PlatformManager` 这一入口注册。GUI 同时注册 SDL2 文本输入、SDL2 文本剪贴板和平台 FilePicker；Windows/Linux Headless 与 Android ServerActivity 不注册这些交互能力。
+所有平台能力通过 `PlatformManager` 这一入口注册。GUI 同时注册 SDL2 文本输入、SDL2 文本剪贴板和平台 FilePicker；独立服务器不加载这些交互能力。
 
 ### 实例身份
 
-`LocalIdentityManager` 在实例 Storage 就绪后的 GUI/Headless 初始化阶段读取
+`LocalIdentityManager` 在实例 Storage 就绪后的 GUI 与独立服务器初始化阶段读取
 `config:LocalIdentities.xml`，在界面、会话恢复和网络启动之前准备玩家及服务器身份。
 每个实例分别维护玩家身份列表和服务器身份列表，两种用途互相独立；每类最多 128 项，分别保存一个默认身份。首次缺失的用途自动生成默认身份并一次保存。每项包含本地名称、完整标识和私钥；默认选择及列表均保存在同一配置文件中。内存中的 `LocalIdentitySettings` 只承载数据，创建、选择、删除和备份恢复均由 `LocalIdentityManager` 执行。
 游戏和联网代码只读取已初始化的身份，不在进入存档或开启服务器时创建密钥。
@@ -148,7 +144,7 @@ GUI 在本地身份准备完成后初始化 `AuthenticationManager`，读取独�
 桌面 POSIX 文件系统的新建私有目录限制为 `0700`；Android 的共享实例存储不保证支持 POSIX 模式，
 沿用实例目录的设备存储访问权限，不强制对共享目录执行 `chmod`。
 这些数据不放入 `Settings`、存档、普通 session 或 `.runtime`。
-Headless 开服不初始化客户端授权存储，服务器自身的准入配置与客户端安装、登录状态独立。
+独立服务器开服不初始化客户端授权存储，服务器自身的准入配置与客户端安装、登录状态独立。
 
 远程连接在游戏加载页处理准入：开放模式自动确认，密码在游戏内的遮蔽输入框提交，外部认证使用浏览器及签名轮询。
 首次未知服务提供“登录并保存 / 仅此次登录 / 拒绝”，停用记录不被服务器描述重新启用。
@@ -163,7 +159,7 @@ Android 在游戏仍活动时从应用图标返回，会把已有 GameActivity �
 第二个 SDL 运行时。显式带命令行或实例参数的启动仍走原启动流程；调试脚本应先停止旧进程。
 GUI 运行结束后由当前启动控制器统一执行退出动作，等待游戏保存和释放世界后再退出进程或重启。
 Android 内部重启仅传递实例 ID；有效目标和覆盖从 pending session 恢复，不重播原始命令行，
-以免原来的显式 session 或运行模式覆盖本次重启意图。
+以免原来的显式 session 覆盖本次重启意图。
 Android 主动退出先关闭游戏视图并执行保存和资源释放，不提前结束 GameActivity。窗口循环返回后，
 由 Starter 统一处理退出、重启、切换实例或更新，避免清理期间露出启动 Activity 和系统导航栏。
 
@@ -184,11 +180,14 @@ GUI 主机快照恢复可在同一进程、同一存档范围内使用内存中�
 更新地址、退出登录及移除。安装不强制登录；地址更新必须保持同一公钥，更新后清除本地旧授权并重新登录。
 退出登录先清除本地授权，再尽力向原固定服务撤销；失败会说明尚未确认远端撤销，不恢复本地登录状态。
 移除仅删除本地服务及其授权；若希望远端撤销，应先退出登录。身份密钥、存档角色和权限均不受这些操作影响。
-GUI 主机与 Headless 均先加载权威世界，再启动游戏监听。服务器端点不代表任何玩家，
+GUI 主机与 独立服务器均先加载权威世界，再启动游戏监听。服务器端点不代表任何玩家，
 不计入玩家人数，也不拥有角色或玩家权限。GUI 随后为本机玩家发起准入；本机使用可信的进程内适配器，
 无需为自己建立 UDP 连接，但与远端共用策略验证后的封禁、重复登录、人数限制及角色创建规则。
-本机批准仅适用于本次已加载世界和随机挑战。单机同样先加载世界，再接纳本机身份、恢复或创建角色；它直接信任本机身份，不建立联机认证事务、不启动网络监听。
-Headless 没有可玩本地玩家。
+本机批准仅适用于本次已加载世界和随机挑战。单机先创建权威世界，再以本机可信身份建立独立的进程内客户端；
+GUI 开服则先完成配置的本机认证，再创建同样的客户端。Authority 不持有可玩 Self，Client 持有本地 Self，
+两侧经过相同的会话注册、Bootstrap、初始快照和角色创建流程。单机不建立联机认证事务，也不启动网络监听。
+冒险世界恢复快照时保留原开服方式；Authority 角色本身不表示已开启监听，单机重开仍保持无监听。
+独立服务器没有可玩本地玩家。
 
 世界列表双击和“开始游戏”使用 `SessionTarget.World`：加载后直接接纳本机玩家，退出游戏、取消认证或初次角色创建时保存并关闭世界，返回存档列表。
 次要操作首项“运行服务器”使用 `SessionTarget.HostedWorld`：本次强制监听，加载后直接进入服务器页，不自动接纳玩家，也不修改存档的开服选项。
@@ -196,7 +195,8 @@ Headless 没有可玩本地玩家。
 
 退出行为由本机玩家流程决定：`GameManager.LocalPlayerReturnTarget` 在发起加入时记录返回目标；游戏菜单、加载页和角色页面统一调用 `GameManager.LeaveGameplay(reason)`，由它执行清理、选择返回页面并呈现退出原因。
 `GameManager.LeaveLocalPlayer()` 结束本机玩家并保存世界，`GameManager.CloseWorld()` 保存、停止网络并释放世界；这些底层生命周期操作不选择页面。
-网络的立即停止同样只清理连接；异步断线完成后通知 GameManager，由其按停止前的角色处理 GUI 退出，避免网络层释放世界或重复跳页。认证断线恢复不触发普通退出；Headless 和应用关闭仍由各自入口完成清理。
+正常离开、关闭世界及主动退出、重启、切换实例请求先完成权威保存；保存失败时保留当前世界和本地客户端，不发布退出意图，可修复存储问题后重试。画面切换本身不执行保存，窗口失焦只请求非终止性的自动保存。桌面窗口关闭事件在停网络、释放世界与图形资源前检查保存，失败时取消关闭；正常关闭后不再重复保存已释放模组状态。系统强制销毁不可取消视图或终止进程时只能尽力保存，不能保证保留内存状态。
+网络的立即停止同样只清理连接；异步断线完成后通知 GameManager，由其按停止前的角色处理 GUI 退出，避免网络层释放世界或重复跳页。认证断线恢复不触发普通退出；独立服务器和应用关闭仍由各自入口完成清理。
 Session 目标只表达启动和恢复意图，不能用来反查当前玩家的退出行为。模组准备重启、有效 session 捕获及快照恢复保留运行入口；
 当前世界的 `GameManager.WorldSession` 保留有效启动覆盖，避免从菜单打开另一世界后误用进程启动时的 session。
 世界模拟和自动保存不依赖玩家进入游戏画面。
@@ -211,7 +211,7 @@ Session 目标只表达启动和恢复意图，不能用来反查当前玩家的
 新建或修改世界的“服务器设置”可选择实例默认身份或某个已有服务器身份，存档只保存公开标识，不复制私钥。
 服务器身份按本次命令行、已保存 session、存档选择、实例默认的顺序解析；显式指定的身份必须存在，缺失时启动失败，
 不会回退到另一密钥。`--save` 只保存 session 覆盖，不重写存档选择；重启保留该覆盖。GUI 主机准入与实际 UDP 监听
-使用同一选择，Headless 也使用同一解析入口。选择优先级由 `Game.Servers.ServerIdentitySelection` 协调，身份管理器负责身份集合及其业务操作，不读取启动参数或存档设置。更换服务器身份会改变客户端看到的服务器标识，不会改变存档的主体权限或角色。
+使用同一选择，独立服务器也使用同一解析入口。选择优先级由 `Game.Servers.ServerIdentitySelection` 协调，身份管理器负责身份集合及其业务操作，不读取启动参数或存档设置。更换服务器身份会改变客户端看到的服务器标识，不会改变存档的主体权限或角色。
 
 服务器设置关闭开服时隐藏服务器子项，关闭 P2P 时隐藏信令和房间子项；开关不清除已填配置。
 初始化缺失的玩家和服务器身份时，名称分别为 `UserId` 和 `ServerId`，不改写已有身份名称。
@@ -223,7 +223,7 @@ Session 目标只表达启动和恢复意图，不能用来反查当前玩家的
 不复制用户授权。修改现有非开放策略需要确认，主体、权限与角色资料保留。世界编辑作用于下次开服，
 不会修改正在运行的服务器或踢出已进入的会话；普通单机不执行联机准入。
 
-GUI 与 Headless 共用命令行覆盖。优先级为命令行、环境变量、已保存 session、世界策略。
+GUI 与 独立服务器共用命令行覆盖。优先级为命令行、环境变量、已保存 session、世界策略。
 环境变量为 `SCNET_ADMISSION`、`SCNET_SERVER_PASSWORD_FILE`、`SCNET_AUTHENTICATION_URL`、
 `SCNET_AUTHENTICATION_KEY`、`SCNET_AUTHENTICATION_NAME`。显式切换模式会清除较低优先级的凭证覆盖，
 避免密码文件与外部模式混用。未给出覆盖时继承存档策略；外部模式必须具有公开 URL 和公钥，
@@ -233,7 +233,7 @@ GUI 与 Headless 共用命令行覆盖。优先级为命令行、环境变量、
 拒绝控制字符。支持绝对路径、解析为绝对路径的相对路径以及 `config:` 等 Storage 路径。
 文件内容只在开服时读取，不能通过 `--server-password` 或 `SCNET_SERVER_PASSWORD` 提供。
 密码文件缺失、无效参数以及无法读取或损坏的准入会话配置会使启动失败，不会回退到开放模式。
-Windows/Linux Starter 保留 Headless 返回的进程退出码：正常停止为 `0`，初始化或运行异常为 `1`，监听启动失败为 `3`。
+独立服务器保留服务端循环返回的进程退出码：正常停止为 `0`，初始化或运行异常为 `1`，监听启动失败为 `3`。
 应限制密码文件及实例目录的访问权限，不把文件放入源码或日志。
 
 覆盖默认仅用于本次运行；`--save` 将公开服务资料及密码文件引用写入命名 session 的
@@ -276,7 +276,7 @@ Windows/Linux Starter 保留 Headless 返回的进程退出码：正常停止为
 - `ServerBrowser`
 - `RemoteServer`
 
-Headless 使用 `World` session。远程联机重启使用 `RemoteServer` session。
+独立服务器使用 `World` session。远程联机重启使用 `RemoteServer` session。
 
 ### World session 优先级
 
@@ -300,13 +300,18 @@ Headless 使用 `World` session。远程联机重启使用 `RemoteServer` sessio
 4. session 中的玩家名和 HTTP 命令覆盖随远程目标一起恢复
 5. session 被消费后清理 pending 状态
 
-Headless 不使用这个机制准备模组。它在启动阶段直接解析 profile、下载缺失包并启动 runtime。
+GUI 在初始世界启动因准备模组需要重启时，将本次显式世界创建和 `--host` 请求写入临时 session 的
+`CreateWorldIfMissing` 与 `ForceWorldRunServer`。这两个字段承载尚未完成的启动操作；世界成功创建或定位、
+开服设置应用后，恢复流程消费并清除字段。`SessionTarget.World` 在恢复后仍直接接纳本机玩家。
+普通已有世界的恢复引用已存在的存档，存档不存在时报告恢复失败。
+
+独立服务器不使用这个机制准备模组。它在启动阶段直接解析 profile、下载缺失包并启动 runtime。
 
 ## 应用生命周期命令
 
-主菜单的电源菜单通过应用域命令请求重新启动、切换实例、切换运行模式或退出，不直接关闭窗口。`GameExitManager` 统一产生 `Exit`、`Restart`、`SwitchInstance` 或 `Update` 动作，再由 Windows、Linux 或 Android Starter 完成平台级退出和重启。
+主菜单的电源菜单通过应用域命令请求重新启动、切换实例或退出，不直接关闭窗口。`GameExitManager` 统一产生 `Exit`、`Restart`、`SwitchInstance` 或 `Update` 动作，再由 Windows、Linux 或 Android Starter 完成平台级退出和重启。
 
-`SetRunModeCommand` 可以携带可选的重启 session。提供 session 时，下一次启动恢复到其中描述的世界或目标；不提供时，不会临时询问用户，而是继续使用 pending、default 或 Headless 自身的默认解析逻辑。主菜单若让用户选择了 Headless 存档，会在执行命令前构造对应的 `World` session。
+图形程序与独立服务器分别拥有退出和重启装配。重启保持当前可执行入口；独立服务器的临时默认目标为 `World`，图形入口为 `MainMenu`，显式或已保存会话仍按统一优先级恢复。
 
 点击主菜单游戏 Logo 可进入实例管理，左下角提供“我的身份”入口。实例管理界面通过应用域命令创建、删除或切换实例；当前实例和其他进程正在使用的实例禁止删除，删除未运行实例会递归删除其完整数据目录。电源菜单仍保留快速切换入口。
 
@@ -334,7 +339,7 @@ Starter 会在实例的 `.runtime` 目录登记当前进程的 PID 和启动时�
 
 启动完成后，代码应当以 `CurrentModRuntime.Value.EffectiveProfile` 作为当前有效 profile。`SessionProfiles/<sessionId>.xml` 只是启动前的恢复输入，不能在运行期当作“当前已生效模组”的判断依据。
 
-持久内容仓库保存在实例的 `ContentRepositories.xml` 中，由仓库集合统一维护稳定 ID、名称、基础地址、启用状态和顺序。GUI 与 Headless
+持久内容仓库保存在实例的 `ContentRepositories.xml` 中，由仓库集合统一维护稳定 ID、名称、基础地址、启用状态和顺序。GUI 与 独立服务器
 启动都先按精确 PackageHash 查询 ContentPackageCache，本地缺失时再使用启用的持久仓库；调用方不区分一个或多个仓库。
 内容仓库和服务器目录分别由自身的 Manager 初始化、修改和保存配置；网络请求由 ContentServer Client 和服务器源客户端执行。`SettingsManager` 只读取 `Settings.xml` 中的通用实例设置。
 
@@ -347,9 +352,16 @@ Starter 会在实例的 `.runtime` 目录登记当前进程的 PID 和启动时�
 
 Profile 决定加载哪些模组，不能替代方块编号映射。GUI 启动后构建 `PreviewCatalog`，
 用于帮助、图鉴和创建世界预览；进入游戏后这些页面仍使用预览目录。
-`WorldCatalog` 在读取世界数据前根据存档 `Project.xml/BlockRegistry` 建立，
-退出世界后释放。Headless 只建立世界目录。两个目录分别持有方块实例和解析后的配方，
-共享资源定义、模型与纹理；预览编号不写入世界。
+世界目录在读取世界数据前根据存档 `Project.xml/BlockRegistry` 建立，并绑定所属
+世界生命周期，由 `WorldContentBinding.For(project).Catalog` 取得。
+关闭运行时后，已绑定的目录保留到 Project 的资源清理完成再释放。独立服务器只建立世界目录。
+预览目录与各世界目录分别持有方块实例和解析后的配方，共享资源定义、模型与纹理；
+预览编号不写入世界。
+
+`GameRuntime` 按 Authority/Client 分别保存运行时。磁盘构造负责世界编号映射的持久化，客户端构造只消费
+Bootstrap 快照及其映射，不替换权威世界；客户端构造失败也只释放其自身运行时。
+保存和自动保存选择会话的权威 Project，不根据当前展示的 Project 或目录名称推断保存职责。
+装入另一个权威世界前必须正常关闭现有权威世界；没有监听端口的单机世界同样受保护。端点仍持有未释放项目时，不能重新准备并清空其会话目录。
 
 同一 Profile 下切换不同编号映射的世界不需要重启。模组集合变化仍走现有 Profile 准备流程。
 新世界先保存空映射，加载时分配模组编号并在任何世界数据写入之前持久化完整映射。
@@ -399,11 +411,14 @@ Windows/Linux Starter 在注册 Storage、选择实例和加载游戏之前检�
 回滚仅覆盖文件替换失败或中断，不自动判断新版本的业务功能是否正常。
 
 桌面安装需要可写的便携安装目录，不自动提权。无法执行自动更新时提供原下载链接；手动关闭所有实例并替换发行文件，
-保留实例和配置。更新完成后不自动启动游戏。Headless 不检查版本、不注册游戏内更新入口，但首次启动仍会处理安装目录的
-恢复或清理任务。
+保留实例和配置。更新完成后不自动启动游戏。独立服务器不提供游戏内更新入口，也不执行图形程序的桌面更新事务；由外部部署流程更新。
 
 ## P2P 自动开启与运行时控制
 
-有效 P2P 配置仍只合并一次。普通端口先监听，世界加载完成后以 System 调用 StartP2PCommand；GUI 与 Headless 均先加载世界再启动监听，P2P 自动请求由监听生命周期协调。每个监听生命周期只自动请求一次，手工 stop 会消费尚未发送的自动请求。
+有效 P2P 配置仍只合并一次。普通端口先监听，世界加载完成后以 System 调用 StartP2PCommand；GUI 与 独立服务器均先加载世界再启动监听，P2P 自动请求由监听生命周期协调。每个监听生命周期只自动请求一次，手工 stop 会消费尚未发送的自动请求。
 
-运行时 p2p start/stop 只改变房间生命周期，不保存世界或 session，不清除启动覆盖。世界/会话中的 Enabled=false 不妨碍显式 start；后续启动仍使用原配置。配置保存与运行时启停不是同一操作，参见 [Headless](Headless.md)。
+运行时 p2p start/stop 只改变房间生命周期，不保存世界或 session，不清除启动覆盖。世界/会话中的 Enabled=false 不妨碍显式 start；后续启动仍使用原配置。配置保存与运行时启停不是同一操作，参见 [独立服务器](Server.md)。
+
+单机、GUI 开服和 独立服务器使用相同的权威世界准备流程；是否开放监听端口是后续独立步骤。
+准备权威世界不创建本地玩家或虚拟服务器玩家。本地 GUI 玩家通过独立客户端运行时准入，
+独立服务器没有这一本地客户端；玩家名册与服务器传输端点分别维护。

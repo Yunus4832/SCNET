@@ -28,39 +28,30 @@ public sealed class HostedWorldScreen : Screen
         _stopButton = Children.Find<ButtonWidget>("Stop")!;
     }
 
-    private static string Text(string key) => LanguageManager.GetContentWidgets(nameof(HostedWorldScreen), key);
+    private static string Text(string key) =>
+        Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(HostedWorldScreen), key);
 
     public override void Enter(object[] parameters)
     {
         _joining = false;
         _failure = parameters.OfType<string>().FirstOrDefault() ?? string.Empty;
-        CommonLib.Net.LocalPlayerRemoved += OnLocalPlayerRemoved;
     }
 
     public override void Leave()
     {
-        CommonLib.Net.LocalPlayerRemoved -= OnLocalPlayerRemoved;
         _admission?.Dispose();
         _admission = null;
     }
 
-    private void OnLocalPlayerRemoved(string reason)
-    {
-        if (ScreensManager.CurrentScreen != this) { return; }
-
-        GameManager.LeaveLocalPlayer();
-        _joining = false;
-        _failure = reason;
-        _admission?.Dispose();
-        _admission = null;
-    }
 
     public override void Update()
     {
+        if (!ReferenceEquals(ScreensManager.CurrentScreen, this)) { return; }
+
         var node = CommonLib.Net;
-        if (!node.IsServer || GameManager.Project is null)
+        if (!node.IsServer || GameManager.AuthorityProject is null)
         {
-            if (GameManager.Project is not null)
+            if (GameManager.AuthorityProject is not null)
             {
                 GameManager.SaveProject(true, true);
                 GameManager.DisposeProject();
@@ -79,7 +70,6 @@ public sealed class HostedWorldScreen : Screen
             _joining = false;
             GameManager.LocalPlayerReturnTarget = null;
             _failure = string.Empty;
-            GameManager.UpdateProject();
             return;
         }
 
@@ -87,7 +77,15 @@ public sealed class HostedWorldScreen : Screen
         _admission?.Update();
         if (_joining && node.AdmissionAccepted)
         {
-            ScreensManager.SwitchScreen("Game");
+            var verified = node.ConsumeLocalAdmission();
+            _joining = false;
+            var client = GameManager.Runtime!.ConnectLocalClient(
+                verified.Subject,
+                verified.Token,
+                Network.Handling.ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true)
+            );
+            GameManager.ObserveEndpoint(client);
+            ScreensManager.SwitchScreen("GameLoading", client.Runtime);
             return;
         }
 
@@ -100,11 +98,10 @@ public sealed class HostedWorldScreen : Screen
             _admission = null;
         }
 
-        GameManager.UpdateProject();
         _status.Text = string.Format(
                            Text("Running"),
                            GameManager.WorldInfo?.WorldSettings.Name ?? string.Empty,
-                           node.ClientCount
+                           node.Connections.PlayerCount
                        ) +
                        "\n" +
                        (_joining ? _admission?.Status : _failure.Length > 0 ? _failure : Text("NotJoined"));
@@ -117,7 +114,7 @@ public sealed class HostedWorldScreen : Screen
     private void Join()
     {
         var node = CommonLib.Net;
-        if (!node.IsServer || node.AdmissionController is not { } controller || GameManager.WorldInfo is not { } world)
+        if (!node.IsServer || node.AdmissionPolicy is null || GameManager.WorldInfo is not { } world)
         {
             return;
         }
@@ -132,14 +129,14 @@ public sealed class HostedWorldScreen : Screen
 
     private void ConfirmStop()
     {
-        var project = GameManager.Project;
+        var project = GameManager.AuthorityProject;
         DialogsManager.Confirm(
             Text("ConfirmStop"),
             button =>
             {
                 if (button != MessageDialogButton.Button1 ||
                     ScreensManager.CurrentScreen != this ||
-                    !ReferenceEquals(project, GameManager.Project)) { return; }
+                    !ReferenceEquals(project, GameManager.AuthorityProject)) { return; }
 
                 GameManager.CloseWorld();
                 ScreensManager.SwitchScreen("Play");

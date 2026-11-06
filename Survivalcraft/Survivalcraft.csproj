@@ -30,6 +30,9 @@
         <ProjectReference Include="../Engine/Engine.csproj"/>
         <ProjectReference Include="../Engine.Network/Engine.Network.csproj"/>
         <ProjectReference Include="../EntitySystem/EntitySystem.csproj"/>
+        <ProjectReference Include="../Survivalcraft.Core/Survivalcraft.Core.csproj"/>
+        <ProjectReference Include="../Survivalcraft.Client/Survivalcraft.Client.csproj"/>
+        <ProjectReference Include="../Survivalcraft.Hosting/Survivalcraft.Hosting.csproj"/>
         <ProjectReference Include="../ServerSource.Protocol/ServerSource.Protocol.csproj"/>
     </ItemGroup>
 
@@ -43,6 +46,5 @@
         <None Include="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
-    <Import Project="..\SharedProperties\GlobalUsing.props"/>
 
 </Project>

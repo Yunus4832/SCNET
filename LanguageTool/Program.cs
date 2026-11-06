@@ -354,8 +354,8 @@ internal sealed class LanguageToolApp
             SCNET language key rules:
             - Language files live in Content/Assets/Lang/{culture}.json.
             - All four language files must expose the same JSON key paths and value kinds.
-            - Runtime LanguageManager.Get(section, key) reads JSON path: {section}.{key}.
-            - Runtime LanguageManager.GetContentWidgets(name, key) reads JSON path: ContentWidgets.{name}.{key}.
+            - Runtime Game.Localization.ClientLanguage.Catalog.Get(section, key) reads JSON path: {section}.{key}.
+            - Runtime Game.Localization.ClientLanguage.Catalog.GetContentWidgets(name, key) reads JSON path: ContentWidgets.{name}.{key}.
             - XML text like [ScreenName:Key] is resolved by LabelWidget through ContentWidgets.ScreenName.Key.
             - Numeric keys are ordinary JSON object keys, not array indexes, unless the path explicitly uses [index].
             - Prefer screen/dialog/widget class names as ContentWidgets section names.

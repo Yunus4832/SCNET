@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using Engine.Core.Mathematics;
@@ -7,7 +8,9 @@ using Game.Components;
 using Game.Network;
 using Game.Network.Replication;
 using Game.Subsystems;
+using Game.World;
 
+using Survivalcraft.Test.Fixtures;
 using Survivalcraft.Test.Modding;
 
 namespace Survivalcraft.Test.Network;
@@ -18,31 +21,28 @@ public sealed class BodyInterestGroupTest
     [Fact]
     public void OwnerReceivesEntireMountedGroupWithoutAnIndexedLocation()
     {
-        var owner = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var previousClients = CommonLib.Net.Clients;
-        try
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
+        var node = WorldNetworkBinding.For(project).RequireNode();
+        var owner = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        node.AddClient(owner);
+        var data = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
+        typeof(CharacterData).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(data, project);
+        data.CharacterId = owner.CharacterId;
+        var mount = new ComponentBody();
+        var rider = new ComponentBody
         {
-            CommonLib.Net.Clients = new Dictionary<int, Client> { [owner.ID] = owner };
-            var data = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
-            data.CharacterId = owner.CharacterId;
-            var mount = new ComponentBody();
-            var rider = new ComponentBody
-            {
-                ParentBody = mount,
-                Character = new ComponentCharacter { CharacterData = data }
-            };
-            var interest = new SubsystemNetworkInterest();
+            ParentBody = mount,
+            Character = new ComponentCharacter { CharacterData = data }
+        };
+        var interest = new SubsystemNetworkInterest();
+        project.InitializeSubsystem(interest);
 
-            Assert.Same(owner, Assert.Single(interest.GetBodyCandidates(mount)));
-            Assert.Same(owner, Assert.Single(interest.GetBodyCandidates(rider)));
-            rider.ParentBody = null;
-            Assert.Empty(interest.GetBodyCandidates(mount));
-            Assert.Same(owner, Assert.Single(interest.GetBodyCandidates(rider)));
-        }
-        finally
-        {
-            CommonLib.Net.Clients = previousClients;
-        }
+        Assert.Same(owner, Assert.Single(interest.GetBodyCandidates(mount)));
+        Assert.Same(owner, Assert.Single(interest.GetBodyCandidates(rider)));
+        rider.ParentBody = null;
+        Assert.Empty(interest.GetBodyCandidates(mount));
+        Assert.Same(owner, Assert.Single(interest.GetBodyCandidates(rider)));
     }
 
     [Fact]
@@ -50,10 +50,10 @@ public sealed class BodyInterestGroupTest
     {
         var interest = new SubsystemNetworkInterest();
         var index = (SpatialInterestIndex)typeof(SubsystemNetworkInterest)
-            .GetField("_spatial", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .GetField("_spatial", BindingFlags.Instance | BindingFlags.NonPublic)!
             .GetValue(interest)!;
-        var first = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var second = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        var first = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        var second = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
         index.SetLocation(first, Vector2.Zero, 16);
         index.SetLocation(second, new Vector2(1024, 0), 16);
         var mount = new ComponentBody { Position = Vector3.Zero };

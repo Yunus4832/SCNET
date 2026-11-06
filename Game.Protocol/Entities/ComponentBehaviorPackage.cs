@@ -11,6 +11,9 @@ namespace Game.Protocol.Entities;
 [Union(5, typeof(CreaturePeckStatePackage))]
 [Union(6, typeof(CreatureRowingStatePackage))]
 [Union(7, typeof(CreatureSoundPackage))]
+[Union(8, typeof(CreatureShapeshiftStatePackage))]
+[Union(9, typeof(CreatureWhalePlumePackage))]
+[Union(10, typeof(ClothingEffectPackage))]
 public abstract record ComponentBehaviorPackage : IProtocolMessage
 {
     public enum EventType
@@ -29,7 +32,13 @@ public abstract record ComponentBehaviorPackage : IProtocolMessage
 
         DigInMud = 6,
 
-        FishOutOfWater = 7
+        FishOutOfWater = 7,
+
+        Shapeshift = 8,
+
+        WhalePlume = 9,
+
+        ClothingEffect = 10
     }
 
     [IgnoreMember] public abstract EventType PackageEventType { get; }

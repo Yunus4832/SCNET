@@ -1,7 +1,9 @@
 using System.Globalization;
 using System.Xml.Linq;
 
+using Game.Application;
 using Game.Commands;
+using Game.Commands.BuiltIn;
 using Game.Platforms;
 
 namespace Game.Screens;
@@ -39,11 +41,15 @@ public class SettingsUiScreen : Screen
         LoadContents(this, node);
         _windowModeContainer = Children.Find<ContainerWidget>("WindowModeContainer")!;
         _languageSelection = Children.Find<InlineSelectionWidget>("LanguageSelection")!;
-        _languageSelection.ItemTextProvider = item => LanguageManager.GetLanguageDisplayName((string)item);
+        _languageSelection.ItemTextProvider = item =>
+            Localization.ClientLanguage.Catalog.GetLanguageDisplayName((string)item);
         _languageSelection.SelectionChanged += () =>
         {
             if (_languageSelection.SelectedItem is string languageType &&
-                !languageType.Equals(LanguageManager.CurrentLanguage, StringComparison.OrdinalIgnoreCase))
+                !languageType.Equals(
+                    Localization.ClientLanguage.Catalog.CurrentLanguage,
+                    StringComparison.OrdinalIgnoreCase
+                ))
             {
                 ChangeLanguage(languageType);
             }
@@ -61,90 +67,97 @@ public class SettingsUiScreen : Screen
 
     public override void Enter(object[] parameters)
     {
-        _windowModeContainer.IsVisible = PlatformManager.Platform is not Platform.Android;
-        _languageSelection.SetItems(LanguageManager.LanguageTypes);
-        _languageSelection.SelectedItem = LanguageManager.CurrentLanguage;
+        _windowModeContainer.IsVisible = ClientPlatform.Kind is not Platform.Android;
+        _languageSelection.SetItems(Localization.ClientLanguage.Catalog.LanguageTypes);
+        _languageSelection.SelectedItem = Localization.ClientLanguage.Catalog.CurrentLanguage;
     }
 
     public override void Update()
     {
-        if (GameManager.Project != null)
-        {
-            GameManager.UpdateProject();
-        }
-
         if (_windowModeButton.IsClicked)
         {
-            var windowMode = (WindowMode)(((int)RunningSettingManager.Current.WindowMode + 1) %
-                                          EnumUtils.GetEnumValues(typeof(WindowMode)).Count);
-            Window.WindowMode = windowMode;
-            RunningSettingManager.SaveCurrent(rs => rs.WindowMode = windowMode);
+            var windowMode = (StartupWindowMode)(((int)StartupManager.Profiles.CurrentRunningSettings.WindowMode + 1) %
+                                                 Enum.GetValues<StartupWindowMode>().Length);
+            Window.WindowMode = StartupWindowModes.ToWindowMode(windowMode);
+            StartupManager.Profiles.UpdateRunningSettings(rs => rs.WindowMode = windowMode);
         }
 
         if (_uiScaleSlider.SlidingCompleted)
         {
-            SettingsManager.Current.UIScale = _uiScaleSlider.Value;
+            Configuration.ClientConfiguration.Preferences.UIScale = _uiScaleSlider.Value;
         }
 
         if (!_uiScaleSlider.IsSliding)
         {
-            _uiScaleSlider.Value = SettingsManager.Current.UIScale;
+            _uiScaleSlider.Value = Configuration.ClientConfiguration.Preferences.UIScale;
         }
 
         _uiScaleSlider.Text = $"{_uiScaleSlider.Value * 100f:0}%";
 
         if (_upsideDownButton.IsClicked)
         {
-            SettingsManager.Current.UpsideDownLayout = !SettingsManager.Current.UpsideDownLayout;
+            Configuration.ClientConfiguration.Preferences.UpsideDownLayout =
+                !Configuration.ClientConfiguration.Preferences.UpsideDownLayout;
         }
 
         if (_hudSafeAreaButton.IsClicked)
         {
-            SettingsManager.Current.HudSafeAreaEnabled = !SettingsManager.Current.HudSafeAreaEnabled;
+            Configuration.ClientConfiguration.Preferences.HudSafeAreaEnabled =
+                !Configuration.ClientConfiguration.Preferences.HudSafeAreaEnabled;
         }
 
         if (_hudSafeAreaCustomPaddingButton.IsClicked)
         {
-            SettingsManager.Current.HudSafeAreaCustomPaddingEnabled =
-                !SettingsManager.Current.HudSafeAreaCustomPaddingEnabled;
+            Configuration.ClientConfiguration.Preferences.HudSafeAreaCustomPaddingEnabled =
+                !Configuration.ClientConfiguration.Preferences.HudSafeAreaCustomPaddingEnabled;
         }
 
         if (_hudSafeAreaPaddingSlider.IsSliding)
         {
-            SettingsManager.Current.HudSafeAreaPadding = _hudSafeAreaPaddingSlider.Value;
+            Configuration.ClientConfiguration.Preferences.HudSafeAreaPadding = _hudSafeAreaPaddingSlider.Value;
         }
 
         if (_showGuiInScreenshotsButton.IsClicked)
         {
-            SettingsManager.Current.ShowGuiInScreenshots = !SettingsManager.Current.ShowGuiInScreenshots;
+            Configuration.ClientConfiguration.Preferences.ShowGuiInScreenshots =
+                !Configuration.ClientConfiguration.Preferences.ShowGuiInScreenshots;
         }
 
         if (_showLogoInScreenshotsButton.IsClicked)
         {
-            SettingsManager.Current.ShowLogoInScreenshots = !SettingsManager.Current.ShowLogoInScreenshots;
+            Configuration.ClientConfiguration.Preferences.ShowLogoInScreenshots =
+                !Configuration.ClientConfiguration.Preferences.ShowLogoInScreenshots;
         }
 
         if (_screenshotSizeButton.IsClicked)
         {
-            SettingsManager.Current.ScreenshotSize =
-                (ScreenshotSize)((int)(SettingsManager.Current.ScreenshotSize + 1) %
+            Configuration.ClientConfiguration.Preferences.ScreenshotSize =
+                (ScreenshotSize)((int)(Configuration.ClientConfiguration.Preferences.ScreenshotSize + 1) %
                                  EnumUtils.GetEnumValues(typeof(ScreenshotSize)).Count);
         }
 
         // 更新按钮文本
-        _windowModeButton.Text = LanguageManager.Get("WindowMode", RunningSettingManager.Current.WindowMode.ToString());
-        _upsideDownButton.Text = SettingsManager.Current.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
-        _hudSafeAreaButton.Text = SettingsManager.Current.HudSafeAreaEnabled
-            ? LanguageManager.Get("Usual", "on")
-            : LanguageManager.Get("Usual", "off");
-        _hudSafeAreaCustomPaddingButton.IsEnabled = SettingsManager.Current.HudSafeAreaEnabled;
-        _hudSafeAreaCustomPaddingButton.Text = SettingsManager.Current.HudSafeAreaCustomPaddingEnabled
-            ? LanguageManager.Get("Usual", "on")
-            : LanguageManager.Get("Usual", "off");
-        _hudSafeAreaPaddingSlider.IsEnabled = SettingsManager.Current.HudSafeAreaEnabled &&
-                                              SettingsManager.Current.HudSafeAreaCustomPaddingEnabled;
-        var hudSafeAreaPadding = SettingsManager.Current.HudSafeAreaCustomPaddingEnabled
-            ? SettingsManager.Current.HudSafeAreaPadding
+        _windowModeButton.Text = Localization.ClientLanguage.Catalog.Get(
+            "WindowMode",
+            StartupManager.Profiles.CurrentRunningSettings.WindowMode.ToString()
+        );
+        _upsideDownButton.Text = Configuration.ClientConfiguration.Preferences.UpsideDownLayout
+            ? Localization.ClientLanguage.Catalog.Yes
+            : Localization.ClientLanguage.Catalog.No;
+        _hudSafeAreaButton.Text = Configuration.ClientConfiguration.Preferences.HudSafeAreaEnabled
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "on")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "off");
+        _hudSafeAreaCustomPaddingButton.IsEnabled =
+            Configuration.ClientConfiguration.Preferences.HudSafeAreaEnabled;
+        _hudSafeAreaCustomPaddingButton.Text =
+            Configuration.ClientConfiguration.Preferences.HudSafeAreaCustomPaddingEnabled
+                ? Localization.ClientLanguage.Catalog.Get("Usual", "on")
+                : Localization.ClientLanguage.Catalog.Get("Usual", "off");
+        _hudSafeAreaPaddingSlider.IsEnabled = Configuration.ClientConfiguration.Preferences.HudSafeAreaEnabled &&
+                                              Configuration.ClientConfiguration.Preferences
+                                                  .HudSafeAreaCustomPaddingEnabled;
+        var hudSafeAreaPadding = Configuration.ClientConfiguration.Preferences.HudSafeAreaCustomPaddingEnabled
+            ? Configuration.ClientConfiguration.Preferences.HudSafeAreaPadding
             : HudSafeAreaManager.GetAutomaticPadding(_hudSafeAreaPaddingSlider.GlobalScale);
         if (!_hudSafeAreaPaddingSlider.IsSliding)
         {
@@ -154,11 +167,18 @@ public class SettingsUiScreen : Screen
         _hudSafeAreaPaddingSlider.Text = MathUtils.Round(hudSafeAreaPadding)
             .ToString(CultureInfo.InvariantCulture);
         _showGuiInScreenshotsButton.Text =
-            SettingsManager.Current.ShowGuiInScreenshots ? LanguageManager.Yes : LanguageManager.No;
+            Configuration.ClientConfiguration.Preferences.ShowGuiInScreenshots
+                ? Localization.ClientLanguage.Catalog.Yes
+                : Localization.ClientLanguage.Catalog.No;
         _showLogoInScreenshotsButton.Text =
-            SettingsManager.Current.ShowLogoInScreenshots ? LanguageManager.Yes : LanguageManager.No;
+            Configuration.ClientConfiguration.Preferences.ShowLogoInScreenshots
+                ? Localization.ClientLanguage.Catalog.Yes
+                : Localization.ClientLanguage.Catalog.No;
         _screenshotSizeButton.Text =
-            LanguageManager.Get("ScreenshotSize", SettingsManager.Current.ScreenshotSize.ToString());
+            Localization.ClientLanguage.Catalog.Get(
+                "ScreenshotSize",
+                Configuration.ClientConfiguration.Preferences.ScreenshotSize.ToString()
+            );
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
@@ -174,17 +194,18 @@ public class SettingsUiScreen : Screen
         }
 
         var result = CommandExecutor.ExecuteLocal(
+            CurrentModRuntime.Value?.Commands,
             new SetLanguageCommand(languageType),
-            GameManager.Project
+            ClientApplication.World?.Project
         );
         if (!result.Success)
         {
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageManager.Error,
+                    Localization.ClientLanguage.Catalog.Error,
                     CommandText.Resolve(result),
-                    LanguageManager.Ok
+                    Localization.ClientLanguage.Catalog.Ok
                 )
             );
         }

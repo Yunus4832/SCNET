@@ -82,7 +82,7 @@ namespace Game.Protocol;
 [Union(77, typeof(Entities.CreatureSoundPackage))]
 [Union(78, typeof(Entities.DismountedPackage))]
 [Union(79, typeof(Entities.DismountRequestPackage))]
-[Union(80, typeof(Entities.EatRequestPackage))]
+[Union(80, typeof(Entities.VitalFeedbackPackage))]
 [Union(81, typeof(Entities.EntityDamagePackage))]
 [Union(82, typeof(Entities.EntityFirePackage))]
 [Union(83, typeof(Entities.EntityHealthPackage))]
@@ -138,6 +138,16 @@ namespace Game.Protocol;
 [Union(133, typeof(World.SubsystemTimePackage))]
 [Union(134, typeof(World.SubsystemWeatherPackage))]
 [Union(135, typeof(Blocks.EditableBlockValuePackage))]
+[Union(136, typeof(Entities.BlockBurnEffectPackage))]
+[Union(137, typeof(Entities.CreatureShapeshiftStatePackage))]
+[Union(138, typeof(Entities.CreatureWhalePlumePackage))]
+[Union(139, typeof(Entities.ClothingEffectPackage))]
+[Union(140, typeof(Blocks.DispenserSoundPackage))]
+[Union(141, typeof(Entities.BlockFuseAddedPackage))]
+[Union(142, typeof(Entities.BlockFuseRemovedPackage))]
+[Union(143, typeof(Blocks.SoundGeneratorNotePackage))]
+[Union(144, typeof(Blocks.FurnitureDesignRenameRequestPackage))]
+[Union(145, typeof(World.NewYearCelebrationAnnouncementPackage))]
 public interface IProtocolMessage
 {
 }

@@ -1,9 +1,8 @@
 using System.Diagnostics;
 using System.Reflection;
 
+using Engine.Core.FileStorage;
 using Engine.Core.Logging;
-using Engine.Core.Runtime;
-using Engine.FileStorage;
 using Engine.Input;
 using Engine.Windowing;
 
@@ -20,7 +19,6 @@ public class Starter
 {
     private const string _appId = "Survivalcraft";
 
-    private const string _serverAppId = "SurvivalcraftServer";
 
     public static void Main(string[] args)
     {
@@ -36,34 +34,23 @@ public class Starter
         }
 
         var instance = RegisterStorageRoots(args);
-        PlatformManager.RegisterPlatform(Platform.Desktop);
+        ClientPlatform.Configure(Platform.Desktop);
         PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
         PlatformManager.RegisterInstanceLauncher(LaunchInstance);
         var startup = StartupManager.Load(instance.GameArguments);
         var runningSetting = startup.Settings;
         InstallDesktopEntries();
-        GameExitAction exitAction;
-        if (runningSetting.RunMode is RunModeType.HeadlessServer)
-        {
-            RunHeadlessServer(startup);
-            exitAction = GameExitManager.ExitAction;
-        }
-        else
-        {
-            PlatformManager.RegisterUpdateSupport(
-                Path.Combine(Path.GetTempPath(), "scnet-updates"),
-                ".zip",
-                "ConfirmDesktopInstall"
-            );
-            RunMode.Value = RunModeType.Gui;
-            PlatformManager.RegisterTextInput(new SdlTextInputBackend());
-            PlatformManager.RegisterClipboard(new SdlClipboardBackend());
-            PlatformManager.RegisterFilePicker(new LinuxFilePicker());
-
-            Window.IconStream = LoadWindowIcon();
-            PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
-            exitAction = GameEntry.EntryPoint(startup);
-        }
+        PlatformManager.RegisterUpdateSupport(
+            Path.Combine(Path.GetTempPath(), "scnet-updates"),
+            ".zip",
+            "ConfirmDesktopInstall"
+        );
+        PlatformManager.RegisterTextInput(new SdlTextInputBackend());
+        PlatformManager.RegisterClipboard(new SdlClipboardBackend());
+        PlatformManager.RegisterFilePicker(new LinuxFilePicker());
+        Window.IconStream = LoadWindowIcon();
+        PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
+        var exitAction = GameEntry.EntryPoint(startup);
 
         if (exitAction is GameExitAction.Update)
         {
@@ -73,14 +60,13 @@ public class Starter
 
         if (exitAction is GameExitAction.Restart)
         {
-            var nextRunningSetting = RunningSettingManager.Load();
-            RestartFromDesktop(nextRunningSetting.RunMode, instance.Id);
+            RestartFromDesktop(instance.Id);
         }
 
         if (exitAction is GameExitAction.SwitchInstance)
         {
             var targetInstanceId = GameExitManager.SwitchInstanceId;
-            RestartFromDesktop(StarterInstanceManager.GetRunMode(targetInstanceId), targetInstanceId);
+            RestartFromDesktop(targetInstanceId);
         }
     }
 
@@ -95,7 +81,7 @@ public class Starter
         {
             Console.Error.WriteLine($"Could not start desktop update: {exception}");
             DesktopUpdateFiles.Notify(
-                $"{LanguageManager.GetContentWidgets("GameInformationManager", "DesktopInstallFailed")}\n{GameExitManager.UpdateDownloadUrl}\n{exception.Message}",
+                $"{Game.Localization.ClientLanguage.Catalog.GetContentWidgets("GameInformationManager", "DesktopInstallFailed")}\n{GameExitManager.UpdateDownloadUrl}\n{exception.Message}",
                 true
             );
             return;
@@ -166,24 +152,9 @@ public class Starter
             Directory.CreateDirectory(desktopDir);
         }
 
-        WriteDesktopEntry(desktopDir, _appId, "Survivalcraft", exePath, exeDir, "--gui", false, false);
-        WriteDesktopEntry(
-            desktopDir,
-            _serverAppId,
-            "Survivalcraft Server",
-            exePath,
-            exeDir,
-            "--server",
-            true,
-            true
-        );
+        WriteDesktopEntry(desktopDir, _appId, "Survivalcraft", exePath, exeDir, string.Empty, false, false);
     }
 
-    private static void RunHeadlessServer(StartupContext startup)
-    {
-        RunMode.Value = RunModeType.HeadlessServer;
-        Environment.ExitCode = HeadlessEntry.Main(startup);
-    }
 
     private static void WriteDesktopEntry(
         string desktopDir,
@@ -215,9 +186,9 @@ public class Starter
         File.WriteAllText(desktopFilePath, content);
     }
 
-    private static void RestartFromDesktop(RunModeType runMode, string instanceId)
+    private static void RestartFromDesktop(string instanceId)
     {
-        if (TryLaunchDesktopInstance(runMode, instanceId, "Survivalcraft Restart"))
+        if (TryLaunchDesktopInstance(instanceId, "Survivalcraft Restart"))
         {
             return;
         }
@@ -227,13 +198,13 @@ public class Starter
 
     private static void LaunchInstance(string instanceId)
     {
-        if (!TryLaunchDesktopInstance(RunModeType.Gui, instanceId, "Survivalcraft"))
+        if (!TryLaunchDesktopInstance(instanceId, "Survivalcraft"))
         {
             throw new InvalidOperationException("No supported desktop instance launcher was found.");
         }
     }
 
-    private static bool TryLaunchDesktopInstance(RunModeType runMode, string instanceId, string name)
+    private static bool TryLaunchDesktopInstance(string instanceId, string name)
     {
         var executablePath = Environment.ProcessPath ??
                              throw new InvalidOperationException("Cannot determine executable path.");
@@ -247,15 +218,14 @@ public class Starter
         );
         Directory.CreateDirectory(desktopDirectory);
         var desktopId = $"SurvivalcraftInstance{Environment.ProcessId}{Guid.NewGuid():N}";
-        var modeArgument = runMode is RunModeType.HeadlessServer ? "--server" : "--gui";
         WriteDesktopEntry(
             desktopDirectory,
             desktopId,
             name,
             executablePath,
             executableDirectory,
-            $"{modeArgument} {StarterInstanceManager.InstanceArgument} {instanceId}",
-            runMode is RunModeType.HeadlessServer,
+            $"{StarterInstanceManager.InstanceArgument} {instanceId}",
+            false,
             true
         );
         if (TryLaunchDesktopEntry("gtk-launch", [desktopId]))

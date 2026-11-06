@@ -7,7 +7,13 @@ public sealed record MessageContent
 
     public IReadOnlyList<MessageSegment> Segments => _segments;
 
-    public string PlainText => string.Concat(_segments.Select(segment => segment.Text));
+    public string PlainText => string.Concat(
+        _segments.Select(segment =>
+            segment.Text.IsLiteral
+                ? segment.Text.Fallback
+                : throw new InvalidOperationException("Only literal text can be flattened without a locale.")
+        )
+    );
 
     public MessageContent(IEnumerable<MessageSegment> segments)
     {
@@ -16,16 +22,21 @@ public sealed record MessageContent
         foreach (var segment in segments)
         {
             ArgumentNullException.ThrowIfNull(segment);
-            if (string.IsNullOrEmpty(segment.Text))
+            if (segment.Text.IsLiteral && string.IsNullOrEmpty(segment.Text.Fallback))
             {
                 continue;
             }
 
             if (normalized.LastOrDefault() is { } previous &&
                 previous.Style == segment.Style &&
-                previous.Color == segment.Color)
+                previous.Color == segment.Color &&
+                previous.Text.IsLiteral &&
+                segment.Text.IsLiteral)
             {
-                normalized[^1] = previous with { Text = previous.Text + segment.Text };
+                normalized[^1] = previous with
+                {
+                    Text = Localization.LocalizedText.Literal(previous.Text.Fallback + segment.Text.Fallback)
+                };
             }
             else
             {

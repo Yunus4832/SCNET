@@ -14,7 +14,7 @@ promote only durable supported behavior into project docs, without links that de
 ## Update documentation when
 
 - command-line arguments, commands, configuration fields, defaults, or precedence change;
-- GUI, Headless, instance, startup-session, restart, or deployment behavior changes;
+- GUI, server, instance, startup-session, restart, or deployment behavior changes;
 - public APIs, mod contracts, package formats, required assets, or extension points change;
 - network compatibility, server authority, protocol behavior, or client requirements change;
 - persistence formats, file locations, migration, or world-upgrade behavior change;

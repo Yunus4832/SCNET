@@ -47,9 +47,6 @@
         <Compile Remove="**\*.Android.cs"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Using Include="System.Reflection"/>
-    </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource Include="..\Engine\Resources\Unlit.vsh" LogicalName="Engine.Resources.Unlit.vsh"/>

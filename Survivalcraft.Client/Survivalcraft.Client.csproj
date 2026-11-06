@@ -1,0 +1,95 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(GameVersion)</Version>
+        <AssemblyName>Survivalcraft.Client</AssemblyName>
+        <TargetFrameworks>$(GlobalTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
+        <RootNamespace>Game</RootNamespace>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Survivalcraft.Client</PackageId>
+        <Description>Client content loading and rendering for SCNET Survivalcraft.</Description>
+        <PackageTags>scnet;survivalcraft;client;rendering</PackageTags>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
+        <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
+        <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
+        <RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Survivalcraft.Core/Survivalcraft.Core.csproj"/>
+        <ProjectReference Include="../Engine/Engine.csproj"/>
+        <ProjectReference Include="../Game.Protocol/Game.Protocol.csproj"/>
+        <ProjectReference Include="../ServerSource.Protocol/ServerSource.Protocol.csproj"/>
+        <ProjectReference Include="../Survivalcraft.Hosting/Survivalcraft.Hosting.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>Survivalcraft.Test</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+    <Target Name="ValidateAssemblyBoundary" AfterTargets="ResolveReferences">
+        <ItemGroup>
+            <_ForbiddenAssemblyReference Include="@(ReferencePath)"
+                                         Condition="'%(Filename)' == 'Survivalcraft'"/>
+        </ItemGroup>
+        <Error Condition="'@(_ForbiddenAssemblyReference)' != ''"
+               Text="$(MSBuildProjectName) must not depend on: @(_ForbiddenAssemblyReference->'%(Filename)', ', ')."/>
+    </Target>
+</Project>

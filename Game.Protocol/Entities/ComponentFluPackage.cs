@@ -13,7 +13,9 @@ public sealed record ComponentFluPackage : IProtocolMessage
 
         StartFlu = 2,
 
-        Sneeze = 3
+        Sneeze = 3,
+
+        Cough = 4
     }
 
     [Key(0)] public int EntityId { get; init; }
@@ -27,4 +29,10 @@ public sealed record ComponentFluPackage : IProtocolMessage
     [Key(4)] public float FluOnset { get; init; }
 
     [Key(5)] public float SneezeDuration { get; init; }
+
+    [Key(6)] public long EffectSequence { get; init; }
+
+    [Key(7)] public float BlackoutDuration { get; init; }
+
+    [Key(8)] public bool LastWasCough { get; init; }
 }

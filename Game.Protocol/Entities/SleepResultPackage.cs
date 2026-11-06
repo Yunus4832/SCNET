@@ -1,3 +1,5 @@
+using Game.Protocol.Localization;
+
 using MessagePack;
 
 namespace Game.Protocol.Entities;
@@ -11,5 +13,7 @@ public sealed record SleepResultPackage : ComponentSleepPackage
 
     [Key(2)] public bool Result { get; init; }
 
-    [Key(3)] public string Reason { get; init; } = string.Empty;
+    [Key(3)] public LocalizedText Reason { get; init; } = LocalizedText.Empty;
+
+    [Key(4)] public double StartTime { get; init; }
 }

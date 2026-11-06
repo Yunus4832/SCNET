@@ -1,12 +1,12 @@
 using System.Security.Cryptography;
 
-using Engine.Core.Runtime;
 using Engine.Core.Security;
 
 using EntitySystem.Core;
 
 using Game.Admission;
 using Game.Network;
+using Game.Network.Transport;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 using Game.World;
@@ -20,75 +20,85 @@ using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Admission;
 
-[Collection(WorldRoleCollection.Name)]
+[Collection(NodeRoleCollection.Name)]
 public sealed class PlayerAdmissionTest
 {
     private static PlayerAddress Address(byte value) =>
         new(IdentityAddress.Encode(Enumerable.Repeat(value, 32).ToArray()));
 
     [Theory]
-    [InlineData(RunModeType.Gui)]
-    [InlineData(RunModeType.HeadlessServer)]
-    public void PreparingServerDoesNotCreateOrAdmitTheLocalPlayer(RunModeType mode)
+    [InlineData(true)]
+    [InlineData(false)]
+    public void PreparingServerDoesNotCreateOrAdmitTheLocalPlayer(bool hasPresentation)
     {
-        var previous = RunMode.Value;
-        try
-        {
-            RunMode.Value = mode;
-            var node = new NetNode();
-            Assert.Equal(WorldRole.None, node.Role);
-            node.PrepareServerWorld();
-            Assert.Equal(WorldRole.Server, node.Role);
-            Assert.True(node.IsServer);
-            Assert.False(node.IsTransportRunning);
-            Assert.Null(node.Self);
-            Assert.NotNull(node.Server);
-            Assert.Null(node.Server.PlayerAddress);
-            Assert.Equal(Guid.Empty, node.Server.CharacterId);
-            Assert.Equal(0, node.ClientCount);
-            Assert.Single(node.Clients);
-            node.StopImmediate();
-            Assert.Equal(WorldRole.None, node.Role);
-        }
-        finally { RunMode.Value = previous; }
-    }
-
-    [Fact]
-    public void PreparingSinglePlayerWorldDoesNotCreateOrAdmitItsPlayer()
-    {
-        var node = new NetNode();
-        node.PrepareSinglePlayerWorld();
-        Assert.Equal(WorldRole.SinglePlayer, node.Role);
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            hasPresentation,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        );
+        Assert.Equal(NodeRole.Inactive, node.Role);
+        node.PrepareAuthorityWorld();
+        Assert.Equal(NodeRole.Authority, node.Role);
+        Assert.True(node.IsServer);
+        Assert.False(node.IsTransportRunning);
         Assert.Null(node.Self);
         Assert.Null(node.Server);
+        Assert.Equal(0, node.Connections.PlayerCount);
         Assert.Empty(node.Clients);
-        Assert.False(node.IsTransportRunning);
-        Assert.Throws<InvalidOperationException>(node.JoinSinglePlayerWorld);
+        node.StopImmediate();
+        Assert.Equal(NodeRole.Inactive, node.Role);
     }
 
     [Fact]
-    public void SinglePlayerAdmissionIgnoresMultiplayerCapacity()
+    public void InProcessAdmissionAllocatesAPlayerWithoutAnAuthorityRosterEntry()
+    {
+        using var project = new AdmissionProject();
+        project.Info.WorldSettings.MaxOnlinePlayerCount = 2;
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        );
+        node.PrepareAuthorityWorld();
+        node.Runtime.BindProject(project);
+        var player = node.AdmitInProcessPlayer(Address(1), Guid.NewGuid());
+        Assert.Equal(1, player.ID);
+        Assert.NotNull(player.PlayerAddress);
+        Assert.Null(node.Server);
+        Assert.Null(node.Self);
+        Assert.False(node.Clients.ContainsKey(0));
+    }
+
+    [Fact]
+    public void LocalAuthorityUsesTheSameCapacityRules()
     {
         using var project = new AdmissionProject();
         project.Info.WorldSettings.MaxOnlinePlayerCount = 0;
-        var node = new NetNode();
-        node.PrepareSinglePlayerWorld();
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        );
+        node.PrepareAuthorityWorld();
         var address = Address(1);
         var token = Guid.NewGuid();
-        Assert.True(
+        Assert.False(
             PlayerAdmission.TryCreateSession(
                 project,
                 node,
                 address,
                 token,
-                character => new Client(null, 0, token, character, project) { PlayerAddress = address },
+                character => new Client(null, 0, token, character) { PlayerAddress = address },
                 out var session,
                 out var error
             )
         );
-        Assert.Null(error);
-        Assert.NotNull(session);
-        Assert.NotNull(project.Players.Store.Find(address));
+        Assert.NotNull(error);
+        Assert.Null(session);
+        Assert.Null(project.Players.Store.Find(address));
     }
 
     [Fact]
@@ -96,8 +106,14 @@ public sealed class PlayerAdmissionTest
     {
         using var project = new AdmissionProject();
         project.Info.WorldSettings.MaxOnlinePlayerCount = 1;
-        var node = new NetNode();
-        node.PrepareServerWorld();
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        );
+        node.PrepareAuthorityWorld();
+        node.Runtime.BindProject(project);
         var first = Address(1);
         var second = Address(2);
         var token = Guid.NewGuid();
@@ -106,7 +122,7 @@ public sealed class PlayerAdmissionTest
         Client Create(Guid character)
         {
             calls++;
-            return new Client(null, 1, token, character, project) { PlayerAddress = first };
+            return new Client(null, 1, token, character) { PlayerAddress = first };
         }
 
         Assert.True(
@@ -114,7 +130,16 @@ public sealed class PlayerAdmissionTest
         );
         Assert.Null(error);
         node.AddClient(admitted!);
-        Assert.True(node.IsPlayerOnline(admitted!));
+        var replica = new NetNode(
+            NetNodeOptions.Default,
+            false,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        );
+        var link = InProcessMessageConnection.CreatePair(node, admitted!, replica, new Client(Guid.Empty));
+        using var toClient = link.ToClient;
+        using var toAuthority = link.ToAuthority;
+        Assert.True(WorldConnectionQuery.IsPlayerOnline(project, admitted!));
         Assert.False(PlayerAdmission.TryCreateSession(project, node, first, Guid.NewGuid(), Create, out _, out error));
         Assert.Equal("该用户已经在线", error);
         Assert.False(PlayerAdmission.TryCreateSession(project, node, second, Guid.NewGuid(), Create, out _, out error));
@@ -127,8 +152,13 @@ public sealed class PlayerAdmissionTest
     public void FailedSessionConstructionCannotPublishAWorldSubject()
     {
         using var project = new AdmissionProject();
-        var node = new NetNode();
-        node.PrepareServerWorld();
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        );
+        node.PrepareAuthorityWorld();
         var address = Address(1);
         Assert.False(
             PlayerAdmission.TryCreateSession(
@@ -144,7 +174,7 @@ public sealed class PlayerAdmissionTest
         Assert.Null(session);
         Assert.NotNull(error);
         Assert.Empty(project.Players.Store.Entries);
-        Assert.Equal(0, node.ClientCount);
+        Assert.Equal(0, node.Connections.PlayerCount);
         Assert.True(node.IsServer);
         Assert.False(node.IsClosing);
     }
@@ -185,8 +215,13 @@ public sealed class PlayerAdmissionTest
         Assert.Equal(AdmissionResultCode.Accepted, (await attempt.AuthorizeAsync(proof, now)).Code);
         using var project = new AdmissionProject();
         project.Players.Store.Ban(subject, "fixture ban", null, now);
-        var node = new NetNode();
-        node.PrepareServerWorld();
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        );
+        node.PrepareAuthorityWorld();
         Assert.False(
             PlayerAdmission.TryCreateSession(
                 project,
@@ -200,56 +235,8 @@ public sealed class PlayerAdmissionTest
         );
         Assert.Null(session);
         Assert.Equal("你被禁止加入该服务器", error);
-        Assert.Equal(0, node.ClientCount);
+        Assert.Equal(0, node.Connections.PlayerCount);
         Assert.Null(node.Self);
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void LocalRemovalOnlyNotifiesForInvoluntaryDeparture(bool voluntary)
-    {
-        using var project = new AdmissionProject();
-        var node = new NetNode();
-        node.PrepareServerWorld();
-        var local = new Client(null, 1, Guid.NewGuid(), Guid.Empty, project)
-            { PlayerAddress = Address(1), State = ClientState.Connected };
-        node.Self = local;
-        node.AddClient(local);
-        var reasons = new List<string>();
-        node.LocalPlayerRemoved += reasons.Add;
-        if (voluntary) { node.LeaveLocalPlayer("reason"); }
-        else { node.RemoveClientImmediate(local, "reason"); }
-
-        Assert.Null(node.Self);
-        Assert.True(node.IsServer);
-        if (voluntary) { Assert.Empty(reasons); }
-        else { Assert.Equal("reason", Assert.Single(reasons)); }
-    }
-
-    [Fact]
-    public void LocalDeparturePreservesServerAndOtherParticipants()
-    {
-        using var project = new AdmissionProject();
-        var node = new NetNode();
-        node.PrepareServerWorld();
-        var server = node.Server;
-        var local = new Client(null, 1, Guid.NewGuid(), Guid.Empty, project)
-            { PlayerAddress = Address(1), State = ClientState.Connected };
-        var other = new Client(null, 2, Guid.NewGuid(), Guid.Empty, project)
-            { PlayerAddress = Address(2), State = ClientState.Connected };
-        node.Self = local;
-        node.AddClient(local);
-        node.AddClient(other);
-        node.LeaveLocalPlayer();
-        Assert.Null(node.Self);
-        Assert.Same(server, node.Server);
-        Assert.True(node.IsServer);
-        Assert.False(node.IsClosing);
-        Assert.Same(other, node.Clients[other.ID]);
-        Assert.False(node.Clients.ContainsKey(local.ID));
-        Assert.False(node.IsPlayerOnline(local));
-        Assert.True(node.IsPlayerOnline(other));
     }
 
     private sealed class AdmissionProject : Project

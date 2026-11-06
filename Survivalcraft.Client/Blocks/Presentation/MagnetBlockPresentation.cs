@@ -1,0 +1,92 @@
+using Engine.Graphics;
+
+using Game.Modding.Blocks;
+
+namespace Game.Blocks.Presentation;
+
+public class MagnetBlockPresentation(MagnetBlock block, BlockPresentationCatalog catalog)
+    : BlockPresentation(block, catalog)
+{
+    protected new MagnetBlock Block => (MagnetBlock)base.Block;
+
+    public readonly BlockMesh[] MeshesByData = new BlockMesh[2];
+
+    public readonly BlockMesh StandaloneMesh = new();
+
+    public override void GenerateTerrainVertices(
+        BlockGeometryGenerator generator,
+        TerrainGeometry geometry,
+        int value,
+        int x,
+        int y,
+        int z
+    )
+    {
+        var num = Terrain.ExtractData(value);
+        if (num < Block.CollisionBoxesByData.Length)
+        {
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                MeshesByData[num],
+                Color.White,
+                null,
+                geometry.SubsetOpaque
+            );
+        }
+    }
+
+    public override void DrawBlock(
+        PrimitivesRenderer3D primitivesRenderer,
+        int value,
+        Color color,
+        float size,
+        ref Matrix matrix,
+        DrawBlockEnvironmentData environmentData
+    )
+    {
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneMesh,
+            color,
+            size,
+            ref matrix,
+            environmentData
+        );
+    }
+
+    public override void Initialize()
+    {
+        var model = ContentManager.Get<Model>("Models/Magnet");
+        var magnetNode = model.FindNode("Magnet")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(magnetNode);
+        for (var i = 0; i < 2; i++)
+        {
+            MeshesByData[i] = new BlockMesh();
+            MeshesByData[i].AppendModelPrimitive(
+                magnetNode.RequireMesh().Primitives[0],
+                nodeAbsoluteTransform *
+                Matrix.CreateRotationY((float)Math.PI / 2f * i) *
+                Matrix.CreateTranslation(0.5f, 0f, 0.5f),
+                false,
+                false,
+                true,
+                false,
+                Color.White
+            );
+        }
+
+        StandaloneMesh.AppendModelPrimitive(
+            magnetNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateScale(1.5f) * Matrix.CreateTranslation(0f, -0.25f, 0f),
+            false,
+            false,
+            true,
+            false,
+            Color.White
+        );
+        base.Initialize();
+    }
+}

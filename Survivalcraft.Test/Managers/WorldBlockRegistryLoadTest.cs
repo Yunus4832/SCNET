@@ -1,12 +1,15 @@
+using Engine.Core.FileStorage;
 using Engine.Core.Runtime;
-using Engine.FileStorage;
 
 using Game.Blocks;
+using Game.Configuration;
+using Game.Content;
+using Game.Hosting;
 using Game.Managers;
 using Game.Modding;
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Widgets;
+using Game.Startup;
 using Game.World;
 
 using Survivalcraft.Test.Modding;
@@ -25,11 +28,7 @@ public sealed class WorldBlockRegistryLoadTest
         File.WriteAllText(Path.Combine(directory, "Project.xml"), original);
         const string rootName = "block-registry-write-test";
         Storage.RegisterFileSystemRoot(rootName, directory, readOnly: true);
-        var previousMode = RunMode.Value;
-        var previousRole = GameManager.Role;
-        CommonLib.Net.Role = WorldRole.Server;
-        var previousRuntime = CurrentModRuntime.Value;
-        RunMode.Value = RunModeType.HeadlessServer;
+
         try
         {
             Dispatcher.Initialize();
@@ -39,29 +38,42 @@ public sealed class WorldBlockRegistryLoadTest
                     new ModDescriptor(new ModManifest("test", "Metadata", "1.0.0"), static () => new MetadataMod())
                 ]
             );
-            runtime.InitializeLanguage("zh-CN");
             runtime.InitializeContentData();
-            CurrentModRuntime.Set(runtime);
+            var node = new NetNode(
+                NetNodeOptions.Default,
+                false,
+                Game.Network.Handling.PackageHandlerCatalog.Empty,
+                NodeRole.Authority
+            );
+            using var controller = new GameWorldController(new WorldProjectActivity());
             var world = new WorldInfo
             {
                 DirectoryName = rootName + ":/",
                 ProjectFormatVersion = WorldVersions.ProjectFormatVersion
             };
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                GameManager.LoadProject(world, new CanvasWidget())
+                controller.LoadAuthority(
+                    new WorldLoadRequest(
+                        world,
+                        new SessionInfo { Target = SessionTarget.World },
+                        node,
+                        runtime,
+                        DatabaseManager.GameDatabase,
+                        WorldProjectPolicies.CaptureAuthority(new HostPreferences()),
+                        new BlockTextureStore(directory),
+                        false
+                    )
+                )
             );
             Assert.Equal("Storage root is read-only.", exception.Message);
-            Assert.Null(GameManager.Project);
-            Assert.Null(runtime.WorldCatalog);
+            Assert.Null(controller.Runtime);
+            Assert.Null(controller.WorldInfo);
+            Assert.Empty(runtime.WorldCatalogs);
             Assert.Equal(original, File.ReadAllText(Path.Combine(directory, "Project.xml")));
             Assert.Single(Directory.EnumerateFileSystemEntries(directory));
         }
         finally
         {
-            GameManager.DisposeProject();
-            CurrentModRuntime.Set(previousRuntime);
-            RunMode.Value = previousMode;
-            CommonLib.Net.Role = previousRole;
             Storage.RegisterFileSystemRoot(rootName, AppContext.BaseDirectory, readOnly: true);
             Directory.Delete(directory, true);
         }

@@ -1,0 +1,19 @@
+{
+    "formatVersion": 1,
+    "type": "mod",
+    "identifier": "scnet.territory",
+    "name": "Territory Stone",
+    "summary": "以领地石为中心，自定义范围和玩家通行、挖掘放置权限。",
+    "description": "领地石可设置 4–32 格水平半径，覆盖整个高度，分别控制进入、离开、挖掘和放置的默认权限。越权时提示领主与申请方式，玩家可通过 territory request 主动申请，领主在审批窗口选择授权，结果通知申请人。授权按玩家保存，与队伍无关，可在领地石 G 编辑面板管理和撤销。靠近边界显示淡网格结界；动物与 tp 不受通行限制，不提供 PvP、火灾、爆炸或机械搬运等全面防破坏保护。",
+    "version": "__TERRITORY_VERSION__",
+    "payload": {
+        "format": "scnet.mod-v1",
+        "entry": "payload/mod.json",
+        "mediaType": "application/json"
+    },
+    "metadata": {
+        "clientContentEntrypoint": "TerritoryStoneMod.Client.Presentation.TerritoryClientContentModule, TerritoryStoneMod.Client",
+        "entrypoint": "TerritoryStoneMod.ModEntry, TerritoryStoneMod",
+        "dependencies": []
+    }
+}

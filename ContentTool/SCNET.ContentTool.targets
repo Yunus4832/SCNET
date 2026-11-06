@@ -3,6 +3,8 @@
         <SurvivalcraftModManifest Condition="'$(SurvivalcraftModManifest)' == ''">$(MSBuildProjectDirectory)/manifest.json</SurvivalcraftModManifest>
         <SurvivalcraftModId Condition="'$(SurvivalcraftModId)' == ''">$(AssemblyName)</SurvivalcraftModId>
         <SurvivalcraftModPackageName Condition="'$(SurvivalcraftModPackageName)' == ''">$(SurvivalcraftModId)</SurvivalcraftModPackageName>
+        <SurvivalcraftModDataDirectory Condition="'$(SurvivalcraftModDataDirectory)' == ''">$(MSBuildProjectDirectory)/Data</SurvivalcraftModDataDirectory>
+        <SurvivalcraftModAssetsDirectory Condition="'$(SurvivalcraftModAssetsDirectory)' == ''">$(MSBuildProjectDirectory)/Assets</SurvivalcraftModAssetsDirectory>
         <SurvivalcraftModPackageExtension>.scpkg</SurvivalcraftModPackageExtension>
         <BuildSurvivalcraftModPackage Condition="'$(BuildSurvivalcraftModPackage)' == ''">true</BuildSurvivalcraftModPackage>
         <IncludeSourceRevisionInInformationalVersion Condition="'$(IncludeSourceRevisionInInformationalVersion)' == ''">false</IncludeSourceRevisionInInformationalVersion>
@@ -19,11 +21,14 @@
         <Error Condition="!Exists('$(SurvivalcraftModManifest)')" Text="Survivalcraft mod manifest was not found: $(SurvivalcraftModManifest)"/>
         <Error Condition="!Exists('$(SurvivalcraftContentTool)')" Text="SCNET ContentTool was not found: $(SurvivalcraftContentTool)"/>
         <ItemGroup>
-            <_SurvivalcraftModData Include="$(MSBuildProjectDirectory)/Data/**/*"/>
-            <_SurvivalcraftModAssets Include="$(MSBuildProjectDirectory)/Assets/**/*"/>
+            <_SurvivalcraftModData Include="$(SurvivalcraftModDataDirectory)/**/*"/>
+            <_SurvivalcraftModAssets Include="$(SurvivalcraftModAssetsDirectory)/**/*"/>
             <_SurvivalcraftModDependencies Include="@(ReferenceCopyLocalPaths)"
                                                Condition="'%(Extension)' == '.dll'
                                                           and '%(Filename)' != 'Survivalcraft'
+                                                          and '%(Filename)' != 'Survivalcraft.Core'
+                                                          and '%(Filename)' != 'Survivalcraft.Hosting'
+                                                          and '%(Filename)' != 'Survivalcraft.Client'
                                                           and '%(Filename)' != 'Engine'
                                                           and '%(Filename)' != 'Engine.Core'
                                                           and '%(Filename)' != 'Engine.Media'

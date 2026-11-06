@@ -37,7 +37,6 @@ public class SettingsScreen : Screen
 
     public override void Update()
     {
-        GameManager.UpdateProject();
         if (_performanceButton.IsClicked)
         {
             ScreensManager.SwitchScreen("SettingsPerformance");

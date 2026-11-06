@@ -7,36 +7,36 @@ using Engine.Core.Security;
 using EntitySystem.Core;
 
 using Game.Commands;
-using Game.Managers;
+using Game.Commands.BuiltIn;
+using Game.Commands.Text;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
-using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(WorldRoleCollection.Name)]
+[Collection(NodeRoleCollection.Name)]
 public sealed class SubjectPermissionCommandTest
 {
     [Fact]
     public void TextPlayersCommandListsOfflinePlayersWithoutCharacters()
     {
-        var previous = GameManager.Role;
+        var previous = CommonLib.Net.Role;
         try
         {
-            CommonLib.Net.Role = WorldRole.Server;
+            CommonLib.Net.Role = NodeRole.Authority;
             using var project = new SubjectProject();
             var address = Address("offline-text-command");
             project.Players.Store.GetOrCreate(address);
-            var adapter = new TextCommandAdapter(Registry());
+            var adapter = new TextCommandAdapter(Registry(), Game.Managers.GameManager.AuthorityProject);
             var context = new CommandContext(CommandInvocationChannel.Text, CommandPrincipal.LocalOperator, project);
             Assert.True(adapter.TryCreate("/permission players", context, out var command, out _));
             Assert.IsType<ListPermissionPlayersCommand>(command);
             var result = adapter.Execute("/permission players", context);
             Assert.True(result.Success);
-            Assert.Contains(address.Value, result.Message);
+            Assert.Contains(address.Value, CommandText.Resolve(result));
             Assert.Empty(project.Characters.Characters);
             Assert.True(
                 adapter.Execute($"/permission grant {address.Value} game:player.teleport.self", context).Success
@@ -56,23 +56,23 @@ public sealed class SubjectPermissionCommandTest
     [Fact]
     public void TextModerationUsesPlayerAddressesAndPlayerPermissions()
     {
-        var previous = GameManager.Role;
+        var previous = CommonLib.Net.Role;
         try
         {
-            CommonLib.Net.Role = WorldRole.Server;
+            CommonLib.Net.Role = NodeRole.Authority;
             using var project = new SubjectProject();
             var player = project.Players.Store.GetOrCreate(Address("text-moderation"));
             var registry = Registry();
-            var adapter = new TextCommandAdapter(registry);
+            var adapter = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject);
             var context = new CommandContext(CommandInvocationChannel.Console, CommandPrincipal.LocalOperator, project);
             Assert.True(adapter.Execute($"/player mute {player.Address}", context).Success);
             Assert.True(player.IsMuted);
-            Assert.Contains(player.Address.Value, adapter.Execute("/player muted", context).Message);
+            Assert.Contains(player.Address.Value, CommandText.Resolve(adapter.Execute("/player muted", context)));
             Assert.True(adapter.Execute($"/player unmute {player.Address}", context).Success);
             Assert.False(player.IsMuted);
             Assert.True(adapter.Execute($"/player ban {player.Address} testing", context).Success);
             Assert.NotNull(player.Ban);
-            Assert.Contains(player.Address.Value, adapter.Execute("/player bans", context).Message);
+            Assert.Contains(player.Address.Value, CommandText.Resolve(adapter.Execute("/player bans", context)));
             Assert.True(adapter.Execute($"/player unban {player.Address}", context).Success);
             Assert.Null(player.Ban);
             Assert.Empty(project.Characters.Characters);
@@ -94,10 +94,10 @@ public sealed class SubjectPermissionCommandTest
     [Fact]
     public void OfflineSubjectWithoutCharacterCanBeGrantedListedAndRevoked()
     {
-        var previous = GameManager.Role;
+        var previous = CommonLib.Net.Role;
         try
         {
-            CommonLib.Net.Role = WorldRole.Server;
+            CommonLib.Net.Role = NodeRole.Authority;
             using var project = new SubjectProject();
             var address = Address("offline");
             var player = project.Players.Store.GetOrCreate(address);
@@ -112,7 +112,7 @@ public sealed class SubjectPermissionCommandTest
             Assert.Empty(project.Characters.Characters);
             var listed = dispatcher.Execute(new ListPlayerPermissionsCommand(address.Value), context);
             Assert.True(listed.Success);
-            Assert.Contains(permission, listed.Message);
+            Assert.Contains(permission, CommandText.Resolve(listed));
             Assert.True(
                 dispatcher.Execute(new RevokePlayerPermissionCommand(address.Value, permission), context).Success
             );
@@ -129,17 +129,15 @@ public sealed class SubjectPermissionCommandTest
     [Fact]
     public void CompletionUsesSubjectAddressesAndDoesNotCreateUnknownSubjects()
     {
-        var previous = GameManager.Role;
-        var previousProject = GameManager.Project;
+        var previous = CommonLib.Net.Role;
         using var project = new SubjectProject();
         try
         {
-            CommonLib.Net.Role = WorldRole.Server;
-            typeof(GameManager).GetProperty(nameof(GameManager.Project))!.SetValue(null, project);
+            CommonLib.Net.Role = NodeRole.Authority;
             var player = project.Players.Store.GetOrCreate(Address("known"));
             player.DisplayName = "An account without a character";
             var registry = Registry();
-            var adapter = new TextCommandAdapter(registry);
+            var adapter = new TextCommandAdapter(registry, project);
             var suggestions = adapter.Suggest("/permission grant ", CommandPrincipal.LocalOperator);
             Assert.Equal(player.Address.Value, Assert.Single(suggestions).Value);
             var dispatcher = new CommandDispatcher(registry);
@@ -157,30 +155,31 @@ public sealed class SubjectPermissionCommandTest
         finally
         {
             CommonLib.Net.Role = previous;
-            typeof(GameManager).GetProperty(nameof(GameManager.Project))!.SetValue(null, previousProject);
         }
     }
 
     [Fact]
     public void BansUseSubjectAuthorizationAndPreserveCharacterAndPermissions()
     {
-        var previous = GameManager.Role;
-        var previousClients = CommonLib.Net.Clients;
-        var pending = (Dictionary<Client, string>)typeof(NetNode)
-            .GetField("_clientsToRemove", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(CommonLib.Net)!;
+        var previous = CommonLib.Net.Role;
         using var project = new SubjectProject();
+        var pending = (Dictionary<Client, string>)typeof(NetNode)
+            .GetField("_clientsToRemove", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(project.Node)!;
         var address = Address("banned");
         var player = project.Players.Store.GetOrCreate(address);
         var characterId = Guid.NewGuid();
         project.Players.Store.BindCharacter(address, characterId);
         var permission = new ResourceId(new ModId("game"), "player.teleport.self");
         player.Permissions.Grant(permission, false);
-        var session = new Client(null, 1, Guid.NewGuid(), characterId, null) { PlayerAddress = address };
-        var unrelated = new Client(null, 2, Guid.NewGuid(), characterId, null) { PlayerAddress = Address("other") };
+        var session = new Client(null, 1, Guid.NewGuid(), characterId) { PlayerAddress = address };
+        var unrelated = new Client(null, 2, Guid.NewGuid(), characterId) { PlayerAddress = Address("other") };
         try
         {
-            CommonLib.Net.Role = WorldRole.Server;
-            CommonLib.Net.Clients = new Dictionary<int, Client> { [1] = session, [2] = unrelated };
+            CommonLib.Net.Role = NodeRole.Authority;
+            Fixtures.ConnectionTestEnvironment.SetRoster(
+                project.Node,
+                (new Dictionary<int, Client> { [1] = session, [2] = unrelated }).Values
+            );
             var dispatcher = new CommandDispatcher(Registry());
             var unauthorized = new CommandContext(
                 CommandInvocationChannel.Network,
@@ -210,7 +209,10 @@ public sealed class SubjectPermissionCommandTest
             );
             Assert.Contains(session, pending.Keys);
             Assert.DoesNotContain(unrelated, pending.Keys);
-            Assert.Contains(address.Value, dispatcher.Execute(new ListPlayerBansCommand(), context).Message);
+            Assert.Contains(
+                address.Value,
+                CommandText.Resolve(dispatcher.Execute(new ListPlayerBansCommand(), context))
+            );
             Assert.True(dispatcher.Execute(new UnbanPlayerCommand(address.Value), context).Success);
             Assert.Null(player.Ban);
             Assert.Equal(characterId, player.CharacterId);
@@ -221,7 +223,6 @@ public sealed class SubjectPermissionCommandTest
         {
             pending.Remove(session);
             pending.Remove(unrelated);
-            CommonLib.Net.Clients = previousClients;
             CommonLib.Net.Role = previous;
         }
     }
@@ -229,10 +230,10 @@ public sealed class SubjectPermissionCommandTest
     [Fact]
     public void MuteManagementSupportsOfflineCharacterlessSubjectsAndUsesItsOwnPermission()
     {
-        var previous = GameManager.Role;
+        var previous = CommonLib.Net.Role;
         try
         {
-            CommonLib.Net.Role = WorldRole.Server;
+            CommonLib.Net.Role = NodeRole.Authority;
             using var project = new SubjectProject();
             var player = project.Players.Store.GetOrCreate(Address("muted"));
             var dispatcher = new CommandDispatcher(Registry());
@@ -249,12 +250,15 @@ public sealed class SubjectPermissionCommandTest
             Assert.True(dispatcher.Execute(new SetPlayerMuteCommand(player.Address.Value, true), context).Success);
             Assert.True(player.IsMuted);
             Assert.Equal(Guid.Empty, player.CharacterId);
-            Assert.Contains(player.Address.Value, dispatcher.Execute(new ListMutedPlayersCommand(), context).Message);
+            Assert.Contains(
+                player.Address.Value,
+                CommandText.Resolve(dispatcher.Execute(new ListMutedPlayersCommand(), context))
+            );
             Assert.True(dispatcher.Execute(new SetPlayerMuteCommand(player.Address.Value, false), context).Success);
             Assert.False(player.IsMuted);
             Assert.DoesNotContain(
                 player.Address.Value,
-                dispatcher.Execute(new ListMutedPlayersCommand(), context).Message
+                CommandText.Resolve(dispatcher.Execute(new ListMutedPlayersCommand(), context))
             );
         }
         finally { CommonLib.Net.Role = previous; }
@@ -267,7 +271,7 @@ public sealed class SubjectPermissionCommandTest
     private static CommandRegistry Registry()
     {
         var registry = new CommandRegistry();
-        BuiltInCommands.Register(registry, new ModId("game"));
+        Fixtures.BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
         registry.Freeze();
         return registry;
     }
@@ -280,8 +284,17 @@ public sealed class SubjectPermissionCommandTest
 
         public SubsystemPositionMarks Marks { get; } = new();
 
+        public NetNode Node { get; } = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Authority
+        );
+
         public SubjectProject()
         {
+            Node.Runtime.BindProject(this);
+            Fixtures.RuleHookTestEnvironment.BindEmpty(this);
             subsystems.Add(Players);
             subsystems.Add(Characters);
             subsystems.Add(Marks);

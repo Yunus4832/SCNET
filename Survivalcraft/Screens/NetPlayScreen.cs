@@ -3,8 +3,10 @@ using System.Xml.Linq;
 using Engine.Network;
 using Engine.Network.Rendezvous;
 
+using Game.Application;
 using Game.Authentication;
 using Game.Servers;
+using Game.World.Presentation;
 
 namespace Game.Screens;
 
@@ -150,7 +152,7 @@ public sealed class NetPlayScreen : Screen
         );
         _actionPanel.SetSecondaryItems([ServerAction.JoinCode, ServerAction.Delete]);
 
-        GameEntry.HandleUri += uri =>
+        ClientApplication.HandleUri += uri =>
         {
             if (uri.Uri.Host != "online")
             {
@@ -163,7 +165,7 @@ public sealed class NetPlayScreen : Screen
                 ConnectToAddress(address, address);
             }
 
-            uri.IsHandle = true;
+            uri.IsHandled = true;
         };
     }
 
@@ -296,9 +298,9 @@ public sealed class NetPlayScreen : Screen
     {
         return $"{Text("Protocol")}: {status.ProtocolVersion} | {Text("Players")}: " +
                $"{status.PlayerCount}/{status.MaxPlayerCount} | {Text("Mode")}: " +
-               $"{LanguageManager.Get("GameMode", status.GameMode.ToString())} | " +
+               $"{Localization.ClientLanguage.Catalog.Get("GameMode", status.GameMode.ToString())} | " +
                $"{Text("Time")}: " +
-               $"{SubsystemTimeOfDay.GetTimeOfDayText(status.TimeOfDay)} | " +
+               $"{TimeOfDayPresentation.GetTimeOfDayText(status.TimeOfDay)} | " +
                $"{Text("Season")}: {GetSeasonText(status.Season, status.TimeOfSeason)}";
     }
 
@@ -312,7 +314,7 @@ public sealed class NetPlayScreen : Screen
             Season.Spring => timeOfSeason < 0.33f ? 9 : timeOfSeason < 0.67f ? 10 : 11,
             _ => 1
         };
-        return LanguageManager.Get("SubsystemSeasons", index);
+        return Localization.ClientLanguage.Catalog.Get("SubsystemSeasons", index);
     }
 
     private void ReloadSources()
@@ -376,7 +378,8 @@ public sealed class NetPlayScreen : Screen
         {
             _refreshCancellation = null;
             _busy = false;
-            _statusLabel.Text = LanguageManager.GetContentWidgets("RendezvousManagementPanel", "NoSources");
+            _statusLabel.Text =
+                Localization.ClientLanguage.Catalog.GetContentWidgets("RendezvousManagementPanel", "NoSources");
             _actionPanel.Refresh();
             return;
         }
@@ -574,7 +577,10 @@ public sealed class NetPlayScreen : Screen
                 : _hadSourceErrors
                     ? Text("LoadFailed")
                     : !RendezvousManager.Current.Snapshot().Any(service => service.IsEnabled)
-                        ? LanguageManager.GetContentWidgets("RendezvousManagementPanel", "NoSources")
+                        ? Localization.ClientLanguage.Catalog.GetContentWidgets(
+                            "RendezvousManagementPanel",
+                            "NoSources"
+                        )
                         : visible.Length == 0
                             ? Text("Empty")
                             : string.Empty;
@@ -712,7 +718,7 @@ public sealed class NetPlayScreen : Screen
         DialogsManager.ShowDialog(
             this,
             new JoinCodeDialog(
-                SettingsManager.Current.InvitationRelayPolicy,
+                Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy,
                 ConnectToRemoteSession
             )
         );
@@ -811,7 +817,9 @@ public sealed class NetPlayScreen : Screen
     {
         if (IsRoomCategory && _serverList.SelectedItem is RendezvousRoom room)
         {
-            ConnectToRemoteSession(room.CreateTarget(SettingsManager.Current.InvitationRelayPolicy));
+            ConnectToRemoteSession(
+                room.CreateTarget(Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy)
+            );
             return;
         }
 
@@ -933,14 +941,14 @@ public sealed class NetPlayScreen : Screen
             var uri = new Uri("tcp://" + normalized);
             var target = new AddressNetworkTarget(
                 uri.DnsSafeHost,
-                uri.Port > 0 ? uri.Port : SettingsManager.Current.ServerPort
+                uri.Port > 0 ? uri.Port : Configuration.HostingConfiguration.Preferences.ServerPort
             );
             ServerDirectoryManager.Current.RecordConnectionAttempt(name, normalized, DateTimeOffset.UtcNow);
             ConnectToRemoteSession(target);
         }
         catch (ArgumentException)
         {
-            DialogsManager.Alert(LanguageManager.Get("Usual", "error"));
+            DialogsManager.Alert(Localization.ClientLanguage.Catalog.Get("Usual", "error"));
         }
     }
 
@@ -1230,10 +1238,13 @@ public sealed class NetPlayScreen : Screen
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.GetContentWidgets(nameof(PlayScreen), 16),
-                string.Format(LanguageManager.GetContentWidgets(nameof(PlayScreen), 17), result.RestartReason),
-                LanguageManager.GetContentWidgets(nameof(PlayScreen), 18),
-                LanguageManager.Get("Usual", "cancel"),
+                Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(PlayScreen), 16),
+                string.Format(
+                    Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(PlayScreen), 17),
+                    result.RestartReason
+                ),
+                Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(PlayScreen), 18),
+                Localization.ClientLanguage.Catalog.Get("Usual", "cancel"),
                 button =>
                 {
                     if (generation == _continuationGeneration && button == MessageDialogButton.Button1)
@@ -1247,6 +1258,6 @@ public sealed class NetPlayScreen : Screen
 
     private static string Text(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(NetPlayScreen), key);
+        return Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(NetPlayScreen), key);
     }
 }

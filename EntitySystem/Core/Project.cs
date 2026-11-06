@@ -8,6 +8,10 @@ namespace EntitySystem.Core;
 
 public class Project : IDisposable
 {
+    private bool _disposed;
+
+    public bool IsDisposed => _disposed;
+
     protected readonly Dictionary<Entity, bool> entityDictionary = new();
 
     protected readonly List<Subsystem> subsystems = [];
@@ -28,6 +32,8 @@ public class Project : IDisposable
 
     public event EventHandler<EntityAddRemoveEventArgs>? EntityRemoved;
 
+    public event Action<Project>? Disposed;
+
     public static event Action<Project>? BeforeSubsystemsAndEntitiesLoad;
 
     public static event Action<Project>? OnProjectLoad;
@@ -36,19 +42,29 @@ public class Project : IDisposable
 
     public bool PostponeFireEntityAddedEvents = true;
 
+    public IProjectComposition? Composition { get; }
+
     public Project()
     {
         GameDatabase = null!;
         ProjectTemplate = null!;
     }
 
-    public Project(GameDatabase gameDatabase, ProjectData projectData)
+    public Project(
+        GameDatabase gameDatabase,
+        ProjectData projectData,
+        Action<Project>? configure = null,
+        IProjectComposition? composition = null,
+        Action<Subsystem>? configureSubsystem = null
+    )
     {
+        Composition = composition;
         try
         {
             GameDatabase = gameDatabase;
             ProjectTemplate = projectData.ValuesDictionary.DatabaseObject;
             ExtensionData.Load(projectData.ExtensionData);
+            configure?.Invoke(this);
             var dictionary = new Dictionary<string, Subsystem>();
             foreach (var item in from x in projectData.ValuesDictionary.Values
                      select x as ValuesDictionary
@@ -57,6 +73,11 @@ public class Project : IDisposable
                            x.DatabaseObject.Type == gameDatabase.MemberSubsystemTemplateType
                      select x)
             {
+                if (Composition?.ShouldCreateSubsystem(item) == false)
+                {
+                    continue;
+                }
+
                 var value = item.GetValue<bool>("IsOptional");
                 var value2 = item.GetValue<string>("Class");
                 var type = RuntimeTypeResolver.FindType(value2, !value);
@@ -86,6 +107,7 @@ public class Project : IDisposable
                 subsystem.Initialize(this, item);
                 dictionary.Add(item.DatabaseObject.Name, subsystem);
                 subsystems.Add(subsystem);
+                configureSubsystem?.Invoke(subsystem);
             }
 
             var loadedSubsystems = new Dictionary<Subsystem, bool>();
@@ -128,18 +150,53 @@ public class Project : IDisposable
 
     public void Dispose()
     {
-        foreach (var key in entityDictionary.Keys)
+        if (_disposed)
         {
-            key.Dispose();
+            return;
+        }
+
+        _disposed = true;
+        var errors = new List<Exception>();
+        foreach (var entity in entityDictionary.Keys.ToArray())
+        {
+            DisposeResource(entity);
         }
 
         foreach (var subsystem in subsystems)
         {
-            subsystem.Dispose();
+            DisposeResource(subsystem);
         }
 
-        OnProjectLoad = null;
+        foreach (var handler in Disposed?.GetInvocationList() ?? [])
+        {
+            try
+            {
+                ((Action<Project>)handler)(this);
+            }
+            catch (Exception exception)
+            {
+                errors.Add(exception);
+            }
+        }
+
+        Disposed = null;
         GC.SuppressFinalize(this);
+        if (errors.Count > 0)
+        {
+            throw new AggregateException("Could not dispose all project resources.", errors);
+        }
+
+        void DisposeResource(IDisposable resource)
+        {
+            try
+            {
+                resource.Dispose();
+            }
+            catch (Exception exception)
+            {
+                errors.Add(exception);
+            }
+        }
     }
 
     public Subsystem? FindSubsystem(Type type, string? name, bool throwOnError)
@@ -323,6 +380,9 @@ public class Project : IDisposable
         return SerializeEntities(entities);
     }
 
+    /// <summary>Contributes to the fresh subsystem snapshot; failures abort snapshot creation.</summary>
+    public event Action<ProjectData>? AfterSubsystemsSaved;
+
     public ProjectData Save()
     {
         var projectData = new ProjectData
@@ -342,6 +402,7 @@ public class Project : IDisposable
             }
         }
 
+        AfterSubsystemsSaved?.Invoke(projectData);
         projectData.EntityDataList = SaveEntities(EntityKeys);
         // World business data is persisted, never included in client bootstrap snapshots.
         if (!SendToClientMode)

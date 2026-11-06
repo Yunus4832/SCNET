@@ -132,7 +132,10 @@ public sealed class AuthenticationManagementPanel : ServicePanelWidget
 
     public override void Update()
     {
-        if (_languageRevision != LanguageManager.Revision) { Refresh(Selected?.Endpoint.Identity.Address); }
+        if (_languageRevision != Localization.ClientLanguage.Revision)
+        {
+            Refresh(Selected?.Endpoint.Identity.Address);
+        }
 
         lock (_browserGate)
         {
@@ -200,7 +203,7 @@ public sealed class AuthenticationManagementPanel : ServicePanelWidget
 
     private void Refresh(string? selected = null)
     {
-        _languageRevision = LanguageManager.Revision;
+        _languageRevision = Localization.ClientLanguage.Revision;
         _list.ClearItems();
         foreach (var service in _manager.Services.Services) { _list.AddItem(service); }
 
@@ -404,8 +407,8 @@ public sealed class AuthenticationManagementPanel : ServicePanelWidget
         _message = new MessageDialog(
             Text("Title"),
             description,
-            LanguageManager.Get("Usual", "ok"),
-            LanguageManager.Get("Usual", "cancel"),
+            Localization.ClientLanguage.Catalog.Get("Usual", "ok"),
+            Localization.ClientLanguage.Catalog.Get("Usual", "cancel"),
             button =>
             {
                 _message = null;
@@ -427,7 +430,7 @@ public sealed class AuthenticationManagementPanel : ServicePanelWidget
         _message = new MessageDialog(
             Text("Title"),
             text,
-            LanguageManager.Get("Usual", "ok"),
+            Localization.ClientLanguage.Catalog.Get("Usual", "ok"),
             string.Empty,
             _ => _message = null
         );
@@ -445,5 +448,5 @@ public sealed class AuthenticationManagementPanel : ServicePanelWidget
     }
 
     private static string Text(string key) =>
-        LanguageManager.GetContentWidgets(nameof(AuthenticationManagementPanel), key);
+        Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(AuthenticationManagementPanel), key);
 }

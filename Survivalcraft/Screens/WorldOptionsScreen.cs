@@ -3,6 +3,9 @@ using System.Xml.Linq;
 
 using Engine.Graphics;
 
+using Game.Application;
+using Game.Blocks.Presentation.Geometry;
+
 namespace Game.Screens;
 
 public class WorldOptionsScreen : Screen
@@ -109,6 +112,10 @@ public class WorldOptionsScreen : Screen
 
     private readonly ButtonWidget _weatherEffectsButton;
 
+    private readonly SliderWidget _creativeDigTimeSlider;
+
+    private readonly SliderWidget _creativeReachSlider;
+
     private WorldSettings _worldSettings = null!;
 
     public WorldOptionsScreen()
@@ -116,6 +123,8 @@ public class WorldOptionsScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/WorldOptionsScreen");
         LoadContents(this, node);
         _creativeModePanel = Children.Find<Widget>("CreativeModePanel")!;
+        _creativeDigTimeSlider = Children.Find<SliderWidget>("CreativeDigTimeSlider")!;
+        _creativeReachSlider = Children.Find<SliderWidget>("CreativeReachSlider")!;
         _seasonsPanel = Children.Find<Widget>("SeasonsPanel")!;
         _yearDaysPanel = Children.Find<Widget>("YearDaysPanel")!;
         _newWorldOnlyPanel = Children.Find<Widget>("NewWorldOnlyPanel")!;
@@ -139,7 +148,7 @@ public class WorldOptionsScreen : Screen
         _environmentBehaviorButton = Children.Find<ButtonWidget>("EnvironmentBehavior")!;
         _timeOfDaySelection = Children.Find<InlineSelectionWidget>("TimeOfDay")!;
         _timeOfDaySelection.ItemTextProvider = item =>
-            LanguageManager.Get("TimeOfDayMode", ((TimeOfDayMode)item).ToString());
+            Localization.ClientLanguage.Catalog.Get("TimeOfDayMode", ((TimeOfDayMode)item).ToString());
         _timeOfDaySelection.SelectionChanged += TimeOfDayChanged;
         _areSeasonsChangingCheckBox = Children.Find<CheckboxWidget>("AreSeasonsChanging")!;
         _yearDaysSlider = Children.Find<SliderWidget>("YearDays")!;
@@ -157,7 +166,7 @@ public class WorldOptionsScreen : Screen
         _flatTerrainLevelSlider = Children.Find<SliderWidget>("FlatTerrainLevel")!;
         _flatTerrainShoreRoughnessSlider = Children.Find<SliderWidget>("FlatTerrainShoreRoughness")!;
         _flatTerrainBlock = Children.Find<BlockIconWidget>("FlatTerrainBlock")!;
-        _flatTerrainBlock.Catalog = CurrentModRuntime.Value!.PreviewCatalog;
+        _flatTerrainBlock.Catalog = ClientApplication.Content.PreviewCatalog;
         _flatTerrainBlockLabel = Children.Find<LabelWidget>("FlatTerrainBlockLabel")!;
         _flatTerrainBlockSelector = Children.Find<ClickableWidget>("FlatTerrainBlockSelector")!;
         _flatTerrainMagmaOceanCheckbox = Children.Find<CheckboxWidget>("MagmaOcean")!;
@@ -210,7 +219,10 @@ public class WorldOptionsScreen : Screen
             CreateDescriptionBinding("PaletteLabel", () => StringsManager.GetString("Palette", "Description")),
             CreateDescriptionBinding(
                 "HotbarSlotsCountLabel",
-                () => LanguageManager.GetContentWidgets(_typeName, "HotbarSlotsCountDescription")
+                () => Localization.ClientLanguage.Catalog.GetContentWidgets(
+                    _typeName,
+                    "HotbarSlotsCountDescription"
+                )
             ),
             CreateDescriptionBinding(
                 "AreSeasonsChangingLabel",
@@ -330,15 +342,6 @@ public class WorldOptionsScreen : Screen
         }
     }
 
-    public static string FormatOffset(float value)
-    {
-        if (value != 0f)
-        {
-            return (value >= 0f ? "+" : "") + value;
-        }
-
-        return LanguageManager.Get(_typeName, 6);
-    }
 
     public override void Enter(object[] parameters)
     {
@@ -346,7 +349,8 @@ public class WorldOptionsScreen : Screen
         _isExistingWorld = (bool)parameters[1];
         RefreshTerrainGenerationSelection();
         RefreshTimeOfDaySelection();
-        _descriptionLabel.Text = LanguageManager.GetContentWidgets(_typeName, "DefaultDescription");
+        _descriptionLabel.Text =
+            Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "DefaultDescription");
     }
 
     public override void Leave()
@@ -359,6 +363,16 @@ public class WorldOptionsScreen : Screen
     public override void Update()
     {
         UpdateSelectedDescription();
+
+        if (_creativeDigTimeSlider.IsSliding)
+        {
+            _worldSettings.CreativeDigTime = _creativeDigTimeSlider.Value;
+        }
+
+        if (_creativeReachSlider.IsSliding)
+        {
+            _worldSettings.CreativeReach = _creativeReachSlider.Value;
+        }
 
         if (_islandSizeEw.IsSliding && !_isExistingWorld)
         {
@@ -401,7 +415,7 @@ public class WorldOptionsScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
-                    LanguageManager.Get(_typeName, 2),
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 2),
                     items,
                     72f,
                     delegate(object index)
@@ -409,10 +423,10 @@ public class WorldOptionsScreen : Screen
                         var node2 = ContentManager.Get<XElement>("Widgets/SelectBlockItem");
                         var obj2 = (ContainerWidget)LoadWidget(null, node2, null);
                         obj2.Children.Find<BlockIconWidget>("SelectBlockItem.Block")!.Catalog =
-                            CurrentModRuntime.Value!.PreviewCatalog;
+                            ClientApplication.Content.PreviewCatalog;
                         obj2.Children.Find<BlockIconWidget>("SelectBlockItem.Block")!.Contents = (int)index;
-                        obj2.Children.Find<LabelWidget>("SelectBlockItem.Text")!.Text = CurrentModRuntime.Value!
-                            .PreviewCatalog.Blocks[(int)index]
+                        obj2.Children.Find<LabelWidget>("SelectBlockItem.Text")!.Text = ClientApplication.Content
+                            .PreviewCatalog.Get((int)index)
                             .GetDisplayName(null, Terrain.MakeBlockValue((int)index));
                         return obj2;
                     },
@@ -452,7 +466,7 @@ public class WorldOptionsScreen : Screen
         {
             BlocksTexturesManager.UpdateBlocksTexturesList();
             var dialog = new ListSelectionDialog(
-                LanguageManager.Get(_typeName, 3),
+                Localization.ClientLanguage.Catalog.Get(_typeName, 3),
                 BlocksTexturesManager.ReadOnlyBlockTexturesNames,
                 64f,
                 delegate(object item)
@@ -551,7 +565,7 @@ public class WorldOptionsScreen : Screen
         _flatTerrainShoreRoughnessSlider.Text = $"{_worldSettings.ShoreRoughness * 100f:0}%";
         _flatTerrainBlock.Contents = _worldSettings.TerrainBlockIndex;
         _flatTerrainMagmaOceanCheckbox.IsChecked = _worldSettings.TerrainOceanBlockIndex == 92;
-        var text = CurrentModRuntime.Value!.PreviewCatalog.Blocks[_worldSettings.TerrainBlockIndex]
+        var text = ClientApplication.Content.PreviewCatalog.Get(_worldSettings.TerrainBlockIndex)
             .GetDisplayName(null, Terrain.MakeBlockValue(_worldSettings.TerrainBlockIndex));
         _flatTerrainBlockLabel.Text = text.Length > 10 ? text[..10] + "..." : text;
         var texture = _blockTexturesCache.GetTexture(_worldSettings.BlocksTextureName);
@@ -559,16 +573,26 @@ public class WorldOptionsScreen : Screen
         _blocksTextureLabel.Text = BlocksTexturesManager.GetDisplayName(_worldSettings.BlocksTextureName);
         _blocksTextureDetails.Text = $"{texture.Width}x{texture.Height}";
         _seaLevelOffsetSlider.Value = _worldSettings.SeaLevelOffset;
-        _seaLevelOffsetSlider.Text = FormatOffset(_worldSettings.SeaLevelOffset);
+        _seaLevelOffsetSlider.Text =
+            World.Presentation.WorldSettingsText.FormatOffset(_worldSettings.SeaLevelOffset);
         _temperatureOffsetSlider.Value = _worldSettings.TemperatureOffset;
-        _temperatureOffsetSlider.Text = FormatOffset(_worldSettings.TemperatureOffset);
+        _temperatureOffsetSlider.Text =
+            World.Presentation.WorldSettingsText.FormatOffset(_worldSettings.TemperatureOffset);
         _humidityOffsetSlider.Value = _worldSettings.HumidityOffset;
-        _humidityOffsetSlider.Text = FormatOffset(_worldSettings.HumidityOffset);
+        _humidityOffsetSlider.Text =
+            World.Presentation.WorldSettingsText.FormatOffset(_worldSettings.HumidityOffset);
         _biomeSizeSlider.Value = FindNearestIndex(_biomeSizes, _worldSettings.BiomeSize);
         _biomeSizeSlider.Text = _worldSettings.BiomeSize + "x";
+        _creativeDigTimeSlider.Value = _worldSettings.CreativeDigTime;
+        _creativeDigTimeSlider.Text = $"{MathUtils.Round(1000f * _worldSettings.CreativeDigTime)}ms";
+        _creativeReachSlider.Value = _worldSettings.CreativeReach;
+        _creativeReachSlider.Text = string.Format(
+            Localization.ClientLanguage.Catalog.Get("SettingsControlsScreen", 1),
+            $"{_worldSettings.CreativeReach:0.0} "
+        );
         _hotbarSlotsCountSlider.Value = _worldSettings.CurrentHotbarSlotsCount;
         _hotbarSlotsCountSlider.Text = _worldSettings.CurrentHotbarSlotsCount.ToString();
-        _environmentBehaviorButton.Text = LanguageManager.Get(
+        _environmentBehaviorButton.Text = Localization.ClientLanguage.Catalog.Get(
             "EnvironmentBehaviorMode",
             _worldSettings.EnvironmentBehaviorMode.ToString()
         );
@@ -576,23 +600,23 @@ public class WorldOptionsScreen : Screen
         _yearDaysSlider.Value = FindNearestIndex(_yearDays, _worldSettings.YearDays);
         _yearDaysSlider.Text = $"{_worldSettings.YearDays} days";
         _timeOfYearSlider.Value = _worldSettings.TimeOfYear;
-        _timeOfYearSlider.Text = $"{SubsystemSeasons.GetTimeOfYearName(_worldSettings.TimeOfYear)}";
-        _timeOfYearSlider.TextColor = SubsystemSeasons.GetTimeOfYearColor(_worldSettings.TimeOfYear);
+        _timeOfYearSlider.Text = $"{ClientApplication.Content.Seasons.GetTimeOfYearName(_worldSettings.TimeOfYear)}";
+        _timeOfYearSlider.TextColor = ClientApplication.Content.Seasons.GetTimeOfYearColor(_worldSettings.TimeOfYear);
         _weatherEffectsButton.Text = _worldSettings.AreWeatherEffectsEnabled
-            ? LanguageManager.Get("Usual", "enable")
-            : LanguageManager.Get("Usual", "disable");
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "enable")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "disable");
         _adventureRespawnButton.Text = _worldSettings.IsAdventureRespawnAllowed
-            ? LanguageManager.Get("Usual", "allowed")
-            : LanguageManager.Get("Usual", "not allowed");
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "allowed")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "not allowed");
         _adventureSurvivalMechanicsButton.Text = _worldSettings.AreAdventureSurvivalMechanicsEnabled
-            ? LanguageManager.Get("Usual", "enable")
-            : LanguageManager.Get("Usual", "disable");
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "enable")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "disable");
         _supernaturalCreaturesButton.Text = _worldSettings.AreSupernaturalCreaturesEnabled
-            ? LanguageManager.Get("Usual", "enable")
-            : LanguageManager.Get("Usual", "disable");
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "enable")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "disable");
         _friendlyFireButton.Text = _worldSettings.IsFriendlyFireEnabled
-            ? LanguageManager.Get("Usual", "allowed")
-            : LanguageManager.Get("Usual", "not allowed");
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "allowed")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "not allowed");
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);

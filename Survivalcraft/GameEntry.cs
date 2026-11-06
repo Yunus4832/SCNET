@@ -5,9 +5,13 @@ using Engine.Graphics;
 using Engine.Input;
 using Engine.Network.Diagnostics;
 
+using Game.Application;
 using Game.Automation;
+using Game.ClientContent;
 using Game.Commands;
+using Game.Commands.Http;
 using Game.Diagnostics;
+using Game.FileStorage;
 using Game.Network;
 
 namespace Game;
@@ -20,21 +24,11 @@ public static class GameEntry
 
     private static TimeSpan _processCpuTimeEnd;
 
-    private static readonly List<HandleUriItem> _urisToHandle = [];
-
     /// <summary>用户最近一次调整后的窗口逻辑尺寸（用于退出时保存到 RunningSetting）。</summary>
     private static Point2 _lastWindowSize;
 
     /// <summary>窗口初始化稳定后才开始记录用户调整，排除启动时的自动缩放事件。</summary>
     private static bool _windowStateReady;
-
-    public static GameModRuntime? ModRuntime => CurrentModRuntime.Value;
-
-    public static float LastFrameTime { get; set; }
-
-    public static float LastCpuFrameTime { get; set; }
-
-    public static event Action<HandleUriItem>? HandleUri;
 
     [STAThread]
     public static GameExitAction EntryPoint(StartupContext startup)
@@ -71,6 +65,7 @@ public static class GameEntry
         Window.Deactivated += DeactivatedHandler;
         Window.Frame += FrameHandler;
         Window.Resized += OnWindowResized;
+        Window.Closing += PrepareClose;
         Window.Closed += Closed;
         Display.DeviceReset += ContentManager.DisplayDeviceReset;
         Window.UnhandledException += delegate(UnhandledExceptionInfo e)
@@ -85,7 +80,7 @@ public static class GameEntry
         Window.Run(
             runningSetting.WindowWidth,
             runningSetting.WindowHeight,
-            runningSetting.WindowMode,
+            StartupWindowModes.ToWindowMode(runningSetting.WindowMode),
             VersionsManager.Title
         );
         return GameExitManager.ExitAction;
@@ -93,7 +88,7 @@ public static class GameEntry
 
     public static void HandleUriHandler(Uri uri)
     {
-        _urisToHandle.Add(new HandleUriItem(uri));
+        ClientApplication.EnqueueUri(uri);
     }
 
     public static void DeactivatedHandler()
@@ -133,32 +128,91 @@ public static class GameEntry
         _lastWindowSize = new Point2(Window.View.Size.X, Window.View.Size.Y);
     }
 
+    private static bool PrepareClose()
+    {
+        try
+        {
+            GameManager.SaveProject(waitForCompletion: true, showErrorDialog: true);
+            return true;
+        }
+        catch (WorldSaveException) { return false; }
+    }
+
     public static void Closed()
     {
-        AutomationInputController.Clear();
-        HttpCommandHostManager.Stop();
+        var errors = new List<Exception>();
+
+        void Cleanup(Action action)
+        {
+            try { action(); }
+            catch (Exception error) { errors.Add(error); }
+        }
+
+        Cleanup(AutomationInputController.Clear);
+        Cleanup(HttpCommandHostManager.Stop);
         if (_windowStateReady && _lastWindowSize is { X: > 0, Y: > 0 })
         {
-            RunningSettingManager.SaveCurrent(rs =>
-                {
-                    rs.WindowWidth = _lastWindowSize.X;
-                    rs.WindowHeight = _lastWindowSize.Y;
-                }
+            Cleanup(() => StartupManager.Profiles.UpdateRunningSettings(rs =>
+                    {
+                        rs.WindowWidth = _lastWindowSize.X;
+                        rs.WindowHeight = _lastWindowSize.Y;
+                    }
+                )
             );
         }
 
-        CommonLib.Net.StopImmediate();
-        GameManager.SaveProject(waitForCompletion: true, showErrorDialog: false);
-        GameManager.DisposeProject();
-        ModRuntime?.Dispose();
-        CurrentModRuntime.Set(null);
-        SettingsManager.SaveSettings();
+        if (CommonLib.IsNetworkInitialized)
+        {
+            Cleanup(GameManager.DisposeProject);
+            Cleanup(CommonLib.Net.StopImmediate);
+        }
+
+        Cleanup(() => SetModRuntime(null));
+        Cleanup(SettingsManager.SaveSettings);
+        if (errors.Count > 0) { throw new AggregateException("Failed to release game application resources.", errors); }
+    }
+
+    public static void InitializeClientContent(GameModRuntime runtime)
+    {
+        var modules = new List<IClientContentModule> { new BuiltInClientContentModule() };
+        foreach (var mod in runtime.Host.Runtimes)
+        {
+            if (mod.Descriptor.Manifest.ClientContentEntrypoint is not { } entrypoint) { continue; }
+
+            var loader = mod.Descriptor.Entrypoints ??
+                         throw new InvalidOperationException(
+                             $"Mod {mod.Descriptor.Manifest.Id} has no entrypoint loader."
+                         );
+            modules.Add(loader.CreateEntrypoint<IClientContentModule>(entrypoint));
+        }
+
+        var replacement = new ClientContentRuntime(modules);
+        try { replacement.InstallResources(runtime.Content.RegisteredResources); }
+        catch
+        {
+            replacement.Dispose();
+            throw;
+        }
+
+        ClientApplication.InstallContent(replacement);
+    }
+
+    public static void InitializeClientPreview(GameModRuntime runtime)
+    {
+        var content = ClientApplication.Content;
+        content.InitializePreview(runtime.PreviewCatalog);
+        var gradient = ContentManager.Get<Texture2D>("Textures/SeasonsSlider").Tag as Engine.Media.Images.Image ??
+                       throw new InvalidOperationException("Season gradient image is not available.");
+        content.Seasons.InitializeGradient(gradient);
     }
 
     public static void SetModRuntime(GameModRuntime? runtime)
     {
-        ModRuntime?.Dispose();
-        CurrentModRuntime.Set(runtime);
+        using var replacement = CurrentModRuntime.BeginReplacement(runtime);
+        try { ClientApplication.ReleaseContent(); }
+        catch (Exception error) { Log.Error($"Client content retirement cleanup failed: {error}"); }
+
+        replacement.Commit();
         if (runtime is not null)
         {
             HttpCommandHostManager.Start(
@@ -170,72 +224,92 @@ public static class GameEntry
 
     public static void Initialize()
     {
-        Log.Information(
-            $"Survivalcraft starting up at {DateTime.Now}, Version={VersionsManager.Version}, ProtocolVersion={VersionsManager.ProtocolVersion}, Platform={PlatformManager.Platform}, Storage.AvailableFreeSpace={Storage.FreeSpace / 1024 / 1024}MB, ApproximateScreenDpi={ScreenResolutionManager.ApproximateScreenDpi:0.0}, ApproxScreenInches={ScreenResolutionManager.ApproximateScreenInches:0.0}, ScreenResolution={Window.Size}, ProcessorsCount={Environment.ProcessorCount}, 64bit={Marshal.SizeOf<IntPtr>() == 8}"
+        ClientApplication.ConfigurePaths(
+            new ClientStoragePaths(
+                GamePaths.External,
+                GamePaths.ScreenCaptures,
+                GamePaths.CharacterSkins,
+                GamePaths.FurniturePacks,
+                GamePaths.BlockTextures,
+                GamePaths.ContentPackageCache,
+                GamePaths.ContentPackageCreationTemp,
+                GamePaths.Logs
+            )
         );
+        ClientApplication.InstallWorldRepository(
+            new WorldRepository(
+                GamePaths.Worlds,
+                [],
+                GameManager.WorldActivity,
+                WorldProjectPersistence.WaitForPendingSaves
+            )
+        );
+        Log.Information(
+            $"Survivalcraft starting up at {DateTime.Now}, Version={VersionsManager.Version}, ProtocolVersion={VersionsManager.ProtocolVersion}, Platform={Platforms.ClientPlatform.Kind}, Storage.AvailableFreeSpace={Storage.FreeSpace / 1024 / 1024}MB, ApproximateScreenDpi={ScreenResolutionManager.ApproximateScreenDpi:0.0}, ApproxScreenInches={ScreenResolutionManager.ApproximateScreenInches:0.0}, ScreenResolution={Window.Size}, ProcessorsCount={Environment.ProcessorCount}, 64bit={Marshal.SizeOf<IntPtr>() == 8}"
+        );
+        ModProfileManager.Initialize(ClientApplication.Worlds);
         SettingsManager.Initialize();
-        LocalIdentityManager.Initialize();
+        CommonLib.InitializeNetwork(
+            new NetNodeOptions(
+                Math.Max(1, Configuration.HostingConfiguration.Preferences.ServerChunkCountSendPer),
+                Math.Max(1, Configuration.HostingConfiguration.Preferences.ServerChunkCountSendPer),
+                Math.Max(1, Configuration.HostingConfiguration.Preferences.ServerChunkBytesSendPerSecond)
+            ),
+            true
+        );
+        LocalIdentityManager.Initialize(Storage.GetSystemPath(GamePaths.LocalIdentitiesFile));
         AuthenticationManager.Initialize();
-        ContentRepositoryManager.Initialize();
-        ServerDirectoryManager.Initialize();
-        RendezvousManager.Initialize();
+        ContentRepositoryManager.Initialize(ExceptionManager.ReportExceptionToUser);
+        ServerDirectoryManager.Initialize(ExceptionManager.ReportExceptionToUser);
+        RendezvousManager.Initialize(ExceptionManager.ReportExceptionToUser);
         ContentManager.Initialize();
-        ScreensManager.Initialize();
+        ScreensManager.Initialize(new LoadingScreen());
     }
 
     public static void Run()
     {
         var realTime = Time.RealTime;
         var currentCpuTime = Process.GetCurrentProcess().TotalProcessorTime;
-        LastFrameTime = (float)(realTime - _frameBeginTime);
-        LastCpuFrameTime =
+        ClientApplication.LastFrameTime = (float)(realTime - _frameBeginTime);
+        ClientApplication.LastCpuFrameTime =
             (float)((_processCpuTimeEnd - _processCpuTimeBegin).TotalSeconds / Environment.ProcessorCount);
         _frameBeginTime = realTime;
         _processCpuTimeBegin = currentCpuTime;
         if (Keyboard.IsKeyDownOnce(Key.F11))
         {
-            var windowMode = RunningSettingManager.Current.WindowMode == WindowMode.Fullscreen
+            var windowMode = StartupManager.Profiles.CurrentRunningSettings.WindowMode == StartupWindowMode.Fullscreen
                 ? WindowMode.Resizable
                 : WindowMode.Fullscreen;
             Window.WindowMode = windowMode;
-            RunningSettingManager.SaveCurrent(rs => rs.WindowMode = windowMode);
+            StartupManager.Profiles.UpdateRunningSettings(rs =>
+                rs.WindowMode = StartupWindowModes.FromWindowMode(windowMode)
+            );
         }
 
-        Window.VSync = SettingsManager.Current.VSync;
+        Window.VSync = Configuration.ClientConfiguration.Preferences.VSync;
         try
         {
             if (ExceptionManager.Error == null)
             {
-                if (_urisToHandle.Count > 0)
-                {
-                    var list = new List<HandleUriItem>();
-                    foreach (var obj in _urisToHandle)
-                    {
-                        HandleUri?.Invoke(obj);
-                        if (obj.IsHandle)
-                        {
-                            list.Add(obj);
-                        }
-                    }
-
-                    foreach (var obj in list)
-                    {
-                        _urisToHandle.Remove(obj);
-                    }
-                }
+                ClientApplication.DispatchUris();
 
                 PerformanceManager.Update();
                 MusicManager.Update();
+                GameManager.UpdateRuntime();
                 ScreensManager.Update();
                 DialogsManager.Update();
                 DebugOverlayManager.Update();
                 AutomationInputController.Update();
-                HttpCommandExecutionQueue.Update();
+                HttpCommandHostManager.Update();
             }
             else
             {
                 ExceptionManager.UpdateExceptionScreen();
             }
+        }
+        catch (WorldSaveException)
+        {
+            // Saving already reported the failure. Keep the current world and screen available for retry.
         }
         catch (Exception e)
         {
@@ -265,12 +339,5 @@ public static class GameEntry
             ExceptionManager.ReportExceptionToUser(string.Empty, e2);
             ScreensManager.SwitchScreen("MainMenu");
         }
-    }
-
-    public class HandleUriItem(Uri uri)
-    {
-        public bool IsHandle = false;
-
-        public readonly Uri Uri = uri;
     }
 }

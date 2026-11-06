@@ -8,10 +8,8 @@ public sealed class ClientDerivedTerrainPolicyTest
     [Fact]
     public void ClientDoesNotRecursivelyAdvanceMissingNetworkNeighbor()
     {
-        var neighbor = new TerrainChunk(null!, 1, 2)
-        {
-            WorkerState = TerrainChunkState.NotLoaded
-        };
+        var neighbor = new TerrainChunk(null!, 1, 2);
+        neighbor.SetWorkerState(TerrainChunkState.NotLoaded);
 
         Assert.False(
             ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
@@ -42,9 +40,9 @@ public sealed class ClientDerivedTerrainPolicyTest
         var target = terrain.AllocateChunk(0, 0);
         var dependency = terrain.AllocateChunk(1, 0);
         target.IsLoaded = true;
-        target.WorkerState = TerrainChunkState.InvalidPropagatedLight;
+        target.SetWorkerState(TerrainChunkState.InvalidPropagatedLight);
         dependency.IsLoaded = true;
-        dependency.WorkerState = TerrainChunkState.InvalidLight;
+        dependency.SetWorkerState(TerrainChunkState.InvalidLight);
 
         Assert.Same(
             dependency,
@@ -80,9 +78,9 @@ public sealed class ClientDerivedTerrainPolicyTest
         var target = terrain.AllocateChunk(0, 0);
         var dependency = terrain.AllocateChunk(1, 0);
         target.IsLoaded = true;
-        target.WorkerState = TerrainChunkState.InvalidVertices1;
+        target.SetWorkerState(TerrainChunkState.Ready);
         dependency.IsLoaded = true;
-        dependency.WorkerState = TerrainChunkState.InvalidPropagatedLight;
+        dependency.SetWorkerState(TerrainChunkState.InvalidPropagatedLight);
 
         Assert.Same(
             dependency,
@@ -93,7 +91,7 @@ public sealed class ClientDerivedTerrainPolicyTest
             )
         );
 
-        dependency.WorkerState = TerrainChunkState.InvalidVertices1;
+        dependency.SetWorkerState(TerrainChunkState.Ready);
         Assert.Null(
             ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
                 terrain,
@@ -111,11 +109,11 @@ public sealed class ClientDerivedTerrainPolicyTest
         var geometryDependency = terrain.AllocateChunk(1, 0);
         var lightingDependency = terrain.AllocateChunk(2, 0);
         target.IsLoaded = true;
-        target.WorkerState = TerrainChunkState.InvalidVertices1;
+        target.SetWorkerState(TerrainChunkState.Ready);
         geometryDependency.IsLoaded = true;
-        geometryDependency.WorkerState = TerrainChunkState.InvalidPropagatedLight;
+        geometryDependency.SetWorkerState(TerrainChunkState.InvalidPropagatedLight);
         lightingDependency.IsLoaded = true;
-        lightingDependency.WorkerState = TerrainChunkState.InvalidLight;
+        lightingDependency.SetWorkerState(TerrainChunkState.InvalidLight);
 
         var pendingGeometry = ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
             terrain,

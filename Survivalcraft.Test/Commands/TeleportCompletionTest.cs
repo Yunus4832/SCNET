@@ -6,38 +6,31 @@ using Engine.Core.Runtime;
 using Engine.Core.Security;
 
 using EntitySystem.Core;
+using EntitySystem.TemplatesDatabase;
 
 using Game.Characters;
 using Game.Commands;
+using Game.Commands.BuiltIn;
+using Game.Commands.Text;
 using Game.Components;
 using Game.Network;
+using Game.Network.Transport;
 using Game.Protocol.Identity;
 using Game.Subsystems;
+using Game.Terrains;
 using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(WorldRoleCollection.Name)]
-public class TeleportCompletionTest : IDisposable
+[Collection(NodeRoleCollection.Name)]
+public class TeleportCompletionTest
 {
-    private readonly Dictionary<int, Client> _previousClients = CommonLib.Net.Clients;
-
-    public TeleportCompletionTest()
-    {
-        CommonLib.Net.Clients = [];
-    }
-
-    public void Dispose()
-    {
-        CommonLib.Net.Clients = _previousClients;
-    }
-
     [Fact]
     public void MarkNamesAreScopedAndAvailableForTeleportAndOverwrite()
     {
-        var project = new CompletionProject();
+        using var project = new CompletionProject();
         var player = CreatePlayer(project, "Home One");
         var other = CreatePlayer(project, "Secret");
         project.Marks.PublicMarks.Set("Shared", Vector3.Zero);
@@ -47,7 +40,7 @@ public class TeleportCompletionTest : IDisposable
             new ResourceId(new ModId("game"), "world.mark.manage")
         };
         var principal = Principal(player, permissions);
-        var adapter = new TextCommandAdapter(Registry());
+        var adapter = new TextCommandAdapter(Registry(), project);
         foreach (var command in new[] { "/tp self", "/mark" })
         {
             Assert.Equal("Home One", Assert.Single(adapter.Suggest(command + " private ", principal)).Value);
@@ -65,8 +58,8 @@ public class TeleportCompletionTest : IDisposable
     [Fact]
     public void SpawnMarksUseOrdinaryMarkCompletionAndCommands()
     {
-        var adapter = new TextCommandAdapter(Registry());
-        var project = new CompletionProject();
+        using var project = new CompletionProject();
+        var adapter = new TextCommandAdapter(Registry(), project);
         var player = CreatePlayer(project, "spawn");
         project.Marks.PublicMarks.Set("spawn", new Vector3(10f, 65f, 10f));
         var principal = Principal(player, [new ResourceId(new ModId("game"), "player.teleport.self")]);
@@ -115,7 +108,7 @@ public class TeleportCompletionTest : IDisposable
     [Fact]
     public void PlayerRoutesCompleteBothPlayerArgumentsAndRespectOtherPlayerPermission()
     {
-        var project = new CompletionProject();
+        using var project = new CompletionProject();
         var player = CreatePlayer(project, "Player One");
         var other = CreatePlayer(project, "Other");
         player.Name = "Player One";
@@ -130,7 +123,7 @@ public class TeleportCompletionTest : IDisposable
         var othersPermission = new ResourceId(new ModId("game"), "player.teleport.others");
         var principal =
             Principal(player, [selfPermission, othersPermission]);
-        var adapter = new TextCommandAdapter(Registry());
+        var adapter = new TextCommandAdapter(Registry(), project);
         Assert.Equal(new[] { "player", "self" }, adapter.Suggest("/tp ", principal).Select(item => item.Value));
         Assert.Equal(
             "TeleportSelf_Description",
@@ -179,11 +172,10 @@ public class TeleportCompletionTest : IDisposable
     [InlineData(true)]
     public void OtherPlayerMarkLookupUsesTheTargetScopeNotTheCaller(bool isPublic)
     {
-        var project = new CompletionProject();
+        using var project = new CompletionProject();
         var caller = CreatePlayer(project, "CallerOnly");
         var target = CreatePlayer(project, "TargetOnly");
         target.Name = "Target";
-        typeof(CharacterData).GetProperty(nameof(CharacterData.IsLocalCharacter))!.SetValue(target, true);
         var stateMachine = new StateMachine();
         stateMachine.AddState("Playing", () => { }, () => { }, () => { });
         stateMachine.TransitionTo("Playing");
@@ -225,7 +217,7 @@ public class TeleportCompletionTest : IDisposable
                 new TeleportPlayerMarkCommand(target.CharacterId.ToString(), "SPAWN", isPublic)
             ).Code
         );
-        Assert.Null(target.PendingTeleport);
+        Assert.False(project.Teleports.HasPending(target));
         Assert.False(OwnedFixtureMarks(target).TryGet("previous", out _));
     }
 
@@ -234,10 +226,9 @@ public class TeleportCompletionTest : IDisposable
     [InlineData(true)]
     public void TeleportingToTheSamePlayerDoesNotMoveOrOverwritePrevious(bool useGuid)
     {
-        var project = new CompletionProject();
+        using var project = new CompletionProject();
         var player = CreatePlayer(project, "Tester");
         player.Name = "Tester";
-        typeof(CharacterData).GetProperty(nameof(CharacterData.IsLocalCharacter))!.SetValue(player, true);
         var stateMachine = new StateMachine();
         stateMachine.AddState("Playing", () => { }, () => { }, () => { });
         stateMachine.TransitionTo("Playing");
@@ -273,28 +264,31 @@ public class TeleportCompletionTest : IDisposable
         Assert.Equal(Vector3.UnitX, body.Velocity);
         Assert.True(OwnedFixtureMarks(player).TryGet("previous", out var saved));
         Assert.Equal(previous, saved);
-        Assert.Null(player.PendingTeleport);
+        Assert.False(project.Teleports.HasPending(player));
     }
 
     [Fact]
     public void MarkCommandsAndCompletionUseTheActorAndTargetControllerInsteadOfRoleOwners()
     {
-        var project = new CompletionProject();
+        using var project = new CompletionProject();
         var actorRole = CreatePlayer(project, "ActorSecret");
         var target = CreatePlayer(project, "OwnerSecret");
         var caller = CreatePlayer(project, "CallerSecret");
         target.Name = "Target";
-        var targetSession = CommonLib.Net.Clients.Values.Single(session => session.CharacterId == target.CharacterId);
-        CommonLib.Net.Clients.Remove(targetSession.ID);
-        var actorSession = CommonLib.Net.Clients.Values.Single(session => session.CharacterId == actorRole.CharacterId);
-        actorSession.CharacterId = target.CharacterId;
+        var targetSession = project.Node.Clients.Values.Single(session => session.CharacterId == target.CharacterId);
+        if (project.Node.Clients.TryGetValue(targetSession.ID, out var removedConnection))
+        {
+            project.Node.UnregisterClient(removedConnection);
+        }
+
+        var actorSession = project.Node.Clients.Values.Single(session => session.CharacterId == actorRole.CharacterId);
+        actorSession.SetControlledCharacter(target.CharacterId);
         var records =
             (List<CharacterData>)typeof(SubsystemCharacters).GetField(
                 "_characters",
                 BindingFlags.NonPublic | BindingFlags.Instance
             )!.GetValue(project.Characters)!;
         records.AddRange([target, caller]);
-        typeof(CharacterData).GetProperty(nameof(CharacterData.IsLocalCharacter))!.SetValue(target, true);
         var machine = new StateMachine();
         machine.AddState("Playing", () => { }, () => { }, () => { });
         machine.TransitionTo("Playing");
@@ -316,7 +310,7 @@ public class TeleportCompletionTest : IDisposable
         );
         Assert.True(project.Marks.GetPrivateMarks(actor.Address).TryGet("actor-owned", out _));
         Assert.False(OwnedFixtureMarks(target).TryGet("actor-owned", out _));
-        var adapter = new TextCommandAdapter(Registry());
+        var adapter = new TextCommandAdapter(Registry(), project);
         Assert.Contains(adapter.Suggest("/tp self private ", principal), item => item.Value == "ActorSecret");
         Assert.DoesNotContain(adapter.Suggest("/tp self private ", principal), item => item.Value == "OwnerSecret");
         var otherPrincipal = Principal(caller, [ResourceId.Parse("game:player.teleport.others")]);
@@ -357,7 +351,7 @@ public class TeleportCompletionTest : IDisposable
     private static CommandRegistry Registry()
     {
         var registry = new CommandRegistry();
-        BuiltInCommands.Register(registry, new ModId("game"));
+        Fixtures.BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
         registry.Freeze();
         return registry;
     }
@@ -368,16 +362,158 @@ public class TeleportCompletionTest : IDisposable
         var player = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
         player.CharacterId = Guid.NewGuid();
         var digest = System.Security.Cryptography.SHA256.HashData(player.CharacterId.ToByteArray());
-        player.OwnerAddress =
-            new PlayerAddress(IdentityAddress.Encode(digest));
+        Fixtures.CharacterTestEnvironment.SetSyntheticOwner(
+            player,
+            new PlayerAddress(IdentityAddress.Encode(digest))
+        );
         typeof(CharacterData).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
             .SetValue(player, project);
         player.SubsystemCharacters = project.FindSubsystem<SubsystemCharacters>(true)!;
         OwnedFixtureMarks(player).Set(name, Vector3.Zero);
-        var id = (byte)(CommonLib.Net.Clients.Count + 1);
-        CommonLib.Net.Clients[id] = new Client(null, id, Guid.NewGuid(), player.CharacterId, project)
-            { PlayerAddress = player.OwnerAddress };
+        var node = WorldNetworkBinding.For(project).RequireNode();
+        var id = (byte)(node.Clients.Count + 1);
+        node.AddClient(
+            new Client(null, id, Guid.NewGuid(), player.CharacterId)
+                { PlayerAddress = player.OwnerAddress, Connection = new ConnectedStub(), State = ClientState.Playing }
+        );
         return player;
+    }
+
+    private sealed class ConnectedStub : IMessageConnection
+    {
+        public bool IsConnected => true;
+
+        public bool IsInProcess => true;
+
+        public ConnectionSendResult TrySendOwned(OutboundPackage message) => ConnectionSendResult.Accepted;
+
+        public void Disconnect(string reason)
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void PendingOperationIsOwnedByHostAndReleasedOnCloseOrDataDispose(bool closeWorld)
+    {
+        using var project = new CompletionProject();
+        var target = CreatePlayer(project, "Target");
+        target.ComponentCharacter = new ComponentCharacter { CharacterData = target };
+        var terrain = AttachPreparationTerrain(project);
+        var context = new CommandContext(CommandInvocationChannel.Text, Principal(target, []), project)
+            { Registry = Registry() };
+        project.Teleports.Start(context, target, new TeleportSelfCommand(Position: Vector3.One), Vector3.One);
+        Assert.True(project.Teleports.HasPending(target));
+        if (closeWorld) { project.Node.Runtime.Close(); }
+        else { target.Dispose(); }
+
+        Assert.False(project.Teleports.HasPending(target));
+        var pending = (Dictionary<int, TerrainUpdateLocation?>)typeof(TerrainUpdater).GetField(
+            "_pendingLocations",
+            BindingFlags.Instance | BindingFlags.NonPublic
+        )!.GetValue(terrain.TerrainUpdater)!;
+        Assert.Null(pending[-2 - target.CharacterIndex]);
+        terrain.TerrainUpdater = null!;
+    }
+
+    [Fact]
+    public void RemovingCharacterCancelsHostRequestAndOldCompletionCannotRemoveReplacement()
+    {
+        using var project = new CompletionProject();
+        var target = CreatePlayer(project, "Target");
+        target.ComponentCharacter = new ComponentCharacter { CharacterData = target };
+        var terrain = AttachPreparationTerrain(project);
+        var context = new CommandContext(CommandInvocationChannel.Text, Principal(target, []), project)
+            { Registry = Registry() };
+        project.Teleports.Start(context, target, new TeleportSelfCommand(Position: Vector3.One), Vector3.One);
+        var requests =
+            (Dictionary<CharacterData, PlayerTeleportRequest>)typeof(SubsystemCharacterTeleports).GetField(
+                "_requests",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            )!.GetValue(project.Teleports)!;
+        var previous = requests[target];
+        project.Teleports.Start(context, target, new TeleportSelfCommand(Position: Vector3.One), Vector3.One);
+        project.Teleports.Remove(target, previous);
+        Assert.True(project.Teleports.HasPending(target));
+        ((List<CharacterData>)typeof(SubsystemCharacters).GetField(
+            "_characters",
+            BindingFlags.Instance | BindingFlags.NonPublic
+        )!.GetValue(project.Characters)!).Add(target);
+        typeof(SubsystemCharacters).GetField("_subsystemTerrain", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(project.Characters, terrain);
+        project.Characters.RemoveCharacterData(target);
+        Assert.False(project.Teleports.HasPending(target));
+        terrain.TerrainUpdater = null!;
+    }
+
+    [Fact]
+    public void HostRequestAdvancesAfterTheActualCharacterUpdatePhase()
+    {
+        using var project = new CompletionProject();
+        var target = CreatePlayer(project, "Target");
+        typeof(CharacterData).GetProperty(nameof(CharacterData.IsLocalCharacter))!.SetValue(target, true);
+        target.ComponentCharacter = new ComponentCharacter { CharacterData = target };
+        var terrain = AttachPreparationTerrain(project);
+        var context = new CommandContext(CommandInvocationChannel.Text, Principal(target, []), project)
+            { Registry = Registry() };
+        project.Teleports.Start(context, target, new TeleportSelfCommand(Position: Vector3.One), Vector3.One);
+        ((List<CharacterData>)typeof(SubsystemCharacters).GetField(
+            "_characters",
+            BindingFlags.Instance | BindingFlags.NonPublic
+        )!.GetValue(project.Characters)!).Add(target);
+        var phases = new List<string>();
+        var machine = new StateMachine();
+        machine.AddState(
+            "HostTest",
+            () => { },
+            () =>
+            {
+                phases.Add("character");
+                target.ComponentCharacter = null;
+            },
+            () => { }
+        );
+        machine.TransitionTo("HostTest");
+        typeof(CharacterData).GetField("_stateMachine", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
+            target,
+            machine
+        );
+        project.Characters.CharacterUpdated += character =>
+        {
+            Assert.Same(target, character);
+            Assert.False(project.Teleports.HasPending(target));
+            phases.Add("host-completed");
+        };
+        project.Characters.Update(0);
+        Assert.Equal(["character", "host-completed"], phases);
+        terrain.TerrainUpdater = null!;
+    }
+
+    private static SubsystemTerrain AttachPreparationTerrain(CompletionProject project)
+    {
+        var terrain = new SubsystemTerrain();
+        project.AddPreparationTerrain(terrain);
+        var updater = (TerrainUpdater)RuntimeHelpers.GetUninitializedObject(typeof(TerrainUpdater));
+        typeof(TerrainUpdater).GetField("_subsystemTerrain", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
+            updater,
+            terrain
+        );
+        typeof(TerrainUpdater).GetField("_pendingLocations", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
+            updater,
+            new Dictionary<int, TerrainUpdateLocation?>()
+        );
+        var field =
+            typeof(TerrainUpdater).GetField("_updateParameters", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var parameters = Activator.CreateInstance(field.FieldType)!;
+        field.FieldType.GetField("Locations")!.SetValue(parameters, new Dictionary<int, TerrainUpdateLocation>());
+        field.SetValue(updater, parameters);
+        terrain.TerrainUpdater = updater;
+        return terrain;
     }
 
     private sealed class CompletionProject : Project
@@ -388,14 +524,37 @@ public class TeleportCompletionTest : IDisposable
 
         public SubsystemPositionMarks Marks { get; } = new();
 
+        public SubsystemCharacterTeleports Teleports { get; } = new();
+
+        public NetNode Node { get; } = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Authority
+        );
+
+        public void AddPreparationTerrain(SubsystemTerrain terrain)
+        {
+            subsystems.Add(terrain);
+            WorldSubsystemTestSupport.Attach(this, terrain);
+        }
+
         public CompletionProject()
         {
+            Node.Runtime.BindProject(this);
+            Fixtures.RuleHookTestEnvironment.BindEmpty(this);
             subsystems.Add(Players);
             subsystems.Add(Characters);
             subsystems.Add(Marks);
+            subsystems.Add(Teleports);
+            var messages = new SubsystemMessages();
+            subsystems.Add(messages);
+            WorldSubsystemTestSupport.Attach(this, messages);
             WorldSubsystemTestSupport.Attach(this, Players);
             WorldSubsystemTestSupport.Attach(this, Characters);
             WorldSubsystemTestSupport.Attach(this, Marks);
+            WorldSubsystemTestSupport.Attach(this, Teleports);
+            Teleports.Load(new ValuesDictionary());
             subsystems.Add(
                 new SubsystemGameInfo
                     { WorldSettings = new WorldSettings { GameMode = GameMode.Survival } }

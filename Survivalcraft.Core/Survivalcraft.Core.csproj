@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(GameVersion)</Version>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <RootNamespace>Game</RootNamespace>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Survivalcraft.Core</PackageId>
+        <Description>Shared game rules and world state for authority and client runtimes.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
+        <ProjectReference Include="../EntitySystem/EntitySystem.csproj"/>
+        <ProjectReference Include="../Game.Protocol/Game.Protocol.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>Survivalcraft.Core.Test</_Parameter1>
+        </AssemblyAttribute>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>Survivalcraft.Test</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
+    <Target Name="ValidateAssemblyBoundary" AfterTargets="ResolveReferences">
+        <ItemGroup>
+            <_ForbiddenAssemblyReference Include="@(ReferencePath)"
+                                         Condition="'%(Filename)' == 'Survivalcraft' Or '%(Filename)' == 'Survivalcraft.Hosting' Or '%(Filename)' == 'Survivalcraft.Client' Or '%(Filename)' == 'Engine' Or '%(Filename)' == 'Engine.Media'"/>
+        </ItemGroup>
+        <Error Condition="'@(_ForbiddenAssemblyReference)' != ''"
+               Text="$(MSBuildProjectName) must not depend on: @(_ForbiddenAssemblyReference->'%(Filename)', ', ')."/>
+    </Target>
+</Project>

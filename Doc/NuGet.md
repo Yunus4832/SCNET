@@ -11,20 +11,23 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 | `SCNET.Native.SDL` | `Native.SDL` | SDL2 及 Android 平台适配和启动桥接；由 Engine 依赖，替换 Silk 自带原生资产。 |
 | `SCNET.Native.OpenAL` | `Native.OpenAL` | Windows、Linux 和 Android 四种 ABI 的 OpenAL，由 Engine 统一依赖。 |
 | `SCNET.Native.ImageCodecs` | `Native.ImageCodecs` | PNG、WebP 的标准 RID 原生资产；由 Media 依赖。 |
-| `SCNET.Engine.Core` | `Engine.Core` | 数学、集合、文本编码与值转换、反射类型查找、身份地址、日志和运行支持；命名空间为 Engine.Core 下的 Mathematics、Collections、Text、Reflection、Security、Logging、Runtime、Diagnostics、Pathfinding、Serialization，不依赖窗口或图形层。 |
+| `SCNET.Engine.Core` | `Engine.Core` | 数学、集合、文本编码与值转换、反射类型查找、身份地址、日志、文件存储和运行支持；命名空间统一位于 Engine.Core 下，包括 FileStorage、Mathematics、Collections、Text、Reflection、Security、Logging、Runtime、Diagnostics、Pathfinding、Serialization，不依赖窗口或图形层。 |
 | `SCNET.Engine.Media` | `Engine.Media` | 图像、音频、glTF 2.0 场景数据与编解码；公共命名空间按 Images、Audio、Models 划分于 Engine.Media 下，无窗口、GPU、音频设备及文件存储依赖。 |
 | `SCNET.Rendezvous.Protocol` | `Rendezvous.Protocol` | 邀请信令契约及认证中继报文编码。 |
 | `SCNET.Engine.Network` | `Engine.Network` | 独立传输宿主、连接生命周期与邀请路径；依赖 Engine.Core 的共享身份地址编码，内部使用 LiteNetLib。 |
-| `SCNET.Engine` | `Engine` | 跨平台图形、音频、输入、存储和窗口运行时。 |
+| `SCNET.Engine` | `Engine` | 跨平台图形、音频、输入和窗口运行时；文件存储由 Engine.Core 提供。 |
 | `SCNET.EntitySystem` | `EntitySystem` | 实体、组件、子系统和模板数据库运行时。 |
 | `SCNET.Content.Packaging` | `Content.Packaging` | 统一内容包协议、读写和验证。 |
 | `SCNET.ServerSource.Protocol` | `ServerSource.Protocol` | 服务器源 HTTP 契约、验证和标准客户端。 |
 | `SCNET.Authentication.Protocol` | `Authentication.Protocol` | 独立外部认证契约、ES256 持钥请求、连接批准验证与有界 HTTPS 客户端；只依赖 Engine.Core。 |
 | `SCNET.Game.Protocol` | `Game.Protocol` | 游戏通信契约、协议兼容整数与二进制编解码；独立于游戏运行时和网络传输实现。 |
-| `SCNET.Survivalcraft` | `Survivalcraft` | 游戏运行时和 Mod 编译契约。 |
+| `SCNET.Survivalcraft.Core` | `Survivalcraft.Core` | 无图形的共享游戏规则、基础世界类型和内容数据库。 |
+| `SCNET.Survivalcraft.Hosting` | `Survivalcraft.Hosting` | 无图形世界装配、连接与消息目录、命令、CPU 模组和内容服务、存档及启动配置。 |
+| `SCNET.Survivalcraft.Client` | `Survivalcraft.Client` | 客户端输入、界面、模型、网格与绘制、音频、粒子和 GPU 资源；桌面与 Android 共用。 |
+| `SCNET.Survivalcraft` | `Survivalcraft` | 综合应用装配和应用层 API。 |
 
-这些包遵循项目的依赖边界。使用方通常只需引用所需的最高层级包。Mod 应引用
-`SCNET.Survivalcraft`，不应再单独列出各个引擎包。
+使用方按代码职责选择 SDK 包。共享规则模组引用 `SCNET.Survivalcraft.Hosting`，客户端表现项目引用
+`SCNET.Survivalcraft.Client`；其依赖会传递提供 Core 和引擎 API。综合应用装配使用 `SCNET.Survivalcraft`。
 
 ## 构建工具包
 
@@ -34,10 +37,10 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 
 ## 模板包
 
-`SCNET.ModTemplates` 由 `Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj`
-构建。它包含 `Survivalcraft.ModTemplates/Survivalcraft.Mod/` 中的模板资源，生成的
-项目会引用打包时确定的 `SCNET.Survivalcraft` 和 `SCNET.ContentTool` 版本。模板、游戏 SDK 和
-工具独立维护版本；模板项目从集中版本属性生成引用，不要求三者版本号相同。
+`SCNET.ModTemplates` 由 `Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj`
+构建。它包含 `Survivalcraft.ModTemplate/Survivalcraft.Mod/` 中的模板资源，生成的解决方案
+包含规则和客户端项目，按打包时确定的版本引用 Core、Hosting、Client SDK 和 ContentTool。
+模板、游戏 SDK 和工具独立维护版本，模板项目从集中版本属性生成引用。
 
 `SCNET.ContentTool` 是私有构建工具包，携带 ContentTool CLI、协议依赖和自动生成
 `.scpkg` 的 MSBuild Target。生成的 Mod 项目显式引用该包，但不会把它作为运行时
@@ -54,8 +57,10 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
   属于应用程序，应以对应平台的产物形式分发。
 - `RendezvousServer` 是独立信令服务，`NetworkProbe` 是网络测试驱动器，两者通过应用发布脚本分发。
 - 测试项目仅用于验证实现。
-- `TerritoryStoneMod` 是实际模组，产物为 `.scpkg`，而不是 NuGet 包。
-- `Survivalcraft.ModTemplates/Survivalcraft.Mod/` 是模板源代码；只有对应的模板打包
+- `BeaconMod` 和 `TerritoryStoneMod` 是模组规则项目，不产 NuGet 包，也不单独生成完整内容包。
+  各自的 `.Client` 项目引用规则项目，由 `SCNET.ContentTool` 把规则与客户端 DLL 装入同一 `.scpkg`；
+  构建及输出路径见[模组开发](Modding.md#包结构)。客户端入口只在客户端装配，业务入口仍统一。
+- `Survivalcraft.ModTemplate/Survivalcraft.Mod/` 是模板源代码；只有对应的模板打包
   项目会生成 NuGet 包。
 
 ## 版本归属
@@ -105,7 +110,7 @@ PowerShell：
 ./Scripts/pack-nuget.ps1 -Project Native.ImageCodecs,Native.OpenAL,Native.SDL
 ```
 
-选择参数使用项目名称（例如 `Survivalcraft.ModTemplates`），不是 NuGet 包名。
+选择参数使用项目名称（例如 `Survivalcraft.ModTemplate`），不是 NuGet 包名。
 额外参数传给每个选中项目的 `dotnet pack`。仅打包所选项目，不自动补打包依赖；
 依赖包的新版本需事先准备好。省略项目选择时保留原有全量行为。
 

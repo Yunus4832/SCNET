@@ -2,6 +2,9 @@ using Engine.Core.Mathematics;
 
 using Game.Network.Transport;
 using Game.Subsystems;
+using Game.World;
+
+using Survivalcraft.Test.Fixtures;
 
 namespace Survivalcraft.Test.Network;
 
@@ -25,7 +28,9 @@ public sealed class MovingBlockPackageTest
         var writer = ProtocolMessageCodec.Encode(package);
         var reader = writer;
         var clone = Assert.IsType<MovingBlockAddedPackage>(ProtocolMessageCodec.Decode(reader));
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
         var subsystem = new SubsystemMovingBlocks();
+        project.InitializeSubsystem(subsystem);
 
         var baseline = new EntitySystem.TemplatesDatabase.ValuesDictionary();
         baseline.ApplyOverridesUseMessagePack(clone.AddData!);

@@ -16,7 +16,7 @@ public enum DirectoryServerReviewStatus
     Rejected = 2
 }
 
-public partial record DirectoryServerId : IGuidStronglyTypedId;
+public record DirectoryServerId : IGuidStronglyTypedId;
 
 public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
 {

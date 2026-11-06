@@ -10,11 +10,12 @@
 - [构建与共享配置](BuildAndConfig.md)：工具链、构建、版本归属和应用发行。
 - [NuGet 包](NuGet.md)：包清单、依赖边界、本地准备与选择打包。
 - [外部依赖](Dependencies.md)：主要托管包、原生库和工具链。
-- [Headless 模式](Headless.md)：无界面运行、命令行与游戏服务器容器部署。
+- [独立服务器](Server.md)：无界面运行、命令行与游戏服务器容器部署。
 
 ## 架构与游戏系统
 
 - [结构与分层](Architecture.md)：项目职责和依赖边界。
+- [逻辑核心分离方案](LogicCoreSeparation.md)：待评审的核心、客户端、宿主、配置与内容迁移设计。
 - [启动会话](StartupSessions.md)：启动请求、实例、会话、重启和桌面更新。
 - [文件定位](FileStorage.md)：逻辑路径及平台文件访问。
 - [命令与权限](CommandPermissions.md)：执行身份、权限和 HTTP 适配。
@@ -44,9 +45,9 @@
 - [服务器源协议](Protocol/ServerSourceProtocol.md)：只读目录契约，与临时 P2P 房间发现分离。
 
 内容工具和示例入口见 [Content.Packaging](../Content.Packaging/README.md)、
-[ContentTool](../ContentTool/README.md)、[模组模板包](../Survivalcraft.ModTemplates/README.md)、
-[生成的模组模板](../Survivalcraft.ModTemplates/Survivalcraft.Mod/README.md)及
-[BeaconMod 示例](../BeaconMod/README.md)。模型测试样本来源见
+[ContentTool](../ContentTool/README.md)、[模组模板包](../Survivalcraft.ModTemplate/README.md)、
+[生成的模组模板](../Survivalcraft.ModTemplate/Survivalcraft.Mod/README.md)及
+[BeaconMod 示例](../Mods/Beacon/README.md)。模型测试样本来源见
 [模型测试资产](../Engine.Test/TestAssets/Models/README.md)。
 
 ## 服务与部署

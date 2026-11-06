@@ -15,9 +15,9 @@ public enum PublisherStatus
     Suspended = 3
 }
 
-public partial record PublisherId : IGuidStronglyTypedId;
+public record PublisherId : IGuidStronglyTypedId;
 
-public partial record PublisherKeyId : IGuidStronglyTypedId;
+public record PublisherKeyId : IGuidStronglyTypedId;
 
 public class Publisher : Entity<PublisherId>, IAggregateRoot
 {

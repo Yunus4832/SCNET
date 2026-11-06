@@ -53,8 +53,8 @@ public sealed class AuthenticationConsentDialog : Dialog
                 new MessageDialog(
                     Text("Details"),
                     _identityDetails,
-                    LanguageManager.GetContentWidgets("ManageIdentitiesScreen", "Copy"),
-                    LanguageManager.Get("Usual", "ok"),
+                    Localization.ClientLanguage.Catalog.GetContentWidgets("ManageIdentitiesScreen", "Copy"),
+                    Localization.ClientLanguage.Catalog.Get("Usual", "ok"),
                     button =>
                     {
                         if (button == MessageDialogButton.Button1)
@@ -82,5 +82,5 @@ public sealed class AuthenticationConsentDialog : Dialog
     }
 
     private static string Text(string key) =>
-        LanguageManager.GetContentWidgets(nameof(AuthenticationConsentDialog), key);
+        Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(AuthenticationConsentDialog), key);
 }

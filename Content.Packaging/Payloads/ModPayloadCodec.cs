@@ -14,37 +14,31 @@ public sealed class ModPayloadCodec : IContentPayloadCodec
             "scnet.mod-v1",
             "payload/mod.json",
             "application/json",
-            ["side", "entrypoints", "dependencies"],
+            ["entrypoint", "clientContentEntrypoint", "dependencies"],
             allowAdditionalPayload: true
         );
-        var side = ContentPackageManifest.GetRequiredString(manifest.Metadata, "side", "manifest.metadata");
-        if (side is not ("common" or "client" or "server"))
+        if (!manifest.Metadata.TryGetProperty("entrypoint", out var entrypoint))
         {
-            throw new ContentPackageException("Mod metadata.side is invalid.");
+            throw new ContentPackageException("Mod metadata.entrypoint is required; data-only packages use null.");
         }
 
-        var entrypoints =
-            ContentPackageManifest.GetRequiredProperty(manifest.Metadata, "entrypoints", "manifest.metadata");
         var dependencies =
             ContentPackageManifest.GetRequiredProperty(manifest.Metadata, "dependencies", "manifest.metadata");
-        if (entrypoints.ValueKind != JsonValueKind.Object || dependencies.ValueKind != JsonValueKind.Array)
+        if (entrypoint.ValueKind is not (JsonValueKind.String or JsonValueKind.Null) ||
+            entrypoint.ValueKind == JsonValueKind.String && string.IsNullOrWhiteSpace(entrypoint.GetString()) ||
+            dependencies.ValueKind != JsonValueKind.Array)
         {
-            throw new ContentPackageException("Mod metadata.entrypoints and metadata.dependencies are invalid.");
+            throw new ContentPackageException("Mod metadata.entrypoint and metadata.dependencies are invalid.");
         }
 
-        ContentPackageManifest.EnsureExactProperties(
-            entrypoints,
-            ["common", "client", "server"],
-            "manifest.metadata.entrypoints"
-        );
-        var entrypointBySide = entrypoints.EnumerateObject().ToDictionary(
-            property => property.Name,
-            property => property.Value.ValueKind == JsonValueKind.String ? property.Value.GetString() : null,
-            StringComparer.Ordinal
-        );
-        if (entrypointBySide.Values.Any(string.IsNullOrWhiteSpace))
+        if (manifest.Metadata.TryGetProperty("clientContentEntrypoint", out var clientContentEntrypoint) &&
+            (clientContentEntrypoint.ValueKind is not (JsonValueKind.String or JsonValueKind.Null) ||
+             clientContentEntrypoint.ValueKind == JsonValueKind.String &&
+             string.IsNullOrWhiteSpace(clientContentEntrypoint.GetString())))
         {
-            throw new ContentPackageException("Mod entrypoints must be non-empty strings.");
+            throw new ContentPackageException(
+                "Mod metadata.clientContentEntrypoint must be a non-empty string or null."
+            );
         }
 
         var dependencyIds = new HashSet<string>(StringComparer.Ordinal);
@@ -57,7 +51,9 @@ public sealed class ModPayloadCodec : IContentPayloadCodec
             path.StartsWith("payload/data/", StringComparison.Ordinal) ||
             path.StartsWith($"payload/assets/{manifest.Identifier}/", StringComparison.Ordinal)
         );
-        if (!entrypointBySide.ContainsKey("common") && !entrypointBySide.ContainsKey(side) && !hasContribution)
+        if (entrypoint.ValueKind == JsonValueKind.Null &&
+            (clientContentEntrypoint.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null) &&
+            !hasContribution)
         {
             throw new ContentPackageException("Mod must define an applicable entrypoint or contribution.");
         }

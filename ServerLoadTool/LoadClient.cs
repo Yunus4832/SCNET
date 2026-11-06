@@ -32,6 +32,8 @@ public sealed class LoadClient : IDisposable
 
     private Guid _epoch;
 
+    private long _connectionGeneration;
+
     private bool _hasEntity;
 
     private bool _snapshot;
@@ -42,7 +44,7 @@ public sealed class LoadClient : IDisposable
 
     private Vector2? _locationCenter;
 
-    private ulong _generation;
+    private ulong _allocationGeneration;
 
     private Vector3 _origin;
 
@@ -212,6 +214,12 @@ public sealed class LoadClient : IDisposable
                 _epoch = bootstrap.Epoch;
                 var ownClient = bootstrap.ClientList.List.Single(client => client.TokenId == _token);
                 _id = ownClient.ID;
+                if (ownClient.ConnectionEpoch != _epoch || ownClient.ConnectionGeneration <= 0)
+                {
+                    throw new InvalidDataException("Invalid local connection lifetime.");
+                }
+
+                _connectionGeneration = ownClient.ConnectionGeneration;
                 _characterId = ownClient.CharacterId;
                 State = "bootstrap";
                 Send(new ConnectionPhaseAckPackage(_epoch, ConnectionPhase.BootstrapApplied));
@@ -247,7 +255,7 @@ public sealed class LoadClient : IDisposable
             case EntitySnapshotPackage entities:
                 ReadCharacterSnapshots(entities.Characters, entities.CharacterEntities);
                 break;
-            case CharacterPositionPackage position when position.ControllerSessionId == _id:
+            case CharacterPositionPackage position when position.ControllerClientId == _id:
                 Position = position.Position;
                 _origin = Position;
                 _movingSeconds = 0;
@@ -299,7 +307,10 @@ public sealed class LoadClient : IDisposable
     {
         foreach (var character in characters)
         {
-            if (character.Client is { } session && session.ID == _id) { _characterId = session.CharacterId; }
+            if (character.Controller is { } controller && controller.ConnectionId == _id)
+            {
+                _characterId = controller.CharacterId;
+            }
         }
 
         ReadEntities(summaries);
@@ -395,7 +406,13 @@ public sealed class LoadClient : IDisposable
         {
             State = "playing";
             PlayingSeconds = now;
-            Send(new ClientStateChangedPackage { ClientId = _id!.Value, State = ClientState.Playing });
+            Send(
+                new ClientStateChangedPackage
+                {
+                    ClientId = _id!.Value, State = ClientState.Playing, ConnectionEpoch = _epoch,
+                    ConnectionGeneration = _connectionGeneration
+                }
+            );
             Send(new CharacterReadyPackage());
             Send(new CharacterFlightPackage { IsCreativeFly = true });
         }
@@ -457,15 +474,15 @@ public sealed class LoadClient : IDisposable
         {
             if (!_chunks.ContainsKey(coords))
             {
-                var chunk = new Chunk(new ChunkAllocationId(coords, ++_generation), now);
+                var chunk = new Chunk(new ChunkAllocationId(coords, ++_allocationGeneration), now);
                 _chunks.Add(coords, chunk);
                 requests.Add(new ChunkContentRequest(chunk.Allocation));
             }
         }
 
-        if (requests.Count > 0)
+        foreach (var batch in requests.Chunk(TerrainChunksRequestPackage.MaximumRequests))
         {
-            Send(new TerrainChunksRequestPackage { ChunkRequests = requests.ToArray() });
+            Send(new TerrainChunksRequestPackage { ChunkRequests = batch });
         }
     }
 

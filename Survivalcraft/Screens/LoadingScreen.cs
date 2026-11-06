@@ -1,7 +1,7 @@
 using Engine.Audio;
 using Engine.Graphics;
 
-using Game.Network.Handling;
+using Game.Application;
 
 namespace Game.Screens;
 
@@ -69,7 +69,7 @@ public class LoadingScreen : Screen
                 if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
                         StartupManager.Current.Session.SessionId,
                         startupSession,
-                        Storage.GetSystemPath(GamePaths.ContentPackageCache),
+                        Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache),
                         Log.Information
                     ))
                 {
@@ -77,7 +77,6 @@ public class LoadingScreen : Screen
                 }
 
                 Log.Information("初始化模组运行时");
-                ContentManager.Initialize();
                 var profile = ModProfileManager.LoadEffectiveProfile(
                     StartupManager.Current.Session.SessionId,
                     startupSession
@@ -85,12 +84,13 @@ public class LoadingScreen : Screen
                 GameEntry.SetModRuntime(
                     GameModRuntime.StartFromProfile(
                         profile,
-                        Storage.GetSystemPath(GamePaths.ContentPackageCache),
-                        ModSide.Client,
-                        Log.Information
+                        Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache),
+                        Log.Information,
+                        registerAppCommands: Commands.BuiltIn.BuiltInApplicationCommands.Register
                     )
                 );
-                CurrentModRuntime.Value!.InitializeAssets();
+                ContentManager.Initialize();
+                GameEntry.InitializeClientContent(CurrentModRuntime.Value!);
                 LabelWidget.BitmapFont = ContentManager.Get<BitmapFont>("Fonts/Pericles");
             }
         );
@@ -99,12 +99,13 @@ public class LoadingScreen : Screen
             delegate
             {
                 Log.Information("初始化语言资源");
-                CurrentModRuntime.Value!.InitializeLanguage(
-                    AppConfigManager.Values.TryGetValue("Language", out var language) ? language : "zh-CN"
+                ClientApplication.Content.PublishLanguage(
+                    CurrentModRuntime.Value!.Content.CreateLanguageCatalog(
+                        AppConfigManager.Values.TryGetValue("Language", out var language) ? language : "zh-CN"
+                    )
                 );
             }
         );
-        AddLoadAction(PackageManager.Initialize);
         AddLoadAction(
             delegate
             {
@@ -120,6 +121,7 @@ public class LoadingScreen : Screen
                 try
                 {
                     CurrentModRuntime.Value!.InitializeContentData();
+                    GameEntry.InitializeClientPreview(CurrentModRuntime.Value!);
                 }
                 catch (Exception e)
                 {
@@ -135,7 +137,10 @@ public class LoadingScreen : Screen
                 CharacterSkinsManager.Initialize();
                 FurniturePacksManager.Initialize();
                 LightingManager.Initialize();
-                WorldsManager.Initialize();
+                ClientApplication.Worlds.SetNewWorldNames(
+                    ContentManager.Get<string>("NewWorldNames")
+                        .Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries)
+                );
             }
         );
         AddLoadAction(
@@ -209,7 +214,7 @@ public class LoadingScreen : Screen
 
     public override void Leave()
     {
-        Window.VSync = SettingsManager.Current.VSync;
+        Window.VSync = Configuration.ClientConfiguration.Preferences.VSync;
         ContentManager.Dispose("Textures/Branding/PublisherLogo");
         ContentManager.Dispose("Textures/Branding/EngineLogo");
     }
@@ -244,10 +249,10 @@ public class LoadingScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageManager.Warning,
+                    Localization.ClientLanguage.Catalog.Warning,
                     "Quit?",
-                    LanguageManager.Ok,
-                    LanguageManager.No,
+                    Localization.ClientLanguage.Catalog.Ok,
+                    Localization.ClientLanguage.Catalog.No,
                     vt =>
                     {
                         if (vt == MessageDialogButton.Button1)

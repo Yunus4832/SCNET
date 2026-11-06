@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
-using Engine.Core.Runtime;
 using Engine.Core.Security;
 
 using EntitySystem.Core;
@@ -14,7 +13,6 @@ using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 using Game.Terrains;
-using Game.World;
 
 using Survivalcraft.Test.Modding;
 
@@ -24,29 +22,25 @@ namespace Survivalcraft.Test.Subsystems;
 public sealed class UnspawnedCharacterPersistenceTest
 {
     [Theory]
-    [InlineData(RunModeType.Gui, false)]
-    [InlineData(RunModeType.Gui, true)]
-    [InlineData(RunModeType.HeadlessServer, false)]
-    [InlineData(RunModeType.HeadlessServer, true)]
-    public void DisconnectBeforeFirstSpawnPreservesCharacterAndResumesSpawn(RunModeType mode, bool reload)
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DisconnectBeforeFirstSpawnPreservesCharacterAndResumesSpawn(bool reload)
     {
-        var previousMode = RunMode.Value;
-        var previousWorldRole = GameManager.Role;
-        var previousClients = CommonLib.Net.Clients;
-        var previousGarbageCollect = SettingsManager.Current.AutoGarbageCollect;
+        var previousNodeRole = CommonLib.Net.Role;
+        var previousClients = CommonLib.Net.Clients.Values.ToArray();
+        var previousGarbageCollect = Game.Configuration.HostingConfiguration.Preferences.AutoGarbageCollect;
         try
         {
-            RunMode.Value = mode;
-            CommonLib.Net.Role = WorldRole.Server;
-            CommonLib.Net.Clients = [];
-            SettingsManager.Current.AutoGarbageCollect = false;
+            CommonLib.Net.Role = NodeRole.Authority;
+            Fixtures.ConnectionTestEnvironment.SetRoster(CommonLib.Net, []);
+            Game.Configuration.HostingConfiguration.Preferences.AutoGarbageCollect = false;
             CharacterSkinsManager.Initialize();
             using var project = new CharacterProject();
             var owner = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
-            var character = new CharacterData(project)
-            {
-                OwnerAddress = owner, Name = "BeforeSpawn", CharacterSkinName = "$Male1", Level = 3.5f
-            };
+            var character = Fixtures.CharacterTestEnvironment.Create(project, owner);
+            character.Name = "BeforeSpawn";
+            character.CharacterSkinName = "$Male1";
+            character.Level = 3.5f;
             var characterId = character.CharacterId;
             project.Characters.AddCharacterData(character);
             Assert.Equal(characterId, project.Players.Store.Find(owner)!.CharacterId);
@@ -94,11 +88,115 @@ public sealed class UnspawnedCharacterPersistenceTest
         }
         finally
         {
-            SettingsManager.Current.AutoGarbageCollect = previousGarbageCollect;
-            CommonLib.Net.Clients = previousClients;
-            CommonLib.Net.Role = previousWorldRole;
-            RunMode.Value = previousMode;
+            Game.Configuration.HostingConfiguration.Preferences.AutoGarbageCollect = previousGarbageCollect;
+            Fixtures.ConnectionTestEnvironment.SetRoster(CommonLib.Net, previousClients);
+            CommonLib.Net.Role = previousNodeRole;
         }
+    }
+
+    [Fact]
+    public void ReplicaUpdatesCannotDriveSpawnOrRestartBusiness()
+    {
+        CharacterSkinsManager.Initialize();
+        using var project = new CharacterProject(NodeRole.Client);
+        using var character = new CharacterData(project) { SpawnPosition = new(100, 70, 100) };
+        character.Update();
+        Assert.Equal("AwaitingEntity", character.CurrentState);
+        Assert.Equal(new Engine.Core.Mathematics.Vector3(100, 70, 100), character.SpawnPosition);
+        Assert.Throws<InvalidOperationException>(() => character.SpawnPlayer(
+                character.SpawnPosition,
+                CharacterData.SpawnMode.Respawn
+            )
+        );
+        Assert.Throws<InvalidOperationException>(character.NetRestart);
+    }
+
+    [Fact]
+    public void CharacterPersistenceDoesNotContainInputDeviceSelection()
+    {
+        CharacterSkinsManager.Initialize();
+        using var project = new CharacterProject();
+        using var character = Fixtures.CharacterTestEnvironment.Create(
+            project,
+            new PlayerAddress(IdentityAddress.Encode(new byte[32]))
+        );
+        var values = new ValuesDictionary();
+        character.Save(values);
+        Assert.False(values.ContainsKey("InputDevice"));
+    }
+
+    [Fact]
+    public void ExistingReplicaInstallsRepeatedAuthorityStateWithoutRunningSpawnBusiness()
+    {
+        CharacterSkinsManager.Initialize();
+        using var project = new CharacterProject(NodeRole.Client);
+        using var character = Fixtures.CharacterTestEnvironment.Create(
+            project,
+            new PlayerAddress(IdentityAddress.Encode(new byte[32]))
+        );
+        var installed = new Game.Components.ComponentCharacter();
+        character.ComponentCharacter = installed;
+        var values = new ValuesDictionary();
+        character.Save(values);
+        values.SetValue("Level", 7.5f);
+        values.SetValue("FirstSpawnTime", 12.0);
+        values.SetValue("LastSpawnTime", 40.0);
+        values.SetValue("SpawnsCount", 3);
+        character.ApplyReplicaState(values);
+        character.ApplyReplicaState(values);
+        character.Update();
+        Assert.Equal(7.5f, character.Level);
+        Assert.Equal(12.0, character.FirstSpawnTime);
+        Assert.Equal(40.0, character.LastSpawnTime);
+        Assert.Equal(3, character.SpawnsCount);
+        Assert.Equal("Installed", character.CurrentState);
+        Assert.Same(installed, character.ComponentCharacter);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ReplicaStateCannotReplaceStableCharacterIdentity(bool replaceOwner)
+    {
+        CharacterSkinsManager.Initialize();
+        using var project = new CharacterProject(NodeRole.Client);
+        using var character = Fixtures.CharacterTestEnvironment.Create(
+            project,
+            new PlayerAddress(IdentityAddress.Encode(new byte[32]))
+        );
+        var values = new ValuesDictionary();
+        character.Save(values);
+        if (replaceOwner)
+        {
+            values.SetValue("OwnerAddress", IdentityAddress.Encode(Enumerable.Repeat((byte)1, 32).ToArray()));
+        }
+        else { values.SetValue("CharacterId", Guid.NewGuid()); }
+
+        Assert.Throws<InvalidDataException>(() => character.ApplyReplicaState(values));
+    }
+
+    [Fact]
+    public void AuthorityRejectsReplicaStateInstallation()
+    {
+        CharacterSkinsManager.Initialize();
+        using var project = new CharacterProject();
+        using var character = new CharacterData(project);
+        Assert.Throws<InvalidOperationException>(() => character.ApplyReplicaState(new ValuesDictionary()));
+    }
+
+    [Fact]
+    public void RemoteReplicaNeverEntersLocalViewPreparationOrRendering()
+    {
+        CharacterSkinsManager.Initialize();
+        using var project = new CharacterProject(NodeRole.Client);
+        using var character = new CharacterData(project);
+        character.ComponentCharacter = new Game.Components.ComponentCharacter();
+        using var view = new CharacterPresentation(new SubsystemCharacterPresentation(), character);
+        // No graphics or view services exist: a remote replica must return before using them.
+        view.Attach(Widgets.CharacterViewLifetimeTest.CreateWidget(view));
+        view.Update();
+        Assert.Equal(CharacterViewState.Inactive, view.State);
+        Assert.False(view.IsReadyForPlaying);
     }
 
     private sealed class CharacterProject : Project, IDisposable
@@ -115,8 +213,15 @@ public sealed class UnspawnedCharacterPersistenceTest
             base.Dispose();
         }
 
-        public CharacterProject()
+        public CharacterProject(NodeRole role = NodeRole.Authority)
         {
+            new NetNode(
+                NetNodeOptions.Default,
+                true,
+                Game.Network.Handling.PackageHandlerCatalog.Empty,
+                role
+            ).Runtime.BindProject(this);
+            Fixtures.RuleHookTestEnvironment.BindEmpty(this);
             var updater = (TerrainUpdater)RuntimeHelpers.GetUninitializedObject(typeof(TerrainUpdater));
             SetField(updater, "_pendingLocations", new Dictionary<int, TerrainUpdateLocation?>());
             var parametersField = typeof(TerrainUpdater).GetField(
@@ -130,7 +235,7 @@ public sealed class UnspawnedCharacterPersistenceTest
             var terrain = new SubsystemTerrain { TerrainUpdater = updater };
             subsystems.AddRange(
                 [
-                    Players, Characters, terrain, new SubsystemTime(), new SubsystemGameWidgets(),
+                    Players, Characters, terrain, new SubsystemTime(), new SubsystemMessages(),
                     new SubsystemGameInfo(), new SubsystemSky()
                 ]
             );

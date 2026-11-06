@@ -2,7 +2,7 @@ using Game.Protocol.Connection;
 
 namespace Game.Protocol.Serialization;
 
-internal static partial class ProtocolMessageValidation
+public static partial class ProtocolMessageValidation
 {
     private static void ValidateProfile(RequiredModProfile profile)
     {

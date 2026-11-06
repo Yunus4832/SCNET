@@ -336,16 +336,23 @@ public sealed class ServerSourceManagementPanel : ServicePanelWidget
 
     private static void ShowError(string message)
     {
-        DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Error, message, LanguageManager.Ok));
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                Localization.ClientLanguage.Catalog.Error,
+                message,
+                Localization.ClientLanguage.Catalog.Ok
+            )
+        );
     }
 
     private static string CommonText(string key)
     {
-        return LanguageManager.GetContentWidgets("ContentRepositoryScreen", key);
+        return Localization.ClientLanguage.Catalog.GetContentWidgets("ContentRepositoryScreen", key);
     }
 
     private static string Text(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(ServerSourceManagementPanel), key);
+        return Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(ServerSourceManagementPanel), key);
     }
 }

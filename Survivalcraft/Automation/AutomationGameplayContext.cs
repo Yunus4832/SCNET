@@ -5,15 +5,18 @@ public static class AutomationGameplayContext
 {
     public static object Capture()
     {
-        var project = GameManager.Project;
+        var project = GameManager.ClientProject;
         var player = project?.FindSubsystem<SubsystemCharacters>()?.ComponentCharacters
             .FirstOrDefault(candidate => candidate.IsLocallyControlled);
         if (player == null)
         {
-            return new { Ready = false, Reason = "No local character is available." };
+            return new
+            {
+                Ready = false, Reason = "No local character is available.", Runtime = CaptureRuntimeTopology(Guid.Empty)
+            };
         }
 
-        var camera = player.GameWidget.ActiveCamera;
+        var camera = player.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget.ActiveCamera;
         var inventory = player.ComponentMiner.Inventory;
         var position = player.ComponentBody.Position;
         var chunk = project!.FindSubsystem<SubsystemTerrain>()?.Terrain.GetChunkAtCell(
@@ -38,7 +41,8 @@ public static class AutomationGameplayContext
             : null;
         return new
         {
-            Ready = player.CharacterData.IsReadyForPlaying,
+            Ready = player.Entity.FindComponent<ComponentCharacterPresentation>(true)!.CharacterView.IsReadyForPlaying,
+            Runtime = CaptureRuntimeTopology(player.CharacterData.CharacterId),
             WindowActive = Window.IsActive,
             Screen = ScreensManager.GetCurrentScreenName(),
             Transitioning = ScreensManager.IsAnimating,
@@ -57,14 +61,17 @@ public static class AutomationGameplayContext
             Flying = player.ComponentLocomotion.IsCreativeFlyEnabled,
             Immersion = player.ComponentBody.ImmersionFactor,
             Grounded = player.ComponentBody.StandingOnValue != null,
-            ModalPanel = player.ComponentGui.ModalPanelWidget?.GetType().Name,
+            ModalPanel = player.Entity.FindComponent<ComponentGui>(true)!.ModalPanelWidget?.GetType().Name,
             UiInput = new
             {
-                player.GameWidget.Input.IsMouseCursorVisible,
+                player.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget.Input
+                    .IsMouseCursorVisible,
                 MouseVisible = Engine.Input.Mouse.IsMouseVisible,
                 MousePosition = Engine.Input.Mouse.MousePosition is { } point ? new { point.X, point.Y } : null,
-                DragActive = player.GameWidget.Input.Drag.HasValue,
-                PressActive = player.GameWidget.Input.Press.HasValue
+                DragActive = player.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget.Input.Drag
+                    .HasValue,
+                PressActive = player.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget.Input.Press
+                    .HasValue
             },
             Target = target,
             HitKind = hit?.GetType().Name,
@@ -84,6 +91,38 @@ public static class AutomationGameplayContext
                     Count = inventory.GetSlotCount(index)
                 }
             ).ToArray()
+        };
+    }
+
+    private static object? CaptureRuntimeTopology(Guid characterId)
+    {
+        var gameRuntime = GameManager.Runtime;
+        if (gameRuntime is null) { return null; }
+
+        return new
+        {
+            Authority = CaptureRuntime(gameRuntime.Authority, characterId),
+            Client = CaptureRuntime(gameRuntime.Client, characterId),
+            DistinctProjects = gameRuntime.Authority?.Project is { } authority &&
+                               gameRuntime.Client?.Project is { } client &&
+                               !ReferenceEquals(authority, client)
+        };
+    }
+
+    private static object? CaptureRuntime(WorldRuntimeContext? runtime, Guid characterId)
+    {
+        if (runtime is null) { return null; }
+
+        var player = runtime.Project?.FindSubsystem<SubsystemCharacters>()?.Characters
+            .FirstOrDefault(character => character.CharacterId == characterId)?.ComponentCharacter;
+        return new
+        {
+            runtime.Id,
+            Side = runtime.Side.ToString(),
+            WorldLoaded = runtime.Project is not null,
+            Network.WorldNetworkBinding.FindNode(runtime)?.LocalPort,
+            SelfCharacterId = Network.WorldNetworkBinding.FindNode(runtime)?.Self?.CharacterId,
+            Position = player is null ? null : Coordinates(player.ComponentBody.Position)
         };
     }
 

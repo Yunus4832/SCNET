@@ -72,7 +72,7 @@ public class ViewGameLogDialog : Dialog
                     new MessageDialog(
                         "Log Item",
                         details,
-                        LanguageManager.Ok,
+                        Localization.ClientLanguage.Catalog.Ok,
                         string.Empty,
                         new Vector2(760f, -1f),
                         MessageDialog.CancelBehavior.InvokeButton1,
@@ -96,15 +96,15 @@ public class ViewGameLogDialog : Dialog
     {
         return (LogAction)item switch
         {
-            LogAction.Copy => LanguageManager.GetContentWidgets(_typeName, "Copy"),
+            LogAction.Copy => Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "Copy"),
             LogAction.Filter => _filter switch
             {
-                FilterType.All => LanguageManager.Get(_typeName, "All"),
-                FilterType.Warning => LanguageManager.Get(_typeName, "Warning"),
-                FilterType.Error => LanguageManager.Get(_typeName, "Error"),
+                FilterType.All => Localization.ClientLanguage.Catalog.Get(_typeName, "All"),
+                FilterType.Warning => Localization.ClientLanguage.Catalog.Get(_typeName, "Warning"),
+                FilterType.Error => Localization.ClientLanguage.Catalog.Get(_typeName, "Error"),
                 _ => throw new ArgumentOutOfRangeException()
             },
-            LogAction.Close => LanguageManager.GetContentWidgets(_typeName, "Close"),
+            LogAction.Close => Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "Close"),
             _ => throw new ArgumentOutOfRangeException(nameof(item))
         };
     }

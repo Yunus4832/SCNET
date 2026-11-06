@@ -11,7 +11,7 @@
 
 - 仅在明确授权的隔离测试服务器上使用。测试会创建玩家、移动玩家、请求生成地形，可能明显占用 CPU、内存与带宽，并留下存档记录。
 - 使用无模组的 Creative 世界；工具发送合成的飞行位置快照，没有客户端碰撞、路径规划、战斗或方块操作。
-- 不授予管理员权限，不发送管理命令，不修改游戏的 GUI/HeadlessServer 运行模式。
+- 不授予管理员权限，不发送管理命令，不改变游戏的应用入口或世界配置。
 - 负载客户端不是完整真实玩家。结果可用于比较协议、地形分发、兴趣路由与基础玩家同步成本，不能直接声称支持同等数量的完整游戏玩家。
 - 若驱动端 CPU、主循环延迟或网络成为瓶颈，不能归因于服务器。较大规模应把驱动端与服务器放在不同机器。
 - 连接上限还受世界最大人数限制，包含真实观察客户端和服务端自身。不要把人数上限拒绝当成性能饱和。
@@ -20,11 +20,11 @@
 
 ## 运行
 
-先按 [Headless](Headless.md) 启动独立实例，例如：
+先按 [独立服务器](Server.md) 启动独立实例，例如：
 
 ```bash
-Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter \
-  --instance load-server --server --session load --world LoadWorld \
+Survivalcraft.Server/bin/Debug/net10.0/linux-x64/Survivalcraft.Server \
+  --instance load-server --session load --world LoadWorld \
   --game-mode Creative --terrain FlatContinent --terrain-level 64 --seed 1234 \
   --server-port 31987 --broadcast-port 31988 --http-command --http-command-port 31989
 ```
@@ -69,9 +69,9 @@ dotnet run --project ServerLoadTool --no-build -- \
 HTTP 首先发现命令，再使用只读 `game:diagnostics/network/get`，沿用原有 LocalOperator 认证与权限边界。
 异步采样不会让客户端主循环等待 HTTP 响应。
 
-网络诊断新增 `HeadlessTicks`：累计 tick 数、累计工作毫秒、超过 50ms 的 tick 数、最大工作耗时、最大起始迟到时间。
+网络诊断新增 `ServerTicks`：累计 tick 数、累计工作毫秒、超过 50ms 的 tick 数、最大工作耗时、最大起始迟到时间。
 `ReliableQueues` 按在线客户端记录 `Path`（Direct、HolePunch、Relay）和 `PendingBytes`，用于区分实际连接路径与可靠发送积压。
-这些计数属于整个 Headless 进程；使用测量区间首尾差值计算平均工作耗时和超预算比例。最大值是进程生命周期最大值，不是区间 P95。
+这些计数属于整个 独立服务器进程；使用测量区间首尾差值计算平均工作耗时和超预算比例。最大值是进程生命周期最大值，不是区间 P95。
 CPU 单位为单核百分比，100% 表示一颗逻辑 CPU 的时间，多线程可能超过 100%。没有提供 PID 或诊断入口时对应指标为 null，不推测填补。
 网络诊断中的 `Terrain` 区分服务端待处理的完整区块请求、尚未就绪的内容及未完成编码数，
 同时提供已分配区块的工作线程状态分布和存储队列大小。待处理数不含补片请求，

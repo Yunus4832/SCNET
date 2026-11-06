@@ -6,7 +6,7 @@ using Android.Runtime;
 
 using AndroidX.Core.Content;
 
-using Game.Commands;
+using Game.Commands.Text;
 using Game.Platforms;
 
 using AndroidEnvironment = Android.OS.Environment;
@@ -57,7 +57,6 @@ public class MainActivity : BlackActivity
 
     private const int _permissionRequestCode = 1;
 
-    private const int _routeRequestCode = 2;
 
     private bool _routeStarted;
 
@@ -67,9 +66,8 @@ public class MainActivity : BlackActivity
 
     private static StarterInstanceContext? _runtimeInstance;
 
-    private static bool _guiRuntimeRouted;
 
-    private static int _guiCompletionHandled;
+    private static int _gameCompletionHandled;
 
     private StarterInstanceContext? _instance;
 
@@ -94,7 +92,7 @@ public class MainActivity : BlackActivity
             return;
         }
 
-        GamePlatformManager.RegisterPlatform(Platform.Android);
+        ClientPlatform.Configure(Platform.Android);
         RouteWhenReady();
     }
 
@@ -154,27 +152,10 @@ public class MainActivity : BlackActivity
         }
     }
 
-    protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
-    {
-        base.OnActivityResult(requestCode, resultCode, data);
-        if (requestCode != _routeRequestCode)
-        {
-            return;
-        }
-
-        if (_guiRuntimeRouted)
-        {
-            // Activity results may arrive before the native game loop has saved and disposed its world.
-            // GameActivity reports completion after GameEntry returns instead.
-            return;
-        }
-
-        HandleRouteResult((int)resultCode);
-    }
 
     internal static void CompleteGameRun(int resultCode)
     {
-        if (Interlocked.Exchange(ref _guiCompletionHandled, 1) != 0) { return; }
+        if (Interlocked.Exchange(ref _gameCompletionHandled, 1) != 0) { return; }
 
         if (_currentController?.TryGetTarget(out var controller) == true &&
             controller is not null &&
@@ -215,12 +196,17 @@ public class MainActivity : BlackActivity
         catch (Exception exception)
         {
             global::Android.Util.Log.Error("SCNET", $"Update installation request failed: {exception}");
-            var dialog = new global::Android.App.AlertDialog.Builder(this);
-            dialog.SetTitle(LanguageManager.GetContentWidgets("GameInformationManager", "Install"));
-            dialog.SetMessage(
-                $"{LanguageManager.GetContentWidgets("GameInformationManager", "InstallFailed")}\n{exception.Message}"
+            var dialog = new AlertDialog.Builder(this);
+            dialog.SetTitle(
+                Game.Localization.ClientLanguage.Catalog.GetContentWidgets("GameInformationManager", "Install")
             );
-            dialog.SetPositiveButton(LanguageManager.Get("Usual", "ok"), (_, _) => ExitApplication());
+            dialog.SetMessage(
+                $"{Game.Localization.ClientLanguage.Catalog.GetContentWidgets("GameInformationManager", "InstallFailed")}\n{exception.Message}"
+            );
+            dialog.SetPositiveButton(
+                Game.Localization.ClientLanguage.Catalog.Get("Usual", "ok"),
+                (_, _) => ExitApplication()
+            );
             dialog.SetCancelable(false);
             dialog.Show();
         }
@@ -287,13 +273,8 @@ public class MainActivity : BlackActivity
         }
 
         _routeStarted = true;
-        var startup = StartupManager.Load(_instance?.GameArguments ?? []);
-        var activityType = startup.Settings.RunMode is RunModeType.HeadlessServer
-            ? typeof(ServerActivity)
-            : typeof(GameActivity);
-        _guiRuntimeRouted = activityType == typeof(GameActivity);
-        var intent = new Intent(this, activityType);
-        if (activityType == typeof(GameActivity) && Intent?.Data is not null)
+        var intent = new Intent(this, typeof(GameActivity));
+        if (Intent?.Data is not null)
         {
             intent.SetData(Intent.Data);
         }
@@ -303,7 +284,7 @@ public class MainActivity : BlackActivity
             intent.PutExtra(gameArgumentsExtra, _instance.GameArguments);
         }
 
-        StartActivityForResult(intent, _routeRequestCode);
+        StartActivity(intent);
     }
 
 #pragma warning disable CA1416

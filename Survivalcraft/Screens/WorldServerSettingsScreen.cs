@@ -80,6 +80,8 @@ public class WorldServerSettingsScreen : Screen
 
     private object[] _returnParameters = [];
 
+    private WorldHostingSettings _hosting = new();
+
     private WorldSettings _worldSettings = null!;
 
     public WorldServerSettingsScreen()
@@ -109,7 +111,7 @@ public class WorldServerSettingsScreen : Screen
             : string.Empty;
         _p2pService.SelectionChanged += SelectP2PService;
         _p2pService.EmptySelectionRequested += () => DialogsManager.Alert(
-            LanguageManager.GetContentWidgets("Services", "NoRendezvous")
+            Localization.ClientLanguage.Catalog.GetContentWidgets("Services", "NoRendezvous")
         );
         _p2pPublic = Children.Find<ButtonWidget>("P2PPublic")!;
         _p2pName = Children.Find<TextBoxWidget>("P2PName")!;
@@ -149,11 +151,13 @@ public class WorldServerSettingsScreen : Screen
 
         _worldSettings = parameters.Length > 0 && parameters[0] is WorldSettings worldSettings
             ? worldSettings
-            : new WorldSettings { RunServer = true };
+            : new WorldSettings();
+        _hosting = parameters.OfType<WorldHostingSettings>().FirstOrDefault() ??
+                   new WorldHostingSettings { RunServer = true };
         _returnScreenName = parameters.Length > 1 && parameters[1] is string returnScreenName
             ? returnScreenName
             : "NewWorld";
-        _returnParameters = parameters.Length > 2 ? new object[parameters.Length - 2] : [_worldSettings];
+        _returnParameters = parameters.Length > 2 ? new object[parameters.Length - 2] : [_worldSettings, _hosting];
         if (parameters.Length > 2)
         {
             Array.Copy(parameters, 2, _returnParameters, 0, _returnParameters.Length);
@@ -164,8 +168,8 @@ public class WorldServerSettingsScreen : Screen
         _recoverySpeedSlider.Value = NormalizeRecoverySpeed(_worldSettings.RecoverFactor);
         _disableBlocks.Text = _worldSettings.DisableBlocks;
         _keywordBlocking.Text = _worldSettings.KeywordBlocking;
-        _p2pName.Text = string.IsNullOrEmpty(_worldSettings.P2P.Name) ? _worldSettings.Name : _worldSettings.P2P.Name;
-        _p2pDescription.Text = _worldSettings.P2P.Description;
+        _p2pName.Text = string.IsNullOrEmpty(_hosting.P2P.Name) ? _worldSettings.Name : _hosting.P2P.Name;
+        _p2pDescription.Text = _hosting.P2P.Description;
         _descriptionLabel.Text = GetText("DefaultDescription");
         RefreshP2PServices();
         UpdateControlTexts();
@@ -193,10 +197,10 @@ public class WorldServerSettingsScreen : Screen
 
     public override void Update()
     {
-        _serverIdentityButton.Text = _worldSettings.ServerIdentityAddress is null
+        _serverIdentityButton.Text = _hosting.ServerIdentityAddress is null
             ? GetText("DefaultIdentity")
             : LocalIdentityManager.Current.GetIdentities(IdentityPurpose.Server)
-                    .FirstOrDefault(identity => identity.Address == _worldSettings.ServerIdentityAddress) is
+                    .FirstOrDefault(identity => identity.Address == _hosting.ServerIdentityAddress) is
                 { } selectedIdentity
                 ? selectedIdentity.Name.Length > 0
                     ? selectedIdentity.Name
@@ -212,7 +216,10 @@ public class WorldServerSettingsScreen : Screen
                                                 service.Enabled
                                             )
                                                 ? AdmissionText("ChooseService")
-                                                : LanguageManager.GetContentWidgets("Services", "NotConfigured"));
+                                                : Localization.ClientLanguage.Catalog.GetContentWidgets(
+                                                    "Services",
+                                                    "NotConfigured"
+                                                ));
         if (_serverIdentityButton.IsClicked) { SelectServerIdentity(); }
 
         if (_authenticationServiceButton.IsClicked) { SelectAuthenticationService(_generation); }
@@ -233,17 +240,17 @@ public class WorldServerSettingsScreen : Screen
 
         if (_p2pButton.IsClicked)
         {
-            _worldSettings.P2P = _worldSettings.P2P with { Enabled = !_worldSettings.P2P.Enabled };
+            _hosting.P2P = _hosting.P2P with { Enabled = !_hosting.P2P.Enabled };
         }
 
         if (_p2pPublic.IsClicked)
         {
-            _worldSettings.P2P = _worldSettings.P2P with { IsPublic = !_worldSettings.P2P.IsPublic };
+            _hosting.P2P = _hosting.P2P with { IsPublic = !_hosting.P2P.IsPublic };
         }
 
         if (_runServerButton.IsClicked)
         {
-            _worldSettings.RunServer = !_worldSettings.RunServer;
+            _hosting.RunServer = !_hosting.RunServer;
         }
 
         if (_randomSpawnPositionButton.IsClicked)
@@ -329,10 +336,10 @@ public class WorldServerSettingsScreen : Screen
         var generation = _generation;
         var choices = new object[] { GetText("DefaultIdentity") }
             .Concat(LocalIdentityManager.Current.GetIdentities(IdentityPurpose.Server)).ToArray();
-        var current = _worldSettings.ServerIdentityAddress is null
+        var current = _hosting.ServerIdentityAddress is null
             ? choices[0]
             : choices.OfType<LocalIdentityEntry>()
-                .FirstOrDefault(identity => identity.Address == _worldSettings.ServerIdentityAddress);
+                .FirstOrDefault(identity => identity.Address == _hosting.ServerIdentityAddress);
         _admissionSelection = new ListSelectionDialog(
             GetText("ServerIdentity"),
             choices,
@@ -349,7 +356,7 @@ public class WorldServerSettingsScreen : Screen
                 _admissionSelection = null;
                 if (generation != _generation) { return; }
 
-                _worldSettings.ServerIdentityAddress = (item as LocalIdentityEntry)?.Address;
+                _hosting.ServerIdentityAddress = (item as LocalIdentityEntry)?.Address;
             },
             current
         );
@@ -358,11 +365,11 @@ public class WorldServerSettingsScreen : Screen
 
     private bool ValidateServerIdentity()
     {
-        if (!_worldSettings.RunServer) { return true; }
+        if (!_hosting.RunServer) { return true; }
 
         try
         {
-            using var identity = LocalIdentityManager.Current.OpenServerIdentity(_worldSettings.ServerIdentityAddress);
+            using var identity = LocalIdentityManager.Current.OpenServerIdentity(_hosting.ServerIdentityAddress);
             return true;
         }
         catch (InvalidOperationException)
@@ -417,8 +424,8 @@ public class WorldServerSettingsScreen : Screen
         _admissionConfirmation = new MessageDialog(
             AdmissionText("Title"),
             AdmissionText("ConfirmChange"),
-            LanguageManager.Get("Usual", "ok"),
-            LanguageManager.Get("Usual", "cancel"),
+            Localization.ClientLanguage.Catalog.Get("Usual", "ok"),
+            Localization.ClientLanguage.Catalog.Get("Usual", "cancel"),
             button =>
             {
                 _admissionConfirmation = null;
@@ -437,7 +444,8 @@ public class WorldServerSettingsScreen : Screen
         if (policy.Mode == ServerAdmissionMode.Password) { _admission.PasswordConfiguration = policy; }
     }
 
-    private static string AdmissionText(string key) => LanguageManager.GetContentWidgets("ServerAdmission", key);
+    private static string AdmissionText(string key) =>
+        Localization.ClientLanguage.Catalog.GetContentWidgets("ServerAdmission", key);
 
     private void RefreshP2PServices()
     {
@@ -449,7 +457,7 @@ public class WorldServerSettingsScreen : Screen
             var services = RendezvousManager.Current.Snapshot().Where(item => item.IsEnabled).ToArray();
             _p2pService.SetItems(services);
             _p2pService.SelectedItem = services.FirstOrDefault(item =>
-                item.ControlUrl == _worldSettings.P2P.ControlUrl && item.Name == _worldSettings.P2P.ServiceName
+                item.ControlUrl == _hosting.P2P.ControlUrl && item.Name == _hosting.P2P.ServiceName
             );
         }
         finally
@@ -467,26 +475,26 @@ public class WorldServerSettingsScreen : Screen
 
         if (_p2pService.SelectedItem is InstalledRendezvousService selected)
         {
-            _worldSettings.P2P = _worldSettings.P2P.SelectService(selected);
+            _hosting.P2P = _hosting.P2P.SelectService(selected);
         }
     }
 
     private bool ValidateP2PSettings()
     {
-        if (!_worldSettings.RunServer || !_worldSettings.P2P.Enabled)
+        if (!_hosting.RunServer || !_hosting.P2P.Enabled)
         {
             return true;
         }
 
         try
         {
-            var address = RendezvousAddress.Normalize(new Uri(_worldSettings.P2P.ControlUrl));
-            if (string.IsNullOrWhiteSpace(_worldSettings.P2P.Name))
+            var address = RendezvousAddress.Normalize(new Uri(_hosting.P2P.ControlUrl));
+            if (string.IsNullOrWhiteSpace(_hosting.P2P.Name))
             {
                 throw new ArgumentException("Room name is required.");
             }
 
-            _worldSettings.P2P = _worldSettings.P2P with { ControlUrl = address.AbsoluteUri };
+            _hosting.P2P = _hosting.P2P with { ControlUrl = address.AbsoluteUri };
             return true;
         }
         catch (Exception exception) when (exception is ArgumentException or UriFormatException)
@@ -498,7 +506,7 @@ public class WorldServerSettingsScreen : Screen
 
     private void SaveSettings()
     {
-        _worldSettings.P2P = _worldSettings.P2P with
+        _hosting.P2P = _hosting.P2P with
         {
             Name = _p2pName.Text.Trim(), Description = _p2pDescription.Text
         };
@@ -512,30 +520,30 @@ public class WorldServerSettingsScreen : Screen
 
     private void UpdateControlTexts()
     {
-        _serverOptions.IsVisible = _worldSettings.RunServer;
-        _p2pOptions.IsVisible = _worldSettings.P2P.Enabled;
-        if (!_worldSettings.RunServer || !_worldSettings.P2P.Enabled)
+        _serverOptions.IsVisible = _hosting.RunServer;
+        _p2pOptions.IsVisible = _hosting.P2P.Enabled;
+        if (!_hosting.RunServer || !_hosting.P2P.Enabled)
         {
             _p2pService.Close();
         }
 
-        _p2pPublic.Text = LanguageManager.Get("Usual", _worldSettings.P2P.IsPublic ? "yes" : "no");
+        _p2pPublic.Text = Localization.ClientLanguage.Catalog.Get("Usual", _hosting.P2P.IsPublic ? "yes" : "no");
         _p2pService.PlaceholderText = !RendezvousManager.Current.Snapshot().Any(service => service.IsEnabled)
-            ? LanguageManager.GetContentWidgets("Services", "NotConfigured")
-            : string.IsNullOrEmpty(_worldSettings.P2P.ControlUrl)
+            ? Localization.ClientLanguage.Catalog.GetContentWidgets("Services", "NotConfigured")
+            : string.IsNullOrEmpty(_hosting.P2P.ControlUrl)
                 ? GetText("P2PSelectService")
-                : string.IsNullOrEmpty(_worldSettings.P2P.ServiceName)
-                    ? _worldSettings.P2P.ControlUrl
-                    : _worldSettings.P2P.ServiceName;
-        _p2pButton.Text = _worldSettings.P2P.Enabled
-            ? LanguageManager.Get("Usual", "on")
-            : LanguageManager.Get("Usual", "off");
-        _runServerButton.Text = _worldSettings.RunServer
-            ? LanguageManager.Get("Usual", "on")
-            : LanguageManager.Get("Usual", "off");
+                : string.IsNullOrEmpty(_hosting.P2P.ServiceName)
+                    ? _hosting.P2P.ControlUrl
+                    : _hosting.P2P.ServiceName;
+        _p2pButton.Text = _hosting.P2P.Enabled
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "on")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "off");
+        _runServerButton.Text = _hosting.RunServer
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "on")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "off");
         _randomSpawnPositionButton.Text = _worldSettings.RandomSpawnPosition
-            ? LanguageManager.Get("Usual", "on")
-            : LanguageManager.Get("Usual", "off");
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "on")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "off");
         _maxPlayersSlider.Text = MathUtils.Round(_maxPlayersSlider.Value).ToString(CultureInfo.InvariantCulture);
         _daySpeedSlider.Text = $"{_daySpeedSlider.Value:0}x";
         _recoverySpeedSlider.Text = $"{_recoverySpeedSlider.Value:0}x";
@@ -568,7 +576,7 @@ public class WorldServerSettingsScreen : Screen
 
     private static string GetText(string name)
     {
-        return LanguageManager.GetContentWidgets(_typeName, name);
+        return Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, name);
     }
 
     private static float NormalizeDaySpeed(float daySpeed)

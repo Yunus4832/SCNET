@@ -43,7 +43,7 @@ public class ConnectionRequestPackageTest
     [Fact]
     public void ModDataHashUsesStableKeyInformation()
     {
-        var left = ModProfileManager.ComputeDataHash(
+        var left = ModProfileFingerprint.Compute(
             new ModProfile
             {
                 Packages =
@@ -53,7 +53,7 @@ public class ConnectionRequestPackageTest
                 ]
             }
         );
-        var right = ModProfileManager.ComputeDataHash(
+        var right = ModProfileFingerprint.Compute(
             new ModProfile
             {
                 Packages =
@@ -63,7 +63,7 @@ public class ConnectionRequestPackageTest
                 ]
             }
         );
-        var changed = ModProfileManager.ComputeDataHash(
+        var changed = ModProfileFingerprint.Compute(
             new ModProfile
             {
                 Packages =

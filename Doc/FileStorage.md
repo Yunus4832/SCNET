@@ -1,6 +1,8 @@
 # 文件定位
 
-`Engine.FileStorage.Storage` 负责统一处理文件路径。项目中的大部分文件读写并不是直接使用系统路径，而是先使用带前缀的逻辑路径，再由 `Storage` 映射到当前平台上的实际位置。
+`Engine.Core.FileStorage.Storage` 负责统一处理文件路径。项目中的大部分文件读写并不是直接使用系统路径，而是先使用带前缀的逻辑路径，再由 `Storage` 映射到当前平台上的实际位置。
+
+游戏层的目录与配置文件路径集中由 `Game.FileStorage.GamePaths` 定义。
 
 ## 解析方式
 
@@ -59,11 +61,11 @@ GUI 的“内容包缓存”界面只列出非 Mod 缓存制品：FilePicker 多
 
 Starter 会先注册程序基础目录并读取 `Starter.xml`，再把选中的 `Instances/<name>` 重新注册为当前进程的 `external:`、`data:` 和 `config:`。桌面端可并发运行多个隔离实例；Android 同样隔离实例数据，但单个已安装包不提供并发游戏进程。不同实例拥有彼此隔离的 session、设置、世界、模组和日志；逻辑路径相同并不代表落到同一个物理目录。
 
-`FilePicker` 返回的 `PickedFile` 和 `PickedSaveTarget` 只暴露按需打开的流。Windows/Linux 实现将系统选择结果封装为文件流；Android 实现保留文档 URI 权限并在每次调用时通过 ContentResolver 打开流。取消选择返回空结果或 `null`，各平台实现串行化选择请求。Linux GUI 始终注册实现，通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，不依赖 `zenity`；会话总线、portal 服务或桌面 backend 不可用时，请求会返回明确错误。Headless 不注册 `FilePicker`，调用方仍应依据 `FilePicker.IsAvailable` 隐藏或禁用交互功能。
+`FilePicker` 返回的 `PickedFile` 和 `PickedSaveTarget` 只暴露按需打开的流。Windows/Linux 实现将系统选择结果封装为文件流；Android 实现保留文档 URI 权限并在每次调用时通过 ContentResolver 打开流。取消选择返回空结果或 `null`，各平台实现串行化选择请求。Linux GUI 始终注册实现，通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，不依赖 `zenity`；会话总线、portal 服务或桌面 backend 不可用时，请求会返回明确错误。独立服务器不注册 `FilePicker`，调用方仍应依据 `FilePicker.IsAvailable` 隐藏或禁用交互功能。
 
 ## 世界数据
 
-世界 Project 当前只使用 `Project.xml`。旧的 `Project.json`、`Project.mpk`、`Project.bak` 和 `Project.temp` 不再作为世界 Project 的磁盘序列化或恢复机制使用。保存时会先写入 `Project.xml.tmp`，校验后再替换 `Project.xml`。升级工具仍可在缺少 `Project.xml` 时读取旧 `Project.json` 并转换为 `Project.xml` 后继续升级。
+世界 Project 当前只使用 `Project.xml`。旧的 `Project.json`、`Project.mpk`、`Project.bak` 和 `Project.temp` 不再作为世界 Project 的磁盘序列化或恢复机制使用。保存时会先写入 `Project.xml.tmp`，校验后再替换 `Project.xml`。
 
 `Project.xml` 的 `ExtensionData` 与 `Subsystems`、`Entities` 同级，用于非实体业务数据，内部按所有者标识和数据标识组织 `ValuesDictionary`。它复用世界保存流程，不产生独立文件；主线程保存时复制嵌套字典，后台写入不会遍历运行时业务字典。客户端世界初始化快照不包含该节点，业务数据需要联机展示时由对应功能显式同步。
 
@@ -89,7 +91,7 @@ Starter 会先注册程序基础目录并读取 `Starter.xml`，再把选中的 
 
 角色实体会同时保存普通 `Inventory` 与 `CreativeInventory`，加载时由 `ComponentMiner` 根据世界模式选择当前使用的库存。两套库存都为物品栏预留 `0–29`、为背包预留 `30–45`；世界设置 `SurvivalHotbarSlotsCount` 与 `CreativeHotbarSlotsCount` 分别决定两套库存中前 7–30 个物品栏槽位可用，运行时生成的创造物品目录位于持久化槽位之后。修改世界模式只更新世界设置，不会在两套库存之间复制或转换物品；切回原模式时会恢复该模式上次保存的库存。因此，在一种模式下保存于背包的物品切换模式后不可访问属于预期行为。旧版存档中的普通库存使用不同的槽位布局，不再兼容。
 
-世界升级或修复工具必须把两套库存视为独立状态，不能依据当前模式删除、合并或重排另一套库存。扩展任一库存时应保留已有槽位索引，将新增但未出现在存档中的槽位初始化为空；创造物品目录不属于需要迁移的存档数据。
+处理或修复存档时必须把两套库存视为独立状态，不能依据当前模式删除、合并或重排另一套库存。扩展任一库存时应保留已有槽位索引，将新增但未出现在存档中的槽位初始化为空；创造物品目录不属于需要迁移的存档数据。
 
 ## 说明
 

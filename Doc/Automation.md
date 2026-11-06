@@ -1,8 +1,8 @@
 # 游戏自动化
 
 自动化用于通过正常输入和游戏规则执行可观察的交互验证，不直接修改角色位置、方块或库存。
-通过 loopback HTTP 命令宿主访问；启动、认证和命令发现见 [Headless](Headless.md)。
-GUI 命令不会在 Headless 宿主上发现或执行。
+通过 loopback HTTP 命令宿主访问；启动、认证和命令发现见 [独立服务器](Server.md)。
+GUI 命令不会在 独立服务器宿主上发现或执行。
 
 ## 观察与行动
 
@@ -26,6 +26,9 @@ GUI 命令不会在 Headless 宿主上发现或执行。
 | `automation/input/mouse/move` | 单帧相对鼠标移动 |
 | `automation/navigation/start` / `status` / `cancel` | 启动、观察和停止步行导航 |
 | `automation/view/look_at` / `angles` / `status` / `cancel` | 朝向坐标、绝对或相对角度控制、查询和停止视角控制 |
+
+Gameplay 上下文的 `Runtime` 观测提供两侧运行时 ID、侧别、世界是否已加载、本地端口和被观测角色的位置，
+以及 `DistinctProjects`，用于检查本地双世界和权威位置收敛；它不修改运行时或角色状态。
 
 Gameplay 库存观测在创造模式中仅返回玩家存储区域，避免把整个创造目录重复发送；
 `TotalSlotsCount` 表示底层索引空间大小。用 UI 槽位的 `Slot` 与 `Text` 选择当前可见物品，

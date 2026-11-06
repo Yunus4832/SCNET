@@ -10,7 +10,7 @@ SCNET 内容包命令行工具，以及模组构建时生成 `.scpkg` 的 MSBuil
 
 NuGet 自动导入 `build/SCNET.ContentTool.targets`。默认在模组构建后读取项目的
 `manifest.json`，收集程序集、`Data` 和 `Assets`，调用包内工具生成 `.scpkg`。
-游戏 SDK 通过独立的 `SCNET.Survivalcraft` 包引用，工具不会成为模组的运行时依赖。
+共享规则模组通过 `SCNET.Survivalcraft.Hosting` 引用 SDK，客户端表现项目使用 `SCNET.Survivalcraft.Client`。构建工具作为私有依赖引用。
 
 ## 命令行
 
@@ -25,3 +25,10 @@ dotnet <包目录>/tools/net10.0/any/SCNET.ContentTool.dll pack <manifest.json> 
 工具依赖和游戏自带的宿主程序集不应进入最终模组包。
 
 [模组开发](https://gitee.com/Yunus0712/scnet/blob/main/Doc/Modding.md) · [NuGet 包说明](https://gitee.com/Yunus0712/scnet/blob/main/Doc/NuGet.md)
+
+## Shared mod inputs
+
+`SurvivalcraftModDataDirectory` and `SurvivalcraftModAssetsDirectory` select the package input directories.
+They default to the packaging project's `Data/` and `Assets/`. A client packaging project can point them
+to the mod solution directory to share inputs with its rule project. `SurvivalcraftModManifest` selects
+the shared manifest.

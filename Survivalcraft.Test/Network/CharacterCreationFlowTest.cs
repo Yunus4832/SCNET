@@ -7,7 +7,6 @@ using Engine.Core.Security;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Characters;
-using Game.Managers;
 using Game.Network;
 using Game.Network.Transport;
 using Game.Players;
@@ -15,29 +14,30 @@ using Game.Protocol.Identity;
 using Game.Subsystems;
 using Game.World;
 
+using Survivalcraft.Test.Fixtures;
 using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Network;
 
-[Collection(WorldRoleCollection.Name)]
+[Collection(NodeRoleCollection.Name)]
 public sealed class CharacterCreationFlowTest
 {
     [Fact]
     public void RejectionsOnlyCompleteTheMatchingRequestAndPermitRetry()
     {
-        var previousType = GameManager.Role;
-        var previousServer = CommonLib.Net.Server;
-        var server = new Client(null, 0, Guid.NewGuid(), Guid.Empty, null);
-        var pending = (List<OutboundPackage>)typeof(NetNode).GetField(
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
+        var node = WorldNetworkBinding.For(project).Node!;
+        var server = new Client(null, 0, Guid.NewGuid(), Guid.Empty);
+        var pending = (PendingLogicalMessages)typeof(NetNode).GetField(
             "_pendingPackages",
             BindingFlags.NonPublic | BindingFlags.Instance
-        )!.GetValue(CommonLib.Net)!;
+        )!.GetValue(node)!;
         var ids = new HashSet<Guid>();
         try
         {
-            CommonLib.Net.Role = WorldRole.RemoteClient;
-            CommonLib.Net.Server = server;
+            node.Server = server;
             var players = new SubsystemCharacters();
+            project.InitializeSubsystem(players);
             var profile = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
             profile.Name = "Tester";
             profile.CharacterSkinName = "$Male1";
@@ -63,22 +63,27 @@ public sealed class CharacterCreationFlowTest
         }
         finally
         {
-            pending.RemoveAll(item =>
-                item.Package is CharacterCreateRequestPackage package && ids.Contains(package.CreationRequestId)
-            );
-            CommonLib.Net.Server = previousServer;
-            CommonLib.Net.Role = previousType;
+            for (var index = pending.Count - 1; index >= 0; index--)
+            {
+                if (pending[index].Package is CharacterCreateRequestPackage package &&
+                    ids.Contains(package.CreationRequestId))
+                {
+                    pending.RemoveAt(index);
+                }
+            }
         }
     }
 
     [Fact]
     public void AuthorityReportsInvalidExistingAndOfflineDuplicateProfilesWithoutMutatingOwnership()
     {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
         var players = new SubsystemCharacters();
+        project.InitializeSubsystem(players);
         var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
         var store = new WorldPlayerStore();
         var user = store.GetOrCreate(address);
-        var sender = new Client(null, 1, Guid.NewGuid(), Guid.Empty, null) { PlayerAddress = address };
+        var sender = new Client(null, 1, Guid.NewGuid(), Guid.Empty) { PlayerAddress = address };
         var request = new CharacterCreateRequestPackage
         {
             CreationRequestId = Guid.NewGuid(), CharacterName = "Tester", SkinName = "$Male1",

@@ -75,7 +75,16 @@ public sealed class SubsystemBodyPackageChunkingTest
 
         Assert.True(SerializeSize([full]) > maxPacketSize);
 
-        var chunks = new NetNode().SplitOversizedBodyPackage(full, PackageTransportPolicy.StateStream, maxPacketSize);
+        var chunks = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        ).SplitOversizedBodyPackage(
+            full,
+            PackageTransportPolicy.StateStream,
+            maxPacketSize
+        );
 
         Assert.True(chunks.Count > 1);
         Assert.Equal(80, chunks.Sum(chunk => chunk.BodyList.Count));

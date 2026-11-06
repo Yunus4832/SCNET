@@ -22,8 +22,11 @@ try {
         @{ Id = "SCNET.ContentTool"; Project = "ContentTool/ContentTool.csproj" },
         @{ Id = "SCNET.Authentication.Protocol"; Project = "Authentication.Protocol/Authentication.Protocol.csproj" },
         @{ Id = "SCNET.Game.Protocol"; Project = "Game.Protocol/Game.Protocol.csproj" },
+        @{ Id = "SCNET.Survivalcraft.Core"; Project = "Survivalcraft.Core/Survivalcraft.Core.csproj" },
+        @{ Id = "SCNET.Survivalcraft.Hosting"; Project = "Survivalcraft.Hosting/Survivalcraft.Hosting.csproj" },
+        @{ Id = "SCNET.Survivalcraft.Client"; Project = "Survivalcraft.Client/Survivalcraft.Client.csproj" },
         @{ Id = "SCNET.Survivalcraft"; Project = "Survivalcraft/Survivalcraft.csproj" },
-        @{ Id = "SCNET.ModTemplates"; Project = "Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj" }
+        @{ Id = "SCNET.ModTemplates"; Project = "Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj" }
     )
     $needsPack = $Refresh.IsPresent
     foreach ($package in $packages) {
@@ -40,11 +43,16 @@ try {
         if (![IO.Path]::IsPathRooted($cacheRoot)) {
             throw "Invalid NuGet cache path: $cacheRoot"
         }
-        foreach ($package in $packages) {
-            $cacheDirectory = Join-Path $cacheRoot ($package.Id.ToLowerInvariant() + "/$($package.Version)")
-            if (Test-Path -LiteralPath $cacheDirectory) { Remove-Item -LiteralPath $cacheDirectory -Recurse -Force }
+        $clearPreparedPackageCache = {
+            foreach ($package in $packages) {
+                $cacheDirectory = Join-Path $cacheRoot ($package.Id.ToLowerInvariant() + "/$($package.Version)")
+                if (Test-Path -LiteralPath $cacheDirectory) { Remove-Item -LiteralPath $cacheDirectory -Recurse -Force }
+            }
         }
+        & $clearPreparedPackageCache
         & "$PSScriptRoot/pack-nuget.ps1" -Configuration $Configuration
+        # Restore during packing can rehydrate a package before its replacement is written.
+        & $clearPreparedPackageCache
     }
     & dotnet restore SCNET.slnx --force
     if ($LASTEXITCODE -ne 0) { throw "Solution restore failed with exit code $LASTEXITCODE." }

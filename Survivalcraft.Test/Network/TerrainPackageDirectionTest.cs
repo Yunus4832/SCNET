@@ -6,8 +6,6 @@ public sealed class TerrainPackageDirectionTest
 {
     [Theory]
     [InlineData(SubsystemTerrainPackage.DataType.RequestSyncChunks, true)]
-    [InlineData(SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments, true)]
-    [InlineData(SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment, false)]
     [InlineData(SubsystemTerrainPackage.DataType.SyncTerrainCellDelta, false)]
     public void TerrainMessagesRequireTheirAuthoritativeDirection(
         SubsystemTerrainPackage.DataType type,
@@ -24,5 +22,24 @@ public sealed class TerrainPackageDirectionTest
         var type = (SubsystemTerrainPackage.DataType)byte.MaxValue;
         Assert.False(SubsystemTerrainPackageHandler.AcceptsDirection(type, true));
         Assert.False(SubsystemTerrainPackageHandler.AcceptsDirection(type, false));
+    }
+
+    [Theory]
+    [InlineData(SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments)]
+    [InlineData(SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment)]
+    public void NativeFragmentsDoNotEnterWorldBusinessHandlers(SubsystemTerrainPackage.DataType type)
+    {
+        Assert.False(
+            SubsystemTerrainPackageHandler.AcceptsDirection(
+                type,
+                true
+            )
+        );
+        Assert.False(
+            SubsystemTerrainPackageHandler.AcceptsDirection(
+                type,
+                false
+            )
+        );
     }
 }

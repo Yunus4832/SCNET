@@ -30,7 +30,7 @@ public sealed class AboutHelpTopicTest
     {
         ContentManager.Initialize();
         using var runtime = GameModRuntime.Start();
-        runtime.InitializeLanguage(culture);
+        Game.Localization.ClientLanguage.Publish(runtime.Content.CreateLanguageCatalog(culture));
         var topic = HelpTopic.Create("52", new JsonObject { ["Name"] = "About" });
         var text = topic.Text;
         Assert.Contains(AboutHelpTopic.ShortBuildVersion(VersionsManager.BuildVersion), text);
@@ -48,15 +48,15 @@ public sealed class AboutHelpTopicTest
                      ("PackageFormat", ContentPackageManifest.CurrentFormatVersion.ToString())
                  })
         {
-            Assert.Contains($"{LanguageManager.Get("About", key)}: {value}", text);
+            Assert.Contains($"{Game.Localization.ClientLanguage.Catalog.Get("About", key)}: {value}", text);
         }
 
         Assert.Contains(RuntimeInformation.ProcessArchitecture.ToString(), text);
         Assert.Contains(AboutHelpTopic.SourceUrl, text);
         Assert.DoesNotContain("[Help:", text);
         Assert.Equal("[Help:5:value]", HelpTopic.Create("5", new JsonObject { ["Name"] = "Keyboard" }).Text);
-        Assert.Equal("About", LanguageManager.GetHelpTopic("52", "Name"));
-        Assert.Equal("Disclaimer", LanguageManager.GetHelpTopic("51", "Name"));
+        Assert.Equal("About", Game.Localization.ClientLanguage.Catalog.GetHelpTopic("52", "Name"));
+        Assert.Equal("Disclaimer", Game.Localization.ClientLanguage.Catalog.GetHelpTopic("51", "Name"));
     }
 
     [Theory]
@@ -68,16 +68,20 @@ public sealed class AboutHelpTopicTest
     {
         ContentManager.Initialize();
         using var runtime = GameModRuntime.Start();
-        runtime.InitializeLanguage(culture);
-        var topics = (JsonObject)LanguageManager.KeyWords["Help"]!;
+        Game.Localization.ClientLanguage.Publish(runtime.Content.CreateLanguageCatalog(culture));
+        var topics = (JsonObject)Game.Localization.ClientLanguage.Catalog.KeyWords["Help"]!;
         var names = topics.Select(pair => (string?)pair.Value?["Name"]).ToArray();
         var p2p = Array.IndexOf(names, "P2P");
         Assert.True(p2p >= 0);
-        Assert.Equal(new[] { "P2P", "Admission", "PlayerIdentity" }, names.Skip(p2p).Take(3));
+        Assert.Equal(["P2P", "Admission", "PlayerIdentity"], names.Skip(p2p).Take(3));
         foreach (var key in new[] { "49", "50" })
         {
-            Assert.False(string.IsNullOrWhiteSpace(LanguageManager.GetHelpTopic(key, "Title")));
-            Assert.False(string.IsNullOrWhiteSpace(LanguageManager.GetHelpTopic(key, "value")));
+            Assert.False(
+                string.IsNullOrWhiteSpace(Game.Localization.ClientLanguage.Catalog.GetHelpTopic(key, "Title"))
+            );
+            Assert.False(
+                string.IsNullOrWhiteSpace(Game.Localization.ClientLanguage.Catalog.GetHelpTopic(key, "value"))
+            );
         }
     }
 
@@ -90,8 +94,8 @@ public sealed class AboutHelpTopicTest
     {
         ContentManager.Initialize();
         using var runtime = GameModRuntime.Start();
-        runtime.InitializeLanguage(culture);
-        var topics = (JsonObject)LanguageManager.KeyWords["Help"]!;
+        Game.Localization.ClientLanguage.Publish(runtime.Content.CreateLanguageCatalog(culture));
+        var topics = (JsonObject)Game.Localization.ClientLanguage.Catalog.KeyWords["Help"]!;
         foreach (var (key, topic) in topics)
         {
             if (topic?["Name"]?.GetValue<string>() is "Keyboard" or "Gamepad")
@@ -99,7 +103,7 @@ public sealed class AboutHelpTopicTest
                 continue;
             }
 
-            var text = LanguageManager.GetHelpTopic(key, "value");
+            var text = Game.Localization.ClientLanguage.Catalog.GetHelpTopic(key, "value");
             Assert.False(string.IsNullOrWhiteSpace(text));
             Assert.DoesNotMatch(@"\\(?:\s|[nrt])", text);
         }

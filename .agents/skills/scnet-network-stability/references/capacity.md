@@ -8,7 +8,7 @@ behavior, duration, and network profile.
 
 Minimum service objectives should cover:
 
-- Headless tick timeliness and long-frame frequency;
+- server tick timeliness and long-frame frequency;
 - CPU and working-set memory;
 - disconnect or protocol error count;
 - reliable-send backlog or proxy queue growth when available;
@@ -56,6 +56,6 @@ and P95 canary latency. Capacity is the knee before objectives fail, not the las
 
 Use [scnet-server-load-testing](../../scnet-server-load-testing/SKILL.md) and `ServerLoadTool` for
 the maintained thin protocol client. Its supported workloads are idle, shared movement and exploration;
-it is not a combat or full client-physics generator. Optional Headless diagnostic sampling includes
+it is not a combat or full client-physics generator. Optional server diagnostic sampling includes
 tick counters and reliable queues. Missing metrics remain unknown. Never extrapolate a maximum from
 one or two clients or claim coverage of unsupported workload classes.

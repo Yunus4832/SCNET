@@ -1,6 +1,8 @@
 using Engine.Graphics;
 using Engine.Media.Images;
 
+using Game.FileStorage;
+
 namespace Game.Automation;
 
 public sealed record AutomationScreenshotResult(

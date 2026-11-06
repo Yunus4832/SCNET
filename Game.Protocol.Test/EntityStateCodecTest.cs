@@ -38,7 +38,10 @@ public sealed class EntityStateCodecTest
         new OnlineCharacterStatePackage([new OnlineCharacterState(_id, Vector3.One, 0.5f, true)]),
         new MountRequestPackage { FromId = 3, TargetId = 4 },
         new SleepResultPackage
-            { Reason = "Reason", EntityId = 3, AllowManualWakeup = true, Result = false },
+        {
+            Reason = Localization.LocalizedText.Literal("Reason"), EntityId = 3, AllowManualWakeup = true,
+            Result = false
+        },
 
         new SubsystemWeatherPackage
         {

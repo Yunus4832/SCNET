@@ -11,10 +11,6 @@ public class SettingsControlsScreen : Screen
 
     private readonly ButtonWidget _autoJumpButton;
 
-    private readonly SliderWidget _creativeDigTimeSlider;
-
-    private readonly SliderWidget _creativeReachSlider;
-
     private readonly SliderWidget _dragDistanceSlider;
 
     private readonly ButtonWidget _flipVerticalAxisButton;
@@ -48,117 +44,113 @@ public class SettingsControlsScreen : Screen
         _lookSensitivitySlider = Children.Find<SliderWidget>("LookSensitivitySlider")!;
         _gamepadCursorSpeedSlider = Children.Find<SliderWidget>("GamepadCursorSpeedSlider")!;
         _gamepadDeadZoneSlider = Children.Find<SliderWidget>("GamepadDeadZoneSlider")!;
-        _creativeDigTimeSlider = Children.Find<SliderWidget>("CreativeDigTimeSlider")!;
-        _creativeReachSlider = Children.Find<SliderWidget>("CreativeReachSlider")!;
         _holdDurationSlider = Children.Find<SliderWidget>("HoldDurationSlider")!;
         _dragDistanceSlider = Children.Find<SliderWidget>("DragDistanceSlider")!;
     }
 
     public override void Update()
     {
-        GameManager.UpdateProject();
         if (_moveControlModeButton.IsClicked)
         {
-            SettingsManager.Current.MoveControlMode =
-                (MoveControlMode)((int)(SettingsManager.Current.MoveControlMode + 1) %
+            Configuration.ClientConfiguration.Preferences.MoveControlMode =
+                (MoveControlMode)((int)(Configuration.ClientConfiguration.Preferences.MoveControlMode + 1) %
                                   EnumUtils.GetEnumValues(typeof(MoveControlMode)).Count);
         }
 
         if (_lookControlModeButton.IsClicked)
         {
-            SettingsManager.Current.LookControlMode =
-                (LookControlMode)((int)(SettingsManager.Current.LookControlMode + 1) %
+            Configuration.ClientConfiguration.Preferences.LookControlMode =
+                (LookControlMode)((int)(Configuration.ClientConfiguration.Preferences.LookControlMode + 1) %
                                   EnumUtils.GetEnumValues(typeof(LookControlMode)).Count);
         }
 
         if (_leftHandedLayoutButton.IsClicked)
         {
-            SettingsManager.Current.LeftHandedLayout = !SettingsManager.Current.LeftHandedLayout;
+            Configuration.ClientConfiguration.Preferences.LeftHandedLayout =
+                !Configuration.ClientConfiguration.Preferences.LeftHandedLayout;
         }
 
         if (_flipVerticalAxisButton.IsClicked)
         {
-            SettingsManager.Current.FlipVerticalAxis = !SettingsManager.Current.FlipVerticalAxis;
+            Configuration.ClientConfiguration.Preferences.FlipVerticalAxis =
+                !Configuration.ClientConfiguration.Preferences.FlipVerticalAxis;
         }
 
         if (_autoJumpButton.IsClicked)
         {
-            SettingsManager.Current.AutoJump = !SettingsManager.Current.AutoJump;
+            Configuration.ClientConfiguration.Preferences.AutoJump =
+                !Configuration.ClientConfiguration.Preferences.AutoJump;
         }
 
         if (_moveSensitivitySlider.IsSliding)
         {
-            SettingsManager.Current.MoveSensitivity = _moveSensitivitySlider.Value;
+            Configuration.ClientConfiguration.Preferences.MoveSensitivity = _moveSensitivitySlider.Value;
         }
 
         if (_lookSensitivitySlider.IsSliding)
         {
-            SettingsManager.Current.LookSensitivity = _lookSensitivitySlider.Value;
+            Configuration.ClientConfiguration.Preferences.LookSensitivity = _lookSensitivitySlider.Value;
         }
 
         if (_gamepadCursorSpeedSlider.IsSliding)
         {
-            SettingsManager.Current.GamepadCursorSpeed = _gamepadCursorSpeedSlider.Value;
+            Configuration.ClientConfiguration.Preferences.GamepadCursorSpeed = _gamepadCursorSpeedSlider.Value;
         }
 
         if (_gamepadDeadZoneSlider.IsSliding)
         {
-            SettingsManager.Current.GamepadDeadZone = _gamepadDeadZoneSlider.Value;
-        }
-
-        if (_creativeDigTimeSlider.IsSliding)
-        {
-            SettingsManager.Current.CreativeDigTime = _creativeDigTimeSlider.Value;
-        }
-
-        if (_creativeReachSlider.IsSliding)
-        {
-            SettingsManager.Current.CreativeReach = _creativeReachSlider.Value;
+            Configuration.ClientConfiguration.Preferences.GamepadDeadZone = _gamepadDeadZoneSlider.Value;
         }
 
         if (_holdDurationSlider.IsSliding)
         {
-            SettingsManager.Current.MinimumHoldDuration = _holdDurationSlider.Value;
+            Configuration.ClientConfiguration.Preferences.MinimumHoldDuration = _holdDurationSlider.Value;
         }
 
         if (_dragDistanceSlider.IsSliding)
         {
-            SettingsManager.Current.MinimumDragDistance = _dragDistanceSlider.Value;
+            Configuration.ClientConfiguration.Preferences.MinimumDragDistance = _dragDistanceSlider.Value;
         }
 
         _moveControlModeButton.Text =
-            LanguageManager.Get("MoveControlMode", SettingsManager.Current.MoveControlMode.ToString());
+            Localization.ClientLanguage.Catalog.Get(
+                "MoveControlMode",
+                Configuration.ClientConfiguration.Preferences.MoveControlMode.ToString()
+            );
         _lookControlModeButton.Text =
-            LanguageManager.Get("LookControlMode", SettingsManager.Current.LookControlMode.ToString());
-        _leftHandedLayoutButton.Text = SettingsManager.Current.LeftHandedLayout
-            ? LanguageManager.Get("Usual", "on")
-            : LanguageManager.Get("Usual", "off");
-        _flipVerticalAxisButton.Text = SettingsManager.Current.FlipVerticalAxis
-            ? LanguageManager.Get("Usual", "on")
-            : LanguageManager.Get("Usual", "off");
-        _autoJumpButton.Text = SettingsManager.Current.AutoJump
-            ? LanguageManager.Get("Usual", "on")
-            : LanguageManager.Get("Usual", "off");
-        _moveSensitivitySlider.Value = SettingsManager.Current.MoveSensitivity;
-        _moveSensitivitySlider.Text = MathUtils.Round(SettingsManager.Current.MoveSensitivity * 10f)
+            Localization.ClientLanguage.Catalog.Get(
+                "LookControlMode",
+                Configuration.ClientConfiguration.Preferences.LookControlMode.ToString()
+            );
+        _leftHandedLayoutButton.Text = Configuration.ClientConfiguration.Preferences.LeftHandedLayout
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "on")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "off");
+        _flipVerticalAxisButton.Text = Configuration.ClientConfiguration.Preferences.FlipVerticalAxis
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "on")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "off");
+        _autoJumpButton.Text = Configuration.ClientConfiguration.Preferences.AutoJump
+            ? Localization.ClientLanguage.Catalog.Get("Usual", "on")
+            : Localization.ClientLanguage.Catalog.Get("Usual", "off");
+        _moveSensitivitySlider.Value = Configuration.ClientConfiguration.Preferences.MoveSensitivity;
+        _moveSensitivitySlider.Text = MathUtils
+            .Round(Configuration.ClientConfiguration.Preferences.MoveSensitivity * 10f)
             .ToString(CultureInfo.InvariantCulture);
-        _lookSensitivitySlider.Value = SettingsManager.Current.LookSensitivity;
-        _lookSensitivitySlider.Text = MathUtils.Round(SettingsManager.Current.LookSensitivity * 10f)
+        _lookSensitivitySlider.Value = Configuration.ClientConfiguration.Preferences.LookSensitivity;
+        _lookSensitivitySlider.Text = MathUtils
+            .Round(Configuration.ClientConfiguration.Preferences.LookSensitivity * 10f)
             .ToString(CultureInfo.InvariantCulture);
-        _gamepadCursorSpeedSlider.Value = SettingsManager.Current.GamepadCursorSpeed;
-        _gamepadCursorSpeedSlider.Text = $"{SettingsManager.Current.GamepadCursorSpeed:0.0}x";
-        _gamepadDeadZoneSlider.Value = SettingsManager.Current.GamepadDeadZone;
-        _gamepadDeadZoneSlider.Text = $"{SettingsManager.Current.GamepadDeadZone * 100f:0}%";
-        _creativeDigTimeSlider.Value = SettingsManager.Current.CreativeDigTime;
-        _creativeDigTimeSlider.Text = $"{MathUtils.Round(1000f * SettingsManager.Current.CreativeDigTime)}ms";
-        _creativeReachSlider.Value = SettingsManager.Current.CreativeReach;
-        _creativeReachSlider.Text =
-            string.Format(LanguageManager.Get(_typeName, 1), $"{SettingsManager.Current.CreativeReach:0.0} ");
-        _holdDurationSlider.Value = SettingsManager.Current.MinimumHoldDuration;
-        _holdDurationSlider.Text = $"{MathUtils.Round(1000f * SettingsManager.Current.MinimumHoldDuration)}ms";
-        _dragDistanceSlider.Value = SettingsManager.Current.MinimumDragDistance;
+        _gamepadCursorSpeedSlider.Value = Configuration.ClientConfiguration.Preferences.GamepadCursorSpeed;
+        _gamepadCursorSpeedSlider.Text =
+            $"{Configuration.ClientConfiguration.Preferences.GamepadCursorSpeed:0.0}x";
+        _gamepadDeadZoneSlider.Value = Configuration.ClientConfiguration.Preferences.GamepadDeadZone;
+        _gamepadDeadZoneSlider.Text = $"{Configuration.ClientConfiguration.Preferences.GamepadDeadZone * 100f:0}%";
+        _holdDurationSlider.Value = Configuration.ClientConfiguration.Preferences.MinimumHoldDuration;
+        _holdDurationSlider.Text =
+            $"{MathUtils.Round(1000f * Configuration.ClientConfiguration.Preferences.MinimumHoldDuration)}ms";
+        _dragDistanceSlider.Value = Configuration.ClientConfiguration.Preferences.MinimumDragDistance;
         _dragDistanceSlider.Text =
-            $"{MathUtils.Round(SettingsManager.Current.MinimumDragDistance)} " + LanguageManager.Get(_typeName, 2);
+            $"{MathUtils.Round(Configuration.ClientConfiguration.Preferences.MinimumDragDistance)} " +
+            Localization.ClientLanguage.Catalog.Get(_typeName, 2);
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);

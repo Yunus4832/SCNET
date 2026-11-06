@@ -1,0 +1,64 @@
+using Engine.Graphics;
+
+using Game.Modding.Blocks;
+
+namespace Game.Blocks.Presentation;
+
+public class WoodenClubBlockPresentation(WoodenClubBlock block, BlockPresentationCatalog catalog)
+    : BlockPresentation(block, catalog)
+{
+    protected new WoodenClubBlock Block => (WoodenClubBlock)base.Block;
+
+    public BlockMesh StandaloneBlockMesh = new();
+
+    public override void GenerateTerrainVertices(
+        BlockGeometryGenerator generator,
+        TerrainGeometry geometry,
+        int value,
+        int x,
+        int y,
+        int z
+    )
+    {
+    }
+
+    public override void DrawBlock(
+        PrimitivesRenderer3D primitivesRenderer,
+        int value,
+        Color color,
+        float size,
+        ref Matrix matrix,
+        DrawBlockEnvironmentData environmentData
+    )
+    {
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneBlockMesh,
+            color,
+            2f * size,
+            ref matrix,
+            environmentData
+        );
+    }
+
+    public override void Initialize()
+    {
+        var num = 47;
+        var model = ContentManager.Get<Model>("Models/WoodenClub");
+        var handleNode = model.FindNode("Handle")!;
+        var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
+        var blockMesh = new BlockMesh();
+        blockMesh.AppendModelPrimitive(
+            handleNode.RequireMesh().Primitives[0],
+            nodeAbsoluteTransform * Matrix.CreateTranslation(0f, -0.5f, 0f),
+            false,
+            false,
+            false,
+            false,
+            Color.White
+        );
+        blockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
+        StandaloneBlockMesh.AppendBlockMesh(blockMesh);
+        base.Initialize();
+    }
+}

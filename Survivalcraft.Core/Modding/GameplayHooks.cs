@@ -1,0 +1,562 @@
+using EntitySystem.Core;
+
+namespace Game.Modding;
+
+public interface IModGameplayHooks
+{
+    IDisposable OnCreatureInjuring(Action<CreatureInjuringContext> handler, int priority = 0);
+
+    IDisposable OnMinerDigging(Action<MinerDiggingContext> handler, int priority = 0);
+
+    IDisposable OnBlockPlacing(Action<BlockPlacingContext> handler, int priority = 0);
+
+    IDisposable OnTerrainCellChanging(Action<TerrainCellChangingContext> handler, int priority = 0);
+
+    IDisposable OnEntityAdded(Action<EntityAddedContext> handler, int priority = 0);
+
+    IDisposable OnWorldUpdating(Action<WorldUpdatingContext> handler, int priority = 0);
+
+    IDisposable OnTerrainChunkGenerated(Action<TerrainChunkGeneratedContext> handler, int priority = 0);
+
+    IDisposable OnTerrainChunkInitialized(Action<TerrainChunkInitializedContext> handler, int priority = 0);
+
+    IDisposable OnTerrainChunkDiscarding(Action<TerrainChunkDiscardingContext> handler, int priority = 0);
+
+    IDisposable OnPlayerDying(Action<PlayerDyingContext> handler, int priority = 0);
+
+    IDisposable OnPlayerSpawned(Action<PlayerSpawnedContext> handler, int priority = 0);
+
+    IDisposable OnPlayerRespawnRequested(Action<PlayerRespawnRequestedContext> handler, int priority = 0);
+
+    IDisposable OnCreatureTargetScoring(Action<CreatureTargetScoringContext> handler, int priority = 0);
+
+    IDisposable OnCellIgniting(Action<CellIgnitingContext> handler, int priority = 0);
+
+    IDisposable OnExplosionPointProcessing(Action<ExplosionPointProcessingContext> handler, int priority = 0);
+
+    IDisposable OnTerrainCollisionBoxes(Action<TerrainCollisionBoxesContext> handler, int priority = 0);
+
+    IDisposable OnMounting(Action<MountingContext> handler, int priority = 0);
+
+    IDisposable OnPistonBlockMoving(Action<PistonBlockMovingContext> handler, int priority = 0);
+
+    IDisposable OnMovingBlockSetTerrainCollision(
+        Action<MovingBlockSetTerrainCollisionContext> handler,
+        int priority = 0
+    );
+}
+
+public sealed class GameplayHooks
+{
+    private readonly ModHook<CreatureInjuringContext> _creatureInjuring = new();
+
+    private readonly ModHook<MinerDiggingContext> _minerDigging = new();
+
+    private readonly ModHook<BlockPlacingContext> _blockPlacing = new();
+
+    private readonly ModHook<TerrainCellChangingContext> _terrainCellChanging = new();
+
+    private readonly ModHook<EntityAddedContext> _entityAdded = new();
+
+    private readonly ModHook<WorldUpdatingContext> _worldUpdating = new();
+
+    private readonly ModHook<TerrainChunkGeneratedContext> _terrainChunkGenerated = new();
+
+    private readonly ModHook<TerrainChunkInitializedContext> _terrainChunkInitialized = new();
+
+    private readonly ModHook<TerrainChunkDiscardingContext> _terrainChunkDiscarding = new();
+
+    private readonly ModHook<PlayerDyingContext> _playerDying = new();
+
+    private readonly ModHook<PlayerSpawnedContext> _playerSpawned = new();
+
+    private readonly ModHook<PlayerRespawnRequestedContext> _playerRespawnRequested = new();
+
+    private readonly ModHook<CreatureTargetScoringContext> _creatureTargetScoring = new();
+
+    private readonly ModHook<CellIgnitingContext> _cellIgniting = new();
+
+    private readonly ModHook<ExplosionPointProcessingContext> _explosionPointProcessing = new();
+
+    private readonly ModHook<TerrainCollisionBoxesContext> _terrainCollisionBoxes = new();
+
+    private readonly ModHook<MountingContext> _mounting = new();
+
+    private readonly ModHook<PistonBlockMovingContext> _pistonBlockMoving = new();
+
+    private readonly ModHook<MovingBlockSetTerrainCollisionContext> _movingBlockSetTerrainCollision = new();
+
+    internal bool HasExplosionPointProcessingHandlers => _explosionPointProcessing.HasHandlers;
+
+    internal bool HasTerrainCollisionBoxesHandlers => _terrainCollisionBoxes.HasHandlers;
+
+    public void Invoke(CreatureInjuringContext context) => _creatureInjuring.Invoke(context);
+
+    public void Invoke(MinerDiggingContext context) => _minerDigging.Invoke(context);
+
+    public void Invoke(BlockPlacingContext context) => _blockPlacing.Invoke(context);
+
+    public void Invoke(TerrainCellChangingContext context) => _terrainCellChanging.Invoke(context);
+
+    public void Invoke(EntityAddedContext context) => _entityAdded.Invoke(context);
+
+    public void Invoke(WorldUpdatingContext context) => _worldUpdating.Invoke(context);
+
+    public void Invoke(TerrainChunkGeneratedContext context) => _terrainChunkGenerated.Invoke(context);
+
+    public void Invoke(TerrainChunkInitializedContext context) => _terrainChunkInitialized.Invoke(context);
+
+    public void Invoke(TerrainChunkDiscardingContext context) => _terrainChunkDiscarding.Invoke(context);
+
+    public void Invoke(PlayerDyingContext context) => _playerDying.Invoke(context);
+
+    public void Invoke(PlayerSpawnedContext context) => _playerSpawned.Invoke(context);
+
+    public void Invoke(PlayerRespawnRequestedContext context) => _playerRespawnRequested.Invoke(context);
+
+    public void Invoke(CreatureTargetScoringContext context) => _creatureTargetScoring.Invoke(context);
+
+    public void Invoke(CellIgnitingContext context) => _cellIgniting.Invoke(context);
+
+    public void Invoke(ExplosionPointProcessingContext context) => _explosionPointProcessing.Invoke(context);
+
+    public void Invoke(TerrainCollisionBoxesContext context) => _terrainCollisionBoxes.Invoke(context);
+
+    public void Invoke(MountingContext context) => _mounting.Invoke(context);
+
+    public void Invoke(PistonBlockMovingContext context) => _pistonBlockMoving.Invoke(context);
+
+    public void Invoke(MovingBlockSetTerrainCollisionContext context) =>
+        _movingBlockSetTerrainCollision.Invoke(context);
+
+    public IModGameplayHooks ForOwner(ModId owner) => new OwnedGameplayHooks(owner, this);
+
+    public void Freeze()
+    {
+        _creatureInjuring.Freeze();
+        _minerDigging.Freeze();
+        _blockPlacing.Freeze();
+        _terrainCellChanging.Freeze();
+        _entityAdded.Freeze();
+        _worldUpdating.Freeze();
+        _terrainChunkGenerated.Freeze();
+        _terrainChunkInitialized.Freeze();
+        _terrainChunkDiscarding.Freeze();
+        _playerDying.Freeze();
+        _playerSpawned.Freeze();
+        _playerRespawnRequested.Freeze();
+        _creatureTargetScoring.Freeze();
+        _cellIgniting.Freeze();
+        _explosionPointProcessing.Freeze();
+        _terrainCollisionBoxes.Freeze();
+        _mounting.Freeze();
+        _pistonBlockMoving.Freeze();
+        _movingBlockSetTerrainCollision.Freeze();
+    }
+
+    public void RemoveOwner(ModId owner)
+    {
+        _creatureInjuring.RemoveOwner(owner);
+        _minerDigging.RemoveOwner(owner);
+        _blockPlacing.RemoveOwner(owner);
+        _terrainCellChanging.RemoveOwner(owner);
+        _entityAdded.RemoveOwner(owner);
+        _worldUpdating.RemoveOwner(owner);
+        _terrainChunkGenerated.RemoveOwner(owner);
+        _terrainChunkInitialized.RemoveOwner(owner);
+        _terrainChunkDiscarding.RemoveOwner(owner);
+        _playerDying.RemoveOwner(owner);
+        _playerSpawned.RemoveOwner(owner);
+        _playerRespawnRequested.RemoveOwner(owner);
+        _creatureTargetScoring.RemoveOwner(owner);
+        _cellIgniting.RemoveOwner(owner);
+        _explosionPointProcessing.RemoveOwner(owner);
+        _terrainCollisionBoxes.RemoveOwner(owner);
+        _mounting.RemoveOwner(owner);
+        _pistonBlockMoving.RemoveOwner(owner);
+        _movingBlockSetTerrainCollision.RemoveOwner(owner);
+    }
+
+    private sealed class OwnedGameplayHooks(ModId owner, GameplayHooks hooks) : IModGameplayHooks
+    {
+        public IDisposable OnCreatureInjuring(Action<CreatureInjuringContext> handler, int priority = 0) =>
+            hooks._creatureInjuring.Register(owner, handler, priority);
+
+        public IDisposable OnMinerDigging(Action<MinerDiggingContext> handler, int priority = 0) =>
+            hooks._minerDigging.Register(owner, handler, priority);
+
+        public IDisposable OnBlockPlacing(Action<BlockPlacingContext> handler, int priority = 0) =>
+            hooks._blockPlacing.Register(owner, handler, priority);
+
+        public IDisposable OnTerrainCellChanging(Action<TerrainCellChangingContext> handler, int priority = 0) =>
+            hooks._terrainCellChanging.Register(owner, handler, priority);
+
+        public IDisposable OnEntityAdded(Action<EntityAddedContext> handler, int priority = 0) =>
+            hooks._entityAdded.Register(owner, handler, priority);
+
+        public IDisposable OnWorldUpdating(Action<WorldUpdatingContext> handler, int priority = 0) =>
+            hooks._worldUpdating.Register(owner, handler, priority);
+
+        public IDisposable OnTerrainChunkGenerated(Action<TerrainChunkGeneratedContext> handler, int priority = 0) =>
+            hooks._terrainChunkGenerated.Register(owner, handler, priority);
+
+        public IDisposable
+            OnTerrainChunkInitialized(Action<TerrainChunkInitializedContext> handler, int priority = 0) =>
+            hooks._terrainChunkInitialized.Register(owner, handler, priority);
+
+        public IDisposable OnTerrainChunkDiscarding(Action<TerrainChunkDiscardingContext> handler, int priority = 0) =>
+            hooks._terrainChunkDiscarding.Register(owner, handler, priority);
+
+        public IDisposable OnPlayerDying(Action<PlayerDyingContext> handler, int priority = 0) =>
+            hooks._playerDying.Register(owner, handler, priority);
+
+        public IDisposable OnPlayerSpawned(Action<PlayerSpawnedContext> handler, int priority = 0) =>
+            hooks._playerSpawned.Register(owner, handler, priority);
+
+        public IDisposable OnPlayerRespawnRequested(Action<PlayerRespawnRequestedContext> handler, int priority = 0) =>
+            hooks._playerRespawnRequested.Register(owner, handler, priority);
+
+        public IDisposable OnCreatureTargetScoring(Action<CreatureTargetScoringContext> handler, int priority = 0) =>
+            hooks._creatureTargetScoring.Register(owner, handler, priority);
+
+        public IDisposable OnCellIgniting(Action<CellIgnitingContext> handler, int priority = 0) =>
+            hooks._cellIgniting.Register(owner, handler, priority);
+
+        public IDisposable OnExplosionPointProcessing(
+            Action<ExplosionPointProcessingContext> handler,
+            int priority = 0
+        ) =>
+            hooks._explosionPointProcessing.Register(owner, handler, priority);
+
+        public IDisposable OnTerrainCollisionBoxes(Action<TerrainCollisionBoxesContext> handler, int priority = 0) =>
+            hooks._terrainCollisionBoxes.Register(owner, handler, priority);
+
+        public IDisposable OnMounting(Action<MountingContext> handler, int priority = 0) =>
+            hooks._mounting.Register(owner, handler, priority);
+
+        public IDisposable OnPistonBlockMoving(Action<PistonBlockMovingContext> handler, int priority = 0) =>
+            hooks._pistonBlockMoving.Register(owner, handler, priority);
+
+        public IDisposable OnMovingBlockSetTerrainCollision(
+            Action<MovingBlockSetTerrainCollisionContext> handler,
+            int priority = 0
+        ) =>
+            hooks._movingBlockSetTerrainCollision.Register(owner, handler, priority);
+    }
+}
+
+internal sealed class ModHook<TContext> where TContext : IWorldHookContext
+{
+    private readonly List<Registration> _registrations = [];
+
+    private Registration[] _handlers = [];
+
+    private bool _isFrozen;
+
+    private long _sequence;
+
+    public bool HasHandlers => _handlers.Length > 0;
+
+    public IDisposable Register(ModId owner, Action<TContext> handler, int priority)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        if (_isFrozen)
+        {
+            throw new InvalidOperationException("Gameplay hooks are frozen.");
+        }
+
+        var registration = new Registration(this, owner, handler, priority, _sequence++);
+        _registrations.Add(registration);
+        return registration;
+    }
+
+    public void Invoke(TContext context)
+    {
+        if (_handlers.Length == 0) { return; }
+
+        var project = context.Project;
+        if (project.IsDisposed) { return; }
+
+        var runtime = WorldRuntimeContext.For(project);
+        foreach (var registration in _handlers)
+        {
+            if (runtime.IsClosed || project.IsDisposed) { break; }
+
+            try
+            {
+                registration.Handler(context);
+            }
+            catch (Exception exception)
+            {
+                Log.Error($"Mod {registration.Owner} gameplay hook failed: {exception}");
+            }
+        }
+    }
+
+    public void Freeze()
+    {
+        _isFrozen = true;
+        RebuildHandlers();
+    }
+
+    public void RemoveOwner(ModId owner)
+    {
+        _registrations.RemoveAll(registration => registration.Owner == owner);
+        RebuildHandlers();
+    }
+
+    private void Remove(Registration registration)
+    {
+        _registrations.Remove(registration);
+        RebuildHandlers();
+    }
+
+    private void RebuildHandlers()
+    {
+        _handlers = _registrations
+            .OrderByDescending(registration => registration.Priority)
+            .ThenBy(registration => registration.Sequence)
+            .ToArray();
+    }
+
+    private sealed class Registration(
+        ModHook<TContext> hook,
+        ModId owner,
+        Action<TContext> handler,
+        int priority,
+        long sequence
+    ) : IDisposable
+    {
+        private ModHook<TContext>? _hook = hook;
+
+        public ModId Owner { get; } = owner;
+
+        public Action<TContext> Handler { get; } = handler;
+
+        public int Priority { get; } = priority;
+
+        public long Sequence { get; } = sequence;
+
+        public void Dispose() => Interlocked.Exchange(ref _hook, null)?.Remove(this);
+    }
+}
+
+public sealed class CreatureInjuringContext(
+    ComponentHealth health,
+    float amount,
+    ComponentCreature? attacker,
+    bool ignoreInvulnerability,
+    LocalizedText cause
+) : IWorldHookContext
+{
+    public Project Project => Health.Project;
+
+    public ComponentHealth Health { get; } = health;
+
+    public float Amount { get; set; } = amount;
+
+    public ComponentCreature? Attacker { get; set; } = attacker;
+
+    public bool IgnoreInvulnerability { get; set; } = ignoreInvulnerability;
+
+    public LocalizedText Cause { get; set; } = cause;
+
+    public bool Cancel { get; set; }
+}
+
+public sealed class MinerDiggingContext(
+    ComponentMiner miner,
+    TerrainRaycastResult raycastResult,
+    int cellValue,
+    int toolValue
+) : IWorldHookContext
+{
+    public Project Project => Miner.Project;
+
+    public ComponentMiner Miner { get; } = miner;
+
+    public TerrainRaycastResult RaycastResult { get; } = raycastResult;
+
+    public int CellValue { get; } = cellValue;
+
+    public int ToolValue { get; } = toolValue;
+
+    public float DigTimeMultiplier { get; set; } = 1f;
+
+    public bool Cancel { get; set; }
+}
+
+public sealed class BlockPlacingContext(ComponentMiner miner, TerrainRaycastResult raycastResult, int value)
+    : IWorldHookContext
+{
+    public Project Project => Miner.Project;
+
+    public ComponentMiner Miner { get; } = miner;
+
+    public TerrainRaycastResult RaycastResult { get; } = raycastResult;
+
+    public int Value { get; set; } = value;
+
+    public bool Cancel { get; set; }
+}
+
+public sealed class TerrainCellChangingContext(
+    SubsystemTerrain terrain,
+    int x,
+    int y,
+    int z,
+    int oldValue,
+    int newValue,
+    ComponentMiner? miner
+) : IWorldHookContext
+{
+    public Project Project => Terrain.Project;
+
+    public SubsystemTerrain Terrain { get; } = terrain;
+
+    public int X { get; } = x;
+
+    public int Y { get; } = y;
+
+    public int Z { get; } = z;
+
+    public int OldValue { get; } = oldValue;
+
+    public int NewValue { get; set; } = newValue;
+
+    public ComponentMiner? Miner { get; } = miner;
+
+    public bool Cancel { get; set; }
+}
+
+public sealed class EntityAddedContext(Project project, Entity entity) : IWorldHookContext
+{
+    public Project Project { get; } = project;
+
+    public Entity Entity { get; } = entity;
+}
+
+public sealed class WorldUpdatingContext(Project project, float deltaTime) : IWorldHookContext
+{
+    public Project Project { get; } = project;
+
+    public float DeltaTime { get; } = deltaTime;
+}
+
+public sealed class PlayerDyingContext(CharacterData player, ComponentCharacter componentCharacter) : IWorldHookContext
+{
+    public Project Project => ComponentCharacter.Project;
+
+    public CharacterData Player { get; } = player;
+
+    public ComponentCharacter ComponentCharacter { get; } = componentCharacter;
+
+    public float Health { get; set; } = componentCharacter.ComponentHealth.Health;
+
+    public LocalizedText CauseOfDeath { get; set; } = componentCharacter.ComponentHealth.CauseOfDeath;
+
+    public bool Cancel { get; set; }
+}
+
+public sealed class PlayerSpawnedContext(
+    CharacterData player,
+    ComponentCharacter componentCharacter,
+    CharacterData.SpawnMode spawnMode
+) : IWorldHookContext
+{
+    public Project Project => ComponentCharacter.Project;
+
+    public CharacterData Player { get; } = player;
+
+    public ComponentCharacter ComponentCharacter { get; } = componentCharacter;
+
+    public CharacterData.SpawnMode SpawnMode { get; } = spawnMode;
+}
+
+public enum PlayerRespawnRequestKind
+{
+    StandardRespawn = 0,
+
+    CruelGameOver = 1,
+
+    RespawnForbidden = 2,
+
+    AdventureRestart = 3
+}
+
+public sealed class PlayerRespawnRequestedContext(
+    CharacterData player,
+    ComponentCharacter componentCharacter,
+    PlayerRespawnRequestKind requestKind
+) : IWorldHookContext
+{
+    public Project Project => ComponentCharacter.Project;
+
+    public CharacterData Player { get; } = player;
+
+    public ComponentCharacter ComponentCharacter { get; } = componentCharacter;
+
+    public PlayerRespawnRequestKind RequestKind { get; } = requestKind;
+
+    public bool Cancel { get; set; }
+}
+
+public enum CreatureTargetingKind
+{
+    FindCharacter = 0,
+
+    AvoidCharacter = 1,
+
+    Chase = 2,
+
+    Stare = 3
+}
+
+public sealed class CreatureTargetScoringContext(
+    ComponentCreature seeker,
+    ComponentCreature target,
+    CreatureTargetingKind targetingKind,
+    float score
+) : IWorldHookContext
+{
+    public Project Project => Seeker.Project;
+
+    public ComponentCreature Seeker { get; } = seeker;
+
+    public ComponentCreature Target { get; } = target;
+
+    public CreatureTargetingKind TargetingKind { get; } = targetingKind;
+
+    public ComponentCharacter? TargetPlayer => Target.Entity.FindComponent<ComponentCharacter>();
+
+    public float Score { get; set; } = score;
+
+    public bool Cancel { get; set; }
+}
+
+public sealed class TerrainChunkGeneratedContext(SubsystemTerrain terrain, TerrainChunk chunk) : IWorldHookContext
+{
+    public Project Project => Terrain.Project;
+
+    public SubsystemTerrain Terrain { get; } = terrain;
+
+    public TerrainChunk Chunk { get; } = chunk;
+}
+
+public sealed class TerrainChunkInitializedContext(SubsystemTerrain terrain, TerrainChunk chunk) : IWorldHookContext
+{
+    public Project Project => Terrain.Project;
+
+    public SubsystemTerrain Terrain { get; } = terrain;
+
+    public TerrainChunk Chunk { get; } = chunk;
+}
+
+public sealed class TerrainChunkDiscardingContext(SubsystemTerrain terrain, TerrainChunk chunk) : IWorldHookContext
+{
+    public Project Project => Terrain.Project;
+
+    public SubsystemTerrain Terrain { get; } = terrain;
+
+    public TerrainChunk Chunk { get; } = chunk;
+}

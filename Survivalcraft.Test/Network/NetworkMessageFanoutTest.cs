@@ -2,21 +2,34 @@ using System.Reflection;
 
 using Game.Network;
 using Game.Network.Diagnostics;
+using Game.Network.Handling;
 using Game.Network.Transport;
+using Game.World;
 
 namespace Survivalcraft.Test.Network;
 
-public sealed class NetworkMessageFanoutTest
+public sealed class NetworkMessageFanoutTest : IDisposable
 {
+    private readonly WorldRuntimeContext _runtime = new(RuntimeSide.Authority, false);
+
+    public void Dispose() => _runtime.Close();
+
     [Fact]
     public void FlushingWithoutRecipientsCountsEachLogicalEmission()
     {
-        var node = new NetNode();
+        var node = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        );
         var package = new EntityRemovedPackage { EntityId = 42 };
         node.QueuePackage(package, PackageAudience.Global);
         node.QueuePackage(package, PackageAudience.Global);
         var flush = typeof(NetNode).GetMethod("FlushPendingPackages", BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(flush);
+        flush.Invoke(node, null);
+        // A cold first emission can exhaust the per-update work budget before the second message.
         flush.Invoke(node, null);
         var result = Assert.Single(node.SendStatistics.GetFanout());
         Assert.Equal(typeof(EntityRemovedPackage), result.PackageType);
@@ -32,16 +45,16 @@ public sealed class NetworkMessageFanoutTest
     {
         var statistics = new NetworkSendStatistics();
         var message = new NetworkMessageFanout(statistics, typeof(OnlineCharacterStatePackage), NetworkChannel.Bulk);
-        var first = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var second = new Client(null, 2, Guid.NewGuid(), Guid.NewGuid(), null);
+        var first = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        var second = new Client(null, 2, Guid.NewGuid(), Guid.NewGuid());
         message.Advance(1, 2);
         var pending = new List<OutboundPackage>
         {
-            new(new OnlineCharacterStatePackage(), PackageAudience.To(first))
+            new(new OnlineCharacterStatePackage(), PackageAudience.To(first), _runtime)
             {
                 Fanout = message
             },
-            new(new OnlineCharacterStatePackage(), PackageAudience.To(second))
+            new(new OnlineCharacterStatePackage(), PackageAudience.To(second), _runtime)
             {
                 Fanout = message
             }
@@ -49,7 +62,7 @@ public sealed class NetworkMessageFanoutTest
         Assert.True(
             SnapshotPackageCoalescer.TryCoalesce(
                 pending,
-                new OutboundPackage(new OnlineCharacterStatePackage(), PackageAudience.To(first))
+                new OutboundPackage(new OnlineCharacterStatePackage(), PackageAudience.To(first), _runtime)
             )
         );
         Assert.Empty(statistics.GetFanout());
@@ -65,7 +78,7 @@ public sealed class NetworkMessageFanoutTest
         var statistics = new NetworkSendStatistics();
         var message = new NetworkMessageFanout(statistics, typeof(EntityRemovedPackage), NetworkChannel.Bulk);
         var clients = Enumerable.Range(0, 64)
-            .Select(_ => new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null)).ToArray();
+            .Select(_ => new Client(null, 1, Guid.NewGuid(), Guid.NewGuid())).ToArray();
         message.Advance(1, clients.Length);
         Parallel.ForEach(
             clients,
@@ -87,8 +100,8 @@ public sealed class NetworkMessageFanoutTest
     {
         var statistics = new NetworkSendStatistics();
         var message = new NetworkMessageFanout(statistics, typeof(EntityRemovedPackage), NetworkChannel.Bulk);
-        var first = new Client(null, 7, Guid.NewGuid(), Guid.NewGuid(), null);
-        var second = new Client(null, 7, Guid.NewGuid(), Guid.NewGuid(), null);
+        var first = new Client(null, 7, Guid.NewGuid(), Guid.NewGuid());
+        var second = new Client(null, 7, Guid.NewGuid(), Guid.NewGuid());
         message.DeliveredTo(first);
         message.DeliveredTo(first);
         message.Advance(1, 2);
@@ -112,7 +125,7 @@ public sealed class NetworkMessageFanoutTest
         var statistics = new NetworkSendStatistics();
         var message = new NetworkMessageFanout(statistics, typeof(EntityRemovedPackage), NetworkChannel.Bulk);
         message.Advance(1, 2);
-        message.DeliveredTo(new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null));
+        message.DeliveredTo(new Client(null, 1, Guid.NewGuid(), Guid.NewGuid()));
         message.Advance(2, 0);
         Assert.Equal(1, Assert.Single(statistics.GetFanout()).RecipientDeliveries);
         var empty = new NetworkMessageFanout(statistics, typeof(EntityRemovedPackage), NetworkChannel.Bulk);
@@ -139,10 +152,10 @@ public sealed class NetworkMessageFanoutTest
     {
         var statistics = new NetworkSendStatistics();
         var message = new NetworkMessageFanout(statistics, typeof(OnlineCharacterStatePackage), NetworkChannel.Bulk);
-        message.DeliveredTo(new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null));
+        message.DeliveredTo(new Client(null, 1, Guid.NewGuid(), Guid.NewGuid()));
         var pending = new List<OutboundPackage>
         {
-            new(new OnlineCharacterStatePackage(), PackageAudience.Global)
+            new(new OnlineCharacterStatePackage(), PackageAudience.Global, _runtime)
             {
                 Fanout = message
             }
@@ -150,7 +163,7 @@ public sealed class NetworkMessageFanoutTest
         Assert.True(
             SnapshotPackageCoalescer.TryCoalesce(
                 pending,
-                new OutboundPackage(new OnlineCharacterStatePackage(), PackageAudience.Global)
+                new OutboundPackage(new OnlineCharacterStatePackage(), PackageAudience.Global, _runtime)
             )
         );
         Assert.Null(Assert.Single(pending).Fanout);

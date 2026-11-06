@@ -70,7 +70,7 @@ public sealed class ServerSourceCatalogPanel : ServicePanelWidget
                     new MessageDialog(
                         Text("Info"),
                         source.Name + "\n" + source.ApiUrl + "\n" + source.RepositoryName + "\n" + source.Description,
-                        LanguageManager.Ok
+                        Localization.ClientLanguage.Catalog.Ok
                     )
                 );
             }
@@ -253,6 +253,6 @@ public sealed class ServerSourceCatalogPanel : ServicePanelWidget
 
     private static string Text(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(ServerSourceCatalogPanel), key);
+        return Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(ServerSourceCatalogPanel), key);
     }
 }

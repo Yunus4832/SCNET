@@ -36,7 +36,7 @@ public sealed class HealthBaselineTest
             Health = health,
             Air = 0.65f,
             DeathTime = deathTime < 0 ? null : deathTime,
-            CauseOfDeath = cause
+            CauseOfDeath = LocalizedText.Literal(cause)
         };
         var values = new ValuesDictionary();
         values.SetValue("AttackResilience", 10f);
@@ -47,7 +47,7 @@ public sealed class HealthBaselineTest
         values.SetValue("CanStrand", false);
         values.SetValue("AirCapacity", 10f);
         values.SetValue("DeathTime", -1.0);
-        values.SetValue("CauseOfDeath", "");
+
         component.Save(values, new EntityToIdMap([]));
         var restored = new ComponentHealth();
         typeof(Component).GetProperty(nameof(Component.Entity))!.SetValue(restored, entity);
@@ -58,7 +58,7 @@ public sealed class HealthBaselineTest
         Assert.Equal(health, restored.Health);
         Assert.Equal(component.Air, restored.Air);
         Assert.Equal(component.DeathTime, restored.DeathTime);
-        Assert.Equal(cause, restored.CauseOfDeath);
+        Assert.Equal(LocalizedText.Literal(cause), restored.CauseOfDeath);
         Assert.Equal(pending, CommonLib.Net.PendingPackageCount);
     }
 

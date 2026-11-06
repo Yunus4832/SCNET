@@ -5,10 +5,8 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Components;
-using Game.Managers;
 using Game.Network;
 using Game.Subsystems;
-using Game.World;
 
 using Survivalcraft.Test.Modding;
 
@@ -18,12 +16,11 @@ namespace Survivalcraft.Test.Network;
 public sealed class OnFireBaselineTest
 {
     [Theory]
-    [InlineData(WorldRole.RemoteClient)]
-    [InlineData(WorldRole.Server)]
-    [InlineData(WorldRole.SinglePlayer)]
-    public void LoadingRestoresFireWithoutSendingIgnitionEvent(WorldRole mode)
+    [InlineData(NodeRole.Client)]
+    [InlineData(NodeRole.Authority)]
+    public void LoadingRestoresFireWithoutSendingIgnitionEvent(NodeRole mode)
     {
-        var original = GameManager.Role;
+        var original = CommonLib.Net.Role;
         var pending = CommonLib.Net.PendingPackageCount;
         CommonLib.Net.Role = mode;
         try

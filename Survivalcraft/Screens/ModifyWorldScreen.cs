@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Admission;
+using Game.Application;
 
 namespace Game.Screens;
 
@@ -25,6 +26,8 @@ public class ModifyWorldScreen : Screen
     private bool _changingGameModeAllowed;
 
     private readonly ValuesDictionary _currentWorldSettingsData = new();
+
+    private WorldHostingSettings _hosting = new();
 
     private string _directoryName = string.Empty;
 
@@ -74,13 +77,15 @@ public class ModifyWorldScreen : Screen
             ScreensManager.PreviousScreen?.GetType() == typeof(WorldServerSettingsScreen);
         _directoryName = (string)parameters[0];
         WorldSettings = (WorldSettings)parameters[1];
+        _hosting = parameters.OfType<WorldHostingSettings>().FirstOrDefault() ?? _hosting;
         if (!isReturningFromServerSettings)
         {
             _admission = new WorldAdmissionDraft
-                { Configuration = WorldsManager.ReadAdmissionPolicy(_directoryName) };
+                { Configuration = ClientApplication.Worlds.ReadAdmissionPolicy(_directoryName) };
             _originalAdmission = _admission.Configuration.Fingerprint();
             _originalWorldSettingsData.Clear();
             WorldSettings.Save(_originalWorldSettingsData, true);
+            _hosting.Save(_originalWorldSettingsData, WorldSettings.Name);
         }
 
         // 修改逻辑：根据 allowGameModeChangeInCruelMode 的值来决定是否允许更改游戏模式
@@ -94,7 +99,7 @@ public class ModifyWorldScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new SelectGameModeDialog(
-                    LanguageManager.GetContentWidgets(_typeName, 3),
+                    Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 3),
                     _cruelAllowed,
                     delegate(GameMode gameMode) { WorldSettings.GameMode = gameMode; },
                     WorldSettings.GameMode
@@ -104,12 +109,14 @@ public class ModifyWorldScreen : Screen
 
         _currentWorldSettingsData.Clear();
         WorldSettings.Save(_currentWorldSettingsData, true);
+        _hosting.Save(_currentWorldSettingsData, WorldSettings.Name);
         var flag = !CompareValueDictionaries(_originalWorldSettingsData, _currentWorldSettingsData) ||
                    _originalAdmission != _admission.Configuration.Fingerprint();
-        var flag2 = WorldsManager.ValidateWorldName(WorldSettings.Name);
+        var flag2 = ClientApplication.Worlds.ValidateWorldName(WorldSettings.Name);
         _nameTextBox.Text = WorldSettings.Name;
         _seedLabel.Text = WorldSettings.Seed;
-        _gameModeButton.Text = LanguageManager.Get("GameMode", WorldSettings.GameMode.ToString());
+        _gameModeButton.Text =
+            Localization.ClientLanguage.Catalog.Get("GameMode", WorldSettings.GameMode.ToString());
         _gameModeButton.IsEnabled = _changingGameModeAllowed;
         _errorLabel.IsVisible = !flag2;
         _applyButton.IsEnabled = flag2 && flag;
@@ -126,7 +133,8 @@ public class ModifyWorldScreen : Screen
                 "ModifyWorld",
                 _directoryName,
                 WorldSettings,
-                _admission
+                _admission,
+                _hosting
             );
         }
 
@@ -137,7 +145,7 @@ public class ModifyWorldScreen : Screen
                 WorldSettings.ResetOptionsForNonCreativeMode();
             }
 
-            WorldsManager.ChangeWorld(_directoryName, WorldSettings, _admission.Configuration);
+            ClientApplication.Worlds.ChangeWorld(_directoryName, WorldSettings, _hosting, _admission.Configuration);
             ScreensManager.SwitchScreen("Play");
         }
 
@@ -148,10 +156,10 @@ public class ModifyWorldScreen : Screen
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageManager.Get(_typeName, 3),
-                        LanguageManager.Get(_typeName, 4),
-                        LanguageManager.Get("Usual", "yes"),
-                        LanguageManager.Get("Usual", "no"),
+                        Localization.ClientLanguage.Catalog.Get(_typeName, 3),
+                        Localization.ClientLanguage.Catalog.Get(_typeName, 4),
+                        Localization.ClientLanguage.Catalog.Get("Usual", "yes"),
+                        Localization.ClientLanguage.Catalog.Get("Usual", "no"),
                         delegate(MessageDialogButton button)
                         {
                             if (button == MessageDialogButton.Button1)

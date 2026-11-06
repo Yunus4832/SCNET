@@ -10,4 +10,8 @@ public sealed record EntityDamagePackage : ComponentHealthPackage
     [Key(0)] public int TargetId { get; init; }
 
     [Key(1)] public float Health { get; init; }
+
+    [Key(2)] public bool Destroyed { get; init; }
+
+    [Key(3)] public bool IsAttack { get; init; }
 }

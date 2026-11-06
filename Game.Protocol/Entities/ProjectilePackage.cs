@@ -31,7 +31,11 @@ public abstract record ProjectilePackage : IProtocolMessage
 
         MagmaSplash = 3,
 
-        Sizzle = 4
+        Sizzle = 4,
+
+        FireworksWhoosh = 5,
+
+        FireworksExplosion = 6
     }
 
     [IgnoreMember] public abstract EventType Type { get; }

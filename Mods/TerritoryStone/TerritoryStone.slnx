@@ -1,0 +1,5 @@
+<Solution>
+    <Project Path="TerritoryStoneMod/TerritoryStoneMod.csproj"/>
+    <Project Path="TerritoryStoneMod.Client/TerritoryStoneMod.Client.csproj"/>
+    <Project Path="TerritoryStoneMod.Test/TerritoryStoneMod.Test.csproj"/>
+</Solution>

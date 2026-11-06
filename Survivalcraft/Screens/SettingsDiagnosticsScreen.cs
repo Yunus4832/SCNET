@@ -32,15 +32,17 @@ public class SettingsDiagnosticsScreen : Screen
 
     public override void Update()
     {
-        GameManager.UpdateProject();
         if (_relayPreference.IsClicked)
         {
-            SettingsManager.Current.InvitationRelayPolicy = (RelayPolicy)(
-                ((int)SettingsManager.Current.InvitationRelayPolicy + 1) % Enum.GetValues<RelayPolicy>().Length);
+            Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy = (RelayPolicy)(
+                ((int)Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy + 1) %
+                Enum.GetValues<RelayPolicy>().Length);
             SettingsManager.SaveSettings();
         }
 
-        _relayPreference.Text = P2PRoomStatusDialog.Text($"Relay{SettingsManager.Current.InvitationRelayPolicy}");
+        _relayPreference.Text = P2PRoomStatusDialog.Text(
+            $"Relay{Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy}"
+        );
         if (_displayDebugInfoButton.IsClicked)
         {
             DebugOverlayManager.ToggleVisibility();
@@ -48,7 +50,8 @@ public class SettingsDiagnosticsScreen : Screen
 
         if (_displayFpsRibbonButton.IsClicked)
         {
-            SettingsManager.Current.DisplayFpsRibbon = !SettingsManager.Current.DisplayFpsRibbon;
+            Configuration.ClientConfiguration.Preferences.DisplayFpsRibbon =
+                !Configuration.ClientConfiguration.Preferences.DisplayFpsRibbon;
         }
 
         if (_viewGameLogButton.IsClicked)
@@ -58,27 +61,30 @@ public class SettingsDiagnosticsScreen : Screen
 
         if (_useReducedZRangeButton.IsClicked)
         {
-            SettingsManager.Current.UseReducedZRange = !SettingsManager.Current.UseReducedZRange;
+            Configuration.ClientConfiguration.Preferences.UseReducedZRange =
+                !Configuration.ClientConfiguration.Preferences.UseReducedZRange;
         }
 
         if (_resetCompatibilityButton.IsClicked)
         {
-            SettingsManager.Current.UseReducedZRange = false;
-            SettingsManager.Current.InvitationRelayPolicy = RelayPolicy.Allowed;
+            Configuration.ClientConfiguration.Preferences.UseReducedZRange = false;
+            Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy = RelayPolicy.Allowed;
             SettingsManager.SaveSettings();
         }
 
-        _displayDebugInfoButton.Text = SettingsManager.Current.DisplayDebugInfo
-            ? LanguageManager.Yes
-            : LanguageManager.No;
-        _displayFpsRibbonButton.Text = SettingsManager.Current.DisplayFpsRibbon
-            ? LanguageManager.Yes
-            : LanguageManager.No;
-        _useReducedZRangeButton.Text = SettingsManager.Current.UseReducedZRange
-            ? LanguageManager.On
-            : LanguageManager.Off;
-        _resetCompatibilityButton.IsEnabled = SettingsManager.Current.UseReducedZRange ||
-                                              SettingsManager.Current.InvitationRelayPolicy != RelayPolicy.Allowed;
+        _displayDebugInfoButton.Text = Configuration.ClientConfiguration.Preferences.DisplayDebugInfo
+            ? Localization.ClientLanguage.Catalog.Yes
+            : Localization.ClientLanguage.Catalog.No;
+        _displayFpsRibbonButton.Text = Configuration.ClientConfiguration.Preferences.DisplayFpsRibbon
+            ? Localization.ClientLanguage.Catalog.Yes
+            : Localization.ClientLanguage.Catalog.No;
+        _useReducedZRangeButton.Text = Configuration.ClientConfiguration.Preferences.UseReducedZRange
+            ? Localization.ClientLanguage.Catalog.On
+            : Localization.ClientLanguage.Catalog.Off;
+        _resetCompatibilityButton.IsEnabled = Configuration.ClientConfiguration.Preferences.UseReducedZRange ||
+                                              Configuration.HostingConfiguration.Preferences
+                                                  .InvitationRelayPolicy !=
+                                              RelayPolicy.Allowed;
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {

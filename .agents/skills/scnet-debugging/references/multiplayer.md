@@ -18,18 +18,16 @@ all server and client processes before deleting only the directories created for
 logs outside those directories first. Do not keep successful lab instances by default.
 
 Normal restart preserves the process instance. Instance switching is a separate exit action.
-Linux restart uses a temporary desktop entry so GUI-to-Headless transitions receive a visible
-terminal; Windows uses process arguments and Android uses an Intent extra.
+GUI restart uses a desktop entry on Linux, process arguments on Windows, and an Intent extra on Android. The standalone server restarts its own executable; it never switches to a GUI entry.
 
 ## Automated startup contract
 
-From the repository root after building the Linux launcher, start the server with transient ports.
+From the repository root after building the Linux GUI launcher and standalone server, start the server with transient ports.
 For Windows use the resolved executable in [windows.md](windows.md).
 
 ```bash
-./Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter \
+./Survivalcraft.Server/bin/Debug/net10.0/linux-x64/Survivalcraft.Server \
   --instance debug-server \
-  --server \
   --session debug-server \
   --world DebugWorld \
   --game-mode Creative \
@@ -42,7 +40,6 @@ Start the GUI client with a transient remote session and explicit player automat
 ```bash
 ./Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter \
   --instance debug-client \
-  --gui \
   --session debug-client \
   --connect 127.0.0.1:28987 \
   --player DebugPlayer
@@ -76,8 +73,8 @@ Use the repository helper to start a GUI-hosted world with an explicit local pla
   --broadcast-port 29988
 ```
 
-The helper launches `--gui --host`. This debugging override forces and persists
-`WorldSettings.RunServer=true` for both new and existing worlds, after which startup follows the
+The helper launches `--host`. This debugging override forces and persists
+`WorldHostingSettings.RunServer=true` for both new and existing worlds, after which startup follows the
 normal GUI server path. The local player is created through the normal GUI server player path.
 Pass `--http-command-port PORT` to the helper when built-in HTTP automation is needed; it enables the host at that transient port. Close the GUI normally when the lab is done.
 

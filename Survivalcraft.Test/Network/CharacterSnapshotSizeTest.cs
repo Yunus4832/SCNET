@@ -1,4 +1,3 @@
-using Game.Network;
 using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
@@ -15,7 +14,7 @@ public sealed class PlayerSnapshotSizeTest
         };
         var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
 
-        var datagram = CommonLib.GetWriter(writer);
+        var datagram = NetworkWireFraming.Wrap(writer);
 
         Assert.InRange(datagram.Length, 1, 507);
         Assert.Equal(PackageTransportPolicy.Snapshot, PackageTransportPolicy.Get(package));

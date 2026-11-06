@@ -13,6 +13,7 @@ namespace Game.Protocol.Blocks;
 [Union(7, typeof(FurnitureSetImportPackage))]
 [Union(8, typeof(FurnitureSetMovePackage))]
 [Union(9, typeof(FurnitureSetRenamedPackage))]
+[Union(10, typeof(FurnitureDesignRenameRequestPackage))]
 public abstract record FurniturePackage : IProtocolMessage
 {
     public enum EventType
@@ -35,7 +36,9 @@ public abstract record FurniturePackage : IProtocolMessage
 
         RemoveFurnitureDesigns = 8,
 
-        ImportFurnitureSet = 9
+        ImportFurnitureSet = 9,
+
+        RenameDesignRequest = 10
     }
 
     [IgnoreMember] public abstract EventType PackageEventType { get; }

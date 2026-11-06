@@ -6,4 +6,6 @@ namespace Game.Protocol.Entities;
 public sealed record WakeupPackage : ComponentSleepPackage
 {
     [IgnoreMember] public override EventType Type => EventType.WakeUp;
+
+    [Key(1)] public SleepWakeReason Reason { get; init; }
 }

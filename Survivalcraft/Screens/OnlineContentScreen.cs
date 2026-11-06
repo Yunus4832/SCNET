@@ -2,6 +2,7 @@ using System.Xml.Linq;
 
 using Content.Packaging;
 
+using Game.Application;
 using Game.Content;
 
 namespace Game.Screens;
@@ -565,7 +566,7 @@ public sealed class OnlineContentScreen : Screen
         _statusLabel.Text = Text("Downloading");
         var cancellation = new CancellationTokenSource();
         _cancellation = cancellation;
-        var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
+        var cache = new ContentPackageCache(Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache));
         var service = new ContentDownloadService(ContentServerClientPool.Shared, cache);
         var entry = _selectedEntry;
         Task.Run(
@@ -748,7 +749,7 @@ public sealed class OnlineContentScreen : Screen
 
     private void RefreshReferences()
     {
-        var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
+        var cache = new ContentPackageCache(Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache));
         cache.RebuildIndex();
         var cached = cache.List();
         _state.SetReferences(
@@ -776,7 +777,7 @@ public sealed class OnlineContentScreen : Screen
 
     private static string Text(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(OnlineContentScreen), key);
+        return Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(OnlineContentScreen), key);
     }
 
     private static string GetContentTypeName(ContentPackageType type)

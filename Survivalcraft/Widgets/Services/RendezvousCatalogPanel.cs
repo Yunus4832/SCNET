@@ -82,7 +82,7 @@ public sealed class RendezvousCatalogPanel : ServicePanelWidget
                         source.RepositoryName +
                         "\n" +
                         source.Description,
-                        LanguageManager.Ok
+                        Localization.ClientLanguage.Catalog.Ok
                     )
                 );
             }
@@ -317,6 +317,6 @@ public sealed class RendezvousCatalogPanel : ServicePanelWidget
 
     private static string Text(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(RendezvousCatalogPanel), key);
+        return Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(RendezvousCatalogPanel), key);
     }
 }

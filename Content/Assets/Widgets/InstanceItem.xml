@@ -7,9 +7,6 @@
             <LabelWidget Name="InstanceItem.Status" VerticalAlignment="Center" HorizontalAlignment="Center"
                          FontScale="0.8" Color="180, 180, 180"/>
         </CanvasWidget>
-        <CanvasWidget Size="150, 64">
-            <LabelWidget Name="InstanceItem.RunMode" VerticalAlignment="Center" HorizontalAlignment="Far"
-                         FontScale="0.8" Color="180, 180, 180"/>
-        </CanvasWidget>
+
     </StackPanelWidget>
 </CanvasWidget>

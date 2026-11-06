@@ -2,7 +2,7 @@ using NetCorePal.Extensions.Domain;
 
 namespace ContentServer.Domain.Releases;
 
-public partial record GameReleaseArtifactId : IGuidStronglyTypedId;
+public record GameReleaseArtifactId : IGuidStronglyTypedId;
 
 public sealed class GameReleaseArtifact : Entity<GameReleaseArtifactId>
 {

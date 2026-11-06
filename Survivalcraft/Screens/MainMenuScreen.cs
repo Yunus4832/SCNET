@@ -2,7 +2,9 @@ using System.Xml.Linq;
 
 using Engine.Input;
 
+using Game.Application;
 using Game.Commands;
+using Game.Commands.BuiltIn;
 using Game.Network;
 
 namespace Game.Screens;
@@ -127,10 +129,7 @@ public class MainMenuScreen : Screen
                         MainMenuText("SwitchInstance"),
                         () => ExecutePowerMenuAction(PowerMenuAction.SwitchInstance)
                     ),
-                    new VerticalTabMenuItem(
-                        MainMenuText("RestartHeadless"),
-                        () => ExecutePowerMenuAction(PowerMenuAction.RestartHeadless)
-                    ),
+
                     new VerticalTabMenuItem(
                         MainMenuText("Exit"),
                         () => ExecutePowerMenuAction(PowerMenuAction.Exit)
@@ -146,9 +145,9 @@ public class MainMenuScreen : Screen
         _mainMenuTabs.AddTab(
             new VerticalTabMenu(
                 "Textures/Atlas/Earth",
-                () => LanguageManager.LanguageTypes
+                () => Game.Localization.ClientLanguage.Catalog.LanguageTypes
                     .Select(languageType => new VerticalTabMenuItem(
-                            LanguageManager.GetLanguageDisplayName(languageType),
+                            Game.Localization.ClientLanguage.Catalog.GetLanguageDisplayName(languageType),
                             () => SettingsUiScreen.ChangeLanguage(languageType)
                         )
                     )
@@ -176,9 +175,6 @@ public class MainMenuScreen : Screen
             case PowerMenuAction.SwitchInstance:
                 ShowInstanceMenu();
                 break;
-            case PowerMenuAction.RestartHeadless:
-                ShowHeadlessTargetMenu();
-                break;
             case PowerMenuAction.Exit:
                 ConfirmExit();
                 break;
@@ -202,7 +198,7 @@ public class MainMenuScreen : Screen
                 new MessageDialog(
                     MainMenuText("SelectInstance"),
                     MainMenuText("NoOtherInstances"),
-                    LanguageManager.Ok
+                    Game.Localization.ClientLanguage.Catalog.Ok
                 )
             );
             return;
@@ -227,63 +223,22 @@ public class MainMenuScreen : Screen
         );
     }
 
-    private static void ShowHeadlessTargetMenu()
-    {
-        WorldsManager.UpdateWorldsList();
-        var targets = new List<HeadlessTarget>
-        {
-            new(null, MainMenuText("HeadlessDefaultWorld"))
-        };
-        targets.AddRange(
-            WorldsManager.WorldInfos.Select(worldInfo => new HeadlessTarget(
-                    worldInfo.DirectoryName,
-                    worldInfo.WorldSettings.Name
-                )
-            )
-        );
-
-        DialogsManager.ShowDialog(
-            null,
-            new ListSelectionDialog(
-                MainMenuText("SelectHeadlessWorld"),
-                targets,
-                60f,
-                item => ((HeadlessTarget)item).DisplayName,
-                item =>
-                {
-                    var target = (HeadlessTarget)item;
-                    var restartSession = target.WorldDirectoryName == null
-                        ? null
-                        : new SessionInfo
-                        {
-                            Target = SessionTarget.World,
-                            World = target.WorldDirectoryName
-                        };
-                    ConfirmAction(
-                        string.Format(MainMenuText("ConfirmRestartHeadless"), target.DisplayName),
-                        () => ExecuteApplicationCommand(
-                            new SetRunModeCommand(
-                                RunModeType.HeadlessServer,
-                                restartSession
-                            )
-                        )
-                    );
-                }
-            )
-        );
-    }
 
     private static void ExecuteApplicationCommand(IGameCommand command)
     {
-        var result = CommandExecutor.ExecuteLocal(command, GameManager.Project);
+        var result = CommandExecutor.ExecuteLocal(
+            CurrentModRuntime.Value?.Commands,
+            command,
+            ClientApplication.World?.Project
+        );
         if (!result.Success)
         {
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageManager.Error,
+                    Game.Localization.ClientLanguage.Catalog.Error,
                     CommandText.Resolve(result),
-                    LanguageManager.Ok
+                    Game.Localization.ClientLanguage.Catalog.Ok
                 )
             );
         }
@@ -411,7 +366,7 @@ public class MainMenuScreen : Screen
     }
 
     private static string MainMenuText(string key) =>
-        LanguageManager.GetContentWidgets("MainMenuScreen", key);
+        Game.Localization.ClientLanguage.Catalog.GetContentWidgets("MainMenuScreen", key);
 
     private enum PowerMenuAction
     {
@@ -419,13 +374,7 @@ public class MainMenuScreen : Screen
 
         SwitchInstance = 1,
 
-        RestartHeadless = 2,
 
         Exit = 3
     }
-
-    private sealed record HeadlessTarget(
-        string? WorldDirectoryName,
-        string DisplayName
-    );
 }

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>__SCNET_MOD_VERSION__</Version>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>Survivalcraft.ModTemplate</AssemblyName>
+        <RootNamespace>Survivalcraft.ModTemplate</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="SCNET.Survivalcraft.Core" Version="__SCNET_GAME_VERSION__" ExcludeAssets="runtime"/>
+        <PackageReference Include="SCNET.Survivalcraft.Hosting" Version="__SCNET_GAME_VERSION__" ExcludeAssets="runtime"/>
+    </ItemGroup>
+</Project>

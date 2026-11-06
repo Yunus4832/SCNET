@@ -5,7 +5,7 @@ public sealed class ComponentHealthPackageTest
     [Fact]
     public void SyncHealthRoundTripsDeathCause()
     {
-        var package = new EntityHealthPackage { TargetId = 42, Health = 0f, Cause = "Drowned" };
+        var package = new EntityHealthPackage { TargetId = 42, Health = 0f, Cause = LocalizedText.Literal("Drowned") };
 
         var writer = ProtocolMessageCodec.Encode(package);
         var clone = Assert.IsType<EntityHealthPackage>(ProtocolMessageCodec.Decode(writer));
@@ -13,6 +13,6 @@ public sealed class ComponentHealthPackageTest
         Assert.Equal(ComponentHealthPackage.EventType.SyncHealth, clone.Type);
         Assert.Equal(42, clone.TargetId);
         Assert.Equal(0f, clone.Health);
-        Assert.Equal("Drowned", clone.Cause);
+        Assert.Equal(LocalizedText.Literal("Drowned"), clone.Cause);
     }
 }

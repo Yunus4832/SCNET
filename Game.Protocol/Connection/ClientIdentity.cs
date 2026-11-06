@@ -10,5 +10,7 @@ public sealed record ClientIdentity(
     [property: Key(1)] Guid TokenId,
     [property: Key(2)] Guid CharacterId,
     [property: Key(3)] PlayerAddress? PlayerAddress,
-    [property: Key(4)] ClientState State = ClientState.NotConnected
+    [property: Key(4)] ClientState State,
+    [property: Key(5)] Guid ConnectionEpoch,
+    [property: Key(6)] long ConnectionGeneration
 );

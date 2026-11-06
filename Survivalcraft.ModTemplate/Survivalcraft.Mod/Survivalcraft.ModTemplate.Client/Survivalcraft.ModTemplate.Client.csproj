@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>__SCNET_MOD_VERSION__</Version>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>Survivalcraft.ModTemplate.Client</AssemblyName>
+        <RootNamespace>Survivalcraft.ModTemplate.Client</RootNamespace>
+        <SurvivalcraftModId>example.mod</SurvivalcraftModId>
+        <SurvivalcraftModManifest>$(MSBuildProjectDirectory)/../manifest.json</SurvivalcraftModManifest>
+        <SurvivalcraftModDataDirectory>$(MSBuildProjectDirectory)/../Data</SurvivalcraftModDataDirectory>
+        <SurvivalcraftModAssetsDirectory>$(MSBuildProjectDirectory)/../Assets</SurvivalcraftModAssetsDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj"/>
+        <PackageReference Include="SCNET.Survivalcraft.Client" Version="__SCNET_GAME_VERSION__" ExcludeAssets="runtime"/>
+        <PackageReference Include="SCNET.ContentTool" Version="__SCNET_CONTENT_TOOL_VERSION__" PrivateAssets="all"/>
+    </ItemGroup>
+</Project>

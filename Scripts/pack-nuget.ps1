@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [ValidateSet("Native.ImageCodecs", "Native.OpenAL", "Native.SDL", "Engine.Core", "Engine.Media", "Rendezvous.Protocol", "Engine.Network", "Engine", "EntitySystem", "Content.Packaging", "ServerSource.Protocol", "ContentTool", "Authentication.Protocol", "Game.Protocol", "Survivalcraft", "Survivalcraft.ModTemplates")]
+    [ValidateSet("Native.ImageCodecs", "Native.OpenAL", "Native.SDL", "Engine.Core", "Engine.Media", "Rendezvous.Protocol", "Engine.Network", "Engine", "EntitySystem", "Content.Packaging", "ServerSource.Protocol", "ContentTool", "Authentication.Protocol", "Game.Protocol", "Survivalcraft.Core", "Survivalcraft.Hosting", "Survivalcraft.Client", "Survivalcraft", "Survivalcraft.ModTemplate")]
     [string[]]$Project = @(),
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$AdditionalArguments
@@ -95,15 +95,33 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Game.Protocol failed with exit code $LASTEXITCODE." }
     }
 
+    if ($Project.Count -eq 0 -or $Project -contains "Survivalcraft.Core") {
+        Write-Host "[SCNET Pack] Packing SCNET.Survivalcraft.Core"
+        & dotnet pack "Survivalcraft.Core/Survivalcraft.Core.csproj" --configuration $Configuration @AdditionalArguments
+        if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Survivalcraft.Core failed with exit code $LASTEXITCODE." }
+    }
+
+    if ($Project.Count -eq 0 -or $Project -contains "Survivalcraft.Hosting") {
+        Write-Host "[SCNET Pack] Packing SCNET.Survivalcraft.Hosting"
+        & dotnet pack "Survivalcraft.Hosting/Survivalcraft.Hosting.csproj" --configuration $Configuration @AdditionalArguments
+        if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Survivalcraft.Hosting failed with exit code $LASTEXITCODE." }
+    }
+
+    if ($Project.Count -eq 0 -or $Project -contains "Survivalcraft.Client") {
+        Write-Host "[SCNET Pack] Packing SCNET.Survivalcraft.Client"
+        & dotnet pack "Survivalcraft.Client/Survivalcraft.Client.csproj" --configuration $Configuration @AdditionalArguments
+        if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Survivalcraft.Client failed with exit code $LASTEXITCODE." }
+    }
+
     if ($Project.Count -eq 0 -or $Project -contains "Survivalcraft") {
         Write-Host "[SCNET Pack] Packing SCNET.Survivalcraft"
         & dotnet pack "Survivalcraft/Survivalcraft.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Survivalcraft failed with exit code $LASTEXITCODE." }
     }
 
-    if ($Project.Count -eq 0 -or $Project -contains "Survivalcraft.ModTemplates") {
+    if ($Project.Count -eq 0 -or $Project -contains "Survivalcraft.ModTemplate") {
         Write-Host "[SCNET Pack] Packing SCNET.ModTemplates"
-        & dotnet pack "Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj" --configuration $Configuration @AdditionalArguments
+        & dotnet pack "Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.ModTemplates failed with exit code $LASTEXITCODE." }
     }
 }

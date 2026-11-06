@@ -24,7 +24,7 @@ public sealed class ClientIdentityCodecTest
         var character = Guid.NewGuid();
         var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
         var package = new ClientListPackage
-            { List = [new ClientIdentity(1, token, character, address, ClientState.Playing)] };
+            { List = [new ClientIdentity(1, token, character, address, ClientState.Playing, Guid.NewGuid(), 1)] };
         var writer = ProtocolMessageCodec.Encode(package);
         var reader = writer;
         var restored = Assert.IsType<ClientListPackage>(ProtocolMessageCodec.Decode(reader));
@@ -33,12 +33,25 @@ public sealed class ClientIdentityCodecTest
         Assert.Equal(character, client.CharacterId);
         Assert.Equal(token, client.TokenId);
         Assert.Equal(ClientState.Playing, client.State);
+        Assert.NotEqual(Guid.Empty, client.ConnectionEpoch);
+        Assert.Equal(1, client.ConnectionGeneration);
     }
 
     [Fact]
     public void RemoteDirectoryEntryCannotContainOnlyACharacterIdentifier()
     {
-        var package = new ClientAddedPackage { Client = new ClientIdentity(1, Guid.NewGuid(), Guid.NewGuid(), null) };
+        var package = new ClientAddedPackage
+        {
+            Client = new ClientIdentity(
+                1,
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                null,
+                ClientState.Connected,
+                Guid.NewGuid(),
+                1
+            )
+        };
         Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Encode(package));
     }
 
@@ -50,7 +63,11 @@ public sealed class ClientIdentityCodecTest
     public void InvalidAddressLengthsAreRejectedBeforeReadingAddressData(byte size)
     {
         var payload = MessagePack.MessagePackSerializer.Serialize(
-            new object[] { 1, Guid.NewGuid(), Guid.NewGuid(), new string('a', size), (byte)ClientState.NotConnected }
+            new object[]
+            {
+                1, Guid.NewGuid(), Guid.NewGuid(), new string('a', size), (byte)ClientState.NotConnected,
+                Guid.NewGuid(), 1L
+            }
         );
         var package = new ClientAddedPackage
         {
@@ -58,7 +75,10 @@ public sealed class ClientIdentityCodecTest
                 1,
                 Guid.NewGuid(),
                 Guid.NewGuid(),
-                new PlayerAddress(IdentityAddress.Encode(new byte[32]))
+                new PlayerAddress(IdentityAddress.Encode(new byte[32])),
+                ClientState.Connected,
+                Guid.NewGuid(),
+                1
             )
         };
         var malformed = WireTestData.ReplaceField(package, 0, payload);

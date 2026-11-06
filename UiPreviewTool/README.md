@@ -59,6 +59,7 @@ XML 保存控件类型、名称、路径、文本、实际尺寸、屏幕边界�
 ```csharp
 using Game.Dialogs;
 using Game.Managers;
+using Game.Localization;
 using Game.Widgets;
 using Scnet.UiPreviewTool;
 
@@ -66,8 +67,8 @@ public sealed class ConfirmationPreview : IUiPreviewScenario
 {
     public Widget Create(UiPreviewContext context) => new MessageDialog(
         "Preview", context.Culture,
-        LanguageManager.Get("Usual", "yes"),
-        LanguageManager.Get("Usual", "no"), _ => { });
+        ClientLanguage.Catalog.Get("Usual", "yes"),
+        ClientLanguage.Catalog.Get("Usual", "no"), _ => { });
 }
 ```
 

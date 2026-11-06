@@ -5,25 +5,25 @@ using Engine.Core.Security;
 
 using Game.Characters;
 using Game.Commands;
-using Game.Managers;
-using Game.Network;
+using Game.Commands.BuiltIn;
+using Game.Commands.Http;
+using Game.Commands.Text;
 using Game.Protocol.Identity;
 using Game.World;
 
 using MessagePack;
 
+using Survivalcraft.Test.Fixtures;
 using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(WorldRoleCollection.Name)]
+[Collection(NodeRoleCollection.Name)]
 public class CommandDispatcherTest : IDisposable
 {
-    private readonly WorldRole _previousRole = GameManager.Role;
+    private readonly RuntimeTestProject _project = new(RuntimeSide.Authority);
 
-    public CommandDispatcherTest() => CommonLib.Net.Role = WorldRole.SinglePlayer;
-
-    public void Dispose() => CommonLib.Net.Role = _previousRole;
+    public void Dispose() => _project.Dispose();
 
     private static readonly ModId _owner = new("example.commands");
 
@@ -38,7 +38,7 @@ public class CommandDispatcherTest : IDisposable
             _owner,
             Id("scale"),
             new CommandDefinition<ScaleCommand>(
-                (_, _) => new CommandResult(success, "test", "test", State: state),
+                (_, _) => new CommandResult(success, "test", LocalizedText.Literal("test"), State: state),
                 CommandDomain.World,
                 panelBehavior: CommandPanelBehavior.CloseOnSuccess
             )
@@ -92,7 +92,7 @@ public class CommandDispatcherTest : IDisposable
         );
 
         Assert.True(result.Success);
-        Assert.Equal("2.5", result.Message);
+        Assert.Equal("2.5", result.Message.Fallback);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class CommandDispatcherTest : IDisposable
                 out var encodeError
             )
         );
-        Assert.Equal(string.Empty, encodeError);
+        Assert.Null(encodeError);
         Assert.Equal(identity, encodedId);
         Assert.True(
             registry.TryDecode(
@@ -129,7 +129,7 @@ public class CommandDispatcherTest : IDisposable
                 out var decodeError
             )
         );
-        Assert.Equal(string.Empty, decodeError);
+        Assert.Null(decodeError);
         Assert.Equal(new ScaleCommand(2.5), decoded);
     }
 
@@ -154,13 +154,13 @@ public class CommandDispatcherTest : IDisposable
             )
         );
 
-        var result = new TextCommandAdapter(registry).Execute(
+        var result = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject).Execute(
             "/echo \"hello world\"",
             Context()
         );
 
         Assert.True(result.Success);
-        Assert.Equal("hello world", result.Message);
+        Assert.Equal("hello world", result.Message.Fallback);
     }
 
     [Fact]
@@ -253,7 +253,7 @@ public class CommandDispatcherTest : IDisposable
             )
         );
         registry.Freeze();
-        var adapter = new TextCommandAdapter(registry);
+        var adapter = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject);
         var player = Player("Player");
         var administrator = Player("Administrator", [permission]);
 
@@ -314,7 +314,7 @@ public class CommandDispatcherTest : IDisposable
         );
 
         var suggestion = Assert.Single(
-            new TextCommandAdapter(registry)
+            new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject)
                 .Suggest("/choose A", Player("Player"))
         );
 
@@ -355,19 +355,22 @@ public class CommandDispatcherTest : IDisposable
         Assert.True(
             registry.CanInvoke(
                 typeof(CreativeActionCommand),
-                Player("CreativePlayer")
+                Player("CreativePlayer"),
+                Game.Managers.GameManager.AuthorityProject
             )
         );
         Assert.False(
             registry.CanInvoke(
                 typeof(CreativeActionCommand),
-                Player("SurvivalPlayer")
+                Player("SurvivalPlayer"),
+                Game.Managers.GameManager.AuthorityProject
             )
         );
         Assert.True(
             registry.CanInvoke(
                 typeof(CreativeActionCommand),
-                CommandPrincipal.LocalOperator
+                CommandPrincipal.LocalOperator,
+                Game.Managers.GameManager.AuthorityProject
             )
         );
     }
@@ -385,15 +388,14 @@ public class CommandDispatcherTest : IDisposable
         );
         var server = new CommandDefinition<StopCommand>(
             (_, _) => CommandResult.Ok("stop"),
-            CommandDomain.Server,
-            hostRequirement: CommandHostRequirement.HeadlessServer
+            CommandDomain.Server
         );
 
         Assert.True(application.CanInvoke(CommandPrincipal.LocalOperator, null));
         Assert.False(application.CanInvoke(Player("Player"), null));
         Assert.True(world.CanInvoke(Player("Player"), null));
-        Assert.False(server.CanInvoke(CommandPrincipal.LocalOperator, null));
-        Assert.False(server.CanInvoke(CommandPrincipal.LocalOperator, null));
+        Assert.True(server.CanInvoke(CommandPrincipal.LocalOperator, null));
+        Assert.False(server.CanExecuteHere(null));
     }
 
     [Fact]
@@ -437,7 +439,7 @@ public class CommandDispatcherTest : IDisposable
             )
         );
         registry.Freeze();
-        var adapter = new TextCommandAdapter(registry);
+        var adapter = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject);
 
         Assert.True(
             adapter.SupportsDomain(
@@ -480,7 +482,7 @@ public class CommandDispatcherTest : IDisposable
 
         Assert.False(result.Success);
         Assert.Equal("command.failed", result.Code);
-        Assert.DoesNotContain("secret detail", result.Message);
+        Assert.DoesNotContain("secret detail", result.Message.Fallback);
     }
 
     [Fact]
@@ -489,7 +491,6 @@ public class CommandDispatcherTest : IDisposable
         var registry = BuiltInRegistry();
 
         AssertDomain<GetLanguageCommand>(registry, CommandDomain.Application);
-        AssertDomain<SetRunModeCommand>(registry, CommandDomain.Application);
         AssertDomain<RestartApplicationCommand>(registry, CommandDomain.Application);
         AssertDomain<SwitchInstanceCommand>(registry, CommandDomain.Application);
         AssertDomain<CreateInstanceCommand>(registry, CommandDomain.Application);
@@ -523,12 +524,12 @@ public class CommandDispatcherTest : IDisposable
     [Fact]
     public void PlayerApplicationSuggestionsUseAnExplicitScopeFilter()
     {
-        var originalLanguageTypes = LanguageManager.LanguageTypes.ToArray();
+        var originalLanguageTypes = Game.Localization.ClientLanguage.Catalog.LanguageTypes.ToArray();
         try
         {
-            LanguageManager.LanguageTypes.Clear();
-            LanguageManager.LanguageTypes.AddRange(["en-US", "zh-CN"]);
-            var adapter = new TextCommandAdapter(BuiltInRegistry());
+            Game.Localization.ClientLanguage.Catalog.LanguageTypes.Clear();
+            Game.Localization.ClientLanguage.Catalog.LanguageTypes.AddRange(["en-US", "zh-CN"]);
+            var adapter = new TextCommandAdapter(BuiltInRegistry(), Game.Managers.GameManager.AuthorityProject);
 
             Assert.Equal(
                 ["en-US", "zh-CN"],
@@ -557,8 +558,8 @@ public class CommandDispatcherTest : IDisposable
         }
         finally
         {
-            LanguageManager.LanguageTypes.Clear();
-            LanguageManager.LanguageTypes.AddRange(originalLanguageTypes);
+            Game.Localization.ClientLanguage.Catalog.LanguageTypes.Clear();
+            Game.Localization.ClientLanguage.Catalog.LanguageTypes.AddRange(originalLanguageTypes);
         }
     }
 
@@ -575,7 +576,7 @@ public class CommandDispatcherTest : IDisposable
                 new ResourceId(owner, "world.weather.fog.set")
             ]
         );
-        var adapter = new TextCommandAdapter(BuiltInRegistry());
+        var adapter = new TextCommandAdapter(BuiltInRegistry(), Game.Managers.GameManager.AuthorityProject);
 
         var timeSuggestions = adapter.Suggest("/time set ", player);
         Assert.Equal(
@@ -680,7 +681,7 @@ public class CommandDispatcherTest : IDisposable
                     out var encodeError
                 )
             );
-            Assert.Equal(string.Empty, encodeError);
+            Assert.Null(encodeError);
             Assert.True(
                 registry.TryDecode(
                     id,
@@ -689,7 +690,7 @@ public class CommandDispatcherTest : IDisposable
                     out var decodeError
                 )
             );
-            Assert.Equal(string.Empty, decodeError);
+            Assert.Null(decodeError);
             Assert.Equal(command, decoded);
         }
     }
@@ -721,7 +722,7 @@ public class CommandDispatcherTest : IDisposable
                     out var encodeError
                 )
             );
-            Assert.Equal(string.Empty, encodeError);
+            Assert.Null(encodeError);
             Assert.True(
                 registry.TryDecode(
                     id,
@@ -730,7 +731,7 @@ public class CommandDispatcherTest : IDisposable
                     out var decodeError
                 )
             );
-            Assert.Equal(string.Empty, decodeError);
+            Assert.Null(decodeError);
             Assert.Equal(command, decoded);
         }
     }
@@ -783,7 +784,7 @@ public class CommandDispatcherTest : IDisposable
             GameMessagePresentation.Default,
             CommandResultPublisher.ToGameMessagePresentation(publicResult.Presentation)
         );
-        Assert.Equal(string.Empty, silentResult.Message);
+        Assert.Equal(LocalizedText.Empty, silentResult.Message);
         Assert.Equal(
             CommandResultPresentation.Silent,
             silentResult.Presentation
@@ -830,7 +831,7 @@ public class CommandDispatcherTest : IDisposable
         );
 
         Assert.True(result.Success);
-        Assert.Equal("2.5", result.Message);
+        Assert.Equal("2.5", result.Message.Fallback);
         Assert.Equal("/commands", HttpCommandProtocol.Endpoint);
         Assert.Equal(
             "command.forbidden",
@@ -905,7 +906,7 @@ public class CommandDispatcherTest : IDisposable
                 ]
             )
         );
-        var adapter = new TextCommandAdapter(registry);
+        var adapter = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject);
 
         Assert.True(
             adapter.Execute(
@@ -950,11 +951,11 @@ public class CommandDispatcherTest : IDisposable
     public void DynamicDescriptionsResolveAfterRegistration()
     {
         const string section = "CommandDescriptionTest";
-        LanguageManager.KeyWords.TryGetPropertyValue(section, out var existing);
+        Game.Localization.ClientLanguage.Catalog.KeyWords.TryGetPropertyValue(section, out var existing);
         var original = existing?.DeepClone();
         try
         {
-            LanguageManager.KeyWords[section] =
+            Game.Localization.ClientLanguage.Catalog.KeyWords[section] =
                 JsonNode.Parse("""{"Description":"Initial"}""");
             var registry = RegistryWith(
                 new CommandDefinition<EchoCommand>(
@@ -973,38 +974,25 @@ public class CommandDispatcherTest : IDisposable
                     ]
                 )
             );
-            var adapter = new TextCommandAdapter(registry);
+            var adapter = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject);
 
-            Assert.Equal(
-                "Initial",
-                Assert.Single(
-                    adapter.Suggest(
-                        "/e",
-                        Player("Player")
-                    )
-                ).Description
-            );
-            LanguageManager.KeyWords[section] =
+            var suggestion = Assert.Single(adapter.Suggest("/e", Player("Player")));
+            var description = Assert.IsType<LocalizedText>(suggestion.DescriptionSource);
+            Assert.Equal("Fallback", suggestion.Description);
+            Assert.Equal("Initial", Game.Localization.ClientLanguage.Resolver.Resolve(description));
+            Game.Localization.ClientLanguage.Catalog.KeyWords[section] =
                 JsonNode.Parse("""{"Description":"Changed"}""");
-            Assert.Equal(
-                "Changed",
-                Assert.Single(
-                    adapter.Suggest(
-                        "/e",
-                        Player("Player")
-                    )
-                ).Description
-            );
+            Assert.Equal("Changed", Game.Localization.ClientLanguage.Resolver.Resolve(description));
         }
         finally
         {
             if (original is null)
             {
-                LanguageManager.KeyWords.Remove(section);
+                Game.Localization.ClientLanguage.Catalog.KeyWords.Remove(section);
             }
             else
             {
-                LanguageManager.KeyWords[section] = original;
+                Game.Localization.ClientLanguage.Catalog.KeyWords[section] = original;
             }
         }
     }
@@ -1040,8 +1028,12 @@ public class CommandDispatcherTest : IDisposable
             "Authorized player",
             BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id)
         );
-        var result = new TextCommandAdapter(BuiltInRegistry()).Execute(text, Context(principal));
-        Assert.Equal("teleport.no_world", result.Code);
+        var result =
+            new TextCommandAdapter(BuiltInRegistry(), Game.Managers.GameManager.AuthorityProject).Execute(
+                text,
+                Context(principal, withoutWorld: true)
+            );
+        Assert.Equal("command.unavailable", result.Code);
     }
 
     [Theory]
@@ -1065,7 +1057,11 @@ public class CommandDispatcherTest : IDisposable
             "Authorized player",
             BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id)
         );
-        Assert.Equal("command.usage", new TextCommandAdapter(BuiltInRegistry()).Execute(text, Context(principal)).Code);
+        Assert.Equal(
+            "command.usage",
+            new TextCommandAdapter(BuiltInRegistry(), Game.Managers.GameManager.AuthorityProject)
+                .Execute(text, Context(principal, withoutWorld: true)).Code
+        );
     }
 
     [Fact]
@@ -1093,7 +1089,11 @@ public class CommandDispatcherTest : IDisposable
         Assert.True(registry.TryEncode(new MarkPrivatePositionCommand("previous"), out var id, out var payload, out _));
         Assert.True(registry.TryDecode(id, payload, out var decoded, out _));
         Assert.Equal(new MarkPrivatePositionCommand("previous"), decoded);
-        Assert.Equal("teleport.no_world", new TextCommandAdapter(registry).Execute("/mark", Context()).Code);
+        Assert.Equal(
+            "command.unavailable",
+            new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject)
+                .Execute("/mark", Context(withoutWorld: true)).Code
+        );
     }
 
     [Theory]
@@ -1101,7 +1101,7 @@ public class CommandDispatcherTest : IDisposable
     [InlineData("tp")]
     public void BareShortcutsCreateTheSameCommandAsPrivatePrevious(string name)
     {
-        var adapter = new TextCommandAdapter(BuiltInRegistry());
+        var adapter = new TextCommandAdapter(BuiltInRegistry(), Game.Managers.GameManager.AuthorityProject);
         Assert.True(adapter.TryFind(name, out var entry));
         var bare = Assert.Single(entry!.Command.Routes, route => route.Segments.Count == 0);
         var explicitRoute = Assert.Single(
@@ -1163,9 +1163,15 @@ public class CommandDispatcherTest : IDisposable
             "Authorized player",
             BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id)
         );
-        var adapter = new TextCommandAdapter(registry);
-        Assert.Equal("teleport.no_world", adapter.Execute("/mark private \"My home\"", Context(principal)).Code);
-        Assert.Equal("teleport.no_world", adapter.Execute("/mark public home", Context(principal)).Code);
+        var adapter = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject);
+        Assert.Equal(
+            "command.unavailable",
+            adapter.Execute("/mark private \"My home\"", Context(principal, withoutWorld: true)).Code
+        );
+        Assert.Equal(
+            "command.unavailable",
+            adapter.Execute("/mark public home", Context(principal, withoutWorld: true)).Code
+        );
         Assert.True(registry.TryGetDefinition<TeleportPlayerMarkCommand>(out var playerMark));
         Assert.False(
             playerMark!.Definition.IsPotentiallyAuthorized(
@@ -1187,7 +1193,7 @@ public class CommandDispatcherTest : IDisposable
     {
         var registry = new CommandRegistry();
         var owner = new ModId("game");
-        BuiltInCommands.Register(registry, owner);
+        BuiltInCommandTestRegistry.Register(registry, owner);
         registry.Freeze();
         return registry;
     }
@@ -1202,15 +1208,16 @@ public class CommandDispatcherTest : IDisposable
         Assert.Equal(expected, registered!.Definition.Domain);
     }
 
-    private static CommandContext Context(
+    private CommandContext Context(
         CommandPrincipal? principal = null,
-        CommandInvocationChannel channel = CommandInvocationChannel.Internal
+        CommandInvocationChannel channel = CommandInvocationChannel.Internal,
+        bool withoutWorld = false
     )
     {
         return new CommandContext(
             channel,
             principal ?? Player("Player"),
-            null,
+            withoutWorld ? null : _project,
             "test"
         );
     }

@@ -6,6 +6,7 @@ using EntitySystem.Core;
 
 using Game.Characters;
 using Game.Commands;
+using Game.Commands.BuiltIn;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 
@@ -27,7 +28,7 @@ public sealed class SubjectPermissionTest
         actor.Permissions.Grant(actorsPermission, false);
         var character = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
         character.SubsystemCharacters = new SubsystemCharacters();
-        character.OwnerAddress = owner.Address;
+        Survivalcraft.Test.Fixtures.CharacterTestEnvironment.SetSyntheticOwner(character, owner.Address);
         character.Name = "Character";
 
         var principal = CommandPrincipal.FromSubject(actor, character);

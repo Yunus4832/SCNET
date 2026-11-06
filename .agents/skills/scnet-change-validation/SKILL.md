@@ -41,7 +41,7 @@ Run broader project tests only when shared behavior has a meaningful blast radiu
 
 ## Runtime validation
 
-Use runtime checks when correctness depends on lifecycle, networking, GUI input, rendering, Android behavior, world loading, Headless startup, timing, or external resources. Load and follow `scnet-debugging` for those sessions, including isolated instances, logs, evidence, and cleanup.
+Use runtime checks when correctness depends on lifecycle, networking, GUI input, rendering, Android behavior, world loading, server startup, timing, or external resources. Load and follow `scnet-debugging` for those sessions, including isolated instances, logs, evidence, and cleanup.
 
 If validation is skipped, state why the available static evidence is sufficient. If a check fails for an unrelated or environmental reason, distinguish it from regressions caused by the change and do not claim success without supporting evidence.
 

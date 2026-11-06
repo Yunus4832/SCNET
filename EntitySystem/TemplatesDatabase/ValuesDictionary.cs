@@ -190,7 +190,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 }
                 else
                 {
-                    type = TemplateTypeNames.Resolve(attributeValue2, true)!;
+                    type = TemplateTypeNames.Resolve(attributeValue2)!;
                 }
 
                 var attributeValue3 = XmlUtils.GetAttributeValue(item, "Value", type);
@@ -260,7 +260,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 }
                 else
                 {
-                    type = TemplateTypeNames.Resolve(keyType, true)!;
+                    type = TemplateTypeNames.Resolve(keyType)!;
                 }
 
                 if (type == typeof(bool) || type.IsPrimitive || type == typeof(string))

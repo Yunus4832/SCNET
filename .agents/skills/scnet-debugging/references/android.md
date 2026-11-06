@@ -1,6 +1,6 @@
 # Android ADB Debugging
 
-Use Android as a client in a multiplayer lab. Prefer a desktop Headless or GUI server and one
+Use Android as a client in a multiplayer lab. Prefer a desktop server or GUI server and one
 Android device or emulator per concurrent Android client. A single installed package can switch
 between data instances, but Android does not provide concurrent isolated game processes for those
 instances.
@@ -53,7 +53,7 @@ adb -s <serial> shell \
   "am start -W -n com.candy.scnet/com.candy.scnet.MainActivity \
   --es Survivalcraft.Android.InstanceId android-client \
   --es Survivalcraft.Android.CommandLine \
-  '--gui --session android-client --connect 10.0.2.2:28987 --player AndroidPlayer --log-level Debug'"
+  '--session android-client --connect 10.0.2.2:28987 --player AndroidPlayer --log-level Debug'"
 ```
 
 The outer double quotes make ADB send one remote shell command, while the inner single quotes keep

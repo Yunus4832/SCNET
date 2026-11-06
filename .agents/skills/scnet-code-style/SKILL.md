@@ -1,6 +1,6 @@
 ---
 name: scnet-code-style
-description: "Apply and verify SCNET C# code style, file organization, namespace placement, project ownership, Roslyn style checks, and JetBrains formatting when creating, editing, moving, or reviewing C# and project files; use before completing any C# change."
+description: "Apply and verify SCNET C# code style, file organization, namespace placement, global imports, project ownership, Roslyn style checks, and JetBrains formatting when creating, editing, moving, or reviewing C# and project files; use before completing any C# change."
 ---
 
 # SCNET Code Style
@@ -42,6 +42,10 @@ and verify that formatting does not change code tokens, literal values or prepro
 Compare against that saved baseline, not just HEAD when earlier edits are pending. Check stability
 with a second formatting pass; inspect conflicts between formatters instead of alternating them.
 
+## Global imports
+
+Keep SDK implicit imports enabled as configured by the project. Put custom project-wide imports and aliases in the project's root `GlobalUsings.cs`, not `<Using>` project items or a cross-layer shared props file. Keep narrow or platform-specific namespaces local to their source files. Do not repeat an existing global import locally. Shared Android launcher sources include the same global-import file in all ABI projects; do not create a parallel list per variant.
+
 ## Enum values
 
 Enum members must declare explicit constant values, including the first/zero member. Keep existing
@@ -81,7 +85,7 @@ After any C# edit, run the repository helper from the repository root:
 ```
 
 The helper checks explicit enum initializers, validates JetBrains formatting on temporary copies,
-then verifies Roslyn syntax/naming style for changed files. The formatting check leaves the working
+then verifies Roslyn syntax/naming style for changed files across the main and independent mod solutions. The formatting check leaves the working
 tree untouched and preserves nested EditorConfig scopes. The JetBrains CLI is required for this gate but not ordinary builds. Install it as documented in
 `Doc/BuildAndConfig.md`; set `SCNET_JB` when
 its `jb` executable is not on PATH. A missing formatter is reported as a failed check, not silently

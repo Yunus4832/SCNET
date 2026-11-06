@@ -17,9 +17,8 @@ public sealed class CommandCodecTest
         var result = new CommandResponse(
             true,
             "command.ok",
-            "done",
-            Data: JsonNode.Parse("{\"value\":42}"),
-            MessageArguments: ["one"]
+            LocalizedText.Literal("done"),
+            Data: JsonNode.Parse("{\"value\":42}")
         );
         yield return [CommandPackage.CreateRequest(ResourceId.Parse("game:time"), [1, 2, 3], "typed")];
         yield return [CommandPackage.CreateResult(result, "result")];
@@ -94,10 +93,8 @@ public sealed class CommandCodecTest
         var response = new CommandResponse(
             true,
             "pending",
-            "fallback",
+            LocalizedText.Format(new LocalizedText("Commands", "key", "fallback {0}"), LocalizedText.Literal("value")),
             IsPending: true,
-            MessageKey: "key",
-            MessageArguments: ["value"],
             Data: new JsonObject { ["value"] = 42 },
             Presentation: GameMessagePresentation.History | GameMessagePresentation.Toast,
             CloseInputOnSuccess: true
@@ -110,8 +107,6 @@ public sealed class CommandCodecTest
         Assert.Equal(response.Code, restored.Code);
         Assert.Equal(response.Message, restored.Message);
         Assert.True(restored.IsPending);
-        Assert.Equal(response.MessageKey, restored.MessageKey);
-        Assert.Equal(response.MessageArguments, restored.MessageArguments);
         Assert.Equal(42, restored.Data!["value"]!.GetValue<int>());
         Assert.Equal(
             response.Presentation,

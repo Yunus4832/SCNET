@@ -2,6 +2,7 @@ using Engine.Core.Mathematics;
 
 using Game.Protocol.Characters;
 using Game.Protocol.Identity;
+using Game.Protocol.Localization;
 using Game.Protocol.Messaging;
 using Game.Protocol.Serialization;
 using Game.Protocol.Teams;
@@ -24,11 +25,19 @@ public sealed class SocialCodecTest
         yield return
         [
             new MessagePackage(
-                GameMessage.System([new MessageSegment("warning", MessageTextStyle.Warning, Color.White)]) with
-                {
-                    LocalizationSection = "Test", LocalizationKey = "Message",
-                    LocalizationArguments = ["one", "two"]
-                }
+                GameMessage.System(
+                    [
+                        new MessageSegment(
+                            LocalizedText.Format(
+                                new LocalizedText("Test", "Message", "{0} {1}"),
+                                LocalizedText.Literal("one"),
+                                LocalizedText.Literal("two")
+                            ),
+                            MessageTextStyle.Warning,
+                            Color.White
+                        )
+                    ]
+                )
             )
         ];
         foreach (var mode in Enum.GetValues<CharacterDataPackage.DataType>())

@@ -5,6 +5,44 @@ namespace Content.Packaging.Test;
 
 public sealed class ContentPackageReaderTest
 {
+    [Theory]
+    [InlineData("\"side\": \"common\", \"entrypoints\": {}")]
+    [InlineData("\"entrypoint\": \"\"")]
+    [InlineData("\"entrypoint\": {}")]
+    public void RejectsProcessSpecificOrMalformedModEntrypoints(string fields)
+    {
+        var json = _modManifest.Replace("\"entrypoint\": null", fields, StringComparison.Ordinal);
+        var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(json));
+        using var stream = new MemoryStream();
+        Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(
+                stream,
+                manifest,
+                [Entry("payload/mod.json", "{\"formatVersion\":1}"), Entry("payload/data/example.txt", "data")]
+            )
+        );
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("{}")]
+    [InlineData("\"\"")]
+    public void RejectsMalformedOptionalClientContentEntrypoints(string value)
+    {
+        var json = _modManifest.Replace(
+            "\"entrypoint\": null",
+            "\"entrypoint\": null, \"clientContentEntrypoint\": " + value,
+            StringComparison.Ordinal
+        );
+        var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(json));
+        using var stream = new MemoryStream();
+        Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(
+                stream,
+                manifest,
+                [Entry("payload/mod.json", "{\"formatVersion\":1}"), Entry("payload/data/example.txt", "data")]
+            )
+        );
+    }
+
     [Fact]
     public void LogicalHashIgnoresZipOrderAndCompression()
     {
@@ -66,7 +104,7 @@ public sealed class ContentPackageReaderTest
 
         var hash = ContentPackageWriter.Write(package, manifest, entries);
 
-        Assert.Equal("337794900c515803f0cb6cd93d4862997c73c74cb19165508cf31c6da5753c18", hash);
+        Assert.Equal("31e5363e2ad6ec1e3e934fae5995be26066d286d2cc8fe041db90759803ca831", hash);
     }
 
     [Fact]
@@ -510,7 +548,7 @@ public sealed class ContentPackageReaderTest
         {
             {
                 _modManifest, ContentPackageType.Mod,
-                "ebdebaa20640c7e42cfde9d54dee8f10208ccb3e176c72073da027dd52d7ac72", [
+                "d65e7f64fae3cb6c1a04b8666ae2d7c4bc9e644ef85055364223ff1c2e217a29", [
                     Entry("payload/mod.json", "{\"formatVersion\":1}"),
                     Entry("payload/data/example.txt", "golden mod data")
                 ]
@@ -712,8 +750,7 @@ public sealed class ContentPackageReaderTest
                                             "mediaType": "application/json"
                                           },
                                           "metadata": {
-                                            "side": "common",
-                                            "entrypoints": {},
+                                            "entrypoint": null,
                                             "dependencies": []
                                           }
                                         }

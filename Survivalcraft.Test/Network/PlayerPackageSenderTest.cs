@@ -25,7 +25,7 @@ public sealed class PlayerPackageSenderTest
     [Fact]
     public void ClientDoesNotRequireServerConnectionToMatchPayloadPlayer()
     {
-        var server = new Client(null, 0, Guid.NewGuid(), Guid.NewGuid(), null);
+        var server = new Client(null, 0, Guid.NewGuid(), Guid.NewGuid());
 
         Assert.True(ComponentCharacterPackageHandler.AcceptsSender(false, server, null));
     }
@@ -33,7 +33,7 @@ public sealed class PlayerPackageSenderTest
     [Fact]
     public void ServerRejectsMissingActorOrSender()
     {
-        var sender = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        var sender = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
 
         Assert.False(ComponentCharacterPackageHandler.AcceptsSender(true, sender, null));
         Assert.False(ComponentCharacterPackageHandler.AcceptsSender(true, null, null));

@@ -8,8 +8,8 @@ public static class LoadWire
         {
             package = player with
             {
-                ControllerSessionId = playerId ??
-                                      throw new ArgumentException("Player action requires the connection player ID.")
+                ControllerClientId = playerId ??
+                                     throw new ArgumentException("Player action requires the connection player ID.")
             };
         }
 

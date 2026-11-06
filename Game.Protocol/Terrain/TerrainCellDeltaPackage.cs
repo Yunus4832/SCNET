@@ -7,5 +7,7 @@ public sealed record TerrainCellDeltaPackage : SubsystemTerrainPackage
 {
     [IgnoreMember] public override DataType Type => DataType.SyncTerrainCellDelta;
 
-    [Key(0)] public TerrainCellDelta CellDelta { get; init; }
+    public const int MaximumDeltas = 64;
+
+    [Key(0)] public IReadOnlyList<TerrainCellDelta> CellDeltas { get; init; } = [];
 }

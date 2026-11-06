@@ -43,15 +43,18 @@ public sealed class P2PRoomSettingsTest
             IsPublic = true
         };
         var restored = new P2PRoomOverrides { Enabled = true, Name = "Saved room" };
-        var effective = restored.Merge(
-            new P2PRoomOverrides
-            {
-                Enabled = false,
-                ControlUrl = "https://session.example/",
-                Description = string.Empty,
-                IsPublic = false
-            }
-        ).Apply(world, "World");
+        var effective = world.ApplyOverrides(
+            restored.Merge(
+                new P2PRoomOverrides
+                {
+                    Enabled = false,
+                    ControlUrl = "https://session.example/",
+                    Description = string.Empty,
+                    IsPublic = false
+                }
+            ),
+            "World"
+        );
         Assert.False(effective.Enabled);
         Assert.False(effective.IsPublic);
         Assert.Empty(effective.Description);
@@ -61,8 +64,8 @@ public sealed class P2PRoomSettingsTest
         Assert.True(world.Enabled);
         Assert.Equal("Original", world.Description);
         Assert.False(
-            new P2PRoomOverrides { ControlUrl = "https://session.example/" }
-                .Apply(new P2PRoomSettings(), "World").Enabled
+            new P2PRoomSettings()
+                .ApplyOverrides(new P2PRoomOverrides { ControlUrl = "https://session.example/" }, "World").Enabled
         );
     }
 }

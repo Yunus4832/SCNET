@@ -5,7 +5,6 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Admission;
-using Game.Managers;
 using Game.Network;
 
 using SCNET.Authentication.Protocol;
@@ -116,7 +115,7 @@ public sealed class LocalPlayerAdmissionTest
             var extension = new XElement("ExtensionData");
             values.Save(extension);
             new XElement("Project", extension).Save(Path.Combine(directory, "Project.xml"));
-            var loaded = WorldsManager.ReadAdmissionPolicy("system:" + directory);
+            var loaded = Game.Application.ClientApplication.Worlds.ReadAdmissionPolicy("system:" + directory);
             Assert.Equal(settings.Fingerprint(), loaded.Fingerprint());
             Assert.Equal(ServerAdmissionMode.Password, loaded.Mode);
         }

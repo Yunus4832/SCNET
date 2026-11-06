@@ -1,52 +1,64 @@
-using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Hosting;
 using Game.Subsystems;
 using Game.World;
+
+using Survivalcraft.Test.Fixtures;
 
 namespace Survivalcraft.Test.Subsystems;
 
 public sealed class SubsystemGameInfoTest
 {
     [Theory]
-    [InlineData(false, false)]
-    [InlineData(true, true)]
-    public void HostingOverrideDoesNotChangeSavedWorldSettings(bool sendToClient, bool expected)
-    {
-        using var project = new Project { SendToClientMode = sendToClient };
-        var subsystem = new SubsystemGameInfo { WorldSettings = new WorldSettings { RunServer = false } };
-        WorldSubsystemTestSupport.Attach(project, subsystem);
-        subsystem.ApplyRunServerOverride(true);
-        var values = new ValuesDictionary();
-        subsystem.Save(values);
-        Assert.True(subsystem.WorldSettings.RunServer);
-        Assert.Equal(expected, values.GetValue<bool>("RunServer"));
-    }
-
-    [Theory]
-    [InlineData(false, GameMode.Survival)]
-    [InlineData(true, GameMode.Creative)]
-    public void GameModeOverrideUsesEffectiveModeForClientsAndPersistedModeForStorage(
-        bool sendToClient,
-        GameMode expected
+    [InlineData(false, true, GameMode.Survival)]
+    [InlineData(true, false, GameMode.Creative)]
+    public void HostingContributesOnlyToStorageSnapshotWithoutChangingLiveRulesOrTemplate(
+        bool network,
+        bool expectedHosting,
+        GameMode expectedMode
     )
     {
-        var subsystem = new SubsystemGameInfo
-        {
-            WorldSettings = new WorldSettings
-            {
-                Name = "TestWorld",
-                GameMode = GameMode.Survival
-            }
-        };
-        using var project = new Project { SendToClientMode = sendToClient };
-        WorldSubsystemTestSupport.Attach(project, subsystem);
-        subsystem.ApplyGameModeOverride(GameMode.Creative);
+        using var project = new RuntimeTestProject(RuntimeSide.Authority) { SendToClientMode = network };
+        var info = new SubsystemGameInfo
+            { WorldSettings = new WorldSettings { Name = "World", GameMode = GameMode.Survival } };
+        project.AddSubsystem(info);
+        new WorldHostingSettings { RunServer = false }.Save(info.ValuesDictionary, "World");
+        info.ValuesDictionary.SetValue("GameMode", GameMode.Survival);
+        var owner = new SubsystemWorldHosting();
+        project.AddSubsystem(owner);
+        owner.Load(new ValuesDictionary());
+        owner.ApplyRunServerOverride(true);
+        owner.ApplyGameModeOverride(GameMode.Creative);
+        var snapshot = project.Save();
+        var saved = snapshot.ValuesDictionary.GetValue<ValuesDictionary>(info.ValuesDictionary.DatabaseObject.Name);
+        Assert.Equal(expectedHosting, saved.ContainsKey("RunServer"));
+        Assert.Equal(expectedHosting, saved.ContainsKey("P2P"));
+        Assert.Equal(expectedMode, saved.GetValue<GameMode>("GameMode"));
+        if (expectedHosting) { Assert.False(saved.GetValue<bool>("RunServer")); }
 
-        var values = new ValuesDictionary();
-        subsystem.Save(values);
+        Assert.True(owner.Settings.RunServer);
+        Assert.Equal(GameMode.Creative, info.WorldSettings.GameMode);
+        Assert.False(info.ValuesDictionary.GetValue<bool>("RunServer"));
+        Assert.Equal(GameMode.Survival, info.ValuesDictionary.GetValue<GameMode>("GameMode"));
+    }
 
-        Assert.Equal(GameMode.Creative, subsystem.WorldSettings.GameMode);
-        Assert.Equal(expected, values.GetValue<GameMode>("GameMode"));
+    [Fact]
+    public void SnapshotContributionFailurePreventsSaveAndDisposeRemovesHostingContribution()
+    {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
+        var info = new SubsystemGameInfo { WorldSettings = new WorldSettings { Name = "World" } };
+        project.AddSubsystem(info);
+        var owner = new SubsystemWorldHosting();
+        project.AddSubsystem(owner);
+        owner.Load(new ValuesDictionary());
+        owner.Dispose();
+        owner.Dispose();
+        var snapshot = project.Save();
+        var saved = snapshot.ValuesDictionary.GetValue<ValuesDictionary>(info.ValuesDictionary.DatabaseObject.Name);
+        Assert.False(saved.ContainsKey("RunServer"));
+        project.AfterSubsystemsSaved += _ => throw new InvalidOperationException("Contribution failed");
+        Assert.Throws<InvalidOperationException>(() => project.Save());
+        Assert.Equal(GameMode.Survival, info.WorldSettings.GameMode);
     }
 }

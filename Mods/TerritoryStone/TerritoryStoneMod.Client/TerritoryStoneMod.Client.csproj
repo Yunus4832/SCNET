@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(TerritoryStoneVersion)</Version>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>TerritoryStoneMod.Client</AssemblyName>
+        <RootNamespace>TerritoryStoneMod.Client</RootNamespace>
+        <SurvivalcraftModId>scnet.territory</SurvivalcraftModId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../TerritoryStoneMod/TerritoryStoneMod.csproj"/>
+        <PackageReference Include="SCNET.Survivalcraft.Client" Version="$(GameVersion)" ExcludeAssets="runtime"/>
+        <PackageReference Include="SCNET.ContentTool" Version="$(ContentToolVersion)" PrivateAssets="all"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Resources/Shaders/*.vsh"/>
+        <EmbeddedResource Include="Resources/Shaders/*.psh"/>
+    </ItemGroup>
+
+    <Target Name="GenerateClientModManifest" BeforeTargets="PackSurvivalcraftMod">
+        <PropertyGroup>
+            <SurvivalcraftModManifest>$(IntermediateOutputPath)manifest.json</SurvivalcraftModManifest>
+            <_ClientModManifest>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/../TerritoryStoneMod/manifest.template.json').Replace('__TERRITORY_VERSION__', '$(TerritoryStoneVersion)'))</_ClientModManifest>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(SurvivalcraftModManifest)" Lines="$(_ClientModManifest)"
+                          Overwrite="true" WriteOnlyWhenDifferent="true"/>
+    </Target>
+</Project>

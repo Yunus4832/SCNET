@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(TerritoryStoneVersion)</Version>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>TerritoryStoneMod</AssemblyName>
+        <RootNamespace>TerritoryStoneMod</RootNamespace>
+        <SurvivalcraftModId>scnet.territory</SurvivalcraftModId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="SCNET.Survivalcraft.Core" Version="$(GameVersion)" ExcludeAssets="runtime"/>
+        <PackageReference Include="SCNET.Survivalcraft.Hosting" Version="$(GameVersion)" ExcludeAssets="runtime"/>
+        <EmbeddedResource Include="Resources\TerritoryDatabase.xml"/>
+        <EmbeddedResource Include="Resources\BlocksData.txt"/>
+        <EmbeddedResource Include="Resources\Lang\*.json" WithCulture="false"/>
+    </ItemGroup>
+</Project>

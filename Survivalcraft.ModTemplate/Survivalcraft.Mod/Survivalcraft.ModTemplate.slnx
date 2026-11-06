@@ -1,0 +1,4 @@
+<Solution>
+    <Project Path="Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj"/>
+    <Project Path="Survivalcraft.ModTemplate.Client/Survivalcraft.ModTemplate.Client.csproj"/>
+</Solution>

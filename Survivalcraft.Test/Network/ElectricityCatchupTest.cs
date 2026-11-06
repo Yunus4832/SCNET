@@ -3,28 +3,27 @@ using System.Reflection;
 using Engine.Core.Mathematics;
 
 using Game.ElectricElements;
-using Game.Managers;
 using Game.Network;
 using Game.Network.Replication;
 using Game.Subsystems;
 using Game.World;
 
+using Survivalcraft.Test.Fixtures;
 using Survivalcraft.Test.Modding;
 
 namespace Survivalcraft.Test.Network;
 
 [Collection(ConfigFileCollection.Name)]
-public sealed class ElectricityCatchupTest : IDisposable
+public sealed class ElectricityCatchupTest
 {
-    private readonly WorldRole _previousWorldRole = GameManager.Role;
-
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void AuthorityRestoresExistingOutputAtItsStepWithoutInputTransition(bool randomGenerator)
     {
-        CommonLib.Net.Role = WorldRole.RemoteClient;
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
         var electricity = new SubsystemElectricity();
+        project.InitializeSubsystem(electricity);
         var point = new Point3(1, 20, 3);
         var face = new CellFace(point.X, point.Y, point.Z, 4);
         ElectricElement element = randomGenerator
@@ -64,10 +63,11 @@ public sealed class ElectricityCatchupTest : IDisposable
     [Fact]
     public void WireDeltasApplyAtTheirStepsAndRecoverAfterInterestReentry()
     {
-        CommonLib.Net.Role = WorldRole.RemoteClient;
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
         var electricity = new SubsystemElectricity();
+        project.InitializeSubsystem(electricity);
         var tracker = new ElectricityReplicationTracker();
-        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
         var point = new Point3(-1, 20, -17);
         var values = new Dictionary<Point3, float> { [point] = 0.5f };
         Receive(electricity, tracker.Capture(client, values), 0);
@@ -90,8 +90,9 @@ public sealed class ElectricityCatchupTest : IDisposable
     [Fact]
     public void LateDeltaStillCorrectsAuthorityAtNextHeartbeat()
     {
-        CommonLib.Net.Role = WorldRole.RemoteClient;
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
         var electricity = new SubsystemElectricity();
+        project.InitializeSubsystem(electricity);
         electricity.List.Add(new SubsystemElectricity.NetSimulate { StartStep = 9 });
         electricity.Update(0.001f);
         var point = new Point3(0, 1, 2);
@@ -131,8 +132,9 @@ public sealed class ElectricityCatchupTest : IDisposable
     [Fact]
     public void LargeClockGapDoesNotConsumeUnboundedStepsInOneFrame()
     {
-        CommonLib.Net.Role = WorldRole.RemoteClient;
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
         var electricity = new SubsystemElectricity();
+        project.InitializeSubsystem(electricity);
         var snapshot = new SubsystemElectricity.NetSimulate { StartStep = 1_000_000 };
         electricity.List.Add(snapshot);
 
@@ -145,8 +147,9 @@ public sealed class ElectricityCatchupTest : IDisposable
     [Fact]
     public void PendingSnapshotSurvivesUntilItsStepIsReached()
     {
-        CommonLib.Net.Role = WorldRole.RemoteClient;
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
         var electricity = new SubsystemElectricity();
+        project.InitializeSubsystem(electricity);
         electricity.List.Add(new SubsystemElectricity.NetSimulate { StartStep = 30 });
 
         electricity.Update(0.1f);
@@ -158,10 +161,5 @@ public sealed class ElectricityCatchupTest : IDisposable
 
         Assert.Equal(31, electricity.CircuitStep);
         Assert.Empty(electricity.List);
-    }
-
-    public void Dispose()
-    {
-        CommonLib.Net.Role = _previousWorldRole;
     }
 }

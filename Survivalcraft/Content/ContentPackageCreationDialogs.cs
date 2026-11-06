@@ -1,5 +1,7 @@
 using Content.Packaging;
 
+using Game.Application;
+
 namespace Game.Content;
 
 public static class ContentPackageCreationDialogs
@@ -21,14 +23,16 @@ public static class ContentPackageCreationDialogs
         ArgumentNullException.ThrowIfNull(failed);
         if (!FilePicker.IsAvailable)
         {
-            failed(new InvalidOperationException(LanguageManager.Get(_typeName, "PickerUnavailable")));
+            failed(
+                new InvalidOperationException(Localization.ClientLanguage.Catalog.Get(_typeName, "PickerUnavailable"))
+            );
             return;
         }
 
         DialogsManager.ShowDialog(
             null,
             new ListSelectionDialog(
-                LanguageManager.Get(_typeName, "SelectType"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "SelectType"),
                 _types,
                 64f,
                 item => GetTypeName((ContentPackageType)item),
@@ -46,9 +50,9 @@ public static class ContentPackageCreationDialogs
     {
         if (type == ContentPackageType.World)
         {
-            WorldsManager.UpdateWorldsList();
-            var running = GameManager.Project?.FindSubsystem<SubsystemGameInfo>()?.DirectoryName;
-            var sources = WorldsManager.WorldInfos.Where(world =>
+            ClientApplication.Worlds.UpdateWorldsList();
+            var running = GameManager.ClientProject?.FindSubsystem<SubsystemGameInfo>()?.DirectoryName;
+            var sources = ClientApplication.Worlds.WorldInfos.Where(world =>
                     !string.Equals(world.DirectoryName, running, StringComparison.OrdinalIgnoreCase)
                 )
                 .Select(world => new AssetSource(Storage.GetFileName(world.DirectoryName), world.WorldSettings.Name))
@@ -79,14 +83,14 @@ public static class ContentPackageCreationDialogs
     {
         if (sources.Count == 0)
         {
-            failed(new InvalidOperationException(LanguageManager.Get(_typeName, "NoSources")));
+            failed(new InvalidOperationException(Localization.ClientLanguage.Catalog.Get(_typeName, "NoSources")));
             return;
         }
 
         DialogsManager.ShowDialog(
             null,
             new ListSelectionDialog(
-                LanguageManager.Get(_typeName, "SelectSource"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "SelectSource"),
                 sources,
                 64f,
                 item => ((AssetSource)item).DisplayName,
@@ -108,7 +112,7 @@ public static class ContentPackageCreationDialogs
                 new FilePickerRequest(
                     [".webp", ".png"],
                     false,
-                    LanguageManager.Get(_typeName, "SelectImage")
+                    Localization.ClientLanguage.Catalog.Get(_typeName, "SelectImage")
                 )
             );
             if (files.Count == 0)
@@ -145,21 +149,25 @@ public static class ContentPackageCreationDialogs
         DialogsManager.ShowDialog(
             null,
             new TextBoxDialog(
-                LanguageManager.Get(_typeName, "Name"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "Name"),
                 source.DisplayName,
                 80,
                 name =>
                 {
                     if (string.IsNullOrWhiteSpace(name))
                     {
-                        failed(new ContentPackageException(LanguageManager.Get(_typeName, "NameRequired")));
+                        failed(
+                            new ContentPackageException(
+                                Localization.ClientLanguage.Catalog.Get(_typeName, "NameRequired")
+                            )
+                        );
                         return;
                     }
 
                     DialogsManager.ShowDialog(
                         null,
                         new TextBoxDialog(
-                            LanguageManager.Get(_typeName, "Version"),
+                            Localization.ClientLanguage.Catalog.Get(_typeName, "Version"),
                             "1.0.0",
                             40,
                             version => AskDescription(
@@ -195,13 +203,13 @@ public static class ContentPackageCreationDialogs
         DialogsManager.ShowDialog(
             null,
             new TextBoxDialog(
-                LanguageManager.Get(_typeName, "Summary"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "Summary"),
                 string.Empty,
                 160,
                 summary => DialogsManager.ShowDialog(
                     null,
                     new TextBoxDialog(
-                        LanguageManager.Get(_typeName, "Description"),
+                        Localization.ClientLanguage.Catalog.Get(_typeName, "Description"),
                         string.Empty,
                         4000,
                         description => _ = Create(
@@ -289,7 +297,7 @@ public static class ContentPackageCreationDialogs
     {
         var manifest = inspection.Manifest;
         var preview = string.Format(
-                          LanguageManager.Get(_typeName, "Preview"),
+                          Localization.ClientLanguage.Catalog.Get(_typeName, "Preview"),
                           GetTypeName(manifest.Type),
                           manifest.Name,
                           manifest.Version,
@@ -300,10 +308,10 @@ public static class ContentPackageCreationDialogs
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.Get(_typeName, "PreviewTitle"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "PreviewTitle"),
                 preview,
-                LanguageManager.Get(_typeName, "Save"),
-                LanguageManager.Get("Usual", "cancel"),
+                Localization.ClientLanguage.Catalog.Get(_typeName, "Save"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "cancel"),
                 button =>
                 {
                     if (button == MessageDialogButton.Button1)
@@ -334,7 +342,7 @@ public static class ContentPackageCreationDialogs
                 new FileSaveRequest(
                     MakeFileName($"{manifest.Name}-{manifest.Version}") + ContentPackageReader.FileExtension,
                     "application/vnd.scnet.content-package",
-                    LanguageManager.Get(_typeName, "SaveTitle")
+                    Localization.ClientLanguage.Catalog.Get(_typeName, "SaveTitle")
                 )
             );
             if (target is null)
@@ -361,10 +369,10 @@ public static class ContentPackageCreationDialogs
 
     private static string GetTypeName(ContentPackageType type) => type switch
     {
-        ContentPackageType.World => LanguageManager.Get(_typeName, "World"),
-        ContentPackageType.BlocksTexture => LanguageManager.Get(_typeName, "BlocksTexture"),
-        ContentPackageType.CharacterSkin => LanguageManager.Get(_typeName, "CharacterSkin"),
-        ContentPackageType.FurniturePack => LanguageManager.Get(_typeName, "FurniturePack"),
+        ContentPackageType.World => Localization.ClientLanguage.Catalog.Get(_typeName, "World"),
+        ContentPackageType.BlocksTexture => Localization.ClientLanguage.Catalog.Get(_typeName, "BlocksTexture"),
+        ContentPackageType.CharacterSkin => Localization.ClientLanguage.Catalog.Get(_typeName, "CharacterSkin"),
+        ContentPackageType.FurniturePack => Localization.ClientLanguage.Catalog.Get(_typeName, "FurniturePack"),
         _ => type.ToString()
     };
 

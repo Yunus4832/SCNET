@@ -1,5 +1,4 @@
 using Engine.Core.Mathematics;
-using Engine.Core.Runtime;
 using Engine.Graphics;
 using Engine.Media.Audio;
 using Engine.Media.Audio.Formats;
@@ -21,8 +20,6 @@ public sealed class MediaTypeRoutingTest
     [InlineData(120, 60, 30, 0)]
     public void TextureReaderPreservesPreparedPixelChannels(int red, int green, int blue, int alpha)
     {
-        var previousRunMode = RunMode.Value;
-        RunMode.Value = RunModeType.HeadlessServer;
         ContentManager.Initialize();
         try
         {
@@ -42,7 +39,6 @@ public sealed class MediaTypeRoutingTest
         finally
         {
             ContentManager.Initialize();
-            RunMode.Value = previousRunMode;
         }
     }
 

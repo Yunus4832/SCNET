@@ -3,7 +3,7 @@ using MessagePack;
 namespace Game.Protocol.Entities;
 
 [MessagePackObject]
-[Union(0, typeof(EatRequestPackage))]
+[Union(0, typeof(VitalFeedbackPackage))]
 [Union(1, typeof(VitalStatePackage))]
 public abstract record ComponentVitalStatPackage : IProtocolMessage
 {
@@ -11,7 +11,7 @@ public abstract record ComponentVitalStatPackage : IProtocolMessage
     {
         SyncStat = 0,
 
-        RequestEat = 1
+        Feedback = 1
     }
 
     [IgnoreMember] public abstract EventType PackageEventType { get; }

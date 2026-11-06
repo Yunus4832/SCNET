@@ -92,9 +92,9 @@ HTTP 返回 Pending 后不继续等待业务完成，最终结果记录在服务
 ## HTTP 适配
 
 本地控制入口提供 `game:player/teleport/other`，必填 `player`，另提供完整的 `x`、`y`、`z`
-或 `destination` 玩家名称。GUI 与 Headless 的 `/commands` 都使用 LocalOperator，在本进程执行；
+或 `destination` 玩家名称。GUI 与 独立服务器的 `/commands` 都使用 LocalOperator，在本进程执行；
 GUI 客户端不会把该入口的世界命令转发给远程服务器。
 
 代表当前 GUI 玩家执行时，使用 `/player/commands`，由权威服务端检查真实玩家权限。
-Headless 没有玩家入口。先发现实际 binding 与参数再调用，启用方法见
-[HTTP 命令宿主](Headless.md#http-命令宿主)。
+独立服务器没有玩家入口。先发现实际 binding 与参数再调用，启用方法见
+[HTTP 命令宿主](Server.md#http-命令宿主)。

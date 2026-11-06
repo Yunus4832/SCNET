@@ -1,9 +1,13 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using Engine.Core.Mathematics;
 
 using Game.Characters;
 using Game.Components;
+using Game.World;
+
+using Survivalcraft.Test.Fixtures;
 
 namespace Survivalcraft.Test.Network;
 
@@ -14,6 +18,7 @@ public sealed class PlayerMovementRecoveryTest
     [InlineData(true)]
     public void LostMovementSnapshotIsRestoredByNextUnchangedSnapshot(bool mounted)
     {
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
         var locomotion = new ComponentLocomotion { LookAngles = new Vector2(0.2f, 0.3f) };
         var body = new ComponentBody
         {
@@ -28,6 +33,8 @@ public sealed class PlayerMovementRecoveryTest
             ComponentBody = mounted ? new ComponentBody { ParentBody = body } : body,
             ComponentLocomotion = locomotion
         };
+        typeof(CharacterData).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(player.CharacterData, project);
         // Discard the first packet just as a lost datagram would be discarded.
         _ = CharacterPackageBuilder.Capture(player, ComponentCharacterPackage.CharacterAction.BodyUpdate);
         var retry = CharacterPackageBuilder.Capture(player, ComponentCharacterPackage.CharacterAction.BodyUpdate);

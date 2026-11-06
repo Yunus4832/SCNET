@@ -1,7 +1,6 @@
 using System.Buffers.Binary;
 
 using Engine.Core.Mathematics;
-using Engine.Core.Runtime;
 using Engine.Graphics;
 using Engine.Media.Models;
 
@@ -13,16 +12,50 @@ public sealed class ModelResourceCollection;
 [Collection(nameof(ModelResourceCollection))]
 public sealed class ModelSceneTest : IDisposable
 {
-    private readonly RunModeType _previous = RunMode.Value;
-
-    public ModelSceneTest()
-    {
-        RunMode.Value = RunModeType.HeadlessServer;
-    }
-
     public void Dispose()
     {
-        RunMode.Value = _previous;
+    }
+
+    [Fact]
+    public void DeviceLossReleasesOnlyUploadedBuffersAndNextDrawCanRecreateThem()
+    {
+        var count = GraphicsResource.resources.Count;
+        var data = Triangle();
+        AddRoot(data, "part", 0);
+        using var model = Model.Load(data);
+        var primitive = model.MeshNodes[0].RequireMesh().Primitives[0];
+        var vertices = primitive.VertexBuffer;
+        var indices = primitive.IndexBuffer;
+        Assert.True(primitive.HasGraphicsResources);
+
+        Display.HandleDeviceLost();
+
+        Assert.False(primitive.HasGraphicsResources);
+        Assert.True(vertices.isDisposed);
+        Assert.True(indices.isDisposed);
+        Assert.Equal(count, GraphicsResource.resources.Count);
+        Assert.NotSame(vertices, primitive.VertexBuffer);
+        Assert.NotSame(indices, primitive.IndexBuffer);
+        Assert.Equal(count + 2, GraphicsResource.resources.Count);
+    }
+
+    [Fact]
+    public void LoadingAndReadingGeometryInGuiModeDoesNotAllocateGraphicsResources()
+    {
+        var count = GraphicsResource.resources.Count;
+        var data = Triangle();
+        AddRoot(data, "part", 0);
+        var model = Model.Load(data);
+        var primitive = model.MeshNodes[0].RequireMesh().Primitives[0];
+        Assert.False(primitive.HasGraphicsResources);
+        Assert.Equal(3, primitive.IndicesCount);
+        Assert.Equal(96, primitive.Vertices.Length);
+        Assert.Equal<ushort>([0, 2, 1], primitive.GetIndices16());
+        Assert.Equal(count, GraphicsResource.resources.Count);
+        model.Dispose();
+        Assert.Equal(count, GraphicsResource.resources.Count);
+        Assert.False(primitive.HasGraphicsResources);
+        Assert.Throws<ObjectDisposedException>(() => primitive.VertexBuffer);
     }
 
     [Fact]
@@ -31,7 +64,7 @@ public sealed class ModelSceneTest : IDisposable
         var data = Triangle();
         AddRoot(data, "part", 0);
         AddRoot(data, "part", 0);
-        using var model = Model.Load(data, true);
+        using var model = Model.Load(data);
         Assert.Equal(2, model.Nodes.Count);
         Assert.Equal(2, model.RootNodes.Count);
         Assert.Equal("geometry", Assert.Single(model.Meshes).Name);
@@ -47,19 +80,23 @@ public sealed class ModelSceneTest : IDisposable
         var data = Triangle();
         AddRoot(data, "first", 0);
         AddRoot(data, "second", 0);
-        var model = Model.Load(data, true);
+        var model = Model.Load(data);
         var a = model.Nodes[0].RequireMesh().Primitives[0];
         var b = model.Nodes[1].RequireMesh().Primitives[0];
-        Assert.Same(a.VertexBuffer, b.VertexBuffer);
-        Assert.Same(a.IndexBuffer, b.IndexBuffer);
+        var vertices = a.VertexBuffer;
+        var indices = a.IndexBuffer;
+        Assert.Same(vertices, b.VertexBuffer);
+        Assert.Same(indices, b.IndexBuffer);
         Assert.Equal(count + 2, GraphicsResource.resources.Count);
         var notifications = 0;
         model.Disposed += _ => notifications++;
         model.Dispose();
         model.Dispose();
         Assert.Equal(1, notifications);
-        Assert.True(a.VertexBuffer.isDisposed);
-        Assert.True(a.IndexBuffer.isDisposed);
+        Assert.True(vertices.isDisposed);
+        Assert.True(indices.isDisposed);
+        Assert.Throws<ObjectDisposedException>(() => a.VertexBuffer);
+        Assert.Throws<ObjectDisposedException>(() => a.IndexBuffer);
         Assert.Equal(count, GraphicsResource.resources.Count);
     }
 
@@ -74,7 +111,7 @@ public sealed class ModelSceneTest : IDisposable
         AddRoot(data, "inherited", 0);
         AddRoot(data, "full", 0).MorphWeights = [1];
         AddRoot(data, "same", 0).MorphWeights = [0.5f];
-        using var model = Model.Load(data, true);
+        using var model = Model.Load(data);
         Assert.Equal(2, model.Meshes.Count);
         Assert.Same(model.Nodes[0].Mesh, model.Nodes[2].Mesh);
         Assert.NotSame(model.Nodes[0].Mesh, model.Nodes[1].Mesh);

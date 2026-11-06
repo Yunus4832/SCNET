@@ -410,11 +410,18 @@ public sealed class ContentRepositoryScreen : Screen
 
     private static void ShowError(string message)
     {
-        DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Error, message, LanguageManager.Ok));
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                Localization.ClientLanguage.Catalog.Error,
+                message,
+                Localization.ClientLanguage.Catalog.Ok
+            )
+        );
     }
 
     private static string Text(string key)
     {
-        return LanguageManager.GetContentWidgets(nameof(ContentRepositoryScreen), key);
+        return Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(ContentRepositoryScreen), key);
     }
 }

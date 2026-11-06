@@ -1,9 +1,50 @@
-using Game.Commands;
+using EntitySystem.Core;
+
+using Game.Commands.BuiltIn;
+using Game.Subsystems;
+using Game.World;
 
 namespace Survivalcraft.Test.Commands;
 
 public class ServerAdministrationBootstrapTest
 {
+    [Theory]
+    [InlineData(RuntimeSide.Authority, true)]
+    [InlineData(RuntimeSide.Client, false)]
+    public void ClaimCodesBelongToTheLiveAuthorityWorld(RuntimeSide side, bool expected)
+    {
+        using var project = new ClaimProject();
+        var runtime = new WorldRuntimeContext(
+            side,
+            (side == RuntimeSide.Client && true)
+        );
+        runtime.BindProject(project);
+        Assert.Equal(expected, ServerAdministrationBootstrap.TryGetClaimCode(project, out var first));
+        Assert.Equal(expected, ServerAdministrationBootstrap.TryRegenerateClaimCode(project, out var second));
+        if (expected)
+        {
+            Assert.NotEmpty(first);
+            Assert.NotEqual(first, second);
+        }
+        else
+        {
+            Assert.Empty(first);
+            Assert.Empty(second);
+        }
+
+        runtime.Close();
+        Assert.False(ServerAdministrationBootstrap.TryGetClaimCode(project, out _));
+    }
+
+    private sealed class ClaimProject : Project
+    {
+        public ClaimProject()
+        {
+            subsystems.Add(new SubsystemPlayers());
+            subsystems.Add(new SubsystemGameInfo());
+        }
+    }
+
     [Fact]
     public void ClaimCodeIsHumanReadableAndContainsSixtyBitsOfRandomCharacters()
     {

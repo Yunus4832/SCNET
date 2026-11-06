@@ -1,11 +1,11 @@
 ---
 name: scnet-startup-architecture
-description: Design, review, or modify SCNET startup arguments, startup sessions, run modes, instance configuration, restart restoration, Settings persistence, or .runtime state while preserving the repository's object boundaries and precedence rules.
+description: Design, review, or modify SCNET startup arguments, startup sessions, application entry points, instance configuration, restart restoration, Settings persistence, or .runtime state while preserving the repository's object boundaries and precedence rules.
 ---
 
 # SCNET Startup Architecture
 
-Use this Skill before changing startup parsing, instance selection, GUI or Headless startup,
+Use this Skill before changing startup parsing, instance selection, GUI or server startup,
 restart behavior, session persistence, settings defaults, or any feature that adds a startup-time
 parameter.
 
@@ -14,15 +14,15 @@ parameter.
 Read [Doc/StartupSessions.md](../../../Doc/StartupSessions.md) completely before editing. Then read
 the current definitions and the manager that owns the affected transition:
 
-- `Survivalcraft/Startup/RunningSetting.cs`
-- `Survivalcraft/Startup/StartupRequest.cs`
-- `Survivalcraft/Startup/SessionInfo.cs`
-- `Survivalcraft/Startup/StartupContext.cs`
-- `Survivalcraft/Managers/StartupManager.cs`
+- `Survivalcraft.Hosting/Startup/RunningSetting.cs`
+- `Survivalcraft.Hosting/Startup/StartupRequest.cs`
+- `Survivalcraft.Hosting/Startup/SessionInfo.cs`
+- `Survivalcraft.Hosting/Startup/StartupContext.cs`
+- `Survivalcraft.Hosting/Startup/StartupManager.cs`
 - `Survivalcraft/Managers/SessionInfoManager.cs`
-- `Survivalcraft/Managers/RunningSettingManager.cs`
+- `Survivalcraft.Hosting/Startup/StartupProfileStore.cs`
 - `Survivalcraft/Managers/SettingsManager.cs`
-- `Survivalcraft/Managers/StarterInstanceManager.cs` when instances or `.runtime` are involved
+- `Survivalcraft.Hosting/Startup/StarterInstanceManager.cs` when instances or `.runtime` are involved
 
 Do not infer ownership from a field's current location alone. Trace where it originates, how it is
 merged, which object consumers read, and which manager serializes it.
@@ -44,8 +44,10 @@ session data, test artifacts, or logs there. Exclude `.runtime` when cloning an 
 
 ### `RunningSetting`
 
+GUI and standalone-server executables select their own entry points; do not restore a global mode or a persisted entry selector. The server supplies `SessionTarget.World` as its new-session default, while GUI supplies `MainMenu`.
+
 `RunningSetting` is the serializable application-entry configuration in
-`config:RunningSetting.xml`. It owns entry concerns such as run mode, log level, GUI window state,
+`config:RunningSetting.xml`. It owns entry concerns such as log level, GUI window state,
 default/pending session pointers, and unconsumed launcher arguments.
 
 Do not place world targets, seeds, game-mode overrides, connection targets, or other recoverable
@@ -134,7 +136,7 @@ Answer these questions before adding it:
 4. Should a named session restore it on a later launch? Parse it into `StartupRequest`, merge it into
    `SessionInfo`, and serialize it when the session is saved.
 5. Is it intentionally one-shot and not recoverable? Keep it in `StartupRequest` and document why.
-6. Is it only the composed handoff to GUI or Headless? Read it through `StartupContext`; do not add a
+6. Is it only the composed handoff to GUI or server? Read it through `StartupContext`; do not add a
    new storage location.
 
 When two locations participate, define one as the override and one as the fallback. Do not copy the
@@ -152,10 +154,10 @@ For every startup-related change:
    together. A missing value may use the documented fallback; an invalid explicit value must not be
    mistaken for a missing value.
 4. Verify that `--save` changes later named-session startup and that omitting `--save` does not.
-5. Verify GUI, Headless, restart, pending-session, and multi-instance consumers in proportion to the
+5. Verify GUI, server, restart, pending-session, and multi-instance consumers in proportion to the
    affected field.
 6. Inspect `.runtime` after runtime validation. It must still contain only instance-liveness state.
-7. Update `Doc/StartupSessions.md` and any mode-specific document such as `Doc/Headless.md` in the
+7. Update `Doc/StartupSessions.md` and any mode-specific document such as `Doc/Server.md` in the
    same change.
 
 Use the `scnet-debugging` Skill when runtime smoke testing is required. Preserve temporary-instance
@@ -171,4 +173,4 @@ and evidence-cleanup rules from that Skill.
 - Putting session or service configuration into `.runtime` because it is convenient for a tool to
   discover.
 - Silently repairing an invalid explicit port by choosing a default or another free port.
-- Making each GUI or Headless consumer merge request, session, and settings independently.
+- Making each GUI or server consumer merge request, session, and settings independently.

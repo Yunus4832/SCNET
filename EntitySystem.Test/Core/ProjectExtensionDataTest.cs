@@ -5,6 +5,7 @@ using EntitySystem.TemplatesDatabase;
 
 namespace EntitySystem.Test.Core;
 
+[Collection(ProjectLifecycleCollection.Name)]
 public class ProjectExtensionDataTest
 {
     [Fact]
@@ -45,7 +46,7 @@ public class ProjectExtensionDataTest
     [InlineData(true)]
     public void ProjectRoundTripsBusinessDataOutsideSubsystemsAndEntities(bool messagePack)
     {
-        var (database, template) = CreateDatabase();
+        var (database, template) = ProjectTestDatabase.Create();
         using var project = new Project(database, new ProjectData(database, template, null));
         project.ExtensionData.Get("example", "counter").SetValue("count", 42);
         var saved = project.Save();
@@ -63,7 +64,7 @@ public class ProjectExtensionDataTest
     [InlineData(true)]
     public void EmptyProjectsAndClientSnapshotsContainNoBusinessData(bool messagePack)
     {
-        var (database, template) = CreateDatabase();
+        var (database, template) = ProjectTestDatabase.Create();
         using var project = new Project(database, new ProjectData(database, template, null));
         Assert.Empty(RoundTrip(database, project.Save(), messagePack).ExtensionData);
         project.ExtensionData.Get("example", "secret").SetValue("value", "server-only");
@@ -80,7 +81,7 @@ public class ProjectExtensionDataTest
     [Fact]
     public void ProjectNotifiesLoadOnceAfterInitialization()
     {
-        var (database, template) = CreateDatabase();
+        var (database, template) = ProjectTestDatabase.Create();
         var notifications = new List<Project>();
         Project.OnProjectLoad += OnLoaded;
         try
@@ -112,26 +113,5 @@ public class ProjectExtensionDataTest
         saved.Save(node);
         Assert.Null(node.Element("Subsystems")!.Element("ExtensionData"));
         return new ProjectData(database, XElement.Parse(node.ToString()), null, false);
-    }
-
-    private static (GameDatabase Database, DatabaseObject Template) CreateDatabase()
-    {
-        var names = new[]
-        {
-            "Folder", "ProjectTemplate", "MemberSubsystemTemplate", "SubsystemTemplate", "EntityTemplate",
-            "MemberComponentTemplate", "ComponentTemplate", "ParameterSet", "Parameter"
-        };
-        var types = names
-            .Select(name => new DatabaseObjectType(name, name, name, 0, name == "Parameter", false, 64, false))
-            .ToArray();
-        foreach (var type in types)
-        {
-            type.InitializeRelations([types[0]], null, types[^1]);
-        }
-
-        var root = new DatabaseObject(types[0], "Root");
-        var database = new Database(root, types);
-        var template = new DatabaseObject(types[1], "TestProject") { NestingParent = root };
-        return (new GameDatabase(database), template);
     }
 }

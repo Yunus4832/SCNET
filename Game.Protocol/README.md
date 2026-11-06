@@ -89,9 +89,17 @@ MessagePack 编码不携带运行时类型名；包内是消息数组，外层�
 角色状态和操作消息归属 `Game.Protocol.Characters`，队伍控制消息归属 `Game.Protocol.Teams`。
 `CharacterDataPackage`、`CharacterListPackage`、`OnlineCharacterStatePackage` 和角色实体快照使用角色名称；
 其集合字段统一为 `Characters`，不再使用指代玩家身份的 `Players`。
-`ComponentCharacterPackage.ControllerSessionId` 是控制该角色的临时 byte 连接编号，用于路由和归属校验，
-不是 `PlayerAddress`、`CharacterId` 或持久会话 GUID。未发布的协议兼容整数保持 `1`。
+`ComponentCharacterPackage.ControllerClientId` 是控制该角色的临时 byte 连接编号，用于路由和归属校验，
+不是 `PlayerAddress`、`CharacterId`、`Client.ConnectionInstanceId` 或启动会话 `SessionInfo.SessionId`。未发布的协议兼容整数保持 `1`。
 
 
 `TeamManagePackage` 只含服务器提示和 `SyncTeams` 快照；队伍修改通过已验证会话中的游戏命令执行。
 `TeamState` 使用独立 `TeamId`、队长地址与成员地址，不携带角色成员列表。客户端不能通过提交快照修改服务器队伍。
+
+## 消息所有权
+
+`ProtocolMessageOwnership.Capture` 按契约取得独立的可变负载副本：数组、列表、字典、嵌套联合成员
+和 JSON 都分离；只有不可变值可以共享。复制前后校验协议值，不经过二进制编解码。调用期间发送方需保持输入稳定，返回后可继续修改自己的原始数据。
+复制计划由 `Game.Protocol.Generators` 在编译期按联合与 Key 属性生成，运行时不使用反射。新字段
+自动进入计划；未支持的可变类型、只读可变成员或循环契约以 `SCNETOWN001` 阻止编译，需先明确
+其所有权规则。生成器只用于构建，不是运行时依赖或独立发布包。

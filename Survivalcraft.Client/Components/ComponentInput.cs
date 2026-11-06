@@ -1,0 +1,620 @@
+using Engine.Input;
+
+using EntitySystem.Core;
+using EntitySystem.TemplatesDatabase;
+
+using Game.Automation;
+using Game.Platforms;
+
+namespace Game.Components;
+
+public class ComponentInput : Component, IUpdateable
+{
+    public UpdateExecutionSide UpdateSide => ComponentCharacter is { IsLocallyControlled: true }
+        ? UpdateExecutionSide.Presentation
+        : UpdateExecutionSide.Disabled;
+
+    private static readonly GamePadButton[] _gamePadButtons = Enum.GetValues<GamePadButton>();
+
+    private static readonly Key[] _inventorySlotKeys =
+    [
+        Key.Number1,
+        Key.Number2,
+        Key.Number3,
+        Key.Number4,
+        Key.Number5,
+        Key.Number6,
+        Key.Number7,
+        Key.Number8,
+        Key.Number9,
+        Key.Number0
+    ];
+
+    private ComponentGui _componentGui = null!;
+
+    private ComponentCharacter _componentCharacter = null!;
+
+    private bool _isViewHoldStarted;
+
+    private double _lastJumpTime;
+
+    private float _lastLeftTrigger;
+
+    private float _lastRightTrigger;
+
+    private PlayerInput _playerInput;
+
+    private SubsystemTime _subsystemTime = null!;
+
+    public PlayerInput PlayerInput => _playerInput;
+
+    public AutomationNavigationController Navigation { get; } = new();
+
+    public AutomationViewController ViewControl { get; } = new();
+
+    public bool IsTouchInputActive { get; private set; }
+
+    public bool IsControlledByVr { get; set; }
+
+    public bool AllowHandleInput { get; set; } = true;
+
+    public IInventory? SplitSourceInventory { get; set; }
+
+    public int SplitSourceSlotIndex { get; set; }
+
+    public UpdateOrder UpdateOrder => UpdateOrder.Input;
+
+    internal ComponentCharacter? ComponentCharacter { get => _componentCharacter; set => _componentCharacter = value!; }
+
+    public void Update(float dt)
+    {
+        _playerInput = default;
+        if (!_componentCharacter.IsLocallyControlled)
+        {
+            _componentCharacter.ClearControlInput();
+            return;
+        }
+
+        UpdateInputFromMouseAndKeyboard(
+            _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget.Input
+        );
+        UpdateInputFromGamepad(
+            _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget.Input
+        );
+        UpdateInputFromWidgets(
+            _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget.Input
+        );
+        Navigation.ApplyInput(_componentCharacter, ref _playerInput);
+        ViewControl.ApplyInput(_componentCharacter, ref _playerInput);
+        if (_playerInput.Jump)
+        {
+            if (Time.RealTime - _lastJumpTime < 0.3)
+            {
+                _playerInput.ToggleCreativeFly = true;
+                _lastJumpTime = 0.0;
+            }
+            else
+            {
+                _lastJumpTime = Time.RealTime;
+            }
+        }
+
+        _playerInput.CameraMove = _playerInput.Move;
+        _playerInput.CameraSneakMove = _playerInput.SneakMove;
+        _playerInput.CameraLook = _playerInput.Look;
+        if (!Window.IsActive ||
+            !_componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.CharacterView
+                .IsReadyForPlaying)
+        {
+            _playerInput = default;
+        }
+        else if (_componentCharacter.ComponentHealth.Health <= 0f ||
+                 _componentCharacter.ComponentSleep.SleepFactor > 0f ||
+                 !_componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget
+                     .ActiveCamera.IsEntityControlEnabled)
+        {
+            _playerInput = new PlayerInput
+            {
+                CameraMove = _playerInput.CameraMove,
+                CameraSneakMove = _playerInput.CameraSneakMove,
+                CameraLook = _playerInput.CameraLook,
+                TimeOfDay = _playerInput.TimeOfDay,
+                TakeScreenshot = _playerInput.TakeScreenshot,
+                KeyboardHelp = _playerInput.KeyboardHelp
+            };
+        }
+        else if (_componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget.ActiveCamera
+                 .UsesMovementControls)
+        {
+            _playerInput.Move = Vector3.Zero;
+            _playerInput.SneakMove = Vector3.Zero;
+            _playerInput.Look = Vector2.Zero;
+            _playerInput.Jump = false;
+            _playerInput.ToggleSneak = false;
+            _playerInput.ToggleCreativeFly = false;
+        }
+
+        if (_playerInput.Move.LengthSquared() > 1f)
+        {
+            _playerInput.Move = Vector3.Normalize(_playerInput.Move);
+        }
+
+        if (_playerInput.SneakMove.LengthSquared() > 1f)
+        {
+            _playerInput.SneakMove = Vector3.Normalize(_playerInput.SneakMove);
+        }
+
+        if (SplitSourceInventory != null && SplitSourceInventory.GetSlotCount(SplitSourceSlotIndex) == 0)
+        {
+            SetSplitSourceInventoryAndSlot(null, -1);
+        }
+
+        var aimAllowed = IsControlledByVr;
+        if (_playerInput.Aim is { } aim)
+        {
+            var projected =
+                _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget.ActiveCamera
+                    .WorldToScreen(aim.Position + aim.Direction, Matrix.Identity);
+            var size = Window.Size;
+            aimAllowed |= projected.X >= size.X * .02f &&
+                          projected.X < size.X * .98f &&
+                          projected.Y >= size.Y * .02f &&
+                          projected.Y < size.Y * .98f;
+        }
+
+        _componentCharacter.SetControlInput(
+            new CharacterControlInput
+            {
+                Look = _playerInput.Look,
+                Move = _playerInput.Move,
+                SneakMove = _playerInput.SneakMove,
+                Jump = _playerInput.Jump,
+                AutoJumpEnabled = Configuration.ClientConfiguration.Preferences.AutoJump,
+                ScrollInventory = _playerInput.ScrollInventory,
+                ScrollInventoryPage = _playerInput.ScrollInventoryPage,
+                SelectInventoryPage = _playerInput.SelectInventoryPage,
+                SelectInventorySlot = _playerInput.SelectInventorySlot,
+                Dig = _playerInput.Dig,
+                Hit = _playerInput.Hit,
+                Aim = _playerInput.Aim,
+                Interact = _playerInput.Interact,
+                PickBlockType = _playerInput.PickBlockType,
+                Drop = _playerInput.Drop,
+                SuppressLookWhileAiming = IsTouchInputActive,
+                IsAimDirectionAllowed = aimAllowed,
+                ContinuousDig = !IsTouchInputActive,
+                UseLookDirectedCreativeFlight = IsTouchInputActive,
+                FlipLookY = Configuration.ClientConfiguration.Preferences.FlipVerticalAxis
+            }
+        );
+    }
+
+    public void SetSplitSourceInventoryAndSlot(IInventory? inventory, int slotIndex)
+    {
+        SplitSourceInventory = inventory;
+        SplitSourceSlotIndex = slotIndex;
+    }
+
+    public override void Dispose()
+    {
+        Navigation.Cancel("character_disposed");
+        ViewControl.Cancel("character_disposed");
+        base.Dispose();
+    }
+
+    public Ray3? CalculateVrHandRay()
+    {
+        return null;
+    }
+
+    public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
+    {
+        _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
+        _componentGui = Entity.FindComponent<ComponentGui>(true)!;
+        _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
+        IsTouchInputActive = ClientPlatform.Kind is Platform.Android;
+    }
+
+    public void UpdateInputFromMouseAndKeyboard(WidgetInput input)
+    {
+        var isMouseOrKeyboardInputActive = false;
+        var viewPosition = _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget
+            .ActiveCamera.ViewPosition;
+        var viewDirection = _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget
+            .ActiveCamera.ViewDirection;
+        if (_componentGui.ModalPanelWidget != null ||
+            DialogsManager.HasDialogs(
+                _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget
+            ))
+        {
+            if (!input.IsMouseCursorVisible)
+            {
+                var viewWidget = _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!
+                    .ViewWidget;
+                var value = viewWidget.WidgetToScreen(viewWidget.ActualSize / 2f);
+                input.IsMouseCursorVisible = true;
+                input.MousePosition = value;
+            }
+        }
+        else if (AllowHandleInput)
+        {
+            input.IsMouseCursorVisible = false;
+            var zero = Vector2.Zero;
+            var num = 0;
+            if (Window.IsActive && Time.FrameDuration > 0f)
+            {
+                var mouseMovement = input.MouseMovement;
+                var mouseWheelMovement = input.MouseWheelMovement;
+                zero.X = 0.02f * mouseMovement.X / Time.FrameDuration / 60f;
+                zero.Y = -0.02f * mouseMovement.Y / Time.FrameDuration / 60f;
+                num = mouseWheelMovement / 120;
+                isMouseOrKeyboardInputActive = mouseMovement != Point2.Zero || mouseWheelMovement != 0;
+            }
+
+            var vector = default(Vector3) + Vector3.UnitX * (input.IsKeyDown(Key.D) ? 1 : 0);
+            vector += -Vector3.UnitZ * (input.IsKeyDown(Key.S) ? 1 : 0);
+            vector += Vector3.UnitZ * (input.IsKeyDown(Key.W) ? 1 : 0);
+            vector += -Vector3.UnitX * (input.IsKeyDown(Key.A) ? 1 : 0);
+            vector += Vector3.UnitY * (input.IsKeyDown(Key.Space) ? 1 : 0);
+            vector += -Vector3.UnitY * (input.IsKeyDown(Key.Shift) ? 1 : 0);
+            isMouseOrKeyboardInputActive |= vector != Vector3.Zero ||
+                                            input.IsMouseButtonDown(MouseButton.Left) ||
+                                            input.IsMouseButtonDown(MouseButton.Right) ||
+                                            input.IsMouseButtonDown(MouseButton.Middle);
+            _playerInput.Look += new Vector2(MathUtils.Clamp(zero.X, -15f, 15f), MathUtils.Clamp(zero.Y, -15f, 15f));
+            _playerInput.Move += vector;
+            _playerInput.SneakMove += vector;
+            _playerInput.Jump |= input.IsKeyDownOnce(Key.Space);
+            if (_componentCharacter.ComponentMiner.Inventory is IPagedInventory &&
+                input.IsKeyDown(Key.Control))
+            {
+                _playerInput.ScrollInventoryPage -= num;
+            }
+            else
+            {
+                _playerInput.ScrollInventory -= num;
+            }
+
+            _playerInput.Dig = input.IsMouseButtonDown(MouseButton.Left)
+                ? new Ray3(viewPosition, viewDirection)
+                : _playerInput.Dig;
+            _playerInput.Hit = input.IsMouseButtonDownOnce(MouseButton.Left)
+                ? new Ray3(viewPosition, viewDirection)
+                : _playerInput.Hit;
+            _playerInput.Aim = input.IsMouseButtonDown(MouseButton.Right)
+                ? new Ray3(viewPosition, viewDirection)
+                : _playerInput.Aim;
+            _playerInput.Interact = input.IsMouseButtonDownOnce(MouseButton.Right)
+                ? new Ray3(viewPosition, viewDirection)
+                : _playerInput.Interact;
+            _playerInput.ToggleSneak |= input.IsKeyDownOnce(Key.Shift);
+            _playerInput.ToggleMount |= input.IsKeyDownOnce(Key.R);
+            _playerInput.ToggleCreativeFly |= input.IsKeyDownOnce(Key.F);
+            _playerInput.PickBlockType = input.IsMouseButtonDownOnce(MouseButton.Middle)
+                ? new Ray3(viewPosition, viewDirection)
+                : _playerInput.PickBlockType;
+        }
+
+        if (_componentGui.IsGameInputCaptured ||
+            IsMessagePanelOpen() ||
+            !AllowHandleInput)
+        {
+            return;
+        }
+
+        _playerInput.ToggleInventory |= input.IsKeyDownOnce(Key.E);
+        _playerInput.ToggleClothing |= input.IsKeyDownOnce(Key.C);
+        _playerInput.TakeScreenshot |= input.IsKeyDownOnce(Key.P);
+        _playerInput.SwitchCameraMode |= input.IsKeyDownOnce(Key.V);
+        _playerInput.TimeOfDay |= input.IsKeyDownOnce(Key.T);
+        _playerInput.Lighting |= input.IsKeyDownOnce(Key.L);
+        _playerInput.Drop |= input.IsKeyDownOnce(Key.Q);
+        _playerInput.EditItem |= input.IsKeyDownOnce(Key.G);
+        _playerInput.KeyboardHelp |= input.IsKeyDownOnce(Key.H);
+        _playerInput.TogglePlayerPanel |= input.IsKeyDownOnce(Key.N);
+        _playerInput.ToggleTouchControls |= input.IsKeyDownOnce(Key.F10);
+        _playerInput.Precipitation |= input.IsKeyDownOnce(Key.Y);
+        _playerInput.Fog |= input.IsKeyDownOnce(Key.O);
+
+        if (_componentCharacter.ComponentMiner.Inventory is IPagedInventory)
+        {
+            if (input.IsKeyDownOnce(Key.Z))
+            {
+                _playerInput.ScrollInventoryPage--;
+            }
+
+            if (input.IsKeyDownOnce(Key.X))
+            {
+                _playerInput.ScrollInventoryPage++;
+            }
+        }
+
+        for (var i = 0; i < _inventorySlotKeys.Length; i++)
+        {
+            if (!input.IsKeyDownOnce(_inventorySlotKeys[i]))
+            {
+                continue;
+            }
+
+            if (_componentCharacter.ComponentMiner.Inventory is IPagedInventory &&
+                input.IsKeyDown(Key.Control))
+            {
+                _playerInput.SelectInventoryPage = i;
+            }
+            else
+            {
+                _playerInput.SelectInventorySlot = i;
+            }
+
+            break;
+        }
+
+        if (isMouseOrKeyboardInputActive || input.LastKey.HasValue)
+        {
+            IsTouchInputActive = false;
+        }
+    }
+
+    public void UpdateInputFromGamepad(WidgetInput input)
+    {
+        var isGamepadInputActive = false;
+        var viewPosition = _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget
+            .ActiveCamera.ViewPosition;
+        var viewDirection = _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget
+            .ActiveCamera.ViewDirection;
+        if (_componentGui.ModalPanelWidget != null ||
+            DialogsManager.HasDialogs(
+                _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget
+            ))
+        {
+            if (!input.IsPadCursorVisible)
+            {
+                var viewWidget = _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!
+                    .ViewWidget;
+                var padCursorPosition = viewWidget.WidgetToScreen(viewWidget.ActualSize / 2f);
+                input.IsPadCursorVisible = true;
+                input.PadCursorPosition = padCursorPosition;
+            }
+        }
+        else
+        {
+            input.IsPadCursorVisible = false;
+            var zero = Vector3.Zero;
+            var padStickPosition =
+                input.GetPadStickPosition(
+                    GamePadStick.Left,
+                    Configuration.ClientConfiguration.Preferences.GamepadDeadZone
+                );
+            var padStickPosition2 =
+                input.GetPadStickPosition(
+                    GamePadStick.Right,
+                    Configuration.ClientConfiguration.Preferences.GamepadDeadZone
+                );
+            var padTriggerPosition = input.GetPadTriggerPosition(GamePadTrigger.Left);
+            var padTriggerPosition2 = input.GetPadTriggerPosition(GamePadTrigger.Right);
+            isGamepadInputActive = padStickPosition != Vector2.Zero ||
+                                   padStickPosition2 != Vector2.Zero ||
+                                   padTriggerPosition > 0f ||
+                                   padTriggerPosition2 > 0f ||
+                                   _gamePadButtons.Any(input.IsPadButtonDown);
+            zero += new Vector3(2f * padStickPosition.X, 0f, 2f * padStickPosition.Y);
+            zero += Vector3.UnitY * (input.IsPadButtonDown(GamePadButton.A) ? 1 : 0);
+            zero += -Vector3.UnitY * (input.IsPadButtonDown(GamePadButton.RightShoulder) ? 1 : 0);
+            _playerInput.Move += zero;
+            _playerInput.SneakMove += zero;
+            _playerInput.Look += 0.75f * padStickPosition2 * MathUtils.Pow(padStickPosition2.LengthSquared(), 0.25f);
+            _playerInput.Jump |= input.IsPadButtonDownOnce(GamePadButton.A);
+            _playerInput.Dig = padTriggerPosition2 >= 0.5f ? new Ray3(viewPosition, viewDirection) : _playerInput.Dig;
+            _playerInput.Hit = padTriggerPosition2 >= 0.5f && _lastRightTrigger < 0.5f
+                ? new Ray3(viewPosition, viewDirection)
+                : _playerInput.Hit;
+            _playerInput.Aim = padTriggerPosition >= 0.5f ? new Ray3(viewPosition, viewDirection) : _playerInput.Aim;
+            _playerInput.Interact = padTriggerPosition >= 0.5f && _lastLeftTrigger < 0.5f
+                ? new Ray3(viewPosition, viewDirection)
+                : _playerInput.Interact;
+            _playerInput.Drop |= input.IsPadButtonDownOnce(GamePadButton.B);
+            _playerInput.ToggleMount |= input.IsPadButtonDownOnce(GamePadButton.LeftThumb) ||
+                                        input.IsPadButtonDownOnce(GamePadButton.DPadUp);
+            _playerInput.EditItem |= input.IsPadButtonDownOnce(GamePadButton.LeftShoulder);
+            _playerInput.ToggleSneak |= input.IsPadButtonDownOnce(GamePadButton.RightShoulder);
+            _playerInput.SwitchCameraMode |= input.IsPadButtonDownOnce(GamePadButton.RightThumb) ||
+                                             input.IsPadButtonDownOnce(GamePadButton.DPadDown);
+            if (input.IsPadButtonDownRepeat(GamePadButton.DPadLeft))
+            {
+                _playerInput.ScrollInventory--;
+            }
+
+            if (input.IsPadButtonDownRepeat(GamePadButton.DPadRight))
+            {
+                _playerInput.ScrollInventory++;
+            }
+
+            _lastLeftTrigger = padTriggerPosition;
+            _lastRightTrigger = padTriggerPosition2;
+        }
+
+        if (_componentGui.IsGameInputCaptured ||
+            IsMessagePanelOpen() ||
+            !AllowHandleInput)
+        {
+            return;
+        }
+
+        _playerInput.ToggleInventory |= input.IsPadButtonDownOnce(GamePadButton.X);
+        _playerInput.ToggleClothing |= input.IsPadButtonDownOnce(GamePadButton.Y);
+        _playerInput.GamepadHelp |= input.IsPadButtonDownOnce(GamePadButton.Start);
+        if (isGamepadInputActive)
+        {
+            IsTouchInputActive = false;
+        }
+    }
+
+    public void UpdateInputFromWidgets(WidgetInput input)
+    {
+        var num = MathUtils.Pow(
+            1.25f,
+            10f * (Configuration.ClientConfiguration.Preferences.MoveSensitivity - 0.5f)
+        );
+        var num2 = MathUtils.Pow(
+            1.25f,
+            10f * (Configuration.ClientConfiguration.Preferences.LookSensitivity - 0.5f)
+        );
+        var num3 = MathUtils.Clamp(_subsystemTime.GameTimeDelta, 0f, 0.1f);
+        var viewWidget = _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.ViewWidget;
+        _componentGui.MoveWidget.Radius = 30f / num * _componentGui.MoveWidget.GlobalScale;
+        if (_componentGui.ModalPanelWidget != null || !(_subsystemTime.GameTimeFactor > 0f) || !(num3 > 0f))
+        {
+            return;
+        }
+
+        var v = new Vector2(Configuration.ClientConfiguration.Preferences.LeftHandedLayout ? 96 : -96, -96f);
+        if (input.Widget != null)
+        {
+            v = Vector2.TransformNormal(v, input.Widget.GlobalTransform);
+        }
+
+        if (_componentGui.ViewWidget is { TouchInput: not null })
+        {
+            IsTouchInputActive = true;
+            var value = _componentGui.ViewWidget.TouchInput.Value;
+            var activeCamera = _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!
+                .GameWidget.ActiveCamera;
+            var viewPosition = activeCamera.ViewPosition;
+            var viewDirection = activeCamera.ViewDirection;
+            var direction =
+                Vector3.Normalize(
+                    activeCamera.ScreenToWorld(new Vector3(value.Position, 1f), Matrix.Identity) -
+                    viewPosition
+                );
+            var direction2 =
+                Vector3.Normalize(
+                    activeCamera.ScreenToWorld(new Vector3(value.Position + v, 1f), Matrix.Identity) -
+                    viewPosition
+                );
+            if (value.InputType == TouchInputType.Tap)
+            {
+                if (Configuration.ClientConfiguration.Preferences.LookControlMode == LookControlMode.SplitTouch)
+                {
+                    _playerInput.Interact = new Ray3(viewPosition, viewDirection);
+                    _playerInput.Hit = new Ray3(viewPosition, viewDirection);
+                }
+                else
+                {
+                    _playerInput.Interact = new Ray3(viewPosition, direction);
+                    _playerInput.Hit = new Ray3(viewPosition, direction);
+                }
+            }
+            else if (value is { InputType: TouchInputType.Hold, DurationFrames: > 1, Duration: > 0.2f })
+            {
+                _playerInput.Dig = Configuration.ClientConfiguration.Preferences.LookControlMode ==
+                                   LookControlMode.SplitTouch
+                    ? new Ray3(viewPosition, viewDirection)
+                    : new Ray3(viewPosition, direction);
+                _playerInput.Aim = new Ray3(viewPosition, direction2);
+
+                _isViewHoldStarted = true;
+            }
+            else if (value.InputType == TouchInputType.Move)
+            {
+                if (Configuration.ClientConfiguration.Preferences.LookControlMode ==
+                    LookControlMode.EntireScreen ||
+                    Configuration.ClientConfiguration.Preferences.LookControlMode == LookControlMode.SplitTouch)
+                {
+                    var v2 = Vector2.TransformNormal(value.Move, _componentGui.ViewWidget.InvertedGlobalTransform);
+                    var vector = num2 /
+                                 num3 *
+                                 new Vector2(0.0006f, -0.0006f) *
+                                 v2 *
+                                 MathUtils.Pow(v2.LengthSquared(), 0.125f);
+                    _playerInput.Look += vector;
+                }
+
+                if (_isViewHoldStarted)
+                {
+                    _playerInput.Dig = Configuration.ClientConfiguration.Preferences.LookControlMode ==
+                                       LookControlMode.SplitTouch
+                        ? new Ray3(viewPosition, viewDirection)
+                        : new Ray3(viewPosition, direction);
+                    _playerInput.Aim = new Ray3(viewPosition, direction2);
+                }
+            }
+        }
+        else
+        {
+            _isViewHoldStarted = false;
+        }
+
+        if (_componentGui.MoveWidget is { TouchInput: not null })
+        {
+            IsTouchInputActive = true;
+            var radius = _componentGui.MoveWidget.Radius;
+            var value2 = _componentGui.MoveWidget.TouchInput.Value;
+            if (value2.InputType == TouchInputType.Tap)
+            {
+                _playerInput.Jump = true;
+            }
+            else if (value2.InputType is TouchInputType.Move or TouchInputType.Hold)
+            {
+                var v3 = Vector2.TransformNormal(value2.Move, _componentGui.ViewWidget.InvertedGlobalTransform);
+                var vector2 = num /
+                              num3 *
+                              new Vector2(0.003f, -0.003f) *
+                              v3 *
+                              MathUtils.Pow(v3.LengthSquared(), 0.175f);
+                _playerInput.SneakMove.X += vector2.X;
+                _playerInput.SneakMove.Z += vector2.Y;
+                var vector3 = Vector2.TransformNormal(
+                    value2.TotalMoveLimited,
+                    _componentGui.ViewWidget.InvertedGlobalTransform
+                );
+                _playerInput.Move.X += ProcessInputValue(vector3.X * viewWidget.GlobalScale, 0.2f * radius, radius);
+                _playerInput.Move.Z +=
+                    ProcessInputValue((0f - vector3.Y) * viewWidget.GlobalScale, 0.2f * radius, radius);
+            }
+        }
+
+        if (_componentGui.MoveRoseWidget.Direction != Vector3.Zero || _componentGui.MoveRoseWidget.Jump)
+        {
+            IsTouchInputActive = true;
+        }
+
+        _playerInput.Move += _componentGui.MoveRoseWidget.Direction;
+        _playerInput.SneakMove += _componentGui.MoveRoseWidget.Direction;
+        _playerInput.Jump |= _componentGui.MoveRoseWidget.Jump;
+
+        if (_componentGui.LookWidget is not { TouchInput: not null })
+        {
+            return;
+        }
+
+        IsTouchInputActive = true;
+        var value3 = _componentGui.LookWidget.TouchInput.Value;
+        if (value3.InputType == TouchInputType.Tap)
+        {
+            _playerInput.Jump = true;
+        }
+        else if (value3.InputType == TouchInputType.Move)
+        {
+            var v4 = Vector2.TransformNormal(value3.Move, _componentGui.ViewWidget.InvertedGlobalTransform);
+            var vector4 = num2 /
+                          num3 *
+                          new Vector2(0.0006f, -0.0006f) *
+                          v4 *
+                          MathUtils.Pow(v4.LengthSquared(), 0.125f);
+            _playerInput.Look += vector4;
+        }
+    }
+
+    public static float ProcessInputValue(float value, float deadZone, float saturationZone)
+    {
+        return MathUtils.Sign(value) *
+               MathUtils.Clamp((MathUtils.Abs(value) - deadZone) / (saturationZone - deadZone), 0f, 1f);
+    }
+
+    private bool IsMessagePanelOpen()
+    {
+        var messagePanel = _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget
+            .MessagePanel;
+        return messagePanel != null && _componentGui.ModalPanelWidget == messagePanel;
+    }
+}

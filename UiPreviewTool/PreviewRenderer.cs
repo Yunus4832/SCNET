@@ -1,11 +1,12 @@
 using System.Xml.Linq;
 
+using Engine.Core.FileStorage;
 using Engine.Core.Mathematics;
-using Engine.FileStorage;
 using Engine.Graphics;
 using Engine.Media.Images;
 using Engine.Windowing;
 
+using Game.Application;
 using Game.Managers;
 using Game.Modding;
 using Game.Widgets;
@@ -52,6 +53,7 @@ internal static class PreviewRenderer
                 Storage.RegisterFileSystemRoot("app", AppContext.BaseDirectory, readOnly: true);
                 ContentManager.Initialize();
                 runtime = GameModRuntime.Start(scenario.CreateMods());
+                Game.GameEntry.InitializeClientContent(runtime);
                 foreach (var culture in options.Cultures)
                 {
                     if (!runtime.Content.LanguageTypes.Contains(culture, StringComparer.OrdinalIgnoreCase))
@@ -79,7 +81,7 @@ internal static class PreviewRenderer
             {
                 foreach (var culture in options.Cultures)
                 {
-                    runtime!.InitializeLanguage(culture);
+                    ClientApplication.Content.PublishLanguage(runtime!.Content.CreateLanguageCatalog(culture));
                     TextureAtlasManager.Initialize();
                     var logicalSize = new Vector2(options.Width / options.Scale, options.Height / options.Scale);
                     using var root = new CanvasWidget
@@ -133,6 +135,7 @@ internal static class PreviewRenderer
             try
             {
                 DisposeScenario();
+                ClientApplication.ReleaseContent();
                 runtime?.Dispose();
             }
             catch (Exception exception)

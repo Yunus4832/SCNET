@@ -1,4 +1,5 @@
 using Game.Content;
+using Game.FileStorage;
 
 namespace Game.Modding;
 
@@ -90,14 +91,17 @@ public static class ModRestartHelper
     {
         if (profile.Packages.Count == 0)
         {
-            return LanguageManager.Get("ModRestart", "ServerNone");
+            return Localization.ClientLanguage.Catalog.Get("ModRestart", "ServerNone");
         }
 
         var packages = profile.Packages
             .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
             .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
             .Select(package => $"{package.ModId}@{package.Version}");
-        var prefix = LanguageManager.Get("ModRestart", downloadedAny ? "ServerDownloaded" : "ServerSwitch");
+        var prefix = Localization.ClientLanguage.Catalog.Get(
+            "ModRestart",
+            downloadedAny ? "ServerDownloaded" : "ServerSwitch"
+        );
         return $"{prefix}\n{string.Join('\n', packages)}";
     }
 
@@ -105,14 +109,17 @@ public static class ModRestartHelper
     {
         if (profile.Packages.Count == 0)
         {
-            return LanguageManager.Get("ModRestart", "WorldNone");
+            return Localization.ClientLanguage.Catalog.Get("ModRestart", "WorldNone");
         }
 
         var packages = profile.Packages
             .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
             .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
             .Select(package => $"{package.ModId}@{package.Version}");
-        var prefix = LanguageManager.Get("ModRestart", downloadedAny ? "WorldDownloaded" : "WorldSwitch");
+        var prefix = Localization.ClientLanguage.Catalog.Get(
+            "ModRestart",
+            downloadedAny ? "WorldDownloaded" : "WorldSwitch"
+        );
         return $"{prefix}\n{string.Join('\n', packages)}";
     }
 }

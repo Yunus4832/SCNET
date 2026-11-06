@@ -1,4 +1,6 @@
 using Game.Commands;
+using Game.Commands.BuiltIn;
+using Game.Commands.Http;
 using Game.Servers;
 
 namespace Survivalcraft.Test.Commands;
@@ -41,7 +43,7 @@ public class P2PCommandTest
     public void PlayerRequiresExplicitPermissionAndAllCommandsRoundTrip()
     {
         var registry = new CommandRegistry();
-        BuiltInCommands.Register(registry, _owner);
+        Fixtures.BuiltInCommandTestRegistry.Register(registry, _owner);
         registry.Freeze();
         var permission = new ResourceId(_owner, "server.p2p.manage");
         IGameCommand[] commands =
@@ -51,21 +53,33 @@ public class P2PCommandTest
         ];
         foreach (var command in commands)
         {
-            Assert.False(registry.CanInvoke(command, CommandPrincipal.CreatePlayer("Host")));
             Assert.False(
                 registry.CanInvoke(
                     command,
-                    CommandPrincipal.CreatePlayer("Claimed", permissions: [BuiltInPermissionIds.ManageStandard])
+                    CommandPrincipal.CreatePlayer("Host"),
+                    Game.Managers.GameManager.AuthorityProject
+                )
+            );
+            Assert.False(
+                registry.CanInvoke(
+                    command,
+                    CommandPrincipal.CreatePlayer("Claimed", permissions: [BuiltInPermissionIds.ManageStandard]),
+                    Game.Managers.GameManager.AuthorityProject
                 )
             );
             Assert.True(
                 registry.CanInvoke(
                     command,
-                    CommandPrincipal.CreatePlayer("Authorized", permissions: [permission])
+                    CommandPrincipal.CreatePlayer("Authorized", permissions: [permission]),
+                    Game.Managers.GameManager.AuthorityProject
                 )
             );
-            Assert.True(registry.CanInvoke(command, CommandPrincipal.LocalOperator));
-            Assert.True(registry.CanInvoke(command, CommandPrincipal.System));
+            Assert.True(
+                registry.CanInvoke(command, CommandPrincipal.LocalOperator, Game.Managers.GameManager.AuthorityProject)
+            );
+            Assert.True(
+                registry.CanInvoke(command, CommandPrincipal.System, Game.Managers.GameManager.AuthorityProject)
+            );
             Assert.True(registry.TryEncode(command, out var id, out var data, out _));
             Assert.True(registry.TryDecode(id, data, out var decoded, out _));
             Assert.Equal(command, decoded);

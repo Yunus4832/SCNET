@@ -1,110 +1,36 @@
-using System.Text.Json;
-
 using Game.Network;
 using Game.Terrains.Distribution;
 
-namespace Game.Commands;
+namespace Game.Commands.BuiltIn;
 
 internal static class NetworkDiagnosticCommandHandlers
 {
-    public static CommandResult GetSendStatistics(CommandContext context, GetNetworkSendStatisticsCommand _)
-    {
-        var statistics = CommonLib.Net.SendStatistics;
-        var snapshot = new
-        {
-            Terrain = CaptureTerrainBacklog(context),
-            ClientTerrain = CaptureClientTerrain(context),
-            HeadlessTicks = RunMode.Value == RunModeType.HeadlessServer ? HeadlessEntry.TickStatistics : null,
-            Interest = context.Project?.FindSubsystem<SubsystemNetworkInterest>()?.Statistics,
-            Routing = statistics.GetRouting(),
-            Encoding = statistics.GetEncoding(),
-            Fanout = statistics.GetFanout().OrderBy(item => item.Channel)
-                .ThenBy(item => item.PackageType.FullName).Select(item => new
-                    {
-                        Package = item.PackageType.FullName,
-                        Channel = item.Channel.ToString(),
-                        item.Messages,
-                        item.RecipientDeliveries,
-                        item.AverageFanout,
-                        item.MaximumFanout
-                    }
-                ).ToArray(),
-            PendingPackages = CommonLib.Net.PendingPackageCount,
-            P2P = CommonLib.Net.GetP2PStatus(),
-            ReliableQueues = CommonLib.Net.Clients.Values.Where(client => client.IsConnected && client.Peer != null)
-                .Select(client => new
-                    {
-                        ClientId = client.ID,
-                        Path = client.Peer!.PathKind.ToString(),
-                        AddressFamily = client.Peer.TransportEndpoint.AddressFamily.ToString(),
-                        PendingBytes = client.Peer!.PendingReliableBytes
-                    }
-                ).ToArray(),
-            Channels = statistics.GetChannels().OrderBy(item => item.Key).Select(item => new
-                {
-                    Channel = item.Key.ToString(),
-                    item.Value.Batches,
-                    item.Value.EncodedBytes
-                }
-            ).ToArray(),
-            Packages = statistics.GetPackages().OrderBy(item => item.Channel)
-                .ThenBy(item => item.PackageType.FullName).Select(item => new
-                    {
-                        Package = item.PackageType.FullName,
-                        Channel = item.Channel.ToString(),
-                        item.Deliveries,
-                        item.PayloadBytes
-                    }
-                ).ToArray()
-        };
-        return new CommandResult(
-            true,
-            "diagnostics.network.send_statistics",
-            "Connection send totals captured; excludes transport overhead and retransmissions.",
-            Data: JsonSerializer.SerializeToNode(snapshot)
-        );
-    }
-
-    private static object? CaptureTerrainBacklog(CommandContext context)
-    {
-        var terrain = context.Project?.FindSubsystem<SubsystemTerrain>();
-        var scheduler = terrain?.TerrainUpdater.ServerChunkDistribution;
-        if (scheduler == null)
-        {
-            return null;
-        }
-
-        var backlog = scheduler.GetBacklog();
-        return new
-        {
-            backlog.Pending,
-            backlog.AwaitingContent,
-            backlog.OutstandingEncodes,
-            terrain!.TerrainUpdater.PendingLocationCount,
-            terrain.TerrainUpdater.LocationHandoffTimeouts,
-            terrain.TerrainUpdater.DeferredAllocationPasses,
-            AllocatedStates = terrain.Terrain.AllocatedChunks.GroupBy(chunk => chunk.WorkerState)
-                .ToDictionary(group => group.Key.ToString(), group => group.Count()),
-            SaveOutstanding = terrain.TerrainSaveCoordinator?.OutstandingCount
-        };
-    }
+    public static NetworkCommandDiagnostics Diagnostics { get; } = new(
+        () => CommonLib.Net,
+        () => null,
+        CaptureClientTerrain
+    );
 
     private static object? CaptureClientTerrain(CommandContext context)
     {
         var terrain = context.Project?.FindSubsystem<SubsystemTerrain>();
-        if (terrain?.ChunkContentTransport is not NetworkChunkContentTransport transport)
+        if (terrain?.ChunkContentTransport is not ClientChunkContentTransport transport)
         {
             return null;
         }
 
+        var presentation = context.Project!.FindSubsystem<SubsystemTerrainPresentation>(true)!;
         var locations = terrain.TerrainUpdater.UpdateLocations.Values.ToArray();
         return new
         {
-            transport.PendingTransferCount,
-            transport.FragmentsReceived,
+            transport.PendingSnapshotBytes,
+            transport.BufferedSnapshotBytes,
             transport.TransfersCompleted,
-            transport.FullChunkRequestsSent,
-            transport.MissingFragmentRequestsSent,
+            transport.RequestsSubmitted,
+            transport.PendingDeltaCount,
+            transport.PendingResyncCount,
+            NativeTransport = WorldNetworkBinding.FindNode(context.Project!)
+                ?.CaptureTerrainReceptionStatistics(),
             Chunks = terrain.Terrain.AllocatedChunks.Select(chunk => new
                 {
                     chunk.Coords.X,
@@ -113,11 +39,16 @@ internal static class NetworkDiagnosticCommandHandlers
                                                         location.VisibilityDistance * location.VisibilityDistance
                     ),
                     chunk.IsLoaded,
-                    Drawable = ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk),
+                    Drawable = ClientChunkDerivationPipeline.CanDraw(
+                        TerrainContentRole.Replica,
+                        chunk,
+                        presentation.ChunkPresentations.Get(chunk)
+                    ),
                     MainState = chunk.MainThreadState.ToString(),
                     WorkerState = chunk.WorkerState.ToString(),
                     chunk.NetworkContentVersion,
-                    chunk.ClientGeometryContentVersion
+                    chunk.NeedsContentSnapshot,
+                    presentation.ChunkPresentations.Get(chunk).ClientGeometryContentVersion
                 }
             ).ToArray()
         };

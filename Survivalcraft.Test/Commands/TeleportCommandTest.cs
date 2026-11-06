@@ -1,7 +1,7 @@
 using Engine.Core.Collections;
 using Engine.Core.Mathematics;
 
-using Game.Commands;
+using Game.Commands.BuiltIn;
 using Game.Components;
 using Game.Terrains;
 using Game.World;
@@ -64,12 +64,12 @@ public class TeleportCommandTest
         {
             for (var z = -1; z <= 0; z++)
             {
-                terrain.AllocateChunk(x, z).MainThreadState = TerrainChunkState.InvalidLight;
+                terrain.AllocateChunk(x, z).SetMainThreadState(TerrainChunkState.InvalidLight);
             }
         }
 
         Assert.True(TeleportCommandHandlers.IsDestinationTerrainReady(terrain, box));
-        terrain.GetChunkAtCoords(-1, -1)!.MainThreadState = TerrainChunkState.InvalidContents4;
+        terrain.GetChunkAtCoords(-1, -1)!.SetMainThreadState(TerrainChunkState.InvalidContents4);
         Assert.False(TeleportCommandHandlers.IsDestinationTerrainReady(terrain, box));
     }
 
@@ -78,11 +78,11 @@ public class TeleportCommandTest
     [InlineData(TerrainChunkState.InvalidContents4, false)]
     [InlineData(TerrainChunkState.InvalidLight, true)]
     [InlineData(TerrainChunkState.InvalidPropagatedLight, true)]
-    [InlineData(TerrainChunkState.Valid, true)]
+    [InlineData(TerrainChunkState.Ready, true)]
     public void SafetyCheckWaitsForContentsButNotLightingOrGeometry(TerrainChunkState state, bool ready)
     {
         using var terrain = new Terrain();
-        terrain.AllocateChunk(0, 0).MainThreadState = state;
+        terrain.AllocateChunk(0, 0).SetMainThreadState(state);
         var box = TeleportCommandHandlers.GetDestinationBox(new Vector3(8f, 30f, 8f), new Vector3(0.6f, 1.8f, 0.6f));
         Assert.Equal(ready, TeleportCommandHandlers.IsDestinationTerrainReady(terrain, box));
     }

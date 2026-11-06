@@ -24,4 +24,6 @@ public sealed record CharacterStatePackage : ComponentCharacterPackage
     [Key(7)] public Quaternion Rotation { get; init; }
 
     [Key(8)] public Vector3 Velocity { get; init; }
+
+    [Key(9)] public bool UseLookDirectedCreativeFlight { get; init; }
 }

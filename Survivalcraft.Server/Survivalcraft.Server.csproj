@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(GameVersion)</Version>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>Survivalcraft.Server</AssemblyName>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND $([MSBuild]::IsOSPlatform('Windows'))">win-x64</RuntimeIdentifier>
+        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND $([MSBuild]::IsOSPlatform('Linux'))">linux-x64</RuntimeIdentifier>
+        <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
+        <UsePackResourceTarget>true</UsePackResourceTarget>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <PublishSingleFile>true</PublishSingleFile>
+        <UsePackOutputTarget>true</UsePackOutputTarget>
+        <OutputFileName>SCNET_Server-$(RuntimeIdentifier)-$(GameVersion).zip</OutputFileName>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../Survivalcraft.Hosting/Survivalcraft.Hosting.csproj"/>
+        <None Include="Content.zip" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
+              ExcludeFromSingleFile="true"/>
+        <None Include="../ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt" CopyToPublishDirectory="PreserveNewest"
+              ExcludeFromSingleFile="true"/>
+    </ItemGroup>
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>Survivalcraft.Server.Test</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+    <Target Name="BuildLinuxServerImage" AfterTargets="PackOutput"
+            Condition="'$(Configuration)' == 'Release' AND '$(BuildLinuxServerImage)' != 'false' AND '$(RuntimeIdentifier)' == 'linux-x64' AND $([MSBuild]::IsOSPlatform('Linux'))">
+        <Exec Command="bash &quot;$(MSBuildProjectDirectory)/Deployment/build-image.sh&quot;"
+              EnvironmentVariables="SCNET_PUBLISH_DIR=$(PublishDir);GAME_VERSION=$(GameVersion);OUTPUT_DIR=$(SolutionRoot)Publish"/>
+    </Target>
+</Project>

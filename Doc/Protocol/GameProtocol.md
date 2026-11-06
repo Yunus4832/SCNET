@@ -47,7 +47,7 @@ sequenceDiagram
 ```
 
 准入期间的连接尚未成为可控制角色的在线玩家。人数、重复在线、存档封禁等检查仍由游戏服务器裁决；
-网页批准本身不保证入场。GUI 主机使用相同策略执行本地玩家预认证；普通单机跳过联机准入，Headless 没有本地可玩玩家。
+网页批准本身不保证入场。GUI 主机使用相同策略执行本地玩家预认证；普通单机跳过联机准入，独立服务器 没有本地可玩玩家。
 
 ## 准入消息
 
@@ -115,10 +115,18 @@ Adaptive 压缩是发送优化，不改变消息含义；接收端必须接受�
 `BootstrapPackage` 包含世界描述、连接 Epoch、方块映射、客户端名单、项目与材质数据。
 后续阶段确认、初始世界快照、实体和地形同步见[网络复制](../NetworkReplication.md)及[地形分发](../TerrainDistribution.md)。
 
-玩家身份地址、角色 `CharacterId`、临时 `ControllerSessionId` 和连接 Epoch 是不同标识：
+玩家身份地址、角色 `CharacterId`、临时 `ControllerClientId` 和连接 Epoch 是不同标识：
 公开角色资料不提供私钥，也不能让另一个连接获得该角色的控制权。
 游戏处理器必须基于已验证的发送连接核对每个角色操作、命令和资源修改请求，不能只相信包内声明的玩家/角色 ID。
 权限、队伍和存档封禁属于玩家，角色与其控制关系由游戏业务管理。
 
 消息的可靠性及通道划分由 [NetworkChannel](../../Game.Protocol/NetworkChannel.cs) 和游戏发送策略共同决定。
 `Game.Protocol` 编码值与快照，不读取世界或执行权限检查；外部批准不随每个游戏消息重复发送。
+
+## 生物表现与投射物烟迹
+
+`CreatureShapeshiftStatePackage` 的主消息标签为 137，携带实体 ID 和转换开始时间；`CreatureWhalePlumePackage` 的标签为 138，携带实体 ID、是否喷发、大小和喷发持续时间。两者都只由 Authority 下发，接收方按实体应用表现，不重新作 AI 决策。
+
+`ProjectileAddedPackage.SmokeTrail` 为可选烟迹快照，包含大小、结束时间和颜色。它随投射物基线一起交付，接收方仅播放未过期的烟迹。
+
+地形缺片修复请求要求有效的分配代次、正内容版本和合法缺片索引；不合法输入不能经修复回退生成不合法的区块请求。

@@ -1,3 +1,5 @@
+using Game.Protocol.Localization;
+
 using MessagePack;
 
 namespace Game.Protocol.Entities;
@@ -17,7 +19,7 @@ public sealed record EntityInjuryRequestPackage : ComponentHealthPackage
 
     [Key(4)] public float Amount { get; init; }
 
-    [Key(5)] public string Cause { get; init; } = string.Empty;
+    [Key(5)] public LocalizedText Cause { get; init; } = LocalizedText.Empty;
 
     [Key(6)] public RequestInjureType InjureRequestType { get; init; }
 }

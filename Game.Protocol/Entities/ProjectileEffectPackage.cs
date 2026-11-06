@@ -14,4 +14,6 @@ public sealed record ProjectileEffectPackage : ProjectilePackage
     [Key(2)] public int Value { get; init; }
 
     [Key(3)] public Vector3 Position { get; init; }
+
+    [Key(4)] public float Pitch { get; init; }
 }

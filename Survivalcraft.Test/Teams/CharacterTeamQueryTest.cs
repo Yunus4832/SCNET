@@ -11,14 +11,14 @@ using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Teams;
 
-[Collection(WorldRoleCollection.Name)]
+[Collection(NodeRoleCollection.Name)]
 public sealed class CharacterTeamQueryTest
 {
     [Fact]
     public void BorrowedCharactersFollowControllersForTeamViewsWithoutMovingOwnership()
     {
-        var oldClients = CommonLib.Net.Clients;
         using var project = new TeamProject();
+        var oldClients = project.Node.Clients.Values.ToArray();
         try
         {
             var first = project.Players.Store.GetOrCreate(Address(1));
@@ -35,11 +35,14 @@ public sealed class CharacterTeamQueryTest
             );
             project.Teams.Store.TryCreate(first, "One", out _);
             project.Teams.Store.TryCreate(second, "Two", out _);
-            CommonLib.Net.Clients = new Dictionary<int, Client>
-            {
-                [1] = new Client(null, 1, Guid.NewGuid(), secondRole, project) { PlayerAddress = first.Address },
-                [2] = new Client(null, 2, Guid.NewGuid(), firstRole, project) { PlayerAddress = second.Address }
-            };
+            Fixtures.ConnectionTestEnvironment.SetRoster(
+                project.Node,
+                (new Dictionary<int, Client>
+                {
+                    [1] = new Client(null, 1, Guid.NewGuid(), secondRole) { PlayerAddress = first.Address },
+                    [2] = new Client(null, 2, Guid.NewGuid(), firstRole) { PlayerAddress = second.Address }
+                }).Values
+            );
             Assert.Equal(firstRole, Assert.Single(project.Characters.GetOwnedCharacters(first.Address)).CharacterId);
             Assert.Equal(
                 secondRole,
@@ -49,12 +52,16 @@ public sealed class CharacterTeamQueryTest
                 project.Teams.Store.FindForPlayer(second.Address)!.Id,
                 CharacterTeamQuery.GetTeamId(project, firstRole)
             );
-            CommonLib.Net.Clients.Remove(1);
+            if (project.Node.Clients.TryGetValue(1, out var removedConnection))
+            {
+                project.Node.UnregisterClient(removedConnection);
+            }
+
             Assert.Empty(CharacterTeamQuery.GetControlledTeamCharacters(project, first.Address));
             Assert.NotNull(project.Teams.Store.FindForPlayer(first.Address));
             Assert.Equal(Guid.Empty, CharacterTeamQuery.GetTeamId(project, secondRole));
         }
-        finally { CommonLib.Net.Clients = oldClients; }
+        finally { Fixtures.ConnectionTestEnvironment.SetRoster(project.Node, oldClients); }
     }
 
     private static PlayerAddress Address(byte value)
@@ -74,8 +81,17 @@ public sealed class CharacterTeamQueryTest
 
         public SubsystemTeams Teams { get; }
 
+        public NetNode Node { get; } = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Authority
+        );
+
         public TeamProject()
         {
+            Node.Runtime.BindProject(this);
+            Fixtures.RuleHookTestEnvironment.BindEmpty(this);
             Teams = TeamTestSupport.CreateSubsystem(Players.Store);
             subsystems.Add(Players);
             subsystems.Add(Characters);

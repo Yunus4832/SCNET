@@ -1,5 +1,5 @@
-using Game.Managers;
 using Game.Subsystems;
+using Game.World;
 
 namespace Survivalcraft.Test.Network;
 
@@ -11,12 +11,12 @@ public sealed class SpatialSoundRadiusTest
     [InlineData(0.5f, 5f, 27.5f)]
     public void RadiusMatchesUnscaledPlaybackThreshold(float volume, float minDistance, float expected)
     {
-        var radius = SubsystemAudio.CalculateAudibleRadius(volume, minDistance);
+        var radius = SoundPropagation.CalculateAudibleRadius(volume, minDistance);
 
         Assert.Equal(expected, radius);
         Assert.True(float.IsFinite(radius));
         Assert.Equal(
-            AudioManager.UnscaledMinAudibleVolume,
+            SoundPropagation.UnscaledMinAudibleVolume,
             volume * new SubsystemAudio().CalculateVolume(radius, minDistance),
             5
         );

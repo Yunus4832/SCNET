@@ -3,42 +3,32 @@ using System.Text.Json;
 
 using Content.Packaging;
 
+using Game.Modding;
+
 namespace Survivalcraft.Test.Modding;
 
 internal static class ScpkgTestPackage
 {
     public static MemoryStream Create(
-        string legacyManifestJson,
+        string manifestJson,
         IReadOnlyDictionary<string, string>? files = null,
         string? assemblyPath = null
     )
     {
-        using var legacyDocument = JsonDocument.Parse(legacyManifestJson);
-        var legacy = legacyDocument.RootElement;
-        var identifier = legacy.GetProperty("id").GetString()!;
-        var entrypoints = legacy.TryGetProperty("entrypoints", out var entrypointsElement)
-            ? entrypointsElement.EnumerateObject().ToDictionary(
-                property => property.Name,
-                property => (object)property.Value.GetString()!,
-                StringComparer.Ordinal
-            )
-            : new Dictionary<string, object>(StringComparer.Ordinal);
-        var dependencies = legacy.TryGetProperty("dependencies", out var dependenciesElement)
-            ? dependenciesElement.EnumerateArray().Select(dependency => new Dictionary<string, object>
-                {
-                    ["identifier"] = dependency.GetProperty("id").GetString()!,
-                    ["minimumVersion"] = dependency.TryGetProperty("minimumVersion", out var minimumVersion)
-                        ? minimumVersion.GetString()!
-                        : "0.0.0",
-                    ["optional"] = dependency.TryGetProperty("optional", out var optional) && optional.GetBoolean()
-                }
-            ).ToArray()
-            : [];
-        var metadata = JsonSerializer.SerializeToElement(
-            new Dictionary<string, object>
+        var definition = ModManifest.Parse(manifestJson);
+        var identifier = definition.Id;
+        var dependencies = definition.RequiredDependencies.Select(dependency => new
             {
-                ["side"] = legacy.TryGetProperty("side", out var side) ? side.GetString()! : "common",
-                ["entrypoints"] = entrypoints,
+                identifier = dependency.Id,
+                minimumVersion = dependency.MinimumVersion ?? "0.0.0",
+                optional = dependency.Optional
+            }
+        ).ToArray();
+        var metadata = JsonSerializer.SerializeToElement(
+            new Dictionary<string, object?>
+            {
+                ["entrypoint"] = definition.Entrypoint,
+                ["clientContentEntrypoint"] = definition.ClientContentEntrypoint,
                 ["dependencies"] = dependencies
             }
         );
@@ -46,10 +36,10 @@ internal static class ScpkgTestPackage
             ContentPackageManifest.CurrentFormatVersion,
             ContentPackageType.Mod,
             identifier,
-            legacy.GetProperty("name").GetString()!,
+            definition.Name,
             "Test summary",
             "Test package description",
-            legacy.GetProperty("version").GetString()!,
+            definition.Version,
             new ContentPackagePayload("scnet.mod-v1", "payload/mod.json", "application/json"),
             metadata
         );

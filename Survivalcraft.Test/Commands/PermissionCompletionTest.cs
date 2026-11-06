@@ -1,28 +1,28 @@
 using Game.Commands;
-using Game.Managers;
+using Game.Commands.BuiltIn;
+using Game.Commands.Text;
 using Game.Network;
-using Game.World;
 
 using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(WorldRoleCollection.Name)]
+[Collection(NodeRoleCollection.Name)]
 public class PermissionCompletionTest
 {
     [Theory]
-    [InlineData(WorldRole.RemoteClient)]
-    [InlineData(WorldRole.Server)]
-    public void GrantAndDelegationUseTheirOwnPoliciesAndPermissionDescriptions(WorldRole worldRole)
+    [InlineData(NodeRole.Client)]
+    [InlineData(NodeRole.Authority)]
+    public void GrantAndDelegationUseTheirOwnPoliciesAndPermissionDescriptions(NodeRole worldRole)
     {
-        var previous = GameManager.Role;
+        var previous = CommonLib.Net.Role;
         try
         {
             CommonLib.Net.Role = worldRole;
             var registry = new CommandRegistry();
-            BuiltInCommands.Register(registry, new ModId("game"));
+            Fixtures.BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
             registry.Freeze();
-            var adapter = new TextCommandAdapter(registry);
+            var adapter = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject);
             var principal = CommandPrincipal.LocalOperator;
             var grants = adapter.Suggest("/permission grant Tester ", principal);
             var others = Assert.Single(grants, item => item.Value == "game:player.teleport.others");
@@ -51,7 +51,9 @@ public class PermissionCompletionTest
                 item => item.Value == "game:player.teleport.others"
             );
             var user = CommandPrincipal.CreatePlayer("User", permissions: [permission]);
-            Assert.True(registry.CanInvoke(typeof(TeleportPlayerCommand), user));
+            Assert.True(
+                registry.CanInvoke(typeof(TeleportPlayerCommand), user, Game.Managers.GameManager.AuthorityProject)
+            );
             Assert.DoesNotContain(
                 adapter.Suggest("/permission delegate Tester ", user),
                 item => item.Value == "game:player.teleport.others"

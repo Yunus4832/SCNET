@@ -1,13 +1,13 @@
 using System.Xml.Linq;
 
-using Engine.FileStorage;
+using Engine.Core.FileStorage;
 using Engine.Network;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
 
-using Game;
+using Game.FileStorage;
 using Game.Managers;
 using Game.Modding;
 using Game.Startup;
@@ -224,9 +224,9 @@ public sealed class ModProfileManagerTest : IDisposable
     [Fact]
     public void NewWorldDefaultsToGlobalPlusWorldStrategy()
     {
-        var worldSettings = new WorldSettings();
+        var hosting = new WorldHostingSettings();
 
-        Assert.Equal(ModProfileResolutionStrategy.GlobalPlusWorld, worldSettings.ModProfileResolutionStrategy);
+        Assert.Equal(ModProfileResolutionStrategy.GlobalPlusWorld, hosting.ModProfileResolutionStrategy);
     }
 
     [Fact]
@@ -456,7 +456,6 @@ public sealed class ModProfileManagerTest : IDisposable
         {
             Name = worldName,
             Seed = "seed",
-            ModProfileResolutionStrategy = strategy
         };
         var databaseObject = DatabaseManager.GameDatabase.Database
             .FindDatabaseObject("GameProject", DatabaseManager.GameDatabase.ProjectTemplateType, true)!;
@@ -464,6 +463,7 @@ public sealed class ModProfileManagerTest : IDisposable
         var gameInfo = new ValuesDictionary();
         overrides.SetValue("GameInfo", gameInfo);
         worldSettings.Save(gameInfo, false);
+        new WorldHostingSettings { ModProfileResolutionStrategy = strategy }.Save(gameInfo, worldSettings.Name);
         gameInfo.SetValue("WorldDirectoryName", worldDirectoryName);
         gameInfo.SetValue("WorldSeed", 1);
         var projectData = new ProjectData(DatabaseManager.GameDatabase, databaseObject, overrides);

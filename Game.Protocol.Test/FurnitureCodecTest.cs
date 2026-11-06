@@ -42,6 +42,8 @@ public sealed class FurnitureCodecTest
                 new FurnitureDesignsRemovedPackage { ToRemoveList = [4, 5] },
             FurniturePackage.EventType.ImportFurnitureSet => new FurnitureSetImportPackage
                 { DesignXml = "opaque game design or set name", Name = "source" },
+            FurniturePackage.EventType.RenameDesignRequest => new FurnitureDesignRenameRequestPackage
+                { Source = new CellFace(-3, 64, 2, 1), FurnitureIndex = 42, Name = "Fixture" },
             _ => throw new InvalidOperationException("Unsupported message operation.")
         });
         Assert.True(ProtocolMessageCodec.IsDefined(message.GetType()));

@@ -2,11 +2,11 @@ using System.Text.Json;
 
 using Game.Automation;
 
-namespace Game.Commands;
+namespace Game.Commands.BuiltIn;
 
 internal static class AutomationCommandHandlers
 {
-    private static ComponentCharacter? FindLocalPlayer() => GameManager.Project?
+    private static ComponentCharacter? FindLocalPlayer() => GameManager.ClientProject?
         .FindSubsystem<SubsystemCharacters>()?.ComponentCharacters.FirstOrDefault(player => player.IsLocallyControlled);
 
     public static CommandResult LookAt(CommandContext _, LookAtAutomationTargetCommand command)
@@ -14,7 +14,7 @@ internal static class AutomationCommandHandlers
         try
         {
             var player = FindLocalPlayer() ?? throw new InvalidOperationException("No local character is available.");
-            var id = player.ComponentInput.ViewControl.Start(
+            var id = player.Entity.FindComponent<ComponentInput>(true)!.ViewControl.Start(
                 player,
                 command.Target,
                 command.ToleranceDegrees,
@@ -23,7 +23,7 @@ internal static class AutomationCommandHandlers
             return new CommandResult(
                 true,
                 "automation.view.started",
-                "View control started.",
+                LocalizedText.Literal("View control started."),
                 Data: JsonSerializer.SerializeToNode(new { Id = id })
             );
         }
@@ -41,9 +41,9 @@ internal static class AutomationCommandHandlers
         new(
             true,
             "automation.view.status",
-            "View control status captured.",
+            LocalizedText.Literal("View control status captured."),
             Data: JsonSerializer.SerializeToNode(
-                FindLocalPlayer()?.ComponentInput.ViewControl.Capture() ??
+                FindLocalPlayer()?.Entity.FindComponent<ComponentInput>(true)!.ViewControl.Capture() ??
                 new { Status = "unavailable" }
             )
         );
@@ -53,7 +53,7 @@ internal static class AutomationCommandHandlers
         try
         {
             var player = FindLocalPlayer() ?? throw new InvalidOperationException("No local character is available.");
-            var id = player.ComponentInput.ViewControl.StartAngles(
+            var id = player.Entity.FindComponent<ComponentInput>(true)!.ViewControl.StartAngles(
                 player,
                 command.YawDegrees,
                 command.PitchDegrees,
@@ -64,7 +64,7 @@ internal static class AutomationCommandHandlers
             return new CommandResult(
                 true,
                 "automation.view.started",
-                "View control started.",
+                LocalizedText.Literal("View control started."),
                 Data: JsonSerializer.SerializeToNode(new { Id = id })
             );
         }
@@ -80,7 +80,7 @@ internal static class AutomationCommandHandlers
 
     public static CommandResult CancelView(CommandContext _, CancelAutomationViewCommand __)
     {
-        FindLocalPlayer()?.ComponentInput.ViewControl.Cancel();
+        FindLocalPlayer()?.Entity.FindComponent<ComponentInput>(true)!.ViewControl.Cancel();
         return CommandResult.Ok("View control cancelled.", "automation.view.cancelled");
     }
 
@@ -92,7 +92,7 @@ internal static class AutomationCommandHandlers
             return new CommandResult(
                 true,
                 "automation.navigation.started",
-                "Navigation started.",
+                LocalizedText.Literal("Navigation started."),
                 Data: JsonSerializer.SerializeToNode(new { Id = id })
             );
         }
@@ -112,7 +112,7 @@ internal static class AutomationCommandHandlers
         return new CommandResult(
             true,
             "automation.navigation.status",
-            "Navigation status captured.",
+            LocalizedText.Literal("Navigation status captured."),
             Data: JsonSerializer.SerializeToNode(navigation?.Capture() ?? new { Status = "unavailable" })
         );
     }
@@ -123,9 +123,9 @@ internal static class AutomationCommandHandlers
         return CommandResult.Ok("Navigation cancelled.", "automation.navigation.cancelled");
     }
 
-    private static AutomationNavigationController? FindNavigation() => GameManager.Project?
+    private static AutomationNavigationController? FindNavigation() => GameManager.ClientProject?
         .FindSubsystem<SubsystemCharacters>()?.ComponentCharacters.FirstOrDefault(player => player.IsLocallyControlled)
-        ?.ComponentInput.Navigation;
+        ?.Entity.FindComponent<ComponentInput>(true)!.Navigation;
 
     private static AutomationNavigationController GetNavigation() => FindNavigation() ??
                                                                      throw new InvalidOperationException(
@@ -136,7 +136,7 @@ internal static class AutomationCommandHandlers
         new(
             true,
             "automation.gameplay.context",
-            "Gameplay context captured.",
+            LocalizedText.Literal("Gameplay context captured."),
             Data: JsonSerializer.SerializeToNode(AutomationGameplayContext.Capture())
         );
 
@@ -161,7 +161,7 @@ internal static class AutomationCommandHandlers
             return new CommandResult(
                 true,
                 "automation.input.started",
-                "Input gesture started.",
+                LocalizedText.Literal("Input gesture started."),
                 Data: JsonSerializer.SerializeToNode(new { Id = id })
             );
         }
@@ -182,7 +182,7 @@ internal static class AutomationCommandHandlers
         new(
             true,
             "automation.input.status",
-            "Input gesture status captured.",
+            LocalizedText.Literal("Input gesture status captured."),
             Data: JsonSerializer.SerializeToNode(AutomationInputController.GetActionStatus())
         );
 
@@ -207,7 +207,7 @@ internal static class AutomationCommandHandlers
         new(
             true,
             "automation.ui.context",
-            "UI context captured.",
+            LocalizedText.Literal("UI context captured."),
             Data: JsonSerializer.SerializeToNode(AutomationUiContext.Capture())
         );
 
@@ -249,7 +249,7 @@ internal static class AutomationCommandHandlers
             return new CommandResult(
                 true,
                 "automation.ui.drag_queued",
-                "UI drag queued.",
+                LocalizedText.Literal("UI drag queued."),
                 Data: JsonSerializer.SerializeToNode(new { Id = id })
             );
         }
@@ -324,7 +324,7 @@ internal static class AutomationCommandHandlers
         return new CommandResult(
             true,
             "automation.ui.screenshot",
-            "UI screenshot captured.",
+            LocalizedText.Literal("UI screenshot captured."),
             Data: JsonSerializer.SerializeToNode(result)
         );
     }

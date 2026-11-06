@@ -1,28 +1,19 @@
-using System.Security.Cryptography;
 using System.Xml.Linq;
 
-using Engine.Core.Serialization;
-
-using EntitySystem.XmlUtilities;
-
 using Game.Configuration;
+using Game.FileStorage;
 
 namespace Game.Managers;
 
 public static class SettingsManager
 {
-    public static Settings Current { get; } = new();
+    public static ApplicationPreferences Application { get; } = new();
 
-    public static event Action? BrightnessChanged;
-
-    public static void SetBrightness(float value)
-    {
-        value = MathUtils.Clamp(value, 0f, 1f);
-        if (value.CloseTo(Current.Brightness)) { return; }
-
-        Current.Brightness = value;
-        BrightnessChanged?.Invoke();
-    }
+    private static readonly PreferenceStore _store = new(
+        GamePaths.SettingsFile,
+        [ClientConfiguration.Preferences, HostingConfiguration.Preferences, Application],
+        AppConfigManager.Values
+    );
 
     public static void Initialize()
     {
@@ -33,7 +24,7 @@ public static class SettingsManager
 
         LoadSettings();
         var settingsChanged = false;
-        if (EnsureHttpCommandAccessToken(Current))
+        if (HostingConfiguration.Preferences.EnsureHttpCommandAccessToken())
         {
             settingsChanged = true;
         }
@@ -46,78 +37,11 @@ public static class SettingsManager
         Window.Deactivated += SaveSettings;
     }
 
-    internal static bool EnsureHttpCommandAccessToken(Settings settings)
-    {
-        if (!string.IsNullOrWhiteSpace(settings.HttpCommandAccessToken) &&
-            settings.HttpCommandAccessToken.Length >= 32)
-        {
-            return false;
-        }
-
-        settings.HttpCommandAccessToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-        Log.Information("Generated a new HTTP command access token for this instance.");
-        return true;
-    }
-
     public static void LoadSettings()
     {
         try
         {
-            if (Storage.FileExists(GamePaths.SettingsFile))
-            {
-                using (var stream = Storage.OpenFile(GamePaths.SettingsFile, OpenFileMode.Read))
-                {
-                    var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
-                    AppConfigManager.ReadFromXml(xElement);
-                    foreach (var item in xElement.Elements())
-                    {
-                        var name = "<unknown>";
-                        try
-                        {
-                            if (item.Name.LocalName == "Setting")
-                            {
-                                name = XmlUtils.GetAttributeValue<string>(item, "Name");
-                                var attributeValue = XmlUtils.GetAttributeValue<string>(item, "Value");
-                                var propertyInfo = (from pi in typeof(Settings).GetRuntimeProperties()
-                                    where pi.Name == name &&
-                                          pi.GetMethod != null &&
-                                          !pi.GetMethod.IsStatic &&
-                                          pi.GetMethod.IsPublic &&
-                                          pi.SetMethod != null &&
-                                          pi.SetMethod.IsPublic
-                                    select pi).FirstOrDefault();
-                                if ((object?)propertyInfo != null)
-                                {
-                                    var value = HumanReadableConverter.ConvertFromString(
-                                        propertyInfo.PropertyType,
-                                        attributeValue
-                                    );
-                                    propertyInfo.SetValue(Current, value, null);
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Warning(
-                                string.Format(
-                                    "Setting \"{0}\" could not be loaded. Reason: {1}",
-                                    new object[]
-                                    {
-                                        name,
-                                        ex.Message
-                                    }
-                                )
-                            );
-                        }
-                    }
-                }
-
-                Log.Information("Loaded settings.");
-            }
-            else
-            {
-                SaveSettings();
-            }
+            _store.Load();
         }
         catch (Exception e)
         {
@@ -137,59 +61,9 @@ public static class SettingsManager
         }
     }
 
-    private static void SaveSettingsCore()
-    {
-        var xElement = new XElement("Settings");
+    internal static void ReadSettings(XElement root) => _store.Read(root);
 
-        foreach (var item in from pi in typeof(Settings).GetRuntimeProperties()
-                 where pi.GetMethod != null &&
-                       !pi.GetMethod.IsStatic &&
-                       pi.GetMethod.IsPublic &&
-                       pi.SetMethod != null &&
-                       pi.SetMethod.IsPublic
-                 select pi)
-        {
-            try
-            {
-                var value = HumanReadableConverter.ConvertToString(item.GetValue(Current, null) ?? string.Empty);
-                var node = XmlUtils.AddElement(xElement, "Setting");
-                XmlUtils.SetAttributeValue(node, "Name", item.Name);
-                XmlUtils.SetAttributeValue(node, "Value", value);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(
-                    string.Format(
-                        "Setting \"{0}\" could not be saved. Reason: {1}",
-                        new object[]
-                        {
-                            item.Name,
-                            ex.Message
-                        }
-                    )
-                );
-            }
-        }
+    internal static XElement WriteSettings() => _store.Write();
 
-        AppConfigManager.WriteToXml(xElement);
-        var temporaryPath = GamePaths.SettingsFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
-        try
-        {
-            using (var stream = Storage.OpenFile(temporaryPath, OpenFileMode.Create))
-            {
-                XmlUtils.SaveXmlToStream(xElement, stream, null, true);
-            }
-
-            Storage.MoveFile(temporaryPath, GamePaths.SettingsFile);
-        }
-        finally
-        {
-            if (Storage.FileExists(temporaryPath))
-            {
-                Storage.DeleteFile(temporaryPath);
-            }
-        }
-
-        Log.Information("Saved settings");
-    }
+    private static void SaveSettingsCore() => _store.Save();
 }

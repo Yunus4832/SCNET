@@ -96,19 +96,7 @@
 
                     <CanvasWidget Size="0, 12"/>
 
-                    <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                        <LabelWidget Text="[SettingsControlsScreen:10]" HorizontalAlignment="Far"
-                                     VerticalAlignment="Center" Margin="20, 0"/>
-                        <SliderWidget Name="CreativeDigTimeSlider" Size="410, 60" VerticalAlignment="Center"
-                                      Margin="20, 0" MinValue="0.1" MaxValue="0.3" Granularity="0.025"/>
-                    </UniformSpacingPanelWidget>
 
-                    <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                        <LabelWidget Text="[SettingsControlsScreen:11]" HorizontalAlignment="Far"
-                                     VerticalAlignment="Center" Margin="20, 0"/>
-                        <SliderWidget Name="CreativeReachSlider" Size="410, 60" VerticalAlignment="Center"
-                                      Margin="20, 0" MinValue="5" MaxValue="10" Granularity="0.5"/>
-                    </UniformSpacingPanelWidget>
 
                 </StackPanelWidget>
             </ScrollPanelWidget>

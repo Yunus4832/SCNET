@@ -21,7 +21,8 @@ public sealed class ServiceCatalogScreen : Screen
         LoadContents(this, ContentManager.Get<XElement>("Screens/ServiceCatalogScreen"));
         _panels = Children.Find<CanvasWidget>("Panels")!;
         _type = Children.Find<SelectionDrawerWidget>("ServiceType")!;
-        _type.ItemTextProvider = item => LanguageManager.GetContentWidgets("Services", item.ToString()!);
+        _type.ItemTextProvider = item =>
+            Localization.ClientLanguage.Catalog.GetContentWidgets("Services", item.ToString()!);
         _type.SetItems(Enum.GetValues<ServiceKind>().Cast<object>());
         _type.SelectionChanged += () =>
         {
@@ -51,7 +52,6 @@ public sealed class ServiceCatalogScreen : Screen
 
     public override void Update()
     {
-        GameManager.UpdateProject();
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen("Content");

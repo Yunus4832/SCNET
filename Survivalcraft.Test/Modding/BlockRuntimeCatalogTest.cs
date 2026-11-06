@@ -6,7 +6,7 @@ using EntitySystem.TemplatesDatabase;
 using Game.Blocks;
 using Game.Modding;
 using Game.Modding.Blocks;
-using Game.Subsystems;
+using Game.Subsystems.Behavior;
 using Game.Terrains;
 
 namespace Survivalcraft.Test.Modding;
@@ -92,8 +92,8 @@ public class BlockRuntimeCatalogTest
         Assert.Equal(300, Terrain.ExtractContents(world.Recipes.ReadonlyRecipes.Single().ResultValue));
         Assert.Equal(7, Terrain.ExtractData(world.Recipes.ReadonlyRecipes.Single().ResultValue));
         Assert.Equal(264, Terrain.ExtractContents(preview.Recipes.ReadonlyRecipes.Single().RemainsValue));
-        world.GetBlock(id).DisplayName = "World";
-        Assert.Equal("Machine", preview.GetBlock(id).DisplayName);
+        world.GetBlock(id).DropCount = 2f;
+        Assert.Equal(1f, preview.GetBlock(id).DropCount);
         world.Dispose();
         Assert.Equal(264, preview.GetBlock(id).BlockIndex);
     }
@@ -103,10 +103,12 @@ public class BlockRuntimeCatalogTest
     {
         var project = XElement.Parse("<Project><Subsystems /><Entities /></Project>");
         var initial = BlockIndexMapping.FromXml(project.Element("BlockRegistry"));
-        using var first = new BlockContentCatalog(BlockRuntimeCatalog.Compile(Definitions(), savedMapping: initial));
+        using var first =
+            new BlockContentCatalog(BlockRuntimeCatalog.Compile(Definitions().Entries, savedMapping: initial));
         project.Add(first.Registry.Mapping.ToXml());
         var saved = BlockIndexMapping.FromXml(XElement.Parse(project.ToString()).Element("BlockRegistry"));
-        using var restored = new BlockContentCatalog(BlockRuntimeCatalog.Compile(Definitions(), savedMapping: saved));
+        using var restored =
+            new BlockContentCatalog(BlockRuntimeCatalog.Compile(Definitions().Entries, savedMapping: saved));
 
         var id = ResourceId.Parse("test:machine");
         Assert.Equal(first.GetBlock(id).BlockIndex, restored.GetBlock(id).BlockIndex);
@@ -118,7 +120,7 @@ public class BlockRuntimeCatalogTest
     {
         var registry = Definitions();
         Assert.Throws<InvalidDataException>(() => BlockRuntimeCatalog.Compile(
-                registry,
+                registry.Entries,
                 savedMapping: BlockIndexMapping.Empty,
                 requireExactMapping: true
             )
@@ -140,7 +142,8 @@ public class BlockRuntimeCatalogTest
             ResourceId.Parse("another:new_block"),
             new BlockRegistration(static () => new AirBlock())
         );
-        using var updated = new BlockContentCatalog(BlockRuntimeCatalog.Compile(definitions, savedMapping: mapping));
+        using var updated =
+            new BlockContentCatalog(BlockRuntimeCatalog.Compile(definitions.Entries, savedMapping: mapping));
         var restored = new ValuesDictionary();
         restored.ApplyOverridesUseMessagePack(encoded);
         var restoredValue = restored.GetValue<int>("Value");
@@ -238,7 +241,8 @@ public class BlockRuntimeCatalogTest
                 new(ResourceId.Parse("test:wire"), 303)
             ]
         );
-        using var catalog = new BlockContentCatalog(BlockRuntimeCatalog.Compile(registry, savedMapping: mapping));
+        using var catalog =
+            new BlockContentCatalog(BlockRuntimeCatalog.Compile(registry.Entries, savedMapping: mapping));
         foreach (var (id, index) in mapping.Entries)
         {
             var values = catalog.GetBlock(id).GetCreativeValues().ToArray();
@@ -265,8 +269,8 @@ public class BlockRuntimeCatalogTest
             new BlockRegistration(static () => new AirBlock())
         );
         registry.Register(new ModId("test"), ResourceId.Parse("test:machine"), new BlockRegistration(() => shared));
-        using var preview = new BlockContentCatalog(BlockRuntimeCatalog.Compile(registry));
-        Assert.Throws<InvalidOperationException>(() => BlockRuntimeCatalog.Compile(registry));
+        using var preview = new BlockContentCatalog(BlockRuntimeCatalog.Compile(registry.Entries));
+        Assert.Throws<InvalidOperationException>(() => BlockRuntimeCatalog.Compile(registry.Entries));
         Assert.Same(shared, preview.GetBlock(ResourceId.Parse("test:machine")));
         Assert.Equal(0, shared.DisposeCount);
     }
@@ -290,10 +294,19 @@ public class BlockRuntimeCatalogTest
     private static BlockContentCatalog Build(int index)
     {
         var mapping = new BlockIndexMapping([new(ResourceId.Parse("test:machine"), index)]);
-        var registry = BlockRuntimeCatalog.Compile(Definitions(), savedMapping: mapping);
+        var registry = BlockRuntimeCatalog.Compile(
+            Definitions().Entries,
+            [
+                new BlockDataEntry(
+                    ResourceId.Parse("test:metadata"),
+                    "Id;DisplayName;DropContent\ntest:machine;Machine;#"
+                )
+            ],
+            savedMapping: mapping
+        );
         var catalog = new BlockContentCatalog(registry);
-        catalog.LoadBlocksData("Id;DisplayName;DropContent\ntest:machine;Machine;#");
         catalog.Initialize(
+            new Game.Blocks.Collision.CollisionGeometryCatalog([]),
             null,
             XElement.Parse(
                 """

@@ -16,4 +16,10 @@ public sealed record VitalStatePackage : ComponentVitalStatPackage
     [Key(4)] public float Temperature { get; init; }
 
     [Key(5)] public float Wetness { get; init; }
+
+    [Key(6)] public float EnvironmentTemperature { get; init; }
+
+    [Key(7)] public float SleepBlackoutDuration { get; init; }
+
+    [Key(8)] public long SleepBlackoutSequence { get; init; }
 }

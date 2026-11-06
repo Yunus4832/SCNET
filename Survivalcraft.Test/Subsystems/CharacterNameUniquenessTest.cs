@@ -7,21 +7,23 @@ using Engine.Core.Security;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Characters;
-using Game.Managers;
-using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 using Game.World;
 
+using Survivalcraft.Test.Fixtures;
+
 namespace Survivalcraft.Test.Subsystems;
 
-[Collection(WorldRoleCollection.Name)]
+[Collection(NodeRoleCollection.Name)]
 public sealed class CharacterNameUniquenessTest
 {
     [Fact]
     public void ActiveAndOfflineNamesAreReservedCaseInsensitively()
     {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
         var subsystem = new SubsystemCharacters();
+        project.InitializeSubsystem(subsystem);
         var active = AddActive(subsystem, "Alice");
         var offlineId = AddOffline(subsystem, "Bob");
         Assert.False(subsystem.IsCharacterNameAvailable("ALICE"));
@@ -36,7 +38,9 @@ public sealed class CharacterNameUniquenessTest
     [Fact]
     public void ActiveRenameSupersedesStaleOfflineCopyForTheSameCharacter()
     {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
         var subsystem = new SubsystemCharacters();
+        project.InitializeSubsystem(subsystem);
         var characterId = AddOffline(subsystem, "BeforeRename");
         var active = AddActive(subsystem, "AfterRename");
         active.CharacterId = characterId;
@@ -48,20 +52,16 @@ public sealed class CharacterNameUniquenessTest
     [Fact]
     public void ClientPrevalidationIncludesOfflineNamesFromThePublicRoster()
     {
-        var previous = GameManager.Role;
-        try
-        {
-            CommonLib.Net.Role = WorldRole.RemoteClient;
-            var subsystem = new SubsystemCharacters();
-            var id = Guid.NewGuid();
-            subsystem.ApplyCharacterList(
-                [new CharacterListEntry(id, new PlayerAddress(IdentityAddress.Encode(new byte[32])), "Offline", false)]
-            );
-            Assert.False(subsystem.IsCharacterNameAvailable("OFFLINE"));
-            Assert.True(subsystem.IsCharacterNameAvailable("Offline", id));
-            Assert.True(subsystem.IsCharacterNameAvailable("Available"));
-        }
-        finally { CommonLib.Net.Role = previous; }
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
+        var subsystem = new SubsystemCharacters();
+        project.InitializeSubsystem(subsystem);
+        var id = Guid.NewGuid();
+        subsystem.ApplyCharacterList(
+            [new CharacterListEntry(id, new PlayerAddress(IdentityAddress.Encode(new byte[32])), "Offline", false)]
+        );
+        Assert.False(subsystem.IsCharacterNameAvailable("OFFLINE"));
+        Assert.True(subsystem.IsCharacterNameAvailable("Offline", id));
+        Assert.True(subsystem.IsCharacterNameAvailable("Available"));
     }
 
     private static CharacterData AddActive(SubsystemCharacters subsystem, string name)

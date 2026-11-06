@@ -33,5 +33,4 @@
                       Link="Assets\ThirdPartyNotices.txt"/>
     </ItemGroup>
 
-    <Import Project="$(MSBuildThisFileDirectory)GlobalUsing.props"/>
 </Project>

@@ -52,6 +52,18 @@ public abstract record SubsystemBodyPackage : IProtocolMessage
         [Key(5)] public Vector3? FlyOrder;
 
         [Key(6)] public ChangeFlag ChangeFlag;
+
+        [Key(7)] public bool Attacking;
+
+        [Key(8)] public bool Feeding;
+
+        [Key(9)] public float AttackPhase;
+
+        [Key(10)] public int AttackCounter;
+
+        [Key(11)] public float? Bend;
+
+        [Key(12)] public float DigIn;
     }
 
     [IgnoreMember] public abstract EventType PackageEventType { get; }

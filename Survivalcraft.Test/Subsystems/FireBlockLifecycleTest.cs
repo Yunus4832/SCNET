@@ -4,10 +4,10 @@ using System.Reflection;
 using Engine.Core.Mathematics;
 
 using Game.Blocks;
-using Game.Managers;
 using Game.Modding.Blocks;
 using Game.Network;
 using Game.Subsystems;
+using Game.Subsystems.Behavior;
 using Game.Terrains;
 using Game.World;
 
@@ -21,9 +21,9 @@ public sealed class FireBlockLifecycleTest
     [Fact]
     public void ClientTerrainRemovalAndChunkDiscardClearOnlyTheirFireRecords()
     {
-        var mode = GameManager.Role;
-        using var scope = new WorldCatalogScope();
-        CommonLib.Net.Role = WorldRole.RemoteClient;
+        var mode = CommonLib.Net.Role;
+        using var scope = new WorldCatalogScope(RuntimeSide.Client);
+        CommonLib.Net.Role = NodeRole.Client;
 
         try
         {
@@ -31,6 +31,7 @@ public sealed class FireBlockLifecycleTest
             var chunk = terrain.AllocateChunk(0, 0);
             terrain.AllocateChunk(2, 0);
             var subsystem = new SubsystemFireBlockBehavior();
+            scope.Project.InitializeSubsystem(subsystem);
             typeof(SubsystemBlockBehavior).GetProperty(
                     "SubsystemTerrain",
                     BindingFlags.Instance | BindingFlags.NonPublic
@@ -42,7 +43,10 @@ public sealed class FireBlockLifecycleTest
             subsystem.AddFireNet(1, 10, 1, 1f);
             subsystem.AddFireNet(2, 10, 1, 1f);
             subsystem.AddFireNet(33, 10, 1, 1f);
+            subsystem.AddFireNet(33, 10, 1, 1f);
             Assert.Equal(3, records.Count);
+            Assert.Equal(3, subsystem.FirePoints.Count);
+            Assert.True(subsystem.ContainsFire(new Point3(33, 10, 1)));
 
             subsystem.OnBlockRemoved(BuiltInBlockRegistry.GetIndex<FireBlock>(), 0, 1, 10, 1);
             Assert.Equal(2, records.Count);
@@ -50,6 +54,11 @@ public sealed class FireBlockLifecycleTest
             Assert.Single(records.Keys.Cast<object>());
             subsystem.ClearChunkState(new Point2(2, 0));
             Assert.Empty(records.Keys.Cast<object>());
+            Assert.Empty(subsystem.FirePoints);
+            subsystem.AddFireNet(33, 10, 1, 1f);
+            Assert.Equal(new Point3(33, 10, 1), Assert.Single(subsystem.FirePoints));
+            subsystem.ClearChunkState(new Point2(2, 0));
+            Assert.Empty(subsystem.FirePoints);
         }
         finally
         {

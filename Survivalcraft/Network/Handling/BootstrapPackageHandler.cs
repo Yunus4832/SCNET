@@ -8,8 +8,9 @@ public sealed class BootstrapPackageHandler : PackageHandlerBase<BootstrapPackag
         node.AdmissionAccepted &&
         ProtocolEnum.TryDecode<GameMode>(package.World.Mode, out _) &&
         node.CurrentStage == NetNode.Stage.Bootstrapping &&
-        node.CurrentConnectionPhase == ConnectionPhase.TransportConnected &&
-        node.ConnectionEpoch == Guid.Empty &&
+        (node.Connections.Authority is null ||
+         node.Connections.Authority.ConnectionPhase == ConnectionPhase.TransportConnected) &&
+        (node.Connections.Authority is null || node.Connections.Authority.ConnectionEpoch == Guid.Empty) &&
         package.Epoch != Guid.Empty &&
         node.TokenId != Guid.Empty &&
         package.ClientList.PackageEventType == ClientPackage.EventType.SyncList &&
@@ -24,11 +25,12 @@ public sealed class BootstrapPackageHandler : PackageHandlerBase<BootstrapPackag
             return;
         }
 
-        PackageDispatcher.Handle(package.ClientList, context);
-        netNode.ConnectionEpoch = package.Epoch;
-        netNode.CurrentConnectionPhase = ConnectionPhase.BootstrapSent;
+        WorldNetworkBinding.For(context.Runtime).Dispatch(package.ClientList, context);
+        netNode.Connections.Authority!.ConnectionEpoch = package.Epoch;
+        netNode.Connections.Authority!.ConnectionPhase = ConnectionPhase.BootstrapSent;
         var loadingScreen = ScreensManager.FindScreen<GameLoadingScreen>("GameLoading", true)!;
         loadingScreen.ReplyCall(
+            context.Runtime,
             package.TextureData.Length > 0,
             package.TextureData,
             package.ProjectData,

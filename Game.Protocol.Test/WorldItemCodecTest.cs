@@ -50,7 +50,9 @@ public sealed class WorldItemCodecTest
                         {
                             NetworkId = 7, StateTick = 42, Value = 4, Position = Vector3.One,
                             Rotation = Vector3.UnitX, Velocity = Vector3.UnitZ, AngularVelocity = Vector3.UnitY,
-                            TrailOffset = Vector3.One, OwnerId = 8, IsFireProjectile = true
+                            TrailOffset = Vector3.One, OwnerId = 8, IsFireProjectile = true,
+                            SmokeTrail = new ProjectileSmokeTrailSnapshot
+                                { Size = 1.25f, EndTime = 123.5, Color = Color.Red }
                         },
                     ProjectilePackage.EventType.Remove => new ProjectileRemovedPackage
                         { NetworkId = 7 },

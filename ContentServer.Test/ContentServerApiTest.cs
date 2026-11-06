@@ -1758,7 +1758,7 @@ public sealed class ContentServerApiTest : IDisposable
     {
         using var metadata = JsonDocument.Parse(
             """
-            {"side":"common","entrypoints":{},"dependencies":[]}
+            {"entrypoint":null,"dependencies":[]}
             """
         );
         var manifest = new ContentPackageManifest(

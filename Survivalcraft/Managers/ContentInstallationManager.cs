@@ -2,6 +2,8 @@ using System.IO.Compression;
 
 using Content.Packaging;
 
+using Game.Application;
+
 namespace Game.Managers;
 
 public interface IContentInstaller
@@ -77,8 +79,8 @@ public static class ContentInstallationManager
         )
         {
             var name = options.ReplaceAssetKey is null
-                ? WorldsManager.ImportWorldPackage(package)
-                : WorldsManager.ReplaceWorldPackage(options.ReplaceAssetKey, package);
+                ? ClientApplication.Worlds.ImportWorldPackage(package)
+                : ClientApplication.Worlds.ReplaceWorldPackage(options.ReplaceAssetKey, package);
             return new(Type, Storage.GetFileName(name), manifest.Name);
         }
     }

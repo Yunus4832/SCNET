@@ -10,9 +10,9 @@ public sealed class ElectricityInterestTest
     [Fact]
     public void VoltagesOnlyContainObservedChunksAndDoNotAliasAuthority()
     {
-        var near = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var far = new Client(null, 2, Guid.NewGuid(), Guid.NewGuid(), null);
-        var empty = new Client(null, 3, Guid.NewGuid(), Guid.NewGuid(), null);
+        var near = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        var far = new Client(null, 2, Guid.NewGuid(), Guid.NewGuid());
+        var empty = new Client(null, 3, Guid.NewGuid(), Guid.NewGuid());
         var negativePoint = new Point3(-1, 20, -17);
         var farPoint = new Point3(160, 30, 160);
         var voltages = new Dictionary<Point3, float>
@@ -39,8 +39,8 @@ public sealed class ElectricityInterestTest
     [Fact]
     public void ObserversOutsideEligibleRecipientsCannotReceiveVoltages()
     {
-        var playing = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var disconnected = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        var playing = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
+        var disconnected = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
         var point = new Point3(1, 2, 3);
 
         var snapshots = SubsystemElectricity.BuildNetworkVoltages(

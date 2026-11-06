@@ -97,9 +97,10 @@ dotnet run --project LanguageTool -- check
 - Use `table` before reading large language files when diagnosing cross-language section mapping.
 - Treat fields like `Help.*.Name` as invariant runtime identifiers; use `sync-field` to keep them identical across cultures.
 - Use JSON path dots only as path separators, for example `ContentWidgets.PlayScreen.12` or `ContentWidgets.WorldServerSettingsScreen.RunServerDescription`.
-- `LanguageManager.Get("PlayScreen", 12)` reads `PlayScreen.12`; it does not prepend `ContentWidgets`. To read `ContentWidgets.PlayScreen.12`, use `LanguageManager.GetContentWidgets("PlayScreen", 12)`.
-- `LanguageManager.Get(section, key)` corresponds to `{section}.{key}`.
-- `LanguageManager.GetContentWidgets(name, key)` corresponds to `ContentWidgets.{name}.{key}`.
+- `ClientLanguage.Catalog.Get("PlayScreen", 12)` reads `PlayScreen.12`; it does not prepend `ContentWidgets`. To read `ContentWidgets.PlayScreen.12`, use `ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 12)`.
+- `ClientLanguage.Catalog.Get(section, key)` corresponds to `{section}.{key}`.
+- `ClientLanguage.Catalog.GetContentWidgets(name, key)` corresponds to `ContentWidgets.{name}.{key}`.
+- `Game.Localization.LanguageCatalog` owns language data in Core; client display code reads the published catalog through `Game.Localization.ClientLanguage.Catalog`.
 - XML text like `[ScreenName:Key]` is resolved through `ContentWidgets.ScreenName.Key`.
 - Numeric keys such as `12` are object keys, not array indexes. Array indexes use `[0]`.
 - Do not create real JSON key names containing `.`. Use `_` for compound flat keys, for example `Strings.GameMode_Creative_Description`.

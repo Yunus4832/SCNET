@@ -6,6 +6,7 @@ repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 configuration="${CONFIGURATION:-Release}"
 selected=false
 publish_linux=false
+publish_game_server=false
 publish_windows=false
 publish_android_arm64=false
 publish_android_arm32=false
@@ -19,6 +20,7 @@ select_project() {
     selected=true
     case "$1" in
         Survivalcraft.Linux) publish_linux=true ;;
+        Survivalcraft.Server) publish_game_server=true ;;
         Survivalcraft.Windows) publish_windows=true ;;
         Survivalcraft.Android) publish_android_arm64=true ;;
         Survivalcraft.Android.Arm32) publish_android_arm32=true ;;
@@ -53,8 +55,13 @@ done
 cd "$repository_root"
 
 if ! $selected || $publish_linux; then
-    echo "[SCNET Publish] Publishing Survivalcraft.Linux (desktop ZIP and server image bundle on Linux)"
+    echo "[SCNET Publish] Publishing Survivalcraft.Linux (desktop ZIP)"
     dotnet publish "Survivalcraft.Linux/Survivalcraft.Linux.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+fi
+
+if ! $selected || $publish_game_server; then
+    echo "[SCNET Publish] Publishing Survivalcraft.Server"
+    dotnet publish "Survivalcraft.Server/Survivalcraft.Server.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $publish_windows; then

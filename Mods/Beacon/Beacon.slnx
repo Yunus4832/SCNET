@@ -1,0 +1,5 @@
+<Solution>
+    <Project Path="BeaconMod/BeaconMod.csproj"/>
+    <Project Path="BeaconMod.Client/BeaconMod.Client.csproj"/>
+    <Project Path="BeaconMod.Test/BeaconMod.Test.csproj"/>
+</Solution>

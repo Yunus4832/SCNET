@@ -2,6 +2,8 @@ using System.Xml.Linq;
 
 using Engine.Graphics;
 
+using Game.Application;
+using Game.Blocks.Presentation.Geometry;
 using Game.Content;
 using Game.Furniture;
 
@@ -52,7 +54,7 @@ public class ManageContentScreen : Screen
         _filterDrawer.SelectedItem = _filter;
         _filterDrawer.SelectionChanged += FilterChanged;
         _actionPanel.PrimaryAccessory = _filterDrawer;
-        _actionPanel.ItemTextProvider = _ => LanguageManager.GetContentWidgets(_typeName, "3");
+        _actionPanel.ItemTextProvider = _ => Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "3");
         _actionPanel.ItemEnabledProvider = IsActionEnabled;
         _actionPanel.ItemColorProvider = _ => new Color(150, 50, 35);
         _actionPanel.ItemClicked += ExecuteAction;
@@ -72,7 +74,11 @@ public class ManageContentScreen : Screen
                 BlocksTexturesManager.GetCreationDate(listItem.Name);
                 rectangleWidget.Subtexture = new Subtexture(texture, Vector2.Zero, Vector2.One);
                 labelWidget.Text = listItem.DisplayName;
-                labelWidget2.Text = string.Format(LanguageManager.Get(_typeName, 1), texture.Width, texture.Height);
+                labelWidget2.Text = string.Format(
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 1),
+                    texture.Width,
+                    texture.Height
+                );
                 if (listItem.IsBuiltIn)
                 {
                     return containerWidget;
@@ -81,7 +87,10 @@ public class ManageContentScreen : Screen
                 labelWidget2.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
                 if (listItem.UseCount > 0)
                 {
-                    labelWidget2.Text += string.Format(LanguageManager.Get(_typeName, 2), listItem.UseCount);
+                    labelWidget2.Text += string.Format(
+                        Localization.ClientLanguage.Catalog.Get(_typeName, 2),
+                        listItem.UseCount
+                    );
                 }
             }
             else
@@ -90,7 +99,7 @@ public class ManageContentScreen : Screen
                 {
                     if (listItem.Type != ContentType.FurniturePack)
                     {
-                        throw new InvalidOperationException(LanguageManager.Get(_typeName, 10));
+                        throw new InvalidOperationException(Localization.ClientLanguage.Catalog.Get(_typeName, 10));
                     }
 
                     var node3 = ContentManager.Get<XElement>("Widgets/FurniturePackItem");
@@ -100,9 +109,13 @@ public class ManageContentScreen : Screen
                     labelWidget3.Text = listItem.DisplayName;
                     try
                     {
-                        var designs = FurniturePacksManager.LoadFurniturePack(null, listItem.Name);
+                        var designs = FurniturePacksManager.LoadFurniturePack(
+                            CurrentModRuntime.Value!.PreviewCatalog,
+                            null,
+                            listItem.Name
+                        );
                         labelWidget4.Text = string.Format(
-                            LanguageManager.Get(_typeName, 3),
+                            Localization.ClientLanguage.Catalog.Get(_typeName, 3),
                             FurnitureDesign.ListChains(designs).Count
                         );
                         if (string.IsNullOrEmpty(listItem.Name))
@@ -115,7 +128,9 @@ public class ManageContentScreen : Screen
                     }
                     catch (Exception ex)
                     {
-                        labelWidget4.Text = labelWidget4.Text + LanguageManager.Get("Usual", "error") + ex.Message;
+                        labelWidget4.Text = labelWidget4.Text +
+                                            Localization.ClientLanguage.Catalog.Get("Usual", "error") +
+                                            ex.Message;
                         return containerWidget;
                     }
                 }
@@ -129,7 +144,11 @@ public class ManageContentScreen : Screen
                 playerModelWidget.CharacterSex = CharacterSex.Male;
                 playerModelWidget.CharacterSkinTexture = texture2;
                 labelWidget5.Text = listItem.DisplayName;
-                labelWidget6.Text = string.Format(LanguageManager.Get(_typeName, 4), texture2.Width, texture2.Height);
+                labelWidget6.Text = string.Format(
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 4),
+                    texture2.Width,
+                    texture2.Height
+                );
                 if (listItem.IsBuiltIn)
                 {
                     return containerWidget;
@@ -138,7 +157,10 @@ public class ManageContentScreen : Screen
                 labelWidget6.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
                 if (listItem.UseCount > 0)
                 {
-                    labelWidget6.Text += string.Format(LanguageManager.Get(_typeName, 2), listItem.UseCount);
+                    labelWidget6.Text += string.Format(
+                        Localization.ClientLanguage.Catalog.Get(_typeName, 2),
+                        listItem.UseCount
+                    );
                 }
             }
 
@@ -195,7 +217,7 @@ public class ManageContentScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
-                    LanguageManager.Get(_typeName, 9),
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 9),
                     replacements,
                     60f,
                     replacement => ((ListItem)replacement).DisplayName,
@@ -222,15 +244,19 @@ public class ManageContentScreen : Screen
     private void ConfirmDelete(ListItem selectedItem, ListItem? replacement)
     {
         var smallMessage = selectedItem.UseCount <= 0
-            ? string.Format(LanguageManager.Get(_typeName, 5), selectedItem.DisplayName)
-            : string.Format(LanguageManager.Get(_typeName, 6), selectedItem.DisplayName, selectedItem.UseCount);
+            ? string.Format(Localization.ClientLanguage.Catalog.Get(_typeName, 5), selectedItem.DisplayName)
+            : string.Format(
+                Localization.ClientLanguage.Catalog.Get(_typeName, 6),
+                selectedItem.DisplayName,
+                selectedItem.UseCount
+            );
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                LanguageManager.Get(_typeName, 9),
+                Localization.ClientLanguage.Catalog.Get(_typeName, 9),
                 smallMessage,
-                LanguageManager.Get("Usual", "yes"),
-                LanguageManager.Get("Usual", "no"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "yes"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "no"),
                 delegate(MessageDialogButton button)
                 {
                     if (button != MessageDialogButton.Button1)
@@ -240,7 +266,11 @@ public class ManageContentScreen : Screen
 
                     if (replacement is not null)
                     {
-                        WorldsManager.ReplaceAssetReferences(selectedItem.Type, selectedItem.Name, replacement.Name);
+                        ClientApplication.Worlds.ReplaceAssetReferences(
+                            selectedItem.Type,
+                            selectedItem.Name,
+                            replacement.Name
+                        );
                     }
 
                     ContentPackageManager.DeleteContent(selectedItem.Type, selectedItem.Name);
@@ -252,7 +282,7 @@ public class ManageContentScreen : Screen
 
     private void UpdateList()
     {
-        WorldsManager.UpdateWorldsList();
+        ClientApplication.Worlds.UpdateWorldsList();
         var list = new List<ListItem>();
         if (_filter is ContentType.BlocksTexture or ContentType.Unknown)
         {
@@ -265,7 +295,9 @@ public class ManageContentScreen : Screen
                         Type = ContentType.BlocksTexture,
                         DisplayName = BlocksTexturesManager.GetDisplayName(name2),
                         CreationTime = BlocksTexturesManager.GetCreationDate(name2),
-                        UseCount = WorldsManager.WorldInfos.Count(wi => wi.WorldSettings.BlocksTextureName == name2)
+                        UseCount = ClientApplication.Worlds.WorldInfos.Count(wi =>
+                            wi.WorldSettings.BlocksTextureName == name2
+                        )
                     }
                 )
             );
@@ -282,7 +314,7 @@ public class ManageContentScreen : Screen
                         Type = ContentType.CharacterSkin,
                         DisplayName = CharacterSkinsManager.GetDisplayName(name),
                         CreationTime = CharacterSkinsManager.GetCreationDate(name),
-                        UseCount = WorldsManager.WorldInfos.Count(wi =>
+                        UseCount = ClientApplication.Worlds.WorldInfos.Count(wi =>
                             wi.CharacterInfos.Any(pi => pi.CharacterSkinName == name)
                         )
                     }
@@ -339,7 +371,7 @@ public class ManageContentScreen : Screen
     private static string GetFilterDisplayName(ContentType filter)
     {
         return filter == ContentType.Unknown
-            ? LanguageManager.Get(_typeName, 8)
+            ? Localization.ClientLanguage.Catalog.Get(_typeName, 8)
             : ContentPackageManager.GetTypeDescription(filter);
     }
 

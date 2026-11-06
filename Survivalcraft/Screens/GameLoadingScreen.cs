@@ -1,14 +1,12 @@
 using System.Text;
 using System.Xml.Linq;
 
-using Engine.Graphics;
-using Engine.Media.Images;
 using Engine.Network;
 
+using Game.Application;
 using Game.Authentication;
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Handling;
 using Game.Network.Transport;
 using Game.Servers;
 
@@ -37,6 +35,10 @@ public class GameLoadingScreen : Screen
     private bool _isWorldSnapshotApplied;
 
     private byte[] _projectXmlData = [];
+
+    private WorldRuntimeContext? _replyRuntime;
+
+    private NetNode? _clientNode;
 
     private BlockIndexMapping _blockMapping = BlockIndexMapping.Empty;
 
@@ -75,13 +77,25 @@ public class GameLoadingScreen : Screen
                 if (string.IsNullOrEmpty(_worldSnapshotName))
                 {
                     SetSpawnDialogMessage("连接服务器", 0.2f);
-                    if (_serverPreparation != null)
+                    if (_clientNode != null)
                     {
-                        CommonLib.Net.ConnectServer(_serverPreparation);
+                        _clientNode.OnReceive += Handle;
+                        DialogsManager.ShowDialog(this, SpawnDialog);
+                        _stateMachine.TransitionTo("WaitServerReply");
+                    }
+                    else if (_serverPreparation != null)
+                    {
+                        _clientNode = CommonLib.Net;
+                        _clientNode.ConnectServer(
+                            _serverPreparation,
+                            new ClientConnectionOptions(
+                                CurrentModRuntime.Value?.ModDataHash ?? GameProtocol.EmptyModDataHash
+                            )
+                        );
                         DialogsManager.ShowDialog(this, SpawnDialog);
                         _stateMachine.TransitionTo("WaitServerReply");
                         // 客户端开启包处理
-                        CommonLib.Net.OnReceive += Handle;
+                        _clientNode.OnReceive += Handle;
                     }
                     else
                     {
@@ -104,31 +118,32 @@ public class GameLoadingScreen : Screen
                 SetSpawnDialogMessage(_admissionUi?.Status is { Length: > 0 } status ? status : "等待服务器响应", 0.25f);
                 if (_admissionUi?.IsWaitingForDetachedAuthentication == true) { return; }
 
-                if (CommonLib.Net.CurrentStage == Stage.Bootstrapping)
+                if (_clientNode!.CurrentStage == Stage.Bootstrapping)
                 {
-                    if (CommonLib.Net.AdmissionDeadline is { } deadline
+                    if (_clientNode!.AdmissionDeadline is { } deadline
                             ? DateTimeOffset.UtcNow >= deadline
-                            : _timer.ElapsedMilliseconds >= CommonLib.DisconnectTimeout)
+                            : _timer.ElapsedMilliseconds >=
+                              NetworkTransportLimits.DisconnectTimeoutMilliseconds)
                     {
-                        CommonLib.Net.Stop("连接超时");
+                        _clientNode!.Stop("连接超时");
                     }
                 }
-                else if (CommonLib.Net.CurrentStage == Stage.Connected)
+                else if (_clientNode!.CurrentStage == Stage.Connected)
                 {
                     _stateMachine.TransitionTo("Loading");
                 }
                 else
                 {
-                    CommonLib.Net.Stop("连接断开");
+                    _clientNode!.Stop("连接断开");
                 }
             },
             delegate
             {
-                if (CommonLib.Net.CurrentStage == Stage.Connected)
+                if (_clientNode!.CurrentStage == Stage.Connected)
                 {
                     NetworkSender.SendToServer(
-                        new ClientStateChangedPackage
-                            { ClientId = CommonLib.Net.Self!.ID, State = ClientState.Connected }
+                        _clientNode!.Runtime,
+                        ClientPackageBuilder.State(_clientNode!.Self!) with { State = ClientState.Connected }
                     );
                 }
             }
@@ -154,7 +169,8 @@ public class GameLoadingScreen : Screen
 
                 if (CommonLib.Net.AdmissionAccepted)
                 {
-                    ScreensManager.SwitchScreen("Game");
+                    var verified = CommonLib.Net.ConsumeLocalAdmission();
+                    BeginInProcessClient(verified.Subject, verified.Token);
                 }
             },
             Actions.Empty
@@ -165,7 +181,7 @@ public class GameLoadingScreen : Screen
             Actions.Empty,
             delegate
             {
-                if (_serverPreparation != null)
+                if (_clientNode != null)
                 {
                     SetSpawnDialogMessage("等待Project和材质", 0.4f);
                     if (_isServerReply)
@@ -173,10 +189,7 @@ public class GameLoadingScreen : Screen
                         _stateMachine.TransitionTo("LoadServerReply");
                     }
 
-                    if (!CommonLib.Net.IsConnected)
-                    {
-                        CommonLib.Net.Stop("与服务器连接断开");
-                    }
+                    if (!_clientNode.IsConnected) { _clientNode.Stop("与服务器连接断开"); }
                 }
                 else
                 {
@@ -184,16 +197,21 @@ public class GameLoadingScreen : Screen
                         .Find<ContainerWidget>("GamesWidget")!;
                     GameManager.LoadProject(_worldInfo, gamesWidget, _worldSession);
                     GameManager.LocalPlayerReturnTarget = _localReturnTarget;
-                    if (_worldInfo.WorldSettings.RunServer)
+                    if (_worldInfo.Hosting.RunServer)
                     {
-                        var saved = WorldsManager.ReadAdmissionPolicy(_worldInfo.DirectoryName);
+                        var saved = ClientApplication.Worlds.ReadAdmissionPolicy(_worldInfo.DirectoryName);
                         var hostPolicy = _worldSession is { } session
                             ? ServerAdmissionManager.Resolve(session.AdmissionOverrides, saved)
                             : saved;
                         var started = _worldSession is { } hostSession
-                            ? CommonLib.StartServer(hostSession, _worldInfo.WorldSettings, hostPolicy)
-                            : CommonLib.StartServer(_worldInfo.WorldSettings, hostPolicy);
-                        if (!started) { throw new InvalidOperationException(CommonLib.Net.Error); }
+                            ? CommonLib.StartServer(
+                                hostSession,
+                                _worldInfo.WorldSettings,
+                                _worldInfo.Hosting,
+                                hostPolicy
+                            )
+                            : CommonLib.StartServer(_worldInfo.WorldSettings, _worldInfo.Hosting, hostPolicy);
+                        if (!started) { throw new InvalidOperationException(CommonLib.Net.StopReason.Message); }
 
                         if (_worldSession?.Target == SessionTarget.HostedWorld && !_isAdventureRestart)
                         {
@@ -204,9 +222,11 @@ public class GameLoadingScreen : Screen
                         return;
                     }
 
-                    CommonLib.Net.JoinSinglePlayerWorld();
-
-                    ScreensManager.SwitchScreen("Game");
+                    using var identity = LocalIdentityManager.Current.OpenPlayerIdentity();
+                    BeginInProcessClient(
+                        new Game.Protocol.Identity.PlayerAddress(identity.PublicIdentity.Address),
+                        Guid.NewGuid()
+                    );
                 }
             },
             delegate { _isServerReply = false; }
@@ -218,12 +238,15 @@ public class GameLoadingScreen : Screen
             delegate
             {
                 SetSpawnDialogMessage("加载服务器Project", 0.6f);
-                if (CommonLib.Net.CurrentStage != Stage.Connected)
+                var runtime = _replyRuntime ?? throw new InvalidOperationException("Missing bootstrap runtime.");
+                if (runtime.IsClosed ||
+                    WorldNetworkBinding.For(runtime).RequireNode().CurrentStage != Stage.Connected)
                 {
                     return;
                 }
 
-                GameManager.LoadProject(
+                GameManager.LoadClientProject(
+                    runtime,
                     _projectXmlData,
                     ScreensManager.FindScreen<GameScreen>("Game", true)!.Children
                         .Find<ContainerWidget>("GamesWidget")!,
@@ -243,15 +266,16 @@ public class GameLoadingScreen : Screen
             {
                 SetSpawnDialogMessage("应用初始世界快照", 0.8f);
                 if (_isWorldSnapshotApplied &&
-                    GameManager.Project?.FindSubsystem<SubsystemCharacters>()?.Characters
+                    ClientApplication.World?.Project?.FindSubsystem<SubsystemCharacters>()?.Characters
                         .Any(player => player.IsLocalCharacter) ==
                     true)
                 {
                     ScreensManager.SwitchScreen("Game");
                 }
-                else if (_timer.ElapsedMilliseconds >= CommonLib.DisconnectTimeout)
+                else if (_timer.ElapsedMilliseconds >=
+                         NetworkTransportLimits.DisconnectTimeoutMilliseconds)
                 {
-                    CommonLib.Net.Stop("初始世界快照超时");
+                    _clientNode!.Stop("初始世界快照超时");
                 }
             },
             Actions.Empty
@@ -264,11 +288,11 @@ public class GameLoadingScreen : Screen
             {
                 CommonLib.Net.StopImmediate();
                 GameManager.DisposeProject();
-                var runServer = _worldInfo.WorldSettings.RunServer;
-                WorldsManager.RestoreWorldFromSnapshot(_worldInfo.DirectoryName, _worldSnapshotName);
-                _worldInfo = WorldsManager.GetWorldInfo(_worldInfo.DirectoryName) ??
+                var runServer = _worldInfo.Hosting.RunServer;
+                ClientApplication.Worlds.RestoreWorldFromSnapshot(_worldInfo.DirectoryName, _worldSnapshotName);
+                _worldInfo = ClientApplication.Worlds.GetWorldInfo(_worldInfo.DirectoryName) ??
                              throw new InvalidDataException("The restored world cannot be read.");
-                _worldInfo.WorldSettings.RunServer = runServer;
+                _worldInfo.Hosting.RunServer = runServer;
                 BeginLocalWorldLoad();
             },
             Actions.Empty
@@ -277,8 +301,7 @@ public class GameLoadingScreen : Screen
 
     private void BeginLocalWorldLoad()
     {
-        if (_worldInfo.WorldSettings.RunServer) { CommonLib.Net.PrepareServerWorld(); }
-        else { CommonLib.Net.PrepareSinglePlayerWorld(); }
+        CommonLib.Net.PrepareAuthorityWorld();
 
         _stateMachine.TransitionTo("Loading");
     }
@@ -297,6 +320,20 @@ public class GameLoadingScreen : Screen
         _stateMachine.TransitionTo("WaitLocalAdmission");
     }
 
+    private void BeginInProcessClient(Game.Protocol.Identity.PlayerAddress subject, Guid token)
+    {
+        _clientNode = GameManager.Runtime!.ConnectLocalClient(
+            subject,
+            token,
+            Network.Handling.ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true)
+        );
+        GameManager.ObserveEndpoint(_clientNode);
+        _replyRuntime = _clientNode.Runtime;
+        _clientNode.OnReceive += Handle;
+        DialogsManager.ShowDialog(this, SpawnDialog);
+        _stateMachine.TransitionTo("WaitServerReply");
+    }
+
     private static void Handle(NetNode node, IEnumerable<ReceivedPackage> packages)
     {
         foreach (var received in packages)
@@ -304,13 +341,13 @@ public class GameLoadingScreen : Screen
             var package = received.Package;
             if (package is AdmissionChallengePackage or AdmissionResultPackage or ConnectionRejectPackage)
             {
-                PackageDispatcher.Handle(received);
+                WorldNetworkBinding.For(received.Context.Runtime).Dispatch(received);
             }
             else if (package is ClientPackage clientPackage)
             {
                 try
                 {
-                    PackageDispatcher.Handle(clientPackage, received.Context);
+                    WorldNetworkBinding.For(received.Context.Runtime).Dispatch(clientPackage, received.Context);
                 }
                 catch (Exception e)
                 {
@@ -321,7 +358,7 @@ public class GameLoadingScreen : Screen
             {
                 try
                 {
-                    PackageDispatcher.Handle(bootstrapPackage, received.Context);
+                    WorldNetworkBinding.For(received.Context.Runtime).Dispatch(bootstrapPackage, received.Context);
                 }
                 catch (Exception e)
                 {
@@ -330,32 +367,34 @@ public class GameLoadingScreen : Screen
             }
             else // 无法处理的包在Project加载后进行处理
             {
-                CommonLib.Net.AddPendingHandlePackage(received);
+                node.AddPendingHandlePackage(received);
             }
         }
     }
 
-    public void ReplyCall(bool hasTexture, byte[] textureData, byte[] projectData, BlockIndexMapping blockMapping)
+    public void ReplyCall(
+        WorldRuntimeContext runtime,
+        bool hasTexture,
+        byte[] textureData,
+        byte[] projectData,
+        BlockIndexMapping blockMapping
+    )
     {
-        CommonLib.Net.OnReceive -= Handle;
+        WorldNetworkBinding.For(runtime).RequireNode().OnReceive -= Handle;
+        _replyRuntime = runtime;
         _isServerReply = true;
-        if (hasTexture)
-        {
-            if (CommonLib.BlockTexture != null)
-            {
-                CommonLib.BlockTexture.Dispose();
-            }
-
-            CommonLib.BlockTexture = Texture2D.Load(Image.Load(new MemoryStream(textureData)));
-        }
+        ClientBootstrapContent.For(runtime).BlocksTextureBytes = hasTexture ? textureData.ToArray() : null;
 
         _projectXmlData = projectData;
         _blockMapping = blockMapping;
     }
 
-    public void WorldSnapshotApplied()
+    public void WorldSnapshotApplied(WorldRuntimeContext runtime)
     {
-        _isWorldSnapshotApplied = true;
+        if (ReferenceEquals(runtime, _replyRuntime) && !runtime.IsClosed)
+        {
+            _isWorldSnapshotApplied = true;
+        }
     }
 
     private void SetSpawnDialogMessage(string msg, float progress)
@@ -410,7 +449,6 @@ public class GameLoadingScreen : Screen
                 return;
             }
 
-            GameManager.UpdateProject();
             _stateMachine.Update();
         }
         catch (Exception e)
@@ -420,18 +458,14 @@ public class GameLoadingScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageManager.Get(_typeName, 1),
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 1),
                     ExceptionManager.MakeFullErrorMessage(e),
-                    LanguageManager.Get("Usual", "ok")
+                    Localization.ClientLanguage.Catalog.Get("Usual", "ok")
                 )
             );
         }
     }
 
-    private void OnLocalPlayerRemoved(string reason)
-    {
-        if (ScreensManager.CurrentScreen == this) { GameManager.LeaveGameplay(reason); }
-    }
 
     private void AbortLoading()
     {
@@ -440,13 +474,16 @@ public class GameLoadingScreen : Screen
             CommonLib.Net.IsServer &&
             !CommonLib.Net.IsClosing &&
             CommonLib.Net.IsTransportRunning &&
-            GameManager.Project is not null)
+            GameManager.AuthorityProject is not null)
         {
-            GameManager.LeaveGameplay();
+            ClientApplication.World?.RequestLeave();
             return;
         }
 
-        if (_serverPreparation is null && GameManager.Project is not null) { GameManager.SaveProject(true, true); }
+        if (_serverPreparation is null && GameManager.AuthorityProject is not null)
+        {
+            ClientApplication.World?.RequestSave(true, true);
+        }
 
         CommonLib.Net.StopImmediate();
         GameManager.DisposeProject();
@@ -459,7 +496,6 @@ public class GameLoadingScreen : Screen
 
     public override void Leave()
     {
-        CommonLib.Net.LocalPlayerRemoved -= OnLocalPlayerRemoved;
         _temporaryAuthorization = null;
         _admissionUi?.Dispose();
         _admissionUi = null;
@@ -486,9 +522,28 @@ public class GameLoadingScreen : Screen
         _admissionUi?.Dispose();
         _admissionUi = null;
         _isServerReply = false;
+        _replyRuntime = null;
+        _clientNode = null;
+        _projectXmlData = [];
+        _blockMapping = BlockIndexMapping.Empty;
         _isWorldSnapshotApplied = false;
         _worldSession = null;
-        if (parameters.Length >= 3 && parameters[2] is ServerConnectionPreparation prepared)
+        if (parameters.FirstOrDefault() is WorldRuntimeContext local)
+        {
+            if (!ReferenceEquals(GameManager.Runtime?.Client, local) || local.IsClosed)
+            {
+                throw new InvalidOperationException("The loading view does not own this local client runtime.");
+            }
+
+            _clientNode = WorldNetworkBinding.For(local).RequireNode();
+            _replyRuntime = local;
+            _worldInfo = GameManager.WorldInfo!;
+            _worldSession = GameManager.WorldSession;
+            _localReturnTarget = GameManager.LocalPlayerReturnTarget;
+            _worldSnapshotName = string.Empty;
+            _serverPreparation = null;
+        }
+        else if (parameters.Length >= 3 && parameters[2] is ServerConnectionPreparation prepared)
         {
             GameManager.LocalPlayerReturnTarget = null;
             _worldSnapshotName = string.Empty;
@@ -517,14 +572,13 @@ public class GameLoadingScreen : Screen
                 _localReturnTarget = GameManager.LocalPlayerReturnTarget;
                 _temporaryAuthorization = CommonLib.Net.TemporaryAuthentication;
                 _worldSession = GameManager.WorldSession ?? _worldSession;
-                if (CommonLib.Net.IsServer) { _worldInfo.WorldSettings.RunServer = true; }
+                if (CommonLib.Net.IsTransportRunning) { _worldInfo.Hosting.RunServer = true; }
             }
 
-            if (_worldSession.Target == SessionTarget.HostedWorld) { _worldInfo.WorldSettings.RunServer = true; }
+            if (_worldSession.Target == SessionTarget.HostedWorld) { _worldInfo.Hosting.RunServer = true; }
         }
 
         _stateMachine.TransitionTo("WaitingForFadeIn");
         ProgressManager.UpdateProgress("Loading World", 0f);
-        CommonLib.Net.LocalPlayerRemoved += OnLocalPlayerRemoved;
     }
 }

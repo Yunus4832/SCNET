@@ -1,0 +1,11 @@
+namespace Game.Blocks;
+
+public abstract class SignBlock : Block
+{
+    public abstract Vector3 GetSignSurfaceNormal(int data);
+
+    public override bool IsEditable(int value)
+    {
+        return true;
+    }
+}

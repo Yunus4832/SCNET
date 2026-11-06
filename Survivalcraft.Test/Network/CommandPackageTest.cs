@@ -1,7 +1,6 @@
 using Engine.Core.Security;
 
 using Game.Commands;
-using Game.Localization;
 using Game.Network.Transport;
 using Game.Protocol.Identity;
 
@@ -21,7 +20,14 @@ public class CommandPackageTest
             CommandPackage.CreateSuggestions(
                 request.Input,
                 request.CorrelationId,
-                [new CommandSuggestion("Home One", description.Resolve(), true, description)]
+                [
+                    new CommandSuggestion(
+                        "Home One",
+                        Game.Localization.ClientLanguage.Resolver.Resolve(description),
+                        true,
+                        description
+                    )
+                ]
             )
         );
         Assert.Equal(CommandPackage.CommandPackageMode.Suggestions, response.Mode);
@@ -129,13 +135,14 @@ public class CommandPackageTest
         var result = new CommandResult(
             true,
             "team.invitation_pending",
-            "等待对方确认。",
+            LocalizedText.Format(
+                new LocalizedText("Commands", "TeamInvitationPending_Message", "等待{0}确认。"),
+                LocalizedText.Literal("Alice")
+            ),
             true,
             CommandResultAudience.AllPlayers,
             CommandResultState.Pending,
             CommandResultPresentation.History | CommandResultPresentation.Toast,
-            "TeamInvitationPending_Message",
-            ["Alice"],
             PanelBehavior: CommandPanelBehavior.CloseOnSuccess
         );
         var package = CommandPackage.CreateResult(CommandResponseBuilder.Capture(result), "request-result");
@@ -148,14 +155,12 @@ public class CommandPackageTest
         var restored = CommandResponseBuilder.Restore(clone.Result!);
         Assert.Equal(result.Success, restored.Success);
         Assert.Equal(result.Code, restored.Code);
-        Assert.Equal(result.Message, restored.Message);
+        Assert.Equivalent(result.Message, restored.Message);
         Assert.False(restored.Sensitive);
         Assert.Equal(CommandResultAudience.Requester, restored.Audience);
         Assert.Equal(result.State, restored.State);
         Assert.Equal(result.Presentation, restored.Presentation);
         Assert.Equal(result.PanelBehavior, restored.PanelBehavior);
-        Assert.Equal(result.MessageKey, restored.MessageKey);
-        Assert.Equal(result.MessageArguments, restored.MessageArguments);
     }
 
     private static T RoundTrip<T>(T package) where T : CommandPackage

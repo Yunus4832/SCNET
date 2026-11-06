@@ -44,8 +44,7 @@ public static class GameInformationManager
 
     public static void StartAutomaticCheck()
     {
-        if (RunMode.Value is not RunModeType.Gui ||
-            ContentRepositoryManager.Current.GameInformationSource is not { } source)
+        if (ContentRepositoryManager.Current.GameInformationSource is not { } source)
         {
             return;
         }
@@ -97,7 +96,7 @@ public static class GameInformationManager
                 Text("NoInformationSourceTitle"),
                 Text("NoInformationSourceBody"),
                 Text("Configure"),
-                LanguageManager.Get("Usual", "no"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "no"),
                 button =>
                 {
                     if (button == MessageDialogButton.Button1)
@@ -256,7 +255,7 @@ public static class GameInformationManager
         try
         {
             var platform = GetReleasePlatform(
-                PlatformManager.Platform,
+                ClientPlatform.Kind,
                 RuntimeInformation.ProcessArchitecture,
                 OperatingSystem.IsWindows()
             );
@@ -369,7 +368,7 @@ public static class GameInformationManager
             new MessageDialog(
                 Text("Updates"),
                 string.Format(Text(key), arguments),
-                LanguageManager.Get("Usual", "ok"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "ok"),
                 string.Empty,
                 _ => EndUpdate(operation)
             )
@@ -403,7 +402,7 @@ public static class GameInformationManager
                 Text("Updates"),
                 message,
                 PlatformManager.CanRequestUpdate ? Text("Download") : Text("OpenLink"),
-                LanguageManager.Get("Usual", "no"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "no"),
                 button =>
                 {
                     if (!IsCurrent(operation) || button != MessageDialogButton.Button1)
@@ -433,8 +432,8 @@ public static class GameInformationManager
             new MessageDialog(
                 Text("Download"),
                 string.Format(Text("ConfirmDownload"), operation.Source.Name, release.Version),
-                LanguageManager.Get("Usual", "yes"),
-                LanguageManager.Get("Usual", "no"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "yes"),
+                Localization.ClientLanguage.Catalog.Get("Usual", "no"),
                 button =>
                 {
                     if (IsCurrent(operation) && button == MessageDialogButton.Button1)
@@ -519,8 +518,8 @@ public static class GameInformationManager
                                 operation.Source.Name,
                                 release.Version
                             ),
-                            LanguageManager.Get("Usual", "yes"),
-                            LanguageManager.Get("Usual", "no"),
+                            Localization.ClientLanguage.Catalog.Get("Usual", "yes"),
+                            Localization.ClientLanguage.Catalog.Get("Usual", "no"),
                             button =>
                             {
                                 if (IsCurrent(operation) && button == MessageDialogButton.Button1)
@@ -553,7 +552,7 @@ public static class GameInformationManager
                             new MessageDialog(
                                 Text("Download"),
                                 Text("DownloadFailed"),
-                                LanguageManager.Get("Usual", "ok"),
+                                Localization.ClientLanguage.Catalog.Get("Usual", "ok"),
                                 string.Empty,
                                 _ => EndUpdate(operation)
                             )
@@ -729,5 +728,6 @@ public static class GameInformationManager
         }
     }
 
-    private static string Text(string key) => LanguageManager.GetContentWidgets(nameof(GameInformationManager), key);
+    private static string Text(string key) =>
+        Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(GameInformationManager), key);
 }

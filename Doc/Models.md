@@ -44,13 +44,14 @@ var data = ModelData.Load(stream, relativePath => OpenAsset("Models/" + relative
 ## 当前渲染能力
 
 `Engine.Graphics.Model` 是供刚性渲染路径使用的共享模型资源。它保留 `SourceData`，选择默认
-场景（未指定时选择第一个），保存只读节点定义和共享 GPU 几何，不保存人物或控件的当前姿态。
+场景（未指定时选择第一个），保存只读节点定义和共享 CPU 几何，不保存人物或控件的当前姿态。
 
 - `ModelNode` 对应场景节点，保存 `LocalTransform`、`Parent`、`Children` 和可选 `Mesh` 引用。
   `SourceNodeIndex` 指向原始节点，`Index` 用于当前场景的运行时变换数组；它不是蒙皮关节编号。
 - `RootNodes` 保留真实的多个场景根节点，不额外插入一个“根骨骼”。
 - `ModelMesh` 保存几何资源，名称来自源 mesh，`SourceMeshIndex` 指向原始网格；它不保存父节点。
-  `Primitives` 中的 `ModelPrimitive` 描述绘制范围、缓冲和材质索引。
+  `Primitives` 中的 `ModelPrimitive` 提供 `Vertices`、`Indices` 的只读 CPU 数据、绘制范围和材质索引。
+  `GetIndices16()` 用于只支持 16 位索引的方块或程序化网格转换，不访问图形设备。
 - 同一源网格在相同默认形变权重下复用同一 `ModelMesh` 和缓冲；权重不同则准备独立的几何变体。
   因此 `Model.Meshes` 是唯一已准备资源的集合，可能包含同一源网格的多个权重变体。
 - `MeshNodes` 是所有引用几何的节点及默认绘制顺序。渲染应遍历这些节点，不能只遍历唯一网格
@@ -63,7 +64,10 @@ var data = ModelData.Load(stream, relativePath => OpenAsset("Models/" + relative
 附加到默认旋转/缩放之后；它不代表标准 glTF 动画片段的 TRS 采样。对象放置使用 WorldTransform，
 可同时作用于多个根节点。`ComponentModel` 与 `ModelWidget` 各自创建 Pose，不修改共享节点定义。
 
-GPU 缓冲的释放责任属于 Model 所拥有的网格资源，节点和 primitive 不单独释放共享缓冲。
+`Model.Load` 不创建 GPU 缓冲。渲染访问 primitive 的 `VertexBuffer` / `IndexBuffer` 时才上传，
+由 Model 所拥有的网格资源统一释放；模型释放后不能再次创建缓冲。设备丢失会释放已上传部分，
+下一次绘制从保留的 CPU 几何重新上传，未绘制过的模型不注册设备事件。
+方块碰撞与网格转换直接读取 CPU 几何，不通过缓冲区 `Tag` 取回数据；旧的 tag-retention 加载参数已移除。
 Model 重复 Dispose 不会重复释放资源；关联的游戏合批缓存也会在 Model 释放时清除。合批缓存按
 节点绘制顺序区分条目，并为每个节点保留各自的变换索引。
 

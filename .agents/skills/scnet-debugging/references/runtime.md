@@ -2,7 +2,7 @@
 
 ## Startup model
 
-- `RunningSetting` selects `Gui` or `HeadlessServer` and the active session.
+- The GUI launcher or standalone server entry determines the application host; `RunningSetting` selects the active startup session.
 - `SessionInfo` selects a world or remote target.
 - Temporary tests should use command-line overrides and should not pass `--save`.
 - Automated runs must use a dedicated `--instance`; never use the default instance.
@@ -12,7 +12,7 @@
 - GUI gameplay tests should pass `--player Codex` (or another stable explicit name) to skip first-player
   setup and enter the world directly. Omit it only when player creation or selection is the behavior
   under test.
-- Read `Doc/Headless.md` and `Doc/StartupSessions.md` when changing startup behavior.
+- Read `Doc/Server.md` and `Doc/StartupSessions.md` when changing startup behavior.
 
 ## Development commands
 
@@ -27,7 +27,6 @@ Start an isolated GUI gameplay session without stopping at player creation:
 ```bash
 Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter \
   --instance codex-gui \
-  --gui \
   --session codex-gui \
   --world TestWorld \
   --game-mode Creative \
@@ -37,12 +36,11 @@ Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter \
   --log-level Debug
 ```
 
-Start Headless:
+Start server:
 
 ```bash
-Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter \
+Survivalcraft.Server/bin/Debug/net10.0/linux-x64/Survivalcraft.Server \
   --instance codex-smoke \
-  --server \
   --session codex-smoke \
   --world TestWorld \
   --game-mode Creative \
@@ -57,7 +55,7 @@ Do not add `--save` unless session persistence is part of the test.
 The readiness marker is:
 
 ```text
-Headless server started. Press Ctrl+C to stop.
+Server started. Press Ctrl+C to stop.
 ```
 
 The server stdin uses the same `CommandDispatcher` as players and Mods. Safe diagnostic commands include:
@@ -77,10 +75,10 @@ Subject command permissions are explicit; the old `ServerMaster` and `ServerMana
 
 The claim grants delegable `game:permissions.manage.standard`. It lets the player manage
 standard command permissions without automatically receiving those command permissions. GUI and
-Headless use the same online-player claim path; GUI presents a local claim dialog, while Headless
+server use the same online-player claim path; GUI presents a local claim dialog, while server
 prints the code to stdout. Until a player claims it, the server remains unclaimed.
 
-Headless console recovery and inspection commands:
+server console recovery and inspection commands:
 
 ```text
 auth status
@@ -105,7 +103,7 @@ permission list <subject-address>
 Permission mutations are always executed by the server. Client commands are requests; never mutate
 permission state in client-side diagnostic code.
 
-stdin and the Android Headless management UI both execute as `LocalOperator`; they differ only in
+stdin and the Android server management UI both execute as `LocalOperator`; they differ only in
 their frontend. Commands that require an online player are filtered by `AllowedPrincipals` and do
 not appear in server-control suggestions.
 
@@ -135,7 +133,7 @@ Use `GET /player/commands` to discover World/Server bindings available to the cu
 then `POST /player/commands` with the same identity/arguments envelope as `/commands`.
 Remote discovery and execution use the server's real player permissions. Use `/commands` for
 local process control and UI automation; it does not forward commands to the remote world.
-Headless exposes only the local endpoint. No active player returns `command.no_player`;
+server exposes only the local endpoint. No active player returns `command.no_player`;
 player/world/server changes invalidate outstanding requests. A 504 timeout does not prove the
 server did not execute the request. Keep `Pending` distinct from final business completion.
 

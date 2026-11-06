@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 
 using Game.Admission;
+using Game.Application;
 
 namespace Game.Screens;
 
@@ -28,6 +29,8 @@ public class NewWorldScreen : Screen
 
     private WorldSettings _worldSettings = null!;
 
+    private WorldHostingSettings _hosting = new();
+
     private WorldAdmissionDraft _admission = new();
 
     public NewWorldScreen()
@@ -53,6 +56,7 @@ public class NewWorldScreen : Screen
         if (parameters.Length > 0 && parameters[0] is WorldSettings worldSettings)
         {
             _worldSettings = worldSettings;
+            _hosting = parameters.OfType<WorldHostingSettings>().FirstOrDefault() ?? _hosting;
             if (parameters.OfType<WorldAdmissionDraft>().FirstOrDefault() is { } draft) { _admission = draft; }
             else if (ScreensManager.PreviousScreen is not WorldOptionsScreen and not WorldServerSettingsScreen)
             {
@@ -62,9 +66,10 @@ public class NewWorldScreen : Screen
         else if (ScreensManager.PreviousScreen?.GetType() != typeof(WorldOptionsScreen))
         {
             _admission = new WorldAdmissionDraft();
+            _hosting = new WorldHostingSettings();
             _worldSettings = new WorldSettings
             {
-                Name = WorldsManager.GetUnusedWorldName()
+                Name = ClientApplication.Worlds.GetUnusedWorldName()
             };
         }
     }
@@ -76,7 +81,7 @@ public class NewWorldScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new SelectGameModeDialog(
-                    LanguageManager.GetContentWidgets(_typeName, 4),
+                    Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 4),
                     false,
                     delegate(GameMode gameMode) { _worldSettings.GameMode = gameMode; },
                     _worldSettings.GameMode
@@ -92,12 +97,16 @@ public class NewWorldScreen : Screen
                                        enumValues2.Count);
         }
 
-        var flag = WorldsManager.ValidateWorldName(_worldSettings.Name);
+        var flag = ClientApplication.Worlds.ValidateWorldName(_worldSettings.Name);
         _nameTextBox.Text = _worldSettings.Name;
         _seedTextBox.Text = _worldSettings.Seed;
-        _gameModeButton.Text = LanguageManager.Get("GameMode", _worldSettings.GameMode.ToString());
+        _gameModeButton.Text =
+            Localization.ClientLanguage.Catalog.Get("GameMode", _worldSettings.GameMode.ToString());
         _startingPositionButton.Text =
-            LanguageManager.Get("StartingPositionMode", _worldSettings.StartingPositionMode.ToString());
+            Localization.ClientLanguage.Catalog.Get(
+                "StartingPositionMode",
+                _worldSettings.StartingPositionMode.ToString()
+            );
         _playButton.IsVisible = flag;
         _errorLabel.IsVisible = !flag;
         _blankSeedLabel.IsVisible = _worldSettings.Seed.Length == 0 && !_seedTextBox.HasFocus;
@@ -108,12 +117,24 @@ public class NewWorldScreen : Screen
 
         if (_serverSettingsButton.IsClicked)
         {
-            ScreensManager.SwitchScreen("WorldServerSettings", _worldSettings, "NewWorld", _worldSettings, _admission);
+            ScreensManager.SwitchScreen(
+                "WorldServerSettings",
+                _worldSettings,
+                "NewWorld",
+                _worldSettings,
+                _admission,
+                _hosting
+            );
         }
 
-        if (_playButton.IsClicked && WorldsManager.ValidateWorldName(_nameTextBox.Text))
+        if (_playButton.IsClicked && ClientApplication.Worlds.ValidateWorldName(_nameTextBox.Text))
         {
-            var worldInfo = WorldsManager.CreateWorld(_worldSettings, admission: _admission.Configuration);
+            var worldInfo = ClientApplication.Worlds.CreateWorld(
+                DatabaseManager.GameDatabase,
+                _worldSettings,
+                _hosting,
+                admission: _admission.Configuration
+            );
             if (_worldSettings.GameMode != GameMode.Creative)
             {
                 _worldSettings.ResetOptionsForNonCreativeMode();

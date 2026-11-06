@@ -5,6 +5,7 @@ using Engine.Core.Mathematics;
 using Game.ElectricElements;
 using Game.Network.Transport;
 using Game.Subsystems;
+using Game.Subsystems.Behavior;
 using Game.World;
 
 namespace Survivalcraft.Test.Network;

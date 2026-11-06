@@ -50,8 +50,8 @@ public class SettingsPerformanceScreen : Screen
 
     public override void Enter(object[] parameters)
     {
-        _enterVisibilityRange = SettingsManager.Current.VisibilityRange;
-        if (GameManager.Role == WorldRole.RemoteClient)
+        _enterVisibilityRange = Configuration.ClientConfiguration.Preferences.VisibilityRange;
+        if (GameManager.Runtime?.Client is { IsClosed: false })
         {
             _visibilityRangeSlider.MaxValue = _visibilityRanges.FindLastIndex(range =>
                 range <= NetworkTerrainPolicy.DefaultMaxClientVisibilityRange
@@ -61,119 +61,134 @@ public class SettingsPerformanceScreen : Screen
 
     public override void Update()
     {
-        GameManager.UpdateProject();
         if (_resolutionButton.IsClicked)
         {
             var enumValues = EnumUtils.GetEnumValues(typeof(ResolutionMode));
-            SettingsManager.Current.ResolutionMode =
-                (ResolutionMode)((enumValues.IndexOf((int)SettingsManager.Current.ResolutionMode) + 1) %
+            Configuration.ClientConfiguration.Preferences.ResolutionMode =
+                (ResolutionMode)((enumValues.IndexOf(
+                                      (int)Configuration.ClientConfiguration.Preferences.ResolutionMode
+                                  ) +
+                                  1) %
                                  enumValues.Count);
         }
 
         if (_visibilityRangeSlider.IsSliding)
         {
-            SettingsManager.Current.VisibilityRange =
+            Configuration.ClientConfiguration.Preferences.VisibilityRange =
                 _visibilityRanges
                     [MathUtils.Clamp((int)_visibilityRangeSlider.Value, 0, _visibilityRanges.Count - 1)];
         }
 
         if (_terrainMipmapsButton.IsClicked)
         {
-            SettingsManager.Current.TerrainMipmapsEnabled = !SettingsManager.Current.TerrainMipmapsEnabled;
+            Configuration.ClientConfiguration.Preferences.TerrainMipmapsEnabled =
+                !Configuration.ClientConfiguration.Preferences.TerrainMipmapsEnabled;
         }
 
         if (_skyRenderingModeButton.IsClicked)
         {
             var enumValues3 = EnumUtils.GetEnumValues(typeof(SkyRenderingMode));
-            SettingsManager.Current.SkyRenderingMode =
-                (SkyRenderingMode)((enumValues3.IndexOf((int)SettingsManager.Current.SkyRenderingMode) + 1) %
+            Configuration.ClientConfiguration.Preferences.SkyRenderingMode =
+                (SkyRenderingMode)((enumValues3.IndexOf(
+                                        (int)Configuration.ClientConfiguration.Preferences.SkyRenderingMode
+                                    ) +
+                                    1) %
                                    enumValues3.Count);
         }
 
         if (_objectShadowsButton.IsClicked)
         {
-            SettingsManager.Current.ObjectsShadowsEnabled = !SettingsManager.Current.ObjectsShadowsEnabled;
+            Configuration.ClientConfiguration.Preferences.ObjectsShadowsEnabled =
+                !Configuration.ClientConfiguration.Preferences.ObjectsShadowsEnabled;
         }
 
         if (_framerateLimitButton.IsClicked)
         {
-            SettingsManager.Current.VSync = !SettingsManager.Current.VSync;
+            Configuration.ClientConfiguration.Preferences.VSync =
+                !Configuration.ClientConfiguration.Preferences.VSync;
         }
 
         _resolutionButton.Text =
-            LanguageManager.Get("ResolutionMode", SettingsManager.Current.ResolutionMode.ToString());
-        _visibilityRangeSlider.Value = _visibilityRanges.IndexOf(SettingsManager.Current.VisibilityRange) >= 0
-            ? _visibilityRanges.IndexOf(SettingsManager.Current.VisibilityRange)
-            : 64;
+            Localization.ClientLanguage.Catalog.Get(
+                "ResolutionMode",
+                Configuration.ClientConfiguration.Preferences.ResolutionMode.ToString()
+            );
+        _visibilityRangeSlider.Value =
+            _visibilityRanges.IndexOf(Configuration.ClientConfiguration.Preferences.VisibilityRange) >= 0
+                ? _visibilityRanges.IndexOf(Configuration.ClientConfiguration.Preferences.VisibilityRange)
+                : 64;
         _visibilityRangeSlider.Text =
-            string.Format(LanguageManager.Get(_typeName, 1), SettingsManager.Current.VisibilityRange);
-        if (SettingsManager.Current.VisibilityRange <= 48)
+            string.Format(
+                Localization.ClientLanguage.Catalog.Get(_typeName, 1),
+                Configuration.ClientConfiguration.Preferences.VisibilityRange
+            );
+        if (Configuration.ClientConfiguration.Preferences.VisibilityRange <= 48)
         {
             _visibilityRangeWarningLabel.IsVisible = true;
-            _visibilityRangeWarningLabel.Text = LanguageManager.Get(_typeName, 2);
+            _visibilityRangeWarningLabel.Text = Localization.ClientLanguage.Catalog.Get(_typeName, 2);
         }
-        else if (SettingsManager.Current.VisibilityRange <= 64)
+        else if (Configuration.ClientConfiguration.Preferences.VisibilityRange <= 64)
         {
             _visibilityRangeWarningLabel.IsVisible = false;
         }
-        else if (SettingsManager.Current.VisibilityRange <= 112)
+        else if (Configuration.ClientConfiguration.Preferences.VisibilityRange <= 112)
         {
             _visibilityRangeWarningLabel.IsVisible = true;
-            _visibilityRangeWarningLabel.Text = LanguageManager.Get(_typeName, 3);
+            _visibilityRangeWarningLabel.Text = Localization.ClientLanguage.Catalog.Get(_typeName, 3);
         }
-        else if (SettingsManager.Current.VisibilityRange <= 224)
+        else if (Configuration.ClientConfiguration.Preferences.VisibilityRange <= 224)
         {
             _visibilityRangeWarningLabel.IsVisible = true;
-            _visibilityRangeWarningLabel.Text = LanguageManager.Get(_typeName, 4);
+            _visibilityRangeWarningLabel.Text = Localization.ClientLanguage.Catalog.Get(_typeName, 4);
         }
-        else if (SettingsManager.Current.VisibilityRange <= 384)
+        else if (Configuration.ClientConfiguration.Preferences.VisibilityRange <= 384)
         {
             _visibilityRangeWarningLabel.IsVisible = true;
-            _visibilityRangeWarningLabel.Text = LanguageManager.Get(_typeName, 5);
+            _visibilityRangeWarningLabel.Text = Localization.ClientLanguage.Catalog.Get(_typeName, 5);
         }
-        else if (SettingsManager.Current.VisibilityRange <= 512)
+        else if (Configuration.ClientConfiguration.Preferences.VisibilityRange <= 512)
         {
             _visibilityRangeWarningLabel.IsVisible = true;
-            _visibilityRangeWarningLabel.Text = LanguageManager.Get(_typeName, 6);
+            _visibilityRangeWarningLabel.Text = Localization.ClientLanguage.Catalog.Get(_typeName, 6);
         }
         else
         {
             _visibilityRangeWarningLabel.IsVisible = true;
-            _visibilityRangeWarningLabel.Text = LanguageManager.Get(_typeName, 7);
+            _visibilityRangeWarningLabel.Text = Localization.ClientLanguage.Catalog.Get(_typeName, 7);
         }
 
-        _terrainMipmapsButton.Text = SettingsManager.Current.TerrainMipmapsEnabled
-            ? LanguageManager.Enable
-            : LanguageManager.Disable;
+        _terrainMipmapsButton.Text = Configuration.ClientConfiguration.Preferences.TerrainMipmapsEnabled
+            ? Localization.ClientLanguage.Catalog.Enable
+            : Localization.ClientLanguage.Catalog.Disable;
 
-        _skyRenderingModeButton.Text = LanguageManager.Get(
+        _skyRenderingModeButton.Text = Localization.ClientLanguage.Catalog.Get(
             "SkyRenderingMode",
-            SettingsManager.Current.SkyRenderingMode.ToString()
+            Configuration.ClientConfiguration.Preferences.SkyRenderingMode.ToString()
         );
 
-        _objectShadowsButton.Text = SettingsManager.Current.ObjectsShadowsEnabled
-            ? LanguageManager.Enable
-            : LanguageManager.Disable;
+        _objectShadowsButton.Text = Configuration.ClientConfiguration.Preferences.ObjectsShadowsEnabled
+            ? Localization.ClientLanguage.Catalog.Enable
+            : Localization.ClientLanguage.Catalog.Disable;
 
-        _framerateLimitButton.Text = SettingsManager.Current.VSync
-            ? LanguageManager.Get(_typeName, 11)
-            : LanguageManager.Get(_typeName, 8);
+        _framerateLimitButton.Text = Configuration.ClientConfiguration.Preferences.VSync
+            ? Localization.ClientLanguage.Catalog.Get(_typeName, 11)
+            : Localization.ClientLanguage.Catalog.Get(_typeName, 8);
 
         if (Input is { Back: false, Cancel: false } && !Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             return;
         }
 
-        var flag = SettingsManager.Current.VisibilityRange > 128;
-        if (SettingsManager.Current.VisibilityRange > _enterVisibilityRange && flag)
+        var flag = Configuration.ClientConfiguration.Preferences.VisibilityRange > 128;
+        if (Configuration.ClientConfiguration.Preferences.VisibilityRange > _enterVisibilityRange && flag)
         {
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageManager.Get(_typeName, 9),
-                    LanguageManager.Get(_typeName, 10),
-                    LanguageManager.Ok,
-                    LanguageManager.Back,
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 9),
+                    Localization.ClientLanguage.Catalog.Get(_typeName, 10),
+                    Localization.ClientLanguage.Catalog.Ok,
+                    Localization.ClientLanguage.Catalog.Back,
                     delegate(MessageDialogButton button)
                     {
                         if (button != MessageDialogButton.Button1)

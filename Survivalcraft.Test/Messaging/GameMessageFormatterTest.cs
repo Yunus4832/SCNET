@@ -2,8 +2,6 @@ using System.Text.Json.Nodes;
 
 using Engine.Core.Security;
 
-using Game.Managers;
-using Game.Messaging;
 using Game.Protocol.Identity;
 
 using Survivalcraft.Test.Modding;
@@ -13,23 +11,24 @@ namespace Survivalcraft.Test.Messaging;
 [Collection(ConfigFileCollection.Name)]
 public class GameMessageFormatterTest : IDisposable
 {
-    private readonly JsonObject _originalKeywords = LanguageManager.KeyWords;
+    private readonly JsonObject _originalKeywords = Game.Localization.ClientLanguage.Catalog.KeyWords;
 
     public GameMessageFormatterTest()
     {
         // Exercise fallback labels independently of languages loaded by other test collections.
-        LanguageManager.KeyWords = new JsonObject();
+        Game.Localization.ClientLanguage.Catalog.KeyWords = new JsonObject();
     }
 
     public void Dispose()
     {
-        LanguageManager.KeyWords = _originalKeywords;
+        Game.Localization.ClientLanguage.Catalog.KeyWords = _originalKeywords;
     }
 
     [Fact]
     public void CommandMessageHasSingleSemanticPrefix()
     {
-        var formatted = GameMessageFormatter.Format(GameMessage.Command("世界时间已更新。", success: true));
+        var formatted =
+            Game.Localization.ClientLanguage.Formatter.Format(GameMessage.Command("世界时间已更新。", success: true));
 
         Assert.Equal("[指令]世界时间已更新。", formatted.PlainText);
         Assert.Equal(MessageTextStyle.Success, formatted.Segments[0].Style);
@@ -39,7 +38,7 @@ public class GameMessageFormatterTest : IDisposable
     [Fact]
     public void TeamChatKeepsChannelSenderAndBodySeparate()
     {
-        var formatted = GameMessageFormatter.Format(
+        var formatted = Game.Localization.ClientLanguage.Formatter.Format(
             GameMessage.Chat(
                 GameMessageChannel.Team,
                 new MessageSender(
@@ -66,7 +65,7 @@ public class GameMessageFormatterTest : IDisposable
     {
         var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
         var message = GameMessage.Chat(GameMessageChannel.Global, new MessageSender(address, string.Empty), "hello");
-        Assert.Equal("[scnet1qqqqqqqq…]hello", GameMessageFormatter.Format(message).PlainText);
+        Assert.Equal("[scnet1qqqqqqqq…]hello", Game.Localization.ClientLanguage.Formatter.Format(message).PlainText);
     }
 
     [Fact]

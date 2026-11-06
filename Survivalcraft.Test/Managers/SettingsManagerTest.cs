@@ -1,5 +1,3 @@
-using Game.Managers;
-
 using Survivalcraft.Test.Modding;
 
 namespace Survivalcraft.Test.Managers;
@@ -10,7 +8,7 @@ public sealed class SettingsManagerTest
     [Fact]
     public void RuntimeBrightnessChangesAreClampedAndNotifiedByTheManager()
     {
-        var previous = SettingsManager.Current.Brightness;
+        var previous = Game.Configuration.ClientConfiguration.Preferences.Brightness;
         var changes = 0;
 
         void Changed()
@@ -18,24 +16,24 @@ public sealed class SettingsManagerTest
             changes++;
         }
 
-        SettingsManager.BrightnessChanged += Changed;
+        Game.Configuration.ClientConfiguration.BrightnessChanged += Changed;
         try
         {
-            SettingsManager.Current.Brightness = 0.5f;
+            Game.Configuration.ClientConfiguration.Preferences.Brightness = 0.5f;
             Assert.Equal(0, changes);
-            SettingsManager.SetBrightness(2f);
-            Assert.Equal(1f, SettingsManager.Current.Brightness);
+            Game.Configuration.ClientConfiguration.SetBrightness(2f);
+            Assert.Equal(1f, Game.Configuration.ClientConfiguration.Preferences.Brightness);
             Assert.Equal(1, changes);
-            SettingsManager.SetBrightness(3f);
+            Game.Configuration.ClientConfiguration.SetBrightness(3f);
             Assert.Equal(1, changes);
-            SettingsManager.SetBrightness(-1f);
-            Assert.Equal(0f, SettingsManager.Current.Brightness);
+            Game.Configuration.ClientConfiguration.SetBrightness(-1f);
+            Assert.Equal(0f, Game.Configuration.ClientConfiguration.Preferences.Brightness);
             Assert.Equal(2, changes);
         }
         finally
         {
-            SettingsManager.BrightnessChanged -= Changed;
-            SettingsManager.Current.Brightness = previous;
+            Game.Configuration.ClientConfiguration.BrightnessChanged -= Changed;
+            Game.Configuration.ClientConfiguration.Preferences.Brightness = previous;
         }
     }
 }

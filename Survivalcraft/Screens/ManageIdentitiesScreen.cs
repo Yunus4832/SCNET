@@ -86,7 +86,8 @@ public sealed class ManageIdentitiesScreen : Screen
 
     private LocalIdentityEntry? Selected => _list.SelectedItem as LocalIdentityEntry;
 
-    private static string Text(string key) => LanguageManager.GetContentWidgets(nameof(ManageIdentitiesScreen), key);
+    private static string Text(string key) =>
+        Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(ManageIdentitiesScreen), key);
 
     public override void Enter(object[] parameters)
     {
@@ -105,7 +106,6 @@ public sealed class ManageIdentitiesScreen : Screen
 
     public override void Update()
     {
-        GameManager.UpdateProject();
         Refresh();
         if (_busy) { return; }
 
@@ -170,7 +170,7 @@ public sealed class ManageIdentitiesScreen : Screen
     {
         if (_busy) { return false; }
 
-        var editable = LocalIdentityManager.CanManage;
+        var editable = IdentityManagementAvailability.CanManage;
         return (IdentityAction)item switch
         {
             IdentityAction.Create => editable &&
@@ -229,7 +229,7 @@ public sealed class ManageIdentitiesScreen : Screen
                     {
                         if (button != MessageDialogButton.Button1 ||
                             !IsCurrent(generation) ||
-                            !LocalIdentityManager.CanManage) { return; }
+                            !IdentityManagementAvailability.CanManage) { return; }
 
                         try
                         {
@@ -248,7 +248,7 @@ public sealed class ManageIdentitiesScreen : Screen
                         IdentityName(selected!),
                         selected!.Address,
                         Text("Copy"),
-                        LanguageManager.Get("Usual", "close"),
+                        Localization.ClientLanguage.Catalog.Get("Usual", "close"),
                         button =>
                         {
                             if (button == MessageDialogButton.Button1)
@@ -292,7 +292,9 @@ public sealed class ManageIdentitiesScreen : Screen
                 LocalIdentityManager.MaximumNameLength,
                 name =>
                 {
-                    if (string.IsNullOrWhiteSpace(name) || !IsCurrent(generation) || !LocalIdentityManager.CanManage)
+                    if (string.IsNullOrWhiteSpace(name) ||
+                        !IsCurrent(generation) ||
+                        !IdentityManagementAvailability.CanManage)
                     {
                         return;
                     }
@@ -505,7 +507,7 @@ public sealed class ManageIdentitiesScreen : Screen
                                         {
                                             if (!IsCurrent(generation) ||
                                                 string.IsNullOrWhiteSpace(name) ||
-                                                !LocalIdentityManager.CanManage) { return; }
+                                                !IdentityManagementAvailability.CanManage) { return; }
 
                                             var imported = _identities.ImportBackup(purpose, backup, password, name);
                                             RefreshIdentities(imported);

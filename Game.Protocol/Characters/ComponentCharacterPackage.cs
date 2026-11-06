@@ -70,7 +70,7 @@ public abstract record ComponentCharacterPackage : IProtocolMessage
         PositionSet = 12
     }
 
-    [Key(0)] public byte ControllerSessionId { get; init; }
+    [Key(0)] public byte ControllerClientId { get; init; }
 
     [IgnoreMember] public abstract CharacterAction Type { get; }
 }

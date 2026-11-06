@@ -1,6 +1,6 @@
 using Engine.Core.Collections;
+using Engine.Core.FileStorage;
 using Engine.Core.Mathematics;
-using Engine.FileStorage;
 using Engine.Media.Models;
 
 namespace Engine.Graphics;
@@ -16,7 +16,7 @@ public sealed class Model : IDisposable
 
     private readonly List<ModelMesh> _meshes = [];
 
-    private Model(ModelData data, bool keepSource)
+    private Model(ModelData data)
     {
         SourceData = data;
         if (data.Scenes.Count == 0)
@@ -36,7 +36,7 @@ public sealed class Model : IDisposable
             var visited = new HashSet<int>();
             foreach (var root in scene.RootNodes)
             {
-                _roots.Add(InitializeNode(root, null, keepSource, visited));
+                _roots.Add(InitializeNode(root, null, visited));
             }
         }
         catch
@@ -115,17 +115,17 @@ public sealed class Model : IDisposable
         return bounds;
     }
 
-    public static Model Load(ModelData data, bool keepSourceVertexDataInTags = false)
+    public static Model Load(ModelData data)
     {
-        return new Model(data, keepSourceVertexDataInTags);
+        return new Model(data);
     }
 
-    public static Model Load(Stream stream, bool keepSourceVertexDataInTags = false)
+    public static Model Load(Stream stream)
     {
-        return Load(ModelData.Load(stream), keepSourceVertexDataInTags);
+        return Load(ModelData.Load(stream));
     }
 
-    public static Model Load(string fileName, bool keepSourceVertexDataInTags = false)
+    public static Model Load(string fileName)
     {
         using var stream = Storage.OpenFile(fileName, OpenFileMode.Read);
         return Load(
@@ -135,8 +135,7 @@ public sealed class Model : IDisposable
                     Path.Combine(Path.GetDirectoryName(fileName) ?? string.Empty, uri),
                     OpenFileMode.Read
                 )
-            ),
-            keepSourceVertexDataInTags
+            )
         );
     }
 
@@ -164,7 +163,7 @@ public sealed class Model : IDisposable
         }
     }
 
-    private ModelNode InitializeNode(int index, ModelNode? parent, bool keepSource, HashSet<int> visited)
+    private ModelNode InitializeNode(int index, ModelNode? parent, HashSet<int> visited)
     {
         if (!visited.Add(index))
         {
@@ -183,7 +182,7 @@ public sealed class Model : IDisposable
         _nodes.Add(node);
         foreach (var child in data.Children)
         {
-            node.AddChild(InitializeNode(child, node, keepSource, visited));
+            node.AddChild(InitializeNode(child, node, visited));
         }
 
         if (data.MeshIndex >= 0)
@@ -203,7 +202,7 @@ public sealed class Model : IDisposable
             );
             if (node.Mesh == null)
             {
-                node.Mesh = new ModelMesh(SourceData, data.MeshIndex, weights, keepSource);
+                node.Mesh = new ModelMesh(SourceData, data.MeshIndex, weights);
                 _meshes.Add(node.Mesh);
             }
 

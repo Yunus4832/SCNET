@@ -13,15 +13,21 @@ namespace Survivalcraft.Test.Network;
 public sealed class ProtocolEnumTest
 {
     [Fact]
-    public void GameConceptsBelongToTheGameAssembly()
+    public void GameConceptsStayOutOfTheWireProtocol()
     {
-        var assembly = typeof(CharacterData).Assembly;
         foreach (var type in new[] { typeof(GameMode), typeof(CharacterSex), typeof(Season), typeof(DragMode) })
         {
             Assert.StartsWith("Game.", type.Namespace);
-            Assert.Equal(assembly, type.Assembly);
             Assert.Null(typeof(GameProtocol).Assembly.GetType(type.FullName!));
         }
+    }
+
+    [Fact]
+    public void SharedWorldRuleEnumsBelongToTheLogicCore()
+    {
+        Assert.Equal("Survivalcraft.Core", typeof(GameMode).Assembly.GetName().Name);
+        Assert.Same(typeof(RuntimeSide).Assembly, typeof(GameMode).Assembly);
+        Assert.Same(typeof(RuntimeSide).Assembly, typeof(Season).Assembly);
     }
 
     [Fact]

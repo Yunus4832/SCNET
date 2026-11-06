@@ -47,6 +47,11 @@ public class Entity : IDisposable
 
         foreach (var item in items)
         {
+            if (project.Composition?.ShouldCreateComponent(item) == false)
+            {
+                continue;
+            }
+
             var value = item.GetValue<bool>("IsOptional");
             var value2 = item.GetValue<string>("Class");
             var value3 = item.GetValue<int>("LoadOrder");

@@ -1,0 +1,480 @@
+using System.Xml.Linq;
+
+using Game.Commands;
+using Game.Commands.BuiltIn;
+using Game.Commands.Text;
+using Game.Messaging;
+using Game.Network.Transport;
+using Game.Platforms;
+
+namespace Game.Widgets;
+
+public sealed class MessagePanelWidget : CanvasWidget
+{
+    private readonly LabelWidget _hint = new()
+    {
+        FontScale = 1f,
+        VerticalAlignment = WidgetAlignment.Center,
+        Text = MultiplayerUiStyle.Text("MessageInputHint"),
+        Color = new Color(160, 160, 160),
+        Margin = new Vector2(12f, 0f)
+    };
+
+    private readonly MessageHistoryOverlayWidget? _historyOverlayWidget;
+
+    private readonly GameMessageService _messageService;
+
+    private readonly bool _messagingEnabled;
+
+    private readonly ChatTranscriptWidget _transcript = new()
+    {
+        Size = new Vector2(590f, 298f),
+        MaximumMessages = GameMessageService.MaximumHistoryCount,
+        Padding = 10f,
+        IsBackgroundVisible = false,
+        VerticalAlignment = WidgetAlignment.Near
+    };
+
+    private readonly BevelledButtonWidget _channelButton =
+        MultiplayerUiStyle.CreateButton(
+            MultiplayerUiStyle.Text("Global"),
+            new Vector2(88f, 54f)
+        );
+
+    private readonly BevelledButtonWidget _sendMessageButton =
+        MultiplayerUiStyle.CreateButton(
+            MultiplayerUiStyle.Text("Send"),
+            new Vector2(88f, 54f)
+        );
+
+    private readonly BevelledButtonWidget _commandButton =
+        MultiplayerUiStyle.CreateButton("/", new Vector2(54f));
+
+    private readonly CommandSuggestionsWidget _commandSuggestions = new()
+    {
+        Size = new Vector2(590f, 298f)
+    };
+
+    private readonly BevelledButtonWidget _historyOverlayButton =
+        MultiplayerUiStyle.CreateButton(string.Empty, new Vector2(116f, 54f));
+
+    public readonly TextBoxWidget EditText = new()
+    {
+        FontScale = 1f,
+        Margin = new Vector2(12f, 0f),
+        HideText = false,
+        Size = new Vector2(float.PositiveInfinity, 54f)
+    };
+
+    private GameMessageChannel _messageChannel;
+
+    private string? _suggestionRequestId;
+
+    private string? _commandRequestId;
+
+    private double _suggestionSendAt;
+
+    private bool _suggestionPending;
+
+    private IReadOnlyList<CommandSuggestion>? _remoteSuggestions;
+
+    public override WidgetAlignment HorizontalAlignment { get; set; } = WidgetAlignment.Center;
+
+    public override WidgetAlignment VerticalAlignment { get; set; } = WidgetAlignment.Center;
+
+    private CharacterData CharacterData { get; }
+
+    public bool IsCommandInput => EditText.Text.StartsWith('/');
+
+    public MessagePanelWidget(
+        CharacterData characterData,
+        MessageHistoryOverlayWidget? historyOverlayWidget,
+        bool messagingEnabled = true
+    )
+    {
+        CharacterData = characterData;
+        _historyOverlayWidget = historyOverlayWidget;
+        _messageService = characterData.Project.FindSubsystem<SubsystemMessages>(true)!.Service;
+        _messagingEnabled = messagingEnabled;
+
+        LoadContents(this, ContentManager.Get<XElement>("Widgets/MessagePanelWidget"));
+        var transcriptHost = Children.Find<CanvasWidget>("TranscriptHost")!;
+        var inputHost = Children.Find<CanvasWidget>("InputHost")!;
+
+        transcriptHost.Children.Add(_transcript);
+        transcriptHost.Children.Add(_commandSuggestions);
+
+        var inputRow = new StackPanelWidget
+        {
+            Direction = LayoutDirection.Horizontal,
+            VerticalAlignment = WidgetAlignment.Far
+        };
+        inputRow.Children.Add(_commandButton);
+        inputRow.Children.Add(CreateInputArea());
+        if (_messagingEnabled)
+        {
+            inputRow.Children.Add(_channelButton);
+            inputRow.Children.Add(_historyOverlayButton);
+        }
+
+        inputRow.Children.Add(_sendMessageButton);
+        inputHost.Children.Add(inputRow);
+
+        _commandSuggestions.SuggestionSelected += ApplyCommandSuggestion;
+        EditText.TextChanged += _ => RefreshCommandSuggestions();
+        EditText.Enter += _ => SubmitOrClose();
+        EditText.CalculateCharacterPosition = (text, position, scale, spacing) =>
+        {
+            var characterIndex = MathUtils.Clamp(position, 0, text.Length);
+            var offset = position > 0 ? 5f : 0f;
+            return EditText.Font.MeasureText(text, 0, characterIndex, new Vector2(scale), spacing).X - offset;
+        };
+
+        foreach (var message in _messageService.History)
+        {
+            _transcript.AddMessage(message);
+        }
+
+        _messageService.HistoryMessageAdded += AddMessage;
+        if (_historyOverlayWidget != null)
+        {
+            UpdateHistoryOverlayButton();
+        }
+    }
+
+    public void FocusInput()
+    {
+        EditText.HasFocus = true;
+        EditText.CaretPosition = EditText.Text.Length;
+    }
+
+    internal void BeginPanelSession()
+    {
+        _commandRequestId = null;
+    }
+
+    public void BeginCommandInput()
+    {
+        if (!EditText.Text.StartsWith('/'))
+        {
+            EditText.Text = "/";
+        }
+
+        RefreshCommandSuggestions();
+        SetCommandTextFocus(false);
+    }
+
+    public void CancelCommandInput()
+    {
+        ResetInput();
+        if (!_messagingEnabled &&
+            CharacterData.ComponentCharacter?.Entity.FindComponent<ComponentGui>(true)!.ModalPanelWidget == this)
+        {
+            CharacterData.ComponentCharacter.Entity.FindComponent<ComponentGui>(true)!.ModalPanelWidget = null;
+        }
+    }
+
+    public void ResetInput()
+    {
+        _commandRequestId = null;
+        EditText.Text = string.Empty;
+        EditText.HasFocus = false;
+        _commandSuggestions.Hide();
+    }
+
+    public override void Update()
+    {
+        if (_suggestionPending &&
+            Time.RealTime >= _suggestionSendAt &&
+            IsCommandInput &&
+            CharacterData.ComponentCharacter?.Entity.FindComponent<ComponentGui>(true)!.ModalPanelWidget == this)
+        {
+            _suggestionPending = false;
+            NetworkSender.SendToServer(
+                WorldRuntimeContext.For(CharacterData.Project),
+                CommandPackage.CreateSuggestionRequest(EditText.Text, _suggestionRequestId!)
+            );
+        }
+
+        if (_messagingEnabled && _channelButton.IsClicked)
+        {
+            _messageChannel = (GameMessageChannel)(((int)_messageChannel + 1) % 2);
+            MultiplayerUiStyle.SetButtonText(
+                _channelButton,
+                _messageChannel switch
+                {
+                    GameMessageChannel.Team => MultiplayerUiStyle.Text("Team"),
+                    _ => MultiplayerUiStyle.Text("Global")
+                }
+            );
+        }
+
+        if (_commandButton.IsClicked)
+        {
+            if (IsCommandInput)
+            {
+                CancelCommandInput();
+            }
+            else
+            {
+                BeginCommandInput();
+            }
+        }
+
+        if (_sendMessageButton.IsClicked)
+        {
+            SubmitInput();
+        }
+
+        if (_historyOverlayWidget != null && _historyOverlayButton.IsClicked)
+        {
+            _historyOverlayWidget.DisplayEnabled = !_historyOverlayWidget.DisplayEnabled;
+            Configuration.ClientConfiguration.Preferences.ShowMessageHistoryOverlay =
+                _historyOverlayWidget.DisplayEnabled;
+            UpdateHistoryOverlayButton();
+        }
+
+        _hint.IsVisible = !EditText.HasDisplayText;
+    }
+
+    public override void Dispose()
+    {
+        _messageService.HistoryMessageAdded -= AddMessage;
+        base.Dispose();
+    }
+
+    private CanvasWidget CreateInputArea()
+    {
+        var inputArea = new CanvasWidget
+        {
+            Size = new Vector2(float.PositiveInfinity, 54f),
+            ClampToBounds = true
+        };
+        inputArea.Children.Add(MultiplayerUiStyle.CreateInsetArea());
+        inputArea.Children.Add(EditText);
+        inputArea.Children.Add(_hint);
+        return inputArea;
+    }
+
+    private void SubmitInput()
+    {
+        var input = EditText.Text.Trim();
+        if (input.Length == 0)
+        {
+            return;
+        }
+
+        if (input.StartsWith('/'))
+        {
+            EditText.Text = string.Empty;
+            ExecuteCommand(input);
+            return;
+        }
+
+        if (!_messagingEnabled)
+        {
+            BeginCommandInput();
+            return;
+        }
+
+        CommandGateway.Submit(
+            CharacterData,
+            new SendChatMessageCommand(_messageChannel, input)
+        );
+        EditText.Text = string.Empty;
+    }
+
+    private void SubmitOrClose()
+    {
+        Input.Clear();
+        if (EditText.Text.Trim() == "/")
+        {
+            CancelCommandInput();
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(EditText.Text))
+        {
+            SubmitInput();
+            return;
+        }
+
+        EditText.Text = string.Empty;
+        EditText.HasFocus = false;
+        _commandSuggestions.Hide();
+        if (CharacterData.ComponentCharacter?.Entity.FindComponent<ComponentGui>(true)!.ModalPanelWidget == this)
+        {
+            CharacterData.ComponentCharacter.Entity.FindComponent<ComponentGui>(true)!.ModalPanelWidget = null;
+        }
+    }
+
+    private void AddMessage(GameMessage message)
+    {
+        _transcript.AddMessage(message);
+    }
+
+    private void ExecuteCommand(string input)
+    {
+        _commandRequestId = Guid.NewGuid().ToString("N");
+        CommandGateway.Submit(CharacterData, input, _commandRequestId);
+    }
+
+    internal void ReceiveCommandResult(CommandResult result, string correlationId)
+    {
+        if (correlationId != _commandRequestId ||
+            CharacterData.ComponentCharacter?.Entity.FindComponent<ComponentGui>(true)!.ModalPanelWidget != this)
+        {
+            return;
+        }
+
+        if (result.State == CommandResultState.Pending)
+        {
+            return;
+        }
+
+        _commandRequestId = null;
+        if (!string.IsNullOrEmpty(EditText.Text))
+        {
+            return;
+        }
+
+        if (result.Success && result.PanelBehavior == CommandPanelBehavior.CloseOnSuccess)
+        {
+            ResetInput();
+            CharacterData.ComponentCharacter.Entity.FindComponent<ComponentGui>(true)!.ModalPanelWidget = null;
+        }
+        else
+        {
+            _commandSuggestions.Hide();
+            SetCommandTextFocus(false);
+        }
+    }
+
+    private void RefreshCommandSuggestions()
+    {
+        if (!string.IsNullOrEmpty(EditText.Text))
+        {
+            _commandRequestId = null;
+        }
+
+        _remoteSuggestions = null;
+        _suggestionRequestId = null;
+        _suggestionPending = false;
+        var isCommandInput = EditText.Text.StartsWith('/');
+        _commandButton.IsChecked = isCommandInput;
+        if (!isCommandInput || CharacterData.Project.FindSubsystem<SubsystemClientModServices>() is not { } runtime)
+        {
+            _commandSuggestions.Hide();
+            return;
+        }
+
+        if (!WorldRuntimeContext.For(CharacterData.Project).IsAuthority)
+        {
+            _suggestionRequestId = Guid.NewGuid().ToString("N");
+            _suggestionPending = true;
+            _suggestionSendAt = Time.RealTime + 0.15;
+        }
+
+        DisplayCommandSuggestions();
+    }
+
+    internal void ReceiveSuggestions(string input, string correlationId, IReadOnlyList<CommandSuggestion> suggestions)
+    {
+        if (input != EditText.Text ||
+            correlationId != _suggestionRequestId ||
+            CharacterData.ComponentCharacter?.Entity.FindComponent<ComponentGui>(true)!.ModalPanelWidget != this)
+        {
+            return;
+        }
+
+        _remoteSuggestions = suggestions;
+        DisplayCommandSuggestions();
+    }
+
+    private void DisplayCommandSuggestions()
+    {
+        if (CharacterData.Project.FindSubsystem<SubsystemClientModServices>() is not { } runtime)
+        {
+            return;
+        }
+
+        var principal = CommandPrincipal.ForInput(CharacterData);
+        var textAdapter = new TextCommandAdapter(runtime.Commands, CharacterData.Project);
+        _commandSuggestions.SetSuggestions(
+            (_remoteSuggestions ?? textAdapter.Suggest(EditText.Text, principal))
+            .Concat(
+                textAdapter.Suggest(
+                    EditText.Text,
+                    CommandPrincipal.LocalOperator,
+                    domain: CommandDomain.Application
+                )
+            )
+            .GroupBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
+        );
+    }
+
+    private void ApplyCommandSuggestion(CommandSuggestion suggestion)
+    {
+        if (suggestion.Value.StartsWith('<'))
+        {
+            SetCommandTextFocus(true);
+            return;
+        }
+
+        var value = suggestion.IsArgument
+            ? CommandLineTokenizer.FormatToken(suggestion.Value)
+            : suggestion.Value;
+        EditText.Text = CommandLineTokenizer.ReplaceCurrentToken(EditText.Text, value) + " ";
+        EditText.CaretPosition = EditText.Text.Length;
+
+        if (CharacterData.Project.FindSubsystem<SubsystemClientModServices>() is { } runtime)
+        {
+            var principal = CommandPrincipal.ForInput(CharacterData);
+            var adapter = new TextCommandAdapter(runtime.Commands, CharacterData.Project);
+            if ((adapter.CanExecute(EditText.Text, principal) ||
+                 adapter.CanExecute(
+                     EditText.Text,
+                     CommandPrincipal.LocalOperator,
+                     domain: CommandDomain.Application
+                 )) &&
+                !_commandSuggestions.HasSuggestions)
+            {
+                var input = EditText.Text;
+                EditText.Text = string.Empty;
+                EditText.HasFocus = false;
+                ExecuteCommand(input);
+                return;
+            }
+        }
+
+        SetCommandTextFocus(false);
+    }
+
+    private void SetCommandTextFocus(bool requiresTextInput)
+    {
+        EditText.HasFocus = requiresTextInput || ClientPlatform.Kind is Platform.Desktop;
+    }
+
+    private void UpdateHistoryOverlayButton()
+    {
+        if (_historyOverlayWidget == null)
+        {
+            return;
+        }
+
+        MultiplayerUiStyle.SetButtonText(
+            _historyOverlayButton,
+            _historyOverlayWidget.DisplayEnabled
+                ? MultiplayerUiStyle.Text("OverlayOn")
+                : MultiplayerUiStyle.Text("OverlayOff")
+        );
+        _historyOverlayButton.IsChecked = _historyOverlayWidget.DisplayEnabled;
+    }
+
+    private void DisplayInputError(string message)
+    {
+        _messageService.DisplayLocal(GameMessage.System(message, GameMessageTone.Error));
+    }
+}

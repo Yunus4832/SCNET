@@ -20,6 +20,9 @@ pack_serversource_protocol=false
 pack_contenttool=false
 pack_authentication_protocol=false
 pack_game_protocol=false
+pack_survivalcraft_core=false
+pack_survivalcraft_hosting=false
+pack_survivalcraft_client=false
 pack_survivalcraft=false
 pack_survivalcraft_modtemplates=false
 additional_arguments=()
@@ -41,8 +44,11 @@ select_project() {
         ContentTool) pack_contenttool=true ;;
         Authentication.Protocol) pack_authentication_protocol=true ;;
         Game.Protocol) pack_game_protocol=true ;;
+        Survivalcraft.Core) pack_survivalcraft_core=true ;;
+        Survivalcraft.Hosting) pack_survivalcraft_hosting=true ;;
+        Survivalcraft.Client) pack_survivalcraft_client=true ;;
         Survivalcraft) pack_survivalcraft=true ;;
-        Survivalcraft.ModTemplates) pack_survivalcraft_modtemplates=true ;;
+        Survivalcraft.ModTemplate) pack_survivalcraft_modtemplates=true ;;
         *) echo "Unknown project: $1" >&2; exit 2 ;;
     esac
 }
@@ -139,6 +145,21 @@ if ! $selected || $pack_game_protocol; then
     dotnet pack "Game.Protocol/Game.Protocol.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
+if ! $selected || $pack_survivalcraft_core; then
+    echo "[SCNET Pack] Packing SCNET.Survivalcraft.Core"
+    dotnet pack "Survivalcraft.Core/Survivalcraft.Core.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+fi
+
+if ! $selected || $pack_survivalcraft_hosting; then
+    echo "[SCNET Pack] Packing SCNET.Survivalcraft.Hosting"
+    dotnet pack "Survivalcraft.Hosting/Survivalcraft.Hosting.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+fi
+
+if ! $selected || $pack_survivalcraft_client; then
+    echo "[SCNET Pack] Packing SCNET.Survivalcraft.Client"
+    dotnet pack "Survivalcraft.Client/Survivalcraft.Client.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+fi
+
 if ! $selected || $pack_survivalcraft; then
     echo "[SCNET Pack] Packing SCNET.Survivalcraft"
     dotnet pack "Survivalcraft/Survivalcraft.csproj" --configuration "$configuration" "${additional_arguments[@]}"
@@ -146,7 +167,7 @@ fi
 
 if ! $selected || $pack_survivalcraft_modtemplates; then
     echo "[SCNET Pack] Packing SCNET.ModTemplates"
-    dotnet pack "Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+    dotnet pack "Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 echo "[SCNET Pack] Requested NuGet packages created successfully."

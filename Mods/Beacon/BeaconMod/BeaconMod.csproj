@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(BeaconVersion)</Version>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>BeaconMod</AssemblyName>
+        <RootNamespace>BeaconMod</RootNamespace>
+        <SurvivalcraftModId>scnet.beacon</SurvivalcraftModId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="SCNET.Survivalcraft.Core" Version="$(GameVersion)" ExcludeAssets="runtime"/>
+        <PackageReference Include="SCNET.Survivalcraft.Hosting" Version="$(GameVersion)" ExcludeAssets="runtime"/>
+        <EmbeddedResource Include="Resources\BeaconDatabase.xml"/>
+        <EmbeddedResource Include="Resources\BlocksData.txt"/>
+        <EmbeddedResource Include="Resources\Lang\*.json" WithCulture="false"/>
+    </ItemGroup>
+</Project>

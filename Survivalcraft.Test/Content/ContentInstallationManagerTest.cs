@@ -1,15 +1,22 @@
+using System.IO.Compression;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 
 using Content.Packaging;
 
-using Engine.FileStorage;
+using Engine.Core.FileStorage;
 using Engine.Media.Images;
 
-using Game;
+using Game.Characters;
 using Game.Content;
+using Game.FileStorage;
 using Game.Managers;
+using Game.Subsystems;
+using Game.World;
 
+using Survivalcraft.Test.Fixtures;
 using Survivalcraft.Test.Modding;
 
 using Color = Engine.Core.Mathematics.Color;
@@ -54,6 +61,211 @@ public sealed class ContentInstallationManagerTest : IDisposable
     }
 
     [Theory]
+    [InlineData("replace", false)]
+    [InlineData("replace", true)]
+    [InlineData("delete", false)]
+    [InlineData("delete", true)]
+    [InlineData("restore", false)]
+    [InlineData("restore", true)]
+    public void WorldFilesRemainProtectedWhileTheAuthorityOwnsThem(string operation, bool closed)
+    {
+        using var package = CreateWorldPackage("protected");
+        var installed = ContentInstallationManager.Install(package);
+        var directory = Storage.CombinePaths(GamePaths.Worlds, installed.AssetKey!);
+        _installedWorlds.Add(directory);
+        WithSplitWorlds((authority, _) =>
+            {
+                authority.FindSubsystem<SubsystemGameInfo>(true)!.DirectoryName = directory;
+                GameManager.WorldActivity.Track(WorldRuntimeContext.For(authority), directory);
+                if (closed) { WorldRuntimeContext.For(authority).Close(); }
+
+                using var replacement = CreateWorldPackage("replacement");
+                if (operation == "restore")
+                {
+                    using var output = Storage.OpenFile(
+                        Storage.CombinePaths(directory, "Guard.snapshot"),
+                        OpenFileMode.Create
+                    );
+                    using var archive = new ZipArchive(output, ZipArchiveMode.Create);
+                }
+
+                Action modify = operation switch
+                {
+                    "replace" => () => ContentInstallationManager.Install(
+                        replacement,
+                        new ContentInstallOptions(installed.AssetKey)
+                    ),
+                    "delete" => () => Game.Application.ClientApplication.Worlds.DeleteWorld(directory),
+                    "restore" => () =>
+                        Game.Application.ClientApplication.Worlds.RestoreWorldFromSnapshot(directory, "Guard"),
+                    _ => throw new ArgumentOutOfRangeException(nameof(operation))
+                };
+                Assert.Throws<InvalidOperationException>(modify);
+                using var region = Storage.OpenFile(
+                    Storage.CombinePaths(directory, "Regions/0,0.dat"),
+                    OpenFileMode.Read
+                );
+                using var reader = new StreamReader(region);
+                Assert.Equal("protected", reader.ReadToEnd());
+            }
+        );
+    }
+
+    [Theory]
+    [InlineData("dot", false)]
+    [InlineData("dot", true)]
+    [InlineData("ancestor", false)]
+    [InlineData("ancestor", true)]
+    [InlineData("descendant", false)]
+    [InlineData("descendant", true)]
+    public void OwnedWorldCannotBeRemovedThroughAnAliasOrContainingDirectory(string pathKind, bool restore)
+    {
+        using var package = CreateWorldPackage("protected");
+        var installed = ContentInstallationManager.Install(package);
+        var directory = Storage.CombinePaths(GamePaths.Worlds, installed.AssetKey!);
+        _installedWorlds.Add(directory);
+        WithSplitWorlds((authority, _) =>
+            {
+                var owned = pathKind == "ancestor" ? Storage.CombinePaths(directory, "Nested") : directory;
+                Storage.CreateDirectory(owned);
+                authority.FindSubsystem<SubsystemGameInfo>(true)!.DirectoryName = owned;
+                GameManager.WorldActivity.Track(WorldRuntimeContext.For(authority), owned);
+                var target = pathKind switch
+                {
+                    "dot" => directory + "/.",
+                    "descendant" => Storage.CombinePaths(directory, "Regions"),
+                    _ => directory
+                };
+                if (restore)
+                {
+                    using var output = Storage.OpenFile(
+                        Storage.CombinePaths(target, "Guard.snapshot"),
+                        OpenFileMode.Create
+                    );
+                    using var archive = new ZipArchive(output, ZipArchiveMode.Create);
+                }
+
+                Assert.Throws<InvalidOperationException>(() =>
+                    {
+                        if (restore)
+                        {
+                            Game.Application.ClientApplication.Worlds.RestoreWorldFromSnapshot(target, "Guard");
+                        }
+                        else { Game.Application.ClientApplication.Worlds.DeleteWorld(target); }
+                    }
+                );
+                Assert.True(Storage.FileExists(Storage.CombinePaths(directory, "Regions/0,0.dat")));
+            }
+        );
+    }
+
+    [Fact]
+    public void AnInactiveSiblingCanBeReplacedWhileAnotherWorldIsOwned()
+    {
+        using var firstPackage = CreateWorldPackage("active");
+        using var secondPackage = CreateWorldPackage("inactive");
+        var first = ContentInstallationManager.Install(firstPackage);
+        var second = ContentInstallationManager.Install(secondPackage);
+        var active = Storage.CombinePaths(GamePaths.Worlds, first.AssetKey!);
+        var inactive = Storage.CombinePaths(GamePaths.Worlds, second.AssetKey!);
+        _installedWorlds.Add(active);
+        _installedWorlds.Add(inactive);
+        WithSplitWorlds((authority, _) =>
+            {
+                authority.FindSubsystem<SubsystemGameInfo>(true)!.DirectoryName = active;
+                GameManager.WorldActivity.Track(WorldRuntimeContext.For(authority), active);
+                using var replacement = CreateWorldPackage("replaced");
+                ContentInstallationManager.Install(replacement, new ContentInstallOptions(second.AssetKey));
+                using var input = Storage.OpenFile(
+                    Storage.CombinePaths(inactive, "Regions/0,0.dat"),
+                    OpenFileMode.Read
+                );
+                using var reader = new StreamReader(input);
+                Assert.Equal("replaced", reader.ReadToEnd());
+                Assert.True(Storage.FileExists(Storage.CombinePaths(active, "Regions/0,0.dat")));
+            }
+        );
+    }
+
+    [Theory]
+    [InlineData(ContentType.BlocksTexture)]
+    [InlineData(ContentType.CharacterSkin)]
+    public void AssetReferenceReplacementUpdatesBothWorldsBeforeTheirNextSave(ContentType type)
+    {
+        Storage.CreateDirectory(GamePaths.Worlds);
+        WithSplitWorlds((authority, client) =>
+            {
+                GameManager.WorldActivity.Track(WorldRuntimeContext.For(authority), null);
+                foreach (var project in new[] { authority, client })
+                {
+                    project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.BlocksTextureName = "old-key";
+                    var characters = new SubsystemCharacters();
+                    project.AddSubsystem(characters);
+                    var character = (CharacterData)RuntimeHelpers.GetUninitializedObject(typeof(CharacterData));
+                    character.CharacterSkinName = "old-key";
+                    ((List<CharacterData>)typeof(SubsystemCharacters).GetField(
+                            "_characters",
+                            BindingFlags.Instance | BindingFlags.NonPublic
+                        )!
+                        .GetValue(characters)!).Add(character);
+                }
+
+                Game.Application.ClientApplication.Worlds.ReplaceAssetReferences(type, "old-key", "new-key");
+
+                foreach (var project in new[] { authority, client })
+                {
+                    if (type == ContentType.BlocksTexture)
+                    {
+                        Assert.Equal(
+                            "new-key",
+                            project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.BlocksTextureName
+                        );
+                    }
+                    else
+                    {
+                        Assert.Equal(
+                            "new-key",
+                            Assert.Single(project.FindSubsystem<SubsystemCharacters>(true)!.Characters)
+                                .CharacterSkinName
+                        );
+                    }
+                }
+            }
+        );
+    }
+
+    private static void WithSplitWorlds(Action<RuntimeTestProject, RuntimeTestProject> action)
+    {
+        using var session = new GameRuntime(false);
+        using var authority = new RuntimeTestProject(RuntimeSide.Authority);
+        using var client = new RuntimeTestProject(RuntimeSide.Client);
+        authority.AddSubsystem(new SubsystemGameInfo { WorldSettings = new WorldSettings() });
+        client.AddSubsystem(new SubsystemGameInfo { WorldSettings = new WorldSettings() });
+        session.Attach(WorldRuntimeContext.For(authority));
+        session.Attach(WorldRuntimeContext.For(client));
+
+        GameManager.WorldActivity.Track(WorldRuntimeContext.For(client), null);
+        try
+        {
+            action(authority, client);
+        }
+        finally
+        {
+            foreach (var project in new[] { authority, client })
+            {
+                if (project.FindSubsystem<SubsystemCharacters>() is { } characters)
+                {
+                    ((List<CharacterData>)typeof(SubsystemCharacters).GetField(
+                            "_characters",
+                            BindingFlags.Instance | BindingFlags.NonPublic
+                        )!
+                        .GetValue(characters)!).Clear();
+                }
+            }
+        }
+    }
+
+    [Theory]
     [InlineData(ContentPackageType.BlocksTexture)]
     [InlineData(ContentPackageType.CharacterSkin)]
     public void ImageInstallAcceptsNonSeekablePayloadAndCreatesIndependentAssets(ContentPackageType type)
@@ -86,7 +298,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
         }
         else
         {
-            Assert.True(CharacterSkinsManager.GetFileName(firstName, out var skinPath));
+            Assert.True(CharacterSkinsManager.CreateStore().TryGetFileName(firstName, out var skinPath));
             Assert.EndsWith(".png", skinPath, StringComparison.Ordinal);
         }
 
@@ -168,7 +380,11 @@ public sealed class ContentInstallationManagerTest : IDisposable
             writer.Write("<Project><Value Name=\"BlockTextureName\" Value=\"old-key\" /></Project>");
         }
 
-        var count = WorldsManager.ReplaceAssetReferences(ContentType.BlocksTexture, "old-key", "new-key");
+        var count = Game.Application.ClientApplication.Worlds.ReplaceAssetReferences(
+            ContentType.BlocksTexture,
+            "old-key",
+            "new-key"
+        );
 
         Assert.Equal(1, count);
         using var input = Storage.OpenFile(project, OpenFileMode.Read);
@@ -185,14 +401,15 @@ public sealed class ContentInstallationManagerTest : IDisposable
         Array.Fill(image.Pixels, new Color(200, 100, 50, 128));
         var encoded = ImageCodec.Encode(image, format);
         var name = Guid.NewGuid().ToString("N");
-        CharacterSkinsManager.SaveSkinToFile(name, encoded);
+        CharacterSkinsManager.CreateStore().Save(name, encoded);
         _installedAssets.Add((ContentType.CharacterSkin, name));
-        Assert.True(CharacterSkinsManager.GetFileName(name, out var path));
+        Assert.True(CharacterSkinsManager.CreateStore().TryGetFileName(name, out var path));
         Assert.EndsWith(format == ImageFormat.WebP ? ".webp" : ".png", path, StringComparison.Ordinal);
-        var reply = Assert.IsType<Game.Protocol.Entities.SkinReplyPackage>(
-            Game.Network.Snapshots.ClothingPackageBuilder.Capture(
+        var reply = Assert.IsType<SkinReplyPackage>(
+            ClothingPackageBuilder.Capture(
+                CharacterSkinsManager.CreateStore(),
                 name,
-                Game.Protocol.Entities.ComponentClothingPackage.DataType.ReplySkin
+                ComponentClothingPackage.DataType.ReplySkin
             )
         );
         Assert.Equal(encoded, reply.SkinData);
@@ -276,7 +493,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
         }
         else
         {
-            Assert.True(CharacterSkinsManager.GetFileName(installed.AssetKey!, out path));
+            Assert.True(CharacterSkinsManager.CreateStore().TryGetFileName(installed.AssetKey!, out path));
         }
 
         Assert.EndsWith(format == ImageFormat.WebP ? ".webp" : ".png", path, StringComparison.Ordinal);
@@ -461,7 +678,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
         {
             if (Storage.DirectoryExists(installedWorld))
             {
-                WorldsManager.DeleteWorld(installedWorld);
+                Game.Application.ClientApplication.Worlds.DeleteWorld(installedWorld);
             }
         }
 

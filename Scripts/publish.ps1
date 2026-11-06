@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [ValidateSet("Survivalcraft.Linux", "Survivalcraft.Windows", "Survivalcraft.Android", "Survivalcraft.Android.Arm32", "ContentServer", "RendezvousServer", "Authentication.Server", "NetworkProbe")]
+    [ValidateSet("Survivalcraft.Linux", "Survivalcraft.Server", "Survivalcraft.Windows", "Survivalcraft.Android", "Survivalcraft.Android.Arm32", "ContentServer", "RendezvousServer", "Authentication.Server", "NetworkProbe")]
     [string[]]$Project = @(),
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$AdditionalArguments
@@ -12,10 +12,18 @@ $ErrorActionPreference = "Stop"
 Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
     if ($Project.Count -eq 0 -or $Project -contains "Survivalcraft.Linux") {
-        Write-Host "[SCNET Publish] Publishing Survivalcraft.Linux (desktop ZIP and Linux server image bundle on Linux)"
+        Write-Host "[SCNET Publish] Publishing Survivalcraft.Linux (desktop ZIP)"
         & dotnet publish "Survivalcraft.Linux/Survivalcraft.Linux.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) {
             throw "Publishing Survivalcraft.Linux failed with exit code $LASTEXITCODE."
+        }
+    }
+
+    if ($Project.Count -eq 0 -or $Project -contains "Survivalcraft.Server") {
+        Write-Host "[SCNET Publish] Publishing Survivalcraft.Server"
+        & dotnet publish "Survivalcraft.Server/Survivalcraft.Server.csproj" --configuration $Configuration @AdditionalArguments
+        if ($LASTEXITCODE -ne 0) {
+            throw "Publishing Survivalcraft.Server failed with exit code $LASTEXITCODE."
         }
     }
 

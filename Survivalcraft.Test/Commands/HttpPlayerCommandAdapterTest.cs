@@ -2,14 +2,15 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 
-using Engine.Core.Runtime;
 using Engine.Core.Security;
 
 using EntitySystem.Core;
 
 using Game.Characters;
 using Game.Commands;
-using Game.Managers;
+using Game.Commands.BuiltIn;
+using Game.Commands.Http;
+using Game.Commands.Text;
 using Game.Network;
 using Game.Protocol.Identity;
 using Game.Subsystems;
@@ -21,9 +22,16 @@ using Survivalcraft.Test.Subsystems;
 
 namespace Survivalcraft.Test.Commands;
 
-[Collection(WorldRoleCollection.Name)]
+[Collection(NodeRoleCollection.Name)]
 public class HttpPlayerCommandAdapterTest
 {
+    private readonly HttpPlayerCommandAdapter _playerAdapter = new(
+        () => null,
+        () => null,
+        () => new Game.Localization.LocalizedTextResolver(new Game.Localization.LanguageCatalog()),
+        (_, _, _) => throw new InvalidOperationException("No player command should execute.")
+    );
+
     private static readonly ModId _owner = new("test.playerhttp");
 
     private static readonly ResourceId _permission = new(_owner, "world.change");
@@ -33,10 +41,10 @@ public class HttpPlayerCommandAdapterTest
     [Fact]
     public void CatalogIsAnOrdinaryCommandAndContainsOnlyAuthorizedCommandIdentities()
     {
-        var previous = GameManager.Role;
+        var previous = CommonLib.Net.Role;
         try
         {
-            CommonLib.Net.Role = WorldRole.Server;
+            CommonLib.Net.Role = NodeRole.Authority;
             using var project = new TestProject();
             var player = Player(project);
             var registry = Registry();
@@ -46,7 +54,7 @@ public class HttpPlayerCommandAdapterTest
                     player.Project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(player.OwnerAddress),
                     player
                 ),
-                null,
+                project,
                 "catalog"
             );
             Assert.True(HttpPlayerCommandAdapter.TryCreateCommand(registry, null, out var command, out _));
@@ -68,7 +76,7 @@ public class HttpPlayerCommandAdapterTest
                     player.Project.FindSubsystem<SubsystemPlayers>(true)!.Store.GetOrCreate(player.OwnerAddress),
                     player
                 ),
-                null,
+                project,
                 "catalog"
             );
             result = dispatcher.Execute(decoded!, context);
@@ -88,30 +96,25 @@ public class HttpPlayerCommandAdapterTest
     public void EveryBuiltInWorldAndServerCommandHasABinaryCodec()
     {
         var registry = new CommandRegistry();
-        BuiltInCommands.Register(registry, new ModId("game"));
+        Fixtures.BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
         Assert.All(
             registry.Definitions.Where(entry => entry.Definition.Domain is not CommandDomain.Application),
             entry => Assert.True(entry.Definition.SupportsRemoteInvocation, entry.Id.ToString())
         );
     }
 
-    [Theory]
-    [InlineData(RunModeType.HeadlessServer)]
-    [InlineData(RunModeType.Gui)]
-    public async Task NoActivePlayerCannotBecomeLocalOperator(RunModeType runMode)
+    [Fact]
+    public async Task NoActivePlayerCannotBecomeLocalOperator()
     {
-        var previous = RunMode.Value;
         try
         {
-            RunMode.Value = runMode;
-            var task = HttpPlayerCommandAdapter.SubmitAsync(null, CancellationToken.None);
-            HttpPlayerCommandAdapter.Update();
+            var task = _playerAdapter.SubmitAsync(null, CancellationToken.None);
+            _playerAdapter.Update();
             Assert.Equal("command.no_player", (await task).Code);
         }
         finally
         {
-            RunMode.Value = previous;
-            HttpPlayerCommandAdapter.FailPending();
+            _playerAdapter.FailPending();
         }
     }
 
@@ -119,17 +122,17 @@ public class HttpPlayerCommandAdapterTest
     public async Task CancelledQueuedRequestDoesNotExecute()
     {
         using var cancellation = new CancellationTokenSource();
-        var task = HttpPlayerCommandAdapter.SubmitAsync(null, cancellation.Token);
+        var task = _playerAdapter.SubmitAsync(null, cancellation.Token);
         await cancellation.CancelAsync();
-        HttpPlayerCommandAdapter.Update();
+        _playerAdapter.Update();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
     }
 
     [Fact]
     public async Task HostShutdownCompletesPendingPlayerRequests()
     {
-        var task = HttpPlayerCommandAdapter.SubmitAsync(null, CancellationToken.None);
-        HttpPlayerCommandAdapter.FailPending();
+        var task = _playerAdapter.SubmitAsync(null, CancellationToken.None);
+        _playerAdapter.FailPending();
         Assert.Equal("command.unavailable", (await task).Code);
     }
 
@@ -137,7 +140,7 @@ public class HttpPlayerCommandAdapterTest
     public void HttpAndTextAdaptersProduceTheSameBinaryCommandWithoutExecutingIt()
     {
         var registry = new CommandRegistry();
-        BuiltInCommands.Register(registry, new ModId("game"));
+        Fixtures.BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
         var http = new HttpCommandAdapter(registry);
         var context = new CommandContext(CommandInvocationChannel.Text, CommandPrincipal.LocalOperator, null, "same");
         Assert.True(
@@ -150,7 +153,14 @@ public class HttpPlayerCommandAdapterTest
                 out _
             )
         );
-        Assert.True(new TextCommandAdapter(registry).TryCreate("/time set night", context, out var textCommand, out _));
+        Assert.True(
+            new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject).TryCreate(
+                "/time set night",
+                context,
+                out var textCommand,
+                out _
+            )
+        );
         Assert.Equal(new SetWorldTimeCommand("night"), httpCommand);
         Assert.Equal(textCommand, httpCommand);
         Assert.True(CommandGateway.TryCreateRequest(registry, httpCommand!, "same", out var httpPackage, out _));
@@ -172,7 +182,7 @@ public class HttpPlayerCommandAdapterTest
     public void RemoteRequestsRejectOversizedEncodedArgumentsBeforeQueueing(string unit, int count, bool accepted)
     {
         var registry = new CommandRegistry();
-        BuiltInCommands.Register(registry, new ModId("game"));
+        Fixtures.BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
         var request = new HttpCommandRequest(
             ResourceId.Parse("game:world/time/set"),
             new JsonObject { ["preset"] = string.Concat(Enumerable.Repeat(unit, count)) }
@@ -198,10 +208,10 @@ public class HttpPlayerCommandAdapterTest
     [Fact]
     public void BindingBeforeTransportDoesNotGrantServerPermission()
     {
-        var previous = GameManager.Role;
+        var previous = CommonLib.Net.Role;
         try
         {
-            CommonLib.Net.Role = WorldRole.Server;
+            CommonLib.Net.Role = NodeRole.Authority;
             using var project = new TestProject();
             var player = Player(project);
             var registry = Registry();
@@ -227,7 +237,7 @@ public class HttpPlayerCommandAdapterTest
                 "request"
             );
             Assert.True(
-                new TextCommandAdapter(registry).TryCreate(
+                new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject).TryCreate(
                     "/change",
                     context,
                     out var textCommand,
@@ -275,7 +285,7 @@ public class HttpPlayerCommandAdapterTest
     private static CommandRegistry Registry()
     {
         var registry = new CommandRegistry();
-        BuiltInCommands.Register(registry, new ModId("game"));
+        Fixtures.BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
         registry.Permissions.Register(_owner, _permission, new CommandPermissionDefinition(CommandDomain.World));
         registry.Register(
             _owner,
@@ -318,14 +328,30 @@ public class HttpPlayerCommandAdapterTest
         typeof(CharacterData).GetField("<Project>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(player, project);
         player.SubsystemCharacters = new SubsystemCharacters();
-        player.OwnerAddress = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
+        Fixtures.CharacterTestEnvironment.SetSyntheticOwner(
+            player,
+            new PlayerAddress(IdentityAddress.Encode(new byte[32]))
+        );
 
         return player;
     }
 
     private sealed class TestProject : Project
     {
-        public TestProject() => subsystems.Add(new SubsystemPlayers());
+        public TestProject()
+        {
+            new NetNode(
+                NetNodeOptions.Default,
+                true,
+                Game.Network.Handling.PackageHandlerCatalog.Empty,
+                NodeRole.Authority
+            ).Runtime.BindProject(this);
+            Fixtures.RuleHookTestEnvironment.BindEmpty(this);
+            subsystems.Add(new SubsystemPlayers());
+            var info = new SubsystemGameInfo { WorldSettings = new WorldSettings { GameMode = GameMode.Survival } };
+            subsystems.Add(info);
+            WorldSubsystemTestSupport.Attach(this, info);
+        }
     }
 
     [MessagePackObject(AllowPrivate = true)]

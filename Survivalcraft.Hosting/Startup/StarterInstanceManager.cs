@@ -1,0 +1,417 @@
+using System.Xml.Linq;
+
+namespace Game.Managers;
+
+public sealed record StarterInstanceContext(
+    string Id,
+    string InstancePath,
+    string[] GameArguments
+);
+
+public static class StarterInstanceManager
+{
+    public const string DefaultInstanceId = "default";
+
+    public const string InstanceArgument = "--instance";
+
+    private const string _settingsPath = "starter:Starter.xml";
+
+    private const string _instancesPath = "starter:Instances";
+
+    private const string _runtimeDirectoryName = ".runtime";
+
+    private static string? _currentRuntimeMarkerPath;
+
+    private static bool _processExitRegistered;
+
+    public static StarterInstanceContext Current { get; private set; } = new(
+        DefaultInstanceId,
+        string.Empty,
+        []
+    );
+
+    public static StarterInstanceContext Initialize(string[] args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        var parsedArguments = ParseArguments(args);
+        var settings = Load();
+        var selectedFromArgument = parsedArguments.InstanceId is not null;
+        var instanceId = parsedArguments.InstanceId ??
+                         NormalizeOptionalInstanceId(settings.NextInstance) ??
+                         NormalizeOptionalInstanceId(settings.CurrentInstance) ?? DefaultInstanceId;
+
+        ValidateInstanceId(instanceId);
+        var instancePath = GetInstancePath(instanceId);
+        if (!Storage.DirectoryExists(instancePath))
+        {
+            Storage.CreateDirectory(instancePath);
+        }
+
+        var consumesPendingSwitch = !string.IsNullOrWhiteSpace(settings.NextInstance) &&
+                                    (!selectedFromArgument ||
+                                     string.Equals(
+                                         parsedArguments.InstanceId,
+                                         settings.NextInstance,
+                                         StringComparison.Ordinal
+                                     ));
+        if (consumesPendingSwitch)
+        {
+            settings.CurrentInstance = instanceId;
+            settings.NextInstance = string.Empty;
+            Save(settings);
+        }
+        else if (!Storage.FileExists(_settingsPath))
+        {
+            Save(settings);
+        }
+
+        Current = new StarterInstanceContext(
+            instanceId,
+            instancePath,
+            parsedArguments.GameArguments
+        );
+        try
+        {
+            RegisterCurrentProcess();
+        }
+        catch (Exception ex)
+        {
+            _currentRuntimeMarkerPath = null;
+            Log.Warning($"Failed to register starter instance process: {ex.Message}");
+        }
+
+        return Current;
+    }
+
+    public static void RequestSwitch(string targetInstanceId)
+    {
+        ValidateInstanceId(targetInstanceId);
+        targetInstanceId = ResolveExistingInstanceId(targetInstanceId);
+
+        var settings = Load();
+        settings.NextInstance = targetInstanceId;
+        Save(settings);
+    }
+
+    public static void CreateInstance(string instanceId)
+    {
+        ValidateInstanceId(instanceId);
+        var instancePath = GetInstancePath(instanceId);
+        if (ListInstances().Contains(instanceId, StringComparer.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"Starter instance '{instanceId}' already exists.");
+        }
+
+        Storage.CreateDirectory(instancePath);
+    }
+
+    public static void DeleteInstance(string instanceId)
+    {
+        ValidateInstanceId(instanceId);
+        instanceId = ResolveExistingInstanceId(instanceId);
+        if (string.Equals(instanceId, Current.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("The current starter instance cannot be deleted.");
+        }
+
+        if (IsInstanceRunning(instanceId))
+        {
+            throw new InvalidOperationException("A running starter instance cannot be deleted.");
+        }
+
+        var instancePath = GetInstancePath(instanceId);
+        if (!Storage.DirectoryExists(instancePath))
+        {
+            throw new InvalidOperationException($"Starter instance '{instanceId}' does not exist.");
+        }
+
+        Storage.DeleteDirectoryRecursive(instancePath);
+    }
+
+    public static void CloneInstance(string sourceInstanceId, string targetInstanceId)
+    {
+        ValidateInstanceId(sourceInstanceId);
+        ValidateInstanceId(targetInstanceId);
+        sourceInstanceId = ResolveExistingInstanceId(sourceInstanceId);
+        var sourcePath = GetInstancePath(sourceInstanceId);
+        var targetPath = GetInstancePath(targetInstanceId);
+        if (ListInstances().Contains(targetInstanceId, StringComparer.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"Starter instance '{targetInstanceId}' already exists.");
+        }
+
+        if (!CanCloneInstance(sourceInstanceId))
+        {
+            throw new InvalidOperationException("An instance used by another process cannot be cloned.");
+        }
+
+        Storage.CreateDirectory(targetPath);
+        try
+        {
+            CopyInstanceDirectory(sourcePath, targetPath, true);
+        }
+        catch
+        {
+            Storage.DeleteDirectoryRecursive(targetPath);
+            throw;
+        }
+    }
+
+    public static bool IsInstanceRunning(string instanceId)
+    {
+        ValidateInstanceId(instanceId);
+        return HasLiveRuntimeMarker(instanceId, false);
+    }
+
+    public static bool IsInstanceRunningElsewhere(string instanceId)
+    {
+        ValidateInstanceId(instanceId);
+        return HasLiveRuntimeMarker(instanceId, true);
+    }
+
+    public static bool CanCloneInstance(string instanceId)
+    {
+        ValidateInstanceId(instanceId);
+        instanceId = ResolveExistingInstanceId(instanceId);
+        return string.Equals(instanceId, Current.Id, StringComparison.OrdinalIgnoreCase)
+            ? !IsInstanceRunningElsewhere(instanceId)
+            : !IsInstanceRunning(instanceId);
+    }
+
+    private static bool HasLiveRuntimeMarker(string instanceId, bool excludeCurrentProcess)
+    {
+        var runtimeDirectory = Storage.CombinePaths(GetInstancePath(instanceId), _runtimeDirectoryName);
+        if (!Storage.DirectoryExists(runtimeDirectory))
+        {
+            return false;
+        }
+
+        var isRunning = false;
+        foreach (var fileName in Storage.ListFileNames(runtimeDirectory).ToArray())
+        {
+            var markerPath = Storage.CombinePaths(runtimeDirectory, fileName);
+            if (IsRuntimeMarkerAlive(markerPath))
+            {
+                if (!excludeCurrentProcess ||
+                    !string.Equals(markerPath, _currentRuntimeMarkerPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    isRunning = true;
+                }
+            }
+            else
+            {
+                TryDeleteFile(markerPath);
+            }
+        }
+
+        return isRunning;
+    }
+
+    public static IReadOnlyList<string> ListInstances()
+    {
+        if (!Storage.DirectoryExists(_instancesPath))
+        {
+            return [];
+        }
+
+        return Storage.ListDirectoryNames(_instancesPath)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+            .ToArray()!;
+    }
+
+
+    public static void ValidateInstanceId(string instanceId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(instanceId);
+        if (instanceId is "." or ".." ||
+            instanceId.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_'))
+        {
+            throw new ArgumentException(
+                "Instance id can contain only ASCII letters, digits, '-' and '_'.",
+                nameof(instanceId)
+            );
+        }
+    }
+
+    private static ParsedArguments ParseArguments(string[] args)
+    {
+        string? instanceId = null;
+        var gameArguments = new List<string>();
+        for (var i = 0; i < args.Length; i++)
+        {
+            if (!string.Equals(args[i], InstanceArgument, StringComparison.OrdinalIgnoreCase))
+            {
+                gameArguments.Add(args[i]);
+                continue;
+            }
+
+            if (i + 1 >= args.Length || args[i + 1].StartsWith('-'))
+            {
+                throw new ArgumentException($"{InstanceArgument} requires an instance id.", nameof(args));
+            }
+
+            if (instanceId is not null)
+            {
+                throw new ArgumentException($"{InstanceArgument} can be specified only once.", nameof(args));
+            }
+
+            instanceId = args[++i].Trim();
+            ValidateInstanceId(instanceId);
+        }
+
+        return new ParsedArguments(instanceId, gameArguments.ToArray());
+    }
+
+    private static StarterSettings Load()
+    {
+        if (!Storage.FileExists(_settingsPath))
+        {
+            return new StarterSettings();
+        }
+
+        using var stream = Storage.OpenFile(_settingsPath, OpenFileMode.Read);
+        var root = XElement.Load(stream);
+        return new StarterSettings
+        {
+            CurrentInstance = root.Attribute(nameof(StarterSettings.CurrentInstance))?.Value ?? DefaultInstanceId,
+            NextInstance = root.Attribute(nameof(StarterSettings.NextInstance))?.Value ?? string.Empty
+        };
+    }
+
+    private static void Save(StarterSettings settings)
+    {
+        var root = new XElement(
+            "Starter",
+            new XAttribute(nameof(StarterSettings.CurrentInstance), settings.CurrentInstance),
+            new XAttribute(nameof(StarterSettings.NextInstance), settings.NextInstance)
+        );
+        using var stream = Storage.OpenFile(_settingsPath, OpenFileMode.Create);
+        root.Save(stream);
+    }
+
+    private static string GetInstancePath(string instanceId)
+    {
+        return Storage.CombinePaths(_instancesPath, instanceId);
+    }
+
+    private static string ResolveExistingInstanceId(string instanceId)
+    {
+        return ListInstances().FirstOrDefault(candidate =>
+                   string.Equals(candidate, instanceId, StringComparison.OrdinalIgnoreCase)
+               ) ??
+               throw new InvalidOperationException($"Starter instance '{instanceId}' does not exist.");
+    }
+
+    private static void CopyInstanceDirectory(string sourcePath, string targetPath, bool isRoot)
+    {
+        foreach (var fileName in Storage.ListFileNames(sourcePath))
+        {
+            Storage.CopyFile(
+                Storage.CombinePaths(sourcePath, fileName),
+                Storage.CombinePaths(targetPath, fileName)
+            );
+        }
+
+        foreach (var directoryName in Storage.ListDirectoryNames(sourcePath))
+        {
+            if (isRoot && string.Equals(directoryName, _runtimeDirectoryName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var sourceDirectory = Storage.CombinePaths(sourcePath, directoryName);
+            var targetDirectory = Storage.CombinePaths(targetPath, directoryName);
+            Storage.CreateDirectory(targetDirectory);
+            CopyInstanceDirectory(sourceDirectory, targetDirectory, false);
+        }
+    }
+
+    private static void RegisterCurrentProcess()
+    {
+        if (_currentRuntimeMarkerPath != null)
+        {
+            TryDeleteFile(_currentRuntimeMarkerPath);
+        }
+
+        var runtimeDirectory = Storage.CombinePaths(Current.InstancePath, _runtimeDirectoryName);
+        Storage.CreateDirectory(runtimeDirectory);
+        var process = Process.GetCurrentProcess();
+        _currentRuntimeMarkerPath = Storage.CombinePaths(runtimeDirectory, $"{process.Id}.xml");
+        var marker = new XElement(
+            "InstanceProcess",
+            new XAttribute("Pid", process.Id),
+            new XAttribute("StartTimeUtcTicks", process.StartTime.ToUniversalTime().Ticks)
+        );
+        using (var stream = Storage.OpenFile(_currentRuntimeMarkerPath, OpenFileMode.Create))
+        {
+            marker.Save(stream);
+        }
+
+        if (!_processExitRegistered)
+        {
+            AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+            {
+                if (_currentRuntimeMarkerPath != null)
+                {
+                    TryDeleteFile(_currentRuntimeMarkerPath);
+                }
+            };
+            _processExitRegistered = true;
+        }
+    }
+
+    private static bool IsRuntimeMarkerAlive(string markerPath)
+    {
+        try
+        {
+            using var stream = Storage.OpenFile(markerPath, OpenFileMode.Read);
+            var marker = XElement.Load(stream);
+            var pid = (int?)marker.Attribute("Pid");
+            var startTimeUtcTicks = (long?)marker.Attribute("StartTimeUtcTicks");
+            if (!pid.HasValue || !startTimeUtcTicks.HasValue)
+            {
+                return false;
+            }
+
+            using var process = Process.GetProcessById(pid.Value);
+            return !process.HasExited &&
+                   Math.Abs(process.StartTime.ToUniversalTime().Ticks - startTimeUtcTicks.Value) <
+                   TimeSpan.TicksPerSecond;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (Storage.FileExists(path))
+            {
+                Storage.DeleteFile(path);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to delete starter runtime marker '{path}': {ex.Message}");
+        }
+    }
+
+    private static string? NormalizeOptionalInstanceId(string? instanceId)
+    {
+        return string.IsNullOrWhiteSpace(instanceId) ? null : instanceId.Trim();
+    }
+
+    private sealed class StarterSettings
+    {
+        public string CurrentInstance { get; set; } = DefaultInstanceId;
+
+        public string NextInstance { get; set; } = string.Empty;
+    }
+
+    private sealed record ParsedArguments(string? InstanceId, string[] GameArguments);
+}

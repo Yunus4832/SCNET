@@ -6,7 +6,6 @@ using Game.Authentication;
 using Game.Managers;
 using Game.Network;
 using Game.Screens;
-using Game.World;
 
 using SCNET.Authentication.Protocol;
 using SCNET.Authentication.Protocol.Contracts;
@@ -72,13 +71,13 @@ public sealed class ClientAdmissionUiTest
         using var fixture = new Fixture();
         using var ui = fixture.CreateUi();
         typeof(ClientAdmissionUi).GetMethod("Cancel", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(ui, null);
-        Assert.Equal(string.Empty, fixture.Node.Error);
+        Assert.Equal(string.Empty, fixture.Node.StopReason.Message);
         var challenge = fixture.Node.PendingAdmissionChallenge!;
         typeof(NetNode).GetMethod("ApplyAdmissionResult", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(
             fixture.Node,
             [new AdmissionResultPackage(challenge.Nonce, AdmissionResultCode.Cancelled)]
         );
-        Assert.Equal(string.Empty, fixture.Node.Error);
+        Assert.Equal(string.Empty, fixture.Node.StopReason.Message);
     }
 
     [Fact]
@@ -195,7 +194,10 @@ public sealed class ClientAdmissionUiTest
         using var ui = fixture.CreateUi();
         Set(ui, "_authorization", Task.FromCanceled<AuthenticationLoginResult>(new CancellationToken(true)));
         ui.Update();
-        Assert.Equal(LanguageManager.GetContentWidgets(nameof(ClientAdmissionUi), "Unavailable"), fixture.Node.Error);
+        Assert.Equal(
+            Game.Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(ClientAdmissionUi), "Unavailable"),
+            fixture.Node.StopReason.Message
+        );
         Assert.Null(ui.TakeReconnectAuthorization());
     }
 
@@ -206,7 +208,7 @@ public sealed class ClientAdmissionUiTest
 
     private sealed class Fixture : IDisposable
     {
-        private readonly WorldRole _previousMode = GameManager.Role;
+        private readonly NodeRole _previousMode = CommonLib.Net.Role;
 
         private readonly EntitySystem.Core.Project _world = new();
 
@@ -216,7 +218,12 @@ public sealed class ClientAdmissionUiTest
 
         private readonly ECDsa _server = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
-        internal NetNode Node { get; } = new() { CurrentStage = NetNode.Stage.Bootstrapping };
+        internal NetNode Node { get; } = new NetNode(
+            NetNodeOptions.Default,
+            true,
+            Game.Network.Handling.PackageHandlerCatalog.Empty,
+            NodeRole.Inactive
+        ) { CurrentStage = NetNode.Stage.Bootstrapping };
 
         internal string Scope { get; } =
             AuthenticationJoinScope.ForRemote(new Engine.Network.AddressNetworkTarget("game.example", 28887));

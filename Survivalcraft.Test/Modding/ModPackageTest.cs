@@ -2,17 +2,68 @@ using System.IO.Compression;
 
 using Content.Packaging;
 
+using EntitySystem.Core;
+
+using Game.ClientContent;
 using Game.Managers;
 using Game.Modding;
 using Game.Modding.Blocks;
 using Game.Modding.Content;
 using Game.Modding.Data;
+using Game.World;
 
 namespace Survivalcraft.Test.Modding;
 
 [Collection(ConfigFileCollection.Name)]
 public class ModPackageTest
 {
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void OnePackagedDefinitionRunsAuthorityBusinessInEitherHostWithIndependentWorldState(bool hasPresentation)
+    {
+        using var stream = CreatePackage(
+            """
+            {
+              "id": "example.test",
+              "name": "Test Mod",
+              "version": "1.0.0",
+              "entrypoint": "Survivalcraft.Test.Modding.PackageEntrypointMod, Survivalcraft.Test"
+            }
+            """,
+            includeTestAssembly: true
+        );
+        var package = ModPackage.Read("definition.scpkg", stream);
+        var host = new ModHost();
+        host.LoadAndStart([package.CreateDescriptor()]);
+        Assert.True(
+            host.Extensions.GetRegistry<Dictionary<string, int>>("fixture_counts")
+                .TryGet(new ResourceId(new ModId("example.test"), "counts"), out var counts)
+        );
+        using (var authority = new Project())
+        using (var client = new Project())
+        {
+            new WorldRuntimeContext(RuntimeSide.Authority, false).BindProject(authority);
+            new WorldRuntimeContext(
+                RuntimeSide.Client,
+                (hasPresentation)
+            ).BindProject(client);
+            host.Gameplay.Invoke(new WorldUpdatingContext(authority, 1));
+            host.Gameplay.Invoke(new WorldUpdatingContext(client, 1));
+            host.Gameplay.Invoke(new WorldUpdatingContext(authority, 1));
+            Assert.Equal(2, authority.ExtensionData.Get("example.test", "fixture").GetValue<int>("updates"));
+            Assert.Empty(client.ExtensionData.Save());
+            Assert.Equal(1, counts!["configure"]);
+            Assert.Equal(1, counts["start"]);
+            Assert.Equal(2, counts["authority"]);
+            Assert.Equal(1, counts["last_client_state"]);
+            Assert.Equal(hasPresentation ? 1 : 0, counts["presentation"]);
+        }
+
+        Assert.Equal(2, counts!["disposed"]);
+        host.StopAll();
+    }
+
     [Fact]
     public void PackageLoadsEntrypointFromIsolatedAssembly()
     {
@@ -22,9 +73,7 @@ public class ModPackageTest
               "id": "example.test",
               "name": "Test Mod",
               "version": "1.0.0",
-              "entrypoints": {
-                "common": "Survivalcraft.Test.Modding.PackageEntrypointMod, Survivalcraft.Test"
-              }
+              "entrypoint": "Survivalcraft.Test.Modding.PackageEntrypointMod, Survivalcraft.Test"
             }
             """,
             includeTestAssembly: true
@@ -32,7 +81,7 @@ public class ModPackageTest
         var package = ModPackage.Read("test.scpkg", packageStream);
         var host = new ModHost();
 
-        host.LoadAndStart([package.CreateDescriptor(ModSide.Server)]);
+        host.LoadAndStart([package.CreateDescriptor()]);
 
         var markerId = new ResourceId(new ModId("example.test"), "loaded");
         Assert.True(host.Extensions.GetRegistry<string>("markers").TryGet(markerId, out var marker));
@@ -59,29 +108,6 @@ public class ModPackageTest
     }
 
     [Fact]
-    public void PackageRejectsWrongRuntimeSide()
-    {
-        using var packageStream = CreatePackage(
-            """
-            {
-              "id": "example.client",
-              "name": "Client Mod",
-              "version": "1.0.0",
-              "side": "client",
-              "entrypoints": {
-                "client": "Survivalcraft.TestMod.TestMod, Survivalcraft.TestMod"
-              }
-            }
-            """
-        );
-        var package = ModPackage.Read("client.scpkg", packageStream);
-
-        var exception = Assert.Throws<ModPackageException>(() => package.CreateDescriptor(ModSide.Server));
-
-        Assert.Contains("cannot load on Server", exception.Message);
-    }
-
-    [Fact]
     public void CatalogCreatesDependencyOrderedLoadPlan()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"scnet-mod-test-{Guid.NewGuid():N}");
@@ -92,7 +118,7 @@ public class ModPackageTest
             WritePackage(Path.Combine(directory, "core.scpkg"), Manifest("example.core"));
             File.WriteAllBytes(Path.Combine(directory, "legacy.scmod"), [1, 2, 3]);
 
-            var plan = ModPackageCatalog.CreateLoadPlan(directory, ModSide.Server);
+            var plan = ModPackageCatalog.CreateLoadPlan(directory);
 
             Assert.Equal(["example.core", "example.addon"], plan.Select(item => item.Manifest.Id));
             foreach (var descriptor in plan)
@@ -117,7 +143,7 @@ public class ModPackageTest
             new ModPackageSource("core.scpkg", () => new MemoryStream(core, writable: false))
         };
 
-        var plan = ModPackageCatalog.CreateLoadPlan(sources, ModSide.Server);
+        var plan = ModPackageCatalog.CreateLoadPlan(sources);
 
         Assert.Equal(["example.core", "example.addon"], plan.Select(item => item.Manifest.Id));
         foreach (var descriptor in plan)
@@ -145,7 +171,7 @@ public class ModPackageTest
             }
         );
         var package = ModPackage.Read("data.scpkg", packageStream);
-        var descriptor = package.CreateDescriptor(ModSide.Server);
+        var descriptor = package.CreateDescriptor();
         var host = new ModHost();
 
         host.LoadAndStart([descriptor]);
@@ -185,19 +211,20 @@ public class ModPackageTest
                     """{"Language":{"Name":"中文"},"Usual":{"ok":"确定"}}"""u8.ToArray()
                 )
             );
-        host.LoadAndStart([package.CreateDescriptor(ModSide.Server)]);
+        host.LoadAndStart([package.CreateDescriptor()]);
         var catalog = ContentCatalog.Compile(host.Extensions);
 
         ContentManager.Initialize();
-        catalog.Install();
+        using (var client = new ClientContentRuntime([]))
+        {
+            client.InstallResources(catalog.RegisteredResources);
+            Assert.Equal("namespaced content", ContentManager.Get<string>("example.assets/text/readme"));
+            Assert.Contains("zh-CN", catalog.LanguageTypes);
+            client.PublishLanguage(catalog.CreateLanguageCatalog("zh-CN"));
+            Assert.Equal("OK", Game.Localization.ClientLanguage.Catalog.Ok);
+            Assert.Equal("中文", Game.Localization.ClientLanguage.Catalog.GetLanguageDisplayName("zh-CN"));
+        }
 
-        Assert.Equal("namespaced content", ContentManager.Get<string>("example.assets/text/readme"));
-        Assert.Contains("zh-CN", catalog.LanguageTypes);
-        catalog.InitializeLanguage("zh-CN");
-        Assert.Equal("OK", LanguageManager.Ok);
-        Assert.Equal("中文", LanguageManager.GetLanguageDisplayName("zh-CN"));
-
-        catalog.Uninstall();
         Assert.False(ContentManager.ContainsKey("example.assets/text/readme.txt"));
         host.StopAll();
     }
@@ -211,9 +238,7 @@ public class ModPackageTest
                   "id": "example.assets",
                   "name": "Asset Mod",
                   "version": "1.0.0",
-                  "entrypoints": {
-                    "common": "Example.ModEntry, Example"
-                  }
+                  "entrypoint": "Example.ModEntry, Example"
                 }
                 """,
                 new Dictionary<string, string>
@@ -311,7 +336,7 @@ public class ModPackageTest
                    "id": "{{id}}",
                    "name": "{{id}}",
                    "version": "1.0.0",
-                   "side": "common",
+
                    "dependencies": {{dependencies}}
                  }
                  """;
@@ -320,8 +345,35 @@ public class ModPackageTest
 
 public sealed class PackageEntrypointMod : IMod
 {
+    // Fixture telemetry is shared; the simulated business counter belongs to each world state.
+    private readonly Dictionary<string, int> _counts = new()
+    {
+        ["configure"] = 0, ["start"] = 0, ["authority"] = 0, ["presentation"] = 0, ["disposed"] = 0
+    };
+
     public void Configure(IModContext context)
     {
+        _counts["configure"]++;
+        context.Extensions.Register("fixture_counts", new ResourceId(context.Manifest.ModId, "counts"), _counts);
+        var states = context.Worlds.Register(
+            new ResourceId(context.Manifest.ModId, "fixture_state"),
+            _ => new FixtureState(() => _counts["disposed"]++)
+        );
+        context.Gameplay.OnWorldUpdating(update =>
+            {
+                var runtime = WorldRuntimeContext.For(update.Project);
+                var state = states.Get(runtime);
+                state.Updates++;
+                if (runtime.IsAuthority)
+                {
+                    context.GetWorldData(update.Project, "fixture").SetValue("updates", state.Updates);
+                    _counts["authority"]++;
+                }
+                else { _counts["last_client_state"] = state.Updates; }
+
+                if (runtime.HasPresentation) { _counts["presentation"]++; }
+            }
+        );
         context.Extensions.Register(
             "markers",
             new ResourceId(context.Manifest.ModId, "loaded"),
@@ -331,9 +383,17 @@ public sealed class PackageEntrypointMod : IMod
 
     public void Start(IModContext context)
     {
+        _counts["start"]++;
     }
 
     public void Stop()
     {
+    }
+
+    private sealed class FixtureState(Action dispose) : IDisposable
+    {
+        public int Updates { get; set; }
+
+        public void Dispose() => dispose();
     }
 }

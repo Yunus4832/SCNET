@@ -26,38 +26,39 @@ public class SettingsGraphicsScreen : Screen
 
     public override void Update()
     {
-        GameManager.UpdateProject();
         if (_viewAngleSlider.IsSliding)
         {
-            SettingsManager.Current.ViewAngle = _viewAngleSlider.Value;
+            Configuration.ClientConfiguration.Preferences.ViewAngle = _viewAngleSlider.Value;
         }
 
         if (_virtualRealityButton.IsClicked)
         {
-            if (SettingsManager.Current.UseVr)
+            if (Configuration.ClientConfiguration.Preferences.UseVr)
             {
-                SettingsManager.Current.UseVr = false;
+                Configuration.ClientConfiguration.Preferences.UseVr = false;
                 VrManager.StopVr();
             }
             else
             {
-                SettingsManager.Current.UseVr = true;
+                Configuration.ClientConfiguration.Preferences.UseVr = true;
                 VrManager.StartVr();
             }
         }
 
         if (_brightnessSlider.IsSliding)
         {
-            SettingsManager.SetBrightness(_brightnessSlider.Value);
+            Configuration.ClientConfiguration.SetBrightness(_brightnessSlider.Value);
         }
 
         _virtualRealityButton.IsEnabled = VrManager.IsVrAvailable;
-        _virtualRealityButton.Text = SettingsManager.Current.UseVr ? "Enabled" : "Disabled";
-        _brightnessSlider.Value = SettingsManager.Current.Brightness;
+        _virtualRealityButton.Text = Configuration.ClientConfiguration.Preferences.UseVr ? "Enabled" : "Disabled";
+        _brightnessSlider.Value = Configuration.ClientConfiguration.Preferences.Brightness;
         _brightnessSlider.Text =
-            MathUtils.Round(SettingsManager.Current.Brightness * 10f).ToString(CultureInfo.InvariantCulture);
-        _viewAngleSlider.Value = SettingsManager.Current.ViewAngle;
-        _viewAngleSlider.Text = $"{MathUtils.Round(SettingsManager.Current.ViewAngle * 100f)}%";
+            MathUtils.Round(Configuration.ClientConfiguration.Preferences.Brightness * 10f)
+                .ToString(CultureInfo.InvariantCulture);
+        _viewAngleSlider.Value = Configuration.ClientConfiguration.Preferences.ViewAngle;
+        _viewAngleSlider.Text =
+            $"{MathUtils.Round(Configuration.ClientConfiguration.Preferences.ViewAngle * 100f)}%";
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);

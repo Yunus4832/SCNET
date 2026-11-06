@@ -13,9 +13,6 @@
         <PackageReference Include="MessagePack" Version="3.1.9"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Using Include="System.Reflection"/>
-    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>

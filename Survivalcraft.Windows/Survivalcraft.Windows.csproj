@@ -11,7 +11,6 @@
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <ApplicationIcon>..\SharedResources\AppIcon\icon.ico</ApplicationIcon>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-        <StartProgram>Starter</StartProgram>
     </PropertyGroup>
 
     <!-- Release 配置 -->

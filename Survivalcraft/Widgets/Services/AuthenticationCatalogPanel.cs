@@ -291,8 +291,8 @@ public sealed class AuthenticationCatalogPanel : ServicePanelWidget
         _message = new MessageDialog(
             Text("Title"),
             description,
-            LanguageManager.Get("Usual", "ok"),
-            accepted is null ? string.Empty : LanguageManager.Get("Usual", "cancel"),
+            Localization.ClientLanguage.Catalog.Get("Usual", "ok"),
+            accepted is null ? string.Empty : Localization.ClientLanguage.Catalog.Get("Usual", "cancel"),
             button =>
             {
                 _message = null;
@@ -310,5 +310,5 @@ public sealed class AuthenticationCatalogPanel : ServicePanelWidget
     }
 
     private static string Text(string key) =>
-        LanguageManager.GetContentWidgets(nameof(AuthenticationCatalogPanel), key);
+        Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(AuthenticationCatalogPanel), key);
 }
