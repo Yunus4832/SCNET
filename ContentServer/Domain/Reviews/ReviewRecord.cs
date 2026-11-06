@@ -4,7 +4,7 @@ using NetCorePal.Extensions.Domain;
 
 namespace ContentServer.Domain.Reviews;
 
-public record ReviewRecordId : IGuidStronglyTypedId;
+public partial record ReviewRecordId : IGuidStronglyTypedId;
 
 public sealed class ReviewRecord : Entity<ReviewRecordId>, IAggregateRoot
 {

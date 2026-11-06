@@ -11,7 +11,7 @@ public enum AnnouncementStatus
     Withdrawn = 2
 }
 
-public record GameAnnouncementId : IGuidStronglyTypedId;
+public partial record GameAnnouncementId : IGuidStronglyTypedId;
 
 public sealed class GameAnnouncement : Entity<GameAnnouncementId>, IAggregateRoot
 {

@@ -18,7 +18,7 @@ using NetCorePal.Extensions.Repository.EntityFrameworkCore;
 
 namespace ContentServer.Infrastructure;
 
-public sealed class ContentServerDbContext(
+public sealed partial class ContentServerDbContext(
     DbContextOptions<ContentServerDbContext> options,
     IMediator mediator
 ) : AppDbContextBase(options, mediator)

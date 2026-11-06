@@ -16,7 +16,7 @@ public enum RendezvousServiceRegistrationStatus
     Disabled = 3
 }
 
-public record RendezvousServiceRegistrationId : IGuidStronglyTypedId;
+public partial record RendezvousServiceRegistrationId : IGuidStronglyTypedId;
 
 public sealed class RendezvousServiceRegistration : Entity<RendezvousServiceRegistrationId>, IAggregateRoot
 {

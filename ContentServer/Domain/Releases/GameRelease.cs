@@ -6,7 +6,7 @@ namespace ContentServer.Domain.Releases;
 
 public enum GameReleaseStatus { Draft = 0, Published = 1, Withdrawn = 2 }
 
-public record GameReleaseId : IGuidStronglyTypedId;
+public partial record GameReleaseId : IGuidStronglyTypedId;
 
 public sealed class GameRelease : Entity<GameReleaseId>, IAggregateRoot
 {

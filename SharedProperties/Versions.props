@@ -1,7 +1,7 @@
 <Project>
     <!-- Release versions are independent; change only the units being released. -->
     <PropertyGroup>
-        <GameVersion>0.2.2</GameVersion>
+        <GameVersion>0.2.3</GameVersion>
         <EngineVersion>0.2.2</EngineVersion>
         <ImageCodecsVersion>0.1.1</ImageCodecsVersion>
         <OpenALVersion>0.1.0</OpenALVersion>

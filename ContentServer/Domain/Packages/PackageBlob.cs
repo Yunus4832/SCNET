@@ -2,7 +2,7 @@ using NetCorePal.Extensions.Domain;
 
 namespace ContentServer.Domain.Packages;
 
-public record PackageBlobId : IGuidStronglyTypedId;
+public partial record PackageBlobId : IGuidStronglyTypedId;
 
 public sealed class PackageBlob : Entity<PackageBlobId>, IAggregateRoot
 {
