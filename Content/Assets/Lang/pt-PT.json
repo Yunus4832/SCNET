@@ -93,7 +93,9 @@
         "4": "Vá para casa.",
         "5": "Queimado até a morte",
         "6": "Stranding (em inglês)",
-        "7": "Afogado"
+        "7": "Afogado",
+        "Stuck": "Ficaste preso",
+        "KilledByCharacter": "Morto por {0}"
     },
     "ComponentBody": [
         "Engarrafamento"
@@ -144,7 +146,9 @@
         "3": "Base de dados de leitura",
         "4": "Inicializando o gerenciador de blocos",
         "5": "Parâmetros de configuração de inicialização Mod",
-        "6": "Aguarde a conclusão das tarefas restantes:"
+        "6": "Aguarde a conclusão das tarefas restantes:",
+        "ConfirmQuit": "Sair do jogo?",
+        "AudioUnavailable": "Não foi possível carregar o sistema de áudio. O som poderá estar indisponível."
     },
     "ModEntity": {
         "1": "Carregue o arquivo de dados. csv Box",
@@ -184,7 +188,7 @@
         "11": "Nome dos móveis"
     },
     "EditAdjustableDelayGateDialog": {
-        "1": "{0}Segundo"
+        "1": "{0} segundos"
     },
     "EditBatteryDialog": {
         "1": "Baixo",
@@ -205,7 +209,7 @@
         "3": "Nome inválido"
     },
     "EditPistonDialog": {
-        "1": "{0}Bloco"
+        "1": "{0} blocos"
     },
     "EditTruthTableDialog": {
         "1": "Formulário",
@@ -632,7 +636,8 @@
         "bitten": "Mordeira",
         "massacred": "Massacre",
         "ripped open": "Tear",
-        "murdered": "Derrota"
+        "murdered": "Derrota",
+        "ItemDisabled": "Este item está desativado"
     },
     "ComponentIntro": {
         "1": "Gente, deixe-o aqui.",
@@ -1759,12 +1764,12 @@
             "CRDescription:0": "Faça um mosquete com ferro e tábuas de madeira"
         },
         "ArrowBlock:0": {
-            "DisplayName": "Archa do",
+            "DisplayName": "Flecha de madeira",
             "Description": "Arco e flecha e ballesta são disparados com arco ou ballesta, e o material da flecha determina a letalidade. Existem também flechas especiais, como foguetes feitos de enxofre que podem acender objetos a serem disparados; balestas explosivas feitas de pólvora e ballestas de ferro que detonam objetos a serem disparados.",
             "CRDescription:0": "Faça flechas de madeira com bastões e penas"
         },
         "BulletBlock:0": {
-            "DisplayName": "Balas",
+            "DisplayName": "Bola de mosquete",
             "Description": "Corta as barras de ferro em partículas de ferro e dispara com uma arma de barril. Existem três tipos de balas: uma é uma única bala grande, que é altamente letal; uma é uma bala dispersa feita de uma bala grande, que tem uma área de disparo mais ampla, mas carece de dano e precisão; e outra é uma bala pequena que usa uma bala dispersa como uma única bala, que não serve para nada além de matar pássaros.",
             "CRDescription:0": "Faça uma bala de mosquete com uma vara de ferro"
         },
@@ -2290,53 +2295,53 @@
             "CRDescription:1": "Extração de sementes de abóboras maduras"
         },
         "ArrowBlock:1": {
-            "DisplayName": "Archa de pedra",
+            "DisplayName": "Flecha de pedra",
             "Description": "Arco e flecha e ballesta são disparados com arco ou ballesta, e o material da flecha determina a letalidade. Existem também flechas especiais, como foguetes feitos de enxofre que podem acender objetos a serem disparados; balestas explosivas feitas de pólvora e ballestas de ferro que detonam objetos a serem disparados.",
             "CRDescription:0": "Faça uma flecha com uma ponta de pedra de um bastão, penas e pedras"
         },
         "ArrowBlock:2": {
-            "DisplayName": "Archa de cabeça de ferro",
+            "DisplayName": "Flecha de ferro",
             "Description": "Arco e flecha e ballesta são disparados com arco ou ballesta, e o material da flecha determina a letalidade. Existem também flechas especiais, como foguetes feitos de enxofre que podem acender objetos a serem disparados; balestas explosivas feitas de pólvora e ballestas de ferro que detonam objetos a serem disparados.",
             "CRDescription:0": "Faça flechas com cabeça de ferro com bastões, penas e ferro"
         },
         "ArrowBlock:3": {
-            "DisplayName": "Archa de diamante",
+            "DisplayName": "Flecha de diamante",
             "Description": "Arco e flecha e ballesta são disparados com arco ou ballesta, e o material da flecha determina a letalidade. Existem também flechas especiais, como foguetes feitos de enxofre que podem acender objetos a serem disparados; balestas explosivas feitas de pólvora e ballestas de ferro que detonam objetos a serem disparados.",
             "CRDescription:0": "Faça setas de diamante com flechas de ferro e diamantes"
         },
         "ArrowBlock:4": {
-            "DisplayName": "Foguete",
+            "DisplayName": "Flecha incendiária",
             "Description": "Arco e flecha e ballesta são disparados com arco ou ballesta, e o material da flecha determina a letalidade. Existem também flechas especiais, como foguetes feitos de enxofre que podem acender objetos a serem disparados; balestas explosivas feitas de pólvora e ballestas de ferro que detonam objetos a serem disparados.",
             "CRDescription:0": "Faça foguetes com flechas de madeira e enxofre"
         },
         "ArrowBlock:5": {
-            "DisplayName": "Arca de Ferro",
+            "DisplayName": "Virote de ferro",
             "Description": "Arco e flecha e ballesta são disparados com arco ou ballesta, e o material da flecha determina a letalidade. Existem também flechas especiais, como foguetes feitos de enxofre que podem acender objetos a serem disparados; balestas explosivas feitas de pólvora e ballestas de ferro que detonam objetos a serem disparados.",
             "CRDescription:0": "Faça uma ballesta com um bastão e uma pluma"
         },
         "ArrowBlock:6": {
-            "DisplayName": "Arca de diamante",
+            "DisplayName": "Virote de diamante",
             "Description": "Arco e flecha e ballesta são disparados com arco ou ballesta, e o material da flecha determina a letalidade. Existem também flechas especiais, como foguetes feitos de enxofre que podem acender objetos a serem disparados; balestas explosivas feitas de pólvora e ballestas de ferro que detonam objetos a serem disparados.",
             "CRDescription:0": "Faça uma ballesta de diamante com uma ballesta e um diamante"
         },
         "ArrowBlock:7": {
-            "DisplayName": "Explosão de arquete",
+            "DisplayName": "Virote explosivo",
             "Description": "Arco e flecha e ballesta são disparados com arco ou ballesta, e o material da flecha determina a letalidade. Existem também flechas especiais, como foguetes feitos de enxofre que podem acender objetos a serem disparados; balestas explosivas feitas de pólvora e ballestas de ferro que detonam objetos a serem disparados.",
             "CRDescription:0": "Faça uma ballesta explosiva com uma ballesta e pólvora"
         },
         "ArrowBlock:8": {
-            "DisplayName": "Capitão Arrowhead",
+            "DisplayName": "Flecha de cobre",
             "Description": "Arco e flecha e ballesta são disparados com arco ou ballesta, e o material da flecha determina a letalidade. Existem também flechas especiais, como foguetes feitos de enxofre que podem acender objetos a serem disparados; balestas explosivas feitas de pólvora e ballestas de ferro que detonam objetos a serem disparados.",
             "CRDescription:0": "Faça uma flecha com cabeça de bronze de bastões, penas e cobre"
         },
         "BulletBlock:1": {
-            "DisplayName": "PRODUÇÃO Lead Bullet",
+            "DisplayName": "Chumbo grosso",
             "Description": "Corta as barras de ferro em partículas de ferro e dispara com uma arma de barril. Existem três tipos de balas: uma é uma única bala grande, que é altamente letal; uma é uma bala dispersa feita de uma bala grande, que tem uma área de disparo mais ampla, mas carece de dano e precisão; e outra é uma bala pequena que usa uma bala dispersa como uma única bala, que não serve para nada além de matar pássaros.",
             "CRDescription:0": "Faça uma bala de chumbo com uma bala de mauser",
             "CRDescription:1": "Faça uma bala de chumbo com uma bola de chumbo"
         },
         "BulletBlock:2": {
-            "DisplayName": "Projétil de chumbo",
+            "DisplayName": "Esfera de chumbo",
             "Description": "Corta as barras de ferro em partículas de ferro e dispara com uma arma de barril. Existem três tipos de balas: uma é uma única bala grande, que é altamente letal; uma é uma bala dispersa feita de uma bala grande, que tem uma área de disparo mais ampla, mas carece de dano e precisão; e outra é uma bala pequena que usa uma bala dispersa como uma única bala, que não serve para nada além de matar pássaros.",
             "CRDescription:0": "Retire a bala de chumbo da bala de chumbo"
         },
@@ -2840,12 +2845,13 @@
             "1": "Ajuste de tensão"
         },
         "CancellableBusyDialog": {
-            "1": "Cancelamento"
+            "1": "Cancelamento",
+            "Background": "Executar em segundo plano"
         },
         "EditAdjustableDelayGateDialog": {
             "1": "Ajuste do atraso",
-            "2": "Determinação",
-            "3": "Cancelamento"
+            "2": "OK",
+            "3": "Cancelar"
         },
         "EditBatteryDialog": {
             "1": "Ajuste da tensão de alimentação",
@@ -2864,9 +2870,14 @@
         "EditPistonDialog": {
             "1": "Extensão máxima",
             "2": "Número de Push-Pull",
-            "3": "Velocidade Settings",
-            "4": "Determinação",
-            "5": "Cancelamento"
+            "3": "Velocidade",
+            "4": "OK",
+            "5": "Cancelar",
+            "EditTitle": "Editar {0}",
+            "Fast": "Rápido",
+            "Medium": "Médio",
+            "Slow": "Lento",
+            "VerySlow": "Muito lento"
         },
         "GameMenuDialog": {
             "1": "Retorno",
@@ -2997,7 +3008,8 @@
         },
         "LevelFactorDialog": {
             "1": "Multiplicador atual:",
-            "2": "Determinação"
+            "2": "Determinação",
+            "Total": "TOTAL"
         },
         "TextBoxDialog": {
             "1": "Determinação",
@@ -3054,7 +3066,17 @@
             "ManageServicesDescription": "Gerir fontes de servidores, sinalização e autenticação"
         },
         "GameLoadingScreen": {
-            "1": "Carregando o mundo"
+            "1": "Carregando o mundo",
+            "Connecting": "A ligar ao servidor",
+            "WaitingForServer": "A aguardar resposta do servidor",
+            "Authenticating": "A autenticar",
+            "WaitingForWorldData": "A aguardar dados do mundo e texturas",
+            "LoadingServerWorld": "A carregar o mundo do servidor",
+            "ApplyingSnapshot": "A aplicar o estado inicial do mundo",
+            "ConnectionTimedOut": "O tempo de ligação expirou",
+            "Disconnected": "Ligação encerrada",
+            "ServerDisconnected": "A ligação ao servidor foi terminada",
+            "SnapshotTimedOut": "O tempo de espera pelo estado inicial do mundo expirou"
         },
         "HelpScreen": {
             "1": "Ajuda Interface",
@@ -3319,7 +3341,8 @@
             "28": "Temporada",
             "DefaultDescription": "Configure o terreno, o ambiente, as estações e as regras de jogo deste mundo.",
             "HotbarSlotsCount": "Capacidade da barra rápida",
-            "HotbarSlotsCountDescription": "Define a capacidade da barra rápida para o modo atual; use páginas quando o espaço for limitado"
+            "HotbarSlotsCountDescription": "Define a capacidade da barra rápida para o modo atual; use páginas quando o espaço for limitado",
+            "DaysCount": "{0} dias"
         },
         "ModWorldSelectionDialog": {
             "Title": "Adicionar ou substituir versão do mod no mundo"
@@ -3824,7 +3847,8 @@
             "2": "Cintilação",
             "3": "Baixo",
             "4": "Alto"
-        }
+        },
+        "CraftingDescription": "Fabricar fogo de artifício"
     },
     "WorldPalette": {
         "Colors": [
@@ -4306,7 +4330,21 @@
         "PlayerUnmuted_Message": "Silêncio retirado ao jogador {0}.",
         "PlayerMutedList_Message": "Jogadores silenciados neste mundo:\n{0}",
         "PlayerBannedCommand_Message": "Este jogador está bloqueado neste mundo.",
-        "NoAuthorityWorld_Message": "Não há um mundo autoritativo em execução."
+        "NoAuthorityWorld_Message": "Não há um mundo autoritativo em execução.",
+        "NetworkSendStatistics_Description": "Mostrar estatísticas de envio da ligação",
+        "AutomationInputRun_Description": "Executar uma sequência de entrada temporizada",
+        "AutomationGameplayContext_Description": "Ler o contexto de interação da personagem",
+        "AutomationLookAt_Description": "Olhar para coordenadas do mundo",
+        "AutomationLookState_Description": "Ler o estado do controlo da vista",
+        "AutomationLookAdjust_Description": "Ajustar os ângulos da vista",
+        "AutomationLookCancel_Description": "Cancelar o controlo da vista",
+        "AutomationNavigate_Description": "Caminhar automaticamente até uma posição",
+        "AutomationNavigationState_Description": "Ler o estado da navegação automática",
+        "AutomationNavigationCancel_Description": "Cancelar a navegação automática",
+        "AutomationInputState_Description": "Ler o estado da entrada automatizada",
+        "AutomationInputCancel_Description": "Cancelar a entrada automatizada",
+        "AutomationInputText_Description": "Enviar texto automaticamente",
+        "AutomationInventoryDrag_Description": "Arrastar um item do inventário"
     },
     "AndroidServer": {
         "Title": "Registo do servidor",
@@ -4427,5 +4465,128 @@
     },
     "ComponentCharacter": {
         "1": "Squat para melhorar a precisão de tiro"
+    },
+    "ClipboardManager": {
+        "WriteFailed": "Não foi possível copiar o texto: {0}"
+    },
+    "SubsystemCactusBlockBehavior": {
+        "CauseOfDeath": "Picado por um cato"
+    },
+    "PumpkinSoupBucketBlock": {
+        "CraftingDescription": "Cozinhar sopa de abóbora"
+    },
+    "PaintBucketBlock": {
+        "CraftingPrefix": "Fabricar",
+        "CraftingSuffix": "tinta"
+    },
+    "ModPreparation": {
+        "Checking": "A verificar o mod {0}@{1} ({2})",
+        "Cached": "{0}@{1} encontrado na cache local",
+        "Downloading": "A procurar {0}@{1} nos repositórios de conteúdo",
+        "RepositoryFailed": "Falha no repositório {0}: {1}",
+        "Downloaded": "Mod {0}@{1} transferido"
+    },
+    "CarpetBlock": {
+        "Dye": "Tingir carpete",
+        "Undye": "Remover a cor da carpete"
+    },
+    "SubsystemEggBlockBehavior": {
+        "CapacityLimit": "Há demasiadas criaturas"
+    },
+    "GameManager": {
+        "SaveFailedTitle": "Não foi possível guardar o mundo: {0}",
+        "SaveFailedMessage": "A gravação não foi concluída. Resolve o problema e tenta novamente.\n{0}"
+    },
+    "GameEntry": {
+        "UnhandledException": "Exceção não tratada: {0}"
+    },
+    "Connection": {
+        "TokenInvalid": "Identificador de ligação inválido",
+        "AlreadyOnline": "Este jogador já está ligado",
+        "TokenInUse": "O identificador de ligação já está em uso",
+        "Banned": "Estás banido deste servidor",
+        "ServerFull": "O servidor está cheio",
+        "SessionCreationFailed": "Não foi possível criar a sessão do jogador. Tenta novamente mais tarde.",
+        "InvalidHeader": "Pedido de ligação não reconhecido",
+        "ProtocolMismatch": "As versões do protocolo do cliente e do servidor são diferentes",
+        "ModsMismatch": "Os mods do cliente e do servidor são diferentes. Atualiza os dados do servidor e tenta novamente.",
+        "WorldChanged": "O mundo mudou. Volta a entrar.",
+        "ChallengeChangedAfterAdmission": "O servidor alterou o desafio após a autenticação",
+        "ChallengeInvalid": "O desafio de autenticação expirou ou é inválido",
+        "ChallengeChanged": "O servidor alterou o desafio de autenticação",
+        "AdmissionEnded": "A autenticação foi cancelada, expirou ou foi recusada",
+        "ServerStarting": "Aguarda que o servidor termine o arranque",
+        "ServerClosed": "O servidor encerrou a ligação",
+        "RequestRejected": "Pedido de ligação recusado",
+        "DeliveryFailed": "Falha na confirmação de entrega da mensagem",
+        "Closed": "Ligação encerrada",
+        "TooManyRequests": "Demasiados pedidos de ligação. Tenta novamente mais tarde.",
+        "InvalidRequest": "Pedido de ligação inválido",
+        "TooManyAuthenticationRequests": "Demasiados pedidos de autenticação. Tenta novamente mais tarde.",
+        "AuthenticationCancelled": "Autenticação cancelada",
+        "AuthenticationTimedOut": "O tempo de autenticação expirou",
+        "AuthenticationDenied": "A autenticação expirou ou foi recusada",
+        "WorldAccessDenied": "Não tens permissão para entrar neste mundo",
+        "CharacterLoadFailed": "Não foi possível carregar os dados do jogador. Tenta novamente mais tarde.",
+        "LogicalQueueFull": "A fila de mensagens do destinatário está cheia.",
+        "OutgoingQueueFull": "A fila de mensagens de saída está cheia.",
+        "InboxFull": "A fila de mensagens recebidas está cheia.",
+        "NativeDeliveryFailed": "Erro na entrega de mensagens de rede.",
+        "TransportLimitExceeded": "A mensagem excede o limite de envio.",
+        "MessageDeliveryFailed": "Falha na entrega da mensagem: {0}",
+        "NotGameServer": "Este destino não é um servidor de jogo",
+        "AuthenticationNotReady": "A autenticação do servidor ainda não está pronta",
+        "PublicationQueueFull": "A fila de publicação de mensagens está cheia."
+    },
+    "DebugOverlay": {
+        "Context": "CONTEXTO",
+        "Performance": "DESEMPENHO",
+        "Network": "REDE",
+        "Character": "PERSONAGEM",
+        "World": "MUNDO",
+        "Screen": "Ecrã",
+        "Dialog": "Diálogo",
+        "Depth": "Profundidade",
+        "HudPanel": "Painel HUD",
+        "Fps": "FPS",
+        "Cpu": "CPU",
+        "Managed": "Memória gerida",
+        "Gpu": "GPU",
+        "Mode": "Modo",
+        "Path": "Ligação",
+        "Ip": "IP",
+        "Signaling": "Sinalização",
+        "Ping": "Latência",
+        "PacketLoss": "Perda de pacotes",
+        "PendingAck": "Por confirmar",
+        "ListenUdp": "Escuta UDP",
+        "Clients": "Clientes",
+        "Direct": "Direta",
+        "P2PDirect": "Direta P2P",
+        "Relay": "Retransmissão",
+        "P2PRoom": "Sala P2P",
+        "P2PError": "Erro P2P",
+        "RelayPeer": "Destino de retransmissão",
+        "ServerPeer": "Destino do servidor",
+        "AddressDirect": "Ligação direta por endereço",
+        "Name": "Nome",
+        "Position": "Posição",
+        "Cell": "Bloco",
+        "Chunk": "Região",
+        "Altitude": "Altitude",
+        "Ground": "Solo",
+        "GroundValue": "{0} ({1} acima)",
+        "Time": "Hora",
+        "Season": "Estação",
+        "Temperature": "Temperatura",
+        "Humidity": "Humidade",
+        "Light": "Luz",
+        "Role_Inactive": "Inativo",
+        "Role_Authority": "Autoridade",
+        "Role_Client": "Cliente"
+    },
+    "BlockNames": {
+        "Colored": "{1} ({0})",
+        "Seasonal": "{1} ({0})"
     }
 }

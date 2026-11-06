@@ -42,7 +42,11 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
                 RemainsCount = 1,
                 RemainsValue = Terrain.MakeBlockValue(90),
                 RequiredHeatLevel = 0f,
-                Description = LocalizedText.Literal("用铜玻璃和颜料来制作7段显示器"),
+                Description = new LocalizedText(
+                    nameof(SevenSegmentDisplayBlock),
+                    "1",
+                    "Make 7-segment displays from copper, glass and paint"
+                ),
                 Ingredients =
                 {
                     [0] = "glass",

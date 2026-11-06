@@ -47,13 +47,10 @@ public class BulletBlockPresentation(BulletBlock block, BlockPresentationCatalog
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)
     {
-        var bulletType = (int)BulletBlock.GetBulletType(Terrain.ExtractData(value));
-        if (bulletType < 0 || bulletType >= BulletBlock.DisplayNames.Length)
-        {
-            return string.Empty;
-        }
-
-        return BulletBlock.DisplayNames[bulletType];
+        var type = BulletBlock.GetBulletType(Terrain.ExtractData(value));
+        return Enum.IsDefined(type)
+            ? Localization.ClientLanguage.Catalog.GetBlock($"BulletBlock:{(int)type}", "DisplayName")
+            : string.Empty;
     }
 
     public override int GetFaceTextureSlot(int face, int value)

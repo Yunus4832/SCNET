@@ -151,7 +151,10 @@ public class NewWorldScreen : Screen
 
     private void PrepareWorldModsAndPlay(WorldInfo worldInfo)
     {
-        var busyDialog = new BusyDialog("准备世界模组", "正在检查所需模组...");
+        var busyDialog = new BusyDialog(
+            Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 12),
+            Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 13)
+        );
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() =>
             {
@@ -180,8 +183,11 @@ public class NewWorldScreen : Screen
                         {
                             DialogsManager.HideDialog(busyDialog);
                             DialogsManager.Alert(
-                                "模组准备失败",
-                                $"无法准备该世界需要的模组。\n{ex.Message}"
+                                Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 14),
+                                string.Format(
+                                    Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 15),
+                                    ex.Message
+                                )
                             );
                         }
                     );
@@ -195,10 +201,13 @@ public class NewWorldScreen : Screen
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                "需要重启游戏",
-                $"{result.RestartReason}\n\n是否现在重启？",
-                "重启",
-                "取消",
+                Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 16),
+                string.Format(
+                    Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 17),
+                    result.RestartReason
+                ),
+                Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 18),
+                Localization.ClientLanguage.Catalog.Cancel,
                 button =>
                 {
                     if (button != MessageDialogButton.Button1)

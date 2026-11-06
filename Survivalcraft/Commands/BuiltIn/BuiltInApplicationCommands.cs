@@ -39,7 +39,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<RunAutomationInputCommand>(
                 AutomationCommandHandlers.RunInput,
                 CommandDomain.Application,
-                LocalizedText.Literal("执行有时限的组合输入")
+                CommandDescription("AutomationInputRun_Description", "执行有时限的组合输入")
             )
         );
         commands.Register(
@@ -47,7 +47,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<GetAutomationGameplayContextCommand>(
                 AutomationCommandHandlers.GameplayContext,
                 CommandDomain.Application,
-                LocalizedText.Literal("读取角色操作上下文")
+                CommandDescription("AutomationGameplayContext_Description", "读取角色操作上下文")
             )
         );
         commands.Register(
@@ -55,7 +55,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<LookAtAutomationTargetCommand>(
                 AutomationCommandHandlers.LookAt,
                 CommandDomain.Application,
-                LocalizedText.Literal("朝向世界坐标")
+                CommandDescription("AutomationLookAt_Description", "朝向世界坐标")
             )
         );
         commands.Register(
@@ -63,7 +63,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<GetAutomationViewStatusCommand>(
                 AutomationCommandHandlers.ViewStatus,
                 CommandDomain.Application,
-                LocalizedText.Literal("读取视角控制状态")
+                CommandDescription("AutomationLookState_Description", "读取视角控制状态")
             )
         );
         commands.Register(
@@ -71,7 +71,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<SetAutomationViewAnglesCommand>(
                 AutomationCommandHandlers.SetViewAngles,
                 CommandDomain.Application,
-                LocalizedText.Literal("按角度调整视角")
+                CommandDescription("AutomationLookAdjust_Description", "按角度调整视角")
             )
         );
         commands.Register(
@@ -79,7 +79,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<CancelAutomationViewCommand>(
                 AutomationCommandHandlers.CancelView,
                 CommandDomain.Application,
-                LocalizedText.Literal("取消视角控制")
+                CommandDescription("AutomationLookCancel_Description", "取消视角控制")
             )
         );
         commands.Register(
@@ -87,7 +87,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<NavigateAutomationPlayerCommand>(
                 AutomationCommandHandlers.Navigate,
                 CommandDomain.Application,
-                LocalizedText.Literal("自动步行到指定位置")
+                CommandDescription("AutomationNavigate_Description", "自动步行到指定位置")
             )
         );
         commands.Register(
@@ -95,7 +95,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<GetAutomationNavigationStatusCommand>(
                 AutomationCommandHandlers.NavigationStatus,
                 CommandDomain.Application,
-                LocalizedText.Literal("读取自动导航状态")
+                CommandDescription("AutomationNavigationState_Description", "读取自动导航状态")
             )
         );
         commands.Register(
@@ -103,7 +103,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<CancelAutomationNavigationCommand>(
                 AutomationCommandHandlers.CancelNavigation,
                 CommandDomain.Application,
-                LocalizedText.Literal("取消自动导航")
+                CommandDescription("AutomationNavigationCancel_Description", "取消自动导航")
             )
         );
         commands.Register(
@@ -111,7 +111,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<GetAutomationActionStatusCommand>(
                 AutomationCommandHandlers.ActionStatus,
                 CommandDomain.Application,
-                LocalizedText.Literal("读取自动化输入状态")
+                CommandDescription("AutomationInputState_Description", "读取自动化输入状态")
             )
         );
         commands.Register(
@@ -119,7 +119,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<CancelAutomationActionCommand>(
                 AutomationCommandHandlers.CancelAction,
                 CommandDomain.Application,
-                LocalizedText.Literal("取消自动化输入")
+                CommandDescription("AutomationInputCancel_Description", "取消自动化输入")
             )
         );
         commands.Register(
@@ -127,7 +127,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<EnterAutomationTextCommand>(
                 AutomationCommandHandlers.EnterText,
                 CommandDomain.Application,
-                LocalizedText.Literal("发送自动化文本输入")
+                CommandDescription("AutomationInputText_Description", "发送自动化文本输入")
             )
         );
         commands.Register(
@@ -143,7 +143,7 @@ public static class BuiltInApplicationCommands
             new CommandDefinition<DragAutomationUiCommand>(
                 AutomationCommandHandlers.Drag,
                 CommandDomain.Application,
-                LocalizedText.Literal("拖动库存物品")
+                CommandDescription("AutomationInventoryDrag_Description", "拖动库存物品")
             )
         );
         commands.Register(

@@ -611,7 +611,12 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         if (inventory is Component component)
         {
             component.Entity.FindComponent<ComponentCharacter>()?.Entity.FindComponent<ComponentGui>(true)!
-                .DisplaySmallMessage("此物品已被禁用", Color.Red, false, true);
+                .DisplaySmallMessage(
+                    Localization.ClientLanguage.Catalog.Get(ComponentMiner.Name, "ItemDisabled"),
+                    Color.Red,
+                    false,
+                    true
+                );
         }
 
         return true;

@@ -345,7 +345,7 @@ public class ComponentHealth : Component, IUpdateable
                     {
                         CauseOfDeath =
                             LocalizedText.Format(
-                                LocalizedText.Literal(" 被 {0} 噶了"),
+                                new LocalizedText(Name, "KilledByCharacter", "Killed by {0}"),
                                 LocalizedText.Literal(player2.CharacterData.Name)
                             );
                     }

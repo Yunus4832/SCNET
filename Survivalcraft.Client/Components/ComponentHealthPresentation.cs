@@ -84,7 +84,7 @@ public sealed class ComponentHealthPresentation : Component, IUpdateable
             if (_time.GameTime >= _crushWarningTime)
             {
                 _character.Entity.FindComponent<ComponentGui>(true)!.DisplaySmallMessage(
-                    "你卡住了",
+                    Localization.ClientLanguage.Catalog.Get(ComponentHealth.Name, "Stuck"),
                     Color.White,
                     true,
                     true

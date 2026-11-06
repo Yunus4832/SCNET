@@ -68,9 +68,9 @@ public class PistonBlockPresentation(PistonBlock block, BlockPresentationCatalog
     {
         return GetMode(Terrain.ExtractData(value)) switch
         {
-            PistonMode.Pulling => "粘性活塞",
-            PistonMode.StrictPulling => "严格粘性活塞",
-            _ => "活塞"
+            PistonMode.Pulling => Localization.ClientLanguage.Catalog.Get(nameof(PistonBlock), 1),
+            PistonMode.StrictPulling => Localization.ClientLanguage.Catalog.Get(nameof(PistonBlock), 2),
+            _ => Localization.ClientLanguage.Catalog.Get(nameof(PistonBlock), 0)
         };
     }
 

@@ -71,7 +71,12 @@ public static class GameEntry
         Window.UnhandledException += delegate(UnhandledExceptionInfo e)
         {
             DialogsManager.Alert(
-                "未处理的异常" + e.Exception.Message,
+                Localization.ClientLanguage.Resolver.Get(
+                    "GameEntry",
+                    "UnhandledException",
+                    "Unhandled exception: {0}",
+                    e.Exception.Message
+                ),
                 e.Exception.StackTrace ?? string.Empty
             );
             Log.Error(e.Exception.Message);

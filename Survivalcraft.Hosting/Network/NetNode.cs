@@ -338,7 +338,7 @@ public class NetNode
 
     private NetworkHost? _broadcastHost;
 
-    private readonly Dictionary<Client, string> _clientsToRemove = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<Client, LocalizedText> _clientsToRemove = new(ReferenceEqualityComparer.Instance);
 
     private P2PRoomController _p2p = new();
 
@@ -745,11 +745,13 @@ public class NetNode
         else { AdmissionRequired?.Invoke(PendingAdmissionChallenge); }
     }
 
-    public string? LocalAdmissionError { get; private set; }
+    public LocalizedText? LocalAdmissionError { get; private set; }
 
     public bool HasPendingAdmission => _localAdmission is not null || CurrentStage == Stage.Bootstrapping;
 
-    public void EndAdmission(string error = "")
+    public void EndAdmission(string error = "") => EndAdmission(LocalizedText.Literal(error));
+
+    public void EndAdmission(LocalizedText error)
     {
         if (IsServer)
         {
@@ -785,7 +787,7 @@ public class NetNode
 
         if (!ReferenceEquals(_localAdmission.World, Runtime.Project))
         {
-            EndAdmission("世界已变化，请重新加入");
+            EndAdmission(ConnectionMessages.Create("WorldChanged", "The world has changed. Please rejoin."));
             return;
         }
 
@@ -920,7 +922,15 @@ public class NetNode
             recipients = _logicalOverloadedRecipients.ToArray();
         }
 
-        if (stop) { Stop("The logical publication queue cannot accept another message."); }
+        if (stop)
+        {
+            Stop(
+                ConnectionMessages.Create(
+                    "PublicationQueueFull",
+                    "The logical publication queue cannot accept another message."
+                )
+            );
+        }
 
         foreach (var (client, runtime) in recipients)
         {
@@ -928,7 +938,13 @@ public class NetNode
             {
                 if (TryGetPhysicalConnection(client, out var physical))
                 {
-                    RemoveClient(physical, "The logical recipient queue cannot accept another message.");
+                    RemoveClient(
+                        physical,
+                        ConnectionMessages.Create(
+                            "LogicalQueueFull",
+                            "The logical recipient queue cannot accept another message."
+                        )
+                    );
                 }
             }
         }
@@ -963,7 +979,13 @@ public class NetNode
 
                 pending.Clear();
                 _networkPackages.Remove(client);
-                RemoveClient(client, "The outgoing message queue cannot accept another message.");
+                RemoveClient(
+                    client,
+                    ConnectionMessages.Create(
+                        "OutgoingQueueFull",
+                        "The outgoing message queue cannot accept another message."
+                    )
+                );
                 return false;
             }
 
@@ -983,7 +1005,7 @@ public class NetNode
             return i;
         }
 
-        throw new Exception("服务器连接人数已满");
+        throw new InvalidOperationException("The server is full.");
     }
 
     /// <summary>
@@ -1018,7 +1040,12 @@ public class NetNode
 
         if (AdmissionAccepted)
         {
-            Stop("服务器在认证通过后更换了挑战");
+            Stop(
+                ConnectionMessages.Create(
+                    "ChallengeChangedAfterAdmission",
+                    "The server changed the challenge after authentication"
+                )
+            );
             return;
         }
 
@@ -1030,7 +1057,7 @@ public class NetNode
             SCNET.Authentication.Protocol.AuthenticationProtocol.MaximumChallengeLifetimeSeconds +
             SCNET.Authentication.Protocol.AuthenticationProtocol.ClockSkewSeconds)
         {
-            Stop("服务器认证挑战已过期或无效");
+            Stop(ConnectionMessages.Create("ChallengeInvalid", "The authentication challenge is expired or invalid"));
             return;
         }
 
@@ -1038,7 +1065,7 @@ public class NetNode
         {
             if (ReferenceEquals(_admissionServerPeer, peer) && pending == challenge) { return; }
 
-            Stop("服务器在认证期间更换了挑战");
+            Stop(ConnectionMessages.Create("ChallengeChanged", "The server changed the authentication challenge"));
             return;
         }
 
@@ -1127,7 +1154,9 @@ public class NetNode
         if (!_isStopping &&
             result.Code is AdmissionResultCode.Cancelled or AdmissionResultCode.Expired or AdmissionResultCode.Denied)
         {
-            EndAdmission("认证已取消、过期或被拒绝");
+            EndAdmission(
+                ConnectionMessages.Create("AdmissionEnded", "Authentication was cancelled, expired or denied")
+            );
         }
     }
 
@@ -1223,7 +1252,9 @@ public class NetNode
         foreach (var client in _clients.Values.ToArray()) { UnregisterClient(client); }
     }
 
-    public void RemoveClient(Client? client, string reason = "")
+    public void RemoveClient(Client? client, string reason = "") => RemoveClient(client, LocalizedText.Literal(reason));
+
+    public void RemoveClient(Client? client, LocalizedText reason)
     {
         if (client is null)
         {
@@ -1235,18 +1266,21 @@ public class NetNode
             return;
         }
 
-        if (!string.IsNullOrEmpty(reason))
+        if (reason != LocalizedText.Empty)
         {
-            _clientsToRemove[client] = string.IsNullOrEmpty(_clientsToRemove[client])
+            _clientsToRemove[client] = _clientsToRemove[client] == LocalizedText.Empty
                 ? reason
-                : _clientsToRemove[client] + '\n' + reason;
+                : LocalizedText.Format(LocalizedText.Literal("{0}\n{1}"), _clientsToRemove[client], reason);
         }
     }
 
     // Explicit StopImmediate callers own their transition; deferred stops notify the world owner.
     public event Action<NetNode, WorldRuntimeContext, NodeRole, NodeStopReason>? Stopped;
 
-    public void RemoveClientImmediate(Client client, string reason = "")
+    public void RemoveClientImmediate(Client client, string reason = "") =>
+        RemoveClientImmediate(client, LocalizedText.Literal(reason));
+
+    public void RemoveClientImmediate(Client client, LocalizedText reason)
     {
         lock (_pendingPackages)
         {
@@ -1308,7 +1342,9 @@ public class NetNode
     /// <summary>
     ///     服务器关闭，不执行OnClientStateChanged，防止多次Dispose
     /// </summary>
-    public void RemoveAllClients(string reason = "")
+    public void RemoveAllClients(string reason = "") => RemoveAllClients(LocalizedText.Literal(reason));
+
+    public void RemoveAllClients(LocalizedText reason)
     {
         var clients = new List<Client>(Clients.Values);
         foreach (var client in clients)
@@ -1502,13 +1538,19 @@ public class NetNode
             (rejectedPayload as IDisposable)?.Dispose();
             if (rejectedPayload is TerrainSnapshotMessage && native != null) { return true; }
 
-            RemoveClient(received.Context.Sender, "The runtime message inbox is full.");
+            RemoveClient(
+                received.Context.Sender,
+                ConnectionMessages.Create("InboxFull", "The runtime message inbox is full.")
+            );
         }
         catch (Exception exception)
         {
             (normalized?.Package as IDisposable)?.Dispose();
             Log.Error(exception);
-            RemoveClient(received.Context.Sender, "Error on native message delivery.");
+            RemoveClient(
+                received.Context.Sender,
+                ConnectionMessages.Create("NativeDeliveryFailed", "Error on native message delivery.")
+            );
         }
 
         return false;
@@ -1539,7 +1581,14 @@ public class NetNode
                 catch (Exception exception)
                 {
                     Log.Error(exception);
-                    RemoveClient(message.Context.Sender, "Error on message delivery: " + exception);
+                    RemoveClient(
+                        message.Context.Sender,
+                        ConnectionMessages.Create(
+                            "MessageDeliveryFailed",
+                            "Message delivery failed: {0}",
+                            exception.Message
+                        )
+                    );
                 }
             }
         );
@@ -1555,14 +1604,25 @@ public class NetNode
 
         if (Runtime.Project == null)
         {
-            SendWriterFromPackage(new ConnectionRejectPackage("请等待服务器启动完成后加入"), request, true);
+            SendWriterFromPackage(
+                new ConnectionRejectPackage(
+                    ConnectionMessages.Create("ServerStarting", "Please wait for the server to finish starting")
+                ),
+                request,
+                true
+            );
         }
         else if (PendingClient != null)
         {
             Log.Information($"Too Many Request And Reject Current Request:{request.TransportEndpoint}");
             Log.Information($"Current Pending Client:{PendingClient}");
             SendWriterFromPackage(
-                new ConnectionRejectPackage($"当前服务器连接请求太多，请稍候再试，等待客户端回应数{AgreeOnPendingPeer.Count}"),
+                new ConnectionRejectPackage(
+                    ConnectionMessages.Create(
+                        "TooManyRequests",
+                        "Too many connection requests. Please try again later."
+                    )
+                ),
                 request,
                 true
             );
@@ -1583,7 +1643,13 @@ public class NetNode
             }
             catch (Exception e)
             {
-                SendWriterFromPackage(new ConnectionRejectPackage($"错误的连接请求数据包:{e.Message}"), request, true);
+                SendWriterFromPackage(
+                    new ConnectionRejectPackage(
+                        ConnectionMessages.Create("InvalidRequest", "Invalid connection request")
+                    ),
+                    request,
+                    true
+                );
                 Log.Error($"ConnectionRequestEvent Error: {e}");
             }
         }
@@ -1811,7 +1877,7 @@ public class NetNode
                 out var error
             ))
         {
-            throw new InvalidOperationException(error);
+            throw new InvalidOperationException(error?.Fallback);
         }
 
         _isStopping = false;
@@ -1837,6 +1903,8 @@ public class NetNode
     }
 
     public void Stop(string message = "") => Stop(new NodeStopReason(message));
+
+    public void Stop(LocalizedText message) => Stop(new NodeStopReason(message));
 
     private void Stop(NodeStopReason reason)
     {
@@ -1902,7 +1970,7 @@ public class NetNode
             // 先发送提示，然后再关闭服务器
             if (Role == NodeRole.Authority)
             {
-                RemoveAllClients("服务器主动关闭");
+                RemoveAllClients(ConnectionMessages.Create("ServerClosed", "The server closed the connection"));
             }
 
             _ = _p2p.ShutdownAsync();
@@ -2097,7 +2165,11 @@ public class NetNode
             request.Reject(
                 w.Length <= 256
                     ? w.Data.AsSpan(0, w.Length)
-                    : CreateUnconnectedPayload(new ConnectionRejectPackage("连接请求被拒绝"))
+                    : CreateUnconnectedPayload(
+                        new ConnectionRejectPackage(
+                            ConnectionMessages.Create("RequestRejected", "Connection request rejected")
+                        )
+                    )
             );
         }
         else if (iPEndPoint != null)
@@ -2136,7 +2208,7 @@ public class NetNode
                                                                   client.State >= ClientState.Connected
                      ).ToArray())
             {
-                RemoveClient(client, "Connection closed.");
+                RemoveClient(client, ConnectionMessages.Create("Closed", "Connection closed"));
             }
         }
 
@@ -2253,20 +2325,33 @@ public class NetNode
             else
             {
                 _ = receipt.Completion.Exception;
-                RemoveClient(receipt.Client, "传输确认失败");
+                RemoveClient(
+                    receipt.Client,
+                    ConnectionMessages.Create("DeliveryFailed", "Message delivery confirmation failed")
+                );
             }
         }
     }
 
-    internal static byte[] EncodeDisconnectReason(string reason)
+    internal static byte[] EncodeDisconnectReason(string reason) =>
+        EncodeDisconnectReason(LocalizedText.Literal(reason));
+
+    internal static byte[] EncodeDisconnectReason(LocalizedText reason)
     {
-        var writer = NetDataWriter.FromString(reason);
-        if (writer.Length <= 256)
+        try
         {
-            return writer.CopyData();
+            var encoded = ProtocolPacketCodec.Encode([new ConnectionRejectPackage(reason)], CompressionPolicy.None);
+            if (encoded.Length <= 256) { return encoded; }
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidDataException
+                                              or MessagePack.MessagePackSerializationException)
+        {
+            // Oversized application detail must not prevent the transport from closing.
         }
 
-        return NetDataWriter.FromString("连接已关闭").CopyData();
+        return CreateUnconnectedPayload(
+            new ConnectionRejectPackage(ConnectionMessages.Create("Closed", "Connection closed"))
+        );
     }
 
     internal static NodeStopReason DecodeDisconnectReason(NetworkDisconnectInfo information)
@@ -2275,17 +2360,10 @@ public class NetNode
         {
             try
             {
-                if (information.Reason == NetworkDisconnectReason.Rejected)
+                if (information.Reason is NetworkDisconnectReason.Rejected or NetworkDisconnectReason.RemoteClose &&
+                    ProtocolPacketCodec.Decode(information.Data) is [ConnectionRejectPackage reason])
                 {
-                    if (ProtocolPacketCodec.Decode(information.Data) is [ConnectionRejectPackage reject])
-                    {
-                        return new NodeStopReason(reject.Reason, information.Reason);
-                    }
-                }
-                else if (information.Reason == NetworkDisconnectReason.RemoteClose)
-                {
-                    var reader = new NetDataReader(information.Data.ToArray());
-                    if (reader.TryGetString(out var reason)) { return new NodeStopReason(reason, information.Reason); }
+                    return new NodeStopReason(reason.Reason, information.Reason);
                 }
             }
             catch (Exception exception) when (exception is InvalidDataException or ArgumentException
@@ -2373,7 +2451,13 @@ public class NetNode
                     else if (result == ConnectionSendResult.Closed)
                     {
                         fanout.Advance(1, 0);
-                        RemoveClient(recipient, "The outgoing message queue cannot accept another message.");
+                        RemoveClient(
+                            recipient,
+                            ConnectionMessages.Create(
+                                "OutgoingQueueFull",
+                                "The outgoing message queue cannot accept another message."
+                            )
+                        );
                     }
                     else if (connection.IsInProcess)
                     {
@@ -2688,7 +2772,13 @@ public class NetNode
             {
                 if (remainingPackages.Count == 1)
                 {
-                    RemoveClient(client, "The outgoing message exceeds the transport send limit.");
+                    RemoveClient(
+                        client,
+                        ConnectionMessages.Create(
+                            "TransportLimitExceeded",
+                            "The outgoing message exceeds the transport send limit."
+                        )
+                    );
                     return [];
                 }
 

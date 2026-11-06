@@ -113,7 +113,7 @@ public sealed class OutboundRoutingBudgetTest
             return ConnectionSendResult.Accepted;
         }
 
-        public void Disconnect(string reason)
+        public void Disconnect(LocalizedText reason)
         {
         }
 
@@ -137,7 +137,7 @@ public sealed class OutboundRoutingBudgetTest
             return ConnectionSendResult.Accepted;
         }
 
-        public void Disconnect(string reason)
+        public void Disconnect(LocalizedText reason)
         {
         }
 

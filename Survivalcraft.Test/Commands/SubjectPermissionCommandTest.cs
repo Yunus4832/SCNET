@@ -163,7 +163,7 @@ public sealed class SubjectPermissionCommandTest
     {
         var previous = CommonLib.Net.Role;
         using var project = new SubjectProject();
-        var pending = (Dictionary<Client, string>)typeof(NetNode)
+        var pending = (Dictionary<Client, LocalizedText>)typeof(NetNode)
             .GetField("_clientsToRemove", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(project.Node)!;
         var address = Address("banned");
         var player = project.Players.Store.GetOrCreate(address);

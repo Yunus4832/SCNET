@@ -598,7 +598,10 @@ public class WorldOptionsScreen : Screen
         );
         _areSeasonsChangingCheckBox.IsChecked = _worldSettings.AreSeasonsChanging;
         _yearDaysSlider.Value = FindNearestIndex(_yearDays, _worldSettings.YearDays);
-        _yearDaysSlider.Text = $"{_worldSettings.YearDays} days";
+        _yearDaysSlider.Text = string.Format(
+            Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "DaysCount"),
+            _worldSettings.YearDays
+        );
         _timeOfYearSlider.Value = _worldSettings.TimeOfYear;
         _timeOfYearSlider.Text = $"{ClientApplication.Content.Seasons.GetTimeOfYearName(_worldSettings.TimeOfYear)}";
         _timeOfYearSlider.TextColor = ClientApplication.Content.Seasons.GetTimeOfYearColor(_worldSettings.TimeOfYear);

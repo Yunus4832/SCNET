@@ -4,12 +4,6 @@ public class PressurePlateBlock : MountedElectricElementBlock
 {
     public readonly BoundingBox[][] CollisionBoxesByData = CreateCollisionBoxes();
 
-    public readonly string[] DisplayNamesByMaterial =
-    [
-        "木质压力板",
-        "石质压力板"
-    ];
-
 
     private static BoundingBox[][] CreateCollisionBoxes()
     {

@@ -110,10 +110,24 @@ public abstract class BasePumpkinBlockPresentation(BasePumpkinBlock block, Block
         var size = BasePumpkinBlock.GetSize(Terrain.ExtractData(value));
         if (Block.IsRotten)
         {
-            return size >= 7 ? "腐烂的南瓜" : "腐烂未成熟的南瓜";
+            return size >= 7
+                ? string.Format(
+                    Localization.ClientLanguage.Catalog.Get("BasePumpkinBlock", 2),
+                    Localization.ClientLanguage.Catalog.Get("BasePumpkinBlock", 4)
+                )
+                : string.Format(
+                    Localization.ClientLanguage.Catalog.Get("BasePumpkinBlock", 3),
+                    Localization.ClientLanguage.Catalog.Get("BasePumpkinBlock", 4),
+                    Localization.ClientLanguage.Catalog.Get("BasePumpkinBlock", 5)
+                );
         }
 
-        return size >= 7 ? "南瓜" : "未成熟的南瓜";
+        return size >= 7
+            ? Localization.ClientLanguage.Catalog.Get("BasePumpkinBlock", 1)
+            : string.Format(
+                Localization.ClientLanguage.Catalog.Get("BasePumpkinBlock", 2),
+                Localization.ClientLanguage.Catalog.Get("BasePumpkinBlock", 5)
+            );
     }
 
     public override void Initialize()

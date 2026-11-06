@@ -52,7 +52,13 @@ public abstract class DeciduousLeavesBlockPresentation(
             _ => Localization.ClientLanguage.Catalog.Get("DeciduousLeavesBlock", 3)
         };
 
-        return seasonPrefix + displayName;
+        return Localization.ClientLanguage.Resolver.Get(
+            "BlockNames",
+            "Seasonal",
+            "{0} {1}",
+            seasonPrefix.Trim(),
+            displayName
+        );
     }
 
     public override int GetShadowStrength(int value)

@@ -16,7 +16,7 @@
                                       HorizontalAlignment="Center" VerticalAlignment="Center"
                                       Text="[CancellableBusyDialog:1]"/>
                 <BevelledButtonWidget Name="CancellableBusyDialog.HideButton" Style="{Styles/ButtonStyle_310x60}"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center" Text="后台处理"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" Text="[CancellableBusyDialog:Background]"
                                       Margin="20, 0"/>
             </StackPanelWidget>
         </UniformSpacingPanelWidget>

@@ -13,14 +13,14 @@ public class SeedsBlockPresentation(SeedsBlock block, BlockPresentationCatalog c
     {
         return Terrain.ExtractData(value) switch
         {
-            0 => Localization.ClientLanguage.Catalog.Get(Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 1)),
-            1 => Localization.ClientLanguage.Catalog.Get(Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 2)),
-            2 => Localization.ClientLanguage.Catalog.Get(Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 3)),
-            3 => Localization.ClientLanguage.Catalog.Get(Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 4)),
-            4 => Localization.ClientLanguage.Catalog.Get(Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 5)),
-            5 => Localization.ClientLanguage.Catalog.Get(Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 6)),
-            6 => Localization.ClientLanguage.Catalog.Get(Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 7)),
-            7 => Localization.ClientLanguage.Catalog.Get(Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 8)),
+            0 => Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 1),
+            1 => Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 2),
+            2 => Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 3),
+            3 => Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 4),
+            4 => Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 5),
+            5 => Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 6),
+            6 => Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 7),
+            7 => Localization.ClientLanguage.Catalog.Get("BaseSeedBlock", 8),
             _ => string.Empty
         };
     }

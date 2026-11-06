@@ -48,7 +48,8 @@ public class LevelFactorDialog : Dialog
 
         _namesWidget.Text = _namesWidget.Text.TrimEnd();
         _valuesWidget.Text = _valuesWidget.Text.TrimEnd();
-        _totalNameWidget.Text = $"{"TOTAL",24}";
+        _totalNameWidget.Text =
+            $"{Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(LevelFactorDialog), "Total"),24}";
         _totalValueWidget.Text = string.Format(CultureInfo.InvariantCulture, "x {0:0.00}", total);
     }
 

@@ -35,9 +35,9 @@ public class PaintBucketBlock : BucketBlock
                 {
                     var craftingRecipe = new CraftingRecipe
                     {
-                        Description = LocalizedText.Literal("制作"),
+                        Description = new LocalizedText(nameof(PaintBucketBlock), "CraftingPrefix", "Make"),
                         DescriptionColor = num,
-                        DescriptionSuffix = LocalizedText.Literal("颜料"),
+                        DescriptionSuffix = new LocalizedText(nameof(PaintBucketBlock), "CraftingSuffix", "paint"),
                         ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, num),
                         ResultCount = 1,
                         RequiredHeatLevel = 1f,

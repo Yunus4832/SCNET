@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 
 using Engine.Core.Mathematics;
 using Engine.Network;
@@ -142,12 +143,14 @@ public sealed class LoadClient : IDisposable
 
     private static string Describe(NetworkDisconnectInfo information)
     {
-        if (information.Reason == NetworkDisconnectReason.Rejected && !information.Data.IsEmpty)
+        if (information.Reason is NetworkDisconnectReason.Rejected or NetworkDisconnectReason.RemoteClose &&
+            !information.Data.IsEmpty)
         {
             try
             {
-                return LoadWire.Decode(information.Data).OfType<ConnectionRejectPackage>().FirstOrDefault()?.Reason ??
-                       information.Reason.ToString();
+                var reason = LoadWire.Decode(information.Data).OfType<ConnectionRejectPackage>().FirstOrDefault()
+                    ?.Reason;
+                return reason is null ? information.Reason.ToString() : Describe(reason);
             }
             catch (Exception)
             {
@@ -185,12 +188,28 @@ public sealed class LoadClient : IDisposable
         SentBytes += data.Length;
     }
 
+    private static string Describe(LocalizedText text)
+    {
+        if (text.Kind != LocalizedTextKind.Format) { return text.Fallback; }
+
+        var template = Describe(text.Template!);
+        try
+        {
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                template,
+                text.Arguments.Select(Describe).Cast<object>().ToArray()
+            );
+        }
+        catch (FormatException) { return template; }
+    }
+
     private void Receive(IProtocolMessage package)
     {
         switch (package)
         {
             case ConnectionRejectPackage reject:
-                Fail($"rejected: {reject.Reason}");
+                Fail($"rejected: {Describe(reject.Reason)}");
                 break;
             case AdmissionChallengePackage challenge:
                 if (challenge.Mode != ServerAdmissionMode.Open)

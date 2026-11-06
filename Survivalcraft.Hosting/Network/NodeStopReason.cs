@@ -2,8 +2,13 @@ using Engine.Network;
 
 namespace Game.Network;
 
-/// <summary>Original application/remote text and optional transport fact, never localized by the node.</summary>
-public sealed record NodeStopReason(string Message, NetworkDisconnectReason? TransportReason = null)
+/// <summary>Retains localized application text and the original transport fact until display.</summary>
+public sealed record NodeStopReason(LocalizedText Message, NetworkDisconnectReason? TransportReason = null)
 {
-    public static NodeStopReason None { get; } = new(string.Empty);
+    public NodeStopReason(string message, NetworkDisconnectReason? transportReason = null)
+        : this(LocalizedText.Literal(message), transportReason)
+    {
+    }
+
+    public static NodeStopReason None { get; } = new(LocalizedText.Empty);
 }

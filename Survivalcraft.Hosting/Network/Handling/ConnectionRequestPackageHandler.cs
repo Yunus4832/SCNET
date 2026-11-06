@@ -19,7 +19,13 @@ public sealed class ConnectionRequestPackageHandler(string modDataHash) : Packag
 
         if (!context.IsServer)
         {
-            request.Reject(NetNode.CreateUnconnectedPayload(new ConnectionRejectPackage("当前节点不是游戏服务器")));
+            request.Reject(
+                NetNode.CreateUnconnectedPayload(
+                    new ConnectionRejectPackage(
+                        ConnectionMessages.Create("NotGameServer", "This endpoint is not a game server")
+                    )
+                )
+            );
             return;
         }
 
@@ -29,13 +35,21 @@ public sealed class ConnectionRequestPackageHandler(string modDataHash) : Packag
         if (error is not null)
         {
             request.Reject(NetNode.CreateUnconnectedPayload(new ConnectionRejectPackage(error)));
-            Log.Information($"Rejected connection request from {request.TransportEndpoint}: {error}");
+            Log.Information(
+                $"Rejected connection request from {request.TransportEndpoint}: {error.Section}.{error.Key}"
+            );
             return;
         }
 
         if (node.AdmissionController is not { } admission)
         {
-            request.Reject(NetNode.CreateUnconnectedPayload(new ConnectionRejectPackage("服务器认证尚未准备完成")));
+            request.Reject(
+                NetNode.CreateUnconnectedPayload(
+                    new ConnectionRejectPackage(
+                        ConnectionMessages.Create("AuthenticationNotReady", "Server authentication is not ready")
+                    )
+                )
+            );
             return;
         }
 
@@ -79,21 +93,30 @@ public sealed class ConnectionRequestPackageHandler(string modDataHash) : Packag
         node.BeginClientBootstrap(client);
     }
 
-    private string? AdmissionError(
+    private LocalizedText? AdmissionError(
         ConnectionRequestPackage package,
         Project project,
         NetNode node,
         PlayerAddress address
     )
     {
-        if (package.Magic != GameProtocol.ConnectionMagic) { return "无法识别的数据包头"; }
+        if (package.Magic != GameProtocol.ConnectionMagic)
+        {
+            return ConnectionMessages.Create("InvalidHeader", "Unrecognized connection request");
+        }
 
-        if (package.ProtocolVersion != GameProtocol.CurrentVersion) { return "客户端和服务器协议版本不一致"; }
+        if (package.ProtocolVersion != GameProtocol.CurrentVersion)
+        {
+            return ConnectionMessages.Create("ProtocolMismatch", "Client and server protocol versions do not match");
+        }
 
         var hash = modDataHash;
         if (!string.Equals(package.ModDataHash, hash, StringComparison.OrdinalIgnoreCase))
         {
-            return "客户端模组与服务器不一致，请刷新服务器信息后重试";
+            return ConnectionMessages.Create(
+                "ModsMismatch",
+                "Client and server mods do not match. Refresh server information and try again."
+            );
         }
 
         return PlayerAdmission.Rejection(project, node, address, package.TmpToken);

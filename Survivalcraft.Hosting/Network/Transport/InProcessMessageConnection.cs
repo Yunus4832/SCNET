@@ -33,7 +33,7 @@ public sealed class InProcessMessageConnection : IMessageConnection
 
     public bool IsInProcess => true;
 
-    internal string DisconnectReason => _lifetime.DisconnectReason;
+    internal LocalizedText DisconnectReason => _lifetime.DisconnectReason;
 
     public static (InProcessMessageConnection ToAuthority, InProcessMessageConnection ToClient) CreatePair(
         NetNode authority,
@@ -136,7 +136,7 @@ public sealed class InProcessMessageConnection : IMessageConnection
         _lifetime.Close();
     }
 
-    public void Disconnect(string reason)
+    public void Disconnect(LocalizedText reason)
     {
         _lifetime.Close(reason);
     }
@@ -151,7 +151,7 @@ public sealed class InProcessMessageConnection : IMessageConnection
 
         private readonly Lock _gate = new();
 
-        internal string DisconnectReason { get; private set; } = string.Empty;
+        internal LocalizedText DisconnectReason { get; private set; } = LocalizedText.Empty;
 
         public Lifetime(CancellationToken authorityClosed, CancellationToken clientClosed)
         {
@@ -161,13 +161,13 @@ public sealed class InProcessMessageConnection : IMessageConnection
 
         public bool IsClosed => Volatile.Read(ref _isClosed) != 0 || Token.IsCancellationRequested;
 
-        public void Close(string reason = "")
+        public void Close(LocalizedText? reason = null)
         {
             lock (_gate)
             {
                 if (_isClosed != 0) { return; }
 
-                DisconnectReason = reason;
+                DisconnectReason = reason ?? LocalizedText.Empty;
                 Volatile.Write(ref _isClosed, 1);
                 _closed.Cancel();
                 _closed.Dispose();

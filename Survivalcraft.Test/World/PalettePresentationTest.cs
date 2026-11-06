@@ -37,7 +37,10 @@ public sealed class PalettePresentationTest
         settings.Palette.Names[3] = "Changed";
         Assert.Equal(Color.White, palette.GetColor(0));
         Assert.Equal("Ocean", palette.GetName(3));
-        Assert.Equal("Ocean Block", PalettePresentation.GetName(palette, 3, "Block"));
+        Assert.Equal(
+            Game.Localization.ClientLanguage.Resolver.Get("BlockNames", "Colored", "{0} {1}", "Ocean", "Block"),
+            PalettePresentation.GetName(palette, 3, "Block")
+        );
         Assert.Equal(
             Game.Localization.ClientLanguage.Catalog.GetWorldPalette(0),
             PalettePresentation.GetName(palette, 0)

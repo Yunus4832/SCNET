@@ -60,13 +60,10 @@ public class ArrowBlockPresentation(ArrowBlock block, BlockPresentationCatalog c
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)
     {
-        var arrowType = (int)GetArrowType(Terrain.ExtractData(value));
-        if (arrowType < 0 || arrowType >= DisplayNames.Length)
-        {
-            return string.Empty;
-        }
-
-        return DisplayNames[arrowType];
+        var type = GetArrowType(Terrain.ExtractData(value));
+        return Enum.IsDefined(type)
+            ? Localization.ClientLanguage.Catalog.GetBlock($"ArrowBlock:{(int)type}", "DisplayName")
+            : string.Empty;
     }
 
     public override void Initialize()

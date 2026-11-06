@@ -346,7 +346,7 @@ public sealed class AdmissionTransportTest
         );
         if (banDuringWait)
         {
-            Assert.Contains("禁止", Assert.Single(rejects).Reason);
+            Assert.Equal("Banned", Assert.Single(rejects).Reason.Key);
             Assert.DoesNotContain(replies, reply => reply.Code == AdmissionResultCode.Accepted);
             Assert.False(clientNode.AdmissionAccepted);
             Assert.Equal(0, admitted);
@@ -410,7 +410,7 @@ public sealed class AdmissionTransportTest
             new ConnectionRejectPackage("untrusted stop"),
             node.CreateReceiveContext()
         );
-        Assert.Equal(string.Empty, node.StopReason.Message);
+        Assert.Equal(string.Empty, node.StopReason.Message.Fallback);
     }
 
     private sealed class AdmissionProject : Project

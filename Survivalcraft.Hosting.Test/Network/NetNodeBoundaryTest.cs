@@ -1,5 +1,7 @@
+using Game.Localization;
 using Game.Network;
 using Game.Network.Handling;
+using Game.Protocol.Localization;
 
 namespace Survivalcraft.Hosting.Test.Network;
 
@@ -38,8 +40,8 @@ public sealed class NetNodeBoundaryTest
             "_clientsToRemove",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic
         )!;
-        var removals = (Dictionary<Client, string>)field.GetValue(node)!;
-        Assert.Equal(expected, removals[client]);
+        var removals = (Dictionary<Client, LocalizedText>)field.GetValue(node)!;
+        Assert.Equal(expected, new LocalizedTextResolver(new LanguageCatalog()).Resolve(removals[client]));
         Assert.Single(removals);
         node.StopImmediate();
     }

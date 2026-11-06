@@ -11,7 +11,10 @@ public class CottonBlockPresentation(CottonBlock block, BlockPresentationCatalog
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)
     {
-        return !CottonBlock.GetIsWild(Terrain.ExtractData(value)) ? "棉花" : "野生棉花";
+        return Localization.ClientLanguage.Catalog.Get(
+            nameof(CottonBlock),
+            CottonBlock.GetIsWild(Terrain.ExtractData(value)) ? 1 : 0
+        );
     }
 
     public override int GetFaceTextureSlot(int face, int value)

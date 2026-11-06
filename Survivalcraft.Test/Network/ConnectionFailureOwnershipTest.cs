@@ -102,7 +102,7 @@ public sealed class ConnectionFailureOwnershipTest
             return ConnectionSendResult.Accepted;
         }
 
-        public void Disconnect(string reason)
+        public void Disconnect(LocalizedText reason)
         {
         }
 

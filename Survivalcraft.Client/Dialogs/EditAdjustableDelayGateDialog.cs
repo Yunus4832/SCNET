@@ -70,7 +70,10 @@ public class EditAdjustableDelayGateDialog : Dialog
         _delaySlider.Value = _delay;
         _minusButton.IsEnabled = _delay > _delaySlider.MinValue;
         _plusButton.IsEnabled = _delay < _delaySlider.MaxValue;
-        _delayLabel.Text = $"{(_delay + 1) * 0.01f:0.00} seconds";
+        _delayLabel.Text = string.Format(
+            Localization.ClientLanguage.Catalog.Get(nameof(EditAdjustableDelayGateDialog), 1),
+            ((_delay + 1) * 0.01f).ToString("0.00")
+        );
     }
 
     public void Dismiss(int? result)

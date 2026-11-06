@@ -50,7 +50,16 @@ internal sealed class ServerAdmissionController(
             ) >=
             4)
         {
-            transport.Reject(NetNode.CreateUnconnectedPayload(new ConnectionRejectPackage("认证请求过多，请稍后重试")));
+            transport.Reject(
+                NetNode.CreateUnconnectedPayload(
+                    new ConnectionRejectPackage(
+                        ConnectionMessages.Create(
+                            "TooManyAuthenticationRequests",
+                            "Too many authentication requests. Please try again later."
+                        )
+                    )
+                )
+            );
             return;
         }
 
@@ -84,7 +93,7 @@ internal sealed class ServerAdmissionController(
                 new AdmissionResultPackage(pending.Attempt.Challenge.Nonce, AdmissionResultCode.Cancelled),
                 peer
             );
-            node.RemoveClient(client, "认证已取消");
+            node.RemoveClient(client, ConnectionMessages.Create("AuthenticationCancelled", "Authentication cancelled"));
             return;
         }
 
@@ -159,7 +168,13 @@ internal sealed class ServerAdmissionController(
             if (!peer.IsConnected || now >= item.Attempt.Challenge.ExpiresAt)
             {
                 _pending.Remove(peer.Id);
-                if (peer.IsConnected) { node.RemoveClient(item.Client, "认证等待超时"); }
+                if (peer.IsConnected)
+                {
+                    node.RemoveClient(
+                        item.Client,
+                        ConnectionMessages.Create("AuthenticationTimedOut", "Authentication timed out")
+                    );
+                }
 
                 continue;
             }
@@ -176,7 +191,10 @@ internal sealed class ServerAdmissionController(
                 else if (item.Attempt.IsTerminal || result.Code == AdmissionResultCode.Denied)
                 {
                     _pending.Remove(peer.Id);
-                    node.RemoveClient(item.Client, "认证已过期或被拒绝");
+                    node.RemoveClient(
+                        item.Client,
+                        ConnectionMessages.Create("AuthenticationDenied", "Authentication expired or was denied")
+                    );
                     continue;
                 }
             }

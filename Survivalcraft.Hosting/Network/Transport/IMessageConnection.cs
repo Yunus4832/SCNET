@@ -10,5 +10,5 @@ public interface IMessageConnection : IConnectionLiveness, IDisposable
     /// </summary>
     ConnectionSendResult TrySendOwned(OutboundPackage message);
 
-    void Disconnect(string reason);
+    void Disconnect(LocalizedText reason);
 }

@@ -106,7 +106,7 @@ internal sealed class NetworkMessageConnection : IMessageConnection
             : ConnectionSendResult.Closed;
     }
 
-    public void Disconnect(string reason)
+    public void Disconnect(LocalizedText reason)
     {
         if (Interlocked.Exchange(ref _disconnected, 1) != 0) { return; }
 
@@ -116,9 +116,9 @@ internal sealed class NetworkMessageConnection : IMessageConnection
         _node.ReleaseConnectionDelivery(_recipient);
         if (_peer.IsConnected)
         {
-            _peer.Disconnect(string.IsNullOrEmpty(reason) ? default : NetNode.EncodeDisconnectReason(reason));
+            _peer.Disconnect(reason == LocalizedText.Empty ? default : NetNode.EncodeDisconnectReason(reason));
         }
     }
 
-    public void Dispose() => Disconnect(string.Empty);
+    public void Dispose() => Disconnect(LocalizedText.Empty);
 }

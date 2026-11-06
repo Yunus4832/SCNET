@@ -93,7 +93,9 @@
         "4": "Come back!",
         "5": "Burned to death",
         "6": "Stranded on land",
-        "7": "Suffocated"
+        "7": "Suffocated",
+        "Stuck": "You are stuck",
+        "KilledByCharacter": "Killed by {0}"
     },
     "ComponentBody": [
         "Crushed"
@@ -144,7 +146,9 @@
         "3": "Loading database.",
         "4": "Initializing BlocksManager.",
         "5": "Loading mod settings.",
-        "6": "Executing OnLoadingFinished mission."
+        "6": "Executing OnLoadingFinished mission.",
+        "ConfirmQuit": "Quit the game?",
+        "AudioUnavailable": "The audio system could not be loaded. Sound may be unavailable."
     },
     "ModEntity": {
         "1": "Loading .csv blocksdata files.",
@@ -632,7 +636,8 @@
         "bitten": "bitten",
         "massacred": "massacred",
         "ripped open": "ripped open",
-        "murdered": "murdered"
+        "murdered": "murdered",
+        "ItemDisabled": "This item is disabled"
     },
     "ComponentIntro": {
         "1": "Cast away, boys.",
@@ -2315,7 +2320,7 @@
             "CRDescription:0": "Make iron bolt from rod and feather"
         },
         "ArrowBlock:6": {
-            "DisplayName": "Diamond Tip Iron Bolt",
+            "DisplayName": "Diamond Bolt",
             "Description": "Arrows and bolts are fired from projectile weapons.",
             "CRDescription:0": "Make diamond-tipped bolt from iron bolt and a diamond"
         },
@@ -2840,7 +2845,8 @@
             "1": "Adjust Voltage"
         },
         "CancellableBusyDialog": {
-            "1": "Cancel"
+            "1": "Cancel",
+            "Background": "Run in background"
         },
         "EditAdjustableDelayGateDialog": {
             "1": "Adjust Delay",
@@ -2864,9 +2870,14 @@
         "EditPistonDialog": {
             "1": "Max Extension",
             "2": "Pull Count",
-            "3": "Speed Setting",
+            "3": "Speed",
             "4": "OK",
-            "5": "Cancel"
+            "5": "Cancel",
+            "EditTitle": "Edit {0}",
+            "Fast": "Fast",
+            "Medium": "Medium",
+            "Slow": "Slow",
+            "VerySlow": "Very slow"
         },
         "GameMenuDialog": {
             "1": "Resume",
@@ -2997,7 +3008,8 @@
         },
         "LevelFactorDialog": {
             "1": "Current multipliers:",
-            "2": "OK"
+            "2": "OK",
+            "Total": "TOTAL"
         },
         "TextBoxDialog": {
             "1": "OK",
@@ -3054,7 +3066,17 @@
             "ManageServicesDescription": "Manage installed server sources, signaling and authentication"
         },
         "GameLoadingScreen": {
-            "1": "Loading World"
+            "1": "Loading World",
+            "Connecting": "Connecting to server",
+            "WaitingForServer": "Waiting for server response",
+            "Authenticating": "Authenticating",
+            "WaitingForWorldData": "Waiting for world data and textures",
+            "LoadingServerWorld": "Loading server world",
+            "ApplyingSnapshot": "Applying initial world snapshot",
+            "ConnectionTimedOut": "Connection timed out",
+            "Disconnected": "Connection closed",
+            "ServerDisconnected": "Disconnected from server",
+            "SnapshotTimedOut": "Timed out waiting for initial world snapshot"
         },
         "HelpScreen": {
             "1": "Help Topics",
@@ -3319,7 +3341,8 @@
             "28": "Season:",
             "DefaultDescription": "Configure terrain, environment, seasons, and gameplay rules for this world.",
             "HotbarSlotsCount": "Hotbar capacity",
-            "HotbarSlotsCountDescription": "Sets the hotbar capacity for the current game mode; use pages when space is limited"
+            "HotbarSlotsCountDescription": "Sets the hotbar capacity for the current game mode; use pages when space is limited",
+            "DaysCount": "{0} days"
         },
         "ModWorldSelectionDialog": {
             "Title": "Add or Replace World Mod Version"
@@ -3824,7 +3847,8 @@
             "2": " Flickering",
             "3": "(Low)",
             "4": "(High)"
-        }
+        },
+        "CraftingDescription": "Make fireworks"
     },
     "WorldPalette": {
         "Colors": [
@@ -4306,7 +4330,21 @@
         "PlayerUnmuted_Message": "Unmuted player {0}.",
         "PlayerMutedList_Message": "Muted world players:\n{0}",
         "PlayerBannedCommand_Message": "This player is banned from this world.",
-        "NoAuthorityWorld_Message": "No authoritative world is running."
+        "NoAuthorityWorld_Message": "No authoritative world is running.",
+        "NetworkSendStatistics_Description": "Show network send statistics for the connection",
+        "AutomationInputRun_Description": "Run a timed input sequence",
+        "AutomationGameplayContext_Description": "Read character interaction context",
+        "AutomationLookAt_Description": "Look toward world coordinates",
+        "AutomationLookState_Description": "Read view control state",
+        "AutomationLookAdjust_Description": "Adjust view angles",
+        "AutomationLookCancel_Description": "Cancel view control",
+        "AutomationNavigate_Description": "Walk automatically to a position",
+        "AutomationNavigationState_Description": "Read navigation state",
+        "AutomationNavigationCancel_Description": "Cancel navigation",
+        "AutomationInputState_Description": "Read automation input state",
+        "AutomationInputCancel_Description": "Cancel automation input",
+        "AutomationInputText_Description": "Send automated text input",
+        "AutomationInventoryDrag_Description": "Drag an inventory item"
     },
     "AndroidServer": {
         "Title": "Server Log",
@@ -4427,5 +4465,128 @@
     },
     "ComponentCharacter": {
         "1": "Sneak to improve your aim"
+    },
+    "ClipboardManager": {
+        "WriteFailed": "Could not copy text: {0}"
+    },
+    "SubsystemCactusBlockBehavior": {
+        "CauseOfDeath": "Pricked by a cactus"
+    },
+    "PumpkinSoupBucketBlock": {
+        "CraftingDescription": "Cook pumpkin soup"
+    },
+    "PaintBucketBlock": {
+        "CraftingPrefix": "Make",
+        "CraftingSuffix": "paint"
+    },
+    "ModPreparation": {
+        "Checking": "Checking mod {0}@{1} ({2})",
+        "Cached": "Found {0}@{1} in local cache",
+        "Downloading": "Looking for {0}@{1} in content repositories",
+        "RepositoryFailed": "Repository {0} failed: {1}",
+        "Downloaded": "Downloaded mod {0}@{1}"
+    },
+    "CarpetBlock": {
+        "Dye": "Dye carpet",
+        "Undye": "Undye carpet"
+    },
+    "SubsystemEggBlockBehavior": {
+        "CapacityLimit": "Too many creatures"
+    },
+    "GameManager": {
+        "SaveFailedTitle": "Could not save world: {0}",
+        "SaveFailedMessage": "Saving did not complete. Resolve the problem and try again.\n{0}"
+    },
+    "GameEntry": {
+        "UnhandledException": "Unhandled exception: {0}"
+    },
+    "Connection": {
+        "TokenInvalid": "Invalid connection token",
+        "AlreadyOnline": "This player is already online",
+        "TokenInUse": "Connection token is already in use",
+        "Banned": "You are banned from this server",
+        "ServerFull": "The server is full",
+        "SessionCreationFailed": "Could not create the player session. Please try again later.",
+        "InvalidHeader": "Unrecognized connection request",
+        "ProtocolMismatch": "Client and server protocol versions do not match",
+        "ModsMismatch": "Client and server mods do not match. Refresh server information and try again.",
+        "WorldChanged": "The world has changed. Please rejoin.",
+        "ChallengeChangedAfterAdmission": "The server changed the challenge after authentication",
+        "ChallengeInvalid": "The authentication challenge is expired or invalid",
+        "ChallengeChanged": "The server changed the authentication challenge",
+        "AdmissionEnded": "Authentication was cancelled, expired or denied",
+        "ServerStarting": "Please wait for the server to finish starting",
+        "ServerClosed": "The server closed the connection",
+        "RequestRejected": "Connection request rejected",
+        "DeliveryFailed": "Message delivery confirmation failed",
+        "Closed": "Connection closed",
+        "TooManyRequests": "Too many connection requests. Please try again later.",
+        "InvalidRequest": "Invalid connection request",
+        "TooManyAuthenticationRequests": "Too many authentication requests. Please try again later.",
+        "AuthenticationCancelled": "Authentication cancelled",
+        "AuthenticationTimedOut": "Authentication timed out",
+        "AuthenticationDenied": "Authentication expired or was denied",
+        "WorldAccessDenied": "You are not permitted to enter this world",
+        "CharacterLoadFailed": "Could not load player data. Please try again later.",
+        "LogicalQueueFull": "The logical recipient queue cannot accept another message.",
+        "OutgoingQueueFull": "The outgoing message queue cannot accept another message.",
+        "InboxFull": "The runtime message inbox is full.",
+        "NativeDeliveryFailed": "Error on native message delivery.",
+        "TransportLimitExceeded": "The outgoing message exceeds the transport send limit.",
+        "MessageDeliveryFailed": "Message delivery failed: {0}",
+        "NotGameServer": "This endpoint is not a game server",
+        "AuthenticationNotReady": "Server authentication is not ready",
+        "PublicationQueueFull": "The logical publication queue cannot accept another message."
+    },
+    "DebugOverlay": {
+        "Context": "CONTEXT",
+        "Performance": "PERFORMANCE",
+        "Network": "NETWORK",
+        "Character": "CHARACTER",
+        "World": "WORLD",
+        "Screen": "Screen",
+        "Dialog": "Dialog",
+        "Depth": "Depth",
+        "HudPanel": "HUD Panel",
+        "Fps": "FPS",
+        "Cpu": "CPU",
+        "Managed": "Managed",
+        "Gpu": "GPU",
+        "Mode": "Mode",
+        "Path": "Path",
+        "Ip": "IP",
+        "Signaling": "Signaling",
+        "Ping": "Ping",
+        "PacketLoss": "Packet Loss",
+        "PendingAck": "Pending ACK",
+        "ListenUdp": "Listen UDP",
+        "Clients": "Clients",
+        "Direct": "Direct",
+        "P2PDirect": "P2P direct",
+        "Relay": "Relay",
+        "P2PRoom": "P2P room",
+        "P2PError": "P2P error",
+        "RelayPeer": "Relay peer",
+        "ServerPeer": "Server peer",
+        "AddressDirect": "Address direct",
+        "Name": "Name",
+        "Position": "Position",
+        "Cell": "Cell",
+        "Chunk": "Chunk",
+        "Altitude": "Altitude",
+        "Ground": "Ground",
+        "GroundValue": "{0} ({1} above)",
+        "Time": "Time",
+        "Season": "Season",
+        "Temperature": "Temperature",
+        "Humidity": "Humidity",
+        "Light": "Light",
+        "Role_Inactive": "Inactive",
+        "Role_Authority": "Authority",
+        "Role_Client": "Client"
+    },
+    "BlockNames": {
+        "Colored": "{0} {1}",
+        "Seasonal": "{0} {1}"
     }
 }

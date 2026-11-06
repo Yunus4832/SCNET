@@ -52,10 +52,14 @@ public class SubsystemEggBlockBehavior : SubsystemBlockBehavior
         }
 
         Project.FindSubsystem<SubsystemMessages>(true)!.Service.Publish(
-            GameMessage.System("太多生物了", presentation: GameMessagePresentation.Toast) with
-            {
-                ToastStyle = new GameMessageToastStyle(GameMessageTone.Normal, true, false)
-            },
+            GameMessageLocalization.System(
+                    "SubsystemEggBlockBehavior",
+                    "CapacityLimit",
+                    presentation: GameMessagePresentation.Toast
+                ) with
+                {
+                    ToastStyle = new GameMessageToastStyle(GameMessageTone.Normal, true, false)
+                },
             [recipient.ID],
             includePublisher: false
         );

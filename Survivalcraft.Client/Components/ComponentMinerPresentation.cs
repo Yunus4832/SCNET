@@ -119,17 +119,22 @@ public sealed class ComponentMinerPresentation : Component
         {
             if (_miner.CalculateDigTime(digValue, Terrain.ExtractContents(value)) >= .5f * digTime) { return; }
 
-            text = "使用:" +
-                   _blockPresentations.Get(Terrain.ExtractContents(value))
-                       .GetDisplayName(_terrain, value) +
-                   "更快挖掘";
+            text = string.Format(
+                Localization.ClientLanguage.Catalog.Get(ComponentMiner.Name, 12),
+                _blockPresentations.Get(Terrain.ExtractContents(value)).GetDisplayName(_terrain, value)
+            );
         }
 
         Notify(text, Color.White, true, true);
         _lastToolHintTime = Time.FrameStartTime;
     }
 
-    private void OnItemDisabled() => Notify("此物品已被禁用", Color.Red, false, true);
+    private void OnItemDisabled() => Notify(
+        Localization.ClientLanguage.Catalog.Get(ComponentMiner.Name, "ItemDisabled"),
+        Color.Red,
+        false,
+        true
+    );
 
     private void OnFriendlyFireRejected()
     {

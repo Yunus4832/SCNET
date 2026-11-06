@@ -74,7 +74,7 @@ public class SubsystemCactusBlockBehavior : SubsystemPollableBlockBehavior, IUpd
             return;
         }
 
-        var cause = LocalizedText.Literal("被仙人掌刺入");
+        var cause = new LocalizedText("SubsystemCactusBlockBehavior", "CauseOfDeath", "Pricked by a cactus");
         var amount = 0.01f * MathUtils.Abs(velocity);
         if (WorldRuntimeContext.For(Project).IsAuthority)
         {

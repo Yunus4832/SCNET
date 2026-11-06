@@ -42,6 +42,12 @@ payload/assets/<mod-id>/**
 模组可以在 `payload/assets/<mod-id>/lang/<语言代码>.json` 中补充翻译。可选语言及其显示名称只由游戏内置语言文件定义；
 模组提供的其他语言代码不会新增语言选项，也不会在运行时加载。
 
+方块显示名称和说明在客户端表现层按当前语言解析。带变种的方块先提取箭种、材质等语义编号，
+再查询 `Blocks.<类型名>:<变种>.DisplayName` 等资源；模型节点名和配方材料标识用于资源及规则关联。
+颜色、季节组合名称使用 `BlockNames.Colored` 和 `BlockNames.Seasonal` 格式模板，分别接收修饰名称和基础名称两个参数。
+跨网络的提示、拒绝与断开原因携带 `LocalizedText` 资源和参数，由接收端解析语言。
+
+
 图像资产使用普通直通 Alpha，默认采用无损 WebP，也支持 PNG。默认内容查找优先选择 WebP。
 `Image` 保留原始像素；`Texture2D.Load` 在上传 GPU 前由 CPU 预乘，不修改输入图片，资源作者无需预乘。
 GUI 图集也输出直通 Alpha 的 WebP，约定见 [图集工具](../GuiAtlasTool/README.md)。

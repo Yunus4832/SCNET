@@ -18,7 +18,7 @@ public class PressurePlateBlockPresentation(PressurePlateBlock block, BlockPrese
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)
     {
         var material = GetMaterial(Terrain.ExtractData(value));
-        return Block.DisplayNamesByMaterial[material];
+        return Localization.ClientLanguage.Catalog.Get(nameof(PressurePlateBlock), material);
     }
 
     public override BlockDebrisParticleSystem? CreateDebrisParticleSystem(

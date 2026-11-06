@@ -11,22 +11,12 @@ public class SaplingBlockPresentation(SaplingBlock block, BlockPresentationCatal
     {
         return Terrain.ExtractData(value) switch
         {
-            0 => Localization.ClientLanguage.Catalog.Get(
-                Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 1)
-            ),
-            1 => Localization.ClientLanguage.Catalog.Get(
-                Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 2)
-            ),
-            2 => Localization.ClientLanguage.Catalog.Get(
-                Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 3)
-            ),
-            3 => Localization.ClientLanguage.Catalog.Get(
-                Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 4)
-            ),
-            4 => Localization.ClientLanguage.Catalog.Get(
-                Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 5)
-            ),
-            _ => Localization.ClientLanguage.Catalog.Get(Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 6))
+            0 => Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 1),
+            1 => Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 2),
+            2 => Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 3),
+            3 => Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 4),
+            4 => Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 5),
+            _ => Localization.ClientLanguage.Catalog.Get("BaseSaplingBlock", 6)
         };
     }
 

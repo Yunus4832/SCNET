@@ -279,7 +279,7 @@ public sealed class NativeTerrainReceiverTest
 
         public ConnectionSendResult TrySendOwned(OutboundPackage message) => ConnectionSendResult.Accepted;
 
-        public void Disconnect(string reason)
+        public void Disconnect(LocalizedText reason)
         {
         }
 

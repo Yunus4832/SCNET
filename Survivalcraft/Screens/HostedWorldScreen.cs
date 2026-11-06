@@ -93,7 +93,7 @@ public sealed class HostedWorldScreen : Screen
         {
             _joining = false;
             GameManager.LocalPlayerReturnTarget = null;
-            _failure = error;
+            _failure = Localization.ClientLanguage.Resolver.Resolve(error);
             _admission?.Dispose();
             _admission = null;
         }

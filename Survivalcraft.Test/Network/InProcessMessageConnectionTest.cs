@@ -46,7 +46,7 @@ public sealed class InProcessMessageConnectionTest
         client.Stopped += (_, stopped, _, message) =>
         {
             Assert.Same(runtime, stopped);
-            reason = message.Message;
+            reason = message.Message.Fallback;
         };
         Assert.DoesNotContain(server, client.Clients.Values);
         Assert.Null(self.Connection);

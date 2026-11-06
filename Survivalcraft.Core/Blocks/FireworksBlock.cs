@@ -108,7 +108,11 @@ public class FireworksBlock : Block
                             RemainsCount = 1,
                             RemainsValue = Terrain.MakeBlockValue(90),
                             RequiredHeatLevel = 0f,
-                            Description = LocalizedText.Literal("制作烟花")
+                            Description = new LocalizedText(
+                                nameof(FireworksBlock),
+                                "CraftingDescription",
+                                "Make fireworks"
+                            )
                         };
 
                         switch (shape)

@@ -13,6 +13,6 @@ public sealed class ConnectionRejectPackageHandler : PackageHandlerBase<Connecti
             return;
         }
 
-        netNode.Stop($"[连接拒绝]{package.Reason}");
+        netNode.Stop(package.Reason);
     }
 }

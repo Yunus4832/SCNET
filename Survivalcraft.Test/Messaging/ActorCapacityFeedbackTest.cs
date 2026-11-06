@@ -83,7 +83,10 @@ public sealed class ActorCapacityFeedbackTest
 
         Assert.Same(worlds.Recipient, Assert.Single(worlds.Pending).Audience.SingleRecipient);
         worlds.Deliver();
-        Assert.Equal("太多生物了", Assert.Single(worlds.Received).Content.PlainText);
+        var feedback = Assert.Single(Assert.Single(worlds.Received).Content.Segments).Text;
+        Assert.Equal("SubsystemEggBlockBehavior", feedback.Section);
+        Assert.Equal("CapacityLimit", feedback.Key);
+        Assert.False(feedback.IsLiteral);
         Assert.Empty(worlds.OtherReceived);
     }
 

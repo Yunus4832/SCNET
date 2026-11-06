@@ -119,7 +119,7 @@ public sealed class WorldConnectionRegistrationTest
 
         public ConnectionSendResult TrySendOwned(OutboundPackage message) => throw new NotSupportedException();
 
-        public void Disconnect(string reason)
+        public void Disconnect(LocalizedText reason)
         {
             IsConnected = false;
         }

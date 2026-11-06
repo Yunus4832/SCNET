@@ -6,12 +6,12 @@ namespace Game.Dialogs;
 
 public class EditPistonDialog : Dialog
 {
-    private static readonly string[] _speedNames =
+    private static readonly string[] _speedKeys =
     [
         "Fast",
         "Medium",
         "Slow",
-        "Very Slow"
+        "VerySlow"
     ];
 
     private readonly ButtonWidget _cancelButton;
@@ -57,9 +57,10 @@ public class EditPistonDialog : Dialog
         _maxExtension = PistonBlock.GetMaxExtension(data);
         _pullCount = PistonBlock.GetPullCount(data);
         _speed = PistonBlock.GetSpeed(data);
-        _title.Text = "Edit " +
-                      catalog.Get(237)
-                          .GetDisplayName(null, Terrain.MakeBlockValue(237, 0, data));
+        _title.Text = string.Format(
+            Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(EditPistonDialog), "EditTitle"),
+            catalog.Get(237).GetDisplayName(null, Terrain.MakeBlockValue(237, 0, data))
+        );
         _slider1.Granularity = 1f;
         _slider1.MinValue = 1f;
         _slider1.MaxValue = 8f;
@@ -110,11 +111,18 @@ public class EditPistonDialog : Dialog
     public void UpdateControls()
     {
         _slider1.Value = _maxExtension + 1;
-        _slider1.Text = $"{_maxExtension + 1} blocks";
+        _slider1.Text = string.Format(
+            Localization.ClientLanguage.Catalog.Get(nameof(EditPistonDialog), 1),
+            _maxExtension + 1
+        );
         _slider2.Value = _pullCount + 1;
-        _slider2.Text = $"{_pullCount + 1} blocks";
+        _slider2.Text = string.Format(
+            Localization.ClientLanguage.Catalog.Get(nameof(EditPistonDialog), 1),
+            _pullCount + 1
+        );
         _slider3.Value = _speed;
-        _slider3.Text = _speedNames[_speed];
+        _slider3.Text =
+            Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(EditPistonDialog), _speedKeys[_speed]);
     }
 
     public void Dismiss(int? result)

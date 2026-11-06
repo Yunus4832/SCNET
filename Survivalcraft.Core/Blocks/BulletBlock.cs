@@ -11,13 +11,6 @@ public class BulletBlock : FlatBlock
         BuckshotBall = 2
     }
 
-    public static readonly string[] DisplayNames =
-    [
-        "枪弹",
-        "铅弹",
-        "铅弹球"
-    ];
-
     public static readonly float[] Sizes =
     [
         1f,

@@ -80,7 +80,7 @@ public sealed class BuiltInProcessCommands(ProcessCommandServices services, Netw
             new CommandDefinition<GetNetworkSendStatisticsCommand>(
                 _diagnostics.GetSendStatistics,
                 CommandDomain.Application,
-                LocalizedText.Literal("读取连接内网络发送统计"),
+                CommandDescription("NetworkSendStatistics_Description", "读取连接内网络发送统计"),
                 allowedPrincipals: CommandPrincipalKinds.LocalOperator
             )
         );

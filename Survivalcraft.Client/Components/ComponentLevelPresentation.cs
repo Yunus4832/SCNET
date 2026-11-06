@@ -21,6 +21,8 @@ public sealed class ComponentLevelPresentation : Component, IUpdateable
 
     private float? _lastLevelTextValue;
 
+    private int _lastLevelLanguageRevision = -1;
+
     private bool _subscribed;
 
     private int _generation;
@@ -54,10 +56,16 @@ public sealed class ComponentLevelPresentation : Component, IUpdateable
         if (!IsAddedToProject || !CanPresent) { return; }
 
         var level = MathUtils.Floor(_character.CharacterData.Level);
-        if (_lastLevelTextValue.HasValue && _lastLevelTextValue.Value.CloseTo(level)) { return; }
+        if (_lastLevelTextValue.HasValue &&
+            _lastLevelTextValue.Value.CloseTo(level) &&
+            _lastLevelLanguageRevision == Localization.ClientLanguage.Revision) { return; }
 
-        _character.Entity.FindComponent<ComponentGui>(true)!.LevelLabelWidget.Text = "等级 " + level;
+        _character.Entity.FindComponent<ComponentGui>(true)!.LevelLabelWidget.Text = string.Format(
+            Localization.ClientLanguage.Catalog.Get(ComponentLevel.Name, 2),
+            level
+        );
         _lastLevelTextValue = level;
+        _lastLevelLanguageRevision = Localization.ClientLanguage.Revision;
     }
 
     private bool CanPresent => _subscribed &&

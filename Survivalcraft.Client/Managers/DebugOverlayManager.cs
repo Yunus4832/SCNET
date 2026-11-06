@@ -5,6 +5,7 @@ using Engine.Input;
 using Engine.Network;
 
 using Game.Application;
+using Game.Commands;
 
 namespace Game.Managers;
 
@@ -118,50 +119,50 @@ public static class DebugOverlayManager
     {
         var lines = new List<string>
         {
-            "CONTEXT",
-            $"Screen      {ScreensManager.GetCurrentScreenName()}"
+            Text("Context"),
+            $"{RowLabel("Screen")}{ScreensManager.GetCurrentScreenName()}"
         };
         var dialog = DialogsManager.ReadOnlyDialogs.LastOrDefault();
         if (dialog != null)
         {
-            lines.Add($"Dialog      {dialog.GetType().Name}");
+            lines.Add($"{RowLabel("Dialog")}{dialog.GetType().Name}");
             if (DialogsManager.ReadOnlyDialogs.Count > 1)
             {
-                lines.Add($"Depth       {DialogsManager.ReadOnlyDialogs.Count}");
+                lines.Add($"{RowLabel("Depth")}{DialogsManager.ReadOnlyDialogs.Count}");
             }
         }
 
         var character = GetLocalCharacter();
         if (character?.Entity.FindComponent<ComponentGui>(true)!.ModalPanelWidget is { } panel)
         {
-            lines.Add($"HUD Panel   {panel.GetType().Name}");
+            lines.Add($"{RowLabel("HudPanel")}{panel.GetType().Name}");
         }
 
         lines.Add(string.Empty);
-        lines.Add("PERFORMANCE");
+        lines.Add(Text("Performance"));
         var frameTime = PerformanceManager.AverageFrameTime;
         lines.Add(
             frameTime > 0f
-                ? $"FPS         {1f / frameTime:0.0} ({frameTime * 1000f:0.0} ms)"
-                : "FPS         --"
+                ? $"{RowLabel("Fps")}{1f / frameTime:0.0} ({frameTime * 1000f:0.0} ms)"
+                : $"{RowLabel("Fps")}--"
         );
-        lines.Add($"CPU         {PerformanceManager.CpuUtilization * 100f:0}%");
-        lines.Add($"Managed     {PerformanceManager.TotalMemoryUsed / 1024f / 1024f:0} MB");
-        lines.Add($"GPU         {PerformanceManager.TotalGpuMemoryUsed / 1024f / 1024f:0} MB");
+        lines.Add($"{RowLabel("Cpu")}{PerformanceManager.CpuUtilization * 100f:0}%");
+        lines.Add($"{RowLabel("Managed")}{PerformanceManager.TotalMemoryUsed / 1024f / 1024f:0} MB");
+        lines.Add($"{RowLabel("Gpu")}{PerformanceManager.TotalGpuMemoryUsed / 1024f / 1024f:0} MB");
 
         lines.Add(string.Empty);
-        lines.Add("NETWORK");
+        lines.Add(Text("Network"));
         var world = ClientApplication.World?.Runtime;
         var node = world is null ? null : WorldNetworkBinding.FindNode(world);
-        lines.Add($"Mode        {node?.Role}");
+        lines.Add($"{RowLabel("Mode")}{Text($"Role_{node?.Role ?? NodeRole.Inactive}")}");
         if (node is { Role: NodeRole.Client } && node.Server?.Peer is { } peer)
         {
-            lines.Add($"Path        {GetPathText(peer.PathKind)}");
+            lines.Add($"{RowLabel("Path")}{GetPathText(peer.PathKind)}");
             lines.Add(
-                $"IP          {(peer.TransportEndpoint.AddressFamily == AddressFamily.InterNetworkV6 ? "IPv6" : "IPv4")}"
+                $"{RowLabel("Ip")}{(peer.TransportEndpoint.AddressFamily == AddressFamily.InterNetworkV6 ? "IPv6" : "IPv4")}"
             );
             lines.Add(
-                $"{(peer.PathKind == NetworkPathKind.Relay ? "Relay peer" : "Server peer"),-12}{peer.TransportEndpoint}"
+                RowLabel(peer.PathKind == NetworkPathKind.Relay ? "RelayPeer" : "ServerPeer") + peer.TransportEndpoint
             );
             var signalingAddress = node.RemoteTarget switch
             {
@@ -171,32 +172,34 @@ public static class DebugOverlayManager
             };
             if (signalingAddress is not null)
             {
-                lines.Add($"Signaling   {signalingAddress.AbsoluteUri}");
+                lines.Add($"{RowLabel("Signaling")}{signalingAddress.AbsoluteUri}");
             }
 
-            lines.Add($"Ping        {peer.RoundTripMilliseconds} ms");
-            lines.Add($"Packet Loss {peer.PacketLossPercent:0.##}%");
-            lines.Add($"Pending ACK {peer.PendingReliableBytes / 1024f:0.##} KB");
+            lines.Add($"{RowLabel("Ping")}{peer.RoundTripMilliseconds} ms");
+            lines.Add($"{RowLabel("PacketLoss")}{peer.PacketLossPercent:0.##}%");
+            lines.Add($"{RowLabel("PendingAck")}{peer.PendingReliableBytes / 1024f:0.##} KB");
         }
         else if (node is { Role: NodeRole.Authority })
         {
             var connections = node.Peers.Select(client => client.Peer).Where(peer => peer?.IsConnected == true)
                 .ToArray();
-            lines.Add($"Listen UDP  {node.LocalPort?.ToString() ?? "--"}");
-            lines.Add($"Clients     {connections.Length}");
-            lines.Add($"Direct      {connections.Count(peer => peer!.PathKind == NetworkPathKind.Direct)}");
-            lines.Add($"P2P direct  {connections.Count(peer => peer!.PathKind == NetworkPathKind.HolePunch)}");
-            lines.Add($"Relay       {connections.Count(peer => peer!.PathKind == NetworkPathKind.Relay)}");
+            lines.Add($"{RowLabel("ListenUdp")}{node.LocalPort?.ToString() ?? "--"}");
+            lines.Add($"{RowLabel("Clients")}{connections.Length}");
+            lines.Add($"{RowLabel("Direct")}{connections.Count(peer => peer!.PathKind == NetworkPathKind.Direct)}");
+            lines.Add(
+                $"{RowLabel("P2PDirect")}{connections.Count(peer => peer!.PathKind == NetworkPathKind.HolePunch)}"
+            );
+            lines.Add($"{RowLabel("Relay")}{connections.Count(peer => peer!.PathKind == NetworkPathKind.Relay)}");
             var room = node.GetP2PStatus();
-            lines.Add($"P2P room    {room.State}");
+            lines.Add($"{RowLabel("P2PRoom")}{CommandText.Get($"P2PState_{room.State}", room.State.ToString())}");
             if (!string.IsNullOrEmpty(room.ControlUrl))
             {
-                lines.Add($"Signaling   {room.ControlUrl}");
+                lines.Add($"{RowLabel("Signaling")}{room.ControlUrl}");
             }
 
             if (!string.IsNullOrEmpty(room.LastError))
             {
-                lines.Add($"P2P error   {room.LastError}");
+                lines.Add($"{RowLabel("P2PError")}{room.LastError}");
             }
         }
 
@@ -205,11 +208,15 @@ public static class DebugOverlayManager
 
     private static string GetPathText(NetworkPathKind kind) => kind switch
     {
-        NetworkPathKind.Direct => "Address direct",
-        NetworkPathKind.HolePunch => "P2P direct",
-        NetworkPathKind.Relay => "Relay",
+        NetworkPathKind.Direct => Text("AddressDirect"),
+        NetworkPathKind.HolePunch => Text("P2PDirect"),
+        NetworkPathKind.Relay => Text("Relay"),
         _ => kind.ToString()
     };
+
+    private static string Text(string key) => Localization.ClientLanguage.Catalog.Get("DebugOverlay", key);
+
+    private static string RowLabel(string key) => Text(key).PadRight(11) + " ";
 
     private static string WrapPanelText(string text, float width, float scale)
     {
@@ -265,20 +272,21 @@ public static class DebugOverlayManager
 
         return string.Join(
             '\n',
-            "CHARACTER",
-            $"Name        {character.CharacterData.Name}",
-            $"Position    {position.X:0.00}, {position.Y:0.00}, {position.Z:0.00}",
-            $"Cell        {cell.X}, {cell.Y}, {cell.Z}",
-            $"Chunk       {chunk.X}, {chunk.Y}",
-            $"Altitude    {position.Y:0.00}",
-            $"Ground      {groundHeight} ({position.Y - groundHeight:0.00} above)",
+            Text("Character"),
+            $"{RowLabel("Name")}{character.CharacterData.Name}",
+            $"{RowLabel("Position")}{position.X:0.00}, {position.Y:0.00}, {position.Z:0.00}",
+            $"{RowLabel("Cell")}{cell.X}, {cell.Y}, {cell.Z}",
+            $"{RowLabel("Chunk")}{chunk.X}, {chunk.Y}",
+            $"{RowLabel("Altitude")}{position.Y:0.00}",
+            RowLabel("Ground") +
+            string.Format(Text("GroundValue"), groundHeight, (position.Y - groundHeight).ToString("0.00")),
             string.Empty,
-            "WORLD",
-            $"Time        {timeOfDay:0.000}",
-            $"Season      {subsystemSeasons.Season} ({subsystemSeasons.TimeOfSeason:P0})",
-            $"Temperature {temperature}",
-            $"Humidity    {humidity}",
-            $"Light       {terrain.GetCellLight(cell.X, cell.Y, cell.Z)}"
+            Text("World"),
+            $"{RowLabel("Time")}{timeOfDay:0.000}",
+            $"{RowLabel("Season")}{ClientApplication.Content.Seasons.GetTimeOfYearName(subsystemTimeOfDay.SubsystemGameInfo.WorldSettings.TimeOfYear)} ({subsystemSeasons.TimeOfSeason:P0})",
+            $"{RowLabel("Temperature")}{temperature}",
+            $"{RowLabel("Humidity")}{humidity}",
+            $"{RowLabel("Light")}{terrain.GetCellLight(cell.X, cell.Y, cell.Z)}"
         );
     }
 

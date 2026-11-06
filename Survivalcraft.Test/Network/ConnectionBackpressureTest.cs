@@ -133,7 +133,7 @@ public sealed class ConnectionBackpressureTest
             return ConnectionSendResult.Accepted;
         }
 
-        public void Disconnect(string reason)
+        public void Disconnect(LocalizedText reason)
         {
         }
 
@@ -153,7 +153,7 @@ public sealed class ConnectionBackpressureTest
         public ConnectionSendResult TrySendOwned(OutboundPackage message) =>
             Accept ? ConnectionSendResult.Accepted : ConnectionSendResult.Backpressured;
 
-        public void Disconnect(string reason)
+        public void Disconnect(LocalizedText reason)
         {
         }
 

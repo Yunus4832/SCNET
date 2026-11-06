@@ -209,8 +209,14 @@ public static class GameManager
                     DialogsManager.ShowDialog(
                         null,
                         new MessageDialog(
-                            "保存存档失败：" + worldName,
-                            "保存未完成，请修复问题后重试。\n" + exception.Message,
+                            string.Format(
+                                Localization.ClientLanguage.Catalog.Get("GameManager", "SaveFailedTitle"),
+                                worldName
+                            ),
+                            string.Format(
+                                Localization.ClientLanguage.Catalog.Get("GameManager", "SaveFailedMessage"),
+                                exception.Message
+                            ),
                             Localization.ClientLanguage.Catalog.Ok
                         )
                     );

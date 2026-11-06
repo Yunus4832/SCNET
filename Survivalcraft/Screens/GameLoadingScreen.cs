@@ -76,7 +76,10 @@ public class GameLoadingScreen : Screen
 
                 if (string.IsNullOrEmpty(_worldSnapshotName))
                 {
-                    SetSpawnDialogMessage("连接服务器", 0.2f);
+                    SetSpawnDialogMessage(
+                        Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "Connecting"),
+                        0.2f
+                    );
                     if (_clientNode != null)
                     {
                         _clientNode.OnReceive += Handle;
@@ -115,7 +118,12 @@ public class GameLoadingScreen : Screen
             delegate { _timer = Stopwatch.StartNew(); },
             delegate
             {
-                SetSpawnDialogMessage(_admissionUi?.Status is { Length: > 0 } status ? status : "等待服务器响应", 0.25f);
+                SetSpawnDialogMessage(
+                    _admissionUi?.Status is { Length: > 0 } status
+                        ? status
+                        : Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "WaitingForServer"),
+                    0.25f
+                );
                 if (_admissionUi?.IsWaitingForDetachedAuthentication == true) { return; }
 
                 if (_clientNode!.CurrentStage == Stage.Bootstrapping)
@@ -125,7 +133,9 @@ public class GameLoadingScreen : Screen
                             : _timer.ElapsedMilliseconds >=
                               NetworkTransportLimits.DisconnectTimeoutMilliseconds)
                     {
-                        _clientNode!.Stop("连接超时");
+                        _clientNode!.Stop(
+                            Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "ConnectionTimedOut")
+                        );
                     }
                 }
                 else if (_clientNode!.CurrentStage == Stage.Connected)
@@ -134,7 +144,7 @@ public class GameLoadingScreen : Screen
                 }
                 else
                 {
-                    _clientNode!.Stop("连接断开");
+                    _clientNode!.Stop(Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "Disconnected"));
                 }
             },
             delegate
@@ -154,7 +164,12 @@ public class GameLoadingScreen : Screen
             Actions.Empty,
             () =>
             {
-                SetSpawnDialogMessage(_admissionUi?.Status is { Length: > 0 } status ? status : "认证", 0.25f);
+                SetSpawnDialogMessage(
+                    _admissionUi?.Status is { Length: > 0 } status
+                        ? status
+                        : Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "Authenticating"),
+                    0.25f
+                );
                 if (CommonLib.Net.IsClosing)
                 {
                     AbortLoading();
@@ -163,7 +178,7 @@ public class GameLoadingScreen : Screen
 
                 if (CommonLib.Net.LocalAdmissionError is { } error)
                 {
-                    GameManager.LeaveGameplay(error);
+                    GameManager.LeaveGameplay(Localization.ClientLanguage.Resolver.Resolve(error));
                     return;
                 }
 
@@ -183,13 +198,21 @@ public class GameLoadingScreen : Screen
             {
                 if (_clientNode != null)
                 {
-                    SetSpawnDialogMessage("等待Project和材质", 0.4f);
+                    SetSpawnDialogMessage(
+                        Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "WaitingForWorldData"),
+                        0.4f
+                    );
                     if (_isServerReply)
                     {
                         _stateMachine.TransitionTo("LoadServerReply");
                     }
 
-                    if (!_clientNode.IsConnected) { _clientNode.Stop("与服务器连接断开"); }
+                    if (!_clientNode.IsConnected)
+                    {
+                        _clientNode.Stop(
+                            Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "ServerDisconnected")
+                        );
+                    }
                 }
                 else
                 {
@@ -211,7 +234,12 @@ public class GameLoadingScreen : Screen
                                 hostPolicy
                             )
                             : CommonLib.StartServer(_worldInfo.WorldSettings, _worldInfo.Hosting, hostPolicy);
-                        if (!started) { throw new InvalidOperationException(CommonLib.Net.StopReason.Message); }
+                        if (!started)
+                        {
+                            throw new InvalidOperationException(
+                                Network.Presentation.DisconnectReasonText.Format(CommonLib.Net.StopReason)
+                            );
+                        }
 
                         if (_worldSession?.Target == SessionTarget.HostedWorld && !_isAdventureRestart)
                         {
@@ -237,7 +265,10 @@ public class GameLoadingScreen : Screen
             Actions.Empty,
             delegate
             {
-                SetSpawnDialogMessage("加载服务器Project", 0.6f);
+                SetSpawnDialogMessage(
+                    Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "LoadingServerWorld"),
+                    0.6f
+                );
                 var runtime = _replyRuntime ?? throw new InvalidOperationException("Missing bootstrap runtime.");
                 if (runtime.IsClosed ||
                     WorldNetworkBinding.For(runtime).RequireNode().CurrentStage != Stage.Connected)
@@ -264,7 +295,10 @@ public class GameLoadingScreen : Screen
             delegate { _timer.Restart(); },
             delegate
             {
-                SetSpawnDialogMessage("应用初始世界快照", 0.8f);
+                SetSpawnDialogMessage(
+                    Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "ApplyingSnapshot"),
+                    0.8f
+                );
                 if (_isWorldSnapshotApplied &&
                     ClientApplication.World?.Project?.FindSubsystem<SubsystemCharacters>()?.Characters
                         .Any(player => player.IsLocalCharacter) ==
@@ -275,7 +309,9 @@ public class GameLoadingScreen : Screen
                 else if (_timer.ElapsedMilliseconds >=
                          NetworkTransportLimits.DisconnectTimeoutMilliseconds)
                 {
-                    _clientNode!.Stop("初始世界快照超时");
+                    _clientNode!.Stop(
+                        Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "SnapshotTimedOut")
+                    );
                 }
             },
             Actions.Empty

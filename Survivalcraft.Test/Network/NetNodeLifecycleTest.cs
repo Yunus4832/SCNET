@@ -104,15 +104,15 @@ public sealed class NetNodeLifecycleTest
     }
 
     [Fact]
-    public void RemoteCloseReasonUsesTheTransportStringFormat()
+    public void RemoteCloseReasonUsesTheProtocolPacketFormat()
     {
         const string reason = "服务器主动关闭";
         var information = new NetworkDisconnectInfo(
             NetworkDisconnectReason.RemoteClose,
-            NetDataWriter.FromString(reason).CopyData(),
+            NetNode.EncodeDisconnectReason(reason),
             0
         );
-        Assert.Equal(reason, NetNode.DecodeDisconnectReason(information).Message);
+        Assert.Equal(reason, NetNode.DecodeDisconnectReason(information).Message.Fallback);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public sealed class NetNodeLifecycleTest
             NetNode.CreateUnconnectedPayload(new ConnectionRejectPackage(reason)),
             0
         );
-        Assert.Equal(reason, NetNode.DecodeDisconnectReason(information).Message);
+        Assert.Equal(reason, NetNode.DecodeDisconnectReason(information).Message.Fallback);
     }
 
     [Theory]
@@ -154,7 +154,7 @@ public sealed class NetNodeLifecycleTest
             Assert.Equal(NetNode.Stage.NotConnected, node.CurrentStage);
             Assert.Empty(node.Clients);
             Assert.Null(node.Self);
-            notifications.Add((previousRole, reason.Message));
+            notifications.Add((previousRole, reason.Message.Fallback));
         };
 
         node.Stop("fixture disconnect");

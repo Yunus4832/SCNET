@@ -12,7 +12,7 @@ public sealed class NetNodeBoundaryTest
     {
         var information = new NetworkDisconnectInfo(NetworkDisconnectReason.RemoteClose, ReadOnlyMemory<byte>.Empty, 0);
         var reason = NetNode.DecodeDisconnectReason(information);
-        Assert.Empty(reason.Message);
+        Assert.Empty(reason.Message.Fallback);
         Assert.Equal(NetworkDisconnectReason.RemoteClose, reason.TransportReason);
         Assert.Equal(
             Game.Localization.ClientLanguage.Catalog.GetContentWidgets("NetPlayScreen", "Disconnect_RemoteClose"),

@@ -22,7 +22,11 @@ public class PumpkinSoupBucketBlock : BucketBlock
                     ResultCount = 1,
                     ResultValue = BlockIndex,
                     RequiredHeatLevel = 1f,
-                    Description = LocalizedText.Literal("烹饪南瓜粥")
+                    Description = new LocalizedText(
+                        nameof(PumpkinSoupBucketBlock),
+                        "CraftingDescription",
+                        "Cook pumpkin soup"
+                    )
                 };
                 var data = BasePumpkinBlock.SetIsDead(BasePumpkinBlock.SetSize(0, 7), isDead != 0);
                 var value = SetDamage(Terrain.MakeBlockValue(131, 0, data), rot);

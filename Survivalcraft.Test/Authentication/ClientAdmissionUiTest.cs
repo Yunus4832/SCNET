@@ -71,13 +71,13 @@ public sealed class ClientAdmissionUiTest
         using var fixture = new Fixture();
         using var ui = fixture.CreateUi();
         typeof(ClientAdmissionUi).GetMethod("Cancel", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(ui, null);
-        Assert.Equal(string.Empty, fixture.Node.StopReason.Message);
+        Assert.Equal(string.Empty, fixture.Node.StopReason.Message.Fallback);
         var challenge = fixture.Node.PendingAdmissionChallenge!;
         typeof(NetNode).GetMethod("ApplyAdmissionResult", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(
             fixture.Node,
             [new AdmissionResultPackage(challenge.Nonce, AdmissionResultCode.Cancelled)]
         );
-        Assert.Equal(string.Empty, fixture.Node.StopReason.Message);
+        Assert.Equal(string.Empty, fixture.Node.StopReason.Message.Fallback);
     }
 
     [Fact]
@@ -196,7 +196,7 @@ public sealed class ClientAdmissionUiTest
         ui.Update();
         Assert.Equal(
             Game.Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(ClientAdmissionUi), "Unavailable"),
-            fixture.Node.StopReason.Message
+            fixture.Node.StopReason.Message.Fallback
         );
         Assert.Null(ui.TakeReconnectAuthorization());
     }

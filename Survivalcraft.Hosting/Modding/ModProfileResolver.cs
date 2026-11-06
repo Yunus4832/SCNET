@@ -1,3 +1,7 @@
+using System.Globalization;
+
+using Game.Localization;
+
 namespace Game.Modding;
 
 public static class ModProfileResolver
@@ -35,14 +39,16 @@ public static class ModProfileResolver
     public static bool EnsurePackagesAvailable(
         ModProfile profile,
         string localRepositoryPath,
-        Action<string>? log = null
+        Action<string>? log = null,
+        LocalizedTextResolver? textResolver = null
     )
     {
         return EnsurePackagesAvailable(
             profile,
             localRepositoryPath,
             ContentSourceContext.Persistent(ContentRepositoryManager.Current.Snapshot()),
-            log
+            log,
+            textResolver: textResolver
         );
     }
 
@@ -51,7 +57,8 @@ public static class ModProfileResolver
         string localRepositoryPath,
         ContentSourceContext context,
         Action<string>? log = null,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken = default,
+        LocalizedTextResolver? textResolver = null
     )
     {
         ArgumentNullException.ThrowIfNull(profile);
@@ -65,7 +72,16 @@ public static class ModProfileResolver
         foreach (var requirement in profile.Packages)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            _ = ResolveEntry(requirement, repository, download, context, log, cancellationToken, out var downloaded);
+            _ = ResolveEntry(
+                requirement,
+                repository,
+                download,
+                context,
+                log,
+                cancellationToken,
+                out var downloaded,
+                textResolver
+            );
             downloadedAny |= downloaded;
         }
 
@@ -79,19 +95,35 @@ public static class ModProfileResolver
         ContentSourceContext context,
         Action<string>? log,
         CancellationToken cancellationToken,
-        out bool downloaded
+        out bool downloaded,
+        LocalizedTextResolver? textResolver = null
     )
     {
-        log?.Invoke($"检查模组 {requirement.ModId}@{requirement.Version} ({requirement.PackageHash})");
+        WriteProgress(
+            log,
+            textResolver,
+            "Checking",
+            "检查模组 {0}@{1} ({2})",
+            requirement.ModId,
+            requirement.Version,
+            requirement.PackageHash
+        );
         var localEntry = repository.Find(requirement);
         if (localEntry is not null)
         {
-            log?.Invoke($"本地缓存命中 {requirement.ModId}@{requirement.Version}");
+            WriteProgress(log, textResolver, "Cached", "本地缓存命中 {0}@{1}", requirement.ModId, requirement.Version);
             downloaded = false;
             return localEntry;
         }
 
-        log?.Invoke($"本地缺失 {requirement.ModId}@{requirement.Version}，查询候选内容仓库");
+        WriteProgress(
+            log,
+            textResolver,
+            "Downloading",
+            "本地缺失 {0}@{1}，查询候选内容仓库",
+            requirement.ModId,
+            requirement.Version
+        );
         try
         {
             var result = download.DownloadExactModAsync(
@@ -104,13 +136,20 @@ public static class ModProfileResolver
                 .ConfigureAwait(false).GetAwaiter().GetResult();
             foreach (var failure in result.PriorFailures)
             {
-                log?.Invoke($"仓库 {failure.RepositoryName} 失败: {failure.Message}");
+                WriteProgress(
+                    log,
+                    textResolver,
+                    "RepositoryFailed",
+                    "仓库 {0} 失败: {1}",
+                    failure.RepositoryName,
+                    failure.Message
+                );
             }
 
             repository.Invalidate();
             localEntry = repository.Find(requirement) ??
                          throw new InvalidDataException("Downloaded package was not found in the local cache.");
-            log?.Invoke($"已下载模组 {requirement.ModId}@{requirement.Version}");
+            WriteProgress(log, textResolver, "Downloaded", "已下载模组 {0}@{1}", requirement.ModId, requirement.Version);
             downloaded = !result.WasCached;
             return localEntry;
         }
@@ -118,7 +157,14 @@ public static class ModProfileResolver
         {
             foreach (var failure in exception.Failures)
             {
-                log?.Invoke($"仓库 {failure.RepositoryName} 失败: {failure.Message}");
+                WriteProgress(
+                    log,
+                    textResolver,
+                    "RepositoryFailed",
+                    "仓库 {0} 失败: {1}",
+                    failure.RepositoryName,
+                    failure.Message
+                );
             }
 
             throw new InvalidOperationException(
@@ -127,6 +173,21 @@ public static class ModProfileResolver
                 exception
             );
         }
+    }
+
+    private static void WriteProgress(
+        Action<string>? log,
+        LocalizedTextResolver? resolver,
+        string key,
+        string fallback,
+        params string[] arguments
+    )
+    {
+        log?.Invoke(
+            resolver is null
+                ? string.Format(CultureInfo.InvariantCulture, fallback, arguments.Cast<object>().ToArray())
+                : resolver.Get("ModPreparation", key, fallback, arguments)
+        );
     }
 
     private static ContentDownloadService CreateDownloadService(string localRepositoryPath)

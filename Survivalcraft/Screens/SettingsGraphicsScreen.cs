@@ -51,7 +51,9 @@ public class SettingsGraphicsScreen : Screen
         }
 
         _virtualRealityButton.IsEnabled = VrManager.IsVrAvailable;
-        _virtualRealityButton.Text = Configuration.ClientConfiguration.Preferences.UseVr ? "Enabled" : "Disabled";
+        _virtualRealityButton.Text = Configuration.ClientConfiguration.Preferences.UseVr
+            ? Localization.ClientLanguage.Catalog.On
+            : Localization.ClientLanguage.Catalog.Off;
         _brightnessSlider.Value = Configuration.ClientConfiguration.Preferences.Brightness;
         _brightnessSlider.Text =
             MathUtils.Round(Configuration.ClientConfiguration.Preferences.Brightness * 10f)

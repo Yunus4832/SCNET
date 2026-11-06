@@ -106,7 +106,7 @@ public class CarpetBlock : CubeBlock
                         damage + MathUtils.Max(block.Durability / 4, 1)
                     ),
                     RequiredHeatLevel = 1f,
-                    Description = LocalizedText.Literal("Dye carpet"),
+                    Description = new LocalizedText(nameof(CarpetBlock), "Dye", "Dye carpet"),
                     DescriptionColor = color,
                     Ingredients = (string[])ingredients.Clone()
                 };
@@ -133,7 +133,7 @@ public class CarpetBlock : CubeBlock
                     damage2 + MathUtils.Max(block2.Durability / 4, 1)
                 ),
                 RequiredHeatLevel = 1f,
-                Description = LocalizedText.Literal("Undye carpet"),
+                Description = new LocalizedText(nameof(CarpetBlock), "Undye", "Undye carpet"),
                 Ingredients = (string[])ingredients.Clone()
             };
         }

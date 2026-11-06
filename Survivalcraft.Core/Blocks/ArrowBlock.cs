@@ -67,19 +67,6 @@ public class ArrowBlock : Block
     ];
 
 
-    public static string[] DisplayNames =
-    [
-        "木尖箭头",
-        "石尖箭头",
-        "铁尖箭头",
-        "钻石尖箭头",
-        "火尖箭头",
-        "铁螺栓",
-        "钻石尖螺栓",
-        "爆炸螺栓",
-        "铜尖箭头"
-    ];
-
     public static float[] Offsets = [-0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.3f, -0.3f, -0.3f, -0.5f];
 
     public static float[] WeaponPowers = [5f, 7f, 14f, 18f, 4f, 28f, 36f, 8f, 10f];

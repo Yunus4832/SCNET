@@ -37,7 +37,8 @@ public static class ModRestartHelper
                                 Storage.GetSystemPath(GamePaths.ContentPackageCache),
                                 context,
                                 log,
-                                cancellationToken
+                                cancellationToken,
+                                Localization.ClientLanguage.Resolver
                             );
         }
         finally
@@ -73,7 +74,8 @@ public static class ModRestartHelper
                             ModProfileResolver.EnsurePackagesAvailable(
                                 desiredProfile,
                                 Storage.GetSystemPath(GamePaths.ContentPackageCache),
-                                log
+                                log,
+                                Localization.ClientLanguage.Resolver
                             );
         if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, desiredProfile))
         {

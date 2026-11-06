@@ -132,7 +132,7 @@ public class FurnitureBlockPresentation(FurnitureBlock block, BlockPresentationC
         var design = subsystemTerrain?.SubsystemFurnitureBlockBehavior.GetDesign(designIndex);
         if (design == null)
         {
-            return "家具";
+            return Localization.ClientLanguage.Catalog.GetBlock("FurnitureBlock:0", "DisplayName");
         }
 
         return !string.IsNullOrEmpty(design.Name) ? design.Name : Catalog.Furniture.GetDefaultName(design);

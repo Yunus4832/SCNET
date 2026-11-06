@@ -154,7 +154,7 @@ public class LoadingScreen : Screen
                 // 如果音频库加载失败，则禁止声音播放
                 if (!Mixer.IsAudioInitialized)
                 {
-                    DialogsManager.Alert("音频系统加载失败，设备播放声音可能出现问题");
+                    DialogsManager.Alert(Localization.ClientLanguage.Catalog.Get("LoadingScreen", "AudioUnavailable"));
                 }
 
                 MusicManager.CurrentMix = MusicManager.Mix.Menu;
@@ -249,10 +249,10 @@ public class LoadingScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    Localization.ClientLanguage.Catalog.Warning,
-                    "Quit?",
-                    Localization.ClientLanguage.Catalog.Ok,
-                    Localization.ClientLanguage.Catalog.No,
+                    Localization.ClientLanguage.Resolver.Get("Usual", "warning", "Warning"),
+                    Localization.ClientLanguage.Resolver.Get("LoadingScreen", "ConfirmQuit", "Quit the game?"),
+                    Localization.ClientLanguage.Resolver.Get("Usual", "ok", "OK"),
+                    Localization.ClientLanguage.Resolver.Get("Usual", "no", "No"),
                     vt =>
                     {
                         if (vt == MessageDialogButton.Button1)

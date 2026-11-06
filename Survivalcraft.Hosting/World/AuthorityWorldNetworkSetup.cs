@@ -137,7 +137,10 @@ public static class AuthorityWorldNetworkSetup
         {
             if (WorldConnectionResolver.FindPlayer(client) is not { } subject || subject.Ban is not null)
             {
-                net.RemoveClient(client, "用户未获准进入此存档");
+                net.RemoveClient(
+                    client,
+                    ConnectionMessages.Create("WorldAccessDenied", "You are not permitted to enter this world")
+                );
                 return;
             }
 
@@ -160,7 +163,10 @@ public static class AuthorityWorldNetworkSetup
         catch (Exception ex)
         {
             Log.Warning($"玩家数据恢复失败，断开连接: guid={client.CharacterId:N}, error={ex.Message}");
-            net.RemoveClient(client, "玩家数据加载失败，请稍后重试");
+            net.RemoveClient(
+                client,
+                ConnectionMessages.Create("CharacterLoadFailed", "Could not load player data. Please try again later.")
+            );
             return;
         }
 

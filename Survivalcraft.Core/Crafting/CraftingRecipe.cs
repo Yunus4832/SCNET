@@ -8,7 +8,7 @@ public class CraftingRecipe
 
     public LocalizedText CreateFeedbackText()
     {
-        if (IsDisabledResult) { return LocalizedText.Literal("此物品已被禁用"); }
+        if (IsDisabledResult) { return new LocalizedText("ComponentMiner", "ItemDisabled", "This item is disabled"); }
 
         return RequiredPlayerLevel > 0f
             ? LocalizedText.Format(

@@ -87,6 +87,9 @@ public class CarpetBlockPresentation(CarpetBlock block, BlockPresentationCatalog
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)
     {
         var value2 = Terrain.ExtractData(value);
-        return PalettePresentation.GetName(value2, "ตุฬบ");
+        return PalettePresentation.GetName(
+            CarpetBlock.GetColor(value2),
+            Localization.ClientLanguage.Catalog.GetBlock("CarpetBlock:0", "DisplayName")
+        );
     }
 }

@@ -38,7 +38,12 @@ public static class ClipboardManager
             }
             catch (Exception ex)
             {
-                DialogsManager.Alert("复制文本失败：" + ex.Message);
+                DialogsManager.Alert(
+                    string.Format(
+                        Localization.ClientLanguage.Catalog.Get("ClipboardManager", "WriteFailed"),
+                        ex.Message
+                    )
+                );
             }
         }
     }

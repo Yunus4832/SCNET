@@ -93,7 +93,9 @@
         "4": "快回去",
         "5": "被烧死",
         "6": "搁浅",
-        "7": "被淹死"
+        "7": "被淹死",
+        "Stuck": "你卡住了",
+        "KilledByCharacter": "被 {0} 杀死"
     },
     "ComponentBody": [
         "卡死"
@@ -144,7 +146,9 @@
         "3": "读取数据库",
         "4": "初始化方块管理器",
         "5": "初始化Mod设置参数",
-        "6": "等待剩下的任务完成："
+        "6": "等待剩下的任务完成：",
+        "ConfirmQuit": "退出游戏？",
+        "AudioUnavailable": "音频系统加载失败，设备播放声音可能出现问题"
     },
     "ModEntity": {
         "1": "加载.csv方块数据文件",
@@ -205,7 +209,7 @@
         "3": "无效的名字"
     },
     "EditPistonDialog": {
-        "1": "{0} 方块"
+        "1": "{0} 格"
     },
     "EditTruthTableDialog": {
         "1": "表格",
@@ -632,7 +636,8 @@
         "bitten": "咬死",
         "massacred": "屠杀",
         "ripped open": "撕开",
-        "murdered": "打败"
+        "murdered": "打败",
+        "ItemDisabled": "此物品已被禁用"
     },
     "ComponentIntro": {
         "1": "伙计们，就把他扔在这里吧",
@@ -1759,12 +1764,12 @@
             "CRDescription:0": "用铁和木板做一支火枪"
         },
         "ArrowBlock:0": {
-            "DisplayName": "箭",
+            "DisplayName": "木尖箭",
             "Description": "弓箭和弩箭是用弓或弩来发射，箭头的材质决定了杀伤力。还有特殊的箭头诸如用硫磺制成的火箭，可以点燃射中的物体；用火药和铁弩箭制成的爆炸弩箭，引爆射中的物体。",
             "CRDescription:0": "用棍子和羽毛做木头箭"
         },
         "BulletBlock:0": {
-            "DisplayName": "子弹",
+            "DisplayName": "火枪弹丸",
             "Description": "将铁棒切割成的铁制颗粒，前膛枪来发射。子弹有三种，一种是单颗的大弹丸，杀伤力高；一种是由大弹丸制成的散弹，具有更广的射击面但欠缺伤害与精度；还有一种是把散弹做为单颗使用的小弹丸，除了打鸟一无是处。",
             "CRDescription:0": "用铁棒做火枪弹"
         },
@@ -2290,17 +2295,17 @@
             "CRDescription:1": "从成熟的南瓜中提取种子"
         },
         "ArrowBlock:1": {
-            "DisplayName": "石箭",
+            "DisplayName": "石尖箭",
             "Description": "弓箭和弩箭是用弓或弩来发射，箭头的材质决定了杀伤力。还有特殊的箭头诸如用硫磺制成的火箭，可以点燃射中的物体；用火药和铁弩箭制成的爆炸弩箭，引爆射中的物体。",
             "CRDescription:0": "用棍子、羽毛和石头做石尖的箭"
         },
         "ArrowBlock:2": {
-            "DisplayName": "铁头箭",
+            "DisplayName": "铁尖箭",
             "Description": "弓箭和弩箭是用弓或弩来发射，箭头的材质决定了杀伤力。还有特殊的箭头诸如用硫磺制成的火箭，可以点燃射中的物体；用火药和铁弩箭制成的爆炸弩箭，引爆射中的物体。",
             "CRDescription:0": "用棍子、羽毛和铁做铁头箭"
         },
         "ArrowBlock:3": {
-            "DisplayName": "钻石箭",
+            "DisplayName": "钻石尖箭",
             "Description": "弓箭和弩箭是用弓或弩来发射，箭头的材质决定了杀伤力。还有特殊的箭头诸如用硫磺制成的火箭，可以点燃射中的物体；用火药和铁弩箭制成的爆炸弩箭，引爆射中的物体。",
             "CRDescription:0": "用铁箭和钻石做钻石箭头"
         },
@@ -2325,18 +2330,18 @@
             "CRDescription:0": "用铁弩箭和火药做爆炸弩箭"
         },
         "ArrowBlock:8": {
-            "DisplayName": "铜头箭",
+            "DisplayName": "铜尖箭",
             "Description": "弓箭和弩箭是用弓或弩来发射，箭头的材质决定了杀伤力。还有特殊的箭头诸如用硫磺制成的火箭，可以点燃射中的物体；用火药和铁弩箭制成的爆炸弩箭，引爆射中的物体。",
             "CRDescription:0": "用棍子、羽毛和铜做铜头箭"
         },
         "BulletBlock:1": {
-            "DisplayName": "铅弹",
+            "DisplayName": "霰弹",
             "Description": "将铁棒切割成的铁制颗粒，前膛枪来发射。子弹有三种，一种是单颗的大弹丸，杀伤力高；一种是由大弹丸制成的散弹，具有更广的射击面但欠缺伤害与精度；还有一种是把散弹做为单颗使用的小弹丸，除了打鸟一无是处。",
             "CRDescription:0": "用毛瑟枪子弹做铅弹",
             "CRDescription:1": "用铅弹球做铅弹"
         },
         "BulletBlock:2": {
-            "DisplayName": "铅弹丸",
+            "DisplayName": "霰弹丸",
             "Description": "将铁棒切割成的铁制颗粒，前膛枪来发射。子弹有三种，一种是单颗的大弹丸，杀伤力高；一种是由大弹丸制成的散弹，具有更广的射击面但欠缺伤害与精度；还有一种是把散弹做为单颗使用的小弹丸，除了打鸟一无是处。",
             "CRDescription:0": "从铅弹中取出铅弹丸"
         },
@@ -2840,7 +2845,8 @@
             "1": "调整电压"
         },
         "CancellableBusyDialog": {
-            "1": "取消"
+            "1": "取消",
+            "Background": "后台处理"
         },
         "EditAdjustableDelayGateDialog": {
             "1": "调整延迟",
@@ -2864,9 +2870,14 @@
         "EditPistonDialog": {
             "1": "最大扩展",
             "2": "推拉个数",
-            "3": "速度设置",
+            "3": "速度",
             "4": "确定",
-            "5": "取消"
+            "5": "取消",
+            "EditTitle": "编辑{0}",
+            "Fast": "快",
+            "Medium": "中",
+            "Slow": "慢",
+            "VerySlow": "很慢"
         },
         "GameMenuDialog": {
             "1": "返回",
@@ -2997,7 +3008,8 @@
         },
         "LevelFactorDialog": {
             "1": "当前乘数：",
-            "2": "确定"
+            "2": "确定",
+            "Total": "合计"
         },
         "TextBoxDialog": {
             "1": "确定",
@@ -3054,7 +3066,17 @@
             "ManageServicesDescription": "管理已安装的服务器源、信令和认证服务"
         },
         "GameLoadingScreen": {
-            "1": "正在加载世界"
+            "1": "正在加载世界",
+            "Connecting": "连接服务器",
+            "WaitingForServer": "等待服务器响应",
+            "Authenticating": "正在验证身份",
+            "WaitingForWorldData": "等待世界数据和材质",
+            "LoadingServerWorld": "加载服务器世界",
+            "ApplyingSnapshot": "应用初始世界快照",
+            "ConnectionTimedOut": "连接超时",
+            "Disconnected": "连接已断开",
+            "ServerDisconnected": "与服务器的连接已断开",
+            "SnapshotTimedOut": "等待初始世界快照超时"
         },
         "HelpScreen": {
             "1": "帮助界面",
@@ -3319,7 +3341,8 @@
             "28": "季节",
             "DefaultDescription": "调整地形、环境、季节和游戏规则等世界选项。",
             "HotbarSlotsCount": "物品栏容量",
-            "HotbarSlotsCountDescription": "设置当前游戏模式的物品栏容量，空间不足时可通过分页访问"
+            "HotbarSlotsCountDescription": "设置当前游戏模式的物品栏容量，空间不足时可通过分页访问",
+            "DaysCount": "{0} 天"
         },
         "ModWorldSelectionDialog": {
             "Title": "加入或替换世界模组版本"
@@ -3824,7 +3847,8 @@
             "2": "闪烁",
             "3": "低",
             "4": "高"
-        }
+        },
+        "CraftingDescription": "制作烟花"
     },
     "WorldPalette": {
         "Colors": [
@@ -4306,7 +4330,21 @@
         "PlayerUnmuted_Message": "已解除玩家 {0} 的禁言。",
         "PlayerMutedList_Message": "存档玩家禁言：\n{0}",
         "PlayerBannedCommand_Message": "当前玩家已被此存档封禁。",
-        "NoAuthorityWorld_Message": "当前没有权威世界。"
+        "NoAuthorityWorld_Message": "当前没有权威世界。",
+        "NetworkSendStatistics_Description": "读取连接内网络发送统计",
+        "AutomationInputRun_Description": "执行有时限的组合输入",
+        "AutomationGameplayContext_Description": "读取角色操作上下文",
+        "AutomationLookAt_Description": "朝向世界坐标",
+        "AutomationLookState_Description": "读取视角控制状态",
+        "AutomationLookAdjust_Description": "按角度调整视角",
+        "AutomationLookCancel_Description": "取消视角控制",
+        "AutomationNavigate_Description": "自动步行到指定位置",
+        "AutomationNavigationState_Description": "读取自动导航状态",
+        "AutomationNavigationCancel_Description": "取消自动导航",
+        "AutomationInputState_Description": "读取自动化输入状态",
+        "AutomationInputCancel_Description": "取消自动化输入",
+        "AutomationInputText_Description": "发送自动化文本输入",
+        "AutomationInventoryDrag_Description": "拖动库存物品"
     },
     "AndroidServer": {
         "Title": "服务器日志",
@@ -4427,5 +4465,128 @@
     },
     "ComponentCharacter": {
         "1": "蹲下提高射击准度"
+    },
+    "ClipboardManager": {
+        "WriteFailed": "复制文本失败：{0}"
+    },
+    "SubsystemCactusBlockBehavior": {
+        "CauseOfDeath": "被仙人掌刺伤"
+    },
+    "PumpkinSoupBucketBlock": {
+        "CraftingDescription": "烹饪南瓜粥"
+    },
+    "PaintBucketBlock": {
+        "CraftingPrefix": "制作",
+        "CraftingSuffix": "颜料"
+    },
+    "ModPreparation": {
+        "Checking": "检查模组 {0}@{1} ({2})",
+        "Cached": "本地缓存命中 {0}@{1}",
+        "Downloading": "本地缺失 {0}@{1}，查询内容仓库",
+        "RepositoryFailed": "仓库 {0} 失败：{1}",
+        "Downloaded": "已下载模组 {0}@{1}"
+    },
+    "CarpetBlock": {
+        "Dye": "给地毯染色",
+        "Undye": "去除地毯颜色"
+    },
+    "SubsystemEggBlockBehavior": {
+        "CapacityLimit": "太多生物了"
+    },
+    "GameManager": {
+        "SaveFailedTitle": "保存存档失败：{0}",
+        "SaveFailedMessage": "保存未完成，请修复问题后重试。\n{0}"
+    },
+    "GameEntry": {
+        "UnhandledException": "未处理的异常：{0}"
+    },
+    "Connection": {
+        "TokenInvalid": "连接关联标识无效",
+        "AlreadyOnline": "该用户已经在线",
+        "TokenInUse": "连接关联标识已被占用",
+        "Banned": "你被禁止加入该服务器",
+        "ServerFull": "在线人数达到最大，拒绝加入",
+        "SessionCreationFailed": "玩家会话创建失败，请稍后重试",
+        "InvalidHeader": "无法识别的数据包头",
+        "ProtocolMismatch": "客户端和服务器协议版本不一致",
+        "ModsMismatch": "客户端模组与服务器不一致，请刷新服务器信息后重试",
+        "WorldChanged": "世界已变化，请重新加入",
+        "ChallengeChangedAfterAdmission": "服务器在认证通过后更换了挑战",
+        "ChallengeInvalid": "服务器认证挑战已过期或无效",
+        "ChallengeChanged": "服务器在认证期间更换了挑战",
+        "AdmissionEnded": "认证已取消、过期或被拒绝",
+        "ServerStarting": "请等待服务器启动完成后加入",
+        "ServerClosed": "服务器主动关闭",
+        "RequestRejected": "连接请求被拒绝",
+        "DeliveryFailed": "传输确认失败",
+        "Closed": "连接已关闭",
+        "TooManyRequests": "当前服务器连接请求太多，请稍后重试",
+        "InvalidRequest": "连接请求数据无效",
+        "TooManyAuthenticationRequests": "认证请求过多，请稍后重试",
+        "AuthenticationCancelled": "认证已取消",
+        "AuthenticationTimedOut": "认证等待超时",
+        "AuthenticationDenied": "认证已过期或被拒绝",
+        "WorldAccessDenied": "用户未获准进入此存档",
+        "CharacterLoadFailed": "玩家数据加载失败，请稍后重试",
+        "LogicalQueueFull": "收件人的消息队列已满",
+        "OutgoingQueueFull": "发送消息队列已满",
+        "InboxFull": "接收消息队列已满",
+        "NativeDeliveryFailed": "网络消息传递失败",
+        "TransportLimitExceeded": "消息超过传输大小限制",
+        "MessageDeliveryFailed": "消息处理失败：{0}",
+        "NotGameServer": "当前节点不是游戏服务器",
+        "AuthenticationNotReady": "服务器认证尚未准备完成",
+        "PublicationQueueFull": "消息发布队列已满"
+    },
+    "DebugOverlay": {
+        "Context": "上下文",
+        "Performance": "性能",
+        "Network": "网络",
+        "Character": "角色",
+        "World": "世界",
+        "Screen": "界面",
+        "Dialog": "对话框",
+        "Depth": "层数",
+        "HudPanel": "HUD 面板",
+        "Fps": "FPS",
+        "Cpu": "CPU",
+        "Managed": "托管内存",
+        "Gpu": "GPU",
+        "Mode": "模式",
+        "Path": "连接方式",
+        "Ip": "IP",
+        "Signaling": "信令",
+        "Ping": "延迟",
+        "PacketLoss": "丢包率",
+        "PendingAck": "待确认",
+        "ListenUdp": "UDP 监听",
+        "Clients": "客户端",
+        "Direct": "直连",
+        "P2PDirect": "P2P 直连",
+        "Relay": "中继",
+        "P2PRoom": "P2P 房间",
+        "P2PError": "P2P 错误",
+        "RelayPeer": "中继端点",
+        "ServerPeer": "服务器端点",
+        "AddressDirect": "地址直连",
+        "Name": "名称",
+        "Position": "位置",
+        "Cell": "方块坐标",
+        "Chunk": "区块",
+        "Altitude": "高度",
+        "Ground": "地面",
+        "GroundValue": "{0}（高出 {1}）",
+        "Time": "时间",
+        "Season": "季节",
+        "Temperature": "温度",
+        "Humidity": "湿度",
+        "Light": "光照",
+        "Role_Inactive": "未连接",
+        "Role_Authority": "权威端",
+        "Role_Client": "客户端"
+    },
+    "BlockNames": {
+        "Colored": "{0}{1}",
+        "Seasonal": "{0}{1}"
     }
 }

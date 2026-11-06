@@ -50,7 +50,7 @@ public class EditColorDialog : Dialog
             {
                 new LabelWidget
                 {
-                    Text = "Edit Color",
+                    Text = Localization.ClientLanguage.Catalog.Get(nameof(EditColorDialog), 1),
                     HorizontalAlignment = WidgetAlignment.Center
                 },
                 new CanvasWidget
@@ -80,7 +80,7 @@ public class EditColorDialog : Dialog
             {
                 new LabelWidget
                 {
-                    Text = "Red:",
+                    Text = Localization.ClientLanguage.Catalog.Get(nameof(EditColorDialog), 2),
                     Color = Color.Gray,
                     VerticalAlignment = WidgetAlignment.Center,
                     Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
@@ -115,7 +115,7 @@ public class EditColorDialog : Dialog
             {
                 new LabelWidget
                 {
-                    Text = "Green:",
+                    Text = Localization.ClientLanguage.Catalog.Get(nameof(EditColorDialog), 3),
                     Color = Color.Gray,
                     VerticalAlignment = WidgetAlignment.Center,
                     Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
@@ -150,7 +150,7 @@ public class EditColorDialog : Dialog
             {
                 new LabelWidget
                 {
-                    Text = "Blue:",
+                    Text = Localization.ClientLanguage.Catalog.Get(nameof(EditColorDialog), 4),
                     Color = Color.Gray,
                     VerticalAlignment = WidgetAlignment.Center,
                     Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
@@ -256,7 +256,7 @@ public class EditColorDialog : Dialog
             DialogsManager.ShowDialog(
                 this,
                 new TextBoxDialog(
-                    "Enter Color",
+                    Localization.ClientLanguage.Catalog.Get(nameof(EditColorDialog), 5),
                     GetColorString(),
                     20,
                     delegate(string s)
@@ -270,8 +270,8 @@ public class EditColorDialog : Dialog
                             DialogsManager.ShowDialog(
                                 this,
                                 new MessageDialog(
-                                    "Invalid Color",
-                                    "Use R,G,B or #HEX notation, e.g. 255,92,13 or #FF5C0D",
+                                    Localization.ClientLanguage.Catalog.Get(nameof(EditColorDialog), 6),
+                                    Localization.ClientLanguage.Catalog.Get(nameof(EditColorDialog), 7),
                                     Localization.ClientLanguage.Catalog.Ok
                                 )
                             );

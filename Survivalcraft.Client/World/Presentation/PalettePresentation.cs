@@ -50,6 +50,8 @@ public static class PalettePresentation
 
     private static string ComposeName(string name, string suffix)
     {
-        return string.IsNullOrEmpty(suffix) ? name : name + " " + suffix;
+        return string.IsNullOrEmpty(suffix)
+            ? name
+            : Localization.ClientLanguage.Resolver.Get("BlockNames", "Colored", "{0} {1}", name, suffix);
     }
 }

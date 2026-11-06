@@ -141,9 +141,9 @@ public sealed class PlayerAdmissionTest
         using var toAuthority = link.ToAuthority;
         Assert.True(WorldConnectionQuery.IsPlayerOnline(project, admitted!));
         Assert.False(PlayerAdmission.TryCreateSession(project, node, first, Guid.NewGuid(), Create, out _, out error));
-        Assert.Equal("该用户已经在线", error);
+        Assert.Equal("AlreadyOnline", error?.Key);
         Assert.False(PlayerAdmission.TryCreateSession(project, node, second, Guid.NewGuid(), Create, out _, out error));
-        Assert.Equal("在线人数达到最大，拒绝加入", error);
+        Assert.Equal("ServerFull", error?.Key);
         Assert.Null(project.Players.Store.Find(second));
         Assert.Equal(1, calls);
     }
@@ -234,7 +234,7 @@ public sealed class PlayerAdmissionTest
             )
         );
         Assert.Null(session);
-        Assert.Equal("你被禁止加入该服务器", error);
+        Assert.Equal("Banned", error?.Key);
         Assert.Equal(0, node.Connections.PlayerCount);
         Assert.Null(node.Self);
     }
