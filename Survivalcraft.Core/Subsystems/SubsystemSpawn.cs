@@ -245,7 +245,7 @@ public class SubsystemSpawn : Subsystem, IUpdateable
 
                     var chunkAtCell =
                         _subsystemTerrain.Terrain.GetChunkAtCell(Terrain.ToCell(v2.X), Terrain.ToCell(v2.Y), false);
-                    if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidPropagatedLight })
+                    if (chunkAtCell is not { HasCurrentLight: true })
                     {
                         continue;
                     }

@@ -184,15 +184,11 @@ public sealed class ContainerOpenAuthorityTest
                 "_characters",
                 BindingFlags.Instance | BindingFlags.NonPublic
             )!.GetValue(characters)!).Add(Character);
-            var updater = (TerrainUpdater)RuntimeHelpers.GetUninitializedObject(typeof(TerrainUpdater));
-            var parameters = typeof(TerrainUpdater).GetField(
-                "_updateParameters",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            )!;
-            var state = Activator.CreateInstance(parameters.FieldType, true)!;
-            state.GetType().GetField("Locations")!.SetValue(state, new Dictionary<int, TerrainUpdateLocation>());
-            parameters.SetValue(updater, state);
-            var terrain = new SubsystemTerrain { TerrainUpdater = updater };
+            var terrain = new SubsystemTerrain { Terrain = new Terrain() };
+            typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.Demands))!.SetValue(
+                terrain,
+                new TerrainDemandManager(terrain.Terrain, Game.Terrains.Distribution.TerrainContentRole.Authority)
+            );
             _authority.AddSubsystem(Interest);
             Set(Interest, "_subsystemTerrain", terrain);
             Set(Interest, "_subsystemCharacters", characters);

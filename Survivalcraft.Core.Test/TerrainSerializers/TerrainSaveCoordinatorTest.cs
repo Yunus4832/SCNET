@@ -8,17 +8,233 @@ namespace Survivalcraft.Core.Test.TerrainSerializers;
 public sealed class TerrainSaveCoordinatorTest
 {
     [Fact]
-    public void LoadedAuthorityChunkDoesNotRequireMainThreadStateToBeSaved()
+    public void CleanReservationProtectsCapacityAndCapturesChangesMadeByUnloadCallbacks()
+    {
+        var writes = new ConcurrentQueue<int>();
+        using var coordinator = new TerrainSaveCoordinator((_, cells, _) => writes.Enqueue(cells[0]), 1);
+        using var terrain = new Terrain();
+        using var source = CreateDirtyChunk(terrain, 0, 0, 100);
+        source.ModificationCounter = 0;
+        using var nested = CreateDirtyChunk(terrain, 1, 0, 300);
+        using var reservation = coordinator.TryReserveUnload(source);
+        Assert.NotNull(reservation);
+        Assert.False(coordinator.CanAcceptUnloadSnapshot);
+        Assert.Null(coordinator.TryReserveUnload(source));
+        Assert.False(coordinator.TryQueueChunkForUnload(nested));
+        Assert.Equal(1, nested.ModificationCounter);
+
+        source.Cells[0] = 200;
+        source.ModificationCounter = 1;
+        Assert.True(reservation.Commit(source));
+        Assert.False(reservation.Commit(source));
+        coordinator.Flush();
+        Assert.Equal(new[] { 200 }, writes.ToArray());
+        Assert.Equal(0, source.ModificationCounter);
+        Assert.True(coordinator.CanAcceptUnloadSnapshot);
+    }
+
+    [Fact]
+    public void DisposingAnUncommittedReservationReturnsItsSlotAndDoesNotClearDirtyData()
+    {
+        using var coordinator = new TerrainSaveCoordinator((_, _, _) => { }, 1);
+        using var terrain = new Terrain();
+        using var source = CreateDirtyChunk(terrain, 0, 0, 100);
+        var reservation = coordinator.TryReserveUnload(source);
+        Assert.NotNull(reservation);
+        reservation.Dispose();
+        reservation.Dispose();
+        Assert.False(reservation.Commit(source));
+        Assert.Equal(1, source.ModificationCounter);
+        Assert.True(coordinator.CanAcceptUnloadSnapshot);
+        using var again = coordinator.TryReserveUnload(source);
+        Assert.NotNull(again);
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("foreign")]
+    [InlineData("renewed")]
+    [InlineData("disposed")]
+    public void InvalidCommitConsumesItsReservationAndCannotLeakCapacity(string failure)
+    {
+        using var coordinator = new TerrainSaveCoordinator((_, _, _) => { }, 1);
+        using var terrain = new Terrain();
+        var source = terrain.AllocateChunk(0, 0);
+        source.HasContents = true;
+        source.ModificationCounter = 1;
+        using var foreign = CreateDirtyChunk(terrain, 0, 0, 200);
+        using var reservation = coordinator.TryReserveUnload(source);
+        Assert.NotNull(reservation);
+        switch (failure)
+        {
+            case "null":
+                Assert.Throws<ArgumentNullException>(() => reservation.Commit(null!));
+                break;
+            case "foreign":
+                Assert.Throws<ArgumentException>(() => reservation.Commit(foreign));
+                break;
+            case "renewed":
+                terrain.RenewChunkAllocation(source);
+                Assert.Throws<ArgumentException>(() => reservation.Commit(source));
+                break;
+            case "disposed":
+                source.Dispose();
+                Assert.Throws<ObjectDisposedException>(() => reservation.Commit(source));
+                break;
+        }
+
+        Assert.False(reservation.Commit(source));
+        Assert.True(coordinator.CanAcceptUnloadSnapshot);
+        Assert.Equal(1, source.ModificationCounter);
+        Assert.Equal(0, coordinator.OutstandingCount);
+    }
+
+    [Fact]
+    public void SnapshotCaptureExceptionReleasesCapacityAndPreservesDirtyData()
+    {
+        using var coordinator = new TerrainSaveCoordinator((_, _, _) => { }, 1);
+        using var terrain = new Terrain();
+        using var source = CreateDirtyChunk(terrain, 0, 0, 100);
+        var cells = source.Cells;
+        source.Cells = [];
+        using var reservation = coordinator.TryReserveUnload(source);
+        Assert.NotNull(reservation);
+        Assert.Throws<ArgumentException>(() => reservation.Commit(source));
+        Assert.True(coordinator.CanAcceptUnloadSnapshot);
+        Assert.Equal(1, source.ModificationCounter);
+        source.Cells = cells;
+        Assert.True(coordinator.TryQueueChunkForUnload(source));
+        coordinator.Flush();
+    }
+
+    [Fact]
+    public void ClosingTheCoordinatorRevokesOutstandingReservationsWithoutSavingTheirDirtyChunks()
+    {
+        var calls = 0;
+        var coordinator = new TerrainSaveCoordinator((_, _, _) => calls++, 1);
+        using var terrain = new Terrain();
+        using var source = CreateDirtyChunk(terrain, 0, 0, 100);
+        using var reservation = coordinator.TryReserveUnload(source);
+        Assert.NotNull(reservation);
+
+        coordinator.Dispose();
+
+        Assert.False(reservation.Commit(source));
+        Assert.False(reservation.Commit(null!));
+        Assert.Null(coordinator.TryReserveUnload(source));
+        Assert.Equal(0, coordinator.OutstandingCount);
+        Assert.Equal(0, calls);
+        Assert.Equal(1, source.ModificationCounter);
+        coordinator.Dispose();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void UncommittedOrFailedReplacementKeepsThePreviousSnapshotRecoverable(bool captureFails)
+    {
+        var coordinator = new TerrainSaveCoordinator((_, _, _) => throw new IOException("Storage unavailable."), 1);
+        using var terrain = new Terrain();
+        using var source = CreateDirtyChunk(terrain, 0, 0, 100);
+        using var replacement = CreateDirtyChunk(terrain, 0, 0, 200);
+        Assert.True(coordinator.TryQueueChunkForUnload(source));
+        Assert.Throws<AggregateException>(coordinator.Flush);
+        using (var reservation = coordinator.TryReserveUnload(replacement))
+        {
+            Assert.NotNull(reservation);
+            using var nested = CreateDirtyChunk(terrain, 1, 0, 300);
+            Assert.Null(coordinator.TryReserveUnload(nested));
+            if (captureFails)
+            {
+                replacement.Cells = [];
+                Assert.Throws<ArgumentException>(() => reservation.Commit(replacement));
+            }
+        }
+
+        using var restored = new TerrainChunk(terrain, 0, 0);
+        Assert.True(coordinator.TryRestorePendingSnapshot(restored));
+        Assert.Equal(100, restored.Cells[0]);
+        Assert.Equal(1, restored.ModificationCounter);
+        Assert.Equal(1, replacement.ModificationCounter);
+        Assert.True(coordinator.CanAcceptUnloadSnapshot);
+        coordinator.Dispose();
+    }
+
+    [Fact]
+    public void FailedCloseStillRevokesItsReservationsAndLeavesUncommittedChunksDirty()
+    {
+        var coordinator = new TerrainSaveCoordinator((_, _, _) => throw new IOException("Storage unavailable."), 2);
+        using var terrain = new Terrain();
+        using var source = CreateDirtyChunk(terrain, 0, 0, 100);
+        using var deferred = CreateDirtyChunk(terrain, 1, 0, 200);
+        Assert.True(coordinator.TryQueueChunkForUnload(source));
+        Assert.Throws<AggregateException>(coordinator.Flush);
+        using var reservation = coordinator.TryReserveUnload(deferred);
+        Assert.NotNull(reservation);
+
+        Assert.Throws<AggregateException>(coordinator.Dispose);
+
+        Assert.False(reservation.Commit(deferred));
+        Assert.Equal(1, deferred.ModificationCounter);
+        Assert.Equal(0, coordinator.OutstandingCount);
+        coordinator.Dispose();
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void FlushDoesNotStealAReplacementLeaseButCanRetryWhenAnotherSlotExists(int capacity)
+    {
+        var failing = 1;
+        var writes = new ConcurrentQueue<int>();
+        using var coordinator = new TerrainSaveCoordinator(
+            (_, cells, _) =>
+            {
+                if (Volatile.Read(ref failing) != 0) { throw new IOException("Storage unavailable."); }
+
+                writes.Enqueue(cells[0]);
+            },
+            capacity
+        );
+        using var terrain = new Terrain();
+        using var source = CreateDirtyChunk(terrain, 0, 0, 100);
+        using var replacement = CreateDirtyChunk(terrain, 0, 0, 200);
+        Assert.True(coordinator.TryQueueChunkForUnload(source));
+        Assert.Throws<AggregateException>(coordinator.Flush);
+        using var reservation = coordinator.TryReserveUnload(replacement);
+        Assert.NotNull(reservation);
+        Volatile.Write(ref failing, 0);
+        if (capacity == 1)
+        {
+            Assert.Throws<AggregateException>(coordinator.Flush);
+            Assert.Empty(writes);
+            Assert.False(coordinator.CanAcceptUnloadSnapshot);
+        }
+        else
+        {
+            coordinator.Flush();
+            Assert.Equal(new[] { 100 }, writes.ToArray());
+        }
+
+        Assert.True(reservation.Commit(replacement));
+        coordinator.Flush();
+        Assert.Equal(capacity == 1 ? new[] { 200 } : new[] { 100, 200 }, writes.ToArray());
+        Assert.True(coordinator.CanAcceptUnloadSnapshot);
+    }
+
+    [Fact]
+    public void LoadedAuthorityChunkDoesNotRequireDerivedLightToBeSaved()
     {
         using var terrain = new Terrain();
         using var chunk = new TerrainChunk(terrain, 0, 0)
         {
-            IsLoaded = true,
+            HasContents = true,
 
             ModificationCounter = 1
         };
-        chunk.SetWorkerState(TerrainChunkState.InvalidLight);
 
+
+        Assert.False(chunk.HasCurrentLight);
         Assert.True(TerrainSaveCoordinator.RequiresSave(chunk));
     }
 
@@ -194,7 +410,7 @@ public sealed class TerrainSaveCoordinatorTest
             }
             else
             {
-                using var restored = new TerrainChunk(terrain, 0, 0) { IsLoaded = true };
+                using var restored = new TerrainChunk(terrain, 0, 0) { HasContents = true };
 
                 Assert.True(coordinator.TryRestorePendingSnapshot(restored));
                 Assert.Equal(100, restored.Cells[0]);
@@ -261,11 +477,11 @@ public sealed class TerrainSaveCoordinatorTest
     {
         var chunk = new TerrainChunk(terrain, x, z)
         {
-            IsLoaded = true,
+            HasContents = true,
 
             ModificationCounter = 1
         };
-        chunk.SetMainThreadState(TerrainChunkState.Ready);
+
         chunk.Cells[0] = value;
         return chunk;
     }

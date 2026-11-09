@@ -29,6 +29,18 @@ public static class NetworkTerrainPolicy
         return Vector2.DistanceSquared(center, closest) <= MathUtils.Sqr(distance);
     }
 
+    /// <summary>Matches the content residency circle; broadphase chunk observers retain AABB intersection.</summary>
+    public static bool IsChunkCenterRelevant(Point2 chunk, Vector2 center, float distance)
+    {
+        var chunkCenter = new Vector2((chunk.X + 0.5f) * 16f, (chunk.Y + 0.5f) * 16f);
+        return IsChunkCenterRelevant(chunkCenter, center, distance);
+    }
+
+    public static bool IsChunkCenterRelevant(Vector2 chunkCenter, Vector2 center, float distance)
+    {
+        return Vector2.DistanceSquared(chunkCenter, center) <= MathUtils.Sqr(distance);
+    }
+
     public static bool TryClampClientUpdateLocation(
         TerrainUpdateLocation requested,
         int configuredMaximum,
@@ -37,6 +49,11 @@ public static class NetworkTerrainPolicy
     )
     {
         clamped = requested;
+        if (!float.IsFinite(requested.VisibilityDistance) || !float.IsFinite(requested.ContentDistance))
+        {
+            return false;
+        }
+
         if (!float.IsFinite(requested.Center.X) || !float.IsFinite(requested.Center.Y))
         {
             return false;

@@ -11,10 +11,10 @@ public sealed class ClientTerrainDeltaCoordinatorTest
     private static TerrainChunk LoadedChunk(Terrain terrain, long version)
     {
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.IsLoaded = true;
+        chunk.HasContents = true;
         chunk.NetworkContentVersion = version;
-        chunk.SetMainThreadState(TerrainChunkState.Ready);
-        chunk.SetWorkerState(TerrainChunkState.Ready);
+
+
         return chunk;
     }
 
@@ -48,7 +48,7 @@ public sealed class ClientTerrainDeltaCoordinatorTest
 
         Assert.Equal(TerrainDeltaApplyResult.Buffered, coordinator.Receive(delta));
 
-        chunk.IsLoaded = true;
+        chunk.HasContents = true;
         chunk.NetworkContentVersion = 10;
         Assert.Equal(TerrainDeltaApplyResult.Applied, coordinator.OnContentInstalled(chunk));
         Assert.Equal(11, chunk.NetworkContentVersion);
@@ -78,7 +78,7 @@ public sealed class ClientTerrainDeltaCoordinatorTest
         var coordinator = new ClientTerrainDeltaCoordinator(terrain, _ => applied++);
 
         coordinator.Receive(Delta(10, 11, 42));
-        chunk.IsLoaded = true;
+        chunk.HasContents = true;
         chunk.NetworkContentVersion = 12;
 
         Assert.Equal(TerrainDeltaApplyResult.Ignored, coordinator.OnContentInstalled(chunk));

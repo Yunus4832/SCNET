@@ -1,6 +1,6 @@
 namespace Game.TerrainSerializers;
 
-public class TerrainContentsGenerator22 : ITerrainContentsGenerator
+public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContentsGenerator
 {
     private static readonly List<TerrainBrush> _coalBrushes = [];
 
@@ -40,85 +40,11 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     private static readonly List<List<TerrainBrush>> _caveBrushesByType = [];
 
-    private static float _tgMountainsDetailFreq;
-
-    private static int _tgMountainsDetailOctaves;
-
-    private static float _tgMountainsDetailPersistence;
-
-    private static float _tgSurfaceMultiplier;
-
-    private readonly Vector2 _humidityOffset;
-
-    private readonly Vector2? _islandSize;
-
-    private readonly Vector2 _mountainsOffset;
-
-    private readonly Vector2 _oceanCorner;
-
-    private readonly Vector2 _riversOffset;
-
-    private readonly int _seed;
-
     private readonly SubsystemBottomSuckerBlockBehavior _subsystemBottomSuckerBlockBehavior;
 
     private readonly SubsystemTerrain _subsystemTerrain;
 
     private readonly Terrain _terrain;
-
-    private readonly Vector2 _temperatureOffset;
-
-    private readonly WorldSettings _worldSettings;
-
-    private readonly float _tgBiomeScaling;
-
-    private readonly bool _tgCavesAndPockets;
-
-    private readonly float _tgDensityBias;
-
-    private readonly bool _tgExtras;
-
-    private readonly float _tgHeightBias;
-
-    private readonly float _tgHillsFrequency;
-
-    private readonly int _tgHillsOctaves;
-
-    private readonly float _tgHillsPercentage;
-
-    private readonly float _tgHillsPersistence;
-
-    private readonly float _tgHillsStrength;
-
-    private readonly float _tgIslandsFrequency;
-
-    private readonly float _tgMinTurbulence;
-
-    private readonly float _tgMountainRangeFreq;
-
-    private readonly float _tgMountainsPercentage;
-
-    private readonly float _tgMountainsStrength;
-
-    private readonly float _tgOceanSlope;
-
-    private readonly float _tgOceanSlopeVariation;
-
-    private readonly float _tgRiversStrength;
-
-    private readonly float _tgShoreFluctuations;
-
-    private readonly float _tgShoreFluctuationsScaling;
-
-    private readonly float _tgTurbulenceFreq;
-
-    private readonly int _tgTurbulenceOctaves;
-
-    private readonly float _tgTurbulencePersistence;
-
-    private readonly float _tgTurbulenceStrength;
-
-    private readonly float _tgTurbulenceZero;
 
     static TerrainContentsGenerator22()
     {
@@ -126,57 +52,13 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
     }
 
     public TerrainContentsGenerator22(SubsystemTerrain subsystemTerrain, Terrain? terrain = null)
+        : base(subsystemTerrain.SubsystemGameInfo.WorldSettings, subsystemTerrain.SubsystemGameInfo.WorldSeed)
     {
         _subsystemTerrain = subsystemTerrain;
         _terrain = terrain ?? subsystemTerrain.Terrain;
         _subsystemBottomSuckerBlockBehavior =
             subsystemTerrain.Project.FindSubsystem<SubsystemBottomSuckerBlockBehavior>(true)!;
-        var subsystemGameInfo = subsystemTerrain.Project.FindSubsystem<SubsystemGameInfo>(true)!;
-        _worldSettings = subsystemGameInfo.WorldSettings;
-        _seed = subsystemGameInfo.WorldSeed;
-        _islandSize = TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode)
-            ? new Vector2?(_worldSettings.IslandSize)
-            : null;
-        var random = new Random(_seed);
-        var num = _islandSize.HasValue ? MathUtils.Min(_islandSize.Value.X, _islandSize.Value.Y) : float.MaxValue;
-        _oceanCorner = new Vector2(-200f, -200f);
-        _temperatureOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
-        _humidityOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
-        _mountainsOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
-        _riversOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
-        _tgBiomeScaling = (TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode) ? 1f : 1.5f) *
-                          _worldSettings.BiomeSize;
-        _tgShoreFluctuations = MathUtils.Clamp(2f * num, 0f, 150f);
-        _tgShoreFluctuationsScaling = MathUtils.Clamp(0.04f * num, 0.5f, 3f);
-        _tgOceanSlope = 0.006f;
-        _tgOceanSlopeVariation = 0.004f;
-        _tgIslandsFrequency = 0.01f;
-        _tgDensityBias = 55f;
-        _tgHeightBias = 1f;
-        _tgRiversStrength = 1f;
-        _tgMountainsStrength = 220f;
-        _tgMountainRangeFreq = 0.0006f;
-        _tgMountainsPercentage = 0.15f;
-        _tgMountainsDetailFreq = 0.003f;
-        _tgMountainsDetailOctaves = 3;
-        _tgMountainsDetailPersistence = 0.53f;
-        _tgHillsPercentage = 0.32f;
-        _tgHillsStrength = 32f;
-        _tgHillsOctaves = 1;
-        _tgHillsFrequency = 0.014f;
-        _tgHillsPersistence = 0.5f;
-        _tgTurbulenceStrength = 55f;
-        _tgTurbulenceFreq = 0.03f;
-        _tgTurbulenceOctaves = 1;
-        _tgTurbulencePersistence = 0.5f;
-        _tgMinTurbulence = 0.04f;
-        _tgTurbulenceZero = 0.84f;
-        _tgSurfaceMultiplier = 2f;
-        _tgExtras = true;
-        _tgCavesAndPockets = true;
     }
-
-    public int OceanLevel => 64 + _worldSettings.SeaLevelOffset;
 
     public Vector3 FindCoarseSpawnPosition()
     {
@@ -192,12 +74,12 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
                     float x;
                     if (k == 0)
                     {
-                        num2 = _oceanCorner.Y + i;
+                        num2 = oceanCorner.Y + i;
                         x = CalculateOceanShoreX(num2) + j;
                     }
                     else
                     {
-                        x = _oceanCorner.X + i;
+                        x = oceanCorner.X + i;
                         num2 = CalculateOceanShoreZ(x) + j;
                     }
 
@@ -251,157 +133,6 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
         GenerateSnowAndIce(chunk);
         GenerateBedrockAndAir(chunk);
         UpdateFluidIsTop(chunk);
-    }
-
-    public float CalculateOceanShoreDistance(float x, float z)
-    {
-        if (_islandSize.HasValue)
-        {
-            var num = CalculateOceanShoreX(z);
-            var num2 = CalculateOceanShoreZ(x);
-            var num3 = CalculateOceanShoreX(z + 1000f) + _islandSize.Value.X;
-            var num4 = CalculateOceanShoreZ(x + 1000f) + _islandSize.Value.Y;
-            return MathUtils.Min(x - num, z - num2, num3 - x, num4 - z);
-        }
-
-        var num5 = CalculateOceanShoreX(z);
-        var num6 = CalculateOceanShoreZ(x);
-        return MathUtils.Min(x - num5, z - num6);
-    }
-
-    public float CalculateMountainRangeFactor(float x, float z)
-    {
-        return SimplexNoise.OctavedNoise(
-            x + _mountainsOffset.X,
-            z + _mountainsOffset.Y,
-            _tgMountainRangeFreq / _tgBiomeScaling,
-            3,
-            1.91f,
-            0.75f,
-            true
-        );
-    }
-
-    public float CalculateHeight(float x, float z)
-    {
-        var num = _tgOceanSlope +
-                  _tgOceanSlopeVariation *
-                  MathUtils.PowSign(
-                      2f *
-                      SimplexNoise.OctavedNoise(x + _mountainsOffset.X, z + _mountainsOffset.Y, 0.01f, 1, 2f, 0.5f) -
-                      1f,
-                      0.5f
-                  );
-        var num2 = CalculateOceanShoreDistance(x, z);
-        var num3 = MathUtils.Saturate(2f - 0.05f * MathUtils.Abs(num2));
-        var num4 = MathUtils.Saturate(MathUtils.Sin(_tgIslandsFrequency * num2));
-        var num5 = MathUtils.Saturate(MathUtils.Saturate((0f - num) * num2) - 0.85f * num4);
-        var num6 = MathUtils.Saturate(MathUtils.Saturate(0.05f * (0f - num2 - 10f)) - num4);
-        var v = CalculateMountainRangeFactor(x, z);
-        var f = (1f - num3) * SimplexNoise.OctavedNoise(x, z, 0.001f / _tgBiomeScaling, 2, 2f, 0.5f);
-        var f2 = (1f - num3) * SimplexNoise.OctavedNoise(x, z, 0.0017f / _tgBiomeScaling, 2, 4f, 0.7f);
-        var num7 = (1f - num6) * (1f - num3) * Squish(v, 1f - _tgHillsPercentage, 1f - _tgMountainsPercentage);
-        var num8 = (1f - num6) * Squish(v, 1f - _tgMountainsPercentage, 1f);
-        var num9 = 1f * SimplexNoise.OctavedNoise(x, z, _tgHillsFrequency, _tgHillsOctaves, 1.93f, _tgHillsPersistence);
-        var amplitudeStep =
-            MathUtils.Lerp(0.75f * _tgMountainsDetailPersistence, 1.33f * _tgMountainsDetailPersistence, f);
-        var num10 = 1.5f *
-                    SimplexNoise.OctavedNoise(
-                        x,
-                        z,
-                        _tgMountainsDetailFreq,
-                        _tgMountainsDetailOctaves,
-                        1.98f,
-                        amplitudeStep
-                    ) -
-                    0.5f;
-        var num11 = MathUtils.Lerp(
-            60f,
-            30f,
-            MathUtils.Saturate(1f * num8 + 0.5f * num7 + MathUtils.Saturate(1f - num2 / 30f))
-        );
-        var x2 = MathUtils.Lerp(-2f, -4f, MathUtils.Saturate(num8 + 0.5f * num7));
-        var num12 = MathUtils.Saturate(
-            1.5f -
-            num11 *
-            MathUtils.Abs(
-                2f *
-                SimplexNoise.OctavedNoise(x + _riversOffset.X, z + _riversOffset.Y, 0.001f, 4, 2f, 0.5f) -
-                1f
-            )
-        );
-        var num13 = -50f * num5 + _tgHeightBias;
-        var num14 = MathUtils.Lerp(0f, 8f, f);
-        var num15 = MathUtils.Lerp(0f, -6f, f2);
-        var num16 = _tgHillsStrength * num7 * num9;
-        var num17 = _tgMountainsStrength * num8 * num10;
-        var f3 = _tgRiversStrength * num12;
-        var num18 = num13 + num14 + num15 + num17 + num16;
-        var num19 = MathUtils.Min(MathUtils.Lerp(num18, x2, f3), num18);
-        return MathUtils.Clamp(64f + num19, 10f, 251f);
-    }
-
-    public int CalculateTemperature(float x, float z)
-    {
-        return MathUtils.Clamp(
-            (int)(MathUtils.Saturate(
-                      3f *
-                      SimplexNoise.OctavedNoise(
-                          x + _temperatureOffset.X,
-                          z + _temperatureOffset.Y,
-                          0.0015f / _tgBiomeScaling,
-                          5,
-                          2f,
-                          0.6f
-                      ) -
-                      1.1f +
-                      _worldSettings.TemperatureOffset / 16f
-                  ) *
-                  16f),
-            0,
-            15
-        );
-    }
-
-    public int CalculateHumidity(float x, float z)
-    {
-        return MathUtils.Clamp(
-            (int)(MathUtils.Saturate(
-                      3f *
-                      SimplexNoise.OctavedNoise(
-                          x + _humidityOffset.X,
-                          z + _humidityOffset.Y,
-                          0.0012f / _tgBiomeScaling,
-                          5,
-                          2f,
-                          0.6f
-                      ) -
-                      0.9f +
-                      _worldSettings.HumidityOffset / 16f
-                  ) *
-                  16f),
-            0,
-            15
-        );
-    }
-
-    public static float Squish(float v, float zero, float one)
-    {
-        return MathUtils.Saturate((v - zero) / (one - zero));
-    }
-
-    public float CalculateOceanShoreX(float z)
-    {
-        return _oceanCorner.X +
-               _tgShoreFluctuations *
-               SimplexNoise.OctavedNoise(z, 0f, 0.005f / _tgShoreFluctuationsScaling, 4, 1.95f, 1f);
-    }
-
-    public float CalculateOceanShoreZ(float x)
-    {
-        return _oceanCorner.Y +
-               _tgShoreFluctuations *
-               SimplexNoise.OctavedNoise(0f, x, 0.005f / _tgShoreFluctuationsScaling, 4, 1.95f, 1f);
     }
 
     public float ScoreSpawnPosition(int x, int z)
@@ -593,11 +324,11 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
                 var num6 = l * 4 + num4;
                 var num7 = CalculateHeight(num5, num6);
                 var v = CalculateMountainRangeFactor(num5, num6);
-                var num8 = MathUtils.Lerp(_tgMinTurbulence, 1f, Squish(v, _tgTurbulenceZero, 1f));
+                var num8 = MathUtils.Lerp(tgMinTurbulence, 1f, Squish(v, tgTurbulenceZero, 1f));
                 for (var m = 0; m < grid3D.SizeY; m++)
                 {
                     var num9 = m * 8;
-                    var num10 = _tgTurbulenceStrength *
+                    var num10 = tgTurbulenceStrength *
                                 num8 *
                                 MathUtils.Saturate(num7 - num9) *
                                 (2f *
@@ -605,15 +336,15 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
                                      num5,
                                      num9,
                                      num6,
-                                     _tgTurbulenceFreq,
-                                     _tgTurbulenceOctaves,
+                                     tgTurbulenceFreq,
+                                     tgTurbulenceOctaves,
                                      4f,
-                                     _tgTurbulencePersistence
+                                     tgTurbulencePersistence
                                  ) -
                                  1f);
                     var num11 = num9 + num10;
                     var num12 = num7 - num11;
-                    num12 += MathUtils.Max(4f * (_tgDensityBias - num9), 0f);
+                    num12 += MathUtils.Max(4f * (tgDensityBias - num9), 0f);
                     grid3D.Set(k, m, l, num12);
                 }
             }
@@ -708,7 +439,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateSurface(TerrainChunk chunk)
     {
-        var random = new Random(_seed + chunk.Coords.X + 101 * chunk.Coords.Y);
+        var random = new Random(seed + chunk.Coords.X + 101 * chunk.Coords.Y);
         for (var i = 0; i < 16; i++)
         {
             for (var j = 0; j < 16; j++)
@@ -752,7 +483,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
                             var f = MathUtils.Saturate(
                                 MathUtils.Saturate((num6 - 0.9f) / 0.1f) -
                                 MathUtils.Saturate((humidity - 3f) / 12f) +
-                                _tgSurfaceMultiplier * num11
+                                tgSurfaceMultiplier * num11
                             );
                             var min = (int)MathUtils.Lerp(4f, 0f, f);
                             var max = (int)MathUtils.Lerp(7f, 0f, f);
@@ -783,7 +514,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateMinerals(TerrainChunk chunk)
     {
-        if (!_tgCavesAndPockets)
+        if (!tgCavesAndPockets)
         {
             return;
         }
@@ -800,7 +531,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
         {
             for (var j = y - 1; j <= y + 1; j++)
             {
-                var random = new Random(_seed + i + 119 * j);
+                var random = new Random(seed + i + 119 * j);
                 var num = random.Int(0, 10);
                 for (var k = 0; k < num; k++)
                 {
@@ -878,7 +609,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GeneratePockets(TerrainChunk chunk)
     {
-        if (!_tgCavesAndPockets)
+        if (!tgCavesAndPockets)
         {
             return;
         }
@@ -889,7 +620,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
             {
                 var num = i + chunk.Coords.X;
                 var num2 = j + chunk.Coords.Y;
-                var random = new Random(_seed + num + 71 * num2);
+                var random = new Random(seed + num + 71 * num2);
                 var num3 = random.Int(0, 10);
                 for (var k = 0; k < num3; k++)
                 {
@@ -1010,7 +741,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateCaves(TerrainChunk chunk)
     {
-        if (!_tgCavesAndPockets)
+        if (!tgCavesAndPockets)
         {
             return;
         }
@@ -1023,7 +754,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
             for (var j = y - 2; j <= y + 2; j++)
             {
                 list.Clear();
-                var random = new Random(_seed + i + 9973 * j);
+                var random = new Random(seed + i + 9973 * j);
                 var num = i * 16 + random.Int(0, 15);
                 var num2 = j * 16 + random.Int(0, 15);
                 var probability = 0.5f;
@@ -1162,7 +893,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateTreesAndLogs(TerrainChunk chunk)
     {
-        if (!_tgExtras)
+        if (!tgExtras)
         {
             return;
         }
@@ -1177,7 +908,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
         {
             for (var j = y2; j <= y2; j++)
             {
-                var random = new Random(_seed + i + 3943 * j);
+                var random = new Random(seed + i + 3943 * j);
                 var humidity = CalculateHumidity(i * 16, j * 16);
                 var num3 = CalculateTemperature(i * 16, j * 16);
                 var num4 = MathUtils.Saturate(
@@ -1426,12 +1157,12 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateGrassAndPlants(TerrainChunk chunk)
     {
-        if (!_tgExtras)
+        if (!tgExtras)
         {
             return;
         }
 
-        var random = new Random(_seed + chunk.Coords.X + 3943 * chunk.Coords.Y);
+        var random = new Random(seed + chunk.Coords.X + 3943 * chunk.Coords.Y);
         for (var i = 0; i < 16; i++)
         {
             for (var j = 0; j < 16; j++)
@@ -1475,12 +1206,12 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateBottomSuckers(TerrainChunk chunk)
     {
-        if (!_tgExtras)
+        if (!tgExtras)
         {
             return;
         }
 
-        var random = new Random(_seed + chunk.Coords.X + 2210 * chunk.Coords.Y);
+        var random = new Random(seed + chunk.Coords.X + 2210 * chunk.Coords.Y);
         for (var i = 0; i < 16; i++)
         {
             for (var j = 0; j < 16; j++)
@@ -1589,14 +1320,14 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateCacti(TerrainChunk chunk)
     {
-        if (!_tgExtras)
+        if (!tgExtras)
         {
             return;
         }
 
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
-        var random = new Random(_seed + x + 1991 * y);
+        var random = new Random(seed + x + 1991 * y);
         if (!random.Bool(0.5f))
         {
             return;
@@ -1649,14 +1380,14 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GeneratePumpkins(TerrainChunk chunk)
     {
-        if (!_tgExtras)
+        if (!tgExtras)
         {
             return;
         }
 
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
-        var random = new Random(_seed + x + 1495 * y);
+        var random = new Random(seed + x + 1495 * y);
         if (!random.Bool(0.2f))
         {
             return;
@@ -1702,7 +1433,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateKelp(TerrainChunk chunk)
     {
-        if (!_tgExtras)
+        if (!tgExtras)
         {
             return;
         }
@@ -1715,7 +1446,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
         {
             var num2 = i % 3 - 1;
             var num3 = i / 3 - 1;
-            random.Seed(_seed + x + num2 + 850 * (y + num3));
+            random.Seed(seed + x + num2 + 850 * (y + num3));
             if (!random.Bool(0.2f))
             {
                 continue;
@@ -1733,7 +1464,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
             return;
         }
 
-        random.Seed(_seed + x + 850 * y);
+        random.Seed(seed + x + 850 * y);
         var num4 = random.Int(0, MathUtils.Max((int)(256f * num), 1));
         for (var j = 0; j < num4; j++)
         {
@@ -1795,14 +1526,14 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateSeagrass(TerrainChunk chunk)
     {
-        if (!_tgExtras)
+        if (!tgExtras)
         {
             return;
         }
 
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
-        var random = new Random(_seed + x + 378 * y);
+        var random = new Random(seed + x + 378 * y);
         for (var i = 0; i < 6; i++)
         {
             var num = random.Int(1, 14);
@@ -1853,12 +1584,12 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateIvy(TerrainChunk chunk)
     {
-        if (!_tgExtras)
+        if (!tgExtras)
         {
             return;
         }
 
-        var random = new Random(_seed + chunk.Coords.X + 2191 * chunk.Coords.Y);
+        var random = new Random(seed + chunk.Coords.X + 2191 * chunk.Coords.Y);
         var num = random.Int(0, MathUtils.Max(12, 1));
         for (var i = 0; i < num; i++)
         {
@@ -1939,7 +1670,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateTraps(TerrainChunk chunk)
     {
-        if (!_tgExtras)
+        if (!tgExtras)
         {
             return;
         }
@@ -1947,7 +1678,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
         _ = _terrain;
-        var random = new Random(_seed + x + 2113 * y);
+        var random = new Random(seed + x + 2113 * y);
         if (!random.Bool(0.15f) || !(CalculateOceanShoreDistance(chunk.Origin.X, chunk.Origin.Y) > 50f))
         {
             return;
@@ -2025,14 +1756,14 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
 
     public void GenerateGraves(TerrainChunk chunk)
     {
-        if (!_tgExtras)
+        if (!tgExtras)
         {
             return;
         }
 
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
-        var random = new Random((int)MathUtils.Hash((uint)(_seed + x + 10323 * y)));
+        var random = new Random((int)MathUtils.Hash((uint)(seed + x + 10323 * y)));
         if (!(random.Float(0f, 1f) < 0.033f) ||
             !(CalculateOceanShoreDistance(chunk.Origin.X, chunk.Origin.Y) > 10f))
         {

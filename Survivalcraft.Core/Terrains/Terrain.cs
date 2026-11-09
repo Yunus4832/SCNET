@@ -307,6 +307,7 @@ public class Terrain : IDisposable
         }
 
         chunk.AllocationGeneration = checked(chunk.AllocationGeneration + 1);
+        chunk.DerivedRevisions.InvalidateHeightsAndLight();
         _chunkVersions[chunk.Coords] = (chunk.AllocationGeneration, chunk.NetworkContentRevision);
     }
 
@@ -324,6 +325,7 @@ public class Terrain : IDisposable
 
         _chunkVersions[chunk.Coords] = (chunk.AllocationGeneration, chunk.NetworkContentRevision);
         _allChunks.Remove(chunk.Coords.X, chunk.Coords.Y);
+        chunk.Dispose();
         _allocatedChunksArray = [];
     }
 
@@ -907,8 +909,15 @@ public class Terrain : IDisposable
                 index = (index + 1) & _capacityMinusOne;
             }
 
-            _array[index]?.Dispose();
             _array[index] = null;
+            // A hole must not terminate lookups for other entries in this collision chain.
+            index = (index + 1) & _capacityMinusOne;
+            while (_array[index] is { } displaced)
+            {
+                _array[index] = null;
+                Add(displaced.Coords.X, displaced.Coords.Y, displaced);
+                index = (index + 1) & _capacityMinusOne;
+            }
         }
     }
 }

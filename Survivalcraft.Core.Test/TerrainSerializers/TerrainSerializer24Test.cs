@@ -29,8 +29,8 @@ public sealed class TerrainSerializer24Test
         using var serializer = new TestTerrainSerializer24(storage);
         using var terrain = new Terrain();
         using var source = new TerrainChunk(terrain, 2, 3);
-        source.IsLoaded = true;
-        source.SetMainThreadState(TerrainChunkState.Ready);
+        source.HasContents = true;
+
 
         for (var z = 0; z < 16; z++)
         {
@@ -104,11 +104,11 @@ public sealed class TerrainSerializer24Test
         using var terrain = new Terrain();
         using var chunk = new TerrainChunk(terrain, 0, 0)
         {
-            IsLoaded = true,
+            HasContents = true,
 
             ModificationCounter = 1
         };
-        chunk.SetMainThreadState(TerrainChunkState.Ready);
+
 
         chunk.SetCellValueFast(1, 65, 2, 42);
         Assert.Throws<IOException>(() => serializer.SaveChunk(chunk));
@@ -130,11 +130,11 @@ public sealed class TerrainSerializer24Test
         using var terrain = new Terrain();
         using var source = new TerrainChunk(terrain, 3, 4)
         {
-            IsLoaded = true,
+            HasContents = true,
 
             ModificationCounter = 1
         };
-        source.SetMainThreadState(TerrainChunkState.Ready);
+
         source.SetCellValueFast(5, 60, 7, Terrain.MakeBlockValue(42, 0, 3));
         source.SetTemperatureFast(5, 7, 12);
         source.SetHumidityFast(5, 7, 9);
@@ -157,11 +157,11 @@ public sealed class TerrainSerializer24Test
         using var terrain = new Terrain();
         using var source = new TerrainChunk(terrain, 1, 2)
         {
-            IsLoaded = true,
+            HasContents = true,
 
             ModificationCounter = 1
         };
-        source.SetMainThreadState(TerrainChunkState.Ready);
+
         source.SetCellValueFast(3, 40, 5, Terrain.MakeBlockValue(17));
         serializer.SaveChunk(source);
 

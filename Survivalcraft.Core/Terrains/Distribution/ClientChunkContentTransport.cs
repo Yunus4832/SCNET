@@ -26,7 +26,13 @@ public sealed class ClientChunkContentTransport : IChunkContentTransport, IDispo
 
     private readonly Dictionary<Point2, ChunkAllocationId> _active = [];
 
-    private readonly Dictionary<ChunkAllocationId, ClientChunkSnapshot> _received = [];
+    private readonly Dictionary<ChunkAllocationId, QueuedSnapshot> _received = [];
+
+    private readonly LinkedList<ChunkAllocationId> _receivedOrder = [];
+
+    private Vector2[] _priorityCenters = [];
+
+    private int _snapshotTurn;
 
     private readonly Dictionary<ChunkAllocationId, DeltaBatch> _deltas = [];
 
@@ -124,6 +130,30 @@ public sealed class ClientChunkContentTransport : IChunkContentTransport, IDispo
 
     public long RequestsSubmitted => Interlocked.Read(ref _requestsSubmitted);
 
+    public bool HasPendingWork
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return !_disposed &&
+                       !_runtime.IsClosed &&
+                       (_received.Count > 0 || _deltaCount > 0 || _resync.Count > 0);
+            }
+        }
+    }
+
+    public void SetPriorityCenters(IReadOnlyList<Vector2> centers)
+    {
+        ArgumentNullException.ThrowIfNull(centers);
+        lock (_gate)
+        {
+            if (_disposed || _runtime.IsClosed) { return; }
+
+            _priorityCenters = centers.ToArray();
+        }
+    }
+
     public int PendingDeltaCount
     {
         get
@@ -162,7 +192,7 @@ public sealed class ClientChunkContentTransport : IChunkContentTransport, IDispo
                    !_runtime.IsClosed &&
                    _active.TryGetValue(allocation.Coords, out var current) &&
                    current == allocation &&
-                   (!_received.TryGetValue(allocation, out var previous) || previous.ContentVersion < version);
+                   (!_received.TryGetValue(allocation, out var previous) || previous.Snapshot.ContentVersion < version);
         }
     }
 
@@ -244,7 +274,8 @@ public sealed class ClientChunkContentTransport : IChunkContentTransport, IDispo
     {
         if (_active.GetValueOrDefault(allocation.Coords) == allocation) { _active.Remove(allocation.Coords); }
 
-        _received.Remove(allocation);
+        if (_received.Remove(allocation, out var queued)) { _receivedOrder.Remove(queued.Node); }
+
         if (_deltas.Remove(allocation, out var batch))
         {
             _deltaCount -= batch.Values.Count;
@@ -280,12 +311,19 @@ public sealed class ClientChunkContentTransport : IChunkContentTransport, IDispo
                 (!_received.ContainsKey(active) &&
                  (_received.Count + _reservedSnapshots + 1) * SnapshotBytes > MaximumQueuedSnapshotBytes)) { return; }
 
-            if (_received.TryGetValue(active, out var previous) && previous.ContentVersion > snapshot.ContentVersion)
+            if (_received.TryGetValue(active, out var previous))
             {
-                return;
+                if (previous.Snapshot.ContentVersion > snapshot.ContentVersion) { return; }
+
+                previous.Snapshot = snapshot;
+            }
+            else
+            {
+                _received.Add(active, new QueuedSnapshot(snapshot, _receivedOrder.AddLast(active)));
             }
 
-            _received[active] = snapshot;
+            TrimCoveredPrefix(active, snapshot.ContentVersion);
+
             Interlocked.Increment(ref _transfersCompleted);
         }
     }
@@ -297,6 +335,10 @@ public sealed class ClientChunkContentTransport : IChunkContentTransport, IDispo
             if (_disposed ||
                 _runtime.IsClosed ||
                 !_active.TryGetValue(Terrain.ToChunk(delta.Cell.X, delta.Cell.Z), out var allocation)) { return; }
+
+            // A complete owned baseline already contains these writes, even before installation.
+            if (_received.TryGetValue(allocation, out var queued) &&
+                delta.ResultContentVersion <= queued.Snapshot.ContentVersion) { return; }
 
             if (_resync.TryGetValue(allocation, out var required))
             {
@@ -335,21 +377,70 @@ public sealed class ClientChunkContentTransport : IChunkContentTransport, IDispo
         }
     }
 
+    private void TrimCoveredPrefix(ChunkAllocationId allocation, long version)
+    {
+        if (_deltas.TryGetValue(allocation, out var batch))
+        {
+            var covered = batch.Values.Where(pair => pair.Value.ResultContentVersion <= version)
+                .Select(pair => pair.Key).ToArray();
+            foreach (var key in covered) { batch.Values.Remove(key); }
+
+            _deltaCount -= covered.Length;
+            if (batch.Values.Count == 0)
+            {
+                _deltas.Remove(allocation);
+                _deltaOrder.Remove(batch.Node);
+            }
+        }
+
+        if (_resync.TryGetValue(allocation, out var required) && required <= version) { _resync.Remove(allocation); }
+    }
+
     public int DrainReceived(ICollection<ClientChunkSnapshot> destination, int maximumCount = int.MaxValue)
     {
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumCount);
         lock (_gate)
         {
-            var selected = _received.Take(maximumCount).ToArray();
-            foreach (var (allocation, snapshot) in selected)
+            var count = 0;
+            while (count < maximumCount && _receivedOrder.Count > 0)
             {
-                destination.Add(snapshot);
+                var queued = SelectSnapshot();
+                var allocation = queued.Node.Value;
+                destination.Add(queued.Snapshot);
                 _received.Remove(allocation);
+                _receivedOrder.Remove(queued.Node);
+                count++;
             }
 
-            return selected.Length;
+            return count;
         }
+    }
+
+    private QueuedSnapshot SelectSnapshot()
+    {
+        var selected = _received[_receivedOrder.First!.Value];
+        // Reserve every fourth turn for the oldest delivery, even while nearer chunks keep arriving.
+        var oldestTurn = _snapshotTurn == 0;
+        _snapshotTurn = (_snapshotTurn + 1) % 4;
+        if (oldestTurn || _priorityCenters.Length == 0) { return selected; }
+
+        var nearest = float.MaxValue;
+        foreach (var queued in _received.Values)
+        {
+            var coords = queued.Node.Value.Coords;
+            var center = new Vector2((coords.X + 0.5f) * 16, (coords.Y + 0.5f) * 16);
+            foreach (var priorityCenter in _priorityCenters)
+            {
+                var distance = Vector2.DistanceSquared(center, priorityCenter);
+                if (distance >= nearest) { continue; }
+
+                nearest = distance;
+                selected = queued;
+            }
+        }
+
+        return selected;
     }
 
     public int DrainDeltas(ICollection<TerrainCellDelta> destination, int maximumCount = MaximumDeltasPerDrain)
@@ -399,6 +490,9 @@ public sealed class ClientChunkContentTransport : IChunkContentTransport, IDispo
         {
             _active.Clear();
             _received.Clear();
+            _receivedOrder.Clear();
+            _priorityCenters = [];
+            _snapshotTurn = 0;
             _deltas.Clear();
             _deltaOrder.Clear();
             _deltaCount = 0;
@@ -425,5 +519,15 @@ public sealed class ClientChunkContentTransport : IChunkContentTransport, IDispo
         internal LinkedListNode<ChunkAllocationId> Node { get; } = node;
 
         internal SortedDictionary<long, TerrainCellDelta> Values { get; } = [];
+    }
+
+    private sealed class QueuedSnapshot(
+        ClientChunkSnapshot snapshot,
+        LinkedListNode<ChunkAllocationId> node
+    )
+    {
+        internal ClientChunkSnapshot Snapshot { get; set; } = snapshot;
+
+        internal LinkedListNode<ChunkAllocationId> Node { get; } = node;
     }
 }

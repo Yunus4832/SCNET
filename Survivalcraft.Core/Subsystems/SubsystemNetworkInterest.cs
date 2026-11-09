@@ -166,17 +166,17 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
             return false;
         }
 
-        var updater = _subsystemTerrain.TerrainUpdater;
+        var demands = _subsystemTerrain.Demands;
         // Reconcile the original camera request after movement arrives on another channel.
-        // LastChunksUpdateCenter remains owned by the server updater.
-        updater.SetUpdateLocation(
+        // LastChunksUpdateCenter remains owned by the authority demand manager.
+        demands.SetLocation(
             player.CharacterIndex,
             approved.Center,
             approved.VisibilityDistance,
             approved.ContentDistance
         );
         _spatial.SetLocation(client, approved.Center, approved.ContentDistance);
-        var distribution = updater.ServerChunkDistribution;
+        var distribution = _subsystemTerrain.ChunkDistribution;
         if (distribution != null &&
             (!distribution.TryGetClientLocation(client, out var center, out var distance) ||
              center != approved.Center ||
@@ -406,7 +406,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
 
     private bool TryGetLocation(WorldConnection client, out Vector2 center, out float contentDistance)
     {
-        if (_subsystemTerrain.TerrainUpdater.ServerChunkDistribution is { } distribution &&
+        if (_subsystemTerrain.ChunkDistribution is { } distribution &&
             distribution.TryGetClientLocation(client, out center, out contentDistance))
         {
             return true;
@@ -421,7 +421,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
             return false;
         }
 
-        if (_subsystemTerrain.TerrainUpdater.UpdateLocations.TryGetValue(
+        if (_subsystemTerrain.Demands.Locations.TryGetValue(
                 characterData.CharacterIndex,
                 out var updateLocation
             ))

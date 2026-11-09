@@ -287,12 +287,39 @@ public sealed class GameRuntimeTest
 
         authority.StopImmediate();
         client.StopImmediate();
+        var nextAuthority = authority.Runtime;
+        var nextClient = client.Runtime;
         Assert.Null(gameRuntime.Authority!.Project);
         Assert.Null(gameRuntime.Client!.Project);
         gameRuntime.Dispose();
 
         Assert.True(authorityProject.IsDisposed);
         Assert.True(clientProject.IsDisposed);
+        Assert.Same(nextAuthority, authority.Runtime);
+        Assert.Same(nextClient, client.Runtime);
+    }
+
+    [Theory]
+    [InlineData(RuntimeSide.Authority)]
+    [InlineData(RuntimeSide.Client)]
+    public void ReleasingAnAlreadyDisposedProjectStillStopsItsOwnedEndpoint(RuntimeSide side)
+    {
+        using var gameRuntime = new GameRuntime(false);
+        using var project = new RuntimeTestProject(side);
+        var world = WorldRuntimeContext.For(project);
+        var node = WorldNetworkBinding.For(world).RequireNode();
+        node.OnReceive += (_, _) => { };
+        gameRuntime.Attach(world);
+
+        project.Dispose();
+        Assert.False(WorldNetworkBinding.TryGet(world, out _));
+
+        if (side == RuntimeSide.Client) { gameRuntime.ReleaseClient(); }
+        else { gameRuntime.Dispose(); }
+
+        Assert.Equal(NodeRole.Inactive, node.Role);
+        Assert.NotSame(world, node.Runtime);
+        node.Update();
     }
 
     private static void AddUpdate(RuntimeTestProject project, Action action)

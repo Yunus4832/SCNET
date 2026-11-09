@@ -65,7 +65,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     var y = value.Point.Y;
                     var z = value.Point.Z;
                     var chunk = SubsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-                    if (chunk is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
+                    if (chunk is not { HasContents: true })
                     {
                         _copyIndex++;
                         continue;
@@ -407,7 +407,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         {
             var offset = CellFace.FaceToPoint3(face);
             if (SubsystemTerrain.Terrain.GetChunkAtCell(x + offset.X, z + offset.Z, false) is not
-                { MainThreadState: > TerrainChunkState.InvalidContents4 })
+                { HasContents: true })
             {
                 return false;
             }

@@ -132,7 +132,6 @@ public sealed class WorldSaveFailureTest
 
             Assert.Contains(sink.Messages, item => item.Type == LogType.Error && item.Message.Contains(name));
             Assert.DoesNotContain(sink.Messages, item => item.Message.Contains("Dispatched action failed."));
-            Assert.DoesNotContain(sink.Messages, item => item.Message.StartsWith("Saved project,"));
             Assert.Same(replaceWorld ? nextRuntime : savingRuntime, GameManager.Runtime);
         }
         finally

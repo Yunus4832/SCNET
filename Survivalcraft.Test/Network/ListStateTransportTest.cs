@@ -25,14 +25,17 @@ public sealed class ListStateTransportTest
     }
 
     [Fact]
-    public void FullPickableChunkFitsMinimumMtuWithoutCompression()
+    public void LogicalPickableChunkCanExceedSecureMinimumMtuWithoutCompression()
     {
-        var items = Enumerable.Range(1, PickablePackage.MaxPositionsPerSnapshot)
+        var items = Enumerable.Range(
+                ushort.MaxValue - PickablePackage.MaxPositionsPerSnapshot + 1,
+                PickablePackage.MaxPositionsPerSnapshot
+            )
             .Select(id => new Pickable { Id = (ushort)id, Position = new Vector3(id, -id, id * 3) }).ToList();
         var package = PickablePackageBuilder.Capture(items) with { StateTick = uint.MaxValue };
         var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
         var datagram = NetworkWireFraming.Wrap(writer);
-        Assert.InRange(datagram.Length, 1, 507);
+        Assert.InRange(datagram.Length, 420, 507);
         Assert.Equal(DeliveryMode.Unreliable, PackageTransportPolicy.Get(package).Delivery);
         Assert.Equal(NetworkChannel.StateStream, PackageTransportPolicy.Get(package).Channel);
     }

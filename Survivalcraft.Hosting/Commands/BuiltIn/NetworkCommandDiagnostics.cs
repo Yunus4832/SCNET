@@ -8,7 +8,7 @@ public sealed class NetworkCommandDiagnostics(
     Func<CommandContext, object?>? getClientTerrain = null
 )
 {
-    public CommandResult GetSendStatistics(CommandContext context, GetNetworkSendStatisticsCommand _)
+    public CommandResult GetSendStatistics(CommandContext context, GetNetworkSendStatisticsCommand command)
     {
         var node = context.Project is { } project
             ? WorldNetworkBinding.For(project).RequireNode()
@@ -76,24 +76,27 @@ public sealed class NetworkCommandDiagnostics(
     private static object? CaptureTerrainBacklog(CommandContext context)
     {
         var terrain = context.Project?.FindSubsystem<SubsystemTerrain>();
-        var scheduler = terrain?.TerrainUpdater.ServerChunkDistribution;
+        var scheduler = terrain?.ChunkDistribution;
         if (scheduler == null)
         {
             return null;
         }
 
         var backlog = scheduler.GetBacklog();
+        var chunks = terrain!.Terrain.AllocatedChunks;
         return new
         {
             backlog.Pending,
             backlog.AwaitingContent,
             OutstandingEncodes = WorldNetworkBinding.FindNode(context.Project!)?.OutstandingChunkEncodes ??
                                  0,
-            terrain!.TerrainUpdater.PendingLocationCount,
-            terrain.TerrainUpdater.LocationHandoffTimeouts,
-            terrain.TerrainUpdater.DeferredAllocationPasses,
-            AllocatedStates = terrain.Terrain.AllocatedChunks.GroupBy(chunk => chunk.WorkerState)
-                .ToDictionary(group => group.Key.ToString(), group => group.Count()),
+            terrain!.Demands.PendingLocationCount,
+            DeferredResidencyUpdates = terrain.Residency.DeferredUpdates,
+            AllocatedChunks = chunks.Length,
+            ContentsMissing = chunks.Count(chunk => !chunk.HasContents),
+            HeightsPending = chunks.Count(chunk => !chunk.HasCurrentHeightData),
+            LightingPending = chunks.Count(chunk => !chunk.HasCurrentLight),
+            InitializationPending = chunks.Count(chunk => !chunk.IsContentInitialized),
             SaveOutstanding = terrain.TerrainSaveCoordinator?.OutstandingCount
         };
     }

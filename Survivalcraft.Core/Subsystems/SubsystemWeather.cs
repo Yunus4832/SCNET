@@ -138,7 +138,7 @@ public class SubsystemWeather : Subsystem, IUpdateable
             foreach (var _ in allocatedChunks)
             {
                 var terrainChunk = allocatedChunks[_random.Int(0, allocatedChunks.Length - 1)];
-                if (terrainChunk.MainThreadState < TerrainChunkState.Ready ||
+                if (!terrainChunk.HasCurrentHeightData ||
                     !_random.Bool(LightningIntensity * 0.0002f))
                 {
                     continue;
@@ -421,7 +421,7 @@ public class SubsystemWeather : Subsystem, IUpdateable
                 }
 
                 if (num4 == 18 &&
-                    SubsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(num5, num7) >
+                    SubsystemTerrain.Environment.CalculateOceanShoreDistance(num5, num7) >
                     -35f)
                 {
                     var cellContents = terrain.GetCellContents(num5 + 1, num6, num7);

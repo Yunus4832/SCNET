@@ -73,7 +73,7 @@ public class ComponentIntroPresentation : Component, IUpdateable
         _startTime = _subsystemTime.GameTime;
         var componentBody = _componentCharacter.Entity.FindComponent<ComponentBody>(true)!;
         var vector = ComponentIntro.FindOceanDirection(
-            _subsystemTerrain.TerrainContentsGenerator,
+            _subsystemTerrain.Environment,
             componentBody.Position.XZ
         );
         var vector2 = componentBody.Position.XZ + 25f * vector;
@@ -103,7 +103,7 @@ public class ComponentIntroPresentation : Component, IUpdateable
         var valuesDictionary = new ValuesDictionary();
         valuesDictionary.PopulateFromDatabaseObject(databaseObject);
         var entity = Project.CreateEntity(valuesDictionary);
-        var vector4 = new Vector3(vector3.X, _subsystemTerrain.TerrainContentsGenerator.OceanLevel + 0.5f, vector3.Y);
+        var vector4 = new Vector3(vector3.X, _subsystemTerrain.Environment.OceanLevel + 0.5f, vector3.Y);
         entity.FindComponent<ComponentFrame>(true)!.Position = vector4;
         entity.FindComponent<ComponentIntroShip>(true)!.Heading = Vector2.Angle(vector, -Vector2.UnitY);
         Project.AddEntity(entity);
@@ -183,7 +183,7 @@ public class ComponentIntroPresentation : Component, IUpdateable
     private float ScoreShipPosition(Vector2 playerPosition, int x, int z)
     {
         var num = 0f;
-        var num2 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(x, z);
+        var num2 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(x, z);
         if (num2 > -8f)
         {
             num -= 100f;
@@ -194,9 +194,9 @@ public class ComponentIntroPresentation : Component, IUpdateable
         num -= MathUtils.Abs(num3 - 20f);
         var num4 = 0;
         var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-        if (chunkAtCell is { MainThreadState: >= TerrainChunkState.InvalidLight })
+        if (chunkAtCell is { HasCurrentHeightData: true })
         {
-            var oceanLevel = _subsystemTerrain.TerrainContentsGenerator.OceanLevel;
+            var oceanLevel = _subsystemTerrain.Environment.OceanLevel;
             var num5 = oceanLevel;
             while (num5 >= oceanLevel - 5 && num5 >= 0)
             {

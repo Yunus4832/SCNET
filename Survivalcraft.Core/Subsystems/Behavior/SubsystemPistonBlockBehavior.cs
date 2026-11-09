@@ -224,7 +224,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 for (var j = -1; j <= 1; j++)
                 {
                     var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(key2.X + i * 16, key2.Z + j * 16, false);
-                    if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
+                    if (chunkAtCell is not { HasContents: true })
                     {
                         flag = false;
                     }

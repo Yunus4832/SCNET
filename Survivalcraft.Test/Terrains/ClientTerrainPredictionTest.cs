@@ -4,6 +4,7 @@ using Game.Network.Handling;
 using Game.Subsystems;
 using Game.Terrains;
 using Game.Terrains.Distribution;
+using Game.Terrains.Lighting;
 
 using Survivalcraft.Test.Modding;
 
@@ -176,24 +177,26 @@ public sealed class ClientTerrainPredictionTest
             }
         }
 
-        TerrainUpdater.GenerateChunkSunLightAndHeight(chunk, 15, world.Catalog);
+        TerrainLightingCalculator.CalculateSunlightAndHeight(chunk, 15, world.Catalog, includePredictions: true);
         Assert.Equal(0, chunk.GetCellLightFast(15, 64, 15));
         var revision = chunk.NetworkContentRevision;
         var prediction = new ClientTerrainPrediction(terrain, _ => { });
         var id = prediction.Begin(_cell, 3, 0, 0);
-        TerrainUpdater.GenerateChunkSunLightAndHeight(chunk, 15, world.Catalog);
+        TerrainLightingCalculator.CalculateSunlightAndHeight(chunk, 15, world.Catalog);
+        Assert.Equal(0, chunk.GetCellLightFast(15, 64, 15));
+        TerrainLightingCalculator.CalculateSunlightAndHeight(chunk, 15, world.Catalog, includePredictions: true);
         var predicted = chunk.GetCellValueForGeometry(15, 64, 15);
         Assert.Equal(15, Terrain.ExtractLight(predicted));
         Assert.Equal(3, chunk.GetCellContentsFast(15, 64, 15));
         Assert.Equal(revision, chunk.NetworkContentRevision);
 
         prediction.Complete(id, _cell, 0);
-        TerrainUpdater.GenerateChunkSunLightAndHeight(chunk, 15, world.Catalog);
+        TerrainLightingCalculator.CalculateSunlightAndHeight(chunk, 15, world.Catalog, includePredictions: true);
         Assert.Equal(0, chunk.GetCellLightFast(15, 64, 15));
         Assert.Equal(3, chunk.GetCellContentsFast(15, 64, 15));
 
         chunk.SetCellValueFast(15, 64, 15, 0);
-        TerrainUpdater.GenerateChunkSunLightAndHeight(chunk, 15, world.Catalog);
+        TerrainLightingCalculator.CalculateSunlightAndHeight(chunk, 15, world.Catalog, includePredictions: true);
         Assert.Equal(predicted, chunk.GetCellValueFast(15, 64, 15));
     }
 

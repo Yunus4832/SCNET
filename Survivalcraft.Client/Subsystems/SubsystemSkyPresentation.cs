@@ -436,26 +436,6 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         return CalculateFogNoHaze(viewPosition, viewPosition + new Vector3(1000f, 150f, 0f));
     }
 
-    public void UpdateBrightness(float blockLight = 5f)
-    {
-        var x = MathUtils.Lerp(0f, 0.1f, blockLight);
-        for (var i = 0; i < 16; i++)
-        {
-            LightingManager.LightIntensityByLightValue[i] =
-                MathUtils.Saturate(MathUtils.Lerp(x, 1f, MathUtils.Pow(i / 15f, 1.25f)));
-        }
-
-        for (var j = 0; j < 6; j++)
-        {
-            var num = LightingManager.CalculateLighting(CellFace.FaceToVector3(j));
-            for (var k = 0; k < 16; k++)
-            {
-                LightingManager.LightIntensityByLightValueAndFace[k + j * 16] =
-                    LightingManager.LightIntensityByLightValue[k] * num;
-            }
-        }
-    }
-
     public override void Dispose()
     {
         if (!WorldRuntimeContext.For(Project).HasPresentation)

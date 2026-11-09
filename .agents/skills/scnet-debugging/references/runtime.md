@@ -103,7 +103,7 @@ permission list <subject-address>
 Permission mutations are always executed by the server. Client commands are requests; never mutate
 permission state in client-side diagnostic code.
 
-stdin and the Android server management UI both execute as `LocalOperator`; they differ only in
+Server stdin and the GUI hosting management page both execute as `LocalOperator`; they differ only in
 their frontend. Commands that require an online player are filtered by `AllowedPrincipals` and do
 not appear in server-control suggestions.
 

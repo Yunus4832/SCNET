@@ -64,27 +64,30 @@ public class TeleportCommandTest
         {
             for (var z = -1; z <= 0; z++)
             {
-                terrain.AllocateChunk(x, z).SetMainThreadState(TerrainChunkState.InvalidLight);
+                terrain.AllocateChunk(x, z).HasContents = true;
             }
         }
 
         Assert.True(TeleportCommandHandlers.IsDestinationTerrainReady(terrain, box));
-        terrain.GetChunkAtCoords(-1, -1)!.SetMainThreadState(TerrainChunkState.InvalidContents4);
+        terrain.GetChunkAtCoords(-1, -1)!.HasContents = false;
         Assert.False(TeleportCommandHandlers.IsDestinationTerrainReady(terrain, box));
     }
 
     [Theory]
-    [InlineData(TerrainChunkState.NotLoaded, false)]
-    [InlineData(TerrainChunkState.InvalidContents4, false)]
-    [InlineData(TerrainChunkState.InvalidLight, true)]
-    [InlineData(TerrainChunkState.InvalidPropagatedLight, true)]
-    [InlineData(TerrainChunkState.Ready, true)]
-    public void SafetyCheckWaitsForContentsButNotLightingOrGeometry(TerrainChunkState state, bool ready)
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SafetyCheckWaitsForContentsButNotHeightLightingOrInitialization(bool hasContents)
     {
         using var terrain = new Terrain();
-        terrain.AllocateChunk(0, 0).SetMainThreadState(state);
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.HasContents = hasContents;
+        Assert.False(chunk.HasCurrentHeightData);
+        Assert.False(chunk.HasCurrentLight);
+        Assert.False(chunk.IsContentInitialized);
         var box = TeleportCommandHandlers.GetDestinationBox(new Vector3(8f, 30f, 8f), new Vector3(0.6f, 1.8f, 0.6f));
-        Assert.Equal(ready, TeleportCommandHandlers.IsDestinationTerrainReady(terrain, box));
+        Assert.Equal(hasContents, TeleportCommandHandlers.IsDestinationTerrainReady(terrain, box));
+        terrain.FreeChunk(chunk);
+        Assert.False(TeleportCommandHandlers.IsDestinationTerrainReady(terrain, box));
     }
 
     [Theory]

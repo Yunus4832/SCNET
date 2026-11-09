@@ -81,7 +81,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                     Terrain.ToCell(projectile.Position.Z),
                     false
                 );
-                if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
+                if (chunkAtCell is not { HasContents: true })
                 {
                     projectile.NoChunk = true;
                 }
@@ -472,7 +472,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                 Terrain.ToCell(projectile.Position.Z),
                 false
             );
-            projectile.NoChunk = chunk is not { MainThreadState: > TerrainChunkState.InvalidContents4 };
+            projectile.NoChunk = chunk is not { HasContents: true };
             if (projectile.NoChunk)
             {
                 continue;

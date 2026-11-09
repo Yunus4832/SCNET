@@ -5,6 +5,26 @@ namespace Survivalcraft.Core.Test.Terrains;
 public sealed class TerrainAllocationGenerationTest
 {
     [Fact]
+    public void RealUnloadInvalidatesOldCompletionsAndCannotReopenTheRetiredContents()
+    {
+        using var terrain = new Terrain();
+        var old = terrain.AllocateChunk(2, 3);
+        old.HasContents = true;
+        var request = old.DerivedRevisions.Capture();
+        Assert.True(old.DerivedRevisions.PublishHeights(request));
+        terrain.FreeChunk(old);
+        Assert.True(old.IsDisposed);
+        Assert.False(old.HasContents);
+        Assert.False(old.DerivedRevisions.PublishHeights(request));
+        Assert.False(old.DerivedRevisions.PublishLight(request));
+        Assert.Throws<ObjectDisposedException>(() => old.HasContents = true);
+        var current = terrain.AllocateChunk(2, 3);
+        Assert.False(current.HasContents);
+        Assert.False(current.HasCurrentLight);
+        Assert.True(current.AllocationGeneration > old.AllocationGeneration);
+    }
+
+    [Fact]
     public void ReallocatingCoordinateAdvancesGeneration()
     {
         var terrain = new Terrain();

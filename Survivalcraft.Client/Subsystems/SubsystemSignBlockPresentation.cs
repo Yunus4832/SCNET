@@ -455,7 +455,7 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
                 ((SignBlockPresentation)Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(num))
                 .GetSignSurfaceBlockMesh(data);
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(nearText.Point.X, nearText.Point.Z, false);
-            if (chunkAtCell is { MainThreadState: >= TerrainChunkState.Ready })
+            if (chunkAtCell is { HasCurrentLight: true })
             {
                 nearText.Light = Terrain.ExtractLight(cellValue);
             }

@@ -145,7 +145,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
                 if (num5 is >= 0 and <= 255)
                 {
                     var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-                    if (chunkAtCell is { MainThreadState: >= TerrainChunkState.Ready })
+                    if (chunkAtCell is { HasCurrentLight: true })
                     {
                         _itemLight = _subsystemTerrain.Terrain.GetCellLightFast(x, num5, z);
                     }

@@ -54,49 +54,45 @@ public sealed class WorldProjectPersistence : IDisposable
         var info = _project.FindSubsystem<SubsystemGameInfo>(true)!;
         var worldName = info.WorldSettings.Name;
         var directory = info.DirectoryName;
-        var captureStarted = Time.RealTime;
         _saveGate.Wait();
-        var gateWaitMilliseconds = (Time.RealTime - captureStarted) * 1000;
         if (_disposed || _project.IsDisposed)
         {
             _saveGate.Release();
             throw new ObjectDisposedException(nameof(WorldProjectPersistence));
         }
 
-        ProjectData data;
+        var terrain = _project.FindSubsystem<SubsystemTerrain>();
+        var previousTerrainSave = terrain?.PendingTerrainSave;
+        ProjectData? data = null;
+        Exception? captureFailure = null;
         try { data = _project.Save(); }
-        catch (Exception error)
-        {
-            _saveGate.Release();
-            Log.Error($"Failed to save world \"{worldName}\": {error}");
-            Publish(new WorldSaveOutcome(operationId, worldName, error));
-            if (waitForCompletion) { throw new WorldSaveException(worldName, error); }
+        catch (Exception error) { captureFailure = error; }
 
-            return operationId;
+        var terrainSave = terrain?.PendingTerrainSave ?? Task.CompletedTask;
+        if (ReferenceEquals(previousTerrainSave, terrainSave) && terrainSave.IsCompleted)
+        {
+            terrainSave = Task.CompletedTask;
         }
 
         if (_disposed || _project.IsDisposed)
         {
-            _saveGate.Release();
-            throw new ObjectDisposedException(nameof(WorldProjectPersistence));
+            captureFailure ??= new ObjectDisposedException(nameof(WorldProjectPersistence));
         }
 
-        var captureMilliseconds = (Time.RealTime - captureStarted) * 1000 - gateWaitMilliseconds;
-        Log.Verbose(
-            $"Captured project save: gate wait={gateWaitMilliseconds:F1}ms, snapshot={captureMilliseconds:F1}ms."
-        );
         var requestId = operationId;
-        Exception? failure = null;
-        var io = Task.Run(() =>
+        var io = Task.Run(async () =>
             {
-                var started = Time.RealTime;
+                var failure = captureFailure;
                 try
                 {
-                    if (!string.IsNullOrEmpty(directory))
+                    // Metadata must not commit before this save point's terrain writes.
+                    // Even a failed metadata capture must drain any terrain batch it queued.
+                    await terrainSave.ConfigureAwait(false);
+                    if (failure == null && !string.IsNullOrEmpty(directory))
                     {
                         var node = new XElement("Project");
                         XmlUtils.SetAttributeValue(node, "Version", WorldVersions.ProjectFormatVersion);
-                        data.Save(node);
+                        data!.Save(node);
                         node.Add(_mapping.ToXml());
                         Storage.CreateDirectory(directory);
                         var target = Storage.CombinePaths(directory, "Project.xml");
@@ -112,15 +108,15 @@ public sealed class WorldProjectPersistence : IDisposable
                         }
 
                         Storage.MoveFile(temporary, target);
-                        Log.Verbose($"Saved project, {MathUtils.Round((Time.RealTime - started) * 1000)}ms");
                     }
                 }
                 catch (Exception error)
                 {
-                    failure = error;
-                    Log.Error($"Failed to save world \"{worldName}\": {error}");
+                    failure = failure == null ? error : new AggregateException(failure, error);
                 }
                 finally { _saveGate.Release(); }
+
+                if (failure != null) { Log.Error($"Failed to save world \"{worldName}\": {failure}"); }
 
                 return new WorldSaveOutcome(requestId, worldName, failure);
             }
@@ -135,7 +131,10 @@ public sealed class WorldProjectPersistence : IDisposable
         if (waitForCompletion)
         {
             notification.GetAwaiter().GetResult();
-            if (failure is not null) { throw new WorldSaveException(worldName, failure); }
+            if (io.GetAwaiter().GetResult().Failure is { } failure)
+            {
+                throw new WorldSaveException(worldName, failure);
+            }
         }
 
         return operationId;

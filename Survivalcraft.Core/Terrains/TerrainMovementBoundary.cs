@@ -5,7 +5,7 @@ internal static class TerrainMovementBoundary
 {
     internal static bool HasCollisionContents(TerrainChunk? chunk)
     {
-        return chunk is { MainThreadState: >= TerrainChunkState.InvalidLight };
+        return chunk is { HasContents: true };
     }
 
     internal static bool HasCollisionContents(Terrain terrain, Vector3 position)

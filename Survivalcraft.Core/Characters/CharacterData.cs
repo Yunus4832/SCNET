@@ -262,7 +262,7 @@ public partial class CharacterData : IDisposable
                 }
 
                 _spawnPreparation ??=
-                    _subsystemTerrain.TerrainUpdater.BeginSpawnPreparation(CharacterId, SpawnPosition.XZ, 64f);
+                    _subsystemTerrain.Demands.BeginSpawnPreparation(CharacterId, SpawnPosition.XZ, 64f);
                 _spawnPreparation.Update(SpawnPosition.XZ, 64f);
 
                 _terrainWaitStartTime = Time.FrameStartTime;
@@ -304,7 +304,7 @@ public partial class CharacterData : IDisposable
                     ? ComponentCharacter.ComponentBody.Position.XZ
                     : SpawnPosition.XZ;
 
-                _spawnPreparation ??= _subsystemTerrain.TerrainUpdater.BeginSpawnPreparation(CharacterId, center, 64f);
+                _spawnPreparation ??= _subsystemTerrain.Demands.BeginSpawnPreparation(CharacterId, center, 64f);
                 _spawnPreparation.Update(center, 64f);
             },
             delegate
@@ -561,7 +561,7 @@ public partial class CharacterData : IDisposable
         _spawnPreparationHandoffDeadline = deadline;
         // Entity installation precedes the first camera request in a new connection.
         // Retain the preparation only until a persistent peer interest covers the spawn's CPU neighborhood.
-        if (_subsystemTerrain.TerrainUpdater.IsUpdateLocationCovered(
+        if (_subsystemTerrain.Demands.IsLocationCovered(
                 CharacterIndex,
                 component.ComponentBody.Position.XZ,
                 32f
@@ -774,7 +774,7 @@ public partial class CharacterData : IDisposable
             }
         }
 
-        var vector = ComponentIntro.FindOceanDirection(_subsystemTerrain.TerrainContentsGenerator, new Vector2(x, z));
+        var vector = ComponentIntro.FindOceanDirection(_subsystemTerrain.Environment, new Vector2(x, z));
         var vector2 = new Vector3(x, num2 + 1.5f, z);
         for (var k = -1; k <= 1; k++)
         {
@@ -1043,7 +1043,7 @@ public partial class CharacterData : IDisposable
             }
         };
 
-        var v = ComponentIntro.FindOceanDirection(_subsystemTerrain.TerrainContentsGenerator, position.XZ);
+        var v = ComponentIntro.FindOceanDirection(_subsystemTerrain.Environment, position.XZ);
         var entityTemplateName = CharacterSex == CharacterSex.Male ? "MaleCharacter" : "FemaleCharacter";
         var entity2 = DatabaseManager.CreateEntity(Project, entityTemplateName, overrides, true)!;
         var body = entity2.FindComponent<ComponentBody>(true)!;

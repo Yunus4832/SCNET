@@ -135,17 +135,11 @@ public sealed class CharacterRosterMemoryPolicyTest
             new NetNode(NetNodeOptions.Default, false, Game.Network.Handling.PackageHandlerCatalog.Empty, role).Runtime
                 .BindProject(this);
             Fixtures.RuleHookTestEnvironment.BindEmpty(this);
-            var updater = (TerrainUpdater)RuntimeHelpers.GetUninitializedObject(typeof(TerrainUpdater));
-            SetField(updater, "_pendingLocations", new Dictionary<int, TerrainUpdateLocation?>());
-            var parametersField = typeof(TerrainUpdater).GetField(
-                "_updateParameters",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            )!;
-            var parameters = Activator.CreateInstance(parametersField.FieldType)!;
-            parametersField.FieldType.GetField("Locations")!
-                .SetValue(parameters, new Dictionary<int, TerrainUpdateLocation>());
-            parametersField.SetValue(updater, parameters);
-            var terrain = new SubsystemTerrain { TerrainUpdater = updater };
+            var terrain = new SubsystemTerrain { Terrain = new Terrain() };
+            typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.Demands))!.SetValue(
+                terrain,
+                new TerrainDemandManager(terrain.Terrain, Game.Terrains.Distribution.TerrainContentRole.Authority)
+            );
             subsystems.AddRange(
                 [
                     Players, Characters, terrain, new SubsystemTime(), new SubsystemMessages(),

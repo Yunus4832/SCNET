@@ -30,10 +30,6 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     public readonly Dictionary<int, float> HazeEnds = new();
 
-    public double NetworkGeometryReadyTime;
-
-    public double NetworkGeometryUploadTime;
-
     public bool GeometryUploaded;
 
     public long ClientGeometryContentVersion => Volatile.Read(ref _completedMesh)?.ContentVersion ?? 0;
@@ -44,9 +40,52 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     private MeshBuildStamp? _completedMesh;
 
+    private MeshBuildStamp? _uploadedMesh;
+
+    public long UploadedContentVersion => Volatile.Read(ref _uploadedMesh)?.ContentVersion ?? 0;
+
+    public bool HasCurrentUploadedGeometry(TerrainChunk chunk)
+    {
+        var uploaded = Volatile.Read(ref _uploadedMesh);
+        return uploaded != null && Matches(chunk, uploaded);
+    }
+
+    /// <summary>Called under the geometry lock only after the actual GPU upload succeeded.</summary>
+    public void MarkUploaded()
+    {
+        var completed = Volatile.Read(ref _completedMesh);
+        if (completed == null)
+        {
+            throw new InvalidOperationException("Cannot publish an upload without completed terrain geometry.");
+        }
+
+        // Neighbor inputs may change during the GPU call. Record what was uploaded;
+        // freshness is checked separately and schedules another build when necessary.
+        Volatile.Write(ref _uploadedMesh, completed);
+        GeometryUploaded = true;
+    }
+
     public TerrainMeshState WorkerMeshState { get; private set; }
 
-    private sealed record MeshBuildStamp(ulong Generation, long ContentVersion, long Revision);
+
+    private readonly record struct NeighborInput(
+        ulong Generation,
+        long ContentVersion,
+        long Heights,
+        long Lighting,
+        TerrainDerivedRevisions.Request Request
+    );
+
+    private sealed record MaintenanceWait(MeshBuildStamp Inputs, double FirstSeen, double ChangedAt);
+
+    private MaintenanceWait? _maintenanceWait;
+
+    private sealed record MeshBuildStamp(
+        ulong Generation,
+        long ContentVersion,
+        long Revision,
+        NeighborInput[] Neighbors
+    );
 
     public void RequestMeshRebuild()
     {
@@ -59,21 +98,113 @@ public sealed class TerrainChunkPresentation : IDisposable
         return completed is not null && Matches(chunk, completed);
     }
 
-    private bool Matches(TerrainChunk chunk, MeshBuildStamp stamp) =>
-        stamp.Generation == chunk.AllocationGeneration &&
-        stamp.ContentVersion == chunk.NetworkContentVersion &&
-        stamp.Revision == Volatile.Read(ref _requestedMeshRevision);
+    private bool Matches(TerrainChunk chunk, MeshBuildStamp stamp)
+    {
+        return stamp.Generation == chunk.AllocationGeneration &&
+               stamp.ContentVersion == chunk.NetworkContentVersion &&
+               stamp.Revision == Volatile.Read(ref _requestedMeshRevision) &&
+               MatchesNeighbors(chunk, stamp.Neighbors);
+    }
+
+    private static NeighborInput ReadNeighbor(TerrainChunk chunk, int x, int z)
+    {
+        var neighbor = chunk.Terrain.GetChunkAtCoords(chunk.Coords.X + x, chunk.Coords.Y + z);
+        return neighbor is not { HasContents: true }
+            ? default
+            : new NeighborInput(
+                neighbor.AllocationGeneration,
+                neighbor.NetworkContentVersion,
+                neighbor.DerivedRevisions.HeightRevision,
+                neighbor.DerivedRevisions.LightRevision,
+                neighbor.DerivedRevisions.Capture()
+            );
+    }
+
+    private static NeighborInput[] CaptureNeighbors(TerrainChunk chunk)
+    {
+        var result = new NeighborInput[9];
+        var index = 0;
+        for (var x = -1; x <= 1; x++)
+        {
+            for (var z = -1; z <= 1; z++) { result[index++] = ReadNeighbor(chunk, x, z); }
+        }
+
+        return result;
+    }
+
+    private static bool MatchesNeighbors(TerrainChunk chunk, NeighborInput[] neighbors)
+    {
+        var index = 0;
+        for (var x = -1; x <= 1; x++)
+        {
+            for (var z = -1; z <= 1; z++)
+            {
+                if (neighbors[index++] != ReadNeighbor(chunk, x, z)) { return false; }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool LightingInputsReadable(TerrainChunk chunk)
+    {
+        if (!chunk.HasCurrentLight) { return false; }
+
+        for (var x = -1; x <= 1; x++)
+        {
+            for (var z = -1; z <= 1; z++)
+            {
+                var neighbor = chunk.Terrain.GetChunkAtCoords(chunk.Coords.X + x, chunk.Coords.Y + z);
+                if (neighbor is { HasContents: true, HasCurrentLight: false }) { return false; }
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Coalesces already-visible maintenance without delaying initial geometry or a valid second pass.</summary>
+    internal bool ShouldDeferMaintenance(TerrainChunk chunk, double now, out double due)
+    {
+        due = now;
+        if (!GeometryUploaded ||
+            _activeMesh != null &&
+            WorkerMeshState == TerrainMeshState.NeedsSecondPass &&
+            Matches(chunk, _activeMesh))
+        {
+            _maintenanceWait = null;
+            return false;
+        }
+
+        var wait = _maintenanceWait;
+        if (wait == null || !Matches(chunk, wait.Inputs))
+        {
+            wait = new MaintenanceWait(CaptureStamp(chunk), wait?.FirstSeen ?? now, now);
+            _maintenanceWait = wait;
+        }
+
+        due = Math.Min(wait.ChangedAt + .05, wait.FirstSeen + .2);
+        if (now < due) { return true; }
+
+        _maintenanceWait = null;
+        return false;
+    }
+
+    private MeshBuildStamp CaptureStamp(TerrainChunk chunk)
+    {
+        return new MeshBuildStamp(
+            chunk.AllocationGeneration,
+            chunk.NetworkContentVersion,
+            Volatile.Read(ref _requestedMeshRevision),
+            CaptureNeighbors(chunk)
+        );
+    }
 
     /// <summary>Called only by the synchronized terrain worker.</summary>
     public TerrainMeshState PrepareMeshUpdate(TerrainChunk chunk)
     {
         if (_activeMesh is null || !Matches(chunk, _activeMesh))
         {
-            _activeMesh = new MeshBuildStamp(
-                chunk.AllocationGeneration,
-                chunk.NetworkContentVersion,
-                Volatile.Read(ref _requestedMeshRevision)
-            );
+            _activeMesh = CaptureStamp(chunk);
             WorkerMeshState = TerrainMeshState.NeedsFirstPass;
         }
 
@@ -85,7 +216,10 @@ public sealed class TerrainChunkPresentation : IDisposable
     /// <summary>Publishes only a build for the same allocation, content and rebuild request.</summary>
     public bool CompleteMeshBuild(TerrainChunk chunk)
     {
-        if (_activeMesh is null || WorkerMeshState != TerrainMeshState.NeedsSecondPass || !Matches(chunk, _activeMesh))
+        if (!LightingInputsReadable(chunk) ||
+            _activeMesh is null ||
+            WorkerMeshState != TerrainMeshState.NeedsSecondPass ||
+            !Matches(chunk, _activeMesh))
         {
             return false;
         }
@@ -98,8 +232,6 @@ public sealed class TerrainChunkPresentation : IDisposable
 
 
     public volatile bool NewGeometryData;
-
-    public readonly int[] SliceContentsHashes = new int[TerrainChunk.SlicesCount];
 
     public void Dispose()
     {
@@ -125,7 +257,9 @@ public sealed class TerrainChunkPresentation : IDisposable
         NewGeometryData = false;
         RequestMeshRebuild();
         Volatile.Write(ref _completedMesh, null);
+        Volatile.Write(ref _uploadedMesh, null);
         _activeMesh = null;
+        _maintenanceWait = null;
         WorkerMeshState = TerrainMeshState.NeedsFirstPass;
     }
 

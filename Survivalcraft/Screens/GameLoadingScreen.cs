@@ -32,6 +32,8 @@ public class GameLoadingScreen : Screen
 
     private bool _isServerReply;
 
+    private bool _waitingForTransport;
+
     private bool _isWorldSnapshotApplied;
 
     private byte[] _projectXmlData = [];
@@ -115,7 +117,11 @@ public class GameLoadingScreen : Screen
 
         _stateMachine.AddState(
             "WaitServerReply",
-            delegate { _timer = Stopwatch.StartNew(); },
+            delegate
+            {
+                _timer = Stopwatch.StartNew();
+                _waitingForTransport = false;
+            },
             delegate
             {
                 SetSpawnDialogMessage(
@@ -128,10 +134,7 @@ public class GameLoadingScreen : Screen
 
                 if (_clientNode!.CurrentStage == Stage.Bootstrapping)
                 {
-                    if (_clientNode!.AdmissionDeadline is { } deadline
-                            ? DateTimeOffset.UtcNow >= deadline
-                            : _timer.ElapsedMilliseconds >=
-                              NetworkTransportLimits.DisconnectTimeoutMilliseconds)
+                    if (HasServerReplyTimedOut(_timer.ElapsedMilliseconds))
                     {
                         _clientNode!.Stop(
                             Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "ConnectionTimedOut")
@@ -550,6 +553,32 @@ public class GameLoadingScreen : Screen
                 }
             );
         }
+    }
+
+    private bool HasServerReplyTimedOut(long elapsedMilliseconds)
+    {
+        if (_clientNode!.AdmissionDeadline is { } admissionDeadline && DateTimeOffset.UtcNow >= admissionDeadline)
+        {
+            return true;
+        }
+
+        if (_clientNode.IsTransportConnecting)
+        {
+            _waitingForTransport = true;
+            _timer.Restart();
+            return false;
+        }
+
+        if (_waitingForTransport)
+        {
+            _waitingForTransport = false;
+            _timer.Restart();
+            elapsedMilliseconds = 0;
+        }
+
+        return _clientNode.AdmissionDeadline is { } deadline
+            ? DateTimeOffset.UtcNow >= deadline
+            : elapsedMilliseconds >= NetworkTransportLimits.DisconnectTimeoutMilliseconds;
     }
 
     public override void Enter(object[] parameters)

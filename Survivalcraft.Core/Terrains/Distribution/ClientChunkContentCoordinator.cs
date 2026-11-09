@@ -26,7 +26,8 @@ public sealed class ClientChunkContentCoordinator(Terrain terrain)
         target.Cells = snapshot.Cells.ToArray();
         target.Shafts = snapshot.Shafts.ToArray();
         target.NetworkContentVersion = snapshot.ContentVersion;
-        target.IsLoaded = true;
+        target.ContentOrigin = TerrainContentOrigin.Replica;
+        target.HasContents = true;
         target.NeedsContentSnapshot = false;
         target.NeedsContentValidation = false;
         ContentInstalled?.Invoke(target);
@@ -39,7 +40,6 @@ public sealed class ClientChunkContentCoordinator(Terrain terrain)
         long contentVersion
     ) =>
         target != null &&
-        (!target.IsLoaded || target.NeedsContentSnapshot) &&
         target.Coords == allocation.Coords &&
         target.AllocationGeneration == allocation.Generation &&
         (contentVersion > target.NetworkContentVersion ||

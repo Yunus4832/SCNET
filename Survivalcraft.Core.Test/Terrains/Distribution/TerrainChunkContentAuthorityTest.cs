@@ -8,6 +8,24 @@ namespace Survivalcraft.Core.Test.Terrains.Distribution;
 public sealed class TerrainChunkContentAuthorityTest
 {
     [Fact]
+    public void PublishedCollisionContentsCannotEscapeAsABaselineBeforeInitialBusinessNormalization()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        var authority = new TerrainChunkContentAuthority(terrain);
+        chunk.HasContents = true;
+        chunk.AreBehaviorsNotified = true;
+        chunk.SetCellValueFast(1, 64, 1, 7);
+        Assert.False(authority.TryGetDescriptor(chunk.Coords, out _));
+        Assert.False(authority.TryGetSnapshot(chunk.Coords, out _));
+        chunk.SetCellValueFast(1, 64, 1, 8);
+        chunk.IsContentInitialized = true;
+        Assert.True(authority.TryGetSnapshot(chunk.Coords, out var baseline));
+        Assert.Equal(8, baseline.Cells.Span[TerrainChunk.CalculateCellIndex(1, 64, 1)]);
+        Assert.Equal(chunk.NetworkContentRevision + 1, baseline.ContentVersion);
+    }
+
+    [Fact]
     public void AuthorityPublishesOnlyLoadedContentAndTracksContentChanges()
     {
         var terrain = new Terrain();
@@ -16,8 +34,10 @@ public sealed class TerrainChunkContentAuthorityTest
 
         Assert.False(authority.TryGetSnapshot(chunk.Coords, out _));
 
-        chunk.IsLoaded = true;
-        chunk.SetWorkerState(TerrainChunkState.InvalidLight);
+        chunk.HasContents = true;
+
+        chunk.IsContentInitialized = true;
+
         chunk.SetCellValueFast(0, 0, 0, 7);
         Assert.True(authority.TryGetDescriptor(chunk.Coords, out var descriptor));
         Assert.True(authority.TryGetSnapshot(chunk.Coords, out var first));
@@ -35,8 +55,9 @@ public sealed class TerrainChunkContentAuthorityTest
     {
         var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(2, 3);
-        chunk.IsLoaded = true;
-        chunk.SetWorkerState(TerrainChunkState.InvalidLight);
+        chunk.HasContents = true;
+        chunk.IsContentInitialized = true;
+
         chunk.SetCellValueFast(0, 0, 0, 7);
         var authority = new TerrainChunkContentAuthority(terrain);
 

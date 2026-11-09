@@ -304,8 +304,6 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         }
 
         RosterMutationCompleted?.Invoke(CharacterRosterMutation.Added);
-
-        _subsystemTerrain.TerrainUpdater.SetLastChunksUpdateCenter(-1, null);
     }
 
     public void RemoveCharacterData(CharacterData characterData, bool disposeEntity = true)
@@ -333,8 +331,6 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         CharacterRemoved?.Invoke(characterData);
         characterData.Dispose();
         RosterMutationCompleted?.Invoke(CharacterRosterMutation.Removed);
-
-        _subsystemTerrain.TerrainUpdater.SetLastChunksUpdateCenter(-1, null);
     }
 
     public override void Dispose()
@@ -501,10 +497,9 @@ public class SubsystemCharacters : Subsystem, IUpdateable
             return;
         }
 
-        var updater = _subsystemTerrain.TerrainUpdater;
         if (pd.ControllerConnection != null)
         {
-            updater.ServerChunkDistribution?.RemoveClient(pd.ControllerConnection);
+            _subsystemTerrain.ChunkDistribution?.RemoveClient(pd.ControllerConnection);
         }
 
         // A committed character can disconnect before its first entity is spawned.
@@ -558,7 +553,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
                 false
             )
         );
-        _subsystemTerrain.TerrainUpdater.RemoveUpdateLocation(pd.CharacterIndex);
+        _subsystemTerrain.Demands.RemoveLocation(pd.CharacterIndex);
         RemoveCharacterData(pd);
     }
 

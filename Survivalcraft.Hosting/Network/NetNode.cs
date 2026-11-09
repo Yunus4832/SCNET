@@ -128,14 +128,14 @@ public class NetNode
 
     private ChunkDeliveryView? GetChunkDeliveryView(Client client)
     {
-        var scheduler = Runtime.Project?.FindSubsystem<SubsystemTerrain>()?.TerrainUpdater.ServerChunkDistribution;
+        var scheduler = Runtime.Project?.FindSubsystem<SubsystemTerrain>()?.ChunkDistribution;
         return scheduler != null && scheduler.TryGetClientLocation(client, out var center, out var distance)
             ? new ChunkDeliveryView(center, scheduler.GetPredictedCenter(client, center), distance)
             : null;
     }
 
     internal bool IsCurrentChunkAllocation(Client client, ChunkAllocationId allocation) =>
-        Runtime.Project?.FindSubsystem<SubsystemTerrain>()?.TerrainUpdater.ServerChunkDistribution
+        Runtime.Project?.FindSubsystem<SubsystemTerrain>()?.ChunkDistribution
             ?.IsCurrentAllocation(client, allocation) ==
         true;
 
@@ -280,7 +280,7 @@ public class NetNode
         if (!TryGetPhysicalConnection(connection, out var client) || client is null) { return; }
 
         DiscardQueuedSnapshots((package, message) => package.Audience.HasSameRecipients(PackageAudience.To(client)) &&
-                                                     !NetworkTerrainPolicy.IsChunkRelevant(
+                                                     !NetworkTerrainPolicy.IsChunkCenterRelevant(
                                                          message.Snapshot.Allocation.Coords,
                                                          center,
                                                          distance
@@ -813,6 +813,8 @@ public class NetNode
     public DateTimeOffset? AdmissionDeadline { get; private set; }
 
     public bool AdmissionAccepted { get; private set; }
+
+    public bool IsTransportConnecting => _connecting is { IsCompleted: false };
 
     private ReceivedPackage? _admissionBootstrap;
 
@@ -1407,9 +1409,7 @@ public class NetNode
                 return;
             }
 
-            client.State = ClientState.NotConnected;
             RemoveClientImmediate(client);
-            OnClientStateChanged?.Invoke(client);
 
             //同步Client列表
             if (peer == PendingPeer)
@@ -2703,8 +2703,35 @@ public class NetNode
 
         var maxPacketSize = peer.GetMaxPayloadSize(transport.Delivery);
         var remainingPackages = new List<OutboundPackage>(packages.Count);
-        foreach (var outboundPackage in packages)
+        for (var packageIndex = 0; packageIndex < packages.Count; packageIndex++)
         {
+            var outboundPackage = packages[packageIndex];
+            if (outboundPackage.Package is PickablePositionsPackage pickables)
+            {
+                CreatePackageWriter([pickables], transport, out var pickableSize);
+                if (pickableSize > maxPacketSize)
+                {
+                    var result = SendPickableFragments(
+                        outboundPackage,
+                        client,
+                        transport,
+                        maxPacketSize,
+                        data => client.Connection?.IsConnected == true
+                            ? peer.TrySend(data, transport.ChannelNumber, transport.Delivery)
+                            : NetworkSendResult.Closed
+                    );
+                    if (result == NetworkSendResult.Backpressure)
+                    {
+                        remainingPackages.AddRange(packages.Skip(packageIndex));
+                        return remainingPackages;
+                    }
+
+                    if (result != NetworkSendResult.Accepted) { return []; }
+
+                    continue;
+                }
+            }
+
             if (outboundPackage.Package is BodyStatesPackage
                 {
                     PackageEventType: SubsystemBodyPackage.EventType.BodyUpdate
@@ -2879,6 +2906,76 @@ public class NetNode
         }
 
         return deferredPackages;
+    }
+
+    internal List<PickablePositionsPackage> SplitPickablePackage(
+        PickablePositionsPackage package,
+        PackageTransport transport,
+        int maxPacketSize
+    )
+    {
+        var chunks = new List<PickablePositionsPackage>();
+        var items = new List<PickablePosition>();
+        foreach (var item in package.Positions)
+        {
+            items.Add(item);
+            CreatePackageWriter([package with { Positions = items }], transport, out var size);
+            if (size <= maxPacketSize) { continue; }
+
+            items.RemoveAt(items.Count - 1);
+            if (items.Count > 0) { chunks.Add(package with { Positions = items.ToArray() }); }
+
+            items.Clear();
+            items.Add(item);
+            CreatePackageWriter([package with { Positions = items }], transport, out size);
+            if (size > maxPacketSize)
+            {
+                throw new InvalidOperationException("A pickable position exceeds the transport payload limit.");
+            }
+        }
+
+        if (items.Count > 0 || package.Positions.Count == 0)
+        {
+            var chunk = package with { Positions = items.ToArray() };
+            CreatePackageWriter([chunk], transport, out var size);
+            if (size > maxPacketSize)
+            {
+                throw new InvalidOperationException(
+                    "The pickable snapshot header exceeds the transport payload limit."
+                );
+            }
+
+            chunks.Add(chunk);
+        }
+
+        return chunks;
+    }
+
+    internal NetworkSendResult SendPickableFragments(
+        OutboundPackage outboundPackage,
+        Client client,
+        PackageTransport transport,
+        int maxPacketSize,
+        Func<byte[], NetworkSendResult> send
+    )
+    {
+        var package = (PickablePositionsPackage)outboundPackage.Package;
+        foreach (var chunk in SplitPickablePackage(package, transport, maxPacketSize))
+        {
+            if (!IsCurrentOutbound(outboundPackage)) { return NetworkSendResult.Closed; }
+
+            var measurements = new List<(Type PackageType, int PayloadBytes)>();
+            var writer = CreatePackageWriter([chunk], transport, out _, measurements);
+            var result = send(writer.Data.AsSpan(0, writer.Length).ToArray());
+            if (result != NetworkSendResult.Accepted) { return result; }
+
+            SendStatistics.Record(transport.Channel, writer.Length, measurements);
+        }
+
+        if (!IsCurrentOutbound(outboundPackage)) { return NetworkSendResult.Closed; }
+
+        outboundPackage.Fanout!.DeliveredTo(client);
+        return NetworkSendResult.Accepted;
     }
 
     internal List<BodyStatesPackage> SplitOversizedBodyPackage(

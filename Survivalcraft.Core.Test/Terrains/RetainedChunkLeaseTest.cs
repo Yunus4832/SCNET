@@ -14,7 +14,7 @@ public sealed class RetainedChunkLeaseTest
         using var terrain = new Terrain();
         var transport = new RecordingTransport();
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.IsLoaded = true;
+        chunk.HasContents = true;
         chunk.NetworkContentVersion = 10;
         chunk.Cells[0] = 7;
         var old = new ChunkAllocationId(chunk.Coords, chunk.AllocationGeneration);
@@ -24,12 +24,12 @@ public sealed class RetainedChunkLeaseTest
         var contents = new ClientChunkContentCoordinator(terrain);
         contents.ContentInstalled += current => deltas.OnContentInstalled(current);
 
-        var previousGeneration = TerrainUpdater.RefreshRetainedChunk(terrain, chunk, transport, deltas);
+        var previousGeneration = TerrainResidencyManager.RefreshRetainedChunk(terrain, chunk, transport, deltas);
         Assert.Equal(old.Generation, previousGeneration);
         Assert.Contains(old, transport.Discarded);
         Assert.Empty(transport.Requests);
 
-        Assert.True(chunk.IsLoaded);
+        Assert.True(chunk.HasContents);
         Assert.Equal(7, chunk.Cells[0]);
         Assert.NotEqual(old.Generation, chunk.AllocationGeneration);
         Assert.Equal(10, chunk.NetworkContentVersion);
@@ -70,6 +70,12 @@ public sealed class RetainedChunkLeaseTest
 
     private sealed class RecordingTransport : IChunkContentTransport
     {
+        public bool HasPendingWork => false;
+
+        public void SetPriorityCenters(IReadOnlyList<Vector2> centers)
+        {
+        }
+
         public readonly List<ChunkContentRequest> Requests = [];
 
         public readonly List<ChunkAllocationId> Discarded = [];

@@ -22,11 +22,14 @@
 
 ## 默认安全传输
 
-连接流量在 LiteNetLib 数据报外使用 Bouncy Castle 2.7.0 DTLS 1.2，固定 ECDHE-ECDSA / ChaCha20-Poly1305，
+连接流量在 LiteNetLib 数据报外使用 Bouncy Castle 2.8.0-beta.349 DTLS 1.2，固定 ECDHE-ECDSA / ChaCha20-Poly1305，
 覆盖应用握手、游戏载荷、ACK、连接和断线控制包。直连、打洞和中继使用同一端到端保护，公开发现和信令数据报仍可单独发送。
 这不是 DTLS 1.3 实现，也不是仅在中继 HMAC 外换名称。DTLS 握手、密钥导出、记录序号和防重放由库负责。
 各平台统一使用库提供的 ChaCha20-Poly1305，实现不跨 JNI 调用逐包加密原语。
 选择依据包括 Android 小包传输实测；不自行实现握手、密钥派生或 AEAD。
+
+当前固定官方预览版以包含[丢失 CertificateVerify 后旧 epoch 重传的上游修复](https://github.com/bcgit/bc-csharp/commit/b7740108768d737d9f2b1fd9086965216a41dfd1)。
+对应的单包丢失回归同时验证连接最终完成和双向身份校验，避免用延长超时代替恢复能力。
 
 `NetworkHostOptions.Identity` 可提供调用方管理的 P-256 身份，宿主创建自己的密钥副本，关闭后销毁副本。
 `NetworkIdentity.Create/Import/ExportPrivateKey` 支持生成和受控持久化；导出的 PKCS#8 私钥必须安全保存并及时清除临时副本。

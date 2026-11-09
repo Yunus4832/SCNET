@@ -26,14 +26,14 @@ public sealed class ClientChunkContentApplicationTest
         var application = new ClientChunkContentApplication(transport, contents, deltas, clock);
 
         Assert.Equal(1, application.Pump());
-        Assert.True(first.IsLoaded);
-        Assert.False(second.IsLoaded);
+        Assert.True(first.HasContents);
+        Assert.False(second.HasContents);
         Assert.Single(transport.Snapshots);
         Assert.Equal(1, application.Pump());
         Assert.Equal(11, first.NetworkContentVersion);
-        Assert.False(second.IsLoaded);
+        Assert.False(second.HasContents);
         Assert.Equal(1, application.Pump());
-        Assert.True(second.IsLoaded);
+        Assert.True(second.HasContents);
         Assert.Empty(transport.Snapshots);
         Assert.Equal(0, application.Pump());
     }
@@ -53,11 +53,11 @@ public sealed class ClientChunkContentApplicationTest
         var application = new ClientChunkContentApplication(transport, contents, deltas);
 
         Assert.Equal(1, application.Pump(1));
-        Assert.False(chunk.IsLoaded);
+        Assert.False(chunk.HasContents);
         Assert.True(chunk.NeedsContentSnapshot);
         Assert.Single(transport.Snapshots);
         Assert.Equal(1, application.Pump(1));
-        Assert.True(chunk.IsLoaded);
+        Assert.True(chunk.HasContents);
         Assert.False(chunk.NeedsContentSnapshot);
         Assert.Equal(12, chunk.NetworkContentVersion);
     }
@@ -82,6 +82,12 @@ public sealed class ClientChunkContentApplicationTest
 
     private sealed class QueuedTransport : IChunkContentTransport
     {
+        public bool HasPendingWork => Snapshots.Count > 0 || Deltas.Count > 0 || Resyncs.Count > 0;
+
+        public void SetPriorityCenters(IReadOnlyList<Vector2> centers)
+        {
+        }
+
         public Queue<ClientChunkSnapshot> Snapshots { get; } = new();
 
         public Queue<TerrainCellDelta> Deltas { get; } = new();

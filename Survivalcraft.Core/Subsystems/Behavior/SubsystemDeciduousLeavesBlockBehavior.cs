@@ -19,6 +19,20 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
     {
         if (!WorldRuntimeContext.IsProjectActive(Project) || !WorldRuntimeContext.For(Project).IsAuthority) { return; }
 
+        if (FindFallenLeavesPosition(p) is { } target)
+        {
+            if (!_subsystemCellChangeQueue.TryQueueCellChange(
+                    target.X,
+                    target.Y,
+                    target.Z,
+                    Terrain.MakeBlockValue(261),
+                    applyImmediately
+                )) { return; }
+        }
+    }
+
+    private Point3? FindFallenLeavesPosition(Point3 p)
+    {
         int? num = null;
         while (p.Y is >= 1 and < 256)
         {
@@ -28,14 +42,7 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
                 if (SubsystemFallenLeavesBlockBehavior.CanSupportFallenLeaves(SubsystemTerrain.Catalog, cellValue) &&
                     SubsystemFallenLeavesBlockBehavior.CanBeReplacedByFallenLeaves(num.Value))
                 {
-                    _subsystemCellChangeQueue.QueueCellChange(
-                        p.X,
-                        p.Y + 1,
-                        p.Z,
-                        Terrain.MakeBlockValue(261),
-                        applyImmediately
-                    );
-                    break;
+                    return new Point3(p.X, p.Y + 1, p.Z);
                 }
 
                 if (SubsystemFallenLeavesBlockBehavior.StopsFallenLeaves(SubsystemTerrain.Catalog, cellValue))
@@ -47,6 +54,8 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
             num = cellValue;
             p.Y--;
         }
+
+        return null;
     }
 
     public override void OnBlockGenerated(int value, int x, int y, int z, bool isLoaded)
@@ -85,11 +94,19 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
         }
 
         var value2 = Terrain.ReplaceData(value, num3);
-        _subsystemCellChangeQueue.QueueCellChange(x, y, z, value2, applyImmediately);
         var season = DeciduousLeavesBlock.GetSeason(num2);
-        if (DeciduousLeavesBlock.GetSeason(num3) == Season.Winter && season != Season.Winter)
+        var enteringWinter = DeciduousLeavesBlock.GetSeason(num3) == Season.Winter && season != Season.Winter;
+        if (!applyImmediately && enteringWinter && FindFallenLeavesPosition(new Point3(x, y, z)) is { } target)
         {
-            CreateFallenLeaves(new Point3(x, y, z), applyImmediately);
+            if (!_subsystemCellChangeQueue.TryQueueCellChanges(
+                    [(new Point3(x, y, z), value2), (target, Terrain.MakeBlockValue(261))]
+                )) { return; }
+        }
+        else
+        {
+            if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value2, applyImmediately)) { return; }
+
+            if (enteringWinter) { CreateFallenLeaves(new Point3(x, y, z), applyImmediately); }
         }
     }
 

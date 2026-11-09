@@ -5,6 +5,7 @@ using Engine.Core.Mathematics;
 using EntitySystem.Core;
 
 using Game.Network;
+using Game.Network.Chunks;
 using Game.Network.Replication;
 using Game.Network.Transport;
 using Game.Terrains.Distribution;
@@ -188,11 +189,18 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
     }
 
     [Theory]
-    [InlineData(2, 0, true)]
-    [InlineData(2, 1, false)]
-    [InlineData(-3, -1, true)]
-    [InlineData(-3, -2, false)]
-    public void RequestsAndQueueCleanupMatchSharedChunkInterest(int x, int z, bool expected)
+    [InlineData(2, 0, true, false)]
+    [InlineData(2, 1, false, false)]
+    [InlineData(-3, -1, true, false)]
+    [InlineData(-3, -2, false, false)]
+    [InlineData(1, 0, true, true)]
+    [InlineData(-2, -1, true, true)]
+    public void ContentRequestsUseCentersWhileSpatialBroadphaseKeepsChunkOverlap(
+        int x,
+        int z,
+        bool broadphase,
+        bool expected
+    )
     {
         using var scheduler = new ServerChunkDistributionScheduler(_project, new EmptyAuthority());
         var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid());
@@ -203,7 +211,7 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
         index.SetLocation(client, Vector2.Zero, 32f);
         scheduler.UpdateClientLocation(client, Vector2.Zero, 32f);
 
-        Assert.Equal(expected, index.GetChunkObservers(coords).Contains(client));
+        Assert.Equal(broadphase, index.GetChunkObservers(coords).Contains(client));
         Assert.Equal(expected ? 1 : 0, scheduler.Enqueue(client, [request]));
         Assert.Equal(expected ? 1 : 0, scheduler.GetPendingCount(client));
         var queue = new PendingChunkRequestQueue();
@@ -212,6 +220,43 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
 
         scheduler.UpdateClientLocation(client, new Vector2(1000f), 32f);
         Assert.Equal(0, scheduler.GetPendingCount(client));
+    }
+
+    [Fact]
+    public void MovingAwayDropsPendingContentEvenWhenItsBoxStillTouchesInterest()
+    {
+        using var scheduler = new ServerChunkDistributionScheduler(_project, new EmptyAuthority());
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.Empty);
+        _node.AddClient(client);
+        var allocation = new ChunkAllocationId(new Point2(2, 1), 1);
+        scheduler.UpdateClientLocation(client, new Vector2(16, 8), 32);
+        Assert.Equal(1, scheduler.Enqueue(client, [new ChunkContentRequest(allocation)]));
+        Assert.Equal((1, 1), scheduler.GetBacklog());
+
+        var moved = new Vector2(7, 8);
+        Assert.True(NetworkTerrainPolicy.IsChunkRelevant(allocation.Coords, moved, 32));
+        scheduler.UpdateClientLocation(client, moved, 32);
+        Assert.Equal(0, scheduler.GetPendingCount(client));
+        Assert.False(scheduler.IsCurrentAllocation(client, allocation));
+        Assert.Equal(0, scheduler.Enqueue(client, [new ChunkContentRequest(allocation)]));
+        Assert.Equal((0, 0), scheduler.GetBacklog());
+    }
+
+    [Fact]
+    public void MovingAwayReleasesOwnedSnapshotOutsideTheContentCenterCircle()
+    {
+        using var scheduler = new ServerChunkDistributionScheduler(_project, new SnapshotAuthority());
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.Empty);
+        _node.AddClient(client);
+        var allocation = new ChunkAllocationId(new Point2(2, 1), 1);
+        scheduler.UpdateClientLocation(client, new Vector2(16, 8), 32);
+        scheduler.Enqueue(client, [new ChunkContentRequest(allocation)]);
+        scheduler.Update();
+        Assert.Equal(1, _node.PendingPackageCount);
+
+        scheduler.UpdateClientLocation(client, new Vector2(7, 8), 32);
+        Assert.Equal(0, _node.PendingPackageCount);
+        Assert.False(scheduler.IsCurrentAllocation(client, allocation));
     }
 
     [Fact]

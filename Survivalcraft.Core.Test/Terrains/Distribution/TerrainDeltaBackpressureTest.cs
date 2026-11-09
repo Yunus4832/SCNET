@@ -16,7 +16,7 @@ public sealed class TerrainDeltaBackpressureTest
         var allocation = new ChunkAllocationId(old.Coords, old.AllocationGeneration);
         terrain.FreeChunk(old);
         var current = terrain.AllocateChunk(0, 0);
-        current.IsLoaded = true;
+        current.HasContents = true;
         current.NetworkContentVersion = 100;
         var coordinator = new ClientTerrainDeltaCoordinator(terrain, _ => { });
         Assert.Equal(
@@ -28,7 +28,7 @@ public sealed class TerrainDeltaBackpressureTest
             TerrainDeltaApplyResult.Ignored,
             coordinator.RequireSnapshot(new ChunkContentResync(replacement, 99))
         );
-        Assert.True(current.IsLoaded);
+        Assert.True(current.HasContents);
     }
 
     [Fact]

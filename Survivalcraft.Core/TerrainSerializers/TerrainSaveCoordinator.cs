@@ -12,9 +12,15 @@ public sealed class TerrainSaveCoordinator : IDisposable
 
     private readonly Dictionary<Point2, TerrainSaveSnapshot> _latestSnapshots = new();
 
+    private readonly Dictionary<Point2, TerrainUnloadReservation> _unloadReservations = new();
+
     private readonly int _maximumSnapshots;
 
-    private readonly Channel<TerrainSaveSnapshot> _queue;
+    private sealed record WriteBatch(TerrainSaveSnapshot[] Snapshots, TaskCompletionSource? Completion = null);
+
+    private readonly Channel<WriteBatch> _queue;
+
+    private bool _fullSaveActive;
 
     private readonly Task _worker;
 
@@ -25,6 +31,8 @@ public sealed class TerrainSaveCoordinator : IDisposable
     private bool _disposed;
 
     private int _outstandingCount;
+
+    private int _bulkOutstandingCount;
 
     public TerrainSaveCoordinator(
         Action<Point2, int[], long[]> writer,
@@ -39,8 +47,8 @@ public sealed class TerrainSaveCoordinator : IDisposable
 
         _writer = writer;
         _maximumSnapshots = queueCapacity;
-        _queue = Channel.CreateBounded<TerrainSaveSnapshot>(
-            new BoundedChannelOptions(queueCapacity)
+        _queue = Channel.CreateBounded<WriteBatch>(
+            new BoundedChannelOptions(checked(queueCapacity + 1))
             {
                 AllowSynchronousContinuations = false,
                 FullMode = BoundedChannelFullMode.Wait,
@@ -63,7 +71,14 @@ public sealed class TerrainSaveCoordinator : IDisposable
     }
 
     // The caller holds _gate. Failed writes still own their recovery buffers after the worker finishes.
-    private int RetainedSnapshotCount => _outstandingCount + _latestSnapshots.Values.Count(snapshot => snapshot.Failed);
+    private int RetainedSnapshotCount =>
+        _outstandingCount -
+        _bulkOutstandingCount +
+        _latestSnapshots.Values.Count(snapshot => snapshot.Failed) +
+        _unloadReservations.Count -
+        _unloadReservations.Keys.Count(coords =>
+            _latestSnapshots.TryGetValue(coords, out var snapshot) && snapshot.Failed
+        );
 
     public int OutstandingCount
     {
@@ -78,51 +93,158 @@ public sealed class TerrainSaveCoordinator : IDisposable
 
     public static bool RequiresSave(TerrainChunk chunk)
     {
-        return chunk is { IsLoaded: true, ModificationCounter: > 0 };
+        return chunk is { HasContents: true, ModificationCounter: > 0 };
+    }
+
+    /// <summary>Reserves an unload slot before callbacks can dirty the chunk or reenter saving.</summary>
+    public TerrainUnloadReservation? TryReserveUnload(TerrainChunk chunk)
+    {
+        ArgumentNullException.ThrowIfNull(chunk);
+        ObjectDisposedException.ThrowIf(chunk.IsDisposed, chunk);
+        lock (_gate)
+        {
+            if (!_accepting || _unloadReservations.ContainsKey(chunk.Coords)) { return null; }
+
+            var replacesFailure = _latestSnapshots.TryGetValue(chunk.Coords, out var previous) && previous.Failed;
+            var additionalCapacity = replacesFailure ? 0 : 1;
+            if (RetainedSnapshotCount + additionalCapacity > _maximumSnapshots) { return null; }
+
+            var reservation = new TerrainUnloadReservation(this, chunk);
+            _unloadReservations.Add(chunk.Coords, reservation);
+            return reservation;
+        }
     }
 
     public bool TryQueueChunkForUnload(TerrainChunk chunk)
     {
         ArgumentNullException.ThrowIfNull(chunk);
-        if (!RequiresSave(chunk))
-        {
-            return true;
-        }
+        ObjectDisposedException.ThrowIf(chunk.IsDisposed, chunk);
+        if (!RequiresSave(chunk)) { return true; }
 
+        using var reservation = TryReserveUnload(chunk);
+        return reservation?.Commit(chunk) ?? false;
+    }
+
+    internal bool CommitUnload(TerrainUnloadReservation reservation, TerrainChunk chunk)
+    {
         lock (_gate)
         {
-            _latestSnapshots.TryGetValue(chunk.Coords, out var previous);
-            var replacedFailure = previous is { Failed: true } ? 1 : 0;
-            if (!_accepting || RetainedSnapshotCount - replacedFailure >= _maximumSnapshots)
+            try
             {
-                return false;
-            }
+                if (!_accepting ||
+                    !_unloadReservations.TryGetValue(reservation.Coords, out var pending) ||
+                    !ReferenceEquals(pending, reservation)) { return false; }
 
-            var snapshot = TerrainSaveSnapshot.Capture(chunk);
-            _latestSnapshots[chunk.Coords] = snapshot;
-            if (!_queue.Writer.TryWrite(snapshot))
-            {
-                if (previous != null)
+                ArgumentNullException.ThrowIfNull(chunk);
+                ObjectDisposedException.ThrowIf(chunk.IsDisposed, chunk);
+                if (!reservation.Matches(chunk))
                 {
-                    _latestSnapshots[chunk.Coords] = previous;
-                }
-                else
-                {
-                    _latestSnapshots.Remove(chunk.Coords);
+                    throw new ArgumentException(
+                        "An unload reservation belongs to one chunk allocation.",
+                        nameof(chunk)
+                    );
                 }
 
-                snapshot.Dispose();
-                return false;
-            }
+                if (!RequiresSave(chunk)) { return true; }
 
-            if (previous is { Failed: true })
+                _latestSnapshots.TryGetValue(chunk.Coords, out var previous);
+                var snapshot = TerrainSaveSnapshot.Capture(chunk);
+                _latestSnapshots[chunk.Coords] = snapshot;
+                if (!_queue.Writer.TryWrite(new WriteBatch([snapshot])))
+                {
+                    if (previous != null) { _latestSnapshots[chunk.Coords] = previous; }
+                    else { _latestSnapshots.Remove(chunk.Coords); }
+
+                    snapshot.Dispose();
+                    return false;
+                }
+
+                if (previous is { Failed: true }) { previous.Dispose(); }
+
+                _outstandingCount++;
+                chunk.ModificationCounter = 0;
+                return true;
+            }
+            finally { ReleaseUnloadUnderGate(reservation); }
+        }
+    }
+
+    internal void ReleaseUnload(TerrainUnloadReservation reservation)
+    {
+        lock (_gate) { ReleaseUnloadUnderGate(reservation); }
+    }
+
+    private void ReleaseUnloadUnderGate(TerrainUnloadReservation reservation)
+    {
+        if (_unloadReservations.TryGetValue(reservation.Coords, out var pending) &&
+            ReferenceEquals(pending, reservation))
+        {
+            _unloadReservations.Remove(reservation.Coords);
+            Monitor.PulseAll(_gate);
+        }
+    }
+
+    /// <summary>Captures one save point under the caller's terrain lease; compression and writes remain on the ordered writer.</summary>
+    public Task CaptureAndQueueSave(IEnumerable<TerrainChunk> chunks)
+    {
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(!_accepting, this);
+            if (_fullSaveActive) { throw new InvalidOperationException("A full terrain save is already pending."); }
+
+            var captured = new List<(TerrainChunk Chunk, TerrainSaveSnapshot Snapshot)>();
+            var transferred = false;
+            try
             {
-                previous.Dispose();
-            }
+                foreach (var chunk in chunks)
+                {
+                    if (RequiresSave(chunk)) { captured.Add((chunk, TerrainSaveSnapshot.Capture(chunk))); }
+                }
 
-            _outstandingCount++;
-            chunk.ModificationCounter = 0;
-            return true;
+                var replaced = captured.Select(item => item.Chunk.Coords).ToHashSet();
+                var retries = _latestSnapshots.Values
+                    .Where(snapshot => snapshot.Failed && !replaced.Contains(snapshot.Coords)).ToArray();
+                var snapshots = retries.Concat(captured.Select(item => item.Snapshot)).ToArray();
+                var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                // Ordinary unloads retain at most _maximumSnapshots slots. One additional queue
+                // slot is reserved for this single bulk save, regardless of its resident input size.
+                if (!_queue.Writer.TryWrite(new WriteBatch(snapshots, completion)))
+                {
+                    throw new InvalidOperationException("The reserved terrain save slot is unavailable.");
+                }
+
+                transferred = true;
+                _fullSaveActive = true;
+                _outstandingCount += snapshots.Length;
+                _bulkOutstandingCount += snapshots.Length;
+                foreach (var retry in retries)
+                {
+                    retry.Failed = false;
+                    retry.Error = null;
+                }
+
+                foreach (var (chunk, snapshot) in captured)
+                {
+                    if (_latestSnapshots.TryGetValue(chunk.Coords, out var previous) && previous.Failed)
+                    {
+                        previous.Dispose();
+                    }
+
+                    _latestSnapshots[chunk.Coords] = snapshot;
+                    chunk.ModificationCounter = 0;
+                }
+
+                return completion.Task;
+            }
+            catch
+            {
+                if (!transferred)
+                {
+                    foreach (var item in captured) { item.Snapshot.Dispose(); }
+                }
+
+                throw;
+            }
         }
     }
 
@@ -156,7 +278,12 @@ public sealed class TerrainSaveCoordinator : IDisposable
         {
             foreach (var snapshot in _latestSnapshots.Values)
             {
-                if (snapshot.Failed && _queue.Writer.TryWrite(snapshot))
+                // A failed baseline shares its slot with a replacement reservation. Retrying
+                // it needs an extra slot until the old writer finishes; never steal the lease.
+                var reservedReplacement = _unloadReservations.ContainsKey(snapshot.Coords);
+                if (snapshot.Failed &&
+                    (!reservedReplacement || RetainedSnapshotCount < _maximumSnapshots) &&
+                    _queue.Writer.TryWrite(new WriteBatch([snapshot])))
                 {
                     snapshot.Failed = false;
                     snapshot.Error = null;
@@ -164,7 +291,7 @@ public sealed class TerrainSaveCoordinator : IDisposable
                 }
             }
 
-            while (_outstandingCount > 0)
+            while (_outstandingCount > 0 || _fullSaveActive)
             {
                 Monitor.Wait(_gate);
             }
@@ -187,6 +314,9 @@ public sealed class TerrainSaveCoordinator : IDisposable
             if (_disposed || !_accepting) { return; }
 
             _accepting = false;
+            foreach (var reservation in _unloadReservations.Values) { reservation.Revoke(this); }
+
+            _unloadReservations.Clear();
         }
 
         Exception? flushError = null;
@@ -221,55 +351,91 @@ public sealed class TerrainSaveCoordinator : IDisposable
 
     private async Task WorkerLoop()
     {
-        await foreach (var snapshot in _queue.Reader.ReadAllAsync().ConfigureAwait(false))
+        await foreach (var batch in _queue.Reader.ReadAllAsync().ConfigureAwait(false))
         {
-            Exception? error = null;
-            for (var attempt = 1; attempt <= 3; attempt++)
+            var failures = new List<Exception>();
+            foreach (var snapshot in batch.Snapshots)
             {
-                try
+                if (await WriteSnapshot(snapshot, batch.Completion != null).ConfigureAwait(false) is { } error)
                 {
-                    _writer(snapshot.Coords, snapshot.Cells, snapshot.Shafts);
-                    error = null;
-                    break;
-                }
-                catch (Exception e)
-                {
-                    error = e;
-                    if (attempt < 3)
-                    {
-                        await Task.Delay(attempt * 25).ConfigureAwait(false);
-                    }
+                    failures.Add(error);
                 }
             }
 
-            lock (_gate)
+            if (batch.Completion != null)
             {
-                _outstandingCount--;
-                if (_latestSnapshots.TryGetValue(snapshot.Coords, out var latest) &&
-                    ReferenceEquals(latest, snapshot))
+                lock (_gate)
                 {
-                    if (error == null)
-                    {
-                        _latestSnapshots.Remove(snapshot.Coords);
-                        snapshot.Dispose();
-                    }
-                    else
-                    {
-                        snapshot.Failed = true;
-                        snapshot.Error = error;
-                        Log.Error(
-                            $"Error saving terrain snapshot ({snapshot.Coords.X},{snapshot.Coords.Y}).{Environment.NewLine}{error}"
-                        );
-                    }
+                    failures.AddRange(
+                        _latestSnapshots.Values.Where(snapshot => snapshot.Failed).Select(snapshot => snapshot.Error!)
+                    );
+                    _fullSaveActive = false;
+                    Monitor.PulseAll(_gate);
+                }
+
+                if (failures.Count == 0) { batch.Completion.TrySetResult(); }
+                else
+                {
+                    batch.Completion.TrySetException(
+                        new AggregateException("Terrain save failed.", failures.Distinct())
+                    );
+                }
+            }
+        }
+    }
+
+    private async Task<Exception?> WriteSnapshot(TerrainSaveSnapshot snapshot, bool bulk)
+    {
+        Exception? error = null;
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                _writer(snapshot.Coords, snapshot.Cells, snapshot.Shafts);
+                error = null;
+                break;
+            }
+            catch (Exception e)
+            {
+                error = e;
+                if (attempt < 3)
+                {
+                    await Task.Delay(attempt * 25).ConfigureAwait(false);
+                }
+            }
+        }
+
+        lock (_gate)
+        {
+            _outstandingCount--;
+            if (bulk) { _bulkOutstandingCount--; }
+
+            if (_latestSnapshots.TryGetValue(snapshot.Coords, out var latest) &&
+                ReferenceEquals(latest, snapshot))
+            {
+                if (error == null)
+                {
+                    _latestSnapshots.Remove(snapshot.Coords);
+                    snapshot.Dispose();
                 }
                 else
                 {
-                    snapshot.Dispose();
+                    snapshot.Failed = true;
+                    snapshot.Error = error;
+                    Log.Error(
+                        $"Error saving terrain snapshot ({snapshot.Coords.X},{snapshot.Coords.Y}).{Environment.NewLine}{error}"
+                    );
                 }
-
-                Monitor.PulseAll(_gate);
             }
+            else
+            {
+                snapshot.Dispose();
+            }
+
+            Monitor.PulseAll(_gate);
         }
+
+        return error;
     }
 }
 

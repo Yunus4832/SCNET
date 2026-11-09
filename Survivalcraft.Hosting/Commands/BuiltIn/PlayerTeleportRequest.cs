@@ -17,7 +17,7 @@ internal sealed class PlayerTeleportRequest : IDisposable
 
     private readonly WorldConnection? _requesterClient;
 
-    private readonly TerrainUpdater _updater;
+    private readonly TerrainDemandManager _demands;
 
     private readonly Vector3 _position;
 
@@ -42,12 +42,12 @@ internal sealed class PlayerTeleportRequest : IDisposable
         _target = target;
         _character = target.ComponentCharacter!;
         _requesterClient = context.Principal.Character?.ControllerConnection;
-        _updater = context.Project!.FindSubsystem<SubsystemTerrain>(true)!.TerrainUpdater;
+        _demands = context.Project!.FindSubsystem<SubsystemTerrain>(true)!.Demands;
         _position = position;
         _deadline = Time.RealTime + 30;
-        // Player indices are nonnegative; -1 is the updater's bootstrap location.
+        // Player indices are nonnegative; temporary preparation locations use a separate negative range.
         _locationIndex = -2 - target.CharacterIndex;
-        _updater.SetUpdateLocation(_locationIndex, position.XZ, 0f, 16f);
+        _demands.SetLocation(_locationIndex, position.XZ, 0f, 16f);
     }
 
     public void Update()
@@ -133,7 +133,7 @@ internal sealed class PlayerTeleportRequest : IDisposable
         }
 
         _disposed = true;
-        _updater.RemoveUpdateLocation(_locationIndex);
+        _demands.RemoveLocation(_locationIndex);
         _owner.Remove(_target, this);
     }
 

@@ -84,15 +84,15 @@ public sealed class TerrainDeltaBackpressureTest
             _ => throw new InvalidOperationException("Lost chain applied.")
         );
         Assert.Equal(TerrainDeltaApplyResult.ResyncRequired, coordinator.RequireSnapshot(request));
-        chunk.IsLoaded = true;
+        chunk.HasContents = true;
         chunk.NetworkContentVersion = 500;
         Assert.Equal(TerrainDeltaApplyResult.ResyncRequired, coordinator.OnContentInstalled(chunk));
-        Assert.True(chunk.IsLoaded);
+        Assert.True(chunk.HasContents);
         Assert.True(chunk.NeedsContentSnapshot);
-        chunk.IsLoaded = true;
+        chunk.HasContents = true;
         chunk.NetworkContentVersion = 1001;
         Assert.Equal(TerrainDeltaApplyResult.Ignored, coordinator.OnContentInstalled(chunk));
-        Assert.True(chunk.IsLoaded);
+        Assert.True(chunk.HasContents);
     }
 
     [Fact]

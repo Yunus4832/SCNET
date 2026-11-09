@@ -10,6 +10,18 @@ namespace Survivalcraft.Test.Terrains;
 public sealed class ClientTerrainPersistenceTest
 {
     [Fact]
+    public void ExportingAuthorityBootstrapDoesNotQueueDiskWrites()
+    {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
+        project.SendToClientMode = true;
+        var terrain = new SubsystemTerrain();
+        project.InitializeSubsystem(terrain);
+        terrain.Save(new ValuesDictionary());
+        Assert.True(terrain.PendingTerrainSave.IsCompletedSuccessfully);
+        Assert.Null(terrain.TerrainSaveCoordinator);
+    }
+
+    [Fact]
     public void SavingAReplicaDoesNotRequireStorageOrTerrainWorkers()
     {
         using var project = new RuntimeTestProject(RuntimeSide.Client);
@@ -23,7 +35,7 @@ public sealed class ClientTerrainPersistenceTest
     }
 
     [Fact]
-    public void SavingAuthorityWithoutItsSerializerCannotSucceedSilently()
+    public void SavingAuthorityWithoutItsSaveCoordinatorCannotSucceedSilently()
     {
         using var project = new RuntimeTestProject(RuntimeSide.Authority);
         var terrain = new SubsystemTerrain();
@@ -31,7 +43,7 @@ public sealed class ClientTerrainPersistenceTest
 
         var exception = Assert.Throws<InvalidOperationException>(() => terrain.Save(new ValuesDictionary()));
 
-        Assert.Contains("disk serializer", exception.Message);
+        Assert.Contains("save coordinator", exception.Message);
         Assert.False(project.IsDisposed);
     }
 }

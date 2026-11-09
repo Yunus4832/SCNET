@@ -135,7 +135,7 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
             if (num is >= 0 and <= 255)
             {
                 var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-                if (chunkAtCell is { MainThreadState: >= TerrainChunkState.Ready })
+                if (chunkAtCell is { HasCurrentLight: true })
                 {
                     _itemLight = _subsystemTerrain.Terrain.GetCellLightFast(x, num, z);
                 }

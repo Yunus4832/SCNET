@@ -58,10 +58,11 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
             MeshUpdater = new TerrainMeshUpdater(this);
             TerrainSubsystem.Closing += OnTerrainClosing;
             TerrainSubsystem.DestructionDebrisRequested += OnDestructionDebrisRequested;
-            TerrainSubsystem.TerrainUpdater.ChunkReleasing += OnChunkReleasing;
-            TerrainSubsystem.TerrainUpdater.ChunkAllocationRenewed += OnAllocationRenewed;
-            TerrainSubsystem.TerrainUpdater.ChunkDerivedDataInvalidated += OnDerivedDataInvalidated;
-            TerrainSubsystem.TerrainUpdater.DerivedEnvironmentChanged += OnEnvironmentChanged;
+            TerrainSubsystem.Residency.ChunkReleasing += OnChunkReleasing;
+            TerrainSubsystem.Residency.ChunkAllocationRenewed += OnAllocationRenewed;
+            TerrainSubsystem.MeshInvalidated += OnDerivedDataInvalidated;
+            TerrainSubsystem.Computations.DerivedInputsInvalidated += OnDerivedInputsInvalidated;
+            TerrainSubsystem.TerrainAppearanceChanged += OnEnvironmentChanged;
             if (TerrainSubsystem.ClientChunkContents is { } contents)
             {
                 contents.ContentInstalled += OnContentInstalled;
@@ -82,7 +83,11 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
     public float GetUpdateProgress(int locationIndex, float visibilityDistance, float contentDistance) =>
         MeshUpdater.GetUpdateProgress(locationIndex, visibilityDistance, contentDistance);
 
-    public void Update(float dt) => MeshUpdater.Update();
+
+    public void Update(float dt)
+    {
+        MeshUpdater.Update();
+    }
 
     public void Draw(Camera camera, int drawOrder)
     {
@@ -102,8 +107,6 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
     {
         var presentation = ChunkPresentations.Get(chunk);
         presentation.NewGeometryData = false;
-        presentation.NetworkGeometryReadyTime = 0;
-        presentation.NetworkGeometryUploadTime = 0;
     }
 
     private void OnChunkReleasing(TerrainChunk chunk) => ChunkPresentations.Release(chunk);
@@ -111,12 +114,15 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
     private void OnAllocationRenewed(TerrainChunk chunk, ulong previousGeneration) =>
         ChunkPresentations.RenewAllocation(chunk, previousGeneration);
 
+    private void OnDerivedInputsInvalidated(TerrainChunk chunk) => OnDerivedDataInvalidated(chunk, false);
+
     private void OnDerivedDataInvalidated(TerrainChunk chunk, bool discardCache)
     {
         var presentation = ChunkPresentations.Get(chunk);
         presentation.RequestMeshRebuild();
         if (discardCache) { presentation.InvalidateSliceContentsHashes(); }
 
+        TerrainSubsystem.Computations.Request(chunk);
         MeshUpdater.Update();
     }
 
@@ -150,10 +156,11 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
         {
             TerrainSubsystem.Closing -= OnTerrainClosing;
             TerrainSubsystem.DestructionDebrisRequested -= OnDestructionDebrisRequested;
-            TerrainSubsystem.TerrainUpdater.ChunkReleasing -= OnChunkReleasing;
-            TerrainSubsystem.TerrainUpdater.ChunkAllocationRenewed -= OnAllocationRenewed;
-            TerrainSubsystem.TerrainUpdater.ChunkDerivedDataInvalidated -= OnDerivedDataInvalidated;
-            TerrainSubsystem.TerrainUpdater.DerivedEnvironmentChanged -= OnEnvironmentChanged;
+            TerrainSubsystem.Residency.ChunkReleasing -= OnChunkReleasing;
+            TerrainSubsystem.Residency.ChunkAllocationRenewed -= OnAllocationRenewed;
+            TerrainSubsystem.MeshInvalidated -= OnDerivedDataInvalidated;
+            TerrainSubsystem.Computations.DerivedInputsInvalidated -= OnDerivedInputsInvalidated;
+            TerrainSubsystem.TerrainAppearanceChanged -= OnEnvironmentChanged;
             if (TerrainSubsystem.ClientChunkContents is { } contents)
             {
                 contents.ContentInstalled -= OnContentInstalled;

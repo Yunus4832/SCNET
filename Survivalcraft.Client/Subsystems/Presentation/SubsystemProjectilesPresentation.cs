@@ -75,7 +75,7 @@ public sealed class SubsystemProjectilesPresentation : Subsystem, IDrawable, IUp
             var num3 = Terrain.ExtractContents(projectile.Value);
             var block = WorldContentBinding.For(Project).Catalog.Blocks[num3];
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-            if (chunkAtCell is { MainThreadState: >= TerrainChunkState.Ready } && num2 is >= 0 and < 255)
+            if (chunkAtCell is { HasCurrentLight: true } && num2 is >= 0 and < 255)
             {
                 _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
                 _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +

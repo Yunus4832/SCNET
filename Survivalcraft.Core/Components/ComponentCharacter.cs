@@ -353,14 +353,14 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
                             CurInteractEventItem.RequestId = ComponentMiner.PlacementRequestId;
                             CurInteractEventItem.PlacementCell = ComponentMiner.PlacementCell;
                             CurInteractEventItem.ExpectedValue = ComponentMiner.PlacementExpectedValue;
-                            _subsystemTerrain.TerrainUpdater.RequestSynchronousUpdate();
+                            _subsystemTerrain.NotifyTerrainInteraction();
                             flag = true;
                             _isAimBlocked = true;
                         }
                     }
                     else
                     {
-                        _subsystemTerrain.TerrainUpdater.RequestSynchronousUpdate();
+                        _subsystemTerrain.NotifyTerrainInteraction();
                         flag = true;
                         _isAimBlocked = true;
                     }
@@ -368,7 +368,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
             }
             else
             {
-                _subsystemTerrain.TerrainUpdater.RequestSynchronousUpdate();
+                _subsystemTerrain.NotifyTerrainInteraction();
                 flag = true;
                 _isAimBlocked = true;
             }
@@ -441,7 +441,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
                     CurDigEventItem.RequestId = ComponentMiner.DigRequestId;
                     CurDigEventItem.ExpectedValue = ComponentMiner.DigExpectedValue;
                     _lastActionTime = _subsystemTime.GameTime;
-                    _subsystemTerrain.TerrainUpdater.RequestSynchronousUpdate();
+                    _subsystemTerrain.NotifyTerrainInteraction();
                 }
             }
         }

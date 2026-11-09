@@ -129,7 +129,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
 
         var data2 = TallGrassBlock.SetIsSmall(data, false);
         var value2 = Terrain.ReplaceData(value, data2);
-        _subsystemCellChangeQueue.QueueCellChange(x, y, z, value2);
+        if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value2)) { return; }
     }
 
     private void GrowFlower(int value, int x, int y, int z, int pollPass)
@@ -143,7 +143,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
 
         var data2 = FlowerBlock.SetIsSmall(data, false);
         var value2 = Terrain.ReplaceData(value, data2);
-        _subsystemCellChangeQueue.QueueCellChange(x, y, z, value2);
+        if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value2)) { return; }
     }
 
     private void GrowRye(int value, int x, int y, int z, int pollPass)
@@ -169,7 +169,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
 
             var data2 = RyeBlock.SetSize(RyeBlock.SetIsWild(data, true), size + 1);
             var value2 = Terrain.ReplaceData(value, data2);
-            _subsystemCellChangeQueue.QueueCellChange(x, y, z, value2);
+            if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value2)) { return; }
 
             return;
         }
@@ -213,20 +213,23 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
             }
 
             var value3 = Terrain.ReplaceData(value, data4);
-            _subsystemCellChangeQueue.QueueCellChange(x, y, z, value3);
             if (size + 1 != 7)
             {
+                if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value3)) { return; }
+
                 return;
             }
 
             var data5 = SoilBlock.SetNitrogen(data3, MathUtils.Max(nitrogen - 1, 0));
             var value4 = Terrain.ReplaceData(cellValueFast, data5);
-            _subsystemCellChangeQueue.QueueCellChange(x, y - 1, z, value4);
+            if (!_subsystemCellChangeQueue.TryQueueCellChanges(
+                    [(new Point3(x, y, z), value3), (new Point3(x, y - 1, z), value4)]
+                )) { return; }
         }
         else
         {
             var value5 = Terrain.ReplaceData(value, RyeBlock.SetIsWild(data, true));
-            _subsystemCellChangeQueue.QueueCellChange(x, y, z, value5);
+            if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value5)) { return; }
         }
     }
 
@@ -248,7 +251,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
         {
             var data2 = CottonBlock.SetSize(CottonBlock.SetIsWild(data, true), size + 1);
             var value2 = Terrain.ReplaceData(value, data2);
-            _subsystemCellChangeQueue.QueueCellChange(x, y, z, value2);
+            if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value2)) { return; }
 
             return;
         }
@@ -292,20 +295,23 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
             }
 
             var value3 = Terrain.ReplaceData(value, data4);
-            _subsystemCellChangeQueue.QueueCellChange(x, y, z, value3);
             if (size + 1 != 2)
             {
+                if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value3)) { return; }
+
                 return;
             }
 
             var data5 = SoilBlock.SetNitrogen(data3, MathUtils.Max(nitrogen - 1, 0));
             var value4 = Terrain.ReplaceData(cellValueFast, data5);
-            _subsystemCellChangeQueue.QueueCellChange(x, y - 1, z, value4);
+            if (!_subsystemCellChangeQueue.TryQueueCellChanges(
+                    [(new Point3(x, y, z), value3), (new Point3(x, y - 1, z), value4)]
+                )) { return; }
         }
         else
         {
             var value5 = Terrain.ReplaceData(value, CottonBlock.SetIsWild(data, true));
-            _subsystemCellChangeQueue.QueueCellChange(x, y, z, value5);
+            if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value5)) { return; }
         }
     }
 
@@ -367,15 +373,18 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
         }
 
         var value2 = Terrain.ReplaceData(value, data3);
-        _subsystemCellChangeQueue.QueueCellChange(x, y, z, value2);
         if (num != 168 || size + 1 != 7)
         {
+            if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value2)) { return; }
+
             return;
         }
 
         var data4 = SoilBlock.SetNitrogen(data2, MathUtils.Max(num2 - 3, 0));
         var value3 = Terrain.ReplaceData(cellValueFast, data4);
-        _subsystemCellChangeQueue.QueueCellChange(x, y - 1, z, value3);
+        if (!_subsystemCellChangeQueue.TryQueueCellChanges(
+                [(new Point3(x, y, z), value2), (new Point3(x, y - 1, z), value3)]
+            )) { return; }
     }
 
     private void Lifecycle(int value, int x, int y, int z, bool applyImmediately)

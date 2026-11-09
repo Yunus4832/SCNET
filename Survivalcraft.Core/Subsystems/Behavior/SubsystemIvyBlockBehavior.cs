@@ -4,11 +4,13 @@ namespace Game.Subsystems.Behavior;
 
 public class SubsystemIvyBlockBehavior : SubsystemPollableBlockBehavior, IUpdateable
 {
-    public UpdateExecutionSide UpdateSide => UpdateExecutionSide.Both;
+    public UpdateExecutionSide UpdateSide => UpdateExecutionSide.Authority;
 
     private readonly Random _random = new();
 
     private SubsystemTime _subsystemTime = null!;
+
+    private SubsystemCellChangeQueue _subsystemCellChangeQueue = null!;
 
     private readonly Dictionary<Point3, int> _toUpdate = new();
 
@@ -25,13 +27,12 @@ public class SubsystemIvyBlockBehavior : SubsystemPollableBlockBehavior, IUpdate
 
         foreach (var item in _toUpdate)
         {
-            if (SubsystemTerrain.Terrain.GetCellContents(item.Key.X, item.Key.Y, item.Key.Z) == 0)
+            if (SubsystemTerrain.Terrain.GetCellContents(item.Key.X, item.Key.Y, item.Key.Z) != 0 ||
+                _subsystemCellChangeQueue.TryQueueCellChange(item.Key.X, item.Key.Y, item.Key.Z, item.Value))
             {
-                SubsystemTerrain.ChangeCell(item.Key.X, item.Key.Y, item.Key.Z, item.Value);
+                _toUpdate.Remove(item.Key);
             }
         }
-
-        _toUpdate.Clear();
     }
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
@@ -73,5 +74,6 @@ public class SubsystemIvyBlockBehavior : SubsystemPollableBlockBehavior, IUpdate
     {
         base.Load(valuesDictionary);
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
+        _subsystemCellChangeQueue = Project.FindSubsystem<SubsystemCellChangeQueue>(true)!;
     }
 }

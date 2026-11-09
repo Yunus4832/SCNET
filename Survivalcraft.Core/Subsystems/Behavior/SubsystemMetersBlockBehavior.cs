@@ -293,7 +293,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
             for (var l = -7; l <= 7; l++)
             {
                 var chunkAtCell2 = SubsystemTerrain.Terrain.GetChunkAtCell(x + k, z + l, false);
-                if (chunkAtCell2 == null || chunkAtCell2.MainThreadState < TerrainChunkState.Ready)
+                if (chunkAtCell2 is not { HasContents: true })
                 {
                     continue;
                 }
@@ -412,12 +412,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
         if (chunkAtCell != null)
         {
-            SubsystemTerrain.TerrainUpdater.DowngradeChunkNeighborhoodState(
-                chunkAtCell.Coords,
-                0,
-                TerrainChunkState.Ready,
-                true
-            );
+            SubsystemTerrain.InvalidateMesh(chunkAtCell.Coords, true);
         }
     }
 

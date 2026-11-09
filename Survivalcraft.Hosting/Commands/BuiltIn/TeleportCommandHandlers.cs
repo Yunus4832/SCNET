@@ -135,7 +135,7 @@ public static class TeleportCommandHandlers
             for (var z = Terrain.ToCell(box.Min.Z); z <= Terrain.ToCell(box.Max.Z); z++)
             {
                 if (terrain.GetChunkAtCell(x, z, false) is not
-                    { MainThreadState: > TerrainChunkState.InvalidContents4 })
+                    { HasContents: true })
                 {
                     return false;
                 }
@@ -273,8 +273,8 @@ public static class TeleportCommandHandlers
         marks.Set("previous", ApplyPosition(body, position));
 
         // Hand off the prepared chunks to the player's normal interest before releasing the temporary location.
-        var updater = subsystemTerrain.TerrainUpdater;
-        updater.UpdateLocations.TryGetValue(target.CharacterIndex, out var location);
+        var demands = subsystemTerrain.Demands;
+        demands.Locations.TryGetValue(target.CharacterIndex, out var location);
         location.Center = position.XZ;
         location.VisibilityDistance = Math.Max(32f, location.VisibilityDistance);
         location.ContentDistance = Math.Max(32f, location.ContentDistance);

@@ -24,16 +24,8 @@ public sealed class MountTerrainReadinessTest
     public void SeparationTimerOnlyRunsWhenBothBodiesCanSimulate(bool riderReady, bool mountReady)
     {
         var terrain = new Terrain();
-        terrain.AllocateChunk(0, 0).SetMainThreadState(
-            mountReady
-                ? TerrainChunkState.InvalidLight
-                : TerrainChunkState.NotLoaded
-        );
-        terrain.AllocateChunk(2, 0).SetMainThreadState(
-            riderReady
-                ? TerrainChunkState.InvalidLight
-                : TerrainChunkState.NotLoaded
-        );
+        terrain.AllocateChunk(0, 0).HasContents = mountReady;
+        terrain.AllocateChunk(2, 0).HasContents = riderReady;
         var subsystem = new SubsystemTerrain { Terrain = terrain };
         var mountBody = CreateBody(subsystem, Vector3.Zero);
         var riderBody = CreateBody(subsystem, new Vector3(32f, 0f, 0f));
@@ -66,7 +58,7 @@ public sealed class MountTerrainReadinessTest
     {
         using var project = new RuntimeTestProject(RuntimeSide.Client);
         using var terrain = new Terrain();
-        terrain.AllocateChunk(0, 0).SetMainThreadState(TerrainChunkState.InvalidLight);
+        terrain.AllocateChunk(0, 0).HasContents = true;
         var subsystem = new SubsystemTerrain { Terrain = terrain };
         var mountBody = CreateBody(subsystem, Vector3.Zero);
         var riderBody = CreateBody(subsystem, Vector3.Zero);

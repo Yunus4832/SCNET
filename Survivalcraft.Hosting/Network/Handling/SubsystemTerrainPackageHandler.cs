@@ -43,7 +43,7 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
                     break;
                 }
 
-                var scheduler = subsystemTerrain.TerrainUpdater.ServerChunkDistribution ??
+                var scheduler = subsystemTerrain.ChunkDistribution ??
                                 throw new InvalidOperationException(
                                     "Terrain chunk requests require an authoritative server scheduler."
                                 );

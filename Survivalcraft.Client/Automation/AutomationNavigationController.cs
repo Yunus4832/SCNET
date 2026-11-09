@@ -76,7 +76,7 @@ public sealed class AutomationNavigationController
 
         var terrain = player.Project.FindSubsystem<SubsystemTerrain>(true)!.Terrain;
         if (terrain.GetChunkAtCell(Terrain.ToCell(destination.X), Terrain.ToCell(destination.Z), false) is not
-            { MainThreadState: >= TerrainChunkState.Ready })
+            { HasContents: true })
         {
             throw new InvalidOperationException("The destination terrain is not loaded yet.");
         }

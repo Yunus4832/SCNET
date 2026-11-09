@@ -9,7 +9,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="LiteNetLib" Version="0.9.5.2"/>
-        <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0"/>
+        <PackageReference Include="BouncyCastle.Cryptography" Version="2.8.0-beta.349"/>
         <ProjectReference Include="../Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
         <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
         <InternalsVisibleTo Include="Engine.Network.Test"/>

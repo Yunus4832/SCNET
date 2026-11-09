@@ -2,6 +2,10 @@ namespace Game.Terrains.Distribution;
 
 public interface IChunkContentTransport
 {
+    bool HasPendingWork { get; }
+
+    void SetPriorityCenters(IReadOnlyList<Vector2> centers);
+
     void Request(IReadOnlyList<ChunkContentRequest> requests);
 
     void Discard(ChunkAllocationId allocation);

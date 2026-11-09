@@ -72,8 +72,7 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
             if (chunkAtCell is
                 {
-                    MainThreadState: >= TerrainChunkState.Ready,
-                    WorkerState: >= TerrainChunkState.Ready
+                    HasCurrentLight: true
                 } &&
                 num5 is >= 0 and < 255 &&
                 !IsInsidePredictedOpaqueBlock(

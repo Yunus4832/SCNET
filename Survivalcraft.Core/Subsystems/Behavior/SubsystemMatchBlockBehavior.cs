@@ -22,6 +22,12 @@ public class SubsystemMatchBlockBehavior : SubsystemBlockBehavior
         if (obj is TerrainRaycastResult result)
         {
             var cellFace = result.CellFace;
+            if (!WorldRuntimeContext.For(Project).IsAuthority)
+            {
+                var block = WorldContentBinding.For(Project).Catalog.Blocks[Terrain.ExtractContents(result.Value)];
+                return block is GunpowderKegBlock or DetonatorBlock || block.FireDuration != 0f;
+            }
+
             //爆炸
             if (_subsystemExplosivesBlockBehavior.IgniteFuse(
                     cellFace.X,
@@ -53,6 +59,8 @@ public class SubsystemMatchBlockBehavior : SubsystemBlockBehavior
             {
                 return false;
             }
+
+            if (!WorldRuntimeContext.For(Project).IsAuthority) { return true; }
 
             if (_subsystemGameInfo.WorldSettings.GameMode < GameMode.Challenging || _random.Float(0f, 1f) < 0.33f)
             {

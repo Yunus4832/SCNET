@@ -1,11 +1,11 @@
 namespace Game.Terrains;
 
-/// <summary>Optional world-owned derived CPU work executed under the terrain update token.</summary>
+/// <summary>Optional client-owned derived work, without owning CPU terrain selection or dependencies.</summary>
 public interface ITerrainDerivedWork
 {
-    TerrainChunk? SelectChunk(TerrainChunk[] chunks, IEnumerable<TerrainUpdateLocation> locations);
+    bool HasCurrentGeometry(TerrainChunk chunk);
 
-    TerrainChunk? GetCpuDependency(TerrainChunk chunk);
+    bool HasUploadedGeometry(TerrainChunk chunk);
 
-    void UpdateChunk(TerrainChunk chunk);
+    TerrainDerivedWorkResult UpdateChunk(TerrainChunk chunk);
 }

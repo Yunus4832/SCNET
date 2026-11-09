@@ -49,6 +49,10 @@ internal sealed class DatagramSecurityProxy : IAsyncDisposable
 
     internal int dropPercent;
 
+    internal int dropFirstCertificateVerify;
+
+    internal int droppedCertificateVerify;
+
     internal int duplicatePercent;
 
     internal DatagramSecurityProxy(IPEndPoint server, bool relay = false)
@@ -89,6 +93,19 @@ internal sealed class DatagramSecurityProxy : IAsyncDisposable
                 _client = received.RemoteEndPoint;
                 var packet = received.Buffer;
                 ClientPackets.Enqueue(packet.ToArray());
+                if (packet.Length >= 30 &&
+                    packet[0] == 8 &&
+                    packet.AsSpan(1, 4).SequenceEqual("SCDT"u8) &&
+                    packet[5] == 22 &&
+                    packet[8] == 0 &&
+                    packet[9] == 0 &&
+                    packet[18] == 15 &&
+                    Interlocked.CompareExchange(ref dropFirstCertificateVerify, 0, 1) == 1)
+                {
+                    Interlocked.Increment(ref droppedCertificateVerify);
+                    continue;
+                }
+
                 if (dropPercent > 0 && _forwardRandom.Next(100) < dropPercent) { continue; }
 
                 if (_relay)

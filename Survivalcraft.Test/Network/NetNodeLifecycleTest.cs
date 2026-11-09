@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 using Engine.Network;
@@ -269,5 +271,57 @@ public sealed class NetNodeLifecycleTest
         {
             CommonLib.Net.Role = previousMode;
         }
+    }
+
+    [Fact]
+    public void ServerReplyDeadlineStartsAfterTransportAndStillExpiresForAdmission()
+    {
+        var node = new NetNode(NetNodeOptions.Default, false, PackageHandlerCatalog.Empty, NodeRole.Client);
+        var screen = (GameLoadingScreen)RuntimeHelpers.GetUninitializedObject(typeof(GameLoadingScreen));
+        typeof(GameLoadingScreen).GetField("_clientNode", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
+            screen,
+            node
+        );
+        typeof(GameLoadingScreen).GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
+            screen,
+            Stopwatch.StartNew()
+        );
+        var connecting =
+            new TaskCompletionSource<NetworkConnection>(TaskCreationOptions.RunContinuationsAsynchronously);
+        typeof(NetNode).GetField("_connecting", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
+            node,
+            connecting.Task
+        );
+        var timeout = typeof(GameLoadingScreen).GetMethod(
+            "HasServerReplyTimedOut",
+            BindingFlags.Instance | BindingFlags.NonPublic
+        )!;
+        bool Expired(long elapsed) => (bool)timeout.Invoke(screen, [elapsed])!;
+        try
+        {
+            Assert.True(node.IsTransportConnecting);
+            Assert.False(Expired(30000));
+            typeof(NetNode).GetProperty(nameof(NetNode.AdmissionDeadline))!
+                .SetValue(node, DateTimeOffset.UtcNow.AddSeconds(-1));
+            Assert.True(Expired(0));
+            typeof(NetNode).GetProperty(nameof(NetNode.AdmissionDeadline))!.SetValue(node, null);
+            Assert.False(Expired(30000));
+            connecting.SetCanceled();
+            Assert.False(node.IsTransportConnecting);
+            Assert.False(Expired(30000));
+            Assert.False(Expired(NetworkTransportLimits.DisconnectTimeoutMilliseconds - 1));
+            Assert.True(Expired(NetworkTransportLimits.DisconnectTimeoutMilliseconds));
+            typeof(NetNode).GetProperty(nameof(NetNode.AdmissionDeadline))!.SetValue(
+                node,
+                DateTimeOffset.UtcNow.AddSeconds(-1)
+            );
+            Assert.True(Expired(0));
+            typeof(NetNode).GetProperty(nameof(NetNode.AdmissionDeadline))!.SetValue(
+                node,
+                DateTimeOffset.UtcNow.AddMinutes(1)
+            );
+            Assert.False(Expired(30000));
+        }
+        finally { node.StopImmediate(); }
     }
 }

@@ -8,9 +8,13 @@ public static class LightingManager
 
     public static readonly Vector3 DirectionToLight2 = new(-0.12f, 0.25f, -0.34f);
 
-    public static readonly float[] LightIntensityByLightValue = new float[16];
+    private static TerrainLightingTables _tables = new(0);
 
-    public static readonly float[] LightIntensityByLightValueAndFace = new float[96];
+    public static TerrainLightingTables CaptureTables() => Volatile.Read(ref _tables);
+
+    public static ReadOnlySpan<float> LightIntensityByLightValue => CaptureTables().Values;
+
+    public static ReadOnlySpan<float> LightIntensityByLightValueAndFace => CaptureTables().Faces;
 
     public static void Initialize()
     {
@@ -44,10 +48,10 @@ public static class LightingManager
         var chunkAtCell2 = terrain.GetChunkAtCell(x, num3, false);
         var chunkAtCell3 = terrain.GetChunkAtCell(num, z, false);
         var chunkAtCell4 = terrain.GetChunkAtCell(x, z, false);
-        if (chunkAtCell is not { MainThreadState: >= TerrainChunkState.Ready } ||
-            chunkAtCell2 is not { MainThreadState: >= TerrainChunkState.Ready } ||
-            chunkAtCell3 is not { MainThreadState: >= TerrainChunkState.Ready } ||
-            chunkAtCell4 is not { MainThreadState: >= TerrainChunkState.Ready })
+        if (chunkAtCell is not { HasCurrentLight: true } ||
+            chunkAtCell2 is not { HasCurrentLight: true } ||
+            chunkAtCell3 is not { HasCurrentLight: true } ||
+            chunkAtCell4 is not { HasCurrentLight: true })
         {
             return null;
         }
@@ -78,20 +82,9 @@ public static class LightingManager
 
     private static void CalculateLightingTables()
     {
-        var brightness = Configuration.ClientConfiguration.Preferences.Brightness;
-        var x = MathUtils.Lerp(0f, 0.1f, brightness);
-        for (var i = 0; i < 16; i++)
-        {
-            LightIntensityByLightValue[i] = MathUtils.Saturate(MathUtils.Lerp(x, 1f, MathUtils.Pow(i / 15f, 1.25f)));
-        }
-
-        for (var j = 0; j < 6; j++)
-        {
-            var num = CalculateLighting(CellFace.FaceToVector3(j));
-            for (var k = 0; k < 16; k++)
-            {
-                LightIntensityByLightValueAndFace[k + j * 16] = LightIntensityByLightValue[k] * num;
-            }
-        }
+        Volatile.Write(
+            ref _tables,
+            new TerrainLightingTables(Configuration.ClientConfiguration.Preferences.Brightness)
+        );
     }
 }

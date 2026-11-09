@@ -20,7 +20,7 @@ internal static class NetworkDiagnosticCommandHandlers
         }
 
         var presentation = context.Project!.FindSubsystem<SubsystemTerrainPresentation>(true)!;
-        var locations = terrain.TerrainUpdater.UpdateLocations.Values.ToArray();
+        var locations = terrain.Demands.Locations.Values.ToArray();
         return new
         {
             transport.PendingSnapshotBytes,
@@ -38,17 +38,22 @@ internal static class NetworkDiagnosticCommandHandlers
                     Visible = locations.Any(location => Vector2.DistanceSquared(chunk.Center, location.Center) <=
                                                         location.VisibilityDistance * location.VisibilityDistance
                     ),
-                    chunk.IsLoaded,
+                    chunk.HasContents,
                     Drawable = ClientChunkDerivationPipeline.CanDraw(
                         TerrainContentRole.Replica,
                         chunk,
                         presentation.ChunkPresentations.Get(chunk)
                     ),
-                    MainState = chunk.MainThreadState.ToString(),
-                    WorkerState = chunk.WorkerState.ToString(),
+                    chunk.HasCurrentHeightData,
+                    chunk.HasCurrentLight,
+                    chunk.IsContentInitialized,
                     chunk.NetworkContentVersion,
                     chunk.NeedsContentSnapshot,
-                    presentation.ChunkPresentations.Get(chunk).ClientGeometryContentVersion
+                    presentation.ChunkPresentations.Get(chunk).ClientGeometryContentVersion,
+                    CurrentGeometry = presentation.ChunkPresentations.Get(chunk).HasCurrentGeometry(chunk),
+                    presentation.ChunkPresentations.Get(chunk).UploadedContentVersion,
+                    CurrentUploadedGeometry =
+                        presentation.ChunkPresentations.Get(chunk).HasCurrentUploadedGeometry(chunk)
                 }
             ).ToArray()
         };

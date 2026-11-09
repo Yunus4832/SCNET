@@ -12,7 +12,7 @@ public sealed class RetainedChunkLeaseTest
         using var presentations = new TerrainChunkPresentationStore();
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.IsLoaded = true;
+        chunk.HasContents = true;
         chunk.NetworkContentVersion = 10;
         var presentation = presentations.Get(chunk);
         presentation.GeometryUploaded = true;

@@ -227,6 +227,40 @@ public sealed class SecureNetworkTest
         Assert.Equal(Enumerable.Range(0, 100), data.Select(bytes => BitConverter.ToInt32(bytes)));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task OneLostClientCertificateVerifyIsRecoveredWithoutDisablingMutualAuthentication(bool loseVerify)
+    {
+        using var serverIdentity = NetworkIdentity.Create();
+        using var clientIdentity = NetworkIdentity.Create();
+        await using var server = new NetworkHost(
+            options: new NetworkHostOptions
+            {
+                Identity = serverIdentity,
+                ValidatePeerIdentity = peer => peer.Address == clientIdentity.PublicIdentity.Address
+            }
+        );
+        await using var client = new NetworkHost(
+            options: new NetworkHostOptions
+            {
+                Identity = clientIdentity,
+                ValidatePeerIdentity = peer => peer.Address == serverIdentity.PublicIdentity.Address
+            }
+        );
+        await using var proxy = new DatagramSecurityProxy(new IPEndPoint(IPAddress.Loopback, server.LocalPort))
+        {
+            dropFirstCertificateVerify = loseVerify ? 1 : 0
+        };
+        server.ConnectionRequested += request => request.Accept();
+        var connecting = client.ConnectAsync(proxy.Endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        await PumpAsync(server, client, () => connecting.IsCompleted, 22);
+        Assert.Equal(loseVerify ? 1 : 0, proxy.droppedCertificateVerify);
+        var connection = await connecting;
+        Assert.True(connection.IsConnected);
+        Assert.Equal(serverIdentity.PublicIdentity.Address, connection.PeerIdentity.Address);
+    }
+
     [Fact]
     public async Task OutOfOrderUnreliableDatagramsRemainValidAndAreNotMistakenForReplay()
     {

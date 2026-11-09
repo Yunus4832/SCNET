@@ -6,6 +6,7 @@ using Game.Modding.Blocks;
 using Game.Subsystems;
 using Game.Subsystems.Behavior;
 using Game.Terrains;
+using Game.Terrains.Lighting;
 using Game.World;
 
 using Survivalcraft.Test.Modding;
@@ -45,8 +46,8 @@ public sealed class TerrainCatalogIsolationTest
         Assert.False(SubsystemSnowBlockBehavior.CanSupportSnow(transparent.Catalog, transparentValue));
         Assert.True(SubsystemFallenLeavesBlockBehavior.CanSupportFallenLeaves(solid.Catalog, solidValue));
         Assert.False(SubsystemFallenLeavesBlockBehavior.CanSupportFallenLeaves(transparent.Catalog, transparentValue));
-        TerrainUpdater.GenerateChunkSunLightAndHeight(solidChunk, 15, solid.Catalog);
-        TerrainUpdater.GenerateChunkSunLightAndHeight(transparentChunk, 15, transparent.Catalog);
+        TerrainLightingCalculator.CalculateSunlightAndHeight(solidChunk, 15, solid.Catalog);
+        TerrainLightingCalculator.CalculateSunlightAndHeight(transparentChunk, 15, transparent.Catalog);
         Assert.Equal(0, solidChunk.GetCellLightFast(1, 64, 1));
         Assert.Equal(15, transparentChunk.GetCellLightFast(1, 64, 1));
         Assert.NotNull(solid.Raycast(start, end, false, true, null));

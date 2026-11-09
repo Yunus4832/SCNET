@@ -21,19 +21,19 @@ public sealed class ClientTerrainDeltaCoordinatorTest
         var result = coordinator.Receive(Delta(11, 12, 42));
 
         Assert.Equal(TerrainDeltaApplyResult.ResyncRequired, result);
-        Assert.True(chunk.IsLoaded);
+        Assert.True(chunk.HasContents);
         Assert.True(chunk.NeedsContentSnapshot);
         Assert.False(chunk.IsRequested);
-        Assert.Equal(TerrainChunkState.Ready, chunk.MainThreadState);
-        Assert.Equal(TerrainChunkState.Ready, chunk.WorkerState);
+        Assert.True(chunk.HasCurrentHeightData);
+        Assert.True(chunk.HasCurrentLight);
         Assert.True(presentations.Get(chunk).GeometryUploaded);
         Assert.Equal(10, presentations.Get(chunk).ClientGeometryContentVersion);
         Assert.Equal(10, chunk.NetworkContentVersion);
 
-        chunk.IsLoaded = true;
+        chunk.HasContents = true;
         chunk.NetworkContentVersion = 12;
         Assert.Equal(TerrainDeltaApplyResult.Ignored, coordinator.OnContentInstalled(chunk));
-        Assert.True(chunk.IsLoaded);
+        Assert.True(chunk.HasContents);
         Assert.False(chunk.NeedsContentSnapshot);
     }
 
@@ -41,10 +41,10 @@ public sealed class ClientTerrainDeltaCoordinatorTest
     private static TerrainChunk LoadedChunk(Terrain terrain, long version)
     {
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.IsLoaded = true;
+        chunk.HasContents = true;
         chunk.NetworkContentVersion = version;
-        chunk.SetMainThreadState(TerrainChunkState.Ready);
-        chunk.SetWorkerState(TerrainChunkState.Ready);
+
+
         return chunk;
     }
 

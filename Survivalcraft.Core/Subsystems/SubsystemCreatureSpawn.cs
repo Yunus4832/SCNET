@@ -177,7 +177,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num97 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num97 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -206,7 +206,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num95 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num95 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -235,7 +235,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num93 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num93 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -257,7 +257,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num91 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num91 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -275,7 +275,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num89 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num89 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -308,7 +308,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num85 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num85 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -341,7 +341,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num81 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num81 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -366,7 +366,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num79 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num79 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -385,7 +385,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num77 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num77 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -411,7 +411,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num75 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num75 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -436,7 +436,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num73 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num73 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -461,7 +461,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num71 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num71 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -479,7 +479,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num69 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num69 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -534,7 +534,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num66 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num66 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -556,7 +556,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num64 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num64 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -579,7 +579,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num62 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num62 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -605,7 +605,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num60 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num60 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -630,7 +630,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num58 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num58 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -653,7 +653,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num56 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num56 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -677,7 +677,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num54 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num54 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -700,7 +700,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num52 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num52 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -725,7 +725,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num50 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num50 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -749,7 +749,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num48 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num48 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -775,7 +775,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num46 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num46 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -851,7 +851,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num41 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num41 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -877,7 +877,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num39 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num39 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -902,7 +902,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num37 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num37 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -1014,7 +1014,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             new CreatureType("Bull Sharks", SpawnLocationType.Water, false, false)
             {
                 SpawnSuitabilityFunction = (_, point) =>
-                    !(_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < -2f)
+                    !(_subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z) < -2f)
                         ? 0f
                         : 0.4f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
@@ -1028,7 +1028,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             new CreatureType("Tiger Sharks", SpawnLocationType.Water, false, false)
             {
                 SpawnSuitabilityFunction = (_, point) =>
-                    !(_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < -5f)
+                    !(_subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z) < -5f)
                         ? 0f
                         : 0.3f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
@@ -1042,7 +1042,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             new CreatureType("Great White Sharks", SpawnLocationType.Water, false, false)
             {
                 SpawnSuitabilityFunction = (_, point) =>
-                    !(_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < -20f)
+                    !(_subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z) < -20f)
                         ? 0f
                         : 0.2f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
@@ -1056,7 +1056,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             new CreatureType("Barracudas", SpawnLocationType.Water, false, false)
             {
                 SpawnSuitabilityFunction = (_, point) =>
-                    !(_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < -2f)
+                    !(_subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z) < -2f)
                         ? 0f
                         : 0.5f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
@@ -1070,7 +1070,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             new CreatureType("Bass_Sea", SpawnLocationType.Water, false, false)
             {
                 SpawnSuitabilityFunction = (_, point) =>
-                    !(_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < -2f)
+                    !(_subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z) < -2f)
                         ? 0f
                         : 1f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
@@ -1085,7 +1085,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num30 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num30 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -1103,7 +1103,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             new CreatureType("Rays", SpawnLocationType.Water, false, false)
             {
                 SpawnSuitabilityFunction = (_, point) =>
-                    !(_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < 10f)
+                    !(_subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z) < 10f)
                         ? 1f
                         : 0.5f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
@@ -1146,7 +1146,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num26 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num26 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -1166,7 +1166,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num25 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num25 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -1189,7 +1189,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num24 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num24 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -1218,7 +1218,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     }
 
                     var num21 =
-                        _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
+                        _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
                     var humidity4 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                     float num22 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     var num23 = Terrain.ExtractContents(
@@ -1248,7 +1248,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     }
 
                     var num17 =
-                        _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
+                        _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
                     float num18 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                     float num19 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     var num20 = Terrain.ExtractContents(
@@ -1282,7 +1282,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     }
 
                     var num15 =
-                        _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
+                        _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
                     var temperature7 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     var humidity3 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                     var num16 = Terrain.ExtractContents(
@@ -1315,7 +1315,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     }
 
                     var num13 =
-                        _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
+                        _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
                     var temperature6 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                     var num14 = Terrain.ExtractContents(
@@ -1347,7 +1347,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     }
 
                     var num11 =
-                        _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
+                        _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
                     var temperature5 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     var num12 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
@@ -1373,7 +1373,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num9 = _subsystemTerrain.TerrainContentsGenerator
+                    var num9 = _subsystemTerrain.Environment
                         .CalculateOceanShoreDistance(point.X, point.Z);
                     var humidity2 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                     var num10 = Terrain.ExtractContents(
@@ -1404,7 +1404,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num7 = _subsystemTerrain.TerrainContentsGenerator
+                    var num7 = _subsystemTerrain.Environment
                         .CalculateOceanShoreDistance(point.X, point.Z);
                     var temperature4 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     var num8 = Terrain.ExtractContents(
@@ -1436,7 +1436,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num5 = _subsystemTerrain.TerrainContentsGenerator
+                    var num5 = _subsystemTerrain.Environment
                         .CalculateOceanShoreDistance(point.X, point.Z);
                     var temperature3 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -1469,7 +1469,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num3 = _subsystemTerrain.TerrainContentsGenerator
+                    var num3 = _subsystemTerrain.Environment
                         .CalculateOceanShoreDistance(point.X, point.Z);
                     var temperature2 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     var num4 = Terrain.ExtractContents(
@@ -1500,7 +1500,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
+                    var num = _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
                     var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     var num2 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
@@ -1526,7 +1526,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num95 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num95 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -1554,7 +1554,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num93 = _subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(
+                    var num93 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
@@ -1792,7 +1792,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
         var num = MathUtils.Clamp(spawnPoint.Y, 1, 253);
         var z = spawnPoint.Z;
         var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-        if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidPropagatedLight })
+        if (chunkAtCell is not { HasCurrentLight: true })
         {
             return null;
         }

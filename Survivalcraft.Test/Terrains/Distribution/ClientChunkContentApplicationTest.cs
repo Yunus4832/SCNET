@@ -39,14 +39,14 @@ public sealed class ClientChunkContentApplicationTest
         var queuedBytes = transport.PendingSnapshotBytes;
 
         Assert.Equal(1, application.Pump());
-        Assert.True(first.IsLoaded);
-        Assert.False(second.IsLoaded);
+        Assert.True(first.HasContents);
+        Assert.False(second.HasContents);
         Assert.Equal(queuedBytes / 2, transport.PendingSnapshotBytes);
         Assert.Equal(1, application.Pump());
         Assert.Equal(11, first.NetworkContentVersion);
-        Assert.False(second.IsLoaded);
+        Assert.False(second.HasContents);
         Assert.Equal(1, application.Pump());
-        Assert.True(second.IsLoaded);
+        Assert.True(second.HasContents);
         Assert.Equal(0, transport.PendingSnapshotBytes);
         Assert.Equal(0, application.Pump());
     }
@@ -81,11 +81,11 @@ public sealed class ClientChunkContentApplicationTest
         contents.ContentInstalled += target => deltas.OnContentInstalled(target);
         var application = new ClientChunkContentApplication(transport, contents, deltas);
         Assert.Equal(1, application.Pump(1));
-        Assert.False(chunk.IsLoaded);
+        Assert.False(chunk.HasContents);
         Assert.True(chunk.NeedsContentSnapshot);
         Assert.True(transport.PendingSnapshotBytes > 0);
         Assert.Equal(1, application.Pump(1));
-        Assert.True(chunk.IsLoaded);
+        Assert.True(chunk.HasContents);
         Assert.True(chunk.NeedsContentSnapshot);
         transport.Receive(Snapshot(chunk, 1001));
         Assert.Equal(1, application.Pump(1));

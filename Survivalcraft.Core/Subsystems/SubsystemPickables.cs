@@ -111,7 +111,7 @@ public class SubsystemPickables : Subsystem, IUpdateable
                     Terrain.ToCell(pickable.Position.Z),
                     false
                 );
-                if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
+                if (chunkAtCell is not { HasContents: true })
                 {
                     continue;
                 }
@@ -757,7 +757,7 @@ public class SubsystemPickables : Subsystem, IUpdateable
                 );
             }
 
-            // 24 * (ushort ID + Vector3) leaves ample framing space below the minimum MTU.
+            // Bound each logical snapshot; the transport splits its actual encoding to the peer payload budget.
             for (var i = 0; i < relevant.Count; i += PickablePackage.MaxPositionsPerSnapshot)
             {
                 NetworkSender.Send(

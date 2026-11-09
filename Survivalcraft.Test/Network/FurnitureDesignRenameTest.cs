@@ -170,19 +170,16 @@ public sealed class FurnitureDesignRenameTest
             var interest = new SubsystemNetworkInterest();
             Authority.AddSubsystem(interest);
             // Preserve real interest authorization: use the actual roster/body location, with no running terrain worker.
-            var updater = (TerrainUpdater)RuntimeHelpers.GetUninitializedObject(typeof(TerrainUpdater));
-            var parameters = typeof(TerrainUpdater).GetField(
-                "_updateParameters",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            )!;
-            var state = Activator.CreateInstance(parameters.FieldType, true)!;
-            state.GetType().GetField("Locations")!.SetValue(state, new Dictionary<int, TerrainUpdateLocation>());
-            parameters.SetValue(updater, state);
+            var terrain = new SubsystemTerrain { Terrain = new Terrain() };
+            typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.Demands))!.SetValue(
+                terrain,
+                new TerrainDemandManager(terrain.Terrain, Game.Terrains.Distribution.TerrainContentRole.Authority)
+            );
             typeof(SubsystemNetworkInterest).GetField(
                     "_subsystemTerrain",
                     BindingFlags.Instance | BindingFlags.NonPublic
                 )!
-                .SetValue(interest, new SubsystemTerrain { TerrainUpdater = updater });
+                .SetValue(interest, terrain);
             typeof(SubsystemNetworkInterest).GetField(
                     "_subsystemCharacters",
                     BindingFlags.Instance | BindingFlags.NonPublic

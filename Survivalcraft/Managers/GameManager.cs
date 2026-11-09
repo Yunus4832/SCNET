@@ -259,7 +259,9 @@ public static class GameManager
         _leavingGameplay = true;
         try
         {
-            if (LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld && CommonLib.Net.IsServer)
+            if (LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld &&
+                CommonLib.Net.IsServer &&
+                Runtime?.Authority is { IsClosed: false, Project: { IsDisposed: false } })
             {
                 LeaveLocalPlayer();
                 ScreensManager.SwitchScreen("HostedWorld", reason ?? string.Empty);

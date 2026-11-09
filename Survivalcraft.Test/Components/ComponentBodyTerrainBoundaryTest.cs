@@ -24,7 +24,7 @@ public sealed class ComponentBodyTerrainBoundaryTest
     {
         using var scope = new WorldCatalogScope(side);
         using var terrain = new Terrain();
-        terrain.AllocateChunk(0, 0).SetMainThreadState(TerrainChunkState.InvalidLight);
+        terrain.AllocateChunk(0, 0).HasContents = true;
         var body = CreateBody(scope, terrain);
         body.Velocity = new Vector3(4, -1, 2);
 
@@ -38,7 +38,7 @@ public sealed class ComponentBodyTerrainBoundaryTest
         Assert.Equal(14.7f, body.Position.X, 4);
         Assert.Equal(9.5f, body.Position.Z, 4);
 
-        terrain.AllocateChunk(1, 0).SetMainThreadState(TerrainChunkState.InvalidLight);
+        terrain.AllocateChunk(1, 0).HasContents = true;
         body.MoveWithCollision(0.1f, new Vector3(2, 0, 0));
         Assert.Equal(16.7f, body.Position.X, 4);
         Assert.True(body.IsTerrainReady);
@@ -50,7 +50,7 @@ public sealed class ComponentBodyTerrainBoundaryTest
         using var scope = new WorldCatalogScope();
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(1, 0);
-        chunk.SetMainThreadState(TerrainChunkState.InvalidContents4);
+
         chunk.SetCellValueFast(0, 70, 8, Terrain.MakeBlockValue(1));
         var body = CreateBody(scope, terrain);
         var collisions = new DynamicArray<ComponentBody.CollisionBox>();
@@ -68,7 +68,7 @@ public sealed class ComponentBodyTerrainBoundaryTest
         using var scope = new WorldCatalogScope();
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.SetMainThreadState(TerrainChunkState.InvalidLight);
+        chunk.HasContents = true;
         scope.Catalog.Blocks[1] = new GraniteBlock { Collidable = true };
         for (var y = 0; y < 256; y++)
         {
@@ -92,9 +92,9 @@ public sealed class ComponentBodyTerrainBoundaryTest
         using var scope = new WorldCatalogScope(RuntimeSide.Client);
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.IsLoaded = true;
-        chunk.SetMainThreadState(TerrainChunkState.Ready);
-        chunk.SetWorkerState(TerrainChunkState.Ready);
+        chunk.HasContents = true;
+
+
         chunk.NetworkContentVersion = 10;
         scope.Catalog.Blocks[1] = new GraniteBlock { Collidable = true };
         for (var y = 0; y < 256; y++)

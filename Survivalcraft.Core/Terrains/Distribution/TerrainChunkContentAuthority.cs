@@ -12,8 +12,7 @@ public sealed class TerrainChunkContentAuthority(Terrain terrain) : IChunkConten
     public bool TryGetSnapshot(Point2 coords, out AuthorityChunkSnapshot snapshot)
     {
         var chunk = _terrain.GetChunkAtCoords(coords.X, coords.Y);
-        if (chunk is not { IsLoaded: true } ||
-            chunk.WorkerState < TerrainChunkState.InvalidLight)
+        if (chunk is not { HasContents: true, IsContentInitialized: true })
         {
             snapshot = null!;
             return false;
@@ -38,8 +37,7 @@ public sealed class TerrainChunkContentAuthority(Terrain terrain) : IChunkConten
     public bool TryGetDescriptor(Point2 coords, out AuthorityChunkDescriptor descriptor)
     {
         var chunk = _terrain.GetChunkAtCoords(coords.X, coords.Y);
-        if (chunk is not { IsLoaded: true } ||
-            chunk.WorkerState < TerrainChunkState.InvalidLight)
+        if (chunk is not { HasContents: true, IsContentInitialized: true })
         {
             descriptor = default;
             return false;

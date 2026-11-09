@@ -20,8 +20,10 @@ public sealed class TerrainChunkContentAuthorityTest
             original.SetCellValueFast(2, 64, 1, i % 2 == 0 ? 7 : 12);
         }
 
-        original.IsLoaded = true;
-        original.SetWorkerState(TerrainChunkState.InvalidLight);
+        original.HasContents = true;
+
+        original.IsContentInitialized = true;
+
         var authority = new TerrainChunkContentAuthority(server);
         Assert.True(authority.TryGetSnapshot(original.Coords, out var initial));
         var cache = new NetworkChunkCache();
@@ -49,8 +51,10 @@ public sealed class TerrainChunkContentAuthorityTest
             reloaded.SetCellValueFast(index, initial.Cells.Span[index]);
         }
 
-        reloaded.IsLoaded = true;
-        reloaded.SetWorkerState(TerrainChunkState.InvalidLight);
+        reloaded.HasContents = true;
+
+        reloaded.IsContentInitialized = true;
+
         var baseVersion = reloaded.NetworkContentRevision + 1;
         var cell = new Point3(1, 64, 1);
         var prediction = new ClientTerrainPrediction(client, _ => { });

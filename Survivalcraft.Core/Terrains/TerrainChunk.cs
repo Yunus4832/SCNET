@@ -30,7 +30,35 @@ public class TerrainChunk : IDisposable
 
     public Point2 Coords;
 
-    public bool IsLoaded;
+    private bool _hasContents;
+
+    /// <summary>Published cells are available independently of derived height and lighting.</summary>
+    public bool HasContents
+    {
+        get => Volatile.Read(ref _hasContents);
+        set
+        {
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
+            Volatile.Write(ref _hasContents, value);
+        }
+    }
+
+    private bool _contentInitialized;
+
+    /// <summary>Initial business normalization finished; contents can be used as a network baseline.</summary>
+    public bool IsContentInitialized
+    {
+        get => Volatile.Read(ref _contentInitialized);
+        internal set => Volatile.Write(ref _contentInitialized, value);
+    }
+
+    public TerrainContentOrigin ContentOrigin { get; internal set; }
+
+    public TerrainDerivedRevisions DerivedRevisions { get; } = new();
+
+    public bool HasCurrentHeightData => HasContents && DerivedRevisions.HasCurrentHeights;
+
+    public bool HasCurrentLight => HasContents && DerivedRevisions.HasCurrentLight;
 
     public bool IsRequested;
 
@@ -39,10 +67,6 @@ public class TerrainChunk : IDisposable
     public bool NeedsContentValidation;
 
     public double NetworkRequestTime;
-
-    public int NetworkRequestAttempts;
-
-    public double NetworkContentReceiveTime;
 
     public long NetworkContentVersion;
 
@@ -65,14 +89,7 @@ public class TerrainChunk : IDisposable
 
     public long StartTime;
 
-    /// <summary>State consumed by gameplay and rendering on the main thread.</summary>
-    public TerrainChunkState MainThreadState { get; private set; }
-
     public readonly Terrain Terrain;
-
-    private int _queuedWorkerDowngrade = -1;
-
-    private int _publishedWorkerState = -1;
 
     public TerrainChunk(Terrain terrain, int x, int z)
     {
@@ -86,64 +103,16 @@ public class TerrainChunk : IDisposable
         Center = new Vector2(Origin.X + 8f, Origin.Y + 8f);
     }
 
-    /// <summary>State owned by the terrain worker or an isolated authority generation pipeline.</summary>
-    public TerrainChunkState WorkerState { get; private set; }
-
-    /// <summary>Sets gameplay-visible state on the main thread while the worker is synchronized.</summary>
-    public void SetMainThreadState(TerrainChunkState state) => MainThreadState = state;
-
-    /// <summary>Sets worker-owned state from its generation pipeline or while the worker is synchronized.</summary>
-    public void SetWorkerState(TerrainChunkState state) => WorkerState = state;
-
-    internal bool HasQueuedWorkerDowngrade => Volatile.Read(ref _queuedWorkerDowngrade) >= 0;
-
-    internal void QueueWorkerDowngrade(TerrainChunkState state)
-    {
-        var requested = (int)state;
-        while (true)
-        {
-            var current = Volatile.Read(ref _queuedWorkerDowngrade);
-            var desired = current < 0 ? requested : Math.Min(current, requested);
-            if (current == desired ||
-                Interlocked.CompareExchange(ref _queuedWorkerDowngrade, desired, current) == current)
-            {
-                return;
-            }
-        }
-    }
-
-    internal bool TryConsumeWorkerDowngrade(out TerrainChunkState state)
-    {
-        var value = Interlocked.Exchange(ref _queuedWorkerDowngrade, -1);
-        state = value >= 0 ? (TerrainChunkState)value : default;
-        return value >= 0;
-    }
-
-    internal void PublishWorkerState(TerrainChunkState state) =>
-        Interlocked.Exchange(ref _publishedWorkerState, (int)state);
-
-    internal bool TryConsumePublishedWorkerState(out TerrainChunkState state)
-    {
-        var value = Interlocked.Exchange(ref _publishedWorkerState, -1);
-        state = value >= 0 ? (TerrainChunkState)value : default;
-        return value >= 0;
-    }
-
-    internal void DiscardPublishedWorkerState() =>
-        Interlocked.Exchange(ref _publishedWorkerState, -1);
-
-    public void ResetStateExchange()
-    {
-        Interlocked.Exchange(ref _queuedWorkerDowngrade, -1);
-        Interlocked.Exchange(ref _publishedWorkerState, -1);
-    }
-
     public bool IsDisposed { get; private set; }
 
     public void Dispose()
     {
+        if (IsDisposed) { return; }
+
         IsDisposed = true;
-        ResetStateExchange();
+        Volatile.Write(ref _hasContents, false);
+        Volatile.Write(ref _contentInitialized, false);
+        DerivedRevisions.InvalidateHeightsAndLight();
         Volatile.Write(ref _geometryPredictions, null);
     }
 

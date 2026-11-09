@@ -16,6 +16,7 @@ public sealed class TerrainSliceGeometryCacheTest
         const int contentA = 100;
         const int contentB = 200;
         chunk.NetworkContentVersion = 1;
+        TerrainMeshTestData.PrepareLighting(chunk);
         presentation.PrepareMeshUpdate(chunk);
         GenerateSlice(presentation, geometry, contentA);
         presentation.CompleteFirstPass();

@@ -8,8 +8,10 @@ namespace Survivalcraft.Core.Test.TerrainSerializers;
 
 public sealed class TerrainDiskPersistenceTest
 {
-    [Fact]
-    public void AuthorityUnloadSnapshotSurvivesAWorldRestartWithoutPresentationServices()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AuthoritySnapshotSurvivesAWorldRestartWithoutPresentationServices(bool fullSave)
     {
         var directory = Directory.CreateTempSubdirectory("scnet-core-save-");
         var rootName = $"core-save-{Guid.NewGuid():N}";
@@ -24,11 +26,13 @@ public sealed class TerrainDiskPersistenceTest
             using (var saves = new TerrainSaveCoordinator(serializer.SaveSnapshot))
             {
                 var chunk = terrain.AllocateChunk(-2, 3);
-                chunk.IsLoaded = true;
+                chunk.HasContents = true;
                 chunk.SetShaftValueFast(1, 2, shaft);
                 var authority = new TerrainCellAuthority(terrain);
                 Assert.True(authority.ChangeCell(-31, 77, 50, value));
-                Assert.True(saves.TryQueueChunkForUnload(chunk));
+                if (fullSave) { await saves.CaptureAndQueueSave(new[] { chunk }); }
+                else { Assert.True(saves.TryQueueChunkForUnload(chunk)); }
+
                 terrain.FreeChunk(chunk);
                 saves.Flush();
             }

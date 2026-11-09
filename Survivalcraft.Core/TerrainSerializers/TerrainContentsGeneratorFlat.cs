@@ -1,56 +1,17 @@
 namespace Game.TerrainSerializers;
 
-public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
+public class TerrainContentsGeneratorFlat : TerrainEnvironmentFlat, ITerrainContentsGenerator
 {
-    private readonly Vector2? _islandSize;
-
-    private readonly Vector2 _oceanCorner;
-
-    private readonly Vector2 _shoreRoughnessAmplitude;
-
-    private readonly Vector2 _shoreRoughnessFrequency;
-
-    private readonly Vector2 _shoreRoughnessOctaves;
-
-    private readonly float[] _shoreRoughnessOffset = new float[4];
-
     private readonly SubsystemTerrain _subsystemTerrain;
 
     private readonly Terrain _terrain;
 
-    private readonly WorldSettings _worldSettings;
-
     public TerrainContentsGeneratorFlat(SubsystemTerrain subsystemTerrain, Terrain? terrain = null)
+        : base(subsystemTerrain.SubsystemGameInfo.WorldSettings, subsystemTerrain.SubsystemGameInfo.WorldSeed)
     {
         _subsystemTerrain = subsystemTerrain;
         _terrain = terrain ?? subsystemTerrain.Terrain;
-        var subsystemGameInfo = subsystemTerrain.Project.FindSubsystem<SubsystemGameInfo>(true)!;
-        _worldSettings = subsystemGameInfo.WorldSettings;
-        _oceanCorner = TerrainGenerationModes.IsPre21(_worldSettings.TerrainGenerationMode)
-            ? _oceanCorner = new Vector2(2001f, 2001f)
-            : _oceanCorner = new Vector2(-199f, -199f);
-        _islandSize = TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode)
-            ? new Vector2?(_worldSettings.IslandSize)
-            : null;
-        _shoreRoughnessAmplitude.X = MathUtils.Pow(_worldSettings.ShoreRoughness, 2f) *
-                                     (_islandSize.HasValue ? MathUtils.Min(4f * _islandSize.Value.X, 400f) : 400f);
-        _shoreRoughnessAmplitude.Y = MathUtils.Pow(_worldSettings.ShoreRoughness, 2f) *
-                                     (_islandSize.HasValue ? MathUtils.Min(4f * _islandSize.Value.Y, 400f) : 400f);
-        _shoreRoughnessFrequency = MathUtils.Lerp(0.5f, 1f, _worldSettings.ShoreRoughness) *
-                                   new Vector2(1f) /
-                                   _shoreRoughnessAmplitude;
-        _shoreRoughnessOctaves.X =
-            (int)MathUtils.Clamp(MathUtils.Log(1f / _shoreRoughnessFrequency.X) / MathUtils.Log(2f) - 1f, 1f, 7f);
-        _shoreRoughnessOctaves.Y =
-            (int)MathUtils.Clamp(MathUtils.Log(1f / _shoreRoughnessFrequency.Y) / MathUtils.Log(2f) - 1f, 1f, 7f);
-        var random = new Random(subsystemGameInfo.WorldSeed);
-        _shoreRoughnessOffset[0] = random.Float(-2000f, 2000f);
-        _shoreRoughnessOffset[1] = random.Float(-2000f, 2000f);
-        _shoreRoughnessOffset[2] = random.Float(-2000f, 2000f);
-        _shoreRoughnessOffset[3] = random.Float(-2000f, 2000f);
     }
-
-    public int OceanLevel => _worldSettings.TerrainLevel + _worldSettings.SeaLevelOffset;
 
     public Vector3 FindCoarseSpawnPosition()
     {
@@ -58,7 +19,7 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
         {
             for (var j = -400; j <= 400; j += 10)
             {
-                var vector = _oceanCorner + new Vector2(i, j);
+                var vector = oceanCorner + new Vector2(i, j);
                 var num = CalculateOceanShoreDistance(vector.X, vector.Y);
                 if (num is >= 1f and <= 20f)
                 {
@@ -67,7 +28,7 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
             }
         }
 
-        return new Vector3(_oceanCorner.X, CalculateHeight(_oceanCorner.X, _oceanCorner.Y), _oceanCorner.Y);
+        return new Vector3(oceanCorner.X, CalculateHeight(oceanCorner.X, oceanCorner.Y), oceanCorner.Y);
     }
 
     public void GenerateChunkContentsPass1(TerrainChunk chunk)
@@ -91,21 +52,21 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
                         {
                             value = Terrain.MakeBlockValue(1);
                         }
-                        else if (k < _worldSettings.TerrainLevel)
+                        else if (k < worldSettings.TerrainLevel)
                         {
                             value = Terrain.MakeBlockValue(
-                                _worldSettings.TerrainBlockIndex == 8
+                                worldSettings.TerrainBlockIndex == 8
                                     ? 2
-                                    : _worldSettings.TerrainBlockIndex
+                                    : worldSettings.TerrainBlockIndex
                             );
                         }
-                        else if (k == _worldSettings.TerrainLevel)
+                        else if (k == worldSettings.TerrainLevel)
                         {
-                            value = Terrain.MakeBlockValue(_worldSettings.TerrainBlockIndex);
+                            value = Terrain.MakeBlockValue(worldSettings.TerrainBlockIndex);
                         }
                         else if (k <= OceanLevel)
                         {
-                            value = Terrain.MakeBlockValue(_worldSettings.TerrainOceanBlockIndex);
+                            value = Terrain.MakeBlockValue(worldSettings.TerrainOceanBlockIndex);
                         }
                     }
                     else if (k < 2)
@@ -114,7 +75,7 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
                     }
                     else if (k <= OceanLevel)
                     {
-                        value = Terrain.MakeBlockValue(_worldSettings.TerrainOceanBlockIndex);
+                        value = Terrain.MakeBlockValue(worldSettings.TerrainOceanBlockIndex);
                     }
 
                     chunk.SetCellValueFast(num3 + k, value);
@@ -134,79 +95,6 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
 
     public void GenerateChunkContentsPass4(TerrainChunk chunk)
     {
-    }
-
-    public float CalculateOceanShoreDistance(float x, float z)
-    {
-        var x2 = 0f;
-        var x3 = 0f;
-        var y = 0f;
-        var y2 = 0f;
-        if (_shoreRoughnessAmplitude.X > 0f)
-        {
-            x2 = _shoreRoughnessAmplitude.X *
-                 SimplexNoise.OctavedNoise(
-                     z + _shoreRoughnessOffset[0],
-                     _shoreRoughnessFrequency.X,
-                     (int)_shoreRoughnessOctaves.X,
-                     2f,
-                     0.6f
-                 );
-            x3 = _shoreRoughnessAmplitude.X *
-                 SimplexNoise.OctavedNoise(
-                     z + _shoreRoughnessOffset[1],
-                     _shoreRoughnessFrequency.X,
-                     (int)_shoreRoughnessOctaves.X,
-                     2f,
-                     0.6f
-                 );
-        }
-
-        if (_shoreRoughnessAmplitude.Y > 0f)
-        {
-            y = _shoreRoughnessAmplitude.Y *
-                SimplexNoise.OctavedNoise(
-                    x + _shoreRoughnessOffset[2],
-                    _shoreRoughnessFrequency.Y,
-                    (int)_shoreRoughnessOctaves.Y,
-                    2f,
-                    0.6f
-                );
-            y2 = _shoreRoughnessAmplitude.Y *
-                 SimplexNoise.OctavedNoise(
-                     x + _shoreRoughnessOffset[3],
-                     _shoreRoughnessFrequency.Y,
-                     (int)_shoreRoughnessOctaves.Y,
-                     2f,
-                     0.6f
-                 );
-        }
-
-        var vector = _oceanCorner + new Vector2(x2, y);
-        var vector2 = _oceanCorner +
-                      (_islandSize ?? new Vector2(3.40282347E+38f)) +
-                      new Vector2(x3, y2);
-        return MathUtils.Min(x - vector.X, vector2.X - x, z - vector.Y, vector2.Y - z);
-    }
-
-    public float CalculateHeight(float x, float z)
-    {
-        return _worldSettings.TerrainLevel;
-    }
-
-    public int CalculateTemperature(float x, float z)
-    {
-        return MathUtils.Clamp(12 + (int)_worldSettings.TemperatureOffset, 0, 15);
-    }
-
-    public int CalculateHumidity(float x, float z)
-    {
-        return MathUtils.Clamp(12 + (int)_worldSettings.HumidityOffset, 0, 15);
-    }
-
-    public float CalculateMountainRangeFactor(float x, float z)
-    {
-        return 0f;
     }
 
     public void UpdateFluidIsTop(TerrainChunk chunk)

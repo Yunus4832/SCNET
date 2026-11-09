@@ -11,6 +11,10 @@ public sealed class SubsystemWorldLifecycle : Subsystem, IUpdateable
 
     private bool _stopRequested;
 
+    private bool _disposed;
+
+    private bool _stopped;
+
     private long _requestedCycle;
 
     private double _requestedAt;
@@ -30,10 +34,12 @@ public sealed class SubsystemWorldLifecycle : Subsystem, IUpdateable
         _world = WorldRuntimeContext.For(Project);
         _node = WorldNetworkBinding.FindNode(Project);
         Persistence = new WorldProjectPersistence(Project);
+        Project.Disposed += OnProjectDisposed;
     }
 
     public void RequestStop()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         if (_stopRequested) { return; }
 
         if (_node is null)
@@ -48,7 +54,10 @@ public sealed class SubsystemWorldLifecycle : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (!_stopRequested || World.IsClosed || _node is null || _node.DispatchCycle <= _requestedCycle) { return; }
+        if (_disposed || !_stopRequested || World.IsClosed || _node is null || _node.DispatchCycle <= _requestedCycle)
+        {
+            return;
+        }
 
         var timedOut = (Time.RealTime - _requestedAt) * 1000 >= NetworkTransportLimits.DisconnectTimeoutMilliseconds;
         if (_node.PendingPackageCount > 0 && !timedOut) { return; }
@@ -62,7 +71,6 @@ public sealed class SubsystemWorldLifecycle : Subsystem, IUpdateable
         try { Persistence.Save(true); }
         catch (WorldSaveException) { return; }
 
-        var stopped = Stopped;
         var errors = new List<Exception>();
         try { World.Close(); }
         catch (Exception error) { errors.Add(error); }
@@ -74,9 +82,24 @@ public sealed class SubsystemWorldLifecycle : Subsystem, IUpdateable
         {
             Log.Error($"World stop cleanup reported errors: {new AggregateException(errors)}");
         }
+    }
 
-        if (!World.IsClosed || !Project.IsDisposed) { return; }
+    private void OnProjectDisposed(Project project)
+    {
+        project.Disposed -= OnProjectDisposed;
+        if (_stopped || !project.IsDisposed) { return; }
 
+        // The runtime's earlier Project.Disposed handler normally closes the world first.
+        // Keep this notification conditional on the actual close, including failed cleanup.
+        try { World.Close(); }
+        catch (Exception error) { Log.Error($"World stop cleanup reported an error: {error}"); }
+
+        if (!World.IsClosed) { return; }
+
+        _stopped = true;
+        _stopRequested = false;
+        var stopped = Stopped;
+        Stopped = null;
         foreach (var callback in stopped?.GetInvocationList() ?? [])
         {
             try { ((Action<SubsystemWorldLifecycle>)callback)(this); }
@@ -86,7 +109,20 @@ public sealed class SubsystemWorldLifecycle : Subsystem, IUpdateable
 
     public override void Dispose()
     {
-        Persistence?.Dispose();
-        Stopped = null;
+        if (_disposed) { return; }
+
+        _disposed = true;
+        try { Persistence?.Dispose(); }
+        finally
+        {
+            // A detached subsystem does not own a future world-stop notification.
+            // During Project.Dispose, retain subscribers until all project cleanup has run.
+            if (Project is not { IsDisposed: true })
+            {
+                if (Project != null) { Project.Disposed -= OnProjectDisposed; }
+
+                Stopped = null;
+            }
+        }
     }
 }

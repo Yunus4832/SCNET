@@ -77,6 +77,19 @@ public sealed class PendingChunkRequestQueueTest
         );
     }
 
+    [Fact]
+    public void MovedDemandDropsAabbOverlapThatCannotBecomeResident()
+    {
+        var queue = new PendingChunkRequestQueue();
+        var edge = Request(2, 1);
+        queue.Enqueue(edge);
+        Assert.Equal(0, queue.RemoveOutside(new Vector2(16, 8), 32));
+        Assert.Single(queue);
+
+        Assert.Equal(1, queue.RemoveOutside(new Vector2(7, 8), 32));
+        Assert.Empty(queue);
+    }
+
     private static ChunkContentRequest Request(int x, int y, ulong generation = 1) =>
         new(new ChunkAllocationId(new Point2(x, y), generation));
 }

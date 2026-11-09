@@ -17,6 +17,8 @@ using Game.Subsystems;
 using Game.Subsystems.Behavior;
 using Game.Terrains;
 using Game.Terrains.Distribution;
+using Game.Terrains.Execution;
+using Game.Terrains.Lighting;
 using Game.World;
 
 using Survivalcraft.Core.Test.Fixtures;
@@ -85,6 +87,55 @@ public sealed class BlockDigOutcomeTest
     }
 
     [Fact]
+    public void UnpublishedGenerationEditsEnterTheBaselineWithoutPublishingLiveDeltas()
+    {
+        using var fixture = new ShakeWorld();
+        fixture.Chunk.HasContents = false;
+        fixture.Chunk.IsContentInitialized = false;
+        fixture.TerrainSubsystem.ChangeCellNet(1, 3, 1, 7);
+        Assert.Equal(7, Terrain.ExtractContents(fixture.Terrain.GetCellValue(1, 3, 1)));
+        Assert.Empty(fixture.Scope.Messages.ChunkMessages);
+        fixture.Chunk.HasContents = true;
+        fixture.Chunk.IsContentInitialized = true;
+        fixture.TerrainSubsystem.ChangeCellNet(1, 3, 1, 0);
+        Assert.Single(fixture.Scope.Messages.ChunkMessages);
+    }
+
+    [Fact]
+    public void ACompleteInitialNormalizationBurstIsContainedInTheFirstBaseline()
+    {
+        using var fixture = new ShakeWorld();
+        fixture.Chunk.IsContentInitialized = false;
+        fixture.Chunk.AreBehaviorsNotified = true;
+        var block = fixture.Scope.Catalog.GetBlock(ResourceId.Parse("game:granite")).BlockIndex;
+        for (var i = 0; i < 300; i++)
+        {
+            fixture.TerrainSubsystem.ChangeCellNet((i / 16) % 16, 3 + i / 256, i % 16, Terrain.MakeBlockValue(block));
+        }
+
+        Assert.Empty(fixture.Scope.Messages.ChunkMessages);
+        Assert.False(fixture.TerrainSubsystem.ChunkContentAuthority!.TryGetSnapshot(fixture.Chunk.Coords, out _));
+        fixture.Chunk.IsContentInitialized = true;
+        Assert.True(
+            fixture.TerrainSubsystem.ChunkContentAuthority.TryGetSnapshot(fixture.Chunk.Coords, out var baseline)
+        );
+        Assert.Equal(fixture.Chunk.NetworkContentRevision + 1, baseline.ContentVersion);
+        for (var i = 0; i < 300; i++)
+        {
+            Assert.Equal(
+                block,
+                Terrain.ExtractContents(
+                    baseline.Cells.Span[
+                        TerrainChunk.CalculateCellIndex((i / 16) % 16, 3 + i / 256, i % 16)]
+                )
+            );
+        }
+
+        fixture.TerrainSubsystem.ChangeCellNet(0, 3, 0, 0);
+        Assert.Single(fixture.Scope.Messages.ChunkMessages);
+    }
+
+    [Fact]
     public void OrdinaryDebrisPermissionsMatchFreshDropGenerationWithoutRepeatingRandomDrops()
     {
         using var scope = new CoreBlockWorld();
@@ -127,12 +178,15 @@ public sealed class BlockDigOutcomeTest
 
         public SubsystemTerrain TerrainSubsystem { get; }
 
-        private readonly TerrainUpdater _updater;
+        private readonly TerrainComputationScheduler _computations;
 
         public ShakeWorld()
         {
             Scope.Catalog.GetBlock(ResourceId.Parse("game:air")).Transparent = true;
             Chunk = Terrain.AllocateChunk(0, 0);
+            Chunk.HasContents = true;
+            Chunk.IsContentInitialized = true;
+            Chunk.ContentOrigin = TerrainContentOrigin.Storage;
             Terrain.SetCellValueFast(1, 1, 1, Scope.Catalog.GetBlock(ResourceId.Parse("game:granite")).BlockIndex);
             TerrainSubsystem = new SubsystemTerrain { Terrain = Terrain };
             Scope.Project.InitializeSubsystem(TerrainSubsystem);
@@ -161,13 +215,23 @@ public sealed class BlockDigOutcomeTest
                 .SetValue(TerrainSubsystem, new TerrainCellAuthority(Terrain));
             typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.ChunkContentAuthority))!
                 .SetValue(TerrainSubsystem, new TerrainChunkContentAuthority(Terrain));
-            _updater = new TerrainUpdater(TerrainSubsystem);
-            TerrainSubsystem.TerrainUpdater = _updater;
+            _computations = new TerrainComputationScheduler(
+                TerrainSubsystem,
+                new TerrainLightingCalculator(
+                    Terrain,
+                    Scope.Catalog,
+                    false,
+                    chunk => chunk.HasContents && !chunk.NeedsContentValidation
+                )
+            );
+            typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.Computations))!
+                .SetValue(TerrainSubsystem, _computations);
         }
 
         public void Dispose()
         {
-            _updater.Dispose();
+            TerrainSubsystem.WorkExecutor.Dispose();
+            _computations.Dispose();
             Scope.Dispose();
             Terrain.Dispose();
         }

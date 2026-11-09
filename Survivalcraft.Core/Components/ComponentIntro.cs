@@ -27,7 +27,7 @@ public class ComponentIntro : Component
         }
     }
 
-    public static Vector2 FindOceanDirection(ITerrainContentsGenerator generator, Vector2 position)
+    public static Vector2 FindOceanDirection(ITerrainEnvironment environment, Vector2 position)
     {
         var num = float.MaxValue;
         var result = Vector2.Zero;
@@ -35,7 +35,7 @@ public class ComponentIntro : Component
         {
             var vector = Vector2.CreateFromAngle(i / 36f * 2f * (float)Math.PI);
             var vector2 = position + 50f * vector;
-            var num2 = generator.CalculateOceanShoreDistance(vector2.X, vector2.Y);
+            var num2 = environment.CalculateOceanShoreDistance(vector2.X, vector2.Y);
             if (!(num2 < num))
             {
                 continue;

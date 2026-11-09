@@ -30,7 +30,7 @@ public sealed class ClientChunkDerivationPipeline(TerrainChunkPresentationStore 
     {
         ArgumentNullException.ThrowIfNull(target);
         return role != TerrainContentRole.Replica ||
-               target is { IsLoaded: true } &&
+               target is { HasContents: true } &&
                target.NetworkContentVersion > 0 &&
                presentation.HasCurrentGeometry(target);
     }
@@ -42,7 +42,7 @@ public sealed class ClientChunkDerivationPipeline(TerrainChunkPresentationStore 
             // Keep the last uploaded geometry visible while a newer content version is
             // being lit and rebuilt, including baseline refreshes within this allocation.
             // A new allocation starts without uploaded geometry.
-            ? target.IsLoaded && presentation.GeometryUploaded
+            ? target.HasContents && presentation.GeometryUploaded
             : presentation.GeometryUploaded;
     }
 }

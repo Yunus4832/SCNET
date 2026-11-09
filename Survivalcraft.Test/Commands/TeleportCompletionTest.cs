@@ -18,6 +18,7 @@ using Game.Network.Transport;
 using Game.Protocol.Identity;
 using Game.Subsystems;
 using Game.Terrains;
+using Game.Terrains.Distribution;
 using Game.World;
 
 using Survivalcraft.Test.Subsystems;
@@ -413,12 +414,8 @@ public class TeleportCompletionTest
         else { target.Dispose(); }
 
         Assert.False(project.Teleports.HasPending(target));
-        var pending = (Dictionary<int, TerrainUpdateLocation?>)typeof(TerrainUpdater).GetField(
-            "_pendingLocations",
-            BindingFlags.Instance | BindingFlags.NonPublic
-        )!.GetValue(terrain.TerrainUpdater)!;
-        Assert.Null(pending[-2 - target.CharacterIndex]);
-        terrain.TerrainUpdater = null!;
+        Assert.Empty(terrain.Demands.CaptureEffectiveLocations());
+        Assert.False(terrain.Demands.IsLocationCovered(-2 - target.CharacterIndex, Vector2.One, 1));
     }
 
     [Fact]
@@ -448,7 +445,6 @@ public class TeleportCompletionTest
             .SetValue(project.Characters, terrain);
         project.Characters.RemoveCharacterData(target);
         Assert.False(project.Teleports.HasPending(target));
-        terrain.TerrainUpdater = null!;
     }
 
     [Fact]
@@ -491,28 +487,16 @@ public class TeleportCompletionTest
         };
         project.Characters.Update(0);
         Assert.Equal(["character", "host-completed"], phases);
-        terrain.TerrainUpdater = null!;
     }
 
     private static SubsystemTerrain AttachPreparationTerrain(CompletionProject project)
     {
-        var terrain = new SubsystemTerrain();
+        var terrain = new SubsystemTerrain { Terrain = new Terrain() };
         project.AddPreparationTerrain(terrain);
-        var updater = (TerrainUpdater)RuntimeHelpers.GetUninitializedObject(typeof(TerrainUpdater));
-        typeof(TerrainUpdater).GetField("_subsystemTerrain", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
-            updater,
-            terrain
+        typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.Demands))!.SetValue(
+            terrain,
+            new TerrainDemandManager(terrain.Terrain, TerrainContentRole.Authority)
         );
-        typeof(TerrainUpdater).GetField("_pendingLocations", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
-            updater,
-            new Dictionary<int, TerrainUpdateLocation?>()
-        );
-        var field =
-            typeof(TerrainUpdater).GetField("_updateParameters", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var parameters = Activator.CreateInstance(field.FieldType)!;
-        field.FieldType.GetField("Locations")!.SetValue(parameters, new Dictionary<int, TerrainUpdateLocation>());
-        field.SetValue(updater, parameters);
-        terrain.TerrainUpdater = updater;
         return terrain;
     }
 

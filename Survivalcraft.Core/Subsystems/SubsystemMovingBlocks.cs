@@ -51,7 +51,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable
                 Terrain.ToCell(movingBlockSet.Position.Z),
                 false
             );
-            if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
+            if (chunkAtCell is not { HasContents: true })
             {
                 continue;
             }

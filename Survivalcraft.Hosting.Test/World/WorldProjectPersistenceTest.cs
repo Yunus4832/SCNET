@@ -50,6 +50,76 @@ public sealed class WorldProjectPersistenceTest
         finally { Directory.Delete(directory, true); }
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void DirectProjectDisposalNotifiesStoppedOnceAfterCleanupWithoutSaving(bool requestStop, bool failCleanup)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "scnet-direct-stop-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            using var project = new PersistenceProject(directory);
+            var lifecycle = new SubsystemWorldLifecycle();
+            project.Add(lifecycle);
+            lifecycle.Load(new ValuesDictionary());
+            var released = false;
+            project.Add(
+                new ReleaseProbe(() =>
+                    {
+                        released = true;
+                        if (failCleanup) { throw new InvalidOperationException("Cleanup failed."); }
+                    }
+                )
+            );
+            var stopped = 0;
+            lifecycle.Stopped += _ =>
+            {
+                Assert.True(project.IsDisposed);
+                Assert.True(project.Node.Runtime.IsClosed);
+                Assert.True(released);
+                stopped++;
+            };
+            if (requestStop) { lifecycle.RequestStop(); }
+
+            if (failCleanup) { Assert.Throws<AggregateException>(project.Dispose); }
+            else { project.Dispose(); }
+
+            Assert.Equal(1, stopped);
+            Assert.False(File.Exists(Path.Combine(directory, "Project.xml")));
+            project.Dispose();
+            lifecycle.Update(0);
+            Assert.Equal(1, stopped);
+            Assert.False(File.Exists(Path.Combine(directory, "Project.xml")));
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) { Directory.Delete(directory, true); }
+        }
+    }
+
+    [Fact]
+    public void DisposingOnlyTheLifecycleDetachesItsFutureStopNotification()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "scnet-detached-stop-" + Guid.NewGuid().ToString("N"));
+        using var project = new PersistenceProject(directory);
+        var lifecycle = new SubsystemWorldLifecycle();
+        project.Add(lifecycle);
+        lifecycle.Load(new ValuesDictionary());
+        var stopped = 0;
+        lifecycle.Stopped += _ => stopped++;
+
+        lifecycle.Dispose();
+        lifecycle.Dispose();
+        Assert.False(project.IsDisposed);
+        Assert.False(project.Node.Runtime.IsClosed);
+        Assert.Throws<ObjectDisposedException>(lifecycle.RequestStop);
+        project.Dispose();
+        Assert.Equal(0, stopped);
+        Assert.False(Directory.Exists(directory));
+    }
+
     [Fact]
     public void StopStillDisposesTheProjectWhenAWorldCloseSubscriberFails()
     {

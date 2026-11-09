@@ -1,6 +1,7 @@
 using Engine.Graphics;
 
 using Game.Terrains.Distribution;
+using Game.Terrains.Rendering;
 
 namespace Game.Terrains;
 
@@ -23,6 +24,12 @@ public class TerrainRenderer : IDisposable
     public static int ChunkTrianglesDrawn;
 
     private readonly DynamicArray<TerrainChunk> _chunksToDraw = [];
+
+    private readonly TerrainUploadScheduler _uploads = new();
+
+    private readonly List<TerrainUploadScheduler.Candidate> _uploadCandidates = [];
+
+    private readonly Dictionary<int, (Vector2 Center, float Visibility, long Frame)> _uploadViews = [];
 
     private readonly SamplerState _samplerState = new()
     {
@@ -104,6 +111,9 @@ public class TerrainRenderer : IDisposable
     public void Dispose()
     {
         Display.DeviceReset -= DisplayDeviceReset;
+        _uploads.Clear();
+        _uploadCandidates.Clear();
+        _uploadViews.Clear();
         var errors = new List<Exception>();
         foreach (var shader in new[] { _opaqueShader, _alphaTestedShader, _transparentShader })
         {
@@ -122,12 +132,87 @@ public class TerrainRenderer : IDisposable
         var distanceSquared = MathUtils.Sqr(distance);
         foreach (var chunk in _subsystemTerrain.Terrain.AllocatedChunks)
         {
-            if (chunk.MainThreadState == TerrainChunkState.Ready &&
+            if (ClientChunkDerivationPipeline.CanDraw(
+                    _subsystemTerrain.ContentRole,
+                    chunk,
+                    _presentation.ChunkPresentations.Get(chunk)
+                ) &&
                 Vector2.DistanceSquared(center, chunk.Center) <= distanceSquared)
             {
                 _presentation.ChunkPresentations.Get(chunk).HazeEnds[gameWidgetIndex] = float.MaxValue;
             }
         }
+    }
+
+    private void UploadReadyGeometry(Camera camera, TerrainChunk[] chunks)
+    {
+        var center = camera.ViewPosition.XZ;
+        var visibilitySquared = MathUtils.Sqr(_subsystemSky.VisibilityRange);
+        var locations = _subsystemTerrain.Demands.Locations.Values.ToArray();
+        var frame = Time.FrameIndex;
+        foreach (var stale in _uploadViews.Where(pair => pair.Value.Frame < frame - 1).Select(pair => pair.Key)
+                     .ToArray())
+        {
+            _uploadViews.Remove(stale);
+        }
+
+        _uploadViews[camera.GameWidget.GameWidgetIndex] = (center, _subsystemSky.VisibilityRange, frame);
+        _uploadCandidates.Clear();
+        foreach (var chunk in chunks)
+        {
+            var presentation = _presentation.ChunkPresentations.Get(chunk);
+            if (!presentation.NewGeometryData || !chunk.HasCurrentLight || !presentation.HasCurrentGeometry(chunk))
+            {
+                continue;
+            }
+
+            var nearest = Vector2.DistanceSquared(center, chunk.Center);
+            var visible = nearest <= visibilitySquared;
+            foreach (var location in locations)
+            {
+                var distance = Vector2.DistanceSquared(location.Center, chunk.Center);
+                nearest = Math.Min(nearest, distance);
+                visible |= distance <= location.VisibilityDistance * location.VisibilityDistance;
+            }
+
+            foreach (var view in _uploadViews.Values)
+            {
+                var distance = Vector2.DistanceSquared(view.Center, chunk.Center);
+                nearest = Math.Min(nearest, distance);
+                visible |= distance <= view.Visibility * view.Visibility;
+            }
+
+            if (visible)
+            {
+                _uploadCandidates.Add(
+                    new TerrainUploadScheduler.Candidate(chunk, !presentation.GeometryUploaded, nearest)
+                );
+            }
+        }
+
+        _uploads.Upload(Time.FrameIndex, _uploadCandidates, TryUploadGeometry);
+    }
+
+    private bool TryUploadGeometry(TerrainChunk chunk)
+    {
+        if (chunk.IsDisposed) { return false; }
+
+        var presentation = _presentation.ChunkPresentations.Get(chunk);
+        if (!Monitor.TryEnter(presentation.Geometry)) { return false; }
+
+        try
+        {
+            if (!presentation.NewGeometryData || !chunk.HasCurrentLight || !presentation.HasCurrentGeometry(chunk))
+            {
+                return false;
+            }
+
+            SetupTerrainChunkGeometryVertexIndexBuffers(chunk);
+            presentation.MarkUploaded();
+            presentation.NewGeometryData = false;
+            return true;
+        }
+        finally { Monitor.Exit(presentation.Geometry); }
     }
 
     public void PrepareForDrawing(Camera camera)
@@ -138,30 +223,10 @@ public class TerrainRenderer : IDisposable
         var gameWidgetIndex = camera.GameWidget.GameWidgetIndex;
         _chunksToDraw.Clear();
         var allocatedChunks = _subsystemTerrain.Terrain.AllocatedChunks;
+        UploadReadyGeometry(camera, allocatedChunks);
         foreach (var terrainChunk in allocatedChunks)
         {
             _presentation.ChunkPresentations.Get(terrainChunk).HazeEnds.TryAdd(gameWidgetIndex, 0);
-            if (_presentation.ChunkPresentations.Get(terrainChunk).NewGeometryData)
-            {
-                lock (_presentation.ChunkPresentations.Get(terrainChunk).Geometry)
-                {
-                    if (_presentation.ChunkPresentations.Get(terrainChunk).NewGeometryData &&
-                        terrainChunk.MainThreadState == TerrainChunkState.Ready &&
-                        _presentation.ChunkPresentations.Get(terrainChunk).HasCurrentGeometry(terrainChunk))
-                    {
-                        _presentation.ChunkPresentations.Get(terrainChunk).NewGeometryData = false;
-                        SetupTerrainChunkGeometryVertexIndexBuffers(terrainChunk);
-                        _presentation.ChunkPresentations.Get(terrainChunk).GeometryUploaded = true;
-                        if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica &&
-                            terrainChunk.NetworkContentReceiveTime > 0.0)
-                        {
-                            _presentation.ChunkPresentations.Get(terrainChunk).NetworkGeometryUploadTime =
-                                Time.RealTime;
-                        }
-                    }
-                }
-            }
-
             _presentation.ChunkPresentations.Get(terrainChunk).DrawDistanceSquared =
                 Vector2.DistanceSquared(xZ, terrainChunk.Center);
             if (_presentation.ChunkPresentations.Get(terrainChunk).DrawDistanceSquared <= num)
@@ -178,7 +243,11 @@ public class TerrainRenderer : IDisposable
                     }
                 }
 
-                if (terrainChunk.MainThreadState != TerrainChunkState.Ready)
+                if (!ClientChunkDerivationPipeline.CanDraw(
+                        _subsystemTerrain.ContentRole,
+                        terrainChunk,
+                        _presentation.ChunkPresentations.Get(terrainChunk)
+                    ))
                 {
                     continue;
                 }
@@ -366,7 +435,7 @@ public class TerrainRenderer : IDisposable
 
     public void DisplayDeviceReset()
     {
-        _subsystemTerrain.TerrainUpdater.UpdateEvent.WaitOne();
+        _subsystemTerrain.WorkExecutor.EnterMain();
         try
         {
             _presentation.MeshUpdater.RequestAllMeshesRebuild(false);
@@ -385,7 +454,7 @@ public class TerrainRenderer : IDisposable
         }
         finally
         {
-            _subsystemTerrain.TerrainUpdater.UpdateEvent.Set();
+            _subsystemTerrain.WorkExecutor.LeaveMain();
         }
     }
 

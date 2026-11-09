@@ -27,6 +27,7 @@ public sealed class CharacterPresentation : IDisposable
 
     private bool _respawning;
 
+
     public CharacterData CharacterData { get; }
 
     public WidgetInputDevice InputDevice { get; set; }
@@ -94,7 +95,7 @@ public sealed class CharacterPresentation : IDisposable
                 State = CharacterViewState.PreparingView;
                 if (CharacterData.IsLocalCharacter)
                 {
-                    _owner.Terrain.TerrainUpdater.SetUpdateLocation(
+                    _owner.Terrain.SetUpdateLocation(
                         CharacterData.CharacterIndex,
                         component.ComponentBody.Position.XZ,
                         MathUtils.Min(Configuration.ClientConfiguration.Preferences.VisibilityRange, 64f),

@@ -60,7 +60,7 @@ public sealed class ClientTerrainDeltaCoordinator(
             delta.ResultContentVersion
         );
 
-        return chunk.IsLoaded && !chunk.NeedsContentValidation
+        return chunk.HasContents && !chunk.NeedsContentValidation
             ? ApplyAvailable(chunk)
             : TerrainDeltaApplyResult.Buffered;
     }

@@ -25,7 +25,7 @@ public sealed class WorldOperationHooksTest
         using var project = new RuntimeTestProject(RuntimeSide.Authority, bindRuleHooks: false);
         var world = WorldRuntimeContext.For(project);
         using var terrain = new Terrain();
-        terrain.AllocateChunk(0, 0).SetMainThreadState(TerrainChunkState.InvalidLight);
+        terrain.AllocateChunk(0, 0).HasContents = true;
         var subsystemTerrain = new SubsystemTerrain { Terrain = terrain };
         project.InitializeSubsystem(subsystemTerrain);
         var time = new SubsystemTime();

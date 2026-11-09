@@ -2,12 +2,23 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Terrains.Distribution;
+using Game.Terrains.Execution;
+using Game.Terrains.Lighting;
 using Game.TerrainSerializers;
 
 namespace Game.Subsystems;
 
 public class SubsystemTerrain : Subsystem, IUpdateable
 {
+    public SubsystemTerrain()
+    {
+        WorkExecutor = new TerrainWorkExecutor(() => Computations.Step(), Access);
+    }
+
+    public TerrainAccessGate Access { get; } = new();
+
+    public TerrainWorkExecutor WorkExecutor { get; }
+
     public UpdateExecutionSide UpdateSide => UpdateExecutionSide.Both;
 
     private readonly Dictionary<Point3, bool> _modifiedCells = new();
@@ -43,7 +54,35 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
     public Terrain Terrain { get; set; } = null!;
 
-    public TerrainUpdater TerrainUpdater { get; set; } = null!;
+    public TerrainComputationScheduler Computations { get; private set; } = null!;
+
+    public TerrainEnvironmentObserver EnvironmentObserver { get; private set; } = null!;
+
+    private TerrainChunkBehaviorNotifier _notifications = null!;
+
+    private TerrainMainWorkRequest? _locationRequest;
+
+    private long _terrainInteractionRevision;
+
+    public long TerrainInteractionRevision => Volatile.Read(ref _terrainInteractionRevision);
+
+    public event Action<TerrainChunk, bool>? MeshInvalidated;
+
+    public event Action? TerrainAppearanceChanged;
+
+    public void NotifyTerrainInteraction() => Interlocked.Increment(ref _terrainInteractionRevision);
+
+    public void InvalidateMesh(Point2 coordinates, bool forceCache)
+    {
+        var chunk = Terrain.GetChunkAtCoords(coordinates.X, coordinates.Y);
+        if (chunk != null) { MeshInvalidated?.Invoke(chunk, forceCache); }
+    }
+
+    public TerrainDemandManager Demands { get; private set; } = null!;
+
+    public TerrainResidencyManager Residency { get; private set; } = null!;
+
+    public ServerChunkDistributionScheduler? ChunkDistribution { get; private set; }
 
     public ClientChunkContentCoordinator? ClientChunkContents { get; private set; }
 
@@ -51,9 +90,11 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
     public ClientTerrainDeltaCoordinator? ClientTerrainDeltas { get; private set; }
 
+    public ClientTerrainContentPump? ClientContentPump { get; private set; }
+
     public ClientTerrainPrediction? CellPrediction { get; private set; }
 
-    public AuthoritativeChunkGenerationPipeline? AuthoritativeChunkGeneration { get; private set; }
+    public AuthorityTerrainContent? AuthorityContents { get; private set; }
 
     public IChunkContentAuthority? ChunkContentAuthority { get; private set; }
 
@@ -73,9 +114,38 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
     public TerrainSaveCoordinator? TerrainSaveCoordinator { get; private set; }
 
-    public ITerrainContentsGenerator TerrainContentsGenerator { get; set; } = null!;
+    private ITerrainContentsGenerator? _contentsGenerator;
+
+    public ITerrainEnvironment Environment { get; private set; } = null!;
+
+    public ITerrainContentsGenerator TerrainContentsGenerator => _contentsGenerator ??
+                                                                 throw new InvalidOperationException(
+                                                                     "Replica terrain does not own an authoritative contents generator."
+                                                                 );
 
     public UpdateOrder UpdateOrder => UpdateOrder.Terrain;
+
+    public void SetUpdateLocation(int index, Vector2 center, float visibility, float content)
+    {
+        if (UsesClientChunkContent)
+        {
+            var previous = Demands.GetRequestedLocation(index);
+            if (previous.LastChunksUpdateCenter is { } last &&
+                visibility.CloseTo(previous.VisibilityDistance) &&
+                MathUtils.Max(content, visibility).CloseTo(previous.ContentDistance) &&
+                Vector2.DistanceSquared(center, last) <= 64f) { return; }
+        }
+
+        if (!Demands.SetLocation(index, center, visibility, content)) { return; }
+
+        if (UsesClientChunkContent)
+        {
+            NetworkSender.SendToServer(
+                WorldRuntimeContext.For(Project),
+                new CharacterUpdateLocationPackage { UpdateLocation = Demands.GetRequestedLocation(index) }
+            );
+        }
+    }
 
     public void ProcessModifiedCells()
     {
@@ -322,7 +392,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                 Terrain.ToCell(vector2.Z),
                 false
             );
-            if (chunkAtCell is { MainThreadState: TerrainChunkState.Ready } && !list.Contains(chunkAtCell))
+            if (chunkAtCell is { HasCurrentLight: true } && !list.Contains(chunkAtCell))
             {
                 list.Add(chunkAtCell);
             }
@@ -340,21 +410,37 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         ComponentMiner? miner = null
     )
     {
-        CellPrediction?.OnCellChanged(new Point3(x, y, z));
-        var authorityChunk = Runtime.IsAuthority
-            ? CellAuthority.Terrain.GetChunkAtCell(x, z, false)
-            : null;
-        var baseContentVersion = authorityChunk?.NetworkContentRevision + 1 ?? 0;
-        if (!ReferenceEquals(CellAuthority.Terrain, Terrain))
+        int cellValueFast;
+        WorkExecutor.EnterMain();
+        try
         {
-            CellAuthority.ChangeCell(x, y, z, value, updateModificationCounter);
-        }
+            CellPrediction?.OnCellChanged(new Point3(x, y, z));
+            var authorityChunk = Runtime.IsAuthority
+                ? CellAuthority.Terrain.GetChunkAtCell(x, z, false)
+                : null;
+            var baseContentVersion = authorityChunk?.NetworkContentRevision + 1 ?? 0;
+            if (!ReferenceEquals(CellAuthority.Terrain, Terrain))
+            {
+                CellAuthority.ChangeCell(x, y, z, value, updateModificationCounter);
+            }
 
-        var cellValueFast = Terrain.GetCellValueFast(x, y, z);
-        value = Terrain.ReplaceLight(value, 0);
-        cellValueFast = Terrain.ReplaceLight(cellValueFast, 0);
-        if (value == cellValueFast)
-        {
+            cellValueFast = Terrain.GetCellValueFast(x, y, z);
+            value = Terrain.ReplaceLight(value, 0);
+            cellValueFast = Terrain.ReplaceLight(cellValueFast, 0);
+            if (value == cellValueFast)
+            {
+                PublishAuthoritativeCellDelta(
+                    authorityChunk,
+                    baseContentVersion,
+                    x,
+                    y,
+                    z,
+                    value
+                );
+                return;
+            }
+
+            Terrain.SetCellValueFast(x, y, z, value);
             PublishAuthoritativeCellDelta(
                 authorityChunk,
                 baseContentVersion,
@@ -363,35 +449,21 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                 z,
                 value
             );
-            return;
-        }
-
-        Terrain.SetCellValueFast(x, y, z, value);
-        PublishAuthoritativeCellDelta(
-            authorityChunk,
-            baseContentVersion,
-            x,
-            y,
-            z,
-            value
-        );
-        var chunkAtCell = Terrain.GetChunkAtCell(x, z, false);
-        if (chunkAtCell != null)
-        {
-            if (updateModificationCounter)
+            var chunkAtCell = Terrain.GetChunkAtCell(x, z, false);
+            if (chunkAtCell != null)
             {
-                chunkAtCell.ModificationCounter++;
+                if (updateModificationCounter)
+                {
+                    chunkAtCell.ModificationCounter++;
+                }
+
+                Computations.InvalidateContentNeighborhood(chunkAtCell.Coords, 1);
             }
 
-            TerrainUpdater.DowngradeChunkNeighborhoodState(
-                chunkAtCell.Coords,
-                1,
-                TerrainChunkState.InvalidLight,
-                false
-            );
+            _modifiedCells[new Point3(x, y, z)] = true;
         }
+        finally { WorkExecutor.LeaveMain(); }
 
-        _modifiedCells[new Point3(x, y, z)] = true;
         var num = Terrain.ExtractContents(cellValueFast);
         var num2 = Terrain.ExtractContents(value);
         if (num2 != num)
@@ -458,8 +530,9 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         int value
     )
     {
-        if (authorityChunk == null)
+        if (authorityChunk is not { HasContents: true, IsContentInitialized: true })
         {
+            // Initial generation and block normalization customize the first baseline, not live deltas.
             return;
         }
 
@@ -620,8 +693,72 @@ public class SubsystemTerrain : Subsystem, IUpdateable
     public void Update(float dt)
     {
         CellPrediction?.Update(Time.RealTime);
-        TerrainUpdater.Update();
+        if (!IsTerrainActive) { return; }
+
+        ClientContentPump?.TryDrainReceivedContents();
+        if (!IsTerrainActive) { return; }
+
+        if (AuthorityContents?.PublishGeneratedContents() > 0) { WorkExecutor.Wake(); }
+
+        if (!IsTerrainActive) { return; }
+
+        ChunkDistribution?.Update();
+        if (!IsTerrainActive) { return; }
+
+        var environment = EnvironmentObserver.Update();
+        if (environment.SunlightChanged) { Computations.InvalidateSkylight(); }
+
+        if (!IsTerrainActive) { return; }
+
+        if (environment.AppearanceChanged) { TerrainAppearanceChanged?.Invoke(); }
+
+        if (!IsTerrainActive) { return; }
+
+        ApplyTerrainDemand();
+        if (!IsTerrainActive) { return; }
+
+        var started = Stopwatch.GetTimestamp();
+        while (Stopwatch.GetElapsedTime(started) < TimeSpan.FromMilliseconds(4) &&
+               Computations.TryTakeInitialization(out var initialized))
+        {
+            _notifications.TryInitialize(initialized!);
+            if (!IsTerrainActive) { return; }
+        }
+
+        ClientContentPump?.UpdateRequests();
+        if (!IsTerrainActive) { return; }
+
         ProcessModifiedCells();
+    }
+
+    private bool IsTerrainActive => !_closed && WorldRuntimeContext.IsProjectActive(Project);
+
+    private void ApplyTerrainDemand()
+    {
+        if (Residency.IsUpdating || !Demands.HasChanges) { return; }
+
+        if (!_locationRequest!.TryEnter(1)) { return; }
+
+        try
+        {
+            var demand = Demands.CapturePending();
+            Demands.Apply(demand);
+            var allocation = Residency.Update(demand.EffectiveLocations, _locationRequest);
+            if (!IsTerrainActive) { return; }
+
+            Computations.UpdateDemand(demand.EffectiveLocations);
+            if (!allocation.RetryRequired) { Demands.Reconciled(demand); }
+        }
+        finally
+        {
+            if (_locationRequest.HasAccess) { _locationRequest.Leave(); }
+        }
+    }
+
+    private void OnChunkAllocated(Point2 coordinates)
+    {
+        var chunk = Terrain.GetChunkAtCoords(coordinates.X, coordinates.Y)!;
+        Computations.Request(chunk);
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
@@ -646,32 +783,52 @@ public class SubsystemTerrain : Subsystem, IUpdateable
             TerrainSaveCoordinator = new TerrainSaveCoordinator(serializer.SaveSnapshot);
         }
 
-        TerrainContentsGenerator = CreateTerrainContentsGenerator(Terrain);
+        Environment = TerrainEnvironment.Create(SubsystemGameInfo.WorldSettings, SubsystemGameInfo.WorldSeed);
 
         if (Runtime.IsAuthority)
         {
-            AuthoritativeChunkGeneration = new AuthoritativeChunkGenerationPipeline(
+            _contentsGenerator = CreateTerrainContentsGenerator(Terrain);
+            var generation = new AuthoritativeChunkGenerationPipeline(
                 TerrainContentsGenerator,
                 chunk => TerrainSaveCoordinator?.TryRestorePendingSnapshot(chunk) == true,
                 (TerrainSerializer ??
-                 throw new InvalidOperationException("Authority terrain requires a disk serializer.")).LoadChunk,
-                chunk =>
-                {
-                    WorldRuleHooks.For(Project).Invoke(new TerrainChunkGeneratedContext(this, chunk));
-                    return WorldRuntimeContext.IsProjectActive(Project);
-                }
+                 throw new InvalidOperationException("Authority terrain requires a disk serializer.")).LoadChunk
             );
+            AuthorityContents = new AuthorityTerrainContent(this, generation);
             ChunkContentAuthority = new TerrainChunkContentAuthority(Terrain);
         }
 
-        // Start the worker only after every service it can reach has been composed.
-        TerrainUpdater = new TerrainUpdater(this);
+        Demands = new TerrainDemandManager(Terrain, ContentRole);
+        if (Runtime.IsAuthority)
+        {
+            ChunkDistribution = new ServerChunkDistributionScheduler(Project, ChunkContentAuthority!);
+        }
+
+        // Compose every service and callback before the worker is started below.
+        _notifications = new TerrainChunkBehaviorNotifier(this, _subsystemBlockBehaviors);
+        _locationRequest = WorkExecutor.CreateMainRequest();
+        EnvironmentObserver = new TerrainEnvironmentObserver(
+            Terrain,
+            SubsystemGameInfo,
+            Project.FindSubsystem<SubsystemSky>(true)!
+        );
+        Computations = new TerrainComputationScheduler(
+            this,
+            new TerrainLightingCalculator(
+                Terrain,
+                Catalog,
+                ContentRole == TerrainContentRole.Replica,
+                static chunk => chunk.HasContents && !chunk.NeedsContentValidation
+            )
+        );
+        if (AuthorityContents != null) { AuthorityContents.ContentPublished += Computations.ContentAvailable; }
+
         if (!Runtime.IsAuthority)
         {
             CellPrediction = new ClientTerrainPrediction(
                 Terrain,
                 coords =>
-                    TerrainUpdater.DowngradeChunkNeighborhoodState(coords, 1, TerrainChunkState.InvalidLight, false)
+                    Computations.InvalidateContentNeighborhood(coords, 1)
             );
             ClientChunkContents!.ContentInstalled += CellPrediction.OnContentInstalled;
         }
@@ -687,11 +844,24 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                     delta.Value
                 )
             );
-            ClientChunkContents.ContentInstalled += TerrainUpdater.OnNetworkChunkContentInstalled;
-            // Replay deltas after the ordinary snapshot derivation reset. A detected version gap
-            // must retain its required baseline version after the installation.
+            ClientContentPump = new ClientTerrainContentPump(
+                this,
+                ChunkContentTransport ?? throw new InvalidOperationException("Client content requires a transport."),
+                ClientChunkContents,
+                ClientTerrainDeltas
+            );
+            ClientChunkContents.ContentInstalled += Computations.ContentAvailable;
+            ClientChunkContents.ContentInstalled += ClientContentPump.OnContentInstalled;
+            // Replay after derivation invalidation and delivery metadata reset.
             ClientChunkContents.ContentInstalled += chunk => ClientTerrainDeltas.OnContentInstalled(chunk);
         }
+
+        Residency = new TerrainResidencyManager(this, _notifications);
+        Residency.ChunkAllocated += OnChunkAllocated;
+        Residency.ChunkReleasing += Computations.Retired;
+        Residency.ChunkAllocationRenewed += Computations.Renewed;
+        WorkExecutor.Wake();
+        WorkExecutor.Start(Runtime.Lifetime);
     }
 
     internal ITerrainContentsGenerator CreateTerrainContentsGenerator(Terrain terrain)
@@ -723,31 +893,28 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         return new TerrainContentsGenerator24(this, terrain);
     }
 
-    private void SaveChunk()
-    {
-        if (!Runtime.IsAuthority) { return; }
+    public Task PendingTerrainSave { get; private set; } = Task.CompletedTask;
 
-        var serializer = TerrainSerializer ??
-                         throw new InvalidOperationException("Authority terrain requires a disk serializer.");
-        TerrainUpdater.UpdateEvent.WaitOne();
+    private void CaptureTerrainSave()
+    {
+        if (!Runtime.IsAuthority || Project.SendToClientMode) { return; }
+
+        var saves = TerrainSaveCoordinator ??
+                    throw new InvalidOperationException("Authority terrain requires a save coordinator.");
+        WorkExecutor.EnterMain();
         try
         {
-            TerrainSaveCoordinator?.Flush();
-            var allocatedChunks = AuthoritativeTerrain.AllocatedChunks;
-            foreach (var chunk in allocatedChunks)
-            {
-                serializer.SaveChunk(chunk);
-            }
+            PendingTerrainSave = saves.CaptureAndQueueSave(AuthoritativeTerrain.AllocatedChunks);
         }
         finally
         {
-            TerrainUpdater.UpdateEvent.Set();
+            WorkExecutor.LeaveMain();
         }
     }
 
     public override void Save(ValuesDictionary valuesDictionary)
     {
-        SaveChunk();
+        CaptureTerrainSave();
     }
 
     public event Action<SubsystemTerrain>? Closing;
@@ -766,13 +933,19 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         }
 
         Closing = null;
-        TryCleanup(() => TerrainUpdater?.Dispose());
-        TerrainUpdater = null!;
+        TryCleanup(() => WorkExecutor.Dispose());
+        TryCleanup(() => ClientContentPump?.Dispose());
+        TryCleanup(() => _locationRequest?.Dispose());
+        TryCleanup(() => Computations?.Dispose());
+        TryCleanup(() => AuthorityContents?.Dispose());
+        TryCleanup(() => ChunkDistribution?.Dispose());
+        TryCleanup(() => Demands?.Dispose());
         TryCleanup(() => TerrainSaveCoordinator?.Dispose());
         TerrainSaveCoordinator = null;
         TryCleanup(() => TerrainSerializer?.Dispose());
         TerrainSerializer = null;
         TryCleanup(() => Terrain?.Dispose());
+        TryCleanup(() => Access.Dispose());
         Terrain = null!;
         if (errors.Count > 0) { throw new AggregateException("Could not dispose all terrain resources.", errors); }
 

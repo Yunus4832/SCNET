@@ -80,7 +80,7 @@ public sealed class BeaconLogicTest
             var values = lines[1].Split(';');
             var declared = int.Parse(values[Array.IndexOf(fields, "EmittedLightAmount")]);
             var block = new BeaconBlock { EmittedLightAmount = declared };
-            // TerrainUpdater uses this static marker before calling the dynamic light method.
+            // Terrain mesh generation uses this static marker before calling the dynamic light method.
             Assert.True(block.EmittedLightAmount > 0);
             for (var intensity = 0; intensity <= 15; intensity++)
             {

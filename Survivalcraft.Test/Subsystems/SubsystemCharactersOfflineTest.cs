@@ -34,17 +34,13 @@ public sealed class SubsystemCharactersOfflineTest
             using var project = new RuntimeTestProject(RuntimeSide.Authority);
             var subsystem = new SubsystemCharacters();
             project.InitializeSubsystem(subsystem);
-            var updater = (TerrainUpdater)RuntimeHelpers.GetUninitializedObject(typeof(TerrainUpdater));
-            SetField(updater, "_pendingLocations", new Dictionary<int, TerrainUpdateLocation?>());
-            var parametersField = typeof(TerrainUpdater).GetField(
-                "_updateParameters",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            )!;
-            var parameters = Activator.CreateInstance(parametersField.FieldType)!;
-            parametersField.FieldType.GetField("Locations")!
-                .SetValue(parameters, new Dictionary<int, TerrainUpdateLocation>());
-            parametersField.SetValue(updater, parameters);
-            SetField(subsystem, "_subsystemTerrain", new SubsystemTerrain { TerrainUpdater = updater });
+            using var data = new Terrain();
+            var terrain = new SubsystemTerrain { Terrain = data };
+            typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.Demands))!.SetValue(
+                terrain,
+                new TerrainDemandManager(data, Game.Terrains.Distribution.TerrainContentRole.Authority)
+            );
+            SetField(subsystem, "_subsystemTerrain", terrain);
             var records = (List<CharacterData>)typeof(SubsystemCharacters)
                 .GetField("_characters", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(subsystem)!;
             var updated = 0;

@@ -3,13 +3,13 @@ namespace Game.Terrains;
 /// <summary>Authority-owned spawn preparation, separate from approved peer interest.</summary>
 public sealed class TerrainSpawnPreparation : IDisposable
 {
-    private TerrainUpdater? _owner;
+    private TerrainDemandManager? _owner;
 
     public Guid CharacterId { get; }
 
     internal TerrainUpdateLocation Location { get; private set; }
 
-    internal TerrainSpawnPreparation(TerrainUpdater owner, Guid characterId, Vector2 center, float radius)
+    internal TerrainSpawnPreparation(TerrainDemandManager owner, Guid characterId, Vector2 center, float radius)
     {
         _owner = owner;
         CharacterId = characterId;
@@ -21,7 +21,7 @@ public sealed class TerrainSpawnPreparation : IDisposable
     public float GetProgress(float visibilityDistance, float contentDistance) =>
         Owner.GetSpawnPreparationProgress(this, visibilityDistance, contentDistance);
 
-    private TerrainUpdater Owner => _owner ?? throw new ObjectDisposedException(nameof(TerrainSpawnPreparation));
+    private TerrainDemandManager Owner => _owner ?? throw new ObjectDisposedException(nameof(TerrainSpawnPreparation));
 
     internal void SetLocation(Vector2 center, float radius) => Location = new TerrainUpdateLocation
     {

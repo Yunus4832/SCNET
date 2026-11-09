@@ -30,6 +30,10 @@ public sealed class GameRuntime(bool allowsLocalPause) : IDisposable
 
     private WorldRuntimeContext? _client;
 
+    private NetNode? _authorityNode;
+
+    private NetNode? _clientNode;
+
     public WorldRuntimeContext? Authority => _authority;
 
     public WorldRuntimeContext? Client => _client;
@@ -68,14 +72,16 @@ public sealed class GameRuntime(bool allowsLocalPause) : IDisposable
             throw new InvalidOperationException("Release the existing world before replacing its runtime.");
         }
 
-        var other = runtime.IsAuthority ? _client : _authority;
-        if (WorldNetworkBinding.FindNode(runtime) is not null &&
-            ReferenceEquals(WorldNetworkBinding.FindNode(runtime), WorldNetworkBinding.FindNode(other)))
+        var node = WorldNetworkBinding.FindNode(runtime);
+        var otherNode = runtime.IsAuthority ? _clientNode : _authorityNode;
+        if (node is not null && ReferenceEquals(node, otherNode))
         {
             throw new InvalidOperationException("Authority and client worlds must use separate message nodes.");
         }
 
         slot = runtime;
+        ref var endpoint = ref (runtime.IsAuthority ? ref _authorityNode : ref _clientNode);
+        endpoint = node;
     }
 
     public NetNode ConnectLocalClient(
@@ -150,7 +156,7 @@ public sealed class GameRuntime(bool allowsLocalPause) : IDisposable
     {
         SetLocalPause(false);
         IsChangingWorlds = true;
-        try { Release(ref _client); }
+        try { Release(ref _client, ref _clientNode); }
         finally { IsChangingWorlds = false; }
     }
 
@@ -160,23 +166,24 @@ public sealed class GameRuntime(bool allowsLocalPause) : IDisposable
 
         IsDisposed = true;
         var errors = new List<Exception>();
-        try { Release(ref _client); }
+        try { Release(ref _client, ref _clientNode); }
         catch (Exception exception) { errors.Add(exception); }
 
-        try { Release(ref _authority); }
+        try { Release(ref _authority, ref _authorityNode); }
         catch (Exception exception) { errors.Add(exception); }
 
         if (errors.Count > 0) { throw new AggregateException("Failed to release game runtime worlds.", errors); }
     }
 
-    private static void Release(ref WorldRuntimeContext? slot)
+    private static void Release(ref WorldRuntimeContext? slot, ref NetNode? endpoint)
     {
         var runtime = slot;
+        var node = endpoint;
         slot = null;
+        endpoint = null;
         if (runtime is null) { return; }
 
         var project = runtime.BoundProject;
-        var node = WorldNetworkBinding.FindNode(runtime);
         var errors = new List<Exception>();
         try { runtime.Close(); }
         catch (Exception exception) { errors.Add(exception); }

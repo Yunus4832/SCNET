@@ -9,69 +9,93 @@ namespace Survivalcraft.Core.Test.Terrains.Distribution;
 public sealed class AuthoritativeChunkGenerationPipelineTest
 {
     [Fact]
-    public void ClosedGenerationCallbackCannotPublishReadyContent()
+    public void StalePublicationCleanupIsBoundedAndLeavesLaterValidWorkAvailable()
+    {
+        using var terrain = new Terrain();
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(new FakeGenerator(), _ => false, _ => false);
+        for (var i = 0; i < 3; i++)
+        {
+            var retired = terrain.AllocateChunk(i, 0);
+            Generate(pipeline, retired);
+            terrain.RenewChunkAllocation(retired);
+        }
+
+        var current = terrain.AllocateChunk(4, 0);
+        Generate(pipeline, current);
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.False(pipeline.TryTakePublication(out _, 1));
+            Assert.True(pipeline.HasPendingPublications);
+        }
+
+        Assert.True(pipeline.TryTakePublication(out var publication, 1));
+        Assert.Same(current, publication.Chunk);
+        Assert.False(pipeline.HasPendingPublications);
+        Assert.True(pipeline.CompletePublication(publication, true));
+    }
+
+    [Fact]
+    public void GeneratedContentWaitsForOneExplicitPublicationDecision()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(3, 4);
+        var generator = new FakeGenerator();
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
+        Generate(pipeline, chunk);
+        Assert.False(chunk.HasContents);
+        Assert.Equal(TerrainContentOrigin.Generated, chunk.ContentOrigin);
+        Assert.Equal(TerrainGenerationStage.Publication, pipeline.GetStage(chunk));
+        Assert.False(pipeline.TryAdvance(chunk));
+        Assert.True(pipeline.TryTakePublication(out var publication));
+        Assert.Same(chunk, publication.Chunk);
+        Assert.Equal(chunk.AllocationGeneration, publication.Generation);
+        Assert.Equal(TerrainGenerationStage.Publishing, pipeline.GetStage(chunk));
+        Assert.False(pipeline.TryTakePublication(out _));
+        Assert.False(pipeline.TryAdvance(chunk));
+
+        Assert.True(pipeline.CompletePublication(publication, true));
+        Assert.False(pipeline.CompletePublication(publication, true));
+        Assert.True(chunk.HasContents);
+        Assert.Equal(TerrainGenerationStage.Complete, pipeline.GetStage(chunk));
+        Assert.Equal(4, generator.PassCount);
+        Assert.False(chunk.HasCurrentLight);
+    }
+
+    [Fact]
+    public void RejectedPublicationCannotRegenerateOrBeAcceptedOnRetry()
     {
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.SetWorkerState(TerrainChunkState.InvalidContents4);
-        var pipeline = new AuthoritativeChunkGenerationPipeline(
-            new FakeGenerator(),
-            _ => false,
-            _ => false,
-            _ => false
-        );
-
+        var generator = new FakeGenerator();
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
+        Generate(pipeline, chunk);
+        Assert.True(pipeline.TryTakePublication(out var publication));
+        Assert.False(pipeline.CompletePublication(publication, false));
+        Assert.False(pipeline.CompletePublication(publication, true));
+        Assert.Equal(TerrainGenerationStage.Rejected, pipeline.GetStage(chunk));
+        Assert.False(chunk.HasContents);
         Assert.False(pipeline.TryAdvance(chunk));
-        Assert.False(chunk.IsLoaded);
-        Assert.Equal(TerrainChunkState.InvalidContents4, chunk.WorkerState);
-    }
-
-    [Fact]
-    public void GeneratedContentAdvancesOnExplicitAuthorityTerrain()
-    {
-        var authorityTerrain = new Terrain();
-        var chunk = authorityTerrain.AllocateChunk(3, 4);
-        var generator = new FakeGenerator();
-        var generated = 0;
-        var pipeline = new AuthoritativeChunkGenerationPipeline(
-            generator,
-            _ => false,
-            _ => false,
-            _ =>
-            {
-                generated++;
-                return true;
-            }
-        );
-
-        for (var i = 0; i < 5; i++)
-        {
-            Assert.True(pipeline.TryAdvance(chunk));
-        }
-
-        Assert.Same(authorityTerrain, chunk.Terrain);
-        Assert.Equal(TerrainChunkState.InvalidLight, chunk.WorkerState);
-        Assert.True(chunk.IsLoaded);
+        Assert.False(pipeline.TryTakePublication(out _));
         Assert.Equal(4, generator.PassCount);
-        Assert.Equal(1, generated);
     }
 
     [Fact]
-    public void RestoredContentSkipsProceduralGeneration()
+    public void RestoredContentSkipsProceduralGenerationAndPublicationTickets()
     {
-        var chunk = new Terrain().AllocateChunk(0, 0);
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
         var generator = new FakeGenerator();
-        var pipeline = new AuthoritativeChunkGenerationPipeline(
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(
             generator,
             _ => true,
             _ => throw new Xunit.Sdk.XunitException("Load must not run after pending-save restore.")
         );
-
         Assert.True(pipeline.TryAdvance(chunk));
-
-        Assert.Equal(TerrainChunkState.InvalidLight, chunk.WorkerState);
-        Assert.True(chunk.IsLoaded);
+        Assert.Equal(TerrainGenerationStage.Complete, pipeline.GetStage(chunk));
+        Assert.True(chunk.HasContents);
+        Assert.Equal(TerrainContentOrigin.Storage, chunk.ContentOrigin);
         Assert.Equal(0, generator.PassCount);
+        Assert.False(pipeline.TryTakePublication(out _));
     }
 
     [Fact]
@@ -80,7 +104,7 @@ public sealed class AuthoritativeChunkGenerationPipelineTest
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
         var calls = new List<string>();
-        var pipeline = new AuthoritativeChunkGenerationPipeline(
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(
             new FakeGenerator(),
             _ =>
             {
@@ -91,67 +115,185 @@ public sealed class AuthoritativeChunkGenerationPipelineTest
             {
                 calls.Add("disk");
                 return true;
-            },
-            _ => throw new InvalidOperationException("Restore does not run procedural generation callbacks.")
+            }
         );
         Assert.True(pipeline.TryAdvance(chunk));
         Assert.Equal(new[] { "pending", "disk" }, calls);
-        Assert.True(chunk.IsLoaded);
-        Assert.Equal(TerrainChunkState.InvalidLight, chunk.WorkerState);
+        Assert.True(chunk.HasContents);
+        Assert.Equal(TerrainGenerationStage.Complete, pipeline.GetStage(chunk));
+        Assert.False(pipeline.TryTakePublication(out _));
     }
 
     [Fact]
-    public void SeedBasisSkipsTheFirstThreePassesButStillFinalizesGeneratedContent()
+    public void SeedBasisSkipsTheFirstThreePassesButStillRequiresPublication()
     {
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
         var generator = new FakeGenerator { HasSeedBasis = true };
-        var completed = 0;
-        var pipeline = new AuthoritativeChunkGenerationPipeline(
-            generator,
-            _ => false,
-            _ => false,
-            _ =>
-            {
-                completed++;
-                return true;
-            }
-        );
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
         for (var step = 0; step < 3; step++) { Assert.True(pipeline.TryAdvance(chunk)); }
 
         Assert.Equal(1, generator.PassCount);
-        Assert.Equal(1, completed);
-        Assert.True(chunk.IsLoaded);
-        Assert.Equal(TerrainChunkState.InvalidLight, chunk.WorkerState);
+        Assert.False(chunk.HasContents);
+        Assert.True(pipeline.TryTakePublication(out var publication));
+        Assert.True(pipeline.CompletePublication(publication, true));
+        Assert.True(chunk.HasContents);
     }
 
     [Theory]
-    [InlineData(TerrainChunkState.InvalidLight)]
-    [InlineData(TerrainChunkState.InvalidPropagatedLight)]
-    [InlineData(TerrainChunkState.Ready)]
-    public void LightingAndReadyStatesBelongToTheCpuDerivationPipeline(TerrainChunkState state)
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GenerationAndPublicationDoNotChangeLightingReadiness(bool complete)
     {
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.SetWorkerState(state);
+        var request = chunk.DerivedRevisions.Capture();
+        if (complete)
+        {
+            Assert.True(chunk.DerivedRevisions.PublishHeights(request));
+            Assert.True(chunk.DerivedRevisions.PublishSunlight(request));
+            Assert.True(chunk.DerivedRevisions.PublishLight(request));
+        }
+
         var generator = new FakeGenerator();
-        var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
-        Assert.False(pipeline.TryAdvance(chunk));
-        Assert.Equal(state, chunk.WorkerState);
-        Assert.Equal(0, generator.PassCount);
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
+        Generate(pipeline, chunk);
+        Assert.True(pipeline.TryTakePublication(out var publication));
+        Assert.True(pipeline.CompletePublication(publication, true));
+        Assert.Equal(request, chunk.DerivedRevisions.Capture());
+        Assert.Equal(complete, chunk.HasCurrentLight);
+        Assert.Equal(4, generator.PassCount);
     }
 
     [Fact]
-    public void FailedPassDoesNotAdvanceOrPublishLoadedContent()
+    public void FailedPassDoesNotAdvanceOrPublishContent()
     {
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.SetWorkerState(TerrainChunkState.InvalidContents2);
         var generator = new FakeGenerator { FailSecondPass = true };
-        var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
+        Assert.True(pipeline.TryAdvance(chunk));
+        Assert.True(pipeline.TryAdvance(chunk));
         Assert.Throws<InvalidOperationException>(() => pipeline.TryAdvance(chunk));
-        Assert.Equal(TerrainChunkState.InvalidContents2, chunk.WorkerState);
-        Assert.False(chunk.IsLoaded);
+        Assert.Equal(TerrainGenerationStage.SecondPass, pipeline.GetStage(chunk));
+        Assert.False(chunk.HasCurrentLight);
+        Assert.False(chunk.HasContents);
+        Assert.False(pipeline.TryTakePublication(out _));
+    }
+
+    [Fact]
+    public void AllocationRenewalCannotReusePartialGenerationProgress()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        var generator = new FakeGenerator();
+        var restores = 0;
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(
+            generator,
+            _ =>
+            {
+                restores++;
+                return false;
+            },
+            _ => false
+        );
+        Assert.True(pipeline.TryAdvance(chunk));
+        Assert.True(pipeline.TryAdvance(chunk));
+        terrain.RenewChunkAllocation(chunk);
+        Assert.Equal(TerrainGenerationStage.Restore, pipeline.GetStage(chunk));
+        Assert.True(pipeline.TryAdvance(chunk));
+        Assert.Equal(2, restores);
+        Assert.Equal(1, generator.PassCount);
+    }
+
+    [Fact]
+    public void CompletingAnOldTicketCannotResetTheNewAllocationsProgress()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(new FakeGenerator(), _ => false, _ => false);
+        Generate(pipeline, chunk);
+        Assert.True(pipeline.TryTakePublication(out var old));
+        terrain.RenewChunkAllocation(chunk);
+        Assert.True(pipeline.TryAdvance(chunk));
+        Assert.True(pipeline.TryAdvance(chunk));
+        Assert.Equal(TerrainGenerationStage.SecondPass, pipeline.GetStage(chunk));
+
+        Assert.False(pipeline.CompletePublication(old, true));
+        Assert.Equal(TerrainGenerationStage.SecondPass, pipeline.GetStage(chunk));
+        for (var i = 0; i < 3; i++) { Assert.True(pipeline.TryAdvance(chunk)); }
+
+        Assert.True(pipeline.TryTakePublication(out var current));
+        Assert.NotEqual(old.Generation, current.Generation);
+        Assert.True(pipeline.CompletePublication(current, true));
+    }
+
+    [Fact]
+    public void ForeignPipelineCannotConsumeAnOwnersTicket()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        using var owner = new AuthoritativeChunkGenerationPipeline(new FakeGenerator(), _ => false, _ => false);
+        using var foreign = new AuthoritativeChunkGenerationPipeline(new FakeGenerator(), _ => false, _ => false);
+        Generate(owner, chunk);
+        Assert.True(owner.TryTakePublication(out var publication));
+        Assert.False(foreign.CompletePublication(publication, true));
+        Assert.True(owner.CompletePublication(publication, true));
+    }
+
+    [Fact]
+    public void FreedChunksCannotPublishOrResetTheNewChunkAtTheirCoordinates()
+    {
+        using var terrain = new Terrain();
+        var old = terrain.AllocateChunk(0, 0);
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(new FakeGenerator(), _ => false, _ => false);
+        Generate(pipeline, old);
+        Assert.True(pipeline.TryTakePublication(out var publication));
+        terrain.FreeChunk(old);
+        var current = terrain.AllocateChunk(0, 0);
+        Assert.True(pipeline.TryAdvance(current));
+        Assert.False(pipeline.CompletePublication(publication, true));
+        Assert.False(current.HasContents);
+        Assert.Equal(TerrainGenerationStage.FirstPass, pipeline.GetStage(current));
+    }
+
+    [Fact]
+    public void QueuedOldAllocationsAreSkippedWithoutTouchingTheNewProgress()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(new FakeGenerator(), _ => false, _ => false);
+        Generate(pipeline, chunk);
+        terrain.RenewChunkAllocation(chunk);
+        Assert.True(pipeline.TryAdvance(chunk));
+        Assert.False(pipeline.TryTakePublication(out _));
+        Assert.Equal(TerrainGenerationStage.FirstPass, pipeline.GetStage(chunk));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DisposalDropsQueuedPublicationsAndRejectsTakenTickets(bool take)
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        var pipeline = new AuthoritativeChunkGenerationPipeline(new FakeGenerator(), _ => false, _ => false);
+        Generate(pipeline, chunk);
+        AuthoritativeChunkGenerationPipeline.Publication? publication = null;
+        if (take) { Assert.True(pipeline.TryTakePublication(out publication)); }
+
+        pipeline.Dispose();
+        Assert.False(pipeline.TryTakePublication(out _));
+        if (publication != null) { Assert.False(pipeline.CompletePublication(publication, true)); }
+
+        Assert.False(chunk.HasContents);
+        Assert.Throws<ObjectDisposedException>(() => pipeline.TryAdvance(chunk));
+        pipeline.Dispose();
+    }
+
+    private static void Generate(AuthoritativeChunkGenerationPipeline pipeline, TerrainChunk chunk)
+    {
+        for (var i = 0; i < 5; i++) { Assert.True(pipeline.TryAdvance(chunk)); }
     }
 
     private sealed class FakeGenerator : ITerrainContentsGenerator
@@ -164,14 +306,8 @@ public sealed class AuthoritativeChunkGenerationPipelineTest
 
         public bool TryTakeSeedGeneratedChunkBasis(TerrainChunk chunk) => HasSeedBasis;
 
-        public int OceanLevel => 64;
-
         public Vector3 FindCoarseSpawnPosition() => Vector3.Zero;
-        public float CalculateOceanShoreDistance(float x, float z) => 0;
-        public float CalculateHeight(float x, float z) => 0;
-        public int CalculateTemperature(float x, float z) => 0;
-        public int CalculateHumidity(float x, float z) => 0;
-        public float CalculateMountainRangeFactor(float x, float z) => 0;
+
         public void GenerateChunkContentsPass1(TerrainChunk chunk) => PassCount++;
 
         public void GenerateChunkContentsPass2(TerrainChunk chunk)

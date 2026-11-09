@@ -91,7 +91,7 @@ public sealed class ServerChunkDistributionScheduler : IDisposable
         foreach (var request in requests)
         {
             var allocation = request.Allocation;
-            if (!NetworkTerrainPolicy.IsChunkRelevant(allocation.Coords, center, distance) ||
+            if (!NetworkTerrainPolicy.IsChunkCenterRelevant(allocation.Coords, center, distance) ||
                 (allocations.TryGetValue(allocation.Coords, out var previous) &&
                  previous.Generation > allocation.Generation)) { continue; }
 
@@ -119,7 +119,7 @@ public sealed class ServerChunkDistributionScheduler : IDisposable
         if (_allocations.TryGetValue(client, out var allocations))
         {
             foreach (var coords in allocations.Keys.Where(coords =>
-                         !NetworkTerrainPolicy.IsChunkRelevant(coords, center, contentDistance)
+                         !NetworkTerrainPolicy.IsChunkCenterRelevant(coords, center, contentDistance)
                      ).ToArray())
             {
                 allocations.Remove(coords);

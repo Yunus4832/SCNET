@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Reflection;
 
 using Engine.Core.Mathematics;
@@ -40,7 +39,7 @@ public sealed class DeciduousLeavesOwnershipTest
         fixture.Rules.OnPoll(oldValue, 1, 3, 1, 0);
 
         Assert.Equal(random, block.SharedRandom1.State);
-        Assert.Equal(2, ((IDictionary)Field(fixture.Queue, "_toChange")!).Count);
+        Assert.Equal(2, fixture.Queue.PendingChangesCount);
         Assert.Equal(oldValue, fixture.Terrain.GetCellValue(1, 3, 1));
         Assert.Null(fixture.Scope.Project.FindSubsystem<SubsystemGameWidgets>());
         Assert.Null(fixture.Scope.Project.FindSubsystem<SubsystemParticles>());
@@ -63,7 +62,7 @@ public sealed class DeciduousLeavesOwnershipTest
 
         Assert.Equal(2, observed.Count);
         Assert.All(observed, visit => Assert.Equal((value, new Point3(1, 3, 1)), visit));
-        Assert.Empty((IDictionary)Field(fixture.Queue, "_toChange")!);
+        Assert.Equal(0, fixture.Queue.PendingChangesCount);
         Assert.Equal(value, fixture.Terrain.GetCellValue(1, 3, 1));
         Assert.Equal(random, fixture.Block.SharedRandom1.State);
     }
@@ -105,7 +104,7 @@ public sealed class DeciduousLeavesOwnershipTest
         fixture.Rules.OnBlockGenerated(value, 1, 3, 1, true);
         presentation.Update(1f);
         Assert.Equal(beforeCap, visualRandom.State);
-        Assert.Empty((IDictionary)Field(fixture.Queue, "_toChange")!);
+        Assert.Equal(0, fixture.Queue.PendingChangesCount);
     }
 
     private static int Autumn(int index)
@@ -144,7 +143,7 @@ public sealed class DeciduousLeavesOwnershipTest
             Scope = new WorldCatalogScope(node);
             var project = Scope.Project;
             Scope.Catalog.GetBlock(ResourceId.Parse("game:air")).Transparent = true;
-            Terrain.AllocateChunk(0, 0);
+            Terrain.AllocateChunk(0, 0).HasContents = true;
             project.AddSubsystem(new SubsystemTerrain { Terrain = Terrain });
             project.AddSubsystem(Info);
             project.AddSubsystem(new SubsystemTime());

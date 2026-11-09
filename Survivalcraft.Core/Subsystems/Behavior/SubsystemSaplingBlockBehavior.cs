@@ -139,10 +139,10 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var chunkAtCell2 = SubsystemTerrain.Terrain.GetChunkAtCell(x - 6, z + 6, false);
         var chunkAtCell3 = SubsystemTerrain.Terrain.GetChunkAtCell(x + 6, z - 6, false);
         var chunkAtCell4 = SubsystemTerrain.Terrain.GetChunkAtCell(x + 6, z + 6, false);
-        if (chunkAtCell is { MainThreadState: TerrainChunkState.Ready } &&
-            chunkAtCell2 is { MainThreadState: TerrainChunkState.Ready } &&
-            chunkAtCell3 is { MainThreadState: TerrainChunkState.Ready } &&
-            chunkAtCell4 is { MainThreadState: TerrainChunkState.Ready })
+        if (chunkAtCell is { HasCurrentLight: true } &&
+            chunkAtCell2 is { HasCurrentLight: true } &&
+            chunkAtCell3 is { HasCurrentLight: true } &&
+            chunkAtCell4 is { HasCurrentLight: true })
         {
             var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
             if (cellContents is 2 or 8)
