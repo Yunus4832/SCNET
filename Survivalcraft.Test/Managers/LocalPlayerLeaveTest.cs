@@ -21,6 +21,23 @@ namespace Survivalcraft.Test.Managers;
 public sealed class LocalPlayerLeaveTest
 {
     [Fact]
+    public void InitialEntryRequestsBelongToTheWorldAndCompleteBeforeGameplay()
+    {
+        using var client = new RuntimeTestProject(RuntimeSide.Client);
+        using var presentation = new ClientWorldPresentation(WorldRuntimeContext.For(client), client, null, null);
+        var requests = 0;
+        presentation.EnterRequested += () => requests++;
+        Assert.True(presentation.IsEnteringWorld);
+        presentation.RequestEnter();
+        Assert.Equal(1, requests);
+        presentation.CompleteEntry();
+        Assert.False(presentation.IsEnteringWorld);
+        presentation.Dispose();
+        presentation.RequestEnter();
+        Assert.Equal(1, requests);
+    }
+
+    [Fact]
     public void LeavingLocalPlayerClearsClientPresentationAndKeepsAuthorityAlive()
     {
         var controller = (GameWorldController)typeof(GameManager)

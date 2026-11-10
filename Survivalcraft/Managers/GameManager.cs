@@ -136,6 +136,11 @@ public static class GameManager
                     request.ShowErrorDialog
                 );
                 presentation.LeaveRequested += () => LeaveGameplay();
+                project.FindSubsystem<SubsystemCharacters>(true)!.CharacterCreationRejected += error =>
+                    ScreensManager.FindScreen<GameLoadingScreen>("GameLoading", true)!
+                        .ShowCharacterCreationFailure(presentation.Runtime, error);
+                presentation.EnterRequested += () => ScreensManager.FindScreen<GameLoadingScreen>("GameLoading", true)!
+                    .ContinueCharacterPreparation(presentation.Runtime);
             }
 
             _lastAutosaveTime = Time.RealTime;

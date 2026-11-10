@@ -21,14 +21,7 @@ public class CharacterScreen : Screen
 
     private const string _typeName = nameof(CharacterScreen);
 
-    private readonly BusyDialog _fetchingPlayerDialog = new(
-        Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(CharacterScreen), "CreatingCharacter"),
-        string.Empty
-    );
-
-    private double _creationStartedAt;
-
-    private bool _creatingCharacter;
+    private bool _continuingEntry;
 
     private readonly ClickableWidget _characterSkinSelector;
 
@@ -110,10 +103,7 @@ public class CharacterScreen : Screen
 
         _playerModel.CharacterSex = _characterData.CharacterSex;
         _playerModel.CharacterSkinName = _characterData.CharacterSkinName;
-        _characterData.SubsystemCharacters.CharacterCreationRejected += OnCharacterCreationRejected;
-        _creatingCharacter = _characterData.SubsystemCharacters.PendingCharacterCreationId != Guid.Empty;
-        _creationStartedAt = Time.RealTime;
-        if (_creatingCharacter) { DialogsManager.ShowDialog(this, _fetchingPlayerDialog); }
+        _continuingEntry = false;
 
         _descriptionLabel.Text = string.Empty;
         _controlsDrawer.RefreshItems();
@@ -132,10 +122,9 @@ public class CharacterScreen : Screen
 
     public override void Leave()
     {
-        _characterData.SubsystemCharacters.CharacterCreationRejected -= OnCharacterCreationRejected;
-        _characterData.SubsystemCharacters.ClearCharacterCreationRequest();
-        DialogsManager.HideDialog(_fetchingPlayerDialog);
-        _creatingCharacter = false;
+        if (!_continuingEntry) { _characterData.SubsystemCharacters.ClearCharacterCreationRequest(); }
+
+        _continuingEntry = false;
         _characterSkinsCache.Clear();
         _characterData = null!;
     }
@@ -152,23 +141,8 @@ public class CharacterScreen : Screen
         if (_mode == Mode.Initial &&
             _characterData.SubsystemCharacters.FindCharacterData(player => player.IsLocalCharacter) is not null)
         {
-            DialogsManager.HideDialog(_fetchingPlayerDialog);
-            ScreensManager.SwitchScreen("Game");
-            return;
-        }
-
-        if (_creatingCharacter)
-        {
-            if (Time.RealTime - _creationStartedAt >= 15)
-            {
-                _characterData.SubsystemCharacters.ClearCharacterCreationRequest();
-                _creatingCharacter = false;
-                DialogsManager.HideDialog(_fetchingPlayerDialog);
-                DialogsManager.Alert(
-                    Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "CreationTimeout")
-                );
-            }
-
+            _continuingEntry = true;
+            ClientApplication.World?.RequestEnter();
             return;
         }
 
@@ -254,9 +228,8 @@ public class CharacterScreen : Screen
             if (_mode == Mode.Initial)
             {
                 _characterData.SubsystemCharacters.RequestOwnCharacterCreation(_characterData);
-                _creatingCharacter = true;
-                _creationStartedAt = Time.RealTime;
-                DialogsManager.ShowDialog(this, _fetchingPlayerDialog);
+                _continuingEntry = true;
+                ClientApplication.World?.RequestEnter();
             }
         }
 
@@ -346,20 +319,6 @@ public class CharacterScreen : Screen
                                                    : Localization.ClientLanguage.Catalog.Get(_typeName, 9)),
             _ => Localization.ClientLanguage.Catalog.Get(_typeName, 10)
         };
-    }
-
-    private void OnCharacterCreationRejected(CharacterCreationError error)
-    {
-        _creatingCharacter = false;
-        DialogsManager.HideDialog(_fetchingPlayerDialog);
-        var key = error switch
-        {
-            CharacterCreationError.ExistingCharacter => "CreationExistingCharacter",
-            CharacterCreationError.InvalidProfile => "CreationInvalidProfile",
-            CharacterCreationError.NameUnavailable => "CreationNameUnavailable",
-            _ => "CreationUnavailable"
-        };
-        DialogsManager.Alert(Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, key));
     }
 
     public bool VerifyName()

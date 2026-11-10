@@ -19,11 +19,15 @@ public sealed class ClientWorldPresentation : IDisposable
 
     public bool IsMultiplayer { get; private set; }
 
+    public bool IsEnteringWorld { get; private set; } = true;
+
     public ComponentCharacter? LocalCharacter => Project.FindSubsystem<SubsystemCharacters>()?.LocalCharacter;
 
     public event Action<ClientWorldSaveRequest>? SaveRequested;
 
     public event Action? LeaveRequested;
+
+    public event Action? EnterRequested;
 
     public ClientWorldPresentation(
         WorldRuntimeContext runtime,
@@ -64,6 +68,13 @@ public sealed class ClientWorldPresentation : IDisposable
         if (!_disposed) { LeaveRequested?.Invoke(); }
     }
 
+    public void RequestEnter()
+    {
+        if (!_disposed) { EnterRequested?.Invoke(); }
+    }
+
+    public void CompleteEntry() => IsEnteringWorld = false;
+
     private void OnProjectDisposed(Project project) => Dispose();
 
     public void Dispose()
@@ -74,5 +85,6 @@ public sealed class ClientWorldPresentation : IDisposable
         Project.Disposed -= OnProjectDisposed;
         SaveRequested = null;
         LeaveRequested = null;
+        EnterRequested = null;
     }
 }

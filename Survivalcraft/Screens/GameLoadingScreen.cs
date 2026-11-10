@@ -18,6 +18,10 @@ public class GameLoadingScreen : Screen
 {
     private const string _typeName = nameof(GameLoadingScreen);
 
+    private const double _characterSpawnTimeoutSeconds =
+        2 * CharacterData.SpawnPreparationTimeoutSeconds +
+        NetworkTransportLimits.DisconnectTimeoutMilliseconds / 1000.0;
+
     private readonly StringBuilder _builder = new();
 
     private ClientAdmissionUi? _admissionUi;
@@ -35,6 +39,8 @@ public class GameLoadingScreen : Screen
     private bool _waitingForTransport;
 
     private bool _isWorldSnapshotApplied;
+
+    private bool _resumingCharacterPreparation;
 
     private byte[] _projectXmlData = [];
 
@@ -302,19 +308,67 @@ public class GameLoadingScreen : Screen
                     Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "ApplyingSnapshot"),
                     0.8f
                 );
-                if (_isWorldSnapshotApplied &&
-                    ClientApplication.World?.Project?.FindSubsystem<SubsystemCharacters>()?.Characters
-                        .Any(player => player.IsLocalCharacter) ==
-                    true)
-                {
-                    ScreensManager.SwitchScreen("Game");
-                }
+                if (_isWorldSnapshotApplied) { _stateMachine.TransitionTo("WaitForCharacter"); }
                 else if (_timer.ElapsedMilliseconds >=
                          NetworkTransportLimits.DisconnectTimeoutMilliseconds)
                 {
                     _clientNode!.Stop(
                         Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "SnapshotTimedOut")
                     );
+                }
+            },
+            Actions.Empty
+        );
+
+        _stateMachine.AddState(
+            "WaitForCharacter",
+            delegate { _timer.Restart(); },
+            delegate
+            {
+                SetSpawnDialogMessage(
+                    Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "WaitingForCharacter"),
+                    0.85f
+                );
+                if (ClientApplication.World?.Project?.FindSubsystem<SubsystemCharacters>()?.Characters
+                        .Any(player => player.IsLocalCharacter) ==
+                    true)
+                {
+                    ClientApplication.World!.Project.FindSubsystem<SubsystemCharacters>(true)!
+                        .ClearCharacterCreationRequest();
+                    _stateMachine.TransitionTo("PrepareCharacterView");
+                }
+                else if (_timer.Elapsed.TotalSeconds >= _characterSpawnTimeoutSeconds)
+                {
+                    _clientNode!.Stop(
+                        Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "CharacterTimedOut")
+                    );
+                }
+            },
+            Actions.Empty
+        );
+
+        _stateMachine.AddState(
+            "PrepareCharacterView",
+            Actions.Empty,
+            delegate
+            {
+                var world = ClientApplication.World;
+                var character = world?.Project.FindSubsystem<SubsystemCharacters>()?.Characters
+                    .FirstOrDefault(candidate => candidate.IsLocalCharacter);
+                if (world is null || character is null) { return; }
+
+                var view = world.Project.FindSubsystem<SubsystemCharacterPresentation>(true)!.Get(character);
+                SetSpawnDialogMessage(
+                    Localization.ClientLanguage.Catalog.GetContentWidgets(
+                        _typeName,
+                        character.ComponentCharacter is null ? "WaitingForCharacter" : "PreparingView"
+                    ),
+                    0.85f + .15f * view.PreparationProgress
+                );
+                if (view.IsReadyForPlaying)
+                {
+                    world.CompleteEntry();
+                    ScreensManager.SwitchScreen("Game");
                 }
             },
             Actions.Empty
@@ -526,7 +580,7 @@ public class GameLoadingScreen : Screen
 
         CommonLib.Net.StopImmediate();
         GameManager.DisposeProject();
-        if (previous is null or LoadingScreen or GameLoadingScreen or GameScreen)
+        if (previous is null or LoadingScreen or GameLoadingScreen or GameScreen or CharacterScreen)
         {
             ScreensManager.SwitchScreen(_serverPreparation is null ? "Play" : "NetPlay");
         }
@@ -581,8 +635,53 @@ public class GameLoadingScreen : Screen
             : elapsedMilliseconds >= NetworkTransportLimits.DisconnectTimeoutMilliseconds;
     }
 
+    public void ShowCharacterCreationFailure(WorldRuntimeContext runtime, CharacterCreationError error)
+    {
+        if (!ReferenceEquals(runtime, ClientApplication.World?.Runtime) || runtime.IsClosed) { return; }
+
+        var key = error switch
+        {
+            CharacterCreationError.ExistingCharacter => "CreationExistingCharacter",
+            CharacterCreationError.InvalidProfile => "CreationInvalidProfile",
+            CharacterCreationError.NameUnavailable => "CreationNameUnavailable",
+            _ => "CreationUnavailable"
+        };
+        ScreensManager.SwitchScreen("Character", CharacterScreen.Mode.Initial, runtime.Project!);
+        DialogsManager.Alert(Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(CharacterScreen), key));
+    }
+
+    public void ContinueCharacterPreparation(WorldRuntimeContext runtime)
+    {
+        if (!ReferenceEquals(runtime, ClientApplication.World?.Runtime) || runtime.IsClosed)
+        {
+            throw new InvalidOperationException("Character preparation requires the active client world.");
+        }
+
+        var hasCharacter = ClientApplication.World!.Project.FindSubsystem<SubsystemCharacters>(true)!.Characters
+            .Any(character => character.IsLocalCharacter);
+        _stateMachine.TransitionTo(hasCharacter ? "PrepareCharacterView" : "WaitForCharacter");
+        _timer.Restart();
+        if (ReferenceEquals(ScreensManager.CurrentScreen, this)) { return; }
+
+        _resumingCharacterPreparation = true;
+        ScreensManager.SwitchScreen(this);
+    }
+
     public override void Enter(object[] parameters)
     {
+        if (_resumingCharacterPreparation)
+        {
+            _resumingCharacterPreparation = false;
+            if (ClientApplication.World?.Runtime is not { IsClosed: false })
+            {
+                AbortLoading();
+                return;
+            }
+
+            DialogsManager.ShowDialog(this, SpawnDialog);
+            return;
+        }
+
         _temporaryAuthorization = null;
         _admissionUi?.Dispose();
         _admissionUi = null;

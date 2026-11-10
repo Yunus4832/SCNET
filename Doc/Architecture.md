@@ -111,7 +111,7 @@ Both 表示两个独立实例分别执行共享计算，仍需在实例内部区
 地形请求可在 Bootstrap 已应用后开始，以便加载世界。认证证明、阶段确认和主动断开消息分别由相应处理器验证。
 `SessionTarget.World` 表达直接进入游戏，`HostedWorld` 表达仅开服并进入服务器页；它们用于启动与恢复。
 GUI 返回目标由 `GameManager.LocalPlayerReturnTarget` 持有：直接游戏退出时关闭世界，从服务器页加入后退出则保留服务器。
-客户端菜单通过 `ClientWorldPresentation` 提交保存或退出意图，综合应用绑定相应生命周期操作。启动和服务器管理页面调用应用装配服务，再通过 `ScreensManager.SwitchScreen` 切换页面。
+客户端菜单和角色页通过 `ClientWorldPresentation` 提交进入、保存或退出意图，综合应用绑定相应生命周期操作。启动和服务器管理页面调用应用装配服务，再通过 `ScreensManager.SwitchScreen` 切换页面。
 本机玩家移除通过 `LocalPlayerRemoved` 通知当前页面；节点停止通知携带来源运行时，当前游戏运行时只处理属于自身世界的通知。
 网络节点不直接切换界面。
 世界文件的替换、删除和快照恢复以权威世界的目录归属为准，不能通过 GUI 当前指向客户端副本来绕过保护；关闭后尚未释放的世界资源也仍受保护。

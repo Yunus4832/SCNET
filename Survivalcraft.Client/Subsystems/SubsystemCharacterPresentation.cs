@@ -103,7 +103,7 @@ public sealed class SubsystemCharacterPresentation : Subsystem, IUpdateable
         if (WorldNetworkBinding.For(runtime).RequireNode().Self?.PlayerAddress is not null &&
             _characters.Characters.All(character => !character.IsLocalCharacter))
         {
-            if (!TryPrepareStartupCharacter())
+            if (_characters.PendingCharacterCreationId == Guid.Empty && !TryPrepareStartupCharacter())
             {
                 ScreensManager.SwitchScreen("Character", CharacterScreen.Mode.Initial, Project);
             }
@@ -112,7 +112,7 @@ public sealed class SubsystemCharacterPresentation : Subsystem, IUpdateable
                  _characters.Characters.Any(character => character.IsLocalCharacter))
         {
             _startupCharacterCreateRequested = false;
-            ScreensManager.SwitchScreen("Game");
+            ClientApplication.World?.RequestEnter();
         }
 
         foreach (var character in _characters.Characters)

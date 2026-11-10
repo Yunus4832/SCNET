@@ -23,6 +23,8 @@ public partial class CharacterData : IDisposable
 
     public const string TypeName = nameof(CharacterData);
 
+    public const double SpawnPreparationTimeoutSeconds = 15;
+
     private static readonly Regex _validNameRegex = GenValidNameRegex();
 
     public bool IsDead;
@@ -274,11 +276,10 @@ public partial class CharacterData : IDisposable
                     return;
                 }
 
-                var initialVisibility = 64f;
-                var updateProgress2 =
-                    _spawnPreparation!.GetProgress(initialVisibility, 64f);
+                var updateProgress2 = _spawnPreparation!.GetProgress(0f, 64f);
 
-                if (updateProgress2 < 1f && Time.FrameStartTime - _terrainWaitStartTime < 15.0)
+                if (updateProgress2 < 1f &&
+                    Time.FrameStartTime - _terrainWaitStartTime < SpawnPreparationTimeoutSeconds)
                 {
                     return;
                 }
@@ -317,7 +318,7 @@ public partial class CharacterData : IDisposable
                 var updateProgress = _spawnPreparation!.GetProgress(32f, 0f);
 
                 if ((!(updateProgress >= 1f) || !(Time.FrameStartTime - _terrainWaitStartTime > 2.0)) &&
-                    !(Time.FrameStartTime - _terrainWaitStartTime >= 15.0))
+                    !(Time.FrameStartTime - _terrainWaitStartTime >= SpawnPreparationTimeoutSeconds))
                 {
                     return;
                 }

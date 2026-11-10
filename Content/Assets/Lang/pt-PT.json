@@ -3076,7 +3076,10 @@
             "ConnectionTimedOut": "O tempo de ligação expirou",
             "Disconnected": "Ligação encerrada",
             "ServerDisconnected": "A ligação ao servidor foi terminada",
-            "SnapshotTimedOut": "O tempo de espera pelo estado inicial do mundo expirou"
+            "SnapshotTimedOut": "O tempo de espera pelo estado inicial do mundo expirou",
+            "WaitingForCharacter": "A aguardar a personagem",
+            "CharacterTimedOut": "O tempo de espera pela personagem expirou. Tente novamente.",
+            "PreparingView": "A preparar a apresentação do terreno próximo"
         },
         "HelpScreen": {
             "1": "Ajuda Interface",
@@ -3602,8 +3605,6 @@
             "6": "Modo de controle",
             "7": "...",
             "10": "Comece o jogo",
-            "CreatingCharacter": "A criar personagem…",
-            "CreationTimeout": "O pedido expirou. Podes tentar novamente; volta a ligar para recuperar uma personagem já criada.",
             "CreationExistingCharacter": "Este sujeito já tem uma personagem. Volta a ligar para a recuperar.",
             "CreationInvalidProfile": "O nome ou aspeto da personagem é inválido. Corrige e tenta novamente.",
             "CreationNameUnavailable": "Este nome já é usado neste mundo. Escolhe outro nome.",
@@ -4448,7 +4449,7 @@
         "1": "Os dados do jogador não podem ser alterados enquanto os dados do jogador estão presentes.",
         "2": "A renascer a personagem {0} (Nível {1})",
         "3": "Seus itens permanecerão por algum tempo após sua morte.",
-        "4": "A criar a personagem {0} (Nível {1})",
+        "4": "A preparar a vista de {0} (nível {1})",
         "5": "Modo de construção inválido",
         "6": "Você está morto!",
         "7": "{0} (em inglês)\n\nNão pode renascer no modo '{1}'",
@@ -4459,7 +4460,7 @@
         "12": "Desconhecido",
         "13": "Causa da morte: {0}",
         "14": "A entrar no mundo com a personagem {0} (Nível {1})",
-        "15": "A aguardar a entidade da personagem enviada pelo servidor",
+        "15": "A preparar o local de aparecimento",
         "16": "Morreste no modo Cruel e não podes renascer.",
         "17": "O servidor desativou o reaparecimento de personagens!"
     },

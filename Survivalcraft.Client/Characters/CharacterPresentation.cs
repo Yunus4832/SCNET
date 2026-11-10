@@ -1,3 +1,4 @@
+using Game.Application;
 using Game.Network.Transport;
 
 namespace Game.Characters;
@@ -44,6 +45,8 @@ public sealed class CharacterPresentation : IDisposable
     }
 
     public CharacterViewState State { get; private set; }
+
+    public float PreparationProgress => _progress;
 
     public bool IsReadyForPlaying => State is CharacterViewState.Playing or CharacterViewState.Dead;
 
@@ -257,6 +260,13 @@ public sealed class CharacterPresentation : IDisposable
 
     private void ShowSpawnDialog(string large, string small)
     {
+        if (ClientApplication.World is { IsEnteringWorld: true } world &&
+            ReferenceEquals(world.Project, CharacterData.Project))
+        {
+            HideSpawnDialog();
+            return;
+        }
+
         if (_spawnDialog is null)
         {
             _spawnDialog = new SpawnDialog();
