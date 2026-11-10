@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <IsPackable>false</IsPackable>
@@ -12,11 +11,13 @@
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4"/>
     </ItemGroup>
 
-
     <ItemGroup>
         <ProjectReference Include="../Engine/Engine.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <None Update="TestAssets/Models/*.glb" CopyToOutputDirectory="PreserveNewest"/>
-        <None Include="..\Content\Assets\Models\StoneClub.glb" Link="TestAssets/StoneClub.glb"
+        <None Include="../Content/Assets/Models/StoneClub.glb" Link="TestAssets/StoneClub.glb"
               CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 

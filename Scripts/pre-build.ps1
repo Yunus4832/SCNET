@@ -7,6 +7,7 @@ param(
 $ErrorActionPreference = "Stop"
 Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
+    New-Item -ItemType Directory -Path "Publish/NuGet" -Force | Out-Null
     $packages = @(
         @{ Id = "SCNET.Native.ImageCodecs"; Project = "Native.ImageCodecs/Native.ImageCodecs.csproj" },
         @{ Id = "SCNET.Native.OpenAL"; Project = "Native.OpenAL/Native.OpenAL.csproj" },

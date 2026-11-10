@@ -11,6 +11,7 @@ for argument in "$@"; do
     esac
 done
 cd "$repository_root"
+mkdir -p Publish/NuGet
 packages=(
     "SCNET.Native.ImageCodecs|Native.ImageCodecs/Native.ImageCodecs.csproj"
     "SCNET.Native.OpenAL|Native.OpenAL/Native.OpenAL.csproj"

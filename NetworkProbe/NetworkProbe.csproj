@@ -7,8 +7,13 @@
         <OutputFileName>network-probe-$(ToolsVersion)-portable.zip</OutputFileName>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="../Engine.Network/Engine.Network.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <None Update="README.md" CopyToPublishDirectory="PreserveNewest"/>
     </ItemGroup>
+
 </Project>

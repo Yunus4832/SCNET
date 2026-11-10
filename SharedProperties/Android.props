@@ -18,4 +18,5 @@
         <AndroidLinkMode>None</AndroidLinkMode>
         <LinkAll>true</LinkAll>
     </PropertyGroup>
+
 </Project>

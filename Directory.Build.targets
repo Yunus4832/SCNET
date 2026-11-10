@@ -6,20 +6,31 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <_GuiAtlasSourceDirectory>$(SolutionRoot)GuiAtlasTool\Assets</_GuiAtlasSourceDirectory>
-        <_GuiAtlasTexture>$(SolutionRoot)Content\Assets\Atlases\AtlasTexture.webp</_GuiAtlasTexture>
-        <_GuiAtlasDefinition>$(SolutionRoot)Content\Assets\Atlases\Atlas.txt</_GuiAtlasDefinition>
-        <_GuiAtlasToolProject>$(SolutionRoot)GuiAtlasTool\GuiAtlasTool.csproj</_GuiAtlasToolProject>
-        <_GuiAtlasToolAssembly>$(SolutionRoot)GuiAtlasTool\bin\$(Configuration)\$(GlobalTargetFramework)\SCNET.GuiAtlasTool.dll</_GuiAtlasToolAssembly>
+        <_GuiAtlasSourceDirectory>$(SolutionRoot)GuiAtlasTool/Assets</_GuiAtlasSourceDirectory>
+        <_GuiAtlasTexture>$(SolutionRoot)Content/Assets/Atlases/AtlasTexture.webp</_GuiAtlasTexture>
+        <_GuiAtlasDefinition>$(SolutionRoot)Content/Assets/Atlases/Atlas.txt</_GuiAtlasDefinition>
+        <_GuiAtlasToolProject>$(SolutionRoot)GuiAtlasTool/GuiAtlasTool.csproj</_GuiAtlasToolProject>
+        <_GuiAtlasToolAssembly>$(SolutionRoot)GuiAtlasTool/bin/$(Configuration)/$(GlobalTargetFramework)/SCNET.GuiAtlasTool.dll</_GuiAtlasToolAssembly>
     </PropertyGroup>
 
     <ItemGroup>
-        <MyContentFiles Include="$(MSBuildProjectDirectory)\..\Content\**\*.*"
+        <MyContentFiles Include="$(SolutionRoot)Content/**/*.*"
                         Exclude="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
         <MyContentFiles Include="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
-        <_GuiAtlasSources Include="$(_GuiAtlasSourceDirectory)\**\*.svg;$(_GuiAtlasSourceDirectory)\**\*.png;$(_GuiAtlasSourceDirectory)\**\*.webp"/>
-        <_GuiAtlasToolSources Include="$(SolutionRoot)GuiAtlasTool\**\*.cs;$(SolutionRoot)GuiAtlasTool\GuiAtlasTool.csproj"
-                              Exclude="$(SolutionRoot)GuiAtlasTool\bin\**\*;$(SolutionRoot)GuiAtlasTool\obj\**\*"/>
+        <_GuiAtlasSources Include="$(_GuiAtlasSourceDirectory)/**/*.svg;$(_GuiAtlasSourceDirectory)/**/*.png;$(_GuiAtlasSourceDirectory)/**/*.webp"/>
+        <_GuiAtlasToolSources Include="$(SolutionRoot)GuiAtlasTool/**/*.cs;$(SolutionRoot)GuiAtlasTool/GuiAtlasTool.csproj"
+                              Exclude="$(SolutionRoot)GuiAtlasTool/bin/**/*;$(SolutionRoot)GuiAtlasTool/obj/**/*"/>
+    </ItemGroup>
+
+    <!-- 图集工具作为主机工具参与构建依赖排序。 -->
+    <ItemGroup Condition="'$(UsePackResourceTarget)' == 'true'">
+        <ProjectReference Include="$(_GuiAtlasToolProject)"
+                          ReferenceOutputAssembly="false"
+                          Private="false"
+                          PrivateAssets="all"
+                          ExcludeAssets="all"
+                          SkipGetTargetFrameworkProperties="true"
+                          GlobalPropertiesToRemove="NoBuild;DeployOnBuild;EnableDefaultItems;EnableDefaultCompileItems;TargetFramework;TargetFrameworks;RuntimeIdentifier;RuntimeIdentifiers;SelfContained;TargetPlatformIdentifier;TargetPlatformVersion;TargetPlatformMinVersion;SupportedOSPlatformVersion;OutputPath;IntermediateOutputPath;BaseOutputPath;BaseIntermediateOutputPath"/>
     </ItemGroup>
 
     <Target Name="GenerateGuiAtlas"
@@ -27,10 +38,6 @@
             Condition="'$(UsePackResourceTarget)' == 'true'"
             Inputs="@(_GuiAtlasSources);$(_GuiAtlasSourceDirectory);@(_GuiAtlasToolSources)"
             Outputs="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)">
-        <!-- 图集工具在构建主机运行，不继承应用的目标平台和输出路径。 -->
-        <MSBuild Projects="$(_GuiAtlasToolProject)" Targets="Build"
-                 RemoveProperties="NoBuild;DeployOnBuild;EnableDefaultItems;EnableDefaultCompileItems;TargetFramework;TargetFrameworks;RuntimeIdentifier;RuntimeIdentifiers;SelfContained;TargetPlatformIdentifier;TargetPlatformVersion;TargetPlatformMinVersion;SupportedOSPlatformVersion;OutputPath;IntermediateOutputPath;BaseOutputPath;BaseIntermediateOutputPath"
-                 Properties="Configuration=$(Configuration)"/>
         <Exec Command="dotnet &quot;$(_GuiAtlasToolAssembly)&quot; generate &quot;$(_GuiAtlasSourceDirectory)&quot; &quot;$(_GuiAtlasTexture)&quot; &quot;$(_GuiAtlasDefinition)&quot;"/>
     </Target>
 
@@ -50,16 +57,12 @@
     <!-- 增量打包资源 -->
     <Target Name="PackResource"
             BeforeTargets="BeforeBuild"
+            DependsOnTargets="ResolveProjectReferences"
             Condition="'$(UsePackResourceTarget)' == 'true'"
             Inputs="@(MyContentFiles);$(_ContentManifest)"
-            Outputs="$(MSBuildProjectDirectory)\Content.zip">
-        <PropertyGroup>
-            <_CurDir>$(MSBuildProjectDirectory)\</_CurDir>
-            <_ContentDir>$([System.IO.Path]::GetFullPath('$(_CurDir)..\Content').TrimEnd('\'))</_ContentDir>
-        </PropertyGroup>
-
+            Outputs="$(MSBuildProjectDirectory)/Content.zip">
         <Message Text="[PackResource] 正在执行增量打包..." Importance="high"/>
-        <ZipDirectory SourceDirectory="$(_ContentDir)" DestinationFile="$(_CurDir)Content.zip" Overwrite="true"/>
+        <ZipDirectory SourceDirectory="$(SolutionRoot)Content" DestinationFile="$(MSBuildProjectDirectory)/Content.zip" Overwrite="true"/>
     </Target>
 
     <!-- 检查是否定义了 OutputFileName 属性 -->
@@ -84,4 +87,5 @@
         <Copy SourceFiles="$([System.IO.Path]::GetFullPath('$(OutputPath)$(ApplicationId)-Signed.apk'))"
               DestinationFiles="$(SolutionRoot)/Publish/$(OutputApkName)"/>
     </Target>
+
 </Project>

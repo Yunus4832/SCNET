@@ -9,9 +9,11 @@
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <RootNamespace>SCNET.Authentication.Server</RootNamespace>
     </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="../Authentication.Protocol/Authentication.Protocol.csproj"/>
     </ItemGroup>
+
     <ItemGroup>
         <None Update="Deployment/run.sh" CopyToPublishDirectory="PreserveNewest"/>
         <None Update="Deployment/run.ps1" CopyToPublishDirectory="PreserveNewest"/>
@@ -21,4 +23,5 @@
         <Content Include="../ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt" CopyToPublishDirectory="PreserveNewest"/>
         <Content Remove="**/appsettings*.json;AuthenticationData/**;**/*.p8;**/*.pfx;**/*.key;**/authorizations.json;**/provider.env"/>
     </ItemGroup>
+
 </Project>

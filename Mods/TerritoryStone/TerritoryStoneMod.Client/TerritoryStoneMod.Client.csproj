@@ -8,9 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="../TerritoryStoneMod/TerritoryStoneMod.csproj"/>
         <PackageReference Include="SCNET.Survivalcraft.Client" Version="$(GameVersion)" ExcludeAssets="runtime"/>
         <PackageReference Include="SCNET.ContentTool" Version="$(ContentToolVersion)" PrivateAssets="all"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../TerritoryStoneMod/TerritoryStoneMod.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -26,4 +29,5 @@
         <WriteLinesToFile File="$(SurvivalcraftModManifest)" Lines="$(_ClientModManifest)"
                           Overwrite="true" WriteOnlyWhenDifferent="true"/>
     </Target>
+
 </Project>

@@ -2,13 +2,17 @@
     <PropertyGroup>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
     </PropertyGroup>
+
     <ItemGroup>
         <None Update="Fixtures/openssl-approval.json" CopyToOutputDirectory="PreserveNewest"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
         <PackageReference Include="xunit" Version="2.9.3"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4"/>
+    </ItemGroup>
 
+    <ItemGroup>
         <ProjectReference Include="../Authentication.Protocol/Authentication.Protocol.csproj"/>
         <ProjectReference Include="../Engine.Network/Engine.Network.csproj"/>
     </ItemGroup>
+
 </Project>

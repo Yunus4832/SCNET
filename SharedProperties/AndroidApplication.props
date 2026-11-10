@@ -7,7 +7,7 @@
         <OutputType>Exe</OutputType>
         <UsePackResourceTarget>true</UsePackResourceTarget>
         <UseRenameApkTarget Condition="'$(Configuration)' == 'Release'">true</UseRenameApkTarget>
-        <AndroidManifest>..\SharedResources\Android\AndroidManifest.xml</AndroidManifest>
+        <AndroidManifest>../SharedResources/Android/AndroidManifest.xml</AndroidManifest>
         <ApplicationVersion>$(AndroidReleaseCode)</ApplicationVersion>
         <ApplicationDisplayVersion>$(GameVersion)</ApplicationDisplayVersion>
         <Version>$(GameVersion)</Version>
@@ -17,20 +17,20 @@
 
     <!-- 四种架构共用同一份图标及 Android 平台资源。 -->
     <ItemGroup>
-        <AndroidResource Include="$(MSBuildThisFileDirectory)..\SharedResources\AppIcon\icon.png"
-                         Link="Resources\mipmap\icon.png"/>
-        <AndroidResource Include="$(MSBuildThisFileDirectory)..\SharedResources\Android\**\*"
-                         Exclude="$(MSBuildThisFileDirectory)..\SharedResources\Android\AndroidManifest.xml"
-                         Link="Resources\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <AndroidResource Include="$(MSBuildThisFileDirectory)../SharedResources/AppIcon/icon.png"
+                         Link="Resources/mipmap/icon.png"/>
+        <AndroidResource Include="$(MSBuildThisFileDirectory)../SharedResources/Android/**/*"
+                         Exclude="$(MSBuildThisFileDirectory)../SharedResources/Android/AndroidManifest.xml"
+                         Link="Resources/%(RecursiveDir)%(Filename)%(Extension)"/>
     </ItemGroup>
 
     <ItemGroup>
-        <AndroidAsset Include="$(MSBuildProjectDirectory)\Content.zip" Link="Assets\Content.zip"/>
+        <AndroidAsset Include="$(MSBuildProjectDirectory)/Content.zip" Link="Assets/Content.zip"/>
     </ItemGroup>
 
     <ItemGroup>
-        <AndroidAsset Include="$(MSBuildThisFileDirectory)..\ThirdPartyNotices.txt"
-                      Link="Assets\ThirdPartyNotices.txt"/>
+        <AndroidAsset Include="$(MSBuildThisFileDirectory)../ThirdPartyNotices.txt"
+                      Link="Assets/ThirdPartyNotices.txt"/>
     </ItemGroup>
 
 </Project>

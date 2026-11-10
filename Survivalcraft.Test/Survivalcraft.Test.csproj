@@ -1,25 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         <PackageReference Include="coverlet.collector" Version="6.0.4"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
         <PackageReference Include="xunit" Version="2.9.3"/>
@@ -27,18 +12,17 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="../Content.Packaging/Content.Packaging.csproj"/>
+        <ProjectReference Include="../Survivalcraft/Survivalcraft.csproj"/>
+    </ItemGroup>
 
+    <ItemGroup>
         <Compile Include="../Engine.Network.Test/Security/DatagramSecurityProxy.cs"
                  Link="Fixtures/DatagramSecurityProxy.cs"/>
         <None Update="Fixtures/BuiltInBlocks.txt" CopyToOutputDirectory="PreserveNewest"/>
         <None Update="Fixtures/BlockCollisionGeometryBaseline.json" CopyToOutputDirectory="PreserveNewest"/>
-        <None Include="..\Content\Assets\Database.xml" Link="Fixtures\Database.xml"
+        <None Include="../Content/Assets/Database.xml" Link="Fixtures/Database.xml"
               CopyToOutputDirectory="PreserveNewest"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="../Content.Packaging/Content.Packaging.csproj"/>
-        <ProjectReference Include="../Survivalcraft/Survivalcraft.csproj"/>
     </ItemGroup>
 
 </Project>

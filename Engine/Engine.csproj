@@ -3,6 +3,7 @@
         <Version>$(EngineVersion)</Version>
         <AssemblyName>Engine</AssemblyName>
         <TargetFrameworks>$(GlobalTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
+        <IsRidAgnostic>true</IsRidAgnostic>
         <IsPackable>true</IsPackable>
         <PackageId>SCNET.Engine</PackageId>
         <Description>Cross-platform engine runtime used by SCNET Survivalcraft.</Description>
@@ -34,34 +35,31 @@
         <PackageReference Include="Silk.NET.Windowing.Common" Version="2.23.0"/>
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
-        <PackageReference Include="Silk.NET.Input.Sdl" Version="2.23.0"/>
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
-        <Compile Remove="**\*.Desktop.cs"/>
-        <PackageReference Include="Xamarin.AndroidX.Core" Version="1.17.0.1"/>
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
-        <Compile Remove="**\*.Android.cs"/>
-    </ItemGroup>
-
-
-    <ItemGroup>
-        <EmbeddedResource Include="..\Engine\Resources\Unlit.vsh" LogicalName="Engine.Resources.Unlit.vsh"/>
-        <EmbeddedResource Include="..\Engine\Resources\Unlit.psh" LogicalName="Engine.Resources.Unlit.psh"/>
-        <EmbeddedResource Include="..\Engine\Resources\Lit.psh" LogicalName="Engine.Resources.Lit.psh"/>
-        <EmbeddedResource Include="..\Engine\Resources\Lit.vsh" LogicalName="Engine.Resources.Lit.vsh"/>
-    </ItemGroup>
-
     <ItemGroup>
         <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
         <ProjectReference Include="../Engine.Media/Engine.Media.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
+        <Compile Remove="**/*.Android.cs"/>
+        <PackageReference Include="Silk.NET.Input.Sdl" Version="2.23.0"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
+        <Compile Remove="**/*.Desktop.cs"/>
+        <PackageReference Include="Xamarin.AndroidX.Core" Version="1.17.0.1"/>
+    </ItemGroup>
+
     <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="\"/>
+        <EmbeddedResource Include="../Engine/Resources/Unlit.vsh" LogicalName="Engine.Resources.Unlit.vsh"/>
+        <EmbeddedResource Include="../Engine/Resources/Unlit.psh" LogicalName="Engine.Resources.Unlit.psh"/>
+        <EmbeddedResource Include="../Engine/Resources/Lit.psh" LogicalName="Engine.Resources.Lit.psh"/>
+        <EmbeddedResource Include="../Engine/Resources/Lit.vsh" LogicalName="Engine.Resources.Lit.vsh"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>
 
 </Project>

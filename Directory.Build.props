@@ -44,4 +44,5 @@
         <Optimize>true</Optimize>
         <PublishTrimmed>false</PublishTrimmed>
     </PropertyGroup>
+
 </Project>

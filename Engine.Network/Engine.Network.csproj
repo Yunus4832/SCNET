@@ -7,16 +7,25 @@
         <Description>SCNET transport hosts, connection lifecycle and invitation paths.</Description>
         <PackageTags>scnet;engine;network</PackageTags>
     </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="LiteNetLib" Version="0.9.5.2"/>
         <PackageReference Include="BouncyCastle.Cryptography" Version="2.8.0-beta.349"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="../Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
         <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <InternalsVisibleTo Include="Engine.Network.Test"/>
         <InternalsVisibleTo Include="Survivalcraft.Test"/>
         <InternalsVisibleTo Include="RendezvousServer.Test"/>
     </ItemGroup>
+
     <ItemGroup>
         <None Update="README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>
+
 </Project>

@@ -22,6 +22,7 @@
                  Exclude="Survivalcraft.Mod/.template.config/**/*;Survivalcraft.Mod/**/*.csproj;Survivalcraft.Mod/manifest.json;Survivalcraft.Mod/**/bin/**/*;Survivalcraft.Mod/**/obj/**/*"
                  PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)"/>
     </ItemGroup>
+
     <Target Name="GenerateTemplateVersions" BeforeTargets="_GetPackageFiles">
         <PropertyGroup>
             <_GeneratedTemplateDirectory>$(IntermediateOutputPath)template</_GeneratedTemplateDirectory>
@@ -41,4 +42,5 @@
             <Content Include="$(_ClientProject)" Pack="true" PackagePath="content/Survivalcraft.ModTemplate.Client/Survivalcraft.ModTemplate.Client.csproj"/>
         </ItemGroup>
     </Target>
+
 </Project>

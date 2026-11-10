@@ -2,38 +2,38 @@
     <PropertyGroup>
         <BuildContentWebUIEnabled Condition="'$(BuildContentWebUIEnabled)' == ''">true</BuildContentWebUIEnabled>
         <BuildContentServerArtifacts Condition="'$(BuildContentServerArtifacts)' == ''">true</BuildContentServerArtifacts>
-        <ContentWebUIDist>$(MSBuildThisFileDirectory)..\ContentWebUI\dist</ContentWebUIDist>
+        <ContentWebUIDist>$(MSBuildThisFileDirectory)../ContentWebUI/dist</ContentWebUIDist>
         <ContentWebUIOutDir>$(MSBuildThisFileDirectory)wwwroot</ContentWebUIOutDir>
-        <ContentWebUIProjectDir>$(MSBuildThisFileDirectory)..\ContentWebUI</ContentWebUIProjectDir>
-        <ContentServerRepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..'))</ContentServerRepositoryRoot>
-        <ContentServerArtifactRoot>$(BaseIntermediateOutputPath)artifacts\$(Configuration)\</ContentServerArtifactRoot>
-        <ContentServerPortablePublishDir>$(ContentServerArtifactRoot)portable\</ContentServerPortablePublishDir>
-        <ContentServerLinuxPublishDir>$(ContentServerArtifactRoot)linux-x64\</ContentServerLinuxPublishDir>
-        <ContentServerPublishRoot>$(ContentServerRepositoryRoot)\Publish</ContentServerPublishRoot>
-        <ContentServerPortableArchive>$(ContentServerPublishRoot)\content-server-$(Version)-portable.zip</ContentServerPortableArchive>
+        <ContentWebUIProjectDir>$(MSBuildThisFileDirectory)../ContentWebUI</ContentWebUIProjectDir>
+        <ContentServerRepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/..'))</ContentServerRepositoryRoot>
+        <ContentServerArtifactRoot>$(BaseIntermediateOutputPath)artifacts/$(Configuration)/</ContentServerArtifactRoot>
+        <ContentServerPortablePublishDir>$(ContentServerArtifactRoot)portable/</ContentServerPortablePublishDir>
+        <ContentServerLinuxPublishDir>$(ContentServerArtifactRoot)linux-x64/</ContentServerLinuxPublishDir>
+        <ContentServerPublishRoot>$(ContentServerRepositoryRoot)/Publish</ContentServerPublishRoot>
+        <ContentServerPortableArchive>$(ContentServerPublishRoot)/content-server-$(Version)-portable.zip</ContentServerPortableArchive>
     </PropertyGroup>
 
     <Target Name="BuildContentWebUI"
             BeforeTargets="Build"
-            Condition="'$(BuildContentWebUIEnabled)' == 'true' AND '$(DesignTimeBuild)' != 'true' AND Exists('$(ContentWebUIProjectDir)\package.json')">
+            Condition="'$(BuildContentWebUIEnabled)' == 'true' AND '$(DesignTimeBuild)' != 'true' AND Exists('$(ContentWebUIProjectDir)/package.json')">
         <Exec Command="npm run build" WorkingDirectory="$(ContentWebUIProjectDir)"/>
     </Target>
 
     <Target Name="CopyContentWebUI"
             BeforeTargets="Build"
             DependsOnTargets="BuildContentWebUI"
-            Condition="'$(BuildContentWebUIEnabled)' == 'true' AND Exists('$(ContentWebUIDist)\index.html')">
+            Condition="'$(BuildContentWebUIEnabled)' == 'true' AND Exists('$(ContentWebUIDist)/index.html')">
         <ItemGroup>
-            <_OldWebFiles Include="$(ContentWebUIOutDir)\*.html;$(ContentWebUIOutDir)\site.css;$(ContentWebUIOutDir)\site.js"/>
-            <_OldWebAssetDir Include="$(ContentWebUIOutDir)\assets"/>
+            <_OldWebFiles Include="$(ContentWebUIOutDir)/*.html;$(ContentWebUIOutDir)/site.css;$(ContentWebUIOutDir)/site.js"/>
+            <_OldWebAssetDir Include="$(ContentWebUIOutDir)/assets"/>
         </ItemGroup>
         <Delete Files="@(_OldWebFiles)"/>
         <RemoveDir Directories="@(_OldWebAssetDir)"/>
         <ItemGroup>
-            <_WebFiles Include="$(ContentWebUIDist)\**\*.*"/>
+            <_WebFiles Include="$(ContentWebUIDist)/**/*.*"/>
         </ItemGroup>
         <Copy SourceFiles="@(_WebFiles)"
-              DestinationFiles="@(_WebFiles->'$(ContentWebUIOutDir)\%(RecursiveDir)%(Filename)%(Extension)')"
+              DestinationFiles="@(_WebFiles->'$(ContentWebUIOutDir)/%(RecursiveDir)%(Filename)%(Extension)')"
               SkipUnchangedFiles="true"/>
         <Message Importance="high" Text="[ContentServer] 已发布前端产物到 wwwroot"/>
     </Target>

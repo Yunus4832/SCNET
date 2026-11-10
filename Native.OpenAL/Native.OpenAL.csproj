@@ -10,8 +10,8 @@
         <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     </PropertyGroup>
     <ItemGroup>
-        <None Update="README.md" Pack="true" PackagePath="\"/>
-        <None Include="..\ThirdPartyNotices.txt" Pack="true" PackagePath="\"/>
+        <None Update="README.md" Pack="true" PackagePath="/"/>
+        <None Include="../ThirdPartyNotices.txt" Pack="true" PackagePath="/"/>
         <None Update="runtimes/android-arm/native/libopenal.so" Pack="true" PackagePath="runtimes/android-arm/native/libopenal.so"/>
         <None Update="runtimes/android-arm64/native/libopenal.so" Pack="true" PackagePath="runtimes/android-arm64/native/libopenal.so"/>
         <None Update="runtimes/android-x86/native/libopenal.so" Pack="true" PackagePath="runtimes/android-x86/native/libopenal.so"/>

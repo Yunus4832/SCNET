@@ -6,19 +6,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="../Content.Packaging/Content.Packaging.csproj"/>
-        <ProjectReference Include="../ServerSource.Protocol/ServerSource.Protocol.csproj"/>
-        <ProjectReference Include="../Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
-        <ProjectReference Include="../Authentication.Protocol/Authentication.Protocol.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-            <_Parameter1>ContentServer.Test</_Parameter1>
-        </AssemblyAttribute>
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="FastEndpoints" Version="8.3.0"/>
         <PackageReference Include="MediatR" Version="12.5.0"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
@@ -32,7 +19,21 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="..\ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt"
+        <ProjectReference Include="../Content.Packaging/Content.Packaging.csproj"/>
+        <ProjectReference Include="../ServerSource.Protocol/ServerSource.Protocol.csproj"/>
+        <ProjectReference Include="../Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
+        <ProjectReference Include="../Authentication.Protocol/Authentication.Protocol.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>ContentServer.Test</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="../ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt"
                  CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest"/>
     </ItemGroup>
+
 </Project>

@@ -1,4 +1,4 @@
 interface:
   display_name: "SCNET Code Style"
-  short_description: "Apply C# style with distinct Roslyn and JetBrains formatting checks."
-  default_prompt: "Use $scnet-code-style to organize project-owned global imports and validate the C# files changed in this task, using Roslyn checks and JetBrains formatting for their respective rules."
+  short_description: "Apply SCNET C# style and MSBuild project-file conventions."
+  default_prompt: "Use $scnet-code-style to review C# and project-file changes, apply the relevant layout and ownership conventions, and run focused validation."

@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <Version>$(EngineVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
@@ -9,9 +8,8 @@
         <PackageTags>scnet;engine;core</PackageTags>
     </PropertyGroup>
 
-
     <ItemGroup>
-        <None Update="README.md" Pack="true" PackagePath="\"/>
+        <None Update="README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>
 
 </Project>

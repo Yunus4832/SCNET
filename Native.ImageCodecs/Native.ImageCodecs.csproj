@@ -10,8 +10,8 @@
         <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     </PropertyGroup>
     <ItemGroup>
-        <None Update="README.md" Pack="true" PackagePath="\"/>
-        <None Include="..\ThirdPartyNotices.txt" Pack="true" PackagePath="\"/>
+        <None Update="README.md" Pack="true" PackagePath="/"/>
+        <None Include="../ThirdPartyNotices.txt" Pack="true" PackagePath="/"/>
         <None Update="runtimes/linux-x64/native/libpng.so;runtimes/linux-x64/native/libwebp.so;runtimes/linux-x64/native/libsharpyuv.so" Pack="true" PackagePath="runtimes/linux-x64/native/%(Filename)%(Extension)"/>
         <None Update="runtimes/win-x64/native/libpng16.dll;runtimes/win-x64/native/libwebp.dll;runtimes/win-x64/native/libsharpyuv.dll" Pack="true" PackagePath="runtimes/win-x64/native/%(Filename)%(Extension)"/>
         <None Update="runtimes/android-arm/native/libpng.so;runtimes/android-arm/native/libwebp.so" Pack="true" PackagePath="runtimes/android-arm/native/%(Filename)%(Extension)"/>

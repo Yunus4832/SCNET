@@ -1,6 +1,6 @@
 ---
 name: scnet-code-style
-description: "Apply and verify SCNET C# code style, file organization, namespace placement, global imports, project ownership, Roslyn style checks, and JetBrains formatting when creating, editing, moving, or reviewing C# and project files; use before completing any C# change."
+description: "Apply SCNET C# style and MSBuild project-file layout when editing or reviewing C#, csproj, props, targets, esproj or slnx files. Covers global imports, project ownership, XML grouping, paths and focused style validation."
 ---
 
 # SCNET Code Style
@@ -41,6 +41,13 @@ exclude generated files and dependency copies, inspect representative output bef
 and verify that formatting does not change code tokens, literal values or preprocessor directives.
 Compare against that saved baseline, not just HEAD when earlier edits are pending. Check stability
 with a second formatting pass; inspect conflicts between formatters instead of alternating them.
+
+## Project files
+
+When editing or reviewing `.csproj`, `.props`, `.targets`, `.esproj` or `.slnx`, read
+[project file style](references/project-files.md). It defines grouping, spacing, path conventions
+and the semantic checks needed when reorganizing MSBuild XML. Start from the user's current diff
+and preserve evaluation and build order while applying layout changes.
 
 ## Global imports
 

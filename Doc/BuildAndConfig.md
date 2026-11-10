@@ -21,9 +21,19 @@
 这些属性会被大多数项目自动继承，所以单个项目里通常只需要写差异部分。
 
 项目自身的目标框架引用 `GlobalTargetFramework` 或 `AndroidTargetFramework`；Windows 启动器
-在通用框架后追加 `-windows`。受已知 MSBuild 缺陷影响，`ProjectReference.SetTargetFramework`
-仍须硬编码，平台引用的 RID 也按现有约定固定，不应将这些缺陷规避改为属性引用。
-框架升级时需同步检查这些引用、独立模组模板及 NuGet 包内工具路径。
+在通用框架后追加 `-windows`。启动器和 UI 预览工具通过普通 `ProjectReference` 引用
+`Survivalcraft`，由 SDK 选择兼容目标框架。
+
+`Engine`、`Survivalcraft.Client` 和 `Survivalcraft` 显式设置 `IsRidAgnostic=true`，
+共享托管程序集按目标框架编译。各启动器保留自身的 `RuntimeIdentifier`，负责选取原生资产和打包。
+共享库的 `RuntimeIdentifiers` 列表用于准备还原资产。Android SDK 仍可创建按 RID 区分的打包副本。
+这组配置同时适用于桌面和 Android，避免引用方的 RID 和 `SelfContained` 向共享托管库传播。
+框架升级时需同步检查独立模组模板及 NuGet 包内工具路径。
+
+项目文件、共享 `.props` / `.targets` 和解决方案中的路径统一使用 `/`。排版、分组和修改时的检查要求见
+[项目文件风格规范](../.agents/skills/scnet-code-style/references/project-files.md)。
+服务端和 UI 预览工具在未指定 RID 时，按宿主系统默认选择受支持的 `linux-x64` 或 `win-x64`；
+显式传入 `-r` 可覆盖默认值。这同时确定开发构建的输出目录和原生资产选取，服务端发布包名也包含 RID。
 
 ### 应用图标与 Android 资源
 
@@ -146,8 +156,8 @@ Android 的几个变体项目会复用这份配置，只在自己的 `.csproj` �
 
 这是 Android 可运行启动器的公共项目配置，集中定义目标框架、程序集名称、最低系统版本、
 `Content.zip` 资产声明、共享图标与 Android 资源、共享 Manifest；全局 `using` 随共享启动器源码维护。每个架构项目仍显式声明自己的
-`RuntimeIdentifier`、APK 名称，并在 `ProjectReference` 中硬编码相同 RID，以避免 Rider 设计时
-构建和 MSBuild 项目引用求值产生架构偏差。
+`RuntimeIdentifier` 和 APK 名称。共享托管项目采用前述 `IsRidAgnostic` 配置，
+主构建输出位于 `bin/<配置>/<目标框架>/`；启动器按自己的 RID 选择原生资产。
 
 公共 Manifest 位于 `SharedResources/Android/AndroidManifest.xml`，所有 Android 启动器使用同一个模板。
 应用通过限制到缓存 `updates/` 子目录的 FileProvider 把已校验 APK 交给 Android 系统安装器；各架构变体必须链接同一份 `update_paths.xml`。
@@ -160,6 +170,19 @@ Arm32、x64 和 x86 变体通过这份配置链接 `Survivalcraft.Android/` 中�
 平台资源由四个架构共同导入的 `AndroidApplication.props` 引用，不再从主架构项目转引。
 各变体继续保留独立的项目、`bin/obj`、`Content.zip` 和对应 ABI 的 OpenAL 库，使 Rider
 可以直接选择匹配设备架构的项目运行，同时避免不同 RID 的中间产物互相污染。
+
+### Android 调试部署出现旧程序集
+
+若出现已存在于源码中的方法或事件无法找到，先核对设备的快速部署目录和本地目标输出。
+Debug 应通过 SDK 的安装目标同时构建和部署 APK、托管程序集：
+
+```bash
+dotnet build Survivalcraft.Android/Survivalcraft.Android.csproj -t:Install -c Debug --no-restore
+```
+
+运行配置应包含启动前构建。只更新 Debug APK 可能继续使用应用私有 `files/.__override__/` 下的旧程序集。
+项目引用已将启动器 RID 与共享托管输出分离，避免解决方案构建更新无 RID 输出、部署却读取另一份旧 RID 输出。
+修改构建配置后执行一次完整构建和安装；后续 IDE 运行仍需正常构建依赖。排查时保留实例存档与配置。
 
 ## 构建
 
@@ -187,7 +210,10 @@ dotnet build SCNET.slnx --configuration Release
 普通开发可恢复 IDE / `dotnet build` 自动还原，本地准备仅用于开发未发布的包。
 
 `pre-build.sh` 检查当前版本的完整本地包集合。缺包时调用 `pack-nuget.sh` 按依赖顺序生成到
-`Publish/NuGet`，然后还原解决方案；包齐全时直接还原。PowerShell 使用 `./Scripts/pre-build.ps1`。
+`Publish/NuGet`。脚本先创建本地源目录，准备包后还原解决方案。
+包齐全时跳过打包，并继续解决方案还原。PowerShell 使用 `./Scripts/pre-build.ps1`。
+图集工具随应用的构建依赖一起还原；资源生成在构建阶段执行。
+独立调用 `pack-nuget` 也会创建本地源目录。
 脚本完成后再执行 `dotnet build`，或从 IDE 构建、调试。普通构建不会自动打包。
 
 修改原生资产、Mod SDK 或 ContentTool 后，即使版本号未变，也应执行
@@ -275,9 +301,11 @@ dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- generate \
 
 启用 `UsePackResourceTarget` 的项目在 `PackResource` 前生成图集。
 MSBuild 将 SVG、PNG、WebP 和工具源码作为增量输入；没有变化时不会重复生成。
-图集工具在构建主机上以 `net10.0` 运行，嵌套构建会移除应用的目标框架、RID、平台及输出路径参数，
-不会将工具改为 Android 项目，也不需要为它还原 Android 目标。
-IDE 安装阶段的 `NoBuild` 和 `DeployOnBuild` 也不会传给主机工具，避免已构建应用的安装流程阻止工具生成图集。
+图集工具通过构建专用 `ProjectReference` 参与依赖排序，其程序集和内容保留在工具输出目录。
+项目引用隔离应用的目标框架、RID、平台、输出路径以及安装阶段的 `NoBuild`、`DeployOnBuild` 参数，
+工具保持构建主机上的 `net10.0` 配置。
+资源生成限定在常规构建阶段，`PackResource` 等待项目引用就绪后执行。
+解决方案并行 `Rebuild` 会先完成工具重建，再允许依赖它的应用生成图集。
 
 ### 信令服务与探针
 

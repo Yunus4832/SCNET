@@ -3,6 +3,7 @@
         <Version>$(GameVersion)</Version>
         <AssemblyName>Survivalcraft</AssemblyName>
         <TargetFrameworks>$(GlobalTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
+        <IsRidAgnostic>true</IsRidAgnostic>
         <RootNamespace>Game</RootNamespace>
         <IsPackable>true</IsPackable>
         <PackageId>SCNET.Survivalcraft</PackageId>
@@ -43,8 +44,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="\"/>
+        <None Include="README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>
-
 
 </Project>

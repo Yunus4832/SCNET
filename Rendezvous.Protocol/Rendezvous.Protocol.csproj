@@ -7,7 +7,9 @@
         <Description>SCNET invitation signaling and authenticated relay datagram contracts.</Description>
         <PackageTags>scnet;network;rendezvous</PackageTags>
     </PropertyGroup>
+
     <ItemGroup>
         <None Update="README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>
+
 </Project>

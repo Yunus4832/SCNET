@@ -74,6 +74,7 @@ while (($#)); do
 done
 
 cd "$repository_root"
+mkdir -p Publish/NuGet
 
 if ! $selected || $pack_native_imagecodecs; then
     echo "[SCNET Pack] Packing SCNET.Native.ImageCodecs"

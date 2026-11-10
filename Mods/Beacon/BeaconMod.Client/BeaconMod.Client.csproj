@@ -8,9 +8,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="../BeaconMod/BeaconMod.csproj"/>
         <PackageReference Include="SCNET.Survivalcraft.Client" Version="$(GameVersion)" ExcludeAssets="runtime"/>
         <PackageReference Include="SCNET.ContentTool" Version="$(ContentToolVersion)" PrivateAssets="all"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../BeaconMod/BeaconMod.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <EmbeddedResource Include="../BeaconMod/Resources/Models/Beacon.glb" LogicalName="BeaconMod.Client.Resources.Models.Beacon.glb"/>
     </ItemGroup>
 
@@ -22,4 +28,5 @@
         <WriteLinesToFile File="$(SurvivalcraftModManifest)" Lines="$(_ClientModManifest)"
                           Overwrite="true" WriteOnlyWhenDifferent="true"/>
     </Target>
+
 </Project>

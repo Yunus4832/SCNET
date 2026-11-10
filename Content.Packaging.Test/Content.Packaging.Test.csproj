@@ -16,6 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Assets\**\*" CopyToOutputDirectory="PreserveNewest"/>
+        <None Update="Assets/**/*" CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
+
 </Project>

@@ -59,6 +59,10 @@ preserve existing numeric values, aliases and Flags semantics when cleaning up d
 The changed-file gate checks this rule with the skill-owned Roslyn checker.
 Keep unrelated legacy formatting out of functional changes.
 
+For project and build XML changes (`.csproj`, `.props`, `.targets`, `.esproj`, `.slnx`), use
+`scnet-code-style` and its `references/project-files.md` conventions. Review the current diff,
+apply consistent grouping and paths, and preserve MSBuild evaluation and dependency order.
+
 ## Build and release workflows
 
 ### Temporary local NuGet prerequisites

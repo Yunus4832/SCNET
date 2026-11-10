@@ -11,6 +11,7 @@ $ErrorActionPreference = "Stop"
 
 Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
+    New-Item -ItemType Directory -Path "Publish/NuGet" -Force | Out-Null
     if ($Project.Count -eq 0 -or $Project -contains "Native.ImageCodecs") {
         Write-Host "[SCNET Pack] Packing SCNET.Native.ImageCodecs"
         & dotnet pack "Native.ImageCodecs/Native.ImageCodecs.csproj" --configuration $Configuration @AdditionalArguments

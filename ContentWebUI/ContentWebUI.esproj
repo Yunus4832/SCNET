@@ -5,4 +5,5 @@
         <BuildCommand>npm run build</BuildCommand>
         <ShouldRunBuildScript>false</ShouldRunBuildScript>
     </PropertyGroup>
+
 </Project>

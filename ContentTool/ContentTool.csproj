@@ -19,19 +19,22 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="SCNET.ContentTool.targets" Pack="true" PackagePath="build\SCNET.ContentTool.targets"/>
-        <None Update="README.md" Pack="true" PackagePath="\"/>
-        <None Include="..\ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt"
+        <None Include="SCNET.ContentTool.targets" Pack="true" PackagePath="build/SCNET.ContentTool.targets"/>
+        <None Update="README.md" Pack="true" PackagePath="/"/>
+        <None Include="../ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt"
               Pack="false"
               CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
     </ItemGroup>
+
     <PropertyGroup>
         <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeContentToolRuntimeFiles</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
+
     <Target Name="IncludeContentToolRuntimeFiles">
         <ItemGroup>
             <TfmSpecificPackageFile Include="$(TargetDir)**/*" Exclude="$(TargetDir)**/*.pdb"
                                     PackagePath="tools/$(TargetFramework)/any/%(RecursiveDir)%(Filename)%(Extension)"/>
         </ItemGroup>
     </Target>
+
 </Project>
