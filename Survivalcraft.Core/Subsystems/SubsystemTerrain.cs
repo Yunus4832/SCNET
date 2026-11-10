@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Network.Chunks;
 using Game.Terrains.Distribution;
 using Game.Terrains.Execution;
 using Game.Terrains.Lighting;
@@ -133,7 +134,8 @@ public class SubsystemTerrain : Subsystem, IUpdateable
             if (previous.LastChunksUpdateCenter is { } last &&
                 visibility.CloseTo(previous.VisibilityDistance) &&
                 MathUtils.Max(content, visibility).CloseTo(previous.ContentDistance) &&
-                Vector2.DistanceSquared(center, last) <= 64f) { return; }
+                Vector2.DistanceSquared(center, last) <=
+                MathUtils.Sqr(NetworkTerrainPolicy.ClientTerrainPreparationMargin)) { return; }
         }
 
         if (!Demands.SetLocation(index, center, visibility, content)) { return; }

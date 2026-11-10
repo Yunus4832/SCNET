@@ -291,7 +291,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
             return false;
         }
 
-        return NetworkTerrainPolicy.IsChunkRelevant(chunk, center, contentDistance);
+        return NetworkTerrainPolicy.IsTerrainChunkRelevant(chunk, center, contentDistance);
     }
 
     public bool ShouldIncludeInInitialSnapshot(WorldConnection client, Entity entity)

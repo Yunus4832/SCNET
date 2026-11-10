@@ -65,7 +65,7 @@ public sealed class PendingChunkRequestQueue : IEnumerable<ChunkContentRequest>
         foreach (var request in _ordered.ToArray())
         {
             var coords = request.Allocation.Coords;
-            if (NetworkTerrainPolicy.IsChunkCenterRelevant(coords, center, contentDistance))
+            if (NetworkTerrainPolicy.IsTerrainChunkRelevant(coords, center, contentDistance))
             {
                 continue;
             }

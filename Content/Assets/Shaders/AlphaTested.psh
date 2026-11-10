@@ -3,6 +3,11 @@
 Texture2D u_texture;
 SamplerState u_samplerState;
 float3 u_fogColor;
+#ifdef SKY_FOG
+Texture2D u_skyTexture;
+SamplerState u_skySampler;
+float u_skyFogEnabled;
+#endif
 #ifdef ALPHATESTED
 float u_alphaThreshold;
 #endif
@@ -11,6 +16,9 @@ void main(
 	in float4 v_color : COLOR,
 	in float2 v_texcoord: TEXCOORD,
 	in float v_fog: FOG,
+#ifdef SKY_FOG
+    in float4 v_skyPosition : TEXCOORD1,
+#endif
 	out float4 svTarget: SV_TARGET
 )
 {
@@ -24,10 +32,24 @@ void main(
 #ifdef ALPHATESTED
 	if (result.a <= u_alphaThreshold)
 		discard;
+#ifdef SKY_FOG
+    // Surviving terrain cutouts write opaque depth; filtered premultiplied texels must also be opaque.
+    result.rgb /= result.a;
+    result.a = 1.0;
+#endif
 #endif
 
 	// Fog
-	result.rgb = lerp(result.rgb, u_fogColor * v_color.a, v_fog);
+    float fog = saturate(v_fog);
+    float3 fogColor = u_fogColor;
+#ifdef SKY_FOG
+    if (u_skyFogEnabled > 0.5 && fog > 0.0)
+    {
+        float2 skyUv = v_skyPosition.xy / v_skyPosition.w * float2(0.5, -0.5) + 0.5;
+        fogColor = u_skyTexture.Sample(u_skySampler, skyUv).rgb;
+    }
+#endif
+	result.rgb = lerp(result.rgb, fogColor * v_color.a, fog);
 	
 	// Return
 	svTarget = result;
@@ -44,6 +66,16 @@ precision mediump float;
 
 uniform sampler2D u_texture;
 uniform vec3 u_fogColor;
+#ifdef SKY_FOG
+// <Sampler Name='u_skySampler' Texture='u_skyTexture' />
+uniform sampler2D u_skyTexture;
+uniform float u_skyFogEnabled;
+#ifdef GL_ES
+varying highp vec4 v_skyPosition;
+#else
+varying vec4 v_skyPosition;
+#endif
+#endif
 #ifdef ALPHATESTED
 uniform float u_alphaThreshold;
 #endif
@@ -64,10 +96,28 @@ void main()
 #ifdef ALPHATESTED
 	if (result.a <= u_alphaThreshold)
 		discard;
+#ifdef SKY_FOG
+    // Surviving terrain cutouts write opaque depth; filtered premultiplied texels must also be opaque.
+    result.rgb /= result.a;
+    result.a = 1.0;
+#endif
 #endif
 
 	// Fog
-	result.rgb = mix(result.rgb, u_fogColor * v_color.a, v_fog);
+    float fog = clamp(v_fog, 0.0, 1.0);
+    vec3 fogColor = u_fogColor;
+#ifdef SKY_FOG
+    if (u_skyFogEnabled > 0.5 && fog > 0.0)
+    {
+#ifdef GL_ES
+        highp vec2 skyUv = v_skyPosition.xy / v_skyPosition.w * vec2(0.5, -0.5) + 0.5;
+#else
+        vec2 skyUv = v_skyPosition.xy / v_skyPosition.w * vec2(0.5, -0.5) + 0.5;
+#endif
+        fogColor = texture2D(u_skyTexture, skyUv).rgb;
+    }
+#endif
+	result.rgb = mix(result.rgb, fogColor * v_color.a, fog);
 	
 	// Return
 	gl_FragColor = result;

@@ -189,13 +189,13 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
     }
 
     [Theory]
-    [InlineData(2, 0, true, false)]
-    [InlineData(2, 1, false, false)]
-    [InlineData(-3, -1, true, false)]
-    [InlineData(-3, -2, false, false)]
+    [InlineData(2, 0, true, true)]
+    [InlineData(2, 1, true, true)]
+    [InlineData(-3, -1, true, true)]
+    [InlineData(-3, -2, true, true)]
     [InlineData(1, 0, true, true)]
     [InlineData(-2, -1, true, true)]
-    public void ContentRequestsUseCentersWhileSpatialBroadphaseKeepsChunkOverlap(
+    public void ContentRequestsAndSpatialObserversSharePreparedSurfaceCoverage(
         int x,
         int z,
         bool broadphase,
@@ -223,7 +223,7 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
     }
 
     [Fact]
-    public void MovingAwayDropsPendingContentEvenWhenItsBoxStillTouchesInterest()
+    public void MovingAwayDropsPendingContentBeyondPreparedCoverage()
     {
         using var scheduler = new ServerChunkDistributionScheduler(_project, new EmptyAuthority());
         var client = new Client(null, 1, Guid.NewGuid(), Guid.Empty);
@@ -233,8 +233,8 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
         Assert.Equal(1, scheduler.Enqueue(client, [new ChunkContentRequest(allocation)]));
         Assert.Equal((1, 1), scheduler.GetBacklog());
 
-        var moved = new Vector2(7, 8);
-        Assert.True(NetworkTerrainPolicy.IsChunkRelevant(allocation.Coords, moved, 32));
+        var moved = new Vector2(-9, 8);
+        Assert.False(NetworkTerrainPolicy.IsTerrainChunkRelevant(allocation.Coords, moved, 32));
         scheduler.UpdateClientLocation(client, moved, 32);
         Assert.Equal(0, scheduler.GetPendingCount(client));
         Assert.False(scheduler.IsCurrentAllocation(client, allocation));
@@ -243,7 +243,7 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
     }
 
     [Fact]
-    public void MovingAwayReleasesOwnedSnapshotOutsideTheContentCenterCircle()
+    public void MovingAwayReleasesOwnedSnapshotBeyondPreparedCoverage()
     {
         using var scheduler = new ServerChunkDistributionScheduler(_project, new SnapshotAuthority());
         var client = new Client(null, 1, Guid.NewGuid(), Guid.Empty);
@@ -254,7 +254,7 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
         scheduler.Update();
         Assert.Equal(1, _node.PendingPackageCount);
 
-        scheduler.UpdateClientLocation(client, new Vector2(7, 8), 32);
+        scheduler.UpdateClientLocation(client, new Vector2(-9, 8), 32);
         Assert.Equal(0, _node.PendingPackageCount);
         Assert.False(scheduler.IsCurrentAllocation(client, allocation));
     }

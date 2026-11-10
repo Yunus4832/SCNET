@@ -99,7 +99,7 @@ public sealed class ClientTerrainContentPumpTest
 
         ClientTerrainContentPump.RequestChunkContents(terrain.AllocatedChunks, locations, transport, 1.1);
 
-        Assert.Equal([99, 98], transport.Requests.Select(request => request.Allocation.Coords.X));
+        Assert.Equal([99, 98, 97], transport.Requests.Select(request => request.Allocation.Coords.X));
         Assert.True(replacement.AllocationGeneration > generation);
         Assert.Equal(replacement.AllocationGeneration, transport.Requests[0].Allocation.Generation);
         Assert.False(terrain.GetChunkAtCoords(64, 0)!.IsRequested);

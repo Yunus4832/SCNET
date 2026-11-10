@@ -95,7 +95,7 @@ public sealed class SpatialInterestIndex
         foreach (var client in candidates)
         {
             var location = _locations[client];
-            if (NetworkTerrainPolicy.IsChunkRelevant(chunk, location.Center, location.Distance))
+            if (NetworkTerrainPolicy.IsTerrainChunkRelevant(chunk, location.Center, location.Distance))
             {
                 yield return client;
             }
@@ -167,6 +167,7 @@ public sealed class SpatialInterestIndex
 
     private static IEnumerable<Point2> CoveredBuckets(Location location)
     {
+        location = location with { Distance = location.Distance + NetworkTerrainPolicy.ClientTerrainPreparationMargin };
         var min = Bucket(location.Center - new Vector2(location.Distance));
         var max = Bucket(location.Center + new Vector2(location.Distance));
         // Include the bucket immediately before an exact lower boundary: chunk rectangles are closed.

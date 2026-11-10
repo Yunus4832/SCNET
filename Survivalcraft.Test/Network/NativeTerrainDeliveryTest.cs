@@ -42,7 +42,7 @@ public sealed class NativeTerrainDeliveryTest : IDisposable
     public void Dispose() => _project.Dispose();
 
     [Fact]
-    public void TrimReleasesPartialTransferThatOnlyOverlapsTheContentCircleByItsBox()
+    public void TrimReleasesPartialTransferOutsidePreparedCoverage()
     {
         var allocation = new ChunkAllocationId(new Point2(2, 1), 1);
         _view = new ChunkDeliveryView(new Vector2(16, 8), new Vector2(16, 8), 32);
@@ -52,8 +52,8 @@ public sealed class NativeTerrainDeliveryTest : IDisposable
         Assert.NotEmpty(QueuedFragments());
         Assert.True(_delivery.GetBacklog(_client).Pending > 0);
 
-        _view = new ChunkDeliveryView(new Vector2(7, 8), new Vector2(7, 8), 32);
-        Assert.True(NetworkTerrainPolicy.IsChunkRelevant(allocation.Coords, _view.Value.Center, 32));
+        _view = new ChunkDeliveryView(new Vector2(-9, 8), new Vector2(-9, 8), 32);
+        Assert.False(NetworkTerrainPolicy.IsTerrainChunkRelevant(allocation.Coords, _view.Value.Center, 32));
         _delivery.Trim(_client);
         Assert.Equal((0, 0), _delivery.GetBacklog(_client));
         Assert.Empty(QueuedFragments());

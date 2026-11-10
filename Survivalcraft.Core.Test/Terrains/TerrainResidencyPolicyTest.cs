@@ -20,7 +20,7 @@ public sealed class TerrainResidencyPolicyTest
                 ContentDistance = 128
             }
         };
-        var bufferedCenter = new Vector2(152, 0);
+        var bufferedCenter = new Vector2(160, 0);
 
         Assert.False(TerrainResidencyManager.IsChunkInRange(bufferedCenter, locations));
         Assert.True(
@@ -32,7 +32,7 @@ public sealed class TerrainResidencyPolicyTest
         );
         Assert.False(
             TerrainResidencyManager.IsChunkInRange(
-                new Vector2(161, 0),
+                new Vector2(177, 0),
                 locations,
                 NetworkTerrainPolicy.ClientChunkRetentionMargin
             )

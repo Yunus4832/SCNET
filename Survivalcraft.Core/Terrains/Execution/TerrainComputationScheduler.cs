@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 
+using Game.Network.Chunks;
 using Game.Terrains.Distribution;
 using Game.Terrains.Lighting;
 
@@ -558,7 +559,7 @@ public sealed class TerrainComputationScheduler(
     private bool IsNeeded(TerrainChunk chunk) => TerrainResidencyManager.IsChunkInRange(chunk.Center, _locations);
 
     private bool IsVisible(TerrainChunk chunk) => _locations.Any(l =>
-        Vector2.DistanceSquared(l.Center, chunk.Center) <= l.VisibilityDistance * l.VisibilityDistance
+        NetworkTerrainPolicy.IsTerrainChunkRelevant(chunk.Center, l.Center, l.VisibilityDistance)
     );
 
     private float Distance(TerrainChunk chunk) => _locations.Length == 0

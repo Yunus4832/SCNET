@@ -280,7 +280,7 @@ public class NetNode
         if (!TryGetPhysicalConnection(connection, out var client) || client is null) { return; }
 
         DiscardQueuedSnapshots((package, message) => package.Audience.HasSameRecipients(PackageAudience.To(client)) &&
-                                                     !NetworkTerrainPolicy.IsChunkCenterRelevant(
+                                                     !NetworkTerrainPolicy.IsTerrainChunkRelevant(
                                                          message.Snapshot.Allocation.Coords,
                                                          center,
                                                          distance

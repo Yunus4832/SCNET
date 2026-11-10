@@ -1,6 +1,7 @@
 using Engine.Core.Mathematics;
 
 using Game.Network;
+using Game.Network.Chunks;
 using Game.Network.Replication;
 
 using Random = System.Random;
@@ -44,7 +45,8 @@ public sealed class SpatialInterestIndexTest
         Assert.Same(client, Assert.Single(index.GetObservers(new Vector2(-80, -64))));
         Assert.Empty(index.GetObservers(new Vector2(-80, -80)));
         Assert.Same(client, Assert.Single(index.GetChunkObservers(new Point2(-6, -4))));
-        Assert.Empty(index.GetChunkObservers(new Point2(-6, -6)));
+        Assert.Same(client, Assert.Single(index.GetChunkObservers(new Point2(-6, -6))));
+        Assert.Empty(index.GetChunkObservers(new Point2(-7, -6)));
     }
 
     [Fact]
@@ -150,7 +152,8 @@ public sealed class SpatialInterestIndexTest
                         Math.Clamp(location.Center.X, chunk.X * 16f, chunk.X * 16f + 16),
                         Math.Clamp(location.Center.Y, chunk.Y * 16f, chunk.Y * 16f + 16)
                     );
-                    return Vector2.DistanceSquared(nearest, location.Center) <= location.Distance * location.Distance;
+                    return Vector2.DistanceSquared(nearest, location.Center) <=
+                           MathF.Pow(location.Distance + NetworkTerrainPolicy.ClientTerrainPreparationMargin, 2);
                 }
             ).Select(location => location.WorldConnection);
 

@@ -78,7 +78,7 @@ public sealed class PendingChunkRequestQueueTest
     }
 
     [Fact]
-    public void MovedDemandDropsAabbOverlapThatCannotBecomeResident()
+    public void MovedDemandDropsChunksBeyondThePreparationMargin()
     {
         var queue = new PendingChunkRequestQueue();
         var edge = Request(2, 1);
@@ -86,7 +86,7 @@ public sealed class PendingChunkRequestQueueTest
         Assert.Equal(0, queue.RemoveOutside(new Vector2(16, 8), 32));
         Assert.Single(queue);
 
-        Assert.Equal(1, queue.RemoveOutside(new Vector2(7, 8), 32));
+        Assert.Equal(1, queue.RemoveOutside(new Vector2(-9, 8), 32));
         Assert.Empty(queue);
     }
 

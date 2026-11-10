@@ -27,6 +27,16 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
     public bool DrawSkyEnabled = true;
 
+    private RenderTarget2D? _skyBackground;
+
+    public Texture2D? FogBackground => FogEnabled &&
+                                       _viewIsSkyVisible &&
+                                       DrawSkyEnabled &&
+                                       Configuration.ClientConfiguration.Preferences.SkyRenderingMode !=
+                                       SkyRenderingMode.Disabled
+        ? _skyBackground
+        : null;
+
     public bool FogEnabled = true;
 
     private readonly Color[] _cloudsLayerColors = new Color[5];
@@ -340,6 +350,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                 _viewIsSkyVisible &&
                 Configuration.ClientConfiguration.Preferences.SkyRenderingMode != SkyRenderingMode.Disabled)
             {
+                CaptureSkyBackground(camera);
                 return;
             }
 
@@ -363,33 +374,97 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                 return;
             }
 
-            DrawSkydome(camera);
-            if (DrawGalaxyEnabled)
+            if (_skyBackground != null)
             {
-                DrawStars(camera);
-                DrawSunAndMoon(camera);
-            }
-
-            DrawClouds(camera);
-            if (Shader != null && ShaderAlphaTest != null)
-            {
-                if (_primitiveRender.Shader == null && _primitiveRender.ShaderAlphaTest == null)
-                {
-                    _primitiveRender.Shader = Shader;
-                    _primitiveRender.ShaderAlphaTest = ShaderAlphaTest;
-                    _primitiveRender.Camera = camera;
-                }
-
-                _primitiveRender.Flush(PrimitivesRenderer3D, camera.ViewProjectionMatrix);
-            }
-            else
-            {
-                PrimitivesRenderer3D.Flush(camera.ViewProjectionMatrix);
+                var batch = PrimitivesRenderer2D.TexturedBatch(
+                    _skyBackground,
+                    false,
+                    0,
+                    DepthStencilState.DepthRead,
+                    RasterizerState.CullNoneScissor,
+                    BlendState.Opaque,
+                    SamplerState.PointClamp
+                );
+                batch.QueueQuad(
+                    Vector2.Zero,
+                    new Vector2(Display.Viewport.Width, Display.Viewport.Height),
+                    1f,
+                    Vector2.Zero,
+                    Vector2.One,
+                    Color.White
+                );
+                PrimitivesRenderer2D.Flush();
             }
         }
         else
         {
             DrawLightning(camera);
+            PrimitivesRenderer3D.Flush(camera.ViewProjectionMatrix);
+        }
+    }
+
+    private void CaptureSkyBackground(Camera camera)
+    {
+        var target = Display.RenderTarget;
+        var viewport = Display.Viewport;
+        var scissor = Display.ScissorRectangle;
+        _skyBackground = null;
+        if (viewport.Width <= 0 || viewport.Height <= 0) { return; }
+
+        var sky = GetSkyDome(camera);
+        if (sky.Background == null ||
+            sky.Background.Width != viewport.Width ||
+            sky.Background.Height != viewport.Height)
+        {
+            sky.Background?.Dispose();
+            sky.Background = null;
+            sky.Background = new RenderTarget2D(
+                viewport.Width,
+                viewport.Height,
+                1,
+                ColorFormat.Rgba8888,
+                DepthFormat.None
+            );
+        }
+
+        try
+        {
+            Display.RenderTarget = sky.Background;
+            Display.Clear(new Vector4(ViewFogColor));
+            DrawSkyBackground(camera);
+            _skyBackground = sky.Background;
+        }
+        finally
+        {
+            Display.RenderTarget = target;
+            Display.Viewport = viewport;
+            Display.ScissorRectangle = scissor;
+        }
+    }
+
+    private void DrawSkyBackground(Camera camera)
+    {
+        DrawSkydome(camera);
+        if (DrawGalaxyEnabled)
+        {
+            DrawStars(camera);
+            DrawSunAndMoon(camera);
+        }
+
+        DrawClouds(camera);
+        if (Shader != null && ShaderAlphaTest != null)
+        {
+            if (_primitiveRender.Shader == null && _primitiveRender.ShaderAlphaTest == null)
+            {
+                _primitiveRender.Shader = Shader;
+                _primitiveRender.ShaderAlphaTest = ShaderAlphaTest;
+                _primitiveRender.Camera = camera;
+            }
+
+            _primitiveRender.Flush(PrimitivesRenderer3D, camera.ViewProjectionMatrix);
+        }
+        else
+        {
             PrimitivesRenderer3D.Flush(camera.ViewProjectionMatrix);
         }
     }
@@ -446,6 +521,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         if (_sky is not null) { _sky.LightningStrike -= OnLightningStrike; }
 
         Display.DeviceReset -= DisplayDeviceReset;
+        _skyBackground = null;
         _shaderFlat?.Dispose();
         _shaderTextured?.Dispose();
         _starsVertexBuffer?.Dispose();
@@ -462,6 +538,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
     public void DisplayDeviceReset()
     {
+        _skyBackground = null;
         _starsVertexBuffer?.Dispose();
         _starsVertexBuffer = null;
         _starsIndexBuffer?.Dispose();
@@ -474,13 +551,20 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         _skyDomes.Clear();
     }
 
+    private SkyDome GetSkyDome(Camera camera)
+    {
+        if (!_skyDomes.TryGetValue(camera.GameWidget, out var sky))
+        {
+            sky = new SkyDome();
+            _skyDomes.Add(camera.GameWidget, sky);
+        }
+
+        return sky;
+    }
+
     public void DrawSkydome(Camera camera)
     {
-        if (!_skyDomes.TryGetValue(camera.GameWidget, out var value))
-        {
-            value = new SkyDome();
-            _skyDomes.Add(camera.GameWidget, value);
-        }
+        var value = GetSkyDome(camera);
 
         if (value.VertexBuffer == null || value.IndexBuffer == null)
         {
@@ -1026,6 +1110,8 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
         public const int VerticesCountY = 8;
 
+        public RenderTarget2D? Background;
+
         public IndexBuffer? IndexBuffer;
 
         public readonly ushort[] Indices = new ushort[714];
@@ -1046,6 +1132,8 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
         public void Dispose()
         {
+            Background?.Dispose();
+            Background = null;
             VertexBuffer?.Dispose();
             VertexBuffer = null;
             IndexBuffer?.Dispose();

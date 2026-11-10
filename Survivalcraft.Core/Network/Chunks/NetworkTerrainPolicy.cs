@@ -8,6 +8,8 @@ public static class NetworkTerrainPolicy
 
     public const int DefaultServerChunkBytesSendPerSecond = 128 * 1024;
 
+    public const float ClientTerrainPreparationMargin = 8f;
+
     public const float ClientChunkRetentionMargin = 32f;
 
     public const int ClientRetainedChunkCapacity = 256;
@@ -29,16 +31,24 @@ public static class NetworkTerrainPolicy
         return Vector2.DistanceSquared(center, closest) <= MathUtils.Sqr(distance);
     }
 
-    /// <summary>Matches the content residency circle; broadphase chunk observers retain AABB intersection.</summary>
-    public static bool IsChunkCenterRelevant(Point2 chunk, Vector2 center, float distance)
+    /// <summary>Covers chunk surfaces and the client camera movement between demand updates.</summary>
+    public static bool IsTerrainChunkRelevant(Point2 chunk, Vector2 center, float distance)
     {
         var chunkCenter = new Vector2((chunk.X + 0.5f) * 16f, (chunk.Y + 0.5f) * 16f);
-        return IsChunkCenterRelevant(chunkCenter, center, distance);
+        return IsTerrainChunkRelevant(chunkCenter, center, distance);
     }
 
-    public static bool IsChunkCenterRelevant(Vector2 chunkCenter, Vector2 center, float distance)
+    public static bool IsTerrainChunkRelevant(Vector2 chunkCenter, Vector2 center, float distance)
     {
-        return Vector2.DistanceSquared(chunkCenter, center) <= MathUtils.Sqr(distance);
+        return GetChunkDistanceSquared(chunkCenter, center) <=
+               MathUtils.Sqr(distance + ClientTerrainPreparationMargin);
+    }
+
+    public static float GetChunkDistanceSquared(Vector2 chunkCenter, Vector2 center)
+    {
+        var x = MathUtils.Max(MathUtils.Abs(chunkCenter.X - center.X) - 8f, 0f);
+        var z = MathUtils.Max(MathUtils.Abs(chunkCenter.Y - center.Y) - 8f, 0f);
+        return x * x + z * z;
     }
 
     public static bool TryClampClientUpdateLocation(

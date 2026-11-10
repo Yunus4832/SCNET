@@ -1,4 +1,5 @@
 using Game.Network;
+using Game.Network.Chunks;
 using Game.Terrains.Distribution;
 
 namespace Game.Commands.BuiltIn;
@@ -35,8 +36,11 @@ internal static class NetworkDiagnosticCommandHandlers
                 {
                     chunk.Coords.X,
                     Z = chunk.Coords.Y,
-                    Visible = locations.Any(location => Vector2.DistanceSquared(chunk.Center, location.Center) <=
-                                                        location.VisibilityDistance * location.VisibilityDistance
+                    Visible = locations.Any(location => NetworkTerrainPolicy.IsChunkRelevant(
+                            chunk.Coords,
+                            location.Center,
+                            location.VisibilityDistance
+                        )
                     ),
                     chunk.HasContents,
                     Drawable = ClientChunkDerivationPipeline.CanDraw(

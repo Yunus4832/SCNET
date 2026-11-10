@@ -18,7 +18,12 @@ float calculateFog(float3 position)
 	fogDelta.y *= u_fogYMultiplier;
 	float fogDistance = length(fogDelta);
 	float fogFactor = (fogIntegral(u_viewPosition.y) - fogIntegral(position.y)) / (u_viewPosition.y - position.y);
-	return saturate(saturate(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x)) + fogFactor * u_fogBottomTopDensity.z * fogDistance);
+	#ifdef SKY_FOG
+    // Preserve values above one until rasterization, so triangles crossing the fog boundary stay hidden outside it.
+    return max(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0) + fogFactor * u_fogBottomTopDensity.z * fogDistance;
+#else
+    return saturate(saturate(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x)) + fogFactor * u_fogBottomTopDensity.z * fogDistance);
+#endif
 }
 
 void main(
@@ -28,6 +33,9 @@ void main(
 	out float4 v_color : COLOR,
 	out float2 v_texcoord : TEXCOORD,
 	out float v_fog : FOG,
+#ifdef SKY_FOG
+    out float4 v_skyPosition : TEXCOORD1,
+#endif
 	out float4 sv_position: SV_POSITION
 )
 {
@@ -48,6 +56,9 @@ void main(
 	
 	// Position
 	sv_position = mul(float4(a_position.x - u_origin.x, a_position.y, a_position.z - u_origin.y, 1.0), u_viewProjectionMatrix);
+#ifdef SKY_FOG
+    v_skyPosition = sv_position;
+#endif
 }
 
 #endif
@@ -71,6 +82,13 @@ attribute vec2 a_texcoord;
 varying vec4 v_color;
 varying vec2 v_texcoord;
 varying float v_fog;
+#ifdef SKY_FOG
+#ifdef GL_ES
+varying highp vec4 v_skyPosition;
+#else
+varying vec4 v_skyPosition;
+#endif
+#endif
 
 float fogIntegral(float y)
 {
@@ -83,7 +101,12 @@ float calculateFog(vec3 position)
 	fogDelta.y *= u_fogYMultiplier;
 	float fogDistance = length(fogDelta);
 	float fogFactor = (fogIntegral(u_viewPosition.y) - fogIntegral(position.y)) / (u_viewPosition.y - position.y);
-	return clamp(clamp(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0, 1.0) + fogFactor * u_fogBottomTopDensity.z * fogDistance, 0.0, 1.0);
+	#ifdef SKY_FOG
+    // Preserve values above one until rasterization, so triangles crossing the fog boundary stay hidden outside it.
+    return max(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0) + fogFactor * u_fogBottomTopDensity.z * fogDistance;
+#else
+    return clamp(clamp(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0, 1.0) + fogFactor * u_fogBottomTopDensity.z * fogDistance, 0.0, 1.0);
+#endif
 }
 
 void main()
@@ -106,6 +129,9 @@ void main()
 	// Position
 	gl_Position = u_viewProjectionMatrix * vec4(a_position.x - u_origin.x, a_position.y, a_position.z - u_origin.y, 1.0);
 
+#ifdef SKY_FOG
+    v_skyPosition = gl_Position;
+#endif
 	// Fix gl_Position
 	OPENGL_POSITION_FIX;
 }

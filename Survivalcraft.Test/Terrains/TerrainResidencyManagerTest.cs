@@ -39,7 +39,8 @@ public sealed class TerrainResidencyManagerTest
         );
         try
         {
-            fixture.Update([Location(0)]);
+            // Isolate the allocation whose unload transaction is under test.
+            fixture.Terrain.AllocateChunk(0, 0);
             var source = fixture.Terrain.GetChunkAtCoords(0, 0)!;
             source.HasContents = true;
             source.ModificationCounter = 1;
@@ -79,7 +80,8 @@ public sealed class TerrainResidencyManagerTest
     public void ADiscardCallbackCanDirtyACleanChunkWithoutLosingItsReservedSaveSlot()
     {
         using var fixture = new Fixture();
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         var source = fixture.Terrain.GetChunkAtCoords(0, 0)!;
         source.HasContents = true;
         source.Cells[0] = 5;
@@ -113,7 +115,8 @@ public sealed class TerrainResidencyManagerTest
     {
         using var fixture = new Fixture(replica: true);
         using var presentations = new TerrainChunkPresentationStore();
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         var source = fixture.Terrain.GetChunkAtCoords(0, 0)!;
         source.HasContents = true;
         source.ContentOrigin = TerrainContentOrigin.Replica;
@@ -129,15 +132,19 @@ public sealed class TerrainResidencyManagerTest
         var previous = new ChunkAllocationId(source.Coords, source.AllocationGeneration);
         fixture.Transport!.Request([new ChunkContentRequest(previous, source.NetworkContentVersion)]);
         var discarded = new List<ChunkAllocationId>();
-        fixture.Transport.AllocationDiscarded += discarded.Add;
+        fixture.Transport.AllocationDiscarded += allocation =>
+        {
+            if (allocation.Coords == source.Coords) { discarded.Add(allocation); }
+        };
         var renewed = new List<ulong>();
         fixture.Manager.ChunkAllocationRenewed += (chunk, generation) =>
         {
-            renewed.Add(generation);
+            if (ReferenceEquals(chunk, source)) { renewed.Add(generation); }
+
             presentations.RenewAllocation(chunk, generation);
         };
 
-        fixture.Update([Location(1)]);
+        fixture.Update([Location(2)]);
         Assert.Same(source, fixture.Terrain.GetChunkAtCoords(0, 0));
         Assert.Equal(0, fixture.Discarded);
         fixture.Update([Location(0)]);
@@ -166,7 +173,8 @@ public sealed class TerrainResidencyManagerTest
     public void LeavingTheRetentionMarginDisposesTheActualAllocationAndDropsItsRequest(bool hasContents)
     {
         using var fixture = new Fixture(replica: true);
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         var source = fixture.Terrain.GetChunkAtCoords(0, 0)!;
         source.HasContents = hasContents;
         var allocation = new ChunkAllocationId(source.Coords, source.AllocationGeneration);
@@ -189,7 +197,8 @@ public sealed class TerrainResidencyManagerTest
     public void ClosingDuringDiscardStopsReleaseAndAllocationAndAllowsTheAccessOwnerToUnwind()
     {
         using var fixture = new Fixture();
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         var source = fixture.Terrain.GetChunkAtCoords(0, 0)!;
         fixture.OnDiscarding = _ => fixture.World.Project.Dispose();
         var released = 0;
@@ -210,7 +219,8 @@ public sealed class TerrainResidencyManagerTest
     public void CallbackReentryDefersAnotherPassWithoutRepeatingTheUnloadTransaction()
     {
         using var fixture = new Fixture();
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         var nested = default(TerrainResidencyManager.UpdateResult);
         fixture.OnDiscarding = _ => nested = fixture.Manager.Update([Location(10)], fixture.LocationLease);
 
@@ -237,7 +247,8 @@ public sealed class TerrainResidencyManagerTest
     public void DiscardCallbacksAllowAnotherThreadToTakeShortAccessAndKeepThePausePending()
     {
         using var fixture = new Fixture();
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         fixture.OnDiscarding = chunk =>
         {
             Assert.False(fixture.Subsystem.Access.IsHeldByCurrentThread);
@@ -262,7 +273,8 @@ public sealed class TerrainResidencyManagerTest
     public void NestedDemandApplicationDoesNotConsumeTheYieldedLocationRequest()
     {
         using var fixture = new Fixture();
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         using var demands = new TerrainDemandManager(fixture.Terrain, TerrainContentRole.Authority);
         typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.Demands))!.SetValue(fixture.Subsystem, demands);
         typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.Residency))!.SetValue(
@@ -290,7 +302,8 @@ public sealed class TerrainResidencyManagerTest
     public void AnExtraOuterLeaseIsRejectedBeforeAnyDiscardCallback()
     {
         using var fixture = new Fixture();
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         fixture.Subsystem.WorkExecutor.EnterMain();
         try
         {
@@ -308,7 +321,8 @@ public sealed class TerrainResidencyManagerTest
     public void AThrowingDiscardCallbackClosesTheWorldAndReleasesTheReservation()
     {
         using var fixture = new Fixture();
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         var failure = new InvalidOperationException("Discard failed.");
         fixture.OnDiscarding = _ => throw failure;
         Assert.Same(failure, Assert.Throws<InvalidOperationException>(() => fixture.Update([Location(10)])));
@@ -323,7 +337,8 @@ public sealed class TerrainResidencyManagerTest
     public void CallbackCannotCancelTheUnloadLeaseAndLeaveTheWorldRunning()
     {
         using var fixture = new Fixture();
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         fixture.OnDiscarding = _ => fixture.LocationLease.Dispose();
 
         Assert.Throws<InvalidOperationException>(() => fixture.Update([Location(10)]));
@@ -342,7 +357,8 @@ public sealed class TerrainResidencyManagerTest
     public void CallbackCannotReplaceTheReservedAllocation(bool free)
     {
         using var fixture = new Fixture();
-        fixture.Update([Location(0)]);
+        // Isolate the allocation whose unload transaction is under test.
+        fixture.Terrain.AllocateChunk(0, 0);
         fixture.OnDiscarding = chunk =>
         {
             if (free) { fixture.Terrain.FreeChunk(chunk); }

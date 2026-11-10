@@ -3,7 +3,7 @@ namespace Game.Network.Chunks;
 internal readonly record struct ChunkDeliveryView(Vector2 Center, Vector2 PredictedCenter, float ContentDistance)
 {
     internal bool Contains(Point2 coords) =>
-        NetworkTerrainPolicy.IsChunkCenterRelevant(coords, Center, ContentDistance);
+        NetworkTerrainPolicy.IsTerrainChunkRelevant(coords, Center, ContentDistance);
 
     internal float Priority(Point2 coords)
     {

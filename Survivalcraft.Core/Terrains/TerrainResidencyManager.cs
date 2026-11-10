@@ -147,7 +147,7 @@ public sealed class TerrainResidencyManager(
     {
         for (var i = 0; i < locations.Length; i++)
         {
-            if (NetworkTerrainPolicy.IsChunkCenterRelevant(
+            if (NetworkTerrainPolicy.IsTerrainChunkRelevant(
                     chunkCenter,
                     locations[i].Center,
                     locations[i].ContentDistance + distanceMargin
@@ -323,8 +323,11 @@ public sealed class TerrainResidencyManager(
 
         for (var j = 0; j < locations.Length; j++)
         {
-            var point = Terrain.ToChunk(locations[j].Center - new Vector2(locations[j].ContentDistance));
-            var point2 = Terrain.ToChunk(locations[j].Center + new Vector2(locations[j].ContentDistance));
+            var distance = locations[j].ContentDistance + NetworkTerrainPolicy.ClientTerrainPreparationMargin;
+            var point = Terrain.ToChunk(locations[j].Center - new Vector2(distance));
+            // Closed rectangles at an exact lower grid boundary also intersect the preparation circle.
+            point = new Point2(point.X - 1, point.Y - 1);
+            var point2 = Terrain.ToChunk(locations[j].Center + new Vector2(distance));
             for (var k = point.X; k <= point2.X; k++)
             {
                 for (var l = point.Y; l <= point2.Y; l++)

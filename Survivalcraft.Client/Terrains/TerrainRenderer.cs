@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+using Game.Network.Chunks;
 using Game.Terrains.Distribution;
 using Game.Terrains.Rendering;
 
@@ -66,16 +67,19 @@ public class TerrainRenderer : IDisposable
             _opaqueShader = new Shader(
                 ShaderCodeManager.GetFast("Shaders/Opaque.vsh"),
                 ShaderCodeManager.GetFast("Shaders/Opaque.psh"),
-                new ShaderMacro("Opaque")
+                new ShaderMacro("Opaque"),
+                new ShaderMacro("SKY_FOG")
             );
             _alphaTestedShader = new Shader(
                 ShaderCodeManager.GetFast("Shaders/AlphaTested.vsh"),
                 ShaderCodeManager.GetFast("Shaders/AlphaTested.psh"),
-                new ShaderMacro("ALPHATESTED")
+                new ShaderMacro("ALPHATESTED"),
+                new ShaderMacro("SKY_FOG")
             );
             _transparentShader = new Shader(
                 ShaderCodeManager.GetFast("Shaders/Transparent.vsh"),
                 ShaderCodeManager.GetFast("Shaders/Transparent.psh"),
+                new ShaderMacro("SKY_FOG"),
                 new ShaderMacro("Transparent")
             );
             Display.DeviceReset += DisplayDeviceReset;
@@ -147,7 +151,7 @@ public class TerrainRenderer : IDisposable
     private void UploadReadyGeometry(Camera camera, TerrainChunk[] chunks)
     {
         var center = camera.ViewPosition.XZ;
-        var visibilitySquared = MathUtils.Sqr(_subsystemSky.VisibilityRange);
+        var visibilityRange = _subsystemSky.VisibilityRange;
         var locations = _subsystemTerrain.Demands.Locations.Values.ToArray();
         var frame = Time.FrameIndex;
         foreach (var stale in _uploadViews.Where(pair => pair.Value.Frame < frame - 1).Select(pair => pair.Key)
@@ -167,19 +171,23 @@ public class TerrainRenderer : IDisposable
             }
 
             var nearest = Vector2.DistanceSquared(center, chunk.Center);
-            var visible = nearest <= visibilitySquared;
+            var visible = NetworkTerrainPolicy.IsTerrainChunkRelevant(chunk.Center, center, visibilityRange);
             foreach (var location in locations)
             {
                 var distance = Vector2.DistanceSquared(location.Center, chunk.Center);
                 nearest = Math.Min(nearest, distance);
-                visible |= distance <= location.VisibilityDistance * location.VisibilityDistance;
+                visible |= NetworkTerrainPolicy.IsTerrainChunkRelevant(
+                    chunk.Center,
+                    location.Center,
+                    location.VisibilityDistance
+                );
             }
 
             foreach (var view in _uploadViews.Values)
             {
                 var distance = Vector2.DistanceSquared(view.Center, chunk.Center);
                 nearest = Math.Min(nearest, distance);
-                visible |= distance <= view.Visibility * view.Visibility;
+                visible |= NetworkTerrainPolicy.IsTerrainChunkRelevant(chunk.Center, view.Center, view.Visibility);
             }
 
             if (visible)
@@ -229,7 +237,7 @@ public class TerrainRenderer : IDisposable
             _presentation.ChunkPresentations.Get(terrainChunk).HazeEnds.TryAdd(gameWidgetIndex, 0);
             _presentation.ChunkPresentations.Get(terrainChunk).DrawDistanceSquared =
                 Vector2.DistanceSquared(xZ, terrainChunk.Center);
-            if (_presentation.ChunkPresentations.Get(terrainChunk).DrawDistanceSquared <= num)
+            if (NetworkTerrainPolicy.GetChunkDistanceSquared(terrainChunk.Center, xZ) <= num)
             {
                 if (viewFrustum.Intersection(terrainChunk.BoundingBox))
                 {
@@ -300,6 +308,7 @@ public class TerrainRenderer : IDisposable
             );
         _opaqueShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _opaqueShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
+        BindSkyFog(_opaqueShader);
         _opaqueShader.GetParameter("u_fogBottomTopDensity").SetValue(
             new Vector3(
                 _subsystemSky.ViewFogBottom,
@@ -366,6 +375,7 @@ public class TerrainRenderer : IDisposable
             );
         _alphaTestedShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _alphaTestedShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
+        BindSkyFog(_alphaTestedShader);
         _alphaTestedShader.GetParameter("u_fogBottomTopDensity").SetValue(
             new Vector3(
                 _subsystemSky.ViewFogBottom,
@@ -412,6 +422,7 @@ public class TerrainRenderer : IDisposable
             );
         _transparentShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _transparentShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
+        BindSkyFog(_transparentShader);
         _transparentShader.GetParameter("u_fogBottomTopDensity").SetValue(
             new Vector3(
                 _subsystemSky.ViewFogBottom,
@@ -431,6 +442,14 @@ public class TerrainRenderer : IDisposable
             const int subsetsMask = 64;
             DrawTerrainChunkGeometrySubsets(_transparentShader, terrainChunk, subsetsMask);
         }
+    }
+
+    private void BindSkyFog(Shader shader)
+    {
+        var background = _subsystemSky.FogBackground;
+        shader.GetParameter("u_skyFogEnabled").SetValue(background != null ? 1f : 0f);
+        shader.GetParameter("u_skyTexture").SetValue(background ?? _subsystemAnimatedTextures.AnimatedBlocksTexture);
+        shader.GetParameter("u_skySampler").SetValue(SamplerState.PointClamp);
     }
 
     public void DisplayDeviceReset()
@@ -632,16 +651,10 @@ public class TerrainRenderer : IDisposable
     private void StartChunkFadeIn(Camera camera, TerrainChunk chunk)
     {
         var viewPosition = camera.ViewPosition;
-        var v = new Vector2(chunk.Origin.X, chunk.Origin.Y);
-        var v2 = new Vector2(chunk.Origin.X + 16, chunk.Origin.Y);
-        var v3 = new Vector2(chunk.Origin.X, chunk.Origin.Y + 16);
-        var v4 = new Vector2(chunk.Origin.X + 16, chunk.Origin.Y + 16);
-        var x = Vector2.Distance(viewPosition.XZ, v);
-        var x2 = Vector2.Distance(viewPosition.XZ, v2);
-        var x3 = Vector2.Distance(viewPosition.XZ, v3);
-        var x4 = Vector2.Distance(viewPosition.XZ, v4);
+        // Start fully hidden, including when the nearest point lies on an edge rather than a corner.
+        var nearest = MathF.Sqrt(NetworkTerrainPolicy.GetChunkDistanceSquared(chunk.Center, viewPosition.XZ));
         _presentation.ChunkPresentations.Get(chunk).HazeEnds[camera.GameWidget.GameWidgetIndex] =
-            MathUtils.Max(MathUtils.Min(x, x2, x3, x4), 0.001f);
+            MathUtils.Max(nearest - 0.01f, 0.001f);
     }
 
     private void RunChunkFadeIn(Camera camera, TerrainChunk chunk)
