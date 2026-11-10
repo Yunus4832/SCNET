@@ -808,9 +808,10 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         );
         var triangleVertices = texturedBatch3D.TriangleVertices;
         var triangleIndices = texturedBatch3D.TriangleIndices;
-        var count = triangleVertices.Count;
-        var count2 = triangleVertices.Count;
-        var count3 = triangleIndices.Count;
+        var vertexStart = triangleVertices.Count;
+        var vertexIndex = vertexStart;
+        var indexStart = triangleIndices.Count;
+        var index = indexStart;
         triangleVertices.Count += 49;
         triangleIndices.Count += 216;
         for (var i = 0; i < 7; i++)
@@ -828,37 +829,95 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                 var position = new Vector3(viewPosition.X + num7 * 1900f, y, viewPosition.Z + num8 * 1900f);
                 var texCoord = new Vector2(position.X, position.Z) / 1900f * 1.75f - v;
                 var color = _cloudsLayerColors[num4];
-                texturedBatch3D.TriangleVertices.Array[count2++] =
+                texturedBatch3D.TriangleVertices.Array[vertexIndex++] =
                     new VertexPositionColorTexture(position, color, texCoord);
                 if (j > 0 && i > 0)
                 {
-                    var num9 = (ushort)(count + j + i * 7);
-                    var num10 = (ushort)(count + (j - 1) + i * 7);
-                    var num11 = (ushort)(count + (j - 1) + (i - 1) * 7);
-                    var num12 = (ushort)(count + j + (i - 1) * 7);
+                    var num9 = (ushort)(vertexStart + j + i * 7);
+                    var num10 = (ushort)(vertexStart + (j - 1) + i * 7);
+                    var num11 = (ushort)(vertexStart + (j - 1) + (i - 1) * 7);
+                    var num12 = (ushort)(vertexStart + j + (i - 1) * 7);
                     if ((num2 <= 0 && num3 <= 0) || (num2 > 0 && num3 > 0))
                     {
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num9;
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num10;
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num11;
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num11;
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num12;
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num9;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num9;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num10;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num11;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num11;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num12;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num9;
                     }
                     else
                     {
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num9;
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num10;
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num12;
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num10;
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num11;
-                        texturedBatch3D.TriangleIndices.Array[count3++] = num12;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num9;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num10;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num12;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num10;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num11;
+                        texturedBatch3D.TriangleIndices.Array[index++] = num12;
                     }
                 }
             }
         }
 
+        ClipCloudsAtNearPlane(camera.ViewFrustum.Near, texturedBatch3D, vertexStart, indexStart);
         _ = DrawCloudsWireframe;
+    }
+
+    internal static void ClipCloudsAtNearPlane(Plane plane, TexturedBatch3D batch, int vertexStart, int indexStart)
+    {
+        // Keep eye-plane vertices out of GPU perspective clipping, retaining interpolated UVs and colors.
+        var vertexCount = batch.TriangleVertices.Count - vertexStart;
+        var indexCount = batch.TriangleIndices.Count - indexStart;
+        Span<VertexPositionColorTexture> vertices = stackalloc VertexPositionColorTexture[vertexCount];
+        batch.TriangleVertices.Array.AsSpan(vertexStart, vertexCount).CopyTo(vertices);
+        Span<int> indices = stackalloc int[indexCount];
+        batch.TriangleIndices.Array.AsSpan(indexStart, indexCount).CopyTo(indices);
+        batch.TriangleVertices.Count = vertexStart;
+        batch.TriangleIndices.Count = indexStart;
+        Span<VertexPositionColorTexture> input = stackalloc VertexPositionColorTexture[3];
+        Span<VertexPositionColorTexture> output = stackalloc VertexPositionColorTexture[4];
+        for (var i = 0; i < indices.Length; i += 3)
+        {
+            for (var j = 0; j < 3; j++) { input[j] = vertices[indices[i + j] - vertexStart]; }
+
+            var count = 0;
+            var previous = input[2];
+            var previousDistance = Vector3.Dot(plane.Normal, previous.Position) + plane.D;
+            for (var j = 0; j < 3; j++)
+            {
+                var current = input[j];
+                var distance = Vector3.Dot(plane.Normal, current.Position) + plane.D;
+                if ((previousDistance <= 0) != (distance <= 0))
+                {
+                    var fraction = previousDistance / (previousDistance - distance);
+                    output[count++] = new VertexPositionColorTexture(
+                        Vector3.Lerp(previous.Position, current.Position, fraction),
+                        Color.Lerp(previous.Color, current.Color, fraction),
+                        Vector2.Lerp(previous.TexCoord, current.TexCoord, fraction)
+                    );
+                }
+
+                if (distance <= 0) { output[count++] = current; }
+
+                previous = current;
+                previousDistance = distance;
+            }
+
+            for (var j = 1; j < count - 1; j++)
+            {
+                batch.QueueTriangle(
+                    output[0].Position,
+                    output[j].Position,
+                    output[j + 1].Position,
+                    output[0].TexCoord,
+                    output[j].TexCoord,
+                    output[j + 1].TexCoord,
+                    output[0].Color,
+                    output[j].Color,
+                    output[j + 1].Color
+                );
+            }
+        }
     }
 
     public void QueueCelestialBody(
