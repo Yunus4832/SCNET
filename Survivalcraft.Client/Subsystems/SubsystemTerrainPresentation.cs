@@ -114,7 +114,11 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
     private void OnAllocationRenewed(TerrainChunk chunk, ulong previousGeneration) =>
         ChunkPresentations.RenewAllocation(chunk, previousGeneration);
 
-    private void OnDerivedInputsInvalidated(TerrainChunk chunk) => OnDerivedDataInvalidated(chunk, false);
+    private void OnDerivedInputsInvalidated(TerrainChunk chunk)
+    {
+        // The computation scheduler owns requeueing after this notification.
+        ChunkPresentations.Get(chunk).RequestMeshRebuild();
+    }
 
     private void OnDerivedDataInvalidated(TerrainChunk chunk, bool discardCache)
     {
@@ -123,7 +127,7 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
         if (discardCache) { presentation.InvalidateSliceContentsHashes(); }
 
         TerrainSubsystem.Computations.Request(chunk);
-        MeshUpdater.Update();
+        // Deferred maintenance resumes in the presentation update once per frame.
     }
 
     private void OnDestructionDebrisRequested(int value, Vector3 position, float strength)
