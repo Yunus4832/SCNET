@@ -30,6 +30,20 @@ set active. If logs show code older than the installed APK, inspect the app-priv
 `adb shell run-as com.candy.scnet`; do not clear application or SCNET data as a routine workaround.
 Release APKs embed the managed assemblies and can be installed normally.
 
+For Release APK updates on MIUI/HyperOS, a non-incremental replacement is a useful fallback when
+installation returns `INSTALL_FAILED_USER_RESTRICTED`. On the tested HyperOS 3 / Android 35 device,
+this command completed for successive different APKs. Verify the installed package and preserve
+application data through replacement installation.
+
+```bash
+adb -s <serial> install --no-incremental -r <signed-release-apk>
+```
+
+When the user authorizes unattended SCNET test installs, a remaining system confirmation can be
+handled through its normal UI after checking the SCNET application identity and the installation
+button text. HyperOS's observed “拒绝后下次安装不再提示” checkbox remembers rejection. Keep its
+meaning in mind when handling that dialog. Use the SDK Install target for Debug Fast Deployment.
+
 SCNET currently uses external shared storage rooted at `/storage/emulated/0/scnet`. On Android 11+
 the first launch can stop at the all-files-access settings screen. Grant that access manually before
 an automated run, or use the device's supported `appops` workflow when available. Do not report a
