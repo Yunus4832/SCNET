@@ -152,6 +152,9 @@ SDK 默认的基础命名空间由 `Directory.Build.props` 中的 `ImplicitUsing
 
 Android 的几个变体项目会复用这份配置，只在自己的 `.csproj` 里覆盖架构、输出名和引用方式。这样一来就可以集中管理移动端的构建差异。
 
+Mono 并发 GC 采用 Android SDK 的默认设置。调整 GC 选项时，应同时验证移动端长帧、内存和地形加载吞吐。
+选项说明见 [AndroidEnableSGenConcurrent](https://learn.microsoft.com/en-us/dotnet/android/building-apps/build-properties#androidenablesgenconcurrent)。
+
 ### `SharedProperties/AndroidApplication.props`
 
 这是 Android 可运行启动器的公共项目配置，集中定义目标框架、程序集名称、最低系统版本、
