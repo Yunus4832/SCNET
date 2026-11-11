@@ -20,6 +20,32 @@ namespace Survivalcraft.Test.Subsystems;
 
 public sealed class SkyWeatherOwnershipTest
 {
+    [Fact]
+    public void WeatherFogIsIndependentOfDistanceFogScalingAndComposesAsSeparateLayer()
+    {
+        var sky = new SubsystemSkyPresentation { VisibilityRangeYMultiplier = 0.25f };
+        foreach (var (name, value) in new[]
+                 {
+                     (nameof(sky.ViewFogBottom), 0f), (nameof(sky.ViewFogTop), 100f),
+                     (nameof(sky.ViewFogDensity), 0.003f), (nameof(sky.ViewHazeStart), 0f),
+                     (nameof(sky.ViewHazeDensity), 0.01f)
+                 })
+        {
+            typeof(SubsystemSkyPresentation).GetProperty(name)!.SetValue(sky, value);
+        }
+
+        var view = new Vector3(0f, 80f, 0f);
+        var target = new Vector3(40f, 40f, 0f);
+        var weatherFog = sky.CalculateFogNoHaze(view, target);
+        Assert.InRange(weatherFog, 0.01f, 0.9f);
+        sky.VisibilityRangeYMultiplier = 2f;
+        Assert.Equal(weatherFog, sky.CalculateFogNoHaze(view, target));
+        var delta = view - target;
+        delta.Y *= sky.VisibilityRangeYMultiplier;
+        var distanceFog = MathUtils.Saturate(sky.ViewHazeDensity * (delta.Length() - sky.ViewHazeStart));
+        Assert.Equal(1f - (1f - weatherFog) * (1f - distanceFog), sky.CalculateFog(view, target), 5);
+    }
+
     [Theory]
     [InlineData(typeof(SubsystemGlow))]
     [InlineData(typeof(SubsystemModelsRenderer))]

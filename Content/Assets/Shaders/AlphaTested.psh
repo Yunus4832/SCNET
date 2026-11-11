@@ -15,7 +15,7 @@ float u_alphaThreshold;
 void main(
 	in float4 v_color : COLOR,
 	in float2 v_texcoord: TEXCOORD,
-	in float v_fog: FOG,
+	in float2 v_fog: FOG,
 #ifdef SKY_FOG
     in float4 v_skyPosition : TEXCOORD1,
 #endif
@@ -40,7 +40,8 @@ void main(
 #endif
 
 	// Fog
-    float fog = saturate(v_fog);
+    float fog = saturate(v_fog.x);
+    float weatherFog = saturate(v_fog.y);
     float3 fogColor = u_fogColor;
 #ifdef SKY_FOG
     if (u_skyFogEnabled > 0.5 && fog > 0.0)
@@ -49,7 +50,8 @@ void main(
         fogColor = u_skyTexture.Sample(u_skySampler, skyUv).rgb;
     }
 #endif
-	result.rgb = lerp(result.rgb, fogColor * v_color.a, fog);
+    result.rgb = lerp(result.rgb, u_fogColor * v_color.a, weatherFog);
+    result.rgb = lerp(result.rgb, fogColor * v_color.a, fog);
 	
 	// Return
 	svTarget = result;
@@ -82,7 +84,7 @@ uniform float u_alphaThreshold;
 
 varying vec4 v_color;
 varying vec2 v_texcoord;
-varying float v_fog;
+varying vec2 v_fog;
 	
 void main()
 {
@@ -104,7 +106,8 @@ void main()
 #endif
 
 	// Fog
-    float fog = clamp(v_fog, 0.0, 1.0);
+    float fog = clamp(v_fog.x, 0.0, 1.0);
+    float weatherFog = clamp(v_fog.y, 0.0, 1.0);
     vec3 fogColor = u_fogColor;
 #ifdef SKY_FOG
     if (u_skyFogEnabled > 0.5 && fog > 0.0)
@@ -117,7 +120,8 @@ void main()
         fogColor = texture2D(u_skyTexture, skyUv).rgb;
     }
 #endif
-	result.rgb = mix(result.rgb, fogColor * v_color.a, fog);
+    result.rgb = mix(result.rgb, u_fogColor * v_color.a, weatherFog);
+    result.rgb = mix(result.rgb, fogColor * v_color.a, fog);
 	
 	// Return
 	gl_FragColor = result;

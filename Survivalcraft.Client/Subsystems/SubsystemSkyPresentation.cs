@@ -288,17 +288,14 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                 ViewFogDensity = MathUtils.Pow(_subsystemWeather.FogIntensity, 2f) *
                                  _fogSeedRandom.Float(0.04f, 0.1f);
                 const float num6 = 256f;
-                const float num7 = 128f;
                 var seasonalTemperature =
                     _subsystemTerrain.Terrain.GetSeasonalTemperature(
                         Terrain.ToCell(viewPosition.X),
                         Terrain.ToCell(viewPosition.Z)
                     );
-                var f = CalculateHazeFactor();
-                var num8 = MathUtils.Lerp(0.5f, 0f, f);
-                var num9 = MathUtils.Lerp(1f, 0.8f, f);
-                ViewHazeStart = VisibilityRange * num8;
-                ViewHazeDensity = 1f / ((num9 - num8) * VisibilityRange);
+                // Distance fog covers the visibility boundary independently of weather.
+                ViewHazeStart = 0.8f * VisibilityRange;
+                ViewHazeDensity = 1f / (VisibilityRange - ViewHazeStart);
                 var color = CalculateSkyColor(
                     new Vector3(1f, 0f, 0f),
                     _subsystemTimeOfDay.TimeOfDay,
@@ -331,11 +328,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                     seasonalTemperature
                 );
                 _viewFogColor = Color.Lerp(c3, c2, CalculateSkyFog(camera.ViewPosition));
-                VisibilityRangeYMultiplier = MathUtils.Lerp(
-                    VisibilityRange / num6,
-                    VisibilityRange / num7,
-                    MathUtils.Pow(_subsystemWeather.PrecipitationIntensity, 4f)
-                );
+                VisibilityRangeYMultiplier = VisibilityRange / num6;
                 _viewIsSkyVisible = true;
             }
 
@@ -395,6 +388,8 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                 );
                 PrimitivesRenderer2D.Flush();
             }
+
+            DrawSkyObjects(camera);
         }
         else
         {
@@ -431,7 +426,8 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         {
             Display.RenderTarget = sky.Background;
             Display.Clear(new Vector4(ViewFogColor));
-            DrawSkyBackground(camera);
+            // Fog samples atmospheric radiance. Sky objects use the scene depth buffer.
+            DrawSkydome(camera);
             _skyBackground = sky.Background;
         }
         finally
@@ -442,9 +438,8 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         }
     }
 
-    private void DrawSkyBackground(Camera camera)
+    private void DrawSkyObjects(Camera camera)
     {
-        DrawSkydome(camera);
         if (DrawGalaxyEnabled)
         {
             DrawStars(camera);
@@ -484,14 +479,13 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         var num = vector.Length();
         var num2 = (FogIntegral(viewPosition.Y) - FogIntegral(position.Y)) / (viewPosition.Y - position.Y);
         var num3 = MathUtils.Saturate(ViewHazeDensity * (num - ViewHazeStart));
-        var num4 = num2 * ViewFogDensity * num;
-        return MathUtils.Saturate(num3 + num4);
+        var num4 = num2 * ViewFogDensity * Vector3.Distance(viewPosition, position);
+        return 1f - (1f - num3) * (1f - MathUtils.Saturate(num4));
     }
 
     public float CalculateFogNoHaze(Vector3 viewPosition, Vector3 position)
     {
         var vector = viewPosition - position;
-        vector.Y *= VisibilityRangeYMultiplier;
         var num = vector.Length();
         return MathUtils.Saturate(
             (FogIntegral(viewPosition.Y) - FogIntegral(position.Y)) /

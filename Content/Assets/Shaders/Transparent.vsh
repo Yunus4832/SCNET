@@ -12,18 +12,17 @@ float fogIntegral(float y)
 	return smoothstep(u_fogBottomTopDensity.x, u_fogBottomTopDensity.y, y) * (u_fogBottomTopDensity.y - u_fogBottomTopDensity.x) + u_fogBottomTopDensity.x;
 }
 
-float calculateFog(float3 position)
+float2 calculateFog(float3 position)
 {
 	float3 fogDelta = u_viewPosition - position;
+    float weatherDistance = length(fogDelta);
 	fogDelta.y *= u_fogYMultiplier;
 	float fogDistance = length(fogDelta);
 	float fogFactor = (fogIntegral(u_viewPosition.y) - fogIntegral(position.y)) / (u_viewPosition.y - position.y);
-	#ifdef SKY_FOG
-    // Preserve values above one until rasterization, so triangles crossing the fog boundary stay hidden outside it.
-    return max(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0) + fogFactor * u_fogBottomTopDensity.z * fogDistance;
-#else
-    return saturate(saturate(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x)) + fogFactor * u_fogBottomTopDensity.z * fogDistance);
-#endif
+    // Keep distance and weather extinction separate through interpolation.
+    // Preserve distance values above one to fully hide triangles beyond the boundary.
+    return float2(max(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0),
+        fogFactor * u_fogBottomTopDensity.z * weatherDistance);
 }
 
 void main(
@@ -32,7 +31,7 @@ void main(
 	in float2 a_texcoord: TEXCOORD,
 	out float4 v_color : COLOR,
 	out float2 v_texcoord : TEXCOORD,
-	out float v_fog : FOG,
+	out float2 v_fog : FOG,
 #ifdef SKY_FOG
     out float4 v_skyPosition : TEXCOORD1,
 #endif
@@ -81,7 +80,7 @@ attribute vec2 a_texcoord;
 
 varying vec4 v_color;
 varying vec2 v_texcoord;
-varying float v_fog;
+varying vec2 v_fog;
 #ifdef SKY_FOG
 #ifdef GL_ES
 varying highp vec4 v_skyPosition;
@@ -95,18 +94,17 @@ float fogIntegral(float y)
 	return smoothstep(u_fogBottomTopDensity.x, u_fogBottomTopDensity.y, y) * (u_fogBottomTopDensity.y - u_fogBottomTopDensity.x) + u_fogBottomTopDensity.x;
 }
 
-float calculateFog(vec3 position)
+vec2 calculateFog(vec3 position)
 {
 	vec3 fogDelta = u_viewPosition - position;
+    float weatherDistance = length(fogDelta);
 	fogDelta.y *= u_fogYMultiplier;
 	float fogDistance = length(fogDelta);
 	float fogFactor = (fogIntegral(u_viewPosition.y) - fogIntegral(position.y)) / (u_viewPosition.y - position.y);
-	#ifdef SKY_FOG
-    // Preserve values above one until rasterization, so triangles crossing the fog boundary stay hidden outside it.
-    return max(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0) + fogFactor * u_fogBottomTopDensity.z * fogDistance;
-#else
-    return clamp(clamp(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0, 1.0) + fogFactor * u_fogBottomTopDensity.z * fogDistance, 0.0, 1.0);
-#endif
+    // Keep distance and weather extinction separate through interpolation.
+    // Preserve distance values above one to fully hide triangles beyond the boundary.
+    return vec2(max(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0),
+        fogFactor * u_fogBottomTopDensity.z * weatherDistance);
 }
 
 void main()
