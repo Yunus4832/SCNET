@@ -14,6 +14,8 @@ public class Projectile : WorldItem
 
     public bool IsInWater;
 
+    public bool IsResting;
+
     public double LastNoiseTime;
 
     public bool NoChunk;

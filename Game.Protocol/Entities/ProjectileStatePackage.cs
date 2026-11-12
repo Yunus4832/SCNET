@@ -18,4 +18,6 @@ public sealed record ProjectileStatePackage : ProjectilePackage
     [Key(4)] public Vector3 Velocity { get; init; }
 
     [Key(5)] public Vector3 AngularVelocity { get; init; }
+
+    [Key(6)] public bool IsResting { get; init; }
 }

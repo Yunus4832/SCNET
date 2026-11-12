@@ -137,4 +137,7 @@ Adaptive 压缩是发送优化，不改变消息含义；接收端必须接受�
 
 `ProjectileAddedPackage.SmokeTrail` 为可选烟迹快照，包含大小、结束时间和颜色。它随投射物基线一起交付，接收方仅播放未过期的烟迹。
 
+`ProjectileAddedPackage.IsResting` 和 `ProjectileStatePackage.IsResting` 表示权威侧确认的低速地面接触状态。
+客户端按运动快照的状态 tick 接受该标记，在静止期间保持位置与旋转，恢复运动后继续外推。
+
 地形缺片修复请求要求有效的分配代次、正内容版本和合法缺片索引；不合法输入不能经修复回退生成不合法的区块请求。

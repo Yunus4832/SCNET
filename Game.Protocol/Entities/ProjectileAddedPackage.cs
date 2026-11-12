@@ -28,4 +28,6 @@ public sealed record ProjectileAddedPackage : ProjectilePackage
     [Key(9)] public bool IsFireProjectile { get; init; }
 
     [Key(10)] public ProjectileSmokeTrailSnapshot? SmokeTrail { get; init; }
+
+    [Key(11)] public bool IsResting { get; init; }
 }

@@ -37,7 +37,7 @@ public sealed class ProjectilePackageTest
                     Position = new Vector3(1, 2, 3),
                     Rotation = new Vector3(4, 5, 6),
                     Velocity = new Vector3(7, 8, 9),
-                    AngularVelocity = new Vector3(10, 11, 12)
+                    AngularVelocity = new Vector3(10, 11, 12), IsResting = true
                 }
             ) with
             {
@@ -49,6 +49,7 @@ public sealed class ProjectilePackageTest
         Assert.Equal(package.Rotation, clone.Rotation);
         Assert.Equal(package.Velocity, clone.Velocity);
         Assert.Equal(package.AngularVelocity, clone.AngularVelocity);
+        Assert.True(clone.IsResting);
         Assert.Equal(5u, clone.StateTick);
         Assert.Equal(PackageTransportPolicy.StateStream, PackageTransportPolicy.Get(clone));
     }
@@ -85,7 +86,7 @@ public sealed class ProjectilePackageTest
                 100d,
                 Color.White
             ),
-            IsFireProjectile = true
+            IsFireProjectile = true, IsResting = true
         };
 
         var clone = RoundTrip(ProjectilePackageBuilder.Capture(projectile));
@@ -98,6 +99,7 @@ public sealed class ProjectilePackageTest
         Assert.Equal(projectile.AngularVelocity, clone.AngularVelocity);
         Assert.Equal(projectile.Trail!.Offset, clone.TrailOffset);
         Assert.True(clone.IsFireProjectile);
+        Assert.True(clone.IsResting);
         Assert.Equal(PackageTransportPolicy.ReliableEvent, PackageTransportPolicy.Get(clone));
     }
 

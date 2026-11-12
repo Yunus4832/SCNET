@@ -63,6 +63,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
         var totalElapsedGameTime = _subsystemGameInfo.TotalElapsedGameTime;
         foreach (var projectile in _projectiles)
         {
+            projectile.IsResting = false;
             if (projectile.ToRemove)
             {
                 _projectilesToRemove.Add(projectile);
@@ -285,6 +286,12 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                             {
                                 projectile.ToRemove = true;
                             }
+                            else if (projectile.ProjectileStoppedAction == ProjectileStoppedAction.DoNothing &&
+                                     terrainRaycastResult is { CellFace.Face: 4 } &&
+                                     projectile.Velocity.LengthSquared() < 1f)
+                            {
+                                projectile.IsResting = true;
+                            }
                         }
                     }
 
@@ -293,6 +300,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                         : MathUtils.Pow(block.ProjectileDamping, dt);
                     projectile.Velocity.Y += -10f * dt;
                     projectile.Velocity *= num5;
+                    projectile.IsResting &= projectile.Velocity.Y <= 0f;
                     projectile.AngularVelocity *= num5;
                     projectile.Position = vector;
                     projectile.Rotation += projectile.AngularVelocity * dt;
@@ -478,6 +486,12 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                 continue;
             }
 
+            if (projectile.IsResting)
+            {
+                projectile.IsInWater = IsWater(projectile.Position);
+                continue;
+            }
+
             var block = WorldContentBinding.For(Project).Catalog
                 .Blocks[Terrain.ExtractContents(projectile.Value)];
             projectile.Position += projectile.Velocity * dt;
@@ -633,6 +647,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
         }
 
         projectile.Rotation = package.Rotation;
+        projectile.IsResting = package.IsResting;
         projectile.LastNetworkStateTick = package.StateTick;
         if (package.SmokeTrail is { } smoke)
         {
@@ -690,6 +705,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
         projectile.Rotation = package.Rotation;
         projectile.Velocity = package.Velocity;
         projectile.AngularVelocity = package.AngularVelocity;
+        projectile.IsResting = package.IsResting;
         return true;
     }
 
