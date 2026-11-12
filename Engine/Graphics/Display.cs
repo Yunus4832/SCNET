@@ -15,6 +15,8 @@ public static class Display
 
     public static string DeviceDescription = string.Empty;
 
+    public static bool SupportsDepthFramebufferFetch { get; internal set; }
+
     public static bool IsDeviceAvailable => Window.IsCreated && GLWrapper.GL is not null;
 
     public static bool UseReducedZRange

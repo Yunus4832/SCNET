@@ -66,10 +66,12 @@ public sealed class RenderTarget2D : Texture2D
     public override void HandleDeviceLost()
     {
         DeleteRenderTarget();
+        base.HandleDeviceLost();
     }
 
     public override void HandleDeviceReset()
     {
+        base.HandleDeviceReset();
         AllocateRenderTarget();
     }
 

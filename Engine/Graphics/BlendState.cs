@@ -45,6 +45,24 @@ public sealed class BlendState : LockOnFirstUse
         isLocked = true
     };
 
+    public static readonly BlendState DepthOnly = new()
+    {
+        ColorWriteEnabled = false,
+        isLocked = true
+    };
+
+    private bool _colorWriteEnabled = true;
+
+    public bool ColorWriteEnabled
+    {
+        get => _colorWriteEnabled;
+        set
+        {
+            ThrowIfLocked();
+            _colorWriteEnabled = value;
+        }
+    }
+
     public BlendFunction MAlphaBlendFunction;
 
     public Blend MAlphaDestinationBlend;

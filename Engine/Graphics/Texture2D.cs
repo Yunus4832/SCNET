@@ -17,6 +17,8 @@ public class Texture2D : GraphicsResource
 
     internal int texture;
 
+    private readonly DepthFormat _depthTextureFormat;
+
     public Texture2D(int width, int height, int mipLevelsCount, ColorFormat colorFormat)
     {
         InitializeTexture2D(width, height, mipLevelsCount, colorFormat);
@@ -45,6 +47,25 @@ public class Texture2D : GraphicsResource
         }
 
         AllocateTexture();
+    }
+
+    internal Texture2D(int width, int height, DepthFormat depthFormat) : base(false)
+    {
+        if (depthFormat is not (DepthFormat.Depth16 or DepthFormat.Depth24Stencil8))
+        {
+            throw new ArgumentOutOfRangeException(nameof(depthFormat));
+        }
+
+        _depthTextureFormat = depthFormat;
+        InitializeTexture2D(width, height, 1, ColorFormat.Rgba8888);
+        PixelFormat = depthFormat == DepthFormat.Depth16 ? GLEnum.DepthComponent : GLEnum.DepthStencil;
+        PixelType = depthFormat == DepthFormat.Depth16 ? GLEnum.UnsignedShort : GLEnum.UnsignedInt248;
+        try { AllocateTexture(); }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     public IntPtr NativeHandle => texture;
@@ -125,6 +146,11 @@ public class Texture2D : GraphicsResource
 
     public virtual void SetDataInternal(int mipLevel, nint source)
     {
+        if (_depthTextureFormat != DepthFormat.None)
+        {
+            throw new InvalidOperationException("Depth textures are written by framebuffer operations.");
+        }
+
         if (!Display.IsDeviceAvailable)
         {
             return;
@@ -148,6 +174,11 @@ public class Texture2D : GraphicsResource
 
     public virtual unsafe void SetDataInternal(int mipLevel, void* source)
     {
+        if (_depthTextureFormat != DepthFormat.None)
+        {
+            throw new InvalidOperationException("Depth textures are written by framebuffer operations.");
+        }
+
         if (!Display.IsDeviceAvailable)
         {
             return;
@@ -199,7 +230,12 @@ public class Texture2D : GraphicsResource
                 GLWrapper.GL.TexImage2D(
                     TextureTarget.Texture2D,
                     i,
-                    (InternalFormat)PixelFormat,
+                    _depthTextureFormat switch
+                    {
+                        DepthFormat.Depth16 => InternalFormat.DepthComponent16,
+                        DepthFormat.Depth24Stencil8 => InternalFormat.Depth24Stencil8,
+                        _ => (InternalFormat)PixelFormat
+                    },
                     (uint)width,
                     (uint)height,
                     0,
@@ -229,7 +265,10 @@ public class Texture2D : GraphicsResource
         {
             var num2 = MathUtils.Max(Width >> i, 1);
             var num3 = MathUtils.Max(Height >> i, 1);
-            num += ColorFormat.GetSize() * num2 * num3;
+            var pixelSize = _depthTextureFormat == DepthFormat.None
+                ? ColorFormat.GetSize()
+                : _depthTextureFormat.GetSize();
+            num += pixelSize * num2 * num3;
         }
 
         return num;
@@ -293,6 +332,11 @@ public class Texture2D : GraphicsResource
 
     public void VerifyParametersSetData<T>(int mipLevel, T[] source, int sourceStartIndex = 0) where T : struct
     {
+        if (_depthTextureFormat != DepthFormat.None)
+        {
+            throw new InvalidOperationException("Depth textures are written by framebuffer operations.");
+        }
+
         if (mipLevel < 0 || mipLevel >= MipLevelsCount)
         {
             throw new ArgumentOutOfRangeException(nameof(mipLevel));

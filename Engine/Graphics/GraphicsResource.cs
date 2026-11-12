@@ -8,9 +8,9 @@ public abstract class GraphicsResource : IDisposable
 
     internal bool isDisposed;
 
-    internal GraphicsResource()
+    internal GraphicsResource(bool register = true)
     {
-        resources.Add(this);
+        if (register) { resources.Add(this); }
     }
 
     public virtual void Dispose()

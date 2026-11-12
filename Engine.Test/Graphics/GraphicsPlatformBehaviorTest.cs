@@ -19,6 +19,14 @@ public class GraphicsPlatformBehaviorTest
         Assert.Same(SamplerState.LinearClamp, texturedBatch.SamplerState);
     }
 
+    [Fact]
+    public void DepthOnlyStatePreservesColorAndIsImmutable()
+    {
+        Assert.True(BlendState.Opaque.ColorWriteEnabled);
+        Assert.False(BlendState.DepthOnly.ColorWriteEnabled);
+        Assert.Throws<InvalidOperationException>(() => BlendState.DepthOnly.ColorWriteEnabled = true);
+    }
+
     [Theory]
     [InlineData(100, "#version 100")]
     [InlineData(300, "#version 300 es")]

@@ -120,6 +120,8 @@ internal static class GLWrapper
             $"{openGLVendor}, Renderer={GL.GetStringS(StringName.Renderer) ?? string.Empty}, Version={GL.GetStringS(StringName.Version) ?? string.Empty}, R={bits[0]} G={bits[1]} B={bits[2]} A={bits[3]}, D={bits[4]} S={bits[5]}, MaxTextureSize={GLMaxTextureSize}";
         Log.Information($"Initialized display device: {Display.DeviceDescription}");
         var extensions = GL.GetStringS(StringName.Extensions);
+        Display.SupportsDepthFramebufferFetch =
+            extensions?.Split(' ').Contains("GL_ARM_shader_framebuffer_fetch_depth_stencil") == true;
         GLExtTextureFilterAnisotropic = extensions?.Contains("GL_EXT_texture_filter_anisotropic") ?? false;
         GLOesPackedDepthStencil = extensions?.Contains("GL_OES_packed_depth_stencil") ?? false;
         GLKhrTextureCompressionAstcLdr = extensions?.Contains("GL_KHR_texture_compression_astc_ldr") ?? false;
@@ -703,6 +705,7 @@ internal static class GLWrapper
 
     public static void ApplyBlendState(BlendState state)
     {
+        ColorMask(state.ColorWriteEnabled ? 15 : 0);
         if (state == _blendState)
         {
             return;
