@@ -71,6 +71,8 @@ public class CreativeInventoryPanel : CanvasWidget
 
         if (_componentCreativeInventory.CategoryIndex != _assignedCategoryIndex)
         {
+            var presentations = _componentCreativeInventory.Project
+                .FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog;
             _slotIndices.Clear();
             for (var i = PlayerInventoryLayout.StorageSlotsCount;
                  i < _componentCreativeInventory.SlotsCount;
@@ -78,14 +80,21 @@ public class CreativeInventoryPanel : CanvasWidget
             {
                 var slotValue = _componentCreativeInventory.GetSlotValue(i);
                 var num2 = Terrain.ExtractContents(slotValue);
-                if (_componentCreativeInventory.Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog
-                        .Get(num2)
-                        .GetCategory(slotValue) ==
+                if (presentations.Get(num2).GetCategory(slotValue) ==
                     _creativeInventoryWidget.GetCategoryName(_componentCreativeInventory.CategoryIndex))
                 {
                     _slotIndices.Add(i);
                 }
             }
+
+            var orderedSlotIndices = _slotIndices.OrderBy(slotIndex =>
+                {
+                    var value = _componentCreativeInventory.GetSlotValue(slotIndex);
+                    return presentations.Get(Terrain.ExtractContents(value)).GetDisplayOrder(value);
+                }
+            ).ToArray();
+            _slotIndices.Clear();
+            _slotIndices.AddRange(orderedSlotIndices);
 
             var num3 = _inventoryGrid.ColumnsCount * _inventoryGrid.RowsCount;
             _pagesCount = (_slotIndices.Count + num3 - 1) / num3;
