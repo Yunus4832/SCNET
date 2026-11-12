@@ -88,7 +88,7 @@ public sealed class DeferredTerrainChangesTest
         var points = Enumerable.Range(0, 4).Select(fixture.Cell).ToArray();
         foreach (var point in points) { fixture.Queue.TryEnqueue(point, 2); }
 
-        fixture.Cells[points[0]] = new DeferredTerrainChanges.Cell(Terrain.ReplaceLight(1, 14), 1);
+        fixture.Cells[points[0]] = new DeferredTerrainChanges.Cell((1 | (14 << 10)), 1);
         fixture.Cells[points[1]] = new DeferredTerrainChanges.Cell(3, 1);
         fixture.Cells[points[2]] = new DeferredTerrainChanges.Cell(1, 2);
         fixture.Cells.Remove(points[3]);

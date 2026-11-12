@@ -160,7 +160,7 @@ public sealed class BlockDigOutcomeTest
     private static int AutumnLeaves(int index)
     {
         var data = DeciduousLeavesBlock.SetTimeOfSeason(0, 0.8f);
-        return Terrain.MakeBlockValue(index, 0, DeciduousLeavesBlock.SetSeason(data, Season.Autumn));
+        return Terrain.MakeBlockValue(index, DeciduousLeavesBlock.SetSeason(data, Season.Autumn));
     }
 
     private static TerrainRaycastResult Hit(int value) => new() { Value = value, CellFace = new CellFace(1, 5, 1, 4) };

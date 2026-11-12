@@ -59,7 +59,7 @@ public class EditPistonDialog : Dialog
         _speed = PistonBlock.GetSpeed(data);
         _title.Text = string.Format(
             Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(EditPistonDialog), "EditTitle"),
-            catalog.Get(237).GetDisplayName(null, Terrain.MakeBlockValue(237, 0, data))
+            catalog.Get(237).GetDisplayName(null, Terrain.MakeBlockValue(237, data))
         );
         _slider1.Granularity = 1f;
         _slider1.MinValue = 1f;

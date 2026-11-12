@@ -25,13 +25,10 @@ public sealed class ClientChunkDerivationPipelineTest
         TerrainMeshTestData.Complete(chunk, presentation);
         Assert.False(ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk, presentation));
         presentation.MarkUploaded();
-        chunk.DerivedRevisions.BeginLightWrite();
-        try
-        {
-            Assert.False(chunk.HasCurrentLight);
-            Assert.True(ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk, presentation));
-        }
-        finally { chunk.DerivedRevisions.EndLightWrite(); }
+        chunk.DerivedRevisions.InvalidatePropagation();
+        Assert.False(chunk.HasCurrentLight);
+        Assert.True(ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk, presentation));
+        Assert.True(chunk.DerivedRevisions.PublishLight(chunk.DerivedRevisions.Capture(), false));
 
         chunk.DerivedRevisions.InvalidateLight();
         Assert.False(chunk.HasCurrentLight);

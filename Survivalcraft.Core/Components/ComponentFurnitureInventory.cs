@@ -175,7 +175,7 @@ public class ComponentFurnitureInventory : Component, IInventory
             }
 
             var data = FurnitureBlock.SetDesignIndex(0, i, design.ShadowStrengthFactor, design.IsLightEmitter);
-            var item = Terrain.MakeBlockValue(BuiltInBlockRegistry.GetIndex<FurnitureBlock>(), 0, data);
+            var item = Terrain.MakeBlockValue(BuiltInBlockRegistry.GetIndex<FurnitureBlock>(), data);
             _slots.Add(item);
         }
     }

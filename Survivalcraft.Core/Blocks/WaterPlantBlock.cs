@@ -18,7 +18,7 @@ public abstract class WaterPlantBlock : WaterBlock
         {
             result = default;
             result.CellFace = raycastResult.CellFace;
-            result.Value = Terrain.MakeBlockValue(BlockIndex, 0, data);
+            result.Value = Terrain.MakeBlockValue(BlockIndex, data);
             return result;
         }
 

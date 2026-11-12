@@ -109,6 +109,7 @@ public class ComponentDiggingCracks : Component, IDrawable
             Display.BlendState = BlendState.AlphaBlend;
             Display.DepthStencilState = DepthStencilState.Default;
             Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
+            LightingManager.BindTerrainEnvironment(_shader, _subsystemTerrain);
             _shader.GetParameter("u_origin").SetValue(v.XZ);
             _shader.GetParameter("u_viewProjectionMatrix").SetValue(value);
             _shader.GetParameter("u_viewPosition").SetValue(camera.ViewPosition);
@@ -161,6 +162,12 @@ public class ComponentDiggingCracks : Component, IDrawable
         _buffers.Clear();
     }
 
+    public override void Dispose()
+    {
+        DisposeBuffers();
+        _shader?.Dispose();
+    }
+
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
         if (!WorldRuntimeContext.For(Project).HasPresentation)
@@ -182,7 +189,12 @@ public class ComponentDiggingCracks : Component, IDrawable
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSkyPresentation>(true)!;
         _componentMiner = Entity.FindComponent<ComponentMiner>(true)!;
-        _shader = ContentManager.Get<Shader>("Shaders/AlphaTested");
+        _shader = new Shader(
+            ShaderCodeManager.GetFast("Shaders/AlphaTested.vsh"),
+            ShaderCodeManager.GetFast("Shaders/AlphaTested.psh"),
+            new ShaderMacro("ALPHATESTED"),
+            new ShaderMacro("TERRAIN_LIGHT_RESPONSE")
+        );
         _textures = new Texture2D[8];
         for (var i = 0; i < 8; i++)
         {

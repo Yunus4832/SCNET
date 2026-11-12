@@ -286,7 +286,7 @@ public static class DebugOverlayManager
             $"{RowLabel("Season")}{ClientApplication.Content.Seasons.GetTimeOfYearName(subsystemTimeOfDay.SubsystemGameInfo.WorldSettings.TimeOfYear)} ({subsystemSeasons.TimeOfSeason:P0})",
             $"{RowLabel("Temperature")}{temperature}",
             $"{RowLabel("Humidity")}{humidity}",
-            $"{RowLabel("Light")}{terrain.GetCellLight(cell.X, cell.Y, cell.Z)}"
+            $"{RowLabel("Light")}{LightingManager.SampleEffectiveLight(subsystemTerrain, cell.X, cell.Y, cell.Z)}"
         );
     }
 

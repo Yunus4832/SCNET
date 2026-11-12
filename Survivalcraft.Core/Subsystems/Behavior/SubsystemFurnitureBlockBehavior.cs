@@ -242,7 +242,6 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
         var componentMiner = player.ComponentMiner;
         var value = Terrain.MakeBlockValue(
             227,
-            0,
             FurnitureBlock.SetDesignIndex(0, design.Index, design.ShadowStrengthFactor, design.IsLightEmitter)
         );
         var num3 = MathUtils.Clamp(design.Resolution, 4, 8);

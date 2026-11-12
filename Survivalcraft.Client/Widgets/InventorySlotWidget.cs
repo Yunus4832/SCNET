@@ -430,7 +430,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!.Catalog =
             PresentationCatalog;
         containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!.Value =
-            Terrain.ReplaceLight(slotValue, 15);
+            Terrain.NormalizeCellValue(slotValue);
         containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!.DrawBlockEnvironmentData
             .SubsystemTerrain = subsystemTerrain;
         containerWidget.Children.Find<LabelWidget>("InventoryDragWidget.Name")!.Text =
@@ -473,7 +473,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                 var num2 = Terrain.ExtractContents(slotValue);
                 var block = Catalog.Blocks[num2];
                 var flag2 = block.GetRotPeriod(slotValue) > 0 && block.GetDamage(slotValue) > 0;
-                _blockIconWidget.Value = Terrain.ReplaceLight(slotValue, 15);
+                _blockIconWidget.Value = Terrain.NormalizeCellValue(slotValue);
                 _blockIconWidget.IsVisible = !HideBlockIcon;
                 if (num != _lastCount)
                 {

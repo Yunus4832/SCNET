@@ -53,8 +53,8 @@ public class PressurePlateBlock : MountedElectricElementBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, 0);
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, 1);
+        yield return Terrain.MakeBlockValue(BlockIndex, 0);
+        yield return Terrain.MakeBlockValue(BlockIndex, 1);
     }
 
 
@@ -86,7 +86,7 @@ public class PressurePlateBlock : MountedElectricElementBlock
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, SetMaterial(0, material)),
+                Value = Terrain.MakeBlockValue(BlockIndex, SetMaterial(0, material)),
                 Count = 1
             }
         );

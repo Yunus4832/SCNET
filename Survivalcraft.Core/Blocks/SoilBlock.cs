@@ -29,9 +29,9 @@ public class SoilBlock : CubeBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetHydration(0, false));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetHydration(0, true));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetHydration(SetNitrogen(0, 3), true));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetHydration(0, false));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetHydration(0, true));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetHydration(SetNitrogen(0, 3), true));
     }
 
 

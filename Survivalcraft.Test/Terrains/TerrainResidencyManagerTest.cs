@@ -124,7 +124,7 @@ public sealed class TerrainResidencyManagerTest
         source.Cells[0] = 11;
         var request = source.DerivedRevisions.Capture();
         Assert.True(source.DerivedRevisions.PublishHeights(request));
-        Assert.True(source.DerivedRevisions.PublishSunlight(request));
+        Assert.True(source.DerivedRevisions.PublishLightSeed(request));
         Assert.True(source.DerivedRevisions.PublishLight(request));
         var presentation = presentations.Get(source);
         TerrainMeshTestData.Complete(source, presentation);

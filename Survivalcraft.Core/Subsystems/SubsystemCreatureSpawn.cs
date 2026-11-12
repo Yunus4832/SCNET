@@ -1224,7 +1224,11 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var num23 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var cellLightFast10 = _subsystemTerrain.Terrain.GetCellLightFast(point.X, point.Y + 1, point.Z);
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast10))
+                    {
+                        return 0f;
+                    }
+
                     if (((num21 > 20f && humidity4 >= 8) || (num22 <= 8f && point.Y < 90 && cellLightFast10 <= 7)) &&
                         num23 is 8 or 2)
                     {
@@ -1254,7 +1258,11 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var num20 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var cellLightFast9 = _subsystemTerrain.Terrain.GetCellLightFast(point.X, point.Y + 1, point.Z);
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast9))
+                    {
+                        return 0f;
+                    }
+
                     if (num17 > 20f &&
                         num19 > 8f &&
                         num18 < 8f &&
@@ -1288,7 +1296,11 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var num16 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var cellLightFast8 = _subsystemTerrain.Terrain.GetCellLightFast(point.X, point.Y + 1, point.Z);
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast8))
+                    {
+                        return 0f;
+                    }
+
                     if (num15 > 20f &&
                         humidity3 >= 4 &&
                         temperature7 >= 8 &&
@@ -1321,7 +1333,11 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var num14 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var cellLightFast7 = _subsystemTerrain.Terrain.GetCellLightFast(point.X, point.Y + 1, point.Z);
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast7))
+                    {
+                        return 0f;
+                    }
+
                     if (num13 > 20f &&
                         temperature6 < 8 &&
                         point.Y < 110 &&
@@ -1352,7 +1368,11 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var num12 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var cellLightFast6 = _subsystemTerrain.Terrain.GetCellLightFast(point.X, point.Y + 1, point.Z);
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast6))
+                    {
+                        return 0f;
+                    }
+
                     if (num11 > -40f && temperature5 < 8 && point.Y < 90 && cellLightFast6 <= 7 && num12 == 62)
                     {
                         return 0.25f;
@@ -1379,7 +1399,11 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var num10 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var cellLightFast5 = _subsystemTerrain.Terrain.GetCellLightFast(point.X, point.Y + 1, point.Z);
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast5))
+                    {
+                        return 0f;
+                    }
+
                     if (num9 > 20f &&
                         humidity2 > 8 &&
                         point.Y < 90 &&
@@ -1410,7 +1434,11 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var num8 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var cellLightFast4 = _subsystemTerrain.Terrain.GetCellLightFast(point.X, point.Y + 1, point.Z);
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast4))
+                    {
+                        return 0f;
+                    }
+
                     if (num7 > 20f &&
                         temperature4 > 8 &&
                         point.Y < 90 &&
@@ -1443,7 +1471,11 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var num6 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var cellLightFast3 = _subsystemTerrain.Terrain.GetCellLightFast(point.X, point.Y + 1, point.Z);
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast3))
+                    {
+                        return 0f;
+                    }
+
                     if (num5 > 20f &&
                         temperature3 > 8 &&
                         humidity > 8 &&
@@ -1475,7 +1507,11 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var num4 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var cellLightFast2 = _subsystemTerrain.Terrain.GetCellLightFast(point.X, point.Y + 1, point.Z);
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast2))
+                    {
+                        return 0f;
+                    }
+
                     if (num3 > 20f &&
                         temperature2 > 8 &&
                         point.Y < 110 &&
@@ -1505,7 +1541,11 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var num2 = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var cellLightFast = _subsystemTerrain.Terrain.GetCellLightFast(point.X, point.Y + 1, point.Z);
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast))
+                    {
+                        return 0f;
+                    }
+
                     if (num > 20f &&
                         temperature > 8 &&
                         point.Y < 100 &&
@@ -1825,12 +1865,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             return false;
         }
 
+        var environment = _subsystemTerrain.CaptureLightEnvironment();
         switch (spawnLocationType)
         {
             case SpawnLocationType.Surface:
             {
-                var cellLightFast2 = _subsystemTerrain.Terrain.GetCellLightFast(x, y, z);
-                if (_subsystemSky.SkyLightValue - cellLightFast2 > 3)
+                if (!_subsystemTerrain.Terrain.Lighting.TryGetEffectiveLight(
+                        x,
+                        y,
+                        z,
+                        environment,
+                        out var cellLightFast2
+                    )) { return false; }
+
+                if (environment.SkyLightValue - cellLightFast2 > 3)
                 {
                     return false;
                 }
@@ -1853,8 +1901,15 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             }
             case SpawnLocationType.Cave:
             {
-                var cellLightFast = _subsystemTerrain.Terrain.GetCellLightFast(x, y, z);
-                if (_subsystemSky.SkyLightValue - cellLightFast < 5)
+                if (!_subsystemTerrain.Terrain.Lighting.TryGetEffectiveLight(
+                        x,
+                        y,
+                        z,
+                        environment,
+                        out var cellLightFast
+                    )) { return false; }
+
+                if (environment.SkyLightValue - cellLightFast < 5)
                 {
                     return false;
                 }

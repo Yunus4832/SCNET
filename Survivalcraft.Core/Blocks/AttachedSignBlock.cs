@@ -100,7 +100,7 @@ public abstract class AttachedSignBlock(string modelName, int postedSignBlockInd
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(PostedSignBlockIndex, 0, data),
+                Value = Terrain.MakeBlockValue(PostedSignBlockIndex, data),
                 Count = 1
             }
         );

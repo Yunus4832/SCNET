@@ -22,19 +22,8 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
 
         _subsystemTerrain = terrain;
         Texture = terrain.Project.FindSubsystem<SubsystemBlocksTexture>(true)!.BlocksTexture;
-        var num = Terrain.ToCell(position.X);
-        var num2 = Terrain.ToCell(position.Y);
-        var num3 = Terrain.ToCell(position.Z);
-        var x = 0;
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num + 1, num2, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num - 1, num2, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2 + 1, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2 - 1, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2, num3 + 1));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2, num3 - 1));
+        SetLightOrigin(terrain, position);
         TextureSlotsCount = 32;
-        var num4 = LightingManager.LightIntensityByLightValue[x];
-        color *= num4;
         color.A = 255;
         var num5 = MathUtils.Sqrt(strength);
         foreach (var obj in Particles)

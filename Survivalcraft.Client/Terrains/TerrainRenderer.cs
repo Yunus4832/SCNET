@@ -68,17 +68,20 @@ public class TerrainRenderer : IDisposable
                 ShaderCodeManager.GetFast("Shaders/Opaque.vsh"),
                 ShaderCodeManager.GetFast("Shaders/Opaque.psh"),
                 new ShaderMacro("Opaque"),
+                new ShaderMacro("TERRAIN_LIGHT_RESPONSE"),
                 new ShaderMacro("SKY_FOG")
             );
             _alphaTestedShader = new Shader(
                 ShaderCodeManager.GetFast("Shaders/AlphaTested.vsh"),
                 ShaderCodeManager.GetFast("Shaders/AlphaTested.psh"),
                 new ShaderMacro("ALPHATESTED"),
+                new ShaderMacro("TERRAIN_LIGHT_RESPONSE"),
                 new ShaderMacro("SKY_FOG")
             );
             _transparentShader = new Shader(
                 ShaderCodeManager.GetFast("Shaders/Transparent.vsh"),
                 ShaderCodeManager.GetFast("Shaders/Transparent.psh"),
+                new ShaderMacro("TERRAIN_LIGHT_RESPONSE"),
                 new ShaderMacro("SKY_FOG"),
                 new ShaderMacro("Transparent")
             );
@@ -165,7 +168,7 @@ public class TerrainRenderer : IDisposable
         foreach (var chunk in chunks)
         {
             var presentation = _presentation.ChunkPresentations.Get(chunk);
-            if (!presentation.NewGeometryData || !chunk.HasCurrentLight || !presentation.HasCurrentGeometry(chunk))
+            if (!presentation.CanUploadGeometry(chunk))
             {
                 continue;
             }
@@ -210,7 +213,7 @@ public class TerrainRenderer : IDisposable
 
         try
         {
-            if (!presentation.NewGeometryData || !chunk.HasCurrentLight || !presentation.HasCurrentGeometry(chunk))
+            if (!presentation.CanUploadGeometry(chunk))
             {
                 return false;
             }
@@ -308,7 +311,7 @@ public class TerrainRenderer : IDisposable
             );
         _opaqueShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _opaqueShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
-        BindSkyFog(_opaqueShader);
+        BindEnvironment(_opaqueShader);
         _opaqueShader.GetParameter("u_fogBottomTopDensity").SetValue(
             new Vector3(
                 _subsystemSky.ViewFogBottom,
@@ -375,7 +378,7 @@ public class TerrainRenderer : IDisposable
             );
         _alphaTestedShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _alphaTestedShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
-        BindSkyFog(_alphaTestedShader);
+        BindEnvironment(_alphaTestedShader);
         _alphaTestedShader.GetParameter("u_fogBottomTopDensity").SetValue(
             new Vector3(
                 _subsystemSky.ViewFogBottom,
@@ -422,7 +425,7 @@ public class TerrainRenderer : IDisposable
             );
         _transparentShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _transparentShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
-        BindSkyFog(_transparentShader);
+        BindEnvironment(_transparentShader);
         _transparentShader.GetParameter("u_fogBottomTopDensity").SetValue(
             new Vector3(
                 _subsystemSky.ViewFogBottom,
@@ -444,8 +447,9 @@ public class TerrainRenderer : IDisposable
         }
     }
 
-    private void BindSkyFog(Shader shader)
+    private void BindEnvironment(Shader shader)
     {
+        LightingManager.BindTerrainEnvironment(shader, _subsystemTerrain);
         var background = _subsystemSky.FogBackground;
         shader.GetParameter("u_skyFogEnabled").SetValue(background != null ? 1f : 0f);
         shader.GetParameter("u_skyTexture").SetValue(background ?? _subsystemAnimatedTextures.AnimatedBlocksTexture);

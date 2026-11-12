@@ -22,8 +22,8 @@ public sealed class TerrainCellAuthority(Terrain terrain)
             return false;
         }
 
-        value = Terrain.ReplaceLight(value, 0);
-        var oldValue = Terrain.ReplaceLight(chunk.GetCellValueFast(x & 15, y, z & 15), 0);
+        value = Terrain.NormalizeCellValue(value);
+        var oldValue = Terrain.NormalizeCellValue(chunk.GetCellValueFast(x & 15, y, z & 15));
         if (oldValue == value)
         {
             return false;

@@ -9,7 +9,7 @@ public class PaintBucketBlock : BucketBlock
         var i = 0;
         while (i < 16)
         {
-            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, i));
+            yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
             var num = i + 1;
             i = num;
         }
@@ -38,7 +38,7 @@ public class PaintBucketBlock : BucketBlock
                         Description = new LocalizedText(nameof(PaintBucketBlock), "CraftingPrefix", "Make"),
                         DescriptionColor = num,
                         DescriptionSuffix = new LocalizedText(nameof(PaintBucketBlock), "CraftingSuffix", "paint"),
-                        ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, num),
+                        ResultValue = Terrain.MakeBlockValue(BlockIndex, num),
                         ResultCount = 1,
                         RequiredHeatLevel = 1f,
                         Ingredients =

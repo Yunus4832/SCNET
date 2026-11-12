@@ -191,7 +191,6 @@ public sealed class FurnitureDesignRenameTest
                 Source.Z,
                 Terrain.MakeBlockValue(
                     BuiltInBlockRegistry.GetIndex<FurnitureBlock>(),
-                    0,
                     FurnitureBlock.SetDesignIndex(0, 7, 0, false)
                 )
             );

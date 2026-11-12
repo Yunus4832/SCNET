@@ -284,7 +284,6 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                         p * (num - 1),
                         Terrain.MakeBlockValue(
                             238,
-                            0,
                             PistonHeadBlock.SetFace(
                                 PistonHeadBlock.SetIsShaft(PistonHeadBlock.SetMode(0, mode), true),
                                 face
@@ -370,7 +369,6 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 Offset = Point3.Zero,
                 Value = Terrain.MakeBlockValue(
                     BuiltInBlockRegistry.GetIndex<PistonHeadBlock>(),
-                    0,
                     PistonHeadBlock.SetFace(
                         PistonHeadBlock.SetMode(PistonHeadBlock.SetIsShaft(0, num > 0), mode),
                         face
@@ -471,7 +469,6 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 position.Z,
                 Terrain.MakeBlockValue(
                     BuiltInBlockRegistry.GetIndex<PistonBlock>(),
-                    0,
                     PistonBlock.SetIsExtended(data, true)
                 )
             );
@@ -625,7 +622,6 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 position.Z,
                 Terrain.MakeBlockValue(
                     BuiltInBlockRegistry.GetIndex<PistonBlock>(),
-                    0,
                     PistonBlock.SetIsExtended(data, isExtended)
                 )
             );

@@ -206,7 +206,7 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
                 dropValues.Add(
                     new BlockDropValue
                     {
-                        Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, paintColor)),
+                        Value = Terrain.MakeBlockValue(BlockIndex, SetColor(0, paintColor)),
                         Count = 1
                     }
                 );
@@ -219,13 +219,13 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
     public override IEnumerable<int> GetCreativeValues()
     {
         yield return Terrain.MakeBlockValue(BlockIndex);
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 0));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 8));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 15));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 11));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 12));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 13));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 14));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, 0));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, 8));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, 15));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, 11));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, 12));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, 13));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, 14));
     }
 
 

@@ -270,7 +270,7 @@ public abstract class SubsystemFluidBlockBehavior(
                             }
                             else
                             {
-                                Set(x, y, z, Terrain.MakeBlockValue(contents, 0, FluidBlock.SetLevel(data, num + 1)));
+                                Set(x, y, z, Terrain.MakeBlockValue(contents, FluidBlock.SetLevel(data, num + 1)));
                             }
 
                             continue;
@@ -279,13 +279,13 @@ public abstract class SubsystemFluidBlockBehavior(
 
                     if (_generateSources && level != 0 && num2 >= 2)
                     {
-                        Set(x, y, z, Terrain.MakeBlockValue(contents, 0, FluidBlock.SetLevel(data, 0)));
+                        Set(x, y, z, Terrain.MakeBlockValue(contents, FluidBlock.SetLevel(data, 0)));
                     }
                     else if (_fluidBlock.IsTheSameFluid(contents2))
                     {
                         if (level2 > 1)
                         {
-                            Set(x, y - 1, z, Terrain.MakeBlockValue(contents2, 0, FluidBlock.SetLevel(data2, 1)));
+                            Set(x, y - 1, z, Terrain.MakeBlockValue(contents2, FluidBlock.SetLevel(data2, 1)));
                         }
                     }
                     else if (!OnFluidInteract(
@@ -293,7 +293,7 @@ public abstract class SubsystemFluidBlockBehavior(
                                  x,
                                  y - 1,
                                  z,
-                                 Terrain.MakeBlockValue(_fluidBlock.BlockIndex, 0, FluidBlock.SetLevel(0, 1))
+                                 Terrain.MakeBlockValue(_fluidBlock.BlockIndex, FluidBlock.SetLevel(0, 1))
                              ) &&
                              level < _fluidBlock.MaxLevel)
                     {
@@ -463,7 +463,7 @@ public abstract class SubsystemFluidBlockBehavior(
             var level2 = FluidBlock.GetLevel(data);
             if (level < level2)
             {
-                Set(x, y, z, Terrain.MakeBlockValue(contents, 0, FluidBlock.SetLevel(data, level)));
+                Set(x, y, z, Terrain.MakeBlockValue(contents, FluidBlock.SetLevel(data, level)));
             }
         }
         else
@@ -473,7 +473,7 @@ public abstract class SubsystemFluidBlockBehavior(
                 x,
                 y,
                 z,
-                Terrain.MakeBlockValue(_fluidBlock.BlockIndex, 0, FluidBlock.SetLevel(0, level))
+                Terrain.MakeBlockValue(_fluidBlock.BlockIndex, FluidBlock.SetLevel(0, level))
             );
         }
     }

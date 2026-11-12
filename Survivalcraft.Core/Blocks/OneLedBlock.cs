@@ -36,7 +36,7 @@ public class OneLedBlock : MountedElectricElementBlock
         var craftingRecipe = new CraftingRecipe
         {
             ResultCount = 4,
-            ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, 0),
+            ResultValue = Terrain.MakeBlockValue(BlockIndex, 0),
             RequiredHeatLevel = 0f,
             Description = new LocalizedText(GetType().Name, "1", string.Empty),
             Ingredients =
@@ -91,7 +91,7 @@ public class OneLedBlock : MountedElectricElementBlock
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, 0),
+                Value = Terrain.MakeBlockValue(BlockIndex, 0),
                 Count = 1
             }
         );

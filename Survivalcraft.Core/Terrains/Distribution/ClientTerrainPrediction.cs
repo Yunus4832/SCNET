@@ -26,8 +26,8 @@ public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> pred
         var chunk = terrain.GetChunkAtCell(cell.X, cell.Z, false);
         if (chunk is null ||
             _pending.Count >= _maximumPending ||
-            Terrain.ReplaceLight(terrain.GetCellValueFast(cell.X, cell.Y, cell.Z), 0) !=
-            Terrain.ReplaceLight(expectedValue, 0))
+            Terrain.NormalizeCellValue(terrain.GetCellValueFast(cell.X, cell.Y, cell.Z)) !=
+            Terrain.NormalizeCellValue(expectedValue))
         {
             return 0;
         }

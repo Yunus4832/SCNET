@@ -25,7 +25,7 @@ public abstract class WoodBlock : CubeBlock
         }
 
         BlockPlacementData result = default;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetCutFace(0, cutFace));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, SetCutFace(0, cutFace));
         result.CellFace = raycastResult.CellFace;
         return result;
     }
@@ -44,7 +44,7 @@ public abstract class WoodBlock : CubeBlock
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Value = Terrain.MakeBlockValue(BlockIndex, data),
                 Count = 1
             }
         );

@@ -99,6 +99,8 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
 
         internal bool Requeued { get; set; }
 
+        internal bool WasAgingSelection { get; set; }
+
         internal readonly HashSet<TerrainWorkKey> dependencies = [];
     }
 
@@ -186,22 +188,34 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
         }
     }
 
-    public Item? Take()
+    public Item? Take(Func<TerrainWorkKey, bool>? canRun = null)
     {
         lock (_sync)
         {
-            while (_ready.Any(group => group.Count != 0))
+            while (true)
             {
-                var group = Enumerable.Range(0, 4).Where(i => _ready[i].Count != 0).MinBy(i => _service[i]);
+                var group = -1;
+                Item? preferred = null;
+                for (var i = 0; i < _ready.Length; i++)
+                {
+                    var candidate = FirstRunnable(_ready[i], canRun);
+                    if (candidate != null && (group < 0 || _service[i] < _service[group]))
+                    {
+                        group = i;
+                        preferred = candidate;
+                    }
+                }
+
+                if (group < 0) { return null; }
+
                 _virtualTime = Math.Max(_virtualTime, _service[group]);
-                var oldest = _ages[group].Min!;
-                var preferred = _ready[group].Min!;
+                var oldest = FirstRunnable(_ages[group], canRun)!;
                 var aged = _time.GetElapsedTime(oldest.Since) >= TimeSpan.FromMilliseconds(500);
                 // Repay an aging turn with distance-preferred execution time, not just one cheap stage.
                 // Otherwise expensive old content slices still dominate a nearby chunk's completion path.
                 var selected = aged && !_lastSelectionWasAged[group] && _agingDebtMilliseconds[group] <= 0
                     ? oldest
-                    : preferred;
+                    : preferred!;
 
                 RemoveReady(selected);
                 if (!selected.Key.IsCurrent)
@@ -213,15 +227,26 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
 
                 _lastSelectionWasAged[group] = !ReferenceEquals(selected, preferred);
                 selected.Running = true;
+                selected.WasAgingSelection = _lastSelectionWasAged[group];
                 selected.Requeued = false;
                 return selected;
             }
-
-            return null;
         }
     }
 
-    public void RecordCost(TerrainWorkPriority priority, TimeSpan elapsed)
+    private static Item? FirstRunnable(SortedSet<Item> items, Func<TerrainWorkKey, bool>? canRun)
+    {
+        if (canRun == null) { return items.Min; }
+
+        foreach (var item in items)
+        {
+            if (canRun(item.Key)) { return item; }
+        }
+
+        return null;
+    }
+
+    public void RecordCost(TerrainWorkPriority priority, TimeSpan elapsed, bool? agingSelection = null)
     {
         lock (_sync)
         {
@@ -232,9 +257,15 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
             // Clamp at zero so idle periods cannot bank credit for a later burst of distant work.
             _agingDebtMilliseconds[group] = Math.Max(
                 0,
-                _agingDebtMilliseconds[group] + (_lastSelectionWasAged[group] ? 3 * milliseconds : -milliseconds)
+                _agingDebtMilliseconds[group] +
+                ((agingSelection ?? _lastSelectionWasAged[group]) ? 3 * milliseconds : -milliseconds)
             );
         }
+    }
+
+    internal bool IsRegistered(Item item)
+    {
+        lock (_sync) { return _items.TryGetValue(item.Key, out var current) && ReferenceEquals(current, item); }
     }
 
     public void Finish(Item item, bool complete)

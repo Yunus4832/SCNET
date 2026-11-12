@@ -86,7 +86,7 @@ public static class NetworkChunkCodec
                 {
                     for (var x = 0; x < 16; x++)
                     {
-                        writer.Write(Terrain.ReplaceLight(cells[TerrainChunk.CalculateCellIndex(x, y, z)], 0));
+                        writer.Write(Terrain.NormalizeCellValue(cells[TerrainChunk.CalculateCellIndex(x, y, z)]));
                     }
                 }
             }
@@ -218,7 +218,7 @@ public static class NetworkChunkCodec
             {
                 for (var x = 0; x < 16; x++)
                 {
-                    var next = Terrain.ReplaceLight(cells[TerrainChunk.CalculateCellIndex(x, y, z)], 0);
+                    var next = Terrain.NormalizeCellValue(cells[TerrainChunk.CalculateCellIndex(x, y, z)]);
                     if (count == 0)
                     {
                         value = next;
@@ -253,7 +253,7 @@ public static class NetworkChunkCodec
                 throw new InvalidDataException("Terrain RLE stream is truncated.");
             }
 
-            var value = Terrain.ReplaceLight(reader.ReadInt32(), 0);
+            var value = Terrain.NormalizeCellValue(reader.ReadInt32());
             var count = reader.ReadUInt16();
             if (count == 0 || index + count > _cellCount)
             {
@@ -279,7 +279,7 @@ public static class NetworkChunkCodec
             {
                 for (var x = 0; x < 16; x++)
                 {
-                    chunk.SetCellValueFast(x, y, z, Terrain.ReplaceLight(reader.ReadInt32(), 0));
+                    chunk.SetCellValueFast(x, y, z, Terrain.NormalizeCellValue(reader.ReadInt32()));
                 }
             }
         }

@@ -50,7 +50,7 @@ public class CrossbowBlockPresentation(CrossbowBlock block, BlockPresentationCat
         var matrix2 = Matrix.CreateRotationX(-(float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0f, 0.2f * size, -0.09f * size) *
                       matrix;
-        var value2 = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, arrowType.Value));
+        var value2 = Terrain.MakeBlockValue(192, ArrowBlock.SetArrowType(0, arrowType.Value));
         Catalog.Get(192).DrawBlock(primitivesRenderer, value2, color, size, ref matrix2, environmentData);
     }
 

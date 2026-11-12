@@ -112,12 +112,11 @@ public class EggBlock : Block
                 continue;
             }
 
-            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetEggType(0, eggType.EggTypeIndex));
+            yield return Terrain.MakeBlockValue(BlockIndex, SetEggType(0, eggType.EggTypeIndex));
             if (eggType.NutritionalValue > 0f)
             {
                 yield return Terrain.MakeBlockValue(
                     BlockIndex,
-                    0,
                     SetIsCooked(SetEggType(0, eggType.EggTypeIndex), true)
                 );
             }
@@ -141,7 +140,6 @@ public class EggBlock : Block
                     ResultCount = 1,
                     ResultValue = Terrain.MakeBlockValue(
                         BlockIndex,
-                        0,
                         SetEggType(SetIsCooked(0, true), eggType.EggTypeIndex)
                     ),
                     RemainsCount = 1,
@@ -150,7 +148,7 @@ public class EggBlock : Block
                     Description = new LocalizedText(TypeName, "4", string.Empty)
                 };
                 var data = SetEggType(SetIsLaid(0, true), eggType.EggTypeIndex);
-                var value = SetDamage(Terrain.MakeBlockValue(BlockIndex, 0, data), rot);
+                var value = SetDamage(Terrain.MakeBlockValue(BlockIndex, data), rot);
                 craftingRecipe.Ingredients[0] =
                     "egg:" + Terrain.ExtractData(value).ToString(CultureInfo.InvariantCulture);
                 craftingRecipe.Ingredients[1] = "waterbucket";

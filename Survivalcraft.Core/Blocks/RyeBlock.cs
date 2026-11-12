@@ -4,11 +4,11 @@ public class RyeBlock : CrossBlock
 {
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 7), true));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 1), false));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 3), false));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 5), false));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 7), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetIsWild(SetSize(0, 7), true));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetIsWild(SetSize(0, 1), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetIsWild(SetSize(0, 3), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetIsWild(SetSize(0, 5), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetIsWild(SetSize(0, 7), false));
     }
 
 
@@ -56,7 +56,7 @@ public class RyeBlock : CrossBlock
         {
             item = new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(173, 0, data),
+                Value = Terrain.MakeBlockValue(173, data),
                 Count = 1
             };
             dropValues.Add(item);

@@ -31,6 +31,7 @@ public sealed class TerrainCatalogIsolationTest
         transparentWorld.Project.InitializeSubsystem(transparent);
         var solidChunk = solidTerrain.AllocateChunk(0, 0);
         var transparentChunk = transparentTerrain.AllocateChunk(0, 0);
+        solidChunk.HasContents = transparentChunk.HasContents = true;
         solidWorld.Catalog.Blocks[0].Transparent = true;
         transparentWorld.Catalog.Blocks[0].Transparent = true;
         solidChunk.SetCellValueFast(1, 64, 1, solid.Catalog.GetBlock(_blockId).BlockIndex);
@@ -46,10 +47,12 @@ public sealed class TerrainCatalogIsolationTest
         Assert.False(SubsystemSnowBlockBehavior.CanSupportSnow(transparent.Catalog, transparentValue));
         Assert.True(SubsystemFallenLeavesBlockBehavior.CanSupportFallenLeaves(solid.Catalog, solidValue));
         Assert.False(SubsystemFallenLeavesBlockBehavior.CanSupportFallenLeaves(transparent.Catalog, transparentValue));
-        TerrainLightingCalculator.CalculateSunlightAndHeight(solidChunk, 15, solid.Catalog);
-        TerrainLightingCalculator.CalculateSunlightAndHeight(transparentChunk, 15, transparent.Catalog);
-        Assert.Equal(0, solidChunk.GetCellLightFast(1, 64, 1));
-        Assert.Equal(15, transparentChunk.GetCellLightFast(1, 64, 1));
+        TerrainLightingCalculator.CalculateHeightsAndLightSeed(solidChunk, solid.Catalog);
+        TerrainLightingCalculator.CalculateHeightsAndLightSeed(transparentChunk, transparent.Catalog);
+        Assert.True(solidTerrain.Lighting.TryGetSeed(solidChunk, out var solidSeed));
+        Assert.True(transparentTerrain.Lighting.TryGetSeed(transparentChunk, out var transparentSeed));
+        Assert.Equal(0, solidSeed.Light.Get(1, 64, 1).Sky);
+        Assert.Equal(15, transparentSeed.Light.Get(1, 64, 1).Sky);
         Assert.NotNull(solid.Raycast(start, end, false, true, null));
     }
 

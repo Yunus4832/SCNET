@@ -54,7 +54,7 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
         var i = 0;
         while (i < 16)
         {
-            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, i));
+            yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
             var num = i + 1;
             i = num;
         }
@@ -82,7 +82,6 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
         BlockPlacementData result = default;
         result.Value = Terrain.MakeBlockValue(
             BlockIndex,
-            0,
             SetMountingFace(Terrain.ExtractData(value), raycastResult.CellFace.Face)
         );
         result.CellFace = raycastResult.CellFace;
@@ -102,7 +101,7 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
+                Value = Terrain.MakeBlockValue(BlockIndex, SetColor(0, color)),
                 Count = 1
             }
         );

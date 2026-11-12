@@ -32,7 +32,7 @@ public class TargetBlock : MountedElectricElementBlock
         }
 
         result.CellFace = raycastResult.CellFace;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetMountingFace(0, raycastResult.CellFace.Face));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, SetMountingFace(0, raycastResult.CellFace.Face));
 
         return result;
     }

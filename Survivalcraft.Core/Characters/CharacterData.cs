@@ -1110,7 +1110,7 @@ public partial class CharacterData : IDisposable
     public static string MakeClothingValue(int index, int color)
     {
         return Terrain
-            .MakeBlockValue(203, 0, ClothingBlock.SetClothingIndex(ClothingBlock.SetClothingColor(0, color), index))
+            .MakeBlockValue(203, ClothingBlock.SetClothingIndex(ClothingBlock.SetClothingColor(0, color), index))
             .ToString(CultureInfo.InvariantCulture);
     }
 

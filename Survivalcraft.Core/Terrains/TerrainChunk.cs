@@ -114,6 +114,7 @@ public class TerrainChunk : IDisposable
         Volatile.Write(ref _contentInitialized, false);
         DerivedRevisions.InvalidateHeightsAndLight();
         Volatile.Write(ref _geometryPredictions, null);
+        Terrain.Lighting.Release(this);
     }
 
     public static bool IsCellValid(int x, int y, int z)
@@ -170,8 +171,8 @@ public class TerrainChunk : IDisposable
         var predictions = Volatile.Read(ref _geometryPredictions);
         return predictions is not null &&
                predictions.TryGetValue(index, out var prediction) &&
-               Terrain.ReplaceLight(value, 0) == prediction.Expected
-            ? Terrain.ReplaceLight(prediction.Value, Terrain.ExtractLight(value))
+               Terrain.NormalizeCellValue(value) == prediction.Expected
+            ? Terrain.NormalizeCellValue(prediction.Value)
             : value;
     }
 
@@ -183,7 +184,7 @@ public class TerrainChunk : IDisposable
         var snapshot = _geometryPredictions is { } current
             ? new Dictionary<int, (int Expected, int Value)>(current)
             : [];
-        snapshot[index] = (Terrain.ReplaceLight(expected, 0), value);
+        snapshot[index] = (Terrain.NormalizeCellValue(expected), value);
         Volatile.Write(ref _geometryPredictions, snapshot);
     }
 
@@ -209,12 +210,6 @@ public class TerrainChunk : IDisposable
         SetCellValueFast(y + x * _height + z * _height * _size, value);
     }
 
-    // Lighting is derived from the visual contents, but must never commit a predicted block.
-    public void SetCellLightFast(int index, int light)
-    {
-        Cells[index] = Terrain.ReplaceLight(Cells[index], light);
-    }
-
     // Reconstructed cell flags, like fluid surfaces, are not authoritative content changes.
     public void SetDerivedCellDataFast(int index, int data)
     {
@@ -223,7 +218,8 @@ public class TerrainChunk : IDisposable
 
     public void SetCellValueFast(int index, int value)
     {
-        if (Terrain.ReplaceLight(Cells[index], 0) != Terrain.ReplaceLight(value, 0))
+        value = Terrain.NormalizeCellValue(value);
+        if (Terrain.NormalizeCellValue(Cells[index]) != Terrain.NormalizeCellValue(value))
         {
             Interlocked.Increment(ref _networkContentRevision);
         }
@@ -234,11 +230,6 @@ public class TerrainChunk : IDisposable
     public int GetCellContentsFast(int x, int y, int z)
     {
         return Terrain.ExtractContents(GetCellValueFast(x, y, z));
-    }
-
-    public int GetCellLightFast(int x, int y, int z)
-    {
-        return Terrain.ExtractLight(GetCellValueFast(x, y, z));
     }
 
     public long GetShaftValueFast(int x, int z)
@@ -297,15 +288,5 @@ public class TerrainChunk : IDisposable
     public void SetBottomHeightFast(int x, int z, int bottomHeight)
     {
         SetShaftValueFast(x, z, Terrain.ReplaceBottomHeight(GetShaftValueFast(x, z), bottomHeight));
-    }
-
-    public int GetSunlightHeightFast(int x, int z)
-    {
-        return Terrain.ExtractSunlightHeight(GetShaftValueFast(x, z));
-    }
-
-    public void SetSunlightHeightFast(int x, int z, int sunlightHeight)
-    {
-        SetShaftValueFast(x, z, Terrain.ReplaceSunlightHeight(GetShaftValueFast(x, z), sunlightHeight));
     }
 }

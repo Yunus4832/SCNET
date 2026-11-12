@@ -89,7 +89,7 @@ public sealed class FurnitureAuthorityTest
             var design = new FurnitureDesign(scope.Catalog, terrain) { Index = 7 };
             design.SetValues(2, Enumerable.Repeat(Terrain.MakeBlockValue(blockIndex), 8).ToArray());
             behavior.InstallNetworkDesign(design);
-            var value = Terrain.MakeBlockValue(227, 0, FurnitureBlock.SetDesignIndex(0, design.Index, 0, false));
+            var value = Terrain.MakeBlockValue(227, FurnitureBlock.SetDesignIndex(0, design.Index, 0, false));
 
             var painted = new FurnitureBlock().Paint(terrain, value, 3);
 

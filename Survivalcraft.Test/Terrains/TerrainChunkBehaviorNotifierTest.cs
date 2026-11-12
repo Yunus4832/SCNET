@@ -84,12 +84,12 @@ public sealed class TerrainChunkBehaviorNotifierTest
         {
             Assert.False(fixture.Chunk.IsContentInitialized);
             Assert.False(authority.TryGetSnapshot(fixture.Chunk.Coords, out _));
-            fixture.Chunk.SetCellValueFast(2, 40, 2, Terrain.MakeBlockValue(3, 0, 11));
+            fixture.Chunk.SetCellValueFast(2, 40, 2, Terrain.MakeBlockValue(3, 11));
         };
         Assert.True(fixture.Notifier.TryInitialize(fixture.Chunk));
         Assert.True(fixture.Chunk.IsContentInitialized);
         Assert.True(authority.TryGetSnapshot(fixture.Chunk.Coords, out var baseline));
-        Assert.Equal(Terrain.MakeBlockValue(3, 0, 11), baseline.Cells.Span[TerrainChunk.CalculateCellIndex(2, 40, 2)]);
+        Assert.Equal(Terrain.MakeBlockValue(3, 11), baseline.Cells.Span[TerrainChunk.CalculateCellIndex(2, 40, 2)]);
         Assert.Equal(fixture.Chunk.NetworkContentRevision + 1, baseline.ContentVersion);
     }
 
@@ -329,8 +329,8 @@ public sealed class TerrainChunkBehaviorNotifierTest
             Chunk = Terrain.AllocateChunk(2, -3);
             Chunk.ContentOrigin = origin;
             Chunk.HasContents = true;
-            Chunk.SetCellValueFast(1, 60, 2, Terrain.MakeBlockValue(3, 9, 4));
-            Chunk.SetCellValueFast(1, 61, 2, Terrain.MakeBlockValue(3, 7, 2));
+            Chunk.SetCellValueFast(1, 60, 2, Terrain.MakeBlockValue(3, 4));
+            Chunk.SetCellValueFast(1, 61, 2, Terrain.MakeBlockValue(3, 2));
             if (ready) { MakeReady(); }
 
             WorldRuleHooks.For(World.Project).Dispose();
@@ -353,7 +353,7 @@ public sealed class TerrainChunkBehaviorNotifierTest
         {
             var request = Chunk.DerivedRevisions.Capture();
             Assert.True(Chunk.DerivedRevisions.PublishHeights(request));
-            Chunk.DerivedRevisions.PublishSunlight(request);
+            Chunk.DerivedRevisions.PublishLightSeed(request);
             Assert.True(Chunk.DerivedRevisions.PublishLight(request));
         }
 

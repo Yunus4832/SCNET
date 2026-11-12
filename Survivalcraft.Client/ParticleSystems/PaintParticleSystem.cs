@@ -18,20 +18,9 @@ public class PaintParticleSystem : ParticleSystem<PaintParticleSystem.Particle>
 
         _subsystemTerrain = terrain;
         Texture = terrain.Project.FindSubsystem<SubsystemBlocksTexture>(true)!.BlocksTexture;
-        var num = Terrain.ToCell(position.X);
-        var num2 = Terrain.ToCell(position.Y);
-        var num3 = Terrain.ToCell(position.Z);
-        var x = 0;
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num + 1, num2, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num - 1, num2, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2 + 1, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2 - 1, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2, num3 + 1));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2, num3 - 1));
+        SetLightOrigin(terrain, position);
         TextureSlotsCount = 16;
-        var s = LightingManager.LightIntensityByLightValue[x];
-        _color = color * s;
-        _color.A = color.A;
+        _color = color;
         var vector = Vector3.Normalize(Vector3.Cross(normal, new Vector3(0.37f, 0.15f, 0.17f)));
         var v = Vector3.Normalize(Vector3.Cross(normal, vector));
         foreach (var particle in Particles)

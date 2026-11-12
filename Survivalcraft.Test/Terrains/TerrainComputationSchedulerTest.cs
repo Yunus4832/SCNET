@@ -14,6 +14,110 @@ namespace Survivalcraft.Test.Terrains;
 public sealed class TerrainComputationSchedulerTest
 {
     [Fact]
+    public void InteractiveHeightPreparationDoesNotRunOrWaitForLighting()
+    {
+        using var fixture = new ComputationWorld();
+        fixture.Populate();
+        fixture.Scheduler.UpdateDemand([Location()]);
+        var chunk = fixture.Data.GetChunkAtCoords(0, 0)!;
+        fixture.Scheduler.PrepareHeightsSynchronously([chunk], TimeSpan.FromSeconds(1));
+        Assert.True(chunk.HasCurrentHeightData);
+        Assert.False(chunk.DerivedRevisions.HasCurrentLightSeed);
+        Assert.False(chunk.HasCurrentLight);
+        Assert.Equal(0, fixture.Scheduler.ActiveLightJobs);
+        var queued = fixture.Scheduler.Counts;
+        fixture.Scheduler.PrepareHeightsSynchronously([chunk], TimeSpan.FromSeconds(1));
+        Assert.Equal(queued, fixture.Scheduler.Counts);
+        Assert.Equal(0, fixture.Scheduler.ActiveLightJobs);
+    }
+
+    [Fact]
+    public void OneAndTwoWorkersConvergeToTheSameSkyAndBlockLightAfterSourceRemoval()
+    {
+        using var serial = new ComputationWorld(lightWorkerCount: 1);
+        using var parallel = new ComputationWorld(lightWorkerCount: 2);
+        foreach (var fixture in new[] { serial, parallel })
+        {
+            fixture.Populate();
+            foreach (var chunk in fixture.Data.AllocatedChunks)
+            {
+                for (var x = 2; x < 14; x++)
+                {
+                    for (var z = 2; z < 14; z++) { chunk.SetCellValueFast(x, 72, z, Terrain.MakeBlockValue(1)); }
+                }
+            }
+
+            fixture.Data.GetChunkAtCoords(0, 0)!.SetCellValueFast(15, 64, 15, Terrain.MakeBlockValue(3));
+            fixture.Data.GetChunkAtCoords(1, 1)!.SetCellValueFast(0, 68, 0, Terrain.MakeBlockValue(3));
+            fixture.Scheduler.UpdateDemand([Location()]);
+            fixture.Drain();
+        }
+
+        ComparePublishedLights(serial, parallel);
+        foreach (var fixture in new[] { serial, parallel })
+        {
+            fixture.Data.GetChunkAtCoords(0, 0)!.SetCellValueFast(15, 64, 15, 0);
+            fixture.Scheduler.InvalidateContentNeighborhood(new Point2(0, 0), 1);
+            fixture.Drain();
+        }
+
+        ComparePublishedLights(serial, parallel);
+    }
+
+    private static void ComparePublishedLights(ComputationWorld expected, ComputationWorld actual)
+    {
+        foreach (var chunk in expected.Data.AllocatedChunks)
+        {
+            var other = actual.Data.GetChunkAtCoords(chunk.Coords.X, chunk.Coords.Y)!;
+            Assert.True(expected.Data.Lighting.TryGetCurrentSnapshot(chunk, out var first));
+            Assert.True(actual.Data.Lighting.TryGetCurrentSnapshot(other, out var second));
+            Assert.True(first.HasSameValues(second), $"Light differs at {chunk.Coords}.");
+        }
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void TerminalJobsWaitForTheOwnerBeforePublicationAndRetiredWorkCannotResurrect(int workers)
+    {
+        using var fixture = new ComputationWorld(lightWorkerCount: workers);
+        var chunk = fixture.Data.AllocateChunk(0, 0);
+        chunk.HasContents = true;
+        chunk.ContentOrigin = TerrainContentOrigin.Replica;
+        fixture.Scheduler.UpdateDemand([Location()]);
+        for (var i = 0; i < 1000 && fixture.Scheduler.ActiveLightJobs == 0; i++) { fixture.Scheduler.Step(); }
+
+        Assert.Equal(1, fixture.Scheduler.ActiveLightJobs);
+        Assert.True(SpinWait.SpinUntil(() => fixture.Scheduler.PendingLightCompletions > 0, TimeSpan.FromSeconds(5)));
+        Assert.False(fixture.Data.Lighting.TryGetPublishedSnapshot(chunk, out _));
+        fixture.Scheduler.Retired(chunk);
+        fixture.Scheduler.Step();
+        Assert.Equal(0, fixture.Scheduler.ActiveLightJobs);
+        Assert.Equal((0, 0, 0), fixture.Scheduler.Counts);
+        Assert.False(fixture.Data.Lighting.TryGetPublishedSnapshot(chunk, out _));
+        fixture.Scheduler.Request(chunk);
+        fixture.Drain();
+        Assert.True(fixture.Data.Lighting.TryGetCurrentSnapshot(chunk, out _));
+    }
+
+    [Fact]
+    public void WorldClosureDropsCompletedJobsBeforeTheyCanPublish()
+    {
+        using var fixture = new ComputationWorld(lightWorkerCount: 2);
+        var chunk = fixture.Data.AllocateChunk(0, 0);
+        chunk.HasContents = true;
+        fixture.Scheduler.UpdateDemand([Location()]);
+        for (var i = 0; i < 1000 && fixture.Scheduler.ActiveLightJobs == 0; i++) { fixture.Scheduler.Step(); }
+
+        Assert.True(SpinWait.SpinUntil(() => fixture.Scheduler.PendingLightCompletions > 0, TimeSpan.FromSeconds(5)));
+        fixture.Scheduler.Dispose();
+        Assert.True(fixture.Scheduler.Step());
+        Assert.Equal(0, fixture.Scheduler.ActiveLightJobs);
+        Assert.Equal(0, fixture.Scheduler.PendingLightCompletions);
+        Assert.False(fixture.Data.Lighting.TryGetPublishedSnapshot(chunk, out _));
+    }
+
+    [Fact]
     public void ExternallyDeferredGeometryDoesNotSpinAndOnlyTheLiveAllocationCanResumeIt()
     {
         using var fixture = new ComputationWorld();
@@ -80,17 +184,20 @@ public sealed class TerrainComputationSchedulerTest
     }
 
     [Fact]
-    public void SkylightInvalidationDoesNotDiscardCurrentHeightData()
+    public void EnvironmentChangesKeepSpatialInputsAndHeightDataCurrent()
     {
         using var fixture = new ComputationWorld(authority: true);
         fixture.Populate();
         fixture.Scheduler.UpdateDemand([Location()]);
         fixture.Drain();
 
-        fixture.Scheduler.InvalidateSkylight();
+        var requests = fixture.Data.AllocatedChunks.Select(chunk => chunk.DerivedRevisions.Capture()).ToArray();
+        var environment = new Game.Terrains.Lighting.TerrainLightEnvironment(3);
+        Assert.True(fixture.Data.Lighting.TryGetEffectiveLight(0, 64, 0, environment, out _));
+        Assert.Equal(requests, fixture.Data.AllocatedChunks.Select(chunk => chunk.DerivedRevisions.Capture()));
 
         Assert.All(fixture.Data.AllocatedChunks, chunk => Assert.True(chunk.HasCurrentHeightData));
-        Assert.All(fixture.Data.AllocatedChunks, chunk => Assert.False(chunk.HasCurrentLight));
+        Assert.All(fixture.Data.AllocatedChunks, chunk => Assert.True(chunk.HasCurrentLight));
         fixture.Drain();
         Assert.All(fixture.Data.AllocatedChunks, chunk => Assert.True(chunk.HasCurrentLight));
     }
@@ -215,7 +322,7 @@ public sealed class TerrainComputationSchedulerTest
         Array.Fill(neighbor.Shafts, long.MaxValue);
         for (var y = 0; y < 256; y++)
         {
-            neighbor.SetCellLightFast(TerrainChunk.CalculateCellIndex(0, y, 0), 15);
+            neighbor.Cells[TerrainChunk.CalculateCellIndex(0, y, 0)] = Terrain.MakeBlockValue(1, 3);
         }
 
         var unpublishedCells = neighbor.Cells.ToArray();
@@ -297,13 +404,14 @@ public sealed class TerrainComputationSchedulerTest
         );
         fixture.Drain();
         Assert.All(fixture.Data.AllocatedChunks, chunk => Assert.True(chunk.HasCurrentLight));
-        Assert.Equal(14, fixture.Data.GetChunkAtCoords(1, 0)!.GetCellLightFast(0, 64, 8));
+        Assert.True(fixture.Data.Lighting.TryGetCurrentSnapshot(fixture.Data.GetChunkAtCoords(1, 0)!, out var light));
+        Assert.Equal(14, light.Get(0, 64, 8).Block);
         Assert.NotEmpty(derived.Completed);
         Assert.Equal((0, 0, 0), fixture.Scheduler.Counts);
     }
 
     [Fact]
-    public void InvalidatingAResumablePropagationReleasesWriteScopesAndRecomputesTheLatestInput()
+    public void ContentInvalidationCancelsPrivateWorkAndComputesTheLatestInput()
     {
         using var fixture = new ComputationWorld();
         fixture.Populate();
@@ -314,24 +422,24 @@ public sealed class TerrainComputationSchedulerTest
         }
 
         fixture.Scheduler.UpdateDemand([Location()]);
-        for (var step = 0; step < 1000 && !fixture.Calculator.HasActivePropagation; step++)
+        for (var step = 0; step < 1000 && fixture.Scheduler.ActiveLightJobs == 0; step++)
         {
             Assert.False(fixture.Scheduler.Step());
         }
 
-        Assert.True(fixture.Calculator.HasActivePropagation);
+        Assert.NotEqual(0, fixture.Scheduler.ActiveLightJobs);
         Assert.Contains(fixture.Data.AllocatedChunks, chunk => !chunk.HasCurrentLight);
         center.SetCellValueFast(8, 64, 8, 0);
         center.DerivedRevisions.InvalidateHeightsAndLight();
         fixture.Scheduler.Request(center);
         fixture.Drain();
-        Assert.False(fixture.Calculator.HasActivePropagation);
+        Assert.Equal(0, fixture.Scheduler.ActiveLightJobs);
         Assert.All(fixture.Data.AllocatedChunks, chunk => Assert.True(chunk.HasCurrentLight));
         Assert.Equal((0, 0, 0), fixture.Scheduler.Counts);
     }
 
     [Fact]
-    public void CancellingDemandAndReturningToTheSameContentsDoesNotLoseTheRemainingLightFrontier()
+    public void CancelledDemandCanResumeFromImmutableLightSeeds()
     {
         using var fixture = new ComputationWorld();
         fixture.Populate();
@@ -342,15 +450,15 @@ public sealed class TerrainComputationSchedulerTest
         }
 
         fixture.Scheduler.UpdateDemand([Location()]);
-        for (var step = 0; step < 1000 && !fixture.Calculator.HasActivePropagation; step++)
+        for (var step = 0; step < 1000 && fixture.Scheduler.ActiveLightJobs == 0; step++)
         {
             Assert.False(fixture.Scheduler.Step());
         }
 
-        Assert.True(fixture.Calculator.HasActivePropagation);
+        Assert.NotEqual(0, fixture.Scheduler.ActiveLightJobs);
         fixture.Scheduler.UpdateDemand([]);
-        Assert.True(fixture.Scheduler.Step());
-        Assert.False(fixture.Calculator.HasActivePropagation);
+        fixture.Drain();
+        Assert.Equal(0, fixture.Scheduler.ActiveLightJobs);
         fixture.Scheduler.UpdateDemand([Location()]);
         fixture.Drain();
         using var reference = new ComputationWorld();
@@ -411,7 +519,7 @@ public sealed class TerrainComputationSchedulerTest
 
         public TerrainComputationScheduler Scheduler { get; }
 
-        public ComputationWorld(bool authority = false)
+        public ComputationWorld(bool authority = false, int lightWorkerCount = 1)
         {
             _scope = new WorldCatalogScope(
                 authority ? Game.World.RuntimeSide.Authority : Game.World.RuntimeSide.Client
@@ -436,7 +544,7 @@ public sealed class TerrainComputationSchedulerTest
                 !authority,
                 chunk => chunk.HasContents && !chunk.NeedsContentValidation
             );
-            Scheduler = new TerrainComputationScheduler(World, Calculator);
+            Scheduler = new TerrainComputationScheduler(World, Calculator, lightWorkerCount);
         }
 
         public void Populate()
@@ -458,7 +566,12 @@ public sealed class TerrainComputationSchedulerTest
         {
             for (var i = 0; i < 20000; i++)
             {
-                if (Scheduler.Step()) { return; }
+                if (Scheduler.Step())
+                {
+                    if (Scheduler.ActiveLightJobs == 0) { return; }
+
+                    Thread.Sleep(1);
+                }
             }
 
             Assert.Fail("Terrain stage queue did not converge within its deterministic work bound.");

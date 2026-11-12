@@ -29,7 +29,7 @@ public class PumpkinSoupBucketBlock : BucketBlock
                     )
                 };
                 var data = BasePumpkinBlock.SetIsDead(BasePumpkinBlock.SetSize(0, 7), isDead != 0);
-                var value = SetDamage(Terrain.MakeBlockValue(131, 0, data), rot);
+                var value = SetDamage(Terrain.MakeBlockValue(131, data), rot);
                 craftingRecipe.Ingredients[0] =
                     "pumpkin:" + Terrain.ExtractData(value).ToString(CultureInfo.InvariantCulture);
                 craftingRecipe.Ingredients[1] = "waterbucket";

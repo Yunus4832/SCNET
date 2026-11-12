@@ -299,7 +299,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Value = Terrain.MakeBlockValue(BlockIndex, data),
                 Count = 1
             }
         );
@@ -375,7 +375,6 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
             {
                 ResultValue = Terrain.MakeBlockValue(
                     BlockIndex,
-                    0,
                     SetDesignIndex(
                         0,
                         furnitureDesign2.Index,
@@ -409,7 +408,6 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
             {
                 ResultValue = Terrain.MakeBlockValue(
                     BlockIndex,
-                    0,
                     SetDesignIndex(
                         0,
                         furnitureDesign3.Index,
@@ -445,7 +443,6 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
             {
                 ResultValue = Terrain.MakeBlockValue(
                     BlockIndex,
-                    0,
                     SetDesignIndex(
                         0,
                         furnitureDesign4.Index,

@@ -33,9 +33,9 @@ public sealed class BeaconLogicTest
                 var cycled = BeaconBlock.CycleColor(data);
                 Assert.Equal(intensity, BeaconBlock.GetIntensity(cycled));
                 Assert.Equal((color + 1) % 8, cycled & 7);
-                Assert.Equal(intensity, block.GetEmittedLightAmount(Terrain.MakeBlockValue(300, 0, data)));
+                Assert.Equal(intensity, block.GetEmittedLightAmount(Terrain.MakeBlockValue(300, data)));
                 var drops = new List<BlockDropValue>();
-                block.GetDropValues(null!, Terrain.MakeBlockValue(300, 15, data), 0, 0, drops, out _);
+                block.GetDropValues(null!, Terrain.MakeBlockValue(300, data), 0, 0, drops, out _);
                 Assert.Equal(Assert.Single(block.GetCreativeValues()), Assert.Single(drops).Value);
                 Assert.False(block.IsEditable(0));
             }
@@ -84,7 +84,7 @@ public sealed class BeaconLogicTest
             Assert.True(block.EmittedLightAmount > 0);
             for (var intensity = 0; intensity <= 15; intensity++)
             {
-                var value = Terrain.MakeBlockValue(300, 0, BeaconBlock.SetIntensity(2, intensity));
+                var value = Terrain.MakeBlockValue(300, BeaconBlock.SetIntensity(2, intensity));
                 Assert.Equal(intensity, block.GetEmittedLightAmount(value));
                 Assert.True(block.GetEmittedLightAmount(value) <= block.EmittedLightAmount);
             }

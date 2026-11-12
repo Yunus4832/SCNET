@@ -248,10 +248,7 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
         var vector = Vector3.UnitX / camera.ProjectionMatrix.M11 * 2f * 0.2f * s;
         var vector2 = Vector3.UnitY / camera.ProjectionMatrix.M22 * 2f * 0.2f * s;
         var v2 = -0.2f * Vector3.UnitZ - 0.5f * (vector + vector2);
-        if (!_light.HasValue || Time.PeriodicEvent(0.05000000074505806, 0.0))
-        {
-            _light = LightingManager.CalculateSmoothLight(_subsystemTerrain, camera.ViewPosition) ?? _light ?? 1f;
-        }
+        _light = LightingManager.CalculateSmoothLight(_subsystemTerrain, camera.ViewPosition) ?? _light ?? 1f;
 
         var color = Color.MultiplyColorOnly(Color.White, _light.Value);
         _random.Seed(0);

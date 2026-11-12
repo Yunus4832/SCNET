@@ -15,7 +15,7 @@ public sealed class ClientChunkSnapshot
 
         var cells = snapshot.Cells.ToArray();
         var shafts = snapshot.Shafts.ToArray();
-        for (var index = 0; index < cells.Length; index++) { cells[index] = Terrain.ReplaceLight(cells[index], 0); }
+        for (var index = 0; index < cells.Length; index++) { cells[index] = Terrain.NormalizeCellValue(cells[index]); }
 
         for (var index = 0; index < shafts.Length; index++)
         {

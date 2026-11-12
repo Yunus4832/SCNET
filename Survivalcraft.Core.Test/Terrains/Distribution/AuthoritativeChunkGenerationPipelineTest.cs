@@ -151,7 +151,7 @@ public sealed class AuthoritativeChunkGenerationPipelineTest
         if (complete)
         {
             Assert.True(chunk.DerivedRevisions.PublishHeights(request));
-            Assert.True(chunk.DerivedRevisions.PublishSunlight(request));
+            Assert.True(chunk.DerivedRevisions.PublishLightSeed(request));
             Assert.True(chunk.DerivedRevisions.PublishLight(request));
         }
 

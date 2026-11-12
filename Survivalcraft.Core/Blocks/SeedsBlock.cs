@@ -24,7 +24,7 @@ public class SeedsBlock : FlatBlock
     public override IEnumerable<int> GetCreativeValues()
     {
         return EnumUtils.GetEnumValues(typeof(SeedType))
-            .Select(enumValue => Terrain.MakeBlockValue(BlockIndex, 0, enumValue))
+            .Select(enumValue => Terrain.MakeBlockValue(BlockIndex, enumValue))
             .ToList();
     }
 
@@ -42,14 +42,14 @@ public class SeedsBlock : FlatBlock
         {
             result.Value = Terrain.ExtractData(value) switch
             {
-                0 => Terrain.MakeBlockValue(19, 0, TallGrassBlock.SetIsSmall(0, true)),
-                1 => Terrain.MakeBlockValue(20, 0, FlowerBlock.SetIsSmall(0, true)),
-                2 => Terrain.MakeBlockValue(24, 0, FlowerBlock.SetIsSmall(0, true)),
-                3 => Terrain.MakeBlockValue(25, 0, FlowerBlock.SetIsSmall(0, true)),
-                4 => Terrain.MakeBlockValue(174, 0, RyeBlock.SetSize(RyeBlock.SetIsWild(0, false), 0)),
-                5 => Terrain.MakeBlockValue(174, 0, RyeBlock.SetSize(RyeBlock.SetIsWild(0, false), 0)),
-                6 => Terrain.MakeBlockValue(204, 0, CottonBlock.SetSize(CottonBlock.SetIsWild(0, false), 0)),
-                7 => Terrain.MakeBlockValue(131, 0, BasePumpkinBlock.SetSize(BasePumpkinBlock.SetIsDead(0, false), 0)),
+                0 => Terrain.MakeBlockValue(19, TallGrassBlock.SetIsSmall(0, true)),
+                1 => Terrain.MakeBlockValue(20, FlowerBlock.SetIsSmall(0, true)),
+                2 => Terrain.MakeBlockValue(24, FlowerBlock.SetIsSmall(0, true)),
+                3 => Terrain.MakeBlockValue(25, FlowerBlock.SetIsSmall(0, true)),
+                4 => Terrain.MakeBlockValue(174, RyeBlock.SetSize(RyeBlock.SetIsWild(0, false), 0)),
+                5 => Terrain.MakeBlockValue(174, RyeBlock.SetSize(RyeBlock.SetIsWild(0, false), 0)),
+                6 => Terrain.MakeBlockValue(204, CottonBlock.SetSize(CottonBlock.SetIsWild(0, false), 0)),
+                7 => Terrain.MakeBlockValue(131, BasePumpkinBlock.SetSize(BasePumpkinBlock.SetIsDead(0, false), 0)),
                 _ => result.Value
             };
         }

@@ -122,7 +122,8 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
     {
         var data = Terrain.ExtractData(value);
         if (!TallGrassBlock.GetIsSmall(data) ||
-            Terrain.ExtractLight(SubsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z)) < 9)
+            !SubsystemTerrain.TryGetEffectiveLight(x, y + 1, z, out var light) ||
+            light < 9)
         {
             return;
         }
@@ -136,7 +137,8 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
     {
         var data = Terrain.ExtractData(value);
         if (!FlowerBlock.GetIsSmall(data) ||
-            Terrain.ExtractLight(SubsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z)) < 9)
+            !SubsystemTerrain.TryGetEffectiveLight(x, y + 1, z, out var light) ||
+            light < 9)
         {
             return;
         }
@@ -148,7 +150,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
 
     private void GrowRye(int value, int x, int y, int z, int pollPass)
     {
-        if (Terrain.ExtractLight(SubsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z)) < 9)
+        if (!SubsystemTerrain.TryGetEffectiveLight(x, y + 1, z, out var light) || light < 9)
         {
             return;
         }
@@ -235,7 +237,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
 
     private void GrowCotton(int value, int x, int y, int z, int pollPass)
     {
-        if (Terrain.ExtractLight(SubsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z)) < 9)
+        if (!SubsystemTerrain.TryGetEffectiveLight(x, y + 1, z, out var light) || light < 9)
         {
             return;
         }
@@ -317,7 +319,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
 
     private void GrowPumpkin(int value, int x, int y, int z, int pollPass)
     {
-        if (Terrain.ExtractLight(SubsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z)) < 9)
+        if (!SubsystemTerrain.TryGetEffectiveLight(x, y + 1, z, out var light) || light < 9)
         {
             return;
         }

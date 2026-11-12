@@ -1,14 +1,11 @@
 namespace Game.Terrains;
 
-/// <summary>Observes sky and season inputs without owning terrain work or residency.</summary>
+/// <summary>Observes season inputs without owning terrain work or residency.</summary>
 public sealed class TerrainEnvironmentObserver(
     Terrain terrain,
-    SubsystemGameInfo gameInfo,
-    SubsystemSky sky
+    SubsystemGameInfo gameInfo
 )
 {
-    private int _lastSkylightValue;
-
     private readonly FloatCurve _temperatureCurve = new(
         new Vector2(0f, 0f),
         new Vector2(0.125f, 0f),
@@ -32,12 +29,8 @@ public sealed class TerrainEnvironmentObserver(
         new Vector2(1f, 0f)
     );
 
-    public readonly record struct Changes(bool SunlightChanged, bool AppearanceChanged);
-
-    public Changes Update()
+    public bool Update()
     {
-        var sunlightChanged = sky.SkyLightValue != _lastSkylightValue;
-        _lastSkylightValue = sky.SkyLightValue;
         var appearanceChanged = false;
         if (Time.PeriodicEvent(1, 0.0))
         {
@@ -51,6 +44,6 @@ public sealed class TerrainEnvironmentObserver(
             }
         }
 
-        return new Changes(sunlightChanged, appearanceChanged);
+        return appearanceChanged;
     }
 }

@@ -1117,7 +1117,7 @@ public class ComponentMiner : Component, IUpdateable
 
         var cell = dig.CellFace.Point;
         var installed = terrain.Terrain.GetCellValue(cell.X, cell.Y, cell.Z);
-        if (Terrain.ReplaceLight(installed, 0) != Terrain.ReplaceLight(dig.Value, 0)) { return false; }
+        if (Terrain.NormalizeCellValue(installed) != Terrain.NormalizeCellValue(dig.Value)) { return false; }
 
         terrain.Project.FindSubsystem<SubsystemDeciduousLeavesBlockBehavior>(true)!
             .CreateFallenLeaves(cell, true);

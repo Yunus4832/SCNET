@@ -40,7 +40,7 @@ public class FurnaceBlock : Block
 
         BlockPlacementData result = default;
         // Lit furnaces are placed as their unlit counterpart.
-        result.Value = Terrain.MakeBlockValue(Catalog.GetBlock(ResourceId.Parse("game:furnace")).BlockIndex, 0, data);
+        result.Value = Terrain.MakeBlockValue(Catalog.GetBlock(ResourceId.Parse("game:furnace")).BlockIndex, data);
         result.CellFace = raycastResult.CellFace;
         return result;
     }

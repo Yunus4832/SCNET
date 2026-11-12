@@ -24,7 +24,7 @@ public sealed class GlowVoltageReplicationTest
         var chunk = terrain.AllocateChunk(0, 0);
         var ledPoint = new Point3(2, 20, 3);
         var ledData = LedBlock.SetMountingFace(0, 4);
-        chunk.SetCellValueFast(ledPoint.X, ledPoint.Y, ledPoint.Z, Terrain.MakeBlockValue(0, 0, ledData));
+        chunk.SetCellValueFast(ledPoint.X, ledPoint.Y, ledPoint.Z, Terrain.MakeBlockValue(0, ledData));
         var subsystemTerrain = new SubsystemTerrain { Terrain = terrain };
         project.InitializeSubsystem(subsystemTerrain);
         var electricity = new SubsystemElectricity();

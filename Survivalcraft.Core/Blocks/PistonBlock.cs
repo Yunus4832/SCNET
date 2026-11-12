@@ -57,9 +57,9 @@ public class PistonBlock : Block, IElectricElementBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetMode(SetMaxExtension(0, 7), PistonMode.Pushing));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetMode(SetMaxExtension(0, 7), PistonMode.Pulling));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetMode(SetMaxExtension(0, 7), PistonMode.StrictPulling));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetMode(SetMaxExtension(0, 7), PistonMode.Pushing));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetMode(SetMaxExtension(0, 7), PistonMode.Pulling));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetMode(SetMaxExtension(0, 7), PistonMode.StrictPulling));
     }
 
 
@@ -87,7 +87,7 @@ public class PistonBlock : Block, IElectricElementBlock
 
         var data = Terrain.ExtractData(value);
         BlockPlacementData result = default;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetFace(data, face));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, SetFace(data, face));
         result.CellFace = raycastResult.CellFace;
         return result;
     }
@@ -105,7 +105,7 @@ public class PistonBlock : Block, IElectricElementBlock
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, SetFace(SetIsExtended(data, false), 0)),
+                Value = Terrain.MakeBlockValue(BlockIndex, SetFace(SetIsExtended(data, false), 0)),
                 Count = 1
             }
         );

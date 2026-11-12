@@ -32,12 +32,26 @@ public class PhotodiodeElectricElement : MountedElectricElement
     {
         var cellFace = CellFaces[0];
         var point = CellFace.FaceToPoint3(cellFace.Face);
-        var cellLight = SubsystemElectricity.SubsystemTerrain.Terrain.GetCellLight(cellFace.X, cellFace.Y, cellFace.Z);
-        var cellLight2 = SubsystemElectricity.SubsystemTerrain.Terrain.GetCellLight(
-            cellFace.X + point.X,
-            cellFace.Y + point.Y,
-            cellFace.Z + point.Z
-        );
+        var terrain = SubsystemElectricity.SubsystemTerrain;
+        var environment = terrain.CaptureLightEnvironment();
+        if (!terrain.Terrain.Lighting.TryGetEffectiveLight(
+                cellFace.X,
+                cellFace.Y,
+                cellFace.Z,
+                environment,
+                out var cellLight
+            ) ||
+            !terrain.Terrain.Lighting.TryGetEffectiveLight(
+                cellFace.X + point.X,
+                cellFace.Y + point.Y,
+                cellFace.Z + point.Z,
+                environment,
+                out var cellLight2
+            ))
+        {
+            return _voltage;
+        }
+
         return MathUtils.Max(cellLight, cellLight2) / 15f;
     }
 }

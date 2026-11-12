@@ -49,7 +49,8 @@ public sealed class TerrainSerializer24Test
                 for (var x = 0; x < 16; x++)
                 {
                     var contents = 1 + (x + 17 * z + 31 * y) % 1023;
-                    source.SetCellValueFast(x, y, z, Terrain.MakeBlockValue(contents, (x + y) & 15, z & 3));
+                    source.Cells[TerrainChunk.CalculateCellIndex(x, y, z)] =
+                        Terrain.MakeBlockValue(contents, z & 3) | (((x + y) & 15) << 10);
                 }
             }
         }
@@ -61,7 +62,7 @@ public sealed class TerrainSerializer24Test
         Assert.True(serializer.LoadChunk(target));
         for (var i = 0; i < source.Cells.Length; i++)
         {
-            Assert.Equal(Terrain.ReplaceLight(source.Cells[i], 0), target.Cells[i]);
+            Assert.Equal(Terrain.NormalizeCellValue(source.Cells[i]), target.Cells[i]);
         }
 
         for (var z = 0; z < 16; z++)
@@ -88,11 +89,12 @@ public sealed class TerrainSerializer24Test
         using var serializer = new TestTerrainSerializer24(storage);
         using var terrain = new Terrain();
         using var chunk = new TerrainChunk(terrain, 0, 0);
-        chunk.SetCellValueFast(0, 0, 0, 1234);
+        var originalValue = Terrain.MakeBlockValue(234, 1);
+        chunk.SetCellValueFast(0, 0, 0, originalValue);
         chunk.SetShaftValueFast(0, 0, 5678);
 
         Assert.False(serializer.LoadChunk(chunk));
-        Assert.Equal(1234, chunk.GetCellValueFast(0, 0, 0));
+        Assert.Equal(originalValue, chunk.GetCellValueFast(0, 0, 0));
         Assert.Equal(5678, chunk.GetShaftValueFast(0, 0));
     }
 
@@ -135,7 +137,7 @@ public sealed class TerrainSerializer24Test
             ModificationCounter = 1
         };
 
-        source.SetCellValueFast(5, 60, 7, Terrain.MakeBlockValue(42, 0, 3));
+        source.SetCellValueFast(5, 60, 7, Terrain.MakeBlockValue(42, 3));
         source.SetTemperatureFast(5, 7, 12);
         source.SetHumidityFast(5, 7, 9);
 

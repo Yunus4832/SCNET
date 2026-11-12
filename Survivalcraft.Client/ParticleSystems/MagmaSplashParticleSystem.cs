@@ -22,19 +22,8 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
         _position = position;
         Texture = ContentManager.Get<Texture2D>("Textures/MagmaSplashParticle");
         TextureSlotsCount = 2;
-        var num = Terrain.ToCell(position.X);
-        var num2 = Terrain.ToCell(position.Y);
-        var num3 = Terrain.ToCell(position.Z);
-        var x = 0;
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num + 1, num2, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num - 1, num2, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2 + 1, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2 - 1, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2, num3 + 1));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2, num3 - 1));
+        SetLightOrigin(terrain, position);
         var white = Color.White;
-        var num4 = LightingManager.LightIntensityByLightValue[x];
-        white *= num4;
         white.A = 255;
         var num5 = large ? 1.5f : 1f;
         foreach (var particle in Particles)

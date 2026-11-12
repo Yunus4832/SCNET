@@ -131,7 +131,7 @@ public class ClothingBlock : Block
             while (color < colorsCount)
             {
                 var data = SetClothingColor(SetClothingIndex(0, clothingData.Index), color);
-                yield return Terrain.MakeBlockValue(BlockIndex, 0, data);
+                yield return Terrain.MakeBlockValue(BlockIndex, data);
                 var num = color + 1;
                 color = num;
             }
@@ -161,15 +161,15 @@ public class ClothingBlock : Block
                 CraftingRecipeCatalog.DecodeIngredient(item, out var craftingId, out var data);
                 if (craftingId == Catalog.Blocks[BlockIndex].CraftingId)
                 {
-                    num3 = Terrain.MakeBlockValue(BlockIndex, 0, data ?? 0);
+                    num3 = Terrain.MakeBlockValue(BlockIndex, data ?? 0);
                 }
                 else if (craftingId == Catalog.Blocks[129].CraftingId)
                 {
-                    num = Terrain.MakeBlockValue(129, 0, data ?? 0);
+                    num = Terrain.MakeBlockValue(129, data ?? 0);
                 }
                 else if (craftingId == Catalog.Blocks[128].CraftingId)
                 {
-                    num2 = Terrain.MakeBlockValue(128, 0, data ?? 0);
+                    num2 = Terrain.MakeBlockValue(128, data ?? 0);
                 }
             }
 
@@ -199,14 +199,13 @@ public class ClothingBlock : Block
                             block2.SetDamage(
                                 Terrain.MakeBlockValue(
                                     BlockIndex,
-                                    0,
                                     SetClothingIndex(SetClothingColor(0, num4), clothingIndex)
                                 ),
                                 damage
                             ),
                         RemainsCount = 1,
                         RemainsValue = Catalog.DamageItem(
-                            Terrain.MakeBlockValue(129, 0, color),
+                            Terrain.MakeBlockValue(129, color),
                             damage2 + MathUtils.Max(block.Durability / 4, 1)
                         ),
                         RequiredHeatLevel = 1f,
@@ -241,14 +240,13 @@ public class ClothingBlock : Block
                             block4.SetDamage(
                                 Terrain.MakeBlockValue(
                                     BlockIndex,
-                                    0,
                                     SetClothingIndex(SetClothingColor(0, 0), clothingIndex2)
                                 ),
                                 damage3
                             ),
                         RemainsCount = 1,
                         RemainsValue = Catalog.DamageItem(
-                            Terrain.MakeBlockValue(128, 0, 0),
+                            Terrain.MakeBlockValue(128, 0),
                             damage4 + MathUtils.Max(block3.Durability / 4, 1)
                         ),
                         RequiredHeatLevel = 1f,

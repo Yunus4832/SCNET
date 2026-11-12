@@ -169,6 +169,7 @@ internal sealed class TerrainMeshBuilder(Terrain terrain, BlockGeometryGenerator
                     continue;
                 }
 
+                _terrain.Lighting.TryGetPublishedSnapshot(chunkAtCell, out var light);
                 var x3 = i & 0xF;
                 var z = j & 0xF;
                 var shaftValueFast = chunkAtCell.GetShaftValueFast(x3, z);
@@ -180,8 +181,11 @@ internal sealed class TerrainMeshBuilder(Terrain terrain, BlockGeometryGenerator
                 var num11 = num10 + num9 - num8;
                 while (num10 < num11)
                 {
-                    num += chunkAtCell.GetCellValueForGeometry(num10++);
+                    num += chunkAtCell.GetCellValueForGeometry(num10);
                     num *= 31;
+                    num += light?.Get(x3, num10 & 255, z).Packed ?? 0;
+                    num *= 31;
+                    num10++;
                 }
 
                 num += Terrain.ExtractTemperature(shaftValueFast);

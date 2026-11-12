@@ -105,7 +105,6 @@ public sealed class FurniturePresentationBoundaryTest
         var point = new Point3(1, 65, 1);
         var value = Terrain.MakeBlockValue(
             BuiltInBlockRegistry.GetIndex<FurnitureBlock>(),
-            0,
             FurnitureBlock.SetDesignIndex(0, 7, 0, false)
         );
         terrain.Terrain.SetCellValueFast(point.X, point.Y, point.Z, value);

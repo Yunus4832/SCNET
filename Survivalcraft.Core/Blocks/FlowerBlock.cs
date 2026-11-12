@@ -17,7 +17,7 @@ public abstract class FlowerBlock : CrossBlock
             dropValues.Add(
                 new BlockDropValue
                 {
-                    Value = Terrain.MakeBlockValue(Terrain.ExtractContents(oldValue), 0, data),
+                    Value = Terrain.MakeBlockValue(Terrain.ExtractContents(oldValue), data),
                     Count = 1
                 }
             );

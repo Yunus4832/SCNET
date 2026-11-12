@@ -81,7 +81,7 @@ public class DispenserBlock : CubeBlock, IElectricElementBlock
         }
 
         BlockPlacementData result = default;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetDirection(0, direction));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, SetDirection(0, direction));
         result.CellFace = raycastResult.CellFace;
         return result;
     }

@@ -13,9 +13,9 @@ public sealed class TerrainCellAuthorityTest
         var authority = new TerrainCellAuthority(terrain);
         var revision = chunk.NetworkContentRevision;
 
-        Assert.True(authority.ChangeCell(33, 7, -15, Terrain.MakeBlockValue(2, 15, 3)));
+        Assert.True(authority.ChangeCell(33, 7, -15, Terrain.MakeBlockValue(2, 3) | (15 << 10)));
 
-        Assert.Equal(Terrain.MakeBlockValue(2, 0, 3), authority.GetCellValue(33, 7, -15));
+        Assert.Equal(Terrain.MakeBlockValue(2, 3), authority.GetCellValue(33, 7, -15));
         Assert.Equal(revision + 1, chunk.NetworkContentRevision);
         Assert.Equal(1, chunk.ModificationCounter);
     }
@@ -30,7 +30,7 @@ public sealed class TerrainCellAuthorityTest
         Assert.True(authority.ChangeCell(1, 2, 3, 42, false));
         var revision = chunk.NetworkContentRevision;
 
-        Assert.False(authority.ChangeCell(1, 2, 3, Terrain.ReplaceLight(42, 15), false));
+        Assert.False(authority.ChangeCell(1, 2, 3, (42 | (15 << 10)), false));
         Assert.False(authority.ChangeCell(32, 2, 32, 42));
         Assert.Equal(revision, chunk.NetworkContentRevision);
         Assert.Equal(0, chunk.ModificationCounter);

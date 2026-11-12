@@ -49,11 +49,13 @@ public class ComponentGlowingEyes : Component, IDrawable
         }
 
         var translation = matrix.Translation;
-        var cellLight = _subsystemTerrain.Terrain.GetCellLight(
-            Terrain.ToCell(translation.X),
-            Terrain.ToCell(translation.Y),
-            Terrain.ToCell(translation.Z)
-        );
+        var cellLight = LightingManager.SampleEffectiveLight(
+                            _subsystemTerrain,
+                            Terrain.ToCell(translation.X),
+                            Terrain.ToCell(translation.Y),
+                            Terrain.ToCell(translation.Z)
+                        ) ??
+                        0;
         var num2 = LightingManager.LightIntensityByLightValue[cellLight];
         float num3 = 0f - Vector3.Dot(vector, Vector3.Normalize(matrix.Translation - camera.ViewPosition)) > 0.7f
             ? 1

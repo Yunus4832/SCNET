@@ -116,7 +116,7 @@ public class TerrainContentsGeneratorFlat : TerrainEnvironmentFlat, ITerrainCont
                         _subsystemTerrain.Catalog.Blocks[num4] is FluidBlock)
                     {
                         var data = Terrain.ExtractData(cellValueFast);
-                        chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, 0, FluidBlock.SetIsTop(data, true)));
+                        chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, FluidBlock.SetIsTop(data, true)));
                     }
 
                     num2 = num4;

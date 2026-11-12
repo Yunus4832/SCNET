@@ -100,7 +100,7 @@ public abstract class RotatableMountedElectricElementBlock(string modelName, str
         num5 &= -29;
         num5 |= raycastResult.CellFace.Face << 2;
         BlockPlacementData result = default;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetRotation(num5, rotation));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, SetRotation(num5, rotation));
         result.CellFace = raycastResult.CellFace;
         return result;
     }

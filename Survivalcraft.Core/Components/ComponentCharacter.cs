@@ -304,7 +304,8 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
                     var cell = CurInteractEventItem.PlacementCell;
                     var value = _subsystemTerrain.Terrain.GetCellValue(cell.X, cell.Y, cell.Z);
                     if (CurInteractEventItem.RequestId == 0 ||
-                        Terrain.ReplaceLight(value, 0) == Terrain.ReplaceLight(CurInteractEventItem.ExpectedValue, 0))
+                        Terrain.NormalizeCellValue(value) ==
+                        Terrain.NormalizeCellValue(CurInteractEventItem.ExpectedValue))
                     {
                         ComponentMiner.Place(CurInteractEventItem.NetPlaceRaycast.Value);
                     }
@@ -549,7 +550,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
         }
 
         var value3 = terrainRaycastResult3.Value.Value;
-        value3 = Terrain.ReplaceLight(value3, 0);
+        value3 = Terrain.NormalizeCellValue(value3);
         var num4 = Terrain.ExtractContents(value3);
         var block2 = WorldContentBinding.For(Project).Catalog.Blocks[num4];
         var num5 = 0;
@@ -674,7 +675,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
                     var cell = hit.CellFace.Point;
                     var value = _subsystemTerrain.Terrain.GetCellValue(cell.X, cell.Y, cell.Z);
                     if (completed.RequestId == 0 ||
-                        Terrain.ReplaceLight(value, 0) == Terrain.ReplaceLight(completed.ExpectedValue, 0))
+                        Terrain.NormalizeCellValue(value) == Terrain.NormalizeCellValue(completed.ExpectedValue))
                     {
                         ComponentMiner.DigProgress = 1f;
                         ComponentMiner.Dig(hit, true);

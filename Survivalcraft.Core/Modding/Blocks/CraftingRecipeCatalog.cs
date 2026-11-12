@@ -231,8 +231,7 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
         var block = catalog.GetBlock(ResourceId.Parse(array[0]));
         return Terrain.MakeBlockValue(
             data: array.Length >= 2 ? int.Parse(array[1], CultureInfo.InvariantCulture) : 0,
-            contents: block.BlockIndex,
-            light: 0
+            contents: block.BlockIndex
         );
     }
 

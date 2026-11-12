@@ -16,11 +16,11 @@ public abstract class PaintedCubeBlock : CubeBlock, IPaintableBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, null));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, null));
         var i = 0;
         while (i < 16)
         {
-            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, i));
+            yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
             var num = i + 1;
             i = num;
         }
@@ -44,7 +44,7 @@ public abstract class PaintedCubeBlock : CubeBlock, IPaintableBlock
                 dropValues.Add(
                     new BlockDropValue
                     {
-                        Value = Terrain.MakeBlockValue(DropContent, 0, data),
+                        Value = Terrain.MakeBlockValue(DropContent, data),
                         Count = (int)DropCount
                     }
                 );

@@ -68,7 +68,6 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
                 contents.ContentInstalled += OnContentInstalled;
             }
 
-            Configuration.ClientConfiguration.BrightnessChanged += OnBrightnessChanged;
             _subscribed = true;
         }
         catch (Exception constructionError)
@@ -147,7 +146,6 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
     }
 
     private void OnEnvironmentChanged() => MeshUpdater.RequestAllMeshesRebuild(false);
-    private void OnBrightnessChanged() => MeshUpdater.RequestAllMeshesRebuild(true);
     private void OnTerrainClosing(SubsystemTerrain terrain) => Dispose();
 
     public override void Dispose()
@@ -170,7 +168,6 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
                 contents.ContentInstalled -= OnContentInstalled;
             }
 
-            Configuration.ClientConfiguration.BrightnessChanged -= OnBrightnessChanged;
             _subscribed = false;
         }
 

@@ -139,7 +139,7 @@ public class CrossbowWidget : CanvasWidget
     public void SetDraw(int draw)
     {
         var data = Terrain.ExtractData(_inventory.GetSlotValue(_slotIndex));
-        var value = Terrain.MakeBlockValue(200, 0, CrossbowBlock.SetDraw(data, draw));
+        var value = Terrain.MakeBlockValue(200, CrossbowBlock.SetDraw(data, draw));
 
         _inventory.RemoveSlotItems(_slotIndex, 1);
         _inventory.AddSlotItems(_slotIndex, value, 1);

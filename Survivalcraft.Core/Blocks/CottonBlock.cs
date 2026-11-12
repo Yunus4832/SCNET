@@ -4,9 +4,9 @@ public class CottonBlock : CrossBlock
 {
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 2), true));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 1), false));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 2), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetIsWild(SetSize(0, 2), true));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetIsWild(SetSize(0, 1), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetIsWild(SetSize(0, 2), false));
     }
 
 
@@ -24,7 +24,7 @@ public class CottonBlock : CrossBlock
         {
             var item = new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(173, 0, 6),
+                Value = Terrain.MakeBlockValue(173, 6),
                 Count = Random.Int(1, 2)
             };
             dropValues.Add(item);
@@ -35,7 +35,7 @@ public class CottonBlock : CrossBlock
                 {
                     item = new BlockDropValue
                     {
-                        Value = Terrain.MakeBlockValue(205, 0, 0),
+                        Value = Terrain.MakeBlockValue(205, 0),
                         Count = 1
                     };
                     dropValues.Add(item);

@@ -78,7 +78,7 @@ public sealed class TerrainDemandManagerTest
         Assert.Equal(0, preparation.GetProgress(16, 0));
         var request = chunk.DerivedRevisions.Capture();
         chunk.DerivedRevisions.PublishHeights(request);
-        chunk.DerivedRevisions.PublishSunlight(request);
+        chunk.DerivedRevisions.PublishLightSeed(request);
         chunk.DerivedRevisions.PublishLight(request);
         Assert.Equal(1, preparation.GetProgress(16, 0));
     }

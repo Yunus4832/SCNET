@@ -253,18 +253,19 @@ public sealed class TerrainSaveCoordinatorTest
         );
         using var terrain = new Terrain();
         using var chunk = CreateDirtyChunk(terrain, 0, 0, 71);
-        chunk.SetCellValueFast(1, 20, 3, 2468);
+        var capturedValue = Terrain.MakeBlockValue(420, 1);
+        chunk.SetCellValueFast(1, 20, 3, capturedValue);
 
         Assert.True(coordinator.TryQueueChunkForUnload(chunk));
         Assert.True(writerStarted.Wait(TimeSpan.FromSeconds(5)));
         Assert.Equal(0, chunk.ModificationCounter);
         Assert.Equal(1, coordinator.OutstandingCount);
-        chunk.SetCellValueFast(1, 20, 3, 1357);
+        chunk.SetCellValueFast(1, 20, 3, Terrain.MakeBlockValue(333, 2));
 
         allowWriter.Set();
         coordinator.Flush();
 
-        Assert.Equal(2468, savedValue);
+        Assert.Equal(capturedValue, savedValue);
         Assert.Equal(0, coordinator.OutstandingCount);
     }
 

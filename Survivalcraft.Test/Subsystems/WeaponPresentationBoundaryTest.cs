@@ -65,7 +65,7 @@ public sealed class WeaponPresentationBoundaryTest
         behavior.Load(new ValuesDictionary());
         var miner = CreateMiner(project, 212, true);
         var inventory = (WeaponInventory)miner.Inventory;
-        inventory.Put(Terrain.MakeBlockValue(212, 0, MusketBlock.SetHammerState(0, true)));
+        inventory.Put(Terrain.MakeBlockValue(212, MusketBlock.SetHammerState(0, true)));
         var random = (Random)Field(behavior, "_random")!;
         random.Seed(12345);
         var reference = new Random(12345);

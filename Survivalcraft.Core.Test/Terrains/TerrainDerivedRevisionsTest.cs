@@ -5,25 +5,43 @@ namespace Survivalcraft.Core.Test.Terrains;
 public sealed class TerrainDerivedRevisionsTest
 {
     [Fact]
-    public void PartialPropagationDoesNotExposeUnstableLightAsCurrentOrLoseInputCompletion()
+    public void BoundaryInvalidationRetainsDirectInputsAndRequiresOnlyPropagation()
+    {
+        var revisions = new TerrainDerivedRevisions();
+        var first = revisions.Capture();
+        Assert.True(revisions.PublishHeights(first));
+        Assert.True(revisions.PublishLightSeed(first));
+        Assert.True(revisions.PublishLight(first));
+        revisions.InvalidatePropagation();
+        Assert.True(revisions.HasCurrentHeights);
+        Assert.True(revisions.HasCurrentLightSeed);
+        Assert.False(revisions.HasCurrentLight);
+        Assert.False(revisions.PublishLight(first));
+        var current = revisions.Capture();
+        Assert.Equal(first.Seed, current.Seed);
+        var published = revisions.LightRevision;
+        Assert.True(revisions.PublishLight(current, false));
+        Assert.Equal(published, revisions.LightRevision);
+        Assert.True(revisions.HasCurrentLight);
+    }
+
+    [Fact]
+    public void PendingPropagationKeepsItsSeedReadyAndRejectsOldCompletions()
     {
         var revisions = new TerrainDerivedRevisions();
         var request = revisions.Capture();
         Assert.True(revisions.PublishHeights(request));
-        Assert.True(revisions.PublishSunlight(request));
+        Assert.True(revisions.PublishLightSeed(request));
         Assert.True(revisions.PublishLight(request));
-        revisions.BeginLightWrite();
-        Assert.True(revisions.HasCompletedLightInputs);
+        revisions.InvalidatePropagation();
+        Assert.True(revisions.HasCurrentLightSeed);
         Assert.False(revisions.HasCurrentLight);
-        revisions.RecordLightChange();
-        Assert.False(revisions.HasCurrentLight);
-        revisions.EndLightWrite();
+        Assert.False(revisions.PublishLight(request));
+        Assert.True(revisions.PublishLight(revisions.Capture()));
         Assert.True(revisions.HasCurrentLight);
-        revisions.BeginLightWrite();
         revisions.InvalidateLight();
-        revisions.EndLightWrite();
+        Assert.False(revisions.HasCurrentLightSeed);
         Assert.False(revisions.HasCurrentLight);
-        Assert.False(revisions.HasCompletedLightInputs);
     }
 
     [Fact]
@@ -40,7 +58,7 @@ public sealed class TerrainDerivedRevisionsTest
         Assert.True(revisions.PublishHeights(current));
         Assert.True(revisions.HasCurrentHeights);
         Assert.False(revisions.HasCurrentLight);
-        revisions.PublishSunlight(current);
+        revisions.PublishLightSeed(current);
         Assert.True(revisions.PublishLight(current));
         Assert.True(revisions.HasCurrentLight);
     }
@@ -51,14 +69,14 @@ public sealed class TerrainDerivedRevisionsTest
         var revisions = new TerrainDerivedRevisions();
         var old = revisions.Capture();
         Assert.True(revisions.PublishHeights(old));
-        revisions.PublishSunlight(old);
+        revisions.PublishLightSeed(old);
         Assert.True(revisions.PublishLight(old));
         var heightRevision = revisions.HeightRevision;
         revisions.InvalidateLight();
         Assert.True(revisions.HasCurrentHeights);
         Assert.False(revisions.HasCurrentLight);
         Assert.False(revisions.PublishLight(old));
-        revisions.PublishSunlight(revisions.Capture());
+        revisions.PublishLightSeed(revisions.Capture());
         Assert.True(revisions.PublishLight(revisions.Capture()));
         Assert.Equal(heightRevision, revisions.HeightRevision);
     }
@@ -70,10 +88,10 @@ public sealed class TerrainDerivedRevisionsTest
         var visual = new TerrainDerivedRevisions();
         var request = logic.Capture();
         Assert.True(logic.PublishHeights(request));
-        logic.PublishSunlight(request);
+        logic.PublishLightSeed(request);
         Assert.True(logic.PublishLight(request));
         var before = logic.LightRevision;
-        logic.RecordLightChange();
+        Assert.True(logic.PublishLight(logic.Capture()));
         Assert.True(logic.LightRevision > before);
         Assert.True(logic.HasCurrentLight);
         Assert.False(visual.HasCurrentHeights);

@@ -43,7 +43,9 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
             return;
         }
 
-        var num = Terrain.ExtractLight(SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z));
+        var environment = SubsystemTerrain.CaptureLightEnvironment();
+        if (!SubsystemTerrain.Terrain.Lighting.TryGetEffectiveLight(x, y + 1, z, environment, out var num)) { return; }
+
         if (num == 0)
         {
             _toUpdate[new Point3(x, y, z)] = Terrain.ReplaceContents(value, 8);
@@ -68,7 +70,14 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
 
                     var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(i, k + 1, j);
                     if (KillsGrassIfOnTopOfIt(cellValue2) ||
-                        Terrain.ExtractLight(cellValue2) < 13 ||
+                        !SubsystemTerrain.Terrain.Lighting.TryGetEffectiveLight(
+                            i,
+                            k + 1,
+                            j,
+                            environment,
+                            out var neighborLight
+                        ) ||
+                        neighborLight < 13 ||
                         !(_random.Float(0f, 1f) < 0.1f))
                     {
                         continue;
@@ -109,7 +118,7 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
 
         if (KillsGrassIfOnTopOfIt(cellValue))
         {
-            SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(2, 0, 0));
+            SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(2, 0));
         }
     }
 
@@ -119,7 +128,7 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
             WorldContentBinding.For(Project).Catalog.Blocks[8].ExplosionResilience *
             SubsystemExplosions.SharedRandom.Float(0f, 1f))
         {
-            SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(2, 0, 0));
+            SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(2, 0));
         }
     }
 

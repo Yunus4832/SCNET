@@ -36,7 +36,7 @@ public sealed class BlockDisplayLocalizationTest
             var carpet = world.Catalog.Blocks.OfType<CarpetBlock>().Single();
             foreach (var type in Enum.GetValues<ArrowBlock.ArrowType>())
             {
-                var value = Terrain.MakeBlockValue(arrow.BlockIndex, 0, ArrowBlock.SetArrowType(0, type));
+                var value = Terrain.MakeBlockValue(arrow.BlockIndex, ArrowBlock.SetArrowType(0, type));
                 Assert.True(language.TryGet(out _, "Blocks", $"ArrowBlock:{(int)type}", "DisplayName"));
                 Assert.Equal(
                     language.GetBlock($"ArrowBlock:{(int)type}", "DisplayName"),
@@ -46,7 +46,7 @@ public sealed class BlockDisplayLocalizationTest
 
             foreach (var type in Enum.GetValues<BulletBlock.BulletType>())
             {
-                var value = Terrain.MakeBlockValue(bullet.BlockIndex, 0, BulletBlock.SetBulletType(0, type));
+                var value = Terrain.MakeBlockValue(bullet.BlockIndex, BulletBlock.SetBulletType(0, type));
                 Assert.True(language.TryGet(out _, "Blocks", $"BulletBlock:{(int)type}", "DisplayName"));
                 Assert.Equal(
                     language.GetBlock($"BulletBlock:{(int)type}", "DisplayName"),
@@ -63,7 +63,7 @@ public sealed class BlockDisplayLocalizationTest
                         language.Get(nameof(PressurePlateBlock), material),
                         presentations.Get(pressurePlate.BlockIndex).GetDisplayName(
                             null,
-                            Terrain.MakeBlockValue(pressurePlate.BlockIndex, 0, data)
+                            Terrain.MakeBlockValue(pressurePlate.BlockIndex, data)
                         )
                     );
                 }
@@ -73,7 +73,7 @@ public sealed class BlockDisplayLocalizationTest
             {
                 var name = presentations.Get(carpet.BlockIndex).GetDisplayName(
                     null,
-                    Terrain.MakeBlockValue(carpet.BlockIndex, 0, CarpetBlock.SetColor(0, color))
+                    Terrain.MakeBlockValue(carpet.BlockIndex, CarpetBlock.SetColor(0, color))
                 );
                 Assert.Contains(language.GetWorldPalette(color), name);
                 Assert.Contains(language.GetBlock("CarpetBlock:0", "DisplayName"), name);
@@ -82,13 +82,13 @@ public sealed class BlockDisplayLocalizationTest
             Assert.Empty(
                 presentations.Get(arrow.BlockIndex).GetDisplayName(
                     null,
-                    Terrain.MakeBlockValue(arrow.BlockIndex, 0, 15)
+                    Terrain.MakeBlockValue(arrow.BlockIndex, 15)
                 )
             );
             Assert.Empty(
                 presentations.Get(bullet.BlockIndex).GetDisplayName(
                     null,
-                    Terrain.MakeBlockValue(bullet.BlockIndex, 0, 15)
+                    Terrain.MakeBlockValue(bullet.BlockIndex, 15)
                 )
             );
         }

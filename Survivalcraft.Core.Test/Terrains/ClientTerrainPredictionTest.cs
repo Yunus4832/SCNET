@@ -10,11 +10,11 @@ public sealed class ClientTerrainPredictionTest
     private static readonly Point3 _cell = new(15, 64, 15);
 
     [Fact]
-    public void PredictionOnlyChangesGeometryAndPreservesLightAndRevision()
+    public void PredictionOnlyChangesGeometryAndPreservesContentAndRevision()
     {
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
-        var value = Terrain.MakeBlockValue(3, 12, 7);
+        var value = Terrain.MakeBlockValue(3, 7);
         chunk.SetCellValueFast(15, 64, 15, value);
         var revision = chunk.NetworkContentRevision;
         var invalidated = new List<Point2>();
@@ -22,8 +22,7 @@ public sealed class ClientTerrainPredictionTest
         Assert.True(prediction.Begin(_cell, value, 0, 0) > 0);
 
         Assert.Equal(value, terrain.GetCellValueFast(15, 64, 15));
-        Assert.Equal(0, Terrain.ExtractContents(terrain.GetCellValueForGeometry(15, 64, 15)));
-        Assert.Equal(12, Terrain.ExtractLight(terrain.GetCellValueForGeometry(15, 64, 15)));
+        Assert.Equal(0, terrain.GetCellValueForGeometry(15, 64, 15));
         Assert.Equal(revision, chunk.NetworkContentRevision);
         Assert.Equal(0, chunk.ModificationCounter);
         Assert.Equal(new Point2(0, 0), Assert.Single(invalidated));

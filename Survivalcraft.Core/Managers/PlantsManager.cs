@@ -22,12 +22,12 @@ public static class PlantsManager
         ];
         _treeLeavesByType =
         [
-            Terrain.MakeBlockValue(12, 0, DeciduousLeavesBlock.SetSeason(0, Season.Spring)),
-            Terrain.MakeBlockValue(13, 0, DeciduousLeavesBlock.SetSeason(0, Season.Spring)),
+            Terrain.MakeBlockValue(12, DeciduousLeavesBlock.SetSeason(0, Season.Spring)),
+            Terrain.MakeBlockValue(13, DeciduousLeavesBlock.SetSeason(0, Season.Spring)),
             14,
             225,
-            Terrain.MakeBlockValue(256, 0, DeciduousLeavesBlock.SetSeason(0, Season.Spring)),
-            Terrain.MakeBlockValue(263, 0, DeciduousLeavesBlock.SetSeason(0, Season.Spring))
+            Terrain.MakeBlockValue(256, DeciduousLeavesBlock.SetSeason(0, Season.Spring)),
+            Terrain.MakeBlockValue(263, DeciduousLeavesBlock.SetSeason(0, Season.Spring))
         ];
         var random = new Random(33);
         _treeBrushesByType[0] = [];
@@ -278,7 +278,7 @@ public static class PlantsManager
                         break;
                     }
 
-                    var result = Terrain.MakeBlockValue(19, 0, TallGrassBlock.SetIsSmall(0, false));
+                    var result = Terrain.MakeBlockValue(19, TallGrassBlock.SetIsSmall(0, false));
                     if (SubsystemWeather.IsPlaceFrozen(temperature, y))
                     {
                         return result;
@@ -290,10 +290,9 @@ public static class PlantsManager
                         < 0.04f => Terrain.MakeBlockValue(20),
                         < 0.07f => Terrain.MakeBlockValue(24),
                         < 0.09f => Terrain.MakeBlockValue(25),
-                        < 0.17f => Terrain.MakeBlockValue(174, 0, RyeBlock.SetIsWild(RyeBlock.SetSize(0, 7), true)),
+                        < 0.17f => Terrain.MakeBlockValue(174, RyeBlock.SetIsWild(RyeBlock.SetSize(0, 7), true)),
                         < 0.19f => Terrain.MakeBlockValue(
                             204,
-                            0,
                             CottonBlock.SetIsWild(CottonBlock.SetSize(0, 2), true)
                         ),
                         _ => result
@@ -304,14 +303,14 @@ public static class PlantsManager
 
                 if (random.Float(0f, 1f) < 0.025f)
                 {
-                    return Terrain.MakeBlockValue(random.Float(0f, 1f) < 0.2f ? 99 : 28, 0, 0);
+                    return Terrain.MakeBlockValue(random.Float(0f, 1f) < 0.2f ? 99 : 28, 0);
                 }
 
                 break;
             case 7:
                 if (humidity < 8 && random.Float(0f, 1f) < 0.01f)
                 {
-                    return Terrain.MakeBlockValue(random.Float(0f, 1f) < 0.05f ? 99 : 28, 0, 0);
+                    return Terrain.MakeBlockValue(random.Float(0f, 1f) < 0.05f ? 99 : 28, 0);
                 }
 
                 break;
@@ -496,7 +495,7 @@ public static class PlantsManager
                 (Func<int?, int?>)(v =>
                     v.HasValue
                         ? null
-                        : new int?(Terrain.MakeBlockValue(woodIndex, 0, WoodBlock.SetCutFace(0, cutFace))))
+                        : new int?(Terrain.MakeBlockValue(woodIndex, WoodBlock.SetCutFace(0, cutFace))))
             );
         }
 

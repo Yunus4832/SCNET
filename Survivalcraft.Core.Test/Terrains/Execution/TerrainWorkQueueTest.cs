@@ -5,6 +5,47 @@ namespace Survivalcraft.Core.Test.Terrains.Execution;
 
 public sealed class TerrainWorkQueueTest
 {
+    [Fact]
+    public void TemporarilyIneligibleWorkRetainsItsReadySlotWhileOtherStagesRun()
+    {
+        using var terrain = new Terrain();
+        var queue = new TerrainWorkQueue();
+        var light = new TerrainWorkKey(terrain.AllocateChunk(0, 0), TerrainWorkStage.Propagation);
+        var mesh = new TerrainWorkKey(terrain.AllocateChunk(1, 0), TerrainWorkStage.Derived);
+        queue.Enqueue(light, 1, TerrainWorkPriority.FirstDisplay, 1);
+        queue.Enqueue(mesh, 1, TerrainWorkPriority.Maintenance, 1000);
+        var selected = queue.Take(static key => key.Stage != TerrainWorkStage.Propagation)!;
+        Assert.Equal(mesh, selected.Key);
+        queue.Finish(selected, true);
+        Assert.Null(queue.Take(static key => key.Stage != TerrainWorkStage.Propagation));
+        Assert.Equal((1, 1, 0), queue.Counts);
+        Assert.Equal(light, queue.Take()!.Key);
+    }
+
+    [Fact]
+    public void AsyncServiceCostUsesTheAdmissionAgingDecision()
+    {
+        using var terrain = new Terrain();
+        var time = new QueueTime();
+        var queue = new TerrainWorkQueue(time);
+        var far = new TerrainWorkKey(terrain.AllocateChunk(2, 0), TerrainWorkStage.Propagation);
+        queue.Enqueue(far, 1, TerrainWorkPriority.Maintenance, 1000);
+        time.Milliseconds = 600;
+        var near = new TerrainWorkKey(terrain.AllocateChunk(0, 0), TerrainWorkStage.Propagation);
+        queue.Enqueue(near, 1, TerrainWorkPriority.Maintenance, 1);
+        var first = queue.Take()!;
+        Assert.Equal(far, first.Key);
+        Assert.True(first.WasAgingSelection);
+        queue.Wait(first, []);
+        var second = queue.Take()!;
+        Assert.Equal(near, second.Key);
+        Assert.False(second.WasAgingSelection);
+        queue.RecordCost(first.Priority, TimeSpan.FromMilliseconds(5), first.WasAgingSelection);
+        queue.Finish(first, true);
+        Assert.False(queue.IsRegistered(first));
+        Assert.True(queue.IsRegistered(second));
+    }
+
     [Theory]
     [InlineData(TerrainWorkPriority.FirstDisplay)]
     [InlineData(TerrainWorkPriority.Maintenance)]
@@ -14,7 +55,7 @@ public sealed class TerrainWorkQueueTest
         var queue = new TerrainWorkQueue();
         var target = new TerrainWorkKey(terrain.AllocateChunk(0, 0), TerrainWorkStage.Derived);
         var neighbor = new TerrainWorkKey(terrain.AllocateChunk(1, 0), TerrainWorkStage.Propagation);
-        var prerequisite = new TerrainWorkKey(terrain.AllocateChunk(2, 0), TerrainWorkStage.Sunlight);
+        var prerequisite = new TerrainWorkKey(terrain.AllocateChunk(2, 0), TerrainWorkStage.LightSeed);
         queue.Enqueue(neighbor, 1, priority, 100);
         queue.Wait(queue.Take()!, [prerequisite]);
         queue.Enqueue(prerequisite, 1, priority, 1000);
@@ -35,7 +76,7 @@ public sealed class TerrainWorkQueueTest
         var queue = new TerrainWorkQueue();
         var target = new TerrainWorkKey(terrain.AllocateChunk(0, 0), TerrainWorkStage.Derived);
         var neighbor = new TerrainWorkKey(terrain.AllocateChunk(1, 0), TerrainWorkStage.Propagation);
-        var prerequisite = new TerrainWorkKey(terrain.AllocateChunk(2, 0), TerrainWorkStage.Sunlight);
+        var prerequisite = new TerrainWorkKey(terrain.AllocateChunk(2, 0), TerrainWorkStage.LightSeed);
         queue.Enqueue(neighbor, 1, TerrainWorkPriority.FirstDisplay, 100);
         queue.Wait(queue.Take()!, [prerequisite]);
         queue.Enqueue(prerequisite, 1, TerrainWorkPriority.FirstDisplay, 1000);
@@ -61,7 +102,7 @@ public sealed class TerrainWorkQueueTest
         var neighbor = terrain.AllocateChunk(1, 0);
         queue.Enqueue(target, 1, TerrainWorkPriority.FirstDisplay, 1);
         queue.Wait(queue.Take()!, [new TerrainWorkKey(neighbor, TerrainWorkStage.Propagation)]);
-        var sunlight = new TerrainWorkKey(neighbor, TerrainWorkStage.Sunlight);
+        var sunlight = new TerrainWorkKey(neighbor, TerrainWorkStage.LightSeed);
         queue.Enqueue(sunlight, 1, TerrainWorkPriority.FirstDisplay, 100);
         queue.Enqueue(
             new TerrainWorkKey(terrain.AllocateChunk(2, 0), TerrainWorkStage.Heights),
@@ -85,7 +126,7 @@ public sealed class TerrainWorkQueueTest
         queue.Enqueue(new TerrainWorkKey(neighbor, TerrainWorkStage.Derived), 1, TerrainWorkPriority.FirstDisplay, 100);
         queue.Wait(queue.Take()!, [new TerrainWorkKey(further, TerrainWorkStage.Propagation)]);
         queue.Enqueue(
-            new TerrainWorkKey(further, TerrainWorkStage.Sunlight),
+            new TerrainWorkKey(further, TerrainWorkStage.LightSeed),
             1,
             TerrainWorkPriority.FirstDisplay,
             1000
@@ -105,12 +146,12 @@ public sealed class TerrainWorkQueueTest
         queue.Enqueue(new TerrainWorkKey(near, TerrainWorkStage.Derived), 1, TerrainWorkPriority.FirstDisplay, 1);
         queue.Wait(queue.Take()!, [new TerrainWorkKey(neighbor, TerrainWorkStage.Propagation)]);
         queue.Enqueue(
-            new TerrainWorkKey(neighbor, TerrainWorkStage.Sunlight),
+            new TerrainWorkKey(neighbor, TerrainWorkStage.LightSeed),
             1,
             TerrainWorkPriority.FirstDisplay,
             100
         );
-        queue.Enqueue(new TerrainWorkKey(near, TerrainWorkStage.Sunlight), 1, TerrainWorkPriority.FirstDisplay, 2000);
+        queue.Enqueue(new TerrainWorkKey(near, TerrainWorkStage.LightSeed), 1, TerrainWorkPriority.FirstDisplay, 2000);
         var unrelated = new TerrainWorkKey(terrain.AllocateChunk(2, 0), TerrainWorkStage.Heights);
         queue.Enqueue(unrelated, 1, TerrainWorkPriority.FirstDisplay, 10);
         Assert.Equal(unrelated, queue.Take()!.Key);
@@ -152,7 +193,7 @@ public sealed class TerrainWorkQueueTest
         var time = new QueueTime();
         var queue = new TerrainWorkQueue(time);
         var geometry = new TerrainWorkKey(terrain.AllocateChunk(4, 0), TerrainWorkStage.Derived);
-        var input = new TerrainWorkKey(terrain.AllocateChunk(0, 0), TerrainWorkStage.Sunlight);
+        var input = new TerrainWorkKey(terrain.AllocateChunk(0, 0), TerrainWorkStage.LightSeed);
         queue.Enqueue(input, 1, TerrainWorkPriority.FirstDisplay, 1);
         queue.Enqueue(geometry, 1, TerrainWorkPriority.FirstDisplay, 10000);
         var first = queue.Take()!;
@@ -186,7 +227,7 @@ public sealed class TerrainWorkQueueTest
         var near = terrain.AllocateChunk(0, 0);
         TerrainWorkStage[] stages =
         [
-            TerrainWorkStage.Heights, TerrainWorkStage.Sunlight, TerrainWorkStage.Propagation, TerrainWorkStage.Derived
+            TerrainWorkStage.Heights, TerrainWorkStage.LightSeed, TerrainWorkStage.Propagation, TerrainWorkStage.Derived
         ];
         var agedTurns = 0;
         foreach (var stage in stages)
@@ -239,7 +280,7 @@ public sealed class TerrainWorkQueueTest
 
         TerrainWorkStage[] stages =
         [
-            TerrainWorkStage.Heights, TerrainWorkStage.Sunlight, TerrainWorkStage.Propagation, TerrainWorkStage.Derived
+            TerrainWorkStage.Heights, TerrainWorkStage.LightSeed, TerrainWorkStage.Propagation, TerrainWorkStage.Derived
         ];
         foreach (var stage in stages)
         {
@@ -304,7 +345,7 @@ public sealed class TerrainWorkQueueTest
         var chunk = terrain.AllocateChunk(0, 0);
         var neighbor = terrain.AllocateChunk(1, 0);
         var mesh = new TerrainWorkKey(chunk, TerrainWorkStage.Derived);
-        var dependency = new TerrainWorkKey(neighbor, TerrainWorkStage.Sunlight);
+        var dependency = new TerrainWorkKey(neighbor, TerrainWorkStage.LightSeed);
         queue.Enqueue(mesh, 1, TerrainWorkPriority.FirstDisplay, 1);
         var waiting = Assert.IsType<TerrainWorkQueue.Item>(queue.Take());
         queue.Wait(waiting, [dependency]);
@@ -416,7 +457,7 @@ public sealed class TerrainWorkQueueTest
         var queue = new TerrainWorkQueue();
         queue.Enqueue(new TerrainWorkKey(chunk, TerrainWorkStage.Derived), 1, TerrainWorkPriority.FirstDisplay, 1);
         var mesh = Assert.IsType<TerrainWorkQueue.Item>(queue.Take());
-        var dependency = new TerrainWorkKey(neighbor, TerrainWorkStage.Sunlight);
+        var dependency = new TerrainWorkKey(neighbor, TerrainWorkStage.LightSeed);
         queue.Wait(mesh, [dependency]);
         queue.Enqueue(dependency, 1, TerrainWorkPriority.FirstDisplay, 2);
         terrain.FreeChunk(neighbor);

@@ -14,7 +14,7 @@ public class SubsystemInWaterBlockBehavior : SubsystemWaterBlockBehavior
     )
     {
         var level = FluidBlock.GetLevel(Terrain.ExtractData(blockValue));
-        newBlockValue = Terrain.MakeBlockValue(18, 0, FluidBlock.SetLevel(0, level));
+        newBlockValue = Terrain.MakeBlockValue(18, FluidBlock.SetLevel(0, level));
         dropValue.Value = Terrain.MakeBlockValue(Terrain.ExtractContents(blockValue));
         dropValue.Count = 1;
     }

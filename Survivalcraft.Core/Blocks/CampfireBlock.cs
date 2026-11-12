@@ -84,7 +84,7 @@ public class CampfireBlock : Block
     {
         BlockPlacementData result = default;
         result.CellFace = raycastResult.CellFace;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, 3);
+        result.Value = Terrain.MakeBlockValue(BlockIndex, 3);
         return result;
     }
 

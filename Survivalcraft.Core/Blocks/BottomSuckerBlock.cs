@@ -22,7 +22,6 @@ public abstract class BottomSuckerBlock : WaterBlock
             result.CellFace = raycastResult.CellFace;
             result.Value = Terrain.MakeBlockValue(
                 BlockIndex,
-                0,
                 SetSubvariant(SetFace(data, raycastResult.CellFace.Face), face)
             );
             return result;

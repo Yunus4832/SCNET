@@ -91,7 +91,6 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                 {
                     num2 = Terrain.MakeBlockValue(
                         num,
-                        0,
                         MusketBlock.SetHammerState(Terrain.ExtractData(num2), true)
                     );
                     if (componentMiner.ComponentCharacter != null)
@@ -128,7 +127,6 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                 {
                     num2 = Terrain.MakeBlockValue(
                         num,
-                        0,
                         MusketBlock.SetHammerState(Terrain.ExtractData(num2), false)
                     );
                     if (componentMiner.ComponentCharacter != null)
@@ -173,7 +171,6 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                             {
                                 value2 = Terrain.MakeBlockValue(
                                     214,
-                                    0,
                                     BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall)
                                 );
                                 num6 = 8;
@@ -184,7 +181,6 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                             {
                                 value2 = Terrain.MakeBlockValue(
                                     214,
-                                    0,
                                     BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall)
                                 );
                                 num6 = 1;
@@ -195,7 +191,6 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                             {
                                 value2 = Terrain.MakeBlockValue(
                                     214,
-                                    0,
                                     BulletBlock.SetBulletType(0, bulletType.Value)
                                 );
                                 num6 = 1;
@@ -260,7 +255,6 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
 
                     num2 = Terrain.MakeBlockValue(
                         Terrain.ExtractContents(num2),
-                        0,
                         MusketBlock.SetLoadState(Terrain.ExtractData(num2), MusketBlock.LoadState.Empty)
                     );
                     num3 = 1;
@@ -270,7 +264,6 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                 {
                     num2 = Terrain.MakeBlockValue(
                         Terrain.ExtractContents(num2),
-                        0,
                         MusketBlock.SetHammerState(Terrain.ExtractData(num2), false)
                     );
                     RequestSound(
@@ -397,7 +390,6 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                 slotIndex,
                 Terrain.MakeBlockValue(
                     212,
-                    0,
                     MusketBlock.SetBulletType(MusketBlock.SetLoadState(data, loadState), bulletType)
                 ),
                 1

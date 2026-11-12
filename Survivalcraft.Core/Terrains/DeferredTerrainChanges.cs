@@ -39,7 +39,7 @@ internal sealed class DeferredTerrainChanges(
         var cell = read(point);
         if (cell == null) { return false; }
 
-        Add(point, new Change(value, Terrain.ReplaceLight(cell.Value.Value, 0), cell.Value.AllocationGeneration));
+        Add(point, new Change(value, Terrain.NormalizeCellValue(cell.Value.Value), cell.Value.AllocationGeneration));
         return true;
     }
 
@@ -64,7 +64,7 @@ internal sealed class DeferredTerrainChanges(
 
             prepared[i] = new Prepared(
                 point,
-                new Change(value, Terrain.ReplaceLight(cell.Value.Value, 0), cell.Value.AllocationGeneration)
+                new Change(value, Terrain.NormalizeCellValue(cell.Value.Value), cell.Value.AllocationGeneration)
             );
         }
 
@@ -108,7 +108,7 @@ internal sealed class DeferredTerrainChanges(
                 var cell = read(point);
                 if (cell is not { } current ||
                     current.AllocationGeneration != change.AllocationGeneration ||
-                    Terrain.ReplaceLight(current.Value, 0) != change.RequiredValue) { continue; }
+                    Terrain.NormalizeCellValue(current.Value) != change.RequiredValue) { continue; }
 
                 // Consume before callbacks: reentrant enqueue is a new intent for a later batch.
                 apply(point, change.Value);

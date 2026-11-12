@@ -48,11 +48,11 @@ public sealed class ElectricWirePredictionTest
         terrain.AllocateChunk(1, 0);
         var switchBlock = (SwitchBlock)world.Catalog.GetBlock(ResourceId.Parse("game:switch"));
         var wireBlock = (WireBlock)world.Catalog.GetBlock(ResourceId.Parse("game:wire"));
-        var switchValue = Terrain.MakeBlockValue(switchBlock.BlockIndex, 0, 4 << 1);
+        var switchValue = Terrain.MakeBlockValue(switchBlock.BlockIndex, 4 << 1);
         var gate = world.Catalog.GetBlock(ResourceId.Parse("game:and_gate"));
         var neighborValue = wireNeighbor
             ? wireBlock.SetWireFacesBitmask(Terrain.MakeBlockValue(wireBlock.BlockIndex), 1 << 4)
-            : Terrain.MakeBlockValue(gate.BlockIndex, 0, 4 << 2);
+            : Terrain.MakeBlockValue(gate.BlockIndex, 4 << 2);
         var origin = new Point3(x, 64, 8);
         var neighbor = new Point3(x + 1, 64, 8);
         var predictedCell = predictOrigin ? origin : neighbor;

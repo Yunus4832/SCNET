@@ -16,7 +16,7 @@ public static class BlockAvailability
             var blocks = catalog.FindBlocksByCraftingId(craftId);
             foreach (var b in blocks)
             {
-                var vv = Terrain.MakeBlockValue(b.BlockIndex, 0, data ?? 0);
+                var vv = Terrain.MakeBlockValue(b.BlockIndex, data ?? 0);
                 if (value == vv)
                 {
                     return true;

@@ -113,7 +113,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                         inventory.RemoveSlotItems(activeSlotIndex, 1);
                         inventory.AddSlotItems(
                             activeSlotIndex,
-                            Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, draw2)),
+                            Terrain.MakeBlockValue(num, BowBlock.SetDraw(data, draw2)),
                             1
                         );
                     }
@@ -127,7 +127,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                     inventory.RemoveSlotItems(activeSlotIndex, 1);
                     inventory.AddSlotItems(
                         activeSlotIndex,
-                        Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, 0)),
+                        Terrain.MakeBlockValue(num, BowBlock.SetDraw(data, 0)),
                         1
                     );
                 }
@@ -164,7 +164,6 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
 
                     var value2 = Terrain.MakeBlockValue(
                         192,
-                        0,
                         ArrowBlock.SetArrowType(0, arrowType.Value)
                     );
                     var vector4 = Vector3.Normalize(Vector3.Cross(vector2, Vector3.UnitY));
@@ -200,7 +199,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                 if (WorldRuntimeContext.For(Project).IsAuthority)
                 {
                     inventory.RemoveSlotItems(activeSlotIndex, 1);
-                    var value3 = Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, 0));
+                    var value3 = Terrain.MakeBlockValue(num, BowBlock.SetDraw(data, 0));
                     inventory.AddSlotItems(activeSlotIndex, value3, 1);
                     var damageCount = 0;
                     if (draw >= 15)
@@ -254,7 +253,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
             inventory.RemoveSlotItems(slotIndex, 1);
             inventory.AddSlotItems(
                 slotIndex,
-                Terrain.MakeBlockValue(191, 0, BowBlock.SetArrowType(data, arrowType)),
+                Terrain.MakeBlockValue(191, BowBlock.SetArrowType(data, arrowType)),
                 1
             );
         }

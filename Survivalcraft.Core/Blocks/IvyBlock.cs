@@ -31,7 +31,7 @@ public class IvyBlock : Block
 
         result.CellFace = raycastResult.CellFace;
         result.Value =
-            Terrain.MakeBlockValue(BlockIndex, 0, SetFace(0, CellFace.OppositeFace(raycastResult.CellFace.Face)));
+            Terrain.MakeBlockValue(BlockIndex, SetFace(0, CellFace.OppositeFace(raycastResult.CellFace.Face)));
 
         return result;
     }

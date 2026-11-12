@@ -20,7 +20,7 @@ public sealed class BlockPresentationCatalogTest
         Assert.Same(granite, presentation.Block);
         Assert.Same(presentation, presentations.Get(ResourceId.Parse("game:granite")));
         Assert.Equal(3, presentation.GetFaceTextureSlot(0, Terrain.MakeBlockValue(granite.BlockIndex)));
-        var painted = Terrain.MakeBlockValue(granite.BlockIndex, 0, PaintedCubeBlock.SetColor(0, 4));
+        var painted = Terrain.MakeBlockValue(granite.BlockIndex, PaintedCubeBlock.SetColor(0, 4));
         Assert.Equal(24, presentation.GetFaceTextureSlot(0, painted));
         Assert.Null(typeof(Block).GetMethod("DrawBlock"));
         Assert.Null(typeof(Block).GetField("TextureSlot"));
@@ -34,9 +34,7 @@ public sealed class BlockPresentationCatalogTest
         var stairs = rules.GetBlock(ResourceId.Parse("game:cobblestone_stairs"));
         for (var variant = 0; variant < 24; variant++)
         {
-            Assert.NotEmpty(
-                stairs.GetCustomCollisionBoxes(null!, Terrain.MakeBlockValue(stairs.BlockIndex, 0, variant))
-            );
+            Assert.NotEmpty(stairs.GetCustomCollisionBoxes(null!, Terrain.MakeBlockValue(stairs.BlockIndex, variant)));
         }
     }
 

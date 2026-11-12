@@ -79,6 +79,7 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
         }
 
         _blockGeometryGenerator?.Terrain.Dispose();
+        _shader?.Dispose();
         _blockGeometryGenerator = null;
         _states.Clear();
     }
@@ -99,7 +100,12 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
 
         if (_vertices.Count > 0)
         {
-            _shader ??= ContentManager.Get<Shader>("Shaders/AlphaTested");
+            _shader ??= new Shader(
+                ShaderCodeManager.GetFast("Shaders/AlphaTested.vsh"),
+                ShaderCodeManager.GetFast("Shaders/AlphaTested.psh"),
+                new ShaderMacro("ALPHATESTED"),
+                new ShaderMacro("TERRAIN_LIGHT_RESPONSE")
+            );
             var viewPosition = camera.ViewPosition;
             var v = new Vector3(MathUtils.Floor(viewPosition.X), 0f, MathUtils.Floor(viewPosition.Z));
             var value = Matrix.CreateTranslation(v - viewPosition) *
@@ -108,6 +114,7 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
             Display.BlendState = BlendState.AlphaBlend;
             Display.DepthStencilState = DepthStencilState.Default;
             Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
+            LightingManager.BindTerrainEnvironment(_shader, _subsystemTerrain);
             _shader.GetParameter("u_origin").SetValue(v.XZ);
             _shader.GetParameter("u_viewProjectionMatrix").SetValue(value);
             _shader.GetParameter("u_viewPosition").SetValue(camera.ViewPosition);
@@ -151,7 +158,9 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
         point.Z = movingBlockSet.CurrentVelocity.Z > 0f
             ? (int)MathUtils.Floor(movingBlockSet.Position.Z)
             : point.Z = (int)MathUtils.Ceiling(movingBlockSet.Position.Z);
-        if (point == state.GeometryGenerationPosition && state.ContentRevision == movingBlockSet.ContentRevision)
+        if (point == state.GeometryGenerationPosition &&
+            state.ContentRevision == movingBlockSet.ContentRevision &&
+            LightInputsCurrent(state))
         {
             return;
         }
@@ -181,6 +190,7 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
             }
         }
 
+        _blockGeometryGenerator.LightOrigin = new Point3(point.X + p.X - 1, point.Y + p.Y - 1, point.Z + p.Z - 1);
         var terrain = _subsystemTerrain.Terrain;
         for (var k = 0; k < point2.X + 2; k++)
         {
@@ -193,9 +203,7 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
                 _blockGeometryGenerator.Terrain.SetHumidity(k, l, Terrain.ExtractHumidity(shaftValue));
                 for (var m = 0; m < point2.Y + 2; m++)
                 {
-                    var y = m + p.Y + point.Y - 1;
-                    var light = Terrain.ExtractLight(terrain.GetCellValue(x2, y, z));
-                    _blockGeometryGenerator.Terrain.SetCellValueFast(k, m, l, Terrain.MakeBlockValue(0, light, 0));
+                    _blockGeometryGenerator.Terrain.SetCellValueFast(k, m, l, Terrain.MakeBlockValue(0, 0));
                 }
             }
         }
@@ -207,10 +215,7 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
             var x3 = block.Offset.X - p.X + 1;
             var y2 = block.Offset.Y - p.Y + 1;
             var z2 = block.Offset.Z - p.Z + 1;
-            var value = Terrain.ReplaceLight(
-                light: _blockGeometryGenerator.Terrain.GetCellLightFast(x3, y2, z2),
-                value: block.Value
-            );
+            var value = block.Value;
             _blockGeometryGenerator.Terrain.SetCellValueFast(x3, y2, z2, value);
         }
 
@@ -245,8 +250,34 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
         }
 
         state.GeometryOffset = new Vector3(p) - new Vector3(1f);
+        state.LightInputs.Clear();
+        var origin = _blockGeometryGenerator.LightOrigin;
+        var min = Terrain.ToChunk(origin.X, origin.Z);
+        var max = Terrain.ToChunk(origin.X + point2.X + 1, origin.Z + point2.Z + 1);
+        for (var chunkX = min.X; chunkX <= max.X; chunkX++)
+        {
+            for (var chunkZ = min.Y; chunkZ <= max.Y; chunkZ++)
+            {
+                var source = terrain.GetChunkAtCoords(chunkX, chunkZ);
+                state.LightInputs[new Point2(chunkX, chunkZ)] =
+                    (source?.AllocationGeneration ?? 0, source?.DerivedRevisions.LightRevision ?? 0);
+            }
+        }
+
         state.GeometryGenerationPosition = point;
         state.ContentRevision = movingBlockSet.ContentRevision;
+    }
+
+    private bool LightInputsCurrent(GeometryState state)
+    {
+        foreach (var (coordinates, input) in state.LightInputs)
+        {
+            var chunk = _subsystemTerrain.Terrain.GetChunkAtCoords(coordinates.X, coordinates.Y);
+            if ((chunk?.AllocationGeneration ?? 0) != input.Generation ||
+                (chunk?.DerivedRevisions.LightRevision ?? 0) != input.Lighting) { return false; }
+        }
+
+        return true;
     }
 
     private void DrawMovingBlockSet(Camera camera, MovingBlockSet movingBlockSet, GeometryState state)
@@ -293,6 +324,8 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
         public Vector3 GeometryOffset;
 
         public long ContentRevision = -1;
+
+        public readonly Dictionary<Point2, (ulong Generation, long Lighting)> LightInputs = [];
 
         public int? RemovedUpdates;
 

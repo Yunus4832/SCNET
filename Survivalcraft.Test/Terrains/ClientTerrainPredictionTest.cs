@@ -124,8 +124,8 @@ public sealed class ClientTerrainPredictionTest
     {
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
-        var air = Terrain.MakeBlockValue(0, 15, 0);
-        var block = Terrain.MakeBlockValue(3, 0, 5);
+        var air = Terrain.MakeBlockValue(0, 0);
+        var block = Terrain.MakeBlockValue(3, 5);
         chunk.SetCellValueFast(15, 64, 15, air);
         chunk.NetworkContentVersion = 10;
         var revision = chunk.NetworkContentRevision;
@@ -166,6 +166,7 @@ public sealed class ClientTerrainPredictionTest
         world.Catalog.Blocks[0].Transparent = true;
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
+        chunk.HasContents = true;
         for (var x = 0; x < 16; x++)
         {
             for (var z = 0; z < 16; z++)
@@ -177,26 +178,31 @@ public sealed class ClientTerrainPredictionTest
             }
         }
 
-        TerrainLightingCalculator.CalculateSunlightAndHeight(chunk, 15, world.Catalog, includePredictions: true);
-        Assert.Equal(0, chunk.GetCellLightFast(15, 64, 15));
+        TerrainLightingCalculator.CalculateHeightsAndLightSeed(chunk, world.Catalog, includePredictions: true);
+        Assert.True(terrain.Lighting.TryGetSeed(chunk, out var seed));
+        Assert.Equal(0, seed.Light.Get(15, 64, 15).Sky);
         var revision = chunk.NetworkContentRevision;
         var prediction = new ClientTerrainPrediction(terrain, _ => { });
         var id = prediction.Begin(_cell, 3, 0, 0);
-        TerrainLightingCalculator.CalculateSunlightAndHeight(chunk, 15, world.Catalog);
-        Assert.Equal(0, chunk.GetCellLightFast(15, 64, 15));
-        TerrainLightingCalculator.CalculateSunlightAndHeight(chunk, 15, world.Catalog, includePredictions: true);
+        TerrainLightingCalculator.CalculateHeightsAndLightSeed(chunk, world.Catalog);
+        Assert.True(terrain.Lighting.TryGetSeed(chunk, out seed));
+        Assert.Equal(0, seed.Light.Get(15, 64, 15).Sky);
+        TerrainLightingCalculator.CalculateHeightsAndLightSeed(chunk, world.Catalog, includePredictions: true);
         var predicted = chunk.GetCellValueForGeometry(15, 64, 15);
-        Assert.Equal(15, Terrain.ExtractLight(predicted));
+        Assert.True(terrain.Lighting.TryGetSeed(chunk, out var predictedSeed));
+        Assert.Equal(15, predictedSeed.Light.Get(15, 64, 15).Sky);
+        Assert.Equal(0, predicted);
         Assert.Equal(3, chunk.GetCellContentsFast(15, 64, 15));
         Assert.Equal(revision, chunk.NetworkContentRevision);
 
         prediction.Complete(id, _cell, 0);
-        TerrainLightingCalculator.CalculateSunlightAndHeight(chunk, 15, world.Catalog, includePredictions: true);
-        Assert.Equal(0, chunk.GetCellLightFast(15, 64, 15));
+        TerrainLightingCalculator.CalculateHeightsAndLightSeed(chunk, world.Catalog, includePredictions: true);
+        Assert.True(terrain.Lighting.TryGetSeed(chunk, out seed));
+        Assert.Equal(0, seed.Light.Get(15, 64, 15).Sky);
         Assert.Equal(3, chunk.GetCellContentsFast(15, 64, 15));
 
         chunk.SetCellValueFast(15, 64, 15, 0);
-        TerrainLightingCalculator.CalculateSunlightAndHeight(chunk, 15, world.Catalog, includePredictions: true);
+        TerrainLightingCalculator.CalculateHeightsAndLightSeed(chunk, world.Catalog, includePredictions: true);
         Assert.Equal(predicted, chunk.GetCellValueFast(15, 64, 15));
     }
 

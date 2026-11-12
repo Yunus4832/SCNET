@@ -90,7 +90,7 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
         if (size >= 1)
         {
             var value = SetDamage(
-                Terrain.MakeBlockValue(BlockIndex, 0, SetSize(SetIsDead(0, true), size)),
+                Terrain.MakeBlockValue(BlockIndex, SetSize(SetIsDead(0, true), size)),
                 GetDamage(oldValue)
             );
             dropValues.Add(
@@ -108,10 +108,10 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetSize(SetIsDead(0, true), 1));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetSize(SetIsDead(0, true), 3));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetSize(SetIsDead(0, true), 5));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetSize(SetIsDead(0, true), 7));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetSize(SetIsDead(0, true), 1));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetSize(SetIsDead(0, true), 3));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetSize(SetIsDead(0, true), 5));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetSize(SetIsDead(0, true), 7));
     }
 
     public static int GetSize(int data)
@@ -158,7 +158,7 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
         }
 
         var data = Terrain.ExtractData(value);
-        return SetDamage(Terrain.MakeBlockValue(244, 0, data), 0);
+        return SetDamage(Terrain.MakeBlockValue(244, data), 0);
     }
 
     public override int GetRotPeriod(int value)

@@ -169,63 +169,63 @@ public class SubsystemTreasureGeneratorBlockBehavior : SubsystemBlockBehavior
         array[21] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(173, 0, 6),
+            Value = Terrain.MakeBlockValue(173, 6),
             Probability = 2f,
             MaxCount = 8
         };
         array[22] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(173, 0, 7),
+            Value = Terrain.MakeBlockValue(173, 7),
             Probability = 8f,
             MaxCount = 8
         };
         array[23] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(173, 0, 5),
+            Value = Terrain.MakeBlockValue(173, 5),
             Probability = 8f,
             MaxCount = 8
         };
         array[24] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(173, 0, 6),
+            Value = Terrain.MakeBlockValue(173, 6),
             Probability = 2f,
             MaxCount = 8
         };
         array[25] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(119, 0, 0),
+            Value = Terrain.MakeBlockValue(119, 0),
             Probability = 2f,
             MaxCount = 8
         };
         array[26] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(119, 0, 1),
+            Value = Terrain.MakeBlockValue(119, 1),
             Probability = 2f,
             MaxCount = 8
         };
         array[27] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(119, 0, 2),
+            Value = Terrain.MakeBlockValue(119, 2),
             Probability = 2f,
             MaxCount = 8
         };
         array[28] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(119, 0, 3),
+            Value = Terrain.MakeBlockValue(119, 3),
             Probability = 2f,
             MaxCount = 8
         };
         array[29] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(119, 0, 4),
+            Value = Terrain.MakeBlockValue(119, 4),
             Probability = 2f,
             MaxCount = 8
         };
@@ -239,28 +239,28 @@ public class SubsystemTreasureGeneratorBlockBehavior : SubsystemBlockBehavior
         array[31] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.CopperArrow)),
+            Value = Terrain.MakeBlockValue(192, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.CopperArrow)),
             Probability = 2f,
             MaxCount = 2
         };
         array[32] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.IronArrow)),
+            Value = Terrain.MakeBlockValue(192, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.IronArrow)),
             Probability = 2f,
             MaxCount = 2
         };
         array[33] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.DiamondArrow)),
+            Value = Terrain.MakeBlockValue(192, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.DiamondArrow)),
             Probability = 1f,
             MaxCount = 2
         };
         array[34] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.FireArrow)),
+            Value = Terrain.MakeBlockValue(192, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.FireArrow)),
             Probability = 2f,
             MaxCount = 2
         };
@@ -274,21 +274,21 @@ public class SubsystemTreasureGeneratorBlockBehavior : SubsystemBlockBehavior
         array[36] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.IronBolt)),
+            Value = Terrain.MakeBlockValue(192, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.IronBolt)),
             Probability = 2f,
             MaxCount = 2
         };
         array[37] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.DiamondBolt)),
+            Value = Terrain.MakeBlockValue(192, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.DiamondBolt)),
             Probability = 1f,
             MaxCount = 2
         };
         array[38] = treasureData;
         treasureData = new TreasureData
         {
-            Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.ExplosiveBolt)),
+            Value = Terrain.MakeBlockValue(192, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.ExplosiveBolt)),
             Probability = 1f,
             MaxCount = 2
         };

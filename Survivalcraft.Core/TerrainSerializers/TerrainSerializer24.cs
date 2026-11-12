@@ -10,6 +10,10 @@ namespace Game.TerrainSerializers;
 /// </summary>
 public class TerrainSerializer24 : IDisposable
 {
+    private const int _rleCountShift = 10;
+
+    private const int _rleCountMask = 15 << _rleCountShift;
+
     /// <summary>
     ///     最大数据块大小: 一个 Cell 占 8 Byte, 一个 Chunk 数据块有 16 x 16 x 256 = 65_536 Cell
     ///     因此，最糟糕的情况下，一个未经压缩的 Chunk 数据块的大小为 65_536 x 8 = 524_800
@@ -145,8 +149,8 @@ public class TerrainSerializer24 : IDisposable
             {
                 for (var m = 0; m < 16; m++)
                 {
-                    // 获取下一个值, 注意: 在存档文件中，光照信息被清除并被用于存储 RLE 算法中 Cell 的重复次数
-                    var nextValue = Terrain.ReplaceLight(cells[TerrainChunk.CalculateCellIndex(m, k, l)], 0);
+                    // 获取下一个值, 注意: 重复计数字段使用格值的保留位10至13，内容与数据位保持原编码
+                    var nextValue = Terrain.NormalizeCellValue(cells[TerrainChunk.CalculateCellIndex(m, k, l)]);
                     if (count == 0)
                     {
                         value = nextValue;
@@ -370,9 +374,9 @@ public class TerrainSerializer24 : IDisposable
 
         var valueCountPair = ReadIntFromBuffer(buffer, i);
 
-        // 注意: 在存档文件中，光照信息被清除并被用于存储 RLE 算法中 Cell 的重复次数
-        count = Terrain.ExtractLight(valueCountPair);
-        value = Terrain.ReplaceLight(valueCountPair, 0);
+        // 注意: 重复计数字段使用格值的保留位10至13，内容与数据位保持原编码
+        count = (valueCountPair & _rleCountMask) >> _rleCountShift;
+        value = Terrain.NormalizeCellValue(valueCountPair);
         if (count < 15)
         {
             count += 1;
@@ -429,8 +433,8 @@ public class TerrainSerializer24 : IDisposable
         int valueCountPair;
         if (count < 16)
         {
-            // 注意: 在存档文件中，光照信息被清除并被用于存储 RLE 算法中 Cell 的重复次数
-            valueCountPair = Terrain.ReplaceLight(value, count - 1);
+            // 注意: 重复计数字段使用格值的保留位10至13，内容与数据位保持原编码
+            valueCountPair = Terrain.NormalizeCellValue(value) | (((count - 1) & 15) << _rleCountShift);
             WriteIntToBuffer(buffer, i, valueCountPair);
             return i + 4;
         }
@@ -438,8 +442,8 @@ public class TerrainSerializer24 : IDisposable
         // 如果重复次数 > 16 而 <= 271 则在 ValueCountPair(4Byte) 之后加一个字节存储减去 16 之后的重复次数
         if (count <= 271)
         {
-            // 注意: 在存档文件中，光照信息被清除并被用于存储 RLE 算法中 Cell 的重复次数
-            valueCountPair = Terrain.ReplaceLight(value, 15);
+            // 注意: 重复计数字段使用格值的保留位10至13，内容与数据位保持原编码
+            valueCountPair = Terrain.NormalizeCellValue(value) | _rleCountMask;
             WriteIntToBuffer(buffer, i, valueCountPair);
             buffer[i + 4] = (byte)(count - 16);
             return i + 5;

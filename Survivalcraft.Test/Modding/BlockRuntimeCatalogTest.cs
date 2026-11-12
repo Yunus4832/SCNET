@@ -132,7 +132,7 @@ public class BlockRuntimeCatalogTest
     {
         using var original = Build(300);
         var persisted = new ValuesDictionary();
-        var item = Terrain.MakeBlockValue(300, 0, 7);
+        var item = Terrain.MakeBlockValue(300, 7);
         persisted.SetValue("Value", item);
         var encoded = persisted.ToMessagePack();
         var mapping = BlockIndexMapping.FromXml(XElement.Parse(original.Registry.Mapping.ToXml().ToString()));
@@ -255,7 +255,7 @@ public class BlockRuntimeCatalogTest
         Assert.Equal(303, Terrain.ExtractContents(wiredValue));
         Assert.Equal(5, wire.GetWireFacesBitmask(wiredValue));
         Assert.True(wire.WireExistsOnFace(wiredValue, 2));
-        Assert.Equal(0, wire.GetWireFacesBitmask(Terrain.MakeBlockValue(133, 0, 5)));
+        Assert.Equal(0, wire.GetWireFacesBitmask(Terrain.MakeBlockValue(133, 5)));
     }
 
     [Fact]

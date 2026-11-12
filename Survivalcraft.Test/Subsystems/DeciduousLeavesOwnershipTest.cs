@@ -110,7 +110,7 @@ public sealed class DeciduousLeavesOwnershipTest
     private static int Autumn(int index)
     {
         var data = DeciduousLeavesBlock.SetTimeOfSeason(0, .8f);
-        return Terrain.MakeBlockValue(index, 0, DeciduousLeavesBlock.SetSeason(data, Season.Autumn));
+        return Terrain.MakeBlockValue(index, DeciduousLeavesBlock.SetSeason(data, Season.Autumn));
     }
 
     private static object? Field(object owner, string name) =>

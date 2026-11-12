@@ -17,7 +17,7 @@ public class CarpetBlock : CubeBlock
         var i = 0;
         while (i < 16)
         {
-            yield return Terrain.MakeBlockValue(BlockIndex, 0, i);
+            yield return Terrain.MakeBlockValue(BlockIndex, i);
             var num = i + 1;
             i = num;
         }
@@ -42,7 +42,7 @@ public class CarpetBlock : CubeBlock
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Value = Terrain.MakeBlockValue(BlockIndex, data),
                 Count = 1
             }
         );
@@ -75,15 +75,15 @@ public class CarpetBlock : CubeBlock
             CraftingRecipeCatalog.DecodeIngredient(item, out var craftingId, out var data);
             if (craftingId == Catalog.Blocks[BlockIndex].CraftingId)
             {
-                num3 = Terrain.MakeBlockValue(BlockIndex, 0, data ?? 0);
+                num3 = Terrain.MakeBlockValue(BlockIndex, data ?? 0);
             }
             else if (craftingId == Catalog.Blocks[129].CraftingId)
             {
-                num = Terrain.MakeBlockValue(129, 0, data ?? 0);
+                num = Terrain.MakeBlockValue(129, data ?? 0);
             }
             else if (craftingId == Catalog.Blocks[128].CraftingId)
             {
-                num2 = Terrain.MakeBlockValue(128, 0, data ?? 0);
+                num2 = Terrain.MakeBlockValue(128, data ?? 0);
             }
         }
 
@@ -99,10 +99,10 @@ public class CarpetBlock : CubeBlock
                 return new CraftingRecipe
                 {
                     ResultCount = 1,
-                    ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, num5),
+                    ResultValue = Terrain.MakeBlockValue(BlockIndex, num5),
                     RemainsCount = 1,
                     RemainsValue = Catalog.DamageItem(
-                        Terrain.MakeBlockValue(129, 0, color),
+                        Terrain.MakeBlockValue(129, color),
                         damage + MathUtils.Max(block.Durability / 4, 1)
                     ),
                     RequiredHeatLevel = 1f,
@@ -126,10 +126,10 @@ public class CarpetBlock : CubeBlock
             return new CraftingRecipe
             {
                 ResultCount = 1,
-                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, 0),
+                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0),
                 RemainsCount = 1,
                 RemainsValue = Catalog.DamageItem(
-                    Terrain.MakeBlockValue(128, 0, 0),
+                    Terrain.MakeBlockValue(128, 0),
                     damage2 + MathUtils.Max(block2.Durability / 4, 1)
                 ),
                 RequiredHeatLevel = 1f,

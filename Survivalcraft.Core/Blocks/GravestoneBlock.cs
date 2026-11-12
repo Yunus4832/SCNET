@@ -69,13 +69,13 @@ public class GravestoneBlock : Block
         if (MathUtils.Abs(Vector3.Dot(forward, Vector3.UnitZ)) > num)
         {
             result = default;
-            result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetRotation(data, 0));
+            result.Value = Terrain.MakeBlockValue(BlockIndex, SetRotation(data, 0));
             result.CellFace = raycastResult.CellFace;
             return result;
         }
 
         result = default;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetRotation(data, 1));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, SetRotation(data, 1));
         result.CellFace = raycastResult.CellFace;
         return result;
     }
@@ -86,7 +86,7 @@ public class GravestoneBlock : Block
         while (i < 8)
         {
             var data = SetVariant(0, i);
-            yield return Terrain.MakeBlockValue(BlockIndex, 0, data);
+            yield return Terrain.MakeBlockValue(BlockIndex, data);
             var num = i + 1;
             i = num;
         }
@@ -105,7 +105,7 @@ public class GravestoneBlock : Block
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, Terrain.ExtractData(oldValue)),
+                Value = Terrain.MakeBlockValue(BlockIndex, Terrain.ExtractData(oldValue)),
                 Count = 1
             }
         );

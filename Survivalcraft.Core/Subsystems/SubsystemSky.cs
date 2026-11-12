@@ -1,6 +1,8 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Terrains.Lighting;
+
 namespace Game.Subsystems;
 
 public class SubsystemSky : Subsystem, IUpdateable
@@ -12,26 +14,6 @@ public class SubsystemSky : Subsystem, IUpdateable
     public const float DuskStart = 0.7f;
 
     public const float NightStart = 0.8f;
-
-    private static readonly int[] _lightValuesMoonless =
-    [
-        0,
-        3,
-        6,
-        9,
-        12,
-        15
-    ];
-
-    private static readonly int[] _lightValuesNormal =
-    [
-        3,
-        5,
-        8,
-        10,
-        13,
-        15
-    ];
 
     private readonly Random _random = new();
 
@@ -135,55 +117,17 @@ public class SubsystemSky : Subsystem, IUpdateable
 
     public void UpdateMoonPhase()
     {
-        MoonPhase = ((int)MathUtils.Floor(SubsystemTimeOfDay.Day - 0.5 + 5.0) % 8 + 8) % 8;
+        MoonPhase = TerrainLightEnvironment.CalculateMoonPhase(SubsystemTimeOfDay.Day);
     }
 
     public void UpdateLightIntensity()
     {
         SkyLightIntensity = CalculateLightIntensity(SubsystemTimeOfDay.TimeOfDay);
-        if (MoonPhase == 4)
-        {
-            SkyLightValue = _lightValuesMoonless[(int)MathUtils.Round(MathUtils.Lerp(0f, 5f, SkyLightIntensity))];
-        }
-        else
-        {
-            SkyLightValue = _lightValuesNormal[(int)MathUtils.Round(MathUtils.Lerp(0f, 5f, SkyLightIntensity))];
-        }
+        SkyLightValue = TerrainLightEnvironment.FromIntensity(SkyLightIntensity, MoonPhase).SkyLightValue;
     }
 
     public float CalculateLightIntensity(float timeOfDay)
     {
-        //if (timeOfDay <= 0.2f || timeOfDay > 0.8f)
-        //{
-        //    return 0f;
-        //}
-        //if (timeOfDay > 0.2f && timeOfDay <= 0.3f)
-        //{
-        //    return (timeOfDay - 0.2f) / (71f / (226f * (float)Math.PI));
-        //}
-        //if (timeOfDay > 0.3f && timeOfDay <= 0.7f)
-        //{
-        //    return 1f;
-        //}
-        //return 1f - (timeOfDay - 0.7f) / 0.100000024f;
-        if (IntervalUtils.IsBetween(timeOfDay, SubsystemTimeOfDay.NightStart, SubsystemTimeOfDay.DawnStart))
-        {
-            return 0f;
-        }
-
-        if (IntervalUtils.IsBetween(timeOfDay, SubsystemTimeOfDay.DawnStart, SubsystemTimeOfDay.DayStart))
-        {
-            return IntervalUtils.Interval(SubsystemTimeOfDay.DawnStart, timeOfDay) /
-                   SubsystemTimeOfDay.DawnInterval;
-        }
-
-        if (IntervalUtils.IsBetween(timeOfDay, SubsystemTimeOfDay.DayStart, SubsystemTimeOfDay.DuskStart))
-        {
-            return 1f;
-        }
-
-        return 1f -
-               IntervalUtils.Interval(SubsystemTimeOfDay.DuskStart, timeOfDay) /
-               SubsystemTimeOfDay.DuskInterval;
+        return TerrainLightEnvironment.CalculateIntensity(SubsystemTimeOfDay, timeOfDay);
     }
 }

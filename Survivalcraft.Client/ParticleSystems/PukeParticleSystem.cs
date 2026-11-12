@@ -27,19 +27,8 @@ public class PukeParticleSystem : ParticleSystem<PukeParticleSystem.Particle>
 
     public override bool Simulate(float dt)
     {
-        var num = Terrain.ToCell(Position.X);
-        var num2 = Terrain.ToCell(Position.Y);
-        var num3 = Terrain.ToCell(Position.Z);
-        var x = 0;
-        x = MathUtils.Max(x, _subsystemTerrain.Terrain.GetCellLight(num + 1, num2, num3));
-        x = MathUtils.Max(x, _subsystemTerrain.Terrain.GetCellLight(num - 1, num2, num3));
-        x = MathUtils.Max(x, _subsystemTerrain.Terrain.GetCellLight(num, num2 + 1, num3));
-        x = MathUtils.Max(x, _subsystemTerrain.Terrain.GetCellLight(num, num2 - 1, num3));
-        x = MathUtils.Max(x, _subsystemTerrain.Terrain.GetCellLight(num, num2, num3 + 1));
-        x = MathUtils.Max(x, _subsystemTerrain.Terrain.GetCellLight(num, num2, num3 - 1));
+        SetLightOrigin(_subsystemTerrain, Position);
         var white = Color.White;
-        var num4 = LightingManager.LightIntensityByLightValue[x];
-        white *= num4;
         white.A = 255;
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
         var num5 = MathUtils.Pow(0.03f, dt);

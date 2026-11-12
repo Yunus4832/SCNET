@@ -23,7 +23,7 @@ public class AdjustableDelayGateBlock()
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Value = Terrain.MakeBlockValue(BlockIndex, data),
                 Count = 1
             }
         );

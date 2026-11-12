@@ -21,17 +21,17 @@ public abstract class StairsBlock : Block, IPaintableBlock
 
     public virtual int Paint(SubsystemTerrain? terrain, int value, int? color)
     {
-        return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(Terrain.ExtractData(value), color));
+        return Terrain.MakeBlockValue(BlockIndex, SetColor(Terrain.ExtractData(value), color));
     }
 
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, null));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, null));
         var i = 0;
         while (i < 16)
         {
-            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, i));
+            yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
             var num = i + 1;
             i = num;
         }
@@ -106,7 +106,7 @@ public abstract class StairsBlock : Block, IPaintableBlock
         var data = Terrain.ExtractData(value);
         BlockPlacementData result = default;
         result.Value =
-            Terrain.MakeBlockValue(BlockIndex, 0, SetIsUpsideDown(SetRotation(data, rotation), isUpsideDown));
+            Terrain.MakeBlockValue(BlockIndex, SetIsUpsideDown(SetRotation(data, rotation), isUpsideDown));
         result.CellFace = raycastResult.CellFace;
         return result;
     }
@@ -130,7 +130,7 @@ public abstract class StairsBlock : Block, IPaintableBlock
         showDebris = true;
         var data = Terrain.ExtractData(oldValue);
         var data2 = SetColor(0, GetColor(data));
-        var value = Terrain.MakeBlockValue(BlockIndex, 0, data2);
+        var value = Terrain.MakeBlockValue(BlockIndex, data2);
         dropValues.Add(
             new BlockDropValue
             {

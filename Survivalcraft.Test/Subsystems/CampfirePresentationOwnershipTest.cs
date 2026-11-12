@@ -25,9 +25,9 @@ public sealed class CampfirePresentationOwnershipTest
         var rules = new SubsystemCampfireBlockBehavior();
         project.InitializeSubsystem(rules);
         var point = new Point3(1, 64, 1);
-        rules.OnBlockGenerated(Terrain.MakeBlockValue(209, 0, 5), point.X, point.Y, point.Z, true);
+        rules.OnBlockGenerated(Terrain.MakeBlockValue(209, 5), point.X, point.Y, point.Z, true);
         Assert.Equal(point, Assert.Single(rules.Campfires));
-        rules.OnBlockModified(Terrain.MakeBlockValue(209, 0, 8), 0, point.X, point.Y, point.Z);
+        rules.OnBlockModified(Terrain.MakeBlockValue(209, 8), 0, point.X, point.Y, point.Z);
         Assert.Equal(point, Assert.Single(rules.Campfires));
         rules.OnBlockRemoved(0, 0, point.X, point.Y, point.Z);
         rules.OnBlockRemoved(0, 0, point.X, point.Y, point.Z);
@@ -47,8 +47,8 @@ public sealed class CampfirePresentationOwnershipTest
         project.AddSubsystem(view);
         view.Load(new ValuesDictionary());
         var point = new Point3(1, 64, 1);
-        rules.OnBlockAdded(Terrain.MakeBlockValue(209, 0, 4), 0, point.X, point.Y, point.Z);
-        rules.OnBlockModified(Terrain.MakeBlockValue(209, 0, 7), 0, point.X, point.Y, point.Z);
+        rules.OnBlockAdded(Terrain.MakeBlockValue(209, 4), 0, point.X, point.Y, point.Z);
+        rules.OnBlockModified(Terrain.MakeBlockValue(209, 7), 0, point.X, point.Y, point.Z);
         var pending = (IDictionary)typeof(SubsystemCampfirePresentation).GetField(
             "_pending",
             BindingFlags.Instance | BindingFlags.NonPublic
@@ -58,7 +58,7 @@ public sealed class CampfirePresentationOwnershipTest
         Assert.Equal(0, pending[point]);
         view.Dispose();
         view.Dispose();
-        rules.OnBlockAdded(Terrain.MakeBlockValue(209, 0, 3), 0, point.X, point.Y, point.Z);
+        rules.OnBlockAdded(Terrain.MakeBlockValue(209, 3), 0, point.X, point.Y, point.Z);
         Assert.Empty(pending);
     }
 }

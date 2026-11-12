@@ -6,7 +6,7 @@ public enum TerrainWorkStage
 
     Heights = 1,
 
-    Sunlight = 2,
+    LightSeed = 2,
 
     Propagation = 3,
 

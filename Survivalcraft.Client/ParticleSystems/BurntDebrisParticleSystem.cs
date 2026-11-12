@@ -22,20 +22,9 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
     {
         _subsystemTerrain = terrain;
         Texture = ContentManager.Get<Texture2D>("Textures/FireParticle");
-        var num = Terrain.ToCell(position.X);
-        var num2 = Terrain.ToCell(position.Y);
-        var num3 = Terrain.ToCell(position.Z);
-        var x = 0;
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num + 1, num2, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num - 1, num2, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2 + 1, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2 - 1, num3));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2, num3 + 1));
-        x = MathUtils.Max(x, terrain.Terrain.GetCellLight(num, num2, num3 - 1));
         TextureSlotsCount = 3;
+        SetLightOrigin(terrain, position);
         var white = Color.White;
-        var num4 = LightingManager.LightIntensityByLightValue[x];
-        white *= num4;
         white.A = 255;
         foreach (var particle in Particles)
         {

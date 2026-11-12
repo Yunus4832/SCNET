@@ -127,7 +127,6 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
                     var v2 = Vector3.Normalize(vector + aim.Direction * 10f - vector);
                     var value2 = Terrain.MakeBlockValue(
                         192,
-                        0,
                         ArrowBlock.SetArrowType(0, arrowType.Value)
                     );
                     var s = 38f;
@@ -155,7 +154,7 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
                 if (WorldRuntimeContext.For(Project).IsAuthority)
                 {
                     inventory.RemoveSlotItems(activeSlotIndex, 1);
-                    var value3 = Terrain.MakeBlockValue(num, 0, CrossbowBlock.SetDraw(data, 0));
+                    var value3 = Terrain.MakeBlockValue(num, CrossbowBlock.SetDraw(data, 0));
                     inventory.AddSlotItems(activeSlotIndex, value3, 1);
                     componentMiner.DamageActiveTool(1);
                 }
@@ -219,7 +218,7 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
             inventory.RemoveSlotItems(slotIndex, 1);
             inventory.AddSlotItems(
                 slotIndex,
-                Terrain.MakeBlockValue(200, 0, CrossbowBlock.SetArrowType(data, arrowType)),
+                Terrain.MakeBlockValue(200, CrossbowBlock.SetArrowType(data, arrowType)),
                 1
             );
         }

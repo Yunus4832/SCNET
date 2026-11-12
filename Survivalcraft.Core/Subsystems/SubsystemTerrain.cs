@@ -16,6 +16,16 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         WorkExecutor = new TerrainWorkExecutor(() => Computations.Step(), Access);
     }
 
+    public TerrainLightEnvironment CaptureLightEnvironment()
+    {
+        return TerrainLightEnvironment.Capture(SubsystemGameInfo.TimeOfDay);
+    }
+
+    public bool TryGetEffectiveLight(int x, int y, int z, out int light)
+    {
+        return Terrain.Lighting.TryGetEffectiveLight(x, y, z, CaptureLightEnvironment(), out light);
+    }
+
     public TerrainAccessGate Access { get; } = new();
 
     public TerrainWorkExecutor WorkExecutor { get; }
@@ -427,8 +437,8 @@ public class SubsystemTerrain : Subsystem, IUpdateable
             }
 
             cellValueFast = Terrain.GetCellValueFast(x, y, z);
-            value = Terrain.ReplaceLight(value, 0);
-            cellValueFast = Terrain.ReplaceLight(cellValueFast, 0);
+            value = Terrain.NormalizeCellValue(value);
+            cellValueFast = Terrain.NormalizeCellValue(cellValueFast);
             if (value == cellValueFast)
             {
                 PublishAuthoritativeCellDelta(
@@ -707,12 +717,11 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         ChunkDistribution?.Update();
         if (!IsTerrainActive) { return; }
 
-        var environment = EnvironmentObserver.Update();
-        if (environment.SunlightChanged) { Computations.InvalidateSkylight(); }
+        var appearanceChanged = EnvironmentObserver.Update();
 
         if (!IsTerrainActive) { return; }
 
-        if (environment.AppearanceChanged) { TerrainAppearanceChanged?.Invoke(); }
+        if (appearanceChanged) { TerrainAppearanceChanged?.Invoke(); }
 
         if (!IsTerrainActive) { return; }
 
@@ -733,7 +742,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         ProcessModifiedCells();
     }
 
-    private bool IsTerrainActive => !_closed && WorldRuntimeContext.IsProjectActive(Project);
+    internal bool IsTerrainActive => !_closed && WorldRuntimeContext.IsProjectActive(Project);
 
     private void ApplyTerrainDemand()
     {
@@ -811,8 +820,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         _locationRequest = WorkExecutor.CreateMainRequest();
         EnvironmentObserver = new TerrainEnvironmentObserver(
             Terrain,
-            SubsystemGameInfo,
-            Project.FindSubsystem<SubsystemSky>(true)!
+            SubsystemGameInfo
         );
         Computations = new TerrainComputationScheduler(
             this,
@@ -830,7 +838,10 @@ public class SubsystemTerrain : Subsystem, IUpdateable
             CellPrediction = new ClientTerrainPrediction(
                 Terrain,
                 coords =>
-                    Computations.InvalidateContentNeighborhood(coords, 1)
+                {
+                    Computations.InvalidateContentNeighborhood(coords, 1);
+                    NotifyTerrainInteraction();
+                }
             );
             ClientChunkContents!.ContentInstalled += CellPrediction.OnContentInstalled;
         }

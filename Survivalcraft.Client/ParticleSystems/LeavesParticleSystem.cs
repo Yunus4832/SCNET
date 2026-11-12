@@ -1,5 +1,7 @@
 using Engine.Graphics;
 
+using Game.Terrains.Lighting;
+
 namespace Game.ParticleSystems;
 
 public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle>
@@ -43,7 +45,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
                                     MathUtils.Lerp(1f, -1f, f),
                                     _random.Float(-1f, 1f)
                                 );
-            particle.Light = 7;
+            particle.Light = new TerrainLightChannels(0, 7);
             particle.BaseColor = color * color2;
             particle.Color = Color.Transparent;
             particle.BillboardingMode = ParticleBillboardingMode.None;
@@ -61,6 +63,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
     public override bool Simulate(float dt)
     {
         var terrain = _subsystemTerrain.Terrain;
+        var environment = _subsystemTerrain.CaptureLightEnvironment();
         var flag = false;
         foreach (var particle in Particles)
         {
@@ -98,15 +101,11 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
             var num2 = Terrain.ToCell(particle.Position.X);
             var num3 = Terrain.ToCell(particle.Position.Y);
             var num4 = Terrain.ToCell(particle.Position.Z);
-            var chunkAtCell = terrain.GetChunkAtCell(num2, num4, false);
-            if (chunkAtCell is { HasCurrentLight: true })
-            {
-                particle.Light = terrain.GetCellLight(num2, num3, num4);
-            }
+            particle.Light = LightingManager.SampleSpatialLight(_subsystemTerrain, num2, num3, num4) ?? particle.Light;
 
             particle.Color = Color.MultiplyColorOnlyNotSaturated(
                 particle.BaseColor,
-                LightingManager.LightIntensityByLightValue[particle.Light]
+                LightingManager.LightIntensityByLightValue[particle.Light.GetEffectiveLight(environment)]
             );
             var num5 = MathUtils.Saturate(0.5f * (particle.EndTime - particle.Time));
             if (_fadeIn)
@@ -165,7 +164,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
 
         public float EndTime;
 
-        public int Light;
+        public TerrainLightChannels Light;
 
         public float Phase;
 

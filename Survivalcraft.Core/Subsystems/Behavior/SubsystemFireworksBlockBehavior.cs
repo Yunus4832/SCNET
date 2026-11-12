@@ -91,7 +91,7 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
                 data = FireworksBlock.SetColor(data, _random.Int(0, 7));
                 data = FireworksBlock.SetAltitude(data, _random.Int(0, 1));
                 data = FireworksBlock.SetFlickering(data, _random.Float(0f, 1f) < 0.25f);
-                var value = Terrain.MakeBlockValue(215, 0, data);
+                var value = Terrain.MakeBlockValue(215, data);
                 var position = new Vector3(
                     terrainRaycastResult.Value.CellFace.Point.X,
                     terrainRaycastResult.Value.CellFace.Point.Y + 1,

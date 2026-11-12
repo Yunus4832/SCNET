@@ -24,7 +24,7 @@ internal static class TerrainMeshTestData
         var request = chunk.DerivedRevisions.Capture();
         if (!chunk.DerivedRevisions.HasCurrentHeights) { Assert.True(chunk.DerivedRevisions.PublishHeights(request)); }
 
-        chunk.DerivedRevisions.PublishSunlight(request);
+        chunk.DerivedRevisions.PublishLightSeed(request);
         if (!chunk.DerivedRevisions.HasCurrentLight) { Assert.True(chunk.DerivedRevisions.PublishLight(request)); }
     }
 

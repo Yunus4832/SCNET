@@ -473,7 +473,7 @@ public class ComponentHumanModel : ComponentCreatureModel
             _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
             _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
                                                     SubsystemWeather.GetTemperatureAdjustmentAtHeight(y);
-            _drawBlockEnvironmentData.Light = _subsystemTerrain.Terrain.GetCellLight(x, y, z);
+            _drawBlockEnvironmentData.Light = (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, y, z) ?? 0);
             _drawBlockEnvironmentData.BillboardDirection = -Vector3.UnitZ;
             _drawBlockEnvironmentData.SubsystemTerrain = _subsystemTerrain;
             var matrix2 = matrix * camera.ViewMatrix;

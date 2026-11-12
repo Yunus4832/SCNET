@@ -72,7 +72,7 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
             if (chunkAtCell is
                 {
-                    HasCurrentLight: true
+                    HasContents: true
                 } &&
                 num5 is >= 0 and < 255 &&
                 !IsInsidePredictedOpaqueBlock(
@@ -86,8 +86,8 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
                                                         SubsystemWeather.GetTemperatureAdjustmentAtHeight(num5);
                 var f = MathUtils.Max(position.Y - num5 - 0.75f, 0f) / 0.25f;
                 var light = (int)MathUtils.Lerp(
-                    _subsystemTerrain.Terrain.GetCellLightFast(x, num5, z),
-                    _subsystemTerrain.Terrain.GetCellLightFast(x, num5 + 1, z),
+                    (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, num5, z) ?? 0),
+                    (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, num5 + 1, z) ?? 0),
                     f
                 );
                 _lightSamples[pickable] = light;
@@ -134,7 +134,7 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
     {
         var actual = terrain.GetCellValue(cell.X, cell.Y, cell.Z);
         var visual = terrain.GetCellValueForGeometry(cell.X, cell.Y, cell.Z);
-        return Terrain.ReplaceLight(actual, 0) != Terrain.ReplaceLight(visual, 0) &&
+        return Terrain.NormalizeCellValue(actual) != Terrain.NormalizeCellValue(visual) &&
                !catalog.Blocks[Terrain.ExtractContents(visual)].Transparent;
     }
 

@@ -71,9 +71,9 @@ public sealed class TerrainChunkPresentation : IDisposable
     private readonly record struct NeighborInput(
         ulong Generation,
         long ContentVersion,
+        long ContentRevision,
         long Heights,
-        long Lighting,
-        TerrainDerivedRevisions.Request Request
+        long Lighting
     );
 
     private sealed record MaintenanceWait(MeshBuildStamp Inputs, double FirstSeen, double ChangedAt);
@@ -84,7 +84,8 @@ public sealed class TerrainChunkPresentation : IDisposable
         ulong Generation,
         long ContentVersion,
         long Revision,
-        NeighborInput[] Neighbors
+        NeighborInput[] Neighbors,
+        bool AllowPendingLighting
     );
 
     public void RequestMeshRebuild()
@@ -96,6 +97,33 @@ public sealed class TerrainChunkPresentation : IDisposable
     {
         var completed = Volatile.Read(ref _completedMesh);
         return completed is not null && Matches(chunk, completed);
+    }
+
+    public bool CanUploadGeometry(TerrainChunk chunk)
+    {
+        return NewGeometryData &&
+               HasCurrentGeometry(chunk) &&
+               (chunk.HasCurrentLight ||
+                _completedMesh is { AllowPendingLighting: true } && CanUsePublishedLighting(chunk));
+    }
+
+    internal bool CanUsePublishedLighting(TerrainChunk chunk)
+    {
+        if (!GeometryUploaded || !chunk.HasContents) { return false; }
+
+        for (var x = -1; x <= 1; x++)
+        {
+            for (var z = -1; z <= 1; z++)
+            {
+                var neighbor = chunk.Terrain.GetChunkAtCoords(chunk.Coords.X + x, chunk.Coords.Y + z);
+                if (neighbor is not { HasContents: true }) { continue; }
+
+                if (!neighbor.HasCurrentHeightData ||
+                    !chunk.Terrain.Lighting.TryGetPublishedSnapshot(neighbor, out _)) { return false; }
+            }
+        }
+
+        return true;
     }
 
     private bool Matches(TerrainChunk chunk, MeshBuildStamp stamp)
@@ -114,9 +142,9 @@ public sealed class TerrainChunkPresentation : IDisposable
             : new NeighborInput(
                 neighbor.AllocationGeneration,
                 neighbor.NetworkContentVersion,
+                neighbor.NetworkContentRevision,
                 neighbor.DerivedRevisions.HeightRevision,
-                neighbor.DerivedRevisions.LightRevision,
-                neighbor.DerivedRevisions.Capture()
+                neighbor.DerivedRevisions.LightRevision
             );
     }
 
@@ -189,22 +217,23 @@ public sealed class TerrainChunkPresentation : IDisposable
         return false;
     }
 
-    private MeshBuildStamp CaptureStamp(TerrainChunk chunk)
+    private MeshBuildStamp CaptureStamp(TerrainChunk chunk, bool allowPendingLighting = false)
     {
         return new MeshBuildStamp(
             chunk.AllocationGeneration,
             chunk.NetworkContentVersion,
             Volatile.Read(ref _requestedMeshRevision),
-            CaptureNeighbors(chunk)
+            CaptureNeighbors(chunk),
+            allowPendingLighting
         );
     }
 
-    /// <summary>Called only by the synchronized terrain worker.</summary>
-    public TerrainMeshState PrepareMeshUpdate(TerrainChunk chunk)
+    /// <summary>Called while holding the owning terrain's access gate.</summary>
+    public TerrainMeshState PrepareMeshUpdate(TerrainChunk chunk, bool allowPendingLighting = false)
     {
         if (_activeMesh is null || !Matches(chunk, _activeMesh))
         {
-            _activeMesh = CaptureStamp(chunk);
+            _activeMesh = CaptureStamp(chunk, allowPendingLighting);
             WorkerMeshState = TerrainMeshState.NeedsFirstPass;
         }
 
@@ -216,8 +245,9 @@ public sealed class TerrainChunkPresentation : IDisposable
     /// <summary>Publishes only a build for the same allocation, content and rebuild request.</summary>
     public bool CompleteMeshBuild(TerrainChunk chunk)
     {
-        if (!LightingInputsReadable(chunk) ||
-            _activeMesh is null ||
+        if (_activeMesh is null ||
+            (!LightingInputsReadable(chunk) &&
+             !(_activeMesh.AllowPendingLighting && CanUsePublishedLighting(chunk))) ||
             WorkerMeshState != TerrainMeshState.NeedsSecondPass ||
             !Matches(chunk, _activeMesh))
         {

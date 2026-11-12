@@ -54,7 +54,7 @@ public class BulletBlock : FlatBlock
     public override IEnumerable<int> GetCreativeValues()
     {
         return EnumUtils.GetEnumValues(typeof(BulletType)).Select(enumValue =>
-            Terrain.MakeBlockValue(BlockIndex, 0, SetBulletType(0, (BulletType)enumValue))
+            Terrain.MakeBlockValue(BlockIndex, SetBulletType(0, (BulletType)enumValue))
         );
     }
 

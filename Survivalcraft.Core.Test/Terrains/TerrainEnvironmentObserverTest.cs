@@ -30,18 +30,18 @@ public sealed class TerrainEnvironmentObserverTest
             terrain.SeasonHumidity = 100;
             var info = new SubsystemGameInfo { WorldSettings = new WorldSettings { TimeOfYear = season } };
             var sky = new SubsystemSky { SkyLightValue = 15 };
-            var observer = new TerrainEnvironmentObserver(terrain, info, sky);
+            var observer = new TerrainEnvironmentObserver(terrain, info);
 
-            Assert.Equal(new TerrainEnvironmentObserver.Changes(true, true), observer.Update());
+            Assert.True(observer.Update());
             Assert.Equal(temperature, terrain.SeasonTemperature);
             Assert.Equal(0, terrain.SeasonHumidity);
             Assert.Equal(request, chunk.DerivedRevisions.Capture());
-            Assert.Equal(new TerrainEnvironmentObserver.Changes(false, false), observer.Update());
+            Assert.False(observer.Update());
 
             sky.SkyLightValue = 7;
             info.WorldSettings.TimeOfYear = 0.625f;
             SetTime(1.5, 0.02f);
-            Assert.Equal(new TerrainEnvironmentObserver.Changes(true, false), observer.Update());
+            Assert.False(observer.Update());
             Assert.Equal(temperature, terrain.SeasonTemperature);
         }
         finally { SetTime(previousStart, previousDuration); }

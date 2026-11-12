@@ -121,7 +121,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         {
             if (block is BucketBlock)
             {
-                processedValue = Terrain.MakeBlockValue(90, 0, Terrain.ExtractData(value));
+                processedValue = Terrain.MakeBlockValue(90, Terrain.ExtractData(value));
                 processedCount = 1;
             }
 

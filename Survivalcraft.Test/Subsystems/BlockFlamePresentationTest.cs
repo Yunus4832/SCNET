@@ -40,8 +40,8 @@ public sealed class BlockFlamePresentationTest
     {
         using var fixture = new Fixture();
         var torch = BuiltInBlockRegistry.GetIndex<TorchBlock>();
-        var first = Terrain.MakeBlockValue(torch, 0, 0);
-        var rotated = Terrain.MakeBlockValue(torch, 0, 1);
+        var first = Terrain.MakeBlockValue(torch, 0);
+        var rotated = Terrain.MakeBlockValue(torch, 1);
         fixture.View.OnBlockGenerated(first, 1, 65, 2, false);
         fixture.View.OnBlockModified(rotated, first, 1, 65, 2);
         Assert.Equal(2, fixture.Created.Count);

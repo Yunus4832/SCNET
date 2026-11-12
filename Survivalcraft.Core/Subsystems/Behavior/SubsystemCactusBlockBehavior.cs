@@ -53,7 +53,9 @@ public class SubsystemCactusBlockBehavior : SubsystemPollableBlockBehavior, IUpd
         }
 
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z);
-        if (Terrain.ExtractContents(cellValue) != 0 || Terrain.ExtractLight(cellValue) < 12)
+        if (Terrain.ExtractContents(cellValue) != 0 ||
+            !SubsystemTerrain.TryGetEffectiveLight(x, y + 1, z, out var light) ||
+            light < 12)
         {
             return;
         }
@@ -62,7 +64,7 @@ public class SubsystemCactusBlockBehavior : SubsystemPollableBlockBehavior, IUpd
         var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(x, y - 2, z);
         if ((cellContents != 127 || cellContents2 != 127) && _random.Float(0f, 1f) < 0.25f)
         {
-            _toUpdate[new Point3(x, y + 1, z)] = Terrain.MakeBlockValue(127, 0, 0);
+            _toUpdate[new Point3(x, y + 1, z)] = Terrain.MakeBlockValue(127, 0);
         }
     }
 

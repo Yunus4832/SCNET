@@ -61,7 +61,7 @@ public class CraftingRecipeSlotWidget : CanvasWidget
             {
                 var block = array[(int)(1.0 * Time.RealTime) % array.Length];
                 _blockIconWidget.Value =
-                    Terrain.MakeBlockValue(block.BlockIndex, 0, data ?? 4);
+                    Terrain.MakeBlockValue(block.BlockIndex, data ?? 4);
                 _blockIconWidget.Light = 15;
                 _blockIconWidget.IsVisible = true;
             }

@@ -1,4 +1,6 @@
 using Game.Modding.Blocks;
+using Game.Terrains.Lighting;
+using Game.Terrains.Rendering;
 using Game.World.Presentation;
 
 namespace Game.Blocks.Presentation.Geometry;
@@ -31,6 +33,12 @@ public class BlockGeometryGenerator
 
     public SubsystemTerrain SubsystemTerrain => _subsystemTerrain;
 
+    public Point3 LightOrigin { get; set; }
+
+    private readonly Dictionary<Point2, TerrainLightSnapshot?> _lightSnapshots = [];
+
+    private readonly record struct LitCell(int Value, TerrainLightChannels Light);
+
     public readonly Terrain Terrain;
 
     public BlockPresentationCatalog Presentations { get; }
@@ -38,6 +46,8 @@ public class BlockGeometryGenerator
     private readonly CornerLights[] _cornerLightsByFace = new CornerLights[6];
 
     private Point3 _cornerLightsPosition;
+
+    private readonly Dictionary<(int Face, Vector3 Position), TerrainLightResponse> _modelResponses = [];
 
     private readonly DynamicArray<ElectricConnectionPath> _tmpConnectionPaths = [];
 
@@ -66,6 +76,8 @@ public class BlockGeometryGenerator
     public void ResetCache()
     {
         _cornerLightsPosition = new Point3(2147483647);
+        _lightSnapshots.Clear();
+        _modelResponses.Clear();
     }
 
     private static void SetupCornerVertex(
@@ -73,7 +85,7 @@ public class BlockGeometryGenerator
         float y,
         float z,
         Color color,
-        int light,
+        TerrainLightChannels light,
         int face,
         int textureSlot,
         int textureSlotCount,
@@ -81,11 +93,12 @@ public class BlockGeometryGenerator
         ref TerrainVertex vertex
     )
     {
-        var num = LightingManager.LightIntensityByLightValueAndFace[light + 16 * face];
+        var num = LightingManager.CalculateLighting(CellFace.FaceToVector3(face));
         var color2 = new Color((byte)(color.R * num), (byte)(color.G * num), (byte)(color.B * num), color.A);
         var tx = (_textureCoordinates[corner].X + textureSlot % textureSlotCount) / textureSlotCount;
         var ty = (_textureCoordinates[corner].Y + textureSlot / textureSlotCount) / textureSlotCount;
         SetupVertex(x, y, z, color2, tx, ty, ref vertex);
+        vertex.Lighting = TerrainLightResponse.FromChannels(light);
     }
 
     public static void SetupLitCornerVertex(
@@ -133,6 +146,7 @@ public class BlockGeometryGenerator
         vertex.Tx = (short)(tx * 32767f);
         vertex.Ty = (short)(ty * 32767f);
         vertex.Color = color;
+        vertex.Lighting = TerrainLightResponse.FullBright;
     }
 
     public void GenerateCrossingFaceVertices(
@@ -148,8 +162,8 @@ public class BlockGeometryGenerator
     {
         var vertices = subset.Vertices;
         var indices = subset.Indices;
-        var num = Terrain.ExtractLight(value);
-        var num2 = LightingManager.LightIntensityByLightValueAndFace[num + 64];
+        var response = TerrainLightResponse.FromChannels(ReadLight(x, y, z));
+        var num2 = LightingManager.CalculateLighting(Vector3.UnitY);
         var color2 = new Color((byte)(color.R * num2), (byte)(color.G * num2), (byte)(color.B * num2), color.A);
         var count = vertices.Count;
         vertices.Count += 8;
@@ -282,6 +296,7 @@ public class BlockGeometryGenerator
         indices.Array[count2 + 21] = count + 4;
         indices.Array[count2 + 22] = count + 7;
         indices.Array[count2 + 23] = count + 6;
+        for (var i = count; i < vertices.Count; i++) { vertices.Array[i].Lighting = response; }
     }
 
     public void GenerateCubeVertices(
@@ -1481,8 +1496,7 @@ public class BlockGeometryGenerator
         var vertices = subset.Vertices;
         var indices = subset.Indices;
         var count = vertices.Count;
-        var cellLightFast = Terrain.GetCellLightFast(x, y, z);
-        var num = LightingManager.LightIntensityByLightValue[cellLightFast];
+        var response = TerrainLightResponse.FromChannels(ReadLight(x, y, z));
         vertices.Count += blockMesh.Vertices.Count;
         for (var i = 0; i < blockMesh.Vertices.Count; i++)
         {
@@ -1493,24 +1507,11 @@ public class BlockGeometryGenerator
                 vector = Vector3.Transform(blockMeshVertex.Position, matrix.Value);
             }
 
-            Color color2;
-            if (blockMeshVertex.IsEmissive)
-            {
-                color2 = new Color(
-                    (byte)(color.R * blockMeshVertex.Color.R / 255),
-                    (byte)(color.G * blockMeshVertex.Color.G / 255),
-                    (byte)(color.B * blockMeshVertex.Color.B / 255)
-                );
-            }
-            else
-            {
-                var num2 = num / 255f;
-                color2 = new Color(
-                    (byte)(color.R * blockMeshVertex.Color.R * num2),
-                    (byte)(color.G * blockMeshVertex.Color.G * num2),
-                    (byte)(color.B * blockMeshVertex.Color.B * num2)
-                );
-            }
+            var color2 = new Color(
+                (byte)(color.R * blockMeshVertex.Color.R / 255),
+                (byte)(color.G * blockMeshVertex.Color.G / 255),
+                (byte)(color.B * blockMeshVertex.Color.B / 255)
+            );
 
             SetupVertex(
                 x + vector.X,
@@ -1521,6 +1522,8 @@ public class BlockGeometryGenerator
                 blockMeshVertex.TextureCoordinates.Y,
                 ref vertices.Array[count + i]
             );
+            vertices.Array[count + i].Lighting =
+                blockMeshVertex.IsEmissive ? TerrainLightResponse.FullBright : response;
         }
 
         if (blockMesh.Sides.Count != 0)
@@ -1588,25 +1591,17 @@ public class BlockGeometryGenerator
                 vector = Vector3.Transform(vector, matrix.Value);
             }
 
-            Color color2;
-            if (blockMeshVertex.IsEmissive)
-            {
-                color2 = new Color(
-                    (byte)(color.R * blockMeshVertex.Color.R / 255),
-                    (byte)(color.G * blockMeshVertex.Color.G / 255),
-                    (byte)(color.B * blockMeshVertex.Color.B / 255)
+            var color2 = new Color(
+                (byte)(color.R * blockMeshVertex.Color.R / 255),
+                (byte)(color.G * blockMeshVertex.Color.G / 255),
+                (byte)(color.B * blockMeshVertex.Color.B / 255)
+            );
+            var response = blockMeshVertex.IsEmissive
+                ? TerrainLightResponse.FullBright
+                : InterpolateCornerLights(
+                    facesMap.Length != 0 ? facesMap[blockMeshVertex.Face] : blockMeshVertex.Face,
+                    vector
                 );
-            }
-            else
-            {
-                var face = facesMap.Length != 0 ? facesMap[blockMeshVertex.Face] : blockMeshVertex.Face;
-                var num = InterpolateCornerLights(face, vector) / 255f;
-                color2 = new Color(
-                    (byte)(color.R * blockMeshVertex.Color.R * num),
-                    (byte)(color.G * blockMeshVertex.Color.G * num),
-                    (byte)(color.B * blockMeshVertex.Color.B * num)
-                );
-            }
 
             SetupVertex(
                 x + vector.X,
@@ -1617,6 +1612,7 @@ public class BlockGeometryGenerator
                 blockMeshVertex.TextureCoordinates.Y,
                 ref vertices.Array[count + i]
             );
+            vertices.Array[count + i].Lighting = response;
         }
 
         if (blockMesh.Sides.Count != 0)
@@ -1673,8 +1669,8 @@ public class BlockGeometryGenerator
             }
         }
 
-        var num2 = Terrain.ExtractLight(value);
-        var num3 = LightingManager.LightIntensityByLightValue[num2];
+        var ownerLight = ReadLight(x, y, z);
+        var ownerResponse = TerrainLightResponse.FromChannels(ownerLight);
         var v = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) - 0.5f * CellFace.FaceToVector3(mountingFace);
         var vector = CellFace.FaceToVector3(mountingFace);
         var v2 = new Vector2(0.9376f, 0.0001f);
@@ -1759,24 +1755,23 @@ public class BlockGeometryGenerator
                     var vector13 = v2 + v3 * new Vector2(MathUtils.Max(0.0625f, centerBoxSize), 1f);
                     var vector14 = v2 + v3 * new Vector2(centerBoxSize, 0.5f);
                     var vector15 = v2 + v3 * new Vector2(num6 * 2f, 0.5f);
-                    var num7 = Terrain.ExtractLight(
-                        _readGeometryCell(
-                            x + tmpConnectionPath.NeighborOffsetX,
-                            y + tmpConnectionPath.NeighborOffsetY,
-                            z + tmpConnectionPath.NeighborOffsetZ
-                        )
+                    var neighborLight = ReadLight(
+                        x + tmpConnectionPath.NeighborOffsetX,
+                        y + tmpConnectionPath.NeighborOffsetY,
+                        z + tmpConnectionPath.NeighborOffsetZ
                     );
-                    var num8 = LightingManager.LightIntensityByLightValue[num7];
-                    var num9 = 0.5f * (num3 + num8);
+                    ReadOnlySpan<TerrainLightChannels> wireSamples = [ownerLight, neighborLight];
+                    ReadOnlySpan<float> wireWeights = [0.5f, 0.5f];
+                    var middleResponse = TerrainLightResponse.FromSamples(wireSamples, wireWeights);
                     var num10 = LightingManager.CalculateLighting(-vector4);
                     var num11 = LightingManager.CalculateLighting(vector4);
                     var num12 = LightingManager.CalculateLighting(vector);
-                    var num13 = num10 * num3;
-                    var num14 = num10 * num9;
-                    var num15 = num11 * num9;
-                    var num16 = num11 * num3;
-                    var num17 = num12 * num3;
-                    var num18 = num12 * num9;
+                    var num13 = num10;
+                    var num14 = num10;
+                    var num15 = num11;
+                    var num16 = num11;
+                    var num17 = num12;
+                    var num18 = num12;
                     var color5 = new Color(
                         (byte)(color3.R * num13),
                         (byte)(color3.G * num13),
@@ -1816,6 +1811,12 @@ public class BlockGeometryGenerator
                     SetupVertex(v6.X, v6.Y, v6.Z, color8, vector13.X, vector13.Y, ref array[count + 3]);
                     SetupVertex(vector7.X, vector7.Y, vector7.Z, color9, vector14.X, vector14.Y, ref array[count + 4]);
                     SetupVertex(vector8.X, vector8.Y, vector8.Z, color10, vector15.X, vector15.Y, ref array[count + 5]);
+                    array[count].Lighting = ownerResponse;
+                    array[count + 1].Lighting = middleResponse;
+                    array[count + 2].Lighting = middleResponse;
+                    array[count + 3].Lighting = ownerResponse;
+                    array[count + 4].Lighting = ownerResponse;
+                    array[count + 5].Lighting = middleResponse;
                     var count2 = subset.Indices.Count;
                     subset.Indices.Count += connectorDirection == ElectricConnectorDirection.In ? 15 : 12;
                     var array2 = subset.Indices.Array;
@@ -1866,8 +1867,8 @@ public class BlockGeometryGenerator
                 var vector19 = v2 + v3 * new Vector2(0.0625f, 0f);
                 var vector20 = v2 + v3 * new Vector2(0.0625f, 1f);
                 var vector21 = v2 + v3 * new Vector2(0f, 0.5f);
-                var num19 = LightingManager.CalculateLighting(vector16) * num3;
-                var num20 = LightingManager.CalculateLighting(vector) * num3;
+                var num19 = LightingManager.CalculateLighting(vector16);
+                var num20 = LightingManager.CalculateLighting(vector);
                 var color11 = new Color((byte)(color.R * num19), (byte)(color.G * num19), (byte)(color.B * num19));
                 var color12 = new Color((byte)(color.R * num20), (byte)(color.G * num20), (byte)(color.B * num20));
                 var count3 = subset.Vertices.Count;
@@ -1884,6 +1885,9 @@ public class BlockGeometryGenerator
                     vector21.Y,
                     ref array3[count3 + 2]
                 );
+                array3[count3].Lighting = ownerResponse;
+                array3[count3 + 1].Lighting = ownerResponse;
+                array3[count3 + 2].Lighting = ownerResponse;
                 var count4 = subset.Indices.Count;
                 subset.Indices.Count += 3;
                 var array4 = subset.Indices.Array;
@@ -1894,119 +1898,119 @@ public class BlockGeometryGenerator
         }
     }
 
-    private void CalculateCubeVertexLight(int value, ref int light, ref int shadow)
+    private void CalculateCubeVertexLight(LitCell cell, ref TerrainLightChannels light, ref int shadow)
     {
-        var num = Terrain.ExtractContents(value);
+        var num = Terrain.ExtractContents(cell.Value);
         if (num == 0)
         {
-            light = Math.Max(light, Terrain.ExtractLight(value));
+            light = light.Max(cell.Light);
             return;
         }
 
-        light = Math.Max(light, Terrain.ExtractLight(value));
-        shadow += Presentations.Get(num).GetShadowStrength(value);
+        light = light.Max(cell.Light);
+        shadow += Presentations.Get(num).GetShadowStrength(cell.Value);
     }
 
-    private static int CombineLightAndShadow(int light, int shadow)
+    private static TerrainLightChannels CombineLightAndShadow(TerrainLightChannels light, int shadow)
     {
-        return MathUtils.Max(light - MathUtils.Max(shadow / 7, 0), 0);
+        return light.Attenuate(MathUtils.Max(shadow / 7, 0));
     }
 
-    private int CalculateVertexLightFace0(int x, int y, int z)
+    private TerrainLightChannels CalculateVertexLightFace0(int x, int y, int z)
     {
-        var light = 0;
+        var light = default(TerrainLightChannels);
         var shadow = 0;
         var chunkAtCell = Terrain.GetChunkAtCell(x - 1, z)!;
         var num = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, z & 0xF);
-        var cellValueFast = chunkAtCell.GetCellValueForGeometry(num - 1);
-        var cellValueFast2 = chunkAtCell.GetCellValueForGeometry(num);
+        var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
+        var cellValueFast2 = ReadLitCell(chunkAtCell, num);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
         var chunkAtCell2 = Terrain.GetChunkAtCell(x, z)!;
         var num2 = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
-        var cellValueFast3 = chunkAtCell2.GetCellValueForGeometry(num2 - 1);
-        var cellValueFast4 = chunkAtCell2.GetCellValueForGeometry(num2);
+        var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
+        var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
         CalculateCubeVertexLight(cellValueFast3, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast4, ref light, ref shadow);
         return CombineLightAndShadow(light, shadow);
     }
 
-    private int CalculateVertexLightFace1(int x, int y, int z)
+    private TerrainLightChannels CalculateVertexLightFace1(int x, int y, int z)
     {
-        var light = 0;
+        var light = default(TerrainLightChannels);
         var shadow = 0;
         var chunkAtCell = Terrain.GetChunkAtCell(x, z - 1)!;
         var num = TerrainChunk.CalculateCellIndex(x & 0xF, y, (z - 1) & 0xF);
-        var cellValueFast = chunkAtCell.GetCellValueForGeometry(num - 1);
-        var cellValueFast2 = chunkAtCell.GetCellValueForGeometry(num);
+        var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
+        var cellValueFast2 = ReadLitCell(chunkAtCell, num);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
         var chunkAtCell2 = Terrain.GetChunkAtCell(x, z)!;
         var num2 = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
-        var cellValueFast3 = chunkAtCell2.GetCellValueForGeometry(num2 - 1);
-        var cellValueFast4 = chunkAtCell2.GetCellValueForGeometry(num2);
+        var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
+        var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
         CalculateCubeVertexLight(cellValueFast3, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast4, ref light, ref shadow);
         return CombineLightAndShadow(light, shadow);
     }
 
-    private int CalculateVertexLightFace2(int x, int y, int z)
+    private TerrainLightChannels CalculateVertexLightFace2(int x, int y, int z)
     {
-        var light = 0;
+        var light = default(TerrainLightChannels);
         var shadow = 0;
         var chunkAtCell = Terrain.GetChunkAtCell(x - 1, z - 1)!;
         var num = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, (z - 1) & 0xF);
-        var cellValueFast = chunkAtCell.GetCellValueForGeometry(num - 1);
-        var cellValueFast2 = chunkAtCell.GetCellValueForGeometry(num);
+        var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
+        var cellValueFast2 = ReadLitCell(chunkAtCell, num);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
         var chunkAtCell2 = Terrain.GetChunkAtCell(x, z - 1)!;
         var num2 = TerrainChunk.CalculateCellIndex(x & 0xF, y, (z - 1) & 0xF);
-        var cellValueFast3 = chunkAtCell2.GetCellValueForGeometry(num2 - 1);
-        var cellValueFast4 = chunkAtCell2.GetCellValueForGeometry(num2);
+        var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
+        var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
         CalculateCubeVertexLight(cellValueFast3, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast4, ref light, ref shadow);
         return CombineLightAndShadow(light, shadow);
     }
 
-    private int CalculateVertexLightFace3(int x, int y, int z)
+    private TerrainLightChannels CalculateVertexLightFace3(int x, int y, int z)
     {
-        var light = 0;
+        var light = default(TerrainLightChannels);
         var shadow = 0;
         var chunkAtCell = Terrain.GetChunkAtCell(x - 1, z - 1)!;
         var num = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, (z - 1) & 0xF);
-        var cellValueFast = chunkAtCell.GetCellValueForGeometry(num - 1);
-        var cellValueFast2 = chunkAtCell.GetCellValueForGeometry(num);
+        var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
+        var cellValueFast2 = ReadLitCell(chunkAtCell, num);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
         var chunkAtCell2 = Terrain.GetChunkAtCell(x - 1, z)!;
         var num2 = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, z & 0xF);
-        var cellValueFast3 = chunkAtCell2.GetCellValueForGeometry(num2 - 1);
-        var cellValueFast4 = chunkAtCell2.GetCellValueForGeometry(num2);
+        var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
+        var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
         CalculateCubeVertexLight(cellValueFast3, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast4, ref light, ref shadow);
         return CombineLightAndShadow(light, shadow);
     }
 
-    private int CalculateVertexLightFace4(int x, int y, int z)
+    private TerrainLightChannels CalculateVertexLightFace4(int x, int y, int z)
     {
-        var light = 0;
+        var light = default(TerrainLightChannels);
         var shadow = 0;
-        CalculateCubeVertexLight(Terrain.GetCellValueForGeometry(x - 1, y, z - 1), ref light, ref shadow);
-        CalculateCubeVertexLight(Terrain.GetCellValueForGeometry(x, y, z - 1), ref light, ref shadow);
-        CalculateCubeVertexLight(Terrain.GetCellValueForGeometry(x - 1, y, z), ref light, ref shadow);
-        CalculateCubeVertexLight(Terrain.GetCellValueForGeometry(x, y, z), ref light, ref shadow);
+        CalculateCubeVertexLight(ReadLitCell(x - 1, y, z - 1), ref light, ref shadow);
+        CalculateCubeVertexLight(ReadLitCell(x, y, z - 1), ref light, ref shadow);
+        CalculateCubeVertexLight(ReadLitCell(x - 1, y, z), ref light, ref shadow);
+        CalculateCubeVertexLight(ReadLitCell(x, y, z), ref light, ref shadow);
         return CombineLightAndShadow(light, shadow);
     }
 
-    private int CalculateVertexLightFace5(int x, int y, int z)
+    private TerrainLightChannels CalculateVertexLightFace5(int x, int y, int z)
     {
-        var light = 0;
+        var light = default(TerrainLightChannels);
         var shadow = 0;
-        CalculateCubeVertexLight(Terrain.GetCellValueForGeometry(x - 1, y - 1, z - 1), ref light, ref shadow);
-        CalculateCubeVertexLight(Terrain.GetCellValueForGeometry(x, y - 1, z - 1), ref light, ref shadow);
-        CalculateCubeVertexLight(Terrain.GetCellValueForGeometry(x - 1, y - 1, z), ref light, ref shadow);
-        CalculateCubeVertexLight(Terrain.GetCellValueForGeometry(x, y - 1, z), ref light, ref shadow);
+        CalculateCubeVertexLight(ReadLitCell(x - 1, y - 1, z - 1), ref light, ref shadow);
+        CalculateCubeVertexLight(ReadLitCell(x, y - 1, z - 1), ref light, ref shadow);
+        CalculateCubeVertexLight(ReadLitCell(x - 1, y - 1, z), ref light, ref shadow);
+        CalculateCubeVertexLight(ReadLitCell(x, y - 1, z), ref light, ref shadow);
         return CombineLightAndShadow(light, shadow);
     }
 
@@ -2127,139 +2131,188 @@ public class BlockGeometryGenerator
         if (!(_cornerLightsPosition == new Point3(x, y, z)))
         {
             _cornerLightsPosition = new Point3(x, y, z);
+            _modelResponses.Clear();
             _cornerLightsByFace[0].L000 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace0(x, y, z)];
+                CalculateVertexLightFace0(x, y, z);
             _cornerLightsByFace[0].L001 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace0(x, y, z + 1)];
+                CalculateVertexLightFace0(x, y, z + 1);
             _cornerLightsByFace[0].L010 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace0(x, y + 1, z)];
+                CalculateVertexLightFace0(x, y + 1, z);
             _cornerLightsByFace[0].L011 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace0(x, y + 1, z + 1)];
+                CalculateVertexLightFace0(x, y + 1, z + 1);
             _cornerLightsByFace[0].L100 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace0(x + 1, y, z)];
+                CalculateVertexLightFace0(x + 1, y, z);
             _cornerLightsByFace[0].L101 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace0(x + 1, y, z + 1)];
+                CalculateVertexLightFace0(x + 1, y, z + 1);
             _cornerLightsByFace[0].L110 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace0(x + 1, y + 1, z)];
+                CalculateVertexLightFace0(x + 1, y + 1, z);
             _cornerLightsByFace[0].L111 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace0(x + 1, y + 1, z + 1)];
+                CalculateVertexLightFace0(x + 1, y + 1, z + 1);
             _cornerLightsByFace[1].L000 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace1(x, y, z)];
+                CalculateVertexLightFace1(x, y, z);
             _cornerLightsByFace[1].L001 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace1(x, y, z + 1)];
+                CalculateVertexLightFace1(x, y, z + 1);
             _cornerLightsByFace[1].L010 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace1(x, y + 1, z)];
+                CalculateVertexLightFace1(x, y + 1, z);
             _cornerLightsByFace[1].L011 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace1(x, y + 1, z + 1)];
+                CalculateVertexLightFace1(x, y + 1, z + 1);
             _cornerLightsByFace[1].L100 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace1(x + 1, y, z)];
+                CalculateVertexLightFace1(x + 1, y, z);
             _cornerLightsByFace[1].L101 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace1(x + 1, y, z + 1)];
+                CalculateVertexLightFace1(x + 1, y, z + 1);
             _cornerLightsByFace[1].L110 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace1(x + 1, y + 1, z)];
+                CalculateVertexLightFace1(x + 1, y + 1, z);
             _cornerLightsByFace[1].L111 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace1(x + 1, y + 1, z + 1)];
+                CalculateVertexLightFace1(x + 1, y + 1, z + 1);
             _cornerLightsByFace[2].L000 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace2(x, y, z)];
+                CalculateVertexLightFace2(x, y, z);
             _cornerLightsByFace[2].L001 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace2(x, y, z + 1)];
+                CalculateVertexLightFace2(x, y, z + 1);
             _cornerLightsByFace[2].L010 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace2(x, y + 1, z)];
+                CalculateVertexLightFace2(x, y + 1, z);
             _cornerLightsByFace[2].L011 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace2(x, y + 1, z + 1)];
+                CalculateVertexLightFace2(x, y + 1, z + 1);
             _cornerLightsByFace[2].L100 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace2(x + 1, y, z)];
+                CalculateVertexLightFace2(x + 1, y, z);
             _cornerLightsByFace[2].L101 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace2(x + 1, y, z + 1)];
+                CalculateVertexLightFace2(x + 1, y, z + 1);
             _cornerLightsByFace[2].L110 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace2(x + 1, y + 1, z)];
+                CalculateVertexLightFace2(x + 1, y + 1, z);
             _cornerLightsByFace[2].L111 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace2(x + 1, y + 1, z + 1)];
+                CalculateVertexLightFace2(x + 1, y + 1, z + 1);
             _cornerLightsByFace[3].L000 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace3(x, y, z)];
+                CalculateVertexLightFace3(x, y, z);
             _cornerLightsByFace[3].L001 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace3(x, y, z + 1)];
+                CalculateVertexLightFace3(x, y, z + 1);
             _cornerLightsByFace[3].L010 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace3(x, y + 1, z)];
+                CalculateVertexLightFace3(x, y + 1, z);
             _cornerLightsByFace[3].L011 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace3(x, y + 1, z + 1)];
+                CalculateVertexLightFace3(x, y + 1, z + 1);
             _cornerLightsByFace[3].L100 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace3(x + 1, y, z)];
+                CalculateVertexLightFace3(x + 1, y, z);
             _cornerLightsByFace[3].L101 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace3(x + 1, y, z + 1)];
+                CalculateVertexLightFace3(x + 1, y, z + 1);
             _cornerLightsByFace[3].L110 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace3(x + 1, y + 1, z)];
+                CalculateVertexLightFace3(x + 1, y + 1, z);
             _cornerLightsByFace[3].L111 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace3(x + 1, y + 1, z + 1)];
+                CalculateVertexLightFace3(x + 1, y + 1, z + 1);
             _cornerLightsByFace[4].L000 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace4(x, y, z)];
+                CalculateVertexLightFace4(x, y, z);
             _cornerLightsByFace[4].L001 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace4(x, y, z + 1)];
+                CalculateVertexLightFace4(x, y, z + 1);
             _cornerLightsByFace[4].L010 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace4(x, y + 1, z)];
+                CalculateVertexLightFace4(x, y + 1, z);
             _cornerLightsByFace[4].L011 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace4(x, y + 1, z + 1)];
+                CalculateVertexLightFace4(x, y + 1, z + 1);
             _cornerLightsByFace[4].L100 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace4(x + 1, y, z)];
+                CalculateVertexLightFace4(x + 1, y, z);
             _cornerLightsByFace[4].L101 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace4(x + 1, y, z + 1)];
+                CalculateVertexLightFace4(x + 1, y, z + 1);
             _cornerLightsByFace[4].L110 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace4(x + 1, y + 1, z)];
+                CalculateVertexLightFace4(x + 1, y + 1, z);
             _cornerLightsByFace[4].L111 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace4(x + 1, y + 1, z + 1)];
+                CalculateVertexLightFace4(x + 1, y + 1, z + 1);
             _cornerLightsByFace[5].L000 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace5(x, y, z)];
+                CalculateVertexLightFace5(x, y, z);
             _cornerLightsByFace[5].L001 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace5(x, y, z + 1)];
+                CalculateVertexLightFace5(x, y, z + 1);
             _cornerLightsByFace[5].L010 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace5(x, y + 1, z)];
+                CalculateVertexLightFace5(x, y + 1, z);
             _cornerLightsByFace[5].L011 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace5(x, y + 1, z + 1)];
+                CalculateVertexLightFace5(x, y + 1, z + 1);
             _cornerLightsByFace[5].L100 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace5(x + 1, y, z)];
+                CalculateVertexLightFace5(x + 1, y, z);
             _cornerLightsByFace[5].L101 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace5(x + 1, y, z + 1)];
+                CalculateVertexLightFace5(x + 1, y, z + 1);
             _cornerLightsByFace[5].L110 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace5(x + 1, y + 1, z)];
+                CalculateVertexLightFace5(x + 1, y + 1, z);
             _cornerLightsByFace[5].L111 =
-                LightingManager.LightIntensityByLightValue[CalculateVertexLightFace5(x + 1, y + 1, z + 1)];
+                CalculateVertexLightFace5(x + 1, y + 1, z + 1);
         }
     }
 
-    private float InterpolateCornerLights(int face, Vector3 position)
+    private TerrainLightResponse InterpolateCornerLights(int face, Vector3 position)
     {
+        var key = (face, position);
+        if (_modelResponses.TryGetValue(key, out var cached)) { return cached; }
+
+        var corners = _cornerLightsByFace[face];
+        ReadOnlySpan<TerrainLightChannels> samples =
+        [
+            corners.L000, corners.L001, corners.L010, corners.L011, corners.L100, corners.L101, corners.L110,
+            corners.L111
+        ];
         var x = position.X;
         var y = position.Y;
         var z = position.Z;
-        var num = 1f - x;
-        var num2 = 1f - y;
-        var num3 = 1f - z;
-        return _cornerLightsByFace[face].L000 * num * num2 * num3 +
-               _cornerLightsByFace[face].L001 * num * num2 * z +
-               _cornerLightsByFace[face].L010 * num * y * num3 +
-               _cornerLightsByFace[face].L011 * num * y * z +
-               _cornerLightsByFace[face].L100 * x * num2 * num3 +
-               _cornerLightsByFace[face].L101 * x * num2 * z +
-               _cornerLightsByFace[face].L110 * x * y * num3 +
-               _cornerLightsByFace[face].L111 * x * y * z;
+        ReadOnlySpan<float> weights =
+        [
+            (1 - x) * (1 - y) * (1 - z), (1 - x) * (1 - y) * z,
+            (1 - x) * y * (1 - z), (1 - x) * y * z,
+            x * (1 - y) * (1 - z), x * (1 - y) * z,
+            x * y * (1 - z), x * y * z
+        ];
+        var response = TerrainLightResponse.FromSamples(samples, weights);
+        _modelResponses[key] = response;
+        return response;
+    }
+
+    public TerrainLightResponse GetLightResponse(int x, int y, int z)
+    {
+        return TerrainLightResponse.FromChannels(ReadLight(x, y, z));
+    }
+
+    private TerrainLightChannels ReadLight(int x, int y, int z)
+    {
+        x += LightOrigin.X;
+        y += LightOrigin.Y;
+        z += LightOrigin.Z;
+        if (y < 0) { return default; }
+
+        if (y >= 256) { return new TerrainLightChannels(15, 0); }
+
+        var coordinates = Terrain.ToChunk(x, z);
+        if (!_lightSnapshots.TryGetValue(coordinates, out var snapshot))
+        {
+            var world = _subsystemTerrain.Terrain;
+            var chunk = world.GetChunkAtCoords(coordinates.X, coordinates.Y);
+            if (chunk != null) { world.Lighting.TryGetPublishedSnapshot(chunk, out snapshot); }
+
+            _lightSnapshots[coordinates] = snapshot;
+        }
+
+        return snapshot?.Get(x & 15, y, z & 15) ?? default;
+    }
+
+    private LitCell ReadLitCell(TerrainChunk chunk, int index)
+    {
+        return new LitCell(
+            chunk.GetCellValueForGeometry(index),
+            ReadLight(chunk.Origin.X + ((index >> 8) & 15), index & 255, chunk.Origin.Y + (index >> 12))
+        );
+    }
+
+    private LitCell ReadLitCell(int x, int y, int z)
+    {
+        return new LitCell(Terrain.GetCellValueForGeometry(x, y, z), ReadLight(x, y, z));
     }
 
     private struct CornerLights
     {
-        public float L000;
+        public TerrainLightChannels L000;
 
-        public float L001;
+        public TerrainLightChannels L001;
 
-        public float L010;
+        public TerrainLightChannels L010;
 
-        public float L011;
+        public TerrainLightChannels L011;
 
-        public float L100;
+        public TerrainLightChannels L100;
 
-        public float L101;
+        public TerrainLightChannels L101;
 
-        public float L110;
+        public TerrainLightChannels L110;
 
-        public float L111;
+        public TerrainLightChannels L111;
     }
 }

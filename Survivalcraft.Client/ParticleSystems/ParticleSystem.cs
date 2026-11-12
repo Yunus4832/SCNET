@@ -1,5 +1,7 @@
 using Engine.Graphics;
 
+using Game.Terrains.Lighting;
+
 namespace Game.ParticleSystems;
 
 public class ParticleSystem<T> : ParticleSystemBase where T : Particle, new()
@@ -13,6 +15,18 @@ public class ParticleSystem<T> : ParticleSystemBase where T : Particle, new()
     private readonly Vector3[] _right = new Vector3[3];
 
     private readonly Vector3[] _up = new Vector3[3];
+
+    private SubsystemTerrain? _lightTerrain;
+
+    private Vector3 _lightOrigin;
+
+    private TerrainLightChannels _spatialLight;
+
+    protected void SetLightOrigin(SubsystemTerrain terrain, Vector3 position)
+    {
+        _lightTerrain = terrain;
+        _lightOrigin = position;
+    }
 
     protected T[] Particles { get; }
 
@@ -77,6 +91,14 @@ public class ParticleSystem<T> : ParticleSystemBase where T : Particle, new()
         _right[2] = Vector3.UnitX;
         _up[2] = Vector3.UnitZ;
         var s = 1f / TextureSlotsCount;
+        var light = 1f;
+        if (_lightTerrain != null)
+        {
+            _spatialLight = LightingManager.SampleNeighborLight(_lightTerrain, _lightOrigin) ?? _spatialLight;
+            light = LightingManager.LightIntensityByLightValue[
+                _spatialLight.GetEffectiveLight(_lightTerrain.CaptureLightEnvironment())];
+        }
+
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -159,7 +181,17 @@ public class ParticleSystem<T> : ParticleSystemBase where T : Particle, new()
             var texCoord2 = (v3 + new Vector2(num2, num3)) * s;
             var texCoord3 = (v3 + new Vector2(num2, num4)) * s;
             var texCoord4 = (v3 + new Vector2(num, num4)) * s;
-            obj.QueueQuad(p, p2, p3, p4, texCoord, texCoord2, texCoord3, texCoord4, particle.Color);
+            obj.QueueQuad(
+                p,
+                p2,
+                p3,
+                p4,
+                texCoord,
+                texCoord2,
+                texCoord3,
+                texCoord4,
+                Color.MultiplyColorOnly(particle.Color, light)
+            );
         }
     }
 

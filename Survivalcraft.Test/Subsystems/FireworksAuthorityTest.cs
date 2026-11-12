@@ -35,7 +35,7 @@ public sealed class FireworksAuthorityTest
         world.Projectiles.EffectRequested += effects.Add;
         var projectile = new Projectile
         {
-            Value = Terrain.MakeBlockValue(215, 0, FireworksBlock.SetAltitude(0, altitude)),
+            Value = Terrain.MakeBlockValue(215, FireworksBlock.SetAltitude(0, altitude)),
             Position = new Vector3(8, 80, 8)
         };
         world.Fireworks.OnFiredAsProjectile(projectile);

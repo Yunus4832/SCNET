@@ -145,10 +145,10 @@ public abstract class DeciduousLeavesBlock : LeavesBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetSeason(SetTimeOfSeason(0, 0f), Season.Spring));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetSeason(SetTimeOfSeason(0, 0f), Season.Summer));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetSeason(SetTimeOfSeason(0, 0.999f), Season.Autumn));
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetSeason(SetTimeOfSeason(0, 0f), Season.Winter));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetSeason(SetTimeOfSeason(0, 0f), Season.Spring));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetSeason(SetTimeOfSeason(0, 0f), Season.Summer));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetSeason(SetTimeOfSeason(0, 0.999f), Season.Autumn));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetSeason(SetTimeOfSeason(0, 0f), Season.Winter));
     }
 
 

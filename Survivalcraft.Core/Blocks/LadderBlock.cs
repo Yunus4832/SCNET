@@ -41,7 +41,7 @@ public abstract class LadderBlock(string modelName, float offset) : Block
     {
         BlockPlacementData result = default;
         result.Value = raycastResult.CellFace.Face < 4
-            ? Terrain.MakeBlockValue(BlockIndex, 0, SetFace(0, raycastResult.CellFace.Face))
+            ? Terrain.MakeBlockValue(BlockIndex, SetFace(0, raycastResult.CellFace.Face))
             : 0;
         result.CellFace = raycastResult.CellFace;
         return result;

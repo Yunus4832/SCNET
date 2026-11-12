@@ -1194,7 +1194,7 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
 
                         if (num2 == 2)
                         {
-                            chunk.SetCellValueFast(i, num, j, Terrain.MakeBlockValue(8, 0, 0));
+                            chunk.SetCellValueFast(i, num, j, Terrain.MakeBlockValue(8, 0));
                         }
                     }
 
@@ -1306,7 +1306,7 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                             BottomSuckerBlock.SetSubvariant(0, face2),
                             CellFace.OppositeFace(face)
                         );
-                        var value = Terrain.MakeBlockValue(num5, 0, data);
+                        var value = Terrain.MakeBlockValue(num5, data);
                         chunk.SetCellValueFast(i, num4, j, value);
                     }
                     else
@@ -1644,7 +1644,6 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                             num9++;
                             var value = Terrain.MakeBlockValue(
                                 197,
-                                0,
                                 IvyBlock.SetFace(0, CellFace.OppositeFace(face))
                             );
                             while (num9 >= 1 && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0)
@@ -1745,7 +1744,7 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                         }
 
                         var data = SpikedPlankBlock.SetSpikesState(0, random.Float(0f, 1f) < 0.33f);
-                        chunk.SetCellValueFast(k, num7.Value - num6 + 1, l, Terrain.MakeBlockValue(86, 0, data));
+                        chunk.SetCellValueFast(k, num7.Value - num6 + 1, l, Terrain.MakeBlockValue(86, data));
                     }
                 }
 
@@ -1856,7 +1855,7 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                     var num19 = random.Int(-1, 0);
                     var num20 = random.Int(1, 2);
                     var num21 = flag2 ? num7 + 2 : num7 + 1;
-                    chunk.SetCellValueFast(num5, num21, num6, Terrain.MakeBlockValue(189, 0, data));
+                    chunk.SetCellValueFast(num5, num21, num6, Terrain.MakeBlockValue(189, data));
                     for (var num22 = num19; num22 <= num20; num22++)
                     {
                         var num23 = num5 + p.X * num22;
@@ -1884,11 +1883,11 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                                     }
                                     else if (num18 < 0.5f)
                                     {
-                                        num25 = Terrain.MakeBlockValue(31, 0, 4);
+                                        num25 = Terrain.MakeBlockValue(31, 4);
                                     }
                                     else if (num18 < 0.6f)
                                     {
-                                        num25 = Terrain.MakeBlockValue(132, 0, CellFace.OppositeFace(num9));
+                                        num25 = Terrain.MakeBlockValue(132, CellFace.OppositeFace(num9));
                                     }
 
                                     if (num25 != 0)
@@ -1908,12 +1907,10 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                         {
                             var value = Terrain.MakeBlockValue(
                                 contents,
-                                0,
                                 StairsBlock.SetRotation(0, CellFace.Point3ToFace(p2))
                             );
                             var value2 = Terrain.MakeBlockValue(
                                 contents,
-                                0,
                                 StairsBlock.SetRotation(0, CellFace.OppositeFace(CellFace.Point3ToFace(p2)))
                             );
                             chunk.SetCellValueFast(num23 + p2.X, num21 - 1, num24 + p2.Z, value);
@@ -1922,7 +1919,6 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                             {
                                 var value3 = Terrain.MakeBlockValue(
                                     contents,
-                                    0,
                                     StairsBlock.SetRotation(0, CellFace.OppositeFace(CellFace.Point3ToFace(p)))
                                 );
                                 chunk.SetCellValueFast(num23, num21 - 1, num24, value3);
@@ -1932,7 +1928,6 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                             {
                                 var value4 = Terrain.MakeBlockValue(
                                     contents,
-                                    0,
                                     StairsBlock.SetRotation(0, CellFace.Point3ToFace(p))
                                 );
                                 chunk.SetCellValueFast(num23, num21 - 1, num24, value4);
@@ -1970,13 +1965,13 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                                     num23 + p2.X,
                                     num21 - 1,
                                     num24 + p2.Z,
-                                    Terrain.MakeBlockValue(31, 0, CellFace.Point3ToFace(p2))
+                                    Terrain.MakeBlockValue(31, CellFace.Point3ToFace(p2))
                                 );
                                 chunk.SetCellValueFast(
                                     num23 - p2.X,
                                     num21 - 1,
                                     num24 - p2.Z,
-                                    Terrain.MakeBlockValue(31, 0, CellFace.OppositeFace(CellFace.Point3ToFace(p2)))
+                                    Terrain.MakeBlockValue(31, CellFace.OppositeFace(CellFace.Point3ToFace(p2)))
                                 );
                             }
 
@@ -1986,13 +1981,13 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                                     num23,
                                     num21 - 1,
                                     num24,
-                                    Terrain.MakeBlockValue(31, 0, CellFace.OppositeFace(num9))
+                                    Terrain.MakeBlockValue(31, CellFace.OppositeFace(num9))
                                 );
                             }
 
                             if (num22 == 2)
                             {
-                                chunk.SetCellValueFast(num23, num21 - 1, num24, Terrain.MakeBlockValue(31, 0, num9));
+                                chunk.SetCellValueFast(num23, num21 - 1, num24, Terrain.MakeBlockValue(31, num9));
                             }
                         }
                     }
@@ -2071,7 +2066,7 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
 
                     if (num4 == 8)
                     {
-                        chunk.SetCellValueFast(i, num3, j, Terrain.MakeBlockValue(8, 0, 1));
+                        chunk.SetCellValueFast(i, num3, j, Terrain.MakeBlockValue(8, 1));
                     }
 
                     break;
@@ -2126,7 +2121,7 @@ public class TerrainContentsGenerator22 : TerrainEnvironment22, ITerrainContents
                         _subsystemTerrain.Catalog.FluidBlocks[num2] == null)
                     {
                         var data = Terrain.ExtractData(cellValueFast);
-                        chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, 0, FluidBlock.SetIsTop(data, true)));
+                        chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, FluidBlock.SetIsTop(data, true)));
                     }
 
                     num2 = num4;

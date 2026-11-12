@@ -1,10 +1,70 @@
 using Game.Terrains;
+using Game.Terrains.Lighting;
 using Game.Terrains.Rendering;
 
 namespace Survivalcraft.Test.Terrains;
 
 public sealed class TerrainMeshLifecycleTest
 {
+    [Fact]
+    public void VisibleInteractionCanPublishGeometryWithPreviousLightAndCurrentHeights()
+    {
+        using var terrain = new Terrain();
+        using var presentations = new TerrainChunkPresentationStore();
+        var chunk = terrain.AllocateChunk(0, 0);
+        var mesh = presentations.Get(chunk);
+        TerrainMeshTestData.Complete(chunk, mesh);
+        Assert.True(
+            terrain.Lighting.TryPublish(
+                chunk,
+                terrain.Lighting.CaptureInput(chunk),
+                new TerrainLightSnapshot(new TerrainLightChannels(15, 0))
+            )
+        );
+        mesh.MarkUploaded();
+        chunk.SetCellValueFast(8, 64, 8, Terrain.MakeBlockValue(1));
+        chunk.DerivedRevisions.InvalidateHeightsAndLight();
+        mesh.RequestMeshRebuild();
+        Assert.False(mesh.CanUsePublishedLighting(chunk));
+        Assert.True(chunk.DerivedRevisions.PublishHeights(chunk.DerivedRevisions.Capture()));
+        Assert.False(chunk.HasCurrentLight);
+        Assert.True(mesh.CanUsePublishedLighting(chunk));
+        mesh.PrepareMeshUpdate(chunk, true);
+        mesh.CompleteFirstPass();
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        Assert.True(mesh.CanUploadGeometry(chunk));
+        mesh.MarkUploaded();
+        Assert.True(mesh.HasCurrentUploadedGeometry(chunk));
+        var request = chunk.DerivedRevisions.Capture();
+        Assert.True(chunk.DerivedRevisions.PublishLightSeed(request));
+        Assert.True(chunk.DerivedRevisions.PublishLight(request));
+        Assert.False(mesh.HasCurrentGeometry(chunk));
+        Assert.False(mesh.CanUploadGeometry(chunk));
+    }
+
+    [Fact]
+    public void InitialGeometryCannotUsePendingLightEvenWhenAPreviousSnapshotExists()
+    {
+        using var terrain = new Terrain();
+        using var presentations = new TerrainChunkPresentationStore();
+        var chunk = terrain.AllocateChunk(0, 0);
+        TerrainMeshTestData.PrepareLighting(chunk);
+        Assert.True(
+            terrain.Lighting.TryPublish(
+                chunk,
+                terrain.Lighting.CaptureInput(chunk),
+                new TerrainLightSnapshot(new TerrainLightChannels(15, 0))
+            )
+        );
+        chunk.DerivedRevisions.InvalidatePropagation();
+        var mesh = presentations.Get(chunk);
+        mesh.PrepareMeshUpdate(chunk, true);
+        mesh.CompleteFirstPass();
+        Assert.False(mesh.CanUsePublishedLighting(chunk));
+        Assert.False(mesh.CompleteMeshBuild(chunk));
+        Assert.False(mesh.CanUploadGeometry(chunk));
+    }
+
     [Fact]
     public void MaintenanceWaitsForQuietInputsButInitialGeometryAndValidSecondPassDoNotWait()
     {
@@ -41,17 +101,17 @@ public sealed class TerrainMeshLifecycleTest
         Assert.True(mesh.ShouldDeferMaintenance(chunk, 0, out _));
         for (var i = 1; i <= 4; i++)
         {
-            neighbor.DerivedRevisions.RecordLightChange();
+            Assert.True(neighbor.DerivedRevisions.PublishLight(neighbor.DerivedRevisions.Capture()));
             Assert.True(mesh.ShouldDeferMaintenance(chunk, i * .04, out var due));
             Assert.InRange(due, i * .04, .2);
         }
 
-        neighbor.DerivedRevisions.RecordLightChange();
+        Assert.True(neighbor.DerivedRevisions.PublishLight(neighbor.DerivedRevisions.Capture()));
         Assert.False(mesh.ShouldDeferMaintenance(chunk, .2, out _));
     }
 
     [Fact]
-    public void TemporaryLightWriterDoesNotInvalidateUnchangedGpuInputsButCannotPublishANewCpuBuild()
+    public void PrivateLightWorkRetainsPublishedGpuInputsButCannotPublishANewCpuBuild()
     {
         using var terrain = new Terrain();
         using var presentations = new TerrainChunkPresentationStore();
@@ -61,7 +121,7 @@ public sealed class TerrainMeshLifecycleTest
         var mesh = presentations.Get(target);
         TerrainMeshTestData.Complete(target, mesh);
         mesh.MarkUploaded();
-        neighbor.DerivedRevisions.BeginLightWrite();
+        neighbor.DerivedRevisions.InvalidatePropagation();
         Assert.False(neighbor.HasCurrentLight);
         Assert.True(mesh.HasCurrentGeometry(target));
         Assert.True(mesh.HasCurrentUploadedGeometry(target));
@@ -69,7 +129,7 @@ public sealed class TerrainMeshLifecycleTest
         mesh.PrepareMeshUpdate(target);
         mesh.CompleteFirstPass();
         Assert.False(mesh.CompleteMeshBuild(target));
-        neighbor.DerivedRevisions.EndLightWrite();
+        Assert.True(neighbor.DerivedRevisions.PublishLight(neighbor.DerivedRevisions.Capture(), false));
         Assert.True(mesh.CompleteMeshBuild(target));
         Assert.False(mesh.HasCurrentUploadedGeometry(target));
         mesh.MarkUploaded();
@@ -77,7 +137,7 @@ public sealed class TerrainMeshLifecycleTest
     }
 
     [Fact]
-    public void PendingNeighborInvalidationRejectsFreshnessBeforeAnyLightValueChanges()
+    public void PendingNeighborWorkRetainsPublishedGeometryButRejectsANewBuild()
     {
         using var terrain = new Terrain();
         using var presentations = new TerrainChunkPresentationStore();
@@ -89,8 +149,8 @@ public sealed class TerrainMeshLifecycleTest
         mesh.MarkUploaded();
         Assert.True(mesh.HasCurrentGeometry(target));
         neighbor.DerivedRevisions.InvalidateLight();
-        Assert.False(mesh.HasCurrentGeometry(target));
-        Assert.False(mesh.HasCurrentUploadedGeometry(target));
+        Assert.True(mesh.HasCurrentGeometry(target));
+        Assert.True(mesh.HasCurrentUploadedGeometry(target));
         mesh.MarkUploaded();
         Assert.True(mesh.GeometryUploaded);
         mesh.PrepareMeshUpdate(target);
@@ -113,12 +173,12 @@ public sealed class TerrainMeshLifecycleTest
         var mesh = presentations.Get(target);
         mesh.PrepareMeshUpdate(target);
         mesh.CompleteFirstPass();
-        neighbor.DerivedRevisions.RecordLightChange();
+        Assert.True(neighbor.DerivedRevisions.PublishLight(neighbor.DerivedRevisions.Capture()));
         Assert.False(mesh.CompleteMeshBuild(target));
         Assert.Equal(4, target.NetworkContentVersion);
         TerrainMeshTestData.Complete(target, mesh);
         Assert.True(mesh.HasCurrentGeometry(target));
-        neighbor.DerivedRevisions.RecordLightChange();
+        Assert.True(neighbor.DerivedRevisions.PublishLight(neighbor.DerivedRevisions.Capture()));
         Assert.False(mesh.HasCurrentGeometry(target));
     }
 
@@ -144,7 +204,7 @@ public sealed class TerrainMeshLifecycleTest
         Assert.Equal(4, mesh.UploadedContentVersion);
         mesh.MarkUploaded();
         Assert.Equal(5, mesh.UploadedContentVersion);
-        chunk.DerivedRevisions.RecordLightChange();
+        Assert.True(chunk.DerivedRevisions.PublishLight(chunk.DerivedRevisions.Capture()));
         // A lighting invalidation during upload does not erase the actual upload record.
         mesh.MarkUploaded();
         Assert.Equal(5, mesh.UploadedContentVersion);

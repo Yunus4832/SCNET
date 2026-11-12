@@ -1,11 +1,13 @@
 using System.Runtime.CompilerServices;
 
+using Game.Terrains.Lighting;
+
 namespace Game.Terrains;
 
 /* Chunk 数据块中未压缩的 Block 方块结构以及 Shaft 簇的结构:
  *
  *                              (0xFFFFC000)              (0x3C00)       (0x3FF)
- *                  +-------------- data ---------------+ +light+ +---- contents ----+
+ *                  +-------------- data ---------------+ +spare+ +---- contents ----+
  *                  |                                   | |     | |                  |
  *      BlockValue: 0 0 0 0 0 0 0 0  0 0 0 0 0 0 0 0  0 0 0 0 0 0 0 0  0 0 0 0 0 0 0 0      (32 bit)
  *
@@ -25,7 +27,7 @@ namespace Game.Terrains;
  *
  * 2.4 版本的 Shaft 簇信息如下，使用 8 Byte 64 bit 存储:
  *                                                               (0xFFF00000000)
- *                                                               sun light height
+ *                                                                   reserved
  *                                                           +----------------------+
  *                                                           |                      |
  *      High32Bit: 0 0 0 0 0 0 0 0  0 0 0 0 0 0 0 0  0 0 0 0 0 0 0 0  0 0 0 0 0 0 0 0      (32 bit)
@@ -72,16 +74,6 @@ public class Terrain : IDisposable
     ///     内容掩码
     /// </summary>
     private const int _contentsMask = 0x3FF;
-
-    /// <summary>
-    ///     光照掩码
-    /// </summary>
-    private const int _lightMask = 0x3C00;
-
-    /// <summary>
-    ///     光照偏移
-    /// </summary>
-    private const int _lightShift = 10;
 
     /// <summary>
     ///     数据掩码
@@ -133,15 +125,13 @@ public class Terrain : IDisposable
     /// </summary>
     private const int _bottomHeightShift = 20;
 
-    /// <summary>
-    ///     阳光高度掩码
-    /// </summary>
-    private const long _sunlightHeightMask = 0xFFF00000000;
 
-    /// <summary>
-    ///     阳光高度偏移
-    /// </summary>
-    private const int _sunlightHeightShift = 32;
+    public TerrainLightingStore Lighting { get; }
+
+    public Terrain()
+    {
+        Lighting = new TerrainLightingStore(this);
+    }
 
     private readonly ChunksStorage _allChunks = new();
 
@@ -186,6 +176,8 @@ public class Terrain : IDisposable
         {
             allocatedChunk.Dispose();
         }
+
+        Lighting.Dispose();
     }
 
     /// <summary>
@@ -431,14 +423,6 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    ///     获取单元格的光照值（带边界检查）
-    /// </summary>
-    public int GetCellLight(int x, int y, int z)
-    {
-        return !IsCellValid(x, y, z) ? 0 : GetCellLightFast(x, y, z);
-    }
-
-    /// <summary>
     ///     快速获取单元格的值（无边界检查）
     /// </summary>
     public int GetCellValueForGeometry(int x, int y, int z) =>
@@ -465,14 +449,6 @@ public class Terrain : IDisposable
     public int GetCellContentsFast(int x, int y, int z)
     {
         return ExtractContents(GetCellValueFast(x, y, z));
-    }
-
-    /// <summary>
-    ///     快速获取单元格的光照值
-    /// </summary>
-    public int GetCellLightFast(int x, int y, int z)
-    {
-        return ExtractLight(GetCellValueFast(x, y, z));
     }
 
     /// <summary>
@@ -573,22 +549,6 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    ///     获取指定列的阳光能到达的最高高度
-    /// </summary>
-    public int GetSunlightHeight(int x, int z)
-    {
-        return ExtractSunlightHeight(GetShaftValue(x, z));
-    }
-
-    /// <summary>
-    ///     设置指定列的阳光能到达的最高高度
-    /// </summary>
-    public void SetSunlightHeight(int x, int z, int sunlightHeight)
-    {
-        SetShaftValue(x, z, ReplaceSunlightHeight(GetShaftValue(x, z), sunlightHeight));
-    }
-
-    /// <summary>
     ///     创建方块值（仅包含内容类型）
     /// </summary>
     /// <param name="contents">方块内容类型 ID</param>
@@ -602,13 +562,15 @@ public class Terrain : IDisposable
     ///     创建完整的方块值
     /// </summary>
     /// <param name="contents">方块内容类型 ID（10位）</param>
-    /// <param name="light">光照值（4位）</param>
     /// <param name="data">方块数据（18位）</param>
-    public static int MakeBlockValue(int contents, int light, int data)
+    public static int MakeBlockValue(int contents, int data)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual((uint)contents, 1024u);
-        return (contents & _contentsMask) | ((light << _lightShift) & _lightMask) | ((data << _dataShift) & _dataMask);
+        return (contents & _contentsMask) | ((data << _dataShift) & _dataMask);
     }
+
+    /// <summary>Returns the content/data payload with reserved cell bits cleared.</summary>
+    public static int NormalizeCellValue(int value) => value & (_contentsMask | _dataMask);
 
     /// <summary>
     ///     从方块值中提取内容类型 ID
@@ -616,14 +578,6 @@ public class Terrain : IDisposable
     public static int ExtractContents(int value)
     {
         return value & _contentsMask;
-    }
-
-    /// <summary>
-    ///     从方块值中提取光照值
-    /// </summary>
-    public static int ExtractLight(int value)
-    {
-        return (value & _lightMask) >> _lightShift;
     }
 
     /// <summary>
@@ -659,22 +613,6 @@ public class Terrain : IDisposable
     )
     {
         return (int)((value & bottomHeightMask) >> bottomHeightShift);
-    }
-
-    /// <summary>
-    ///     从 Shaft 值中提取阳光照射高度
-    /// </summary>
-    /// <param name="value">Shaft 数据值</param>
-    /// <param name="sunlightHeightMask">阳光高度位掩码</param>
-    /// <param name="sunlightHeightShift">阳光高度位偏移</param>
-    /// <returns>阳光能到达的最高高度</returns>
-    public static int ExtractSunlightHeight(
-        long value,
-        long sunlightHeightMask = _sunlightHeightMask,
-        int sunlightHeightShift = _sunlightHeightShift
-    )
-    {
-        return (int)((value & sunlightHeightMask) >> sunlightHeightShift);
     }
 
     /// <summary>
@@ -715,14 +653,6 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    ///     替换方块值中的光照值
-    /// </summary>
-    public static int ReplaceLight(int value, int light)
-    {
-        return value ^ ((value ^ (light << _lightShift)) & _lightMask);
-    }
-
-    /// <summary>
     ///     替换方块值中的数据
     /// </summary>
     public static int ReplaceData(int value, int data)
@@ -750,17 +680,6 @@ public class Terrain : IDisposable
     public static long ReplaceBottomHeight(long value, int bottomHeight)
     {
         return value ^ ((value ^ (bottomHeight << _bottomHeightShift)) & _bottomHeightMask);
-    }
-
-    /// <summary>
-    ///     替换 Shaft 值中的阳光高度
-    /// </summary>
-    /// <param name="value">原始 Shaft 值</param>
-    /// <param name="sunlightHeight">新的阳光高度</param>
-    /// <returns>更新后的 Shaft 值</returns>
-    public static long ReplaceSunlightHeight(long value, int sunlightHeight)
-    {
-        return value ^ ((value ^ ((long)sunlightHeight << _sunlightHeightShift)) & _sunlightHeightMask);
     }
 
     /// <summary>

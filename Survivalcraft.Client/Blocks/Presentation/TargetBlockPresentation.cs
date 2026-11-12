@@ -23,9 +23,8 @@ public class TargetBlockPresentation(TargetBlock block, BlockPresentationCatalog
         var indices = subsetAlphaTest.Indices;
         var count = vertices.Count;
         var data = Terrain.ExtractData(value);
-        var num = Terrain.ExtractLight(value);
         var mountingFace = TargetBlock.GetMountingFace(data);
-        var s = LightingManager.LightIntensityByLightValueAndFace[num + 16 * mountingFace];
+        var s = LightingManager.CalculateLighting(CellFace.FaceToVector3(mountingFace));
         var color = Color.White * s;
         color.A = byte.MaxValue;
         switch (mountingFace)
@@ -235,6 +234,9 @@ public class TargetBlockPresentation(TargetBlock block, BlockPresentationCatalog
                 indices.Add(count + 2);
                 break;
         }
+
+        var response = generator.GetLightResponse(x, y, z);
+        for (var i = count; i < vertices.Count; i++) { vertices.Array[i].Lighting = response; }
     }
 
     public override void DrawBlock(

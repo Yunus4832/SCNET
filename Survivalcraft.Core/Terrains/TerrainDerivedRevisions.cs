@@ -7,44 +7,55 @@ public sealed class TerrainDerivedRevisions
 
     private long _lightRequest = 1;
 
+    private long _seedRequest = 1;
+
     private long _completedHeightRequest;
 
     private long _completedLightRequest;
 
-    private long _completedSunlightRequest;
+    private long _completedSeedRequest;
 
     private long _heightRevision;
 
     private long _lightRevision;
 
-    private int _lightWriters;
-
     public bool HasCurrentHeights => Volatile.Read(ref _completedHeightRequest) == Volatile.Read(ref _heightRequest);
 
-    public bool HasCurrentSunlight => HasCurrentHeights &&
-                                      Volatile.Read(ref _completedSunlightRequest) == Volatile.Read(ref _lightRequest);
+    public bool HasCurrentLightSeed => HasCurrentHeights &&
+                                       Volatile.Read(ref _completedSeedRequest) ==
+                                       Volatile.Read(ref _seedRequest);
 
-    public bool HasCompletedLightInputs => HasCurrentSunlight &&
-                                           Volatile.Read(ref _completedLightRequest) ==
-                                           Volatile.Read(ref _lightRequest);
-
-    public bool HasCurrentLight => HasCompletedLightInputs && Volatile.Read(ref _lightWriters) == 0;
+    public bool HasCurrentLight => HasCurrentLightSeed &&
+                                   Volatile.Read(ref _completedLightRequest) == Volatile.Read(ref _lightRequest);
 
     public long HeightRevision => Volatile.Read(ref _heightRevision);
 
     public long LightRevision => Volatile.Read(ref _lightRevision);
 
-    public readonly record struct Request(long Heights, long Lighting);
+    public readonly record struct Request(long Heights, long Lighting, long Seed);
 
-    public Request Capture() => new(Volatile.Read(ref _heightRequest), Volatile.Read(ref _lightRequest));
+    public Request Capture()
+    {
+        return new Request(
+            Volatile.Read(ref _heightRequest),
+            Volatile.Read(ref _lightRequest),
+            Volatile.Read(ref _seedRequest)
+        );
+    }
 
     public void InvalidateHeightsAndLight()
     {
         Interlocked.Increment(ref _heightRequest);
+        InvalidateLight();
+    }
+
+    public void InvalidateLight()
+    {
+        Interlocked.Increment(ref _seedRequest);
         Interlocked.Increment(ref _lightRequest);
     }
 
-    public void InvalidateLight() => Interlocked.Increment(ref _lightRequest);
+    public void InvalidatePropagation() => Interlocked.Increment(ref _lightRequest);
 
     public bool PublishHeights(Request request)
     {
@@ -55,41 +66,30 @@ public sealed class TerrainDerivedRevisions
         return Volatile.Read(ref _heightRequest) == request.Heights;
     }
 
-    public bool PublishSunlight(Request request)
+    public bool PublishLightSeed(Request request)
     {
         if (Volatile.Read(ref _heightRequest) != request.Heights ||
             Volatile.Read(ref _completedHeightRequest) != request.Heights ||
-            Volatile.Read(ref _lightRequest) != request.Lighting) { return false; }
+            Volatile.Read(ref _seedRequest) != request.Seed) { return false; }
 
-        Volatile.Write(ref _completedSunlightRequest, request.Lighting);
-        return HasCurrentSunlight;
+        Volatile.Write(ref _completedSeedRequest, request.Seed);
+        return HasCurrentLightSeed;
     }
 
-    public bool PublishLight(Request request)
+    public bool PublishLight(Request request, bool valuesChanged = true)
     {
         if (Volatile.Read(ref _heightRequest) != request.Heights ||
             Volatile.Read(ref _completedHeightRequest) != request.Heights ||
-            Volatile.Read(ref _completedSunlightRequest) != request.Lighting ||
+            Volatile.Read(ref _completedSeedRequest) != request.Seed ||
+            Volatile.Read(ref _seedRequest) != request.Seed ||
             Volatile.Read(ref _lightRequest) != request.Lighting)
         {
             return false;
         }
 
         Volatile.Write(ref _completedLightRequest, request.Lighting);
-        Interlocked.Increment(ref _lightRevision);
-        return HasCompletedLightInputs;
+        if (valuesChanged) { Interlocked.Increment(ref _lightRevision); }
+
+        return HasCurrentLight;
     }
-
-    public void BeginLightWrite() => Interlocked.Increment(ref _lightWriters);
-
-    public void EndLightWrite()
-    {
-        if (Interlocked.Decrement(ref _lightWriters) < 0)
-        {
-            throw new InvalidOperationException("Terrain light write scope was released twice.");
-        }
-    }
-
-    /// <summary>Propagation can change a neighbor that already published its own light task.</summary>
-    public void RecordLightChange() => Interlocked.Increment(ref _lightRevision);
 }

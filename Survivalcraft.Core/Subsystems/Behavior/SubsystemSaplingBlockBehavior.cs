@@ -139,15 +139,16 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var chunkAtCell2 = SubsystemTerrain.Terrain.GetChunkAtCell(x - 6, z + 6, false);
         var chunkAtCell3 = SubsystemTerrain.Terrain.GetChunkAtCell(x + 6, z - 6, false);
         var chunkAtCell4 = SubsystemTerrain.Terrain.GetChunkAtCell(x + 6, z + 6, false);
-        if (chunkAtCell is { HasCurrentLight: true } &&
-            chunkAtCell2 is { HasCurrentLight: true } &&
-            chunkAtCell3 is { HasCurrentLight: true } &&
-            chunkAtCell4 is { HasCurrentLight: true })
+        if (chunkAtCell is { HasContents: true, NeedsContentValidation: false } &&
+            chunkAtCell2 is { HasContents: true, NeedsContentValidation: false } &&
+            chunkAtCell3 is { HasContents: true, NeedsContentValidation: false } &&
+            chunkAtCell4 is { HasContents: true, NeedsContentValidation: false } &&
+            SubsystemTerrain.TryGetEffectiveLight(x, y + 1, z, out var light))
         {
             var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
             if (cellContents is 2 or 8)
             {
-                if (SubsystemTerrain.Terrain.GetCellLight(x, y + 1, z) >= 9)
+                if (light >= 9)
                 {
                     var flag = false;
                     for (var i = x - 1; i <= x + 1; i++)
@@ -187,25 +188,25 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
                     if (_random.Bool(num))
                     {
-                        SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(0, 0, 0));
+                        SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(0, 0));
                         if (!GrowTree(x, y, z, saplingData.Type))
                         {
-                            SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(28, 0, 0));
+                            SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(28, 0));
                         }
                     }
                     else
                     {
-                        SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(28, 0, 0));
+                        SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(28, 0));
                     }
                 }
                 else if (_subsystemGameInfo.TotalElapsedGameTime > saplingData.MatureTime + 1200.0)
                 {
-                    SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(28, 0, 0));
+                    SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(28, 0));
                 }
             }
             else
             {
-                SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(28, 0, 0));
+                SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(28, 0));
             }
         }
         else

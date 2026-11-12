@@ -19,7 +19,7 @@ public sealed class TerrainDiskPersistenceTest
         var worldPath = $"{rootName}:world";
         try
         {
-            var value = Terrain.MakeBlockValue(3, 0, 17);
+            var value = Terrain.MakeBlockValue(3, 17);
             var shaft = Terrain.ReplaceHumidity(Terrain.ReplaceTemperature(0, 9), 6);
             using (var terrain = new Terrain())
             using (var serializer = new TerrainSerializer24(worldPath))

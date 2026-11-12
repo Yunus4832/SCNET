@@ -156,7 +156,6 @@ public class ComponentLayEggBehavior : ComponentBehavior, IUpdateable
                         _importanceLevel = 0f;
                         var value = Terrain.MakeBlockValue(
                             118,
-                            0,
                             EggBlock.SetIsLaid(EggBlock.SetEggType(0, _eggType.EggTypeIndex), true)
                         );
                         var matrix = _componentCreature.ComponentBody.Matrix;

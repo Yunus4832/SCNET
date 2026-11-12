@@ -101,7 +101,7 @@ public class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackage>
                         if (Terrain.ExtractContents(theItemValue) == 200)
                         {
                             var data = Terrain.ExtractData(theItemValue);
-                            var value = Terrain.MakeBlockValue(200, 0, CrossbowBlock.SetDraw(data, 15));
+                            var value = Terrain.MakeBlockValue(200, CrossbowBlock.SetDraw(data, 15));
                             inventory.RemoveSlotItems(message3.SlotIndex, 1);
                             inventory.AddSlotItems(message3.SlotIndex, value, 1);
                         }

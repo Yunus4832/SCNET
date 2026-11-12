@@ -12,7 +12,7 @@ public sealed class NetworkChunkCodecTest
     {
         using var terrain = new Terrain();
         using var chunk = new TerrainChunk(terrain, 0, 0);
-        chunk.SetCellValueFast(0, 0, 0, Terrain.MakeBlockValue(3, 15, 2));
+        chunk.SetCellValueFast(0, 0, 0, Terrain.MakeBlockValue(3, 2));
         var snapshot = Snapshot(chunk);
 
         var direct = NetworkChunkCodec.Encode(chunk);
@@ -41,7 +41,7 @@ public sealed class NetworkChunkCodecTest
                 shaft = Terrain.ReplaceHumidity(shaft, (x * 3 + z) & 0xF);
                 shaft = Terrain.ReplaceTopHeight(shaft, 200);
                 shaft = Terrain.ReplaceBottomHeight(shaft, 12);
-                shaft = Terrain.ReplaceSunlightHeight(shaft, 180);
+                shaft |= 180L << 32;
                 source.SetShaftValueFast(x, z, shaft);
             }
         }
@@ -53,7 +53,8 @@ public sealed class NetworkChunkCodecTest
                 for (var x = 0; x < 16; x++)
                 {
                     var contents = y < 60 ? 3 : 0;
-                    source.SetCellValueFast(x, y, z, Terrain.MakeBlockValue(contents, (x + y + z) & 0xF, y & 7));
+                    source.Cells[TerrainChunk.CalculateCellIndex(x, y, z)] =
+                        Terrain.MakeBlockValue(contents, y & 7) | (((x + y + z) & 15) << 10);
                 }
             }
         }
@@ -64,7 +65,7 @@ public sealed class NetworkChunkCodecTest
         Assert.True(encoded.Payload.Length < source.Cells.Length * sizeof(int) / 20);
         for (var i = 0; i < source.Cells.Length; i++)
         {
-            Assert.Equal(Terrain.ReplaceLight(source.Cells[i], 0), decoded.Cells[i]);
+            Assert.Equal(Terrain.NormalizeCellValue(source.Cells[i]), decoded.Cells[i]);
         }
 
         for (var z = 0; z < 16; z++)
@@ -75,22 +76,22 @@ public sealed class NetworkChunkCodecTest
                 Assert.Equal(source.GetHumidityFast(x, z), decoded.GetHumidityFast(x, z));
                 Assert.Equal(0, decoded.GetTopHeightFast(x, z));
                 Assert.Equal(0, decoded.GetBottomHeightFast(x, z));
-                Assert.Equal(0, decoded.GetSunlightHeightFast(x, z));
+                Assert.Equal(0L, decoded.GetShaftValueFast(x, z) & (4095L << 32));
             }
         }
     }
 
     [Fact]
-    public void ContentRevisionIgnoresLightButTracksNetworkContent()
+    public void ContentRevisionIgnoresReservedBitsButTracksNetworkContent()
     {
         using var terrain = new Terrain();
         var chunk = new TerrainChunk(terrain, 0, 0);
         var revision = chunk.NetworkContentRevision;
 
-        chunk.SetCellValueFast(0, 0, 0, Terrain.MakeBlockValue(0, 15, 0));
+        chunk.SetCellValueFast(0, 0, 0, Terrain.MakeBlockValue(0, 0) | (15 << 10));
         Assert.Equal(revision, chunk.NetworkContentRevision);
 
-        chunk.SetCellValueFast(0, 0, 0, Terrain.MakeBlockValue(1, 15, 0));
+        chunk.SetCellValueFast(0, 0, 0, Terrain.MakeBlockValue(1, 0));
         Assert.True(chunk.NetworkContentRevision > revision);
     }
 

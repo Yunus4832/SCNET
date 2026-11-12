@@ -96,11 +96,11 @@ public abstract class FenceBlock(string modelName) : Block, IPaintableBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, null));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, null));
         var i = 0;
         while (i < 16)
         {
-            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, i));
+            yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
             var num = i + 1;
             i = num;
         }
@@ -120,7 +120,7 @@ public abstract class FenceBlock(string modelName) : Block, IPaintableBlock
         dropValues.Add(
             new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
+                Value = Terrain.MakeBlockValue(BlockIndex, data),
                 Count = 1
             }
         );

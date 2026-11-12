@@ -132,7 +132,7 @@ public sealed class ClientTerrainContentPumpTest
         chunk.HasContents = true;
         var derivedRequest = chunk.DerivedRevisions.Capture();
         Assert.True(chunk.DerivedRevisions.PublishHeights(derivedRequest));
-        Assert.True(chunk.DerivedRevisions.PublishSunlight(derivedRequest));
+        Assert.True(chunk.DerivedRevisions.PublishLightSeed(derivedRequest));
         Assert.True(chunk.DerivedRevisions.PublishLight(derivedRequest));
         chunk.NetworkContentVersion = 10;
 

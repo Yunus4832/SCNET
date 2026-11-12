@@ -14,6 +14,6 @@ public class DirtSlabBlock() : SlabBlock(2)
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, null));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, null));
     }
 }

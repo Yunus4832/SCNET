@@ -302,7 +302,7 @@ public sealed class NativeTerrainReceiverTest
     public void LocalCaptureAndNativeDecodePublishIdenticalOwnedContent()
     {
         var allocation = new ChunkAllocationId(new Point2(4, 5), 7);
-        var cells = Enumerable.Repeat(Terrain.MakeBlockValue(7, 15, 3), AuthorityChunkSnapshot.CellCount).ToArray();
+        var cells = Enumerable.Repeat(Terrain.MakeBlockValue(7, 3), AuthorityChunkSnapshot.CellCount).ToArray();
         var shaft = Terrain.ReplaceTemperature(Terrain.ReplaceHumidity(-1L, 9), 3);
         var shafts = Enumerable.Repeat(shaft, AuthorityChunkSnapshot.ShaftCount).ToArray();
         var authority = new AuthorityChunkSnapshot(allocation.Coords, 2, cells, shafts);
@@ -313,7 +313,7 @@ public sealed class NativeTerrainReceiverTest
         Assert.Equal(native.Shafts.ToArray(), local.Shafts.ToArray());
         cells[0] = 0;
         shafts[0] = 0;
-        Assert.Equal(Terrain.MakeBlockValue(7, 0, 3), local.Cells.Span[0]);
+        Assert.Equal(Terrain.MakeBlockValue(7, 3), local.Cells.Span[0]);
         Assert.Equal(3, Terrain.ExtractTemperature(local.Shafts.Span[0]));
         Assert.Equal(9, Terrain.ExtractHumidity(local.Shafts.Span[0]));
         Assert.Throws<ArgumentException>(() => ClientChunkSnapshot.Capture(

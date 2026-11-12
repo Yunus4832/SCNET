@@ -20,7 +20,7 @@ public abstract class SlabBlock(int fullBlockIndex) : Block, IPaintableBlock
     public virtual int Paint(SubsystemTerrain? terrain, int value, int? color)
     {
         var data = Terrain.ExtractData(value);
-        return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(data, color));
+        return Terrain.MakeBlockValue(BlockIndex, SetColor(data, color));
     }
 
 
@@ -51,7 +51,7 @@ public abstract class SlabBlock(int fullBlockIndex) : Block, IPaintableBlock
             ((GetIsTop(data2) && raycastResult.CellFace.Face == 5) ||
              (!GetIsTop(data2) && raycastResult.CellFace.Face == 4)))
         {
-            var value2 = Terrain.MakeBlockValue(FullBlockIndex, 0, 0);
+            var value2 = Terrain.MakeBlockValue(FullBlockIndex, 0);
             if (Catalog.Blocks[FullBlockIndex] is IPaintableBlock paintableBlock)
             {
                 var color = GetColor(data);
@@ -70,7 +70,7 @@ public abstract class SlabBlock(int fullBlockIndex) : Block, IPaintableBlock
             ? raycastResult.CellFace.Face == 5
             : raycastResult.HitPoint().Y - raycastResult.CellFace.Y > 0.5f;
         result = default;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetIsTop(data, isTop));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, SetIsTop(data, isTop));
         result.CellFace = raycastResult.CellFace;
         return result;
     }
@@ -98,7 +98,7 @@ public abstract class SlabBlock(int fullBlockIndex) : Block, IPaintableBlock
         {
             var data = Terrain.ExtractData(oldValue);
             var data2 = SetColor(0, GetColor(data));
-            var value = Terrain.MakeBlockValue(BlockIndex, 0, data2);
+            var value = Terrain.MakeBlockValue(BlockIndex, data2);
             dropValues.Add(
                 new BlockDropValue
                 {
@@ -112,11 +112,11 @@ public abstract class SlabBlock(int fullBlockIndex) : Block, IPaintableBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, null));
+        yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, null));
         var i = 0;
         while (i < 16)
         {
-            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, i));
+            yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
             var num = i + 1;
             i = num;
         }

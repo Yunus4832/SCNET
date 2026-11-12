@@ -62,7 +62,6 @@ public class FireworksBlock : Block
                     {
                         yield return Terrain.MakeBlockValue(
                             BlockIndex,
-                            0,
                             SetColor(
                                 SetAltitude(SetShape(SetFlickering(0, flickering != 0), (Shape)shape), altitude),
                                 color
@@ -99,7 +98,6 @@ public class FireworksBlock : Block
                             ResultCount = 20,
                             ResultValue = Terrain.MakeBlockValue(
                                 BlockIndex,
-                                0,
                                 SetColor(
                                     SetAltitude(SetShape(SetFlickering(0, flickering != 0), (Shape)shape), altitude),
                                     color

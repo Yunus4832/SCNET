@@ -73,7 +73,7 @@ public abstract class WireThroughBlock : CubeBlock, IElectricWireElementBlock, I
         }
 
         BlockPlacementData result = default;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetWiredFace(0, wiredFace));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, SetWiredFace(0, wiredFace));
         result.CellFace = raycastResult.CellFace;
         return result;
     }

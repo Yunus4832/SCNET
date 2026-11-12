@@ -22,9 +22,8 @@ public class IvyBlockPresentation(IvyBlock block, BlockPresentationCatalog catal
         var indices = subsetAlphaTest.Indices;
         var count = vertices.Count;
         var data = Terrain.ExtractData(value);
-        var num = Terrain.ExtractLight(value);
         var face = IvyBlock.GetFace(data);
-        var s = LightingManager.LightIntensityByLightValueAndFace[num + 16 * CellFace.OppositeFace(face)];
+        var s = LightingManager.CalculateLighting(CellFace.FaceToVector3(CellFace.OppositeFace(face)));
         var color = BlockColorsMap.IvyColorsMap.Lookup(generator.Terrain, x, y, z) * s;
         color.A = byte.MaxValue;
         switch (face)
@@ -234,6 +233,9 @@ public class IvyBlockPresentation(IvyBlock block, BlockPresentationCatalog catal
                 indices.Add(count + 2);
                 break;
         }
+
+        var response = generator.GetLightResponse(x, y, z);
+        for (var i = count; i < vertices.Count; i++) { vertices.Array[i].Lighting = response; }
     }
 
     public override void DrawBlock(

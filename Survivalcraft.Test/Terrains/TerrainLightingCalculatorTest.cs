@@ -1,7 +1,4 @@
-using Engine.Core.Mathematics;
-
 using Game.Terrains;
-using Game.Terrains.Distribution;
 using Game.Terrains.Lighting;
 
 using Survivalcraft.Test.Modding;
@@ -11,416 +8,237 @@ namespace Survivalcraft.Test.Terrains;
 [Collection(ConfigFileCollection.Name)]
 public sealed class TerrainLightingCalculatorTest
 {
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void PreparationOrAdvanceFaultsReleaseTheSingleActivePropagation(bool duringAdvance)
+    [Fact]
+    public void RestoringTheSameComputedValuesStillNotifiesConsumersOfAChangedSeedBoundary()
     {
         using var world = new WorldCatalogScope();
-        ConfigurePropagation(world);
-        using var terrain = CreatePropagationTerrain();
-        var source = terrain.GetChunkAtCoords(0, 0)!;
-        PrepareEmitter(source);
-        var fail = !duringAdvance;
-        var calculator = new TerrainLightingCalculator(
-            terrain,
-            world.Catalog,
-            false,
-            _ =>
-            {
-                if (fail) { throw new InvalidOperationException("Simulated neighbor read failure."); }
-
-                return true;
-            }
-        );
-        if (duringAdvance)
-        {
-            calculator.BeginPropagation(source);
-            fail = true;
-            Assert.Throws<InvalidOperationException>(() => calculator.AdvancePropagation(source, 1));
-        }
-        else { Assert.Throws<InvalidOperationException>(() => calculator.BeginPropagation(source)); }
-
-        Assert.False(calculator.HasActivePropagation);
-        fail = false;
-        calculator.ResetSunlightAndHeight(source, 0);
-        calculator.BeginPropagation(source);
-        Assert.True(calculator.HasActivePropagation);
-        calculator.CancelPropagation();
-        Assert.False(calculator.HasActivePropagation);
+        Configure(world);
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.HasContents = true;
+        var calculator = Create(terrain, world);
+        Prepare(calculator, chunk);
+        var original = new TerrainLightSnapshot(new TerrainLightChannels(15, 7));
+        Assert.True(terrain.Lighting.TryPublish(chunk, terrain.Lighting.CaptureInput(chunk), original));
+        chunk.SetCellValueFast(8, 64, 8, Terrain.MakeBlockValue(1));
+        chunk.DerivedRevisions.InvalidateHeightsAndLight();
+        Prepare(calculator, chunk);
+        Assert.True(terrain.Lighting.TryGetPropagationSnapshot(chunk, out var seedInput));
+        Assert.Equal(0, seedInput.Get(0, 64, 0).Block);
+        Assert.True(calculator.TryCapturePropagation(chunk, out var job));
+        var publication = calculator.Publish(job, original);
+        Assert.True(publication.Published);
+        Assert.False(publication.ValuesChanged);
+        Assert.Equal(15, publication.ChangedBoundaryFaces);
     }
 
     [Fact]
-    public void BatchesRespectTheSourceBudgetAndOnlyReportTheirOwnChanges()
+    public void DirectInputsKeepSkyAndEmissionSeparateAndLeaveContentsUnchanged()
     {
         using var world = new WorldCatalogScope();
-        ConfigurePropagation(world);
-        using var terrain = CreatePropagationTerrain();
-        var source = terrain.GetChunkAtCoords(0, 0)!;
-        var right = terrain.GetChunkAtCoords(1, 0)!;
-        PrepareEmitter(source);
-        var calculator = new TerrainLightingCalculator(terrain, world.Catalog, false, _ => true);
-        calculator.BeginPropagation(source);
-        Assert.Same(source, Assert.Single(calculator.ChangedChunks));
-        Assert.Equal(15, source.GetCellLightFast(15, 64, 8));
-        Assert.Equal(0, source.GetCellLightFast(14, 64, 8));
-
-        Assert.False(calculator.AdvancePropagation(source, 1));
-        Assert.Equal(14, source.GetCellLightFast(14, 64, 8));
-        Assert.Equal(0, source.GetCellLightFast(13, 64, 8));
-        Assert.Contains(right, calculator.ChangedChunks);
-        Assert.False(calculator.AdvancePropagation(source, 1));
-        Assert.Equal(13, source.GetCellLightFast(13, 64, 8));
-        Assert.DoesNotContain(right, calculator.ChangedChunks);
-        Assert.False(calculator.AdvancePropagation(source, 1));
-        Assert.Same(right, Assert.Single(calculator.ChangedChunks));
-        Complete(calculator, source, 64);
-        calculator.Propagate(source);
-        Assert.Empty(calculator.ChangedChunks);
+        Configure(world);
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.HasContents = true;
+        chunk.SetCellValueFast(8, 64, 8, Terrain.MakeBlockValue(3));
+        var before = (int[])chunk.Cells.Clone();
+        var calculator = Create(terrain, world);
+        Prepare(calculator, chunk);
+        Assert.True(terrain.Lighting.TryGetSeed(chunk, out var seed));
+        Assert.Equal(new TerrainLightChannels(15, 15), seed.Light.Get(8, 64, 8));
+        Assert.Equal(new TerrainLightChannels(15, 0), seed.Light.Get(7, 64, 8));
+        Assert.Equal(before, chunk.Cells);
+        Assert.True(terrain.Lighting.TryGetSeed(chunk, out var same));
+        Assert.Same(seed, same);
     }
 
     [Theory]
     [InlineData(1)]
     [InlineData(7)]
-    [InlineData(4096)]
-    public void PausedPropagationMatchesSynchronousCalculationWithoutRestarting(int budget)
+    [InlineData(2048)]
+    public void BoundedPrivatePropagationMatchesSynchronousPublication(int budget)
     {
         using var world = new WorldCatalogScope();
-        ConfigurePropagation(world);
-        using var reference = CreatePropagationTerrain();
-        using var paused = CreatePropagationTerrain();
-        var referenceSource = reference.GetChunkAtCoords(0, 0)!;
-        var pausedSource = paused.GetChunkAtCoords(0, 0)!;
-        PrepareEmitter(referenceSource);
-        PrepareEmitter(pausedSource);
-        new TerrainLightingCalculator(reference, world.Catalog, false, _ => true).Propagate(referenceSource);
-        var calculator = new TerrainLightingCalculator(paused, world.Catalog, false, _ => true);
-        calculator.BeginPropagation(pausedSource);
-        Complete(calculator, pausedSource, budget);
-
-        foreach (var expected in reference.AllocatedChunks)
-        {
-            var actual = paused.GetChunkAtCoords(expected.Coords.X, expected.Coords.Y)!;
-            Assert.Equal(expected.Cells, actual.Cells);
-            Assert.Equal(expected.Shafts, actual.Shafts);
-        }
-
-        Assert.False(calculator.HasActivePropagation);
-    }
-
-    [Fact]
-    public void HeightAndSunlightWorkOnAnotherRegionDoesNotClearAPausedSourceQueue()
-    {
-        using var world = new WorldCatalogScope();
-        ConfigurePropagation(world);
-        using var terrain = CreatePropagationTerrain();
-        var source = terrain.GetChunkAtCoords(0, 0)!;
-        PrepareEmitter(source);
-        var calculator = new TerrainLightingCalculator(terrain, world.Catalog, false, _ => true);
-        calculator.BeginPropagation(source);
-        Assert.False(calculator.AdvancePropagation(source, 1));
-        var unrelated = terrain.AllocateChunk(8, 8);
-        unrelated.SetCellValueFast(1, 64, 1, 3);
-        calculator.CalculateHeights(unrelated);
-        calculator.ResetSunlight(unrelated, 0);
-        Assert.True(calculator.HasActivePropagation);
-        Assert.False(calculator.AdvancePropagation(source, 1));
-        Assert.DoesNotContain(unrelated, calculator.ChangedChunks);
-        Complete(calculator, source, 64);
-        Assert.Equal(1, terrain.GetCellLightFast(29, 64, 8));
-    }
-
-    [Fact]
-    public void WrongChunkAndCancellationDoNotMixOrResurrectPropagationTasks()
-    {
-        using var world = new WorldCatalogScope();
-        ConfigurePropagation(world);
-        using var terrain = CreatePropagationTerrain();
-        var source = terrain.GetChunkAtCoords(0, 0)!;
-        var other = terrain.GetChunkAtCoords(1, 0)!;
-        PrepareEmitter(source);
-        var calculator = new TerrainLightingCalculator(terrain, world.Catalog, false, _ => true);
-        calculator.BeginPropagation(source);
-        Assert.Throws<InvalidOperationException>(() => calculator.BeginPropagation(other));
-        Assert.Throws<ArgumentException>(() => calculator.AdvancePropagation(other, 1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => calculator.AdvancePropagation(source, 0));
-        Assert.True(calculator.HasActivePropagation);
-        Assert.False(calculator.AdvancePropagation(source, 1));
-        calculator.CancelPropagation();
-        calculator.CancelPropagation();
-        Assert.False(calculator.HasActivePropagation);
-        Assert.Empty(calculator.ChangedChunks);
-        Assert.Throws<InvalidOperationException>(() => calculator.AdvancePropagation(source, 1));
-        calculator.BeginPropagation(other);
-        calculator.CancelPropagation();
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void ExpiredOrFreedAllocationsCannotAdvanceTheirOldSources(bool free)
-    {
-        using var world = new WorldCatalogScope();
-        ConfigurePropagation(world);
-        using var terrain = CreatePropagationTerrain();
-        var source = terrain.GetChunkAtCoords(0, 0)!;
-        PrepareEmitter(source);
-        var calculator = new TerrainLightingCalculator(terrain, world.Catalog, false, _ => true);
-        calculator.BeginPropagation(source);
-        if (free)
-        {
-            terrain.FreeChunk(source);
-            Assert.Throws<ObjectDisposedException>(() => calculator.AdvancePropagation(source, 1));
-        }
-        else
-        {
-            terrain.RenewChunkAllocation(source);
-            Assert.Throws<InvalidOperationException>(() => calculator.AdvancePropagation(source, 1));
-        }
-
-        Assert.False(calculator.HasActivePropagation);
-        Assert.Equal(0, terrain.GetCellLightFast(16, 64, 8));
-    }
-
-    [Fact]
-    public void MoreThanTheOld120000SourcesContinueUntilTheFrontierReallyDrains()
-    {
-        using var world = new WorldCatalogScope();
-        ConfigurePropagation(world);
-        world.Catalog.Blocks[4].Transparent = true;
-        world.Catalog.Blocks[4].LightAttenuation = 0;
-        world.Catalog.Blocks[4].EmittedLightAmount = 15;
-        using var terrain = CreatePropagationTerrain();
-        var source = terrain.GetChunkAtCoords(0, 0)!;
-        Array.Fill(source.Cells, 4);
-        for (var x = 0; x < 16; x++)
-        {
-            for (var z = 0; z < 16; z++) { source.SetTopHeightFast(x, z, 255); }
-        }
-
-        var calculator = new TerrainLightingCalculator(terrain, world.Catalog, false, _ => true);
-        calculator.BeginPropagation(source);
-        Assert.False(calculator.AdvancePropagation(source, 120000));
-        Assert.True(calculator.HasActivePropagation);
-        Complete(calculator, source, 8192);
-        Assert.Equal(1, terrain.GetCellLightFast(29, 64, 8));
-        Assert.Equal(0, terrain.GetCellLightFast(30, 64, 8));
-        Assert.False(calculator.HasActivePropagation);
-    }
-
-    private static Terrain CreatePropagationTerrain()
-    {
-        var terrain = new Terrain();
-        for (var x = -1; x <= 1; x++)
-        {
-            for (var z = -1; z <= 1; z++) { terrain.AllocateChunk(x, z).HasContents = true; }
-        }
-
-        return terrain;
-    }
-
-    private static void ConfigurePropagation(WorldCatalogScope world)
-    {
-        world.Catalog.Blocks[0].Transparent = true;
-        world.Catalog.Blocks[0].LightAttenuation = 0;
-        world.Catalog.Blocks[0].EmittedLightAmount = 0;
-        world.Catalog.Blocks[3].Transparent = false;
-        world.Catalog.Blocks[3].LightAttenuation = 0;
-        world.Catalog.Blocks[3].EmittedLightAmount = 15;
-    }
-
-    private static void PrepareEmitter(TerrainChunk chunk)
-    {
-        chunk.SetCellValueFast(15, 64, 8, 3);
-        chunk.SetTopHeightFast(15, 8, 64);
-    }
-
-    private static void Complete(TerrainLightingCalculator calculator, TerrainChunk chunk, int budget)
-    {
-        var maximumBatches = Math.Max(128, 20000 / budget);
-        for (var batches = 0; batches < maximumBatches; batches++)
-        {
-            if (calculator.AdvancePropagation(chunk, budget)) { return; }
-        }
-
-        Assert.Fail("The bounded light frontier did not converge.");
-    }
-
-    [Fact]
-    public void CombinedOperationRetainsHeightOnlyChanges()
-    {
-        using var world = new WorldCatalogScope();
-        world.Catalog.Blocks[0].Transparent = true;
+        Configure(world);
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.SetTopHeightFast(0, 0, 64);
-        for (var x = 0; x < 16; x++)
-        {
-            for (var z = 0; z < 16; z++) { chunk.SetSunlightHeightFast(x, z, 1); }
-        }
+        chunk.HasContents = true;
+        chunk.SetCellValueFast(8, 64, 8, Terrain.MakeBlockValue(3));
+        var calculator = Create(terrain, world);
+        Prepare(calculator, chunk);
+        var before = (int[])chunk.Cells.Clone();
+        Assert.True(calculator.TryCapturePropagation(chunk, out var job));
+        using var work = job.CreateComputation();
+        Assert.False(work.Advance(1));
+        Assert.False(terrain.Lighting.TryGetPublishedSnapshot(chunk, out _));
+        var complete = false;
+        for (var i = 0; i < 100000 && !complete; i++) { complete = work.Advance(budget); }
 
-        var calculator = new TerrainLightingCalculator(terrain, world.Catalog, false, _ => true);
-
-        calculator.ResetSunlightAndHeight(chunk, 0);
-
-        Assert.Equal(0, chunk.GetTopHeightFast(0, 0));
-        Assert.Equal(1, chunk.GetSunlightHeightFast(0, 0));
-        Assert.Same(chunk, Assert.Single(calculator.ChangedChunks));
+        Assert.True(complete);
+        Assert.True(calculator.Publish(job, work.Capture()).Published);
+        Assert.True(terrain.Lighting.TryGetPublishedSnapshot(chunk, out var result));
+        Assert.Equal(14, result.Get(7, 64, 8).Block);
+        Assert.Equal(13, result.Get(7, 64, 7).Block);
+        Assert.Equal(before, chunk.Cells);
+        var repeated = calculator.Propagate(chunk);
+        Assert.True(terrain.Lighting.TryGetPublishedSnapshot(chunk, out var synchronous));
+        Assert.True(result.HasSameValues(synchronous));
+        Assert.False(repeated.ValuesChanged);
+        Assert.Equal(0, repeated.ChangedBoundaryFaces);
     }
 
     [Fact]
-    public void HeightCalculationCanCompleteWithoutChangingAnyLightValues()
+    public void NeighborPublicationsConvergeAcrossAnEdgeAndDecayAfterSourceRemoval()
     {
         using var world = new WorldCatalogScope();
-        world.Catalog.Blocks[0].Transparent = true;
+        Configure(world);
+        using var terrain = new Terrain();
+        var left = terrain.AllocateChunk(0, 0);
+        var right = terrain.AllocateChunk(1, 0);
+        left.HasContents = right.HasContents = true;
+        left.SetCellValueFast(15, 64, 8, Terrain.MakeBlockValue(3));
+        var calculator = Create(terrain, world);
+        Prepare(calculator, left);
+        Prepare(calculator, right);
+        calculator.Propagate(left);
+        Assert.False(terrain.Lighting.TryGetPublishedSnapshot(right, out _));
+        Assert.Equal(0, right.GetCellValueFast(0, 64, 8));
+        calculator.Propagate(right);
+        Assert.True(terrain.Lighting.TryGetPublishedSnapshot(right, out var illuminated));
+        Assert.Equal(14, illuminated.Get(0, 64, 8).Block);
+        left.SetCellValueFast(15, 64, 8, 0);
+        left.DerivedRevisions.InvalidateHeightsAndLight();
+        Prepare(calculator, left);
+        for (var i = 0; i < 16; i++)
+        {
+            calculator.Propagate(left);
+            calculator.Propagate(right);
+        }
+
+        Assert.True(terrain.Lighting.TryGetPublishedSnapshot(left, out var darkLeft));
+        Assert.True(terrain.Lighting.TryGetPublishedSnapshot(right, out var darkRight));
+        Assert.Equal(0, darkLeft.Get(15, 64, 8).Block);
+        Assert.Equal(0, darkRight.Get(0, 64, 8).Block);
+        Assert.Equal(14, illuminated.Get(0, 64, 8).Block);
+    }
+
+    [Fact]
+    public void CancelledAndStaleTasksCannotReplaceAPublication()
+    {
+        using var world = new WorldCatalogScope();
+        Configure(world);
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
-        chunk.SetCellValueFast(1, 64, 1, Terrain.MakeBlockValue(3, 7, 0));
-        chunk.SetSunlightHeightFast(1, 1, 99);
-        var cells = chunk.Cells.ToArray();
-        var revision = chunk.NetworkContentRevision;
-        var calculator = new TerrainLightingCalculator(terrain, world.Catalog, false, _ => true);
-
-        calculator.CalculateHeights(chunk);
-
-        Assert.Equal(64, chunk.GetTopHeightFast(1, 1));
-        Assert.Equal(0, chunk.GetBottomHeightFast(1, 1));
-        Assert.Equal(99, chunk.GetSunlightHeightFast(1, 1));
-        Assert.Equal(cells, chunk.Cells);
-        Assert.Equal(revision, chunk.NetworkContentRevision);
-        Assert.Same(chunk, Assert.Single(calculator.ChangedChunks));
-
-        calculator.CalculateHeights(chunk);
-        Assert.Empty(calculator.ChangedChunks);
-        calculator.ResetSunlight(chunk, 15);
-        Assert.Equal(65, chunk.GetSunlightHeightFast(1, 1));
-        Assert.Equal(0, chunk.GetCellLightFast(1, 64, 1));
-        Assert.Equal(15, chunk.GetCellLightFast(1, 65, 1));
-    }
-
-    [Theory]
-    [InlineData(0, false)]
-    [InlineData(7, false)]
-    [InlineData(15, false)]
-    [InlineData(0, true)]
-    [InlineData(7, true)]
-    [InlineData(15, true)]
-    public void CombinedAndSeparateStagesProduceTheSameLightAndColumns(int skylight, bool includePredictions)
-    {
-        using var world = new WorldCatalogScope();
-        world.Catalog.Blocks[0].Transparent = true;
-        using var combinedTerrain = new Terrain();
-        using var separateTerrain = new Terrain();
-        using var staticTerrain = new Terrain();
-        var combined = combinedTerrain.AllocateChunk(0, 0);
-        var separate = separateTerrain.AllocateChunk(0, 0);
-        var staticChunk = staticTerrain.AllocateChunk(0, 0);
-        foreach (var chunk in new[] { combined, separate, staticChunk })
-        {
-            for (var x = 0; x < 16; x++)
-            {
-                for (var z = 0; z < 16; z++)
-                {
-                    var height = 40 + (x * 7 + z * 13) % 25;
-                    for (var y = 0; y < 256; y++)
-                    {
-                        var solid = y == 0 || y == height || x % 3 == 0 && y < height;
-                        chunk.SetCellValueFast(x, y, z, Terrain.MakeBlockValue(solid ? 3 : 0, (x + y + z) % 16, 0));
-                    }
-                }
-            }
-
-            var prediction = new ClientTerrainPrediction(chunk.Terrain, _ => { });
-            prediction.Begin(new Point3(0, 40, 0), chunk.GetCellValueFast(0, 40, 0), 0, 0);
-        }
-
-        var combinedCalculator = new TerrainLightingCalculator(
-            combinedTerrain,
-            world.Catalog,
-            includePredictions,
-            _ => true
-        );
-        var separateCalculator = new TerrainLightingCalculator(
-            separateTerrain,
-            world.Catalog,
-            includePredictions,
-            _ => true
-        );
-        combinedCalculator.ResetSunlightAndHeight(combined, skylight);
-        separateCalculator.CalculateHeights(separate);
-        separateCalculator.ResetSunlight(separate, skylight);
-        TerrainLightingCalculator.CalculateSunlightAndHeight(staticChunk, skylight, world.Catalog, includePredictions);
-
-        Assert.Equal(combined.Cells, separate.Cells);
-        Assert.Equal(combined.Shafts, separate.Shafts);
-        Assert.Equal(combined.Cells, staticChunk.Cells);
-        Assert.Equal(combined.Shafts, staticChunk.Shafts);
-        Assert.Same(combined, Assert.Single(combinedCalculator.ChangedChunks));
+        chunk.HasContents = true;
+        chunk.SetCellValueFast(8, 64, 8, Terrain.MakeBlockValue(3));
+        var calculator = Create(terrain, world);
+        Prepare(calculator, chunk);
+        calculator.Propagate(chunk);
+        Assert.True(terrain.Lighting.TryGetPublishedSnapshot(chunk, out var original));
+        Assert.True(calculator.TryCapturePropagation(chunk, out var job));
+        using var work = job.CreateComputation();
+        Assert.False(work.Advance(1));
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        Assert.Throws<OperationCanceledException>(() => work.Advance(2048, cancellation.Token));
+        Assert.True(terrain.Lighting.TryGetPublishedSnapshot(chunk, out var afterCancel));
+        Assert.Same(original, afterCancel);
+        Assert.True(calculator.TryCapturePropagation(chunk, out var stale));
+        var calculated = stale.Compute();
+        chunk.SetCellValueFast(8, 64, 8, 0);
+        Assert.False(calculator.Publish(stale, calculated).Published);
+        Assert.True(terrain.Lighting.TryGetPublishedSnapshot(chunk, out var afterStale));
+        Assert.Same(original, afterStale);
     }
 
     [Fact]
-    public void ReplicaLightNeverReadsOrWritesAnUninstalledNeighborAndTracksCrossChunkChanges()
+    public void BoundaryChangeDuringAJobRejectsItsPrivateResult()
     {
         using var world = new WorldCatalogScope();
+        Configure(world);
+        using var terrain = new Terrain();
+        var left = terrain.AllocateChunk(0, 0);
+        var right = terrain.AllocateChunk(1, 0);
+        left.HasContents = right.HasContents = true;
+        left.SetCellValueFast(15, 64, 8, Terrain.MakeBlockValue(3));
+        var first = Create(terrain, world);
+        var second = Create(terrain, world);
+        Prepare(first, left);
+        Prepare(first, right);
+        Assert.True(first.TryCapturePropagation(right, out var rightJob));
+        second.Propagate(left);
+        Assert.False(first.Publish(rightJob, rightJob.Compute()).Published);
+        Assert.False(terrain.Lighting.TryGetPublishedSnapshot(right, out _));
+        Assert.True(first.Propagate(right).Published);
+    }
+
+    [Fact]
+    public void PredictionsAffectOnlyReplicaLightInputs()
+    {
+        using var world = new WorldCatalogScope();
+        Configure(world);
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.HasContents = true;
+        chunk.SetGeometryPrediction(TerrainChunk.CalculateCellIndex(8, 64, 8), 0, Terrain.MakeBlockValue(3));
+        var authority = Create(terrain, world);
+        var replica = Create(terrain, world, true);
+        Prepare(authority, chunk);
+        Assert.True(terrain.Lighting.TryGetSeed(chunk, out var actual));
+        Assert.Equal(0, actual.Light.Get(8, 64, 8).Block);
+        Prepare(replica, chunk);
+        Assert.True(terrain.Lighting.TryGetSeed(chunk, out var predicted));
+        Assert.Equal(15, predicted.Light.Get(8, 64, 8).Block);
+        Assert.Equal(0, chunk.GetCellValueFast(8, 64, 8));
+    }
+
+    [Fact]
+    public void OpaqueAndAbsorbingCellsKeepIndependentDirectSkyInputs()
+    {
+        using var world = new WorldCatalogScope();
+        Configure(world);
+        world.Catalog.Blocks[1].Transparent = false;
+        world.Catalog.Blocks[2].Transparent = true;
+        world.Catalog.Blocks[2].LightAttenuation = 2;
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.HasContents = true;
+        chunk.SetCellValueFast(1, 70, 1, Terrain.MakeBlockValue(1));
+        chunk.SetCellValueFast(2, 70, 2, Terrain.MakeBlockValue(2));
+        Prepare(Create(terrain, world), chunk);
+        Assert.True(terrain.Lighting.TryGetSeed(chunk, out var seed));
+        Assert.Equal(15, seed.Light.Get(1, 71, 1).Sky);
+        Assert.Equal(0, seed.Light.Get(1, 70, 1).Sky);
+        Assert.Equal(0, seed.Light.Get(1, 69, 1).Sky);
+        Assert.Equal(13, seed.Light.Get(2, 70, 2).Sky);
+        Assert.Equal(13, seed.Light.Get(2, 69, 2).Sky);
+    }
+
+    private static void Prepare(TerrainLightingCalculator calculator, TerrainChunk chunk)
+    {
+        var request = chunk.DerivedRevisions.Capture();
+        calculator.CalculateHeights(chunk);
+        Assert.True(chunk.DerivedRevisions.PublishHeights(request));
+        Assert.True(calculator.CalculateLightSeed(chunk).Published);
+        Assert.True(chunk.DerivedRevisions.PublishLightSeed(request));
+    }
+
+    private static TerrainLightingCalculator Create(Terrain terrain, WorldCatalogScope world, bool predictions = false)
+    {
+        return new TerrainLightingCalculator(
+            terrain,
+            world.Catalog,
+            predictions,
+            chunk => chunk.HasContents && !chunk.NeedsContentValidation
+        );
+    }
+
+    private static void Configure(WorldCatalogScope world)
+    {
         world.Catalog.Blocks[0].Transparent = true;
         world.Catalog.Blocks[0].LightAttenuation = 0;
         world.Catalog.Blocks[3].Transparent = true;
         world.Catalog.Blocks[3].LightAttenuation = 0;
         world.Catalog.Blocks[3].EmittedLightAmount = 15;
-        using var terrain = new Terrain();
-        for (var x = -1; x <= 1; x++)
-        {
-            for (var z = -1; z <= 1; z++) { terrain.AllocateChunk(x, z).HasContents = true; }
-        }
-
-        var source = terrain.GetChunkAtCoords(0, 0)!;
-        var neighbor = terrain.GetChunkAtCoords(1, 0)!;
-        neighbor.HasContents = false;
-        neighbor.SetCellLightFast(TerrainChunk.CalculateCellIndex(0, 64, 0), 15);
-        source.SetCellValueFast(15, 64, 8, 3);
-        source.SetTopHeightFast(15, 8, 64);
-        var sourceVersion = source.NetworkContentRevision;
-        var neighborVersion = neighbor.NetworkContentRevision;
-        var calculator = new TerrainLightingCalculator(terrain, world.Catalog, true, chunk => chunk.HasContents);
-
-        calculator.Propagate(source);
-
-        Assert.Equal(15, source.GetCellLightFast(15, 64, 8));
-        Assert.Equal(0, neighbor.GetCellLightFast(0, 64, 8));
-        Assert.Equal(7, source.GetCellLightFast(15, 64, 0));
-        Assert.Equal(15, neighbor.GetCellLightFast(0, 64, 0));
-        Assert.Contains(source, calculator.ChangedChunks);
-        Assert.DoesNotContain(neighbor, calculator.ChangedChunks);
-
-        neighbor.HasContents = true;
-        calculator.ResetSunlightAndHeight(source, 0);
-        calculator.Propagate(source);
-
-        Assert.Equal(14, neighbor.GetCellLightFast(0, 64, 8));
-        Assert.Contains(source, calculator.ChangedChunks);
-        Assert.Contains(neighbor, calculator.ChangedChunks);
-        Assert.Equal(sourceVersion, source.NetworkContentRevision);
-        Assert.Equal(neighborVersion, neighbor.NetworkContentRevision);
-
-        calculator.Propagate(source);
-        Assert.Empty(calculator.ChangedChunks);
-    }
-
-    [Fact]
-    public void ResetTracksColumnChangesSeparatelyFromContentVersions()
-    {
-        using var world = new WorldCatalogScope();
-        world.Catalog.Blocks[0].Transparent = true;
-        using var terrain = new Terrain();
-        var chunk = terrain.AllocateChunk(0, 0);
-        var contentVersion = chunk.NetworkContentRevision;
-        var calculator = new TerrainLightingCalculator(terrain, world.Catalog, false, _ => true);
-
-        calculator.ResetSunlightAndHeight(chunk, 15);
-        Assert.Same(chunk, Assert.Single(calculator.ChangedChunks));
-        Assert.Equal(contentVersion, chunk.NetworkContentRevision);
-
-        calculator.ResetSunlightAndHeight(chunk, 15);
-        Assert.Empty(calculator.ChangedChunks);
     }
 }
