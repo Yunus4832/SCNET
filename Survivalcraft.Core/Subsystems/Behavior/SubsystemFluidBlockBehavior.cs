@@ -29,35 +29,27 @@ public abstract class SubsystemFluidBlockBehavior(
 
     public SubsystemTime SubsystemTime { get; set; } = null!;
 
-    public void UpdateIsTop(int value, int x, int y, int z)
+    public void UpdateIsTop(int x, int y, int z)
     {
+        if (!WorldRuntimeContext.For(Project).IsAuthority || y is < 0 or > 255) { return; }
+
         var terrain = SubsystemTerrain.Terrain;
-        if (y >= 255)
-        {
-            return;
-        }
+        var value = terrain.GetCellValue(x, y, z);
+        if (!_fluidBlock.IsTheSameFluid(Terrain.ExtractContents(value))) { return; }
 
-        var chunkAtCell = terrain.GetChunkAtCell(x, z, false);
-        if (chunkAtCell == null)
-        {
-            return;
-        }
-
-        var num = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
-        var contents = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(num + 1));
-        var data = Terrain.ExtractData(value);
-        var isTop = !_fluidBlock.IsTheSameFluid(contents);
-        chunkAtCell.SetDerivedCellDataFast(num, FluidBlock.SetIsTop(data, isTop));
+        var isTop = y == 255 || !_fluidBlock.IsTheSameFluid(terrain.GetCellContents(x, y + 1, z));
+        var updated = Terrain.ReplaceData(value, FluidBlock.SetIsTop(Terrain.ExtractData(value), isTop));
+        if (updated != value) { SubsystemTerrain.ChangeCell(x, y, z, updated); }
     }
 
     public override void OnBlockAdded(int value, int oldValue, int x, int y, int z)
     {
-        UpdateIsTop(value, x, y, z);
+        UpdateIsTop(x, y, z);
     }
 
     public override void OnBlockModified(int value, int oldValue, int x, int y, int z)
     {
-        UpdateIsTop(value, x, y, z);
+        UpdateIsTop(x, y, z);
     }
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
@@ -69,7 +61,7 @@ public abstract class SubsystemFluidBlockBehavior(
 
         if (neighborY == y + 1)
         {
-            UpdateIsTop(SubsystemTerrain.Terrain.GetCellValueFast(x, y, z), x, y, z);
+            UpdateIsTop(x, y, z);
         }
     }
 

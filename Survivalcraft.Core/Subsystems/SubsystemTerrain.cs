@@ -470,6 +470,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                 }
 
                 Computations.InvalidateContentNeighborhood(chunkAtCell.Coords, 1);
+                if (!Runtime.IsAuthority) { NotifyTerrainInteraction(); }
             }
 
             _modifiedCells[new Point3(x, y, z)] = true;

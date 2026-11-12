@@ -210,12 +210,6 @@ public class TerrainChunk : IDisposable
         SetCellValueFast(y + x * _height + z * _height * _size, value);
     }
 
-    // Reconstructed cell flags, like fluid surfaces, are not authoritative content changes.
-    public void SetDerivedCellDataFast(int index, int data)
-    {
-        Cells[index] = Terrain.ReplaceData(Cells[index], data);
-    }
-
     public void SetCellValueFast(int index, int value)
     {
         value = Terrain.NormalizeCellValue(value);
