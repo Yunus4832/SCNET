@@ -3,9 +3,6 @@
 float2 u_origin;
 float4x4 u_viewProjectionMatrix;
 float3 u_viewPosition;
-float u_fogYMultiplier;
-float3 u_fogBottomTopDensity;
-float2 u_hazeStartDensity;
 
 #ifdef TERRAIN_LIGHT_RESPONSE
 float2 u_lightEnvironment;
@@ -25,24 +22,6 @@ float calculateLight(float4 levels0, float4 levels1, float4 levels2, float4 leve
 }
 #endif
 
-float fogIntegral(float y)
-{
-	return smoothstep(u_fogBottomTopDensity.x, u_fogBottomTopDensity.y, y) * (u_fogBottomTopDensity.y - u_fogBottomTopDensity.x) + u_fogBottomTopDensity.x;
-}
-
-float2 calculateFog(float3 position)
-{
-	float3 fogDelta = u_viewPosition - position;
-    float weatherDistance = length(fogDelta);
-	fogDelta.y *= u_fogYMultiplier;
-	float fogDistance = length(fogDelta);
-	float fogFactor = (fogIntegral(u_viewPosition.y) - fogIntegral(position.y)) / (u_viewPosition.y - position.y);
-    // Keep distance and weather extinction separate through interpolation.
-    // Preserve distance values above one to fully hide triangles beyond the boundary.
-    return float2(max(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0),
-        fogFactor * u_fogBottomTopDensity.z * weatherDistance);
-}
-
 void main(
 	in float3 a_position: POSITION,
 	in float4 a_color: COLOR,
@@ -55,10 +34,8 @@ void main(
 #endif
 	out float4 v_color : COLOR,
 	out float2 v_texcoord : TEXCOORD,
-	out float2 v_fog : FOG,
-#ifdef SKY_FOG
+    out float3 v_viewOffset : TEXCOORD2,
     out float4 v_skyPosition : TEXCOORD1,
-#endif
 	out float4 sv_position: SV_POSITION
 )
 {
@@ -77,14 +54,11 @@ void main(
     v_color.rgb *= calculateLight(a_light0, a_light1, a_light2, a_light3);
 #endif
 	
-	// Fog
-	v_fog = calculateFog(a_position);
+    v_viewOffset = a_position - u_viewPosition;
 	
 	// Position
 	sv_position = mul(float4(a_position.x - u_origin.x, a_position.y, a_position.z - u_origin.y, 1.0), u_viewProjectionMatrix);
-#ifdef SKY_FOG
     v_skyPosition = sv_position;
-#endif
 }
 
 #endif
@@ -97,9 +71,6 @@ void main(
 uniform vec2 u_origin;
 uniform mat4 u_viewProjectionMatrix;
 uniform vec3 u_viewPosition;
-uniform float u_fogYMultiplier;
-uniform vec3 u_fogBottomTopDensity;
-uniform vec2 u_hazeStartDensity;
 
 #ifdef TERRAIN_LIGHT_RESPONSE
 uniform vec2 u_lightEnvironment;
@@ -135,32 +106,16 @@ attribute vec4 a_light3;
 
 varying vec4 v_color;
 varying vec2 v_texcoord;
-varying vec2 v_fog;
-#ifdef SKY_FOG
+#ifdef GL_ES
+varying highp vec3 v_viewOffset;
+#else
+varying vec3 v_viewOffset;
+#endif
 #ifdef GL_ES
 varying highp vec4 v_skyPosition;
 #else
 varying vec4 v_skyPosition;
 #endif
-#endif
-
-float fogIntegral(float y)
-{
-	return smoothstep(u_fogBottomTopDensity.x, u_fogBottomTopDensity.y, y) * (u_fogBottomTopDensity.y - u_fogBottomTopDensity.x) + u_fogBottomTopDensity.x;
-}
-
-vec2 calculateFog(vec3 position)
-{
-	vec3 fogDelta = u_viewPosition - position;
-    float weatherDistance = length(fogDelta);
-	fogDelta.y *= u_fogYMultiplier;
-	float fogDistance = length(fogDelta);
-	float fogFactor = (fogIntegral(u_viewPosition.y) - fogIntegral(position.y)) / (u_viewPosition.y - position.y);
-    // Keep distance and weather extinction separate through interpolation.
-    // Preserve distance values above one to fully hide triangles beyond the boundary.
-    return vec2(max(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0),
-        fogFactor * u_fogBottomTopDensity.z * weatherDistance);
-}
 
 void main()
 {
@@ -179,15 +134,12 @@ void main()
     v_color.rgb *= calculateLight(a_light0, a_light1, a_light2, a_light3);
 #endif
 	
-	// Fog
-	v_fog = calculateFog(a_position);
+    v_viewOffset = a_position - u_viewPosition;
 	
 	// Position
 	gl_Position = u_viewProjectionMatrix * vec4(a_position.x - u_origin.x, a_position.y, a_position.z - u_origin.y, 1.0);
 
-#ifdef SKY_FOG
     v_skyPosition = gl_Position;
-#endif
 	// Fix gl_Position
 	OPENGL_POSITION_FIX;
 }

@@ -1,78 +1,58 @@
+#include "Shaders/Atmosphere.txt"
 #ifdef HLSL
-
 Texture2D u_texture;
 SamplerState u_samplerState;
+float3 u_worldUp;
 #ifdef ALPHATESTED
 float u_alphaThreshold;
 #endif
-float3 u_fogColor;
-
 void main(
-	in float4 v_color : COLOR,
-	in float2 v_texcoord: TEXCOORD,
-	in float v_fog : FOG,
-	out float4 svTarget: SV_TARGET
+    in float4 v_color : COLOR,
+    in float2 v_texcoord : TEXCOORD,
+    in float3 v_viewPosition : TEXCOORD1,
+    in float4 v_skyPosition : TEXCOORD2,
+    out float4 svTarget : SV_TARGET
 )
 {
-	// Color
-	float4 result = v_color;
-
-	// Texture
-	result *= u_texture.Sample(u_samplerState, v_texcoord);
-	
-	// Alpha threshold
+    float4 result = v_color * u_texture.Sample(u_samplerState, v_texcoord);
 #ifdef ALPHATESTED
-	if (result.a <= u_alphaThreshold)
-		discard;
+    if (result.a <= u_alphaThreshold) { discard; }
 #endif
-
-	// Fog
-	float4 premultipliedFogColor = float4(u_fogColor * result.a, result.a);
-	result = lerp(result, premultipliedFogColor, v_fog);
-	
-	// Return
-	svTarget = result;
+#ifdef OPAQUE_CUTOUT
+    result.rgb /= result.a;
+    result.a = 1.0;
+#endif
+    svTarget = applyAtmosphere(result, v_viewPosition, u_worldUp, v_skyPosition);
 }
-
 #endif
 #ifdef GLSL
-
 // <Sampler Name='u_samplerState' Texture='u_texture' />
-
 #ifdef GL_ES
 precision mediump float;
+uniform highp vec3 u_worldUp;
+varying highp vec3 v_viewPosition;
+varying highp vec4 v_skyPosition;
+#else
+uniform vec3 u_worldUp;
+varying vec3 v_viewPosition;
+varying vec4 v_skyPosition;
 #endif
-
 uniform sampler2D u_texture;
 #ifdef ALPHATESTED
 uniform float u_alphaThreshold;
 #endif
-uniform vec3 u_fogColor;
-
 varying vec4 v_color;
 varying vec2 v_texcoord;
-varying float v_fog;
-
 void main()
 {
-	// Color
-	vec4 result = v_color;
-
-	// Texture
-	result *= texture2D(u_texture, v_texcoord);
-	
-	// Alpha threshold
+    vec4 result = v_color * texture2D(u_texture, v_texcoord);
 #ifdef ALPHATESTED
-	if (result.a <= u_alphaThreshold)
-		discard;
+    if (result.a <= u_alphaThreshold) { discard; }
 #endif
-
-	// Fog
-	vec4 premultipliedFogColor = vec4(u_fogColor * result.a, result.a);
-	result = mix(result, premultipliedFogColor, v_fog);
-
-	// On some devices using gl_FragColor in calculations causes a compile fail (Kindle Fire 1)
-	gl_FragColor = result;
+#ifdef OPAQUE_CUTOUT
+    result.rgb /= result.a;
+    result.a = 1.0;
+#endif
+    gl_FragColor = applyAtmosphere(result, v_viewPosition, u_worldUp, v_skyPosition);
 }
-
 #endif

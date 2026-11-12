@@ -1,0 +1,137 @@
+#ifndef SCNET_ATMOSPHERE
+#define SCNET_ATMOSPHERE
+
+#ifdef GL_ES
+precision highp float;
+#endif
+
+float atmosphereBoundaryOpacity(float distance, float start, float end)
+{
+    return end <= 0.0 ? 1.0 : smoothstep(start, end, distance);
+}
+
+float atmosphereDistanceOpacity(float distance, float start, float density)
+{
+    return clamp((distance - start) * density, 0.0, 1.0);
+}
+
+float atmosphereBoundaryOpacitySquared(float distanceSquared, float start, float end)
+{
+    if (end <= 0.0) { return 1.0; }
+    if (distanceSquared <= start * start) { return 0.0; }
+    if (distanceSquared >= end * end) { return 1.0; }
+    return atmosphereBoundaryOpacity(sqrt(distanceSquared), start, end);
+}
+
+float atmosphereDistanceOpacitySquared(float distanceSquared, float start, float density)
+{
+    if (density <= 0.0 || distanceSquared <= start * start) { return 0.0; }
+    float end = start + 1.0 / density;
+    if (distanceSquared >= end * end) { return 1.0; }
+    return atmosphereDistanceOpacity(sqrt(distanceSquared), start, density);
+}
+
+float atmosphereWeatherIntegral(float y, float bottom, float top)
+{
+    float height = top - bottom;
+    float t = clamp((y - bottom) / height, 0.0, 1.0);
+    return height * t * t * (3.0 - 2.0 * t);
+}
+
+float atmosphereWeatherOpacity(float eyeY, float targetY, float distance, float bottom, float top, float density)
+{
+    float height = top - bottom;
+    if (height <= 0.0 || density <= 0.0) { return 0.0; }
+    float delta = targetY - eyeY;
+    float average;
+    if (abs(delta) < 0.001)
+    {
+        float t = clamp(((eyeY + targetY) * 0.5 - bottom) / height, 0.0, 1.0);
+        average = 6.0 * t * (1.0 - t);
+    }
+    else
+    {
+        average = (atmosphereWeatherIntegral(targetY, bottom, top) -
+            atmosphereWeatherIntegral(eyeY, bottom, top)) / delta;
+    }
+    return clamp(average * density * distance, 0.0, 1.0);
+}
+
+
+#ifdef HLSL
+float3 u_fogColor;
+float u_fogYMultiplier;
+float2 u_hazeStartDensity;
+float3 u_fogBottomTopDensity;
+float2 u_visibilityStartEnd;
+float u_fogColorContribution;
+Texture2D u_skyTexture;
+SamplerState u_skySampler;
+float u_skyFogEnabled;
+
+float4 applyAtmosphere(float4 color, float3 offset, float3 worldUp, float4 skyPosition)
+{
+    float vertical = dot(offset, worldUp);
+    float distanceSquared = dot(offset, offset);
+    float horizontalSquared = max(distanceSquared - vertical * vertical, 0.0);
+    float airSquared = max(distanceSquared +
+        (u_fogYMultiplier * u_fogYMultiplier - 1.0) * vertical * vertical, 0.0);
+    float air = max(atmosphereDistanceOpacitySquared(airSquared, u_hazeStartDensity.x, u_hazeStartDensity.y),
+        atmosphereBoundaryOpacitySquared(horizontalSquared, u_visibilityStartEnd.x, u_visibilityStartEnd.y));
+    float weather = 0.0;
+    if (u_fogBottomTopDensity.z > 0.0)
+    {
+        weather = atmosphereWeatherOpacity(0.0, vertical, sqrt(distanceSquared),
+            u_fogBottomTopDensity.x, u_fogBottomTopDensity.y, u_fogBottomTopDensity.z);
+    }
+    float3 atmosphereColor = u_fogColor;
+    if (u_skyFogEnabled > 0.5 && air > 0.0)
+    {
+        float2 uv = skyPosition.xy / skyPosition.w * float2(0.5, -0.5) + 0.5;
+        atmosphereColor = u_skyTexture.Sample(u_skySampler, uv).rgb;
+    }
+    color.rgb = lerp(color.rgb, u_fogColor * color.a * u_fogColorContribution, weather);
+    color.rgb = lerp(color.rgb, atmosphereColor * color.a * u_fogColorContribution, air);
+    return color;
+}
+#endif
+
+#ifdef GLSL
+// <Sampler Name='u_skySampler' Texture='u_skyTexture' />
+uniform mediump vec3 u_fogColor;
+uniform float u_fogYMultiplier;
+uniform vec2 u_hazeStartDensity;
+uniform vec3 u_fogBottomTopDensity;
+uniform vec2 u_visibilityStartEnd;
+uniform mediump float u_fogColorContribution;
+uniform sampler2D u_skyTexture;
+uniform mediump float u_skyFogEnabled;
+
+mediump vec4 applyAtmosphere(mediump vec4 color, highp vec3 offset, highp vec3 worldUp, highp vec4 skyPosition)
+{
+    float vertical = dot(offset, worldUp);
+    float distanceSquared = dot(offset, offset);
+    float horizontalSquared = max(distanceSquared - vertical * vertical, 0.0);
+    float airSquared = max(distanceSquared +
+        (u_fogYMultiplier * u_fogYMultiplier - 1.0) * vertical * vertical, 0.0);
+    float air = max(atmosphereDistanceOpacitySquared(airSquared, u_hazeStartDensity.x, u_hazeStartDensity.y),
+        atmosphereBoundaryOpacitySquared(horizontalSquared, u_visibilityStartEnd.x, u_visibilityStartEnd.y));
+    float weather = 0.0;
+    if (u_fogBottomTopDensity.z > 0.0)
+    {
+        weather = atmosphereWeatherOpacity(0.0, vertical, sqrt(distanceSquared),
+            u_fogBottomTopDensity.x, u_fogBottomTopDensity.y, u_fogBottomTopDensity.z);
+    }
+    mediump vec3 atmosphereColor = u_fogColor;
+    if (u_skyFogEnabled > 0.5 && air > 0.0)
+    {
+        vec2 uv = skyPosition.xy / skyPosition.w * vec2(0.5, -0.5) + 0.5;
+        atmosphereColor = texture2D(u_skyTexture, uv).rgb;
+    }
+    color.rgb = mix(color.rgb, u_fogColor * color.a * u_fogColorContribution, weather);
+    color.rgb = mix(color.rgb, atmosphereColor * color.a * u_fogColorContribution, air);
+    return color;
+}
+#endif
+
+#endif

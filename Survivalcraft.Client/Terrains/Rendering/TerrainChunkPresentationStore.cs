@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Game.Terrains.Rendering;
 
 /// <summary>Per-client-world ownership of chunk presentation resources.</summary>
@@ -10,6 +12,24 @@ public sealed class TerrainChunkPresentationStore : IDisposable
     private readonly object _sync = new();
 
     private bool _disposed;
+
+    public bool TryGet(TerrainChunk chunk, [NotNullWhen(true)] out TerrainChunkPresentation? presentation)
+    {
+        lock (_sync)
+        {
+            presentation = null;
+            if (_disposed ||
+                chunk.IsDisposed ||
+                !_entries.TryGetValue(chunk, out var entry) ||
+                entry.Generation != chunk.AllocationGeneration)
+            {
+                return false;
+            }
+
+            presentation = entry.Presentation;
+            return true;
+        }
+    }
 
     public TerrainChunkPresentation Get(TerrainChunk chunk) => Get(chunk, chunk.AllocationGeneration);
 

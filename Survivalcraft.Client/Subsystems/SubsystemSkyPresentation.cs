@@ -119,6 +119,8 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
     public float ViewFogTop { get; private set; }
 
+    internal Vector2 ViewVisibilityStartEnd { get; set; } = new(float.MaxValue);
+
     public float ViewHazeStart { get; private set; }
 
     public float ViewHazeDensity { get; private set; }
@@ -224,6 +226,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
         if (drawOrder == _drawOrders[0])
         {
+            ViewVisibilityStartEnd = new Vector2(VisibilityRange * 0.8f, VisibilityRange);
             ViewUnderWaterDepth = 0f;
             ViewUnderMagmaDepth = 0f;
             var viewPosition = camera.ViewPosition;
@@ -466,33 +469,38 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-    //
-    public float FogIntegral(float y)
+    internal ViewAtmosphere CaptureAtmosphere(Vector3 viewPosition)
     {
-        return MathUtils.SmoothStep(ViewFogBottom, ViewFogTop, y) * (ViewFogTop - ViewFogBottom) + ViewFogBottom;
+        return new ViewAtmosphere(
+            new Vector2(ViewHazeStart, ViewHazeDensity),
+            new Vector3(ViewFogBottom - viewPosition.Y, ViewFogTop - viewPosition.Y, ViewFogDensity),
+            VisibilityRangeYMultiplier,
+            ViewVisibilityStartEnd
+        );
+    }
+
+    internal void BindAtmosphere(Shader shader, Camera camera)
+    {
+        var atmosphere = CaptureAtmosphere(camera.ViewPosition);
+        shader.GetParameter("u_fogColor").SetValue(new Vector3(ViewFogColor));
+        shader.GetParameter("u_fogBottomTopDensity").SetValue(atmosphere.WeatherBottomTopDensity);
+        shader.GetParameter("u_hazeStartDensity").SetValue(atmosphere.DistanceStartDensity);
+        shader.GetParameter("u_fogYMultiplier").SetValue(atmosphere.VerticalDistanceScale);
+        shader.GetParameter("u_visibilityStartEnd").SetValue(atmosphere.VisibilityStartEnd);
+        shader.GetParameter("u_fogColorContribution").SetValue(1f);
+        shader.GetParameter("u_skyFogEnabled").SetValue(FogBackground != null ? 1f : 0f);
+        shader.GetParameter("u_skyTexture").SetValue(FogBackground ?? _cloudsTexture);
+        shader.GetParameter("u_skySampler").SetValue(SamplerState.PointClamp);
     }
 
     public float CalculateFog(Vector3 viewPosition, Vector3 position)
     {
-        var vector = viewPosition - position;
-        vector.Y *= VisibilityRangeYMultiplier;
-        var num = vector.Length();
-        var num2 = (FogIntegral(viewPosition.Y) - FogIntegral(position.Y)) / (viewPosition.Y - position.Y);
-        var num3 = MathUtils.Saturate(ViewHazeDensity * (num - ViewHazeStart));
-        var num4 = num2 * ViewFogDensity * Vector3.Distance(viewPosition, position);
-        return 1f - (1f - num3) * (1f - MathUtils.Saturate(num4));
+        return CaptureAtmosphere(viewPosition).GetOpacity(position - viewPosition);
     }
 
     public float CalculateFogNoHaze(Vector3 viewPosition, Vector3 position)
     {
-        var vector = viewPosition - position;
-        var num = vector.Length();
-        return MathUtils.Saturate(
-            (FogIntegral(viewPosition.Y) - FogIntegral(position.Y)) /
-            (viewPosition.Y - position.Y) *
-            ViewFogDensity *
-            num
-        );
+        return CaptureAtmosphere(viewPosition).GetWeatherOpacity(position - viewPosition);
     }
 
     public float CalculateHazeFactor()

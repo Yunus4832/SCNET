@@ -118,18 +118,9 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
             _shader.GetParameter("u_origin").SetValue(v.XZ);
             _shader.GetParameter("u_viewProjectionMatrix").SetValue(value);
             _shader.GetParameter("u_viewPosition").SetValue(camera.ViewPosition);
+            _subsystemSky.BindAtmosphere(_shader, camera);
             _shader.GetParameter("u_texture").SetValue(_subsystemAnimatedTextures.AnimatedBlocksTexture);
             _shader.GetParameter("u_samplerState").SetValue(SamplerState.PointClamp);
-            _shader.GetParameter("u_fogColor").SetValue(new Vector3(_subsystemSky.ViewFogColor));
-            _shader.GetParameter("u_fogBottomTopDensity").SetValue(
-                new Vector3(
-                    _subsystemSky.ViewFogBottom,
-                    _subsystemSky.ViewFogTop,
-                    _subsystemSky.ViewFogDensity
-                )
-            );
-            _shader.GetParameter("u_hazeStartDensity")
-                .SetValue(new Vector2(_subsystemSky.ViewHazeStart, _subsystemSky.ViewHazeDensity));
             _shader.GetParameter("u_alphaThreshold").SetValue(0.5f);
             using var vertexBuffer = new VertexBuffer(TerrainVertex.VertexDeclaration, _vertices.Count);
             using var indexBuffer = new IndexBuffer(IndexFormat.ThirtyTwoBits, _indices.Count);

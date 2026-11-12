@@ -18,24 +18,6 @@ float3 u_diffuseLightColor2;
 float3 u_directionToLight2;
 
 // Fog
-float3 u_worldUp;
-float u_fogYMultiplier;
-float3 u_fogBottomTopDensity;
-float2 u_hazeStartDensity;
-
-float fogIntegral(float y)
-{
-	return smoothstep(u_fogBottomTopDensity.x, u_fogBottomTopDensity.y, y) * (u_fogBottomTopDensity.y - u_fogBottomTopDensity.x) + u_fogBottomTopDensity.x;
-}
-
-float calculateFog(float3 position, int instance)
-{
-	float3 worldPosition = mul(float4(position, 1.0), u_worldMatrix[instance]).xyz;
-	float worldY = dot(worldPosition, u_worldUp);
-	float fogDistance = sqrt((u_fogYMultiplier * u_fogYMultiplier - 1) * (worldY * worldY) + dot(worldPosition, worldPosition));	// Reduce Y component of worldPosition in distance calculation
-	float fogFactor = (fogIntegral(0) - fogIntegral(worldY)) / (0 - worldY);
-	return saturate(saturate(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x)) + fogFactor * u_fogBottomTopDensity.z * fogDistance);
-}
 
 void main(
 	in float3 a_position: POSITION,
@@ -44,7 +26,8 @@ void main(
 	in float a_instance: INSTANCE,
 	out float4 v_color : COLOR,
 	out float2 v_texcoord : TEXCOORD,
-	out float v_fog : FOG,
+    out float3 v_viewPosition : TEXCOORD1,
+    out float4 v_skyPosition : TEXCOORD2,
 	out float4 sv_position: SV_POSITION
 )
 {
@@ -68,10 +51,11 @@ void main(
 	v_color += u_emissionColor;
 	
 	// Fog
-	v_fog = calculateFog(a_position, instance);
+    v_viewPosition = mul(float4(a_position, 1.0), u_worldMatrix[instance]).xyz;
 
 	// Position
 	sv_position = mul(float4(a_position, 1.0), u_worldViewProjectionMatrix[instance]);
+    v_skyPosition = sv_position;
 }
 
 #endif
@@ -101,10 +85,6 @@ uniform vec3 u_diffuseLightColor2;
 uniform vec3 u_directionToLight2;
 
 // Fog
-uniform vec3 u_worldUp;
-uniform float u_fogYMultiplier;
-uniform vec3 u_fogBottomTopDensity;
-uniform vec2 u_hazeStartDensity;
 
 // Inputs and outputs
 attribute vec3 a_position;
@@ -113,21 +93,13 @@ attribute vec2 a_texcoord;
 attribute float a_instance;
 varying vec4 v_color;
 varying vec2 v_texcoord;
-varying float v_fog;
-
-float fogIntegral(float y)
-{
-	return smoothstep(u_fogBottomTopDensity.x, u_fogBottomTopDensity.y, y) * (u_fogBottomTopDensity.y - u_fogBottomTopDensity.x) + u_fogBottomTopDensity.x;
-}
-
-float calculateFog(vec3 position, int instance)
-{
-	vec3 worldPosition = vec3(u_worldMatrix[instance] * vec4(position, 1.0));
-	float worldY = dot(worldPosition, u_worldUp);
-	float fogDistance = sqrt((u_fogYMultiplier * u_fogYMultiplier - 1.0) * (worldY * worldY) + dot(worldPosition, worldPosition));	// Reduce Y component of worldPosition in distance calculation
-	float fogFactor = (fogIntegral(0.0) - fogIntegral(worldY)) / (0.0 - worldY);
-	return clamp(clamp(u_hazeStartDensity.y * (fogDistance - u_hazeStartDensity.x), 0.0, 1.0) + fogFactor * u_fogBottomTopDensity.z * fogDistance, 0.0, 1.0);
-}
+#ifdef GL_ES
+varying highp vec3 v_viewPosition;
+varying highp vec4 v_skyPosition;
+#else
+varying vec3 v_viewPosition;
+varying vec4 v_skyPosition;
+#endif
 
 void main()
 {
@@ -151,10 +123,11 @@ void main()
 	v_color += u_emissionColor;
 
 	// Fog
-	v_fog = calculateFog(a_position, instance);
+    v_viewPosition = (u_worldMatrix[instance] * vec4(a_position, 1.0)).xyz;
 	
 	// Position
 	gl_Position = u_worldViewProjectionMatrix[instance] * vec4(a_position, 1.0);
+    v_skyPosition = gl_Position;
 
 	// Fix gl_Position
 	OPENGL_POSITION_FIX;

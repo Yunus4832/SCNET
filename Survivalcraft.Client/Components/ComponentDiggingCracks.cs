@@ -113,18 +113,8 @@ public class ComponentDiggingCracks : Component, IDrawable
             _shader.GetParameter("u_origin").SetValue(v.XZ);
             _shader.GetParameter("u_viewProjectionMatrix").SetValue(value);
             _shader.GetParameter("u_viewPosition").SetValue(camera.ViewPosition);
+            _subsystemSky.BindAtmosphere(_shader, camera);
             _shader.GetParameter("u_samplerState").SetValue(SamplerState.PointWrap);
-            _shader.GetParameter("u_fogColor").SetValue(new Vector3(_subsystemSky.ViewFogColor));
-            _shader.GetParameter("u_fogYMultiplier").SetValue(_subsystemSky.VisibilityRangeYMultiplier);
-            _shader.GetParameter("u_fogBottomTopDensity").SetValue(
-                new Vector3(
-                    _subsystemSky.ViewFogBottom,
-                    _subsystemSky.ViewFogTop,
-                    _subsystemSky.ViewFogDensity
-                )
-            );
-            _shader.GetParameter("u_hazeStartDensity")
-                .SetValue(new Vector2(_subsystemSky.ViewHazeStart, _subsystemSky.ViewHazeDensity));
             _shader.GetParameter("u_alphaThreshold").SetValue(0.5f);
             foreach (var buffer in _buffers)
             {

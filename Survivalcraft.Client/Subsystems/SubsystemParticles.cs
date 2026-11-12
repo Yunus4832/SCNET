@@ -43,22 +43,15 @@ public class SubsystemParticles : Subsystem, IDrawable, IUpdateable
         shader.GetParameter("u_origin").SetValue(Vector2.Zero);
         shader.GetParameter("u_viewProjectionMatrix").SetValue(camera.ViewProjectionMatrix);
         shader.GetParameter("u_viewPosition").SetValue(camera.ViewPosition);
-        shader.GetParameter("u_fogYMultiplier").SetValue(SubsystemSkyPresentation.VisibilityRangeYMultiplier);
-        shader.GetParameter("u_fogColor").SetValue(new Vector3(SubsystemSkyPresentation.ViewFogColor));
-        shader.GetParameter("u_hazeStartDensity")
-            .SetValue(new Vector2(SubsystemSkyPresentation.ViewHazeStart, SubsystemSkyPresentation.ViewHazeDensity));
-        shader.GetParameter("u_fogBottomTopDensity").SetValue(
-            new Vector3(
-                SubsystemSkyPresentation.ViewFogBottom,
-                SubsystemSkyPresentation.ViewFogTop,
-                SubsystemSkyPresentation.ViewFogDensity
-            )
-        );
+        SubsystemSkyPresentation.BindAtmosphere(shader, camera);
         shader.GetParameter("u_alphaThreshold").SetValue(0f);
         var parameter = shader.GetParameter("u_texture");
         var parameter2 = shader.GetParameter("u_samplerState");
         foreach (var texturedBatch in PrimitivesRenderer.TexturedBatches)
         {
+            shader.GetParameter("u_fogColorContribution").SetValue(
+                ReferenceEquals(texturedBatch.BlendState, BlendState.PremultipliedAdditive) ? 0f : 1f
+            );
             Display.DepthStencilState = texturedBatch.DepthStencilState;
             Display.RasterizerState = texturedBatch.RasterizerState;
             Display.BlendState = texturedBatch.BlendState;

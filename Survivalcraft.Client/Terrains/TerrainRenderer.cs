@@ -14,6 +14,14 @@ public class TerrainRenderer : IDisposable
 
     private Shader _transparentShader;
 
+    private Shader _waterDepthShader;
+
+    private readonly bool _depthFramebufferFetch;
+
+    private readonly IComparer<TerrainChunk> _waterComparer;
+
+    private Vector2 _waterSortCenter;
+
     private static readonly DynamicArray<int> _tmpIndices = [];
 
     public static bool DrawChunksMap;
@@ -25,6 +33,16 @@ public class TerrainRenderer : IDisposable
     public static int ChunkTrianglesDrawn;
 
     private readonly DynamicArray<TerrainChunk> _chunksToDraw = [];
+
+    private readonly Dictionary<int, DepthBufferSnapshot> _depthSnapshots = [];
+
+    private readonly HashSet<Point2> _drawableChunks = [];
+
+    private readonly Dictionary<Camera, TerrainVisibilityBoundary> _visibilityBoundaries = [];
+
+    private readonly Func<Point2, bool> _isDrawable;
+
+    private Vector2 _visibilityStartEnd;
 
     private readonly TerrainUploadScheduler _uploads = new();
 
@@ -59,6 +77,9 @@ public class TerrainRenderer : IDisposable
     public TerrainRenderer(SubsystemTerrainPresentation presentation)
     {
         _presentation = presentation;
+        _isDrawable = _drawableChunks.Contains;
+        _depthFramebufferFetch = Display.SupportsDepthFramebufferFetch;
+        _waterComparer = Comparer<TerrainChunk>.Create(CompareWaterChunks);
         _subsystemTerrain = presentation.TerrainSubsystem;
         _subsystemSky = _subsystemTerrain.Project.FindSubsystem<SubsystemSkyPresentation>(true)!;
         _subsystemAnimatedTextures = presentation.SubsystemAnimatedTextures;
@@ -67,23 +88,26 @@ public class TerrainRenderer : IDisposable
             _opaqueShader = new Shader(
                 ShaderCodeManager.GetFast("Shaders/Opaque.vsh"),
                 ShaderCodeManager.GetFast("Shaders/Opaque.psh"),
-                new ShaderMacro("Opaque"),
-                new ShaderMacro("TERRAIN_LIGHT_RESPONSE"),
-                new ShaderMacro("SKY_FOG")
+                new ShaderMacro("TERRAIN_LIGHT_RESPONSE")
             );
             _alphaTestedShader = new Shader(
                 ShaderCodeManager.GetFast("Shaders/AlphaTested.vsh"),
                 ShaderCodeManager.GetFast("Shaders/AlphaTested.psh"),
                 new ShaderMacro("ALPHATESTED"),
-                new ShaderMacro("TERRAIN_LIGHT_RESPONSE"),
-                new ShaderMacro("SKY_FOG")
+                new ShaderMacro("OPAQUE_CUTOUT"),
+                new ShaderMacro("TERRAIN_LIGHT_RESPONSE")
             );
+            var waterMacros = new List<ShaderMacro> { new("TERRAIN_LIGHT_RESPONSE") };
+            if (_depthFramebufferFetch) { waterMacros.Add(new ShaderMacro("FRAMEBUFFER_DEPTH_FETCH")); }
+
             _transparentShader = new Shader(
                 ShaderCodeManager.GetFast("Shaders/Transparent.vsh"),
                 ShaderCodeManager.GetFast("Shaders/Transparent.psh"),
-                new ShaderMacro("TERRAIN_LIGHT_RESPONSE"),
-                new ShaderMacro("SKY_FOG"),
-                new ShaderMacro("Transparent")
+                waterMacros.ToArray()
+            );
+            _waterDepthShader = new Shader(
+                ShaderCodeManager.GetFast("Shaders/Transparent.vsh"),
+                ShaderCodeManager.GetFast("Shaders/DepthOnly.psh")
             );
             Display.DeviceReset += DisplayDeviceReset;
         }
@@ -120,9 +144,14 @@ public class TerrainRenderer : IDisposable
         Display.DeviceReset -= DisplayDeviceReset;
         _uploads.Clear();
         _uploadCandidates.Clear();
+        _drawableChunks.Clear();
+        _visibilityBoundaries.Clear();
+        foreach (var depth in _depthSnapshots.Values) { depth.Dispose(); }
+
+        _depthSnapshots.Clear();
         _uploadViews.Clear();
         var errors = new List<Exception>();
-        foreach (var shader in new[] { _opaqueShader, _alphaTestedShader, _transparentShader })
+        foreach (var shader in new[] { _opaqueShader, _alphaTestedShader, _transparentShader, _waterDepthShader })
         {
             try { shader?.Dispose(); }
             catch (Exception error) { errors.Add(error); }
@@ -131,24 +160,8 @@ public class TerrainRenderer : IDisposable
         _opaqueShader = null!;
         _alphaTestedShader = null!;
         _transparentShader = null!;
+        _waterDepthShader = null!;
         if (errors.Count > 0) { throw new AggregateException("Could not dispose terrain shaders.", errors); }
-    }
-
-    public void CompleteInitialChunkFadeIn(int gameWidgetIndex, Vector2 center, float distance)
-    {
-        var distanceSquared = MathUtils.Sqr(distance);
-        foreach (var chunk in _subsystemTerrain.Terrain.AllocatedChunks)
-        {
-            if (ClientChunkDerivationPipeline.CanDraw(
-                    _subsystemTerrain.ContentRole,
-                    chunk,
-                    _presentation.ChunkPresentations.Get(chunk)
-                ) &&
-                Vector2.DistanceSquared(center, chunk.Center) <= distanceSquared)
-            {
-                _presentation.ChunkPresentations.Get(chunk).HazeEnds[gameWidgetIndex] = float.MaxValue;
-            }
-        }
     }
 
     private void UploadReadyGeometry(Camera camera, TerrainChunk[] chunks)
@@ -231,58 +244,36 @@ public class TerrainRenderer : IDisposable
         var xZ = camera.ViewPosition.XZ;
         var num = MathUtils.Sqr(_subsystemSky.VisibilityRange);
         var viewFrustum = camera.ViewFrustum;
-        var gameWidgetIndex = camera.GameWidget.GameWidgetIndex;
         _chunksToDraw.Clear();
+        _drawableChunks.Clear();
         var allocatedChunks = _subsystemTerrain.Terrain.AllocatedChunks;
         UploadReadyGeometry(camera, allocatedChunks);
-        foreach (var terrainChunk in allocatedChunks)
+        foreach (var chunk in allocatedChunks)
         {
-            _presentation.ChunkPresentations.Get(terrainChunk).HazeEnds.TryAdd(gameWidgetIndex, 0);
-            _presentation.ChunkPresentations.Get(terrainChunk).DrawDistanceSquared =
-                Vector2.DistanceSquared(xZ, terrainChunk.Center);
-            if (NetworkTerrainPolicy.GetChunkDistanceSquared(terrainChunk.Center, xZ) <= num)
+            if (!_presentation.ChunkPresentations.TryGet(chunk, out var presentation) ||
+                !ClientChunkDerivationPipeline.CanDraw(_subsystemTerrain.ContentRole, chunk, presentation))
             {
-                if (viewFrustum.Intersection(terrainChunk.BoundingBox))
-                {
-                    if (ClientChunkDerivationPipeline.CanDraw(
-                            _subsystemTerrain.ContentRole,
-                            terrainChunk,
-                            _presentation.ChunkPresentations.Get(terrainChunk)
-                        ))
-                    {
-                        _chunksToDraw.Add(terrainChunk);
-                    }
-                }
-
-                if (!ClientChunkDerivationPipeline.CanDraw(
-                        _subsystemTerrain.ContentRole,
-                        terrainChunk,
-                        _presentation.ChunkPresentations.Get(terrainChunk)
-                    ))
-                {
-                    continue;
-                }
-
-                var num2 = _presentation.ChunkPresentations.Get(terrainChunk).HazeEnds[gameWidgetIndex];
-                if (num2.CloseTo(3.40282347E+38f))
-                {
-                    continue;
-                }
-
-                if (num2 == 0f)
-                {
-                    StartChunkFadeIn(camera, terrainChunk);
-                }
-                else
-                {
-                    RunChunkFadeIn(camera, terrainChunk);
-                }
+                continue;
             }
-            else
+
+            _drawableChunks.Add(chunk.Coords);
+            presentation.DrawDistanceSquared = Vector2.DistanceSquared(xZ, chunk.Center);
+            if (NetworkTerrainPolicy.GetChunkDistanceSquared(chunk.Center, xZ) <= num &&
+                viewFrustum.Intersection(chunk.BoundingBox))
             {
-                _presentation.ChunkPresentations.Get(terrainChunk).HazeEnds[gameWidgetIndex] = 0f;
+                _chunksToDraw.Add(chunk);
             }
         }
+
+        if (!_visibilityBoundaries.TryGetValue(camera, out var boundary))
+        {
+            boundary = new TerrainVisibilityBoundary();
+            _visibilityBoundaries.Add(camera, boundary);
+        }
+
+        boundary.Update(xZ, _subsystemSky.VisibilityRange, Time.FrameDuration, _isDrawable);
+        _visibilityStartEnd = new Vector2(boundary.DisplayDistance * 0.8f, boundary.DisplayDistance);
+        _subsystemSky.ViewVisibilityStartEnd = _visibilityStartEnd;
 
         ChunksDrawn = 0;
         ChunkDrawCalls = 0;
@@ -291,7 +282,6 @@ public class TerrainRenderer : IDisposable
 
     public void DrawOpaque(Camera camera)
     {
-        var gameWidgetIndex = camera.GameWidget.GameWidgetIndex;
         var viewPosition = camera.ViewPosition;
         var v = new Vector3(MathUtils.Floor(viewPosition.X), 0f, MathUtils.Floor(viewPosition.Z));
         var value = Matrix.CreateTranslation(v - viewPosition) *
@@ -309,27 +299,10 @@ public class TerrainRenderer : IDisposable
                     ? _samplerStateMips
                     : _samplerState
             );
-        _opaqueShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
-        _opaqueShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
-        BindEnvironment(_opaqueShader);
-        _opaqueShader.GetParameter("u_fogBottomTopDensity").SetValue(
-            new Vector3(
-                _subsystemSky.ViewFogBottom,
-                _subsystemSky.ViewFogTop,
-                _subsystemSky.ViewFogDensity
-            )
-        );
-        var parameter = _opaqueShader.GetParameter("u_hazeStartDensity");
-        var point = Terrain.ToChunk(camera.ViewPosition.XZ);
-        _subsystemTerrain.Terrain.GetChunkAtCoords(point.X, point.Y);
+        LightingManager.BindTerrainEnvironment(_opaqueShader, _subsystemTerrain);
+        _subsystemSky.BindAtmosphere(_opaqueShader, camera);
         foreach (var terrainChunk in _chunksToDraw)
         {
-            var num = MathUtils.Min(
-                _presentation.ChunkPresentations.Get(terrainChunk).HazeEnds[gameWidgetIndex],
-                _subsystemSky.ViewHazeStart + 1f / _subsystemSky.ViewHazeDensity
-            );
-            var num2 = MathUtils.Min(_subsystemSky.ViewHazeStart, num - 1f);
-            parameter.SetValue(new Vector2(num2, 1f / (num - num2)));
             var num3 = 16;
             if (viewPosition.Z > terrainChunk.BoundingBox.Min.Z)
             {
@@ -358,7 +331,6 @@ public class TerrainRenderer : IDisposable
 
     public void DrawAlphaTested(Camera camera)
     {
-        var gameWidgetIndex = camera.GameWidget.GameWidgetIndex;
         var viewPosition = camera.ViewPosition;
         var v = new Vector3(MathUtils.Floor(viewPosition.X), 0f, MathUtils.Floor(viewPosition.Z));
         var value = Matrix.CreateTranslation(v - viewPosition) *
@@ -376,26 +348,11 @@ public class TerrainRenderer : IDisposable
                     ? _samplerStateMips
                     : _samplerState
             );
-        _alphaTestedShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
-        _alphaTestedShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
-        BindEnvironment(_alphaTestedShader);
-        _alphaTestedShader.GetParameter("u_fogBottomTopDensity").SetValue(
-            new Vector3(
-                _subsystemSky.ViewFogBottom,
-                _subsystemSky.ViewFogTop,
-                _subsystemSky.ViewFogDensity
-            )
-        );
+        LightingManager.BindTerrainEnvironment(_alphaTestedShader, _subsystemTerrain);
+        _subsystemSky.BindAtmosphere(_alphaTestedShader, camera);
         _alphaTestedShader.GetParameter("u_alphaThreshold").SetValue(0.5f);
-        var parameter = _alphaTestedShader.GetParameter("u_hazeStartDensity");
         foreach (var terrainChunk in _chunksToDraw)
         {
-            var num = MathUtils.Min(
-                _presentation.ChunkPresentations.Get(terrainChunk).HazeEnds[gameWidgetIndex],
-                _subsystemSky.ViewHazeStart + 1f / _subsystemSky.ViewHazeDensity
-            );
-            var num2 = MathUtils.Min(_subsystemSky.ViewHazeStart, num - 1f);
-            parameter.SetValue(new Vector2(num2, 1f / (num - num2)));
             const int subsetsMask = 32;
             DrawTerrainChunkGeometrySubsets(_alphaTestedShader, terrainChunk, subsetsMask);
         }
@@ -403,14 +360,49 @@ public class TerrainRenderer : IDisposable
 
     public void DrawTransparent(Camera camera)
     {
-        var gameWidgetIndex = camera.GameWidget.GameWidgetIndex;
+        if (!HasWaterGeometry()) { return; }
+
+        if (!_depthFramebufferFetch)
+        {
+            var viewport = Display.Viewport;
+            var view = camera.GameWidget.GameWidgetIndex;
+            var format = Display.RenderTarget?.DepthFormat ?? DepthFormat.Depth24Stencil8;
+            if (!_depthSnapshots.TryGetValue(view, out var depth) ||
+                depth.Texture.Width != viewport.Width ||
+                depth.Texture.Height != viewport.Height ||
+                depth.Format != format)
+            {
+                _depthSnapshots.Remove(view);
+                depth?.Dispose();
+                depth = new DepthBufferSnapshot(viewport.Width, viewport.Height, format);
+                _depthSnapshots[view] = depth;
+            }
+
+            depth.Capture();
+            _transparentShader.GetParameter("u_sceneDepth").SetValue(depth.Texture);
+            _transparentShader.GetParameter("u_sceneDepthSampler").SetValue(SamplerState.PointClamp);
+            _transparentShader.GetParameter("u_depthUvScale").SetValue(
+                new Vector2(0.5f, Display.RenderTarget == null ? 0.5f : -0.5f)
+            );
+        }
+
+        var projection = camera.ProjectionMatrix;
+        _transparentShader.GetParameter("u_depthProjection").SetValue(
+            new Vector4(projection.M33, projection.M43, projection.M34, projection.M44)
+        );
+        _transparentShader.GetParameter("u_viewDirection").SetValue(camera.ViewDirection);
+        _transparentShader.GetParameter("u_depthScaleBias").SetValue(
+            Display.UseReducedZRange ? new Vector2(2f, -1f) : new Vector2(1f, 0f)
+        );
+        _transparentShader.GetParameter("u_underWater").SetValue(_subsystemSky.ViewUnderWaterDepth > 0f ? 1f : 0f);
+
         var viewPosition = camera.ViewPosition;
         var v = new Vector3(MathUtils.Floor(viewPosition.X), 0f, MathUtils.Floor(viewPosition.Z));
         var value = Matrix.CreateTranslation(v - viewPosition) *
                     camera.ViewMatrix.OrientationMatrix *
                     camera.ProjectionMatrix;
         Display.BlendState = BlendState.AlphaBlend;
-        Display.DepthStencilState = DepthStencilState.Default;
+        Display.DepthStencilState = DepthStencilState.DepthRead;
         Display.RasterizerState = _subsystemSky.ViewUnderWaterDepth > 0f
             ? RasterizerState.CullClockwiseScissor
             : RasterizerState.CullCounterClockwiseScissor;
@@ -423,37 +415,45 @@ public class TerrainRenderer : IDisposable
                     ? _samplerStateMips
                     : _samplerState
             );
-        _transparentShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
-        _transparentShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
-        BindEnvironment(_transparentShader);
-        _transparentShader.GetParameter("u_fogBottomTopDensity").SetValue(
-            new Vector3(
-                _subsystemSky.ViewFogBottom,
-                _subsystemSky.ViewFogTop,
-                _subsystemSky.ViewFogDensity
-            )
-        );
-        var parameter = _transparentShader.GetParameter("u_hazeStartDensity");
+        LightingManager.BindTerrainEnvironment(_transparentShader, _subsystemTerrain);
+        _subsystemSky.BindAtmosphere(_transparentShader, camera);
+        _waterSortCenter = camera.ViewPosition.XZ;
+        Array.Sort(_chunksToDraw.Array, 0, _chunksToDraw.Count, _waterComparer);
         foreach (var terrainChunk in _chunksToDraw)
         {
-            var num = MathUtils.Min(
-                _presentation.ChunkPresentations.Get(terrainChunk).HazeEnds[gameWidgetIndex],
-                _subsystemSky.ViewHazeStart + 1f / _subsystemSky.ViewHazeDensity
-            );
-            var num2 = MathUtils.Min(_subsystemSky.ViewHazeStart, num - 1f);
-            parameter.SetValue(new Vector2(num2, 1f / (num - num2)));
             const int subsetsMask = 64;
             DrawTerrainChunkGeometrySubsets(_transparentShader, terrainChunk, subsetsMask);
         }
+
+        Display.DepthStencilState = DepthStencilState.Default;
+        Display.BlendState = BlendState.DepthOnly;
+        _waterDepthShader.GetParameter("u_origin").SetValue(v.XZ);
+        _waterDepthShader.GetParameter("u_viewProjectionMatrix").SetValue(value);
+        foreach (var chunk in _chunksToDraw)
+        {
+            DrawTerrainChunkGeometrySubsets(_waterDepthShader, chunk, 64, false);
+        }
+
+        Display.BlendState = BlendState.AlphaBlend;
     }
 
-    private void BindEnvironment(Shader shader)
+    private int CompareWaterChunks(TerrainChunk first, TerrainChunk second)
     {
-        LightingManager.BindTerrainEnvironment(shader, _subsystemTerrain);
-        var background = _subsystemSky.FogBackground;
-        shader.GetParameter("u_skyFogEnabled").SetValue(background != null ? 1f : 0f);
-        shader.GetParameter("u_skyTexture").SetValue(background ?? _subsystemAnimatedTextures.AnimatedBlocksTexture);
-        shader.GetParameter("u_skySampler").SetValue(SamplerState.PointClamp);
+        return Vector2.DistanceSquared(_waterSortCenter, second.Center)
+            .CompareTo(Vector2.DistanceSquared(_waterSortCenter, first.Center));
+    }
+
+    private bool HasWaterGeometry()
+    {
+        foreach (var chunk in _chunksToDraw)
+        {
+            foreach (var buffer in _presentation.ChunkPresentations.Get(chunk).Buffers)
+            {
+                if (buffer.SubsetIndexBufferEnds[6] > buffer.SubsetIndexBufferStarts[6]) { return true; }
+            }
+        }
+
+        return false;
     }
 
     public void DisplayDeviceReset()
@@ -649,27 +649,6 @@ public class TerrainRenderer : IDisposable
                     num = 2147483647;
                 }
             }
-        }
-    }
-
-    private void StartChunkFadeIn(Camera camera, TerrainChunk chunk)
-    {
-        var viewPosition = camera.ViewPosition;
-        // Start fully hidden, including when the nearest point lies on an edge rather than a corner.
-        var nearest = MathF.Sqrt(NetworkTerrainPolicy.GetChunkDistanceSquared(chunk.Center, viewPosition.XZ));
-        _presentation.ChunkPresentations.Get(chunk).HazeEnds[camera.GameWidget.GameWidgetIndex] =
-            MathUtils.Max(nearest - 0.01f, 0.001f);
-    }
-
-    private void RunChunkFadeIn(Camera camera, TerrainChunk chunk)
-    {
-        _presentation.ChunkPresentations.Get(chunk).HazeEnds[camera.GameWidget.GameWidgetIndex] +=
-            32f * Time.FrameDuration;
-        if (_presentation.ChunkPresentations.Get(chunk).HazeEnds[camera.GameWidget.GameWidgetIndex] >=
-            _subsystemSky.VisibilityRange)
-        {
-            _presentation.ChunkPresentations.Get(chunk).HazeEnds[camera.GameWidget.GameWidgetIndex] =
-                3.40282347E+38f;
         }
     }
 

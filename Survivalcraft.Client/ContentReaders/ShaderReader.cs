@@ -20,9 +20,17 @@ public class ShaderReader : IContentReader
             shaderMacros = [];
         }
 
+        using var vertexReader = new StreamReader(contents[0].Duplicate());
+        using var pixelReader = new StreamReader(contents[1].Duplicate());
         return new Shader(
-            new StreamReader(contents[0].Duplicate()).ReadToEnd(),
-            new StreamReader(contents[1].Duplicate()).ReadToEnd(),
+            ShaderCodeManager.ExpandIncludes(
+                vertexReader.ReadToEnd(),
+                ShaderCodeManager.ReadSource
+            ),
+            ShaderCodeManager.ExpandIncludes(
+                pixelReader.ReadToEnd(),
+                ShaderCodeManager.ReadSource
+            ),
             shaderMacros
         );
     }

@@ -11,6 +11,8 @@ public class SubsystemShadows : Subsystem, IDrawable
 
     private TexturedBatch3D _batch = null!;
 
+    private SubsystemSkyPresentation _subsystemSky = null!;
+
     private PrimitivesRenderer3D PrimitivesRenderer3D => field ??= new();
 
     public SubsystemTerrain SubsystemTerrain = null!;
@@ -47,6 +49,7 @@ public class SubsystemShadows : Subsystem, IDrawable
 
         var num2 = MathUtils.Sqrt(num);
         var num3 = MathUtils.Saturate(4f * (1f - num2 / 32f));
+        num3 *= 1f - _subsystemSky.CalculateFog(camera.ViewPosition, shadowPosition);
         var num4 = shadowDiameter / 2f;
         var num5 = Terrain.ToCell(shadowPosition.X - num4);
         var num6 = Terrain.ToCell(shadowPosition.Z - num4);
@@ -119,6 +122,7 @@ public class SubsystemShadows : Subsystem, IDrawable
             return;
         }
 
+        _subsystemSky = Project.FindSubsystem<SubsystemSkyPresentation>(true)!;
         _batch = PrimitivesRenderer3D.TexturedBatch(
             ContentManager.Get<Texture2D>("Textures/Shadow"),
             false,

@@ -237,14 +237,9 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
 
         modelShader.LightDirection1 = -Vector3.TransformNormal(LightingManager.DirectionToLight1, camera.ViewMatrix);
         modelShader.LightDirection2 = -Vector3.TransformNormal(LightingManager.DirectionToLight2, camera.ViewMatrix);
-        modelShader.FogColor = new Vector3(_subsystemSky.ViewFogColor);
-        modelShader.FogBottomTopDensity = new Vector3(
-            _subsystemSky.ViewFogBottom - camera.ViewPosition.Y,
-            _subsystemSky.ViewFogTop - camera.ViewPosition.Y,
-            _subsystemSky.ViewFogDensity
-        );
-        modelShader.HazeStartDensity = new Vector2(_subsystemSky.ViewHazeStart, _subsystemSky.ViewHazeDensity);
-        modelShader.FogYMultiplier = _subsystemSky.VisibilityRangeYMultiplier;
+
+
+        _subsystemSky.BindAtmosphere(modelShader, camera);
         modelShader.WorldUp = Vector3.TransformNormal(Vector3.UnitY, camera.ViewMatrix);
         modelShader.Transforms.View = Matrix.Identity;
         modelShader.Transforms.Projection = camera.ProjectionMatrix;

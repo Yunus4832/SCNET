@@ -17,10 +17,6 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
 
     private PrimitivesRenderer3D PrimitivesRenderer3D => field ??= new PrimitivesRenderer3D();
 
-    private Shader _shader = null!;
-
-    private SubsystemAnimatedTextures _subsystemAnimatedTextures = null!;
-
     private SubsystemSkyPresentation _subsystemSky = null!;
 
     private SubsystemTerrain _subsystemTerrain = null!;
@@ -96,14 +92,8 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
-        _subsystemAnimatedTextures = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSkyPresentation>(true)!;
         _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
-        _shader = new Shader(
-            ContentManager.Get<string>("Shaders/Highlight", ".vsh"),
-            ContentManager.Get<string>("Shaders/Highlight", ".psh"),
-            new ShaderMacro("ShadowShader")
-        );
     }
 
     public void DrawRayHighlight(Camera camera)

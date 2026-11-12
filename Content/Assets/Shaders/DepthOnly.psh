@@ -1,0 +1,15 @@
+#ifdef HLSL
+void main(out float4 svTarget : SV_TARGET)
+{
+    svTarget = float4(0.0, 0.0, 0.0, 0.0);
+}
+#endif
+#ifdef GLSL
+#ifdef GL_ES
+precision mediump float;
+#endif
+void main()
+{
+    gl_FragColor = vec4(0.0);
+}
+#endif

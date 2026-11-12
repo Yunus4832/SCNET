@@ -20,14 +20,6 @@ public class ModelShader : Shader
 
     private ShaderParameter _emissionColorParameter = null!;
 
-    private ShaderParameter _fogBottomTopDensityParameter = null!;
-
-    private ShaderParameter _fogColorParameter = null!;
-
-    private ShaderParameter _fogYMultiplierParameter = null!;
-
-    private ShaderParameter _hazeStartDensityParameter = null!;
-
     private int _instancesCount;
 
     private ShaderParameter _materialColorParameter = null!;
@@ -98,15 +90,7 @@ public class ModelShader : Shader
 
     public Vector3 LightDirection2 { set => _directionToLight2Parameter.SetValue(-value); }
 
-    public Vector3 FogColor { set => _fogColorParameter.SetValue(value); }
-
     //new
-    public Vector3 FogBottomTopDensity { set => _fogBottomTopDensityParameter.SetValue(value); }
-
-    public Vector2 HazeStartDensity { set => _hazeStartDensityParameter.SetValue(value); }
-
-    public float FogYMultiplier { set => _fogYMultiplierParameter.SetValue(value); }
-
     public Vector3 WorldUp { set => _worldUpParameter.SetValue(value); }
 
     public int InstancesCount
@@ -137,10 +121,6 @@ public class ModelShader : Shader
         _directionToLight1Parameter = GetParameter("u_directionToLight1");
         _diffuseLightColor2Parameter = GetParameter("u_diffuseLightColor2");
         _directionToLight2Parameter = GetParameter("u_directionToLight2");
-        _fogColorParameter = GetParameter("u_fogColor");
-        _fogBottomTopDensityParameter = GetParameter("u_fogBottomTopDensity");
-        _hazeStartDensityParameter = GetParameter("u_hazeStartDensity");
-        _fogYMultiplierParameter = GetParameter("u_fogYMultiplier");
         _worldUpParameter = GetParameter("u_worldUp");
     }
 
@@ -169,6 +149,7 @@ public class ModelShader : Shader
         if (useAlphaThreshold)
         {
             list.Add(new ShaderMacro("ALPHATESTED"));
+            list.Add(new ShaderMacro("OPAQUE_CUTOUT"));
         }
 
         list.Add(new ShaderMacro("MAX_INSTANCES_COUNT", maxInstancesCount.ToString(CultureInfo.InvariantCulture)));

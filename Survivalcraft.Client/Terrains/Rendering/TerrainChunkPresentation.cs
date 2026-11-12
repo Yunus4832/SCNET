@@ -28,8 +28,6 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     public TerrainChunkGeometry Geometry => _geometry ??= new TerrainChunkGeometry();
 
-    public readonly Dictionary<int, float> HazeEnds = new();
-
     public bool GeometryUploaded;
 
     public long ClientGeometryContentVersion => Volatile.Read(ref _completedMesh)?.ContentVersion ?? 0;

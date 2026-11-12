@@ -1,120 +1,51 @@
-using System.Text.RegularExpressions;
-
-using Game.Application;
-using Game.Platforms;
+using System.Text;
 
 namespace Game.Managers;
 
-public class ShaderCodeManager
+public static class ShaderCodeManager
 {
-    public static string GetFast(string fileName)
-    {
-        var shaderText = string.Empty;
-        var parameters = fileName.Split('.');
-        if (parameters.Length > 1)
-        {
-            shaderText = ContentManager.Get<string>(parameters[0], "." + parameters[1]);
-        }
+    public static string GetFast(string fileName) => ExpandIncludes(ReadSource(fileName), ReadSource);
 
-        return shaderText;
+    internal static string ExpandIncludes(string source, Func<string, string> readSource)
+    {
+        return ExpandIncludes(source, readSource, new HashSet<string>(StringComparer.Ordinal));
     }
 
-    public static string Get(string fileName)
+    internal static string ReadSource(string fileName)
     {
-        var shaderText = string.Empty;
-        shaderText = GetIncludeText(shaderText, fileName, false);
-        return shaderText;
+        var extension = fileName.LastIndexOf('.');
+        if (extension <= 0) { throw new InvalidDataException($"Shader source has no extension: {fileName}"); }
+
+        return ContentManager.Get<string>(fileName[..extension], fileName[extension..]);
     }
 
-    public static string GetExternal(string fileName)
+    private static string ExpandIncludes(string source, Func<string, string> readSource, HashSet<string> active)
     {
-        var shaderText = string.Empty;
-        shaderText = GetIncludeText(shaderText, fileName, true);
-        return shaderText;
-    }
-
-    private static string GetIncludeText(string shaderText, string includedFileName, bool external)
-    {
-        var includeText = string.Empty;
-        try
+        var result = new StringBuilder();
+        using var reader = new StringReader(source);
+        while (reader.ReadLine() is { } line)
         {
-            string shaderTextTemp;
-            if (external)
+            var directive = line.Trim();
+            if (!directive.StartsWith("#include", StringComparison.Ordinal))
             {
-                var stream = Storage.OpenFile(
-                    Storage.CombinePaths(ClientApplication.Paths.External, includedFileName),
-                    OpenFileMode.Read
-                );
-                var streamReader = new StreamReader(stream);
-                shaderTextTemp = streamReader.ReadToEnd();
-            }
-            else
-            {
-                if (includedFileName.Contains(".txt"))
-                {
-                    includedFileName = includedFileName.Split(['.'])[0];
-                    shaderTextTemp = ContentManager.Get<string>(includedFileName);
-                }
-                else
-                {
-                    shaderTextTemp = GetFast(includedFileName);
-                }
+                result.Append(line);
+                result.Append('\n');
+                continue;
             }
 
-            if (shaderTextTemp == string.Empty)
+            var argument = directive[8..].Trim();
+            if (argument.Length < 3 || argument[0] != '"' || argument[^1] != '"')
             {
-                return string.Empty;
+                throw new InvalidDataException($"Invalid shader include: {line}");
             }
 
-            shaderTextTemp = shaderTextTemp.Replace("\n", "$");
-            var lines = shaderTextTemp.Split(['$'], StringSplitOptions.RemoveEmptyEntries);
-            for (var l = 0; l < lines.Length; l++)
-            {
-                lines[l] = lines[l].Trim();
-                if (lines[l].StartsWith("//"))
-                {
-                    var text = lines[l][2..].TrimStart();
-                    if (text.StartsWith('<') && text.EndsWith("/>"))
-                    {
-                        includeText += lines[l] + "\n";
-                        continue;
-                    }
-                }
+            var name = argument[1..^1];
+            if (!active.Add(name)) { throw new InvalidDataException($"Cyclic shader include: {name}"); }
 
-                var arline = lines[l].Replace("//", "$").Split(['$']);
-                if (arline.Length > 0)
-                {
-                    lines[l] = arline[0];
-                }
-
-                if (lines[l].StartsWith("#include"))
-                {
-                    var regex = new Regex("\"[^\"]*\"");
-                    var fileName = regex.Match(lines[l]).Value.Replace("\"", "");
-                    includeText += GetIncludeText(shaderText, fileName, external);
-                }
-                else
-                {
-                    if (ClientPlatform.Kind is Platform.Android)
-                    {
-                        includeText += lines[l] + "\n";
-                    }
-
-                    if (ClientPlatform.Kind is Platform.Desktop)
-                    {
-                        includeText += lines[l].Replace("highp", "").Replace("lowp", "").Replace("mediump", "") + "\n";
-                        includeText += lines[l] + "\n";
-                    }
-                }
-            }
-
-            shaderText += includeText;
-        }
-        catch
-        {
-            // ignored
+            try { result.Append(ExpandIncludes(readSource(name), readSource, active)); }
+            finally { active.Remove(name); }
         }
 
-        return shaderText;
+        return result.ToString();
     }
 }

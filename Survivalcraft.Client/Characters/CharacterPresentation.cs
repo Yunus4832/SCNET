@@ -145,11 +145,6 @@ public sealed class CharacterPresentation : IDisposable
             _readyEntity = component;
             _respawning = false;
             HideSpawnDialog();
-            _owner.TerrainPresentation.TerrainRenderer.CompleteInitialChunkFadeIn(
-                GameWidget.GameWidgetIndex,
-                component.ComponentBody.Position.XZ,
-                MathUtils.Min(Configuration.ClientConfiguration.Preferences.VisibilityRange, 64f)
-            );
             var runtime = WorldRuntimeContext.For(CharacterData.Project);
             NetworkSender.SendToServer(
                 runtime,
