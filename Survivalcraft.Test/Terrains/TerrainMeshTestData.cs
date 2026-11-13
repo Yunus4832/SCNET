@@ -14,8 +14,13 @@ internal static class TerrainMeshTestData
         }
 
         presentation.PrepareMeshUpdate(chunk);
-        presentation.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(presentation);
         Assert.True(presentation.CompleteMeshBuild(chunk));
+    }
+
+    public static void CompleteSlices(TerrainChunkPresentation presentation)
+    {
+        while (presentation.NextMeshSlice < TerrainChunk.SlicesCount) { presentation.CompleteMeshSlice(); }
     }
 
     public static void PrepareLighting(TerrainChunk chunk)

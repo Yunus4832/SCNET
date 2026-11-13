@@ -16,12 +16,15 @@ public sealed class SeedGeneratedChunkBasisTest
         var first = new TerrainChunk(null!, 1, 2);
         var second = new TerrainChunk(null!, 1, 2);
 
+        Assert.Equal(0, first.CellStorageBytes);
+        Assert.Equal(0, second.CellStorageBytes);
         Assert.True(basis.TryMoveTo(first));
         Assert.Same(cells, first.Cells);
         Assert.Same(shafts, first.Shafts);
         Assert.Equal(456, first.Cells[123]);
         Assert.Equal(789, first.Shafts[12]);
         Assert.False(basis.TryMoveTo(second));
+        Assert.Equal(0, second.CellStorageBytes);
         Assert.NotSame(cells, second.Cells);
     }
 }

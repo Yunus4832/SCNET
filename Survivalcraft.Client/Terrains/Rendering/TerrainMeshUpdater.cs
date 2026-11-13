@@ -71,7 +71,7 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
             return TerrainDerivedWorkResult.Waiting;
         }
 
-        UpdateChunkMesh(chunk);
+        UpdateChunkMesh(chunk, false, TimeSpan.FromMilliseconds(4));
         return presentation.HasCurrentGeometry(chunk)
             ? TerrainDerivedWorkResult.Complete
             : TerrainDerivedWorkResult.Continue;
@@ -117,7 +117,10 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
                 while (!_presentation.ChunkPresentations.Get(chunk).HasCurrentGeometry(chunk) &&
                        Stopwatch.GetElapsedTime(started) < TimeSpan.FromMilliseconds(4))
                 {
-                    UpdateChunkMesh(chunk, pendingLighting);
+                    var remaining = TimeSpan.FromMilliseconds(4) - Stopwatch.GetElapsedTime(started);
+                    if (remaining <= TimeSpan.Zero) { break; }
+
+                    UpdateChunkMesh(chunk, pendingLighting, remaining);
                 }
 
                 complete &= _presentation.ChunkPresentations.Get(chunk).HasCurrentGeometry(chunk);
@@ -272,7 +275,7 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
         _subsystemAnimatedTextures.AnimatedBlocksTexture
     );
 
-    private void UpdateChunkMesh(TerrainChunk chunk, bool allowPendingLighting = false)
+    private void UpdateChunkMesh(TerrainChunk chunk, bool allowPendingLighting, TimeSpan maximumTime)
     {
         var presentation = _presentation.ChunkPresentations.Get(chunk);
         if (!chunk.HasCurrentLight &&
@@ -280,25 +283,30 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
 
         lock (presentation.Geometry)
         {
-            switch (presentation.PrepareMeshUpdate(chunk, allowPendingLighting))
-            {
-                case TerrainMeshState.NeedsFirstPass:
-                    presentation.NewGeometryData = false;
-                    SerialBuilder.GeneratePass(chunk, presentation, true);
-                    presentation.CompleteFirstPass();
-                    break;
-                case TerrainMeshState.NeedsSecondPass:
-                    SerialBuilder.GeneratePass(chunk, presentation, false);
-                    if (ClientChunkDerivationPipeline.CompleteGeometry(chunk, presentation))
-                    {
-                        var key = new TerrainWorkKey(chunk, TerrainWorkStage.Derived);
-                        if (_deferred.TryRemove(key, out _))
-                        {
-                            _subsystemTerrain.Computations.ResumeDerived(chunk, key.Generation);
-                        }
-                    }
+            if (presentation.PrepareMeshUpdate(chunk, allowPendingLighting) != TerrainMeshState.Building) { return; }
 
-                    break;
+            presentation.NewGeometryData = false;
+            var started = Stopwatch.GetTimestamp();
+            while (presentation.CompletedMeshSlices < TerrainChunk.SlicesCount)
+            {
+                var remaining = maximumTime - Stopwatch.GetElapsedTime(started);
+                if (remaining <= TimeSpan.Zero ||
+                    !SerialBuilder.GenerateSlice(chunk, presentation, presentation.NextMeshSlice, remaining))
+                {
+                    return;
+                }
+
+                presentation.CompleteMeshSlice();
+            }
+
+            if (presentation.CompletedMeshSlices == TerrainChunk.SlicesCount &&
+                ClientChunkDerivationPipeline.CompleteGeometry(chunk, presentation))
+            {
+                var key = new TerrainWorkKey(chunk, TerrainWorkStage.Derived);
+                if (_deferred.TryRemove(key, out _))
+                {
+                    _subsystemTerrain.Computations.ResumeDerived(chunk, key.Generation);
+                }
             }
         }
     }

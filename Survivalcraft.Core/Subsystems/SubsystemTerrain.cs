@@ -730,11 +730,34 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         if (!IsTerrainActive) { return; }
 
         var started = Stopwatch.GetTimestamp();
-        while (Stopwatch.GetElapsedTime(started) < TimeSpan.FromMilliseconds(4) &&
-               Computations.TryTakeInitialization(out var initialized))
+        var initializationBudget = TimeSpan.FromMilliseconds(4);
+        while (Stopwatch.GetElapsedTime(started) < initializationBudget)
         {
-            _notifications.TryInitialize(initialized!);
+            var initialized = _notifications.PendingChunk;
+            if (initialized == null && !Computations.TryTakeInitialization(out initialized)) { break; }
+
+            var remaining = initializationBudget - Stopwatch.GetElapsedTime(started);
+            if (remaining <= TimeSpan.Zero)
+            {
+                if (_notifications.PendingChunk == null) { Computations.Request(initialized!); }
+
+                break;
+            }
+
+            var complete = _notifications.TryInitialize(initialized!, remaining);
             if (!IsTerrainActive) { return; }
+
+            if (!complete)
+            {
+                if (_notifications.PendingChunk == null &&
+                    !initialized!.AreBehaviorsNotified &&
+                    !initialized.IsDisposed)
+                {
+                    Computations.Request(initialized);
+                }
+
+                break;
+            }
         }
 
         ClientContentPump?.UpdateRequests();
@@ -830,7 +853,8 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                 Catalog,
                 ContentRole == TerrainContentRole.Replica,
                 static chunk => chunk.HasContents && !chunk.NeedsContentValidation
-            )
+            ),
+            Math.Clamp(System.Environment.ProcessorCount / 4, 1, 2)
         );
         if (AuthorityContents != null) { AuthorityContents.ContentPublished += Computations.ContentAvailable; }
 
@@ -906,6 +930,10 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
         return new TerrainContentsGenerator24(this, terrain);
     }
+
+    public TerrainChunk? PendingChunkInitialization => _notifications?.PendingChunk;
+
+    public void CompletePendingChunkInitialization() => _notifications?.CompletePendingInitialization();
 
     public Task PendingTerrainSave { get; private set; } = Task.CompletedTask;
 

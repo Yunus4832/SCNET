@@ -24,7 +24,16 @@ public class TerrainChunk : IDisposable
 
     public BoundingBox BoundingBox;
 
-    public int[] Cells = new int[_size * _size * _height];
+    private int[]? _cells;
+
+    /// <summary>Mutable cell storage, acquired under this terrain's access ownership.</summary>
+    public int[] Cells
+    {
+        get => _cells ??= new int[_size * _size * _height];
+        set => _cells = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    public long CellStorageBytes => (long)(_cells?.Length ?? 0) * sizeof(int);
 
     public Vector2 Center;
 
@@ -162,12 +171,16 @@ public class TerrainChunk : IDisposable
 
     public int GetCellValueFast(int index)
     {
-        return Cells[index];
+        if (_cells is { } cells) { return cells[index]; }
+
+        if ((uint)index >= _size * _size * _height) { throw new IndexOutOfRangeException(); }
+
+        return 0;
     }
 
     public int GetCellValueForGeometry(int index)
     {
-        var value = Cells[index];
+        var value = GetCellValueFast(index);
         var predictions = Volatile.Read(ref _geometryPredictions);
         return predictions is not null &&
                predictions.TryGetValue(index, out var prediction) &&
@@ -202,7 +215,7 @@ public class TerrainChunk : IDisposable
 
     public int GetCellValueFast(int x, int y, int z)
     {
-        return Cells[y + x * _height + z * _height * _size];
+        return GetCellValueFast(y + x * _height + z * _height * _size);
     }
 
     public void SetCellValueFast(int x, int y, int z, int value)
@@ -213,12 +226,12 @@ public class TerrainChunk : IDisposable
     public void SetCellValueFast(int index, int value)
     {
         value = Terrain.NormalizeCellValue(value);
-        if (Terrain.NormalizeCellValue(Cells[index]) != Terrain.NormalizeCellValue(value))
+        if (Terrain.NormalizeCellValue(GetCellValueFast(index)) != value)
         {
             Interlocked.Increment(ref _networkContentRevision);
         }
 
-        Cells[index] = value;
+        if (_cells != null || value != 0) { Cells[index] = value; }
     }
 
     public int GetCellContentsFast(int x, int y, int z)

@@ -68,7 +68,11 @@ public sealed class TerrainComputationScheduler : IDisposable
 
     internal int PendingLightCompletions => _lightCompletions.Count;
 
-    private bool CanExecute(TerrainWorkKey key) => key.Stage != TerrainWorkStage.Propagation || _lightCapacity;
+    private bool CanExecute(TerrainWorkKey key)
+    {
+        return !ReferenceEquals(_world.PendingChunkInitialization, key.Chunk) &&
+               (key.Stage != TerrainWorkStage.Propagation || _lightCapacity);
+    }
 
     private void OnLightCompleted(TerrainLightCompletion completion)
     {
@@ -271,16 +275,27 @@ public sealed class TerrainComputationScheduler : IDisposable
 
     public void PrepareHeightsSynchronously(IReadOnlyList<TerrainChunk> chunks, TimeSpan maximumTime)
     {
+        var started = Stopwatch.GetTimestamp();
         foreach (var chunk in chunks)
         {
-            if (!chunk.HasCurrentHeightData) { Request(chunk, TerrainWorkPriority.Critical); }
-        }
+            if (Stopwatch.GetElapsedTime(started) >= maximumTime || !_world.IsTerrainActive) { break; }
 
-        var started = Stopwatch.GetTimestamp();
-        while (Stopwatch.GetElapsedTime(started) < maximumTime &&
-               chunks.Any(chunk => chunk.HasContents && !chunk.HasCurrentHeightData))
-        {
-            if (Step()) { break; }
+            if (!chunk.HasContents ||
+                chunk.NeedsContentValidation ||
+                chunk.HasCurrentHeightData ||
+                ReferenceEquals(_world.PendingChunkInitialization, chunk)) { continue; }
+
+            // Interactive preparation only needs these heights, not a turn through the whole work graph.
+            var stepStarted = Stopwatch.GetTimestamp();
+            var request = chunk.DerivedRevisions.Capture();
+            _lighting.CalculateHeights(chunk);
+            if (chunk.DerivedRevisions.PublishHeights(request))
+            {
+                _queue.Signal(new TerrainWorkKey(chunk, TerrainWorkStage.Heights));
+                Request(chunk, TerrainWorkPriority.Critical);
+            }
+
+            _queue.RecordCost(TerrainWorkPriority.Critical, Stopwatch.GetElapsedTime(stepStarted), false);
         }
     }
 
@@ -564,17 +579,36 @@ public sealed class TerrainComputationScheduler : IDisposable
 
     public bool TryTakeInitialization(out TerrainChunk? chunk)
     {
-        while (_initialization.TryDequeue(out var key))
+        TerrainWorkKey? selected = null;
+        var bestPriority = TerrainWorkPriority.Maintenance;
+        var bestDistance = float.PositiveInfinity;
+        var count = _initialization.Count;
+        for (var i = 0; i < count && _initialization.TryDequeue(out var key); i++)
         {
-            _pendingInitialization.TryRemove(key, out _);
-            if (!key.IsCurrent || !key.Chunk.HasCurrentLight || key.Chunk.AreBehaviorsNotified) { continue; }
+            if (!key.IsCurrent || !key.Chunk.HasCurrentLight || key.Chunk.AreBehaviorsNotified)
+            {
+                _pendingInitialization.TryRemove(key, out _);
+                continue;
+            }
 
-            chunk = key.Chunk;
-            return true;
+            var priority = Priority(key.Chunk, TerrainWorkStage.Content);
+            var distance = Distance(key.Chunk);
+            if (selected == null || priority < bestPriority || priority == bestPriority && distance < bestDistance)
+            {
+                if (selected is { } previous) { _initialization.Enqueue(previous); }
+
+                selected = key;
+                bestPriority = priority;
+                bestDistance = distance;
+            }
+            else { _initialization.Enqueue(key); }
         }
 
-        chunk = null;
-        return false;
+        chunk = selected?.Chunk;
+        if (selected is not { } chosen) { return false; }
+
+        _pendingInitialization.TryRemove(chosen, out _);
+        return true;
     }
 
     private IEnumerable<TerrainChunk> Neighbors(TerrainChunk chunk)

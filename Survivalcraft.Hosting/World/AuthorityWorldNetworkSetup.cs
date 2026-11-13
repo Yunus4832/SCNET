@@ -241,6 +241,7 @@ public static class AuthorityWorldNetworkSetup
 
     private static byte[] CaptureBootstrapData(Project project)
     {
+        project.FindSubsystem<SubsystemTerrain>()?.CompletePendingChunkInitialization();
         var previousMode = project.SendToClientMode;
         project.SendToClientMode = true;
         try

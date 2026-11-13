@@ -30,7 +30,7 @@ public sealed class TerrainMeshLifecycleTest
         Assert.False(chunk.HasCurrentLight);
         Assert.True(mesh.CanUsePublishedLighting(chunk));
         mesh.PrepareMeshUpdate(chunk, true);
-        mesh.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(mesh);
         Assert.True(mesh.CompleteMeshBuild(chunk));
         Assert.True(mesh.CanUploadGeometry(chunk));
         mesh.MarkUploaded();
@@ -59,7 +59,7 @@ public sealed class TerrainMeshLifecycleTest
         chunk.DerivedRevisions.InvalidatePropagation();
         var mesh = presentations.Get(chunk);
         mesh.PrepareMeshUpdate(chunk, true);
-        mesh.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(mesh);
         Assert.False(mesh.CanUsePublishedLighting(chunk));
         Assert.False(mesh.CompleteMeshBuild(chunk));
         Assert.False(mesh.CanUploadGeometry(chunk));
@@ -82,7 +82,7 @@ public sealed class TerrainMeshLifecycleTest
         Assert.True(mesh.ShouldDeferMaintenance(chunk, 1.049, out _));
         Assert.False(mesh.ShouldDeferMaintenance(chunk, 1.051, out _));
         mesh.PrepareMeshUpdate(chunk);
-        mesh.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(mesh);
         Assert.False(mesh.ShouldDeferMaintenance(chunk, 1.052, out _));
     }
 
@@ -127,7 +127,7 @@ public sealed class TerrainMeshLifecycleTest
         Assert.True(mesh.HasCurrentUploadedGeometry(target));
         mesh.RequestMeshRebuild();
         mesh.PrepareMeshUpdate(target);
-        mesh.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(mesh);
         Assert.False(mesh.CompleteMeshBuild(target));
         Assert.True(neighbor.DerivedRevisions.PublishLight(neighbor.DerivedRevisions.Capture(), false));
         Assert.True(mesh.CompleteMeshBuild(target));
@@ -154,7 +154,7 @@ public sealed class TerrainMeshLifecycleTest
         mesh.MarkUploaded();
         Assert.True(mesh.GeometryUploaded);
         mesh.PrepareMeshUpdate(target);
-        mesh.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(mesh);
         Assert.False(mesh.CompleteMeshBuild(target));
     }
 
@@ -172,7 +172,7 @@ public sealed class TerrainMeshLifecycleTest
         TerrainMeshTestData.PrepareLighting(neighbor);
         var mesh = presentations.Get(target);
         mesh.PrepareMeshUpdate(target);
-        mesh.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(mesh);
         Assert.True(neighbor.DerivedRevisions.PublishLight(neighbor.DerivedRevisions.Capture()));
         Assert.False(mesh.CompleteMeshBuild(target));
         Assert.Equal(4, target.NetworkContentVersion);
@@ -244,13 +244,13 @@ public sealed class TerrainMeshLifecycleTest
         chunk.NetworkContentVersion = 1;
         var presentation = presentations.Get(chunk);
         presentation.PrepareMeshUpdate(chunk);
-        presentation.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(presentation);
         if (contentChanged) { chunk.NetworkContentVersion = 2; }
         else { presentation.RequestMeshRebuild(); }
 
         Assert.False(presentation.CompleteMeshBuild(chunk));
         Assert.False(presentation.NewGeometryData);
-        Assert.Equal(TerrainMeshState.NeedsFirstPass, presentation.PrepareMeshUpdate(chunk));
+        Assert.Equal(TerrainMeshState.Building, presentation.PrepareMeshUpdate(chunk));
     }
 
     [Fact]
@@ -262,7 +262,7 @@ public sealed class TerrainMeshLifecycleTest
         var generation = chunk.AllocationGeneration;
         var presentation = presentations.Get(chunk);
         presentation.PrepareMeshUpdate(chunk);
-        presentation.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(presentation);
         terrain.RenewChunkAllocation(chunk);
         presentations.RenewAllocation(chunk, generation);
 
@@ -280,5 +280,67 @@ public sealed class TerrainMeshLifecycleTest
         Assert.Equal(16, TerrainChunk.SlicesCount);
         Assert.Equal(TerrainChunk.SlicesCount, presentations.Get(chunk).ChunkSliceGeometries.Length);
         Assert.Equal(TerrainChunk.SlicesCount, presentations.Get(chunk).GeneratedSliceContentsHashes.Length);
+    }
+
+    [Fact]
+    public void SliceCursorPreservesTraversalAndOnlyPublishesTheWholeMesh()
+    {
+        using var terrain = new Terrain();
+        using var presentations = new TerrainChunkPresentationStore();
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.NetworkContentVersion = 1;
+        TerrainMeshTestData.PrepareLighting(chunk);
+        var mesh = presentations.Get(chunk);
+        Assert.Equal(TerrainMeshState.Building, mesh.PrepareMeshUpdate(chunk));
+        var visited = new List<int>();
+        while (mesh.CompletedMeshSlices < TerrainChunk.SlicesCount)
+        {
+            Assert.False(mesh.CompleteMeshBuild(chunk));
+            Assert.False(mesh.NewGeometryData);
+            visited.Add(mesh.NextMeshSlice);
+            mesh.CompleteMeshSlice();
+        }
+
+        Assert.Equal(new[] { 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15 }, visited);
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        Assert.Equal(TerrainMeshState.Ready, mesh.WorkerMeshState);
+        Assert.True(mesh.NewGeometryData);
+        Assert.Throws<InvalidOperationException>(mesh.CompleteMeshSlice);
+    }
+
+    [Fact]
+    public void ChangedInputsRestartTheSliceCursorBeforeAnotherUnitRuns()
+    {
+        using var terrain = new Terrain();
+        using var presentations = new TerrainChunkPresentationStore();
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.NetworkContentVersion = 1;
+        TerrainMeshTestData.PrepareLighting(chunk);
+        var mesh = presentations.Get(chunk);
+        mesh.PrepareMeshUpdate(chunk);
+        mesh.CompleteMeshSlice();
+        mesh.CompleteMeshSlice();
+        Assert.Equal(2, mesh.CompletedMeshSlices);
+        chunk.NetworkContentVersion++;
+        Assert.Equal(TerrainMeshState.Building, mesh.PrepareMeshUpdate(chunk));
+        Assert.Equal(0, mesh.CompletedMeshSlices);
+        Assert.Equal(0, mesh.NextMeshSlice);
+        Assert.False(mesh.CompleteMeshBuild(chunk));
+    }
+
+    [Fact]
+    public void MaintenanceDoesNotStartAnotherCoalescingWaitInsideTheFirstSlice()
+    {
+        using var terrain = new Terrain();
+        using var presentations = new TerrainChunkPresentationStore();
+        var chunk = terrain.AllocateChunk(0, 0);
+        var mesh = presentations.Get(chunk);
+        TerrainMeshTestData.Complete(chunk, mesh);
+        mesh.MarkUploaded();
+        mesh.RequestMeshRebuild();
+        mesh.PrepareMeshUpdate(chunk);
+        mesh.ActiveSlice = new TerrainChunkPresentation.SliceWork(0, 123) { Column = 1 };
+        Assert.Equal(0, mesh.CompletedMeshSlices);
+        Assert.False(mesh.ShouldDeferMaintenance(chunk, 100, out _));
     }
 }

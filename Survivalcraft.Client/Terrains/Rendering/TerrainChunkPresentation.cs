@@ -65,6 +65,31 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     public TerrainMeshState WorkerMeshState { get; private set; }
 
+    public int CompletedMeshSlices { get; private set; }
+
+    internal SliceWork? ActiveSlice { get; set; }
+
+    internal sealed class SliceWork(int slice, int contentsHash)
+    {
+        public int Slice { get; } = slice;
+
+        public int ContentsHash { get; } = contentsHash;
+
+        public int Column;
+    }
+
+    public int NextMeshSlice
+    {
+        get
+        {
+            if (CompletedMeshSlices >= TerrainChunk.SlicesCount) { return TerrainChunk.SlicesCount; }
+
+            // Preserve material registration order across the original even/odd slice traversal.
+            var half = TerrainChunk.SlicesCount / 2;
+            return CompletedMeshSlices < half ? CompletedMeshSlices * 2 : (CompletedMeshSlices - half) * 2 + 1;
+        }
+    }
+
 
     private readonly record struct NeighborInput(
         ulong Generation,
@@ -188,13 +213,14 @@ public sealed class TerrainChunkPresentation : IDisposable
         return true;
     }
 
-    /// <summary>Coalesces already-visible maintenance without delaying initial geometry or a valid second pass.</summary>
+    /// <summary>Coalesces already-visible maintenance without delaying initial geometry or valid in-progress slices.</summary>
     internal bool ShouldDeferMaintenance(TerrainChunk chunk, double now, out double due)
     {
         due = now;
         if (!GeometryUploaded ||
             _activeMesh != null &&
-            WorkerMeshState == TerrainMeshState.NeedsSecondPass &&
+            WorkerMeshState == TerrainMeshState.Building &&
+            (CompletedMeshSlices > 0 || ActiveSlice != null) &&
             Matches(chunk, _activeMesh))
         {
             _maintenanceWait = null;
@@ -232,13 +258,25 @@ public sealed class TerrainChunkPresentation : IDisposable
         if (_activeMesh is null || !Matches(chunk, _activeMesh))
         {
             _activeMesh = CaptureStamp(chunk, allowPendingLighting);
-            WorkerMeshState = TerrainMeshState.NeedsFirstPass;
+            WorkerMeshState = TerrainMeshState.Building;
+            CompletedMeshSlices = 0;
+            ActiveSlice = null;
         }
 
         return WorkerMeshState;
     }
 
-    public void CompleteFirstPass() => WorkerMeshState = TerrainMeshState.NeedsSecondPass;
+    public void CompleteMeshSlice()
+    {
+        if (WorkerMeshState != TerrainMeshState.Building ||
+            ActiveSlice != null ||
+            CompletedMeshSlices >= TerrainChunk.SlicesCount)
+        {
+            throw new InvalidOperationException("No terrain mesh slice is awaiting completion.");
+        }
+
+        CompletedMeshSlices++;
+    }
 
     /// <summary>Publishes only a build for the same allocation, content and rebuild request.</summary>
     public bool CompleteMeshBuild(TerrainChunk chunk)
@@ -246,7 +284,8 @@ public sealed class TerrainChunkPresentation : IDisposable
         if (_activeMesh is null ||
             (!LightingInputsReadable(chunk) &&
              !(_activeMesh.AllowPendingLighting && CanUsePublishedLighting(chunk))) ||
-            WorkerMeshState != TerrainMeshState.NeedsSecondPass ||
+            WorkerMeshState != TerrainMeshState.Building ||
+            CompletedMeshSlices != TerrainChunk.SlicesCount ||
             !Matches(chunk, _activeMesh))
         {
             return false;
@@ -288,7 +327,9 @@ public sealed class TerrainChunkPresentation : IDisposable
         Volatile.Write(ref _uploadedMesh, null);
         _activeMesh = null;
         _maintenanceWait = null;
-        WorkerMeshState = TerrainMeshState.NeedsFirstPass;
+        WorkerMeshState = TerrainMeshState.Building;
+        CompletedMeshSlices = 0;
+        ActiveSlice = null;
     }
 
     public void InvalidateSliceContentsHashes()

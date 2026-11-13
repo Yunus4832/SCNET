@@ -5,6 +5,8 @@ using Game.Subsystems;
 using Game.Subsystems.Behavior;
 using Game.Terrains;
 using Game.Terrains.Distribution;
+using Game.Terrains.Execution;
+using Game.Terrains.Lighting;
 using Game.World;
 
 using Survivalcraft.Test.Modding;
@@ -30,7 +32,7 @@ public sealed class TerrainChunkBehaviorNotifierTest
             finally { terrain.WorkExecutor.LeaveMain(); }
         };
 
-        Assert.True(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.True(fixture.Initialize());
         Assert.False(terrain.WorkExecutor.HasMainRequest);
         Assert.True(fixture.Chunk.IsContentInitialized);
         Assert.Equal(3, Terrain.ExtractContents(fixture.Chunk.GetCellValueFast(2, 60, 2)));
@@ -44,7 +46,7 @@ public sealed class TerrainChunkBehaviorNotifierTest
         terrain.WorkExecutor.EnterMain();
         try
         {
-            Assert.Throws<InvalidOperationException>(() => fixture.Notifier.TryInitialize(fixture.Chunk));
+            Assert.Throws<InvalidOperationException>(() => fixture.Initialize());
             Assert.True(terrain.Access.IsHeldByCurrentThread);
         }
         finally { terrain.WorkExecutor.LeaveMain(); }
@@ -60,12 +62,12 @@ public sealed class TerrainChunkBehaviorNotifierTest
         var terrain = fixture.World.Project.FindSubsystem<SubsystemTerrain>(true)!;
         fixture.First.WhenInitialized = () => throw new InvalidOperationException("initialization failed");
 
-        Assert.Throws<InvalidOperationException>(() => fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.Throws<InvalidOperationException>(() => fixture.Initialize());
 
         Assert.True(fixture.World.Project.IsDisposed);
         Assert.False(terrain.WorkExecutor.HasMainRequest);
         Assert.False(fixture.Chunk.IsContentInitialized);
-        Assert.False(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.False(fixture.Initialize());
         Assert.Equal(1, fixture.First.Initialized);
     }
 
@@ -86,7 +88,7 @@ public sealed class TerrainChunkBehaviorNotifierTest
             Assert.False(authority.TryGetSnapshot(fixture.Chunk.Coords, out _));
             fixture.Chunk.SetCellValueFast(2, 40, 2, Terrain.MakeBlockValue(3, 11));
         };
-        Assert.True(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.True(fixture.Initialize());
         Assert.True(fixture.Chunk.IsContentInitialized);
         Assert.True(authority.TryGetSnapshot(fixture.Chunk.Coords, out var baseline));
         Assert.Equal(Terrain.MakeBlockValue(3, 11), baseline.Cells.Span[TerrainChunk.CalculateCellIndex(2, 40, 2)]);
@@ -103,7 +105,7 @@ public sealed class TerrainChunkBehaviorNotifierTest
     )
     {
         using var fixture = new Fixture(origin);
-        Assert.True(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.True(fixture.Initialize());
         Assert.Equal(1, fixture.First.Initialized);
         Assert.Equal(1, fixture.Second.Initialized);
         Assert.Equal(1, fixture.InitializedHooks);
@@ -116,11 +118,11 @@ public sealed class TerrainChunkBehaviorNotifierTest
             Assert.Equal((fixture.Chunk.Origin.X + 1, 61, fixture.Chunk.Origin.Y + 2), behavior.Generated[1].Position);
         }
 
-        Assert.False(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.False(fixture.Initialize());
         fixture.Chunk.DerivedRevisions.InvalidateLight();
-        Assert.False(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.False(fixture.Initialize());
         fixture.MakeReady();
-        Assert.False(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.False(fixture.Initialize());
         Assert.Equal(2, fixture.First.Generated.Count);
         Assert.Equal(1, fixture.InitializedHooks);
     }
@@ -129,10 +131,10 @@ public sealed class TerrainChunkBehaviorNotifierTest
     public void RetainedReplicaLeaseDoesNotReplayBusinessInitialization()
     {
         using var fixture = new Fixture(TerrainContentOrigin.Replica);
-        Assert.True(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.True(fixture.Initialize());
         fixture.Terrain.RenewChunkAllocation(fixture.Chunk);
         fixture.MakeReady();
-        Assert.False(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.False(fixture.Initialize());
         Assert.Equal(2, fixture.First.Generated.Count);
         Assert.Equal(1, fixture.InitializedHooks);
     }
@@ -141,13 +143,13 @@ public sealed class TerrainChunkBehaviorNotifierTest
     public void InitializationWaitsForContentAndLightAndRejectsUnspecifiedPublishedOrigin()
     {
         using var fixture = new Fixture(TerrainContentOrigin.Unspecified, ready: false);
-        Assert.False(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.False(fixture.Initialize());
         Assert.False(fixture.Chunk.AreBehaviorsNotified);
         fixture.MakeReady();
         fixture.Chunk.HasContents = false;
-        Assert.False(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.False(fixture.Initialize());
         fixture.Chunk.HasContents = true;
-        Assert.Throws<InvalidOperationException>(() => fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.Throws<InvalidOperationException>(() => fixture.Initialize());
         Assert.False(fixture.Chunk.AreBehaviorsNotified);
         Assert.Empty(fixture.First.Generated);
     }
@@ -158,13 +160,11 @@ public sealed class TerrainChunkBehaviorNotifierTest
         using var fixture = new Fixture();
         var events = 0;
         Assert.True(
-            fixture.Notifier.TryInitialize(
-                fixture.Chunk,
-                chunk =>
+            fixture.Initialize(chunk =>
                 {
                     events++;
                     Assert.True(chunk.AreBehaviorsNotified);
-                    Assert.False(fixture.Notifier.TryInitialize(chunk));
+                    Assert.False(fixture.Initialize());
                 }
             )
         );
@@ -181,7 +181,7 @@ public sealed class TerrainChunkBehaviorNotifierTest
         Action<TerrainChunk> handlers = _ => fixture.World.Project.Dispose();
         handlers += _ => laterHandler = true;
 
-        Assert.False(fixture.Notifier.TryInitialize(fixture.Chunk, handlers));
+        Assert.False(fixture.Initialize(handlers));
         Assert.False(laterHandler);
         Assert.True(fixture.Chunk.AreBehaviorsNotified);
         Assert.False(fixture.Chunk.IsContentInitialized);
@@ -199,7 +199,7 @@ public sealed class TerrainChunkBehaviorNotifierTest
         if (duringChunkInitialization) { fixture.First.WhenInitialized = fixture.World.Project.Dispose; }
         else { fixture.First.WhenGenerated = fixture.World.Project.Dispose; }
 
-        Assert.False(fixture.Notifier.TryInitialize(fixture.Chunk));
+        Assert.False(fixture.Initialize());
         Assert.Equal(1, fixture.First.Initialized);
         Assert.Equal(duringChunkInitialization ? 0 : 1, fixture.Second.Initialized);
         Assert.Equal(duringChunkInitialization ? 0 : 1, fixture.First.Generated.Count);
@@ -280,6 +280,161 @@ public sealed class TerrainChunkBehaviorNotifierTest
         Assert.False(fixture.Notifier.NotifyDiscarding(fixture.Chunk));
     }
 
+    [Fact]
+    public void InitializationResumesBetweenHandlersWithoutPublishingPartialContents()
+    {
+        using var fixture = new Fixture();
+        var terrain = fixture.World.Project.FindSubsystem<SubsystemTerrain>(true)!;
+        var original = fixture.Chunk.GetCellValueFast(1, 60, 2);
+        fixture.First.WhenGenerated = () =>
+        {
+            fixture.Chunk.SetCellValueFast(1, 60, 2, Terrain.MakeBlockValue(3, 9));
+            fixture.Clock.Advance(TimeSpan.FromMilliseconds(5));
+        };
+
+        Assert.False(fixture.Initialize());
+        Assert.Same(fixture.Chunk, fixture.Notifier.PendingChunk);
+        Assert.True(fixture.Chunk.AreBehaviorsNotified);
+        Assert.False(fixture.Chunk.IsContentInitialized);
+        Assert.False(terrain.WorkExecutor.HasMainRequest);
+        Assert.Single(fixture.First.Generated);
+        Assert.Empty(fixture.Second.Generated);
+        Assert.Equal(0, fixture.InitializedHooks);
+        Assert.False(new TerrainChunkContentAuthority(fixture.Terrain).TryGetSnapshot(fixture.Chunk.Coords, out _));
+
+        fixture.First.WhenGenerated = null;
+        Assert.True(fixture.Initialize());
+        Assert.Null(fixture.Notifier.PendingChunk);
+        Assert.Equal(original, fixture.Second.Generated[0].Value);
+        Assert.Equal(2, fixture.First.Generated.Count);
+        Assert.Equal(2, fixture.Second.Generated.Count);
+        Assert.Equal(1, fixture.First.Initialized);
+        Assert.Equal(1, fixture.Second.Initialized);
+        Assert.Equal(1, fixture.InitializedHooks);
+        Assert.True(fixture.Chunk.IsContentInitialized);
+    }
+
+    [Fact]
+    public void SnapshotPreparationCompletesTheActiveCursorOnce()
+    {
+        using var fixture = new Fixture();
+        fixture.First.WhenInitialized = () => fixture.Clock.Advance(TimeSpan.FromMilliseconds(5));
+        Assert.False(fixture.Initialize());
+        Assert.Equal(0, fixture.Second.Initialized);
+        Assert.Empty(fixture.First.Generated);
+        fixture.Notifier.CompletePendingInitialization();
+        fixture.Notifier.CompletePendingInitialization();
+        Assert.Null(fixture.Notifier.PendingChunk);
+        Assert.Equal(1, fixture.First.Initialized);
+        Assert.Equal(1, fixture.Second.Initialized);
+        Assert.Equal(2, fixture.Second.Generated.Count);
+        Assert.Equal(1, fixture.InitializedHooks);
+        Assert.True(fixture.Chunk.IsContentInitialized);
+    }
+
+    [Fact]
+    public void SnapshotPreparationRejectsReentrancyInsideCallbacks()
+    {
+        using var fixture = new Fixture();
+        fixture.First.WhenInitialized = () =>
+            Assert.Throws<InvalidOperationException>(fixture.Notifier.CompletePendingInitialization);
+        Assert.True(fixture.Initialize());
+        Assert.False(fixture.World.Project.IsDisposed);
+    }
+
+    [Fact]
+    public void DisposedChunkCancelsTheCursorWithoutRunningRemainingCallbacks()
+    {
+        using var fixture = new Fixture();
+        fixture.First.WhenInitialized = () => fixture.Clock.Advance(TimeSpan.FromMilliseconds(5));
+        Assert.False(fixture.Initialize());
+        fixture.Terrain.FreeChunk(fixture.Chunk);
+        Assert.False(fixture.Initialize());
+        Assert.Null(fixture.Notifier.PendingChunk);
+        Assert.Equal(0, fixture.Second.Initialized);
+        Assert.Empty(fixture.Second.Generated);
+        Assert.Equal(0, fixture.InitializedHooks);
+    }
+
+    [Fact]
+    public void FailureAfterYieldClosesTheWorldAndReleasesTheWorkerPause()
+    {
+        using var fixture = new Fixture();
+        var terrain = fixture.World.Project.FindSubsystem<SubsystemTerrain>(true)!;
+        fixture.First.WhenGenerated = () => fixture.Clock.Advance(TimeSpan.FromMilliseconds(5));
+        Assert.False(fixture.Initialize());
+        fixture.Second.WhenGenerated = () => throw new InvalidOperationException("resumed failure");
+        Assert.Throws<InvalidOperationException>(() => fixture.Initialize());
+        Assert.True(fixture.World.Project.IsDisposed);
+        Assert.Null(fixture.Notifier.PendingChunk);
+        Assert.False(terrain.WorkExecutor.HasMainRequest);
+    }
+
+    [Fact]
+    public void EmptyBudgetDoesNotBeginCallbacks()
+    {
+        using var fixture = new Fixture();
+        Assert.False(fixture.Initialize(maximumTime: TimeSpan.Zero));
+        Assert.False(fixture.Chunk.AreBehaviorsNotified);
+        Assert.Null(fixture.Notifier.PendingChunk);
+        Assert.Throws<ArgumentOutOfRangeException>(() => fixture.Initialize(maximumTime: TimeSpan.FromTicks(-1)));
+    }
+
+    [Fact]
+    public void BackgroundDerivationWaitsUntilNormalizationFinishes()
+    {
+        using var fixture = new Fixture();
+        var terrain = fixture.World.Project.FindSubsystem<SubsystemTerrain>(true)!;
+        using var scheduler = new TerrainComputationScheduler(
+            terrain,
+            new TerrainLightingCalculator(
+                fixture.Terrain,
+                fixture.World.Catalog,
+                false,
+                static chunk => chunk.HasContents
+            )
+        );
+        typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.Computations))!.SetValue(terrain, scheduler);
+        fixture.First.WhenInitialized = () => fixture.Clock.Advance(TimeSpan.FromMilliseconds(5));
+        Assert.False(fixture.Initialize());
+        fixture.Chunk.DerivedRevisions.InvalidateHeightsAndLight();
+        scheduler.UpdateDemand(
+            [new TerrainUpdateLocation { Center = fixture.Chunk.Center, VisibilityDistance = 64, ContentDistance = 64 }]
+        );
+        Assert.True(scheduler.Step());
+        Assert.False(fixture.Chunk.HasCurrentHeightData);
+        Assert.True(scheduler.Counts.Total > 0);
+        fixture.Notifier.CompletePendingInitialization();
+        Assert.False(scheduler.Step());
+        Assert.True(fixture.Chunk.HasCurrentHeightData);
+    }
+
+    [Fact]
+    public void RetainedAllocationResumesTheSameCallbacksAfterYield()
+    {
+        using var fixture = new Fixture(TerrainContentOrigin.Replica, replica: true);
+        fixture.First.WhenGenerated = () => fixture.Clock.Advance(TimeSpan.FromMilliseconds(5));
+        Assert.False(fixture.Initialize());
+        fixture.Terrain.RenewChunkAllocation(fixture.Chunk);
+        fixture.First.WhenGenerated = null;
+        Assert.True(fixture.Initialize());
+        Assert.Equal(1, fixture.First.Initialized);
+        Assert.Equal(2, fixture.First.Generated.Count);
+        Assert.Equal(2, fixture.Second.Generated.Count);
+        Assert.Equal(1, fixture.InitializedHooks);
+    }
+
+    private sealed class ManualClock : TimeProvider
+    {
+        private long _timestamp;
+
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+
+        public override long GetTimestamp() => _timestamp;
+
+        public void Advance(TimeSpan elapsed) => _timestamp += elapsed.Ticks;
+    }
+
     private sealed class Fixture : IDisposable
     {
         public WorldCatalogScope World { get; }
@@ -293,6 +448,13 @@ public sealed class TerrainChunkBehaviorNotifierTest
         public TerrainChunk Chunk { get; }
 
         public TerrainChunkBehaviorNotifier Notifier { get; }
+
+        public ManualClock Clock { get; } = new();
+
+        public bool Initialize(Action<TerrainChunk>? callback = null, TimeSpan? maximumTime = null)
+        {
+            return Notifier.TryInitialize(Chunk, maximumTime ?? TimeSpan.FromMilliseconds(4), callback);
+        }
 
         public int InitializedHooks { get; private set; }
 
@@ -325,7 +487,12 @@ public sealed class TerrainChunkBehaviorNotifierTest
             var behaviors = new SubsystemBlockBehaviors();
             World.Project.AddSubsystem(behaviors);
             behaviors.Load(new ValuesDictionary());
-            Notifier = new TerrainChunkBehaviorNotifier(terrain, behaviors);
+            Notifier = new TerrainChunkBehaviorNotifier(terrain, behaviors, Clock);
+            typeof(SubsystemTerrain).GetField(
+                    "_notifications",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic
+                )!
+                .SetValue(terrain, Notifier);
             Chunk = Terrain.AllocateChunk(2, -3);
             Chunk.ContentOrigin = origin;
             Chunk.HasContents = true;

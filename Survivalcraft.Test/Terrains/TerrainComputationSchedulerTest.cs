@@ -32,6 +32,38 @@ public sealed class TerrainComputationSchedulerTest
     }
 
     [Fact]
+    public void SynchronousHeightPreparationDoesNotConsumeOtherQueuedCriticalWork()
+    {
+        using var fixture = new ComputationWorld();
+        fixture.Populate();
+        fixture.Scheduler.UpdateDemand([Location()]);
+        var target = fixture.Data.GetChunkAtCoords(0, 0)!;
+        var other = fixture.Data.GetChunkAtCoords(1, 0)!;
+        fixture.Scheduler.Request(other, TerrainWorkPriority.Critical);
+        fixture.Scheduler.PrepareHeightsSynchronously([target], TimeSpan.FromSeconds(1));
+        Assert.True(target.HasCurrentHeightData);
+        Assert.False(other.HasCurrentHeightData);
+        Assert.Equal(0, fixture.Scheduler.ActiveLightJobs);
+    }
+
+    [Fact]
+    public void InitializationUsesTheCurrentViewInsteadOfLightCompletionOrder()
+    {
+        using var fixture = new ComputationWorld();
+        fixture.Populate();
+        fixture.Scheduler.UpdateDemand([Location()]);
+        fixture.Drain();
+        fixture.Scheduler.UpdateDemand(
+            [new TerrainUpdateLocation { Center = new Vector2(-8, -8), VisibilityDistance = 64, ContentDistance = 64 }]
+        );
+        Assert.True(fixture.Scheduler.TryTakeInitialization(out var selected));
+        Assert.Equal(new Point2(-1, -1), selected!.Coords);
+        selected.AreBehaviorsNotified = true;
+        Assert.True(fixture.Scheduler.TryTakeInitialization(out var next));
+        Assert.NotSame(selected, next);
+    }
+
+    [Fact]
     public void OneAndTwoWorkersConvergeToTheSameSkyAndBlockLightAfterSourceRemoval()
     {
         using var serial = new ComputationWorld(lightWorkerCount: 1);

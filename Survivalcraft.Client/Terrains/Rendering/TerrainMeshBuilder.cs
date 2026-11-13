@@ -5,7 +5,12 @@ using Game.Blocks.Presentation.Geometry;
 namespace Game.Terrains.Rendering;
 
 /// <summary>CPU-only slice-cache builder; uploads remain on the rendering thread.</summary>
-internal sealed class TerrainMeshBuilder(Terrain terrain, BlockGeometryGenerator generator, Texture2D texture)
+internal sealed class TerrainMeshBuilder(
+    Terrain terrain,
+    BlockGeometryGenerator generator,
+    Texture2D texture,
+    TimeProvider? timeProvider = null
+)
 {
     private readonly Terrain _terrain = terrain;
 
@@ -13,145 +18,144 @@ internal sealed class TerrainMeshBuilder(Terrain terrain, BlockGeometryGenerator
 
     private readonly Texture2D _texture = texture;
 
-    internal void GeneratePass(TerrainChunk chunk, TerrainChunkPresentation output, bool even)
+    private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
+
+    private readonly Game.Terrains.Lighting.TerrainLightSnapshot?[] _hashLights =
+        new Game.Terrains.Lighting.TerrainLightSnapshot?[9];
+
+    private readonly TerrainChunk?[] _neighbors = new TerrainChunk?[9];
+
+    internal bool GenerateSlice(
+        TerrainChunk chunk,
+        TerrainChunkPresentation output,
+        int sliceIndex,
+        TimeSpan maximumTime
+    )
     {
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual((uint)sliceIndex, (uint)TerrainChunk.SlicesCount);
+        if (maximumTime <= TimeSpan.Zero) { return false; }
+
+        var started = _time.GetTimestamp();
         _generator.ResetCache();
-        if (!output.Draws.TryGetValue(
-                _texture,
-                out var terrainGeometry
-            ))
+        if (!output.Draws.TryGetValue(_texture, out var terrainGeometry))
         {
             terrainGeometry = new TerrainGeometry[TerrainChunk.SlicesCount];
             for (var i = 0; i < TerrainChunk.SlicesCount; i++)
             {
-                var t = new TerrainGeometry(output.Draws, i);
-                terrainGeometry[i] = t;
+                terrainGeometry[i] = new TerrainGeometry(output.Draws, i);
             }
 
-            output.Draws.Add(
-                _texture,
-                terrainGeometry
-            );
+            output.Draws.Add(_texture, terrainGeometry);
         }
 
-        var chunkAtCoords = _terrain.GetChunkAtCoords(chunk.Coords.X - 1, chunk.Coords.Y - 1);
-        var chunkAtCoords2 = _terrain.GetChunkAtCoords(chunk.Coords.X, chunk.Coords.Y - 1);
-        var chunkAtCoords3 = _terrain.GetChunkAtCoords(chunk.Coords.X + 1, chunk.Coords.Y - 1);
-        var chunkAtCoords4 = _terrain.GetChunkAtCoords(chunk.Coords.X - 1, chunk.Coords.Y);
-        var chunkAtCoords5 = _terrain.GetChunkAtCoords(chunk.Coords.X + 1, chunk.Coords.Y);
-        var chunkAtCoords6 = _terrain.GetChunkAtCoords(chunk.Coords.X - 1, chunk.Coords.Y + 1);
-        var chunkAtCoords7 = _terrain.GetChunkAtCoords(chunk.Coords.X, chunk.Coords.Y + 1);
-        var chunkAtCoords8 = _terrain.GetChunkAtCoords(chunk.Coords.X + 1, chunk.Coords.Y + 1);
-        var num = 0;
-        var num2 = 0;
-        var num3 = 16;
-        var num4 = 16;
-        if (chunkAtCoords4 == null)
+        var work = output.ActiveSlice;
+        if (work == null)
         {
-            num++;
-        }
+            var hash = CalculateChunkSliceContentsHash(chunk, sliceIndex);
+            if (!output.BeginSliceGeometryUpdate(sliceIndex, hash)) { return true; }
 
-        if (chunkAtCoords2 == null)
-        {
-            num2++;
-        }
-
-        if (chunkAtCoords5 == null)
-        {
-            num3--;
-        }
-
-        if (chunkAtCoords7 == null)
-        {
-            num4--;
-        }
-
-        for (var i = 0; i < TerrainChunk.SlicesCount; i++)
-        {
-            if (i % 2 == 0 != even)
+            foreach (var draw in output.Draws)
             {
-                continue;
-            }
-
-            var contentsHash = CalculateChunkSliceContentsHash(chunk, i);
-            var presentation = output;
-            if (!presentation.BeginSliceGeometryUpdate(i, contentsHash))
-            {
-                continue;
-            }
-
-            foreach (var c in output.Draws)
-            {
-                var subsets = c.Value[i].Subsets;
-                foreach (var subset in subsets)
+                foreach (var subset in draw.Value[sliceIndex].Subsets)
                 {
                     subset.Vertices.Clear();
                     subset.Indices.Clear();
                 }
             }
 
-            for (var k = num; k < num3; k++)
+            work = new TerrainChunkPresentation.SliceWork(sliceIndex, hash);
+            output.ActiveSlice = work;
+        }
+
+        else { CaptureInputs(chunk); }
+
+        if (work.Slice != sliceIndex)
+        {
+            throw new InvalidOperationException("Terrain slice cursor does not match the active build.");
+        }
+
+        try
+        {
+            while (work.Column < 16 * 16)
             {
-                for (var l = num2; l < num4; l++)
+                var x = work.Column / 16;
+                var z = work.Column % 16;
+                if (ColumnInputsAvailable(x, z))
                 {
-                    switch (k)
-                    {
-                        case 0:
-                            if ((l == 0 && chunkAtCoords == null) || (l == 15 && chunkAtCoords6 == null))
-                            {
-                                continue;
-                            }
-
-                            break;
-                        case 15:
-                            if ((l == 0 && chunkAtCoords3 == null) || (l == 15 && chunkAtCoords8 == null))
-                            {
-                                continue;
-                            }
-
-                            break;
-                    }
-
-                    var num5 = k + chunk.Origin.X;
-                    var num6 = l + chunk.Origin.Y;
-                    var bottomHeightFast = chunk.GetBottomHeightFast(k, l);
-                    var bottomHeight = _terrain.GetBottomHeight(num5 - 1, num6);
-                    var bottomHeight2 = _terrain.GetBottomHeight(num5 + 1, num6);
-                    var bottomHeight3 = _terrain.GetBottomHeight(num5, num6 - 1);
-                    var bottomHeight4 = _terrain.GetBottomHeight(num5, num6 + 1);
-                    var x = MathUtils.Min(
-                        bottomHeightFast - 1,
-                        MathUtils.Min(bottomHeight, bottomHeight2, bottomHeight3, bottomHeight4)
-                    );
-                    var x2 = chunk.GetTopHeightFast(k, l) + 1;
-                    var num7 = MathUtils.Max(16 * i, x, 1);
-                    var num8 = MathUtils.Min(16 * (i + 1), x2, 256);
-                    var num9 = TerrainChunk.CalculateCellIndex(k, 0, l);
-                    for (var m = num7; m < num8; m++)
-                    {
-                        var cellValueFast = chunk.GetCellValueForGeometry(num9 + m);
-                        var num10 = Terrain.ExtractContents(cellValueFast);
-                        if (num10 != 0)
-                        {
-                            _generator.Presentations.Get(num10).GenerateTerrainVertices(
-                                _generator,
-                                terrainGeometry[i],
-                                cellValueFast,
-                                num5,
-                                m,
-                                num6
-                            );
-                        }
-                    }
+                    GenerateColumn(chunk, terrainGeometry[sliceIndex], x, z, sliceIndex);
                 }
+
+                work.Column++;
+                if (work.Column < 16 * 16 && _time.GetElapsedTime(started) >= maximumTime) { return false; }
             }
 
-            presentation.CompleteSliceGeometryUpdate(i, contentsHash);
+            output.CompleteSliceGeometryUpdate(sliceIndex, work.ContentsHash);
+            output.ActiveSlice = null;
+            return true;
+        }
+        catch
+        {
+            // A failed generator may already have appended vertices. Retry the entire invalid slice.
+            output.ActiveSlice = null;
+            throw;
+        }
+    }
+
+    private bool ColumnInputsAvailable(int x, int z)
+    {
+        var dx = x == 0 ? -1 : x == 15 ? 1 : 0;
+        var dz = z == 0 ? -1 : z == 15 ? 1 : 0;
+        return (dx == 0 || _neighbors[(dx + 1) * 3 + 1] != null) &&
+               (dz == 0 || _neighbors[3 + dz + 1] != null) &&
+               (dx == 0 || dz == 0 || _neighbors[(dx + 1) * 3 + dz + 1] != null);
+    }
+
+    private void GenerateColumn(TerrainChunk chunk, TerrainGeometry geometry, int x, int z, int slice)
+    {
+        var worldX = x + chunk.Origin.X;
+        var worldZ = z + chunk.Origin.Y;
+        var bottom = MathUtils.Min(
+            chunk.GetBottomHeightFast(x, z) - 1,
+            MathUtils.Min(
+                _terrain.GetBottomHeight(worldX - 1, worldZ),
+                _terrain.GetBottomHeight(worldX + 1, worldZ),
+                _terrain.GetBottomHeight(worldX, worldZ - 1),
+                _terrain.GetBottomHeight(worldX, worldZ + 1)
+            )
+        );
+        var first = MathUtils.Max(16 * slice, bottom, 1);
+        var last = MathUtils.Min(16 * (slice + 1), chunk.GetTopHeightFast(x, z) + 1, 256);
+        var index = TerrainChunk.CalculateCellIndex(x, 0, z);
+        for (var y = first; y < last; y++)
+        {
+            var value = chunk.GetCellValueForGeometry(index + y);
+            var contents = Terrain.ExtractContents(value);
+            if (contents == 0) { continue; }
+
+            _generator.Presentations.Get(contents)
+                .GenerateTerrainVertices(_generator, geometry, value, worldX, y, worldZ);
+        }
+    }
+
+    private void CaptureInputs(TerrainChunk chunk)
+    {
+        for (var dx = -1; dx <= 1; dx++)
+        {
+            for (var dz = -1; dz <= 1; dz++)
+            {
+                var neighbor = _terrain.GetChunkAtCoords(chunk.Coords.X + dx, chunk.Coords.Y + dz);
+                _neighbors[(dx + 1) * 3 + dz + 1] = neighbor;
+                Game.Terrains.Lighting.TerrainLightSnapshot? snapshot = null;
+                if (neighbor != null) { _terrain.Lighting.TryGetPublishedSnapshot(neighbor, out snapshot); }
+
+                _hashLights[(dx + 1) * 3 + dz + 1] = snapshot;
+            }
         }
     }
 
     internal int CalculateChunkSliceContentsHash(TerrainChunk chunk, int sliceIndex)
     {
+        CaptureInputs(chunk);
         var num = 1;
         var num2 = chunk.Origin.X - 1;
         var num3 = chunk.Origin.X + 16 + 1;
@@ -169,7 +173,10 @@ internal sealed class TerrainMeshBuilder(Terrain terrain, BlockGeometryGenerator
                     continue;
                 }
 
-                _terrain.Lighting.TryGetPublishedSnapshot(chunkAtCell, out var light);
+                var light = _hashLights[(chunkAtCell.Coords.X - chunk.Coords.X + 1) * 3 +
+                                        chunkAtCell.Coords.Y -
+                                        chunk.Coords.Y +
+                                        1];
                 var x3 = i & 0xF;
                 var z = j & 0xF;
                 var shaftValueFast = chunkAtCell.GetShaftValueFast(x3, z);

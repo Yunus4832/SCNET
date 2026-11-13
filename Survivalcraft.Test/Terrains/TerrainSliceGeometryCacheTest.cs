@@ -19,21 +19,21 @@ public sealed class TerrainSliceGeometryCacheTest
         TerrainMeshTestData.PrepareLighting(chunk);
         presentation.PrepareMeshUpdate(chunk);
         GenerateSlice(presentation, geometry, contentA);
-        presentation.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(presentation);
         Assert.True(presentation.CompleteMeshBuild(chunk));
         presentation.GeometryUploaded = true;
 
         chunk.NetworkContentVersion = 2;
         presentation.PrepareMeshUpdate(chunk);
         GenerateSlice(presentation, geometry, contentB);
-        presentation.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(presentation);
         Assert.Equal(contentB, geometry.SubsetOpaque.Indices[0]);
 
         chunk.NetworkContentVersion = 3;
         Assert.False(presentation.CompleteMeshBuild(chunk));
         presentation.PrepareMeshUpdate(chunk);
         Assert.True(GenerateSlice(presentation, geometry, contentA));
-        presentation.CompleteFirstPass();
+        TerrainMeshTestData.CompleteSlices(presentation);
         Assert.True(presentation.CompleteMeshBuild(chunk));
         Assert.Equal(contentA, geometry.SubsetOpaque.Indices[0]);
         Assert.True(presentation.GeometryUploaded);

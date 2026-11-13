@@ -65,7 +65,11 @@ public sealed class WorldProjectPersistence : IDisposable
         var previousTerrainSave = terrain?.PendingTerrainSave;
         ProjectData? data = null;
         Exception? captureFailure = null;
-        try { data = _project.Save(); }
+        try
+        {
+            terrain?.CompletePendingChunkInitialization();
+            data = _project.Save();
+        }
         catch (Exception error) { captureFailure = error; }
 
         var terrainSave = terrain?.PendingTerrainSave ?? Task.CompletedTask;

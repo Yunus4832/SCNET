@@ -9,6 +9,19 @@ public class SubsystemBlocksScanner : Subsystem, IUpdateable
 
     public const float ScanPeriod = 60f;
 
+    private static readonly TimeSpan _updateBudget = TimeSpan.FromMilliseconds(3);
+
+    private readonly TimeProvider _time;
+
+    public SubsystemBlocksScanner() : this(TimeProvider.System)
+    {
+    }
+
+    internal SubsystemBlocksScanner(TimeProvider time)
+    {
+        _time = time;
+    }
+
     private SubsystemPollableBlockBehavior[][] _pollableBehaviorsByContents = [];
 
     private Point2 _pollChunkCoordinates;
@@ -38,11 +51,15 @@ public class SubsystemBlocksScanner : Subsystem, IUpdateable
             return;
         }
 
-        while (_pollCount >= 1f)
+        var started = _time.GetTimestamp();
+        while (_pollCount >= 1f && _time.GetElapsedTime(started) < _updateBudget)
         {
-            if (!nextChunk.HasCurrentLight)
+            if (!nextChunk.HasCurrentLight || !nextChunk.IsContentInitialized)
             {
-                _pollCount -= 65536f;
+                // Credits represent columns, including when an unavailable chunk is skipped.
+                _pollCount -= 16 * 16 - (_pollX * 16 + _pollZ);
+                _pollX = 0;
+                _pollZ = 0;
             }
             else
             {
@@ -50,7 +67,7 @@ public class SubsystemBlocksScanner : Subsystem, IUpdateable
                 {
                     while (_pollZ < 16)
                     {
-                        if (_pollCount < 1f)
+                        if (_pollCount < 1f || _time.GetElapsedTime(started) >= _updateBudget)
                         {
                             return;
                         }

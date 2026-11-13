@@ -5,6 +5,8 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
 {
     private readonly Lock _sync = new();
 
+    private readonly HashSet<TerrainChunk> _distanceChanges = [];
+
     private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
 
     private readonly Dictionary<TerrainWorkKey, Item> _items = [];
@@ -176,7 +178,7 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
                 if (item.Running) { item.Requeued |= changed; }
                 else if (wasReady || changed) { AddReady(item); }
 
-                RefreshDistances([key.Chunk]);
+                InvalidateDistances([key.Chunk]);
 
                 return;
             }
@@ -184,7 +186,7 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
             item = new Item(key, revision, priority, distance, _time.GetTimestamp(), ++_sequence);
             _items.Add(key, item);
             AddReady(item);
-            RefreshDistances([key.Chunk]);
+            InvalidateDistances([key.Chunk]);
         }
     }
 
@@ -192,6 +194,7 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
     {
         lock (_sync)
         {
+            ApplyDistanceChanges();
             while (true)
             {
                 var group = -1;
@@ -222,6 +225,7 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
                 {
                     RemoveItem(selected);
                     SignalCore(selected.Key);
+                    ApplyDistanceChanges();
                     continue;
                 }
 
@@ -319,7 +323,7 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
                 waiting.Add(item);
             }
 
-            RefreshDistances(required.Select(key => key.Chunk));
+            InvalidateDistances(required.Select(key => key.Chunk));
         }
     }
 
@@ -353,9 +357,15 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
         return distance;
     }
 
-    private void RefreshDistances(IEnumerable<TerrainChunk> chunks)
+    private void InvalidateDistances(IEnumerable<TerrainChunk> chunks) => _distanceChanges.UnionWith(chunks);
+
+    // Coalesce graph updates until selection actually needs the effective distances.
+    private void ApplyDistanceChanges()
     {
-        var pending = new Stack<TerrainChunk>(chunks);
+        if (_distanceChanges.Count == 0) { return; }
+
+        var pending = new Stack<TerrainChunk>(_distanceChanges);
+        _distanceChanges.Clear();
         var visited = new HashSet<TerrainChunk>();
         while (pending.TryPop(out var chunk))
         {
@@ -429,6 +439,7 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
         {
             _items.Clear();
             _dependents.Clear();
+            _distanceChanges.Clear();
             foreach (var ready in _ready) { ready.Clear(); }
 
             foreach (var ages in _ages) { ages.Clear(); }
@@ -475,7 +486,7 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
         }
 
         item.dependencies.Clear();
-        RefreshDistances(dependencies.Select(key => key.Chunk));
+        InvalidateDistances(dependencies.Select(key => key.Chunk));
     }
 
     private void RemoveItem(Item item)
@@ -495,6 +506,6 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
             if (item.dependencies.Count == 0 && !item.Running) { AddReady(item); }
         }
 
-        RefreshDistances([key.Chunk]);
+        InvalidateDistances([key.Chunk]);
     }
 }
