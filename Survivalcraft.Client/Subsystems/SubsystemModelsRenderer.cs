@@ -197,10 +197,8 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
             modelData.LastAnimateFrame = Time.FrameIndex;
         }
 
-        var daylight = _subsystemTerrain.CaptureLightEnvironment().SkyLightValue;
         var brightness = Configuration.ClientConfiguration.Preferences.Brightness;
         if (Time.FrameStartTime >= modelData.NextLightTime ||
-            modelData.LightDaylight != daylight ||
             modelData.LightBrightness != brightness)
         {
             var num = CalculateModelLight(modelData);
@@ -210,7 +208,6 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
             }
 
             modelData.NextLightTime = Time.FrameStartTime + 0.1;
-            modelData.LightDaylight = daylight;
             modelData.LightBrightness = brightness;
         }
 
@@ -532,8 +529,6 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
         public float Light;
 
         public double NextLightTime;
-
-        public int LightDaylight = -1;
 
         public float LightBrightness = float.NaN;
 

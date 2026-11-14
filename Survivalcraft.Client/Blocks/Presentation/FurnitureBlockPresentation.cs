@@ -93,8 +93,7 @@ public class FurnitureBlockPresentation(FurnitureBlock block, BlockPresentationC
         var geometry = Catalog.Furniture.GetGeometry(design, environmentData.SubsystemTerrain);
         for (var i = 0; i < 6; i++)
         {
-            var s = LightingManager.LightIntensityByLightValueAndFace[
-                environmentData.Light + 16 * CellFace.OppositeFace(i)];
+            var s = LightingManager.GetFaceBrightness(environmentData.Light, CellFace.OppositeFace(i));
             var color2 = Color.MultiplyColorOnly(color, s);
             BlocksManager.DrawMeshBlock(
                 primitivesRenderer,

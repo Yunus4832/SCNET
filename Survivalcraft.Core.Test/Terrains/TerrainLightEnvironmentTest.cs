@@ -7,6 +7,34 @@ namespace Survivalcraft.Core.Test.Terrains;
 public sealed class TerrainLightEnvironmentTest
 {
     [Fact]
+    public void ContinuousPresentationCurvePreservesAnchorsAndRemovesDiscreteThresholdJumps()
+    {
+        for (var phase = 0; phase < 8; phase++)
+        {
+            for (var step = 0; step < 6; step++)
+            {
+                var intensity = step / 5f;
+                Assert.Equal(
+                    (float)TerrainLightEnvironment.FromIntensity(intensity, phase).SkyLightValue,
+                    TerrainLightEnvironment.InterpolateSkyLightValue(intensity, phase)
+                );
+            }
+
+            for (var step = 0; step < 5; step++)
+            {
+                var threshold = (step + .5f) / 5f;
+                var before = TerrainLightEnvironment.InterpolateSkyLightValue(threshold - .00001f, phase);
+                var after = TerrainLightEnvironment.InterpolateSkyLightValue(threshold + .00001f, phase);
+                Assert.InRange(after - before, 0f, .001f);
+                Assert.NotEqual(
+                    TerrainLightEnvironment.FromIntensity(threshold - .00001f, phase),
+                    TerrainLightEnvironment.FromIntensity(threshold + .00001f, phase)
+                );
+            }
+        }
+    }
+
+    [Fact]
     public void DiscreteIntensityTablesPreserveEveryMoonPhase()
     {
         int[] moonless = [0, 3, 6, 9, 12, 15];

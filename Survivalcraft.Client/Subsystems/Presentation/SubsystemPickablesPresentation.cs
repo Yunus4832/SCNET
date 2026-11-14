@@ -21,7 +21,7 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
 
     private BlockPresentationCatalog _blockPresentations = null!;
 
-    private readonly Dictionary<Pickable, int> _lightSamples = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<Pickable, float> _lightSamples = new(ReferenceEqualityComparer.Instance);
 
     private bool _subscribed;
 
@@ -85,7 +85,7 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
                 _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
                                                         SubsystemWeather.GetTemperatureAdjustmentAtHeight(num5);
                 var f = MathUtils.Max(position.Y - num5 - 0.75f, 0f) / 0.25f;
-                var light = (int)MathUtils.Lerp(
+                var light = MathUtils.Lerp(
                     (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, num5, z) ?? 0),
                     (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, num5 + 1, z) ?? 0),
                     f

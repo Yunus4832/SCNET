@@ -1,26 +1,9 @@
+#include "Shaders/TerrainLighting.txt"
 #ifdef HLSL
 
 float2 u_origin;
 float4x4 u_viewProjectionMatrix;
 float3 u_viewPosition;
-
-#ifdef TERRAIN_LIGHT_RESPONSE
-float2 u_lightEnvironment;
-
-float calculateLight(float4 levels0, float4 levels1, float4 levels2, float4 levels3)
-{
-    float4 levels = levels0;
-    if (u_lightEnvironment.x >= 4.0) levels = levels1;
-    if (u_lightEnvironment.x >= 8.0) levels = levels2;
-    if (u_lightEnvironment.x >= 12.0) levels = levels3;
-    float component = u_lightEnvironment.x - 4.0 * floor(u_lightEnvironment.x / 4.0);
-    float response = levels.x;
-    if (component >= 1.0) response = levels.y;
-    if (component >= 2.0) response = levels.z;
-    if (component >= 3.0) response = levels.w;
-    return lerp(u_lightEnvironment.y, 1.0, response);
-}
-#endif
 
 void main(
 	in float3 a_position: POSITION,
@@ -71,24 +54,6 @@ void main(
 uniform vec2 u_origin;
 uniform mat4 u_viewProjectionMatrix;
 uniform vec3 u_viewPosition;
-
-#ifdef TERRAIN_LIGHT_RESPONSE
-uniform vec2 u_lightEnvironment;
-
-float calculateLight(vec4 levels0, vec4 levels1, vec4 levels2, vec4 levels3)
-{
-    vec4 levels = levels0;
-    if (u_lightEnvironment.x >= 4.0) levels = levels1;
-    if (u_lightEnvironment.x >= 8.0) levels = levels2;
-    if (u_lightEnvironment.x >= 12.0) levels = levels3;
-    float component = u_lightEnvironment.x - 4.0 * floor(u_lightEnvironment.x / 4.0);
-    float response = levels.x;
-    if (component >= 1.0) response = levels.y;
-    if (component >= 2.0) response = levels.z;
-    if (component >= 3.0) response = levels.w;
-    return mix(u_lightEnvironment.y, 1.0, response);
-}
-#endif
 
 attribute vec3 a_position;
 attribute vec4 a_color;

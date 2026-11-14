@@ -50,7 +50,7 @@ public static class BlocksManager
     )
     {
         environmentData ??= _defaultEnvironmentData;
-        var num = LightingManager.LightIntensityByLightValue[environmentData.Light];
+        var num = LightingManager.GetBrightness(environmentData.Light);
         var v = new Vector4(color);
         v.X *= num;
         v.Y *= num;

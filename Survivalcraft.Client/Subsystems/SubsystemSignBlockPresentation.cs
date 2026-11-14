@@ -466,7 +466,7 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
                                  nearText.Light;
             }
 
-            var num2 = LightingManager.LightIntensityByLightValue[nearText.Light];
+            var num2 = LightingManager.GetBrightness(nearText.Light);
             var color = new Color(num2, num2, num2);
             var x = 0f;
             var x2 = nearText.UsedTextureWidth / (Font.GlyphHeight * 16f);
@@ -524,7 +524,7 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
 
         public float Distance;
 
-        public int Light;
+        public float Light;
 
         public readonly string[] Lines =
         [

@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
 
+using Engine.Core.Mathematics;
+
 using Game.Managers;
 using Game.Subsystems;
 using Game.Terrains;
@@ -10,6 +12,38 @@ namespace Survivalcraft.Test.Terrains;
 
 public sealed class TerrainLightResponseTest
 {
+    [Fact]
+    public void FractionalDaylightInterpolatesAcrossEveryPackedVectorBoundary()
+    {
+        var response = new TerrainLightResponse(
+            new Color(0, 17, 34, 51),
+            new Color(68, 85, 102, 119),
+            new Color(136, 153, 170, 187),
+            new Color(204, 221, 238, 255)
+        );
+        for (var quarter = 0; quarter <= 60; quarter++)
+        {
+            var daylight = quarter / 4f;
+            Assert.Equal(daylight / 15f, response.GetBrightness(daylight, 0f), 6);
+            Assert.Equal(.05f + .95f * daylight / 15f, response.GetBrightness(daylight, .5f), 6);
+        }
+    }
+
+    [Fact]
+    public void ContinuousDaylightPreservesTorchFloorAndUnlitAmbient()
+    {
+        var torch = TerrainLightResponse.FromChannels(new TerrainLightChannels(0, 15));
+        var dark = TerrainLightResponse.FromChannels(default);
+        for (var quarter = 0; quarter <= 60; quarter++)
+        {
+            Assert.Equal(1f, torch.GetBrightness(quarter / 4f, .5f));
+            Assert.Equal(.05f, dark.GetBrightness(quarter / 4f, .5f), 6);
+        }
+
+        Assert.Equal(5.5f, LightingManager.GetEffectiveLight(new TerrainLightChannels(15, 0), 5.5f));
+        Assert.Equal(7f, LightingManager.GetEffectiveLight(new TerrainLightChannels(5, 7), 5.5f));
+    }
+
     [Fact]
     public void MissingPublishedSamplesReturnUnknownWithoutRequiringAWorldClock()
     {

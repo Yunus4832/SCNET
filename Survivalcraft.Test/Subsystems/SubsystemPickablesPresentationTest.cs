@@ -98,7 +98,7 @@ public sealed class SubsystemPickablesPresentationTest
         subscribe.Invoke(presentation, null);
         Assert.Single(Event(rules, "PickableRemoved")!.GetInvocationList());
         Assert.Single(Event(rules, "EffectRequested")!.GetInvocationList());
-        var cache = (Dictionary<Pickable, int>)typeof(SubsystemPickablesPresentation)
+        var cache = (Dictionary<Pickable, float>)typeof(SubsystemPickablesPresentation)
             .GetField("_lightSamples", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(presentation)!;
         cache.Add(item, 12);
         item.Light = 3;

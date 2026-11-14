@@ -56,7 +56,7 @@ public class ComponentGlowingEyes : Component, IDrawable
                             Terrain.ToCell(translation.Z)
                         ) ??
                         0;
-        var num2 = LightingManager.LightIntensityByLightValue[cellLight];
+        var num2 = LightingManager.GetBrightness(cellLight);
         float num3 = 0f - Vector3.Dot(vector, Vector3.Normalize(matrix.Translation - camera.ViewPosition)) > 0.7f
             ? 1
             : 0;

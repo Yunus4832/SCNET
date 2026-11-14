@@ -1,0 +1,71 @@
+#ifndef SCNET_TERRAIN_LIGHTING
+#define SCNET_TERRAIN_LIGHTING
+
+#ifdef TERRAIN_LIGHT_RESPONSE
+#ifdef HLSL
+float2 u_lightEnvironment;
+
+float sampleTerrainLight(float level, float4 levels0, float4 levels1, float4 levels2, float4 levels3)
+{
+    float4 levels = levels0;
+    if (level >= 4.0) levels = levels1;
+    if (level >= 8.0) levels = levels2;
+    if (level >= 12.0) levels = levels3;
+    float component = level - 4.0 * floor(level / 4.0);
+    float response = levels.x;
+    if (component >= 1.0) response = levels.y;
+    if (component >= 2.0) response = levels.z;
+    if (component >= 3.0) response = levels.w;
+    return response;
+}
+
+float calculateLight(float4 levels0, float4 levels1, float4 levels2, float4 levels3)
+{
+    float level = clamp(u_lightEnvironment.x, 0.0, 15.0);
+    float lower = floor(level);
+    float fraction = level - lower;
+    float response = sampleTerrainLight(lower, levels0, levels1, levels2, levels3);
+    if (fraction > 0.0)
+    {
+        float next = sampleTerrainLight(min(lower + 1.0, 15.0), levels0, levels1, levels2, levels3);
+        response = lerp(response, next, fraction);
+    }
+    return lerp(u_lightEnvironment.y, 1.0, response);
+}
+#endif
+
+#ifdef GLSL
+uniform vec2 u_lightEnvironment;
+
+float sampleTerrainLight(float level, vec4 levels0, vec4 levels1, vec4 levels2, vec4 levels3)
+{
+    vec4 levels = levels0;
+    if (level >= 4.0) levels = levels1;
+    if (level >= 8.0) levels = levels2;
+    if (level >= 12.0) levels = levels3;
+    float component = level - 4.0 * floor(level / 4.0);
+    float response = levels.x;
+    if (component >= 1.0) response = levels.y;
+    if (component >= 2.0) response = levels.z;
+    if (component >= 3.0) response = levels.w;
+    return response;
+}
+
+float calculateLight(vec4 levels0, vec4 levels1, vec4 levels2, vec4 levels3)
+{
+    float level = clamp(u_lightEnvironment.x, 0.0, 15.0);
+    float lower = floor(level);
+    float fraction = level - lower;
+    float response = sampleTerrainLight(lower, levels0, levels1, levels2, levels3);
+    if (fraction > 0.0)
+    {
+        float next = sampleTerrainLight(min(lower + 1.0, 15.0), levels0, levels1, levels2, levels3);
+        response = mix(response, next, fraction);
+    }
+    return mix(u_lightEnvironment.y, 1.0, response);
+}
+#endif
+
+#endif
+
+#endif

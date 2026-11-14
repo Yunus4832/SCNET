@@ -29,7 +29,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
 
     private Model _handModel = null!;
 
-    private int _itemLight;
+    private float _itemLight;
 
     private Vector3 _itemOffset;
 

@@ -63,7 +63,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
     public override bool Simulate(float dt)
     {
         var terrain = _subsystemTerrain.Terrain;
-        var environment = _subsystemTerrain.CaptureLightEnvironment();
+        var daylight = LightingManager.CaptureSkyLightValue(_subsystemTerrain);
         var flag = false;
         foreach (var particle in Particles)
         {
@@ -105,7 +105,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
 
             particle.Color = Color.MultiplyColorOnlyNotSaturated(
                 particle.BaseColor,
-                LightingManager.LightIntensityByLightValue[particle.Light.GetEffectiveLight(environment)]
+                LightingManager.GetBrightness(LightingManager.GetEffectiveLight(particle.Light, daylight))
             );
             var num5 = MathUtils.Saturate(0.5f * (particle.EndTime - particle.Time));
             if (_fadeIn)

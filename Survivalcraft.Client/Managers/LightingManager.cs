@@ -22,10 +22,10 @@ public static class LightingManager
 
     public static void BindTerrainEnvironment(Shader shader, SubsystemTerrain terrain)
     {
-        var environment = terrain.CaptureLightEnvironment();
+        var daylight = CaptureSkyLightValue(terrain);
         shader.GetParameter("u_lightEnvironment").SetValue(
             new Vector2(
-                environment.SkyLightValue,
+                daylight,
                 0.1f * Configuration.ClientConfiguration.Preferences.Brightness
             )
         );
@@ -46,9 +46,36 @@ public static class LightingManager
         return snapshot.Get(x & 15, y, z & 15);
     }
 
-    public static int? SampleEffectiveLight(SubsystemTerrain terrain, int x, int y, int z)
+    public static float CaptureSkyLightValue(SubsystemTerrain terrain)
     {
-        return SampleSpatialLight(terrain, x, y, z)?.GetEffectiveLight(terrain.CaptureLightEnvironment());
+        var time = terrain.SubsystemGameInfo.TimeOfDay;
+        return TerrainLightEnvironment.InterpolateSkyLightValue(
+            TerrainLightEnvironment.CalculateIntensity(time, time.TimeOfDay),
+            TerrainLightEnvironment.CalculateMoonPhase(time.Day)
+        );
+    }
+
+    public static float GetEffectiveLight(TerrainLightChannels channels, float daylight) =>
+        Math.Max(channels.Block, Math.Max(0f, channels.Sky - (15f - daylight)));
+
+    public static float GetBrightness(float light)
+    {
+        var values = CaptureTables().Values;
+        var lower = (int)MathUtils.Floor(light);
+        return MathUtils.Lerp(values[lower], values[Math.Min(lower + 1, 15)], light - lower);
+    }
+
+    public static float GetFaceBrightness(float light, int face)
+    {
+        var values = CaptureTables().Faces;
+        var lower = (int)MathUtils.Floor(light);
+        return MathUtils.Lerp(values[lower + 16 * face], values[Math.Min(lower + 1, 15) + 16 * face], light - lower);
+    }
+
+    public static float? SampleEffectiveLight(SubsystemTerrain terrain, int x, int y, int z)
+    {
+        var sample = SampleSpatialLight(terrain, x, y, z);
+        return sample.HasValue ? GetEffectiveLight(sample.Value, CaptureSkyLightValue(terrain)) : null;
     }
 
     public static TerrainLightChannels? SampleNeighborLight(SubsystemTerrain terrain, Vector3 position)
@@ -111,18 +138,18 @@ public static class LightingManager
             !l110.HasValue ||
             !l111.HasValue) { return null; }
 
-        var environment = subsystemTerrain.CaptureLightEnvironment();
+        var daylight = CaptureSkyLightValue(subsystemTerrain);
         var f = p.X - num;
         var f2 = p.Y - num2;
         var f3 = p.Z - num3;
-        float x2 = l000.Value.GetEffectiveLight(environment);
-        float x3 = l001.Value.GetEffectiveLight(environment);
-        float x4 = l010.Value.GetEffectiveLight(environment);
-        float x5 = l011.Value.GetEffectiveLight(environment);
-        float x6 = l100.Value.GetEffectiveLight(environment);
-        float x7 = l101.Value.GetEffectiveLight(environment);
-        float x8 = l110.Value.GetEffectiveLight(environment);
-        float x9 = l111.Value.GetEffectiveLight(environment);
+        var x2 = GetEffectiveLight(l000.Value, daylight);
+        var x3 = GetEffectiveLight(l001.Value, daylight);
+        var x4 = GetEffectiveLight(l010.Value, daylight);
+        var x5 = GetEffectiveLight(l011.Value, daylight);
+        var x6 = GetEffectiveLight(l100.Value, daylight);
+        var x7 = GetEffectiveLight(l101.Value, daylight);
+        var x8 = GetEffectiveLight(l110.Value, daylight);
+        var x9 = GetEffectiveLight(l111.Value, daylight);
         var x10 = MathUtils.Lerp(x2, x6, f);
         var x11 = MathUtils.Lerp(x3, x7, f);
         var x12 = MathUtils.Lerp(x4, x8, f);
@@ -130,10 +157,7 @@ public static class LightingManager
         var x14 = MathUtils.Lerp(x10, x12, f2);
         var x15 = MathUtils.Lerp(x11, x13, f2);
         var num5 = MathUtils.Lerp(x14, x15, f3);
-        var num6 = (int)MathUtils.Floor(num5);
-        var num7 = (int)MathUtils.Ceiling(num5);
-        var f4 = num5 - num6;
-        return MathUtils.Lerp(LightIntensityByLightValue[num6], LightIntensityByLightValue[num7], f4);
+        return GetBrightness(Math.Clamp(num5, 0f, 15f));
     }
 
     private static void CalculateLightingTables()

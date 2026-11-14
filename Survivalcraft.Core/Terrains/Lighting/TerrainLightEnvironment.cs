@@ -22,13 +22,28 @@ public readonly record struct TerrainLightEnvironment
 
     public static TerrainLightEnvironment FromIntensity(float intensity, int moonPhase)
     {
+        var values = GetIntensityValues(intensity, moonPhase);
+        return new TerrainLightEnvironment(values[(int)MathUtils.Round(MathUtils.Lerp(0f, 5f, intensity))]);
+    }
+
+    /// <summary>The continuous daylight curve for presentation; rule light retains its discrete levels.</summary>
+    public static float InterpolateSkyLightValue(float intensity, int moonPhase)
+    {
+        var values = GetIntensityValues(intensity, moonPhase);
+        var position = intensity * (values.Length - 1);
+        var lower = (int)position;
+        var upper = Math.Min(lower + 1, values.Length - 1);
+        return MathUtils.Lerp(values[lower], values[upper], position - lower);
+    }
+
+    private static int[] GetIntensityValues(float intensity, int moonPhase)
+    {
         ArgumentOutOfRangeException.ThrowIfLessThan(intensity, 0f);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(intensity, 1f);
         ArgumentOutOfRangeException.ThrowIfGreaterThan((uint)moonPhase, 7u);
         if (float.IsNaN(intensity)) { throw new ArgumentOutOfRangeException(nameof(intensity)); }
 
-        var values = moonPhase == 4 ? _moonlessValues : _normalValues;
-        return new TerrainLightEnvironment(values[(int)MathUtils.Round(MathUtils.Lerp(0f, 5f, intensity))]);
+        return moonPhase == 4 ? _moonlessValues : _normalValues;
     }
 
     public static int CalculateMoonPhase(double day)

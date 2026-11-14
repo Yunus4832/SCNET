@@ -25,7 +25,7 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
 
     private float _handLight;
 
-    private int _itemLight;
+    private float _itemLight;
 
     private Vector3 _itemOffset;
 

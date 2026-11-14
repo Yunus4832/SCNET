@@ -81,9 +81,21 @@ public readonly record struct TerrainLightResponse(
         );
     }
 
-    public float GetBrightness(int daylight, float brightnessSetting)
+    public float GetBrightness(float daylight, float brightnessSetting)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThan((uint)daylight, 15u);
+        ArgumentOutOfRangeException.ThrowIfLessThan(daylight, 0f);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(daylight, 15f);
+        if (float.IsNaN(daylight)) { throw new ArgumentOutOfRangeException(nameof(daylight)); }
+
+        var lower = (int)daylight;
+        var upper = Math.Min(lower + 1, 15);
+        var response = MathUtils.Lerp(GetResponse(lower), GetResponse(upper), daylight - lower);
+        var ambient = MathUtils.Lerp(0f, 0.1f, brightnessSetting);
+        return MathUtils.Lerp(ambient, 1f, response);
+    }
+
+    private float GetResponse(int daylight)
+    {
         var levels = (daylight >> 2) switch
         {
             0 => Levels0To3,
@@ -91,8 +103,6 @@ public readonly record struct TerrainLightResponse(
             2 => Levels8To11,
             _ => Levels12To15
         };
-        var response = (byte)(levels.PackedValue >> (8 * (daylight & 3))) / 255f;
-        var ambient = MathUtils.Lerp(0f, 0.1f, brightnessSetting);
-        return MathUtils.Lerp(ambient, 1f, response);
+        return (byte)(levels.PackedValue >> (8 * (daylight & 3))) / 255f;
     }
 }

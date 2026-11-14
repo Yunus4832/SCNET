@@ -10,7 +10,7 @@ public class DrawBlockEnvironmentData
 
     public Matrix InWorldMatrix = Matrix.Identity;
 
-    public int Light = 15;
+    public float Light = 15;
 
     public SubsystemTerrain? SubsystemTerrain;
 

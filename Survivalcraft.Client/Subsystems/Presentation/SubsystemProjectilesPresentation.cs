@@ -27,7 +27,7 @@ public sealed class SubsystemProjectilesPresentation : Subsystem, IDrawable, IUp
 
     private BlockPresentationCatalog _blockPresentations = null!;
 
-    private readonly Dictionary<Projectile, int> _lightSamples = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<Projectile, float> _lightSamples = new(ReferenceEqualityComparer.Instance);
 
     private readonly Dictionary<Projectile, TrailState> _trails = new(ReferenceEqualityComparer.Instance);
 

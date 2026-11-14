@@ -202,7 +202,7 @@ public sealed class BlockPresentationCatalog : IDisposable
             BlendState.AlphaBlend,
             SamplerState.PointClamp
         );
-        var s = LightingManager.LightIntensityByLightValue[environmentData.Light];
+        var s = LightingManager.GetBrightness(environmentData.Light);
         color = Color.MultiplyColorOnlyNotSaturated(color, s);
         topColor = Color.MultiplyColorOnlyNotSaturated(topColor, s);
         var translation = matrix.Translation;
@@ -357,7 +357,7 @@ public sealed class BlockPresentationCatalog : IDisposable
             null,
             SamplerState.PointClamp
         );
-        var s = LightingManager.LightIntensityByLightValue[environmentData.Light];
+        var s = LightingManager.GetBrightness(environmentData.Light);
         color = Color.MultiplyColorOnly(color, s);
         topColor = Color.MultiplyColorOnly(topColor, s);
         var translation = matrix.Translation;
@@ -538,7 +538,7 @@ public sealed class BlockPresentationCatalog : IDisposable
             : BlocksTexturesManager.DefaultBlocksTexture;
         if (!isEmissive)
         {
-            var s = LightingManager.LightIntensityByLightValue[environmentData.Light];
+            var s = LightingManager.GetBrightness(environmentData.Light);
             color = Color.MultiplyColorOnly(color, s);
         }
 

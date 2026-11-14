@@ -95,8 +95,9 @@ public class ParticleSystem<T> : ParticleSystemBase where T : Particle, new()
         if (_lightTerrain != null)
         {
             _spatialLight = LightingManager.SampleNeighborLight(_lightTerrain, _lightOrigin) ?? _spatialLight;
-            light = LightingManager.LightIntensityByLightValue[
-                _spatialLight.GetEffectiveLight(_lightTerrain.CaptureLightEnvironment())];
+            light = LightingManager.GetBrightness(
+                LightingManager.GetEffectiveLight(_spatialLight, LightingManager.CaptureSkyLightValue(_lightTerrain))
+            );
         }
 
         foreach (var particle in Particles)

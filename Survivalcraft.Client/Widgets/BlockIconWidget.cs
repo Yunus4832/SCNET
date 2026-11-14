@@ -43,7 +43,7 @@ public class BlockIconWidget : Widget
 
     public int Contents { get => Terrain.ExtractContents(Value); set => Value = Terrain.ReplaceContents(Value, value); }
 
-    public int Light { get => DrawBlockEnvironmentData.Light; set => DrawBlockEnvironmentData.Light = value; }
+    public float Light { get => DrawBlockEnvironmentData.Light; set => DrawBlockEnvironmentData.Light = value; }
 
     public int Data { get => Terrain.ExtractData(Value); set => Value = Terrain.ReplaceData(Value, value); }
 
