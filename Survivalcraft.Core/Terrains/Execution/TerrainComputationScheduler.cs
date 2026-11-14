@@ -35,6 +35,8 @@ public sealed class TerrainComputationScheduler : IDisposable
 
     private readonly HashSet<TerrainWorkKey> _generationWaits = [];
 
+    private readonly ConcurrentDictionary<TerrainChunk, ulong> _interactive = new();
+
     private int _generationPrepared;
 
     private bool _lightCapacity;
@@ -108,9 +110,26 @@ public sealed class TerrainComputationScheduler : IDisposable
 
     public (int Total, int Ready, int Waiting) Counts => _queue.Counts;
 
+    public bool IsInteractive(TerrainChunk chunk) =>
+        _interactive.TryGetValue(chunk, out var generation) && generation == chunk.AllocationGeneration;
+
+    public bool HasInteractiveWork => !_interactive.IsEmpty;
+
+    public TerrainChunk[] GetInteractiveChunks() => _interactive.Keys.Where(IsInteractive).ToArray();
+
+    public void SetInteractive(TerrainChunk chunk, bool value)
+    {
+        if (value && !_disposed)
+        {
+            _interactive[chunk] = chunk.AllocationGeneration;
+            Request(chunk, TerrainWorkPriority.Critical);
+        }
+        else { _interactive.TryRemove(chunk, out _); }
+    }
+
 
     public bool IsDerivedRequested(TerrainChunk chunk) =>
-        !_disposed && !chunk.IsDisposed && _derived != null && IsVisible(chunk);
+        !_disposed && !chunk.IsDisposed && _derived != null && (IsVisible(chunk) || IsInteractive(chunk));
 
     /// <summary>Resumes an externally deferred client job only for the same live allocation.</summary>
     public void ResumeDerived(TerrainChunk chunk, ulong allocationGeneration)
@@ -210,6 +229,7 @@ public sealed class TerrainComputationScheduler : IDisposable
 
     public void Retired(TerrainChunk chunk)
     {
+        _interactive.TryRemove(chunk, out _);
         CancelLightJobs(chunk);
         _queue.Cancel(chunk);
         _pendingInitialization.TryRemove(new TerrainWorkKey(chunk, TerrainWorkStage.Content), out _);
@@ -217,6 +237,7 @@ public sealed class TerrainComputationScheduler : IDisposable
 
     public void Renewed(TerrainChunk chunk, ulong previousGeneration)
     {
+        _interactive.TryRemove(chunk, out _);
         CancelLightJobs(chunk);
         _queue.Cancel(chunk);
         Request(chunk);
@@ -397,7 +418,10 @@ public sealed class TerrainComputationScheduler : IDisposable
                 AdvancePropagation(item);
                 break;
             case TerrainWorkStage.Derived:
-                if (_derived == null || _derived.HasCurrentGeometry(chunk)) { Complete(item, true); }
+                if (_derived == null || _derived.HasCurrentGeometry(chunk) && !CanPreview(chunk))
+                {
+                    Complete(item, true);
+                }
                 else
                 {
                     switch (_derived.UpdateChunk(chunk))
@@ -520,7 +544,8 @@ public sealed class TerrainComputationScheduler : IDisposable
             yield break;
         }
 
-        if (key.Stage == TerrainWorkStage.LightSeed) { yield break; }
+        if (key.Stage == TerrainWorkStage.LightSeed ||
+            key.Stage == TerrainWorkStage.Derived && CanPreview(chunk)) { yield break; }
 
         if (!chunk.DerivedRevisions.HasCurrentLightSeed)
         {
@@ -548,6 +573,10 @@ public sealed class TerrainComputationScheduler : IDisposable
 
         if (!chunk.DerivedRevisions.HasCurrentHeights) { return TerrainWorkStage.Heights; }
 
+        // Visible interactions may use the last published light; finish their geometry before
+        // queuing fresh propagation so a small frame budget is not their only source of CPU time.
+        if (CanPreview(chunk)) { return TerrainWorkStage.Derived; }
+
         if (!chunk.DerivedRevisions.HasCurrentLightSeed || !_world.Terrain.Lighting.TryGetSeed(chunk, out _))
         {
             return TerrainWorkStage.LightSeed;
@@ -555,10 +584,13 @@ public sealed class TerrainComputationScheduler : IDisposable
 
         if (!chunk.DerivedRevisions.HasCurrentLight) { return TerrainWorkStage.Propagation; }
 
-        return _derived != null && IsVisible(chunk) && !_derived.HasCurrentGeometry(chunk)
+        return _derived != null && (IsVisible(chunk) || IsInteractive(chunk)) && !_derived.HasCurrentGeometry(chunk)
             ? TerrainWorkStage.Derived
             : null;
     }
+
+    private bool CanPreview(TerrainChunk chunk) =>
+        IsInteractive(chunk) && _derived?.CanUpdateBeforeLighting(chunk) == true;
 
     private void CancelLightJobs(TerrainChunk chunk)
     {
@@ -670,6 +702,8 @@ public sealed class TerrainComputationScheduler : IDisposable
 
     private TerrainWorkPriority Priority(TerrainChunk chunk, TerrainWorkStage stage)
     {
+        if (IsInteractive(chunk)) { return TerrainWorkPriority.Critical; }
+
         if (stage == TerrainWorkStage.Content && Distance(chunk) <= 64 * 64) { return TerrainWorkPriority.Critical; }
 
         if (_derived != null)
@@ -693,6 +727,7 @@ public sealed class TerrainComputationScheduler : IDisposable
         }
 
         _generationWaits.Clear();
+        _interactive.Clear();
         _lightWorkers.Dispose();
         _propagations.Clear();
         _lightCompletions.Clear();

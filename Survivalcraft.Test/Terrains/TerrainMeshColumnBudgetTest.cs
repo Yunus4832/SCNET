@@ -19,6 +19,44 @@ namespace Survivalcraft.Test.Terrains;
 public sealed class TerrainMeshColumnBudgetTest
 {
     [Fact]
+    public void NewLightPublicationDoesNotMixLightingAcrossResumedInteractiveColumns()
+    {
+        using var fixture = new Fixture();
+        var input = fixture.Terrain.Lighting.CaptureInput(fixture.Chunk);
+        Assert.True(
+            fixture.Terrain.Lighting.TryPublish(
+                fixture.Chunk,
+                input,
+                new TerrainLightSnapshot(new TerrainLightChannels(15, 0))
+            )
+        );
+        using var expected = new TerrainChunkPresentation();
+        using var actual = new TerrainChunkPresentation();
+        expected.PrepareMeshUpdate(fixture.Chunk, true);
+        actual.PrepareMeshUpdate(fixture.Chunk, true);
+        var full = new TerrainMeshBuilder(fixture.Terrain, fixture.Generator, fixture.Texture);
+        Assert.True(full.GenerateSlice(fixture.Chunk, expected, 0, TimeSpan.MaxValue));
+        var bounded = new TerrainMeshBuilder(fixture.Terrain, fixture.Generator, fixture.Texture, new Clock());
+        Assert.False(bounded.GenerateSlice(fixture.Chunk, actual, 0, TimeSpan.FromMilliseconds(1)));
+        Assert.True(fixture.Terrain.Lighting.TryPublish(fixture.Chunk, input, new TerrainLightSnapshot(default)));
+        var finished = false;
+        for (var i = 0; i < 300 && !finished; i++)
+        {
+            actual.PrepareMeshUpdate(fixture.Chunk, true);
+            finished = bounded.GenerateSlice(fixture.Chunk, actual, 0, TimeSpan.FromMilliseconds(1));
+        }
+
+        Assert.True(finished);
+        var first = expected.Draws[fixture.Texture][0].Subsets;
+        var second = actual.Draws[fixture.Texture][0].Subsets;
+        for (var i = 0; i < first.Length; i++)
+        {
+            Assert.Equal(first[i].Vertices.ToArray(), second[i].Vertices.ToArray());
+            Assert.Equal(first[i].Indices.ToArray(), second[i].Indices.ToArray());
+        }
+    }
+
+    [Fact]
     public void CompactionYieldsWithinTheSliceBudgetAndPreservesCachedGeometry()
     {
         using var fixture = new Fixture();

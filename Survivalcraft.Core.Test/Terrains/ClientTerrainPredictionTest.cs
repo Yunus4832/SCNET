@@ -10,6 +10,40 @@ public sealed class ClientTerrainPredictionTest
     private static readonly Point3 _cell = new(15, 64, 15);
 
     [Fact]
+    public void MatchingConfirmationDoesNotCreateAnotherVisualTransition()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.SetCellValueFast(15, 64, 15, 3);
+        var changes = new List<Point3>();
+        var invalidated = new List<Point2>();
+        var prediction = new ClientTerrainPrediction(terrain, invalidated.Add);
+        prediction.GeometryChanged += changes.Add;
+        prediction.Begin(_cell, 3, 0, 0);
+        prediction.OnCellChanged(_cell, 0);
+        chunk.SetCellValueFast(15, 64, 15, 0);
+        Assert.Equal(_cell, Assert.Single(changes));
+        Assert.Equal(new Point2(0, 0), Assert.Single(invalidated));
+        Assert.False(prediction.IsPending(_cell));
+        Assert.Equal(0, terrain.GetCellValueForGeometry(15, 64, 15));
+    }
+
+    [Fact]
+    public void RejectedPredictionCreatesARestoringVisualTransition()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.SetCellValueFast(15, 64, 15, 3);
+        var changes = new List<Point3>();
+        var prediction = new ClientTerrainPrediction(terrain, _ => { });
+        prediction.GeometryChanged += changes.Add;
+        prediction.Begin(_cell, 3, 0, 0);
+        prediction.OnCellChanged(_cell, 3);
+        Assert.Equal(new[] { _cell, _cell }, changes);
+        Assert.Equal(3, terrain.GetCellValueForGeometry(15, 64, 15));
+    }
+
+    [Fact]
     public void PredictionOnlyChangesGeometryAndPreservesContentAndRevision()
     {
         using var terrain = new Terrain();

@@ -19,11 +19,20 @@ internal sealed class TerrainUploadScheduler(TimeProvider? timeProvider = null)
 
     private bool _preferInitial = true;
 
-    private readonly int[] _oldestTurns = [1, 1];
+    private bool _preferInteractive = true;
 
-    internal readonly record struct Candidate(TerrainChunk Chunk, bool Initial, float DistanceSquared);
+    private readonly int[] _oldestTurns = [1, 1, 1];
+
+    internal readonly record struct Candidate(
+        TerrainChunk Chunk,
+        bool Initial,
+        float DistanceSquared,
+        bool Interactive = false
+    );
 
     public double SpentMilliseconds => _spentMilliseconds;
+
+    public void RecordWork(TimeSpan elapsed) => _spentMilliseconds += Math.Max(0, elapsed.TotalMilliseconds);
 
     public int Upload(long frame, IReadOnlyList<Candidate> candidates, Func<TerrainChunk, bool> upload)
     {
@@ -53,24 +62,29 @@ internal sealed class TerrainUploadScheduler(TimeProvider? timeProvider = null)
         if (_spentMilliseconds >= FrameBudgetMilliseconds) { return 0; }
 
         var started = _time.GetTimestamp();
-        var initial = Ordered(candidates.Where(candidate => candidate.Initial));
-        var maintenance = Ordered(candidates.Where(candidate => !candidate.Initial));
+        var interactive = Ordered(candidates.Where(candidate => candidate.Interactive));
+        var initial = Ordered(candidates.Where(candidate => !candidate.Interactive && candidate.Initial));
+        var maintenance = Ordered(candidates.Where(candidate => !candidate.Interactive && !candidate.Initial));
         var uploaded = 0;
         try
         {
-            while ((initial.Count != 0 || maintenance.Count != 0) &&
+            while ((interactive.Count != 0 || initial.Count != 0 || maintenance.Count != 0) &&
                    _spentMilliseconds + _time.GetElapsedTime(started).TotalMilliseconds < FrameBudgetMilliseconds)
             {
-                var queue = initial.Count == 0 ? maintenance :
+                var queue = interactive.Count != 0 &&
+                            (_preferInteractive || initial.Count == 0 && maintenance.Count == 0) ? interactive :
+                    initial.Count == 0 ? maintenance :
                     maintenance.Count == 0 ? initial :
                     _preferInitial ? initial : maintenance;
-                var group = ReferenceEquals(queue, initial) ? 0 : 1;
+                var group = ReferenceEquals(queue, interactive) ? 2 : ReferenceEquals(queue, initial) ? 0 : 1;
                 var selected = _oldestTurns[group] == 0
                     ? queue.MinBy(candidate => _arrivals[Key(candidate.Chunk)])
                     : queue[0];
                 _oldestTurns[group] = (_oldestTurns[group] + 1) % 4;
                 queue.Remove(selected);
-                _preferInitial = !selected.Initial;
+                _preferInteractive = !selected.Interactive;
+                if (!selected.Interactive) { _preferInitial = !selected.Initial; }
+
                 if (!upload(selected.Chunk)) { continue; }
 
                 _arrivals.Remove(Key(selected.Chunk));

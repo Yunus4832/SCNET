@@ -7,5 +7,7 @@ public interface ITerrainDerivedWork
 
     bool HasUploadedGeometry(TerrainChunk chunk);
 
+    bool CanUpdateBeforeLighting(TerrainChunk chunk);
+
     TerrainDerivedWorkResult UpdateChunk(TerrainChunk chunk);
 }

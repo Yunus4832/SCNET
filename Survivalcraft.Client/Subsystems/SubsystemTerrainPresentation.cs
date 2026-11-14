@@ -22,6 +22,8 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
 
     public TerrainMeshUpdater MeshUpdater { get; private set; } = null!;
 
+    internal TerrainEditCohorts EditCohorts { get; private set; } = null!;
+
     public UpdateExecutionSide UpdateSide => UpdateExecutionSide.Presentation;
 
     public UpdateOrder UpdateOrder => UpdateOrder.Terrain + 1;
@@ -46,6 +48,10 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
             TerrainSubsystem = Project.FindSubsystem<SubsystemTerrain>(true)!;
             SubsystemAnimatedTextures = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!;
             ChunkPresentations = new TerrainChunkPresentationStore();
+            EditCohorts = new TerrainEditCohorts(
+                TerrainSubsystem.Terrain,
+                TerrainSubsystem.Computations.SetInteractive
+            );
             BlockGeometryGenerator = new BlockGeometryGenerator(
                 TerrainSubsystem.Terrain,
                 TerrainSubsystem,
@@ -61,8 +67,14 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
             TerrainSubsystem.Residency.ChunkReleasing += OnChunkReleasing;
             TerrainSubsystem.Residency.ChunkAllocationRenewed += OnAllocationRenewed;
             TerrainSubsystem.MeshInvalidated += OnDerivedDataInvalidated;
+            TerrainSubsystem.CellGeometryChanged += OnCellGeometryChanged;
             TerrainSubsystem.Computations.DerivedInputsInvalidated += OnDerivedInputsInvalidated;
             TerrainSubsystem.TerrainAppearanceChanged += OnEnvironmentChanged;
+            if (TerrainSubsystem.CellPrediction is { } prediction)
+            {
+                prediction.GeometryChanged += TrackInteractiveCell;
+            }
+
             if (TerrainSubsystem.ClientChunkContents is { } contents)
             {
                 contents.ContentInstalled += OnContentInstalled;
@@ -105,13 +117,69 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
     private void OnContentInstalled(TerrainChunk chunk)
     {
         var presentation = ChunkPresentations.Get(chunk);
+        if (EditCohorts.Find(chunk) is { } group)
+        {
+            foreach (var member in group) { ChunkPresentations.Get(member).MarkInteractiveSnapshot(); }
+        }
+        else if (presentation.GeometryUploaded) { presentation.MarkInteractiveSnapshot(); }
+
         presentation.NewGeometryData = false;
     }
 
-    private void OnChunkReleasing(TerrainChunk chunk) => ChunkPresentations.Release(chunk);
+    private void TrackInteractiveCell(Point3 cell)
+    {
+        EditCohorts.Track(cell);
+        var owner = TerrainSubsystem.Terrain.GetChunkAtCell(cell.X, cell.Z, false);
+        if (owner == null) { return; }
 
-    private void OnAllocationRenewed(TerrainChunk chunk, ulong previousGeneration) =>
+        if (EditCohorts.Find(owner) is { } group)
+        {
+            foreach (var chunk in group) { ChunkPresentations.Get(chunk).MarkInteractiveCell(cell.Y); }
+        }
+        else { ChunkPresentations.Get(owner).MarkInteractiveCell(cell.Y); }
+    }
+
+    private void OnCellGeometryChanged(Point3 cell, int before, int after)
+    {
+        if ((cell.X & 15) is not (0 or 15) && (cell.Z & 15) is not (0 or 15)) { return; }
+
+        var oldContents = Terrain.ExtractContents(before);
+        var newContents = Terrain.ExtractContents(after);
+        var oldBlock = TerrainSubsystem.Catalog.Blocks[oldContents];
+        var newBlock = TerrainSubsystem.Catalog.Blocks[newContents];
+        var faces = new List<int>();
+        if ((cell.X & 15) == 0) { faces.Add(3); }
+
+        if ((cell.X & 15) == 15) { faces.Add(1); }
+
+        if ((cell.Z & 15) == 0) { faces.Add(2); }
+
+        if ((cell.Z & 15) == 15) { faces.Add(0); }
+
+        if (!faces.Any(face => oldBlock.IsFaceTransparent(TerrainSubsystem, face, before) !=
+                               newBlock.IsFaceTransparent(TerrainSubsystem, face, after)
+            )) { return; }
+
+        var chunk = TerrainSubsystem.Terrain.GetChunkAtCell(cell.X, cell.Z, false);
+        if (chunk != null && ChunkPresentations.TryGet(chunk, out var mesh) && mesh.GeometryUploaded)
+        {
+            TrackInteractiveCell(cell);
+        }
+    }
+
+    private void OnChunkReleasing(TerrainChunk chunk)
+    {
+        TerrainRenderer.InvalidateStagedGeometry(chunk);
+        EditCohorts.Release(chunk);
+        ChunkPresentations.Release(chunk);
+    }
+
+    private void OnAllocationRenewed(TerrainChunk chunk, ulong previousGeneration)
+    {
+        TerrainRenderer.InvalidateStagedGeometry(chunk);
+        EditCohorts.Release(chunk);
         ChunkPresentations.RenewAllocation(chunk, previousGeneration);
+    }
 
     private void OnDerivedInputsInvalidated(TerrainChunk chunk)
     {
@@ -161,8 +229,14 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
             TerrainSubsystem.Residency.ChunkReleasing -= OnChunkReleasing;
             TerrainSubsystem.Residency.ChunkAllocationRenewed -= OnAllocationRenewed;
             TerrainSubsystem.MeshInvalidated -= OnDerivedDataInvalidated;
+            TerrainSubsystem.CellGeometryChanged -= OnCellGeometryChanged;
             TerrainSubsystem.Computations.DerivedInputsInvalidated -= OnDerivedInputsInvalidated;
             TerrainSubsystem.TerrainAppearanceChanged -= OnEnvironmentChanged;
+            if (TerrainSubsystem.CellPrediction is { } prediction)
+            {
+                prediction.GeometryChanged -= TrackInteractiveCell;
+            }
+
             if (TerrainSubsystem.ClientChunkContents is { } contents)
             {
                 contents.ContentInstalled -= OnContentInstalled;
@@ -173,6 +247,7 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
 
         TryCleanup(() => MeshUpdater?.Dispose());
         TryCleanup(() => TerrainRenderer?.Dispose());
+        TryCleanup(() => EditCohorts?.Clear());
         TryCleanup(() => ChunkPresentations?.Dispose());
         if (errors.Count > 0)
         {

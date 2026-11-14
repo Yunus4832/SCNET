@@ -2,6 +2,7 @@ using Engine.Graphics;
 
 using Game.Network.Chunks;
 using Game.Terrains.Distribution;
+using Game.Terrains.Execution;
 using Game.Terrains.Rendering;
 
 namespace Game.Terrains;
@@ -74,6 +75,29 @@ public class TerrainRenderer : IDisposable
 
     private readonly SubsystemTerrainPresentation _presentation;
 
+    private sealed record StagedUpload(object Token, DynamicArray<TerrainChunkGeometry.Buffer> Buffers);
+
+    private readonly Dictionary<TerrainChunk, StagedUpload> _staged = [];
+
+    private HashSet<TerrainChunk>? _activeCohort;
+
+    private TerrainMainWorkRequest? _commitRequest;
+
+    internal void InvalidateStagedGeometry(TerrainChunk? chunk = null)
+    {
+        if (chunk != null && _activeCohort?.Contains(chunk) != true && !_staged.ContainsKey(chunk)) { return; }
+
+        _commitRequest?.Dispose();
+        _commitRequest = null;
+        foreach (var upload in _staged.Values)
+        {
+            foreach (var buffer in upload.Buffers) { buffer.Dispose(); }
+        }
+
+        _staged.Clear();
+        _activeCohort = null;
+    }
+
     public TerrainRenderer(SubsystemTerrainPresentation presentation)
     {
         _presentation = presentation;
@@ -141,6 +165,7 @@ public class TerrainRenderer : IDisposable
 
     public void Dispose()
     {
+        InvalidateStagedGeometry();
         Display.DeviceReset -= DisplayDeviceReset;
         _uploads.Clear();
         _uploadCandidates.Clear();
@@ -167,6 +192,7 @@ public class TerrainRenderer : IDisposable
     private void UploadReadyGeometry(Camera camera, TerrainChunk[] chunks)
     {
         var center = camera.ViewPosition.XZ;
+        PrepareEditUploads(center);
         var visibilityRange = _subsystemSky.VisibilityRange;
         var locations = _subsystemTerrain.Demands.Locations.Values.ToArray();
         var frame = Time.FrameIndex;
@@ -181,6 +207,9 @@ public class TerrainRenderer : IDisposable
         foreach (var chunk in chunks)
         {
             var presentation = _presentation.ChunkPresentations.Get(chunk);
+            if (_presentation.EditCohorts.Find(chunk) is { } cohort &&
+                (!ReferenceEquals(cohort, _activeCohort) || _staged.ContainsKey(chunk))) { continue; }
+
             if (!presentation.CanUploadGeometry(chunk))
             {
                 continue;
@@ -206,15 +235,109 @@ public class TerrainRenderer : IDisposable
                 visible |= NetworkTerrainPolicy.IsTerrainChunkRelevant(chunk.Center, view.Center, view.Visibility);
             }
 
-            if (visible)
+            if (visible ||
+                ReferenceEquals(_presentation.EditCohorts.Find(chunk), _activeCohort) && _activeCohort != null)
             {
                 _uploadCandidates.Add(
-                    new TerrainUploadScheduler.Candidate(chunk, !presentation.GeometryUploaded, nearest)
+                    new TerrainUploadScheduler.Candidate(
+                        chunk,
+                        !presentation.GeometryUploaded,
+                        nearest,
+                        _subsystemTerrain.Computations.IsInteractive(chunk)
+                    )
                 );
             }
         }
 
         _uploads.Upload(Time.FrameIndex, _uploadCandidates, TryUploadGeometry);
+        CommitEditUploads();
+    }
+
+    private bool CohortReady(HashSet<TerrainChunk> group) => group.All(chunk =>
+        !chunk.IsDisposed &&
+        _presentation.ChunkPresentations.TryGet(chunk, out var mesh) &&
+        (mesh.HasCurrentUploadedGeometry(chunk) || mesh.CanUploadGeometry(chunk))
+    );
+
+    private void PrepareEditUploads(Vector2 center)
+    {
+        if (_activeCohort != null &&
+            (!_activeCohort.Any() ||
+             !CohortReady(_activeCohort) ||
+             _activeCohort.Any(chunk => !ReferenceEquals(_presentation.EditCohorts.Find(chunk), _activeCohort)) ||
+             _staged.Any(pair => !_presentation.ChunkPresentations.TryGet(pair.Key, out var mesh) ||
+                                 !mesh.CanPublishUpload(pair.Key, pair.Value.Token)
+             )))
+        {
+            InvalidateStagedGeometry();
+        }
+
+        if (_activeCohort == null)
+        {
+            // Only one edit cohort owns replacement GPU buffers at a time.
+            _activeCohort = _presentation.EditCohorts.Groups.Where(CohortReady)
+                .MinBy(group => group.Min(chunk => Vector2.DistanceSquared(chunk.Center, center)));
+        }
+    }
+
+    private void CommitEditUploads()
+    {
+        if (_activeCohort is not { } group || !CohortReady(group))
+        {
+            _commitRequest?.Dispose();
+            _commitRequest = null;
+            return;
+        }
+
+        if (group.Any(chunk => !_staged.ContainsKey(chunk) &&
+                               !_presentation.ChunkPresentations.Get(chunk).HasCurrentUploadedGeometry(chunk)
+            ))
+        {
+            return;
+        }
+
+        _commitRequest ??= _subsystemTerrain.WorkExecutor.CreateMainRequest();
+        if (!_commitRequest.TryEnter()) { return; }
+
+        var started = Stopwatch.GetTimestamp();
+        var oldBuffers = new List<DynamicArray<TerrainChunkGeometry.Buffer>>();
+        try
+        {
+            if (_staged.Any(pair => !_presentation.ChunkPresentations.Get(pair.Key)
+                    .CanPublishUpload(pair.Key, pair.Value.Token)
+                ) ||
+                !CohortReady(group))
+            {
+                return;
+            }
+
+            // No drawing or terrain mutation can interleave these pointer/stamp switches.
+            foreach (var (chunk, upload) in _staged)
+            {
+                var mesh = _presentation.ChunkPresentations.Get(chunk);
+                if (mesh.ExchangeBuffers(upload.Buffers) is { } old) { oldBuffers.Add(old); }
+
+                mesh.MarkUploaded();
+                mesh.NewGeometryData = false;
+            }
+
+            _staged.Clear();
+            _presentation.EditCohorts.Complete(group);
+            _activeCohort = null;
+            foreach (var chunk in group) { FinishInteractiveUpload(chunk); }
+        }
+        finally
+        {
+            _commitRequest.Leave();
+            _commitRequest.Dispose();
+            _commitRequest = null;
+            foreach (var buffers in oldBuffers)
+            {
+                foreach (var buffer in buffers) { buffer.Dispose(); }
+            }
+
+            _uploads.RecordWork(Stopwatch.GetElapsedTime(started));
+        }
     }
 
     private bool TryUploadGeometry(TerrainChunk chunk)
@@ -231,12 +354,47 @@ public class TerrainRenderer : IDisposable
                 return false;
             }
 
+            if (_presentation.EditCohorts.Find(chunk) != null)
+            {
+                if (!ReferenceEquals(_presentation.EditCohorts.Find(chunk), _activeCohort)) { return false; }
+
+                var token = presentation.GeometryUploadToken!;
+                var buffers = new DynamicArray<TerrainChunkGeometry.Buffer>();
+                try { CompileDrawSubsets(presentation.Draws, buffers); }
+                catch
+                {
+                    foreach (var buffer in buffers) { buffer.Dispose(); }
+
+                    throw;
+                }
+
+                _staged.Add(chunk, new StagedUpload(token, buffers));
+                return true;
+            }
+
             SetupTerrainChunkGeometryVertexIndexBuffers(chunk);
             presentation.MarkUploaded();
             presentation.NewGeometryData = false;
+            if (presentation.HasCurrentUploadedGeometry(chunk))
+            {
+                _subsystemTerrain.Computations.SetInteractive(chunk, false);
+            }
+
+            FinishInteractiveUpload(chunk);
+
             return true;
         }
         finally { Monitor.Exit(presentation.Geometry); }
+    }
+
+    private void FinishInteractiveUpload(TerrainChunk chunk)
+    {
+        var mesh = _presentation.ChunkPresentations.Get(chunk);
+        if (!mesh.FinishInteractiveUpload()) { return; }
+
+        // The preview reuses uploaded slices; maintenance subsequently refreshes all lighting/data.
+        mesh.RequestMeshRebuild();
+        _subsystemTerrain.Computations.Request(chunk);
     }
 
     public void PrepareForDrawing(Camera camera)
@@ -458,6 +616,7 @@ public class TerrainRenderer : IDisposable
 
     public void DisplayDeviceReset()
     {
+        InvalidateStagedGeometry();
         _subsystemTerrain.WorkExecutor.EnterMain();
         try
         {

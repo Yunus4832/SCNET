@@ -11,6 +11,8 @@ public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> pred
 
     private int _nextId;
 
+    public event Action<Point3>? GeometryChanged;
+
     public bool IsPending(Point3 cell) => _pending.Values.Any(pending =>
         pending.Cell == cell &&
         ReferenceEquals(terrain.GetChunkAtCell(cell.X, cell.Z, false), pending.Chunk)
@@ -37,6 +39,7 @@ public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> pred
         var index = TerrainChunk.CalculateCellIndex(cell.X & 15, cell.Y, cell.Z & 15);
         chunk.SetGeometryPrediction(index, expectedValue, replacementValue);
         _pending.Add(_nextId, new PendingEdit(cell, chunk, index, now + TimeoutSeconds));
+        GeometryChanged?.Invoke(cell);
         predictionChanged(chunk.Coords);
         return _nextId;
     }
@@ -55,11 +58,11 @@ public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> pred
         }
     }
 
-    public void OnCellChanged(Point3 cell)
+    public void OnCellChanged(Point3 cell, int? confirmedValue = null)
     {
         foreach (var item in _pending.Where(item => item.Value.Cell == cell).ToArray())
         {
-            Remove(item.Key);
+            Remove(item.Key, confirmedValue);
         }
     }
 
@@ -87,14 +90,22 @@ public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> pred
         }
     }
 
-    private void Remove(int id)
+    private void Remove(int id, int? confirmedValue = null)
     {
         var pending = _pending[id];
         _pending.Remove(id);
+        var before = pending.Chunk.GetCellValueForGeometry(pending.Index);
         pending.Chunk.RemoveGeometryPrediction(pending.Index);
         if (ReferenceEquals(terrain.GetChunkAtCoords(pending.Chunk.Coords.X, pending.Chunk.Coords.Y), pending.Chunk))
         {
-            predictionChanged(pending.Chunk.Coords);
+            var after = confirmedValue.HasValue
+                ? Terrain.NormalizeCellValue(confirmedValue.Value)
+                : pending.Chunk.GetCellValueForGeometry(pending.Index);
+            if (before != after)
+            {
+                GeometryChanged?.Invoke(pending.Cell);
+                predictionChanged(pending.Chunk.Coords);
+            }
         }
     }
 

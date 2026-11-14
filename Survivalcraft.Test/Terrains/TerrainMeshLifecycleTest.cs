@@ -7,6 +7,156 @@ namespace Survivalcraft.Test.Terrains;
 public sealed class TerrainMeshLifecycleTest
 {
     [Fact]
+    public void InteractiveBuildPinsLightWhileGeometryChangesStillRestartIt()
+    {
+        using var terrain = new Terrain();
+        using var mesh = new TerrainChunkPresentation();
+        var chunk = terrain.AllocateChunk(0, 0);
+        TerrainMeshTestData.Complete(chunk, mesh);
+        var first = new TerrainLightSnapshot(new TerrainLightChannels(15, 0));
+        Assert.True(terrain.Lighting.TryPublish(chunk, terrain.Lighting.CaptureInput(chunk), first));
+        mesh.MarkUploaded();
+        mesh.RequestMeshRebuild();
+        mesh.PrepareMeshUpdate(chunk, true);
+        mesh.CompleteMeshSlice();
+        Assert.Same(first, mesh.BuildLights![4]);
+        var second = new TerrainLightSnapshot(new TerrainLightChannels(0, 15));
+        Assert.True(terrain.Lighting.TryPublish(chunk, terrain.Lighting.CaptureInput(chunk), second));
+        Assert.True(chunk.DerivedRevisions.PublishLight(chunk.DerivedRevisions.Capture()));
+        mesh.PrepareMeshUpdate(chunk, true);
+        Assert.Equal(1, mesh.CompletedMeshSlices);
+        Assert.Same(first, mesh.BuildLights![4]);
+        chunk.NetworkContentVersion++;
+        mesh.PrepareMeshUpdate(chunk, true);
+        Assert.Equal(0, mesh.CompletedMeshSlices);
+        Assert.Same(second, mesh.BuildLights![4]);
+        TerrainMeshTestData.CompleteSlices(mesh);
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        Assert.Null(mesh.BuildLights);
+        mesh.MarkUploaded();
+        Assert.True(mesh.FinishInteractiveUpload());
+    }
+
+    [Fact]
+    public void InteractivePreviewOnlyReusesUnchangedUploadedSlicesAndRequiresMaintenance()
+    {
+        using var terrain = new Terrain();
+        using var mesh = new TerrainChunkPresentation();
+        var chunk = terrain.AllocateChunk(0, 0);
+        TerrainMeshTestData.Complete(chunk, mesh);
+        for (var slice = 0; slice < TerrainChunk.SlicesCount; slice++)
+        {
+            mesh.CompleteSliceGeometryUpdate(slice, slice + 100);
+        }
+
+        mesh.MarkUploaded();
+        mesh.MarkInteractiveCell(64);
+        Assert.False(mesh.TryReuseInteractiveSlice(3));
+        Assert.False(mesh.TryReuseInteractiveSlice(4));
+        Assert.True(mesh.TryReuseInteractiveSlice(2));
+        mesh.CompleteSliceGeometryUpdate(5, 500);
+        Assert.False(mesh.TryReuseInteractiveSlice(5));
+        Assert.True(mesh.BeginSliceGeometryUpdate(6, 600));
+        Assert.False(mesh.TryReuseInteractiveSlice(6));
+        Assert.True(mesh.FinishInteractiveUpload());
+        Assert.False(mesh.TryReuseInteractiveSlice(2));
+        Assert.False(mesh.FinishInteractiveUpload());
+    }
+
+    [Fact]
+    public void SnapshotRefreshDisablesInteractiveReuseOfEverySlice()
+    {
+        using var terrain = new Terrain();
+        using var mesh = new TerrainChunkPresentation();
+        var chunk = terrain.AllocateChunk(0, 0);
+        TerrainMeshTestData.Complete(chunk, mesh);
+        for (var slice = 0; slice < TerrainChunk.SlicesCount; slice++)
+        {
+            mesh.CompleteSliceGeometryUpdate(slice, slice + 100);
+        }
+
+        mesh.MarkUploaded();
+        mesh.MarkInteractiveSnapshot();
+        for (var slice = 0; slice < TerrainChunk.SlicesCount; slice++)
+        {
+            Assert.False(mesh.TryReuseInteractiveSlice(slice));
+        }
+    }
+
+    [Fact]
+    public void CompletedButNotUploadableGeometryCanUsePublishedLightForInteraction()
+    {
+        using var terrain = new Terrain();
+        using var mesh = new TerrainChunkPresentation();
+        var chunk = terrain.AllocateChunk(0, 0);
+        TerrainMeshTestData.Complete(chunk, mesh);
+        Assert.True(
+            terrain.Lighting.TryPublish(
+                chunk,
+                terrain.Lighting.CaptureInput(chunk),
+                new TerrainLightSnapshot(new TerrainLightChannels(15, 0))
+            )
+        );
+        mesh.MarkUploaded();
+        mesh.RequestMeshRebuild();
+        mesh.PrepareMeshUpdate(chunk);
+        TerrainMeshTestData.CompleteSlices(mesh);
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        chunk.DerivedRevisions.InvalidatePropagation();
+        Assert.True(mesh.HasCurrentGeometry(chunk));
+        Assert.False(mesh.HasCurrentUploadedGeometry(chunk));
+        Assert.False(mesh.CanUploadGeometry(chunk));
+        Assert.Equal(TerrainMeshState.Ready, mesh.PrepareMeshUpdate(chunk, true));
+        Assert.True(mesh.CanUploadGeometry(chunk));
+    }
+
+    [Fact]
+    public void ForegroundInteractionPromotesAnExistingBuildWithoutRestartingCompletedSlices()
+    {
+        using var terrain = new Terrain();
+        using var mesh = new TerrainChunkPresentation();
+        var chunk = terrain.AllocateChunk(0, 0);
+        TerrainMeshTestData.Complete(chunk, mesh);
+        Assert.True(
+            terrain.Lighting.TryPublish(
+                chunk,
+                terrain.Lighting.CaptureInput(chunk),
+                new TerrainLightSnapshot(new TerrainLightChannels(15, 0))
+            )
+        );
+        mesh.MarkUploaded();
+        mesh.RequestMeshRebuild();
+        mesh.PrepareMeshUpdate(chunk);
+        mesh.CompleteMeshSlice();
+        chunk.DerivedRevisions.InvalidatePropagation();
+        Assert.Equal(TerrainMeshState.Building, mesh.PrepareMeshUpdate(chunk, true));
+        Assert.Equal(1, mesh.CompletedMeshSlices);
+        TerrainMeshTestData.CompleteSlices(mesh);
+        Assert.False(chunk.HasCurrentLight);
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        Assert.True(mesh.CanUploadGeometry(chunk));
+    }
+
+    [Fact]
+    public void StagedUploadTokenCannotPublishAfterInputsOrAllocationChange()
+    {
+        using var terrain = new Terrain();
+        using var mesh = new TerrainChunkPresentation();
+        var chunk = terrain.AllocateChunk(0, 0);
+        TerrainMeshTestData.Complete(chunk, mesh);
+        var original = mesh.GeometryUploadToken!;
+        Assert.True(mesh.CanPublishUpload(chunk, original));
+        mesh.RequestMeshRebuild();
+        Assert.False(mesh.CanPublishUpload(chunk, original));
+        TerrainMeshTestData.Complete(chunk, mesh);
+        Assert.NotSame(original, mesh.GeometryUploadToken);
+        Assert.False(mesh.CanPublishUpload(chunk, original));
+        Assert.True(mesh.CanPublishUpload(chunk, mesh.GeometryUploadToken!));
+        terrain.RenewChunkAllocation(chunk);
+        Assert.False(mesh.CanPublishUpload(chunk, mesh.GeometryUploadToken!));
+    }
+
+    [Fact]
     public void VisibleInteractionCanPublishGeometryWithPreviousLightAndCurrentHeights()
     {
         using var terrain = new Terrain();
@@ -35,6 +185,8 @@ public sealed class TerrainMeshLifecycleTest
         Assert.True(mesh.CanUploadGeometry(chunk));
         mesh.MarkUploaded();
         Assert.True(mesh.HasCurrentUploadedGeometry(chunk));
+        Assert.True(mesh.FinishInteractiveUpload());
+        mesh.RequestMeshRebuild();
         var request = chunk.DerivedRevisions.Capture();
         Assert.True(chunk.DerivedRevisions.PublishLightSeed(request));
         Assert.True(chunk.DerivedRevisions.PublishLight(request));

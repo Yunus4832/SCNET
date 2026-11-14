@@ -80,6 +80,17 @@ public class BlockGeometryGenerator
         _modelResponses.Clear();
     }
 
+    internal void SetLightSnapshots(Point2 center, Game.Terrains.Lighting.TerrainLightSnapshot?[] snapshots)
+    {
+        for (var x = -1; x <= 1; x++)
+        {
+            for (var z = -1; z <= 1; z++)
+            {
+                _lightSnapshots[new Point2(center.X + x, center.Y + z)] = snapshots[(x + 1) * 3 + z + 1];
+            }
+        }
+    }
+
     private static void SetupCornerVertex(
         float x,
         float y,

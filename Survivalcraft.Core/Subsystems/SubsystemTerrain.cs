@@ -79,6 +79,8 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
     public event Action<TerrainChunk, bool>? MeshInvalidated;
 
+    public event Action<Point3, int, int>? CellGeometryChanged;
+
     public event Action? TerrainAppearanceChanged;
 
     public void NotifyTerrainInteraction() => Interlocked.Increment(ref _terrainInteractionRevision);
@@ -426,7 +428,10 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         WorkExecutor.EnterMain();
         try
         {
-            CellPrediction?.OnCellChanged(new Point3(x, y, z));
+            var geometryBefore = Runtime.IsAuthority
+                ? 0
+                : Terrain.NormalizeCellValue(Terrain.GetCellValueForGeometry(x, y, z));
+            CellPrediction?.OnCellChanged(new Point3(x, y, z), value);
             var authorityChunk = Runtime.IsAuthority
                 ? CellAuthority.Terrain.GetChunkAtCell(x, z, false)
                 : null;
@@ -453,6 +458,11 @@ public class SubsystemTerrain : Subsystem, IUpdateable
             }
 
             Terrain.SetCellValueFast(x, y, z, value);
+            if (!Runtime.IsAuthority && geometryBefore != value)
+            {
+                CellGeometryChanged?.Invoke(new Point3(x, y, z), geometryBefore, value);
+            }
+
             PublishAuthoritativeCellDelta(
                 authorityChunk,
                 baseContentVersion,
@@ -469,8 +479,11 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                     chunkAtCell.ModificationCounter++;
                 }
 
-                Computations.InvalidateContentNeighborhood(chunkAtCell.Coords, 1);
-                if (!Runtime.IsAuthority) { NotifyTerrainInteraction(); }
+                if (Runtime.IsAuthority || geometryBefore != value)
+                {
+                    Computations.InvalidateContentNeighborhood(chunkAtCell.Coords, 1);
+                    if (!Runtime.IsAuthority) { NotifyTerrainInteraction(); }
+                }
             }
 
             _modifiedCells[new Point3(x, y, z)] = true;

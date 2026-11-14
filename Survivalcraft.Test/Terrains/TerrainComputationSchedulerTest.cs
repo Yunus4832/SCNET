@@ -15,6 +15,31 @@ namespace Survivalcraft.Test.Terrains;
 public sealed class TerrainComputationSchedulerTest
 {
     [Fact]
+    public void InteractiveGeometryRunsOnTheWorkerBeforeFreshLightingButMaintenanceStillConverges()
+    {
+        using var fixture = new ComputationWorld();
+        fixture.Populate();
+        var work = new Derived(fixture.Data);
+        fixture.Scheduler.AttachDerivedWork(work);
+        fixture.Scheduler.UpdateDemand([Location()]);
+        fixture.Drain();
+        var chunk = fixture.Data.GetChunkAtCoords(0, 0)!;
+        work.Completed.Remove(chunk);
+        work.PreviewChunk = chunk;
+        fixture.Scheduler.InvalidateContentNeighborhood(chunk.Coords, 1);
+        fixture.Scheduler.SetInteractive(chunk, true);
+        for (var i = 0; i < 10 && !work.Completed.Contains(chunk); i++) { fixture.Scheduler.Step(); }
+
+        Assert.Contains(chunk, work.Completed);
+        Assert.True(work.PreviewUsed);
+        Assert.False(chunk.HasCurrentLight);
+        fixture.Scheduler.SetInteractive(chunk, false);
+        fixture.Drain();
+        Assert.All(fixture.Data.AllocatedChunks, c => Assert.True(c.HasCurrentLight));
+        Assert.False(fixture.Scheduler.HasInteractiveWork);
+    }
+
+    [Fact]
     public void InteractiveHeightPreparationDoesNotRunOrWaitForLighting()
     {
         using var fixture = new ComputationWorld();
@@ -184,6 +209,8 @@ public sealed class TerrainComputationSchedulerTest
         public bool HasCurrentGeometry(TerrainChunk chunk) => Available;
 
         public bool HasUploadedGeometry(TerrainChunk chunk) => true;
+
+        public bool CanUpdateBeforeLighting(TerrainChunk chunk) => false;
 
         public TerrainDerivedWorkResult UpdateChunk(TerrainChunk chunk)
         {
@@ -580,12 +607,26 @@ public sealed class TerrainComputationSchedulerTest
     {
         public HashSet<TerrainChunk> Completed { get; } = [];
 
+        public TerrainChunk? PreviewChunk { get; set; }
+
+        public bool PreviewUsed { get; private set; }
+
         public bool HasCurrentGeometry(TerrainChunk chunk) => Completed.Contains(chunk);
 
         public bool HasUploadedGeometry(TerrainChunk chunk) => false;
 
+        public bool CanUpdateBeforeLighting(TerrainChunk chunk) =>
+            ReferenceEquals(chunk, PreviewChunk) && !Completed.Contains(chunk);
+
         public TerrainDerivedWorkResult UpdateChunk(TerrainChunk chunk)
         {
+            if (ReferenceEquals(chunk, PreviewChunk))
+            {
+                PreviewUsed = !chunk.HasCurrentLight;
+                Completed.Add(chunk);
+                return TerrainDerivedWorkResult.Complete;
+            }
+
             for (var x = -1; x <= 1; x++)
             {
                 for (var z = -1; z <= 1; z++)

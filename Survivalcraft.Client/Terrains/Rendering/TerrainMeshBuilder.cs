@@ -39,6 +39,8 @@ internal sealed class TerrainMeshBuilder(
 
         var started = _time.GetTimestamp();
         _generator.ResetCache();
+        if (output.BuildLights is { } lights) { _generator.SetLightSnapshots(chunk.Coords, lights); }
+
         if (!output.Draws.TryGetValue(_texture, out var terrainGeometry))
         {
             terrainGeometry = new TerrainGeometry[TerrainChunk.SlicesCount];
@@ -53,7 +55,7 @@ internal sealed class TerrainMeshBuilder(
         var work = output.ActiveSlice;
         if (work == null)
         {
-            var hash = CalculateChunkSliceContentsHash(chunk, sliceIndex);
+            var hash = CalculateChunkSliceContentsHash(chunk, sliceIndex, output.BuildLights);
             if (!output.BeginSliceGeometryUpdate(sliceIndex, hash)) { return true; }
 
             foreach (var draw in output.Draws)
@@ -69,7 +71,7 @@ internal sealed class TerrainMeshBuilder(
             output.ActiveSlice = work;
         }
 
-        else { CaptureInputs(chunk); }
+        else { CaptureInputs(chunk, output.BuildLights); }
 
         if (work.Slice != sliceIndex)
         {
@@ -189,7 +191,7 @@ internal sealed class TerrainMeshBuilder(
         }
     }
 
-    private void CaptureInputs(TerrainChunk chunk)
+    private void CaptureInputs(TerrainChunk chunk, Game.Terrains.Lighting.TerrainLightSnapshot?[]? lights = null)
     {
         for (var dx = -1; dx <= 1; dx++)
         {
@@ -198,16 +200,21 @@ internal sealed class TerrainMeshBuilder(
                 var neighbor = _terrain.GetChunkAtCoords(chunk.Coords.X + dx, chunk.Coords.Y + dz);
                 _neighbors[(dx + 1) * 3 + dz + 1] = neighbor;
                 Game.Terrains.Lighting.TerrainLightSnapshot? snapshot = null;
-                if (neighbor != null) { _terrain.Lighting.TryGetPublishedSnapshot(neighbor, out snapshot); }
+                if (lights != null) { snapshot = lights[(dx + 1) * 3 + dz + 1]; }
+                else if (neighbor != null) { _terrain.Lighting.TryGetPublishedSnapshot(neighbor, out snapshot); }
 
                 _hashLights[(dx + 1) * 3 + dz + 1] = snapshot;
             }
         }
     }
 
-    internal int CalculateChunkSliceContentsHash(TerrainChunk chunk, int sliceIndex)
+    internal int CalculateChunkSliceContentsHash(
+        TerrainChunk chunk,
+        int sliceIndex,
+        Game.Terrains.Lighting.TerrainLightSnapshot?[]? lights = null
+    )
     {
-        CaptureInputs(chunk);
+        CaptureInputs(chunk, lights);
         var num = 1;
         var num2 = chunk.Origin.X - 1;
         var num3 = chunk.Origin.X + 16 + 1;

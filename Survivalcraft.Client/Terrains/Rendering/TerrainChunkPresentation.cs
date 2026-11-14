@@ -1,5 +1,7 @@
 using Engine.Graphics;
 
+using Game.Terrains.Lighting;
+
 namespace Game.Terrains.Rendering;
 
 /// <summary>Client-owned meshes and GPU resources for one chunk allocation.</summary>
@@ -40,7 +42,63 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     private MeshBuildStamp? _uploadedMesh;
 
+    private TerrainLightSnapshot?[]? _buildLights;
+
+    private readonly int[] _uploadedSliceHashes = new int[TerrainChunk.SlicesCount];
+
+    private int _interactiveSlices;
+
+    private bool _reusedInteractiveSlices;
+
+    internal void MarkInteractiveCell(int y)
+    {
+        for (var slice = Math.Max(0, (y - 1) / 16); slice <= Math.Min(15, (y + 1) / 16); slice++)
+        {
+            _interactiveSlices |= 1 << slice;
+        }
+    }
+
+    internal void MarkInteractiveSnapshot() => _interactiveSlices = 0xFFFF;
+
+    internal bool TryReuseInteractiveSlice(int slice)
+    {
+        if (!GeometryUploaded ||
+            _interactiveSlices == 0 ||
+            (_interactiveSlices & (1 << slice)) != 0 ||
+            !_sliceGeometryValid[slice] ||
+            GeneratedSliceContentsHashes[slice] != _uploadedSliceHashes[slice])
+        {
+            return false;
+        }
+
+        _reusedInteractiveSlices = true;
+        return true;
+    }
+
+    internal bool FinishInteractiveUpload()
+    {
+        var reused = _reusedInteractiveSlices || Volatile.Read(ref _uploadedMesh) is { AllowPendingLighting: true };
+        _reusedInteractiveSlices = false;
+        _interactiveSlices = 0;
+        return reused;
+    }
+
     public long UploadedContentVersion => Volatile.Read(ref _uploadedMesh)?.ContentVersion ?? 0;
+
+    /// <summary>Opaque identity of the completed CPU mesh being staged for upload.</summary>
+    internal object? GeometryUploadToken => Volatile.Read(ref _completedMesh);
+
+    internal bool CanPublishUpload(TerrainChunk chunk, object token) =>
+        ReferenceEquals(GeometryUploadToken, token) && CanUploadGeometry(chunk);
+
+    internal DynamicArray<TerrainChunkGeometry.Buffer>? ExchangeBuffers(
+        DynamicArray<TerrainChunkGeometry.Buffer> buffers
+    )
+    {
+        var previous = _buffers;
+        _buffers = buffers;
+        return previous;
+    }
 
     public bool HasCurrentUploadedGeometry(TerrainChunk chunk)
     {
@@ -60,6 +118,7 @@ public sealed class TerrainChunkPresentation : IDisposable
         // Neighbor inputs may change during the GPU call. Record what was uploaded;
         // freshness is checked separately and schedules another build when necessary.
         Volatile.Write(ref _uploadedMesh, completed);
+        Array.Copy(GeneratedSliceContentsHashes, _uploadedSliceHashes, TerrainChunk.SlicesCount);
         GeometryUploaded = true;
     }
 
@@ -113,6 +172,8 @@ public sealed class TerrainChunkPresentation : IDisposable
         bool AllowPendingLighting
     );
 
+    internal TerrainLightSnapshot?[]? BuildLights => _buildLights;
+
     public void RequestMeshRebuild()
     {
         Interlocked.Increment(ref _requestedMeshRevision);
@@ -156,7 +217,7 @@ public sealed class TerrainChunkPresentation : IDisposable
         return stamp.Generation == chunk.AllocationGeneration &&
                stamp.ContentVersion == chunk.NetworkContentVersion &&
                stamp.Revision == Volatile.Read(ref _requestedMeshRevision) &&
-               MatchesNeighbors(chunk, stamp.Neighbors);
+               MatchesNeighbors(chunk, stamp.Neighbors, stamp.AllowPendingLighting);
     }
 
     private static NeighborInput ReadNeighbor(TerrainChunk chunk, int x, int z)
@@ -185,14 +246,18 @@ public sealed class TerrainChunkPresentation : IDisposable
         return result;
     }
 
-    private static bool MatchesNeighbors(TerrainChunk chunk, NeighborInput[] neighbors)
+    private static bool MatchesNeighbors(TerrainChunk chunk, NeighborInput[] neighbors, bool allowPendingLighting)
     {
         var index = 0;
         for (var x = -1; x <= 1; x++)
         {
             for (var z = -1; z <= 1; z++)
             {
-                if (neighbors[index++] != ReadNeighbor(chunk, x, z)) { return false; }
+                var expected = neighbors[index++];
+                var current = ReadNeighbor(chunk, x, z);
+                if (allowPendingLighting) { current = current with { Lighting = expected.Lighting }; }
+
+                if (expected != current) { return false; }
             }
         }
 
@@ -254,15 +319,49 @@ public sealed class TerrainChunkPresentation : IDisposable
         );
     }
 
+    private static TerrainLightSnapshot?[] CaptureLights(TerrainChunk chunk)
+    {
+        var snapshots = new TerrainLightSnapshot?[9];
+        var index = 0;
+        for (var x = -1; x <= 1; x++)
+        {
+            for (var z = -1; z <= 1; z++)
+            {
+                var neighbor = chunk.Terrain.GetChunkAtCoords(chunk.Coords.X + x, chunk.Coords.Y + z);
+                if (neighbor != null)
+                {
+                    chunk.Terrain.Lighting.TryGetPublishedSnapshot(neighbor, out snapshots[index]);
+                }
+
+                index++;
+            }
+        }
+
+        return snapshots;
+    }
+
     /// <summary>Called while holding the owning terrain's access gate.</summary>
     public TerrainMeshState PrepareMeshUpdate(TerrainChunk chunk, bool allowPendingLighting = false)
     {
         if (_activeMesh is null || !Matches(chunk, _activeMesh))
         {
             _activeMesh = CaptureStamp(chunk, allowPendingLighting);
+            _buildLights = CaptureLights(chunk);
             WorkerMeshState = TerrainMeshState.Building;
             CompletedMeshSlices = 0;
             ActiveSlice = null;
+            _reusedInteractiveSlices = false;
+        }
+        else if (allowPendingLighting && !_activeMesh.AllowPendingLighting && CanUsePublishedLighting(chunk))
+        {
+            // A background build may have started before a new propagation request. The foreground
+            // interaction can finish those same inputs using their published light without restarting.
+            var previous = _activeMesh;
+            _activeMesh = previous with { AllowPendingLighting = true };
+            if (ReferenceEquals(Volatile.Read(ref _completedMesh), previous))
+            {
+                Volatile.Write(ref _completedMesh, _activeMesh);
+            }
         }
 
         return WorkerMeshState;
@@ -293,6 +392,9 @@ public sealed class TerrainChunkPresentation : IDisposable
             return false;
         }
 
+        // Snapshot references are needed only while generating; completed/GPU stamps must not
+        // retain superseded light volumes for every visible chunk.
+        _buildLights = null;
         WorkerMeshState = TerrainMeshState.Ready;
         Volatile.Write(ref _completedMesh, _activeMesh);
         NewGeometryData = true;
@@ -328,7 +430,11 @@ public sealed class TerrainChunkPresentation : IDisposable
         Volatile.Write(ref _completedMesh, null);
         Volatile.Write(ref _uploadedMesh, null);
         _activeMesh = null;
+        _buildLights = null;
         _maintenanceWait = null;
+        _interactiveSlices = 0;
+        _reusedInteractiveSlices = false;
+        Array.Clear(_uploadedSliceHashes);
         WorkerMeshState = TerrainMeshState.Building;
         CompletedMeshSlices = 0;
         ActiveSlice = null;

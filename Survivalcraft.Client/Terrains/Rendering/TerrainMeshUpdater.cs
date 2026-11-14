@@ -22,6 +22,8 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
 
     private long _lastSynchronousRevision = -1;
 
+    private TerrainMainWorkRequest? _interactionRequest;
+
     public TerrainMeshUpdater(SubsystemTerrainPresentation presentation)
     {
         _presentation = presentation;
@@ -60,18 +62,24 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
     bool ITerrainDerivedWork.HasUploadedGeometry(TerrainChunk chunk) =>
         _presentation.ChunkPresentations.Get(chunk).GeometryUploaded;
 
+    bool ITerrainDerivedWork.CanUpdateBeforeLighting(TerrainChunk chunk) =>
+        NeedsInteractiveMesh(chunk) && _presentation.ChunkPresentations.Get(chunk).CanUsePublishedLighting(chunk);
+
     TerrainDerivedWorkResult ITerrainDerivedWork.UpdateChunk(TerrainChunk chunk)
     {
         var key = new TerrainWorkKey(chunk, TerrainWorkStage.Derived);
         _deferred.TryRemove(key, out _);
         var presentation = _presentation.ChunkPresentations.Get(chunk);
-        if (presentation.ShouldDeferMaintenance(chunk, Time.RealTime, out var due))
+        if (!_subsystemTerrain.Computations.IsInteractive(chunk) &&
+            presentation.ShouldDeferMaintenance(chunk, Time.RealTime, out var due))
         {
             _deferred[key] = due;
             return TerrainDerivedWorkResult.Waiting;
         }
 
-        UpdateChunkMesh(chunk, false, TimeSpan.FromMilliseconds(4));
+        var interactive = _subsystemTerrain.Computations.IsInteractive(chunk);
+        var preview = interactive && presentation.CanUsePublishedLighting(chunk);
+        UpdateChunkMesh(chunk, preview, TimeSpan.FromMilliseconds(4), interactive);
         return presentation.HasCurrentGeometry(chunk)
             ? TerrainDerivedWorkResult.Complete
             : TerrainDerivedWorkResult.Continue;
@@ -86,18 +94,27 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
             64f
         );
         var revision = _subsystemTerrain.TerrainInteractionRevision;
-        if (_lastSynchronousRevision == revision) { return; }
+        if (_lastSynchronousRevision == revision &&
+            !_subsystemTerrain.Computations.HasInteractiveWork)
+        {
+            _interactionRequest?.Dispose();
+            _interactionRequest = null;
+            return;
+        }
 
         var chunks = DetermineSynchronousUpdateChunks(camera.ViewPosition, camera.ViewDirection);
         if (chunks.Count == 0)
         {
+            _interactionRequest?.Dispose();
+            _interactionRequest = null;
             _lastSynchronousRevision = revision;
             return;
         }
 
         var dependencies = chunks.SelectMany(NeighborChunks).Distinct().ToArray();
         var started = Stopwatch.GetTimestamp();
-        if (!_subsystemTerrain.WorkExecutor.TryEnterMain(1)) { return; }
+        _interactionRequest ??= _subsystemTerrain.WorkExecutor.CreateMainRequest();
+        if (!_interactionRequest.TryEnter(1)) { return; }
 
         try
         {
@@ -114,21 +131,31 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
                     continue;
                 }
 
-                while (!_presentation.ChunkPresentations.Get(chunk).HasCurrentGeometry(chunk) &&
+                while (NeedsInteractiveMesh(chunk) &&
                        Stopwatch.GetElapsedTime(started) < TimeSpan.FromMilliseconds(4))
                 {
                     var remaining = TimeSpan.FromMilliseconds(4) - Stopwatch.GetElapsedTime(started);
                     if (remaining <= TimeSpan.Zero) { break; }
 
-                    UpdateChunkMesh(chunk, pendingLighting, remaining);
+                    UpdateChunkMesh(
+                        chunk,
+                        pendingLighting || _subsystemTerrain.Computations.IsInteractive(chunk),
+                        remaining,
+                        true
+                    );
                 }
 
-                complete &= _presentation.ChunkPresentations.Get(chunk).HasCurrentGeometry(chunk);
+                complete &= !NeedsInteractiveMesh(chunk);
             }
 
             if (complete) { _lastSynchronousRevision = revision; }
         }
-        finally { _subsystemTerrain.WorkExecutor.LeaveMain(); }
+        finally
+        {
+            _interactionRequest.Leave();
+            _interactionRequest.Dispose();
+            _interactionRequest = null;
+        }
     }
 
     private List<TerrainChunk> DetermineSynchronousUpdateChunks(Vector3 viewPosition, Vector3 viewDirection)
@@ -144,7 +171,12 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
             viewPosition + 6f * viewDirection - 2f * v,
             viewPosition + 6f * viewDirection + 2f * v
         };
-        var list = new List<TerrainChunk>();
+        var list = _subsystemTerrain.Computations.GetInteractiveChunks()
+            .Where(chunk => !chunk.IsDisposed &&
+                            chunk.HasContents &&
+                            NeedsInteractiveMesh(chunk)
+            )
+            .OrderBy(chunk => Vector2.DistanceSquared(chunk.Center, viewPosition.XZ)).ToList();
         foreach (var vector2 in obj)
         {
             var chunkAtCell = _terrain.GetChunkAtCell(Terrain.ToCell(vector2.X), Terrain.ToCell(vector2.Z), false);
@@ -159,6 +191,13 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
         }
 
         return list;
+    }
+
+    private bool NeedsInteractiveMesh(TerrainChunk chunk)
+    {
+        var mesh = _presentation.ChunkPresentations.Get(chunk);
+        return !mesh.HasCurrentGeometry(chunk) ||
+               !mesh.HasCurrentUploadedGeometry(chunk) && !mesh.CanUploadGeometry(chunk);
     }
 
     private IEnumerable<TerrainChunk> NeighborChunks(TerrainChunk target)
@@ -193,6 +232,8 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
         if (_disposed) { return; }
 
         _disposed = true;
+        _interactionRequest?.Dispose();
+        _interactionRequest = null;
         _subsystemTerrain.Computations.DetachDerivedWork(this);
         _deferred.Clear();
     }
@@ -275,7 +316,12 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
         _subsystemAnimatedTextures.AnimatedBlocksTexture
     );
 
-    private void UpdateChunkMesh(TerrainChunk chunk, bool allowPendingLighting, TimeSpan maximumTime)
+    private void UpdateChunkMesh(
+        TerrainChunk chunk,
+        bool allowPendingLighting,
+        TimeSpan maximumTime,
+        bool interactive = false
+    )
     {
         var presentation = _presentation.ChunkPresentations.Get(chunk);
         if (!chunk.HasCurrentLight &&
@@ -289,6 +335,14 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
             var started = Stopwatch.GetTimestamp();
             while (presentation.CompletedMeshSlices < TerrainChunk.SlicesCount)
             {
+                if (interactive &&
+                    _subsystemTerrain.Computations.IsInteractive(chunk) &&
+                    presentation.TryReuseInteractiveSlice(presentation.NextMeshSlice))
+                {
+                    presentation.CompleteMeshSlice();
+                    continue;
+                }
+
                 var remaining = maximumTime - Stopwatch.GetElapsedTime(started);
                 if (remaining <= TimeSpan.Zero ||
                     !SerialBuilder.GenerateSlice(chunk, presentation, presentation.NextMeshSlice, remaining))

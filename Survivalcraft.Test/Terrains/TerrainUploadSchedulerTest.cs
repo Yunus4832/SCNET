@@ -6,6 +6,31 @@ namespace Survivalcraft.Test.Terrains;
 public sealed class TerrainUploadSchedulerTest
 {
     [Fact]
+    public void InteractionGetsTheFirstSlotWithoutStarvingInitialOrMaintenanceUploads()
+    {
+        using var terrain = new Terrain();
+        var clock = new Clock();
+        var scheduler = new TerrainUploadScheduler(clock);
+        var initial = terrain.AllocateChunk(0, 0);
+        var maintenance = terrain.AllocateChunk(1, 0);
+        var edits = Enumerable.Range(2, 4).Select(x => terrain.AllocateChunk(x, 0)).ToArray();
+        var candidates = edits.Select(chunk => new TerrainUploadScheduler.Candidate(chunk, false, 100, true))
+            .Concat([new(initial, true, 0), new(maintenance, false, 1)]).ToArray();
+        var uploaded = new List<TerrainChunk>();
+        scheduler.Upload(
+            1,
+            candidates,
+            chunk =>
+            {
+                uploaded.Add(chunk);
+                clock.Advance(1);
+                return true;
+            }
+        );
+        Assert.Equal(new[] { edits[0], initial, edits[1], maintenance }, uploaded);
+    }
+
+    [Fact]
     public void CamerasShareOneFrameBudgetAndTheNextFrameGetsANewBudget()
     {
         using var terrain = new Terrain();
