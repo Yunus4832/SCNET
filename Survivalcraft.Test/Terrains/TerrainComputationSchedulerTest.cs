@@ -5,6 +5,7 @@ using Game.Terrains;
 using Game.Terrains.Distribution;
 using Game.Terrains.Execution;
 using Game.Terrains.Lighting;
+using Game.TerrainSerializers;
 
 using Survivalcraft.Test.Modding;
 
@@ -510,6 +511,66 @@ public sealed class TerrainComputationSchedulerTest
         }
     }
 
+    [Fact]
+    public void PreparingContentYieldsToOtherStagesAndResumesOnCompletion()
+    {
+        var completion = new TaskCompletionSource();
+        var generator = new DelayedGeneration(completion.Task);
+        using var fixture = new ComputationWorld(authority: true, generator: generator);
+        var generating = fixture.Data.AllocateChunk(0, 0);
+        fixture.Scheduler.UpdateDemand([Location()]);
+        for (var i = 0; i < 20 && generator.PreparationCount == 0; i++) { fixture.Scheduler.Step(); }
+
+        Assert.Equal(1, generator.PreparationCount);
+        Assert.True(fixture.World.AuthorityContents!.Generation.HasPendingPreparation);
+        Assert.Equal(0, generator.Decorations);
+        var ready = fixture.Data.AllocateChunk(1, 0);
+        ready.HasContents = true;
+        ready.ContentOrigin = TerrainContentOrigin.Storage;
+        fixture.Scheduler.Request(ready, TerrainWorkPriority.Critical);
+        Assert.False(fixture.Scheduler.Step());
+        Assert.True(ready.HasCurrentHeightData);
+        Assert.False(generating.HasContents);
+        completion.SetResult();
+        for (var i = 0; i < 20 && !fixture.World.AuthorityContents.Generation.HasPendingPublications; i++)
+        {
+            fixture.Scheduler.Step();
+        }
+
+        Assert.Equal(1, generator.Decorations);
+        Assert.True(fixture.World.AuthorityContents.Generation.HasPendingPublications);
+        Assert.Equal(1, generator.PreparationCount);
+    }
+
+    private sealed class DelayedGeneration(Task preparation) : ITerrainContentsGenerator
+    {
+        public int PreparationCount { get; private set; }
+
+        public int Decorations { get; private set; }
+
+        public Vector3 FindCoarseSpawnPosition() => Vector3.Zero;
+
+        public void GenerateChunkContentsPass1(TerrainChunk chunk)
+        {
+        }
+
+        public void GenerateChunkContentsPass2(TerrainChunk chunk)
+        {
+        }
+
+        public void GenerateChunkContentsPass3(TerrainChunk chunk)
+        {
+        }
+
+        public void GenerateChunkContentsPass4(TerrainChunk chunk) => Decorations++;
+
+        public Task PrepareChunkContentsPass4Async(TerrainChunk chunk, CancellationToken cancellationToken)
+        {
+            PreparationCount++;
+            return preparation;
+        }
+    }
+
     private static TerrainUpdateLocation Location() => new()
     {
         Center = new Vector2(8, 8), VisibilityDistance = 64, ContentDistance = 64
@@ -551,7 +612,11 @@ public sealed class TerrainComputationSchedulerTest
 
         public TerrainComputationScheduler Scheduler { get; }
 
-        public ComputationWorld(bool authority = false, int lightWorkerCount = 1)
+        public ComputationWorld(
+            bool authority = false,
+            int lightWorkerCount = 1,
+            ITerrainContentsGenerator? generator = null
+        )
         {
             _scope = new WorldCatalogScope(
                 authority ? Game.World.RuntimeSide.Authority : Game.World.RuntimeSide.Client
@@ -568,6 +633,13 @@ public sealed class TerrainComputationSchedulerTest
             {
                 typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.ClientChunkContents))!
                     .SetValue(World, new ClientChunkContentCoordinator(Data));
+            }
+
+            if (generator != null)
+            {
+                var generation = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
+                typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.AuthorityContents))!
+                    .SetValue(World, new AuthorityTerrainContent(World, generation));
             }
 
             Calculator = new TerrainLightingCalculator(
@@ -612,6 +684,7 @@ public sealed class TerrainComputationSchedulerTest
         public void Dispose()
         {
             Scheduler.Dispose();
+            World.AuthorityContents?.Dispose();
             World.WorkExecutor.Dispose();
             Data.Dispose();
             _scope.Dispose();

@@ -26,6 +26,14 @@ public sealed class AuthoritativeChunkGenerationPipeline(
 
     private readonly ConcurrentQueue<Publication> _publications = new();
 
+    private readonly CancellationTokenSource _preparationLifetime = new();
+
+    private Task? _preparation;
+
+    public event Action? PreparationCompleted;
+
+    public bool HasPendingPreparation => _preparation is { IsCompleted: false };
+
     private int _disposed;
 
     /// <summary>Thread-safe availability hint; the owner still takes and validates tickets under terrain access.</summary>
@@ -87,6 +95,32 @@ public sealed class AuthoritativeChunkGenerationPipeline(
                 return true;
 
             case TerrainGenerationStage.FourthPass:
+                if (progress.Preparation == null)
+                {
+                    if (HasPendingPreparation) { return false; }
+
+                    var preparation = _generator.PrepareChunkContentsPass4Async(chunk, _preparationLifetime.Token);
+                    progress.Preparation = preparation;
+                    _preparation = preparation;
+                    if (!preparation.IsCompleted)
+                    {
+                        _ = preparation.ContinueWith(
+                            completed =>
+                            {
+                                _ = completed.Exception;
+                                if (Volatile.Read(ref _disposed) == 0) { PreparationCompleted?.Invoke(); }
+                            },
+                            CancellationToken.None,
+                            TaskContinuationOptions.ExecuteSynchronously,
+                            TaskScheduler.Default
+                        );
+                        return false;
+                    }
+                }
+
+                if (!progress.Preparation.IsCompleted) { return false; }
+
+                progress.Preparation.GetAwaiter().GetResult();
                 _generator.GenerateChunkContentsPass4(chunk);
                 progress.Stage = TerrainGenerationStage.Publication;
                 progress.Publication = new Publication(this, chunk, chunk.AllocationGeneration);
@@ -158,6 +192,19 @@ public sealed class AuthoritativeChunkGenerationPipeline(
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0) { return; }
 
+        PreparationCompleted = null;
+        _preparationLifetime.Cancel();
+        if (_preparation is { IsCompleted: false } preparation)
+        {
+            _ = preparation.ContinueWith(
+                _ => _preparationLifetime.Dispose(),
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default
+            );
+        }
+        else { _preparationLifetime.Dispose(); }
+
         _publications.Clear();
         _progress.Clear();
     }
@@ -170,6 +217,7 @@ public sealed class AuthoritativeChunkGenerationPipeline(
             progress.Generation = chunk.AllocationGeneration;
             progress.Stage = TerrainGenerationStage.Restore;
             progress.Publication = null;
+            progress.Preparation = null;
         }
 
         return progress;
@@ -209,5 +257,7 @@ public sealed class AuthoritativeChunkGenerationPipeline(
         internal TerrainGenerationStage Stage { get; set; }
 
         internal Publication? Publication { get; set; }
+
+        internal Task? Preparation { get; set; }
     }
 }

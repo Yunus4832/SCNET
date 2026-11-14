@@ -1,4 +1,7 @@
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+
+using EntitySystem.TemplatesDatabase;
 
 namespace Game.TerrainSerializers;
 
@@ -44,6 +47,18 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
 
     private readonly Terrain _terrain;
 
+    private readonly Block[] _generationBlocks;
+
+    private readonly ConditionalWeakTable<TerrainChunk, PreparedTrees> _preparedTrees = new();
+
+    private sealed class PreparedTrees(ulong generation, BrushPaint[][] brushes)
+    {
+        public ulong Generation { get; } = generation;
+
+        public BrushPaint[][] Brushes { get; } = brushes;
+    }
+
+
     private readonly ConcurrentDictionary<(int Seed, Point2 Coords), CleanTreeBrushCacheEntry> _cleanTreeBrushCache =
         new();
 
@@ -67,8 +82,18 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
     {
         _subsystemTerrain = subsystemTerrain;
         _terrain = terrain ?? subsystemTerrain.Terrain;
+        _generationBlocks = subsystemTerrain.Catalog.Blocks;
         _subsystemBottomSuckerBlockBehavior =
             subsystemTerrain.Project.FindSubsystem<SubsystemBottomSuckerBlockBehavior>(true)!;
+    }
+
+    private TerrainContentsGenerator24(TerrainContentsGenerator24 owner, Terrain terrain, WorldSettings settings)
+        : base(settings, owner.seed)
+    {
+        _subsystemTerrain = owner._subsystemTerrain;
+        _subsystemBottomSuckerBlockBehavior = owner._subsystemBottomSuckerBlockBehavior;
+        _generationBlocks = owner._generationBlocks;
+        _terrain = terrain;
     }
 
     public Vector3 FindCoarseSpawnPosition()
@@ -132,6 +157,8 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
 
     public void GenerateChunkContentsPass4(TerrainChunk chunk)
     {
+        if (tgExtras) { RequirePreparedTrees(chunk); }
+
         RegisterCleanTreeBrush(chunk);
         GenerateGrassAndPlants(chunk);
         GenerateLogs(chunk);
@@ -148,6 +175,7 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
         GenerateSnowAndIce(chunk);
         GenerateBedrockAndAir(chunk);
         UpdateFluidIsTop(chunk);
+        _preparedTrees.Remove(chunk);
     }
 
     public void GenerateBasin(TerrainChunk chunk) //盆地
@@ -488,7 +516,7 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
                 while (num4 >= 0)
                 {
                     var num5 = Terrain.ExtractContents(chunk.GetCellValueFast(num3));
-                    if (!_subsystemTerrain.Catalog.Blocks[num5].Transparent)
+                    if (!_generationBlocks[num5].Transparent)
                     {
                         var num6 = CalculateMountainRangeFactor(num, num2);
                         var temperature = chunk.GetTemperatureFast(i, j);
@@ -1155,62 +1183,93 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
 
     public void GenerateTrees(TerrainChunk chunk)
     {
-        if (!tgExtras)
-        {
-            return;
-        }
+        if (!tgExtras) { return; }
 
-        var x = chunk.Coords.X;
-        var y = chunk.Coords.Y;
-
-        var sourceCoords = new Point2[9];
-        var sourceIndex = 0;
-        for (var i = x - 1; i < x + 2; i++)
+        var sources = RequirePreparedTrees(chunk).Brushes;
+        foreach (var brushes in sources)
         {
-            for (var j = y - 1; j < y + 2; j++)
+            foreach (var paint in brushes)
             {
-                sourceCoords[sourceIndex++] = new Point2(i, j);
-            }
-        }
-
-        WarmCleanTreeBrushCache(sourceCoords);
-
-        foreach (var coords in sourceCoords)
-        {
-            foreach (var brushPaint in GetCleanTreeBrush(coords))
-            {
-                brushPaint.Brush.PaintFast(chunk, brushPaint.Position.X, brushPaint.Position.Y, brushPaint.Position.Z);
+                paint.Brush.PaintFast(chunk, paint.Position.X, paint.Position.Y, paint.Position.Z);
             }
         }
     }
 
-    private void WarmCleanTreeBrushCache(Point2[] sourceCoords)
+    private PreparedTrees RequirePreparedTrees(TerrainChunk chunk)
     {
-        var missingCoords = sourceCoords
-            .Where(coords => !_cleanTreeBrushCache.ContainsKey((seed, coords)))
-            .ToArray();
-        if (missingCoords.Length == 0)
+        if (_preparedTrees.TryGetValue(chunk, out var prepared) && prepared.Generation == chunk.AllocationGeneration)
         {
-            return;
+            return prepared;
         }
 
-        Parallel.ForEach(
-            missingCoords,
-            new ParallelOptions
-            {
-                MaxDegreeOfParallelism = SeedTerrainGenerationPolicy.GetParallelism(Environment.ProcessorCount)
-            },
-            coords => _ = GetCleanTreeBrush(coords)
+        throw new InvalidOperationException(
+            "Tree generation requires completed preparation for the current allocation."
         );
     }
 
-    private BrushPaint[] GetCleanTreeBrush(Point2 coords)
+    public Task PrepareChunkContentsPass4Async(TerrainChunk chunk, CancellationToken cancellationToken)
+    {
+        if (!tgExtras) { return Task.CompletedTask; }
+
+        _preparedTrees.Remove(chunk);
+        RegisterCleanTreeBrush(chunk);
+        var brushes = new BrushPaint[9][];
+        var prepared = new PreparedTrees(chunk.AllocationGeneration, brushes);
+        var missing = new List<(int Index, Point2 Coords)>();
+        var index = 0;
+        for (var x = chunk.Coords.X - 1; x <= chunk.Coords.X + 1; x++)
+        {
+            for (var z = chunk.Coords.Y - 1; z <= chunk.Coords.Y + 1; z++)
+            {
+                var coords = new Point2(x, z);
+                if (_cleanTreeBrushCache.TryGetValue((seed, coords), out var entry))
+                {
+                    entry.LastAccessTicks = Environment.TickCount64;
+                    brushes[index] = entry.BrushPaints;
+                }
+                else { missing.Add((index, coords)); }
+
+                index++;
+            }
+        }
+
+        // Retain this batch's brushes independently of cache eviction or an application pause.
+        for (var i = 0; i < brushes.Length; i++) { MaybeCleanupCleanTreeBrushCache(); }
+
+        if (missing.Count == 0)
+        {
+            _preparedTrees.Add(chunk, prepared);
+            return Task.CompletedTask;
+        }
+
+        var values = new ValuesDictionary();
+        worldSettings.Save(values, false);
+        var settings = new WorldSettings();
+        settings.Load(values);
+        return Task.Run(() =>
+            {
+                using var terrain = new Terrain();
+                var source = new TerrainContentsGenerator24(this, terrain, settings);
+                Parallel.ForEach(
+                    missing,
+                    new ParallelOptions
+                    {
+                        CancellationToken = cancellationToken,
+                        MaxDegreeOfParallelism = SeedTerrainGenerationPolicy.GetParallelism(Environment.ProcessorCount)
+                    },
+                    item => brushes[item.Index] = GetCleanTreeBrush(item.Coords, source)
+                );
+                _preparedTrees.Add(chunk, prepared);
+            }
+        );
+    }
+
+    private BrushPaint[] GetCleanTreeBrush(Point2 coords, TerrainContentsGenerator24 source)
     {
         var entry = _cleanTreeBrushCache.GetOrAdd(
             (seed, coords),
-            static (key, generator) =>
-                generator.CreateCleanTreeBrushEntry(key.Coords),
-            this
+            static (key, generator) => generator.CreateCleanTreeBrushEntry(key.Coords),
+            source
         );
         entry.LastAccessTicks = Environment.TickCount64;
         MaybeCleanupCleanTreeBrushCache();
@@ -1295,14 +1354,10 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
 
                     heightLimit++;
 
-                    if (_subsystemTerrain.Catalog
-                            .Blocks[chunk.GetCellContentsFast(localX + 1, heightLimit, localZ)].Collidable ||
-                        _subsystemTerrain.Catalog
-                            .Blocks[chunk.GetCellContentsFast(localX - 1, heightLimit, localZ)].Collidable ||
-                        _subsystemTerrain.Catalog
-                            .Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ + 1)].Collidable ||
-                        _subsystemTerrain.Catalog
-                            .Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ - 1)].Collidable)
+                    if (_generationBlocks[chunk.GetCellContentsFast(localX + 1, heightLimit, localZ)].Collidable ||
+                        _generationBlocks[chunk.GetCellContentsFast(localX - 1, heightLimit, localZ)].Collidable ||
+                        _generationBlocks[chunk.GetCellContentsFast(localX, heightLimit, localZ + 1)].Collidable ||
+                        _generationBlocks[chunk.GetCellContentsFast(localX, heightLimit, localZ - 1)].Collidable)
                     {
                         continue;
                     }

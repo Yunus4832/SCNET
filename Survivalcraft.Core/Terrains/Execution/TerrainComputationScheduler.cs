@@ -33,6 +33,10 @@ public sealed class TerrainComputationScheduler : IDisposable
 
     private readonly Func<TerrainWorkKey, bool> _canExecute;
 
+    private readonly HashSet<TerrainWorkKey> _generationWaits = [];
+
+    private int _generationPrepared;
+
     private bool _lightCapacity;
 
     private volatile bool _disposed;
@@ -62,6 +66,10 @@ public sealed class TerrainComputationScheduler : IDisposable
             OnLightCompleted
         );
         _canExecute = CanExecute;
+        if (_world.AuthorityContents?.Generation is { } generation)
+        {
+            generation.PreparationCompleted += OnGenerationPrepared;
+        }
     }
 
     internal int ActiveLightJobs => _propagations.Count;
@@ -71,7 +79,9 @@ public sealed class TerrainComputationScheduler : IDisposable
     private bool CanExecute(TerrainWorkKey key)
     {
         return !ReferenceEquals(_world.PendingChunkInitialization, key.Chunk) &&
-               (key.Stage != TerrainWorkStage.Propagation || _lightCapacity);
+               (key.Stage != TerrainWorkStage.Propagation || _lightCapacity) &&
+               (key.Stage != TerrainWorkStage.Content ||
+                _world.AuthorityContents?.Generation.HasPendingPreparation != true);
     }
 
     private void OnLightCompleted(TerrainLightCompletion completion)
@@ -81,6 +91,17 @@ public sealed class TerrainComputationScheduler : IDisposable
             if (_disposed) { return; }
 
             _lightCompletions.Enqueue(completion);
+            _world.WorkExecutor.Wake();
+        }
+    }
+
+    private void OnGenerationPrepared()
+    {
+        lock (_completionSync)
+        {
+            if (_disposed) { return; }
+
+            Interlocked.Exchange(ref _generationPrepared, 1);
             _world.WorkExecutor.Wake();
         }
     }
@@ -230,6 +251,13 @@ public sealed class TerrainComputationScheduler : IDisposable
     {
         if (_disposed) { return true; }
 
+        if (Interlocked.Exchange(ref _generationPrepared, 0) != 0)
+        {
+            foreach (var key in _generationWaits) { _queue.Signal(key); }
+
+            _generationWaits.Clear();
+        }
+
         DrainLightCompletions();
         ValidatePropagations();
         _lightCapacity = _lightWorkers.HasCapacity;
@@ -323,7 +351,12 @@ public sealed class TerrainComputationScheduler : IDisposable
                 }
 
                 generation.TryAdvance(chunk);
-                if (chunk.HasContents)
+                if (generation.HasPendingPreparation && generation.GetStage(chunk) == TerrainGenerationStage.FourthPass)
+                {
+                    _generationWaits.Add(item.Key);
+                    _queue.Wait(item, []);
+                }
+                else if (chunk.HasContents)
                 {
                     ContentAvailable(chunk);
                     Complete(item, true);
@@ -654,6 +687,12 @@ public sealed class TerrainComputationScheduler : IDisposable
     {
         lock (_completionSync) { _disposed = true; }
 
+        if (_world.AuthorityContents?.Generation is { } generation)
+        {
+            generation.PreparationCompleted -= OnGenerationPrepared;
+        }
+
+        _generationWaits.Clear();
         _lightWorkers.Dispose();
         _propagations.Clear();
         _lightCompletions.Clear();

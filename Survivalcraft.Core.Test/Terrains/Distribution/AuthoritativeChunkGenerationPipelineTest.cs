@@ -291,6 +291,110 @@ public sealed class AuthoritativeChunkGenerationPipelineTest
         pipeline.Dispose();
     }
 
+    [Fact]
+    public void PendingPreparationReturnsWithoutRunningTheFourthPass()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        var completion = new TaskCompletionSource();
+        var generator = new FakeGenerator { Preparation = completion.Task };
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
+        for (var i = 0; i < 4; i++) { Assert.True(pipeline.TryAdvance(chunk)); }
+
+        var notifications = 0;
+        pipeline.PreparationCompleted += () => notifications++;
+        Assert.False(pipeline.TryAdvance(chunk));
+        Assert.True(pipeline.HasPendingPreparation);
+        Assert.False(pipeline.TryAdvance(chunk));
+        Assert.Equal(1, generator.PreparationCount);
+        Assert.Equal(3, generator.PassCount);
+        Assert.False(pipeline.HasPendingPublications);
+        completion.SetResult();
+        Assert.Equal(1, notifications);
+        Assert.True(pipeline.TryAdvance(chunk));
+        Assert.Equal(4, generator.PassCount);
+        Assert.True(pipeline.HasPendingPublications);
+    }
+
+    [Fact]
+    public void OnlyOnePreparationBatchCanBeInFlight()
+    {
+        using var terrain = new Terrain();
+        var first = terrain.AllocateChunk(0, 0);
+        var second = terrain.AllocateChunk(1, 0);
+        var completion = new TaskCompletionSource();
+        var generator = new FakeGenerator { Preparation = completion.Task };
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
+        for (var i = 0; i < 4; i++)
+        {
+            pipeline.TryAdvance(first);
+            pipeline.TryAdvance(second);
+        }
+
+        Assert.False(pipeline.TryAdvance(first));
+        Assert.False(pipeline.TryAdvance(second));
+        Assert.Equal(1, generator.PreparationCount);
+        completion.SetResult();
+        Assert.True(pipeline.TryAdvance(first));
+        Assert.True(pipeline.TryAdvance(second));
+        Assert.Equal(2, generator.PreparationCount);
+    }
+
+    [Fact]
+    public void RenewedAllocationCannotPublishTheOldPreparedGeneration()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        var completion = new TaskCompletionSource();
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(
+            new FakeGenerator { Preparation = completion.Task },
+            _ => false,
+            _ => false
+        );
+        for (var i = 0; i < 5; i++) { pipeline.TryAdvance(chunk); }
+
+        terrain.RenewChunkAllocation(chunk);
+        completion.SetResult();
+        Assert.True(pipeline.TryAdvance(chunk));
+        Assert.Equal(TerrainGenerationStage.FirstPass, pipeline.GetStage(chunk));
+        Assert.False(pipeline.HasPendingPublications);
+    }
+
+    [Fact]
+    public void DisposalCancelsPreparationAndSuppressesLateNotifications()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        var completion = new TaskCompletionSource();
+        var generator = new FakeGenerator { Preparation = completion.Task };
+        var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
+        for (var i = 0; i < 5; i++) { pipeline.TryAdvance(chunk); }
+
+        var notifications = 0;
+        pipeline.PreparationCompleted += () => notifications++;
+        pipeline.Dispose();
+        Assert.True(generator.PreparationCancellation.IsCancellationRequested);
+        completion.SetResult();
+        Assert.Equal(0, notifications);
+        Assert.False(pipeline.HasPendingPublications);
+    }
+
+    [Fact]
+    public void FailedPreparationIsObservedBeforeAnyDecorationOrPublication()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        var completion = new TaskCompletionSource();
+        var generator = new FakeGenerator { Preparation = completion.Task };
+        using var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, _ => false);
+        for (var i = 0; i < 5; i++) { pipeline.TryAdvance(chunk); }
+
+        completion.SetException(new InvalidOperationException("Preparation failed."));
+        Assert.Throws<InvalidOperationException>(() => pipeline.TryAdvance(chunk));
+        Assert.Equal(3, generator.PassCount);
+        Assert.False(pipeline.HasPendingPublications);
+    }
+
     private static void Generate(AuthoritativeChunkGenerationPipeline pipeline, TerrainChunk chunk)
     {
         for (var i = 0; i < 5; i++) { Assert.True(pipeline.TryAdvance(chunk)); }
@@ -298,6 +402,19 @@ public sealed class AuthoritativeChunkGenerationPipelineTest
 
     private sealed class FakeGenerator : ITerrainContentsGenerator
     {
+        public Task Preparation { get; init; } = Task.CompletedTask;
+
+        public int PreparationCount { get; private set; }
+
+        public CancellationToken PreparationCancellation { get; private set; }
+
+        public Task PrepareChunkContentsPass4Async(TerrainChunk chunk, CancellationToken cancellationToken)
+        {
+            PreparationCount++;
+            PreparationCancellation = cancellationToken;
+            return Preparation;
+        }
+
         public int PassCount { get; private set; }
 
         public bool HasSeedBasis { get; init; }
