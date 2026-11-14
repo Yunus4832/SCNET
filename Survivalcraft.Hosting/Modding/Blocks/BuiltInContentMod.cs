@@ -31,10 +31,10 @@ public sealed class BuiltInContentMod(Action<IModCommands, ModId>? registerAppCo
         var assets = BuiltInContentAssets.Load();
         foreach (var asset in assets)
         {
-            context.Extensions.RegisterContent(
+            context.Extensions.Register(
+                ContentExtensions.RegistryName,
                 new ResourceId(context.Manifest.ModId, asset.RelativePath),
-                asset.RelativePath,
-                asset.CopyBytes()
+                asset
             );
         }
 

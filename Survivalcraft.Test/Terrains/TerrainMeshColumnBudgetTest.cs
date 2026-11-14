@@ -19,6 +19,38 @@ namespace Survivalcraft.Test.Terrains;
 public sealed class TerrainMeshColumnBudgetTest
 {
     [Fact]
+    public void CompactionYieldsWithinTheSliceBudgetAndPreservesCachedGeometry()
+    {
+        using var fixture = new Fixture();
+        using var mesh = new TerrainChunkPresentation();
+        var complete = new TerrainMeshBuilder(fixture.Terrain, fixture.Generator, fixture.Texture);
+        Assert.True(complete.GenerateSlice(fixture.Chunk, mesh, 0, TimeSpan.MaxValue));
+        var subset = mesh.Draws[fixture.Texture][0].Subsets.First(part => part.Indices.Count > 0);
+        var expectedVertices = subset.Vertices.ToArray();
+        var expectedIndices = subset.Indices.ToArray();
+        subset.Vertices.Capacity = 8192;
+        subset.Indices.Capacity = 8192;
+        mesh.InvalidateSliceContentsHashes();
+        var bounded = new TerrainMeshBuilder(fixture.Terrain, fixture.Generator, fixture.Texture, new Clock());
+        var yieldedCompaction = false;
+        var finished = false;
+        for (var i = 0; i < 300 && !finished; i++)
+        {
+            finished = bounded.GenerateSlice(fixture.Chunk, mesh, 0, TimeSpan.FromMilliseconds(1));
+            yieldedCompaction |= !finished && mesh.ActiveSlice is { Column: 256, CompactionBuffer: > 0 };
+        }
+
+        Assert.True(finished);
+        Assert.True(yieldedCompaction);
+        Assert.Equal(expectedVertices, subset.Vertices.ToArray());
+        Assert.Equal(expectedIndices, subset.Indices.ToArray());
+        Assert.InRange(subset.Vertices.Capacity, subset.Vertices.Count, 8191);
+        Assert.InRange(subset.Indices.Capacity, subset.Indices.Count, 8191);
+        Assert.True(complete.GenerateSlice(fixture.Chunk, mesh, 0, TimeSpan.MaxValue));
+        Assert.Null(mesh.ActiveSlice);
+    }
+
+    [Fact]
     public void InterruptedColumnsProduceTheSameGeometryAsAnUninterruptedSlice()
     {
         using var fixture = new Fixture();

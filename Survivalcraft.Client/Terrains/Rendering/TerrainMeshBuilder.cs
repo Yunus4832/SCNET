@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 using Engine.Graphics;
 
 using Game.Blocks.Presentation.Geometry;
@@ -76,6 +78,7 @@ internal sealed class TerrainMeshBuilder(
 
         try
         {
+            var hadColumns = work.Column < 16 * 16;
             while (work.Column < 16 * 16)
             {
                 var x = work.Column / 16;
@@ -89,6 +92,10 @@ internal sealed class TerrainMeshBuilder(
                 if (work.Column < 16 * 16 && _time.GetElapsedTime(started) >= maximumTime) { return false; }
             }
 
+            if (hadColumns && _time.GetElapsedTime(started) >= maximumTime) { return false; }
+
+            if (!CompactSlice(output, work, started, maximumTime)) { return false; }
+
             output.CompleteSliceGeometryUpdate(sliceIndex, work.ContentsHash);
             output.ActiveSlice = null;
             return true;
@@ -99,6 +106,51 @@ internal sealed class TerrainMeshBuilder(
             output.ActiveSlice = null;
             throw;
         }
+    }
+
+    private bool CompactSlice(
+        TerrainChunkPresentation output,
+        TerrainChunkPresentation.SliceWork work,
+        long started,
+        TimeSpan maximumTime
+    )
+    {
+        var index = 0;
+        foreach (var slices in output.Draws.Values)
+        {
+            foreach (var subset in slices[work.Slice].Subsets)
+            {
+                if (index++ >= work.CompactionBuffer)
+                {
+                    var changed = TrimBufferCapacity(subset.Vertices);
+                    work.CompactionBuffer++;
+                    if (changed && _time.GetElapsedTime(started) >= maximumTime) { return false; }
+                }
+
+                if (index++ >= work.CompactionBuffer)
+                {
+                    var changed = TrimBufferCapacity(subset.Indices);
+                    work.CompactionBuffer++;
+                    if (changed && _time.GetElapsedTime(started) >= maximumTime) { return false; }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    internal static bool TrimBufferCapacity<T>(DynamicArray<T> buffer) where T : unmanaged
+    {
+        // Keep 25% growth room. The 50% trigger and byte threshold avoid resizing for minor changes.
+        if ((long)buffer.Capacity - buffer.Count < buffer.Count / 2) { return false; }
+
+        var retained = buffer.Count == 0
+            ? 0
+            : Math.Min(buffer.Capacity, (long)buffer.Count + Math.Max(4, buffer.Count / 4));
+        if ((buffer.Capacity - retained) * Unsafe.SizeOf<T>() < 4096) { return false; }
+
+        buffer.Capacity = (int)retained;
+        return true;
     }
 
     private bool ColumnInputsAvailable(int x, int z)

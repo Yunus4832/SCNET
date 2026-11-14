@@ -54,7 +54,9 @@ public class BitmapFont : IDisposable
     {
         try
         {
-            var texture = Texture2D.Load(textureStream);
+            using var image = Image.Load(textureStream);
+            var texture = Texture2D.Load(image);
+            texture.Tag = null;
             var bitmapFont = new BitmapFont();
             var streamReader = new StreamReader(glyphsStream);
             var num = int.Parse(streamReader.ReadLine() ?? string.Empty);
@@ -320,6 +322,12 @@ public class BitmapFont : IDisposable
         }
 
         var texture = createTexture ? Texture2D.Load(image2, mipLevelsCount) : null;
+        if (texture != null)
+        {
+            texture.Tag = null;
+            image2.Dispose();
+        }
+
         var image3 = createTexture ? null : image2;
         var bitmapFont = new BitmapFont();
         bitmapFont.Initialize(texture, image3, list3, fallbackCode, num6, spacing, scale);

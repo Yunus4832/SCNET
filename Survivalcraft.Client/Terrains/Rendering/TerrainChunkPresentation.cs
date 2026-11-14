@@ -76,6 +76,8 @@ public sealed class TerrainChunkPresentation : IDisposable
         public int ContentsHash { get; } = contentsHash;
 
         public int Column;
+
+        public int CompactionBuffer;
     }
 
     public int NextMeshSlice
