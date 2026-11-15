@@ -35,7 +35,8 @@ public sealed class ClientAssemblyBoundaryTest
         {
             var value = Assert.IsType<JsonObject>(new JsonObjectReader().Get([content]));
             Assert.Equal(7, value["value"]!.GetValue<int>());
-            Assert.Equal(0, content.ContentStream.Position);
+            using var cursor = content.Duplicate();
+            Assert.Equal(0, cursor.Position);
         }
         finally { content.Dispose(); }
     }

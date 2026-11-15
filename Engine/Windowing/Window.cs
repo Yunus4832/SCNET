@@ -345,7 +345,6 @@ public static partial class Window
         Touch.BeforeFrame();
         InputSimulation.BeforeFrame();
         GamePad.BeforeFrame();
-        Mixer.BeforeFrame();
     }
 
     private static void AfterFrameAll()
@@ -357,7 +356,6 @@ public static partial class Window
         Mouse.AfterFrame();
         Touch.AfterFrame();
         GamePad.AfterFrame();
-        Mixer.AfterFrame();
     }
 
     private static partial void ConfigurePlatform();

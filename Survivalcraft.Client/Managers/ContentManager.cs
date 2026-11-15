@@ -100,6 +100,22 @@ public static class ContentManager
         }
     }
 
+    public static Func<Stream> CreateStreamFactory(string name, params string[] suffixes)
+    {
+        lock (_syncObj)
+        {
+            foreach (var suffix in suffixes)
+            {
+                if (_resources.TryGetValue(name + "." + suffix, out var resource))
+                {
+                    return resource.CreateStreamFactory();
+                }
+            }
+
+            throw new FileNotFoundException($"Audio resource was not found: {name}");
+        }
+    }
+
     public static object Get(Type type, string name, string suffix = "")
     {
         lock (_syncObj)

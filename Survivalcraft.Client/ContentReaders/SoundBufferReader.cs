@@ -10,6 +10,6 @@ public class SoundBufferReader : IContentReader
 
     public override object Get(ContentInfo[] contents)
     {
-        return SoundBuffer.Load(contents[0].Duplicate());
+        return SoundBuffer.LoadDeferred(contents[0].CreateStreamFactory());
     }
 }

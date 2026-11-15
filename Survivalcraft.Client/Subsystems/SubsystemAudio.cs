@@ -21,6 +21,10 @@ public class SubsystemAudio : Subsystem, IUpdateable
 
     private readonly Random _random = new();
 
+    private readonly CancellationTokenSource _lifetime = new();
+
+    private bool _disposed;
+
     private SubsystemSpatialSoundRequests? _requests;
 
     private readonly Dictionary<string, List<SpatialSoundRequest>> _nearest = new(StringComparer.Ordinal);
@@ -37,7 +41,7 @@ public class SubsystemAudio : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (!WorldRuntimeContext.For(Project).HasPresentation) { return; }
+        if (_disposed || !WorldRuntimeContext.For(Project).HasPresentation) { return; }
 
         _listenerPositions.Clear();
         foreach (var gameWidget in _subsystemViews.GameWidgets)
@@ -68,7 +72,13 @@ public class SubsystemAudio : Subsystem, IUpdateable
                     AudioManager.MinAudibleVolume &&
                     UpdateCongestion(soundInfo.Name, soundInfo.Volume))
                 {
-                    AudioManager.PlaySound(soundInfo.Name, soundInfo.Volume, soundInfo.Pitch, soundInfo.Pan);
+                    AudioManager.PlaySound(
+                        soundInfo.Name,
+                        soundInfo.Volume,
+                        soundInfo.Pitch,
+                        soundInfo.Pan,
+                        _lifetime.Token
+                    );
                 }
 
                 _queuedSounds.RemoveAt(num);
@@ -105,7 +115,7 @@ public class SubsystemAudio : Subsystem, IUpdateable
     {
         foreach (var sound in _sounds)
         {
-            if (sound.State == SoundState.Playing)
+            if (sound.State is SoundState.Preparing or SoundState.Playing)
             {
                 _mutedSounds[sound] = true;
                 sound.Pause();
@@ -197,12 +207,13 @@ public class SubsystemAudio : Subsystem, IUpdateable
 
     public Sound CreateSound(string name)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         if (!WorldRuntimeContext.For(Project).HasPresentation)
         {
             throw new InvalidOperationException("Only a presentation world can create audio resources.");
         }
 
-        var sound = new Sound(ContentManager.Get<SoundBuffer>(name));
+        var sound = new Sound(ContentManager.Get<SoundBuffer>(name), cancellation: _lifetime.Token);
         _sounds.Add(sound);
         return sound;
     }
@@ -239,6 +250,11 @@ public class SubsystemAudio : Subsystem, IUpdateable
 
     public override void Dispose()
     {
+        if (_disposed) { return; }
+
+        _disposed = true;
+        _lifetime.Cancel();
+        _lifetime.Dispose();
         if (_requests is not null) { _requests.Requested -= OnSpatialSoundRequested; }
 
         _requests = null;

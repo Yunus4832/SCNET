@@ -25,11 +25,8 @@ public sealed class ClientContentRuntime : IDisposable
             if (ContentManager.ContainsOwned(entry.Id.Namespace, entry.ContentPath)) { continue; }
 
             using var source = entry.OpenRead();
-            var bytes = new MemoryStream();
-            source.CopyTo(bytes);
-            bytes.Position = 0;
             var content = new ContentInfo(entry.ContentPath);
-            content.SetContentStream(bytes);
+            content.SetContentStream(source);
             try
             {
                 ContentManager.AddOwned(entry.Id.Namespace, content);

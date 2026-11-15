@@ -103,7 +103,7 @@ public sealed class ClientContentRuntimeTest
         var previous = new ClientContentRuntime([module]);
         previous.InstallResources(resources);
         previous.InitializePreview(rules);
-        var oldStreams = ContentManager.List().Select(resource => resource.ContentStream).ToArray();
+        var oldResources = ContentManager.List().ToArray();
         var oldAssets = resources.Select(resource => ContentManager.Get<TrackingAsset>(resource.ContentPath[..^4]))
             .ToArray();
         var first = GameModRuntime.Start();
@@ -118,7 +118,7 @@ public sealed class ClientContentRuntimeTest
 
             Assert.Same(next, CurrentModRuntime.Value);
             Assert.All(oldAssets, asset => Assert.Equal(1, asset.DisposeCount));
-            Assert.All(oldStreams, stream => Assert.False(stream.CanRead));
+            Assert.All(oldResources, resource => Assert.True(resource.IsDisposed));
             Assert.All(
                 resources,
                 resource => Assert.False(ContentManager.ContainsOwned(resource.Id.Namespace, resource.ContentPath))

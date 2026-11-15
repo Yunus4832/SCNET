@@ -8,5 +8,7 @@ public enum SoundState
 
     Paused = 2,
 
-    Disposed = 3
+    Disposed = 3,
+
+    Preparing = 4
 }

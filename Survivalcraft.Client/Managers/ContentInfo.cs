@@ -1,57 +1,61 @@
 namespace Game.Managers;
 
-public class ContentInfo
+/// <summary>Owned immutable content bytes with independent read cursors for background preparation.</summary>
+public class ContentInfo : IDisposable
 {
+    private sealed record ContentBytes(byte[] Data, int Offset, int Count);
+
+    private ContentBytes? _bytes;
+
     public string AbsolutePath { get; set; }
 
     public string ContentPath { get; set; }
 
-    public MemoryStream ContentStream
-    {
-        get => field is not null ? field : throw new InvalidOperationException("ContentStream hasn't been initialized");
-        set;
-    } = null!;
-
     public string Filename { get; set; }
 
+    public bool IsDisposed => Volatile.Read(ref _bytes) == null;
 
     public ContentInfo(string absolutePath)
     {
         AbsolutePath = absolutePath;
         var pos = absolutePath.LastIndexOf('.');
         ContentPath = pos > -1 ? absolutePath[..pos] : absolutePath;
-        Filename = Path.GetFileName(AbsolutePath);
+        Filename = Path.GetFileName(absolutePath);
     }
 
+    /// <summary>Takes ownership of the stream and freezes its complete content.</summary>
     public void SetContentStream(Stream stream)
     {
-        if (stream is MemoryStream contentStream)
+        using (stream)
         {
-            ContentStream = contentStream;
-            ContentStream.Position = 0L;
-        }
-        else
-        {
-            throw new Exception("Can't set ContentStream width type " + stream.GetType().Name);
+            if (stream is MemoryStream memory)
+            {
+                _bytes = memory.TryGetBuffer(out var buffer)
+                    ? new ContentBytes(buffer.Array!, buffer.Offset, checked((int)memory.Length))
+                    : new ContentBytes(memory.ToArray(), 0, checked((int)memory.Length));
+            }
+            else
+            {
+                using var copy = new MemoryStream();
+                stream.CopyTo(copy);
+                _bytes = new ContentBytes(copy.ToArray(), 0, checked((int)copy.Length));
+            }
         }
     }
 
-    public Stream Duplicate()
+    public Stream Duplicate() => Open(Capture());
+
+    public Func<Stream> CreateStreamFactory()
     {
-        if (ContentStream is not { CanRead: true, CanWrite: true })
-        {
-            throw new Exception("ContentStream has been disposed");
-        }
-
-        var memoryStream = new MemoryStream();
-        ContentStream.CopyTo(memoryStream);
-        ContentStream.Position = 0L;
-        memoryStream.Position = 0L;
-        return memoryStream;
+        var bytes = Capture();
+        return () => Open(bytes);
     }
 
-    public void Dispose()
-    {
-        ContentStream?.Dispose();
-    }
+    private ContentBytes Capture() =>
+        Volatile.Read(ref _bytes) ?? throw new ObjectDisposedException(nameof(ContentInfo));
+
+    private static Stream Open(ContentBytes bytes) =>
+        new MemoryStream(bytes.Data, bytes.Offset, bytes.Count, false, false);
+
+    public void Dispose() => Interlocked.Exchange(ref _bytes, null);
 }

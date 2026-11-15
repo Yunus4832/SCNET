@@ -1,106 +1,146 @@
+using System.Diagnostics;
+
+using Engine.Core.Logging;
 using Engine.Core.Mathematics;
 
 using Silk.NET.OpenAL;
 
 namespace Engine.Audio;
 
-public abstract class BaseSound : IDisposable
+/// <summary>A coalesced playback intent; native state belongs exclusively to the audio service.</summary>
+public abstract class BaseSound : IDisposable, IAsyncDisposable
 {
+    private readonly Lock _sync = new();
+
+    private readonly CancellationToken _cancellation;
+
+    private SoundState _desired;
+
+    private int _state;
+
+    private long _revision;
+
+    private long _generation;
+
+    private float _volume = 1f;
+
+    private float _pitch = 1f;
+
+    private float _pan;
+
+    private bool _looped;
+
     private bool _disposeOnStop;
 
-    protected bool soundIsLooped;
+    private bool _retired;
 
-    protected readonly Lock stateSync = new();
+    private sealed record VolumeFade(float Target, float Seconds, float Delay, bool DisposeOnCompletion);
 
-    public uint Source;
+    private VolumeFade? _fade;
 
-    internal BaseSound()
+    private VolumeFade? _activeFade;
+
+    private double _fadeStarted;
+
+    private float _fadeFrom;
+
+    private TaskCompletionSource? _completion;
+
+    private AudioService? _service;
+
+    internal uint source;
+
+    internal int nativeState;
+
+    protected long appliedGeneration = -1;
+
+    private AudioPlaybackRequest? _applied;
+
+    protected BaseSound(CancellationToken cancellation = default)
     {
-        if (!Mixer.IsAudioInitialized)
-        {
-            return;
-        }
-
-        if (Mixer.AL is null)
-        {
-            return;
-        }
-
-        Source = Mixer.AL.GenSource();
-        Mixer.CheckALError();
-        Mixer.AL.DistanceModel(DistanceModel.None);
-        Mixer.CheckALError();
+        _cancellation = cancellation;
     }
 
-    public SoundState State { get; private set; }
-
-    protected int ChannelsCount { get; init; }
-
-    protected int SamplingFrequency { get; init; }
+    public SoundState State => (SoundState)Volatile.Read(ref _state);
 
     public float Volume
     {
-        get;
+        get
+        {
+            lock (_sync) { return _volume; }
+        }
         set
         {
             value = MathUtils.Saturate(value);
-            if (value.CloseTo(field))
+            lock (_sync)
             {
-                return;
+                if (_volume.CloseTo(value) && _fade == null) { return; }
+
+                _volume = value;
+                _fade = null;
+                _revision++;
             }
 
-            InternalSetVolume(value);
-            field = value;
+            _service?.Wake();
         }
-    } = 1f;
+    }
 
     public float Pitch
     {
-        get;
+        get
+        {
+            lock (_sync) { return _pitch; }
+        }
         set
         {
-            value = MathUtils.Clamp(value, 0.5f, 2f);
-            if (value.CloseTo(field))
+            value = MathUtils.Clamp(value, .5f, 2f);
+            lock (_sync)
             {
-                return;
+                if (_pitch.CloseTo(value)) { return; }
+
+                _pitch = value;
+                _revision++;
             }
 
-            InternalSetPitch(value);
-            field = value;
+            _service?.Wake();
         }
-    } = 1f;
+    }
 
     public float Pan
     {
-        get;
+        get
+        {
+            lock (_sync) { return _pan; }
+        }
         set
         {
-            if (ChannelsCount != 1)
-            {
-                return;
-            }
-
             value = MathUtils.Clamp(value, -1f, 1f);
-            if (value.CloseTo(field))
+            lock (_sync)
             {
-                return;
+                if (_pan.CloseTo(value)) { return; }
+
+                _pan = value;
+                _revision++;
             }
 
-            InternalSetPan(value);
-            field = value;
+            _service?.Wake();
         }
     }
 
     public bool IsLooped
     {
-        get => soundIsLooped;
+        get
+        {
+            lock (_sync) { return _looped; }
+        }
         set
         {
-            lock (stateSync)
+            lock (_sync)
             {
-                if (State == SoundState.Stopped)
+                if (_desired == SoundState.Stopped)
                 {
-                    soundIsLooped = value;
+                    _looped = value;
+                    _revision++;
                 }
             }
         }
@@ -108,155 +148,299 @@ public abstract class BaseSound : IDisposable
 
     public bool DisposeOnStop
     {
-        get => _disposeOnStop;
+        get
+        {
+            lock (_sync) { return _disposeOnStop; }
+        }
         set
         {
-            lock (stateSync)
+            lock (_sync)
             {
-                if (State == SoundState.Stopped)
+                if (_desired == SoundState.Stopped)
                 {
                     _disposeOnStop = value;
+                    _revision++;
                 }
             }
         }
     }
 
-    public virtual void Dispose()
+    protected void Register()
     {
-        if (State == SoundState.Disposed)
+        _service = Mixer.Service;
+        if (_service?.Register(this) != true)
         {
-            return;
+            Dispose();
+            RetireWithoutNative();
+        }
+    }
+
+    public void FadeTo(float volume, float seconds, float delay = 0f, bool disposeOnCompletion = false)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(seconds);
+        ArgumentOutOfRangeException.ThrowIfNegative(delay);
+        if (!float.IsFinite(seconds) || !float.IsFinite(delay))
+        {
+            throw new ArgumentOutOfRangeException(nameof(seconds));
         }
 
-        State = SoundState.Disposed;
-        InternalDispose();
+        lock (_sync)
+        {
+            if (_desired == SoundState.Disposed) { return; }
+
+            _fade = new VolumeFade(MathUtils.Saturate(volume), seconds, delay, disposeOnCompletion);
+            _revision++;
+        }
+
+        _service?.Wake();
     }
 
     public void Play()
     {
-        lock (stateSync)
+        lock (_sync)
         {
-            if (State != SoundState.Stopped && State != SoundState.Paused)
-            {
-                return;
-            }
+            if (_desired is not (SoundState.Stopped or SoundState.Paused)) { return; }
 
-            State = SoundState.Playing;
-            InternalPlay();
+            if (_desired == SoundState.Stopped) { _generation++; }
+
+            _desired = SoundState.Playing;
+            _revision++;
+            Volatile.Write(ref _state, (int)SoundState.Preparing);
         }
+
+        _service?.Wake();
     }
 
     public void Pause()
     {
-        lock (stateSync)
+        lock (_sync)
         {
-            if (State != SoundState.Playing)
-            {
-                return;
-            }
+            if (_desired != SoundState.Playing) { return; }
 
-            State = SoundState.Paused;
-            InternalPause();
+            _desired = SoundState.Paused;
+            _revision++;
+            Volatile.Write(ref _state, (int)SoundState.Paused);
         }
+
+        _service?.Wake();
     }
 
     public void Stop()
     {
-        if (_disposeOnStop)
+        lock (_sync)
         {
-            Dispose();
+            if (_desired == SoundState.Disposed) { return; }
+
+            _desired = _disposeOnStop ? SoundState.Disposed : SoundState.Stopped;
+            _fade = null;
+            _generation++;
+            _revision++;
+            Volatile.Write(ref _state, (int)_desired);
         }
 
-        lock (stateSync)
+        _service?.Wake();
+    }
+
+    public virtual void Dispose()
+    {
+        lock (_sync)
         {
-            if (State is not (SoundState.Playing or SoundState.Paused))
+            _desired = SoundState.Disposed;
+            _revision++;
+            Volatile.Write(ref _state, (int)SoundState.Disposed);
+        }
+
+        _service?.Wake();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        lock (_sync)
+        {
+            if (_retired) { return ValueTask.CompletedTask; }
+
+            _completion ??= new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            return new ValueTask(_completion.Task);
+        }
+    }
+
+    internal bool Update(AudioService service)
+    {
+        AudioPlaybackRequest request;
+        lock (_sync)
+        {
+            if (_cancellation.IsCancellationRequested)
             {
-                return;
+                _desired = SoundState.Disposed;
+                Volatile.Write(ref _state, (int)SoundState.Disposed);
             }
 
-            State = SoundState.Stopped;
-            InternalStop();
+            AdvanceFade();
+            request = new(_desired, _revision, _generation, _volume, _pitch, _pan, _looped, _disposeOnStop);
+        }
+
+        if (request.State == SoundState.Disposed)
+        {
+            Retire(service);
+            return false;
+        }
+
+        try { UpdatePlayback(service, request); }
+        catch (Exception error)
+        {
+            Log.Warning($"Audio playback failed: {error}");
+            Dispose();
+            Retire(service);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void AdvanceFade()
+    {
+        if (_fade is not { } fade)
+        {
+            _activeFade = null;
+            return;
+        }
+
+        var now = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
+        if (!ReferenceEquals(_activeFade, fade))
+        {
+            _activeFade = fade;
+            _fadeFrom = _volume;
+            _fadeStarted = now + fade.Delay;
+        }
+
+        if (now < _fadeStarted) { return; }
+
+        var amount = fade.Seconds == 0 ? 1f : MathUtils.Saturate((float)((now - _fadeStarted) / fade.Seconds));
+        _volume = MathUtils.Lerp(_fadeFrom, fade.Target, amount);
+        if (amount < 1f) { return; }
+
+        _fade = null;
+        _activeFade = null;
+        if (fade.DisposeOnCompletion)
+        {
+            _desired = SoundState.Disposed;
+            _revision++;
+            Volatile.Write(ref _state, (int)SoundState.Disposed);
+        }
+    }
+
+    private protected abstract void UpdatePlayback(AudioService service, AudioPlaybackRequest request);
+
+    private protected virtual Task ReleaseData() => Task.CompletedTask;
+
+    private protected virtual void ReleaseNative(AudioService service)
+    {
+        if (source == 0) { return; }
+
+        service.Api!.SourceStop(source);
+        service.Api.DeleteSource(source);
+        source = 0;
+    }
+
+    private protected void EnsureSource(AudioService service, AudioPlaybackRequest request, int channels)
+    {
+        var api = service.Api!;
+        if (source == 0)
+        {
+            source = api.GenSource();
+            _applied = null;
+        }
+
+        if (source == 0) { throw new InvalidOperationException("No audio source is available."); }
+
+        if (_applied is not { } previous || previous.Volume != request.Volume)
+        {
+            api.SetSourceProperty(source, SourceFloat.Gain, request.Volume);
+        }
+
+        if (_applied is not { } pitch || pitch.Pitch != request.Pitch)
+        {
+            api.SetSourceProperty(source, SourceFloat.Pitch, request.Pitch);
+        }
+
+        if (channels == 1 && (_applied is not { } pan || pan.Pan != request.Pan))
+        {
+            api.SetSourceProperty(source, SourceVector3.Position, request.Pan, 0f, -.1f);
+        }
+
+        _applied = request;
+    }
+
+    private protected SourceState ReadNativeState(AudioService service)
+    {
+        service.Api!.GetSourceProperty(source, GetSourceInteger.SourceState, out var state);
+        Volatile.Write(ref nativeState, state);
+        return (SourceState)state;
+    }
+
+    private protected bool IsCurrent(AudioPlaybackRequest request)
+    {
+        lock (_sync)
+        {
+            return _revision == request.Revision && _desired == request.State && !_cancellation.IsCancellationRequested;
+        }
+    }
+
+    private protected void Preparing(AudioPlaybackRequest request) =>
+        Publish(request.State == SoundState.Playing ? SoundState.Preparing : request.State, request);
+
+    private protected void Publish(SoundState state, AudioPlaybackRequest request)
+    {
+        lock (_sync)
+        {
+            if (_revision == request.Revision && _desired == request.State)
+            {
+                Volatile.Write(ref _state, (int)state);
+            }
+        }
+    }
+
+    private protected void Finished(AudioPlaybackRequest request)
+    {
+        lock (_sync)
+        {
+            if (_revision != request.Revision) { return; }
+
+            _desired = _disposeOnStop ? SoundState.Disposed : SoundState.Stopped;
+            Volatile.Write(ref _state, (int)_desired);
+        }
+    }
+
+    private void Retire(AudioService service)
+    {
+        ReleaseNative(service);
+        service.TrackCleanup(this, ReleaseData(), MarkRetired);
+    }
+
+    private void RetireWithoutNative()
+    {
+        var cleanup = ReleaseData();
+        _ = cleanup.ContinueWith(
+            _ => MarkRetired(),
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default
+        );
+    }
+
+    private void MarkRetired()
+    {
+        lock (_sync)
+        {
+            _retired = true;
+            _completion?.TrySetResult();
         }
     }
 
     public static void CalculateStereoVolumes(float volume, float pan, out float left, out float right)
     {
-        left = volume * MathUtils.Saturate(0f - pan + 1f);
-        right = volume * MathUtils.Saturate(pan + 1f);
-    }
-
-    private void InternalSetVolume(float volume)
-    {
-        if (Source == 0)
-        {
-            return;
-        }
-
-        if (Mixer.AL is null)
-        {
-            return;
-        }
-
-        Mixer.AL.SetSourceProperty(Source, SourceFloat.Gain, volume);
-        Mixer.CheckALError();
-    }
-
-    private void InternalSetPitch(float pitch)
-    {
-        if (Source == 0)
-        {
-            return;
-        }
-
-        if (Mixer.AL is null)
-        {
-            return;
-        }
-
-        Mixer.AL.SetSourceProperty(Source, SourceFloat.Pitch, pitch);
-        Mixer.CheckALError();
-    }
-
-    private void InternalSetPan(float pan)
-    {
-        if (Source == 0)
-        {
-            return;
-        }
-
-        if (Mixer.AL is null)
-        {
-            return;
-        }
-
-        const float value = 0f;
-        const float value2 = -0.1f;
-        Mixer.AL.SetSourceProperty(Source, SourceVector3.Position, pan, value, value2);
-        Mixer.CheckALError();
-    }
-
-    protected abstract void InternalPlay();
-
-    protected abstract void InternalPause();
-
-    protected abstract void InternalStop();
-
-    internal virtual void InternalDispose()
-    {
-        if (Source == 0)
-        {
-            return;
-        }
-
-        if (Mixer.AL is null)
-        {
-            return;
-        }
-
-        Mixer.AL.SourceStop(Source);
-        Mixer.CheckALError();
-        Mixer.AL.DeleteSource(Source);
-        Mixer.CheckALError();
-        Source = 0;
+        left = volume * MathUtils.Saturate(1f - pan);
+        right = volume * MathUtils.Saturate(1f + pan);
     }
 }

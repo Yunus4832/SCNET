@@ -20,7 +20,7 @@ public static class MusicManager
 
     private static StreamingSound? _sound;
 
-    private static double _fadeStartTime;
+    private static float _targetVolume = float.NaN;
 
     private static Mix _currentMix;
 
@@ -49,7 +49,7 @@ public static class MusicManager
         {
             if (_sound != null)
             {
-                return _sound.State != SoundState.Stopped;
+                return _sound.State is SoundState.Preparing or SoundState.Playing or SoundState.Paused;
             }
 
             return false;
@@ -60,19 +60,14 @@ public static class MusicManager
 
     public static void Update()
     {
-        if (_fadeSound != null)
-        {
-            _fadeSound.Volume = MathUtils.Min(_fadeSound.Volume - _fadeSpeed * Volume * Time.FrameDuration, Volume);
-            if (_fadeSound.Volume <= 0f)
-            {
-                _fadeSound.Dispose();
-                _fadeSound = null;
-            }
-        }
+        if (!Mixer.IsAudioInitialized) { return; }
 
-        if (_sound != null && Time.FrameStartTime >= _fadeStartTime)
+        if (_fadeSound?.State == SoundState.Disposed) { _fadeSound = null; }
+
+        if (_sound != null && _targetVolume != Volume)
         {
-            _sound.Volume = MathUtils.Min(_sound.Volume + _fadeSpeed * Volume * Time.FrameDuration, Volume);
+            _sound.FadeTo(Volume, Volume > 0 ? MathUtils.Abs(Volume - _sound.Volume) / (_fadeSpeed * Volume) : 0f);
+            _targetVolume = Volume;
         }
 
         if (_currentMix == Mix.None || Volume == 0f)
@@ -119,14 +114,20 @@ public static class MusicManager
             try
             {
                 StopMusic();
-                _fadeStartTime = Time.FrameStartTime + _fadeWait;
                 var volume = _fadeSound != null ? 0f : Volume;
-                var streamingSource = ContentManager.Get<StreamingSource>(name).Duplicate();
-                streamingSource.Position = (long)(MathUtils.Saturate(startPercentage) *
-                                                  (streamingSource.BytesCount / streamingSource.ChannelsCount / 2)) /
-                                           16 *
-                                           16;
-                _sound = new StreamingSound(streamingSource, volume, 1f, 0f, false, false, 1f);
+                var open = ContentManager.CreateStreamFactory(name, "ogg", "wav");
+                _sound = new StreamingSound(
+                    () => SoundData.Stream(open()),
+                    volume,
+                    1f,
+                    0f,
+                    false,
+                    false,
+                    1f,
+                    startPercentage: startPercentage
+                );
+                _sound.FadeTo(Volume, volume == 0f ? 1f / _fadeSpeed : 0f, _fadeWait);
+                _targetVolume = Volume;
                 _sound.Play();
             }
             catch (Exception e)
@@ -145,6 +146,11 @@ public static class MusicManager
 
         _fadeSound?.Dispose();
         _fadeSound = _sound;
+        _fadeSound.FadeTo(
+            0f,
+            Volume > 0 ? _fadeSound.Volume / (_fadeSpeed * Volume) : 0f,
+            disposeOnCompletion: true
+        );
         _sound = null;
     }
 }

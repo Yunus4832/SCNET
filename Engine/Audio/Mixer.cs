@@ -1,259 +1,56 @@
-using Engine.Core.Logging;
 using Engine.Core.Mathematics;
 
 using Silk.NET.OpenAL;
 
 namespace Engine.Audio;
 
+/// <summary>Application audio lifetime and the entry point to its dedicated device owner.</summary>
 public static class Mixer
 {
-    private static readonly List<BaseSound> _soundsToStop = [];
+    private static readonly Lock _lifetime = new();
 
-    internal static readonly HashSet<BaseSound> soundsToStopPoll = [];
+    private static AudioService? _service;
 
-    internal static ALContext? audioContext;
+    private static float _volume = 1f;
 
-    public static AL? AL;
+    internal static AudioService? Service => Volatile.Read(ref _service);
 
-    private static nint _device;
+    internal static AL? AL => Service?.Api;
 
-    private static nint _context;
-
-    private static int _deviceRefreshRequested;
-
-    public static bool IsAudioInitialized { get; private set; }
+    public static bool IsAudioInitialized => Service?.IsReady == true;
 
     public static float MasterVolume
     {
-        get;
+        get => Volatile.Read(ref _volume);
         set
         {
-            value = MathUtils.Saturate(value);
-            if (value.CloseTo(field))
-            {
-                return;
-            }
-
-            field = value;
-            InternalSetMasterVolume(value);
+            Volatile.Write(ref _volume, MathUtils.Saturate(value));
+            Service?.Wake();
         }
-    } = 1f;
+    }
 
     public static void Initialize()
     {
-        IsAudioInitialized = false;
-        try
+        lock (_lifetime)
         {
-            if (audioContext != null)
-            {
-                return;
-            }
+            if (_service != null) { return; }
 
-            audioContext = ALContext.GetApi();
-            AL = AL.GetApi();
-            unsafe
-            {
-                var device = audioContext.OpenDevice("");
-                if (device is null)
-                {
-                    Log.Error("Could not create audio device");
-                    return;
-                }
-
-                var c = audioContext.CreateContext(device, null);
-                audioContext.MakeContextCurrent(c);
-                _device = (nint)device;
-                _context = (nint)c;
-            }
-
-            if (!CheckAllErrorFull())
-            {
-                IsAudioInitialized = true;
-            }
-        }
-        catch (Exception e)
-        {
-            Log.Error($"OpenAL Audio is unsupported in this device, {e}");
+            var service = new AudioService();
+            _service = service;
+            service.Start();
         }
     }
 
     internal static void Dispose()
     {
-        if (audioContext == null)
+        lock (_lifetime)
         {
-            return;
-        }
-
-        DisposeSounds();
-
-        unsafe
-        {
-            if (_context != 0)
-            {
-                audioContext.MakeContextCurrent((Context*)0);
-                audioContext.DestroyContext((Context*)_context);
-                _context = 0;
-            }
-
-            if (_device != 0)
-            {
-                audioContext.CloseDevice((Device*)_device);
-                _device = 0;
-            }
-        }
-
-        IsAudioInitialized = false;
-        AL?.Dispose();
-        audioContext.Dispose();
-        AL = null;
-        audioContext = null;
-    }
-
-    internal static void DisposeSounds()
-    {
-        var soundsSnapshot = new BaseSound[soundsToStopPoll.Count];
-        soundsToStopPoll.CopyTo(soundsSnapshot);
-        foreach (var sound in soundsSnapshot)
-        {
-            sound.Dispose();
-        }
-
-        foreach (var sound in _soundsToStop)
-        {
-            sound.Dispose();
-        }
-
-        soundsToStopPoll.Clear();
-        _soundsToStop.Clear();
-    }
-
-    internal static void BeforeFrame()
-    {
-        if (Interlocked.Exchange(ref _deviceRefreshRequested, 0) != 0)
-        {
-            TryRefreshDevice();
-        }
-
-        if (AL is null)
-        {
-            return;
-        }
-
-        var soundsSnapshot = new BaseSound[soundsToStopPoll.Count];
-        soundsToStopPoll.CopyTo(soundsSnapshot);
-        foreach (var item in soundsSnapshot)
-        {
-            AL.GetSourceProperty(item.Source, GetSourceInteger.SourceState, out var sourceState);
-            var flag = (SourceState)sourceState == SourceState.Stopped;
-
-            if (item.State == SoundState.Playing && flag)
-            {
-                _soundsToStop.Add(item);
-            }
-        }
-
-        foreach (var item2 in _soundsToStop)
-        {
-            item2.Stop();
-        }
-
-        _soundsToStop.Clear();
-    }
-
-    internal static void AfterFrame()
-    {
-    }
-
-    public static void RequestDeviceRefresh()
-    {
-        Interlocked.Exchange(ref _deviceRefreshRequested, 1);
-    }
-
-    private static unsafe bool TryRefreshDevice()
-    {
-        if (!IsAudioInitialized || audioContext is null || _device == 0)
-        {
-            return false;
-        }
-
-        var device = (Device*)_device;
-        const string extensionName = "ALC_SOFT_reopen_device";
-        if (!audioContext.IsExtensionPresent(device, extensionName))
-        {
-            Log.Warning("Cannot refresh audio device because {0} is unavailable.", extensionName);
-            return false;
-        }
-
-        var functionAddress = audioContext.GetProcAddress(device, "alcReopenDeviceSOFT");
-        if (functionAddress is null)
-        {
-            Log.Warning("Cannot refresh audio device because alcReopenDeviceSOFT is unavailable.");
-            return false;
-        }
-
-        var reopenDevice = (delegate* unmanaged[Cdecl]<Device*, byte*, int*, byte>)functionAddress;
-        if (reopenDevice(device, null, null) == 0)
-        {
-            Log.Error("Failed to refresh the default audio device.");
-            return false;
-        }
-
-        InternalSetMasterVolume(MasterVolume);
-        Log.Information("Refreshed the default audio device.");
-        return true;
-    }
-
-    internal static void InternalSetMasterVolume(float volume)
-    {
-        if (AL is null)
-        {
-            return;
-        }
-
-        if (IsAudioInitialized)
-        {
-            AL.SetListenerProperty(ListenerFloat.Gain, volume);
+            var service = Interlocked.Exchange(ref _service, null);
+            service?.Dispose();
         }
     }
 
-    public static AudioError CheckALError()
-    {
-        if (AL is null)
-        {
-            return AudioError.InvalidValue;
-        }
+    internal static void DisposeSounds() => Service?.DisposeSounds();
 
-        var error = AL.GetError();
-        if (error != AudioError.NoError)
-        {
-            Log.Error($"OpenAL error: {error}");
-        }
-
-        return error;
-    }
-
-    public static bool CheckAllErrorFull()
-    {
-        try
-        {
-            if (AL is null)
-            {
-                return false;
-            }
-
-            var error = AL.GetError();
-            if (error == AudioError.NoError)
-            {
-                return false;
-            }
-
-            Log.Error($"Openal error: {error}");
-            return true;
-        }
-        catch (Exception e)
-        {
-            Log.Error($"Unable to load OPENAL: {e}");
-            return true;
-        }
-    }
+    public static void RequestDeviceRefresh() => Service?.Refresh();
 }

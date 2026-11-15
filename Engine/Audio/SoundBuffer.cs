@@ -1,180 +1,233 @@
-using System.Runtime.InteropServices;
-
 using Engine.Core.FileStorage;
 using Engine.Media.Audio;
 
-using Silk.NET.OpenAL;
-
 namespace Engine.Audio;
 
+/// <summary>Owned decoded PCM; native buffers are created and retired by the audio service.</summary>
 public sealed class SoundBuffer : IDisposable
 {
-    internal uint mBuffer;
+    private readonly Lock _sync = new();
+
+    private Task<SoundData>? _data;
+
+    private readonly Func<SoundData>? _prepare;
+
+    private readonly CancellationTokenSource _cancellation = new();
+
+    private int _uses;
+
+    private bool _disposed;
 
     public SoundBuffer(byte[] data, int startIndex, int itemsCount, int channelsCount, int samplingFrequency)
+        : this(Copy(data, startIndex, itemsCount, channelsCount, samplingFrequency))
     {
-        Initialize(data, startIndex, itemsCount, channelsCount, samplingFrequency);
-        CreateBuffer(data, startIndex, itemsCount, channelsCount, samplingFrequency);
     }
 
     public SoundBuffer(short[] data, int startIndex, int itemsCount, int channelsCount, int samplingFrequency)
+        : this(Copy(data, startIndex, itemsCount, channelsCount, samplingFrequency))
     {
-        Initialize(data, startIndex, itemsCount, channelsCount, samplingFrequency);
-        CreateBuffer(data, startIndex, itemsCount, channelsCount, samplingFrequency);
     }
 
     public SoundBuffer(Stream stream, int bytesCount, int channelsCount, int samplingFrequency)
+        : this(Read(stream, bytesCount, channelsCount, samplingFrequency))
     {
-        var array = Initialize(stream, bytesCount, channelsCount, samplingFrequency);
-        CreateBuffer(array, 0, array.Length, channelsCount, samplingFrequency);
     }
 
-    public int ChannelsCount { get; private set; }
+    private SoundBuffer(SoundData data)
+    {
+        Validate(data);
+        _data = Task.FromResult(data);
+    }
 
-    public int SamplingFrequency { get; private set; }
+    private SoundBuffer(Func<Stream> open)
+    {
+        _prepare = () =>
+        {
+            using var source = open();
+            var data = SoundData.Load(source);
+            Validate(data);
+            return data;
+        };
+    }
 
-    public int SamplesCount { get; private set; }
+    internal void TryPrepare(AudioService service)
+    {
+        lock (_sync)
+        {
+            if (_disposed || _data != null) { return; }
 
-    public int UseCount { get; internal set; }
+            if (!service.Preparation.TrySubmit(_prepare!, _cancellation.Token, out var task)) { return; }
+
+            _data = task!;
+            _ = task!.ContinueWith(
+                completed =>
+                {
+                    _ = completed.Exception;
+                    service.Wake();
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default
+            );
+        }
+    }
+
+    public int ChannelsCount => Data.ChannelsCount;
+
+    public int SamplingFrequency => Data.SamplingFrequency;
+
+    public int SamplesCount => Data.Data.Length / Data.ChannelsCount;
+
+    public int UseCount => Volatile.Read(ref _uses);
+
+    internal bool IsDisposed
+    {
+        get
+        {
+            lock (_sync) { return _disposed; }
+        }
+    }
+
+    internal bool IsReady => Volatile.Read(ref _data)?.IsCompletedSuccessfully == true;
+
+    internal SoundData Data => Volatile.Read(ref _data) is { IsCompletedSuccessfully: true } data
+        ? data.Result
+        : throw new InvalidOperationException("Audio data has not been prepared.");
+
+    public async ValueTask PrepareAsync()
+    {
+        while (!IsDisposed)
+        {
+            if (Volatile.Read(ref _data) is { } prepared)
+            {
+                await prepared.ConfigureAwait(false);
+                return;
+            }
+
+            TryPrepare(Mixer.Service ?? throw new InvalidOperationException("Audio service is not initialized."));
+            if (Volatile.Read(ref _data) is { } data)
+            {
+                await data.ConfigureAwait(false);
+                return;
+            }
+
+            await Task.Delay(2).ConfigureAwait(false);
+        }
+
+        throw new ObjectDisposedException(nameof(SoundBuffer));
+    }
+
+    public static SoundBuffer LoadDeferred(Func<Stream> open)
+    {
+        ArgumentNullException.ThrowIfNull(open);
+        return new SoundBuffer(open);
+    }
+
+    internal bool Acquire()
+    {
+        lock (_sync)
+        {
+            if (_disposed) { return false; }
+
+            _uses++;
+            return true;
+        }
+    }
+
+    internal void Release()
+    {
+        lock (_sync) { _uses--; }
+
+        Mixer.Service?.Wake();
+    }
+
+    internal void ThrowIfFailed()
+    {
+        if (Volatile.Read(ref _data) is { } data && (data.IsFaulted || data.IsCanceled))
+        {
+            data.GetAwaiter().GetResult();
+        }
+    }
 
     public void Dispose()
     {
-        if (UseCount != 0)
+        lock (_sync)
         {
-            throw new InvalidOperationException("Cannot dispose SoundBuffer which is in use.");
+            if (_disposed) { return; }
+
+            _disposed = true;
         }
 
-        InternalDispose();
+        _cancellation.Cancel();
+        if (Volatile.Read(ref _data) is { } task)
+        {
+            _ = task.ContinueWith(
+                _ => _cancellation.Dispose(),
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default
+            );
+        }
+        else { _cancellation.Dispose(); }
+
+        Mixer.Service?.Wake();
     }
 
-    private void InternalDispose()
-    {
-        if (mBuffer == 0)
-        {
-            return;
-        }
+    public static SoundBuffer Load(SoundData data) =>
+        new(data.Data, 0, data.Data.Length, data.ChannelsCount, data.SamplingFrequency);
 
-        if (Mixer.AL is null)
-        {
-            return;
-        }
+    public static SoundBuffer Load(Stream stream, SoundFileFormat format) => new(SoundData.Load(stream, format));
 
-        Mixer.AL.DeleteBuffer(mBuffer);
-        Mixer.CheckALError();
-        mBuffer = 0;
-    }
-
-    private void CreateBuffer<T>(T[] data, int startIndex, int itemsCount, int channelsCount, int samplingFrequency)
-        where T : unmanaged
-    {
-        if (!Mixer.IsAudioInitialized)
-        {
-            return;
-        }
-
-        if (Mixer.AL is null)
-        {
-            return;
-        }
-
-        mBuffer = Mixer.AL.GenBuffer();
-        Mixer.CheckALError();
-        unsafe
-        {
-            fixed (T* pData = data)
-            {
-                var elementSizeInBytes = sizeof(T);
-                var pStartAddress = pData + startIndex;
-                var totalBytesToCopy = itemsCount * elementSizeInBytes;
-                Mixer.AL.BufferData(
-                    mBuffer,
-                    channelsCount == 1 ? BufferFormat.Mono16 : BufferFormat.Stereo16,
-                    pStartAddress,
-                    totalBytesToCopy,
-                    samplingFrequency
-                );
-            }
-        }
-
-        Mixer.CheckALError();
-    }
-
-    public static SoundBuffer Load(SoundData soundData)
-    {
-        return new SoundBuffer(
-            soundData.Data,
-            0,
-            soundData.Data.Length,
-            soundData.ChannelsCount,
-            soundData.SamplingFrequency
-        );
-    }
-
-    public static SoundBuffer Load(Stream stream, SoundFileFormat format)
-    {
-        return Load(SoundData.Load(stream, format));
-    }
+    public static SoundBuffer Load(Stream stream) => new(SoundData.Load(stream));
 
     public static SoundBuffer Load(string fileName, SoundFileFormat format)
     {
         using var stream = Storage.OpenFile(fileName, OpenFileMode.Read);
-        return Load(SoundData.Load(stream, format));
-    }
-
-    public static SoundBuffer Load(Stream stream)
-    {
-        return Load(SoundData.Load(stream));
+        return Load(stream, format);
     }
 
     public static SoundBuffer Load(string fileName)
     {
         using var stream = Storage.OpenFile(fileName, OpenFileMode.Read);
-        return Load(SoundData.Load(stream));
+        return Load(stream);
     }
 
-    private void InitializeProperties(int samplesCount, int channelsCount, int samplingFrequency)
+    private static void Validate(SoundData data)
     {
-        if (samplesCount <= 0)
+        if (data.Data.Length == 0 || data.SamplingFrequency > 48000)
         {
-            throw new InvalidOperationException("Buffer cannot have zero samples.");
+            throw new InvalidOperationException("Invalid audio sample count or sampling frequency.");
         }
-
-        if (channelsCount is < 1 or > 2)
-        {
-            throw new ArgumentOutOfRangeException(nameof(channelsCount));
-        }
-
-        if (samplingFrequency is < 8000 or > 48000)
-        {
-            throw new ArgumentOutOfRangeException(nameof(samplingFrequency));
-        }
-
-        ChannelsCount = channelsCount;
-        SamplingFrequency = samplingFrequency;
-        SamplesCount = samplesCount;
     }
 
-    private void Initialize<T>(T[] data, int startIndex, int itemsCount, int channelsCount, int samplingFrequency)
+    private static SoundData Copy(byte[] data, int start, int count, int channels, int rate)
     {
-        var num = Marshal.SizeOf<T>();
-        InitializeProperties(itemsCount * num / channelsCount / 2, channelsCount, samplingFrequency);
         ArgumentNullException.ThrowIfNull(data);
+        ArgumentOutOfRangeException.ThrowIfNegative(start);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        if (start > data.Length - count) { throw new ArgumentOutOfRangeException(nameof(count)); }
 
-        if (startIndex + itemsCount > data.Length)
-        {
-            throw new ArgumentOutOfRangeException(nameof(itemsCount));
-        }
+        var result = new SoundData(channels, rate, count);
+        Buffer.BlockCopy(data, start, result.Data, 0, count);
+        return result;
     }
 
-    private byte[] Initialize(Stream stream, int bytesCount, int channelsCount, int samplingFrequency)
+    private static SoundData Copy(short[] data, int start, int count, int channels, int rate)
     {
-        var array = new byte[bytesCount];
-        if (stream.Read(array, 0, bytesCount) != bytesCount)
-        {
-            throw new InvalidOperationException("Not enough data in stream.");
-        }
+        ArgumentNullException.ThrowIfNull(data);
+        ArgumentOutOfRangeException.ThrowIfNegative(start);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        if (start > data.Length - count) { throw new ArgumentOutOfRangeException(nameof(count)); }
 
-        Initialize(array, 0, bytesCount, channelsCount, samplingFrequency);
-        return array;
+        var result = new SoundData(channels, rate, checked(count * 2));
+        data.AsSpan(start, count).CopyTo(result.Data);
+        return result;
+    }
+
+    private static SoundData Read(Stream stream, int bytes, int channels, int rate)
+    {
+        var data = new byte[bytes];
+        stream.ReadExactly(data);
+        return Copy(data, 0, bytes, channels, rate);
     }
 }

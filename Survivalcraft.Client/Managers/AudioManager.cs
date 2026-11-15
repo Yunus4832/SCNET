@@ -4,12 +4,16 @@ namespace Game.Managers;
 
 public static class AudioManager
 {
-    private static readonly Dictionary<string, SoundBuffer> _bufferCaches = new();
-
     public static float MinAudibleVolume =>
         SoundPropagation.UnscaledMinAudibleVolume * Configuration.ClientConfiguration.Preferences.SoundsVolume;
 
-    public static void PlaySound(string name, float volume, float pitch, float pan)
+    public static void PlaySound(
+        string name,
+        float volume,
+        float pitch,
+        float pan,
+        CancellationToken cancellation = default
+    )
     {
         if (!(Configuration.ClientConfiguration.Preferences.SoundsVolume > 0f))
         {
@@ -21,11 +25,9 @@ public static class AudioManager
             return;
         }
 
-        if (!_bufferCaches.TryGetValue(name, out var buffer))
-        {
-            buffer = ContentManager.Get<SoundBuffer>(name);
-            _bufferCaches.Add(name, buffer);
-        }
+        if (!Mixer.IsAudioInitialized || cancellation.IsCancellationRequested) { return; }
+
+        var buffer = ContentManager.Get<SoundBuffer>(name);
 
         new Sound(
             buffer,
@@ -33,13 +35,9 @@ public static class AudioManager
             ToEnginePitch(pitch),
             pan,
             false,
-            true
+            true,
+            cancellation
         ).Play();
-    }
-
-    public static void Initialize()
-    {
-        _bufferCaches.Clear();
     }
 
     public static float ToEnginePitch(float pitch)
