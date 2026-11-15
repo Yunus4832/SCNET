@@ -56,7 +56,7 @@ public class ComponentSickness : Component, IUpdateable
             if (SicknessDuration > 0f)
             {
                 var recovery = _componentCharacter.ComponentSleep is
-                    { IsSleeping: true, SubsystemUpdate.UpdatesPerFrame: 1 }
+                    { IsSleeping: true, SubsystemUpdate.UpdatesPerTick: 1 }
                     ? _subsystemGameInfo.WorldSettings.RecoverFactor
                     : 1f;
                 SicknessDuration = MathUtils.Max(SicknessDuration - dt * recovery, 0f);

@@ -3,7 +3,11 @@ using Game.Commands.Text;
 
 namespace Game.Commands.BuiltIn;
 
-public sealed class BuiltInProcessCommands(ProcessCommandServices services, NetworkCommandDiagnostics diagnostics)
+public sealed class BuiltInProcessCommands(
+    ProcessCommandServices services,
+    NetworkCommandDiagnostics diagnostics,
+    CommandDomain diagnosticsDomain
+)
 {
     private readonly ProcessCommandServices _services = services;
 
@@ -79,7 +83,7 @@ public sealed class BuiltInProcessCommands(ProcessCommandServices services, Netw
             new ResourceId(owner, "diagnostics/network/get"),
             new CommandDefinition<GetNetworkSendStatisticsCommand>(
                 _diagnostics.GetSendStatistics,
-                CommandDomain.Application,
+                diagnosticsDomain,
                 CommandDescription("NetworkSendStatistics_Description", "读取连接内网络发送统计"),
                 allowedPrincipals: CommandPrincipalKinds.LocalOperator
             )

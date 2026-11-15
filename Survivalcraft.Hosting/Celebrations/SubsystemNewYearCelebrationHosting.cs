@@ -45,7 +45,7 @@ public sealed class SubsystemNewYearCelebrationHosting : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        TryStartAtCalendarTick(Time.PeriodicEvent(5.0, 0.0));
+        TryStartAtCalendarTick(WorldRuntimeContext.For(Project).Clock.PeriodicEvent(5.0, 0.0));
     }
 
     internal bool TryStartAtCalendarTick(bool calendarTick)

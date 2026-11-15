@@ -66,7 +66,7 @@ public static class ServerStarter
         }
     }
 
-    public static ServerTickStatistics TickStatistics { get; } = new();
+    public static ServerTickStatistics? TickStatistics => _worlds.Runtime?.AuthorityExecution?.TickStatistics;
 
     private sealed record ConsoleCommandRequest(
         string Input,
@@ -106,7 +106,7 @@ public static class ServerStarter
             ? new CommandExecutionScope(
                 mods.Commands,
                 null,
-                _worlds.Runtime?.Authority?.Project
+                _worlds.Runtime?.AuthorityExecution
             )
             : null,
         () => TextResolver
@@ -118,7 +118,8 @@ public static class ServerStarter
 
     private static Action<IModCommands, ModId>? _registerAppCommands;
 
-    public static NetworkCommandDiagnostics CommandDiagnostics { get; } = new(() => _net!, () => TickStatistics);
+    public static NetworkCommandDiagnostics CommandDiagnostics { get; } =
+        new(() => _net!, () => TickStatistics?.Capture());
 
     public static ProcessCommandServices ProcessCommands { get; } = new(
         RequestRestart,
@@ -139,42 +140,38 @@ public static class ServerStarter
 
     public static void SaveSettings() => _preferences.Save();
 
-    public static void SaveWorldBeforeExit()
-    {
-        _worlds.Runtime?.Authority?.Project?.FindSubsystem<SubsystemWorldLifecycle>(true)?.Persistence.Save(true);
-    }
+    private static Action? _commitAfterStop;
 
     public static void RequestRestart(SessionInfo? session = null)
     {
-        SaveWorldBeforeExit();
-        var pending = StartupSessionLifecycle.PrepareRestart(
-            session ?? _worlds.WorldSession ?? StartupManager.Current.Session,
-            StartupManager.Profiles
-        );
-        StartupManager.Profiles.UpdateRunningSettings(settings => settings.PendingSessionId = pending.SessionId);
-        ExitAction = GameExitAction.Restart;
+        var selected = session ?? _worlds.WorldSession ?? StartupManager.Current.Session;
+        _commitAfterStop = () =>
+        {
+            var pending = StartupSessionLifecycle.PrepareRestart(selected, StartupManager.Profiles);
+            StartupManager.Profiles.UpdateRunningSettings(settings => settings.PendingSessionId = pending.SessionId);
+            ExitAction = GameExitAction.Restart;
+        };
         RequestStop();
     }
 
     public static void RequestInstanceSwitch(string instanceId)
     {
-        SaveWorldBeforeExit();
-        StarterInstanceManager.RequestSwitch(instanceId);
-        SwitchInstanceId = instanceId;
-        ExitAction = GameExitAction.SwitchInstance;
+        _commitAfterStop = () =>
+        {
+            StarterInstanceManager.RequestSwitch(instanceId);
+            SwitchInstanceId = instanceId;
+            ExitAction = GameExitAction.SwitchInstance;
+        };
         RequestStop();
     }
 
     public static void RequestExit()
     {
-        SaveWorldBeforeExit();
-        ExitAction = GameExitAction.Exit;
+        _commitAfterStop = () => ExitAction = GameExitAction.Exit;
         RequestStop();
     }
 
     private static bool _interactiveConsole;
-
-    private static double _lastAutosave;
 
     private static volatile bool _running = true;
 
@@ -205,17 +202,50 @@ public static class ServerStarter
         return cancellationToken.Register(RequestStop);
     }
 
+    private static Task? _pendingWorldStop;
+
     internal static bool ProcessStopRequest()
     {
-        if (Interlocked.CompareExchange(ref _stopRequested, 0, 1) != 1) { return false; }
-
-        // Only the server thread consumes requests. A failed save needs another explicit request.
-        if (_worlds.Runtime?.Authority?.Project is { IsDisposed: false } project)
+        if (_pendingWorldStop is { } pending)
         {
-            project.FindSubsystem<SubsystemWorldLifecycle>(true)!.RequestStop();
+            if (!pending.IsCompleted) { return false; }
+
+            _pendingWorldStop = null;
+            if (pending.IsCompletedSuccessfully)
+            {
+                var commit = _commitAfterStop;
+                _commitAfterStop = null;
+                commit?.Invoke();
+                EndStopRequestHandling();
+                return true;
+            }
+
+            _commitAfterStop = null;
+            Log.Error($"Server stop failed; the world remains active: {pending.Exception}");
             return false;
         }
 
+        if (_worlds.Runtime?.AuthorityExecution?.Completion is { IsCompleted: true } finished)
+        {
+            if (finished.IsFaulted) { Log.Error(finished.Exception); }
+            else { _commitAfterStop?.Invoke(); }
+
+            _commitAfterStop = null;
+            EndStopRequestHandling();
+            return true;
+        }
+
+        if (Interlocked.CompareExchange(ref _stopRequested, 0, 1) != 1) { return false; }
+
+        if (_worlds.Runtime?.AuthorityExecution is { } execution)
+        {
+            _pendingWorldStop = execution.StopAsync(true);
+            return false;
+        }
+
+        var commitWithoutWorld = _commitAfterStop;
+        _commitAfterStop = null;
+        commitWithoutWorld?.Invoke();
         EndStopRequestHandling();
         return true;
     }
@@ -227,8 +257,8 @@ public static class ServerStarter
     }
 
     /// <summary>
-    ///     Enqueues a trusted host-console command for execution on the server
-    ///     server thread. The command uses the LocalOperator principal.
+    ///     Enqueues a trusted LocalOperator command. The host routes application work locally
+    ///     and world/server work to the authority owner.
     /// </summary>
     public static Task<CommandResult> SubmitConsoleCommandAsync(string input)
     {
@@ -260,8 +290,7 @@ public static class ServerStarter
     }
 
     /// <summary>
-    ///     Enqueues a trusted host-console completion request for evaluation on
-    ///     the server server thread.
+    ///     Enqueues a trusted completion request for evaluation by the corresponding command owner.
     /// </summary>
     public static Task<ServerCommandSuggestions> SubmitConsoleSuggestionsAsync(string input)
     {
@@ -306,12 +335,7 @@ public static class ServerStarter
                 FailPendingConsoleRequests();
                 try
                 {
-                    if (_worlds.Runtime?.Authority?.Project is { IsDisposed: false } project)
-                    {
-                        project.FindSubsystem<SubsystemWorldLifecycle>(true)!.Persistence.Save(true);
-                    }
-
-                    _worlds.Close();
+                    _worlds.CloseAsync().GetAwaiter().GetResult();
                     _net?.StopImmediate();
                     _net = null;
 
@@ -392,7 +416,7 @@ public static class ServerStarter
                 )
             )
         );
-        _worlds.LoadAuthority(
+        _worlds.LoadAuthorityAsync(
             new WorldLoadRequest(
                 world,
                 startupSession,
@@ -403,10 +427,9 @@ public static class ServerStarter
                 new BlockTextureStore(GamePaths.BlockTextures),
                 false
             )
-        );
-        _worlds.Runtime!.Authority!.Project!.FindSubsystem<SubsystemWorldLifecycle>(true)!.Stopped +=
-            _ => EndStopRequestHandling();
-        if (!StartListener(startupSession, world))
+        ).GetAwaiter().GetResult();
+        var execution = _worlds.Runtime!.AuthorityExecution!;
+        if (!execution.InvokeAsync(_ => StartListener(startupSession, world)).GetAwaiter().GetResult())
         {
             Log.Error("Failed to start server (port may be in use).");
             return 3;
@@ -439,15 +462,6 @@ public static class ServerStarter
                 Dispatcher.BeforeFrame();
                 if (ProcessStopRequest()) { break; }
 
-                _worlds.Runtime?.UpdateMessages();
-                _worlds.Runtime?.UpdateWorlds();
-                if (_worlds.Runtime?.Authority?.Project is { IsDisposed: false } project &&
-                    Time.RealTime - _lastAutosave > 120)
-                {
-                    _lastAutosave = Time.RealTime;
-                    project.FindSubsystem<SubsystemWorldLifecycle>(true)!.Persistence.Save(false);
-                }
-
                 _httpQueue.Update();
                 ExecuteConsoleCommands();
                 ExecuteConsoleSuggestions();
@@ -459,7 +473,6 @@ public static class ServerStarter
                 Log.Error(ex);
             }
 
-            TickStatistics.Record(Stopwatch.GetElapsedTime(tickStarted).TotalMilliseconds, startLateness);
             nextTickMs += tickMs;
             var delay = nextTickMs - sw.ElapsedMilliseconds;
             switch (delay)
@@ -520,23 +533,50 @@ public static class ServerStarter
     {
         while (_consoleCommands.TryDequeue(out var request))
         {
-            var result = CommandExecutor.ExecuteLocal(
-                _modRuntime?.Commands,
-                request.Input,
-                _worlds.Runtime?.Authority?.Project
-            );
-            if (_worlds.Runtime?.Authority?.Project is { } project)
+            var registry = _modRuntime?.Commands;
+            var application = registry != null &&
+                              new TextCommandAdapter(registry, null)
+                                  .SupportsDomain(request.Input, CommandDomain.Application);
+            if (!application && _worlds.Runtime?.AuthorityExecution is { } execution)
             {
-                CommandResultPublisher.Publish(project, result, includeServer: false);
-            }
+                _ = CompleteConsoleCommandAsync(
+                    request,
+                    execution.InvokeAsync(world =>
+                        {
+                            var result = CommandExecutor.ExecuteLocal(registry, request.Input, world.Project);
+                            if (world.Project is { } project)
+                            {
+                                CommandResultPublisher.Publish(project, result, includeServer: false);
+                            }
 
-            if (request.WriteResultToLog)
+                            return result;
+                        }
+                    )
+                );
+            }
+            else
             {
-                WriteConsoleCommandResult(result);
-            }
+                var result = CommandExecutor.ExecuteLocal(registry, request.Input, null);
+                if (request.WriteResultToLog) { WriteConsoleCommandResult(result); }
 
-            request.Completion?.TrySetResult(result);
+                request.Completion?.TrySetResult(result);
+            }
         }
+    }
+
+    private static async Task CompleteConsoleCommandAsync(ConsoleCommandRequest request, Task<CommandResult> operation)
+    {
+        CommandResult result;
+        try { result = await operation.ConfigureAwait(false); }
+        catch (Exception error)
+        {
+            Log.Error(error);
+            result = CreateCommandConsoleUnavailableResult();
+        }
+
+        if (request.WriteResultToLog) { WriteConsoleCommandResult(result); }
+
+        request.Completion?.TrySetResult(result);
     }
 
     private static void WriteConsoleCommandResult(CommandResult result)
@@ -557,46 +597,86 @@ public static class ServerStarter
     {
         while (_consoleSuggestions.TryDequeue(out var request))
         {
-            ServerCommandSuggestions result;
-            try
+            if (_modRuntime is not { } runtime)
             {
-                if (CurrentModRuntime.Value is not { } runtime)
-                {
-                    result = EmptyConsoleSuggestions();
-                }
-                else
-                {
-                    var adapter = new TextCommandAdapter(runtime.Commands, _worlds.Runtime?.Authority?.Project);
-                    var items = adapter.Suggest(
-                            request.Input,
-                            CommandPrincipal.LocalOperator,
-                            CommandInvocationChannel.Console
-                        )
-                        .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
-                        .Select(item => item with
-                            {
-                                Description = item.DescriptionSource is { } source
-                                    ? TextResolver.Resolve(source)
-                                    : item.Description
-                            }
-                        )
-                        .ToArray();
-                    result = new ServerCommandSuggestions(
-                        items,
-                        adapter.CanExecute(
-                            request.Input,
-                            CommandPrincipal.LocalOperator
-                        )
-                    );
-                }
-            }
-            catch (Exception exception)
-            {
-                Log.Error($"Failed to generate server console suggestions: {exception}");
-                result = EmptyConsoleSuggestions();
+                request.Completion.TrySetResult(EmptyConsoleSuggestions());
+                continue;
             }
 
-            request.Completion.TrySetResult(result);
+            var application = new TextCommandAdapter(runtime.Commands, null);
+            var local = application.Suggest(
+                request.Input,
+                CommandPrincipal.LocalOperator,
+                CommandInvocationChannel.Console,
+                CommandDomain.Application
+            );
+            if (_worlds.Runtime?.AuthorityExecution is { } execution)
+            {
+                _ = CompleteSuggestionsAsync(
+                    request,
+                    local,
+                    execution.InvokeAsync(world =>
+                        {
+                            var adapter = new TextCommandAdapter(runtime.Commands, world.Project);
+                            var items = adapter.Suggest(
+                                    request.Input,
+                                    CommandPrincipal.LocalOperator,
+                                    CommandInvocationChannel.Console,
+                                    CommandDomain.World
+                                )
+                                .Concat(
+                                    adapter.Suggest(
+                                        request.Input,
+                                        CommandPrincipal.LocalOperator,
+                                        CommandInvocationChannel.Console,
+                                        CommandDomain.Server
+                                    )
+                                ).ToArray();
+                            return new ServerCommandSuggestions(
+                                items,
+                                application.SupportsDomain(request.Input, CommandDomain.Application)
+                                    ? application.CanExecute(request.Input, CommandPrincipal.LocalOperator)
+                                    : adapter.CanExecute(request.Input, CommandPrincipal.LocalOperator)
+                            );
+                        }
+                    )
+                );
+            }
+            else
+            {
+                request.Completion.TrySetResult(
+                    new ServerCommandSuggestions(
+                        local,
+                        application.CanExecute(request.Input, CommandPrincipal.LocalOperator)
+                    )
+                );
+            }
+        }
+    }
+
+    private static async Task CompleteSuggestionsAsync(
+        ConsoleSuggestionRequest request,
+        IReadOnlyList<CommandSuggestion> local,
+        Task<ServerCommandSuggestions> operation
+    )
+    {
+        try
+        {
+            var world = await operation.ConfigureAwait(false);
+            var items = local.Concat(world.Items).OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
+                .Select(item => item with
+                    {
+                        Description = item.DescriptionSource is { } source
+                            ? TextResolver.Resolve(source)
+                            : item.Description
+                    }
+                ).ToArray();
+            request.Completion.TrySetResult(new ServerCommandSuggestions(items, world.CanExecute));
+        }
+        catch (Exception error)
+        {
+            Log.Error(error);
+            request.Completion.TrySetResult(EmptyConsoleSuggestions());
         }
     }
 
@@ -634,11 +714,15 @@ public static class ServerStarter
 
     private static void WriteAdministrationBootstrapInstructions()
     {
-        if (_worlds.Runtime?.Authority?.Project is not { } project ||
-            !ServerAdministrationBootstrap.TryGetClaimCode(project, out var code))
-        {
-            return;
-        }
+        var execution = _worlds.Runtime?.AuthorityExecution;
+        if (execution == null) { return; }
+
+        var code = execution.InvokeAsync(world =>
+            ServerAdministrationBootstrap.TryGetClaimCode(world.Project!, out var claim)
+                ? claim
+                : null
+        ).GetAwaiter().GetResult();
+        if (code == null) { return; }
 
         Console.WriteLine();
         Console.WriteLine(
@@ -700,7 +784,7 @@ public static class ServerStarter
 
     private static void RegisterProcessCommands(IModCommands commands, ModId owner)
     {
-        new BuiltInProcessCommands(ProcessCommands, CommandDiagnostics)
+        new BuiltInProcessCommands(ProcessCommands, CommandDiagnostics, CommandDomain.Server)
             .Register(commands, owner);
     }
 

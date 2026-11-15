@@ -16,9 +16,24 @@ public sealed class WorldProjectPersistence : IDisposable
 
     private readonly BlockIndexMapping _mapping;
 
-    private Task _pending = Task.CompletedTask;
+    private sealed record SaveRequest(Guid Id, TaskCompletionSource<WorldSaveOutcome> Completion);
 
-    private bool _disposed;
+    private readonly Queue<SaveRequest> _requests = new();
+
+    private SaveRequest? _current;
+
+    private SaveRequest? _final;
+
+    private Task<WorldSaveOutcome>? _pending;
+
+    private Task _lastWrite = Task.CompletedTask;
+
+    public Task Completion => Volatile.Read(ref _lastWrite);
+
+    public static bool TryGet(Project project, out WorldProjectPersistence? owner) =>
+        _owners.TryGetValue(project, out owner);
+
+    private volatile bool _disposed;
 
     public event Action<WorldSaveOutcome>? SaveCompleted;
 
@@ -46,15 +61,60 @@ public sealed class WorldProjectPersistence : IDisposable
         _saveGate.Release();
     }
 
-    public Guid Save(bool waitForCompletion, Guid operationId = default)
+    /// <summary>Queues an owner-thread capture; an existing write never blocks the world update loop.</summary>
+    public Task<WorldSaveOutcome> SaveAsync(Guid operationId = default, bool final = false)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (operationId == Guid.Empty) { operationId = Guid.NewGuid(); }
+        WorldRuntimeContext.For(_project).VerifyExecutionAccess();
+        if (final && _final != null) { return _final.Completion.Task; }
+
+        if (_final != null) { throw new InvalidOperationException("The final world save is already pending."); }
+
+        if (!final && _requests.Count >= 16) { throw new InvalidOperationException("The world save queue is full."); }
+
+        var request = new SaveRequest(
+            operationId == Guid.Empty ? Guid.NewGuid() : operationId,
+            new TaskCompletionSource<WorldSaveOutcome>(TaskCreationOptions.RunContinuationsAsynchronously)
+        );
+        _requests.Enqueue(request);
+        if (final) { _final = request; }
+
+        Pump();
+        return request.Completion.Task;
+    }
+
+    public void Pump()
+    {
+        if (_disposed) { return; }
+
+        WorldRuntimeContext.For(_project).VerifyExecutionAccess();
+        if (_pending is { IsCompleted: true } pending)
+        {
+            var outcome = pending.GetAwaiter().GetResult();
+            var completed = _current!;
+            _pending = null;
+            _current = null;
+            if (ReferenceEquals(_final, completed)) { _final = null; }
+
+            Publish(outcome);
+            completed.Completion.TrySetResult(outcome);
+            if (_disposed) { return; }
+        }
+
+        if (_pending != null || _requests.Count == 0) { return; }
 
         var info = _project.FindSubsystem<SubsystemGameInfo>(true)!;
+        if (!_saveGate.Wait(0)) { return; }
+
+        var request = _requests.Dequeue();
+        _current = request;
+        Capture(request, info);
+    }
+
+    private void Capture(SaveRequest request, SubsystemGameInfo info)
+    {
         var worldName = info.WorldSettings.Name;
         var directory = info.DirectoryName;
-        _saveGate.Wait();
         if (_disposed || _project.IsDisposed)
         {
             _saveGate.Release();
@@ -83,7 +143,7 @@ public sealed class WorldProjectPersistence : IDisposable
             captureFailure ??= new ObjectDisposedException(nameof(WorldProjectPersistence));
         }
 
-        var requestId = operationId;
+        var requestId = request.Id;
         var io = Task.Run(async () =>
             {
                 var failure = captureFailure;
@@ -125,23 +185,18 @@ public sealed class WorldProjectPersistence : IDisposable
                 return new WorldSaveOutcome(requestId, worldName, failure);
             }
         );
+        Volatile.Write(ref _lastWrite, io);
         _pending = io;
-        var notification = io.ContinueWith(
-            completed => Publish(completed.GetAwaiter().GetResult()),
+        _ = io.ContinueWith(
+            completed =>
+            {
+                // A capture callback may dispose the project; completion must still settle without another owner tick.
+                if (_disposed) { request.Completion.TrySetResult(completed.GetAwaiter().GetResult()); }
+            },
             CancellationToken.None,
             TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default
         );
-        if (waitForCompletion)
-        {
-            notification.GetAwaiter().GetResult();
-            if (io.GetAwaiter().GetResult().Failure is { } failure)
-            {
-                throw new WorldSaveException(worldName, failure);
-            }
-        }
-
-        return operationId;
     }
 
     public static void SaveMetadata(string directory, XElement node)
@@ -201,7 +256,22 @@ public sealed class WorldProjectPersistence : IDisposable
         if (_disposed) { return; }
 
         _disposed = true;
-        _pending.GetAwaiter().GetResult();
+        var pending = _pending;
+        var current = _current;
+        _pending = null;
+        _current = null;
+        if (pending != null)
+        {
+            var outcome = pending.GetAwaiter().GetResult();
+            Publish(outcome);
+            current!.Completion.TrySetResult(outcome);
+        }
+
+        while (_requests.TryDequeue(out var request))
+        {
+            request.Completion.TrySetException(new ObjectDisposedException(nameof(WorldProjectPersistence)));
+        }
+
         _owners.Remove(_project);
         SaveCompleted = null;
         SaveFailed = null;

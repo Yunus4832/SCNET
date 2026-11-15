@@ -12,7 +12,14 @@ public static class Time
 
     public static int FrameIndex { get; private set; }
 
-    public static double RealTime => (Stopwatch.GetTimestamp() - _applicationStartTicks) / (double)Stopwatch.Frequency;
+    public static double RealTime
+    {
+        get
+        {
+            var origin = _applicationStartTicks;
+            return (Stopwatch.GetTimestamp() - origin) / (double)Stopwatch.Frequency;
+        }
+    }
 
     public static double PreviousFrameStartTime { get; private set; }
 

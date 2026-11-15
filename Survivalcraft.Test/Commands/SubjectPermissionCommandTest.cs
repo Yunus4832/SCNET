@@ -30,7 +30,7 @@ public sealed class SubjectPermissionCommandTest
             using var project = new SubjectProject();
             var address = Address("offline-text-command");
             project.Players.Store.GetOrCreate(address);
-            var adapter = new TextCommandAdapter(Registry(), Game.Managers.GameManager.AuthorityProject);
+            var adapter = new TextCommandAdapter(Registry(), null);
             var context = new CommandContext(CommandInvocationChannel.Text, CommandPrincipal.LocalOperator, project);
             Assert.True(adapter.TryCreate("/permission players", context, out var command, out _));
             Assert.IsType<ListPermissionPlayersCommand>(command);
@@ -63,7 +63,7 @@ public sealed class SubjectPermissionCommandTest
             using var project = new SubjectProject();
             var player = project.Players.Store.GetOrCreate(Address("text-moderation"));
             var registry = Registry();
-            var adapter = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject);
+            var adapter = new TextCommandAdapter(registry, null);
             var context = new CommandContext(CommandInvocationChannel.Console, CommandPrincipal.LocalOperator, project);
             Assert.True(adapter.Execute($"/player mute {player.Address}", context).Success);
             Assert.True(player.IsMuted);

@@ -19,9 +19,9 @@ public class SubsystemUpdate : Subsystem
 
     public int UpdatableCount => _updatable.Count;
 
-    public bool IsLastUpdateInFrame { get; private set; }
+    public bool IsLastUpdateInTick { get; private set; }
 
-    public int UpdatesPerFrame { get; set; }
+    public int UpdatesPerTick { get; set; }
 
     public void Update()
     {
@@ -32,22 +32,24 @@ public class SubsystemUpdate : Subsystem
             var runtime = WorldRuntimeContext.For(Project);
             if (runtime.IsClosed) { return; }
 
-            runtime.RunTimeDelayedExecutions(Time.FrameStartTime);
-            for (var i = 0; i < UpdatesPerFrame; i++)
+            runtime.VerifyExecutionAccess();
+
+            runtime.RunTimeDelayedExecutions(Time.RealTime);
+            for (var i = 0; i < UpdatesPerTick; i++)
             {
                 if (Project.IsDisposed || runtime.IsClosed)
                 {
                     return;
                 }
 
-                var updates = _subsystemTime.NextFrame(Time.FrameDuration, _sleepPopulation.ReadPopulation);
+                var updates = _subsystemTime.AdvanceStep(runtime.Clock.ElapsedSeconds, _sleepPopulation.ReadPopulation);
                 if (Project.IsDisposed || runtime.IsClosed)
                 {
                     return;
                 }
 
-                UpdatesPerFrame = updates;
-                IsLastUpdateInFrame = i == UpdatesPerFrame - 1;
+                UpdatesPerTick = updates;
+                IsLastUpdateInTick = i == UpdatesPerTick - 1;
                 var flag = false;
                 foreach (var item in _toAddOrRemove)
                 {
@@ -120,7 +122,7 @@ public class SubsystemUpdate : Subsystem
         }
         finally
         {
-            IsLastUpdateInFrame = false;
+            IsLastUpdateInTick = false;
         }
     }
 
@@ -163,7 +165,7 @@ public class SubsystemUpdate : Subsystem
             AddUpdateable(item);
         }
 
-        UpdatesPerFrame = 1;
+        UpdatesPerTick = 1;
     }
 
     public override void OnEntityAdded(Entity entity)

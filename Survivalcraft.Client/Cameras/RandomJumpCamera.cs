@@ -48,7 +48,7 @@ public class RandomJumpCamera(GameWidget gameWidget) : BasePerspectiveCamera(gam
 
         if (_innerRandom.Float(0f, 1f) < 1f * dt * 0.5f)
         {
-            ClientApplication.World?.RequestSave(false, false);
+            ClientApplication.World?.RequestSave(false);
         }
     }
 }

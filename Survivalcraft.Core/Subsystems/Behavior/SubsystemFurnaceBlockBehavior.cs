@@ -15,7 +15,8 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public void Update(float dt)
     {
-        if (!Time.PeriodicEvent(0.1, 0.0) || !WorldRuntimeContext.For(Project).IsAuthority)
+        if (!WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0.0) ||
+            !WorldRuntimeContext.For(Project).IsAuthority)
         {
             return;
         }

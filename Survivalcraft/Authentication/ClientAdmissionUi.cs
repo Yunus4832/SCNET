@@ -16,7 +16,7 @@ internal sealed class ClientAdmissionUi : IDisposable
 
     private sealed record BrowserRequest(Uri Url, TaskCompletionSource Completion);
 
-    private readonly NetNode _node;
+    private readonly AdmissionInteraction _node;
 
     private readonly Screen _owner;
 
@@ -102,16 +102,22 @@ internal sealed class ClientAdmissionUi : IDisposable
 
     private string _statusKey = string.Empty;
 
-    internal ClientAdmissionUi(NetNode node, Screen owner, string scope, TemporaryJoinAuthorization? temporary = null)
+    internal ClientAdmissionUi(
+        NetNode node,
+        Screen owner,
+        string scope,
+        TemporaryJoinAuthorization? temporary = null,
+        AuthorityWorldExecutor? authority = null
+    )
     {
-        _node = node;
+        _node = new AdmissionInteraction(node, authority);
         _owner = owner;
         _scope = scope;
         _temporary = temporary;
-        node.AdmissionTransportInterrupted += PreserveExternalAuthentication;
-        node.AdmissionRequired += Begin;
-        node.AdmissionResultReceived += Receive;
-        if (node.PendingAdmissionChallenge is { } challenge && challenge.Mode != ServerAdmissionMode.Open)
+        _node.AdmissionTransportInterrupted += PreserveExternalAuthentication;
+        _node.AdmissionRequired += Begin;
+        _node.AdmissionResultReceived += Receive;
+        if (_node.PendingAdmissionChallenge is { } challenge && challenge.Mode != ServerAdmissionMode.Open)
         {
             Begin(challenge);
         }
@@ -119,8 +125,20 @@ internal sealed class ClientAdmissionUi : IDisposable
 
     public string Status => _statusKey.Length == 0 ? string.Empty : Text(_statusKey);
 
+    public bool AdmissionAccepted => _node.AdmissionAccepted;
+
+    public LocalizedText? LocalAdmissionError => _node.LocalAdmissionError;
+
+    public void BeginLocalAdmission() => _node.BeginLocalAdmission();
+
+    public void CancelJoin() => Cancel();
+
+    public Task<(Game.Protocol.Identity.PlayerAddress Subject, Guid Token)> ConsumeLocalAdmissionAsync() =>
+        _node.ConsumeLocalAdmissionAsync();
+
     public void Update()
     {
+        _node.Update();
         if (_disposed || !_detached && !_node.HasPendingAdmission) { return; }
 
         if (!_detached &&
@@ -270,6 +288,7 @@ internal sealed class ClientAdmissionUi : IDisposable
         _node.AdmissionTransportInterrupted -= PreserveExternalAuthentication;
         _node.AdmissionRequired -= Begin;
         _node.AdmissionResultReceived -= Receive;
+        _node.Dispose();
         _cancel.Cancel();
         Interlocked.Exchange(ref _browserRequest, null)?.Completion.TrySetCanceled();
         _passwordDialog?.Cancel();

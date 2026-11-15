@@ -67,11 +67,11 @@ public sealed class CellChangeQueueTest
         fixture.StartPeriod();
         ((IUpdateable)fixture.Queue).Update(.1f);
         Assert.InRange(fixture.Queue.PendingChangesCount, 32, 63);
-        fixture.Time.NextFrame(.1f, static () => default);
+        fixture.Time.AdvanceStep(.1f, static () => default);
         for (var frame = 0; frame < 64 && fixture.Queue.PendingChangesCount != 0; frame++)
         {
             ((IUpdateable)fixture.Queue).Update(.1f);
-            fixture.Time.NextFrame(.1f, static () => default);
+            fixture.Time.AdvanceStep(.1f, static () => default);
         }
 
         Assert.Equal(0, fixture.Queue.PendingChangesCount);
@@ -117,7 +117,7 @@ public sealed class CellChangeQueueTest
 
         public void StartPeriod()
         {
-            for (var frame = 0; frame < 200; frame++) { Time.NextFrame(.1f, static () => default); }
+            for (var frame = 0; frame < 200; frame++) { Time.AdvanceStep(.1f, static () => default); }
         }
 
         public void Dispose() => _world.Dispose();

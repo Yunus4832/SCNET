@@ -44,7 +44,7 @@ public class ComponentSleep : Component, IUpdateable
         var authority = WorldRuntimeContext.For(Project).IsAuthority;
         if (IsSleeping && _character.ComponentHealth.Health > 0)
         {
-            var recovery = authority && SubsystemUpdate.UpdatesPerFrame == 1 ? _info.WorldSettings.RecoverFactor : 1f;
+            var recovery = authority && SubsystemUpdate.UpdatesPerTick == 1 ? _info.WorldSettings.RecoverFactor : 1f;
             _sleepFactor = MathUtils.Min(_sleepFactor + .33f * dt * recovery, 1);
             if (!authority) { return; }
 
@@ -67,7 +67,7 @@ public class ComponentSleep : Component, IUpdateable
                 WakeUp(SleepWakeReason.Wet);
             }
 
-            if (IsSleeping && Time.PeriodicEvent(1, .5)) { SendStatistics(); }
+            if (IsSleeping && WorldRuntimeContext.For(Project).Clock.PeriodicEvent(1, .5)) { SendStatistics(); }
         }
         else
         {

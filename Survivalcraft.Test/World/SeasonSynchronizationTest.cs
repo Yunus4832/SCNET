@@ -1,7 +1,3 @@
-using System.Reflection;
-
-using Engine.Core.Runtime;
-
 using EntitySystem.TemplatesDatabase;
 
 using Game.Subsystems;
@@ -30,40 +26,23 @@ public sealed class SeasonSynchronizationTest
         Assert.Equal(0f, seasons.TimeOfSeason);
         var sent = new List<float>();
         seasons.TimeOfYearSynchronizationRequested += sent.Add;
-        var previousTime = Time.FrameStartTime;
-        var previousDuration = Time.FrameDuration;
-        try
-        {
-            SetClock(9.99, 0.016f);
-            seasons.Update(0.016f);
-            Assert.Empty(sent);
-            seasons.SetTimeOfYear(1.375f);
-            Assert.Equal(0.375f, settings.TimeOfYear);
-            Assert.Equal(Season.Autumn, seasons.Season);
-            Assert.Equal(0.5f, seasons.TimeOfSeason);
-            Assert.Empty(sent);
-            SetClock(10.0, 0.016f);
-            seasons.Update(0.016f);
-            Assert.Equal(expected, sent.Count);
-            Assert.All(sent, year => Assert.Equal(0.375f, year));
-            SetClock(10.02, 0.016f);
-            seasons.Update(0.016f);
-            Assert.Equal(expected, sent.Count);
-            Assert.Throws<ArgumentOutOfRangeException>(() => seasons.SetTimeOfYear(float.NaN));
-            Assert.Equal(0.375f, settings.TimeOfYear);
-        }
-        finally { SetClock(previousTime, previousDuration); }
-    }
-
-    private static void SetClock(double time, float duration)
-    {
-        typeof(Time).GetProperty(nameof(Time.FrameStartTime), BindingFlags.Public | BindingFlags.Static)!.SetValue(
-            null,
-            time
-        );
-        typeof(Time).GetProperty(nameof(Time.FrameDuration), BindingFlags.Public | BindingFlags.Static)!.SetValue(
-            null,
-            duration
-        );
+        var clock = WorldRuntimeContext.For(project).Clock;
+        clock.Advance(.016f, 9.99);
+        seasons.Update(0.016f);
+        Assert.Empty(sent);
+        seasons.SetTimeOfYear(1.375f);
+        Assert.Equal(0.375f, settings.TimeOfYear);
+        Assert.Equal(Season.Autumn, seasons.Season);
+        Assert.Equal(0.5f, seasons.TimeOfSeason);
+        Assert.Empty(sent);
+        clock.Advance(.016f, 10.0);
+        seasons.Update(0.016f);
+        Assert.Equal(expected, sent.Count);
+        Assert.All(sent, year => Assert.Equal(0.375f, year));
+        clock.Advance(.016f, 10.02);
+        seasons.Update(0.016f);
+        Assert.Equal(expected, sent.Count);
+        Assert.Throws<ArgumentOutOfRangeException>(() => seasons.SetTimeOfYear(float.NaN));
+        Assert.Equal(0.375f, settings.TimeOfYear);
     }
 }

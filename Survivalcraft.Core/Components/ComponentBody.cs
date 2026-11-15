@@ -318,7 +318,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         else
         {
             _stoppedTime += dt;
-            if (_stoppedTime > 0.5f && !Time.PeriodicEvent(0.25, 0.0))
+            if (_stoppedTime > 0.5f && !WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.25, 0.0))
             {
                 return;
             }
@@ -413,7 +413,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
             {
                 num4 = SimplexNoise.Noise(
                            (float)MathUtils.Remainder(
-                               6.0 * Time.FrameStartTime + GetHashCode() % 1000,
+                               6.0 * Time.RealTime + GetHashCode() % 1000,
                                1000.0
                            )
                        ) >

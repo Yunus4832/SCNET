@@ -143,7 +143,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable
                 if (!WorldRuntimeContext.IsProjectActive(Project)) { return; }
             }
 
-            if (Time.PeriodicEvent(0.1, 0.0))
+            if (WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0.0))
             {
                 UpdateClientMovingBlockInterests();
             }

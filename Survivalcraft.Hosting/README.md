@@ -6,5 +6,6 @@
 这些服务消费 Core 的稳定世界快照与协议数据，不访问客户端窗口、渲染器或界面。
 权威世界的项目构造、刷怪与兴趣策略绑定、庆典策略和内存回收生命周期已由宿主负责。物理连接节点、消息处理目录、世界命令、保存与停止协调、CPU 模组运行时和内容目录也由宿主负责。
 客户端可以使用其中的连接、命令和内容服务；宿主不得反向引用客户端或综合应用程序集。
-`WorldRepository` 管理世界文件，`WorldProjectActivity` 协调活动世界与文件替换，`WorldProjectPersistence` 负责保存快照和写入。
+`AuthorityWorldExecutor` 在独立所有者线程推进权威世界，GUI 和独立服务器共用模拟与消息服务节奏；宿主不直接调用权威更新。
+`WorldRepository` 管理世界文件，`WorldProjectActivity` 将活动项目操作投递到各自所有者。`WorldProjectPersistence` 在权威线程捕获快照并异步写入，正常关闭等待保存成功后再退休世界，失败时保持运行以便重试。
 综合入口和独立服务端入口消费同一套宿主服务；入口、资源与发行依赖的使用方式见[构建与配置](../Doc/BuildAndConfig.md)。

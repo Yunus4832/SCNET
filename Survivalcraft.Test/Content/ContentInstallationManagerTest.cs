@@ -210,7 +210,10 @@ public sealed class ContentInstallationManagerTest : IDisposable
                         .GetValue(characters)!).Add(character);
                 }
 
-                Game.Application.ClientApplication.Worlds.ReplaceAssetReferences(type, "old-key", "new-key");
+                using var frame = new FrameTestLoop();
+                frame.Complete(
+                    Game.Application.ClientApplication.Worlds.ReplaceAssetReferencesAsync(type, "old-key", "new-key")
+                );
 
                 foreach (var project in new[] { authority, client })
                 {
@@ -236,13 +239,10 @@ public sealed class ContentInstallationManagerTest : IDisposable
 
     private static void WithSplitWorlds(Action<RuntimeTestProject, RuntimeTestProject> action)
     {
-        using var session = new GameRuntime(false);
         using var authority = new RuntimeTestProject(RuntimeSide.Authority);
         using var client = new RuntimeTestProject(RuntimeSide.Client);
         authority.AddSubsystem(new SubsystemGameInfo { WorldSettings = new WorldSettings() });
         client.AddSubsystem(new SubsystemGameInfo { WorldSettings = new WorldSettings() });
-        session.Attach(WorldRuntimeContext.For(authority));
-        session.Attach(WorldRuntimeContext.For(client));
 
         GameManager.WorldActivity.Track(WorldRuntimeContext.For(client), null);
         try
@@ -380,10 +380,13 @@ public sealed class ContentInstallationManagerTest : IDisposable
             writer.Write("<Project><Value Name=\"BlockTextureName\" Value=\"old-key\" /></Project>");
         }
 
-        var count = Game.Application.ClientApplication.Worlds.ReplaceAssetReferences(
-            ContentType.BlocksTexture,
-            "old-key",
-            "new-key"
+        using var frame = new FrameTestLoop();
+        var count = frame.Complete(
+            Game.Application.ClientApplication.Worlds.ReplaceAssetReferencesAsync(
+                ContentType.BlocksTexture,
+                "old-key",
+                "new-key"
+            )
         );
 
         Assert.Equal(1, count);

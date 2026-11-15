@@ -13,6 +13,15 @@ public sealed class NetworkCommandDiagnostics(
         var node = context.Project is { } project
             ? WorldNetworkBinding.For(project).RequireNode()
             : getNode();
+        if (context.Project == null && node.Runtime.IsAuthority)
+        {
+            return CommandResult.Fail(
+                "diagnostics.unavailable",
+                "Authority diagnostics require the world command context."
+            );
+        }
+
+        node.Runtime.VerifyExecutionAccess();
         var statistics = node.SendStatistics;
         var snapshot = new
         {

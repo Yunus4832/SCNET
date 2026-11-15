@@ -1,63 +1,48 @@
-using System.Reflection;
-using System.Runtime.CompilerServices;
-
 using Game.Network;
 using Game.Network.Handling;
 using Game.Network.Transport;
 using Game.World;
+
+using Survivalcraft.Test.Fixtures;
 
 namespace Survivalcraft.Test.Network;
 
 public sealed class GameRuntimeMultiplayerPolicyTest
 {
     [Fact]
-    public void InProcessAuthorityRoleWithoutListenerDoesNotEnableMultiplayerUi()
+    public async Task InProcessAuthorityWithoutListenerDoesNotEnableMultiplayerUi()
     {
-        using var gameRuntime = new GameRuntime(true);
-        var authority = new NetNode(
-            NetNodeOptions.Default,
-            true,
-            PackageHandlerCatalog.Empty,
-            NodeRole.Authority
+        await using var game = new GameRuntime(true, Inline);
+        await game.StartAuthorityAsync(_ => WorldRuntimeContext.For(new RuntimeTestProject(RuntimeSide.Authority)));
+        var client = new NetNode(NetNodeOptions.Default, true, PackageHandlerCatalog.Empty, NodeRole.Client);
+        game.AttachClient(client.Runtime);
+        var connection = await game.AuthorityExecution!.InvokeAsync(world =>
+            InProcessMessageConnection.CreatePair(
+                WorldNetworkBinding.For(world).RequireNode(),
+                new Client(null, 1, Guid.NewGuid(), Guid.Empty),
+                client,
+                new Client(null, 0, Guid.NewGuid(), Guid.Empty)
+            ).ToAuthority
         );
-        var client = new NetNode(
-            NetNodeOptions.Default,
-            true,
-            PackageHandlerCatalog.Empty,
-            NodeRole.Client
-        );
-        gameRuntime.Attach(authority.Runtime);
-        gameRuntime.Attach(client.Runtime);
-        using var first = InProcessMessageConnection.CreatePair(
-            authority,
-            new Client(null, 1, Guid.NewGuid(), Guid.Empty),
-            client,
-            new Client(null, 0, Guid.NewGuid(), Guid.Empty)
-        ).ToAuthority;
-
-        Assert.False(gameRuntime.IsMultiplayer);
-        var host = typeof(NetNode).GetField("_host", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        host.SetValue(authority, RuntimeHelpers.GetUninitializedObject(host.FieldType));
-        try { Assert.True(gameRuntime.IsMultiplayer); }
-        finally { host.SetValue(authority, null); }
+        using (connection) { Assert.False(game.IsMultiplayer); }
     }
 
     [Fact]
-    public void RemoteConnectionEnablesMultiplayerUiAndClosureRemovesIt()
+    public async Task RemoteConnectionEnablesMultiplayerUiAndClosureRemovesIt()
     {
-        using var gameRuntime = new GameRuntime(false);
-        var node = new NetNode(
-            NetNodeOptions.Default,
-            true,
-            PackageHandlerCatalog.Empty,
-            NodeRole.Client
-        );
-        var connection = new NetworkStub();
-        node.Server = new Client(null, 0, Guid.NewGuid(), Guid.Empty) { Connection = connection };
-        gameRuntime.Attach(node.Runtime);
-        Assert.True(gameRuntime.IsMultiplayer);
+        await using var game = new GameRuntime(false, Inline);
+        var node = new NetNode(NetNodeOptions.Default, true, PackageHandlerCatalog.Empty, NodeRole.Client);
+        node.Server = new Client(null, 0, Guid.NewGuid(), Guid.Empty) { Connection = new NetworkStub() };
+        game.AttachClient(node.Runtime);
+        Assert.True(game.IsMultiplayer);
         node.Runtime.Close();
-        Assert.False(gameRuntime.IsMultiplayer);
+        Assert.False(game.IsMultiplayer);
+    }
+
+    private static Task Inline(Action action)
+    {
+        action();
+        return Task.CompletedTask;
     }
 
     private sealed class NetworkStub : IMessageConnection

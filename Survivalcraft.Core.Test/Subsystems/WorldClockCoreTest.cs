@@ -20,7 +20,7 @@ public sealed class WorldClockCoreTest
         using var project = new ClockProject(RuntimeSide.Authority);
         var time = new SubsystemTime();
         project.Add(time);
-        Assert.Equal(expected, time.NextFrame(.016f, () => new CharacterSleepPopulation(total, sleeping, dead)));
+        Assert.Equal(expected, time.AdvanceStep(.016f, () => new CharacterSleepPopulation(total, sleeping, dead)));
         Assert.Equal(expected == 20 ? .05f : null, time.FixedTimeStep);
     }
 
@@ -32,11 +32,11 @@ public sealed class WorldClockCoreTest
         authority.Add(time);
         var population = new CharacterSleepPopulation(1, 1, 0);
         time.QueueGameTimeDelayedExecution(0, () => population = new CharacterSleepPopulation(1, 0, 0));
-        Assert.Equal(1, time.NextFrame(.016f, () => population));
+        Assert.Equal(1, time.AdvanceStep(.016f, () => population));
         using var client = new ClockProject(RuntimeSide.Client);
         var replica = new SubsystemTime();
         client.Add(replica);
-        Assert.Equal(1, replica.NextFrame(.016f, () => throw new InvalidOperationException("AOI population read")));
+        Assert.Equal(1, replica.AdvanceStep(.016f, () => throw new InvalidOperationException("AOI population read")));
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public sealed class WorldClockCoreTest
         info.TimeSynchronizationRequested += facts.Add;
         for (var i = 0; i < 10; i++)
         {
-            time.NextFrame(.1f, () => default);
+            time.AdvanceStep(.1f, () => default);
             info.Update(time.GameTimeDelta);
         }
 

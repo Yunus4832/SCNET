@@ -26,6 +26,7 @@ public static class WorldProjectFactory
     )
     {
         ValidateRuntime(runtime, RuntimeSide.Client);
+        runtime.BindExecutionThread();
         BlockPresentationCatalog? presentation = null;
         var bound = false;
 

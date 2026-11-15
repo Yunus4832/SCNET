@@ -52,7 +52,7 @@ public sealed class CommandInputPrincipalTest
         Assert.Empty(principal.DelegablePermissions);
         var registry = new CommandRegistry();
         BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
-        var adapter = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject);
+        var adapter = new TextCommandAdapter(registry, null);
         Assert.Contains(adapter.Suggest("/team", principal), item => item.Value == "team");
         Assert.True(
             adapter.TryCreate(

@@ -53,7 +53,8 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (!WorldRuntimeContext.For(Project).IsAuthority || !Time.PeriodicEvent(0.25, 0))
+        if (!WorldRuntimeContext.For(Project).IsAuthority ||
+            !WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.25, 0))
         {
             return;
         }

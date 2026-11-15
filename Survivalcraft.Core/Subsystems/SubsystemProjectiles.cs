@@ -398,7 +398,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
         }
 
         _projectilesToRemove.Clear();
-        if (WorldRuntimeContext.For(Project).IsAuthority && Time.PeriodicEvent(0.1, 0.0))
+        if (WorldRuntimeContext.For(Project).IsAuthority &&
+            WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0.0))
         {
             UpdateClientProjectileInterests();
         }

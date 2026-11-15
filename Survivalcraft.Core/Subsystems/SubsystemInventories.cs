@@ -14,7 +14,8 @@ public class SubsystemInventories : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (!WorldRuntimeContext.For(Project).IsAuthority || !Time.PeriodicEvent(0.1, 0))
+        if (!WorldRuntimeContext.For(Project).IsAuthority ||
+            !WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0))
         {
             return;
         }

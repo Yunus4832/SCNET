@@ -35,8 +35,14 @@ public sealed class WorldProjectPersistenceTest
                         owner.Dispose();
                         disposedFromNotification = true;
                     };
-                    if (failIo) { Assert.Throws<WorldSaveException>(() => owner.Save(true)); }
-                    else { owner.Save(true); }
+                    var pending = owner.SaveAsync();
+                    while (!pending.IsCompleted)
+                    {
+                        owner.Pump();
+                        Thread.Sleep(1);
+                    }
+
+                    Assert.Equal(failIo, pending.GetAwaiter().GetResult().Failure != null);
                 }
             );
             await saving.WaitAsync(TimeSpan.FromSeconds(5));
@@ -81,6 +87,7 @@ public sealed class WorldProjectPersistenceTest
                 Assert.True(released);
                 stopped++;
             };
+            lifecycle.BindStopRequest(() => Task.CompletedTask);
             if (requestStop) { lifecycle.RequestStop(); }
 
             if (failCleanup) { Assert.Throws<AggregateException>(project.Dispose); }
@@ -89,7 +96,6 @@ public sealed class WorldProjectPersistenceTest
             Assert.Equal(1, stopped);
             Assert.False(File.Exists(Path.Combine(directory, "Project.xml")));
             project.Dispose();
-            lifecycle.Update(0);
             Assert.Equal(1, stopped);
             Assert.False(File.Exists(Path.Combine(directory, "Project.xml")));
         }
@@ -121,35 +127,44 @@ public sealed class WorldProjectPersistenceTest
     }
 
     [Fact]
-    public void StopStillDisposesTheProjectWhenAWorldCloseSubscriberFails()
+    public async Task StopStillDisposesTheProjectWhenAWorldCloseSubscriberFails()
     {
         var directory = Path.Combine(Path.GetTempPath(), "scnet-stop-" + Guid.NewGuid().ToString("N"));
-        try
-        {
-            using var project = new PersistenceProject(directory);
-            var lifecycle = new SubsystemWorldLifecycle();
-            project.Add(lifecycle);
-            lifecycle.Load(new ValuesDictionary());
-            var released = false;
-            project.Add(new ReleaseProbe(() => released = true));
-            var stopped = 0;
-            lifecycle.Stopped += _ => stopped++;
-            using var failure =
+        PersistenceProject? project = null;
+        WorldRuntimeContext? originalWorld = null;
+        var released = false;
+        var stopped = 0;
+        var owner = new AuthorityWorldExecutor(
+            _ =>
+            {
+                project = new PersistenceProject(directory);
+                var lifecycle = new SubsystemWorldLifecycle();
+                project.Add(lifecycle);
+                lifecycle.Load(new ValuesDictionary());
+                project.Add(new ReleaseProbe(() => released = true));
+                lifecycle.Stopped += _ => stopped++;
                 project.Node.Runtime.Lifetime.Register(() =>
                     throw new InvalidOperationException("Close observer failed.")
                 );
-            lifecycle.RequestStop();
-            project.Node.Update();
-            lifecycle.Update(0);
-            Assert.True(project.IsDisposed);
-            Assert.True(project.Node.Runtime.IsClosed);
+                originalWorld = project.Node.Runtime;
+                return originalWorld;
+            },
+            false
+        );
+        try
+        {
+            await owner.Ready.WaitAsync(TimeSpan.FromSeconds(5));
+            await Assert.ThrowsAnyAsync<Exception>(() => owner.StopAsync(true));
+            Assert.True(project!.IsDisposed);
+            Assert.True(originalWorld!.IsClosed);
             Assert.True(released);
-            Assert.Equal(1, stopped);
-            lifecycle.Update(0);
             Assert.Equal(1, stopped);
         }
         finally
         {
+            try { await owner.DisposeAsync(); }
+            catch (Exception) { }
+
             if (Directory.Exists(directory)) { Directory.Delete(directory, true); }
         }
     }
@@ -157,48 +172,58 @@ public sealed class WorldProjectPersistenceTest
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void StopRequiresCompletedDispatchAndSuccessfulSave(bool failIo)
+    public async Task StopRequiresSuccessfulSaveAndFailureCanBeRetried(bool failIo)
     {
         var directory = Path.Combine(Path.GetTempPath(), "scnet-stop-save-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
+        var target = Path.Combine(directory, "world");
+        if (failIo) { File.WriteAllText(target, "not a directory"); }
+
+        PersistenceProject? project = null;
+        WorldRuntimeContext? originalWorld = null;
+        var stopped = false;
+        var failed = false;
+        var owner = new AuthorityWorldExecutor(
+            _ =>
+            {
+                project = new PersistenceProject(target);
+                var lifecycle = new SubsystemWorldLifecycle();
+                project.Add(lifecycle);
+                lifecycle.Load(new ValuesDictionary());
+                lifecycle.Stopped += _ => stopped = true;
+                lifecycle.Persistence.SaveFailed += _ => failed = true;
+                originalWorld = project.Node.Runtime;
+                return originalWorld;
+            },
+            false
+        );
         try
         {
-            var target = Path.Combine(directory, "world");
-            if (failIo) { File.WriteAllText(target, "not a directory"); }
+            await owner.Ready.WaitAsync(TimeSpan.FromSeconds(5));
+            var stop = owner.StopAsync(true);
+            if (failIo) { await Assert.ThrowsAsync<WorldSaveException>(() => stop); }
+            else { await stop.WaitAsync(TimeSpan.FromSeconds(5)); }
 
-            using var project = new PersistenceProject(target);
-            var lifecycle = new SubsystemWorldLifecycle();
-            project.Add(lifecycle);
-            lifecycle.Load(new ValuesDictionary());
-            var stopped = false;
-            var failed = false;
-            lifecycle.Stopped += _ => stopped = true;
-            lifecycle.Persistence.SaveFailed += _ => failed = true;
-            lifecycle.RequestStop();
-            lifecycle.Update(0);
-            Assert.False(project.IsDisposed);
-            Assert.False(stopped);
-            project.Node.Update();
-            lifecycle.Update(0);
             Assert.Equal(failIo, failed);
             Assert.Equal(!failIo, stopped);
-            Assert.Equal(!failIo, project.IsDisposed);
-            Assert.Equal(!failIo, project.Node.Runtime.IsClosed);
-            if (!failIo)
+            Assert.Equal(!failIo, project!.IsDisposed);
+            Assert.Equal(!failIo, originalWorld!.IsClosed);
+            if (failIo)
             {
-                Assert.True(WorldProjectPersistence.IsProjectFileValid(project.DirectoryName + "/Project.xml"));
-            }
-            else
-            {
+                Assert.Equal(AuthorityExecutionState.Running, owner.Status.State);
                 File.Delete(target);
-                lifecycle.RequestStop();
-                project.Node.Update();
-                lifecycle.Update(0);
+                await owner.StopAsync(true).WaitAsync(TimeSpan.FromSeconds(5));
                 Assert.True(stopped);
                 Assert.True(project.IsDisposed);
             }
+
+            Assert.True(WorldProjectPersistence.IsProjectFileValid(project.DirectoryName + "/Project.xml"));
         }
-        finally { Directory.Delete(directory, true); }
+        finally
+        {
+            await owner.DisposeAsync();
+            Directory.Delete(directory, true);
+        }
     }
 
     private sealed class ReleaseProbe(Action release) : Subsystem

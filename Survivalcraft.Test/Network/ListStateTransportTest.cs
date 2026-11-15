@@ -11,10 +11,10 @@ public sealed class ListStateTransportTest
     [Fact]
     public void PickableSnapshotRoundTripsItsTickAndPositions()
     {
-        var package = PickablePackageBuilder.Capture([new Pickable { Id = 7, Position = new Vector3(1, 2, 3) }]) with
-        {
-            StateTick = uint.MaxValue
-        };
+        var package = PickablePackageBuilder.Capture(
+            [new Pickable { Id = 7, Position = new Vector3(1, 2, 3) }],
+            uint.MaxValue
+        );
         var writer = ProtocolMessageCodec.Encode(package);
         var reader = writer;
         var clone = Assert.IsType<PickablePositionsPackage>(ProtocolMessageCodec.Decode(reader));
@@ -32,7 +32,7 @@ public sealed class ListStateTransportTest
                 PickablePackage.MaxPositionsPerSnapshot
             )
             .Select(id => new Pickable { Id = (ushort)id, Position = new Vector3(id, -id, id * 3) }).ToList();
-        var package = PickablePackageBuilder.Capture(items) with { StateTick = uint.MaxValue };
+        var package = PickablePackageBuilder.Capture(items, uint.MaxValue);
         var writer = ProtocolPacketCodec.Encode([package], CompressionPolicy.None);
         var datagram = NetworkWireFraming.Wrap(writer);
         Assert.InRange(datagram.Length, 420, 507);

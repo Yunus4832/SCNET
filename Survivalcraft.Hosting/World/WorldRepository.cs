@@ -244,116 +244,154 @@ public sealed class WorldRepository
         }
     }
 
-    public int ReplaceAssetReferences(ContentType type, string oldAssetKey, string newAssetKey)
+    public async Task<int> ReplaceAssetReferencesAsync(ContentType type, string oldAssetKey, string newAssetKey)
     {
         if (type is not (ContentType.BlocksTexture or ContentType.CharacterSkin))
         {
             throw new ArgumentOutOfRangeException(nameof(type));
         }
 
-        _waitForPendingSaves();
-        var valueName = type == ContentType.BlocksTexture ? "BlockTextureName" : "CharacterSkinName";
-        var changes = new List<(string Project, string Temporary, string Backup)>();
-        foreach (var worldName in Storage.ListDirectoryNames(_worldsDirectoryName))
-        {
-            var project = Storage.CombinePaths(_worldsDirectoryName, worldName, "Project.xml");
-            if (!Storage.FileExists(project))
+        var saves = new List<Task<WorldSaveOutcome>>();
+        await _activity.ApplyToProjectsAsync(activeProject =>
             {
-                continue;
-            }
-
-            using var input = Storage.OpenFile(project, OpenFileMode.Read);
-            var document = XDocument.Load(input);
-            var references = document.Descendants().Where(element =>
-                (string?)element.Attribute("Name") == valueName &&
-                (string?)element.Attribute("Value") == oldAssetKey
-            ).ToArray();
-            if (references.Length == 0)
-            {
-                continue;
-            }
-
-            foreach (var reference in references)
-            {
-                reference.SetAttributeValue("Value", newAssetKey);
-            }
-
-            var temporary = project + $".{Guid.NewGuid():N}.temp";
-            var backup = project + $".{Guid.NewGuid():N}.backup";
-            using (var output = Storage.OpenFile(temporary, OpenFileMode.Create))
-            {
-                document.Save(output);
-            }
-
-            changes.Add((project, temporary, backup));
-        }
-
-        var committed = new List<(string Project, string Backup)>();
-        try
-        {
-            foreach (var change in changes)
-            {
-                Storage.MoveFile(change.Project, change.Backup);
-                Storage.MoveFile(change.Temporary, change.Project);
-                committed.Add((change.Project, change.Backup));
-            }
-        }
-        catch
-        {
-            foreach (var change in changes.AsEnumerable().Reverse())
-            {
-                if (Storage.FileExists(change.Backup))
+                var changed = false;
+                if (type == ContentType.BlocksTexture)
                 {
-                    Storage.MoveFile(change.Backup, change.Project);
-                }
-            }
-
-            foreach (var change in changes)
-            {
-                if (Storage.FileExists(change.Temporary))
-                {
-                    Storage.DeleteFile(change.Temporary);
-                }
-            }
-
-            throw;
-        }
-
-        foreach (var change in committed)
-        {
-            if (Storage.FileExists(change.Backup))
-            {
-                Storage.DeleteFile(change.Backup);
-            }
-        }
-
-        foreach (var activeProject in _activity.Projects)
-        {
-            if (type == ContentType.BlocksTexture)
-            {
-                var settings = activeProject.FindSubsystem<SubsystemGameInfo>()?.WorldSettings;
-                if (settings?.BlocksTextureName == oldAssetKey)
-                {
-                    settings.BlocksTextureName = newAssetKey;
-                }
-            }
-            else
-            {
-                var players = activeProject.FindSubsystem<SubsystemCharacters>()?.Characters;
-                if (players is not null)
-                {
-                    foreach (var player in players)
+                    var settings = activeProject.FindSubsystem<SubsystemGameInfo>()?.WorldSettings;
+                    if (settings?.BlocksTextureName == oldAssetKey)
                     {
-                        if (player.CharacterSkinName == oldAssetKey)
+                        settings.BlocksTextureName = newAssetKey;
+                        changed = true;
+                    }
+                }
+                else
+                {
+                    var players = activeProject.FindSubsystem<SubsystemCharacters>()?.Characters;
+                    if (players is not null)
+                    {
+                        foreach (var player in players)
                         {
-                            player.CharacterSkinName = newAssetKey;
+                            if (player.CharacterSkinName == oldAssetKey)
+                            {
+                                player.CharacterSkinName = newAssetKey;
+                                changed = true;
+                            }
                         }
                     }
                 }
+
+                if (changed && WorldProjectPersistence.TryGet(activeProject, out var persistence))
+                {
+                    saves.Add(persistence!.SaveAsync());
+                }
             }
+        ).ConfigureAwait(false);
+
+        foreach (var save in saves)
+        {
+            var outcome = await save.ConfigureAwait(false);
+            if (outcome.Failure != null) { throw new WorldSaveException(outcome.WorldName, outcome.Failure); }
         }
 
-        return changes.Count;
+        return await Task.Run(() => ReplaceStoredAssetReferences(type, oldAssetKey, newAssetKey)).ConfigureAwait(false);
+    }
+
+    private int ReplaceStoredAssetReferences(ContentType type, string oldAssetKey, string newAssetKey)
+    {
+        if (type is not (ContentType.BlocksTexture or ContentType.CharacterSkin))
+        {
+            throw new ArgumentOutOfRangeException(nameof(type));
+        }
+
+        var leases = new List<IDisposable>();
+        try
+        {
+            _waitForPendingSaves();
+            var valueName = type == ContentType.BlocksTexture ? "BlockTextureName" : "CharacterSkinName";
+            var changes = new List<(string Project, string Temporary, string Backup)>();
+            foreach (var worldName in Storage.ListDirectoryNames(_worldsDirectoryName))
+            {
+                var directory = Storage.CombinePaths(_worldsDirectoryName, worldName);
+                if (_activity.IsDirectoryInUse(directory)) { continue; }
+
+                leases.Add(_activity.BeginFileOperation(directory));
+                var project = Storage.CombinePaths(directory, "Project.xml");
+                if (!Storage.FileExists(project))
+                {
+                    continue;
+                }
+
+                using var input = Storage.OpenFile(project, OpenFileMode.Read);
+                var document = XDocument.Load(input);
+                var references = document.Descendants().Where(element =>
+                    (string?)element.Attribute("Name") == valueName &&
+                    (string?)element.Attribute("Value") == oldAssetKey
+                ).ToArray();
+                if (references.Length == 0)
+                {
+                    continue;
+                }
+
+                foreach (var reference in references)
+                {
+                    reference.SetAttributeValue("Value", newAssetKey);
+                }
+
+                var temporary = project + $".{Guid.NewGuid():N}.temp";
+                var backup = project + $".{Guid.NewGuid():N}.backup";
+                using (var output = Storage.OpenFile(temporary, OpenFileMode.Create))
+                {
+                    document.Save(output);
+                }
+
+                changes.Add((project, temporary, backup));
+            }
+
+            var committed = new List<(string Project, string Backup)>();
+            try
+            {
+                foreach (var change in changes)
+                {
+                    Storage.MoveFile(change.Project, change.Backup);
+                    Storage.MoveFile(change.Temporary, change.Project);
+                    committed.Add((change.Project, change.Backup));
+                }
+            }
+            catch
+            {
+                foreach (var change in changes.AsEnumerable().Reverse())
+                {
+                    if (Storage.FileExists(change.Backup))
+                    {
+                        Storage.MoveFile(change.Backup, change.Project);
+                    }
+                }
+
+                foreach (var change in changes)
+                {
+                    if (Storage.FileExists(change.Temporary))
+                    {
+                        Storage.DeleteFile(change.Temporary);
+                    }
+                }
+
+                throw;
+            }
+
+            foreach (var change in committed)
+            {
+                if (Storage.FileExists(change.Backup))
+                {
+                    Storage.DeleteFile(change.Backup);
+                }
+            }
+
+            return changes.Count;
+        }
+        finally
+        {
+            foreach (var lease in leases) { lease.Dispose(); }
+        }
     }
 
     public WorldInfo? GetWorldInfo(string directoryName)

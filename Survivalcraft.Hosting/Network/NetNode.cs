@@ -344,7 +344,13 @@ public class NetNode
 
     public P2PRoomSettings P2PConfiguration => _p2p.Configuration;
 
-    public P2PRoomStatus GetP2PStatus() => new(
+    private P2PRoomStatus _p2pStatus = null!;
+
+    public P2PRoomStatus GetP2PStatus() => Volatile.Read(ref _p2pStatus);
+
+    private void PublishP2PStatus() => Volatile.Write(ref _p2pStatus, CaptureP2PStatus());
+
+    private P2PRoomStatus CaptureP2PStatus() => new(
         _p2p.State,
         _p2p.DesiredEnabled,
         IsServer && _host is not null,
@@ -363,7 +369,7 @@ public class NetNode
 
     public P2PRoomStartFailure StartConfiguredP2P()
     {
-        var status = GetP2PStatus();
+        var status = CaptureP2PStatus();
         if (!status.ListenerReady) { return P2PRoomStartFailure.ListenerRequired; }
 
         if (!status.WorldReady) { return P2PRoomStartFailure.WorldRequired; }
@@ -378,9 +384,17 @@ public class NetNode
         return P2PRoomStartFailure.None;
     }
 
-    public void StartP2P(P2PRoomSettings configuration) => _p2p.Start(configuration);
+    public void StartP2P(P2PRoomSettings configuration)
+    {
+        _p2p.Start(configuration);
+        PublishP2PStatus();
+    }
 
-    public void StopP2P() => _p2p.Stop();
+    public void StopP2P()
+    {
+        _p2p.Stop();
+        PublishP2PStatus();
+    }
 
     private NetworkHost? _host;
 
@@ -579,6 +593,7 @@ public class NetNode
         _outboundTime = outboundTime;
         _role = initialRole;
         Runtime = CreateRuntimeContext(initialRole == NodeRole.Authority ? RuntimeSide.Authority : RuntimeSide.Client);
+        PublishP2PStatus();
     }
 
     public PackageHandlerCatalog BaseHandlers { get; }
@@ -1758,6 +1773,7 @@ public class NetNode
             CurrentStage = Stage.Connected;
             Role = NodeRole.Authority;
             _p2p.Bind(_host, room, maxParticipants);
+            PublishP2PStatus();
             return true;
         }
         catch (Exception e)
@@ -1937,6 +1953,51 @@ public class NetNode
         StopImmediate();
     }
 
+    private Task? _transportStop;
+
+    /// <summary>Starts transport teardown on its owner without waiting on connection or host workers.</summary>
+    public Task PrepareTransportStopAsync()
+    {
+        if (_transportStop != null) { return _transportStop; }
+
+        _isStopping = true;
+        _connectingCancellation?.Cancel();
+        var closing = new List<Task> { _p2p.ShutdownAsync() };
+        if (_connecting is { } connecting) { closing.Add(ObserveCancelledConnectionAsync(connecting)); }
+
+        if (_preparedPath is { } path)
+        {
+            _preparedPath = null;
+            _pathClosing = path.DisposeAsync().AsTask();
+        }
+
+        if (_pathClosing != null) { closing.Add(_pathClosing); }
+
+        if (_broadcastHost is { } broadcast)
+        {
+            _broadcastHost = null;
+            closing.Add(broadcast.DisposeAsync().AsTask());
+        }
+
+        if (_host is { } host)
+        {
+            _host = null;
+            closing.Add(host.DisposeAsync().AsTask());
+        }
+
+        _transportStop = Task.WhenAll(closing);
+        return _transportStop;
+    }
+
+    private static async Task ObserveCancelledConnectionAsync(Task<NetworkConnection> connecting)
+    {
+        try { (await connecting.ConfigureAwait(false)).Disconnect(); }
+        catch (Exception)
+        {
+            /* The normal update path reports connection failures before teardown. */
+        }
+    }
+
     public void StopImmediate()
     {
         TemporaryAuthentication = null;
@@ -2045,9 +2106,11 @@ public class NetNode
             OnClientBecameLive = null;
 
 
+            _transportStop = null;
             CurrentStage = Stage.NotConnected;
             Role = NodeRole.Inactive;
             ResetRuntimeContext();
+            PublishP2PStatus();
             _preserveAdmissionOnStop = false;
             ClearClientRegistrations();
             Self = null;
@@ -2190,6 +2253,7 @@ public class NetNode
 
     public void Update()
     {
+        Runtime.VerifyExecutionAccess();
         // 先处理UI操作，Inventory序号增加后再处理客户端过来的包
         // 发送物品同步数据
         Runtime.Project?.FindSubsystem<SubsystemInventories>()?.FlushSyncItems();
@@ -2219,7 +2283,7 @@ public class NetNode
             RemoveClientImmediate(pair.Key, pair.Value);
         }
 
-        _terrainDelivery?.Update(Time.FrameStartTime);
+        _terrainDelivery?.Update(Time.RealTime);
 
         // 批处理发送包队列，按传输通道分流，避免可靠大包阻塞实时状态。
         FlushPendingPackages();
@@ -2259,6 +2323,7 @@ public class NetNode
             }
         }
 
+        PublishP2PStatus();
         _host?.DispatchEvents();
         PumpReceivedPackages();
         if (_pendingClient is { Connection: { IsConnected: false } } cancelled)
@@ -2870,7 +2935,7 @@ public class NetNode
         var peer = client.Peer!;
         var deferredPackages = new List<OutboundPackage>();
         var selectedPackages = new List<OutboundPackage>();
-        var startIndex = Time.FrameIndex % packages.Count;
+        var startIndex = (int)(Runtime.Clock.TickIndex % packages.Count);
         for (var offset = 0; offset < packages.Count; offset++)
         {
             var package = packages[(startIndex + offset) % packages.Count];

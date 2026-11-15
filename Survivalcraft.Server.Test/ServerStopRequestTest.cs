@@ -23,117 +23,108 @@ namespace Survivalcraft.Server.Test;
 public sealed class ServerStopRequestTest
 {
     [Fact]
-    public void StopRequestedDuringATickSavesAndDisposesOnlyOnTheServerThread()
+    public async Task StopRequestedDuringOwnerWorkSavesAndDisposesOnlyOnTheAuthorityThread()
     {
-        using var scope = new StopScope();
-        using var tickStarted = new ManualResetEventSlim();
-        using var finishTick = new ManualResetEventSlim();
-        Exception? failure = null;
-        var stopped = false;
-        var server = new Thread(() =>
+        await using var scope = await StopScope.CreateAsync();
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        var blocked = scope.Runtime.AuthorityExecution!.InvokeAsync(_ =>
             {
-                try
-                {
-                    ServerStarter.BeginStopRequestHandling();
-                    tickStarted.Set();
-                    finishTick.Wait();
-                    stopped = scope.ProcessStopTick();
-                }
-                catch (Exception exception) { failure = exception; }
+                entered.Set();
+                release.Wait();
+                return true;
             }
         );
-        server.Start();
         try
         {
-            Assert.True(tickStarted.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
+            ServerStarter.BeginStopRequestHandling();
             ServerStarter.RequestStop();
+            Assert.False(scope.ProcessStopTick());
             Assert.Empty(scope.Observer.SaveThreads);
             Assert.Empty(scope.Observer.DisposeThreads);
             Assert.False(scope.Project.IsDisposed);
         }
         finally
         {
-            finishTick.Set();
-            Assert.True(server.Join(TimeSpan.FromSeconds(5)));
+            release.Set();
+            await blocked.WaitAsync(TimeSpan.FromSeconds(5));
         }
 
-        Assert.Null(failure);
-        Assert.True(stopped);
-        Assert.Equal([server.ManagedThreadId], scope.Observer.SaveThreads);
-        Assert.Equal([server.ManagedThreadId], scope.Observer.DisposeThreads);
-        Assert.True(scope.Node.Runtime.IsClosed);
+        await scope.WaitForStopAsync();
+        Assert.Equal([scope.OwnerThread], scope.Observer.SaveThreads);
+        Assert.Equal([scope.OwnerThread], scope.Observer.DisposeThreads);
+        Assert.True(scope.World.IsClosed);
+        Assert.Equal(NodeRole.Inactive, scope.Node.Role);
     }
 
     [Fact]
-    public void EarlyRequestSurvivesInitializationAndFailedSaveRequiresAnExplicitRetry()
+    public async Task EarlyRequestSurvivesInitializationAndFailedSaveRequiresAnExplicitRetry()
     {
-        using var scope = new StopScope();
+        await using var scope = await StopScope.CreateAsync();
         scope.Observer.FailSave = true;
         ServerStarter.RequestStop();
         ServerStarter.BeginStopRequestHandling();
-
-        Assert.False(scope.ProcessStopTick());
+        await scope.WaitForFailedSaveAsync();
         Assert.False(scope.ProcessStopTick());
         Assert.Single(scope.Observer.SaveThreads);
         Assert.Empty(scope.Observer.DisposeThreads);
         Assert.False(scope.Project.IsDisposed);
-        Assert.False(scope.Node.Runtime.IsClosed);
-
+        Assert.False(scope.World.IsClosed);
         scope.Observer.FailSave = false;
         ServerStarter.RequestStop();
-        Assert.True(scope.ProcessStopTick());
+        await scope.WaitForStopAsync();
         Assert.Equal(2, scope.Observer.SaveThreads.Count);
         Assert.Single(scope.Observer.DisposeThreads);
-
-        // A late Activity.OnDestroy after shutdown must not stop the next run.
+        await scope.CloseWorldAsync();
+        // A late request after shutdown cannot stop the next run.
         ServerStarter.RequestStop();
         ServerStarter.BeginStopRequestHandling();
         Assert.False(ServerStarter.ProcessStopRequest());
     }
 
     [Fact]
-    public void CancelledNewOwnerStopsEvenWhenItsTaskStartsAfterThePreviousRunEnded()
+    public async Task CancelledNewOwnerStopsEvenWhenItsTaskStartsAfterThePreviousRunEnded()
     {
-        using var scope = new StopScope();
+        await using var scope = await StopScope.CreateAsync();
         ServerStarter.EndStopRequestHandling();
         using var owner = new CancellationTokenSource();
         owner.Cancel();
-
         using var registration = ServerStarter.BeginStopRequestHandling(owner.Token);
-        Assert.True(scope.ProcessStopTick());
+        await scope.WaitForStopAsync();
         Assert.Single(scope.Observer.SaveThreads);
         Assert.Single(scope.Observer.DisposeThreads);
     }
 
     [Fact]
-    public void DestroyingAnOldOwnerCannotStopTheNextRun()
+    public async Task DestroyingAnOldOwnerCannotStopTheNextRun()
     {
-        using var scope = new StopScope();
+        await using var scope = await StopScope.CreateAsync();
         using var oldOwner = new CancellationTokenSource();
         var oldRegistration = ServerStarter.BeginStopRequestHandling(oldOwner.Token);
         oldRegistration.Dispose();
         ServerStarter.EndStopRequestHandling();
-
         using var newOwner = new CancellationTokenSource();
         using var registration = ServerStarter.BeginStopRequestHandling(newOwner.Token);
         oldOwner.Cancel();
         Assert.False(scope.ProcessStopTick());
         Assert.Empty(scope.Observer.SaveThreads);
         Assert.False(scope.Project.IsDisposed);
-
         newOwner.Cancel();
-        Assert.True(scope.ProcessStopTick());
+        await scope.WaitForStopAsync();
         Assert.Single(scope.Observer.DisposeThreads);
     }
 
     [Fact]
-    public void FailedSaveRejectsTheActualRestartCallbackBeforePublishingIntent()
+    public async Task FailedSaveRejectsTheActualRestartCallbackBeforePublishingIntent()
     {
-        using var scope = new StopScope();
+        await using var scope = await StopScope.CreateAsync();
         var previousAction = ServerStarter.ExitAction;
         scope.Observer.FailSave = true;
         ServerStarter.BeginStopRequestHandling();
-        Assert.Throws<WorldSaveException>(() => ServerStarter.ProcessCommands.Restart(new SessionInfo()));
+        ServerStarter.ProcessCommands.Restart(new SessionInfo());
+        Assert.Equal(previousAction, ServerStarter.ExitAction);
+        await scope.WaitForFailedSaveAsync();
         Assert.Equal(previousAction, ServerStarter.ExitAction);
         Assert.False(scope.ProcessStopTick());
         Assert.False(scope.Project.IsDisposed);
@@ -141,14 +132,13 @@ public sealed class ServerStopRequestTest
     }
 
     [Fact]
-    public void ActualRestartCallbackSavesTheWorldAndPersistsItsRecoverableSessionBeforeStopping()
+    public async Task ActualRestartSavesAndRetiresTheWorldBeforePublishingItsRecoverableSession()
     {
-        using var scope = new StopScope();
+        await using var scope = await StopScope.CreateAsync();
         var paths = new[] { GamePaths.RunningSettingFile, GamePaths.SessionInfoFile };
         var backups = paths.ToDictionary(
             path => path,
-            path =>
-                Storage.FileExists(path) ? File.ReadAllBytes(Storage.GetSystemPath(path)) : null
+            path => Storage.FileExists(path) ? File.ReadAllBytes(Storage.GetSystemPath(path)) : null
         );
         var previousAction = ServerStarter.ExitAction;
         try
@@ -156,9 +146,12 @@ public sealed class ServerStopRequestTest
             ServerStarter.BeginStopRequestHandling();
             var source = new SessionInfo { World = "RestartWorld", ServerPort = 43971, HttpCommandEnabled = true };
             ServerStarter.ProcessCommands.Restart(source);
+            Assert.Equal(previousAction, ServerStarter.ExitAction);
+            await scope.WaitForStopAsync();
             Assert.Equal(GameExitAction.Restart, ServerStarter.ExitAction);
-            Assert.Single(scope.Observer.SaveThreads);
-            Assert.False(scope.Project.IsDisposed);
+            Assert.Equal([scope.OwnerThread], scope.Observer.SaveThreads);
+            Assert.Equal([scope.OwnerThread], scope.Observer.DisposeThreads);
+            Assert.True(scope.Project.IsDisposed);
             var settings = StartupManager.Profiles.LoadRunningSettings();
             Assert.False(string.IsNullOrWhiteSpace(settings.PendingSessionId));
             var pending = StartupManager.Profiles.LoadSession(settings.PendingSessionId);
@@ -166,9 +159,6 @@ public sealed class ServerStopRequestTest
             Assert.Equal(source.ServerPort, pending.ServerPort);
             Assert.Equal(source.HttpCommandEnabled, pending.HttpCommandEnabled);
             Assert.Equal(string.Empty, source.SessionId);
-            Assert.True(scope.ProcessStopTick());
-            Assert.True(scope.Project.IsDisposed);
-            Assert.Single(scope.Observer.DisposeThreads);
         }
         finally
         {
@@ -185,30 +175,25 @@ public sealed class ServerStopRequestTest
         }
     }
 
-    private sealed class StopScope : IDisposable
+    private sealed class StopScope : IAsyncDisposable
     {
-        private static readonly FieldInfo _worldsField =
-            typeof(ServerStarter).GetField("_worlds", BindingFlags.Static | BindingFlags.NonPublic)!;
+        private static FieldInfo Field(string name) => typeof(ServerStarter).GetField(
+            name,
+            BindingFlags.Static | BindingFlags.NonPublic
+        )!;
 
-        private static readonly FieldInfo _runningField =
-            typeof(ServerStarter).GetField("_running", BindingFlags.Static | BindingFlags.NonPublic)!;
+        private readonly GameWorldController _controller = (GameWorldController)Field("_worlds").GetValue(null)!;
 
-        private static readonly FieldInfo _stopRequestedField =
-            typeof(ServerStarter).GetField("_stopRequested", BindingFlags.Static | BindingFlags.NonPublic)!;
-
-        private readonly GameWorldController _controller = (GameWorldController)_worldsField.GetValue(null)!;
-
-
-        private readonly object? _previousRunning = _runningField.GetValue(null);
-
-        private readonly object? _previousStopRequested = _stopRequestedField.GetValue(null);
+        private readonly Dictionary<FieldInfo, object?> _previous =
+            new[] { "_running", "_stopRequested", "_pendingWorldStop", "_commitAfterStop" }
+                .Select(Field).ToDictionary(field => field, field => field.GetValue(null));
 
         private readonly string _directory = Path.Combine(
             Path.GetTempPath(),
             "scnet-stop-" + Guid.NewGuid().ToString("N")
         );
 
-        private readonly SubsystemWorldLifecycle _lifecycle;
+        private readonly string _scheme = "server-stop-" + Guid.NewGuid().ToString("N");
 
         internal NetNode Node { get; } = new(
             NetNodeOptions.Default,
@@ -217,65 +202,122 @@ public sealed class ServerStopRequestTest
             NodeRole.Authority
         );
 
-        internal ServerTestProject Project { get; }
+        internal WorldRuntimeContext World { get; private set; } = null!;
+
+        internal ServerTestProject Project { get; private set; } = null!;
 
         internal GameRuntime Runtime { get; } = new(false);
 
         internal ThreadObserver Observer { get; } = new();
 
-        internal StopScope()
-        {
-            Assert.Null(_controller.Runtime);
+        internal int OwnerThread { get; private set; }
 
-            _stopRequestedField.SetValue(null, 0);
-            var scheme = "server-stop-" + Guid.NewGuid().ToString("N");
-            Storage.RegisterFileSystemRoot(scheme, _directory);
-            Project = new ServerTestProject(Node.Runtime);
-            var catalog = new BlockContentCatalog(
-                BlockRuntimeCatalog.Compile(
-                    [
-                        new(ResourceId.Parse("game:air"), new BlockRegistration(static () => new AirBlock()))
-                    ]
-                )
-            );
-            _ = new WorldContentBinding(Node.Runtime, catalog, catalog.Dispose);
-            Project.AddSubsystem(
-                new SubsystemGameInfo
-                    { WorldSettings = new WorldSettings(), DirectoryName = scheme + ":/world" }
-            );
-            Project.AddSubsystem(Observer);
-            _lifecycle = new SubsystemWorldLifecycle();
-            Project.AddSubsystem(_lifecycle);
-            _lifecycle.Load(new ValuesDictionary());
-            _lifecycle.Stopped += _ => ServerStarter.EndStopRequestHandling();
-            Runtime.Attach(Node.Runtime);
-            typeof(GameWorldController).GetProperty(nameof(GameWorldController.Runtime))!
-                .SetValue(_controller, Runtime);
+        internal static async Task<StopScope> CreateAsync()
+        {
+            var scope = new StopScope();
+            Assert.Null(scope._controller.Runtime);
+            Field("_stopRequested").SetValue(null, 0);
+            Field("_pendingWorldStop").SetValue(null, null);
+            Field("_commitAfterStop").SetValue(null, null);
+            Storage.RegisterFileSystemRoot(scope._scheme, scope._directory);
+            try
+            {
+                await scope.Runtime.StartAuthorityAsync(cancellation =>
+                    {
+                        scope.OwnerThread = Environment.CurrentManagedThreadId;
+                        scope.World = scope.Node.Runtime;
+                        scope.Project = new ServerTestProject(scope.World);
+                        var catalog = new BlockContentCatalog(
+                            BlockRuntimeCatalog.Compile(
+                                [
+                                    new(
+                                        ResourceId.Parse("game:air"),
+                                        new BlockRegistration(static () => new AirBlock())
+                                    )
+                                ]
+                            )
+                        );
+                        _ = new WorldContentBinding(scope.World, catalog, catalog.Dispose);
+                        scope.Project.AddSubsystem(
+                            new SubsystemGameInfo
+                            {
+                                WorldSettings = new WorldSettings(), DirectoryName = scope._scheme + ":/world"
+                            }
+                        );
+                        scope.Project.AddSubsystem(scope.Observer);
+                        var lifecycle = new SubsystemWorldLifecycle();
+                        scope.Project.AddSubsystem(lifecycle);
+                        lifecycle.Load(new ValuesDictionary());
+                        return scope.World;
+                    }
+                );
+                typeof(GameWorldController).GetProperty(nameof(GameWorldController.Runtime))!.SetValue(
+                    scope._controller,
+                    scope.Runtime
+                );
+                return scope;
+            }
+            catch
+            {
+                await scope.DisposeAsync();
+                throw;
+            }
         }
 
-        internal bool ProcessStopTick()
+        internal bool ProcessStopTick() => ServerStarter.ProcessStopRequest();
+
+        internal async Task WaitForStopAsync()
         {
-            var immediate = ServerStarter.ProcessStopRequest();
-            Node.Update();
-            _lifecycle.Update(0);
-            return immediate || Project.IsDisposed;
+            for (var i = 0; i < 500; i++)
+            {
+                if (ProcessStopTick()) { return; }
+
+                await Task.Delay(2);
+            }
+
+            Assert.Fail("The host did not observe authority retirement.");
         }
 
-        public void Dispose()
+        internal async Task WaitForFailedSaveAsync()
+        {
+            for (var i = 0; i < 500; i++)
+            {
+                Assert.False(ProcessStopTick());
+                if (!Observer.SaveThreads.IsEmpty &&
+                    Runtime.AuthorityExecution!.Status.State == AuthorityExecutionState.Running &&
+                    Field("_pendingWorldStop").GetValue(null) == null &&
+                    (int)Field("_stopRequested").GetValue(null)! == 0) { return; }
+
+                await Task.Delay(2);
+            }
+
+            Assert.Fail("The host did not observe the failed final save.");
+        }
+
+        internal Task CloseWorldAsync() => _controller.CloseAsync();
+
+        public async ValueTask DisposeAsync()
         {
             ServerStarter.EndStopRequestHandling();
-            _controller.Close();
-            Project.Dispose();
+            try
+            {
+                await _controller.CloseAsync();
+                await Runtime.DisposeAsync();
+            }
+            finally
+            {
+                foreach (var (field, value) in _previous) { field.SetValue(null, value); }
 
-            _runningField.SetValue(null, _previousRunning);
-            _stopRequestedField.SetValue(null, _previousStopRequested);
-            if (Directory.Exists(_directory)) { Directory.Delete(_directory, true); }
+                if (Directory.Exists(_directory)) { Directory.Delete(_directory, true); }
+            }
         }
     }
 
     private sealed class ThreadObserver : Subsystem
     {
-        internal bool FailSave { get; set; }
+        private volatile bool _failSave;
+
+        internal bool FailSave { get => _failSave; set => _failSave = value; }
 
         internal ConcurrentQueue<int> SaveThreads { get; } = new();
 

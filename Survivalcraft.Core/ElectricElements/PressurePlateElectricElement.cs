@@ -5,7 +5,7 @@ public class PressurePlateElectricElement(
     CellFace cellFace
 ) : MountedElectricElement(subsystemElectricity, cellFace)
 {
-    private int _lastPressFrameIndex;
+    private long _lastPressTick;
 
     private float _pressure;
 
@@ -13,7 +13,7 @@ public class PressurePlateElectricElement(
 
     public void Press(float pressure)
     {
-        _lastPressFrameIndex = Time.FrameIndex;
+        _lastPressTick = WorldRuntimeContext.For(SubsystemElectricity.Project).Clock.TickIndex;
         if (!(pressure > _pressure))
         {
             return;
@@ -40,7 +40,8 @@ public class PressurePlateElectricElement(
     public override bool Simulate()
     {
         var voltage = _voltage;
-        if (_pressure > 0f && Time.FrameIndex - _lastPressFrameIndex < 2)
+        if (_pressure > 0f &&
+            WorldRuntimeContext.For(SubsystemElectricity.Project).Clock.TickIndex - _lastPressTick < 2)
         {
             _voltage = PressureToVoltage(_pressure);
             SubsystemElectricity.QueueElectricElementForSimulation(this, SubsystemElectricity.CircuitStep + 10);

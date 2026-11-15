@@ -103,6 +103,8 @@ public sealed class WorldNetworkBinding : IDisposable
     {
         if (World.IsClosed || !ReferenceEquals(context.Runtime, World)) { return false; }
 
+        World.VerifyExecutionAccess();
+
         if (!AllowsMessage(message) || !Handlers.TryResolve(message, out var registration)) { return false; }
 
         ResolveHandler(registration!).Handle(message, context);

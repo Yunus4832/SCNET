@@ -14,13 +14,16 @@ public sealed class HttpCommandAdapter(CommandRegistry registry)
         CommandPrincipal principal,
         Project? applicationProject,
         Project? authorityProject,
-        LocalizedTextResolver resolver
+        LocalizedTextResolver resolver,
+        params CommandDomain[] domains
     )
     {
         return _registry.Adapters.Get<HttpCommandBinding>()
             .Where(entry =>
                 {
                     if (!_registry.TryGetDefinition(entry.Id, out var command) || command is null) { return false; }
+
+                    if (domains.Length > 0 && !domains.Contains(command.Definition.Domain)) { return false; }
 
                     var project = command.Definition.Domain == CommandDomain.Application
                         ? applicationProject

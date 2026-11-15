@@ -264,7 +264,7 @@ public class CommandAuthorityTest
     }
 
     [Fact]
-    public void SuggestionsAndImplicitPermissionsUseTheExplicitWorldWithoutACharacter()
+    public async Task SuggestionsAndImplicitPermissionsUseTheExplicitWorldWithoutACharacter()
     {
         using var authority = new RuntimeTestProject(RuntimeSide.Authority);
         using var client = new RuntimeTestProject(RuntimeSide.Client);
@@ -274,8 +274,15 @@ public class CommandAuthorityTest
         )!.GetValue(null)!;
         var runtimeProperty = typeof(GameWorldController).GetProperty(nameof(GameWorldController.Runtime))!;
         var previous = Game.Managers.GameManager.Runtime;
-        using var session = new GameRuntime(false);
-        session.Attach(WorldRuntimeContext.For(client));
+        await using var session = new GameRuntime(
+            false,
+            action =>
+            {
+                action();
+                return Task.CompletedTask;
+            }
+        );
+        session.AttachClient(WorldRuntimeContext.For(client));
         try
         {
             runtimeProperty.SetValue(controller, session);

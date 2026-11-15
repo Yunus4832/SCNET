@@ -310,7 +310,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
             FrameStartCircuitStep = CircuitStep;
             SimulatedElectricElements = 0;
             _remainingSimulationTime = MathUtils.Min(_remainingSimulationTime + dt, 0.1f);
-            var sendFlag = Time.PeriodicEvent(0.05, 0.0);
+            var sendFlag = WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.05, 0.0);
             if (sendFlag && WorldRuntimeContext.For(Project).IsAuthority)
             {
                 var interest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;

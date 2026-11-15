@@ -11,7 +11,7 @@ public static class HttpCommandHostManager
             ? new CommandExecutionScope(
                 runtime.Commands,
                 GameManager.ClientProject,
-                GameManager.Runtime?.Authority?.Project
+                GameManager.Runtime?.AuthorityExecution
             )
             : null,
         () => Localization.ClientLanguage.Resolver

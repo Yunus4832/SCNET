@@ -2,11 +2,37 @@ using System.Runtime.CompilerServices;
 
 using EntitySystem.Core;
 
+using Game.World.Timing;
+
 namespace Game.World;
 
 /// <summary>Explicit world binding and lifetime for one side of a game session.</summary>
 public sealed class WorldRuntimeContext
 {
+    public WorldUpdateClock Clock { get; } = new();
+
+    private int _executionThreadId;
+
+    public void BindExecutionThread()
+    {
+        ObjectDisposedException.ThrowIf(IsClosed, this);
+        var current = Environment.CurrentManagedThreadId;
+        var previous = Interlocked.CompareExchange(ref _executionThreadId, current, 0);
+        if (previous != 0 && previous != current)
+        {
+            throw new InvalidOperationException("The world already belongs to another execution thread.");
+        }
+    }
+
+    public void VerifyExecutionAccess()
+    {
+        var owner = Volatile.Read(ref _executionThreadId);
+        if (owner != 0 && owner != Environment.CurrentManagedThreadId)
+        {
+            throw new InvalidOperationException("World operations must execute on their owning thread.");
+        }
+    }
+
     private static readonly ConditionalWeakTable<Project, WorldRuntimeContext> _worlds = new();
 
 
@@ -94,7 +120,9 @@ public sealed class WorldRuntimeContext
 
     private sealed record DelayedAction(double Time, Action Action);
 
-    public Project? BoundProject { get; private set; }
+    private volatile Project? _boundProject;
+
+    public Project? BoundProject { get => _boundProject; private set => _boundProject = value; }
 
     public bool HasProjectResources => BoundProject is not null;
 
@@ -122,9 +150,13 @@ public sealed class WorldRuntimeContext
     public bool HasPresentation { get; }
 
 
-    public Project? Project { get; private set; }
+    private volatile Project? _project;
 
-    public bool IsClosed { get; private set; }
+    public Project? Project { get => _project; private set => _project = value; }
+
+    private volatile bool _closed;
+
+    public bool IsClosed => _closed;
 
     public static bool IsProjectActive(Project project)
     {
@@ -172,7 +204,7 @@ public sealed class WorldRuntimeContext
             return;
         }
 
-        IsClosed = true;
+        _closed = true;
         Project = null;
         _delayedActions.Clear();
         try

@@ -1,9 +1,12 @@
+using Game.World.Timing;
+
 namespace Game.Terrains;
 
 /// <summary>Observes season inputs without owning terrain work or residency.</summary>
 public sealed class TerrainEnvironmentObserver(
     Terrain terrain,
-    SubsystemGameInfo gameInfo
+    SubsystemGameInfo gameInfo,
+    WorldUpdateClock clock
 )
 {
     private readonly FloatCurve _temperatureCurve = new(
@@ -32,7 +35,7 @@ public sealed class TerrainEnvironmentObserver(
     public bool Update()
     {
         var appearanceChanged = false;
-        if (Time.PeriodicEvent(1, 0.0))
+        if (clock.PeriodicEvent(1, 0.0))
         {
             var temperature = (int)MathUtils.Round(_temperatureCurve.Sample(gameInfo.WorldSettings.TimeOfYear));
             var humidity = (int)MathUtils.Round(_humidityCurve.Sample(gameInfo.WorldSettings.TimeOfYear));

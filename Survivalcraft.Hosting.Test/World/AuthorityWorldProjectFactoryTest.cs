@@ -38,7 +38,7 @@ public sealed class AuthorityWorldProjectFactoryTest
     }
 
     [Fact]
-    public void HostCreatesAndReleasesAnActualProjectUsingPreparedCoreContentWithoutApplicationTypes()
+    public async Task HostCreatesAndReleasesAnActualProjectUsingPreparedCoreContentWithoutApplicationTypes()
     {
         var world = new WorldRuntimeContext(RuntimeSide.Authority, false);
         var activity = new WorldProjectActivity();
@@ -80,11 +80,15 @@ public sealed class AuthorityWorldProjectFactoryTest
         Assert.Equal(1, written);
         Assert.Equal(0, released);
         Assert.True(activity.IsDirectoryInUse(directory));
-        Assert.Contains(project, activity.Projects);
+        var tracked = new List<Project>();
+        await activity.ApplyToProjectsAsync(tracked.Add);
+        Assert.Contains(project, tracked);
         world.Close();
         Assert.Equal(0, released);
         Assert.True(activity.IsDirectoryInUse(directory));
-        Assert.Empty(activity.Projects);
+        tracked.Clear();
+        await activity.ApplyToProjectsAsync(tracked.Add);
+        Assert.Empty(tracked);
         project.Dispose();
         Assert.Equal(1, released);
         Assert.False(activity.IsDirectoryInUse(directory));

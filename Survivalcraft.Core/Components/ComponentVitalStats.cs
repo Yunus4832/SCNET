@@ -124,7 +124,8 @@ public class ComponentVitalStats : Component, IUpdateable
             if (_random.Bool(dt)) { body.ApplyImpulse(Vector3.UnitY * _character.ComponentLocomotion.JumpSpeed); }
         }
 
-        if (Time.PeriodicEvent(1, .5) && _character.CharacterData.ControllerConnection is { IsConnected: true } owner)
+        if (WorldRuntimeContext.For(Project).Clock.PeriodicEvent(1, .5) &&
+            _character.CharacterData.ControllerConnection is { IsConnected: true } owner)
         {
             NetworkSender.SendTo(owner, EntityStatePackageBuilder.Capture(this));
         }
@@ -209,7 +210,7 @@ public class ComponentVitalStats : Component, IUpdateable
         if (RulesEnabled)
         {
             var hunger = _character.ComponentLevel.HungerFactor;
-            if (_character.ComponentSleep is { IsSleeping: true, SubsystemUpdate.UpdatesPerFrame: 1 })
+            if (_character.ComponentSleep is { IsSleeping: true, SubsystemUpdate.UpdatesPerTick: 1 })
             {
                 hunger *= _info.WorldSettings.RecoverFactor;
             }

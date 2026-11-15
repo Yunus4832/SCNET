@@ -22,12 +22,12 @@ public class SubsystemItemsScanner : Subsystem, IUpdateable
             return;
         }
 
-        if (!(Time.FrameStartTime >= _nextAutomaticScanTime))
+        if (!(Time.RealTime >= _nextAutomaticScanTime))
         {
             return;
         }
 
-        _nextAutomaticScanTime = Time.FrameStartTime + AutomaticScanPeriod;
+        _nextAutomaticScanTime = Time.RealTime + AutomaticScanPeriod;
         ItemsScanned?.Invoke(ScanItems());
     }
 
@@ -132,7 +132,7 @@ public class SubsystemItemsScanner : Subsystem, IUpdateable
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
-        _nextAutomaticScanTime = Time.FrameStartTime + AutomaticScanPeriod;
+        _nextAutomaticScanTime = Time.RealTime + AutomaticScanPeriod;
     }
 
     private void ScanInventory(IInventory inventory, List<ScannedItemData> items)

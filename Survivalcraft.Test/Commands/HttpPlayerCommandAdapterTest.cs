@@ -154,7 +154,7 @@ public class HttpPlayerCommandAdapterTest
             )
         );
         Assert.True(
-            new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject).TryCreate(
+            new TextCommandAdapter(registry, null).TryCreate(
                 "/time set night",
                 context,
                 out var textCommand,
@@ -237,7 +237,7 @@ public class HttpPlayerCommandAdapterTest
                 "request"
             );
             Assert.True(
-                new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject).TryCreate(
+                new TextCommandAdapter(registry, null).TryCreate(
                     "/change",
                     context,
                     out var textCommand,

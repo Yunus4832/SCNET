@@ -10,24 +10,23 @@ public sealed class WorldProjectActivity
 
     private readonly HashSet<FileOperation> _fileOperations = [];
 
-    public IReadOnlyList<Project> Projects
+    public async Task ApplyToProjectsAsync(Action<Project> operation)
     {
-        get
+        ArgumentNullException.ThrowIfNull(operation);
+        Registration[] registrations;
+        lock (_sync) { registrations = _worlds.Values.ToArray(); }
+
+        foreach (var registration in registrations)
         {
-            lock (_sync)
-            {
-                return _worlds.Keys.Where(world => !world.IsClosed)
-                    .Select(world => world.BoundProject)
-                    .OfType<Project>().Where(project => !project.IsDisposed).ToArray();
-            }
+            await registration.ApplyAsync(operation).ConfigureAwait(false);
         }
     }
 
-    public void Track(WorldRuntimeContext world, string? sourceDirectory)
+    public void Track(WorldRuntimeContext world, string? sourceDirectory, Func<Action, Task>? execute = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ObjectDisposedException.ThrowIf(world.IsClosed, world);
-        var registration = new Registration(this, world, sourceDirectory);
+        var registration = new Registration(this, world, sourceDirectory, execute);
         lock (_sync)
         {
             if (sourceDirectory is not null &&
@@ -105,10 +104,31 @@ public sealed class WorldProjectActivity
                !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
     }
 
-    private sealed class Registration(WorldProjectActivity owner, WorldRuntimeContext world, string? sourceDirectory)
+    private sealed class Registration(
+        WorldProjectActivity owner,
+        WorldRuntimeContext world,
+        string? sourceDirectory,
+        Func<Action, Task>? execute
+    )
         : IDisposable
     {
         public string? SourceDirectory { get; } = sourceDirectory;
+
+        public Task ApplyAsync(Action<Project> operation)
+        {
+            if (world.IsClosed) { return Task.CompletedTask; }
+
+            void Apply()
+            {
+                world.VerifyExecutionAccess();
+                if (world is { IsClosed: false, Project: { IsDisposed: false } project }) { operation(project); }
+            }
+
+            if (execute != null) { return execute(Apply); }
+
+            Apply();
+            return Task.CompletedTask;
+        }
 
         public void Dispose()
         {

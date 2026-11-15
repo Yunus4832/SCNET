@@ -205,14 +205,14 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             {
                 StopPiston(key);
                 value.Stop = false;
-                value.StoppedFrame = Time.FrameIndex;
+                value.StoppedTick = WorldRuntimeContext.For(Project).Clock.TickIndex;
             }
         }
 
         foreach (var (key2, value2) in _tmpActions)
         {
             if (value2 is not { Move: not null, Stop: false } ||
-                Time.FrameIndex == value2.StoppedFrame ||
+                WorldRuntimeContext.For(Project).Clock.TickIndex == value2.StoppedTick ||
                 _subsystemMovingBlocks.FindMovingBlocks(IdString, key2) != null)
             {
                 continue;
@@ -751,7 +751,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
         public bool Stop;
 
-        public int StoppedFrame;
+        public long StoppedTick;
     }
 
     public override void Dispose()

@@ -104,11 +104,27 @@ public static class AutomationGameplayContext
 
         return new
         {
-            Authority = CaptureRuntime(gameRuntime.Authority, characterId),
+            Authority = CaptureAuthority(gameRuntime.AuthorityExecution?.Status, characterId),
             Client = CaptureRuntime(gameRuntime.Client, characterId),
-            DistinctProjects = gameRuntime.Authority?.Project is { } authority &&
-                               gameRuntime.Client?.Project is { } client &&
-                               !ReferenceEquals(authority, client)
+            DistinctProjects = gameRuntime.AuthorityExecution is not null &&
+                               gameRuntime.Client is not null &&
+                               gameRuntime.AuthorityExecution.Status.WorldId != gameRuntime.Client.Id
+        };
+    }
+
+    private static object? CaptureAuthority(AuthorityWorldStatus? status, Guid characterId)
+    {
+        if (status == null) { return null; }
+
+        var player = status.Characters.FirstOrDefault(character => character.CharacterId == characterId);
+        return new
+        {
+            Id = status.WorldId,
+            Side = RuntimeSide.Authority.ToString(),
+            WorldLoaded = status.State == AuthorityExecutionState.Running,
+            status.LocalPort,
+            SelfCharacterId = (Guid?)null,
+            Position = player == null ? null : Coordinates(player.Position)
         };
     }
 

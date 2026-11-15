@@ -83,20 +83,25 @@ internal sealed class TerrainLightWorkerPool : IDisposable
         _completed(completion);
     }
 
-    public void Dispose()
+    private Task? _stopping;
+
+    public Task StopAsync()
     {
         TerrainLightTask[] tasks;
+        Task completion;
         lock (_sync)
         {
-            if (_disposed) { return; }
+            if (_stopping != null) { return _stopping; }
 
             _disposed = true;
             tasks = _active.ToArray();
+            _stopping = completion = Task.WhenAll(tasks.Select(task => task.Worker));
         }
 
         foreach (var task in tasks) { task.Cancel(); }
 
-        // Closing joins only private computations and callbacks, which never require world access.
-        Task.WhenAll(tasks.Select(task => task.Worker)).GetAwaiter().GetResult();
+        return completion;
     }
+
+    public void Dispose() => StopAsync().GetAwaiter().GetResult();
 }

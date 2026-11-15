@@ -225,7 +225,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             for (var i = 0; i < 3; i++)
             {
                 WorldRuntimeContext.For(Project).QueueTimeDelayedExecution(
-                    Time.FrameStartTime + i * 0.25f,
+                    Time.RealTime + i * 0.25f,
                     delegate { _subsystemSoundMaterials.PlayImpactSound(startValue, new Vector3(start.Point), 1f); }
                 );
             }

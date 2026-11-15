@@ -214,7 +214,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
         var num = Terrain.ExtractContents(ComponentMiner.ActiveBlockValue);
         var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
 
-        if (_subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1f, 0.0))
+        if (_subsystemUpdate.IsLastUpdateInTick && WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1f, 0.0))
         {
             if (WorldRuntimeContext.For(Project).IsAuthority)
                 //服务器广播玩家数据
@@ -393,7 +393,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
                         _aim = null;
                         _isAimBlocked = true;
                     }
-                    else if (Time.PeriodicEvent(1, 0))
+                    else if (WorldRuntimeContext.For(Project).Clock.PeriodicEvent(1, 0))
                     {
                         AimHintRequested?.Invoke();
                     }

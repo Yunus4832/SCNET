@@ -1,5 +1,7 @@
 using EntitySystem.Core;
 
+using Game.Application;
+
 namespace Game.World.Presentation;
 
 /// <summary>Actual presentation-side world identity and explicit requests to its application lifecycle owner.</summary>
@@ -21,7 +23,9 @@ public sealed class ClientWorldPresentation : IDisposable
 
     public bool IsEnteringWorld { get; private set; } = true;
 
-    public ComponentCharacter? LocalCharacter => Project.FindSubsystem<SubsystemCharacters>()?.LocalCharacter;
+    public ComponentCharacter? LocalCharacter => !_disposed && !Runtime.IsClosed && !Project.IsDisposed
+        ? Project.FindSubsystem<SubsystemCharacters>()?.LocalCharacter
+        : null;
 
     public event Action<ClientWorldSaveRequest>? SaveRequested;
 
@@ -55,11 +59,11 @@ public sealed class ClientWorldPresentation : IDisposable
         return !_disposed && ReferenceEquals(project, Project) ? LocalAuthority : null;
     }
 
-    public void RequestSave(bool waitForCompletion, bool showErrorDialog)
+    public void RequestSave(bool showErrorDialog)
     {
         if (!_disposed)
         {
-            SaveRequested?.Invoke(new ClientWorldSaveRequest(Project, waitForCompletion, showErrorDialog));
+            SaveRequested?.Invoke(new ClientWorldSaveRequest(Project, showErrorDialog));
         }
     }
 
@@ -75,7 +79,11 @@ public sealed class ClientWorldPresentation : IDisposable
 
     public void CompleteEntry() => IsEnteringWorld = false;
 
-    private void OnProjectDisposed(Project project) => Dispose();
+    private void OnProjectDisposed(Project project)
+    {
+        Dispose();
+        ClientApplication.ReleaseWorld(this);
+    }
 
     public void Dispose()
     {

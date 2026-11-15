@@ -64,7 +64,8 @@ public class ComponentHealth : Component, IUpdateable
         var position = _componentCreature.ComponentBody.Position;
         if (Health is > 0f and < 1f)
         {
-            if (WorldRuntimeContext.For(Project).IsAuthority && Time.PeriodicEvent(2.0, 0.0))
+            if (WorldRuntimeContext.For(Project).IsAuthority &&
+                WorldRuntimeContext.For(Project).Clock.PeriodicEvent(2.0, 0.0))
             {
                 NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
             }
@@ -256,7 +257,7 @@ public class ComponentHealth : Component, IUpdateable
         }
 
         if (_componentCharacter is
-            { ComponentSleep: { SubsystemUpdate.UpdatesPerFrame: 1, IsSleeping: true } })
+            { ComponentSleep: { SubsystemUpdate.UpdatesPerTick: 1, IsSleeping: true } })
         {
             amount *= _subsystemGameInfo.WorldSettings.RecoverFactor;
         }

@@ -26,7 +26,7 @@ public class SubsystemTime : Subsystem
 
     public float? FixedTimeStep { get; set; }
 
-    public int NextFrame(float frameDuration, Func<CharacterSleepPopulation> readPopulation)
+    public int AdvanceStep(float elapsedSeconds, Func<CharacterSleepPopulation> readPopulation)
     {
         if (Project.IsDisposed)
         {
@@ -38,7 +38,7 @@ public class SubsystemTime : Subsystem
 
         PreviousGameTimeDelta = GameTimeDelta;
         GameTimeDelta = !FixedTimeStep.HasValue
-            ? MathUtils.Min(frameDuration * _gameTimeFactor, 0.1f)
+            ? MathUtils.Min(elapsedSeconds * _gameTimeFactor, 0.1f)
             : MathUtils.Min(FixedTimeStep.Value * _gameTimeFactor, 0.1f);
 
         GameTime += GameTimeDelta;

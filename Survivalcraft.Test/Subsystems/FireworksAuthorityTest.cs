@@ -41,11 +41,11 @@ public sealed class FireworksAuthorityTest
         world.Fireworks.OnFiredAsProjectile(projectile);
         Assert.Equal(ProjectileTrailKind.Fireworks, projectile.Trail!.Kind);
         Assert.Equal(ProjectilePackage.EffectType.FireworksWhoosh, Assert.Single(effects).Kind);
-        for (var i = 0; i < frames; i++) { world.Time.NextFrame(.1f, () => default); }
+        for (var i = 0; i < frames; i++) { world.Time.AdvanceStep(.1f, () => default); }
 
         Assert.True(projectile.ToRemove);
         Assert.Equal(1, effects.Count(effect => effect.Kind == ProjectilePackage.EffectType.FireworksExplosion));
-        world.Time.NextFrame(.1f, () => default);
+        world.Time.AdvanceStep(.1f, () => default);
         Assert.Equal(2, effects.Count);
         Assert.Null(world.Project.FindSubsystem<SubsystemParticles>());
     }
@@ -72,7 +72,7 @@ public sealed class FireworksAuthorityTest
             },
             null
         );
-        for (var i = 0; i < 20; i++) { world.Time.NextFrame(.1f, () => default); }
+        for (var i = 0; i < 20; i++) { world.Time.AdvanceStep(.1f, () => default); }
 
         Assert.False(projectile.ToRemove);
         Assert.Equal(ProjectileTrailKind.Fireworks, projectile.Trail!.Kind);

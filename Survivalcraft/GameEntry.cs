@@ -98,7 +98,6 @@ public static class GameEntry
 
     public static void DeactivatedHandler()
     {
-        GC.Collect();
     }
 
     public static void FrameHandler()
@@ -133,14 +132,38 @@ public static class GameEntry
         _lastWindowSize = new Point2(Window.View.Size.X, Window.View.Size.Y);
     }
 
+    private static Task? _preparingClose;
+
+    private static bool _closePrepared;
+
     private static bool PrepareClose()
     {
-        try
+        if (_closePrepared) { return true; }
+
+        if (_preparingClose != null) { return false; }
+
+        _preparingClose = GameManager.CloseWorldAsync();
+        if (_preparingClose.IsCompletedSuccessfully)
         {
-            GameManager.SaveProject(waitForCompletion: true, showErrorDialog: true);
+            _closePrepared = true;
             return true;
         }
-        catch (WorldSaveException) { return false; }
+
+        _ = _preparingClose.ContinueWith(
+            completed => Dispatcher.Dispatch(() =>
+                {
+                    _preparingClose = null;
+                    if (completed.IsCompletedSuccessfully)
+                    {
+                        _closePrepared = true;
+                        Window.Close();
+                    }
+                    else { Log.Error($"Window close preparation failed: {completed.Exception}"); }
+                }
+            ),
+            TaskScheduler.Default
+        );
+        return false;
     }
 
     public static void Closed()
@@ -168,7 +191,7 @@ public static class GameEntry
 
         if (CommonLib.IsNetworkInitialized)
         {
-            Cleanup(GameManager.DisposeProject);
+            Cleanup(GameManager.FinalizePlatformShutdown);
             Cleanup(CommonLib.Net.StopImmediate);
         }
 

@@ -3,6 +3,8 @@ namespace Game.Diagnostics;
 /// <summary>Cumulative main-loop counters; recorded and read on the server update thread.</summary>
 public sealed class ServerTickStatistics
 {
+    private readonly Lock _gate = new();
+
     public long Ticks { get; private set; }
 
     public long OverBudgetTicks { get; private set; }
@@ -15,13 +17,30 @@ public sealed class ServerTickStatistics
 
     public void Record(double workMilliseconds, double startLatenessMilliseconds)
     {
-        Ticks++;
-        WorkMilliseconds += workMilliseconds;
-        MaximumWorkMilliseconds = Math.Max(MaximumWorkMilliseconds, workMilliseconds);
-        MaximumStartLatenessMilliseconds = Math.Max(MaximumStartLatenessMilliseconds, startLatenessMilliseconds);
-        if (workMilliseconds > 50)
+        lock (_gate)
         {
-            OverBudgetTicks++;
+            Ticks++;
+            WorkMilliseconds += workMilliseconds;
+            MaximumWorkMilliseconds = Math.Max(MaximumWorkMilliseconds, workMilliseconds);
+            MaximumStartLatenessMilliseconds = Math.Max(MaximumStartLatenessMilliseconds, startLatenessMilliseconds);
+            if (workMilliseconds > 50)
+            {
+                OverBudgetTicks++;
+            }
+        }
+    }
+
+    public ServerTickSnapshot Capture()
+    {
+        lock (_gate)
+        {
+            return new ServerTickSnapshot(
+                Ticks,
+                OverBudgetTicks,
+                WorkMilliseconds,
+                MaximumWorkMilliseconds,
+                MaximumStartLatenessMilliseconds
+            );
         }
     }
 }

@@ -22,7 +22,7 @@ public class PermissionCompletionTest
             var registry = new CommandRegistry();
             Fixtures.BuiltInCommandTestRegistry.Register(registry, new ModId("game"));
             registry.Freeze();
-            var adapter = new TextCommandAdapter(registry, Game.Managers.GameManager.AuthorityProject);
+            var adapter = new TextCommandAdapter(registry, null);
             var principal = CommandPrincipal.LocalOperator;
             var grants = adapter.Suggest("/permission grant Tester ", principal);
             var others = Assert.Single(grants, item => item.Value == "game:player.teleport.others");
@@ -51,9 +51,7 @@ public class PermissionCompletionTest
                 item => item.Value == "game:player.teleport.others"
             );
             var user = CommandPrincipal.CreatePlayer("User", permissions: [permission]);
-            Assert.True(
-                registry.CanInvoke(typeof(TeleportPlayerCommand), user, Game.Managers.GameManager.AuthorityProject)
-            );
+            Assert.True(registry.CanInvoke(typeof(TeleportPlayerCommand), user, null));
             Assert.DoesNotContain(
                 adapter.Suggest("/permission delegate Tester ", user),
                 item => item.Value == "game:player.teleport.others"

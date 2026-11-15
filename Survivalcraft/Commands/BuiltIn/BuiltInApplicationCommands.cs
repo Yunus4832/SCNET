@@ -24,7 +24,8 @@ public static class BuiltInApplicationCommands
                 },
                 SettingsManager.SaveSettings
             ),
-            NetworkDiagnosticCommandHandlers.Diagnostics
+            NetworkDiagnosticCommandHandlers.Diagnostics,
+            CommandDomain.Application
         ).Register(commands, owner);
         commands.Register(
             new ResourceId(owner, "automation/ui/context/get"),

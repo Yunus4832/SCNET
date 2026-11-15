@@ -391,7 +391,10 @@ public class SubsystemPickables : Subsystem, IUpdateable
                 {
                     NetworkSender.Send(
                         Project,
-                        PickablePackageBuilder.CaptureRemoval(item),
+                        PickablePackageBuilder.CaptureRemoval(
+                            item,
+                            unchecked((uint)WorldRuntimeContext.For(Project).Clock.TickIndex)
+                        ),
                         PackageAudience.To(observers)
                     );
                 }
@@ -401,7 +404,7 @@ public class SubsystemPickables : Subsystem, IUpdateable
         }
 
         PickablesToRemove.Clear();
-        if (Time.PeriodicEvent(0.1, 0.0))
+        if (WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0.0))
         {
             UpdateNetworkInterest();
         }
@@ -581,7 +584,7 @@ public class SubsystemPickables : Subsystem, IUpdateable
             NetworkSender.SendToServer(
                 WorldRuntimeContext.For(Project),
                 new PickableSyncRequestPackage
-                    { Id = id, StateTick = unchecked((uint)Time.FrameIndex) }
+                    { Id = id, StateTick = unchecked((uint)WorldRuntimeContext.For(Project).Clock.TickIndex) }
             );
         }
 
@@ -742,7 +745,10 @@ public class SubsystemPickables : Subsystem, IUpdateable
             {
                 NetworkSender.Send(
                     Project,
-                    PickablePackageBuilder.CaptureAdded(entered),
+                    PickablePackageBuilder.CaptureAdded(
+                        entered,
+                        unchecked((uint)WorldRuntimeContext.For(Project).Clock.TickIndex)
+                    ),
                     PackageAudience.To(client)
                 );
             }
@@ -752,7 +758,10 @@ public class SubsystemPickables : Subsystem, IUpdateable
                 var left = changes.Left.Select(id => new Pickable { Id = (ushort)id }).ToList();
                 NetworkSender.Send(
                     Project,
-                    PickablePackageBuilder.CaptureRemoved(left),
+                    PickablePackageBuilder.CaptureRemoved(
+                        left,
+                        unchecked((uint)WorldRuntimeContext.For(Project).Clock.TickIndex)
+                    ),
                     PackageAudience.To(client)
                 );
             }
@@ -766,7 +775,8 @@ public class SubsystemPickables : Subsystem, IUpdateable
                         relevant.GetRange(
                             i,
                             Math.Min(PickablePackage.MaxPositionsPerSnapshot, relevant.Count - i)
-                        )
+                        ),
+                        unchecked((uint)WorldRuntimeContext.For(Project).Clock.TickIndex)
                     ),
                     PackageAudience.To(client)
                 );

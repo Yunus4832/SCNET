@@ -24,7 +24,7 @@ public sealed class UpdateLifetimeTest
         WorldRuntimeContext.For(project).Close();
 
         time.QueueGameTimeDelayedExecution(0, () => throw new InvalidOperationException("Closed callback"));
-        time.NextFrame(0f, () => throw new InvalidOperationException("Closed population query"));
+        time.AdvanceStep(0f, () => throw new InvalidOperationException("Closed population query"));
 
         var requests = (System.Collections.ICollection)typeof(SubsystemTime)
             .GetField(
@@ -88,7 +88,7 @@ public sealed class UpdateLifetimeTest
             Assert.Equal(0, later.Calls);
             Assert.Equal(0, delayedCalls);
             Assert.Equal(stoppedAt, time.GameTime);
-            Assert.False(update.IsLastUpdateInFrame);
+            Assert.False(update.IsLastUpdateInTick);
             if (phase == ClosePhase.RealTime) { Assert.Equal(0, stoppedAt); }
         }
     }

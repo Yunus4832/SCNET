@@ -3,31 +3,25 @@ using EntitySystem.TemplatesDatabase;
 
 namespace Game.World;
 
-public sealed class SubsystemWorldLifecycle : Subsystem, IUpdateable
+public sealed class SubsystemWorldLifecycle : Subsystem
 {
     private NetNode? _node;
 
     private WorldRuntimeContext _world = null!;
 
-    private bool _stopRequested;
-
     private bool _disposed;
 
     private bool _stopped;
 
-    private long _requestedCycle;
+    private Func<Task>? _requestStop;
 
-    private double _requestedAt;
+    private Task? _stopping;
 
     public WorldProjectPersistence Persistence { get; private set; } = null!;
 
     public WorldRuntimeContext World => _world;
 
     public event Action<SubsystemWorldLifecycle>? Stopped;
-
-    public UpdateExecutionSide UpdateSide => UpdateExecutionSide.Authority;
-
-    public UpdateOrder UpdateOrder => UpdateOrder.SubsystemCharacters + 1;
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
@@ -37,51 +31,28 @@ public sealed class SubsystemWorldLifecycle : Subsystem, IUpdateable
         Project.Disposed += OnProjectDisposed;
     }
 
+    public void BindStopRequest(Func<Task> requestStop)
+    {
+        if (_requestStop != null) { throw new InvalidOperationException("The world already has a stop owner."); }
+
+        _requestStop = requestStop ?? throw new ArgumentNullException(nameof(requestStop));
+    }
+
     public void RequestStop()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (_stopRequested) { return; }
+        World.VerifyExecutionAccess();
+        if (_stopping is { IsCompleted: false }) { return; }
 
-        if (_node is null)
-        {
-            throw new InvalidOperationException("A world stop requires its actual message endpoint.");
-        }
-
-        _stopRequested = true;
-        _requestedCycle = _node.DispatchCycle;
-        _requestedAt = Time.RealTime;
-    }
-
-    public void Update(float dt)
-    {
-        if (_disposed || !_stopRequested || World.IsClosed || _node is null || _node.DispatchCycle <= _requestedCycle)
-        {
-            return;
-        }
-
-        var timedOut = (Time.RealTime - _requestedAt) * 1000 >= NetworkTransportLimits.DisconnectTimeoutMilliseconds;
-        if (_node.PendingPackageCount > 0 && !timedOut) { return; }
-
-        if (_node.PendingPackageCount > 0)
-        {
-            Log.Warning($"World stop drain deadline reached with {_node.PendingPackageCount} messages pending.");
-        }
-
-        _stopRequested = false;
-        try { Persistence.Save(true); }
-        catch (WorldSaveException) { return; }
-
-        var errors = new List<Exception>();
-        try { World.Close(); }
-        catch (Exception error) { errors.Add(error); }
-
-        try { Project.Dispose(); }
-        catch (Exception error) { errors.Add(error); }
-
-        if (errors.Count > 0)
-        {
-            Log.Error($"World stop cleanup reported errors: {new AggregateException(errors)}");
-        }
+        _stopping = (_requestStop ??
+                     throw new InvalidOperationException("The authority stop owner is not attached."))();
+        _ = _stopping.ContinueWith(
+            completed =>
+            {
+                if (completed.IsFaulted) { Log.Error($"World stop failed: {completed.Exception}"); }
+            },
+            TaskScheduler.Default
+        );
     }
 
     private void OnProjectDisposed(Project project)
@@ -97,7 +68,6 @@ public sealed class SubsystemWorldLifecycle : Subsystem, IUpdateable
         if (!World.IsClosed) { return; }
 
         _stopped = true;
-        _stopRequested = false;
         var stopped = Stopped;
         Stopped = null;
         foreach (var callback in stopped?.GetInvocationList() ?? [])

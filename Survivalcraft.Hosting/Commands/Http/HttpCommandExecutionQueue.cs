@@ -5,8 +5,8 @@ using Game.Localization;
 namespace Game.Commands.Http;
 
 /// <summary>
-///     Moves HTTP command requests from listener threads onto the game update
-///     thread. Other command frontends execute through their own dispatch paths.
+///     Receives HTTP requests on the host loop and routes world/server commands to their authority owner.
+///     Application commands stay on the host; other frontends use their own dispatch paths.
 /// </summary>
 public sealed class HttpCommandExecutionQueue(
     Func<CommandExecutionScope?> getScope,
@@ -78,19 +78,23 @@ public sealed class HttpCommandExecutionQueue(
                     continue;
                 }
 
-                var project = scope.Registry.TryGetDefinition(request.Command.Identity, out var definition) &&
-                              definition?.Definition.Domain == CommandDomain.Application
-                    ? scope.ApplicationProject
-                    : scope.AuthorityProject;
-                var context = new CommandContext(
-                    CommandInvocationChannel.HttpApi,
-                    request.Principal,
-                    project,
-                    request.CorrelationId
-                );
-                request.Completion.TrySetResult(
-                    new HttpCommandAdapter(scope.Registry).Execute(request.Command, context)
-                );
+                if (scope.Registry.TryGetDefinition(request.Command.Identity, out var definition) &&
+                    definition?.Definition.Domain == CommandDomain.Application)
+                {
+                    request.Completion.TrySetResult(Execute(request, scope.Registry, scope.ApplicationProject));
+                }
+                else if (scope.Authority is { } authority)
+                {
+                    _ = CompleteAuthorityAsync(
+                        request,
+                        authority.InvokeAsync(
+                            world =>
+                                Execute(request, scope.Registry, world.Project),
+                            request.Cancellation
+                        )
+                    );
+                }
+                else { request.Completion.TrySetResult(Execute(request, scope.Registry, null)); }
             }
             catch (Exception exception)
             {
@@ -120,14 +124,34 @@ public sealed class HttpCommandExecutionQueue(
                     continue;
                 }
 
-                var commands = new HttpCommandAdapter(scope.Registry)
-                    .Discover(
-                        request.Principal,
-                        scope.ApplicationProject,
-                        scope.AuthorityProject,
-                        getResolver()
+                var resolver = getResolver();
+                var commands = new HttpCommandAdapter(scope.Registry).Discover(
+                    request.Principal,
+                    scope.ApplicationProject,
+                    null,
+                    resolver,
+                    CommandDomain.Application
+                );
+                if (scope.Authority is { } authority)
+                {
+                    _ = CompleteDiscoveryAsync(
+                        request,
+                        commands,
+                        authority.InvokeAsync(
+                            world =>
+                                new HttpCommandAdapter(scope.Registry).Discover(
+                                    request.Principal,
+                                    null,
+                                    world.Project,
+                                    resolver,
+                                    CommandDomain.World,
+                                    CommandDomain.Server
+                                ),
+                            request.Cancellation
+                        )
                     );
-                request.Completion.TrySetResult(commands);
+                }
+                else { request.Completion.TrySetResult(commands); }
             }
             catch (Exception exception)
             {
@@ -135,6 +159,48 @@ public sealed class HttpCommandExecutionQueue(
                 request.Completion.TrySetException(exception);
             }
         }
+    }
+
+    private static CommandResult Execute(Request request, CommandRegistry registry, EntitySystem.Core.Project? project)
+    {
+        var context = new CommandContext(
+            CommandInvocationChannel.HttpApi,
+            request.Principal,
+            project,
+            request.CorrelationId
+        );
+        return new HttpCommandAdapter(registry).Execute(request.Command, context);
+    }
+
+    private static async Task CompleteAuthorityAsync(Request request, Task<CommandResult> operation)
+    {
+        try { request.Completion.TrySetResult(await operation.ConfigureAwait(false)); }
+        catch (OperationCanceledException) { request.Completion.TrySetCanceled(request.Cancellation); }
+        catch (Exception error)
+        {
+            Log.Error($"Authority HTTP command failed: {error}");
+            request.Completion.TrySetResult(CommandResult.Fail("command.internal_error", "Command execution failed."));
+        }
+    }
+
+    private static async Task CompleteDiscoveryAsync(
+        DiscoveryRequest request,
+        IReadOnlyList<HttpDiscoveredCommand> application,
+        Task<IReadOnlyList<HttpDiscoveredCommand>> operation
+    )
+    {
+        try
+        {
+            var authority = await operation.ConfigureAwait(false);
+            request.Completion.TrySetResult(
+                application.Concat(authority).OrderBy(
+                    command => command.Identity,
+                    StringComparer.Ordinal
+                ).ToArray()
+            );
+        }
+        catch (OperationCanceledException) { request.Completion.TrySetCanceled(request.Cancellation); }
+        catch (Exception error) { request.Completion.TrySetException(error); }
     }
 
     public void FailPending()

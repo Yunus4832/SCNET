@@ -10,9 +10,14 @@ using Game.Startup;
 namespace Game.World;
 
 /// <summary>Owns the actual loaded authority/client world runtime and its host loading/closing operations.</summary>
-public sealed class GameWorldController(WorldProjectActivity activity) : IDisposable
+public sealed class GameWorldController(
+    WorldProjectActivity activity,
+    Func<Action, Task>? dispatchClient = null
+) : IAsyncDisposable
 {
-    public GameRuntime? Runtime { get; private set; }
+    private volatile GameRuntime? _runtime;
+
+    public GameRuntime? Runtime { get => _runtime; private set => _runtime = value; }
 
     public WorldInfo? WorldInfo { get; private set; }
 
@@ -22,9 +27,15 @@ public sealed class GameWorldController(WorldProjectActivity activity) : IDispos
 
     public LocalGameReturnTarget? LocalPlayerReturnTarget { get; set; }
 
-    public void LoadAuthority(WorldLoadRequest request)
+    private readonly Lock _gate = new();
+
+    private CancellationTokenSource? _loading;
+
+    private TaskCompletionSource? _loadCompletion;
+
+    public async Task LoadAuthorityAsync(WorldLoadRequest request, CancellationToken cancellation = default)
     {
-        if (Runtime?.Authority?.BoundProject is not null)
+        if (Runtime?.Authority is { IsClosed: false })
         {
             throw new InvalidOperationException("Close the existing authority world before loading another world.");
         }
@@ -34,21 +45,109 @@ public sealed class GameWorldController(WorldProjectActivity activity) : IDispos
             throw new InvalidOperationException("Authority loading requires an idle authority endpoint.");
         }
 
-        Close();
-        if (request.World.ProjectFormatVersion != WorldVersions.ProjectFormatVersion)
+        var loading = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+        var loaded = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        lock (_gate)
         {
-            throw new InvalidOperationException($"Unsupported project format '{request.World.ProjectFormatVersion}'.");
+            if (_loading != null)
+            {
+                loading.Dispose();
+                throw new InvalidOperationException("World loading is already active.");
+            }
+
+            _loading = loading;
+            _loadCompletion = loaded;
         }
 
-        var runtime = request.AuthorityNode.PrepareWorldRuntime();
-        var game = new GameRuntime(request.AllowsLocalPause);
-        Runtime = game;
-        WorldInfo = request.World;
-        WorldSession = request.StartupSession;
+        GameRuntime? game = null;
         try
         {
-            game.Attach(runtime);
-            activity.Track(runtime, request.World.DirectoryName);
+            if (Runtime is { } previous) { await previous.CloseAsync(false).ConfigureAwait(false); }
+
+            loading.Token.ThrowIfCancellationRequested();
+            if (request.World.ProjectFormatVersion != WorldVersions.ProjectFormatVersion)
+            {
+                throw new InvalidOperationException(
+                    $"Unsupported project format '{request.World.ProjectFormatVersion}'."
+                );
+            }
+
+            game = new GameRuntime(request.AllowsLocalPause, dispatchClient);
+            lock (_gate)
+            {
+                loading.Token.ThrowIfCancellationRequested();
+                WorldInfo = request.World;
+                WorldSession = request.StartupSession;
+                Runtime = game;
+            }
+
+            await game.StartAuthorityAsync(ownerCancellation =>
+                {
+                    using var linked =
+                        CancellationTokenSource.CreateLinkedTokenSource(ownerCancellation, loading.Token);
+                    return LoadAuthorityProject(request, linked.Token);
+                }
+            ).ConfigureAwait(false);
+        }
+        catch
+        {
+            if (game != null)
+            {
+                try { await game.CloseAsync(false).ConfigureAwait(false); }
+                catch (Exception cleanup) { Log.Error($"Failed authority load cleanup: {cleanup}"); }
+
+                lock (_gate)
+                {
+                    if (ReferenceEquals(Runtime, game)) { Clear(); }
+                }
+            }
+
+            throw;
+        }
+        finally
+        {
+            lock (_gate)
+            {
+                if (ReferenceEquals(_loading, loading))
+                {
+                    _loading = null;
+                    _loadCompletion = null;
+                }
+
+                loading.Dispose();
+            }
+
+            loaded.TrySetResult();
+        }
+    }
+
+    private WorldRuntimeContext LoadAuthorityProject(WorldLoadRequest request, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        var runtime = request.AuthorityNode.PrepareWorldRuntime();
+        activity.Track(
+            runtime,
+            request.World.DirectoryName,
+            operation =>
+            {
+                var game = Runtime;
+                if (!ReferenceEquals(game?.Authority, runtime) || game?.AuthorityExecution is not { } execution)
+                {
+                    return Task.FromException(
+                        new InvalidOperationException("The authority world is not available for editing.")
+                    );
+                }
+
+                return execution.InvokeAsync(_ =>
+                    {
+                        operation();
+                        return true;
+                    }
+                );
+            }
+        );
+        try
+        {
             var projectPath = Storage.CombinePaths(request.World.DirectoryName, "Project.xml");
             if (!Storage.FileExists(projectPath))
             {
@@ -65,10 +164,12 @@ public sealed class GameWorldController(WorldProjectActivity activity) : IDispos
             {
                 { "GameInfo", new ValuesDictionary { { "WorldDirectoryName", request.World.DirectoryName } } }
             };
+            token.ThrowIfCancellationRequested();
             var catalog = request.Mods.CreateWorldCatalog(
                 runtime,
                 BlockIndexMapping.FromXml(node.Element("BlockRegistry"))
             );
+            token.ThrowIfCancellationRequested();
             var project = AuthorityWorldProjectFactory.Create(
                 runtime,
                 catalog,
@@ -94,11 +195,25 @@ public sealed class GameWorldController(WorldProjectActivity activity) : IDispos
             request.AuthorityNode.TurnOnPackageHandle(project);
             AuthorityWorldNetworkSetup.Attach(project, request.AuthorityNode, request.Textures);
             runtime.OwnWorldResource(new WorldTimeReplication(project));
+            token.ThrowIfCancellationRequested();
             AuthorityLoaded?.Invoke(project);
+            return runtime;
         }
-        catch
+        catch (Exception primary)
         {
-            Close();
+            var errors = new List<Exception> { primary };
+            var project = runtime.BoundProject;
+            try { runtime.Close(); }
+            catch (Exception error) { errors.Add(error); }
+
+            try { project?.Dispose(); }
+            catch (Exception error) { errors.Add(error); }
+
+            try { request.AuthorityNode.StopImmediate(); }
+            catch (Exception error) { errors.Add(error); }
+
+            if (errors.Count > 1) { throw new AggregateException("Authority load and cleanup failed.", errors); }
+
             throw;
         }
     }
@@ -107,25 +222,51 @@ public sealed class GameWorldController(WorldProjectActivity activity) : IDispos
 
     public void AttachClient(WorldRuntimeContext runtime)
     {
-        Runtime ??= new GameRuntime(false);
-        if (!ReferenceEquals(Runtime.Client, runtime)) { Runtime.ReleaseClient(); }
-
-        Runtime.Attach(runtime);
-    }
-
-    public void Close()
-    {
-        WorldProjectPersistence.WaitForPendingSaves();
-        var runtime = Runtime;
-        try { runtime?.Dispose(); }
-        finally
+        lock (_gate)
         {
-            Runtime = null;
-            WorldInfo = null;
-            WorldSession = null;
-            LocalPlayerReturnTarget = null;
+            Runtime ??= new GameRuntime(false, dispatchClient);
+            if (Runtime.Client != null && !ReferenceEquals(Runtime.Client, runtime))
+            {
+                throw new InvalidOperationException("Release the existing client before attaching a replacement.");
+            }
+
+            Runtime.AttachClient(runtime);
         }
     }
 
-    public void Dispose() => Close();
+    public async Task CloseAsync(bool save = false)
+    {
+        GameRuntime? runtime;
+        Task? loading;
+        lock (_gate)
+        {
+            _loading?.Cancel();
+            runtime = Runtime;
+            loading = _loadCompletion?.Task;
+        }
+
+        try
+        {
+            if (runtime != null) { await runtime.CloseAsync(save).ConfigureAwait(false); }
+
+            if (loading != null) { await loading.ConfigureAwait(false); }
+        }
+        finally
+        {
+            lock (_gate)
+            {
+                if (runtime is null or { IsDisposed: true } && ReferenceEquals(Runtime, runtime)) { Clear(); }
+            }
+        }
+    }
+
+    private void Clear()
+    {
+        Runtime = null;
+        WorldInfo = null;
+        WorldSession = null;
+        LocalPlayerReturnTarget = null;
+    }
+
+    public ValueTask DisposeAsync() => new(CloseAsync());
 }

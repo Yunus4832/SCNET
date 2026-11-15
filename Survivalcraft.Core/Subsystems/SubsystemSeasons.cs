@@ -22,7 +22,7 @@ public class SubsystemSeasons : Subsystem, IUpdateable
         if (!WorldRuntimeContext.For(Project).IsAuthority) { return; }
 
         UpdateSeasonState();
-        if (Time.PeriodicEvent(10, 0.0))
+        if (WorldRuntimeContext.For(Project).Clock.PeriodicEvent(10, 0.0))
         {
             TimeOfYearSynchronizationRequested?.Invoke(_subsystemGameInfo.WorldSettings.TimeOfYear);
         }

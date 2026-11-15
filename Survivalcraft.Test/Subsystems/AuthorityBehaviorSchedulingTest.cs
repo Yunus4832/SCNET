@@ -24,7 +24,7 @@ public sealed class AuthorityBehaviorSchedulingTest
     public void OnlyAuthorityAdvancesAutonomousBehavior(RuntimeSide side, int expectedUpdates)
     {
         using var project = new RuntimeTestProject(side);
-        var update = new SubsystemUpdate { UpdatesPerFrame = 1 };
+        var update = new SubsystemUpdate { UpdatesPerTick = 1 };
         var time = new SubsystemTime();
         project.InitializeSubsystem(update);
         project.AddSubsystem(time);

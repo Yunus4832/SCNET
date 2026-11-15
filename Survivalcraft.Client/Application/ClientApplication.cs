@@ -56,6 +56,11 @@ public static class ClientApplication
         previous?.Dispose();
     }
 
+    public static void ReleaseWorld(ClientWorldPresentation expected)
+    {
+        if (ReferenceEquals(_world, expected)) { ReleaseWorld(); }
+    }
+
     public static float LastFrameTime { get; set; }
 
     public static float LastCpuFrameTime { get; set; }

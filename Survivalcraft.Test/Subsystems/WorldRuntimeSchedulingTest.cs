@@ -67,7 +67,7 @@ public sealed class WorldRuntimeSchedulingTest
     public void ClosingTheWorldDuringAnUpdateSkipsTheRemainingComponentsAndFutureFrames(bool closeDuringClock)
     {
         using var project = new RuntimeTestProject(RuntimeSide.Authority);
-        var update = new SubsystemUpdate { UpdatesPerFrame = 1 };
+        var update = new SubsystemUpdate { UpdatesPerTick = 1 };
         var time = new SubsystemTime();
         project.InitializeSubsystem(update);
         project.AddSubsystem(time);
@@ -91,7 +91,7 @@ public sealed class WorldRuntimeSchedulingTest
 
         Assert.True(project.IsDisposed);
         Assert.Equal(0, remainingCalls);
-        Assert.False(update.IsLastUpdateInFrame);
+        Assert.False(update.IsLastUpdateInTick);
     }
 
     [Fact]

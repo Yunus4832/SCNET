@@ -15,6 +15,23 @@ public static class Dispatcher
 
     public static bool IsMainThread => Environment.CurrentManagedThreadId == MainThreadId;
 
+    public static Task InvokeAsync(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Dispatch(() =>
+            {
+                try
+                {
+                    action();
+                    completion.TrySetResult();
+                }
+                catch (Exception error) { completion.TrySetException(error); }
+            }
+        );
+        return completion.Task;
+    }
+
     public static void Dispatch(Action action, bool waitUntilCompleted = false)
     {
         if (!_mainThreadId.HasValue)

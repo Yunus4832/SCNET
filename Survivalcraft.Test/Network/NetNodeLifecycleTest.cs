@@ -169,13 +169,19 @@ public sealed class NetNodeLifecycleTest
     [Theory]
     [InlineData(NodeRole.Authority)]
     [InlineData(NodeRole.Client)]
-    public void AnObservedOldEndpointCannotNavigateOrDisposeTheCurrentSession(NodeRole oldRole)
+    public async Task AnObservedOldEndpointCannotNavigateOrDisposeTheCurrentSession(NodeRole oldRole)
     {
-        using var current = new GameRuntime(false);
-        using var authority = new RuntimeTestProject(RuntimeSide.Authority);
+        await using var current = new GameRuntime(
+            false,
+            action =>
+            {
+                action();
+                return Task.CompletedTask;
+            }
+        );
+        await current.StartAuthorityAsync(_ => WorldRuntimeContext.For(new RuntimeTestProject(RuntimeSide.Authority)));
         using var client = new RuntimeTestProject(RuntimeSide.Client);
-        current.Attach(WorldRuntimeContext.For(authority));
-        current.Attach(WorldRuntimeContext.For(client));
+        current.AttachClient(WorldRuntimeContext.For(client));
         var controller = typeof(GameManager).GetField("_worlds", BindingFlags.Static | BindingFlags.NonPublic)!
             .GetValue(null)!;
         var runtimeProperty = typeof(GameWorldController).GetProperty(nameof(GameWorldController.Runtime))!;
@@ -202,7 +208,7 @@ public sealed class NetNodeLifecycleTest
             Assert.Same(current, GameManager.Runtime);
             Assert.Same(client, GameManager.ClientProject);
             Assert.False(current.IsDisposed);
-            Assert.False(WorldRuntimeContext.For(authority).IsClosed);
+            Assert.False(current.Authority!.IsClosed);
             Assert.False(WorldRuntimeContext.For(client).IsClosed);
         }
         finally

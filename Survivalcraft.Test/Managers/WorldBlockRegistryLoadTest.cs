@@ -20,7 +20,7 @@ namespace Survivalcraft.Test.Managers;
 public sealed class WorldBlockRegistryLoadTest
 {
     [Fact]
-    public void RegistryWriteFailurePreventsWorldConstructionAndReleasesCatalog()
+    public async Task RegistryWriteFailurePreventsWorldConstructionAndReleasesCatalog()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"scnet-block-registry-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
@@ -45,14 +45,14 @@ public sealed class WorldBlockRegistryLoadTest
                 Game.Network.Handling.PackageHandlerCatalog.Empty,
                 NodeRole.Authority
             );
-            using var controller = new GameWorldController(new WorldProjectActivity());
+            await using var controller = new GameWorldController(new WorldProjectActivity());
             var world = new WorldInfo
             {
                 DirectoryName = rootName + ":/",
                 ProjectFormatVersion = WorldVersions.ProjectFormatVersion
             };
-            var exception = Assert.Throws<InvalidOperationException>(() =>
-                controller.LoadAuthority(
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                controller.LoadAuthorityAsync(
                     new WorldLoadRequest(
                         world,
                         new SessionInfo { Target = SessionTarget.World },

@@ -100,7 +100,7 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                     interest.IsPositionRelevant(context.Sender, requested.Position.XZ))
                 {
                     netNode.QueuePackage(
-                        PickablePackageBuilder.Capture(requested),
+                        PickablePackageBuilder.Capture(requested, unchecked((uint)context.Runtime.Clock.TickIndex)),
                         PackageAudience.To(context.Sender)
                     );
                     interest.Entities.AddObserved(

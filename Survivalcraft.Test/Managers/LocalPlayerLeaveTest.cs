@@ -1,5 +1,7 @@
 using System.Reflection;
 
+using Engine.Core.Runtime;
+
 using EntitySystem.TemplatesDatabase;
 
 using Game.Application;
@@ -51,12 +53,30 @@ public sealed class LocalPlayerLeaveTest
         var previousRuntime = controller.Runtime;
         var previousNode = nodeField.GetValue(null);
         var previousPresentation = presentationField.GetValue(null);
-        using var game = new GameRuntime(false);
+        using var frame = new FrameTestLoop();
+        var game = new GameRuntime(false, Dispatcher.InvokeAsync);
         var authority = new NetNode(NetNodeOptions.Default, false, PackageHandlerCatalog.Empty, NodeRole.Authority);
+        WorldCatalogScope? authorityScope = null;
+        frame.Complete(
+            game.StartAuthorityAsync(_ =>
+                {
+                    authorityScope = new WorldCatalogScope(authority);
+                    authorityScope.Project.AddSubsystem(
+                        new SubsystemGameInfo
+                        {
+                            WorldSettings = new WorldSettings { Name = "Local leave" }, DirectoryName = string.Empty
+                        }
+                    );
+                    var lifecycle = new SubsystemWorldLifecycle();
+                    authorityScope.Project.AddSubsystem(lifecycle);
+                    lifecycle.Load(new ValuesDictionary());
+                    return authority.Runtime;
+                }
+            )
+        );
         using var client = new RuntimeTestProject(RuntimeSide.Client);
         var clientRuntime = WorldRuntimeContext.For(client);
-        game.Attach(authority.Runtime);
-        game.Attach(clientRuntime);
+        game.AttachClient(clientRuntime);
         var presentation = new ClientWorldPresentation(clientRuntime, client, null, authority.Runtime);
         try
         {
@@ -64,7 +84,7 @@ public sealed class LocalPlayerLeaveTest
             nodeField.SetValue(null, authority);
             presentationField.SetValue(null, presentation);
 
-            GameManager.LeaveLocalPlayer();
+            frame.Complete(GameManager.LeaveLocalPlayerAsync());
 
             Assert.Null(ClientApplication.World);
             Assert.Null(game.Client);
@@ -74,6 +94,8 @@ public sealed class LocalPlayerLeaveTest
         }
         finally
         {
+            frame.Complete(game.DisposeAsync().AsTask());
+            authorityScope?.Dispose();
             presentation.Dispose();
             runtimeProperty.SetValue(controller, previousRuntime);
             nodeField.SetValue(null, previousNode);
@@ -115,23 +137,32 @@ public sealed class LocalPlayerLeaveTest
         var previousCurrent = ScreensManager.CurrentScreen;
         var previousPrevious = ScreensManager.PreviousScreen;
         var previousAnimation = animationField.GetValue(null);
+        using var frame = new FrameTestLoop();
         var authority = new NetNode(NetNodeOptions.Default, false, PackageHandlerCatalog.Empty, NodeRole.Authority);
         var authorityWorld = authority.Runtime;
-        var scope = new WorldCatalogScope(authority);
+        WorldCatalogScope? scope = null;
         var client = new RuntimeTestProject(RuntimeSide.Client);
         var clientWorld = WorldRuntimeContext.For(client);
-        var game = new GameRuntime(false);
-        game.Attach(authorityWorld);
-        game.Attach(clientWorld);
-        scope.Project.AddSubsystem(
-            new SubsystemGameInfo
-            {
-                WorldSettings = new WorldSettings { Name = "hosted-stop-boundary" }, DirectoryName = string.Empty
-            }
+        var game = new GameRuntime(false, Dispatcher.InvokeAsync);
+        frame.Complete(
+            game.StartAuthorityAsync(_ =>
+                {
+                    scope = new WorldCatalogScope(authority);
+                    scope.Project.AddSubsystem(
+                        new SubsystemGameInfo
+                        {
+                            WorldSettings = new WorldSettings { Name = "hosted-stop-boundary" },
+                            DirectoryName = string.Empty
+                        }
+                    );
+                    var lifecycle = new SubsystemWorldLifecycle();
+                    scope.Project.AddSubsystem(lifecycle);
+                    lifecycle.Load(new ValuesDictionary());
+                    return authorityWorld;
+                }
+            )
         );
-        var lifecycle = new SubsystemWorldLifecycle();
-        scope.Project.AddSubsystem(lifecycle);
-        lifecycle.Load(new ValuesDictionary());
+        game.AttachClient(clientWorld);
         var presentation = new ClientWorldPresentation(clientWorld, client, null, authorityWorld);
         var play = new Screen();
         var hosted = new Screen();
@@ -150,12 +181,34 @@ public sealed class LocalPlayerLeaveTest
             ScreensManager.CurrentScreen = null;
             ScreensManager.PreviousScreen = null;
             animationField.SetValue(null, null);
-            typeof(GameManager).GetMethod("BindWorldLifecycle", BindingFlags.Static | BindingFlags.NonPublic)!
-                .Invoke(null, [scope.Project]);
+            frame.Complete(
+                game.AuthorityExecution!.InvokeAsync(_ =>
+                    {
+                        typeof(GameManager).GetMethod(
+                                "BindWorldLifecycle",
+                                BindingFlags.Static | BindingFlags.NonPublic
+                            )!
+                            .Invoke(null, [scope!.Project]);
+                        return true;
+                    }
+                )
+            );
             Assert.True(authority.IsServer);
 
-            if (closeAuthority) { scope.Project.Dispose(); }
+            if (closeAuthority)
+            {
+                frame.Complete(
+                    game.AuthorityExecution!.InvokeAsync(world =>
+                        {
+                            world.Project!.Dispose();
+                            return true;
+                        }
+                    )
+                );
+            }
             else { GameManager.LeaveGameplay(); }
+
+            frame.Complete(GameManager.PendingWorldTransition);
 
             Assert.Null(ClientApplication.World);
             Assert.Null(game.Client);
@@ -182,8 +235,8 @@ public sealed class LocalPlayerLeaveTest
             try
             {
                 presentation.Dispose();
-                game.Dispose();
-                scope.Dispose();
+                frame.Complete(game.DisposeAsync().AsTask());
+                scope?.Dispose();
                 client.Dispose();
                 authority.StopImmediate();
             }

@@ -1615,7 +1615,7 @@ public static class BuiltInWorldCommands
         }
 
         SynchronizePermissions(context.Project!, player);
-        WorldProjectPersistence.For(context.Project!).Save(false);
+        WorldProjectPersistence.For(context.Project!).SaveAsync();
         return new CommandResult(
             true,
             result.Code,

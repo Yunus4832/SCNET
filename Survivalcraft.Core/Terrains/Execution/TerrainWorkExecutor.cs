@@ -29,6 +29,8 @@ public sealed class TerrainWorkExecutor(Func<bool> step, TerrainAccessGate? acce
 
     private bool _workerStopped;
 
+    private bool _stopRequested;
+
     private bool _signalDisposed;
 
 
@@ -248,6 +250,18 @@ public sealed class TerrainWorkExecutor(Func<bool> step, TerrainAccessGate? acce
         }
     }
 
+    /// <summary>Stops private work without closing access needed by final owner-thread resource callbacks.</summary>
+    public Task QuiesceAsync()
+    {
+        lock (_signal)
+        {
+            _stopRequested = true;
+            if (!_signalDisposed) { _wake.Set(); }
+
+            return _worker ?? Task.CompletedTask;
+        }
+    }
+
     public void Dispose()
     {
         Task? worker;
@@ -285,7 +299,7 @@ public sealed class TerrainWorkExecutor(Func<bool> step, TerrainAccessGate? acce
 
     private void ResumeIfUnblocked()
     {
-        if (_disposed || HasRequests) { return; }
+        if (_disposed || _stopRequested || HasRequests) { return; }
 
         _wakeRevision++;
         _wake.Set();
@@ -301,7 +315,7 @@ public sealed class TerrainWorkExecutor(Func<bool> step, TerrainAccessGate? acce
                 _wake.Wait();
                 lock (_signal)
                 {
-                    if (_disposed || _lifetime.IsCancellationRequested) { return; }
+                    if (_disposed || _stopRequested || _lifetime.IsCancellationRequested) { return; }
                 }
 
                 if (!Access.TryEnter(Timeout.Infinite)) { return; }
@@ -311,7 +325,7 @@ public sealed class TerrainWorkExecutor(Func<bool> step, TerrainAccessGate? acce
                     long revision;
                     lock (_signal)
                     {
-                        if (_disposed) { return; }
+                        if (_disposed || _stopRequested) { return; }
 
                         if (HasRequests)
                         {

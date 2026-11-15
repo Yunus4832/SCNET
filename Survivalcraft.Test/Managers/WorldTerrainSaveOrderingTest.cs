@@ -64,13 +64,20 @@ public sealed class WorldTerrainSaveOrderingTest
             persistence.SaveCompleted += result => outcome.TrySetResult(result);
             try
             {
-                var accepted = Task.Run(() => persistence.Save(false));
-                var operation = await accepted.WaitAsync(TimeSpan.FromSeconds(5));
+                var operation = Guid.NewGuid();
+                var pending = persistence.SaveAsync(operation);
                 Assert.True(started.Wait(TimeSpan.FromSeconds(5)));
                 Assert.False(outcome.Task.IsCompleted);
                 Assert.False(File.Exists(Path.Combine(directory, "world", "Project.xml")));
                 release.Set();
-                var result = await outcome.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                for (var i = 0; i < 500 && !pending.IsCompleted; i++)
+                {
+                    persistence.Pump();
+                    await Task.Delay(1);
+                }
+
+                var result = await pending.WaitAsync(TimeSpan.FromSeconds(5));
+                Assert.True(outcome.Task.IsCompleted);
                 Assert.Equal(operation, result.OperationId);
                 Assert.Equal(writeFailure || captureFailure, result.Failure != null);
                 Assert.Equal(

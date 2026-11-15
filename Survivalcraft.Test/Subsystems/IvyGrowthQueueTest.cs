@@ -79,8 +79,8 @@ public sealed class IvyGrowthQueueTest
 
         public void NextGrowthPeriod()
         {
-            do { Time.NextFrame(.1f, static () => default); } while (Time.GameTime < 1 ||
-                                                                     !Time.PeriodicGameTimeEvent(60, 0));
+            do { Time.AdvanceStep(.1f, static () => default); } while (Time.GameTime < 1 ||
+                                                                       !Time.PeriodicGameTimeEvent(60, 0));
         }
 
         public void Dispose() => _world.Dispose();

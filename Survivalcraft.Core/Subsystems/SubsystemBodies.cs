@@ -48,7 +48,8 @@ public class SubsystemBodies : Subsystem, IUpdateable
     {
         if (WorldRuntimeContext.For(Project).IsAuthority)
         {
-            var flag = _subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1, 0.0);
+            var flag = _subsystemUpdate.IsLastUpdateInTick &&
+                       WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0.0);
             _toSendList.Clear();
             var eligibleClients = flag
                 ? _subsystemCharacters.Characters

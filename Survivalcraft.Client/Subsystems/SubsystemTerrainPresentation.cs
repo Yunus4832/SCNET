@@ -102,7 +102,7 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
 
     public void Draw(Camera camera, int drawOrder)
     {
-        if (!TerrainRenderingEnabled) { return; }
+        if (!TerrainRenderingEnabled || !WorldRuntimeContext.IsProjectActive(Project)) { return; }
 
         if (drawOrder == 0)
         {

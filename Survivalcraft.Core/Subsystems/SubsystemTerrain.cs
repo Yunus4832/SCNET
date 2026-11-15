@@ -30,7 +30,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
     public TerrainWorkExecutor WorkExecutor { get; }
 
-    public UpdateExecutionSide UpdateSide => UpdateExecutionSide.Both;
+    public UpdateExecutionSide UpdateSide => UpdateExecutionSide.Client;
 
     private readonly Dictionary<Point3, bool> _modifiedCells = new();
 
@@ -857,7 +857,8 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         _locationRequest = WorkExecutor.CreateMainRequest();
         EnvironmentObserver = new TerrainEnvironmentObserver(
             Terrain,
-            SubsystemGameInfo
+            SubsystemGameInfo,
+            Runtime.Clock
         );
         Computations = new TerrainComputationScheduler(
             this,
@@ -975,6 +976,12 @@ public class SubsystemTerrain : Subsystem, IUpdateable
     public event Action<SubsystemTerrain>? Closing;
 
     private bool _closed;
+
+    public async Task QuiesceBackgroundAsync()
+    {
+        await WorkExecutor.QuiesceAsync().ConfigureAwait(false);
+        if (Computations != null) { await Computations.QuiesceAsync().ConfigureAwait(false); }
+    }
 
     public override void Dispose()
     {

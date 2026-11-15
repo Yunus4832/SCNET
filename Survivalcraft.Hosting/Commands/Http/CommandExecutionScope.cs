@@ -5,5 +5,5 @@ namespace Game.Commands.Http;
 public sealed record CommandExecutionScope(
     CommandRegistry Registry,
     Project? ApplicationProject,
-    Project? AuthorityProject
+    AuthorityWorldExecutor? Authority
 );

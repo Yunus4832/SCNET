@@ -57,13 +57,13 @@ public sealed class SleepTimeAuthorityTest
                 );
             }
 
-            var updates = new SubsystemUpdate { UpdatesPerFrame = 20 };
+            var updates = new SubsystemUpdate { UpdatesPerTick = 20 };
             var time = new SubsystemTime { FixedTimeStep = 0.05f };
             using var project = new RuntimeTestProject(side);
             project.InitializeSubsystem(time);
-            updates.UpdatesPerFrame = time.NextFrame(0f, new CharacterSleepPopulationSource(players).ReadPopulation);
+            updates.UpdatesPerTick = time.AdvanceStep(0f, new CharacterSleepPopulationSource(players).ReadPopulation);
 
-            Assert.Equal(accelerated ? 20 : 1, updates.UpdatesPerFrame);
+            Assert.Equal(accelerated ? 20 : 1, updates.UpdatesPerTick);
             Assert.Equal(accelerated ? 0.05f : null, time.FixedTimeStep);
         }
         finally

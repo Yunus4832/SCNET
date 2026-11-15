@@ -264,20 +264,34 @@ public class ManageContentScreen : Screen
                         return;
                     }
 
-                    if (replacement is not null)
-                    {
-                        ClientApplication.Worlds.ReplaceAssetReferences(
-                            selectedItem.Type,
-                            selectedItem.Name,
-                            replacement.Name
-                        );
-                    }
+                    if (_deleting is { IsCompleted: false }) { return; }
 
-                    ContentPackageManager.DeleteContent(selectedItem.Type, selectedItem.Name);
-                    UpdateList();
+                    _deleting = DeleteConfirmedAsync(selectedItem, replacement);
+                    GameManager.ObserveApplicationTask(_deleting);
                 }
             )
         );
+    }
+
+    private Task? _deleting;
+
+    private async Task DeleteConfirmedAsync(ListItem selectedItem, ListItem? replacement)
+    {
+        if (replacement != null)
+        {
+            await ClientApplication.Worlds.ReplaceAssetReferencesAsync(
+                selectedItem.Type,
+                selectedItem.Name,
+                replacement.Name
+            ).ConfigureAwait(false);
+        }
+
+        await Dispatcher.InvokeAsync(() =>
+            {
+                ContentPackageManager.DeleteContent(selectedItem.Type, selectedItem.Name);
+                UpdateList();
+            }
+        ).ConfigureAwait(false);
     }
 
     private void UpdateList()

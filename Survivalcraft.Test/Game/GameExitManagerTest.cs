@@ -1,6 +1,7 @@
 using Game.Managers;
 using Game.Startup;
 
+using Survivalcraft.Test.Fixtures;
 using Survivalcraft.Test.Modding;
 
 namespace Survivalcraft.Test;
@@ -13,6 +14,7 @@ public sealed class GameExitManagerTest
     {
         var packagePath = Path.Combine(Path.GetTempPath(), "verified-update.zip");
         const string downloadUrl = "https://example.com/release.zip";
+        using var frame = new FrameTestLoop();
         var requestedActions = new List<GameExitAction>();
 
         void OnExitRequested(GameExitAction action)
@@ -28,6 +30,7 @@ public sealed class GameExitManagerTest
             GameExitManager.ExitRequested += OnExitRequested;
 
             GameExitManager.RequestUpdate(packagePath, downloadUrl);
+            frame.Complete(GameExitManager.PendingTransition);
 
             Assert.Equal(GameExitAction.Update, GameExitManager.ExitAction);
             Assert.Equal([GameExitAction.Update], requestedActions);
@@ -47,6 +50,7 @@ public sealed class GameExitManagerTest
     [Fact]
     public void RequestExitPublishesExitAndStopsThroughLifecycleManager()
     {
+        using var frame = new FrameTestLoop();
         var requestedActions = new List<GameExitAction>();
         void OnExitRequested(GameExitAction action) => requestedActions.Add(action);
 
@@ -56,6 +60,7 @@ public sealed class GameExitManagerTest
             GameExitManager.ExitRequested += OnExitRequested;
 
             GameExitManager.RequestExit();
+            frame.Complete(GameExitManager.PendingTransition);
 
             Assert.Equal(GameExitAction.Exit, GameExitManager.ExitAction);
             Assert.Equal([GameExitAction.Exit], requestedActions);

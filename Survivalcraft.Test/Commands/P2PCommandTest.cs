@@ -57,29 +57,25 @@ public class P2PCommandTest
                 registry.CanInvoke(
                     command,
                     CommandPrincipal.CreatePlayer("Host"),
-                    Game.Managers.GameManager.AuthorityProject
+                    null
                 )
             );
             Assert.False(
                 registry.CanInvoke(
                     command,
                     CommandPrincipal.CreatePlayer("Claimed", permissions: [BuiltInPermissionIds.ManageStandard]),
-                    Game.Managers.GameManager.AuthorityProject
+                    null
                 )
             );
             Assert.True(
                 registry.CanInvoke(
                     command,
                     CommandPrincipal.CreatePlayer("Authorized", permissions: [permission]),
-                    Game.Managers.GameManager.AuthorityProject
+                    null
                 )
             );
-            Assert.True(
-                registry.CanInvoke(command, CommandPrincipal.LocalOperator, Game.Managers.GameManager.AuthorityProject)
-            );
-            Assert.True(
-                registry.CanInvoke(command, CommandPrincipal.System, Game.Managers.GameManager.AuthorityProject)
-            );
+            Assert.True(registry.CanInvoke(command, CommandPrincipal.LocalOperator, null));
+            Assert.True(registry.CanInvoke(command, CommandPrincipal.System, null));
             Assert.True(registry.TryEncode(command, out var id, out var data, out _));
             Assert.True(registry.TryDecode(id, data, out var decoded, out _));
             Assert.Equal(command, decoded);

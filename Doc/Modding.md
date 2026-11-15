@@ -120,7 +120,7 @@ context.Gameplay.OnWorldUpdating(update =>
 
 `MyWorldState` 实现 `IDisposable`。工厂在某个运行时第一次 `Get` 时调用；同一注册在同一运行时
 返回同一实例，在不同运行时必须返回不同实例，不能返回单例。工厂可能在 Project 加载前调用，
-不得假定子系统已经存在。按世界更新线程访问此状态；异步工作使用 `runtime.Lifetime` 取消，
+不得假定子系统已经存在。权威实例运行于独立的权威执行线程，客户端实例运行于图形帧线程，两者可能同时调用同一模组的回调。按世界更新线程访问此状态；异步工作使用 `runtime.Lifetime` 取消，
 结果通过所属世界的消息或更新流程应用，不直接从后台线程修改世界。
 
 运行时关闭立即取消 `Lifetime` 并拒绝新的状态访问；已绑定 Project 的状态等到该 Project
@@ -128,7 +128,7 @@ context.Gameplay.OnWorldUpdating(update =>
 其他状态释放。释放客户端世界不会清理 Authority 状态；仍有状态实例时禁止卸载模组宿主。
 该状态注册不提供持久化，存档数据仍使用下文的世界扩展数据或所属子系统的保存逻辑。
 与世界相关的实时时间延迟回调使用 `runtime.QueueTimeDelayedExecution(deadline, action)`，
-截止时间采用 `Time.FrameStartTime` 的时间基准。回调在所属世界更新时执行，同一轮回调中新排入的工作
+截止时间采用单调 `Time.RealTime` 的时间基准，不依赖图形帧。回调在所属世界更新时执行，同一轮回调中新排入的工作
 留到下一轮；世界关闭会立即清空待执行回调。不要把捕获 Project、组件或子系统的回调放入
 进程级 `Time.QueueTimeDelayedExecution`，否则保存退出或重载后仍可能访问已经释放的世界。
 

@@ -10,8 +10,10 @@ namespace Survivalcraft.Hosting.Test.Commands;
 
 public sealed class BuiltInProcessCommandsTest
 {
-    [Fact]
-    public void CpuEntrypointRegistersProcessLifecycleCommands()
+    [Theory]
+    [InlineData(CommandDomain.Application)]
+    [InlineData(CommandDomain.Server)]
+    public void CpuEntrypointRegistersProcessLifecycleCommands(CommandDomain diagnosticsDomain)
     {
         var transitions = 0;
         var catalog = new LanguageCatalog();
@@ -27,9 +29,17 @@ public sealed class BuiltInProcessCommandsTest
         var node = new NetNode(NetNodeOptions.Default, false, PackageHandlerCatalog.Empty, NodeRole.Authority);
         using var mods = GameModRuntime.Start(
             registerAppCommands: (commands, owner) =>
-                new BuiltInProcessCommands(services, new NetworkCommandDiagnostics(() => node, () => null))
+                new BuiltInProcessCommands(
+                        services,
+                        new NetworkCommandDiagnostics(() => node, () => null),
+                        diagnosticsDomain
+                    )
                     .Register(commands, owner)
         );
+        Assert.True(
+            mods.Commands.TryGetDefinition(ResourceId.Parse("game:diagnostics/network/get"), out var diagnostic)
+        );
+        Assert.Equal(diagnosticsDomain, diagnostic!.Definition.Domain);
         var context = new CommandContext(CommandInvocationChannel.Console, CommandPrincipal.LocalOperator, null);
         var dispatcher = new CommandDispatcher(mods.Commands);
         Assert.True(dispatcher.Execute(new GetLanguageCommand(), context).Success);

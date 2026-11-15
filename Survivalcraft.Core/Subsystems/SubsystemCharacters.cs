@@ -122,7 +122,8 @@ public class SubsystemCharacters : Subsystem, IUpdateable
 
         _toRemove.Clear();
 
-        if (WorldRuntimeContext.For(Project).IsAuthority && Time.PeriodicEvent(0.25, 0.0))
+        if (WorldRuntimeContext.For(Project).IsAuthority &&
+            WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.25, 0.0))
         {
             SendOnlineCharacterStates();
         }

@@ -16,19 +16,15 @@ public static class GameManager
 {
     private static bool _leavingGameplay;
 
-    private static double _lastAutosaveTime;
-
     private static readonly ConcurrentDictionary<Guid, (long Generation, bool ShowDialog)> _saveNotifications = new();
 
     public static Project? ClientProject => Runtime?.Client?.Project;
-
-    public static Project? AuthorityProject => Runtime?.Authority?.Project;
 
     private static long _runtimeGeneration;
 
     internal static WorldProjectActivity WorldActivity { get; } = new();
 
-    private static readonly GameWorldController _worlds = new(WorldActivity);
+    private static readonly GameWorldController _worlds = new(WorldActivity, Dispatcher.InvokeAsync);
 
     public static GameRuntime? Runtime => _worlds.Runtime;
 
@@ -67,20 +63,30 @@ public static class GameManager
         }
         else if (!ReferenceEquals(node, CommonLib.Net)) { return; }
 
+        if (!Dispatcher.IsMainThread)
+        {
+            Dispatcher.Dispatch(() => OnNetworkStopped(node, stoppedRuntime, previousRole, reason));
+            return;
+        }
+
         if (Window.IsCreated)
         {
             LeaveGameplay(previousRole, Network.Presentation.DisconnectReasonText.Format(reason));
         }
     }
 
-    public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget, SessionInfo? startupSession = null)
+    public static Task LoadProjectAsync(
+        WorldInfo worldInfo,
+        SessionInfo? startupSession = null,
+        CancellationToken cancellation = default
+    )
     {
         var session = startupSession ?? SessionInfoManager.CreateWorldSession(worldInfo);
         var settings = Configuration.HostingConfiguration.Preferences;
         var mods = CurrentModRuntime.Value!;
         Network.Handling.ApplicationMessageHandlers.InstallWorldHandlers(CommonLib.Net, mods);
         _runtimeGeneration++;
-        _worlds.LoadAuthority(
+        return _worlds.LoadAuthorityAsync(
             new WorldLoadRequest(
                 worldInfo,
                 session,
@@ -90,10 +96,9 @@ public static class GameManager
                 WorldProjectPolicies.CaptureAuthority(settings),
                 new BlockTextureStore(GamePaths.BlockTextures),
                 session.Target == SessionTarget.World
-            )
+            ),
+            cancellation
         );
-        _lastAutosaveTime = Time.RealTime;
-        GC.Collect();
     }
 
     public static void LoadClientProject(
@@ -110,11 +115,14 @@ public static class GameManager
 
         _worlds.AttachClient(runtime);
         var gameRuntime = _worlds.RequireRuntime();
-        if (!ReferenceEquals(gameRuntime.Client, runtime)) { gameRuntime.ReleaseClient(); }
+        if (!ReferenceEquals(gameRuntime.Client, runtime))
+        {
+            throw new InvalidOperationException("Release the previous client before applying bootstrap.");
+        }
 
         try
         {
-            gameRuntime.Attach(runtime);
+            gameRuntime.AttachClient(runtime);
             var project = WorldProjectFactory.CreateClient(
                 runtime,
                 CurrentModRuntime.Value!,
@@ -131,10 +139,8 @@ public static class GameManager
             if (ClientApplication.World is { } presentation)
             {
                 presentation.SetMultiplayer(gameRuntime.IsMultiplayer);
-                presentation.SaveRequested += request => SaveProject(
-                    request.WaitForCompletion,
-                    request.ShowErrorDialog
-                );
+                presentation.SaveRequested +=
+                    request => ObserveApplicationTask(SaveProjectAsync(request.ShowErrorDialog));
                 presentation.LeaveRequested += () => LeaveGameplay();
                 project.FindSubsystem<SubsystemCharacters>(true)!.CharacterCreationRejected += error =>
                     ScreensManager.FindScreen<GameLoadingScreen>("GameLoading", true)!
@@ -143,43 +149,61 @@ public static class GameManager
                     .ContinueCharacterPreparation(presentation.Runtime);
             }
 
-            _lastAutosaveTime = Time.RealTime;
             SetupNetworkHandlers(project);
+            WorldActivity.Track(runtime, null, Dispatcher.InvokeAsync);
 
             Log.Information("加载NetProject");
-            GC.Collect();
         }
         catch
         {
-            gameRuntime.ReleaseClient();
+            ObserveApplicationTask(gameRuntime.ReleaseClientAsync());
             throw;
         }
     }
 
-    public static void SaveProject(bool waitForCompletion, bool showErrorDialog)
+    public static async Task SaveProjectAsync(bool showErrorDialog)
     {
-        var project = Runtime?.Authority?.BoundProject;
-        if (project is null || project.IsDisposed) { return; }
+        var execution = Runtime?.AuthorityExecution;
+        if (execution == null) { return; }
 
         var id = Guid.NewGuid();
+        var worldName = WorldInfo?.WorldSettings.Name ?? string.Empty;
         _saveNotifications[id] = (_runtimeGeneration, showErrorDialog);
-        try { WorldProjectPersistence.For(project).Save(waitForCompletion, id); }
+        try
+        {
+            var pending = await execution.InvokeAsync(world =>
+                WorldProjectPersistence.For(world.Project!).SaveAsync(id)
+            ).ConfigureAwait(false);
+            var outcome = await pending.ConfigureAwait(false);
+            if (outcome.Failure != null) { throw new WorldSaveException(outcome.WorldName, outcome.Failure); }
+        }
         catch (Exception error)
         {
             if (_saveNotifications.TryRemove(id, out var notification))
             {
-                Log.Error($"Could not start world save: {error}");
-                ReportSaveFailure(
-                    project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.Name,
-                    notification.Generation,
-                    notification.ShowDialog,
-                    error
-                );
+                ReportSaveFailure(worldName, notification.Generation, notification.ShowDialog, error);
             }
 
-            if (waitForCompletion) { throw; }
+            throw;
         }
     }
+
+    internal static void ObserveApplicationTask(Task operation)
+    {
+        _ = operation.ContinueWith(
+            completed =>
+            {
+                if (completed.IsFaulted) { Log.Error(completed.Exception); }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default
+        );
+    }
+
+    private static Task? _leaveOperation;
+
+    public static Task PendingWorldTransition => _leaveOperation ?? Task.CompletedTask;
 
     private static void BindWorldLifecycle(Project project)
     {
@@ -199,7 +223,14 @@ public static class GameManager
         {
             if (!ReferenceEquals(Runtime?.Authority, stopped.World)) { return; }
 
-            LeaveGameplay(NodeRole.Authority, null);
+            Dispatcher.Dispatch(() =>
+                {
+                    if (ReferenceEquals(Runtime?.Authority, stopped.World) && Runtime is { IsChangingWorlds: false })
+                    {
+                        LeaveGameplay(NodeRole.Authority, null);
+                    }
+                }
+            );
         };
     }
 
@@ -232,9 +263,6 @@ public static class GameManager
 
     public static void UpdateRuntime()
     {
-        if (Runtime is { } messageRuntime) { messageRuntime.UpdateMessages(); }
-        else { CommonLib.Net.Update(); }
-
         if (Runtime is { } gameRuntime)
         {
             var local = gameRuntime.Client?.Project?.FindSubsystem<SubsystemCharacters>()?.LocalCharacter;
@@ -244,14 +272,9 @@ public static class GameManager
                            dialog is GameMenuDialog && ReferenceEquals(dialog.ParentWidget, gui)
                        );
             gameRuntime.SetLocalPause(menu);
-            gameRuntime.UpdateWorlds();
+            gameRuntime.UpdateClient(Time.FrameDuration, Time.FrameStartTime);
         }
-
-        if (Runtime?.Authority?.Project is { IsDisposed: false } && Time.RealTime - _lastAutosaveTime > 120)
-        {
-            _lastAutosaveTime = Time.RealTime;
-            SaveProject(false, true);
-        }
+        else { CommonLib.Net.Update(); }
     }
 
     /// <summary>Ends GUI gameplay and returns according to the current player's runtime entry flow.</summary>
@@ -262,54 +285,94 @@ public static class GameManager
         if (_leavingGameplay) { return; }
 
         _leavingGameplay = true;
+        _leaveOperation = LeaveGameplayCoreAsync(previousRole, reason);
+        ObserveApplicationTask(_leaveOperation);
+    }
+
+    private static async Task LeaveGameplayCoreAsync(NodeRole previousRole, string? reason)
+    {
+        var hosted = LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld &&
+                     Runtime?.AuthorityExecution?.Status.State == AuthorityExecutionState.Running &&
+                     Runtime.Authority is { IsClosed: false };
+        var worldList = LocalPlayerReturnTarget == LocalGameReturnTarget.WorldList;
         try
         {
-            if (LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld &&
-                CommonLib.Net.IsServer &&
-                Runtime?.Authority is { IsClosed: false, Project: { IsDisposed: false } })
-            {
-                LeaveLocalPlayer();
-                ScreensManager.SwitchScreen("HostedWorld", reason ?? string.Empty);
-            }
-            else
-            {
-                var returnToWorldList = LocalPlayerReturnTarget == LocalGameReturnTarget.WorldList;
-                CloseWorld();
-                ScreensManager.SwitchScreen(!returnToWorldList && previousRole == NodeRole.Client ? "NetPlay" : "Play");
-                if (!string.IsNullOrEmpty(reason)) { DialogsManager.Alert(reason); }
-            }
+            if (hosted) { await LeaveLocalPlayerAsync().ConfigureAwait(false); }
+            else { await CloseWorldAsync().ConfigureAwait(false); }
+
+            await Dispatcher.InvokeAsync(() =>
+                {
+                    ScreensManager.SwitchScreen(
+                        hosted ? "HostedWorld" : !worldList && previousRole == NodeRole.Client ? "NetPlay" : "Play"
+                    );
+                    if (!string.IsNullOrEmpty(reason)) { DialogsManager.Alert(reason); }
+                }
+            ).ConfigureAwait(false);
         }
-        finally { _leavingGameplay = false; }
+        finally { await Dispatcher.InvokeAsync(() => _leavingGameplay = false).ConfigureAwait(false); }
     }
 
-    public static void LeaveLocalPlayer()
+    public static async Task LeaveLocalPlayerAsync()
     {
-        SaveProject(true, true);
-        CommonLib.Net.EndAdmission();
-        try { Runtime?.ReleaseClient(); }
-        finally { ClientApplication.ReleaseWorld(); }
+        var runtime = Runtime;
+        var presentation = ClientApplication.World;
+        await SaveProjectAsync(true).ConfigureAwait(false);
+        if (runtime?.AuthorityExecution is { } execution)
+        {
+            await execution.InvokeAsync(world =>
+                {
+                    WorldNetworkBinding.For(world).RequireNode().EndAdmission();
+                    return true;
+                }
+            ).ConfigureAwait(false);
+        }
 
-        LocalPlayerReturnTarget = null;
+        if (runtime != null) { await runtime.ReleaseClientAsync().ConfigureAwait(false); }
+
+        await Dispatcher.InvokeAsync(() =>
+            {
+                if (presentation != null) { ClientApplication.ReleaseWorld(presentation); }
+
+                if (ReferenceEquals(Runtime, runtime)) { LocalPlayerReturnTarget = null; }
+            }
+        ).ConfigureAwait(false);
     }
 
-    public static void CloseWorld()
+    public static async Task CloseWorldAsync()
     {
-        if (Runtime?.Authority?.BoundProject is not null) { SaveProject(true, true); }
-
-        if (Runtime is null) { CommonLib.Net.StopImmediate(); }
-
-        DisposeProject();
+        var presentation = ClientApplication.World;
+        await _worlds.CloseAsync(true).ConfigureAwait(false);
+        if (presentation != null)
+        {
+            await Dispatcher.InvokeAsync(() => ClientApplication.ReleaseWorld(presentation)).ConfigureAwait(false);
+        }
     }
 
     internal static void WaitForPendingSave() => WorldProjectPersistence.WaitForPendingSaves();
 
-    public static void DisposeProject()
+    public static async Task DisposeProjectAsync()
     {
-        WaitForPendingSave();
-        try { _worlds.Close(); }
-        finally { ClientApplication.ReleaseWorld(); }
+        var presentation = ClientApplication.World;
+        await _worlds.CloseAsync().ConfigureAwait(false);
+        if (presentation != null)
+        {
+            await Dispatcher.InvokeAsync(() => ClientApplication.ReleaseWorld(presentation)).ConfigureAwait(false);
+        }
+    }
 
-        GC.Collect();
+    internal static void FinalizePlatformShutdown()
+    {
+        // A destroyed platform view cannot pump frame continuations. Normal window close already awaited CloseWorldAsync.
+        var runtime = Runtime;
+        runtime?.ReleaseClientForHostShutdown();
+        ClientApplication.ReleaseWorld();
+        if (runtime?.AuthorityExecution is { } execution)
+        {
+            try { execution.StopAsync(true).GetAwaiter().GetResult(); }
+            catch (Exception error) { Log.Error($"Final platform save failed: {error}"); }
+        }
+
+        _worlds.CloseAsync().GetAwaiter().GetResult();
     }
 
     private static void SetupNetworkHandlers(Project project)

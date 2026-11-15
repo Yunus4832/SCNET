@@ -15,122 +15,155 @@ namespace Survivalcraft.Test.Network;
 public sealed class LocalGameRuntimeTest
 {
     [Fact]
-    public void TrustedLocalAdmissionUsesAnOrdinarySessionAndBootstrapWithoutPortsOrAuthoritySelf()
+    public async Task TrustedLocalAdmissionUsesAnOrdinarySessionAndBootstrapWithoutPortsOrAuthoritySelf()
     {
-        using var project = new RuntimeTestProject(RuntimeSide.Authority);
-        project.AddSubsystem(new SubsystemPlayers());
-        project.AddSubsystem(new SubsystemGameInfo { WorldSettings = new WorldSettings { Name = "Local" } });
-        using var gameRuntime = new GameRuntime(false);
-        var authority = WorldNetworkBinding.For(project).RequireNode();
-        gameRuntime.Attach(authority.Runtime);
+        await using var game = new GameRuntime(false, Inline);
         Client? admitted = null;
-        authority.OnClientTransportConnected += player =>
-        {
-            admitted = player;
-            authority.QueuePackage(
-                WorldSnapshotBuilder.Bootstrap(
-                    project,
-                    player.ConnectionEpoch,
-                    authority.Clients.Values,
-                    null,
-                    [],
-                    BlockIndexMapping.Empty
-                ),
-                PackageAudience.To(player)
-            );
-        };
+        await game.StartAuthorityAsync(_ =>
+            {
+                var project = CreateProject();
+                var authority = WorldNetworkBinding.For(project).RequireNode();
+                authority.OnClientTransportConnected += player =>
+                {
+                    admitted = player;
+                    authority.QueuePackage(
+                        WorldSnapshotBuilder.Bootstrap(
+                            project,
+                            player.ConnectionEpoch,
+                            authority.Clients.Values,
+                            null,
+                            [],
+                            BlockIndexMapping.Empty
+                        ),
+                        PackageAudience.To(player)
+                    );
+                };
+                return authority.Runtime;
+            }
+        );
         var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
-
-        var client = gameRuntime.ConnectLocalClient(
+        var messages = new List<ReceivedPackage>();
+        var client = await game.ConnectLocalClientAsync(
             address,
             Guid.NewGuid(),
-            ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true)
+            ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true),
+            endpoint => endpoint.OnReceive += (_, received) => messages.AddRange(received)
         );
-        var messages = new List<ReceivedPackage>();
-        client.OnReceive += (_, received) => messages.AddRange(received);
-        // Budgeted bootstrap dispatch can continue on the next update during cold startup.
-        gameRuntime.UpdateMessages();
-        gameRuntime.UpdateMessages();
+        for (var i = 0; i < 100 && messages.Count == 0; i++)
+        {
+            game.UpdateClient(.016f, Engine.Core.Runtime.Time.RealTime);
+            await Task.Delay(10);
+        }
 
         var bootstrap = Assert.IsType<BootstrapPackage>(Assert.Single(messages).Package);
         Assert.True(BootstrapPackageHandler.CanApply(bootstrap, client));
-        Assert.NotNull(admitted);
-        Assert.Equal(address, admitted.PlayerAddress);
-        Assert.Same(admitted, authority.Clients[admitted.ID]);
-        Assert.True(admitted.Connection!.IsInProcess);
-        Assert.True(admitted.IsConnected);
-        Assert.Null(authority.Self);
-        Assert.NotSame(authority, client);
+        var valid = await game.AuthorityExecution!.InvokeAsync(world =>
+            {
+                var node = WorldNetworkBinding.For(world).RequireNode();
+                return admitted != null &&
+                       admitted.PlayerAddress == address &&
+                       ReferenceEquals(admitted, node.Clients[admitted.ID]) &&
+                       admitted.Connection!.IsInProcess &&
+                       admitted.IsConnected &&
+                       node.Self == null &&
+                       node.LocalPort == null;
+            }
+        );
+        Assert.True(valid);
+        Assert.NotSame(game.Authority, client.Runtime);
         Assert.Equal(address, client.Self!.PlayerAddress);
         Assert.Null(client.Runtime.Project);
-        Assert.Null(authority.LocalPort);
         Assert.Null(client.LocalPort);
     }
 
     [Fact]
-    public void LocalAdmissionStillEnforcesWorldCapacity()
+    public async Task LocalAdmissionStillEnforcesWorldCapacity()
     {
-        using var project = new RuntimeTestProject(RuntimeSide.Authority);
-        var players = new SubsystemPlayers();
-        project.AddSubsystem(players);
-        project.AddSubsystem(
-            new SubsystemGameInfo
-            {
-                WorldSettings = new WorldSettings { Name = "Full", MaxOnlinePlayerCount = 0 }
-            }
-        );
-        using var gameRuntime = new GameRuntime(false);
-        gameRuntime.Attach(WorldRuntimeContext.For(project));
+        await using var game = new GameRuntime(false, Inline);
+        await game.StartAuthorityAsync(_ => WorldRuntimeContext.For(CreateProject(0)));
         var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
-
-        Assert.Throws<InvalidOperationException>(() => gameRuntime.ConnectLocalClient(
+        await Assert.ThrowsAsync<InvalidOperationException>(() => game.ConnectLocalClientAsync(
                 address,
                 Guid.NewGuid(),
-                ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true)
+                ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true),
+                _ => { }
             )
         );
-
-        Assert.Null(gameRuntime.Client);
-        Assert.Null(WorldNetworkBinding.For(gameRuntime.Authority!).RequireNode().Self);
-        Assert.Empty(players.Store.Entries);
-        Assert.False(project.IsDisposed);
+        Assert.Null(game.Client);
+        var valid = await game.AuthorityExecution!.InvokeAsync(world =>
+            WorldNetworkBinding.For(world).RequireNode().Self == null &&
+            world.Project!.FindSubsystem<SubsystemPlayers>(true)!.Store.Entries.Count == 0 &&
+            !world.Project.IsDisposed
+        );
+        Assert.True(valid);
     }
 
     [Fact]
-    public void ReleasingLocalClientPreservesAuthorityAndOtherParticipants()
+    public async Task ReleasingLocalClientPreservesAuthorityAndOtherParticipants()
     {
-        using var project = new RuntimeTestProject(RuntimeSide.Authority);
-        project.AddSubsystem(new SubsystemPlayers());
-        project.AddSubsystem(new SubsystemGameInfo { WorldSettings = new WorldSettings { Name = "Local" } });
-        using var gameRuntime = new GameRuntime(false);
-        var authority = WorldNetworkBinding.For(project).RequireNode();
-        gameRuntime.Attach(authority.Runtime);
-        var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
-        var other = new Client(null, 2, Guid.NewGuid(), Guid.Empty)
-        {
-            PlayerAddress = new PlayerAddress(IdentityAddress.Encode(Enumerable.Repeat((byte)1, 32).ToArray()))
-        };
-        authority.AddClient(other);
-        var client = gameRuntime.ConnectLocalClient(
-            address,
-            Guid.NewGuid(),
-            ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true)
+        await using var game = new GameRuntime(false, Inline);
+        Client? other = null;
+        await game.StartAuthorityAsync(_ =>
+            {
+                var project = CreateProject();
+                var node = WorldNetworkBinding.For(project).RequireNode();
+                other = new Client(null, 2, Guid.NewGuid(), Guid.Empty)
+                {
+                    PlayerAddress = new PlayerAddress(IdentityAddress.Encode(Enumerable.Repeat((byte)1, 32).ToArray()))
+                };
+                node.AddClient(other);
+                return node.Runtime;
+            }
         );
-
-        gameRuntime.ReleaseClient();
-        gameRuntime.UpdateMessages();
-
-        Assert.True(client.Runtime.IsClosed || !client.IsConnected);
-        Assert.False(project.IsDisposed);
-        Assert.True(authority.IsServer);
-        Assert.Null(authority.Self);
-        Assert.Same(other, authority.Clients[other.ID]);
-        Assert.DoesNotContain(authority.Clients.Values, player => player.PlayerAddress == address);
-        var replacement = gameRuntime.ConnectLocalClient(
+        var address = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
+        var client = await game.ConnectLocalClientAsync(
             address,
             Guid.NewGuid(),
-            ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true)
+            ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true),
+            _ => { }
+        );
+        await game.ReleaseClientAsync();
+        var valid = false;
+        for (var i = 0; i < 100 && !valid; i++)
+        {
+            valid = await game.AuthorityExecution!.InvokeAsync(world =>
+                {
+                    var node = WorldNetworkBinding.For(world).RequireNode();
+                    return !world.Project!.IsDisposed &&
+                           node.IsServer &&
+                           node.Self == null &&
+                           ReferenceEquals(other, node.Clients[other!.ID]) &&
+                           !node.Clients.Values.Any(player => player.PlayerAddress == address);
+                }
+            );
+            if (!valid) { await Task.Delay(10); }
+        }
+
+        Assert.True(valid);
+        Assert.True(client.Runtime.IsClosed || !client.IsConnected);
+        var replacement = await game.ConnectLocalClientAsync(
+            address,
+            Guid.NewGuid(),
+            ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true),
+            _ => { }
         );
         Assert.Equal(address, replacement.Self!.PlayerAddress);
+    }
+
+    private static RuntimeTestProject CreateProject(ushort maxPlayers = 4)
+    {
+        var project = new RuntimeTestProject(RuntimeSide.Authority);
+        project.AddSubsystem(new SubsystemPlayers());
+        project.AddSubsystem(
+            new SubsystemGameInfo
+                { WorldSettings = new WorldSettings { Name = "Local", MaxOnlinePlayerCount = maxPlayers } }
+        );
+        return project;
+    }
+
+    private static Task Inline(Action action)
+    {
+        action();
+        return Task.CompletedTask;
     }
 }

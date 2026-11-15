@@ -727,6 +727,8 @@ public sealed class TerrainComputationScheduler : IDisposable
         return !chunk.IsContentInitialized ? TerrainWorkPriority.FirstDisplay : TerrainWorkPriority.Maintenance;
     }
 
+    public Task QuiesceAsync() => _lightWorkers.StopAsync();
+
     public void Dispose()
     {
         lock (_completionSync) { _disposed = true; }

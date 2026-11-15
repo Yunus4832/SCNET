@@ -76,7 +76,7 @@ public class ModHostTest
         host.LoadAndStart([descriptor]);
 
         Assert.True(host.Commands.IsFrozen);
-        var textAdapter = new TextCommandAdapter(host.Commands, Game.Managers.GameManager.AuthorityProject);
+        var textAdapter = new TextCommandAdapter(host.Commands, null);
         Assert.True(textAdapter.TryFind("hello", out var registered));
         Assert.Equal("example.commands:text/hello", registered!.Id.ToString());
         Assert.True(host.Commands.TryGetDefinition<CommandMod.HelloCommand>(out var definition));

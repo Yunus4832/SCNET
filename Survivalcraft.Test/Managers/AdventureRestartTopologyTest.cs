@@ -29,6 +29,12 @@ public sealed class AdventureRestartTopologyTest
             .GetValue(null)!;
         var sessionProperty = typeof(GameWorldController).GetProperty(nameof(GameWorldController.WorldSession))!;
         var screen = (GameLoadingScreen)RuntimeHelpers.GetUninitializedObject(typeof(GameLoadingScreen));
+        using var cancellation = new CancellationTokenSource();
+        var cancellationField = typeof(GameLoadingScreen).GetField(
+            "_loadingCancellation",
+            BindingFlags.Instance | BindingFlags.NonPublic
+        )!;
+        cancellationField.SetValue(screen, cancellation);
         var states = new StateMachine();
         states.AddState("WaitingForFadeIn", () => { }, () => { }, () => { });
         typeof(GameLoadingScreen).GetField("_stateMachine", BindingFlags.Instance | BindingFlags.NonPublic)!
@@ -48,6 +54,7 @@ public sealed class AdventureRestartTopologyTest
         }
         finally
         {
+            ((CancellationTokenSource)cancellationField.GetValue(screen)!).Dispose();
             sessionProperty.SetValue(controller, previousSession);
             CommonLib.Net.Role = previousRole;
             ProgressManager.UpdateProgress(previousOperation, previousProgress);

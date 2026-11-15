@@ -90,10 +90,18 @@
 生物声音的权威事件和发送节流由 `ComponentCreatureSounds` 处理，`ComponentCreatureSoundsPresentation` 负责本地播放、播放节流与脚步材质采样。声音不是伤害、噪声或 AI 决策的反馈依据。
 生物 AI、行为选择与寻路只在权威世界更新。客户端本机骑乘保留独立的速度和转向预测，不运行生物 AI 状态机，也不因骑乘消息开启整套行为选择。
 生物生成调度、掉落提交和最终实体退场也由权威世界推进。客户端保留淡入淡出所需数据与动画，等待权威实体移除消息，不自行完成退场或修改掉落标记。
-GUI 与 独立服务器宿主通过同一个游戏运行时更新入口，先处理两侧消息，再更新权威世界和客户端世界；页面不负责推进世界。现有宿主时间步策略保持独立。
-运行时先更新权威世界，再更新客户端世界；暂停单机时暂停两侧模拟，消息处理仍可运行，GUI 开服不因本机菜单暂停服务。
+GUI 内的权威世界和独立服务器都由 Hosting 的 `AuthorityWorldExecutor` 独占执行，加载、消息、规则更新、命令、保存捕获和释放均归该所有者线程。
+模拟按 20TPS 推进，消息和地形协调独立按约 60Hz 服务；过载后按实际经过时间继续，不无限补 tick。
+图形帧只推进客户端副本、输入预测、UI、相机与绘制，不调用权威世界更新。
+每个世界通过 `WorldRuntimeContext.Clock` 获取自己的更新序号和时间步；真实超时使用单调时钟，规则不读取图形帧序号。
+暂停单机时暂停两侧模拟，消息服务继续运行；GUI 开服不因本机菜单暂停服务。
 菜单、对话框与鼠标输入由界面层继续更新，不依赖模拟是否暂停。单机的进程内连接不代表联机；聊天、玩家列表、邀请及开服管理提示只在存在实际网络监听或远程连接时显示。
-应用层通过 `GameManager.ClientProject` 与 `AuthorityProject` 明确选择世界；不存在随页面切换改变指向的全局 Project 或全局世界角色。
+应用层通过 `GameManager.ClientProject` 访问本端副本；权威操作提交给 `GameManager.Runtime.AuthorityExecution.InvokeAsync`，界面读取执行器发布的不可变状态，不能跨线程持有或访问活的权威实体。
+应用命令在宿主线程执行，世界和服务器命令在权威所有者执行；本机玩家命令仍走与远程玩家相同的消息路径。
+
+加载、保存和正常退出提供可观察的异步完成状态。`WorldProjectPersistence` 在所有者上捕获一致项目及地形输入，压缩和写盘在后台执行；等待上次写入不会阻塞图形帧。
+正常停止保存成功后才退休世界，保存失败保持世界与本机客户端以便重试。客户端退休先关闭投递并异步等待私有地形工作，随后回图形线程释放 Project 与 GPU 资源。
+窗口关闭等待该流程完成后再真正关闭；无法继续运行帧循环的系统销毁是单独的尽力清理边界，不能用来替代正常异步退出。
 世界业务从自己的 Project 获取 `WorldRuntimeContext`，服务器发现快照也使用请求所属的权威世界。
 更新对象通过 `IUpdateable.UpdateSide` 显式声明 Authority、Client、Presentation 或 Both；没有未声明类型默认在两侧运行的规则。
 Both 表示两个独立实例分别执行共享计算，仍需在实例内部区分预测、权威提交与表现工作。
@@ -215,7 +223,7 @@ Profile 也不保存仓库地址。联机临时仓库是握手提供的短生命
 
 Core、Hosting、Client 在各自 `.csproj` 中声明禁止引用的程序集，构建时检查已解析的引用。Core 禁止引用综合应用、Hosting、Client、Engine 和 Engine.Media；Hosting 禁止引用 Client、综合应用和混合 Engine。Client 可以引用 Hosting，Hosting 保持单向依赖。最终发行依赖和完整运行场景仍按[分离验收清单](LogicCoreSeparation.md#验收清单)验证。
 
-`WorldRuntimeContext` 本身属于 Core，只负责世界身份、明确的执行侧与表现能力、Project 绑定、取消、定时任务及资源生命周期。网络节点、消息收件箱和处理器缓存由 `WorldNetworkBinding` 所有，待安装的客户端内容字节由 `ClientBootstrapContent` 所有，规则目录由 `WorldContentBinding` 所有；Hosting 和客户端工厂分别装配这些所有者，Core 不反向查找它们。关闭世界立即取消投递，绑定 Project 的资源在 Project 释放时清理，内容目录最后释放。
+`WorldRuntimeContext` 本身属于 Core，只负责世界身份、明确的执行侧与表现能力、Project 绑定、世界更新时钟与执行线程校验、取消、定时任务及资源生命周期。网络节点、消息收件箱和处理器缓存由 `WorldNetworkBinding` 所有，待安装的客户端内容字节由 `ClientBootstrapContent` 所有，规则目录由 `WorldContentBinding` 所有；Hosting 和客户端工厂分别装配这些所有者，Core 不反向查找它们。关闭世界立即取消投递，绑定 Project 的资源在 Project 释放时清理，内容目录最后释放。
 
 世界工厂使用 `WorldProjectComposition` 根据模板的 `ConstructionSide`（`Shared`、`Authority`、`Client`、`Presentation`）选择实例组成。该选择发生于 ECS 类型解析及构造之前，与 `UpdateSide` 的更新调度相互独立；选择不删除模板定义。内置表现组件显式声明 `Presentation`，装配还须显式启用表现能力，权威世界不创建这些实例。未知的构造侧值会报错，不能静默丢弃内容。
 

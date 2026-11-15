@@ -12,7 +12,11 @@ namespace Game.Screens;
 
 public class GameScreen : Screen
 {
-    private Project? _administrationDialogProject;
+    private Guid _administrationDialogWorld;
+
+    private Guid _claimWorld;
+
+    private Task<string?>? _claimCode;
 
     public GameScreen()
     {
@@ -21,7 +25,7 @@ public class GameScreen : Screen
         IsDrawRequired = true;
         Window.Deactivated += delegate
         {
-            if (!Window.IsClosing) { ClientApplication.World?.RequestSave(false, false); }
+            if (!Window.IsClosing) { ClientApplication.World?.RequestSave(false); }
         };
     }
 
@@ -51,6 +55,13 @@ public class GameScreen : Screen
 
     public override void Update()
     {
+        if (GameManager.Runtime?.IsChangingWorlds == true ||
+            ClientApplication.World?.Project is not { IsDisposed: false })
+        {
+            ShowHideCursors(true);
+            return;
+        }
+
         if (GameManager.Runtime?.Client is { IsClosed: true })
         {
             ClientApplication.World?.RequestLeave();
@@ -88,16 +99,38 @@ public class GameScreen : Screen
 
     private void TryShowAdministrationBootstrap()
     {
-        if (GameManager.Runtime is not { IsMultiplayer: true, Authority.Project: { } project } ||
-            ReferenceEquals(_administrationDialogProject, project) ||
-            ServerAdministrationBootstrap.IsClaimed(project) ||
-            ClientApplication.World?.LocalCharacter is not { } player ||
-            !ServerAdministrationBootstrap.TryGetClaimCode(project, out var code))
+        if (GameManager.Runtime is not { IsMultiplayer: true, AuthorityExecution: { } execution } ||
+            _administrationDialogWorld == execution.Status.WorldId ||
+            ClientApplication.World?.LocalCharacter is not { } player) { return; }
+
+        var worldId = execution.Status.WorldId;
+        if (_claimCode == null || _claimWorld != worldId)
         {
+            _claimWorld = worldId;
+            _claimCode = execution.InvokeAsync(world =>
+                {
+                    var authority = world.Project;
+                    return authority != null &&
+                           !ServerAdministrationBootstrap.IsClaimed(authority) &&
+                           ServerAdministrationBootstrap.TryGetClaimCode(authority, out var claim)
+                        ? claim
+                        : null;
+                }
+            );
+        }
+
+        if (!_claimCode.IsCompleted) { return; }
+
+        _administrationDialogWorld = worldId;
+        if (!_claimCode.IsCompletedSuccessfully)
+        {
+            Log.Error(_claimCode.Exception);
             return;
         }
 
-        _administrationDialogProject = project;
+        var code = _claimCode.Result;
+        if (code == null) { return; }
+
         var claimCommand = $"/auth claim {code}";
         DialogsManager.ShowDialog(
             player.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GuiWidget,

@@ -267,11 +267,11 @@ public partial class CharacterData : IDisposable
                     _subsystemTerrain.Demands.BeginSpawnPreparation(CharacterId, SpawnPosition.XZ, 64f);
                 _spawnPreparation.Update(SpawnPosition.XZ, 64f);
 
-                _terrainWaitStartTime = Time.FrameStartTime;
+                _terrainWaitStartTime = Time.RealTime;
             },
             delegate
             {
-                if (!Time.PeriodicEvent(0.1, 0.0))
+                if (!WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0.0))
                 {
                     return;
                 }
@@ -279,7 +279,7 @@ public partial class CharacterData : IDisposable
                 var updateProgress2 = _spawnPreparation!.GetProgress(0f, 64f);
 
                 if (updateProgress2 < 1f &&
-                    Time.FrameStartTime - _terrainWaitStartTime < SpawnPreparationTimeoutSeconds)
+                    Time.RealTime - _terrainWaitStartTime < SpawnPreparationTimeoutSeconds)
                 {
                     return;
                 }
@@ -300,7 +300,7 @@ public partial class CharacterData : IDisposable
             "WaitForTerrain",
             delegate
             {
-                _terrainWaitStartTime = Time.FrameStartTime;
+                _terrainWaitStartTime = Time.RealTime;
                 var center = ComponentCharacter != null
                     ? ComponentCharacter.ComponentBody.Position.XZ
                     : SpawnPosition.XZ;
@@ -310,15 +310,15 @@ public partial class CharacterData : IDisposable
             },
             delegate
             {
-                if (!Time.PeriodicEvent(0.1, 0.0))
+                if (!WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0.0))
                 {
                     return;
                 }
 
                 var updateProgress = _spawnPreparation!.GetProgress(32f, 0f);
 
-                if ((!(updateProgress >= 1f) || !(Time.FrameStartTime - _terrainWaitStartTime > 2.0)) &&
-                    !(Time.FrameStartTime - _terrainWaitStartTime >= SpawnPreparationTimeoutSeconds))
+                if ((!(updateProgress >= 1f) || !(Time.RealTime - _terrainWaitStartTime > 2.0)) &&
+                    !(Time.RealTime - _terrainWaitStartTime >= SpawnPreparationTimeoutSeconds))
                 {
                     return;
                 }
@@ -338,7 +338,7 @@ public partial class CharacterData : IDisposable
             Actions.Empty,
             delegate
             {
-                if (!Time.PeriodicEvent(0.1, 0.0))
+                if (!WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0.0))
                 {
                     return;
                 }
@@ -355,7 +355,7 @@ public partial class CharacterData : IDisposable
             delegate
             {
                 InitializeSpawnMarks();
-                TryReleaseSpawnPreparation(Time.FrameStartTime);
+                TryReleaseSpawnPreparation(Time.RealTime);
             },
             delegate
             {
@@ -547,7 +547,7 @@ public partial class CharacterData : IDisposable
         }
 
         _stateMachine.Update();
-        if (_stateMachine.CurrentState == "Playing") { TryReleaseSpawnPreparation(Time.FrameStartTime); }
+        if (_stateMachine.CurrentState == "Playing") { TryReleaseSpawnPreparation(Time.RealTime); }
     }
 
     internal void TryReleaseSpawnPreparation(double now)

@@ -59,6 +59,34 @@ public sealed class TerrainWorkExecutorTest
     }
 
     [Fact]
+    public async Task QuiescingWaitsForPrivateWorkWithoutClosingFinalOwnerAccess()
+    {
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        using var executor = new TerrainWorkExecutor(() =>
+            {
+                entered.Set();
+                release.Wait();
+                return false;
+            }
+        );
+        executor.Start();
+        executor.Wake();
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
+            var stopping = executor.QuiesceAsync();
+            Assert.False(stopping.IsCompleted);
+            release.Set();
+            await stopping.WaitAsync(TimeSpan.FromSeconds(5));
+            executor.EnterMain();
+            executor.LeaveMain();
+            Assert.Same(stopping, executor.QuiesceAsync());
+        }
+        finally { release.Set(); }
+    }
+
+    [Fact]
     public void RequestHasAccessDescribesOnlyTheCurrentThreadsAcquiredLease()
     {
         using var executor = new TerrainWorkExecutor(() => true);

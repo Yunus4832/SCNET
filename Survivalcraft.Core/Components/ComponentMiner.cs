@@ -47,7 +47,7 @@ public class ComponentMiner : Component, IUpdateable
 
     private double _digStartTime;
 
-    private int _lastDigFrameIndex;
+    private long _lastDigTick;
 
     private double _lastHitTime;
 
@@ -115,7 +115,7 @@ public class ComponentMiner : Component, IUpdateable
             }
         }
 
-        if (DigCellFace.HasValue && Time.FrameIndex - _lastDigFrameIndex > 1)
+        if (DigCellFace.HasValue && WorldRuntimeContext.For(Project).Clock.TickIndex - _lastDigTick > 1)
         {
             DigCellFace = null;
         }
@@ -158,7 +158,7 @@ public class ComponentMiner : Component, IUpdateable
         DigRequestId = 0;
         DigExpectedValue = 0;
         var result = false;
-        _lastDigFrameIndex = Time.FrameIndex;
+        _lastDigTick = WorldRuntimeContext.For(Project).Clock.TickIndex;
         var cellFace = raycastResult.CellFace;
         if (ComponentCharacter is { CharacterData.IsLocalCharacter: true } &&
             _subsystemTerrain.CellPrediction?.IsPending(cellFace.Point) == true)

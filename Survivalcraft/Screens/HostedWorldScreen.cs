@@ -16,6 +16,14 @@ public sealed class HostedWorldScreen : Screen
 
     private ClientAdmissionUi? _admission;
 
+    private Task<(Game.Protocol.Identity.PlayerAddress Subject, Guid Token)>? _verified;
+
+    private Task<NetNode>? _connection;
+
+    private Task? _leaving;
+
+    private CancellationTokenSource _joinCancellation = new();
+
     private bool _joining;
 
     private string _failure = string.Empty;
@@ -33,38 +41,43 @@ public sealed class HostedWorldScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        _joinCancellation.Dispose();
+        _joinCancellation = new CancellationTokenSource();
         _joining = false;
+        _verified = null;
+        _connection = null;
+        _leaving = null;
         _failure = parameters.OfType<string>().FirstOrDefault() ?? string.Empty;
     }
 
     public override void Leave()
     {
+        _joinCancellation.Cancel();
         _admission?.Dispose();
         _admission = null;
     }
-
 
     public override void Update()
     {
         if (!ReferenceEquals(ScreensManager.CurrentScreen, this)) { return; }
 
-        var node = CommonLib.Net;
-        if (!node.IsServer || GameManager.AuthorityProject is null)
-        {
-            if (GameManager.AuthorityProject is not null)
-            {
-                GameManager.SaveProject(true, true);
-                GameManager.DisposeProject();
-            }
+        if (_leaving is { IsCompleted: false }) { return; }
 
-            GameManager.LocalPlayerReturnTarget = null;
-            ScreensManager.SwitchScreen("Play");
+        _leaving = null;
+
+        var execution = GameManager.Runtime?.AuthorityExecution;
+        var state = execution?.Status;
+        if (state?.State != AuthorityExecutionState.Running || !state.Listening)
+        {
+            _leaving = StopAndReturnAsync();
+            GameManager.ObserveApplicationTask(_leaving);
             return;
         }
 
         if (_joining && (Input.Back || Input.Cancel))
         {
-            node.EndAdmission();
+            _joinCancellation.Cancel();
+            _admission?.CancelJoin();
             _admission?.Dispose();
             _admission = null;
             _joining = false;
@@ -73,75 +86,115 @@ public sealed class HostedWorldScreen : Screen
             return;
         }
 
-        node.PumpLocalAdmission();
         _admission?.Update();
-        if (_joining && node.AdmissionAccepted)
+        if (_joining && _verified == null && _admission?.AdmissionAccepted == true)
         {
-            var verified = node.ConsumeLocalAdmission();
-            _joining = false;
-            var client = GameManager.Runtime!.ConnectLocalClient(
-                verified.Subject,
-                verified.Token,
-                Network.Handling.ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true)
-            );
-            GameManager.ObserveEndpoint(client);
-            ScreensManager.SwitchScreen("GameLoading", client.Runtime);
-            return;
+            _verified = _admission.ConsumeLocalAdmissionAsync();
         }
 
-        if (_joining && node.LocalAdmissionError is { } error)
+        if (_joining && _verified is { IsCompleted: true } verified && _connection == null)
         {
-            _joining = false;
-            GameManager.LocalPlayerReturnTarget = null;
-            _failure = Localization.ClientLanguage.Resolver.Resolve(error);
-            _admission?.Dispose();
-            _admission = null;
+            try
+            {
+                var value = verified.GetAwaiter().GetResult();
+                var generation = _joinCancellation;
+                _connection = GameManager.Runtime!.ConnectLocalClientAsync(
+                    value.Subject,
+                    value.Token,
+                    Network.Handling.ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true),
+                    client =>
+                    {
+                        if (!ReferenceEquals(_joinCancellation, generation)) { throw new OperationCanceledException(); }
+
+                        generation.Token.ThrowIfCancellationRequested();
+                        GameManager.ObserveEndpoint(client);
+                        ScreensManager.SwitchScreen("GameLoading", client.Runtime);
+                    }
+                );
+            }
+            catch (Exception error) { JoinFailed(error); }
+        }
+
+        if (_connection is { IsFaulted: true } failed) { JoinFailed(failed.Exception!.GetBaseException()); }
+
+        if (_joining && _admission?.LocalAdmissionError is { } rejection)
+        {
+            JoinFailed(new InvalidOperationException(Localization.ClientLanguage.Resolver.Resolve(rejection)));
         }
 
         _status.Text = string.Format(
                            Text("Running"),
                            GameManager.WorldInfo?.WorldSettings.Name ?? string.Empty,
-                           node.Connections.PlayerCount
+                           state.PlayerCount
                        ) +
                        "\n" +
-                       (_joining ? _admission?.Status : _failure.Length > 0 ? _failure : Text("NotJoined"));
-        _joinButton.IsEnabled = !_joining && node.Self?.PlayerAddress is null;
+                       (_failure.Length > 0 ? _failure : Text("NotJoined"));
+        _joinButton.IsEnabled = !_joining && GameManager.Runtime?.Client == null;
         if (_joinButton.IsClicked) { Join(); }
 
         if (_stopButton.IsClicked || Input.Back || Input.Cancel) { ConfirmStop(); }
     }
 
+    private void JoinFailed(Exception error)
+    {
+        _joining = false;
+        _connection = null;
+        _verified = null;
+        _failure = error.Message;
+        GameManager.LocalPlayerReturnTarget = null;
+        _admission?.Dispose();
+        _admission = null;
+    }
+
     private void Join()
     {
-        var node = CommonLib.Net;
-        if (!node.IsServer || node.AdmissionPolicy is null || GameManager.WorldInfo is not { } world)
+        if (GameManager.Runtime?.AuthorityExecution is not { } execution || GameManager.WorldInfo is not { } world)
         {
             return;
         }
 
+        _joinCancellation.Dispose();
+        _joinCancellation = new CancellationTokenSource();
         GameManager.LocalPlayerReturnTarget = LocalGameReturnTarget.HostedWorld;
         _admission?.Dispose();
-        _admission = new ClientAdmissionUi(node, this, AuthenticationJoinScope.ForWorld(world.DirectoryName));
-        _failure = string.Empty;
+        _admission = new ClientAdmissionUi(
+            CommonLib.Net,
+            this,
+            AuthenticationJoinScope.ForWorld(world.DirectoryName),
+            authority: execution
+        );
+        _verified = null;
+        _connection = null;
         _joining = true;
-        node.BeginLocalAdmission();
+        _failure = string.Empty;
+        _admission.BeginLocalAdmission();
     }
 
     private void ConfirmStop()
     {
-        var project = GameManager.AuthorityProject;
+        var execution = GameManager.Runtime?.AuthorityExecution;
         DialogsManager.Confirm(
             Text("ConfirmStop"),
             button =>
             {
                 if (button != MessageDialogButton.Button1 ||
                     ScreensManager.CurrentScreen != this ||
-                    !ReferenceEquals(project, GameManager.AuthorityProject)) { return; }
+                    !ReferenceEquals(execution, GameManager.Runtime?.AuthorityExecution)) { return; }
 
-                GameManager.CloseWorld();
-                ScreensManager.SwitchScreen("Play");
+                _leaving = StopAndReturnAsync();
+                GameManager.ObserveApplicationTask(_leaving);
             },
             this
         );
+    }
+
+    private async Task StopAndReturnAsync()
+    {
+        try
+        {
+            await GameManager.CloseWorldAsync().ConfigureAwait(false);
+            await Dispatcher.InvokeAsync(() => ScreensManager.SwitchScreen("Play")).ConfigureAwait(false);
+        }
+        finally { await Dispatcher.InvokeAsync(() => _leaving = null).ConfigureAwait(false); }
     }
 }

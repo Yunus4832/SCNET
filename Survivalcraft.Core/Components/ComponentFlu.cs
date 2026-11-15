@@ -85,7 +85,7 @@ public class ComponentFlu : Component, IUpdateable
             }
             else { FluOnset = 0; }
 
-            if (Time.PeriodicEvent(1, .5) &&
+            if (WorldRuntimeContext.For(Project).Clock.PeriodicEvent(1, .5) &&
                 _character.CharacterData.ControllerConnection is { IsConnected: true } owner)
             {
                 NetworkSender.SendTo(

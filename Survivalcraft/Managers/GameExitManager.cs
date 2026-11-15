@@ -2,6 +2,24 @@ namespace Game.Managers;
 
 public static class GameExitManager
 {
+    private static Task? _pendingTransition;
+
+    public static Task PendingTransition => _pendingTransition ?? Task.CompletedTask;
+
+    private static void RequestTransition(Action commit)
+    {
+        if (_pendingTransition is { IsCompleted: false }) { return; }
+
+        _pendingTransition = CompleteTransitionAsync(commit);
+        GameManager.ObserveApplicationTask(_pendingTransition);
+    }
+
+    private static async Task CompleteTransitionAsync(Action commit)
+    {
+        await GameManager.CloseWorldAsync().ConfigureAwait(false);
+        await Dispatcher.InvokeAsync(commit).ConfigureAwait(false);
+    }
+
     public static GameExitAction ExitAction { get; private set; }
 
     public static event Action<GameExitAction>? ExitRequested;
@@ -16,12 +34,15 @@ public static class GameExitManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(packagePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(downloadUrl);
-        SaveWorldBeforeExit();
-        UpdatePackagePath = packagePath;
-        UpdateDownloadUrl = downloadUrl;
-        ExitAction = GameExitAction.Update;
-        ExitRequested?.Invoke(ExitAction);
-        RequestApplicationExit();
+        RequestTransition(() =>
+            {
+                UpdatePackagePath = packagePath;
+                UpdateDownloadUrl = downloadUrl;
+                ExitAction = GameExitAction.Update;
+                ExitRequested?.Invoke(ExitAction);
+                RequestApplicationExit();
+            }
+        );
     }
 
     public static void RequestRestart(SessionInfo? sessionInfo = null)
@@ -36,24 +57,31 @@ public static class GameExitManager
 
     public static void RequestInstanceSwitch(string instanceId)
     {
-        SaveWorldBeforeExit();
-        StarterInstanceManager.RequestSwitch(instanceId);
-        SwitchInstanceId = instanceId;
-        ExitAction = GameExitAction.SwitchInstance;
-        ExitRequested?.Invoke(ExitAction);
-        RequestApplicationExit();
+        RequestTransition(() =>
+            {
+                StarterInstanceManager.RequestSwitch(instanceId);
+                SwitchInstanceId = instanceId;
+                ExitAction = GameExitAction.SwitchInstance;
+                ExitRequested?.Invoke(ExitAction);
+                RequestApplicationExit();
+            }
+        );
     }
 
     public static void RequestExit()
     {
-        SaveWorldBeforeExit();
-        ExitAction = GameExitAction.Exit;
-        ExitRequested?.Invoke(ExitAction);
-        RequestApplicationExit();
+        RequestTransition(() =>
+            {
+                ExitAction = GameExitAction.Exit;
+                ExitRequested?.Invoke(ExitAction);
+                RequestApplicationExit();
+            }
+        );
     }
 
     internal static void BeginSession()
     {
+        _pendingTransition = null;
         ExitAction = GameExitAction.Exit;
         SwitchInstanceId = string.Empty;
         UpdatePackagePath = string.Empty;
@@ -62,32 +90,30 @@ public static class GameExitManager
 
     private static void RequestRestartInternal(SessionInfo? sessionInfo, ModProfile? sessionProfile)
     {
-        SaveWorldBeforeExit();
-        var pendingSessionId = string.Empty;
-        if (sessionInfo != null)
-        {
-            var pendingSession = SessionInfoManager.PrepareRestartSession(sessionInfo);
-            pendingSessionId = pendingSession.SessionId;
-            if (sessionProfile != null)
+        RequestTransition(() =>
             {
-                sessionProfile.Id = pendingSessionId;
-                ModProfileManager.SaveSessionProfile(sessionProfile);
-            }
-        }
+                var pendingSessionId = string.Empty;
+                if (sessionInfo != null)
+                {
+                    var pendingSession = SessionInfoManager.PrepareRestartSession(sessionInfo);
+                    pendingSessionId = pendingSession.SessionId;
+                    if (sessionProfile != null)
+                    {
+                        sessionProfile.Id = pendingSessionId;
+                        ModProfileManager.SaveSessionProfile(sessionProfile);
+                    }
+                }
 
-        StartupManager.Profiles.UpdateRunningSettings(runningSetting =>
-            {
-                runningSetting.PendingSessionId = pendingSessionId;
+                StartupManager.Profiles.UpdateRunningSettings(runningSetting =>
+                    {
+                        runningSetting.PendingSessionId = pendingSessionId;
+                    }
+                );
+                ExitAction = GameExitAction.Restart;
+                ExitRequested?.Invoke(ExitAction);
+                RequestApplicationExit();
             }
         );
-        ExitAction = GameExitAction.Restart;
-        ExitRequested?.Invoke(ExitAction);
-        RequestApplicationExit();
-    }
-
-    private static void SaveWorldBeforeExit()
-    {
-        GameManager.SaveProject(waitForCompletion: true, showErrorDialog: true);
     }
 
     private static void RequestApplicationExit()

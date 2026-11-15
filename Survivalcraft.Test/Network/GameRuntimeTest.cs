@@ -1,10 +1,11 @@
 using System.Reflection;
 
-using EntitySystem.Core;
+using Engine.Network;
 
-using Game.Managers;
+using EntitySystem.Core;
+using EntitySystem.TemplatesDatabase;
+
 using Game.Network;
-using Game.Network.Handling;
 using Game.Network.Transport;
 using Game.Subsystems;
 using Game.World;
@@ -18,321 +19,330 @@ namespace Survivalcraft.Test.Network;
 public sealed class GameRuntimeTest
 {
     [Theory]
-    [InlineData(true, true, true)]
-    [InlineData(true, true, false)]
-    [InlineData(true, false, false)]
-    [InlineData(false, true, false)]
-    public void HostEntryPumpsMessagesBeforeUpdatingEachOwnedWorldOnce(
-        bool hasAuthority,
-        bool hasClient,
-        bool allowsPause
-    )
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task ClientPumpDoesNotDriveTheAuthority(bool hasAuthority, bool hasClient)
     {
-        using var gameRuntime = new GameRuntime(allowsPause);
-        using var authority = new RuntimeTestProject(RuntimeSide.Authority);
-        using var client = new RuntimeTestProject(RuntimeSide.Client);
-        var calls = new List<string>();
+        await using var game = new GameRuntime(false, Inline);
+        var authorityCalls = 0;
         if (hasAuthority)
         {
-            gameRuntime.Attach(WorldRuntimeContext.For(authority));
-            AddUpdate(authority, () => calls.Add("authority"));
+            await game.StartAuthorityAsync(_ => CreateAuthority(() => Interlocked.Increment(ref authorityCalls)));
+            await Wait(() => Volatile.Read(ref authorityCalls) > 0);
         }
 
+        using var client = new RuntimeTestProject(RuntimeSide.Client);
+        var calls = new List<string>();
         if (hasClient)
         {
-            var runtime = WorldRuntimeContext.For(client);
-            gameRuntime.Attach(runtime);
             AddUpdate(client, () => calls.Add("client"));
-            WorldNetworkBinding.For(runtime).RequireNode().OnReceive += (_, _) => calls.Add("message");
+            var world = WorldRuntimeContext.For(client);
+            game.AttachClient(world);
+            var node = WorldNetworkBinding.For(world).RequireNode();
+            node.OnReceive += (_, _) => calls.Add("message");
             Assert.True(
-                WorldNetworkBinding.For(runtime).Inbox.TryPostOwned(
-                    new ReceivedPackage(
-                        new SubsystemTimePackage(1, 0),
-                        WorldNetworkBinding.For(runtime).RequireNode().CreateReceiveContext()
-                    )
+                WorldNetworkBinding.For(world).Inbox.TryPostOwned(
+                    new ReceivedPackage(new SubsystemTimePackage(1, 0), node.CreateReceiveContext())
                 )
             );
         }
 
-        var controller =
-            typeof(GameManager).GetField("_worlds", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
-        var runtimeProperty = typeof(GameWorldController).GetProperty(nameof(GameWorldController.Runtime))!;
-        var autosaveField = typeof(GameManager).GetField(
-            "_lastAutosaveTime",
-            BindingFlags.Static | BindingFlags.NonPublic
-        )!;
-        var previousRuntime = GameManager.Runtime;
-        var previousAutosave = autosaveField.GetValue(null);
-        try
+        game.UpdateClient(.016f, Engine.Core.Runtime.Time.RealTime);
+        Assert.Equal(hasClient ? new[] { "message", "client" } : [], calls);
+        if (hasAuthority)
         {
-            runtimeProperty.SetValue(controller, gameRuntime);
-            autosaveField.SetValue(null, Engine.Core.Runtime.Time.RealTime);
-            GameManager.UpdateRuntime();
-            var expected = new List<string>();
-            if (hasClient) { expected.Add("message"); }
-
-            if (hasAuthority) { expected.Add("authority"); }
-
-            if (hasClient) { expected.Add("client"); }
-
-            Assert.Equal(expected, calls);
-            calls.Clear();
-            GameManager.UpdateRuntime();
-            Assert.Equal(expected.Where(call => call != "message"), calls);
-        }
-        finally
-        {
-            runtimeProperty.SetValue(controller, previousRuntime);
-            autosaveField.SetValue(null, previousAutosave);
+            var before = Volatile.Read(ref authorityCalls);
+            await Wait(() => Volatile.Read(ref authorityCalls) > before);
         }
     }
 
     [Fact]
-    public void LocalAdministrationIsAvailableOnlyToTheRuntimesLivePresentationProject()
+    public async Task LocalAdministrationRequiresTheLiveClientOfThisRuntime()
     {
-        using var gameRuntime = new GameRuntime(false);
-        using var authority = new RuntimeTestProject(RuntimeSide.Authority);
+        await using var game = new GameRuntime(false, Inline);
+        await game.StartAuthorityAsync(_ => CreateAuthority());
         using var client = new RuntimeTestProject(RuntimeSide.Client);
         using var unrelated = new RuntimeTestProject(RuntimeSide.Client);
-        var owner = WorldRuntimeContext.For(authority);
-        gameRuntime.Attach(owner);
-        gameRuntime.Attach(WorldRuntimeContext.For(client));
-        Assert.Same(owner, gameRuntime.GetAuthorityForClient(client));
-        Assert.Null(gameRuntime.GetAuthorityForClient(unrelated));
-        Assert.Null(gameRuntime.GetAuthorityForClient(authority));
+        game.AttachClient(WorldRuntimeContext.For(client));
+        Assert.Same(game.Authority, game.GetAuthorityForClient(client));
+        Assert.Null(game.GetAuthorityForClient(unrelated));
+        Assert.Null(game.GetAuthorityForClient(game.Authority!.Project!));
         WorldRuntimeContext.For(client).Close();
-        Assert.Null(gameRuntime.GetAuthorityForClient(client));
+        Assert.Null(game.GetAuthorityForClient(client));
     }
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void LocalPauseStopsBothWorldsOnlyWhenAllowedAndKeepsTheMessagePumpAlive(bool allowed)
+    public async Task PauseIsAppliedByEachOwnerWithoutStoppingClientMessages(bool allowed)
     {
-        using var gameRuntime = new GameRuntime(allowed);
-        using var authority = new RuntimeTestProject(RuntimeSide.Authority);
+        var authorityCalls = 0;
+        await using var game = new GameRuntime(allowed, Inline);
+        await game.StartAuthorityAsync(_ => CreateAuthority(() => Interlocked.Increment(ref authorityCalls)));
         using var client = new RuntimeTestProject(RuntimeSide.Client);
-        var calls = new List<string>();
-        AddUpdate(authority, () => calls.Add("authority"));
-        AddUpdate(client, () => calls.Add("client"));
-        var authorityRuntime = WorldRuntimeContext.For(authority);
-        var clientRuntime = WorldRuntimeContext.For(client);
-        gameRuntime.Attach(authorityRuntime);
-        gameRuntime.Attach(clientRuntime);
+        var clientCalls = 0;
+        AddUpdate(client, () => clientCalls++);
+        var world = WorldRuntimeContext.For(client);
+        game.AttachClient(world);
+        var node = WorldNetworkBinding.For(world).RequireNode();
         var received = 0;
-        WorldNetworkBinding.For(clientRuntime).RequireNode().OnReceive +=
-            (_, messages) => received += messages.Count();
-        WorldNetworkBinding.For(clientRuntime).Inbox.TryPostOwned(
-            new ReceivedPackage(
-                new SubsystemTimePackage(1, 0),
-                WorldNetworkBinding.For(clientRuntime).RequireNode().CreateReceiveContext()
-            )
+        node.OnReceive += (_, _) => received++;
+        WorldNetworkBinding.For(world).Inbox.TryPostOwned(
+            new ReceivedPackage(new SubsystemTimePackage(1, 0), node.CreateReceiveContext())
         );
-
-        gameRuntime.SetLocalPause(true);
-        gameRuntime.UpdateWorlds();
-        gameRuntime.UpdateMessages();
-
-        Assert.Equal(allowed, gameRuntime.IsPaused);
-        Assert.Equal(allowed ? 0 : 2, calls.Count);
+        game.SetLocalPause(true);
+        await Wait(() => game.AuthorityExecution!.Status.Paused == allowed);
+        game.UpdateClient(.016f, Engine.Core.Runtime.Time.RealTime);
+        Assert.Equal(allowed, game.IsPaused);
+        Assert.Equal(allowed ? 0 : 1, clientCalls);
         Assert.Equal(1, received);
-        Assert.Equal(allowed ? 0f : 1f, authority.FindSubsystem<SubsystemTime>(true)!.GameTimeFactor);
-        Assert.Equal(allowed ? 0f : 1f, client.FindSubsystem<SubsystemTime>(true)!.GameTimeFactor);
-        gameRuntime.SetLocalPause(false);
-        gameRuntime.UpdateWorlds();
-        Assert.Equal(allowed ? 2 : 4, calls.Count);
-        Assert.Equal(1f, authority.FindSubsystem<SubsystemTime>(true)!.GameTimeFactor);
+        var factor = await game.AuthorityExecution!.InvokeAsync(owner =>
+            owner.Project!.FindSubsystem<SubsystemTime>(true)!.GameTimeFactor
+        );
+        Assert.Equal(allowed ? 0f : 1f, factor);
+        if (allowed)
+        {
+            var before = Volatile.Read(ref authorityCalls);
+            await Task.Delay(100);
+            Assert.Equal(before, Volatile.Read(ref authorityCalls));
+        }
+
+        game.SetLocalPause(false);
+        await Wait(() => !game.AuthorityExecution!.Status.Paused);
     }
 
     [Fact]
-    public void LeavingAPausedLocalClientResumesTheRetainedAuthority()
+    public async Task ReplacingClientResumesAndPreservesTheAuthority()
     {
-        using var gameRuntime = new GameRuntime(true);
+        await using var game = new GameRuntime(true, Inline);
+        await game.StartAuthorityAsync(_ => CreateAuthority());
+        using var first = new RuntimeTestProject(RuntimeSide.Client);
+        using var second = new RuntimeTestProject(RuntimeSide.Client);
+        AddUpdate(first, () => { });
+        game.AttachClient(WorldRuntimeContext.For(first));
+        game.SetLocalPause(true);
+        await Wait(() => game.AuthorityExecution!.Status.Paused);
+        await game.ReleaseClientAsync();
+        Assert.True(first.IsDisposed);
+        Assert.False(game.Authority!.IsClosed);
+        await Wait(() => !game.AuthorityExecution!.Status.Paused);
+        game.AttachClient(WorldRuntimeContext.For(second));
+        Assert.Same(second, game.Client!.Project);
+        Assert.Null(game.GetAuthorityForClient(first));
+        Assert.NotNull(game.GetAuthorityForClient(second));
+    }
+
+    [Fact]
+    public async Task ClientCancellationFailureDoesNotLeakAuthorityOrClientResources()
+    {
+        var authorityReleased = false;
+        await using var game = new GameRuntime(false, Inline);
+        await game.StartAuthorityAsync(_ =>
+            {
+                var world = CreateAuthority();
+                world.Project!.Disposed += _ => authorityReleased = true;
+                return world;
+            }
+        );
+        using var client = new RuntimeTestProject(RuntimeSide.Client);
+        var context = WorldRuntimeContext.For(client);
+        game.AttachClient(context);
+        using var cancellation =
+            context.Lifetime.Register(() => throw new InvalidOperationException("Cancellation failed."));
+        await Assert.ThrowsAsync<AggregateException>(() => game.CloseAsync(false));
+        Assert.True(authorityReleased);
+        Assert.True(client.IsDisposed);
+        Assert.True(context.IsClosed);
+        Assert.True(game.IsDisposed);
+    }
+
+    [Fact]
+    public async Task AHostCannotAttachAnUnownedAuthorityAsAClient()
+    {
+        await using var game = new GameRuntime(false, Inline);
         using var authority = new RuntimeTestProject(RuntimeSide.Authority);
+        Assert.Throws<ArgumentException>(() => game.AttachClient(WorldRuntimeContext.For(authority)));
+    }
+
+    [Fact]
+    public async Task SlowAuthorityDoesNotPreventClientUpdates()
+    {
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        await using var game = new GameRuntime(false, Inline);
+        await game.StartAuthorityAsync(_ => CreateAuthority());
         using var client = new RuntimeTestProject(RuntimeSide.Client);
         var calls = 0;
-        AddUpdate(authority, () => calls++);
-        AddUpdate(client, () => { });
-        gameRuntime.Attach(WorldRuntimeContext.For(authority));
-        gameRuntime.Attach(WorldRuntimeContext.For(client));
-        gameRuntime.SetLocalPause(true);
-        Assert.True(gameRuntime.IsPaused);
+        AddUpdate(client, () => calls++);
+        game.AttachClient(WorldRuntimeContext.For(client));
+        var blocked = game.AuthorityExecution!.InvokeAsync(_ =>
+            {
+                entered.Set();
+                release.Wait();
+                return 0;
+            }
+        );
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
+            for (var i = 0; i < 30; i++) { game.UpdateClient(.016f, Engine.Core.Runtime.Time.RealTime); }
 
-        gameRuntime.ReleaseClient();
-        gameRuntime.UpdateWorlds();
-
-        Assert.False(gameRuntime.IsPaused);
-        Assert.Equal(1, calls);
-        Assert.Equal(1f, authority.FindSubsystem<SubsystemTime>(true)!.GameTimeFactor);
+            Assert.Equal(30, calls);
+            Assert.False(blocked.IsCompleted);
+        }
+        finally
+        {
+            release.Set();
+            await blocked;
+        }
     }
 
     [Fact]
-    public void ReplacingAClientWorldKeepsTheAuthorityAlive()
+    public async Task AuthorityTransportShutdownStillRetiresItsBoundProject()
     {
-        using var gameRuntime = new GameRuntime(false);
-        var authority = new WorldRuntimeContext(RuntimeSide.Authority, false);
-        var client = new WorldRuntimeContext(
-            RuntimeSide.Client,
-            true
+        await using var game = new GameRuntime(false, Inline);
+        RuntimeTestProject? project = null;
+        await game.StartAuthorityAsync(_ =>
+            {
+                var world = CreateAuthority();
+                project = (RuntimeTestProject)world.Project!;
+                return world;
+            }
         );
-        var authorityProject = new Project();
-        var clientProject = new Project();
-        authority.BindProject(authorityProject);
-        client.BindProject(clientProject);
-        gameRuntime.Attach(authority);
-        gameRuntime.Attach(client);
-
-        gameRuntime.ReleaseClient();
-
-        Assert.True(clientProject.IsDisposed);
-        Assert.True(client.IsClosed);
-        Assert.False(authorityProject.IsDisposed);
-        Assert.Same(authorityProject, gameRuntime.Authority!.Project);
-        Assert.Null(gameRuntime.Client);
-        var replacement = new WorldRuntimeContext(
-            RuntimeSide.Client,
-            true
+        await game.AuthorityExecution!.InvokeAsync(world =>
+            {
+                WorldNetworkBinding.For(world).RequireNode().StopImmediate();
+                return 0;
+            }
         );
-        gameRuntime.Attach(replacement);
-        gameRuntime.Dispose();
-        Assert.True(authorityProject.IsDisposed);
-        Assert.True(replacement.IsClosed);
+        await game.AuthorityExecution.Completion.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(project!.IsDisposed);
+        Assert.True(game.Authority!.IsClosed);
     }
 
     [Fact]
-    public void ClosingTheClientStillReleasesAuthorityIfCancellationFails()
+    public async Task ReleasingAnAlreadyDisposedClientStopsItsEndpoint()
     {
-        var gameRuntime = new GameRuntime(false);
-        var authority = new WorldRuntimeContext(RuntimeSide.Authority, false);
-        var client = new WorldRuntimeContext(
-            RuntimeSide.Client,
-            true
-        );
-        var authorityProject = new Project();
-        var clientProject = new Project();
-        authority.BindProject(authorityProject);
-        client.BindProject(clientProject);
-        gameRuntime.Attach(authority);
-        gameRuntime.Attach(client);
-        using var registration = client.Lifetime.Register(() => throw new InvalidOperationException("probe"));
-
-        Assert.Throws<AggregateException>(gameRuntime.Dispose);
-
-        Assert.True(clientProject.IsDisposed);
-        Assert.True(authorityProject.IsDisposed);
-        Assert.True(authority.IsClosed);
-        Assert.True(gameRuntime.IsDisposed);
-        gameRuntime.Dispose();
-    }
-
-    [Fact]
-    public void BothSidesCannotShareAMessageNode()
-    {
-        using var gameRuntime = new GameRuntime(false);
-        var node = new NetNode(
-            NetNodeOptions.Default,
-            true,
-            PackageHandlerCatalog.Empty,
-            NodeRole.Authority
-        );
-        gameRuntime.Attach(node.Runtime);
-        var client = new WorldRuntimeContext(RuntimeSide.Client, true);
-        _ = new WorldNetworkBinding(client, node, PackageHandlerCatalog.Empty);
-        Assert.Throws<InvalidOperationException>(() => gameRuntime.Attach(client));
-        client.Close();
-    }
-
-    [Fact]
-    public void BothProjectsAdvanceInAuthorityThenClientOrder()
-    {
-        using var gameRuntime = new GameRuntime(false);
-        using var authority = new RuntimeTestProject(RuntimeSide.Authority);
+        await using var game = new GameRuntime(false, Inline);
         using var client = new RuntimeTestProject(RuntimeSide.Client);
-        var calls = new List<string>();
-        AddUpdate(authority, () => calls.Add("authority"));
-        AddUpdate(client, () => calls.Add("client"));
-        gameRuntime.Attach(WorldRuntimeContext.For(authority));
-        gameRuntime.Attach(WorldRuntimeContext.For(client));
-
-        gameRuntime.UpdateWorlds();
-
-        Assert.Equal(new[] { "authority", "client" }, calls);
-        gameRuntime.ReleaseClient();
-        gameRuntime.UpdateWorlds();
-        Assert.Equal(new[] { "authority", "client", "authority" }, calls);
+        var world = WorldRuntimeContext.For(client);
+        var node = WorldNetworkBinding.For(world).RequireNode();
+        game.AttachClient(world);
+        client.Dispose();
+        await game.ReleaseClientAsync();
+        Assert.True(world.IsClosed);
+        Assert.Equal(NodeRole.Inactive, node.Role);
+        Assert.Null(game.Client);
     }
 
     [Fact]
-    public void TransportShutdownDoesNotLoseTheProjectsThatStillNeedDisposal()
+    public void PendingTransportShutdownDoesNotBlockFramesOrDisposeTheProjectEarly()
     {
-        using var gameRuntime = new GameRuntime(false);
-        var authority = new NetNode(
-            NetNodeOptions.Default,
-            true,
-            PackageHandlerCatalog.Empty,
-            NodeRole.Authority
+        using var frame = new FrameTestLoop();
+        var game = new GameRuntime(false, Engine.Core.Runtime.Dispatcher.InvokeAsync);
+        using var client = new RuntimeTestProject(RuntimeSide.Client);
+        var world = WorldRuntimeContext.For(client);
+        var node = WorldNetworkBinding.For(world).RequireNode();
+        var connecting =
+            new TaskCompletionSource<NetworkConnection>(TaskCreationOptions.RunContinuationsAsynchronously);
+        typeof(NetNode).GetField("_connecting", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
+            node,
+            connecting.Task
         );
-        var client = new NetNode(
-            NetNodeOptions.Default,
-            true,
-            PackageHandlerCatalog.Empty,
-            NodeRole.Client
-        );
-        var authorityProject = new Project();
-        var clientProject = new Project();
-        authority.Runtime.BindProject(authorityProject);
-        client.Runtime.BindProject(clientProject);
-        gameRuntime.Attach(authority.Runtime);
-        gameRuntime.Attach(client.Runtime);
-
-        authority.StopImmediate();
-        client.StopImmediate();
-        var nextAuthority = authority.Runtime;
-        var nextClient = client.Runtime;
-        Assert.Null(gameRuntime.Authority!.Project);
-        Assert.Null(gameRuntime.Client!.Project);
-        gameRuntime.Dispose();
-
-        Assert.True(authorityProject.IsDisposed);
-        Assert.True(clientProject.IsDisposed);
-        Assert.Same(nextAuthority, authority.Runtime);
-        Assert.Same(nextClient, client.Runtime);
+        game.AttachClient(world);
+        var retiring = game.ReleaseClientAsync();
+        try
+        {
+            Assert.False(retiring.IsCompleted);
+            Assert.True(world.IsClosed);
+            Assert.False(client.IsDisposed);
+            Assert.Same(retiring, game.ReleaseClientAsync());
+            var closing = game.CloseAsync(false);
+            Assert.False(closing.IsCompleted);
+            var frameCalls = 0;
+            Engine.Core.Runtime.Dispatcher.Dispatch(() => frameCalls++);
+            Engine.Core.Runtime.Dispatcher.BeforeFrame();
+            Assert.Equal(1, frameCalls);
+            connecting.SetCanceled();
+            frame.Complete(closing);
+            Assert.True(client.IsDisposed);
+            Assert.True(game.IsDisposed);
+        }
+        finally
+        {
+            connecting.TrySetCanceled();
+            frame.Complete(game.DisposeAsync().AsTask());
+        }
     }
 
-    [Theory]
-    [InlineData(RuntimeSide.Authority)]
-    [InlineData(RuntimeSide.Client)]
-    public void ReleasingAnAlreadyDisposedProjectStillStopsItsOwnedEndpoint(RuntimeSide side)
+    [Fact]
+    public void ForcedPlatformRetirementCompletesAnAlreadyQueuedClientRelease()
     {
-        using var gameRuntime = new GameRuntime(false);
-        using var project = new RuntimeTestProject(side);
-        var world = WorldRuntimeContext.For(project);
-        var node = WorldNetworkBinding.For(world).RequireNode();
-        node.OnReceive += (_, _) => { };
-        gameRuntime.Attach(world);
+        using var frame = new FrameTestLoop();
+        var owner = Environment.CurrentManagedThreadId;
+        var game = new GameRuntime(false, Engine.Core.Runtime.Dispatcher.InvokeAsync);
+        using var client = new RuntimeTestProject(RuntimeSide.Client);
+        var disposedOn = 0;
+        client.Disposed += _ => disposedOn = Environment.CurrentManagedThreadId;
+        game.AttachClient(WorldRuntimeContext.For(client));
+        Task? retiring = null;
+        using var requested = new ManualResetEventSlim();
+        var requester = Task.Run(() =>
+            {
+                retiring = game.ReleaseClientAsync();
+                requested.Set();
+            }
+        );
+        Assert.True(requested.Wait(TimeSpan.FromSeconds(5)));
+        Assert.False(retiring!.IsCompleted);
+        Assert.Throws<InvalidOperationException>(() => game.AttachClient(WorldRuntimeContext.For(client)));
+        game.ReleaseClientForHostShutdown();
+        frame.Complete(retiring);
+        Assert.True(client.IsDisposed);
+        Assert.Equal(owner, disposedOn);
+        frame.Complete(requester);
+        frame.Complete(game.DisposeAsync().AsTask());
+    }
 
-        project.Dispose();
-        Assert.False(WorldNetworkBinding.TryGet(world, out _));
+    private static WorldRuntimeContext CreateAuthority(Action? update = null)
+    {
+        var project = new RuntimeTestProject(RuntimeSide.Authority);
+        if (update != null) { AddUpdate(project, update); }
 
-        if (side == RuntimeSide.Client) { gameRuntime.ReleaseClient(); }
-        else { gameRuntime.Dispose(); }
+        return WorldRuntimeContext.For(project);
+    }
 
-        Assert.Equal(NodeRole.Inactive, node.Role);
-        Assert.NotSame(world, node.Runtime);
-        node.Update();
+    private static Task Inline(Action action)
+    {
+        action();
+        return Task.CompletedTask;
+    }
+
+    private static async Task Wait(Func<bool> predicate)
+    {
+        for (var i = 0; i < 200; i++)
+        {
+            if (predicate()) { return; }
+
+            await Task.Delay(10);
+        }
+
+        Assert.True(predicate());
     }
 
     private static void AddUpdate(RuntimeTestProject project, Action action)
     {
-        var update = new SubsystemUpdate { UpdatesPerFrame = 1 };
+        var update = new SubsystemUpdate { UpdatesPerTick = 1 };
         var time = new SubsystemTime();
-        project.AddSubsystem(update);
-        project.AddSubsystem(time);
         project.AddSubsystem(new SubsystemCharacters());
-        update.Load(new EntitySystem.TemplatesDatabase.ValuesDictionary());
+        project.AddSubsystem(time);
+        project.AddSubsystem(update);
+        time.Load(new ValuesDictionary());
+        update.Load(new ValuesDictionary());
         var pending = (Dictionary<IUpdateable, bool>)typeof(SubsystemUpdate)
             .GetField("_toAddOrRemove", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(update)!;
-        pending.Add(new UpdateProbe(action), true);
+        pending[new UpdateProbe(action)] = true;
     }
 
     private sealed class UpdateProbe(Action action) : IUpdateable

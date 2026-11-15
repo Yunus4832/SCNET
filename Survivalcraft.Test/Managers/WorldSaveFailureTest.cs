@@ -47,71 +47,86 @@ public sealed class WorldSaveFailureTest
             BindingFlags.Static | BindingFlags.NonPublic
         )!;
         var previousGeneration = (long)generationField.GetValue(null)!;
-        var dispatcherThread = typeof(Dispatcher).GetField(
-            "_mainThreadId",
-            BindingFlags.Static | BindingFlags.NonPublic
-        )!;
         var previousRuntime = GameManager.Runtime;
-
-        var previousThread = dispatcherThread.GetValue(null);
+        using var frame = new FrameTestLoop();
         var sink = new MemorySink();
-        using var scope = new WorldCatalogScope(
-            new NetNode(
-                NetNodeOptions.Default,
-                hasPresentation,
-                Game.Network.Handling.PackageHandlerCatalog.Empty,
-                NodeRole.Authority
+        WorldCatalogScope? scope = null;
+        var savingRuntime = new GameRuntime(false, Dispatcher.InvokeAsync);
+        using var clientProject = new RuntimeTestProject(RuntimeSide.Client);
+        var nextRuntime = new GameRuntime(false, Dispatcher.InvokeAsync);
+        var name = "save-failure-" + Guid.NewGuid().ToString("N");
+        using var saveReported = new ManualResetEventSlim();
+        frame.Complete(
+            savingRuntime.StartAuthorityAsync(_ =>
+                {
+                    scope = new WorldCatalogScope(
+                        new NetNode(
+                            NetNodeOptions.Default,
+                            hasPresentation,
+                            Game.Network.Handling.PackageHandlerCatalog.Empty,
+                            NodeRole.Authority
+                        )
+                    );
+                    scope!.Project.AddSubsystem(
+                        new SubsystemGameInfo
+                        {
+                            WorldSettings = new WorldSettings { Name = name },
+                            DirectoryName = "missing-" + name + ":world"
+                        }
+                    );
+                    var lifecycle = new SubsystemWorldLifecycle();
+                    scope!.Project.AddSubsystem(lifecycle);
+                    lifecycle.Load(new ValuesDictionary());
+                    lifecycle.Persistence.SaveCompleted += _ => saveReported.Set();
+                    if (captureFailure) { scope!.Project.AddSubsystem(new FailingSaveSubsystem()); }
+
+                    return WorldRuntimeContext.For(scope!.Project);
+                }
             )
         );
-        using var savingRuntime = new GameRuntime(false);
-        using var clientProject = new RuntimeTestProject(RuntimeSide.Client);
-        using var nextProject = new RuntimeTestProject(RuntimeSide.Authority);
-        using var nextRuntime = new GameRuntime(false);
-        var name = "save-failure-" + Guid.NewGuid().ToString("N");
-        scope.Project.AddSubsystem(
-            new SubsystemGameInfo
-            {
-                WorldSettings = new WorldSettings { Name = name },
-                DirectoryName = "missing-" + name + ":world"
-            }
-        );
-        using var saveReported = new ManualResetEventSlim();
-        var lifecycle = new SubsystemWorldLifecycle();
-        scope.Project.AddSubsystem(lifecycle);
-        lifecycle.Load(new ValuesDictionary());
-        savingRuntime.Attach(WorldRuntimeContext.For(scope.Project));
-        if (captureFailure) { scope.Project.AddSubsystem(new FailingSaveSubsystem()); }
+        if (transition == SaveTransition.LeaveLocal)
+        {
+            savingRuntime.AttachClient(WorldRuntimeContext.For(clientProject));
+        }
 
-        if (transition == SaveTransition.LeaveLocal) { savingRuntime.Attach(WorldRuntimeContext.For(clientProject)); }
-
-        nextRuntime.Attach(WorldRuntimeContext.For(nextProject));
         var exitRequests = 0;
         void OnExit(GameExitAction action) => exitRequests++;
         GameExitManager.ExitRequested += OnExit;
         try
         {
-            Dispatcher.Initialize();
             Log.AddLogSink(sink);
             runtimeProperty.SetValue(controller, savingRuntime);
-            typeof(GameManager).GetMethod("BindWorldLifecycle", BindingFlags.Static | BindingFlags.NonPublic)!
-                .Invoke(null, [scope.Project]);
-            lifecycle.Persistence.SaveCompleted += _ => saveReported.Set();
+            frame.Complete(
+                savingRuntime.AuthorityExecution!.InvokeAsync(_ =>
+                    {
+                        typeof(GameManager).GetMethod(
+                                "BindWorldLifecycle",
+                                BindingFlags.Static | BindingFlags.NonPublic
+                            )!
+                            .Invoke(null, [scope!.Project]);
+                        return true;
+                    }
+                )
+            );
 
-            Action save = transition switch
+            Task save;
+            if (transition == SaveTransition.Exit)
             {
-                SaveTransition.Close => GameManager.CloseWorld,
-                SaveTransition.LeaveLocal => GameManager.LeaveLocalPlayer,
-                SaveTransition.Exit => GameExitManager.RequestExit,
-                SaveTransition.SaveAsync => () => GameManager.SaveProject(false, showDialog),
-                _ => () => GameManager.SaveProject(true, showDialog)
-            };
-            if (transition == SaveTransition.SaveAsync)
-            {
-                save();
-                GameManager.WaitForPendingSave();
-                Assert.True(saveReported.Wait(TimeSpan.FromSeconds(5)));
+                GameExitManager.RequestExit();
+                save = GameExitManager.PendingTransition;
             }
-            else { Assert.Throws<WorldSaveException>(save); }
+            else
+            {
+                save = transition switch
+                {
+                    SaveTransition.Close => GameManager.CloseWorldAsync(),
+                    SaveTransition.LeaveLocal => GameManager.LeaveLocalPlayerAsync(),
+                    _ => GameManager.SaveProjectAsync(showDialog)
+                };
+            }
+
+            Assert.Throws<WorldSaveException>(() => frame.Complete(save));
+            Assert.True(saveReported.IsSet);
 
             Assert.Equal(0, exitRequests);
             if (transition == SaveTransition.LeaveLocal)
@@ -120,8 +135,8 @@ public sealed class WorldSaveFailureTest
                 Assert.False(clientProject.IsDisposed);
             }
 
-            Assert.False(scope.Project.IsDisposed);
-            Assert.False(WorldRuntimeContext.For(scope.Project).IsClosed);
+            Assert.False(scope!.Project.IsDisposed);
+            Assert.False(WorldRuntimeContext.For(scope!.Project).IsClosed);
             if (replaceWorld)
             {
                 runtimeProperty.SetValue(controller, nextRuntime);
@@ -138,8 +153,9 @@ public sealed class WorldSaveFailureTest
         {
             GameExitManager.ExitRequested -= OnExit;
             Log.RemoveLogSink(sink);
-            dispatcherThread.SetValue(null, previousThread);
-
+            frame.Complete(savingRuntime.DisposeAsync().AsTask());
+            frame.Complete(nextRuntime.DisposeAsync().AsTask());
+            scope?.Dispose();
             runtimeProperty.SetValue(controller, previousRuntime);
             generationField.SetValue(null, previousGeneration);
         }
