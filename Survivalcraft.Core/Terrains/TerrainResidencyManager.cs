@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 using Game.Network.Chunks;
 using Game.Terrains.Distribution;
 using Game.Terrains.Execution;
@@ -175,152 +177,206 @@ public sealed class TerrainResidencyManager(
         return !IsChunkInRange(chunk.Center, locations, retentionMargin) || retentionEvictions.Contains(chunk.Coords);
     }
 
+    private readonly record struct ReleaseResult(bool Changed, bool RetryRequired, bool Completed);
+
     private UpdateResult UpdateCore(
         TerrainUpdateLocation[] locations,
         TerrainMainWorkRequest locationLease,
         Action<TerrainChunk>? onDiscarding
     )
     {
-        var result = false;
-        var hasDeferredChunkDiscards = false;
         var allocatedChunks = _terrain.AllocatedChunks;
         HashSet<Point2> retentionEvictions = [];
         if (world.UsesClientChunkContent)
         {
-            var access = ++_remoteChunkAccessClock;
-            foreach (var chunk in allocatedChunks)
-            {
-                if (!IsChunkInRange(chunk.Center, locations))
-                {
-                    _inactiveClientChunks.Add(chunk.Coords);
-                    continue;
-                }
+            if (!TrackClientAccess(allocatedChunks, locations)) { return default; }
 
-                if (_inactiveClientChunks.Remove(chunk.Coords))
-                {
-                    var previousGeneration = RefreshRetainedChunk(
-                        _terrain,
-                        chunk,
-                        world.ChunkContentTransport!,
-                        world.ClientTerrainDeltas!
-                    );
-                    if (!IsActive() || chunk.IsDisposed || !NotifyAllocationRenewed(chunk, previousGeneration))
-                    {
-                        return new UpdateResult(result, false);
-                    }
-                }
-
-                _remoteChunkLastAccess[chunk.Coords] = access;
-            }
-
-            var retained = allocatedChunks
-                .Where(chunk => !IsChunkInRange(chunk.Center, locations))
-                .Where(chunk => IsChunkInRange(
-                        chunk.Center,
-                        locations,
-                        NetworkTerrainPolicy.ClientChunkRetentionMargin
-                    )
-                )
-                .Select(chunk => (chunk.Coords, _remoteChunkLastAccess.GetValueOrDefault(chunk.Coords)))
-                .ToArray();
-            retentionEvictions = SelectRetainedChunkCoordsToEvict(
-                    retained,
-                    NetworkTerrainPolicy.ClientRetainedChunkCapacity
-                )
-                .ToHashSet();
+            retentionEvictions = SelectRetentionEvictions(allocatedChunks, locations);
         }
 
-        foreach (var terrainChunk in allocatedChunks)
+        var released = ReleaseUnneededChunks(
+            allocatedChunks,
+            locations,
+            retentionEvictions,
+            locationLease,
+            onDiscarding
+        );
+        if (!released.Completed || released.RetryRequired)
         {
-            var retentionMargin = world.UsesClientChunkContent
-                ? NetworkTerrainPolicy.ClientChunkRetentionMargin
-                : 0f;
-            if (!ShouldDiscardChunk(terrainChunk, locations, retentionMargin, retentionEvictions))
-            {
-                continue;
-            }
+            return new UpdateResult(released.Changed, released.RetryRequired);
+        }
 
-            var saveCoordinator = world.ContentRole == TerrainContentRole.Authority
-                ? world.TerrainSaveCoordinator
-                : null;
-            using var unload = saveCoordinator?.TryReserveUnload(terrainChunk);
-            if (saveCoordinator != null && unload == null)
-            {
-                hasDeferredChunkDiscards = true;
-                continue;
-            }
+        var allocated = AllocateNeededChunks(locations);
+        return new UpdateResult(released.Changed || allocated, false);
+    }
 
-            var generation = terrainChunk.AllocationGeneration;
-            var notified = false;
-            locationLease.YieldAccess();
-            try { notified = behaviors.NotifyDiscarding(terrainChunk, onDiscarding); }
-            finally { locationLease.TryEnter(Timeout.Infinite); }
+    private bool TrackClientAccess(TerrainChunk[] allocatedChunks, TerrainUpdateLocation[] locations)
+    {
+        var access = ++_remoteChunkAccessClock;
+        foreach (var chunk in allocatedChunks)
+        {
+            if (!TrackClientChunk(chunk, locations, access)) { return false; }
+        }
 
-            if (!IsActive()) { return new UpdateResult(result, false); }
+        return true;
+    }
 
-            if (!locationLease.HasAccess)
-            {
-                var failure = new InvalidOperationException("Discard callbacks cancelled the terrain access lease.");
-                try { world.Project.Dispose(); }
-                catch (Exception closingFailure) { throw new AggregateException(failure, closingFailure); }
+    // Keep transaction compilation out of the scan's OSR body on the world update thread.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private bool TrackClientChunk(TerrainChunk chunk, TerrainUpdateLocation[] locations, long access)
+    {
+        if (!IsChunkInRange(chunk.Center, locations))
+        {
+            _inactiveClientChunks.Add(chunk.Coords);
+            return true;
+        }
 
-                throw failure;
-            }
-
-            if (terrainChunk.IsDisposed ||
-                !ReferenceEquals(
-                    _terrain.GetChunkAtCoords(terrainChunk.Coords.X, terrainChunk.Coords.Y),
-                    terrainChunk
-                ) ||
-                terrainChunk.AllocationGeneration != generation)
-            {
-                var failure = new InvalidOperationException("Discard callbacks changed the chunk's allocation lease.");
-                try { world.Project.Dispose(); }
-                catch (Exception closingFailure) { throw new AggregateException(failure, closingFailure); }
-
-                throw failure;
-            }
-
-            if (!notified) { return new UpdateResult(result, false); }
-
-            world.ChunkDistribution?.OnChunkRemoved(terrainChunk);
-            if (!IsActive() || terrainChunk.IsDisposed) { return new UpdateResult(result, false); }
-
-            if (saveCoordinator != null)
-            {
-                if (!unload!.Commit(terrainChunk))
-                {
-                    throw new InvalidOperationException(
-                        "A reserved terrain unload could not commit its final contents."
-                    );
-                }
-            }
-            else if (world.ContentRole == TerrainContentRole.Authority)
-            {
-                (world.TerrainSerializer ??
-                 throw new InvalidOperationException("Authority terrain requires a disk serializer."))
-                    .SaveChunk(terrainChunk);
-            }
-
-            result = true;
-            world.ClientTerrainDeltas?.Discard(terrainChunk.Coords);
-            world.ChunkContentTransport?.Discard(
-                new ChunkAllocationId(terrainChunk.Coords, terrainChunk.AllocationGeneration)
+        if (_inactiveClientChunks.Remove(chunk.Coords))
+        {
+            var previousGeneration = RefreshRetainedChunk(
+                _terrain,
+                chunk,
+                world.ChunkContentTransport!,
+                world.ClientTerrainDeltas!
             );
-            if (!IsActive() || terrainChunk.IsDisposed) { return new UpdateResult(result, false); }
-
-            _inactiveClientChunks.Remove(terrainChunk.Coords);
-            if (!NotifyReleasing(terrainChunk)) { return new UpdateResult(result, false); }
-
-            _terrain.FreeChunk(terrainChunk);
-            _remoteChunkLastAccess.Remove(terrainChunk.Coords);
+            if (!IsActive() || chunk.IsDisposed || !NotifyAllocationRenewed(chunk, previousGeneration))
+            {
+                return false;
+            }
         }
 
-        if (hasDeferredChunkDiscards)
+        _remoteChunkLastAccess[chunk.Coords] = access;
+        return true;
+    }
+
+    private HashSet<Point2> SelectRetentionEvictions(TerrainChunk[] allocatedChunks, TerrainUpdateLocation[] locations)
+    {
+        var retained = allocatedChunks
+            .Where(chunk => !IsChunkInRange(chunk.Center, locations))
+            .Where(chunk => IsChunkInRange(
+                    chunk.Center,
+                    locations,
+                    NetworkTerrainPolicy.ClientChunkRetentionMargin
+                )
+            )
+            .Select(chunk => (chunk.Coords, _remoteChunkLastAccess.GetValueOrDefault(chunk.Coords)))
+            .ToArray();
+        return SelectRetainedChunkCoordsToEvict(
+                retained,
+                NetworkTerrainPolicy.ClientRetainedChunkCapacity
+            )
+            .ToHashSet();
+    }
+
+    private ReleaseResult ReleaseUnneededChunks(
+        TerrainChunk[] allocatedChunks,
+        TerrainUpdateLocation[] locations,
+        IReadOnlySet<Point2> retentionEvictions,
+        TerrainMainWorkRequest locationLease,
+        Action<TerrainChunk>? onDiscarding
+    )
+    {
+        var changed = false;
+        var deferred = false;
+        var retentionMargin = world.UsesClientChunkContent ? NetworkTerrainPolicy.ClientChunkRetentionMargin : 0f;
+        foreach (var chunk in allocatedChunks)
         {
-            return new UpdateResult(result, true);
+            if (!ShouldDiscardChunk(chunk, locations, retentionMargin, retentionEvictions)) { continue; }
+
+            var released = ReleaseChunk(chunk, locationLease, onDiscarding);
+            changed |= released.Changed;
+            if (!released.Completed) { return new ReleaseResult(changed, false, false); }
+
+            deferred |= released.RetryRequired;
         }
 
+        return new ReleaseResult(changed, deferred, true);
+    }
+
+    private ReleaseResult ReleaseChunk(
+        TerrainChunk terrainChunk,
+        TerrainMainWorkRequest locationLease,
+        Action<TerrainChunk>? onDiscarding
+    )
+    {
+        var changed = false;
+        var saveCoordinator = world.ContentRole == TerrainContentRole.Authority
+            ? world.TerrainSaveCoordinator
+            : null;
+        using var unload = saveCoordinator?.TryReserveUnload(terrainChunk);
+        if (saveCoordinator != null && unload == null)
+        {
+            return new ReleaseResult(false, true, true);
+        }
+
+        var generation = terrainChunk.AllocationGeneration;
+        var notified = false;
+        locationLease.YieldAccess();
+        try { notified = behaviors.NotifyDiscarding(terrainChunk, onDiscarding); }
+        finally { locationLease.TryEnter(Timeout.Infinite); }
+
+        if (!IsActive()) { return new ReleaseResult(changed, false, false); }
+
+        if (!locationLease.HasAccess)
+        {
+            var failure = new InvalidOperationException("Discard callbacks cancelled the terrain access lease.");
+            try { world.Project.Dispose(); }
+            catch (Exception closingFailure) { throw new AggregateException(failure, closingFailure); }
+
+            throw failure;
+        }
+
+        if (terrainChunk.IsDisposed ||
+            !ReferenceEquals(
+                _terrain.GetChunkAtCoords(terrainChunk.Coords.X, terrainChunk.Coords.Y),
+                terrainChunk
+            ) ||
+            terrainChunk.AllocationGeneration != generation)
+        {
+            var failure = new InvalidOperationException("Discard callbacks changed the chunk's allocation lease.");
+            try { world.Project.Dispose(); }
+            catch (Exception closingFailure) { throw new AggregateException(failure, closingFailure); }
+
+            throw failure;
+        }
+
+        if (!notified) { return new ReleaseResult(changed, false, false); }
+
+        world.ChunkDistribution?.OnChunkRemoved(terrainChunk);
+        if (!IsActive() || terrainChunk.IsDisposed) { return new ReleaseResult(changed, false, false); }
+
+        if (saveCoordinator != null)
+        {
+            if (!unload!.Commit(terrainChunk))
+            {
+                throw new InvalidOperationException("A reserved terrain unload could not commit its final contents.");
+            }
+        }
+        else if (world.ContentRole == TerrainContentRole.Authority)
+        {
+            (world.TerrainSerializer ??
+             throw new InvalidOperationException("Authority terrain requires a disk serializer."))
+                .SaveChunk(terrainChunk);
+        }
+
+        changed = true;
+        world.ClientTerrainDeltas?.Discard(terrainChunk.Coords);
+        world.ChunkContentTransport?.Discard(
+            new ChunkAllocationId(terrainChunk.Coords, terrainChunk.AllocationGeneration)
+        );
+        if (!IsActive() || terrainChunk.IsDisposed) { return new ReleaseResult(changed, false, false); }
+
+        _inactiveClientChunks.Remove(terrainChunk.Coords);
+        if (!NotifyReleasing(terrainChunk)) { return new ReleaseResult(changed, false, false); }
+
+        _terrain.FreeChunk(terrainChunk);
+        _remoteChunkLastAccess.Remove(terrainChunk.Coords);
+        return new ReleaseResult(true, false, true);
+    }
+
+    private bool AllocateNeededChunks(TerrainUpdateLocation[] locations)
+    {
+        var result = false;
         for (var j = 0; j < locations.Length; j++)
         {
             var distance = locations[j].ContentDistance + NetworkTerrainPolicy.ClientTerrainPreparationMargin;
@@ -332,33 +388,43 @@ public sealed class TerrainResidencyManager(
             {
                 for (var l = point.Y; l <= point2.Y; l++)
                 {
-                    var chunkCenter = new Vector2((k + 0.5f) * 16f, (l + 0.5f) * 16f);
-                    var chunkAtCoords = _terrain.GetChunkAtCoords(k, l);
-                    if (chunkAtCoords == null)
-                    {
-                        if (!IsChunkInRange(chunkCenter, locations))
-                        {
-                            continue;
-                        }
-
-                        result = true;
-                        _terrain.AllocateChunk(k, l);
-                        if (world.UsesClientChunkContent)
-                        {
-                            _remoteChunkLastAccess[new Point2(k, l)] = _remoteChunkAccessClock;
-                        }
-
-                        if (!NotifyAllocated(new Point2(k, l))) { return new UpdateResult(result, false); }
-                    }
-                    else if (chunkAtCoords.Coords.X != k || chunkAtCoords.Coords.Y != l)
-                    {
-                        Log.Error("Chunk wraparound detected at {0}", chunkAtCoords.Coords);
-                    }
+                    if (!AllocateRequiredChunk(k, l, locations, ref result)) { return result; }
                 }
             }
         }
 
-        return new UpdateResult(result, false);
+
+        return result;
+    }
+
+    // Match the access scan's compilation boundary while keeping each callback's allocation live.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private bool AllocateRequiredChunk(int x, int z, TerrainUpdateLocation[] locations, ref bool changed)
+    {
+        var chunkCenter = new Vector2((x + 0.5f) * 16f, (z + 0.5f) * 16f);
+        var chunkAtCoords = _terrain.GetChunkAtCoords(x, z);
+        if (chunkAtCoords == null)
+        {
+            if (!IsChunkInRange(chunkCenter, locations))
+            {
+                return true;
+            }
+
+            changed = true;
+            _terrain.AllocateChunk(x, z);
+            if (world.UsesClientChunkContent)
+            {
+                _remoteChunkLastAccess[new Point2(x, z)] = _remoteChunkAccessClock;
+            }
+
+            return NotifyAllocated(new Point2(x, z));
+        }
+        else if (chunkAtCoords.Coords.X != x || chunkAtCoords.Coords.Y != z)
+        {
+            Log.Error("Chunk wraparound detected at {0}", chunkAtCoords.Coords);
+        }
+
+        return true;
     }
 
     internal static IReadOnlyList<Point2> SelectRetainedChunkCoordsToEvict(

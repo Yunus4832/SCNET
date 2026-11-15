@@ -203,12 +203,22 @@ public sealed class TerrainComputationScheduler : IDisposable
     public void UpdateDemand(TerrainUpdateLocation[] locations)
     {
         _locations = locations.ToArray();
-        foreach (var chunk in _world.Terrain.AllocatedChunks)
+        var chunks = _world.Terrain.AllocatedChunks;
+        CancelUnneededWork(chunks);
+        RescheduleChunks(chunks);
+    }
+
+    private void CancelUnneededWork(TerrainChunk[] chunks)
+    {
+        foreach (var chunk in chunks)
         {
             if (!IsNeeded(chunk)) { _queue.Cancel(chunk); }
         }
+    }
 
-        foreach (var chunk in _world.Terrain.AllocatedChunks) { Request(chunk); }
+    private void RescheduleChunks(TerrainChunk[] chunks)
+    {
+        foreach (var chunk in chunks) { Request(chunk); }
     }
 
     public void ContentAvailable(TerrainChunk chunk)

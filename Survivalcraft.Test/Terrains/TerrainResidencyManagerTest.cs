@@ -216,6 +216,26 @@ public sealed class TerrainResidencyManagerTest
     }
 
     [Fact]
+    public void ClosingDuringAllocationStopsBeforeTheNextCandidate()
+    {
+        using var fixture = new Fixture();
+        var allocations = 0;
+        fixture.Manager.ChunkAllocated += _ =>
+        {
+            allocations++;
+            fixture.World.Project.Dispose();
+        };
+
+        var result = fixture.Update([Location(10)]);
+
+        Assert.True(result.Changed);
+        Assert.False(result.RetryRequired);
+        Assert.True(fixture.World.Project.IsDisposed);
+        Assert.Equal(1, allocations);
+        Assert.False(fixture.LocationLease.HasAccess);
+    }
+
+    [Fact]
     public void CallbackReentryDefersAnotherPassWithoutRepeatingTheUnloadTransaction()
     {
         using var fixture = new Fixture();
