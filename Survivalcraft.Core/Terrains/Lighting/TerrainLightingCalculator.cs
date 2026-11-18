@@ -11,6 +11,136 @@ public sealed class TerrainLightingCalculator(
     Func<TerrainChunk, bool> canReadNeighbor
 )
 {
+    /// <summary>Applies an emission-only edit under terrain access, with no intermediate light publications.</summary>
+    internal bool TryApplyEmissionEdit(Point3 source, int before, int after)
+    {
+        if (includePredictions || source.Y is < 0 or >= 256) { return false; }
+
+        var oldBlock = GetBlock(before);
+        var newBlock = GetBlock(after);
+        if (oldBlock.Transparent != newBlock.Transparent ||
+            oldBlock.LightAttenuation != newBlock.LightAttenuation ||
+            Emission(before) == Emission(after))
+        {
+            return false;
+        }
+
+        var owner = terrain.GetChunkAtCell(source.X, source.Z, false);
+        if (owner == null || !terrain.Lighting.TryGetSeed(owner, out var seed)) { return false; }
+
+        const int lightReach = 15;
+        var snapshots = new Dictionary<Point2, (TerrainChunk Chunk, TerrainLightSnapshot Light)>();
+        for (var z = (source.Z - lightReach) >> 4; z <= (source.Z + lightReach) >> 4; z++)
+        {
+            for (var x = (source.X - lightReach) >> 4; x <= (source.X + lightReach) >> 4; x++)
+            {
+                var chunk = terrain.GetChunkAtCoords(x, z);
+                if (chunk is not { HasContents: true }) { continue; }
+
+                if (!canReadNeighbor(chunk) || !terrain.Lighting.TryGetCurrentSnapshot(chunk, out var snapshot))
+                {
+                    return false;
+                }
+
+                snapshots.Add(chunk.Coords, (chunk, snapshot));
+            }
+        }
+
+        var changes = TerrainEmissionUpdate.Solve(
+            source,
+            cell => cell.Y is >= 0 and < 256 && snapshots.TryGetValue(Coords(cell), out var sample)
+                ? sample.Light.Get(cell.X & 15, cell.Y, cell.Z & 15).Block
+                : 0,
+            cell => Emission(ReadValue(cell)),
+            cell => cell.Y is >= 0 and < 256 && snapshots.TryGetValue(Coords(cell), out var sample)
+                ? Attenuation(
+                    GetBlock(cell == source ? after : sample.Chunk.GetCellValueFast(cell.X & 15, cell.Y, cell.Z & 15))
+                )
+                : byte.MaxValue
+        );
+
+        var replacements = new Dictionary<Point2, TerrainLightSnapshot>();
+        foreach (var group in changes.GroupBy(change => Coords(change.Key)))
+        {
+            var snapshot = snapshots[group.Key].Light;
+            foreach (var section in group.GroupBy(change => change.Key.Y >> 4))
+            {
+                var values = new byte[TerrainLightSection.CellCount];
+                var previous = snapshot.GetSection(section.Key);
+                previous.CopyTo(values);
+                foreach (var (cell, value) in section)
+                {
+                    var index = SectionIndex(cell);
+                    values[index] = (byte)((values[index] & 240) | value);
+                }
+
+                if (!previous.HasSameBytes(values))
+                {
+                    snapshot = snapshot.WithSection(section.Key, TerrainLightSection.Capture(values));
+                }
+            }
+
+            replacements.Add(group.Key, snapshot);
+        }
+
+        var seedSlice = source.Y >> 4;
+        var seedValues = new byte[TerrainLightSection.CellCount];
+        seed.Light.GetSection(seedSlice).CopyTo(seedValues);
+        var seedIndex = SectionIndex(source);
+        seedValues[seedIndex] = (byte)((seedValues[seedIndex] & 240) | Emission(after));
+        var nextSeed = seed.WithLight(seed.Light.WithSection(seedSlice, TerrainLightSection.Capture(seedValues)));
+
+        terrain.SetCellValueFast(source.X, source.Y, source.Z, after);
+        if (Terrain.ExtractContents(before) != Terrain.ExtractContents(after))
+        {
+            var heights = owner.DerivedRevisions.Capture();
+            if (ApplyColumnHeights(owner, catalog, includePredictions, source.X & 15, source.Z & 15))
+            {
+                owner.DerivedRevisions.PublishHeights(heights);
+            }
+        }
+
+        var members = new List<TerrainChunk>(replacements.Count);
+        var ownerInput = terrain.Lighting.CaptureInput(owner);
+        terrain.Lighting.TryPublishSeed(owner, ownerInput, nextSeed);
+        foreach (var (coords, snapshot) in replacements)
+        {
+            var (chunk, previous) = snapshots[coords];
+            if (!ReferenceEquals(chunk, owner) && ReferenceEquals(snapshot, previous)) { continue; }
+
+            var input = terrain.Lighting.CaptureInput(chunk);
+            if (terrain.Lighting.TryPublish(chunk, input, snapshot))
+            {
+                if (chunk.DerivedRevisions.PublishLight(input.Request, !ReferenceEquals(snapshot, previous)) &&
+                    !ReferenceEquals(snapshot, previous))
+                {
+                    members.Add(chunk);
+                }
+            }
+        }
+
+        terrain.Lighting.RecordLocalBatch(source, members);
+
+        return true;
+
+        int ReadValue(Point3 cell) => cell == source ? after : terrain.GetCellValueFast(cell.X, cell.Y, cell.Z);
+    }
+
+    private static Point2 Coords(Point3 cell) => new(cell.X >> 4, cell.Z >> 4);
+
+    private static int SectionIndex(Point3 cell) => (cell.Y & 15) + ((cell.X & 15) << 4) + ((cell.Z & 15) << 8);
+
+    private Block GetBlock(int value) => catalog.Blocks[Terrain.ExtractContents(value)];
+
+    private int Emission(int value)
+    {
+        var block = GetBlock(value);
+        return block.EmittedLightAmount > 0 ? block.GetEmittedLightAmount(value) : 0;
+    }
+
+    private static int Attenuation(Block block) =>
+        block.Transparent ? Math.Clamp(block.LightAttenuation + 1, 1, 255) : byte.MaxValue;
+
     public bool CalculateHeights(TerrainChunk chunk)
     {
         return ApplyHeights(chunk, catalog, includePredictions);
@@ -36,9 +166,7 @@ public sealed class TerrainLightingCalculator(
                         var index = TerrainChunk.CalculateCellIndex(x, y, z);
                         var value = GetCellValue(chunk, index, includePredictions);
                         var block = catalog.Blocks[Terrain.ExtractContents(value)];
-                        transmission[index] = block.Transparent
-                            ? (byte)Math.Clamp(block.LightAttenuation + 1, 1, 255)
-                            : byte.MaxValue;
+                        transmission[index] = (byte)Attenuation(block);
                         if (!block.Transparent || block.LightAttenuation >= sky) { sky = 0; }
                         else { sky -= block.LightAttenuation; }
 
@@ -199,44 +327,56 @@ public sealed class TerrainLightingCalculator(
         {
             for (var z = 0; z < 16; z++)
             {
-                var topHeight = 0;
-                var bottomHeight = 256;
-                var y = 255;
-                var index = TerrainChunk.CalculateCellIndex(x, y, z);
-                while (y >= 0)
-                {
-                    if (Terrain.ExtractContents(GetCellValue(chunk, index, includePredictions)) != 0)
-                    {
-                        topHeight = y;
-                        break;
-                    }
-
-                    y--;
-                    index--;
-                }
-
-                y = 0;
-                index = TerrainChunk.CalculateCellIndex(x, y, z);
-                while (y <= topHeight + 1)
-                {
-                    var contents = Terrain.ExtractContents(GetCellValue(chunk, index, includePredictions));
-                    if (catalog.Blocks[contents].Transparent)
-                    {
-                        bottomHeight = y;
-                        break;
-                    }
-
-                    y++;
-                    index++;
-                }
-
-                changed |= chunk.GetTopHeightFast(x, z) != topHeight ||
-                           chunk.GetBottomHeightFast(x, z) != bottomHeight;
-                chunk.SetTopHeightFast(x, z, topHeight);
-                chunk.SetBottomHeightFast(x, z, bottomHeight);
+                changed |= ApplyColumnHeights(chunk, catalog, includePredictions, x, z);
             }
         }
 
+        return changed;
+    }
+
+    private static bool ApplyColumnHeights(
+        TerrainChunk chunk,
+        BlockContentCatalog catalog,
+        bool includePredictions,
+        int x,
+        int z
+    )
+    {
+        var topHeight = 0;
+        var bottomHeight = 256;
+        var y = 255;
+        var index = TerrainChunk.CalculateCellIndex(x, y, z);
+        while (y >= 0)
+        {
+            if (Terrain.ExtractContents(GetCellValue(chunk, index, includePredictions)) != 0)
+            {
+                topHeight = y;
+                break;
+            }
+
+            y--;
+            index--;
+        }
+
+        y = 0;
+        index = TerrainChunk.CalculateCellIndex(x, y, z);
+        while (y <= topHeight + 1)
+        {
+            var contents = Terrain.ExtractContents(GetCellValue(chunk, index, includePredictions));
+            if (catalog.Blocks[contents].Transparent)
+            {
+                bottomHeight = y;
+                break;
+            }
+
+            y++;
+            index++;
+        }
+
+        var changed = chunk.GetTopHeightFast(x, z) != topHeight ||
+                      chunk.GetBottomHeightFast(x, z) != bottomHeight;
+        chunk.SetTopHeightFast(x, z, topHeight);
+        chunk.SetBottomHeightFast(x, z, bottomHeight);
         return changed;
     }
 }

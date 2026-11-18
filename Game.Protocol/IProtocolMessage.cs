@@ -148,6 +148,8 @@ namespace Game.Protocol;
 [Union(143, typeof(Blocks.SoundGeneratorNotePackage))]
 [Union(144, typeof(Blocks.FurnitureDesignRenameRequestPackage))]
 [Union(145, typeof(World.NewYearCelebrationAnnouncementPackage))]
+[Union(146, typeof(Terrain.TerrainLightSectionsPackage))]
+[Union(147, typeof(Terrain.TerrainLightBatchPackage))]
 public interface IProtocolMessage
 {
 }

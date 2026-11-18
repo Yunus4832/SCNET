@@ -52,6 +52,8 @@ public static class HostRuleHandlers
         builder.RegisterFamily(() => new PickablePackageHandler());
         builder.RegisterFamily(() => new SubsystemBodyPackageHandler());
         builder.RegisterFamily(() => new SubsystemTerrainPackageHandler());
+        builder.RegisterFamily(() => new TerrainLightSectionsPackageHandler());
+        builder.RegisterFamily(() => new TerrainLightBatchPackageHandler());
         builder.RegisterFamily(() => new SubsystemTimePackageHandler());
         builder.RegisterFamily(() => new SubsystemSkyPackageHandler());
         builder.RegisterFamily(() => new SubsystemWeatherPackageHandler());

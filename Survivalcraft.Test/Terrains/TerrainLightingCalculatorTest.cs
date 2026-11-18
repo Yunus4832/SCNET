@@ -1,3 +1,5 @@
+using Engine.Core.Mathematics;
+
 using Game.Terrains;
 using Game.Terrains.Lighting;
 
@@ -8,6 +10,97 @@ namespace Survivalcraft.Test.Terrains;
 [Collection(ConfigFileCollection.Name)]
 public sealed class TerrainLightingCalculatorTest
 {
+    [Fact]
+    public void FullStrengthEmissionEditBatchesAllSevenChangedChunks()
+    {
+        using var world = new WorldCatalogScope();
+        Configure(world);
+        using var terrain = new Terrain();
+        var calculator = Create(terrain, world);
+        var chunks = (
+            from z in Enumerable.Range(-1, 3)
+            from x in Enumerable.Range(-1, 3)
+            select terrain.AllocateChunk(x, z)
+        ).ToArray();
+        foreach (var chunk in chunks)
+        {
+            chunk.HasContents = true;
+            Prepare(calculator, chunk);
+        }
+
+        foreach (var chunk in chunks)
+        {
+            calculator.Propagate(chunk);
+            Assert.True(chunk.DerivedRevisions.PublishLight(chunk.DerivedRevisions.Capture()));
+        }
+
+        var source = new Point3(7, 64, 4);
+        var lamp = Terrain.MakeBlockValue(3);
+        var owner = terrain.GetChunkAtCell(source.X, source.Z)!;
+        Assert.True(calculator.TryApplyEmissionEdit(source, 0, lamp));
+        var lit = Assert.IsType<TerrainLightingStore.LocalLightBatch>(terrain.Lighting.GetLocalBatch(owner));
+        Assert.Equal(7, lit.Members.Length);
+        Assert.All(lit.Members, member => Assert.Same(lit, terrain.Lighting.GetLocalBatch(member)));
+
+        Assert.True(calculator.TryApplyEmissionEdit(source, lamp, 0));
+        var dark = Assert.IsType<TerrainLightingStore.LocalLightBatch>(terrain.Lighting.GetLocalBatch(owner));
+        Assert.NotSame(lit, dark);
+        Assert.True(lit.Members.ToHashSet().SetEquals(dark.Members));
+    }
+
+    [Fact]
+    public void EmissionEditPublishesBothSidesWithoutDecayAndPreservesAnotherSource()
+    {
+        using var world = new WorldCatalogScope();
+        Configure(world);
+        using var terrain = new Terrain();
+        using var reference = new Terrain();
+        var chunks = new[] { terrain.AllocateChunk(0, 0), terrain.AllocateChunk(1, 0) };
+        var expectedChunks = new[] { reference.AllocateChunk(0, 0), reference.AllocateChunk(1, 0) };
+        var calculator = Create(terrain, world);
+        var oracle = Create(reference, world);
+        var lamp = Terrain.MakeBlockValue(3);
+        foreach (var chunk in chunks.Concat(expectedChunks))
+        {
+            chunk.HasContents = true;
+            if (chunk.Coords.X == 1) { chunk.SetCellValueFast(4, 64, 8, lamp); }
+        }
+
+        foreach (var chunk in chunks) { Prepare(calculator, chunk); }
+
+        for (var i = 0; i < 2; i++)
+        {
+            foreach (var chunk in chunks) { calculator.Propagate(chunk); }
+        }
+
+        foreach (var chunk in chunks)
+        {
+            Assert.True(chunk.DerivedRevisions.PublishLight(chunk.DerivedRevisions.Capture()));
+        }
+
+        var source = new Point3(15, 64, 8);
+        Assert.True(calculator.TryApplyEmissionEdit(source, 0, lamp));
+        Assert.True(terrain.Lighting.TryGetCurrentSnapshot(chunks[0], out var litLeft));
+        Assert.True(terrain.Lighting.TryGetCurrentSnapshot(chunks[1], out var litRight));
+        Assert.Equal(15, litLeft.Get(15, 64, 8).Block);
+        Assert.Equal(14, litRight.Get(0, 64, 8).Block);
+        Assert.True(calculator.TryApplyEmissionEdit(source, lamp, 0));
+
+        foreach (var chunk in expectedChunks) { Prepare(oracle, chunk); }
+
+        for (var i = 0; i < 2; i++)
+        {
+            foreach (var chunk in expectedChunks) { oracle.Propagate(chunk); }
+        }
+
+        for (var i = 0; i < chunks.Length; i++)
+        {
+            Assert.True(terrain.Lighting.TryGetCurrentSnapshot(chunks[i], out var actual));
+            Assert.True(reference.Lighting.TryGetPublishedSnapshot(expectedChunks[i], out var expected));
+            Assert.True(actual.HasSameValues(expected));
+        }
+    }
+
     [Fact]
     public void RestoringTheSameComputedValuesStillNotifiesConsumersOfAChangedSeedBoundary()
     {

@@ -1,3 +1,5 @@
+using Game.Terrains.Lighting;
+
 namespace Game.Terrains;
 
 public class TerrainChunk : IDisposable
@@ -62,6 +64,16 @@ public class TerrainChunk : IDisposable
     }
 
     public TerrainContentOrigin ContentOrigin { get; internal set; }
+
+    private TerrainLightPresentationBatch? _lightingPresentationBatch;
+
+    public TerrainLightPresentationBatch? LightingPresentationBatch
+    {
+        get => Volatile.Read(ref _lightingPresentationBatch);
+        internal set => Volatile.Write(ref _lightingPresentationBatch, value);
+    }
+
+    public bool HasPendingLightingPresentation => LightingPresentationBatch?.IsPending == true;
 
     public TerrainDerivedRevisions DerivedRevisions { get; } = new();
 

@@ -8,7 +8,9 @@ using Game.Network;
 using Game.Network.Chunks;
 using Game.Network.Replication;
 using Game.Network.Transport;
+using Game.Terrains;
 using Game.Terrains.Distribution;
+using Game.Terrains.Lighting;
 using Game.World;
 
 using Survivalcraft.Test.Modding;
@@ -30,6 +32,75 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
     public ServerChunkDistributionSchedulerTest() => _node.Runtime.BindProject(_project);
 
     public void Dispose() => _project.Dispose();
+
+    [Fact]
+    public void LightBatchWaitsForEstablishedMembersAndIncludesUnsentChanges()
+    {
+        using var terrain = new Terrain();
+        var first = terrain.AllocateChunk(0, 0);
+        var second = terrain.AllocateChunk(1, 0);
+        first.HasContents = second.HasContents = true;
+        var dark = new TerrainLightSnapshot(default);
+        Publish(first, dark);
+        Publish(second, dark);
+        var authority = new SnapshotAuthority();
+        using var scheduler = new ServerChunkDistributionScheduler(_project, authority);
+        using var lighting = new ServerTerrainLightingReplication(
+            terrain,
+            authority,
+            scheduler,
+            WorldMessageEndpoint.For(_node.Runtime)
+        );
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.Empty);
+        _node.AddClient(client);
+        client.Connection = new ConnectedStub(true);
+        scheduler.UpdateClientLocation(client, Vector2.Zero, 64);
+        scheduler.Enqueue(
+            client,
+            new[] { first, second }.Select(chunk => new ChunkContentRequest(new ChunkAllocationId(chunk.Coords, 1)))
+        );
+        var outgoing = (PendingLogicalMessages)typeof(NetNode)
+            .GetField("_pendingPackages", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(_node)!;
+        lighting.Update();
+        Assert.Equal(2, outgoing.Count);
+        outgoing.Clear();
+
+        var lit = dark.WithSection(4, new TerrainLightSection(new TerrainLightChannels(0, 15)));
+        var dimmer = dark.WithSection(4, new TerrainLightSection(new TerrainLightChannels(0, 8)));
+        var source = new Point3(15, 64, 7);
+        terrain.Lighting.RecordLocalBatch(source, [first, second]);
+        second.DerivedRevisions.InvalidatePropagation();
+        Publish(first, lit);
+        lighting.Update();
+        Assert.Empty(outgoing);
+
+        Publish(first, dimmer);
+        terrain.Lighting.RecordLocalBatch(source, [first]);
+        Publish(second, lit);
+        lighting.Update();
+        var batch = Assert.IsType<TerrainLightBatchPackage>(Assert.Single(outgoing).Package);
+        Assert.Equal(2, batch.Updates.Length);
+        Assert.All(batch.Updates, update => Assert.Equal(1, update.BaseSequence));
+        Assert.Equal(8, ReadLight(first));
+        Assert.Equal(15, ReadLight(second));
+
+        int ReadLight(TerrainChunk chunk)
+        {
+            return TerrainLightSectionsCodec.Apply(
+                batch.Updates.Single(update => update.Allocation.Coords == chunk.Coords),
+                dark
+            ).Get(0, 64, 0).Block;
+        }
+
+        void Publish(TerrainChunk chunk, TerrainLightSnapshot snapshot)
+        {
+            var request = chunk.DerivedRevisions.Capture();
+            Assert.True(chunk.DerivedRevisions.PublishHeights(request));
+            Assert.True(chunk.DerivedRevisions.PublishLightSeed(request));
+            Assert.True(terrain.Lighting.TryPublish(chunk, terrain.Lighting.CaptureInput(chunk), snapshot));
+            Assert.True(chunk.DerivedRevisions.PublishLight(request));
+        }
+    }
 
     [Fact]
     public void ReplacementAllocationsCancelOwnedOutboxDataAndRejectLateOlderRequests()

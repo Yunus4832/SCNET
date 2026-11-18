@@ -35,6 +35,9 @@ public static class PackageTransportPolicy
     public static readonly PackageTransport PlayerListState =
         new(NetworkChannel.Bulk, DeliveryMode.ReliableOrdered, 0.10, true);
 
+    public static readonly PackageTransport TerrainLighting =
+        new(NetworkChannel.Bulk, DeliveryMode.ReliableOrdered, 0.02);
+
     public static readonly PackageTransport TerrainFragment =
         new(NetworkChannel.TerrainFragment, DeliveryMode.Unreliable, 0.02);
 
@@ -44,6 +47,7 @@ public static class PackageTransportPolicy
         return package switch
         {
             TerrainSnapshotMessage => Bulk,
+            TerrainLightSectionsPackage or TerrainLightBatchPackage => TerrainLighting,
             CharacterStatePackage => Snapshot,
             SubsystemBodyPackage { PackageEventType: SubsystemBodyPackage.EventType.BodyUpdate } => StateStream,
             PickablePackage { Type: PickablePackage.PickType.Update } => StateStream,

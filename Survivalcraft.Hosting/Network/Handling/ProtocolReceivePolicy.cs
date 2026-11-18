@@ -25,6 +25,7 @@ public static class ProtocolReceivePolicy
     public static ClientState MinimumState(IProtocolMessage message) => message switch
     {
         TerrainSnapshotMessage => ClientState.ProjectLoaded,
+        TerrainLightSectionsPackage or TerrainLightBatchPackage => ClientState.ProjectLoaded,
         ModEnvelopePackage envelope => envelope.RequiredState,
         CommandPackage => ClientState.ProjectLoaded,
         ComponentInventoryPackage => ClientState.ProjectLoaded,

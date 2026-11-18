@@ -214,7 +214,8 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     private bool Matches(TerrainChunk chunk, MeshBuildStamp stamp)
     {
-        return stamp.Generation == chunk.AllocationGeneration &&
+        return (!stamp.AllowPendingLighting || !chunk.HasPendingLightingPresentation) &&
+               stamp.Generation == chunk.AllocationGeneration &&
                stamp.ContentVersion == chunk.NetworkContentVersion &&
                stamp.Revision == Volatile.Read(ref _requestedMeshRevision) &&
                MatchesNeighbors(chunk, stamp.Neighbors, stamp.AllowPendingLighting);

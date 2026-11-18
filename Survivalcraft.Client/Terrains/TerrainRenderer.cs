@@ -3,6 +3,7 @@ using Engine.Graphics;
 using Game.Network.Chunks;
 using Game.Terrains.Distribution;
 using Game.Terrains.Execution;
+using Game.Terrains.Lighting;
 using Game.Terrains.Rendering;
 
 namespace Game.Terrains;
@@ -81,6 +82,8 @@ public class TerrainRenderer : IDisposable
 
     private HashSet<TerrainChunk>? _activeCohort;
 
+    private TerrainLightPresentationBatch? _activeLightBatch;
+
     private TerrainMainWorkRequest? _commitRequest;
 
     internal void InvalidateStagedGeometry(TerrainChunk? chunk = null)
@@ -96,6 +99,7 @@ public class TerrainRenderer : IDisposable
 
         _staged.Clear();
         _activeCohort = null;
+        _activeLightBatch = null;
     }
 
     public TerrainRenderer(SubsystemTerrainPresentation presentation)
@@ -192,7 +196,6 @@ public class TerrainRenderer : IDisposable
     private void UploadReadyGeometry(Camera camera, TerrainChunk[] chunks)
     {
         var center = camera.ViewPosition.XZ;
-        PrepareEditUploads(center);
         var visibilityRange = _subsystemSky.VisibilityRange;
         var locations = _subsystemTerrain.Demands.Locations.Values.ToArray();
         var frame = Time.FrameIndex;
@@ -203,12 +206,12 @@ public class TerrainRenderer : IDisposable
         }
 
         _uploadViews[camera.GameWidget.GameWidgetIndex] = (center, _subsystemSky.VisibilityRange, frame);
+        PrepareCohortUploads(center, chunks);
         _uploadCandidates.Clear();
         foreach (var chunk in chunks)
         {
             var presentation = _presentation.ChunkPresentations.Get(chunk);
-            if (_presentation.EditCohorts.Find(chunk) is { } cohort &&
-                (!ReferenceEquals(cohort, _activeCohort) || _staged.ContainsKey(chunk))) { continue; }
+            if (!CanScheduleUpload(chunk, presentation)) { continue; }
 
             if (!presentation.CanUploadGeometry(chunk))
             {
@@ -236,35 +239,68 @@ public class TerrainRenderer : IDisposable
             }
 
             if (visible ||
-                ReferenceEquals(_presentation.EditCohorts.Find(chunk), _activeCohort) && _activeCohort != null)
+                _activeCohort?.Contains(chunk) == true)
             {
                 _uploadCandidates.Add(
                     new TerrainUploadScheduler.Candidate(
                         chunk,
                         !presentation.GeometryUploaded,
                         nearest,
-                        _subsystemTerrain.Computations.IsInteractive(chunk)
+                        _subsystemTerrain.Computations.IsInteractive(chunk) || chunk.HasPendingLightingPresentation
                     )
                 );
             }
         }
 
         _uploads.Upload(Time.FrameIndex, _uploadCandidates, TryUploadGeometry);
-        CommitEditUploads();
+        CommitCohortUploads();
     }
 
-    private bool CohortReady(HashSet<TerrainChunk> group) => group.All(chunk =>
-        !chunk.IsDisposed &&
-        _presentation.ChunkPresentations.TryGet(chunk, out var mesh) &&
-        (mesh.HasCurrentUploadedGeometry(chunk) || mesh.CanUploadGeometry(chunk))
-    );
+    private bool CanScheduleUpload(TerrainChunk chunk, TerrainChunkPresentation mesh)
+    {
+        var edit = _presentation.EditCohorts.Find(chunk);
+        if (_activeCohort?.Contains(chunk) == true)
+        {
+            return !_staged.ContainsKey(chunk) &&
+                   (_activeLightBatch is { } light
+                       ? edit == null && light.IsPending && ReferenceEquals(chunk.LightingPresentationBatch, light)
+                       : ReferenceEquals(edit, _activeCohort));
+        }
 
-    private void PrepareEditUploads(Vector2 center)
+        return edit == null && (!mesh.GeometryUploaded || !chunk.HasPendingLightingPresentation);
+    }
+
+    private bool MeshReady(TerrainChunk chunk)
+    {
+        return !chunk.IsDisposed &&
+               _presentation.ChunkPresentations.TryGet(chunk, out var mesh) &&
+               (mesh.HasCurrentUploadedGeometry(chunk) || mesh.CanUploadGeometry(chunk));
+    }
+
+    private bool LightMemberReady(TerrainChunk chunk, TerrainLightPresentationBatch batch)
+    {
+        return batch.IsPending &&
+               ReferenceEquals(chunk.LightingPresentationBatch, batch) &&
+               _presentation.EditCohorts.Find(chunk) == null &&
+               _subsystemTerrain.ReplicaLighting?.IsPresentationApplied(chunk, batch) == true &&
+               MeshReady(chunk);
+    }
+
+    private bool CohortReady(HashSet<TerrainChunk> group)
+    {
+        var light = _activeLightBatch;
+        return group.Count != 0 &&
+               (light != null
+                   ? group.All(chunk => LightMemberReady(chunk, light))
+                   : group.All(chunk =>
+                       ReferenceEquals(_presentation.EditCohorts.Find(chunk), group) && MeshReady(chunk)
+                   ));
+    }
+
+    private void PrepareCohortUploads(Vector2 center, TerrainChunk[] chunks)
     {
         if (_activeCohort != null &&
-            (!_activeCohort.Any() ||
-             !CohortReady(_activeCohort) ||
-             _activeCohort.Any(chunk => !ReferenceEquals(_presentation.EditCohorts.Find(chunk), _activeCohort)) ||
+            (!CohortReady(_activeCohort) ||
              _staged.Any(pair => !_presentation.ChunkPresentations.TryGet(pair.Key, out var mesh) ||
                                  !mesh.CanPublishUpload(pair.Key, pair.Value.Token)
              )))
@@ -272,15 +308,51 @@ public class TerrainRenderer : IDisposable
             InvalidateStagedGeometry();
         }
 
-        if (_activeCohort == null)
+        if (_activeCohort != null) { return; }
+
+        _activeCohort = _presentation.EditCohorts.Groups.Where(CohortReady)
+            .MinBy(group => group.Min(chunk => Vector2.DistanceSquared(chunk.Center, center)));
+        if (_activeCohort != null) { return; }
+
+        var seen = new HashSet<TerrainLightPresentationBatch>();
+        foreach (var chunk in chunks)
         {
-            // Only one edit cohort owns replacement GPU buffers at a time.
-            _activeCohort = _presentation.EditCohorts.Groups.Where(CohortReady)
-                .MinBy(group => group.Min(chunk => Vector2.DistanceSquared(chunk.Center, center)));
+            if (chunk.LightingPresentationBatch is not { IsPending: true } batch || !seen.Add(batch)) { continue; }
+
+            var group = new HashSet<TerrainChunk>();
+            foreach (var allocation in batch.Allocations)
+            {
+                var member = _subsystemTerrain.Terrain.GetChunkAtCoords(allocation.Coords.X, allocation.Coords.Y);
+                if (member?.AllocationGeneration != allocation.Generation ||
+                    !ReferenceEquals(member.LightingPresentationBatch, batch) ||
+                    !_presentation.ChunkPresentations.TryGet(member, out var mesh) ||
+                    !mesh.GeometryUploaded ||
+                    !_uploadViews.Values.Any(view =>
+                        NetworkTerrainPolicy.GetChunkDistanceSquared(member.Center, view.Center) <=
+                        view.Visibility * view.Visibility
+                    ))
+                {
+                    continue;
+                }
+
+                group.Add(member);
+            }
+
+            if (group.Count < 2)
+            {
+                batch.Release();
+                continue;
+            }
+
+            if (!group.All(chunk => LightMemberReady(chunk, batch))) { continue; }
+
+            _activeCohort = group;
+            _activeLightBatch = batch;
+            break;
         }
     }
 
-    private void CommitEditUploads()
+    private void CommitCohortUploads()
     {
         if (_activeCohort is not { } group || !CohortReady(group))
         {
@@ -322,7 +394,10 @@ public class TerrainRenderer : IDisposable
             }
 
             _staged.Clear();
-            _presentation.EditCohorts.Complete(group);
+            if (_activeLightBatch is { } light) { light.Release(); }
+            else { _presentation.EditCohorts.Complete(group); }
+
+            _activeLightBatch = null;
             _activeCohort = null;
             foreach (var chunk in group) { FinishInteractiveUpload(chunk); }
         }
@@ -349,15 +424,13 @@ public class TerrainRenderer : IDisposable
 
         try
         {
-            if (!presentation.CanUploadGeometry(chunk))
+            if (!presentation.CanUploadGeometry(chunk) || !CanScheduleUpload(chunk, presentation))
             {
                 return false;
             }
 
-            if (_presentation.EditCohorts.Find(chunk) != null)
+            if (_activeCohort?.Contains(chunk) == true)
             {
-                if (!ReferenceEquals(_presentation.EditCohorts.Find(chunk), _activeCohort)) { return false; }
-
                 var token = presentation.GeometryUploadToken!;
                 var buffers = new DynamicArray<TerrainChunkGeometry.Buffer>();
                 try { CompileDrawSubsets(presentation.Draws, buffers); }

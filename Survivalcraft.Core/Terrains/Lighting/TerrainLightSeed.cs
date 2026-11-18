@@ -32,6 +32,15 @@ public sealed class TerrainLightSeed
         }
     }
 
+    private TerrainLightSeed(TerrainLightSeed previous, TerrainLightSnapshot light)
+    {
+        _transmission = previous._transmission;
+        _uniform = previous._uniform;
+        Light = light;
+    }
+
+    internal TerrainLightSeed WithLight(TerrainLightSnapshot light) => new(this, light);
+
     public void CopyTransmissionTo(Span<byte> cells)
     {
         if (cells.Length < 65536)

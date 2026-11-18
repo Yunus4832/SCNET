@@ -48,6 +48,9 @@ public sealed class ServerChunkDistributionScheduler : IDisposable
 
     public int ClientCount => _pending.Count;
 
+    internal IReadOnlyDictionary<WorldConnection, Dictionary<Point2, ChunkAllocationId>> Allocations => _allocations;
+
+
     public (int Pending, int AwaitingContent) GetBacklog()
     {
         var requests = _pending.Values.SelectMany(queue => queue).ToArray();

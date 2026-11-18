@@ -97,6 +97,8 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
     public ServerChunkDistributionScheduler? ChunkDistribution { get; private set; }
 
+    private ServerTerrainLightingReplication? _lightDistribution;
+
     public ClientChunkContentCoordinator? ClientChunkContents { get; private set; }
 
     public IChunkContentTransport? ChunkContentTransport { get; private set; }
@@ -104,6 +106,8 @@ public class SubsystemTerrain : Subsystem, IUpdateable
     public ClientTerrainDeltaCoordinator? ClientTerrainDeltas { get; private set; }
 
     public ClientTerrainContentPump? ClientContentPump { get; private set; }
+
+    public TerrainReplicaLighting? ReplicaLighting { get; private set; }
 
     public ClientTerrainPrediction? CellPrediction { get; private set; }
 
@@ -457,7 +461,9 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                 return;
             }
 
-            Terrain.SetCellValueFast(x, y, z, value);
+            var emissionApplied = Computations.TryApplyEmissionEdit(new Point3(x, y, z), cellValueFast, value);
+            if (!emissionApplied) { Terrain.SetCellValueFast(x, y, z, value); }
+
             if (!Runtime.IsAuthority && geometryBefore != value)
             {
                 CellGeometryChanged?.Invoke(new Point3(x, y, z), geometryBefore, value);
@@ -479,9 +485,13 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                     chunkAtCell.ModificationCounter++;
                 }
 
-                if (Runtime.IsAuthority || geometryBefore != value)
+                if (!emissionApplied && (Runtime.IsAuthority || geometryBefore != value))
                 {
-                    Computations.InvalidateContentNeighborhood(chunkAtCell.Coords, 1);
+                    Computations.InvalidateContentNeighborhood(
+                        chunkAtCell.Coords,
+                        1,
+                        Runtime.IsAuthority || Terrain.ExtractContents(geometryBefore) != Terrain.ExtractContents(value)
+                    );
                     if (!Runtime.IsAuthority) { NotifyTerrainInteraction(); }
                 }
             }
@@ -729,6 +739,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         if (!IsTerrainActive) { return; }
 
         ChunkDistribution?.Update();
+        _lightDistribution?.Update();
         if (!IsTerrainActive) { return; }
 
         var appearanceChanged = EnvironmentObserver.Update();
@@ -850,6 +861,12 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         if (Runtime.IsAuthority)
         {
             ChunkDistribution = new ServerChunkDistributionScheduler(Project, ChunkContentAuthority!);
+            _lightDistribution = new ServerTerrainLightingReplication(
+                Terrain,
+                ChunkContentAuthority!,
+                ChunkDistribution,
+                WorldMessageEndpoint.For(Runtime)
+            );
         }
 
         // Compose every service and callback before the worker is started below.
@@ -874,6 +891,9 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
         if (!Runtime.IsAuthority)
         {
+            var lightTransport = (ClientChunkContentTransport)ChunkContentTransport!;
+            ReplicaLighting = new TerrainReplicaLighting(Terrain, lightTransport.IsCurrentAllocation);
+            lightTransport.AllocationDiscarded += ReplicaLighting.Discard;
             CellPrediction = new ClientTerrainPrediction(
                 Terrain,
                 coords =>
@@ -1000,6 +1020,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         TryCleanup(() => _locationRequest?.Dispose());
         TryCleanup(() => Computations?.Dispose());
         TryCleanup(() => AuthorityContents?.Dispose());
+        TryCleanup(() => _lightDistribution?.Dispose());
         TryCleanup(() => ChunkDistribution?.Dispose());
         TryCleanup(() => Demands?.Dispose());
         TryCleanup(() => TerrainSaveCoordinator?.Dispose());

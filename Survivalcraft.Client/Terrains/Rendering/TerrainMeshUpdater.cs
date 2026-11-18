@@ -46,7 +46,7 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
             }
 
             // Retain the due entry until the worker consumes it: an early signal cannot lose a wakeup.
-            if (Time.RealTime >= item.Value)
+            if (Time.RealTime >= item.Value || item.Key.Chunk.HasPendingLightingPresentation)
             {
                 _subsystemTerrain.Computations.ResumeDerived(item.Key.Chunk, item.Key.Generation);
             }
@@ -70,7 +70,8 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
         var key = new TerrainWorkKey(chunk, TerrainWorkStage.Derived);
         _deferred.TryRemove(key, out _);
         var presentation = _presentation.ChunkPresentations.Get(chunk);
-        if (!_subsystemTerrain.Computations.IsInteractive(chunk) &&
+        if (!chunk.HasPendingLightingPresentation &&
+            !_subsystemTerrain.Computations.IsInteractive(chunk) &&
             presentation.ShouldDeferMaintenance(chunk, Time.RealTime, out var due))
         {
             _deferred[key] = due;
@@ -324,6 +325,12 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
     )
     {
         var presentation = _presentation.ChunkPresentations.Get(chunk);
+        if (chunk.HasPendingLightingPresentation)
+        {
+            allowPendingLighting = false;
+            interactive = false;
+        }
+
         if (!chunk.HasCurrentLight &&
             !(allowPendingLighting && presentation.CanUsePublishedLighting(chunk))) { return; }
 

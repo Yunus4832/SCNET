@@ -178,7 +178,15 @@ public sealed class TerrainComputationScheduler : IDisposable
         foreach (var chunk in _world.Terrain.AllocatedChunks) { Request(chunk); }
     }
 
-    public void InvalidateContentNeighborhood(Point2 coordinates, int radius)
+    internal bool TryApplyEmissionEdit(Point3 cell, int before, int after)
+    {
+        return !_disposed &&
+               WorldRuntimeContext.For(_world.Project).IsAuthority &&
+               ReferenceEquals(_world.CellAuthority.Terrain, _world.Terrain) &&
+               _lighting.TryApplyEmissionEdit(cell, before, after);
+    }
+
+    public void InvalidateContentNeighborhood(Point2 coordinates, int radius, bool heightsChanged = true)
     {
         if (_disposed || !WorldRuntimeContext.IsProjectActive(_world.Project)) { return; }
 
@@ -189,8 +197,14 @@ public sealed class TerrainComputationScheduler : IDisposable
                 var chunk = _world.Terrain.GetChunkAtCoords(coordinates.X + x, coordinates.Y + z);
                 if (chunk == null) { continue; }
 
-                if (chunk.Coords == coordinates) { chunk.DerivedRevisions.InvalidateHeightsAndLight(); }
-                else { chunk.DerivedRevisions.InvalidatePropagation(); }
+                if (chunk.Coords == coordinates)
+                {
+                    if (heightsChanged) { chunk.DerivedRevisions.InvalidateHeightsAndLight(); }
+                    else { chunk.DerivedRevisions.InvalidateLight(); }
+
+                    _world.ReplicaLighting?.Requeue(chunk);
+                }
+                else if (_world.ReplicaLighting == null) { chunk.DerivedRevisions.InvalidatePropagation(); }
 
                 DerivedInputsInvalidated?.Invoke(chunk);
                 if (_disposed || !WorldRuntimeContext.IsProjectActive(_world.Project)) { return; }
@@ -224,11 +238,13 @@ public sealed class TerrainComputationScheduler : IDisposable
     public void ContentAvailable(TerrainChunk chunk)
     {
         chunk.DerivedRevisions.InvalidateHeightsAndLight();
+        _world.ReplicaLighting?.Requeue(chunk);
         foreach (var neighbor in Neighbors(chunk))
         {
             if (!ReferenceEquals(neighbor, chunk) && neighbor.HasContents)
             {
-                neighbor.DerivedRevisions.InvalidatePropagation();
+                if (_world.ReplicaLighting == null) { neighbor.DerivedRevisions.InvalidatePropagation(); }
+
                 Request(neighbor);
             }
         }
@@ -289,11 +305,21 @@ public sealed class TerrainComputationScheduler : IDisposable
             _generationWaits.Clear();
         }
 
+        var receivedLights = _world.ReplicaLighting?.Drain();
+        if (receivedLights != null)
+        {
+            foreach (var chunk in receivedLights)
+            {
+                _queue.Signal(new TerrainWorkKey(chunk, TerrainWorkStage.Propagation));
+                foreach (var neighbor in Neighbors(chunk)) { Request(neighbor); }
+            }
+        }
+
         DrainLightCompletions();
         ValidatePropagations();
         _lightCapacity = _lightWorkers.HasCapacity;
         var item = _queue.Take(_canExecute);
-        if (item == null) { return true; }
+        if (item == null) { return receivedLights is not { Count: > 0 }; }
 
         var started = Stopwatch.GetTimestamp();
         var priority = item.Priority;
@@ -557,6 +583,17 @@ public sealed class TerrainComputationScheduler : IDisposable
         if (key.Stage == TerrainWorkStage.LightSeed ||
             key.Stage == TerrainWorkStage.Derived && CanPreview(chunk)) { yield break; }
 
+        if (_world.ReplicaLighting != null)
+        {
+            foreach (var neighbor in Neighbors(chunk)
+                         .Where(neighbor => neighbor.HasContents && !neighbor.HasCurrentLight))
+            {
+                yield return new TerrainWorkKey(neighbor, TerrainWorkStage.Propagation);
+            }
+
+            yield break;
+        }
+
         if (!chunk.DerivedRevisions.HasCurrentLightSeed)
         {
             yield return new TerrainWorkKey(chunk, TerrainWorkStage.LightSeed);
@@ -586,6 +623,16 @@ public sealed class TerrainComputationScheduler : IDisposable
         // Visible interactions may use the last published light; finish their geometry before
         // queuing fresh propagation so a small frame budget is not their only source of CPU time.
         if (CanPreview(chunk)) { return TerrainWorkStage.Derived; }
+
+        if (_world.ReplicaLighting != null)
+        {
+            return chunk.HasCurrentLight &&
+                   _derived != null &&
+                   (IsVisible(chunk) || IsInteractive(chunk)) &&
+                   !_derived.HasCurrentGeometry(chunk)
+                ? TerrainWorkStage.Derived
+                : null;
+        }
 
         if (!chunk.DerivedRevisions.HasCurrentLightSeed || !_world.Terrain.Lighting.TryGetSeed(chunk, out _))
         {

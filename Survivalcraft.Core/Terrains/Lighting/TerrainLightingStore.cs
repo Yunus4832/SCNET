@@ -10,6 +10,40 @@ public sealed class TerrainLightingStore(Terrain terrain) : IDisposable
 
     private readonly ConcurrentDictionary<TerrainChunk, SeedPublication> _seeds = new();
 
+    private readonly ConcurrentDictionary<TerrainChunk, LocalLightBatch> _localBatches = new();
+
+    internal sealed record LocalLightBatch(Point3 Source, TerrainChunk[] Members);
+
+    internal void RecordLocalBatch(Point3 source, List<TerrainChunk> changed)
+    {
+        if (changed.Count < 1) { return; }
+
+        lock (_sync)
+        {
+            if (_disposed) { return; }
+
+            var members = changed.ToHashSet();
+            foreach (var chunk in changed)
+            {
+                if (GetLocalBatch(chunk) is { } previous && previous.Source == source)
+                {
+                    members.UnionWith(
+                        previous.Members.Where(member => !member.IsDisposed &&
+                                                         ReferenceEquals(GetLocalBatch(member), previous)
+                        )
+                    );
+                }
+            }
+
+            if (members.Count is < 2 or > TerrainLightBatchPackage.MaximumUpdates) { return; }
+
+            var batch = new LocalLightBatch(source, members.ToArray());
+            foreach (var chunk in members) { _localBatches[chunk] = batch; }
+        }
+    }
+
+    internal LocalLightBatch? GetLocalBatch(TerrainChunk chunk) => _localBatches.GetValueOrDefault(chunk);
+
     private readonly object _sync = new();
 
     private bool _disposed;
@@ -137,6 +171,7 @@ public sealed class TerrainLightingStore(Terrain terrain) : IDisposable
         RequireOwnedChunk(chunk);
         lock (_sync)
         {
+            _localBatches.TryRemove(chunk, out _);
             _publications.TryRemove(chunk, out _);
             _seeds.TryRemove(chunk, out _);
         }
@@ -147,6 +182,7 @@ public sealed class TerrainLightingStore(Terrain terrain) : IDisposable
         lock (_sync)
         {
             Volatile.Write(ref _disposed, true);
+            _localBatches.Clear();
             _publications.Clear();
             _seeds.Clear();
         }

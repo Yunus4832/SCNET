@@ -372,6 +372,34 @@ public static partial class ProtocolMessageValidation
                     "Invalid editable block value."
                 );
                 break;
+            case TerrainLightBatchPackage batch:
+                Require(
+                    batch.Updates is { Length: >= 2 and <= TerrainLightBatchPackage.MaximumUpdates } &&
+                    batch.Updates.All(update => update is { IsBaseline: false }) &&
+                    batch.Updates.Select(update => update.Allocation.Coords).Distinct().Count() == batch.Updates.Length,
+                    "Invalid terrain light batch."
+                );
+                foreach (var update in batch.Updates) { Validate(update); }
+
+                break;
+            case TerrainLightSectionsPackage light:
+                Require(
+                    light.Allocation.Generation > 0 &&
+                    light.ContentVersion > 0 &&
+                    light.Sequence > light.BaseSequence &&
+                    light.BaseSequence >= 0,
+                    "Invalid terrain light metadata."
+                );
+                Require(
+                    !light.IsBaseline || light.BaseSequence == 0 && light.SectionMask == ushort.MaxValue,
+                    "A light baseline must contain all sections."
+                );
+                Require(
+                    light.Sections.Length == System.Numerics.BitOperations.PopCount((uint)light.SectionMask) &&
+                    light.Sections.All(section => section is { Length: 1 or 4096 }),
+                    "Invalid terrain light sections."
+                );
+                break;
             case TerrainCellDeltaPackage deltas:
                 Require(
                     deltas.CellDeltas is { Count: > 0 and <= TerrainCellDeltaPackage.MaximumDeltas },

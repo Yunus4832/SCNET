@@ -172,6 +172,17 @@ public sealed class ClientChunkContentTransport : IChunkContentTransport, IDispo
 
     public WorldRuntimeContext Runtime => _runtime;
 
+    public bool IsCurrentAllocation(ChunkAllocationId allocation)
+    {
+        lock (_gate)
+        {
+            return !_disposed &&
+                   !_runtime.IsClosed &&
+                   _active.TryGetValue(allocation.Coords, out var current) &&
+                   current == allocation;
+        }
+    }
+
     public bool IsRequested(ChunkAllocationId allocation)
     {
         lock (_gate)
