@@ -30,7 +30,10 @@ public sealed class ClientTerrainContentPump : IDisposable
 
     public bool TryDrainReceivedContents()
     {
-        if (!_transport.HasPendingWork && !_contentRequest.IsPending) { return true; }
+        if (!_transport.HasPendingWork && !_application.HasDeferredPresentation && !_contentRequest.IsPending)
+        {
+            return true;
+        }
 
         // Keep the foreground request latched across frames until the worker yields.
         // Other foreground requests and mesh wakeups cannot consume this handoff.

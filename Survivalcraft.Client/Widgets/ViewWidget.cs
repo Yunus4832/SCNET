@@ -10,6 +10,8 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
 
     private SubsystemDrawing _subsystemDrawing = null!;
 
+    private SubsystemTerrainPresentation? _terrainPresentation;
+
     private GameWidget GameWidget { get; set; } = null!;
 
     public Point2? ScalingRenderTargetSize
@@ -82,7 +84,9 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
         }
 
         GameWidget = widget;
-        _subsystemDrawing = GameWidget.SubsystemGameWidgets.Project.FindSubsystem<SubsystemDrawing>(true)!;
+        var project = GameWidget.SubsystemGameWidgets.Project;
+        _subsystemDrawing = project.FindSubsystem<SubsystemDrawing>(true)!;
+        _terrainPresentation = project.FindSubsystem<SubsystemTerrainPresentation>();
         base.ChangeParent(widget);
     }
 
@@ -173,12 +177,14 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
 
     public void DrawToScreen(DrawContext dc)
     {
-        GameWidget.ActiveCamera.PrepareForDrawing(null);
+        var camera = GameWidget.ActiveCamera;
+        camera.PrepareForDrawing(null);
         var renderTarget = Display.RenderTarget;
         SetupScalingRenderTarget();
         try
         {
-            _subsystemDrawing.Draw(GameWidget.ActiveCamera);
+            _terrainPresentation?.PrepareView(camera);
+            _subsystemDrawing.Draw(camera);
         }
         finally
         {

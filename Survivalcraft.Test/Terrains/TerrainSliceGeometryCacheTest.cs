@@ -46,24 +46,24 @@ public sealed class TerrainSliceGeometryCacheTest
         using var presentation = new TerrainChunkPresentation();
         var geometry = new TerrainGeometry();
         GenerateSlice(presentation, geometry, 10);
-        Assert.True(presentation.BeginSliceGeometryUpdate(0, 20));
+        Assert.True(presentation.BeginSliceGeometryUpdate(0, new TerrainSliceInputs(20, 0)));
         geometry.SubsetOpaque.Indices.Clear();
         // A generator exception leaves no completed CPU geometry for either hash.
-        Assert.True(presentation.BeginSliceGeometryUpdate(0, 10));
-        Assert.True(presentation.BeginSliceGeometryUpdate(0, 20));
-        presentation.CompleteSliceGeometryUpdate(0, 20);
-        Assert.False(presentation.BeginSliceGeometryUpdate(0, 20));
+        Assert.True(presentation.BeginSliceGeometryUpdate(0, new TerrainSliceInputs(10, 0)));
+        Assert.True(presentation.BeginSliceGeometryUpdate(0, new TerrainSliceInputs(20, 0)));
+        presentation.CompleteSliceGeometryUpdate(0, new TerrainSliceInputs(20, 0));
+        Assert.False(presentation.BeginSliceGeometryUpdate(0, new TerrainSliceInputs(20, 0)));
         presentation.InvalidateSliceContentsHashes();
-        Assert.True(presentation.BeginSliceGeometryUpdate(0, 20));
+        Assert.True(presentation.BeginSliceGeometryUpdate(0, new TerrainSliceInputs(20, 0)));
     }
 
     private static bool GenerateSlice(TerrainChunkPresentation presentation, TerrainGeometry geometry, int content)
     {
-        if (!presentation.BeginSliceGeometryUpdate(0, content)) { return false; }
+        if (!presentation.BeginSliceGeometryUpdate(0, new TerrainSliceInputs(content, 0))) { return false; }
 
         geometry.SubsetOpaque.Indices.Clear();
         geometry.SubsetOpaque.Indices.Add(content);
-        presentation.CompleteSliceGeometryUpdate(0, content);
+        presentation.CompleteSliceGeometryUpdate(0, new TerrainSliceInputs(content, 0));
         return true;
     }
 }

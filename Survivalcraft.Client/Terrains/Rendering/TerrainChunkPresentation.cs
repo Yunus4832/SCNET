@@ -19,10 +19,20 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     public Dictionary<Texture2D, TerrainGeometry[]> Draws => _draws ??= new();
 
-    // Hashes describe the actual CPU Draws, independently of uploaded GPU buffers.
-    public readonly int[] GeneratedSliceContentsHashes = new int[TerrainChunk.SlicesCount];
+    // Inputs describe the actual CPU Draws, independently of uploaded GPU buffers.
+    internal readonly TerrainSliceInputs[] generatedSliceInputs = new TerrainSliceInputs[TerrainChunk.SlicesCount];
 
     private readonly bool[] _sliceGeometryValid = new bool[TerrainChunk.SlicesCount];
+
+    private readonly bool[] _sliceTopologyValid = new bool[TerrainChunk.SlicesCount];
+
+    private readonly TerrainMeshLightReads[] _sliceLightReads = new TerrainMeshLightReads[TerrainChunk.SlicesCount];
+
+    private int _recordedLightReads;
+
+    private long _topologyRevision;
+
+    private long _uploadedTopologyRevision;
 
     public bool HasGeometry => _geometry is not null;
 
@@ -31,6 +41,11 @@ public sealed class TerrainChunkPresentation : IDisposable
     public TerrainChunkGeometry Geometry => _geometry ??= new TerrainChunkGeometry();
 
     public bool GeometryUploaded;
+
+    internal volatile bool lightingCohortPending;
+
+    internal bool NeedsGroupedLighting(TerrainChunk chunk) =>
+        lightingCohortPending || chunk.HasPendingLightingPresentation;
 
     public long ClientGeometryContentVersion => Volatile.Read(ref _completedMesh)?.ContentVersion ?? 0;
 
@@ -44,7 +59,7 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     private TerrainLightSnapshot?[]? _buildLights;
 
-    private readonly int[] _uploadedSliceHashes = new int[TerrainChunk.SlicesCount];
+    private readonly TerrainSliceInputs[] _uploadedSliceInputs = new TerrainSliceInputs[TerrainChunk.SlicesCount];
 
     private int _interactiveSlices;
 
@@ -66,7 +81,7 @@ public sealed class TerrainChunkPresentation : IDisposable
             _interactiveSlices == 0 ||
             (_interactiveSlices & (1 << slice)) != 0 ||
             !_sliceGeometryValid[slice] ||
-            GeneratedSliceContentsHashes[slice] != _uploadedSliceHashes[slice])
+            generatedSliceInputs[slice] != _uploadedSliceInputs[slice])
         {
             return false;
         }
@@ -87,6 +102,21 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     /// <summary>Opaque identity of the completed CPU mesh being staged for upload.</summary>
     internal object? GeometryUploadToken => Volatile.Read(ref _completedMesh);
+
+    internal bool CanReuseUploadedTopology => GeometryUploaded && _topologyRevision == _uploadedTopologyRevision;
+
+    internal bool HasChangedLighting
+    {
+        get
+        {
+            for (var i = 0; i < generatedSliceInputs.Length; i++)
+            {
+                if (generatedSliceInputs[i].Lighting != _uploadedSliceInputs[i].Lighting) { return true; }
+            }
+
+            return false;
+        }
+    }
 
     internal bool CanPublishUpload(TerrainChunk chunk, object token) =>
         ReferenceEquals(GeometryUploadToken, token) && CanUploadGeometry(chunk);
@@ -118,7 +148,8 @@ public sealed class TerrainChunkPresentation : IDisposable
         // Neighbor inputs may change during the GPU call. Record what was uploaded;
         // freshness is checked separately and schedules another build when necessary.
         Volatile.Write(ref _uploadedMesh, completed);
-        Array.Copy(GeneratedSliceContentsHashes, _uploadedSliceHashes, TerrainChunk.SlicesCount);
+        _uploadedTopologyRevision = _topologyRevision;
+        Array.Copy(generatedSliceInputs, _uploadedSliceInputs, TerrainChunk.SlicesCount);
         GeometryUploaded = true;
     }
 
@@ -128,15 +159,27 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     internal SliceWork? ActiveSlice { get; set; }
 
-    internal sealed class SliceWork(int slice, int contentsHash)
+    internal sealed class SliceWork(int slice, TerrainSliceInputs inputs)
     {
         public int Slice { get; } = slice;
 
-        public int ContentsHash { get; } = contentsHash;
+        public TerrainSliceInputs Inputs { get; } = inputs;
 
         public int Column;
 
         public int CompactionBuffer;
+
+        public TerrainGeometrySubset[]? RelightSubsets;
+
+        public int LightSubsetIndex;
+
+        public int LightRunIndex;
+
+        public int LightVertexIndex;
+
+        public bool CanReplayLighting = true;
+
+        public TerrainMeshLightReads LightReads;
     }
 
     public int NextMeshSlice
@@ -152,13 +195,15 @@ public sealed class TerrainChunkPresentation : IDisposable
     }
 
 
-    private readonly record struct NeighborInput(
+    private readonly record struct NeighborGeometry(
         ulong Generation,
         long ContentVersion,
         long ContentRevision,
         long Heights,
-        long Lighting
+        long? ReplicaHaloRevision
     );
+
+    private readonly record struct NeighborInput(NeighborGeometry Geometry, long Lighting);
 
     private sealed record MaintenanceWait(MeshBuildStamp Inputs, double FirstSeen, double ChangedAt);
 
@@ -170,7 +215,21 @@ public sealed class TerrainChunkPresentation : IDisposable
         long Revision,
         NeighborInput[] Neighbors,
         bool AllowPendingLighting
-    );
+    )
+    {
+        internal TerrainMeshLightReads LightReads { get; init; }
+
+        internal ulong? SampledLightFingerprint { get; init; }
+    }
+
+    internal bool SamplesLighting(TerrainChunk mesh, TerrainLightPresentationBatch.Source source)
+    {
+        var offset = source.Allocation.Coords - mesh.Coords;
+        var uploaded = Volatile.Read(ref _uploadedMesh);
+        var completed = Volatile.Read(ref _completedMesh);
+        return uploaded?.LightReads.Intersects(offset, source.Sections, source.Boundaries) == true ||
+               completed?.LightReads.Intersects(offset, source.Sections, source.Boundaries) == true;
+    }
 
     internal TerrainLightSnapshot?[]? BuildLights => _buildLights;
 
@@ -195,7 +254,7 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     internal bool CanUsePublishedLighting(TerrainChunk chunk)
     {
-        if (!GeometryUploaded || !chunk.HasContents) { return false; }
+        if (!GeometryUploaded || !chunk.HasContents || NeedsGroupedLighting(chunk)) { return false; }
 
         for (var x = -1; x <= 1; x++)
         {
@@ -214,11 +273,11 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     private bool Matches(TerrainChunk chunk, MeshBuildStamp stamp)
     {
-        return (!stamp.AllowPendingLighting || !chunk.HasPendingLightingPresentation) &&
+        return (!stamp.AllowPendingLighting || !NeedsGroupedLighting(chunk)) &&
                stamp.Generation == chunk.AllocationGeneration &&
                stamp.ContentVersion == chunk.NetworkContentVersion &&
                stamp.Revision == Volatile.Read(ref _requestedMeshRevision) &&
-               MatchesNeighbors(chunk, stamp.Neighbors, stamp.AllowPendingLighting);
+               MatchesNeighbors(chunk, stamp);
     }
 
     private static NeighborInput ReadNeighbor(TerrainChunk chunk, int x, int z)
@@ -227,10 +286,13 @@ public sealed class TerrainChunkPresentation : IDisposable
         return neighbor is not { HasContents: true }
             ? default
             : new NeighborInput(
-                neighbor.AllocationGeneration,
-                neighbor.NetworkContentVersion,
-                neighbor.NetworkContentRevision,
-                neighbor.DerivedRevisions.HeightRevision,
+                new NeighborGeometry(
+                    neighbor.AllocationGeneration,
+                    neighbor.NetworkContentVersion,
+                    neighbor.NetworkContentRevision,
+                    neighbor.DerivedRevisions.HeightRevision,
+                    neighbor.ContentOrigin == TerrainContentOrigin.Replica ? neighbor.GeometryHaloRevision : null
+                ),
                 neighbor.DerivedRevisions.LightRevision
             );
     }
@@ -247,22 +309,39 @@ public sealed class TerrainChunkPresentation : IDisposable
         return result;
     }
 
-    private static bool MatchesNeighbors(TerrainChunk chunk, NeighborInput[] neighbors, bool allowPendingLighting)
+    private static bool MatchesNeighbors(TerrainChunk chunk, MeshBuildStamp stamp)
     {
         var index = 0;
+        var sampledLightingMayHaveChanged = false;
         for (var x = -1; x <= 1; x++)
         {
             for (var z = -1; z <= 1; z++)
             {
-                var expected = neighbors[index++];
+                var expected = stamp.Neighbors[index];
                 var current = ReadNeighbor(chunk, x, z);
-                if (allowPendingLighting) { current = current with { Lighting = expected.Lighting }; }
+                if (!MatchesGeometry(
+                        expected.Geometry,
+                        current.Geometry,
+                        index,
+                        stamp.SampledLightFingerprint.HasValue
+                    ))
+                {
+                    return false;
+                }
 
-                if (expected != current) { return false; }
+                if (!stamp.AllowPendingLighting && expected.Lighting != current.Lighting)
+                {
+                    if (!stamp.SampledLightFingerprint.HasValue) { return false; }
+
+                    sampledLightingMayHaveChanged |= stamp.LightReads.ReadsNeighbor(index);
+                }
+
+                index++;
             }
         }
 
-        return true;
+        return !sampledLightingMayHaveChanged ||
+               stamp.SampledLightFingerprint == stamp.LightReads.FingerprintCurrent(chunk);
     }
 
     private static bool LightingInputsReadable(TerrainChunk chunk)
@@ -348,6 +427,18 @@ public sealed class TerrainChunkPresentation : IDisposable
         {
             _activeMesh = CaptureStamp(chunk, allowPendingLighting);
             _buildLights = CaptureLights(chunk);
+            if (_completedMesh is { SampledLightFingerprint: not null } previous &&
+                previous.Generation == _activeMesh.Generation &&
+                previous.Revision == _activeMesh.Revision &&
+                SameNeighborGeometry(previous.Neighbors, _activeMesh.Neighbors))
+            {
+                _activeMesh = _activeMesh with
+                {
+                    LightReads = previous.LightReads,
+                    SampledLightFingerprint = previous.LightReads.Fingerprint(_buildLights)
+                };
+            }
+
             WorkerMeshState = TerrainMeshState.Building;
             CompletedMeshSlices = 0;
             ActiveSlice = null;
@@ -366,6 +457,26 @@ public sealed class TerrainChunkPresentation : IDisposable
         }
 
         return WorkerMeshState;
+    }
+
+    private static bool SameNeighborGeometry(NeighborInput[] first, NeighborInput[] second)
+    {
+        for (var i = 0; i < first.Length; i++)
+        {
+            if (!MatchesGeometry(first[i].Geometry, second[i].Geometry, i, true)) { return false; }
+        }
+
+        return true;
+    }
+
+    private static bool MatchesGeometry(NeighborGeometry previous, NeighborGeometry current, int index, bool useHalo)
+    {
+        return previous == current ||
+               useHalo &&
+               index != 4 &&
+               previous.Generation == current.Generation &&
+               previous.ReplicaHaloRevision.HasValue &&
+               previous.ReplicaHaloRevision == current.ReplicaHaloRevision;
     }
 
     public void CompleteMeshSlice()
@@ -393,10 +504,30 @@ public sealed class TerrainChunkPresentation : IDisposable
             return false;
         }
 
-        // Snapshot references are needed only while generating; completed/GPU stamps must not
-        // retain superseded light volumes for every visible chunk.
+        var lightReads = new TerrainMeshLightReads();
+        foreach (ref readonly var reads in _sliceLightReads.AsSpan()) { lightReads.Include(in reads); }
+
+        var recordedAllSlices = _recordedLightReads == (1 << TerrainChunk.SlicesCount) - 1;
+        ulong? fingerprint = recordedAllSlices &&
+                             Array.TrueForAll(_sliceTopologyValid, valid => valid) &&
+                             !lightReads.HasOutsideNeighbors &&
+                             _buildLights != null
+            ? lightReads.Fingerprint(_buildLights)
+            : null;
+        if (!_activeMesh.AllowPendingLighting &&
+            _activeMesh.SampledLightFingerprint.HasValue &&
+            fingerprint.HasValue &&
+            fingerprint != lightReads.FingerprintCurrent(chunk))
+        {
+            _activeMesh = null;
+            _buildLights = null;
+            return false;
+        }
+
+        // Completed/GPU stamps keep the light fingerprint and release the immutable cell storage.
         _buildLights = null;
         WorkerMeshState = TerrainMeshState.Ready;
+        _activeMesh = _activeMesh with { LightReads = lightReads, SampledLightFingerprint = fingerprint };
         Volatile.Write(ref _completedMesh, _activeMesh);
         NewGeometryData = true;
         return true;
@@ -435,7 +566,7 @@ public sealed class TerrainChunkPresentation : IDisposable
         _maintenanceWait = null;
         _interactiveSlices = 0;
         _reusedInteractiveSlices = false;
-        Array.Clear(_uploadedSliceHashes);
+        Array.Clear(_uploadedSliceInputs);
         WorkerMeshState = TerrainMeshState.Building;
         CompletedMeshSlices = 0;
         ActiveSlice = null;
@@ -444,23 +575,53 @@ public sealed class TerrainChunkPresentation : IDisposable
     public void InvalidateSliceContentsHashes()
     {
         Array.Clear(_sliceGeometryValid);
+        Array.Clear(_sliceTopologyValid);
+        Array.Clear(_sliceLightReads);
+        _recordedLightReads = 0;
     }
 
-    internal bool BeginSliceGeometryUpdate(int slice, int contentsHash)
+    internal bool CanRefreshSliceLighting(int slice, TerrainSliceInputs inputs)
     {
-        if (_sliceGeometryValid[slice] && GeneratedSliceContentsHashes[slice] == contentsHash)
-        {
-            return false;
-        }
+        return _sliceTopologyValid[slice] && generatedSliceInputs[slice].Geometry == inputs.Geometry;
+    }
+
+    internal bool MatchesSliceInputs(int slice, TerrainSliceInputs inputs)
+    {
+        return _sliceGeometryValid[slice] && generatedSliceInputs[slice] == inputs;
+    }
+
+    internal bool BeginSliceGeometryUpdate(int slice, TerrainSliceInputs inputs, bool geometryChanges = true)
+    {
+        if (MatchesSliceInputs(slice, inputs)) { return false; }
 
         // Invalidate before Draws can be cleared or partially generated, including throwing builds.
         _sliceGeometryValid[slice] = false;
+        if (geometryChanges)
+        {
+            _sliceTopologyValid[slice] = false;
+            _topologyRevision++;
+        }
+
         return true;
     }
 
-    internal void CompleteSliceGeometryUpdate(int slice, int contentsHash)
+    internal void CompleteSliceGeometryUpdate(int slice, TerrainSliceInputs inputs, bool canReplayLighting = true)
     {
-        GeneratedSliceContentsHashes[slice] = contentsHash;
+        generatedSliceInputs[slice] = inputs;
         _sliceGeometryValid[slice] = true;
+        _sliceTopologyValid[slice] = canReplayLighting;
+    }
+
+    internal TerrainMeshLightReads LightReadsForSlice(int slice)
+    {
+        return (_recordedLightReads & (1 << slice)) != 0 && !_sliceLightReads[slice].HasOutsideNeighbors
+            ? _sliceLightReads[slice]
+            : TerrainMeshLightReads.AroundSlice(slice);
+    }
+
+    internal void MarkSliceLightReads(int slice, in TerrainMeshLightReads reads)
+    {
+        _sliceLightReads[slice] = reads;
+        _recordedLightReads |= 1 << slice;
     }
 }

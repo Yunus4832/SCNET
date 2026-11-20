@@ -18,8 +18,14 @@ public class TerrainChunkGeometry
 
         public required VertexBuffer VertexBuffer;
 
+        internal VertexBuffer? LightingBuffer { get; set; }
+
+        internal (int Begin, int End) VertexRange { get; init; }
+
         public void Dispose()
         {
+            LightingBuffer?.Dispose();
+            LightingBuffer = null;
             VertexBuffer?.Dispose();
             VertexBuffer = null!;
             IndexBuffer?.Dispose();

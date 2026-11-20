@@ -38,6 +38,40 @@ public sealed class ClientTerrainDeltaCoordinatorTest
     }
 
     [Fact]
+    public void ADeferredPresentationChainCanResumeOrYieldToAStructuralEdit()
+    {
+        using var terrain = new Terrain();
+        var chunk = LoadedChunk(terrain, 10);
+        var held = true;
+        var applied = new List<TerrainCellDelta>();
+        var coordinator = new ClientTerrainDeltaCoordinator(
+            terrain,
+            applied.Add,
+            (_, pending) => held && pending.All(delta => delta.Value == 42)
+        );
+
+        var first = Delta(10, 11, 42);
+        Assert.Equal(TerrainDeltaApplyResult.Buffered, coordinator.Receive(first));
+        Assert.True(coordinator.HasDeferredPresentation);
+        Assert.False(coordinator.ResumePresentation());
+        Assert.Empty(applied);
+        Assert.False(chunk.NeedsContentSnapshot);
+
+        held = false;
+        Assert.True(coordinator.ResumePresentation());
+        Assert.Equal([first], applied);
+        Assert.False(coordinator.HasDeferredPresentation);
+
+        held = true;
+        var appearance = Delta(11, 12, 42);
+        var structure = Delta(12, 13, 43);
+        Assert.Equal(TerrainDeltaApplyResult.Buffered, coordinator.Receive(appearance));
+        Assert.Equal(TerrainDeltaApplyResult.Applied, coordinator.Receive(structure));
+        Assert.Equal([first, appearance, structure], applied);
+        Assert.Equal(13, chunk.NetworkContentVersion);
+    }
+
+    [Fact]
     public void DeltaArrivingBeforeSnapshotIsAppliedAfterMatchingSnapshot()
     {
         var terrain = new Terrain();

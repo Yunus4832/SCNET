@@ -28,22 +28,16 @@ public sealed class TerrainLightingCalculator(
         var owner = terrain.GetChunkAtCell(source.X, source.Z, false);
         if (owner == null || !terrain.Lighting.TryGetSeed(owner, out var seed)) { return false; }
 
-        const int lightReach = 15;
         var snapshots = new Dictionary<Point2, (TerrainChunk Chunk, TerrainLightSnapshot Light)>();
-        for (var z = (source.Z - lightReach) >> 4; z <= (source.Z + lightReach) >> 4; z++)
+        // Read one cell beyond the illuminated volume to refill light from other sources.
+        foreach (var chunk in EmissionChunks(source, 15))
         {
-            for (var x = (source.X - lightReach) >> 4; x <= (source.X + lightReach) >> 4; x++)
+            if (!canReadNeighbor(chunk) || !terrain.Lighting.TryGetCurrentSnapshot(chunk, out var snapshot))
             {
-                var chunk = terrain.GetChunkAtCoords(x, z);
-                if (chunk is not { HasContents: true }) { continue; }
-
-                if (!canReadNeighbor(chunk) || !terrain.Lighting.TryGetCurrentSnapshot(chunk, out var snapshot))
-                {
-                    return false;
-                }
-
-                snapshots.Add(chunk.Coords, (chunk, snapshot));
+                return false;
             }
+
+            snapshots.Add(chunk.Coords, (chunk, snapshot));
         }
 
         var changes = TerrainEmissionUpdate.Solve(
@@ -83,12 +77,7 @@ public sealed class TerrainLightingCalculator(
             replacements.Add(group.Key, snapshot);
         }
 
-        var seedSlice = source.Y >> 4;
-        var seedValues = new byte[TerrainLightSection.CellCount];
-        seed.Light.GetSection(seedSlice).CopyTo(seedValues);
-        var seedIndex = SectionIndex(source);
-        seedValues[seedIndex] = (byte)((seedValues[seedIndex] & 240) | Emission(after));
-        var nextSeed = seed.WithLight(seed.Light.WithSection(seedSlice, TerrainLightSection.Capture(seedValues)));
+        var nextSeed = WithEmission(seed, source, after);
 
         terrain.SetCellValueFast(source.X, source.Y, source.Z, after);
         if (Terrain.ExtractContents(before) != Terrain.ExtractContents(after))
@@ -127,6 +116,46 @@ public sealed class TerrainLightingCalculator(
     }
 
     private static Point2 Coords(Point3 cell) => new(cell.X >> 4, cell.Z >> 4);
+
+    internal TerrainLightSeed? CaptureEmissionSeed(Point3 source, int value)
+    {
+        var owner = terrain.GetChunkAtCell(source.X, source.Z, false);
+        return owner != null && terrain.Lighting.TryGetSeed(owner, out var seed)
+            ? WithEmission(seed, source, value)
+            : null;
+    }
+
+    private TerrainLightSeed WithEmission(TerrainLightSeed seed, Point3 source, int value)
+    {
+        var slice = source.Y >> 4;
+        var values = new byte[TerrainLightSection.CellCount];
+        seed.Light.GetSection(slice).CopyTo(values);
+        var index = SectionIndex(source);
+        values[index] = (byte)((values[index] & 240) | Emission(value));
+        return seed.WithLight(seed.Light.WithSection(slice, TerrainLightSection.Capture(values)));
+    }
+
+    internal List<TerrainChunk> CollectEmissionChunks(Point3 source)
+    {
+        // Each step costs at least one level. Cells 15 steps away cannot receive block light.
+        return EmissionChunks(source, 14).ToList();
+    }
+
+    private IEnumerable<TerrainChunk> EmissionChunks(Point3 source, int reach)
+    {
+        for (var z = (source.Z - reach) >> 4; z <= (source.Z + reach) >> 4; z++)
+        {
+            for (var x = (source.X - reach) >> 4; x <= (source.X + reach) >> 4; x++)
+            {
+                var distanceX = Math.Max(Math.Max((x << 4) - source.X, source.X - ((x << 4) + 15)), 0);
+                var distanceZ = Math.Max(Math.Max((z << 4) - source.Z, source.Z - ((z << 4) + 15)), 0);
+                if (distanceX + distanceZ <= reach && terrain.GetChunkAtCoords(x, z) is { HasContents: true } chunk)
+                {
+                    yield return chunk;
+                }
+            }
+        }
+    }
 
     private static int SectionIndex(Point3 cell) => (cell.Y & 15) + ((cell.X & 15) << 4) + ((cell.Z & 15) << 8);
 
@@ -259,7 +288,14 @@ public sealed class TerrainLightingCalculator(
         );
     }
 
-    private static int ChangedFaces(TerrainLightSnapshot? previous, TerrainLightSnapshot current)
+    internal TerrainLightRegion? CaptureEmissionRegion(TerrainLightingStore.LocalLightBatch batch)
+    {
+        var air = catalog.Blocks[0];
+        var clipAboveTerrain = air.Transparent && air.LightAttenuation == 0 && air.EmittedLightAmount <= 0;
+        return TerrainLightRegion.Capture(terrain, batch, clipAboveTerrain);
+    }
+
+    internal static int ChangedFaces(TerrainLightSnapshot? previous, TerrainLightSnapshot current)
     {
         var faces = 0;
         previous ??= new TerrainLightSnapshot(default);

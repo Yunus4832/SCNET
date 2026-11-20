@@ -53,6 +53,8 @@ public sealed class BlockPresentationCatalog : IDisposable
 
                 var block = rules.GetBlock(registration.Id);
                 var presentation = registration.Create(block, this);
+                presentation.SupportsTerrainLightingReplay =
+                    presentation.GetType().Assembly == typeof(BlockPresentation).Assembly;
                 if (!ReferenceEquals(presentation.Block, block))
                 {
                     throw new InvalidOperationException(

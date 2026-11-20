@@ -4,6 +4,7 @@ namespace Game.Terrains.Lighting;
 internal readonly record struct TerrainLightCompletion(
     TerrainLightTask Task,
     TerrainLightSnapshot? Snapshot,
+    TerrainLightSnapshot[]? RegionSnapshots,
     Exception? Error,
     TimeSpan Elapsed
 );

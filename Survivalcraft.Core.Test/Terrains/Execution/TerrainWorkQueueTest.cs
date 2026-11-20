@@ -6,6 +6,33 @@ namespace Survivalcraft.Core.Test.Terrains.Execution;
 public sealed class TerrainWorkQueueTest
 {
     [Fact]
+    public void LightingFinishesBeforeOtherMaintenanceWithoutTakingTheFirstDisplayTurn()
+    {
+        using var terrain = new Terrain();
+        var time = new QueueTime();
+        var queue = new TerrainWorkQueue(time);
+        var firstDisplay = new TerrainWorkKey(terrain.AllocateChunk(0, 0), TerrainWorkStage.Derived);
+        var maintenance = new TerrainWorkKey(terrain.AllocateChunk(1, 0), TerrainWorkStage.Derived);
+        var lighting = new TerrainWorkKey(terrain.AllocateChunk(2, 0), TerrainWorkStage.Propagation);
+        queue.Enqueue(firstDisplay, 1, TerrainWorkPriority.FirstDisplay, 4);
+        queue.Enqueue(maintenance, 1, TerrainWorkPriority.Maintenance, 1);
+        queue.Enqueue(lighting, 1, TerrainWorkPriority.Maintenance, 16, finishesLighting: true);
+
+        var first = queue.Take()!;
+        Assert.Equal(firstDisplay, first.Key);
+        queue.RecordCost(first.Priority, TimeSpan.FromMilliseconds(4));
+        queue.Finish(first, false);
+        var next = queue.Take()!;
+        Assert.Equal(lighting, next.Key);
+        queue.RecordCost(next.Priority, TimeSpan.FromMilliseconds(4));
+        queue.Finish(next, false);
+        Assert.Equal(firstDisplay, queue.Take()!.Key);
+
+        time.Milliseconds = 501;
+        Assert.Equal(maintenance, queue.Take()!.Key);
+    }
+
+    [Fact]
     public void TemporarilyIneligibleWorkRetainsItsReadySlotWhileOtherStagesRun()
     {
         using var terrain = new Terrain();

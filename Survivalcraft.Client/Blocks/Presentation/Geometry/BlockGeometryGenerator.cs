@@ -5,7 +5,7 @@ using Game.World.Presentation;
 
 namespace Game.Blocks.Presentation.Geometry;
 
-public class BlockGeometryGenerator
+public partial class BlockGeometryGenerator
 {
     private static readonly Vector2[] _textureCoordinates =
     [
@@ -23,6 +23,10 @@ public class BlockGeometryGenerator
 
     private readonly Func<int, int, int, int> _readGeometryCell;
 
+    private TerrainChunk?[]? _geometryNeighborhood;
+
+    private Point2 _geometryCenter;
+
     public readonly SubsystemFurnitureBlockBehavior SubsystemFurnitureBlockBehavior;
 
     public readonly SubsystemMetersBlockBehavior SubsystemMetersBlockBehavior;
@@ -36,6 +40,10 @@ public class BlockGeometryGenerator
     public Point3 LightOrigin { get; set; }
 
     private readonly Dictionary<Point2, TerrainLightSnapshot?> _lightSnapshots = [];
+
+    private TerrainLightSnapshot?[]? _nearbyLightSnapshots;
+
+    private TerrainChunkPresentation.SliceWork? _lightReadTarget;
 
     private readonly record struct LitCell(int Value, TerrainLightChannels Light);
 
@@ -77,18 +85,44 @@ public class BlockGeometryGenerator
     {
         _cornerLightsPosition = new Point3(2147483647);
         _lightSnapshots.Clear();
+        _nearbyLightSnapshots = null;
         _modelResponses.Clear();
+        _recordLighting = false;
+    }
+
+    internal void SetGeometryNeighborhood(Point2 center, TerrainChunk?[]? neighbors)
+    {
+        _geometryCenter = center;
+        _geometryNeighborhood = neighbors;
+    }
+
+    private TerrainChunk? FindGeometryChunk(int x, int z)
+    {
+        if (_geometryNeighborhood is { } neighbors)
+        {
+            var dx = (x >> 4) - _geometryCenter.X + 1;
+            var dz = (z >> 4) - _geometryCenter.Y + 1;
+            if ((uint)dx < 3 && (uint)dz < 3) { return neighbors[dx * 3 + dz]; }
+        }
+
+        return Terrain.GetChunkAtCell(x, z, false);
+    }
+
+    private TerrainChunk GetGeometryChunk(int x, int z) => FindGeometryChunk(x, z) ?? Terrain.GetChunkAtCell(x, z)!;
+
+    private int ReadGeometryCell(int x, int y, int z)
+    {
+        return Terrain.IsCellValid(x, y, z)
+            ? FindGeometryChunk(x, z)?.GetCellValueForGeometry(x & 15, y, z & 15) ?? 0
+            : 0;
     }
 
     internal void SetLightSnapshots(Point2 center, Game.Terrains.Lighting.TerrainLightSnapshot?[] snapshots)
     {
-        for (var x = -1; x <= 1; x++)
-        {
-            for (var z = -1; z <= 1; z++)
-            {
-                _lightSnapshots[new Point2(center.X + x, center.Y + z)] = snapshots[(x + 1) * 3 + z + 1];
-            }
-        }
+        _lightingCenter = center;
+        // Cube recipes recover their integer sample positions from the emitted vertices.
+        _recordLighting = center.X is >= -524288 and < 524288 && center.Y is >= -524288 and < 524288;
+        _nearbyLightSnapshots = snapshots;
     }
 
     private static void SetupCornerVertex(
@@ -173,7 +207,6 @@ public class BlockGeometryGenerator
     {
         var vertices = subset.Vertices;
         var indices = subset.Indices;
-        var response = TerrainLightResponse.FromChannels(ReadLight(x, y, z));
         var num2 = LightingManager.CalculateLighting(Vector3.UnitY);
         var color2 = new Color((byte)(color.R * num2), (byte)(color.G * num2), (byte)(color.B * num2), color.A);
         var count = vertices.Count;
@@ -307,7 +340,7 @@ public class BlockGeometryGenerator
         indices.Array[count2 + 21] = count + 4;
         indices.Array[count2 + 22] = count + 7;
         indices.Array[count2 + 23] = count + 6;
-        for (var i = count; i < vertices.Count; i++) { vertices.Array[i].Lighting = response; }
+        SetCellLighting(subset, count, x, y, z);
     }
 
     public void GenerateCubeVertices(
@@ -320,11 +353,11 @@ public class BlockGeometryGenerator
         TerrainGeometrySubset[] subsetsByFace
     )
     {
-        var chunkAtCell = Terrain.GetChunkAtCell(x, z)!;
-        var chunkAtCell2 = Terrain.GetChunkAtCell(x, z + 1)!;
-        var chunkAtCell3 = Terrain.GetChunkAtCell(x + 1, z)!;
-        var chunkAtCell4 = Terrain.GetChunkAtCell(x, z - 1)!;
-        var chunkAtCell5 = Terrain.GetChunkAtCell(x - 1, z)!;
+        var chunkAtCell = GetGeometryChunk(x, z);
+        var chunkAtCell2 = GetGeometryChunk(x, z + 1);
+        var chunkAtCell3 = GetGeometryChunk(x + 1, z);
+        var chunkAtCell4 = GetGeometryChunk(x, z - 1);
+        var chunkAtCell5 = GetGeometryChunk(x - 1, z);
         var cellValueFast = chunkAtCell2.GetCellValueForGeometry(x & 0xF, y, (z + 1) & 0xF);
         var textureSlotCount = block.GetTextureSlotCount(value);
         if (block.ShouldGenerateFace(_subsystemTerrain, 0, value, cellValueFast))
@@ -334,6 +367,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot = block.GetFaceTextureSlot(0, value);
             var count = vertices.Count;
             vertices.Count += 4;
+            if (_recordLighting) { subsetsByFace[0].RecordLighting(count, 4, 1); }
+
             SetupCubeVertexFace0(
                 x,
                 y,
@@ -396,6 +431,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot2 = block.GetFaceTextureSlot(1, value);
             var count3 = vertices2.Count;
             vertices2.Count += 4;
+            if (_recordLighting) { subsetsByFace[1].RecordLighting(count3, 4, 2); }
+
             SetupCubeVertexFace1(
                 x + 1,
                 y,
@@ -458,6 +495,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot3 = block.GetFaceTextureSlot(2, value);
             var count5 = vertices3.Count;
             vertices3.Count += 4;
+            if (_recordLighting) { subsetsByFace[2].RecordLighting(count5, 4, 3); }
+
             SetupCubeVertexFace2(
                 x,
                 y,
@@ -520,6 +559,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot4 = block.GetFaceTextureSlot(3, value);
             var count7 = vertices4.Count;
             vertices4.Count += 4;
+            if (_recordLighting) { subsetsByFace[3].RecordLighting(count7, 4, 4); }
+
             SetupCubeVertexFace3(
                 x,
                 y,
@@ -582,6 +623,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot5 = block.GetFaceTextureSlot(4, value);
             var count9 = vertices5.Count;
             vertices5.Count += 4;
+            if (_recordLighting) { subsetsByFace[4].RecordLighting(count9, 4, 5); }
+
             SetupCubeVertexFace4(
                 x,
                 y + 1,
@@ -644,6 +687,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot6 = block.GetFaceTextureSlot(5, value);
             var count11 = vertices6.Count;
             vertices6.Count += 4;
+            if (_recordLighting) { subsetsByFace[5].RecordLighting(count11, 4, 6); }
+
             SetupCubeVertexFace5(
                 x,
                 y,
@@ -718,13 +763,9 @@ public class BlockGeometryGenerator
         TerrainGeometrySubset[] subsetsByFace
     )
     {
-        var chunkAtCell = Terrain.GetChunkAtCell(x, z)!;
-        var chunkAtCell2 = Terrain.GetChunkAtCell(x, z + 1)!;
-        var chunkAtCell3 = Terrain.GetChunkAtCell(x + 1, z)!;
-        var chunkAtCell4 = Terrain.GetChunkAtCell(x, z - 1)!;
-        var chunkAtCell5 = Terrain.GetChunkAtCell(x - 1, z)!;
-        var cellValueFast = chunkAtCell2.GetCellValueForGeometry(x & 0xF, y, (z + 1) & 0xF);
+        var cellValueFast = ReadGeometryCell(x, y, z + 1);
         var textureSlotCount = block.GetTextureSlotCount(value);
+        var fullHeight = height11 == 1f && height21 == 1f && height22 == 1f && height12 == 1f;
         if (block.ShouldGenerateFace(_subsystemTerrain, 0, value, cellValueFast))
         {
             var vertices = subsetsByFace[0].Vertices;
@@ -732,6 +773,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot = block.GetFaceTextureSlot(0, value);
             var count = vertices.Count;
             vertices.Count += 4;
+            if (_recordLighting) { RecordHeightFace(subsetsByFace[0], count, 0, y, fullHeight); }
+
             SetupCubeVertexFace0(
                 x,
                 y,
@@ -786,7 +829,7 @@ public class BlockGeometryGenerator
             indices.Array[count2 + 5] = count + 3;
         }
 
-        cellValueFast = chunkAtCell3.GetCellValueForGeometry((x + 1) & 0xF, y, z & 0xF);
+        cellValueFast = ReadGeometryCell(x + 1, y, z);
         if (block.ShouldGenerateFace(_subsystemTerrain, 1, value, cellValueFast))
         {
             var vertices2 = subsetsByFace[1].Vertices;
@@ -794,6 +837,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot2 = block.GetFaceTextureSlot(1, value);
             var count3 = vertices2.Count;
             vertices2.Count += 4;
+            if (_recordLighting) { RecordHeightFace(subsetsByFace[1], count3, 1, y, fullHeight); }
+
             SetupCubeVertexFace1(
                 x + 1,
                 y,
@@ -848,7 +893,7 @@ public class BlockGeometryGenerator
             indices2.Array[count4 + 5] = count3 + 3;
         }
 
-        cellValueFast = chunkAtCell4.GetCellValueForGeometry(x & 0xF, y, (z - 1) & 0xF);
+        cellValueFast = ReadGeometryCell(x, y, z - 1);
         if (block.ShouldGenerateFace(_subsystemTerrain, 2, value, cellValueFast))
         {
             var vertices3 = subsetsByFace[2].Vertices;
@@ -856,6 +901,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot3 = block.GetFaceTextureSlot(2, value);
             var count5 = vertices3.Count;
             vertices3.Count += 4;
+            if (_recordLighting) { RecordHeightFace(subsetsByFace[2], count5, 2, y, fullHeight); }
+
             SetupCubeVertexFace2(
                 x,
                 y,
@@ -910,7 +957,7 @@ public class BlockGeometryGenerator
             indices3.Array[count6 + 5] = count5;
         }
 
-        cellValueFast = chunkAtCell5.GetCellValueForGeometry((x - 1) & 0xF, y, z & 0xF);
+        cellValueFast = ReadGeometryCell(x - 1, y, z);
         if (block.ShouldGenerateFace(_subsystemTerrain, 3, value, cellValueFast))
         {
             var vertices4 = subsetsByFace[3].Vertices;
@@ -918,6 +965,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot4 = block.GetFaceTextureSlot(3, value);
             var count7 = vertices4.Count;
             vertices4.Count += 4;
+            if (_recordLighting) { RecordHeightFace(subsetsByFace[3], count7, 3, y, fullHeight); }
+
             SetupCubeVertexFace3(
                 x,
                 y,
@@ -972,7 +1021,7 @@ public class BlockGeometryGenerator
             indices4.Array[count8 + 5] = count7;
         }
 
-        cellValueFast = chunkAtCell.GetCellValueForGeometry(x & 0xF, y + 1, z & 0xF);
+        cellValueFast = ReadGeometryCell(x, y + 1, z);
         if (block.ShouldGenerateFace(_subsystemTerrain, 4, value, cellValueFast) ||
             height11 < 1f ||
             height12 < 1f ||
@@ -984,6 +1033,8 @@ public class BlockGeometryGenerator
             var textureSlot = overrideTopTextureSlot >= 0 ? overrideTopTextureSlot : block.GetFaceTextureSlot(4, value);
             var count9 = vertices5.Count;
             vertices5.Count += 4;
+            if (_recordLighting) { RecordHeightFace(subsetsByFace[4], count9, 4, y, fullHeight); }
+
             SetupCubeVertexFace4(
                 x,
                 y + 1,
@@ -1038,7 +1089,7 @@ public class BlockGeometryGenerator
             indices5.Array[count10 + 5] = count9;
         }
 
-        cellValueFast = chunkAtCell.GetCellValueForGeometry(x & 0xF, y - 1, z & 0xF);
+        cellValueFast = ReadGeometryCell(x, y - 1, z);
         if (block.ShouldGenerateFace(_subsystemTerrain, 5, value, cellValueFast))
         {
             var vertices6 = subsetsByFace[5].Vertices;
@@ -1046,6 +1097,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot5 = block.GetFaceTextureSlot(5, value);
             var count11 = vertices6.Count;
             vertices6.Count += 4;
+            if (_recordLighting) { RecordHeightFace(subsetsByFace[5], count11, 5, y, fullHeight); }
+
             SetupCubeVertexFace5(
                 x,
                 y,
@@ -1114,11 +1167,11 @@ public class BlockGeometryGenerator
         TerrainGeometrySubset[] subsetsByFace
     )
     {
-        var chunkAtCell = Terrain.GetChunkAtCell(x, z)!;
-        var chunkAtCell2 = Terrain.GetChunkAtCell(x, z + 1)!;
-        var chunkAtCell3 = Terrain.GetChunkAtCell(x + 1, z)!;
-        var chunkAtCell4 = Terrain.GetChunkAtCell(x, z - 1)!;
-        var chunkAtCell5 = Terrain.GetChunkAtCell(x - 1, z)!;
+        var chunkAtCell = GetGeometryChunk(x, z);
+        var chunkAtCell2 = GetGeometryChunk(x, z + 1);
+        var chunkAtCell3 = GetGeometryChunk(x + 1, z);
+        var chunkAtCell4 = GetGeometryChunk(x, z - 1);
+        var chunkAtCell5 = GetGeometryChunk(x - 1, z);
         var cellValueFast = chunkAtCell2.GetCellValueForGeometry(x & 0xF, y, (z + 1) & 0xF);
         var textureSlotCount = block.GetTextureSlotCount(value);
         if (block.ShouldGenerateFace(_subsystemTerrain, 0, value, cellValueFast))
@@ -1128,6 +1181,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot = block.GetFaceTextureSlot(0, value);
             var count = vertices.Count;
             vertices.Count += 4;
+            if (_recordLighting) { subsetsByFace[0].RecordLighting(count, 4, 1); }
+
             SetupCubeVertexFace0(
                 x,
                 y,
@@ -1190,6 +1245,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot2 = block.GetFaceTextureSlot(1, value);
             var count3 = vertices2.Count;
             vertices2.Count += 4;
+            if (_recordLighting) { subsetsByFace[1].RecordLighting(count3, 4, 2); }
+
             SetupCubeVertexFace1(
                 x + 1,
                 y,
@@ -1252,6 +1309,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot3 = block.GetFaceTextureSlot(2, value);
             var count5 = vertices3.Count;
             vertices3.Count += 4;
+            if (_recordLighting) { subsetsByFace[2].RecordLighting(count5, 4, 3); }
+
             SetupCubeVertexFace2(
                 x,
                 y,
@@ -1314,6 +1373,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot4 = block.GetFaceTextureSlot(3, value);
             var count7 = vertices4.Count;
             vertices4.Count += 4;
+            if (_recordLighting) { subsetsByFace[3].RecordLighting(count7, 4, 4); }
+
             SetupCubeVertexFace3(
                 x,
                 y,
@@ -1376,6 +1437,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot5 = block.GetFaceTextureSlot(4, value);
             var count9 = vertices5.Count;
             vertices5.Count += 4;
+            if (_recordLighting) { subsetsByFace[4].RecordLighting(count9, 4, 5); }
+
             SetupCubeVertexFace4(
                 x,
                 y + 1,
@@ -1438,6 +1501,8 @@ public class BlockGeometryGenerator
             var faceTextureSlot6 = block.GetFaceTextureSlot(5, value);
             var count11 = vertices6.Count;
             vertices6.Count += 4;
+            if (_recordLighting) { subsetsByFace[5].RecordLighting(count11, 4, 6); }
+
             SetupCubeVertexFace5(
                 x,
                 y,
@@ -1508,6 +1573,7 @@ public class BlockGeometryGenerator
         var indices = subset.Indices;
         var count = vertices.Count;
         var response = TerrainLightResponse.FromChannels(ReadLight(x, y, z));
+        var sample = _recordLighting ? PackLightCell(x, y, z) : 0;
         vertices.Count += blockMesh.Vertices.Count;
         for (var i = 0; i < blockMesh.Vertices.Count; i++)
         {
@@ -1535,6 +1601,10 @@ public class BlockGeometryGenerator
             );
             vertices.Array[count + i].Lighting =
                 blockMeshVertex.IsEmissive ? TerrainLightResponse.FullBright : response;
+            if (_recordLighting)
+            {
+                subset.RecordLighting(count + i, 1, blockMeshVertex.IsEmissive ? _fullBrightSample : sample);
+            }
         }
 
         if (blockMesh.Sides.Count != 0)
@@ -1543,7 +1613,7 @@ public class BlockGeometryGenerator
             {
                 var point = CellFace.FaceToPoint3(j);
                 var cellValueFastChunkExists =
-                    Terrain.GetCellValueForGeometry(x + point.X, y + point.Y, z + point.Z);
+                    ReadGeometryCell(x + point.X, y + point.Y, z + point.Z);
                 _visibleSides[j] = _subsystemTerrain.Catalog
                     .Blocks[Terrain.ExtractContents(cellValueFastChunkExists)]
                     .IsFaceTransparent(_subsystemTerrain, CellFace.OppositeFace(j), cellValueFastChunkExists);
@@ -1632,7 +1702,7 @@ public class BlockGeometryGenerator
             {
                 var point = CellFace.FaceToPoint3(j);
                 var cellValueFastChunkExists =
-                    Terrain.GetCellValueForGeometry(x + point.X, y + point.Y, z + point.Z);
+                    ReadGeometryCell(x + point.X, y + point.Y, z + point.Z);
                 _visibleSides[j] = _subsystemTerrain.Catalog
                     .Blocks[Terrain.ExtractContents(cellValueFastChunkExists)]
                     .IsFaceTransparent(_subsystemTerrain, CellFace.OppositeFace(j), cellValueFastChunkExists);
@@ -1681,6 +1751,7 @@ public class BlockGeometryGenerator
         }
 
         var ownerLight = ReadLight(x, y, z);
+        var ownerSample = _recordLighting ? PackLightCell(x, y, z) : 0;
         var ownerResponse = TerrainLightResponse.FromChannels(ownerLight);
         var v = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) - 0.5f * CellFace.FaceToVector3(mountingFace);
         var vector = CellFace.FaceToVector3(mountingFace);
@@ -1815,6 +1886,17 @@ public class BlockGeometryGenerator
                     );
                     var count = subset.Vertices.Count;
                     subset.Vertices.Count += 6;
+                    if (_recordLighting)
+                    {
+                        var sample = PackWireLightCell(
+                            ownerSample,
+                            tmpConnectionPath.NeighborOffsetX,
+                            tmpConnectionPath.NeighborOffsetY,
+                            tmpConnectionPath.NeighborOffsetZ
+                        );
+                        subset.RecordLighting(count, 6, sample);
+                    }
+
                     var array = subset.Vertices.Array;
                     SetupVertex(v5.X, v5.Y, v5.Z, color5, vector10.X, vector10.Y, ref array[count]);
                     SetupVertex(vector5.X, vector5.Y, vector5.Z, color6, vector11.X, vector11.Y, ref array[count + 1]);
@@ -1884,6 +1966,8 @@ public class BlockGeometryGenerator
                 var color12 = new Color((byte)(color.R * num20), (byte)(color.G * num20), (byte)(color.B * num20));
                 var count3 = subset.Vertices.Count;
                 subset.Vertices.Count += 3;
+                if (_recordLighting) { subset.RecordLighting(count3, 3, ownerSample); }
+
                 var array3 = subset.Vertices.Array;
                 SetupVertex(v8.X, v8.Y, v8.Z, color11, vector19.X, vector19.Y, ref array3[count3]);
                 SetupVertex(v9.X, v9.Y, v9.Z, color11, vector20.X, vector20.Y, ref array3[count3 + 1]);
@@ -1931,13 +2015,13 @@ public class BlockGeometryGenerator
     {
         var light = default(TerrainLightChannels);
         var shadow = 0;
-        var chunkAtCell = Terrain.GetChunkAtCell(x - 1, z)!;
+        var chunkAtCell = GetGeometryChunk(x - 1, z);
         var num = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, z & 0xF);
         var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
         var cellValueFast2 = ReadLitCell(chunkAtCell, num);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
-        var chunkAtCell2 = Terrain.GetChunkAtCell(x, z)!;
+        var chunkAtCell2 = GetGeometryChunk(x, z);
         var num2 = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
         var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
         var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
@@ -1950,13 +2034,13 @@ public class BlockGeometryGenerator
     {
         var light = default(TerrainLightChannels);
         var shadow = 0;
-        var chunkAtCell = Terrain.GetChunkAtCell(x, z - 1)!;
+        var chunkAtCell = GetGeometryChunk(x, z - 1);
         var num = TerrainChunk.CalculateCellIndex(x & 0xF, y, (z - 1) & 0xF);
         var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
         var cellValueFast2 = ReadLitCell(chunkAtCell, num);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
-        var chunkAtCell2 = Terrain.GetChunkAtCell(x, z)!;
+        var chunkAtCell2 = GetGeometryChunk(x, z);
         var num2 = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
         var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
         var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
@@ -1969,13 +2053,13 @@ public class BlockGeometryGenerator
     {
         var light = default(TerrainLightChannels);
         var shadow = 0;
-        var chunkAtCell = Terrain.GetChunkAtCell(x - 1, z - 1)!;
+        var chunkAtCell = GetGeometryChunk(x - 1, z - 1);
         var num = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, (z - 1) & 0xF);
         var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
         var cellValueFast2 = ReadLitCell(chunkAtCell, num);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
-        var chunkAtCell2 = Terrain.GetChunkAtCell(x, z - 1)!;
+        var chunkAtCell2 = GetGeometryChunk(x, z - 1);
         var num2 = TerrainChunk.CalculateCellIndex(x & 0xF, y, (z - 1) & 0xF);
         var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
         var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
@@ -1988,13 +2072,13 @@ public class BlockGeometryGenerator
     {
         var light = default(TerrainLightChannels);
         var shadow = 0;
-        var chunkAtCell = Terrain.GetChunkAtCell(x - 1, z - 1)!;
+        var chunkAtCell = GetGeometryChunk(x - 1, z - 1);
         var num = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, (z - 1) & 0xF);
         var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
         var cellValueFast2 = ReadLitCell(chunkAtCell, num);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
-        var chunkAtCell2 = Terrain.GetChunkAtCell(x - 1, z)!;
+        var chunkAtCell2 = GetGeometryChunk(x - 1, z);
         var num2 = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, z & 0xF);
         var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
         var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
@@ -2283,6 +2367,30 @@ public class BlockGeometryGenerator
         if (y >= 256) { return new TerrainLightChannels(15, 0); }
 
         var coordinates = Terrain.ToChunk(x, z);
+        var section = y >> 4;
+        if (_lightReadTarget is { } target)
+        {
+            var offset = coordinates - _lightingCenter;
+            var interior = offset.X != 0 && (x & 15) != (offset.X > 0 ? 0 : 15) ||
+                           offset.Y != 0 && (z & 15) != (offset.Y > 0 ? 0 : 15);
+            if (_lastLightReadSection != section ||
+                _lastLightReadChunk != coordinates ||
+                interior && !_lastLightReadInterior)
+            {
+                target.LightReads.Add(offset, section, interior);
+                _lastLightReadSection = section;
+                _lastLightReadChunk = coordinates;
+                _lastLightReadInterior = interior;
+            }
+        }
+
+        if (_nearbyLightSnapshots is { } nearby)
+        {
+            var dx = coordinates.X - _lightingCenter.X + 1;
+            var dz = coordinates.Y - _lightingCenter.Y + 1;
+            if ((uint)dx < 3 && (uint)dz < 3) { return nearby[dx * 3 + dz]?.Get(x & 15, y, z & 15) ?? default; }
+        }
+
         if (!_lightSnapshots.TryGetValue(coordinates, out var snapshot))
         {
             var world = _subsystemTerrain.Terrain;
@@ -2305,7 +2413,7 @@ public class BlockGeometryGenerator
 
     private LitCell ReadLitCell(int x, int y, int z)
     {
-        return new LitCell(Terrain.GetCellValueForGeometry(x, y, z), ReadLight(x, y, z));
+        return new LitCell(ReadGeometryCell(x, y, z), ReadLight(x, y, z));
     }
 
     private struct CornerLights

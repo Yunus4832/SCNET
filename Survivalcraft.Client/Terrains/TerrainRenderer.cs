@@ -1,3 +1,5 @@
+using System.Buffers;
+
 using Engine.Graphics;
 
 using Game.Network.Chunks;
@@ -76,13 +78,63 @@ public class TerrainRenderer : IDisposable
 
     private readonly SubsystemTerrainPresentation _presentation;
 
-    private sealed record StagedUpload(object Token, DynamicArray<TerrainChunkGeometry.Buffer> Buffers);
+    private sealed class StagedUpload(object token) : IDisposable
+    {
+        internal object Token { get; } = token;
+
+        internal DynamicArray<TerrainChunkGeometry.Buffer>? buffers;
+
+        internal VertexBuffer?[]? lighting;
+
+        internal VertexBuffer?[]? geometry;
+
+        internal void Publish(TerrainChunkPresentation presentation)
+        {
+            if (buffers != null) { buffers = presentation.ExchangeBuffers(buffers); }
+
+            if (lighting == null) { return; }
+
+            for (var i = 0; i < lighting.Length; i++)
+            {
+                var buffer = presentation.Buffers[i];
+                if (geometry?[i] is { } replacement)
+                {
+                    geometry[i] = buffer.VertexBuffer;
+                    buffer.VertexBuffer = replacement;
+                }
+
+                (buffer.LightingBuffer, lighting[i]) = (lighting[i], buffer.LightingBuffer);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (buffers != null)
+            {
+                foreach (var buffer in buffers) { buffer.Dispose(); }
+            }
+
+            if (lighting != null)
+            {
+                foreach (var buffer in lighting) { buffer?.Dispose(); }
+            }
+
+            if (geometry != null)
+            {
+                foreach (var buffer in geometry) { buffer?.Dispose(); }
+            }
+        }
+    }
 
     private readonly Dictionary<TerrainChunk, StagedUpload> _staged = [];
 
     private HashSet<TerrainChunk>? _activeCohort;
 
-    private TerrainLightPresentationBatch? _activeLightBatch;
+    private TerrainLightUploadGroup? _activeLightGroup;
+
+    private readonly Dictionary<TerrainChunk, TerrainLightUploadGroup> _lightGroupsByChunk = [];
+
+    private readonly List<TerrainLightUploadGroup> _lightGroups = [];
 
     private TerrainMainWorkRequest? _commitRequest;
 
@@ -92,14 +144,11 @@ public class TerrainRenderer : IDisposable
 
         _commitRequest?.Dispose();
         _commitRequest = null;
-        foreach (var upload in _staged.Values)
-        {
-            foreach (var buffer in upload.Buffers) { buffer.Dispose(); }
-        }
+        foreach (var upload in _staged.Values) { upload.Dispose(); }
 
         _staged.Clear();
         _activeCohort = null;
-        _activeLightBatch = null;
+        _activeLightGroup = null;
     }
 
     public TerrainRenderer(SubsystemTerrainPresentation presentation)
@@ -159,6 +208,7 @@ public class TerrainRenderer : IDisposable
                 foreach (var buffer in _presentation.ChunkPresentations.Get(terrainChunk).Buffers)
                 {
                     num += buffer.VertexBuffer.GetGpuMemoryUsage();
+                    num += buffer.LightingBuffer?.GetGpuMemoryUsage() ?? 0;
                     num += buffer.IndexBuffer.GetGpuMemoryUsage();
                 }
             }
@@ -246,7 +296,7 @@ public class TerrainRenderer : IDisposable
                         chunk,
                         !presentation.GeometryUploaded,
                         nearest,
-                        _subsystemTerrain.Computations.IsInteractive(chunk) || chunk.HasPendingLightingPresentation
+                        _subsystemTerrain.Computations.IsInteractive(chunk) || _lightGroupsByChunk.ContainsKey(chunk)
                     )
                 );
             }
@@ -259,15 +309,16 @@ public class TerrainRenderer : IDisposable
     private bool CanScheduleUpload(TerrainChunk chunk, TerrainChunkPresentation mesh)
     {
         var edit = _presentation.EditCohorts.Find(chunk);
+        var light = _lightGroupsByChunk.GetValueOrDefault(chunk);
         if (_activeCohort?.Contains(chunk) == true)
         {
             return !_staged.ContainsKey(chunk) &&
-                   (_activeLightBatch is { } light
-                       ? edit == null && light.IsPending && ReferenceEquals(chunk.LightingPresentationBatch, light)
-                       : ReferenceEquals(edit, _activeCohort));
+                   (_activeLightGroup != null
+                       ? ReferenceEquals(light, _activeLightGroup)
+                       : light == null && ReferenceEquals(edit, _activeCohort));
         }
 
-        return edit == null && (!mesh.GeometryUploaded || !chunk.HasPendingLightingPresentation);
+        return edit == null && light == null && (!mesh.GeometryUploaded || !chunk.HasPendingLightingPresentation);
     }
 
     private bool MeshReady(TerrainChunk chunk)
@@ -277,79 +328,178 @@ public class TerrainRenderer : IDisposable
                (mesh.HasCurrentUploadedGeometry(chunk) || mesh.CanUploadGeometry(chunk));
     }
 
-    private bool LightMemberReady(TerrainChunk chunk, TerrainLightPresentationBatch batch)
+    private bool EditGroupReady(HashSet<TerrainChunk> group)
     {
-        return batch.IsPending &&
-               ReferenceEquals(chunk.LightingPresentationBatch, batch) &&
-               _presentation.EditCohorts.Find(chunk) == null &&
-               _subsystemTerrain.ReplicaLighting?.IsPresentationApplied(chunk, batch) == true &&
-               MeshReady(chunk);
+        return group.Count != 0 &&
+               group.All(chunk =>
+                   !_lightGroupsByChunk.ContainsKey(chunk) &&
+                   ReferenceEquals(_presentation.EditCohorts.Find(chunk), group) &&
+                   MeshReady(chunk)
+               );
+    }
+
+    private bool LightGroupReady(TerrainLightUploadGroup group)
+    {
+        return group.Members.Count != 0 &&
+               group.Members.All(MeshReady) &&
+               group.Edits.All(edit => edit.All(chunk => ReferenceEquals(_presentation.EditCohorts.Find(chunk), edit))
+               ) &&
+               _subsystemTerrain.ReplicaLighting is { } replica &&
+               group.Sources.All(pair => replica.CanPresent(pair.Key, pair.Value));
     }
 
     private bool CohortReady(HashSet<TerrainChunk> group)
     {
-        var light = _activeLightBatch;
-        return group.Count != 0 &&
-               (light != null
-                   ? group.All(chunk => LightMemberReady(chunk, light))
-                   : group.All(chunk =>
-                       ReferenceEquals(_presentation.EditCohorts.Find(chunk), group) && MeshReady(chunk)
-                   ));
+        return _activeLightGroup is { } light ? LightGroupReady(light) : EditGroupReady(group);
     }
 
-    private void PrepareCohortUploads(Vector2 center, TerrainChunk[] chunks)
+    private void BuildLightGroups(TerrainChunk[] chunks)
     {
-        if (_activeCohort != null &&
-            (!CohortReady(_activeCohort) ||
-             _staged.Any(pair => !_presentation.ChunkPresentations.TryGet(pair.Key, out var mesh) ||
-                                 !mesh.CanPublishUpload(pair.Key, pair.Value.Token)
-             )))
-        {
-            InvalidateStagedGeometry();
-        }
+        var previousMembers = _lightGroupsByChunk.Keys.ToArray();
+        _lightGroups.Clear();
+        _lightGroupsByChunk.Clear();
+        if (_subsystemTerrain.ReplicaLighting is not { } replica) { return; }
 
-        if (_activeCohort != null) { return; }
-
-        _activeCohort = _presentation.EditCohorts.Groups.Where(CohortReady)
-            .MinBy(group => group.Min(chunk => Vector2.DistanceSquared(chunk.Center, center)));
-        if (_activeCohort != null) { return; }
-
-        var seen = new HashSet<TerrainLightPresentationBatch>();
+        var batches = new HashSet<TerrainLightPresentationBatch>();
         foreach (var chunk in chunks)
         {
-            if (chunk.LightingPresentationBatch is not { IsPending: true } batch || !seen.Add(batch)) { continue; }
+            if (chunk.LightingPresentationBatch is { IsPending: true } batch) { batches.Add(batch); }
+        }
 
-            var group = new HashSet<TerrainChunk>();
-            foreach (var allocation in batch.Allocations)
+        if (batches.Count == 0)
+        {
+            UpdateLightReservations(previousMembers);
+            return;
+        }
+
+        var visible = new List<(TerrainChunk Chunk, TerrainChunkPresentation Mesh)>();
+        foreach (var chunk in chunks)
+        {
+            if (_presentation.ChunkPresentations.TryGet(chunk, out var mesh) &&
+                (mesh.GeometryUploaded || mesh.CanUploadGeometry(chunk)) &&
+                _uploadViews.Values.Any(view =>
+                    NetworkTerrainPolicy.GetChunkDistanceSquared(chunk.Center, view.Center) <=
+                    view.Visibility * view.Visibility
+                ))
             {
-                var member = _subsystemTerrain.Terrain.GetChunkAtCoords(allocation.Coords.X, allocation.Coords.Y);
-                if (member?.AllocationGeneration != allocation.Generation ||
-                    !ReferenceEquals(member.LightingPresentationBatch, batch) ||
-                    !_presentation.ChunkPresentations.TryGet(member, out var mesh) ||
-                    !mesh.GeometryUploaded ||
-                    !_uploadViews.Values.Any(view =>
-                        NetworkTerrainPolicy.GetChunkDistanceSquared(member.Center, view.Center) <=
-                        view.Visibility * view.Visibility
-                    ))
+                visible.Add((chunk, mesh));
+            }
+        }
+
+        foreach (var batch in batches)
+        {
+            var sources = replica.CapturePresentationSources(batch);
+            var group = new TerrainLightUploadGroup();
+            var required = new List<TerrainLightPresentationBatch.Source>();
+            var hasDisplayedMember = false;
+            foreach (var source in sources)
+            {
+                var affectsVisibleMesh = false;
+                foreach (var (chunk, mesh) in visible)
                 {
-                    continue;
+                    if (!TerrainLightUploadGroup.IsAffected(chunk, mesh, source)) { continue; }
+
+                    affectsVisibleMesh = true;
+                    hasDisplayedMember |= mesh.GeometryUploaded;
+                    group.Members.Add(chunk);
+                    if (_presentation.EditCohorts.Find(chunk) is { } edit) { group.Edits.Add(edit); }
                 }
 
-                group.Add(member);
+                if (affectsVisibleMesh) { required.Add(source); }
             }
 
-            if (group.Count < 2)
+            // Ready first meshes follow a visible light change without waiting for unfinished first meshes.
+            if (!hasDisplayedMember)
             {
                 batch.Release();
                 continue;
             }
 
-            if (!group.All(chunk => LightMemberReady(chunk, batch))) { continue; }
+            foreach (var edit in group.Edits) { group.Members.UnionWith(edit); }
 
-            _activeCohort = group;
-            _activeLightBatch = batch;
-            break;
+            group.Sources.Add(batch, required.ToArray());
+            for (var i = _lightGroups.Count - 1; i >= 0; i--)
+            {
+                if (!group.Members.Overlaps(_lightGroups[i].Members)) { continue; }
+
+                group.Include(_lightGroups[i]);
+                _lightGroups.RemoveAt(i);
+            }
+
+            _lightGroups.Add(group);
         }
+
+        foreach (var group in _lightGroups)
+        {
+            foreach (var chunk in group.Members) { _lightGroupsByChunk.Add(chunk, group); }
+        }
+
+        UpdateLightReservations(previousMembers);
+    }
+
+    private void UpdateLightReservations(TerrainChunk[] previousMembers)
+    {
+        foreach (var chunk in previousMembers)
+        {
+            if (!_lightGroupsByChunk.ContainsKey(chunk) &&
+                _presentation.ChunkPresentations.TryGet(chunk, out var mesh))
+            {
+                mesh.lightingCohortPending = false;
+            }
+        }
+
+        foreach (var chunk in _lightGroupsByChunk.Keys)
+        {
+            if (_presentation.ChunkPresentations.TryGet(chunk, out var mesh) && !mesh.lightingCohortPending)
+            {
+                mesh.lightingCohortPending = true;
+                _subsystemTerrain.Computations.Request(chunk);
+            }
+        }
+    }
+
+    private void PrepareCohortUploads(Vector2 center, TerrainChunk[] chunks)
+    {
+        BuildLightGroups(chunks);
+        if (_subsystemTerrain.ReplicaLighting is { } replica)
+        {
+            var next = _lightGroups.Where(group => group.Sources.All(pair => replica.CanPresent(pair.Key, pair.Value)))
+                .MinBy(group => group.Members.Min(chunk => Vector2.DistanceSquared(chunk.Center, center)));
+            if (next != null) { replica.TryHoldPresentation(next.Sources); }
+        }
+
+        if (_activeCohort != null)
+        {
+            if (_activeLightGroup is { } previous)
+            {
+                var current = _lightGroups.FirstOrDefault(previous.Matches);
+                if (current == null) { InvalidateStagedGeometry(); }
+                else
+                {
+                    _activeLightGroup = current;
+                    _activeCohort = current.Members;
+                }
+            }
+
+            if (_activeCohort != null &&
+                (!CohortReady(_activeCohort) ||
+                 _staged.Any(pair => !_presentation.ChunkPresentations.TryGet(pair.Key, out var mesh) ||
+                                     !mesh.CanPublishUpload(pair.Key, pair.Value.Token)
+                 )))
+            {
+                InvalidateStagedGeometry();
+            }
+        }
+
+        if (_activeCohort != null) { return; }
+
+        _activeCohort = _presentation.EditCohorts.Groups.Where(EditGroupReady)
+            .MinBy(group => group.Min(chunk => Vector2.DistanceSquared(chunk.Center, center)));
+        if (_activeCohort != null) { return; }
+
+        _activeLightGroup = _lightGroups.Where(LightGroupReady)
+            .MinBy(group => group.Members.Min(chunk => Vector2.DistanceSquared(chunk.Center, center)));
+        _activeCohort = _activeLightGroup?.Members;
     }
 
     private void CommitCohortUploads()
@@ -372,7 +522,7 @@ public class TerrainRenderer : IDisposable
         if (!_commitRequest.TryEnter()) { return; }
 
         var started = Stopwatch.GetTimestamp();
-        var oldBuffers = new List<DynamicArray<TerrainChunkGeometry.Buffer>>();
+        var published = new List<StagedUpload>();
         try
         {
             if (_staged.Any(pair => !_presentation.ChunkPresentations.Get(pair.Key)
@@ -387,17 +537,23 @@ public class TerrainRenderer : IDisposable
             foreach (var (chunk, upload) in _staged)
             {
                 var mesh = _presentation.ChunkPresentations.Get(chunk);
-                if (mesh.ExchangeBuffers(upload.Buffers) is { } old) { oldBuffers.Add(old); }
+                upload.Publish(mesh);
+                published.Add(upload);
 
                 mesh.MarkUploaded();
                 mesh.NewGeometryData = false;
             }
 
             _staged.Clear();
-            if (_activeLightBatch is { } light) { light.Release(); }
+            if (_activeLightGroup is { } light)
+            {
+                _subsystemTerrain.ReplicaLighting?.CompletePresentation(light.Sources);
+
+                foreach (var edit in light.Edits) { _presentation.EditCohorts.Complete(edit); }
+            }
             else { _presentation.EditCohorts.Complete(group); }
 
-            _activeLightBatch = null;
+            _activeLightGroup = null;
             _activeCohort = null;
             foreach (var chunk in group) { FinishInteractiveUpload(chunk); }
         }
@@ -406,10 +562,7 @@ public class TerrainRenderer : IDisposable
             _commitRequest.Leave();
             _commitRequest.Dispose();
             _commitRequest = null;
-            foreach (var buffers in oldBuffers)
-            {
-                foreach (var buffer in buffers) { buffer.Dispose(); }
-            }
+            foreach (var upload in published) { upload.Dispose(); }
 
             _uploads.RecordWork(Stopwatch.GetElapsedTime(started));
         }
@@ -431,21 +584,12 @@ public class TerrainRenderer : IDisposable
 
             if (_activeCohort?.Contains(chunk) == true)
             {
-                var token = presentation.GeometryUploadToken!;
-                var buffers = new DynamicArray<TerrainChunkGeometry.Buffer>();
-                try { CompileDrawSubsets(presentation.Draws, buffers); }
-                catch
-                {
-                    foreach (var buffer in buffers) { buffer.Dispose(); }
-
-                    throw;
-                }
-
-                _staged.Add(chunk, new StagedUpload(token, buffers));
+                _staged.Add(chunk, StageUpload(presentation));
                 return true;
             }
 
-            SetupTerrainChunkGeometryVertexIndexBuffers(chunk);
+            using var upload = StageUpload(presentation);
+            upload.Publish(presentation);
             presentation.MarkUploaded();
             presentation.NewGeometryData = false;
             if (presentation.HasCurrentUploadedGeometry(chunk))
@@ -470,7 +614,7 @@ public class TerrainRenderer : IDisposable
         _subsystemTerrain.Computations.Request(chunk);
     }
 
-    public void PrepareForDrawing(Camera camera)
+    internal void PrepareView(Camera camera)
     {
         var xZ = camera.ViewPosition.XZ;
         var num = MathUtils.Sqr(_subsystemSky.VisibilityRange);
@@ -504,8 +648,6 @@ public class TerrainRenderer : IDisposable
 
         boundary.Update(xZ, _subsystemSky.VisibilityRange, Time.FrameDuration, _isDrawable);
         _visibilityStartEnd = new Vector2(boundary.DisplayDistance * 0.8f, boundary.DisplayDistance);
-        _subsystemSky.ViewVisibilityStartEnd = _visibilityStartEnd;
-
         ChunksDrawn = 0;
         ChunkDrawCalls = 0;
         ChunkTrianglesDrawn = 0;
@@ -513,6 +655,8 @@ public class TerrainRenderer : IDisposable
 
     public void DrawOpaque(Camera camera)
     {
+        // The sky pass initializes its atmosphere before terrain applies the visible terrain boundary.
+        _subsystemSky.ViewVisibilityStartEnd = _visibilityStartEnd;
         var viewPosition = camera.ViewPosition;
         var v = new Vector3(MathUtils.Floor(viewPosition.X), 0f, MathUtils.Floor(viewPosition.Z));
         var value = Matrix.CreateTranslation(v - viewPosition) *
@@ -723,19 +867,61 @@ public class TerrainRenderer : IDisposable
         _presentation.ChunkPresentations.Get(chunk).Buffers.Clear();
     }
 
-    private void SetupTerrainChunkGeometryVertexIndexBuffers(TerrainChunk chunk)
+    private static StagedUpload StageUpload(TerrainChunkPresentation presentation)
     {
-        DisposeTerrainChunkGeometryVertexIndexBuffers(chunk);
-        CompileDrawSubsets(
-            _presentation.ChunkPresentations.Get(chunk).Draws,
-            _presentation.ChunkPresentations.Get(chunk).Buffers
-        );
+        var upload = new StagedUpload(presentation.GeometryUploadToken!);
+        try
+        {
+            if (presentation.CanReuseUploadedTopology)
+            {
+                if (!presentation.HasChangedLighting) { return upload; }
+
+                upload.lighting = new VertexBuffer?[presentation.Buffers.Count];
+                for (var i = 0; i < presentation.Buffers.Count; i++)
+                {
+                    var buffer = presentation.Buffers[i];
+                    var lighting = new VertexBuffer(
+                        TerrainLightResponse.VertexDeclaration,
+                        buffer.VertexBuffer.VerticesCount
+                    );
+                    upload.lighting[i] = lighting;
+                    var slices = presentation.Draws[buffer.Texture];
+                    if (buffer.LightingBuffer != null) { UploadLightingStream(slices, lighting, buffer.VertexRange); }
+                    else
+                    {
+                        // First display uses the interleaved stream. Migrate only when geometry can be retained.
+                        upload.geometry ??= new VertexBuffer?[presentation.Buffers.Count];
+                        var geometry = new VertexBuffer(
+                            TerrainGeometryVertex.VertexDeclaration,
+                            buffer.VertexBuffer.VerticesCount
+                        );
+                        upload.geometry[i] = geometry;
+                        UploadTerrainVertexStreams(slices, geometry, lighting, buffer.VertexRange);
+                    }
+                }
+            }
+            else
+            {
+                upload.buffers = [];
+                var separateLighting = presentation.Buffers.Count != 0 &&
+                                       presentation.Buffers[0].LightingBuffer != null;
+                CompileDrawSubsets(presentation.Draws, upload.buffers, separateLighting: separateLighting);
+            }
+
+            return upload;
+        }
+        catch
+        {
+            upload.Dispose();
+            throw;
+        }
     }
 
     public static void CompileDrawSubsets(
         Dictionary<Texture2D, TerrainGeometry[]> list,
         DynamicArray<TerrainChunkGeometry.Buffer> buffers,
-        Func<TerrainVertex, TerrainVertex>? vertexTransform = null
+        Func<TerrainVertex, TerrainVertex>? vertexTransform = null,
+        bool separateLighting = false
     )
     {
         foreach (var (key, geometry) in list)
@@ -779,9 +965,21 @@ public class TerrainRenderer : IDisposable
                     {
                         IndexBuffer = new IndexBuffer(IndexFormat.ThirtyTwoBits, num3),
                         Texture = key,
-                        VertexBuffer = new VertexBuffer(TerrainVertex.VertexDeclaration, num2)
+                        VertexRange = (num, i),
+                        VertexBuffer = new VertexBuffer(
+                            separateLighting
+                                ? TerrainGeometryVertex.VertexDeclaration
+                                : TerrainVertex.VertexDeclaration,
+                            num2
+                        )
                     };
                     buffers.Add(buffer);
+                    if (separateLighting)
+                    {
+                        buffer.LightingBuffer = new VertexBuffer(TerrainLightResponse.VertexDeclaration, num2);
+                        UploadTerrainVertexStreams(geometry, buffer.VertexBuffer, buffer.LightingBuffer, (num, i));
+                    }
+
                     var num6 = 0;
                     var num7 = 0;
                     for (var j = num; j < i; j++)
@@ -809,12 +1007,16 @@ public class TerrainRenderer : IDisposable
 
                         if (terrainGeometrySubset2.Vertices.Count > 0)
                         {
-                            buffer.VertexBuffer.SetData(
-                                terrainGeometrySubset2.Vertices.Array,
-                                0,
-                                terrainGeometrySubset2.Vertices.Count,
-                                num6
-                            );
+                            if (!separateLighting)
+                            {
+                                buffer.VertexBuffer.SetData(
+                                    terrainGeometrySubset2.Vertices.Array,
+                                    0,
+                                    terrainGeometrySubset2.Vertices.Count,
+                                    num6
+                                );
+                            }
+
                             num6 += terrainGeometrySubset2.Vertices.Count;
                         }
 
@@ -828,6 +1030,71 @@ public class TerrainRenderer : IDisposable
                 num = i;
             }
         }
+    }
+
+    private static void UploadTerrainVertexStreams(
+        TerrainGeometry[] slices,
+        VertexBuffer geometryBuffer,
+        VertexBuffer lightingBuffer,
+        (int Begin, int End) range
+    )
+    {
+        var count = geometryBuffer.VerticesCount;
+        var geometry = ArrayPool<TerrainGeometryVertex>.Shared.Rent(count);
+        var lighting = ArrayPool<TerrainLightResponse>.Shared.Rent(count);
+        try
+        {
+            var offset = 0;
+            for (var i = range.Begin; i < range.End; i++)
+            {
+                var vertices = slices[i % TerrainChunk.SlicesCount].Subsets[i / TerrainChunk.SlicesCount].Vertices;
+                for (var j = 0; j < vertices.Count; j++)
+                {
+                    ref var vertex = ref vertices.Array[j];
+                    geometry[offset] = new TerrainGeometryVertex(
+                        new Vector3(vertex.X, vertex.Y, vertex.Z),
+                        vertex.Tx,
+                        vertex.Ty,
+                        vertex.Color
+                    );
+                    lighting[offset++] = vertex.Lighting;
+                }
+            }
+
+            geometryBuffer.SetData(geometry, 0, count);
+            lightingBuffer.SetData(lighting, 0, count);
+        }
+        finally
+        {
+            ArrayPool<TerrainGeometryVertex>.Shared.Return(geometry);
+            ArrayPool<TerrainLightResponse>.Shared.Return(lighting);
+        }
+    }
+
+    private static void UploadLightingStream(
+        TerrainGeometry[] slices,
+        VertexBuffer buffer,
+        (int Begin, int End) range
+    )
+    {
+        var lighting = ArrayPool<TerrainLightResponse>.Shared.Rent(buffer.VerticesCount);
+        try
+        {
+            var offset = 0;
+            for (var i = range.Begin; i < range.End; i++)
+            {
+                var vertices = slices[i % TerrainChunk.SlicesCount].Subsets[i / TerrainChunk.SlicesCount].Vertices;
+                for (var j = 0; j < vertices.Count; j++) { lighting[offset++] = vertices.Array[j].Lighting; }
+            }
+
+            if (offset != buffer.VerticesCount)
+            {
+                throw new InvalidOperationException("Terrain lighting no longer matches the uploaded vertex layout.");
+            }
+
+            buffer.SetData(lighting, 0, offset);
+        }
+        finally { ArrayPool<TerrainLightResponse>.Shared.Return(lighting); }
     }
 
     private void DrawTerrainChunkGeometrySubsets(
@@ -872,7 +1139,8 @@ public class TerrainRenderer : IDisposable
                             buffer.VertexBuffer,
                             buffer.IndexBuffer,
                             num,
-                            num2 - num
+                            num2 - num,
+                            buffer.LightingBuffer
                         );
                         ChunkTrianglesDrawn += (num2 - num) / 3;
                         ChunkDrawCalls++;

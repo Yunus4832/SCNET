@@ -13,6 +13,8 @@ public sealed class TerrainLightJob
 
     public TerrainLightInput Input { get; }
 
+    internal TerrainLightRegion? Region { get; set; }
+
     internal TerrainLightJob(
         TerrainChunk chunk,
         TerrainLightInput input,

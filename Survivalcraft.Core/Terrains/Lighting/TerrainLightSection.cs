@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace Game.Terrains.Lighting;
 
 /// <summary>Immutable light publication for one sixteen-cubed section.</summary>
@@ -11,14 +13,25 @@ public sealed class TerrainLightSection
 
     public int StoredBytes => _values?.Length ?? 0;
 
+    /// <summary>Compares equivalent light values across publications without retaining cell storage in consumers.</summary>
+    public ulong Fingerprint { get; }
+
     public TerrainLightSection(TerrainLightChannels uniform)
     {
         _uniform = uniform.Packed;
+        Fingerprint = (ulong)_uniform << 1;
     }
 
     private TerrainLightSection(byte[] values)
     {
         _values = values;
+        var fingerprint = 14695981039346656037UL;
+        foreach (var word in MemoryMarshal.Cast<byte, ulong>(values.AsSpan()))
+        {
+            fingerprint = (fingerprint ^ word) * 1099511628211UL;
+        }
+
+        Fingerprint = fingerprint | 1;
     }
 
     public static TerrainLightSection Capture(ReadOnlySpan<byte> values)
@@ -62,6 +75,20 @@ public sealed class TerrainLightSection
         return other._values == null
             ? _values.AsSpan().IndexOfAnyExcept(other._uniform) < 0
             : _values.AsSpan().SequenceEqual(other._values);
+    }
+
+    internal bool HasSameColumn(TerrainLightSection other, int start)
+    {
+        if (_values == null)
+        {
+            return other._values == null
+                ? _uniform == other._uniform
+                : other._values.AsSpan(start, 16).IndexOfAnyExcept(_uniform) < 0;
+        }
+
+        return other._values == null
+            ? _values.AsSpan(start, 16).IndexOfAnyExcept(other._uniform) < 0
+            : _values.AsSpan(start, 16).SequenceEqual(other._values.AsSpan(start, 16));
     }
 
     public void CopyTo(Span<byte> destination)

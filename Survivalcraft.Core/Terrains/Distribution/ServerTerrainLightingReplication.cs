@@ -72,6 +72,9 @@ internal sealed class ServerTerrainLightingReplication(
             {
                 if (sent >= _updatesPerClientTick || !_messages.CanQueueTerrainSnapshot(client)) { break; }
 
+                var epoch = _terrain.Lighting.RegionalPublicationEpoch;
+                if ((epoch & 1) != 0) { break; }
+
                 var chunk = _terrain.GetChunkAtCoords(allocation.Coords.X, allocation.Coords.Y);
                 if (chunk == null ||
                     !TryCapture(chunk, allocation, cursors, out var update, out var cursor) ||
@@ -83,7 +86,8 @@ internal sealed class ServerTerrainLightingReplication(
                 if (!update.IsBaseline && _terrain.Lighting.GetLocalBatch(chunk) is { } batch)
                 {
                     if (!visited.Add(batch) ||
-                        !TryCaptureBatch(batch, allocations, cursors, out var updates, out var nextCursors))
+                        !TryCaptureBatch(batch, allocations, cursors, out var updates, out var nextCursors) ||
+                        _terrain.Lighting.RegionalPublicationEpoch != epoch)
                     {
                         continue;
                     }
@@ -100,6 +104,8 @@ internal sealed class ServerTerrainLightingReplication(
                     sent += updates.Length;
                     continue;
                 }
+
+                if (_terrain.Lighting.RegionalPublicationEpoch != epoch) { continue; }
 
                 _messages.Send(update, PackageAudience.To(client));
                 cursors[allocation.Coords] = cursor;

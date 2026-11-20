@@ -28,11 +28,23 @@ public class TerrainChunk : IDisposable
 
     private int[]? _cells;
 
+    private long _geometryHaloRevision;
+
+    /// <summary>Replica geometry edits within the border read by nearby terrain meshes.</summary>
+    public long GeometryHaloRevision => Volatile.Read(ref _geometryHaloRevision);
+
+    public static bool IsInsideGeometryHalo(int x, int z) =>
+        (x & SizeMinusOne) is < 2 or > 13 || (z & SizeMinusOne) is < 2 or > 13;
+
     /// <summary>Mutable cell storage, acquired under this terrain's access ownership.</summary>
     public int[] Cells
     {
         get => _cells ??= new int[_size * _size * _height];
-        set => _cells = value ?? throw new ArgumentNullException(nameof(value));
+        set
+        {
+            _cells = value ?? throw new ArgumentNullException(nameof(value));
+            InvalidateGeometryHalo();
+        }
     }
 
     public long CellStorageBytes => (long)(_cells?.Length ?? 0) * sizeof(int);
@@ -106,7 +118,28 @@ public class TerrainChunk : IDisposable
 
     public Point2 Origin;
 
-    public long[] Shafts = new long[_size * _size];
+    public long[] Shafts
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateGeometryHalo();
+        }
+    } = new long[_size * _size];
+
+    private void InvalidateGeometryHalo() => Interlocked.Increment(ref _geometryHaloRevision);
+
+    private void TrackGeometryEdit(int x, int z)
+    {
+        if (ContentOrigin == TerrainContentOrigin.Replica && IsInsideGeometryHalo(x, z))
+        {
+            InvalidateGeometryHalo();
+        }
+    }
+
+    private void TrackGeometryCellEdit(int index) =>
+        TrackGeometryEdit(index >> HeightBits, index >> (HeightBits + SizeBits));
 
     public long StartTime;
 
@@ -211,6 +244,7 @@ public class TerrainChunk : IDisposable
             : [];
         snapshot[index] = (Terrain.NormalizeCellValue(expected), value);
         Volatile.Write(ref _geometryPredictions, snapshot);
+        TrackGeometryCellEdit(index);
     }
 
     public void RemoveGeometryPrediction(int index)
@@ -223,6 +257,7 @@ public class TerrainChunk : IDisposable
         var snapshot = new Dictionary<int, (int Expected, int Value)>(current);
         snapshot.Remove(index);
         Volatile.Write(ref _geometryPredictions, snapshot.Count == 0 ? null : snapshot);
+        TrackGeometryCellEdit(index);
     }
 
     public int GetCellValueFast(int x, int y, int z)
@@ -241,6 +276,7 @@ public class TerrainChunk : IDisposable
         if (Terrain.NormalizeCellValue(GetCellValueFast(index)) != value)
         {
             Interlocked.Increment(ref _networkContentRevision);
+            TrackGeometryCellEdit(index);
         }
 
         if (_cells != null || value != 0) { Cells[index] = value; }
@@ -260,6 +296,8 @@ public class TerrainChunk : IDisposable
     {
         var index = x + z * _size;
         var previous = Shafts[index];
+        if (previous != value) { TrackGeometryEdit(x, z); }
+
         if (Terrain.ExtractTemperature(previous) != Terrain.ExtractTemperature(value) ||
             Terrain.ExtractHumidity(previous) != Terrain.ExtractHumidity(value))
         {

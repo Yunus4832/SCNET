@@ -210,6 +210,8 @@ public sealed class TerrainComputationSchedulerTest
 
         public bool HasUploadedGeometry(TerrainChunk chunk) => true;
 
+        public bool HasPendingLightingPresentation(TerrainChunk chunk) => false;
+
         public bool CanUpdateBeforeLighting(TerrainChunk chunk) => false;
 
         public TerrainDerivedWorkResult UpdateChunk(TerrainChunk chunk)
@@ -217,6 +219,44 @@ public sealed class TerrainComputationSchedulerTest
             Calls++;
             return TerrainDerivedWorkResult.Waiting;
         }
+    }
+
+    [Fact]
+    public void RepeatedEmissionFallbackKeepsPendingNeighborWorkInTheSameDisplayBatch()
+    {
+        using var fixture = new ComputationWorld(authority: true);
+        fixture.Populate();
+        fixture.Scheduler.UpdateDemand([Location()]);
+        fixture.Drain();
+        var source = new Point3(7, 64, 4);
+        var owner = fixture.Data.GetChunkAtCoords(0, 0)!;
+        var neighbor = fixture.Data.GetChunkAtCoords(1, -1)!;
+        var excluded = fixture.Data.GetChunkAtCoords(1, 1)!;
+
+        var lit = Terrain.MakeBlockValue(3);
+        var seed = fixture.Scheduler.CaptureEmissionSeed(source, lit);
+        Assert.NotNull(seed);
+        fixture.Data.SetCellValueFast(source.X, source.Y, source.Z, lit);
+        var previousSeedRequest = owner.DerivedRevisions.Capture().Seed;
+        fixture.Scheduler.RepairEmission(source, seed);
+        var pending = neighbor.DerivedRevisions.Capture();
+        seed = fixture.Scheduler.CaptureEmissionSeed(source, 0);
+        Assert.NotNull(seed);
+        fixture.Data.SetCellValueFast(source.X, source.Y, source.Z, 0);
+        fixture.Scheduler.RepairEmission(source, seed);
+
+        Assert.True(owner.HasCurrentHeightData);
+        Assert.Equal(previousSeedRequest, owner.DerivedRevisions.Capture().Seed);
+        Assert.True(fixture.Data.Lighting.TryGetSeed(owner, out var currentSeed));
+        Assert.Equal(0, currentSeed.Light.Get(7, 64, 4).Block);
+        Assert.False(owner.HasCurrentLight);
+        Assert.False(neighbor.HasCurrentLight);
+        Assert.Equal(pending, neighbor.DerivedRevisions.Capture());
+        Assert.True(excluded.HasCurrentLight);
+        var batch = Assert.IsType<TerrainLightingStore.LocalLightBatch>(fixture.Data.Lighting.GetLocalBatch(owner));
+        Assert.Equal(7, batch.Members.Length);
+        Assert.Same(batch, fixture.Data.Lighting.GetLocalBatch(neighbor));
+        Assert.Null(fixture.Data.Lighting.GetLocalBatch(excluded));
     }
 
     [Fact]
@@ -614,6 +654,8 @@ public sealed class TerrainComputationSchedulerTest
         public bool HasCurrentGeometry(TerrainChunk chunk) => Completed.Contains(chunk);
 
         public bool HasUploadedGeometry(TerrainChunk chunk) => false;
+
+        public bool HasPendingLightingPresentation(TerrainChunk chunk) => false;
 
         public bool CanUpdateBeforeLighting(TerrainChunk chunk) =>
             ReferenceEquals(chunk, PreviewChunk) && !Completed.Contains(chunk);

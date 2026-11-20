@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 
+using Engine.Core.Mathematics;
 using Engine.Graphics;
 
 using Game.Blocks.Presentation.Geometry;
@@ -54,6 +55,193 @@ public sealed class TerrainMeshColumnBudgetTest
             Assert.Equal(first[i].Vertices.ToArray(), second[i].Vertices.ToArray());
             Assert.Equal(first[i].Indices.ToArray(), second[i].Indices.ToArray());
         }
+    }
+
+    [Fact]
+    public void RelightingResumesWithinTheBudgetAndKeepsUploadedTopology()
+    {
+        using var fixture = new Fixture();
+        for (var x = 2; x < 14; x++)
+        {
+            for (var z = 2; z < 14; z++)
+            {
+                fixture.Chunk.SetCellValueFast(x, 2, z, 3);
+                fixture.Chunk.SetTopHeightFast(x, z, 2);
+            }
+        }
+
+        var terrain = fixture.Terrain;
+        var chunk = fixture.Chunk;
+        var input = terrain.Lighting.CaptureInput(chunk);
+        Assert.True(terrain.Lighting.TryPublish(chunk, input, new TerrainLightSnapshot(default)));
+        using var mesh = new TerrainChunkPresentation();
+        using var expected = new TerrainChunkPresentation();
+        var builder = new TerrainMeshBuilder(terrain, fixture.Generator, fixture.Texture);
+        mesh.PrepareMeshUpdate(chunk);
+        Assert.True(builder.GenerateSlice(chunk, mesh, 0, TimeSpan.MaxValue));
+        TerrainMeshTestData.CompleteSlices(mesh);
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        mesh.MarkUploaded();
+        Assert.False(mesh.HasChangedLighting);
+
+        chunk.DerivedRevisions.InvalidatePropagation();
+        input = terrain.Lighting.CaptureInput(chunk);
+        var lit = new TerrainLightSnapshot(new TerrainLightChannels(0, 15));
+        Assert.True(terrain.Lighting.TryPublish(chunk, input, lit));
+        Assert.True(chunk.DerivedRevisions.PublishLight(input.Request));
+        mesh.PrepareMeshUpdate(chunk);
+        var budget = TimeSpan.FromMilliseconds(2);
+        var bounded = new TerrainMeshBuilder(terrain, fixture.Generator, fixture.Texture, new Clock());
+        Assert.False(bounded.GenerateSlice(chunk, mesh, 0, budget));
+        Assert.NotNull(mesh.ActiveSlice?.RelightSubsets);
+        Assert.True(mesh.CanReuseUploadedTopology);
+        var finished = false;
+        for (var i = 0; i < 512 && !finished; i++) { finished = bounded.GenerateSlice(chunk, mesh, 0, budget); }
+
+        Assert.True(finished);
+        Assert.True(mesh.CanReuseUploadedTopology);
+        Assert.True(mesh.HasChangedLighting);
+        expected.PrepareMeshUpdate(chunk);
+        Assert.True(builder.GenerateSlice(chunk, expected, 0, TimeSpan.MaxValue));
+        var refreshedSubsets = mesh.Draws[fixture.Texture][0].Subsets;
+        var rebuiltSubsets = expected.Draws[fixture.Texture][0].Subsets;
+        for (var i = 0; i < refreshedSubsets.Length; i++)
+        {
+            Assert.Equal(rebuiltSubsets[i].Vertices.ToArray(), refreshedSubsets[i].Vertices.ToArray());
+            Assert.Equal(rebuiltSubsets[i].Indices.ToArray(), refreshedSubsets[i].Indices.ToArray());
+        }
+    }
+
+    [Fact]
+    public void BoundaryMeshJoinsAChangeToTheNeighborSectionItActuallySamples()
+    {
+        using var fixture = new Fixture();
+        var chunk = fixture.Chunk;
+        var neighbor = fixture.Terrain.AllocateChunk(1, 0);
+        TerrainMeshTestData.PrepareLighting(neighbor);
+        var input = fixture.Terrain.Lighting.CaptureInput(neighbor);
+        var light = new TerrainLightSnapshot(default);
+        Assert.True(fixture.Terrain.Lighting.TryPublish(neighbor, input, light));
+        chunk.SetCellValueFast(15, 2, 8, Terrain.MakeBlockValue(3));
+        chunk.SetTopHeightFast(15, 8, 2);
+        using var mesh = new TerrainChunkPresentation();
+        mesh.PrepareMeshUpdate(chunk);
+        var builder = new TerrainMeshBuilder(fixture.Terrain, fixture.Generator, fixture.Texture);
+        Assert.True(builder.GenerateSlice(chunk, mesh, 0, TimeSpan.MaxValue));
+        TerrainMeshTestData.CompleteSlices(mesh);
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        mesh.MarkUploaded();
+
+        var allocation = new ChunkAllocationId(neighbor.Coords, neighbor.AllocationGeneration);
+        var sampled = new TerrainLightPresentationBatch.Source(allocation, 2, 1);
+        Assert.True(TerrainLightUploadGroup.IsAffected(chunk, mesh, sampled));
+        Assert.False(TerrainLightUploadGroup.IsAffected(chunk, mesh, sampled with { Sections = 1 << 4 }));
+        Assert.False(
+            TerrainLightUploadGroup.IsAffected(
+                chunk,
+                mesh,
+                sampled with { Boundaries = default(TerrainLightBoundaryChanges) }
+            )
+        );
+
+        var before = mesh.generatedSliceInputs[0];
+        var bright = new TerrainLightSection(new TerrainLightChannels(0, 15));
+        Assert.True(fixture.Terrain.Lighting.TryPublish(neighbor, input, light.WithSection(4, bright)));
+        Assert.Equal(before, builder.CalculateSliceInputs(chunk, 0, lightReads: mesh.LightReadsForSlice(0)));
+        Assert.True(fixture.Terrain.Lighting.TryPublish(neighbor, input, light.WithSection(0, bright)));
+        var changed = builder.CalculateSliceInputs(chunk, 0, lightReads: mesh.LightReadsForSlice(0));
+        Assert.Equal(before.Geometry, changed.Geometry);
+        Assert.NotEqual(before.Lighting, changed.Lighting);
+    }
+
+    [Fact]
+    public void HeightAdjustedFacesReplayTheOriginalLightSamples()
+    {
+        using var fixture = new Fixture();
+        var generator = fixture.Generator;
+        var chunk = fixture.Chunk;
+        var lights = new TerrainLightSnapshot?[9];
+        lights[4] = new TerrainLightSnapshot(default);
+        generator.SetLightSnapshots(chunk.Coords, lights);
+        var dark = Build();
+
+        var cells = new byte[65536];
+        for (var x = 0; x < 16; x++)
+        {
+            for (var z = 0; z < 16; z++)
+            {
+                for (var y = 0; y < 5; y++)
+                {
+                    cells[TerrainChunk.CalculateCellIndex(x, y, z)] = (byte)(1 + (x + 2 * y + z) % 15);
+                }
+            }
+        }
+
+        lights[4] = TerrainLightSnapshot.Capture(cells);
+        generator.SetLightSnapshots(chunk.Coords, lights);
+        var expected = Build();
+        for (var group = 0; group < dark.Subsets.Length; group++)
+        {
+            var subset = dark.Subsets[group];
+            var start = 0;
+            for (var runIndex = 0; runIndex < subset.LightingRunCount; runIndex++)
+            {
+                var run = subset.GetLightingRun(runIndex);
+                generator.RefreshLighting(subset, run, start, run.End);
+                start = run.End;
+            }
+
+            Assert.Equal(subset.Vertices.Count, start);
+            Assert.Equal(expected.Subsets[group].Vertices.ToArray(), subset.Vertices.ToArray());
+            Assert.Equal(expected.Subsets[group].Indices.ToArray(), subset.Indices.ToArray());
+        }
+
+        TerrainGeometry Build()
+        {
+            var geometry = new TerrainGeometry();
+            generator.GenerateCubeVertices(
+                fixture.Presentations.Get(3),
+                3,
+                8,
+                2,
+                8,
+                0f,
+                .25f,
+                .5f,
+                .75f,
+                Color.White,
+                Color.White,
+                Color.White,
+                Color.White,
+                Color.White,
+                -1,
+                geometry.OpaqueSubsetsByFace
+            );
+            return geometry;
+        }
+    }
+
+    [Fact]
+    public void LightingRunGapsPreventReplayUntilTheSubsetIsRebuilt()
+    {
+        var subset = new TerrainGeometrySubset();
+        subset.Vertices.Count = 8;
+        subset.RecordLighting(0, 4, 1);
+        subset.RecordLighting(4, 4, 1);
+        Assert.True(subset.HasCompleteLighting);
+        Assert.Equal(1, subset.LightingRunCount);
+
+        subset.ClearLighting();
+        subset.RecordLighting(0, 2, 1);
+        subset.RecordLighting(3, 5, 2);
+        Assert.False(subset.HasCompleteLighting);
+
+        subset.ClearLighting();
+        subset.RecordLighting(0, 4, 1);
+        subset.RecordLighting(4, 4, 2);
+        Assert.True(subset.HasCompleteLighting);
+        Assert.Equal(new TerrainVertexLightRun(4, 1), subset.GetLightingRun(0));
+        Assert.Equal(new TerrainVertexLightRun(8, 2), subset.GetLightingRun(1));
     }
 
     [Fact]

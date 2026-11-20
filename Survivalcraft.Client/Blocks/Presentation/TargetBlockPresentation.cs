@@ -235,8 +235,7 @@ public class TargetBlockPresentation(TargetBlock block, BlockPresentationCatalog
                 break;
         }
 
-        var response = generator.GetLightResponse(x, y, z);
-        for (var i = count; i < vertices.Count; i++) { vertices.Array[i].Lighting = response; }
+        generator.SetCellLighting(subsetAlphaTest, count, x, y, z);
     }
 
     public override void DrawBlock(

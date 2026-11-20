@@ -90,6 +90,10 @@ internal static class GLWrapper
 
     private static int _lastArrayBuffer;
 
+    private static int _lastAdditionalArrayBuffer;
+
+    private static VertexDeclaration? _lastAdditionalVertexDeclaration;
+
     private static Viewport? _viewport;
 
     private static Rectangle? _scissorRectangle;
@@ -177,6 +181,8 @@ internal static class GLWrapper
         _lastVertexDeclaration = null!;
         _lastVertexOffset = IntPtr.Zero;
         _lastArrayBuffer = -1;
+        _lastAdditionalArrayBuffer = -1;
+        _lastAdditionalVertexDeclaration = null;
         _viewport = null;
         _scissorRectangle = null;
     }
@@ -514,6 +520,8 @@ internal static class GLWrapper
 
     public static void DeleteProgram(int program)
     {
+        if (_lastShader?.Program == program) { _lastShader = null!; }
+
         if (_program == program)
         {
             _program = -1;
@@ -567,6 +575,8 @@ internal static class GLWrapper
             {
                 _lastArrayBuffer = -1;
             }
+
+            if (_lastAdditionalArrayBuffer == buffer) { _lastAdditionalArrayBuffer = -1; }
         }
 
         if (target == BufferTargetARB.ElementArrayBuffer && _elementArrayBuffer == buffer)
@@ -767,7 +777,8 @@ internal static class GLWrapper
         VertexDeclaration vertexDeclaration,
         IntPtr vertexOffset,
         int arrayBuffer,
-        int? elementArrayBuffer
+        int? elementArrayBuffer,
+        VertexBuffer? additionalVertices = null
     )
     {
         shader.PrepareForDrawing();
@@ -778,23 +789,31 @@ internal static class GLWrapper
         }
 
         UseProgram((uint)shader.Program);
+        var additionalDeclaration = additionalVertices?.VertexDeclaration;
+        var additionalBuffer = additionalVertices?.buffer ?? 0;
         if (shader != _lastShader ||
             vertexOffset != _lastVertexOffset ||
             arrayBuffer != _lastArrayBuffer ||
-            vertexDeclaration != _lastVertexDeclaration)
+            vertexDeclaration != _lastVertexDeclaration ||
+            additionalBuffer != _lastAdditionalArrayBuffer ||
+            additionalDeclaration != _lastAdditionalVertexDeclaration)
         {
-            var vertexAttribData = shader.GetVertexAttribData(vertexDeclaration);
+            var vertexAttribData = shader.GetVertexAttribData(vertexDeclaration, additionalDeclaration);
             for (var i = 0; i < vertexAttribData.Length; i++)
             {
                 if (vertexAttribData[i].Size != 0)
                 {
+                    var additional = vertexAttribData[i].AdditionalStream;
+                    var stride = additional ? additionalDeclaration!.VertexStride : vertexDeclaration.VertexStride;
+                    var offset = additional ? IntPtr.Zero : vertexOffset;
+                    BindBuffer(BufferTargetARB.ArrayBuffer, (uint)(additional ? additionalBuffer : arrayBuffer));
                     GL.VertexAttribPointer(
                         (uint)i,
                         vertexAttribData[i].Size,
                         vertexAttribData[i].Type,
                         vertexAttribData[i].Normalize,
-                        (uint)vertexDeclaration.VertexStride,
-                        (vertexOffset + vertexAttribData[i].Offset).ToPointer()
+                        (uint)stride,
+                        (offset + vertexAttribData[i].Offset).ToPointer()
                     );
                     VertexAttribArray(i, true);
                 }
@@ -808,6 +827,8 @@ internal static class GLWrapper
             _lastVertexDeclaration = vertexDeclaration;
             _lastVertexOffset = vertexOffset;
             _lastArrayBuffer = arrayBuffer;
+            _lastAdditionalArrayBuffer = additionalBuffer;
+            _lastAdditionalVertexDeclaration = additionalDeclaration;
         }
 
         var num = 0;

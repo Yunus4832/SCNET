@@ -216,10 +216,20 @@ public static class Display
         VertexBuffer vertexBuffer,
         IndexBuffer indexBuffer,
         int startIndex,
-        int indicesCount
+        int indicesCount,
+        VertexBuffer? additionalVertices = null
     )
     {
         VerifyParametersDrawIndexed(primitiveType, shader, vertexBuffer, indexBuffer, startIndex, indicesCount);
+        if (additionalVertices != null)
+        {
+            additionalVertices.VerifyNotDisposed();
+            if (additionalVertices.VerticesCount != vertexBuffer.VerticesCount)
+            {
+                throw new ArgumentException("Vertex streams must contain the same number of vertices.");
+            }
+        }
+
         GLWrapper.ApplyRenderTarget(RenderTarget);
         GLWrapper.ApplyViewportScissor(Viewport, ScissorRectangle, RasterizerState.ScissorTestEnable);
         GLWrapper.ApplyShaderAndBuffers(
@@ -227,7 +237,8 @@ public static class Display
             vertexBuffer.VertexDeclaration,
             IntPtr.Zero,
             vertexBuffer.buffer,
-            indexBuffer.buffer
+            indexBuffer.buffer,
+            additionalVertices
         );
         GLWrapper.ApplyRasterizerState(RasterizerState);
         GLWrapper.ApplyDepthStencilState(DepthStencilState);

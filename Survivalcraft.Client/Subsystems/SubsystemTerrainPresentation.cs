@@ -36,6 +36,10 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
 
     private bool _subscribed;
 
+    private Camera? _preparedCamera;
+
+    private int _preparedFrame;
+
     public override void Load(ValuesDictionary valuesDictionary)
     {
         if (!WorldRuntimeContext.For(Project).HasPresentation)
@@ -100,14 +104,33 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
         MeshUpdater.Update();
     }
 
+    internal void PrepareView(Camera camera)
+    {
+        _preparedCamera = null;
+        if (!TerrainRenderingEnabled || !WorldRuntimeContext.IsProjectActive(Project)) { return; }
+
+        try
+        {
+            MeshUpdater.PrepareForDrawing(camera);
+            TerrainRenderer.PrepareView(camera);
+            _preparedCamera = camera;
+            _preparedFrame = Time.FrameIndex;
+        }
+        catch (Exception error) { Log.Error($"Could not prepare the terrain view: {error}"); }
+    }
+
     public void Draw(Camera camera, int drawOrder)
     {
-        if (!TerrainRenderingEnabled || !WorldRuntimeContext.IsProjectActive(Project)) { return; }
+        if (!TerrainRenderingEnabled ||
+            !ReferenceEquals(_preparedCamera, camera) ||
+            _preparedFrame != Time.FrameIndex ||
+            !WorldRuntimeContext.IsProjectActive(Project))
+        {
+            return;
+        }
 
         if (drawOrder == 0)
         {
-            MeshUpdater.PrepareForDrawing(camera);
-            TerrainRenderer.PrepareForDrawing(camera);
             TerrainRenderer.DrawOpaque(camera);
             TerrainRenderer.DrawAlphaTested(camera);
         }

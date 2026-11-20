@@ -17,6 +17,9 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
         .Select(group => new SortedSet<Item>(
                 Comparer<Item>.Create((a, b) =>
                     {
+                        var lighting = b.FinishesLighting.CompareTo(a.FinishesLighting);
+                        if (lighting != 0) { return lighting; }
+
                         var distance = a.Distance.CompareTo(b.Distance);
                         if (distance != 0) { return distance; }
 
@@ -103,6 +106,8 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
 
         internal bool WasAgingSelection { get; set; }
 
+        internal bool FinishesLighting { get; set; }
+
         internal readonly HashSet<TerrainWorkKey> dependencies = [];
     }
 
@@ -150,7 +155,13 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
         }
     }
 
-    public void Enqueue(TerrainWorkKey key, long revision, TerrainWorkPriority priority, float distance)
+    public void Enqueue(
+        TerrainWorkKey key,
+        long revision,
+        TerrainWorkPriority priority,
+        float distance,
+        bool finishesLighting = false
+    )
     {
         if (!key.IsCurrent) { return; }
 
@@ -174,6 +185,7 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
 
                 item.Revision = revision;
                 item.Priority = changed || priority < item.Priority ? priority : item.Priority;
+                item.FinishesLighting = item.Priority == TerrainWorkPriority.Maintenance && finishesLighting;
                 item.OwnDistance = distance;
                 if (item.Running) { item.Requeued |= changed; }
                 else if (wasReady || changed) { AddReady(item); }
@@ -184,6 +196,7 @@ public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
             }
 
             item = new Item(key, revision, priority, distance, _time.GetTimestamp(), ++_sequence);
+            item.FinishesLighting = priority == TerrainWorkPriority.Maintenance && finishesLighting;
             _items.Add(key, item);
             AddReady(item);
             InvalidateDistances([key.Chunk]);

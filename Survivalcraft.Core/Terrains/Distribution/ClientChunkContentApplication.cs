@@ -18,6 +18,8 @@ public sealed class ClientChunkContentApplication(
 
     private bool _preferSnapshot = true;
 
+    internal bool HasDeferredPresentation => deltas.HasDeferredPresentation;
+
     public int Pump(int maximumOperations = 256, TimeSpan? maximumTime = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumOperations);
@@ -26,6 +28,7 @@ public sealed class ClientChunkContentApplication(
 
         var started = _time.GetTimestamp();
         var processed = 0;
+        var tryDeferred = deltas.HasDeferredPresentation;
         while (processed < maximumOperations && (processed == 0 || _time.GetElapsedTime(started) < budget))
         {
             _resync.Clear();
@@ -35,6 +38,17 @@ public sealed class ClientChunkContentApplication(
             }
             else
             {
+                if (tryDeferred)
+                {
+                    if (deltas.ResumePresentation())
+                    {
+                        processed++;
+                        continue;
+                    }
+
+                    tryDeferred = false;
+                }
+
                 // Recovery floors precede baselines; snapshots and ordinary deltas share the remaining turns.
                 var applied = _preferSnapshot ? TrySnapshot() || TryDelta() : TryDelta() || TrySnapshot();
                 if (!applied) { break; }

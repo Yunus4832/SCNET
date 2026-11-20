@@ -11,6 +11,46 @@ namespace Survivalcraft.Test.Terrains;
 public sealed class TerrainLightingCalculatorTest
 {
     [Fact]
+    public void RegionalPropagationMatchesSettledLightAndRejectsChangedSeeds()
+    {
+        using var world = new WorldCatalogScope();
+        Configure(world);
+        using var terrain = new Terrain();
+        var calculator = Create(terrain, world);
+        var left = terrain.AllocateChunk(0, 0);
+        var right = terrain.AllocateChunk(1, 0);
+        left.HasContents = true;
+        right.HasContents = true;
+        var source = new Point3(15, 64, 7);
+        var lamp = Terrain.MakeBlockValue(3);
+        left.SetCellValueFast(15, 64, 7, lamp);
+        right.SetCellValueFast(9, 64, 7, lamp);
+        right.SetCellValueFast(0, 65, 7, Terrain.MakeBlockValue(1));
+        Prepare(calculator, left);
+        Prepare(calculator, right);
+
+        terrain.Lighting.RecordLocalBatch(source, [left, right]);
+        var batch = Assert.IsType<TerrainLightingStore.LocalLightBatch>(terrain.Lighting.GetLocalBatch(left));
+        var region = Assert.IsType<TerrainLightRegion>(calculator.CaptureEmissionRegion(batch));
+        var snapshots = region.Compute(CancellationToken.None);
+        Assert.True(region.IsCurrent(terrain));
+        for (var i = 0; i < 4; i++)
+        {
+            calculator.Propagate(left);
+            calculator.Propagate(right);
+        }
+
+        for (var i = 0; i < batch.Members.Length; i++)
+        {
+            Assert.True(terrain.Lighting.TryGetPublishedSnapshot(batch.Members[i], out var expected));
+            Assert.True(snapshots[i].HasSameValues(expected));
+        }
+
+        right.SetCellValueFast(9, 64, 7, 0);
+        Assert.False(region.IsCurrent(terrain));
+    }
+
+    [Fact]
     public void FullStrengthEmissionEditBatchesAllSevenChangedChunks()
     {
         using var world = new WorldCatalogScope();
@@ -35,12 +75,15 @@ public sealed class TerrainLightingCalculatorTest
         }
 
         var source = new Point3(7, 64, 4);
+        var outside = terrain.GetChunkAtCoords(1, 1)!;
+        outside.DerivedRevisions.InvalidatePropagation();
         var lamp = Terrain.MakeBlockValue(3);
         var owner = terrain.GetChunkAtCell(source.X, source.Z)!;
         Assert.True(calculator.TryApplyEmissionEdit(source, 0, lamp));
         var lit = Assert.IsType<TerrainLightingStore.LocalLightBatch>(terrain.Lighting.GetLocalBatch(owner));
         Assert.Equal(7, lit.Members.Length);
         Assert.All(lit.Members, member => Assert.Same(lit, terrain.Lighting.GetLocalBatch(member)));
+        Assert.False(outside.HasCurrentLight);
 
         Assert.True(calculator.TryApplyEmissionEdit(source, lamp, 0));
         var dark = Assert.IsType<TerrainLightingStore.LocalLightBatch>(terrain.Lighting.GetLocalBatch(owner));

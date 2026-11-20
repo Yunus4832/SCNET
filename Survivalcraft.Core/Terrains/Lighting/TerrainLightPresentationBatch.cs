@@ -3,6 +3,13 @@ namespace Game.Terrains.Lighting;
 /// <summary>Keeps related replica light updates together until presentation or invalidation.</summary>
 public sealed class TerrainLightPresentationBatch(IReadOnlyList<ChunkAllocationId> allocations)
 {
+    public readonly record struct Source(
+        ChunkAllocationId Allocation,
+        long Sequence,
+        ushort Sections,
+        TerrainLightBoundaryChanges? Boundaries = null
+    );
+
     private int _state;
 
     public IReadOnlyList<ChunkAllocationId> Allocations { get; } = allocations;

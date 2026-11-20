@@ -1,3 +1,5 @@
+using Engine.Core.Mathematics;
+
 using Game.Protocol.Serialization;
 using Game.Protocol.Terrain;
 using Game.Terrains;
@@ -7,6 +9,172 @@ namespace Survivalcraft.Core.Test.Terrains;
 
 public sealed class TerrainReplicaLightingTest
 {
+    [Fact]
+    public void ExpiredAppearanceCannotBePinnedAgainBeforeItsDelayedLightPackageArrives()
+    {
+        using var terrain = new Terrain();
+        var a = Prepare(terrain, 1);
+        var b = Prepare(terrain, 1, 1);
+        var first = new ChunkAllocationId(a.Coords, a.AllocationGeneration);
+        var second = new ChunkAllocationId(b.Coords, b.AllocationGeneration);
+        var clock = new PresentationClock();
+        var inbox = new TerrainReplicaLighting(terrain, _ => true, clock);
+        var dark = new TerrainLightSnapshot(default);
+        var lit = dark.WithSection(4, new TerrainLightSection(new TerrainLightChannels(0, 15)));
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(first, 1, 1, 0, dark, null)));
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(second, 1, 1, 0, dark, null)));
+        Assert.Equal(2, inbox.Drain().Count);
+        Assert.True(
+            inbox.Receive(
+                new TerrainLightBatchPackage
+                {
+                    Updates =
+                    [
+                        TerrainLightSectionsCodec.Capture(first, 1, 2, 1, lit, dark),
+                        TerrainLightSectionsCodec.Capture(second, 1, 2, 1, lit, dark)
+                    ]
+                }
+            )
+        );
+        Assert.Equal(2, inbox.Drain().Count);
+        var batch = Assert.IsType<TerrainLightPresentationBatch>(a.LightingPresentationBatch);
+        var original = inbox.CapturePresentationSources(batch);
+        var groups = new Dictionary<TerrainLightPresentationBatch, TerrainLightPresentationBatch.Source[]>
+        {
+            [batch] = original
+        };
+        Assert.True(inbox.TryHoldPresentation(groups));
+        Assert.True(inbox.HasHeldAppearance(a));
+
+        clock.Advance(TimeSpan.FromMilliseconds(501));
+        Assert.False(inbox.TryHoldPresentation(groups));
+        Assert.False(inbox.HasHeldAppearance(a));
+        Assert.True(inbox.CanPresent(batch, original));
+
+        Assert.True(
+            inbox.Receive(
+                new TerrainLightBatchPackage
+                {
+                    Updates =
+                    [
+                        TerrainLightSectionsCodec.Capture(first, 1, 3, 2, dark, lit),
+                        TerrainLightSectionsCodec.Capture(second, 1, 3, 2, dark, lit)
+                    ]
+                }
+            )
+        );
+        Assert.Equal(2, inbox.Drain().Count);
+        groups[batch] = inbox.CapturePresentationSources(batch);
+        Assert.True(inbox.TryHoldPresentation(groups));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void HeldBatchKeepsItsInstalledSourcesAndRetainsTheNewestPendingUpdate(bool expires)
+    {
+        using var terrain = new Terrain();
+        var a = Prepare(terrain, 1);
+        var b = Prepare(terrain, 1, 1);
+        var first = new ChunkAllocationId(a.Coords, a.AllocationGeneration);
+        var second = new ChunkAllocationId(b.Coords, b.AllocationGeneration);
+        var clock = new PresentationClock();
+        var inbox = new TerrainReplicaLighting(terrain, _ => true, clock);
+        var dark = new TerrainLightSnapshot(default);
+        var lit = dark.WithSection(4, new TerrainLightSection(new TerrainLightChannels(0, 15)));
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(first, 1, 1, 0, dark, null)));
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(second, 1, 1, 0, dark, null)));
+        Assert.Equal(2, inbox.Drain().Count);
+        Assert.True(
+            inbox.Receive(
+                new TerrainLightBatchPackage
+                {
+                    Updates =
+                    [
+                        TerrainLightSectionsCodec.Capture(first, 1, 2, 1, lit, dark),
+                        TerrainLightSectionsCodec.Capture(second, 1, 2, 1, lit, dark)
+                    ]
+                }
+            )
+        );
+        Assert.Equal(2, inbox.Drain().Count);
+        var batch = Assert.IsType<TerrainLightPresentationBatch>(a.LightingPresentationBatch);
+        var original = inbox.CapturePresentationSources(batch);
+        var groups = new Dictionary<TerrainLightPresentationBatch, TerrainLightPresentationBatch.Source[]>
+        {
+            [batch] = original
+        };
+        Assert.True(inbox.TryHoldPresentation(groups));
+        Assert.True(inbox.HasHeldAppearance(a));
+
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(first, 1, 3, 2, dark, lit)));
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(first, 1, 4, 3, lit, dark)));
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(first, 1, 5, 4, dark, lit)));
+        Assert.Empty(inbox.Drain());
+        Assert.True(inbox.CanPresent(batch, original));
+        Assert.Equal(original, inbox.CapturePresentationSources(batch));
+        Assert.True(terrain.Lighting.TryGetPublishedSnapshot(a, out var published));
+        Assert.Equal(15, published.Get(0, 64, 0).Block);
+
+        if (expires)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(501));
+            Assert.False(inbox.TryHoldPresentation(groups));
+        }
+        else { inbox.CompletePresentation(groups); }
+
+        Assert.False(inbox.HasHeldAppearance(a));
+        Assert.True(batch.IsPending);
+        Assert.Single(inbox.Drain());
+        Assert.True(terrain.Lighting.TryGetPublishedSnapshot(a, out published));
+        Assert.Equal(0, published.Get(0, 64, 0).Block);
+        groups[batch] = inbox.CapturePresentationSources(batch);
+        Assert.True(inbox.CanPresent(batch, groups[batch]));
+        inbox.CompletePresentation(groups);
+        Assert.False(batch.IsPending);
+    }
+
+    private sealed class PresentationClock : TimeProvider
+    {
+        private long _timestamp;
+
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+
+        public override long GetTimestamp() => _timestamp;
+
+        public void Advance(TimeSpan elapsed) => _timestamp += elapsed.Ticks;
+    }
+
+    [Fact]
+    public void LightBoundaryMasksDistinguishAnInteriorCellFromACorner()
+    {
+        var dark = new TerrainLightSnapshot(default);
+        var cells = new byte[TerrainLightSection.CellCount];
+        cells[(8 << 4) + (8 << 8)] = 15;
+        var interior = dark.WithSection(4, TerrainLightSection.Capture(cells));
+        var changes = new TerrainLightBoundaryChanges();
+        changes.Include(dark, interior, 1 << 4);
+        var interiorOnly = changes;
+        Assert.Equal(0, changes.ForSampledNeighbor(new Point2(1, 0)));
+        Assert.Equal(0, changes.ForSampledNeighbor(new Point2(1, 1)));
+
+        cells[0] = 15;
+        var corner = interior.WithSection(4, TerrainLightSection.Capture(cells));
+        changes.Include(interior, corner, 1 << 4);
+        Assert.Equal(1 << 4, changes.ForSampledNeighbor(new Point2(1, 0)));
+        Assert.Equal(1 << 4, changes.ForSampledNeighbor(new Point2(0, 1)));
+        Assert.Equal(1 << 4, changes.ForSampledNeighbor(new Point2(1, 1)));
+        Assert.Equal(0, changes.ForSampledNeighbor(new Point2(-1, 0)));
+        Assert.NotEqual(interiorOnly, changes);
+        var allocation = new ChunkAllocationId(Point2.Zero, 1);
+        var first = new TerrainLightPresentationBatch.Source(allocation, 2, 1 << 4, changes);
+        var copy = first with { Boundaries = changes };
+        TerrainLightPresentationBatch.Source[] original = [first];
+        TerrainLightPresentationBatch.Source[] repeated = [copy];
+        Assert.True(original.AsSpan().SequenceEqual(repeated));
+        Assert.Equal(first.GetHashCode(), copy.GetHashCode());
+    }
+
     [Fact]
     public void RealCodecRoundTripInstallsBaselineAndExplicitDarkSectionWithoutChangingCells()
     {
@@ -156,10 +324,18 @@ public sealed class TerrainReplicaLightingTest
         Assert.Same(chunks[0], Assert.Single(inbox.Drain()));
         Assert.All(chunks, chunk => Assert.True(inbox.IsPresentationApplied(chunk, batch)));
 
-        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(allocations[^1], 7, 3, 2, dark, lit)));
+        var sources = inbox.CapturePresentationSources(batch);
+        Assert.True(inbox.CanPresent(batch, sources));
+        var shifted = dark.WithSection(5, new TerrainLightSection(new TerrainLightChannels(0, 15)));
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(allocations[^1], 7, 3, 2, shifted, lit)));
         Assert.True(batch.IsPending);
+        Assert.False(inbox.CanPresent(batch, sources));
+        var next = inbox.CapturePresentationSources(batch);
+        Assert.Equal((1 << 4) | (1 << 5), next.Single(source => source.Allocation == allocations[^1]).Sections);
+        Assert.False(inbox.CanPresent(batch, next));
         Assert.False(inbox.IsPresentationApplied(chunks[^1], batch));
         Assert.Same(chunks[^1], Assert.Single(inbox.Drain()));
+        Assert.True(inbox.CanPresent(batch, next));
         Assert.All(chunks, chunk => Assert.True(inbox.IsPresentationApplied(chunk, batch)));
     }
 

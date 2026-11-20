@@ -10,6 +10,8 @@ public abstract class BlockPresentation(Block block, BlockPresentationCatalog ca
 
     public BlockPresentationCatalog Catalog { get; } = catalog;
 
+    internal bool SupportsTerrainLightingReplay { get; set; }
+
     protected BlockContentCatalog RulesCatalog => Block.Catalog;
 
     public virtual void Initialize()

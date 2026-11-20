@@ -55,19 +55,32 @@ internal sealed class TerrainMeshBuilder(
         var work = output.ActiveSlice;
         if (work == null)
         {
-            var hash = CalculateChunkSliceContentsHash(chunk, sliceIndex, output.BuildLights);
-            if (!output.BeginSliceGeometryUpdate(sliceIndex, hash)) { return true; }
+            var inputs = CalculateSliceInputs(
+                chunk,
+                sliceIndex,
+                output.BuildLights,
+                output.LightReadsForSlice(sliceIndex)
+            );
+            if (output.MatchesSliceInputs(sliceIndex, inputs)) { return true; }
 
-            foreach (var draw in output.Draws)
+            var refreshLighting = output.BuildLights != null && output.CanRefreshSliceLighting(sliceIndex, inputs);
+            var relight = refreshLighting ? FindRelightSubsets(output, sliceIndex) : null;
+            output.BeginSliceGeometryUpdate(sliceIndex, inputs, geometryChanges: relight == null);
+
+            if (relight == null)
             {
-                foreach (var subset in draw.Value[sliceIndex].Subsets)
+                foreach (var draw in output.Draws.Values)
                 {
-                    subset.Vertices.Clear();
-                    subset.Indices.Clear();
+                    foreach (var subset in draw[sliceIndex].Subsets)
+                    {
+                        subset.Vertices.Clear();
+                        subset.Indices.Clear();
+                        subset.ClearLighting();
+                    }
                 }
             }
 
-            work = new TerrainChunkPresentation.SliceWork(sliceIndex, hash);
+            work = new TerrainChunkPresentation.SliceWork(sliceIndex, inputs) { RelightSubsets = relight };
             output.ActiveSlice = work;
         }
 
@@ -78,8 +91,19 @@ internal sealed class TerrainMeshBuilder(
             throw new InvalidOperationException("Terrain slice cursor does not match the active build.");
         }
 
+        _generator.SetGeometryNeighborhood(chunk.Coords, _neighbors);
+        _generator.SetLightReadTarget(output.BuildLights != null ? work : null);
         try
         {
+            if (work.RelightSubsets is { } subsets)
+            {
+                if (!RelightSlice(work, subsets, started, maximumTime)) { return false; }
+
+                CompleteSlice(output, work);
+                output.ActiveSlice = null;
+                return true;
+            }
+
             var hadColumns = work.Column < 16 * 16;
             while (work.Column < 16 * 16)
             {
@@ -87,7 +111,7 @@ internal sealed class TerrainMeshBuilder(
                 var z = work.Column % 16;
                 if (ColumnInputsAvailable(x, z))
                 {
-                    GenerateColumn(chunk, terrainGeometry[sliceIndex], x, z, sliceIndex);
+                    GenerateColumn(chunk, terrainGeometry[sliceIndex], x, z, work);
                 }
 
                 work.Column++;
@@ -98,7 +122,7 @@ internal sealed class TerrainMeshBuilder(
 
             if (!CompactSlice(output, work, started, maximumTime)) { return false; }
 
-            output.CompleteSliceGeometryUpdate(sliceIndex, work.ContentsHash);
+            CompleteSlice(output, work);
             output.ActiveSlice = null;
             return true;
         }
@@ -108,6 +132,70 @@ internal sealed class TerrainMeshBuilder(
             output.ActiveSlice = null;
             throw;
         }
+        finally
+        {
+            _generator.SetGeometryNeighborhood(default, null);
+            _generator.SetLightReadTarget(null);
+        }
+    }
+
+    private void CompleteSlice(TerrainChunkPresentation output, TerrainChunkPresentation.SliceWork work)
+    {
+        var inputs = work.Inputs;
+        if (output.BuildLights != null)
+        {
+            output.MarkSliceLightReads(work.Slice, in work.LightReads);
+            inputs = inputs with { Lighting = output.LightReadsForSlice(work.Slice).Fingerprint(_hashLights) };
+        }
+
+        output.CompleteSliceGeometryUpdate(work.Slice, inputs, work.CanReplayLighting);
+    }
+
+    private static TerrainGeometrySubset[]? FindRelightSubsets(TerrainChunkPresentation output, int slice)
+    {
+        var subsets = new List<TerrainGeometrySubset>();
+        foreach (var slices in output.Draws.Values)
+        {
+            foreach (var subset in slices[slice].Subsets)
+            {
+                if (subset.Vertices.Count == 0) { continue; }
+
+                if (!subset.HasCompleteLighting) { return null; }
+
+                subsets.Add(subset);
+            }
+        }
+
+        return subsets.ToArray();
+    }
+
+    private bool RelightSlice(
+        TerrainChunkPresentation.SliceWork work,
+        TerrainGeometrySubset[] subsets,
+        long started,
+        TimeSpan maximumTime
+    )
+    {
+        while (work.LightSubsetIndex < subsets.Length)
+        {
+            var subset = subsets[work.LightSubsetIndex];
+            while (work.LightRunIndex < subset.LightingRunCount)
+            {
+                if (_time.GetElapsedTime(started) >= maximumTime) { return false; }
+
+                var run = subset.GetLightingRun(work.LightRunIndex);
+                var end = Math.Min(work.LightVertexIndex + 64, run.End);
+                _generator.RefreshLighting(subset, run, work.LightVertexIndex, end);
+                work.LightVertexIndex = end;
+                if (end == run.End) { work.LightRunIndex++; }
+            }
+
+            work.LightSubsetIndex++;
+            work.LightRunIndex = 0;
+            work.LightVertexIndex = 0;
+        }
+
+        return true;
     }
 
     private bool CompactSlice(
@@ -164,17 +252,24 @@ internal sealed class TerrainMeshBuilder(
                (dx == 0 || dz == 0 || _neighbors[(dx + 1) * 3 + dz + 1] != null);
     }
 
-    private void GenerateColumn(TerrainChunk chunk, TerrainGeometry geometry, int x, int z, int slice)
+    private void GenerateColumn(
+        TerrainChunk chunk,
+        TerrainGeometry geometry,
+        int x,
+        int z,
+        TerrainChunkPresentation.SliceWork work
+    )
     {
+        var slice = work.Slice;
         var worldX = x + chunk.Origin.X;
         var worldZ = z + chunk.Origin.Y;
         var bottom = MathUtils.Min(
             chunk.GetBottomHeightFast(x, z) - 1,
             MathUtils.Min(
-                _terrain.GetBottomHeight(worldX - 1, worldZ),
-                _terrain.GetBottomHeight(worldX + 1, worldZ),
-                _terrain.GetBottomHeight(worldX, worldZ - 1),
-                _terrain.GetBottomHeight(worldX, worldZ + 1)
+                GetNeighborBottomHeight(x - 1, z),
+                GetNeighborBottomHeight(x + 1, z),
+                GetNeighborBottomHeight(x, z - 1),
+                GetNeighborBottomHeight(x, z + 1)
             )
         );
         var first = MathUtils.Max(16 * slice, bottom, 1);
@@ -186,9 +281,21 @@ internal sealed class TerrainMeshBuilder(
             var contents = Terrain.ExtractContents(value);
             if (contents == 0) { continue; }
 
-            _generator.Presentations.Get(contents)
-                .GenerateTerrainVertices(_generator, geometry, value, worldX, y, worldZ);
+            var presentation = _generator.Presentations.Get(contents);
+            // External generators may derive topology or vertex color from sampled light.
+            work.CanReplayLighting &= presentation.SupportsTerrainLightingReplay;
+            presentation.GenerateTerrainVertices(_generator, geometry, value, worldX, y, worldZ);
         }
+    }
+
+    private TerrainChunk? GetNeighborColumn(int x, int z)
+    {
+        return _neighbors[((x >> 4) + 1) * 3 + (z >> 4) + 1];
+    }
+
+    private int GetNeighborBottomHeight(int x, int z)
+    {
+        return GetNeighborColumn(x, z)?.GetBottomHeightFast(x & 15, z & 15) ?? 0;
     }
 
     private void CaptureInputs(TerrainChunk chunk, Game.Terrains.Lighting.TerrainLightSnapshot?[]? lights = null)
@@ -208,34 +315,28 @@ internal sealed class TerrainMeshBuilder(
         }
     }
 
-    internal int CalculateChunkSliceContentsHash(
+    internal TerrainSliceInputs CalculateSliceInputs(
         TerrainChunk chunk,
         int sliceIndex,
-        Game.Terrains.Lighting.TerrainLightSnapshot?[]? lights = null
+        Game.Terrains.Lighting.TerrainLightSnapshot?[]? lights = null,
+        TerrainMeshLightReads? lightReads = null
     )
     {
         CaptureInputs(chunk, lights);
-        var num = 1;
-        var num2 = chunk.Origin.X - 1;
-        var num3 = chunk.Origin.X + 16 + 1;
-        var num4 = chunk.Origin.Y - 1;
-        var num5 = chunk.Origin.Y + 16 + 1;
+        var geometry = 1;
         var x = MathUtils.Max(16 * sliceIndex - 1, 0);
         var x2 = MathUtils.Min(16 * (sliceIndex + 1) + 1, 256);
-        for (var i = num2; i < num3; i++)
+        for (var i = -1; i <= 16; i++)
         {
-            for (var j = num4; j < num5; j++)
+            for (var j = -1; j <= 16; j++)
             {
-                var chunkAtCell = _terrain.GetChunkAtCell(i, j, false);
+                var chunkAtCell = GetNeighborColumn(i, j);
                 if (chunkAtCell == null)
                 {
+                    geometry *= 31;
                     continue;
                 }
 
-                var light = _hashLights[(chunkAtCell.Coords.X - chunk.Coords.X + 1) * 3 +
-                                        chunkAtCell.Coords.Y -
-                                        chunk.Coords.Y +
-                                        1];
                 var x3 = i & 0xF;
                 var z = j & 0xF;
                 var shaftValueFast = chunkAtCell.GetShaftValueFast(x3, z);
@@ -247,26 +348,22 @@ internal sealed class TerrainMeshBuilder(
                 var num11 = num10 + num9 - num8;
                 while (num10 < num11)
                 {
-                    num += chunkAtCell.GetCellValueForGeometry(num10);
-                    num *= 31;
-                    num += light?.Get(x3, num10 & 255, z).Packed ?? 0;
-                    num *= 31;
+                    geometry = 31 * geometry + chunkAtCell.GetCellValueForGeometry(num10);
                     num10++;
                 }
 
-                num += Terrain.ExtractTemperature(shaftValueFast);
-                num *= 31;
-                num += Terrain.ExtractHumidity(shaftValueFast);
-                num *= 31;
-                num += num8;
-                num *= 31;
+                geometry = 31 * geometry + Terrain.ExtractTemperature(shaftValueFast);
+                geometry = 31 * geometry + Terrain.ExtractHumidity(shaftValueFast);
+                geometry = 31 * geometry + num8;
+                geometry = 31 * geometry + num9;
             }
         }
 
-        num += _terrain.SeasonTemperature;
-        num *= 31;
-        num += _terrain.SeasonHumidity;
-        num *= 31;
-        return num;
+        geometry = 31 * geometry + _terrain.SeasonTemperature;
+        geometry = 31 * geometry + _terrain.SeasonHumidity;
+        return new TerrainSliceInputs(
+            geometry,
+            (lightReads ?? TerrainMeshLightReads.AroundSlice(sliceIndex)).Fingerprint(_hashLights)
+        );
     }
 }

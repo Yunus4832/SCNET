@@ -13,6 +13,35 @@ namespace Survivalcraft.Test.Terrains;
 public sealed class TerrainLightResponseTest
 {
     [Fact]
+    public void SplitVertexStreamsPreserveTheBytesOfTheInterleavedLayout()
+    {
+        var lighting = new TerrainLightResponse(
+            new Color(1, 2, 3, 4),
+            new Color(5, 6, 7, 8),
+            new Color(9, 10, 11, 12),
+            new Color(13, 14, 15, 16)
+        );
+        var vertex = new TerrainVertex
+        {
+            X = 12.5f, Y = 64, Z = -16.5f, Tx = 2000, Ty = -3000, Color = Color.Green, Lighting = lighting
+        };
+        var geometry = new TerrainGeometryVertex(
+            new Vector3(vertex.X, vertex.Y, vertex.Z),
+            vertex.Tx,
+            vertex.Ty,
+            vertex.Color
+        );
+        var vertexBytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref vertex, 1));
+        var geometryBytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref geometry, 1));
+        var lightingBytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref lighting, 1));
+        Assert.Equal(TerrainGeometryVertex.VertexDeclaration.VertexStride, geometryBytes.Length);
+        Assert.Equal(TerrainLightResponse.VertexDeclaration.VertexStride, lightingBytes.Length);
+        Assert.Equal(TerrainVertex.VertexDeclaration.VertexStride, geometryBytes.Length + lightingBytes.Length);
+        Assert.True(vertexBytes[..geometryBytes.Length].SequenceEqual(geometryBytes));
+        Assert.True(vertexBytes[geometryBytes.Length..].SequenceEqual(lightingBytes));
+    }
+
+    [Fact]
     public void FractionalDaylightInterpolatesAcrossEveryPackedVectorBoundary()
     {
         var response = new TerrainLightResponse(

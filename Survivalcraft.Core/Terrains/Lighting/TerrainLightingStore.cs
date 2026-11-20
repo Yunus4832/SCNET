@@ -12,7 +12,19 @@ public sealed class TerrainLightingStore(Terrain terrain) : IDisposable
 
     private readonly ConcurrentDictionary<TerrainChunk, LocalLightBatch> _localBatches = new();
 
-    internal sealed record LocalLightBatch(Point3 Source, TerrainChunk[] Members);
+    private long _regionalPublicationEpoch;
+
+    // Replication reads without the terrain work gate. Odd epochs denote an in-progress regional publication.
+    internal long RegionalPublicationEpoch => Volatile.Read(ref _regionalPublicationEpoch);
+
+    internal void BeginRegionalPublication() => Interlocked.Increment(ref _regionalPublicationEpoch);
+
+    internal void EndRegionalPublication() => Interlocked.Increment(ref _regionalPublicationEpoch);
+
+    internal sealed record LocalLightBatch(Point3 Source, TerrainChunk[] Members)
+    {
+        internal bool RegionAttempted { get; set; }
+    }
 
     internal void RecordLocalBatch(Point3 source, List<TerrainChunk> changed)
     {

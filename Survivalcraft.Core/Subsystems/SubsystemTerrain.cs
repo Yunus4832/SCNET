@@ -461,7 +461,13 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                 return;
             }
 
-            var emissionApplied = Computations.TryApplyEmissionEdit(new Point3(x, y, z), cellValueFast, value);
+            var cell = new Point3(x, y, z);
+            var emissionApplied = Computations.TryApplyEmissionEdit(cell, cellValueFast, value);
+            var lightAppearance = !emissionApplied &&
+                                  Runtime.IsAuthority &&
+                                  Catalog.Blocks[Terrain.ExtractContents(cellValueFast)]
+                                      .IsLightAppearanceEdit(cellValueFast, value);
+            var emissionSeed = lightAppearance ? Computations.CaptureEmissionSeed(cell, value) : null;
             if (!emissionApplied) { Terrain.SetCellValueFast(x, y, z, value); }
 
             if (!Runtime.IsAuthority && geometryBefore != value)
@@ -487,11 +493,22 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
                 if (!emissionApplied && (Runtime.IsAuthority || geometryBefore != value))
                 {
-                    Computations.InvalidateContentNeighborhood(
-                        chunkAtCell.Coords,
-                        1,
-                        Runtime.IsAuthority || Terrain.ExtractContents(geometryBefore) != Terrain.ExtractContents(value)
-                    );
+                    var affectedRadius = Runtime.IsAuthority ||
+                                         chunkAtCell.ContentOrigin != TerrainContentOrigin.Replica ||
+                                         TerrainChunk.IsInsideGeometryHalo(x, z)
+                        ? 1
+                        : 0;
+                    if (lightAppearance) { Computations.RepairEmission(cell, emissionSeed); }
+                    else
+                    {
+                        Computations.InvalidateContentNeighborhood(
+                            chunkAtCell.Coords,
+                            affectedRadius,
+                            Runtime.IsAuthority ||
+                            Terrain.ExtractContents(geometryBefore) != Terrain.ExtractContents(value)
+                        );
+                    }
+
                     if (!Runtime.IsAuthority) { NotifyTerrainInteraction(); }
                 }
             }
@@ -814,6 +831,27 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         }
     }
 
+    private bool DeferHeldLightAppearance(TerrainChunk chunk, IEnumerable<TerrainCellDelta> deltas)
+    {
+        if (ReplicaLighting is not { } replica || !replica.HasHeldAppearance(chunk)) { return false; }
+
+        foreach (var delta in deltas)
+        {
+            var cell = delta.Cell;
+            var previous = chunk.GetCellValueFast(cell.X & 15, cell.Y, cell.Z & 15);
+            if (Catalog.Blocks[Terrain.ExtractContents(previous)].IsLightAppearanceEdit(previous, delta.Value))
+            {
+                continue;
+            }
+
+            // Collision and structural changes must never wait behind a visual transition.
+            replica.CancelHeldAppearance(chunk);
+            return false;
+        }
+
+        return true;
+    }
+
     private void OnChunkAllocated(Point2 coordinates)
     {
         var chunk = Terrain.GetChunkAtCoords(coordinates.X, coordinates.Y)!;
@@ -894,10 +932,16 @@ public class SubsystemTerrain : Subsystem, IUpdateable
             var lightTransport = (ClientChunkContentTransport)ChunkContentTransport!;
             ReplicaLighting = new TerrainReplicaLighting(Terrain, lightTransport.IsCurrentAllocation);
             lightTransport.AllocationDiscarded += ReplicaLighting.Discard;
+            ClientChunkContents!.ContentInstalled += ReplicaLighting.CancelHeldAppearance;
             CellPrediction = new ClientTerrainPrediction(
                 Terrain,
                 coords =>
                 {
+                    if (Terrain.GetChunkAtCoords(coords.X, coords.Y) is { } chunk)
+                    {
+                        ReplicaLighting.CancelHeldAppearance(chunk);
+                    }
+
                     Computations.InvalidateContentNeighborhood(coords, 1);
                     NotifyTerrainInteraction();
                 }
@@ -914,7 +958,8 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                     delta.Cell.Y,
                     delta.Cell.Z,
                     delta.Value
-                )
+                ),
+                DeferHeldLightAppearance
             );
             ClientContentPump = new ClientTerrainContentPump(
                 this,

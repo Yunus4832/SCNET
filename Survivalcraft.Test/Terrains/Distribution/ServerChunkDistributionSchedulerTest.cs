@@ -77,6 +77,14 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
         Publish(first, dimmer);
         terrain.Lighting.RecordLocalBatch(source, [first]);
         Publish(second, lit);
+        terrain.Lighting.BeginRegionalPublication();
+        try
+        {
+            lighting.Update();
+            Assert.Empty(outgoing);
+        }
+        finally { terrain.Lighting.EndRegionalPublication(); }
+
         lighting.Update();
         var batch = Assert.IsType<TerrainLightBatchPackage>(Assert.Single(outgoing).Package);
         Assert.Equal(2, batch.Updates.Length);

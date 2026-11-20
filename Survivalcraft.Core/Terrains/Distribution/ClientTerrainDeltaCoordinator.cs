@@ -6,7 +6,8 @@ namespace Game.Terrains.Distribution;
 /// </summary>
 public sealed class ClientTerrainDeltaCoordinator(
     Terrain terrain,
-    Action<TerrainCellDelta> apply
+    Action<TerrainCellDelta> apply,
+    Func<TerrainChunk, IEnumerable<TerrainCellDelta>, bool>? deferPresentation = null
 )
 {
     public const int MaximumPendingDeltasPerChunk = 256;
@@ -22,6 +23,23 @@ public sealed class ClientTerrainDeltaCoordinator(
     private readonly Dictionary<Point2, SortedDictionary<long, TerrainCellDelta>> _pending = [];
 
     private readonly Dictionary<Point2, long> _requiredVersions = [];
+
+    private readonly HashSet<Point2> _presentationDeferred = [];
+
+    internal bool HasDeferredPresentation => _presentationDeferred.Count != 0;
+
+    internal bool ResumePresentation()
+    {
+        foreach (var coords in _presentationDeferred.ToArray())
+        {
+            var chunk = _terrain.GetChunkAtCoords(coords.X, coords.Y);
+            if (chunk is not { HasContents: true, NeedsContentValidation: false }) { continue; }
+
+            if (ApplyAvailable(chunk) != TerrainDeltaApplyResult.Buffered) { return true; }
+        }
+
+        return false;
+    }
 
     public TerrainDeltaApplyResult Receive(TerrainCellDelta delta)
     {
@@ -102,6 +120,7 @@ public sealed class ClientTerrainDeltaCoordinator(
         if (_pending.Remove(coords, out var deltas)) { PendingDeltaCount -= deltas.Count; }
 
         _requiredVersions.Remove(coords);
+        _presentationDeferred.Remove(coords);
     }
 
     private TerrainDeltaApplyResult ApplyAvailable(TerrainChunk chunk)
@@ -122,6 +141,14 @@ public sealed class ClientTerrainDeltaCoordinator(
         }
 
         var applied = false;
+        if (deltas.ContainsKey(chunk.NetworkContentVersion) &&
+            deferPresentation?.Invoke(chunk, deltas.Values) == true)
+        {
+            _presentationDeferred.Add(coords);
+            return TerrainDeltaApplyResult.Buffered;
+        }
+
+        _presentationDeferred.Remove(coords);
         while (deltas.Remove(chunk.NetworkContentVersion, out var delta))
         {
             PendingDeltaCount--;

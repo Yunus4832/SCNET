@@ -26,16 +26,33 @@ internal sealed class TerrainLightTask(TerrainLightJob job)
             {
                 var started = Stopwatch.GetTimestamp();
                 TerrainLightSnapshot? snapshot = null;
+                TerrainLightSnapshot[]? regionSnapshots = null;
                 Exception? error = null;
-                try { snapshot = compute(Job, _cancellation.Token); }
+                try
+                {
+                    if (Job.Region is { } region) { regionSnapshots = region.Compute(_cancellation.Token); }
+                    else { snapshot = compute(Job, _cancellation.Token); }
+                }
                 catch (OperationCanceledException) when (_cancellation.IsCancellationRequested) { }
                 catch (Exception failure) { error = failure; }
 
-                if (_cancellation.IsCancellationRequested) { snapshot = null; }
+                if (_cancellation.IsCancellationRequested)
+                {
+                    snapshot = null;
+                    regionSnapshots = null;
+                }
 
                 try
                 {
-                    completed(new TerrainLightCompletion(this, snapshot, error, Stopwatch.GetElapsedTime(started)));
+                    completed(
+                        new TerrainLightCompletion(
+                            this,
+                            snapshot,
+                            regionSnapshots,
+                            error,
+                            Stopwatch.GetElapsedTime(started)
+                        )
+                    );
                 }
                 finally { DisposeCancellation(); }
             }

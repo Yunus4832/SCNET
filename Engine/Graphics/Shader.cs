@@ -24,7 +24,8 @@ public class Shader : GraphicsResource
 
     public ShaderMacro[] ShaderMacros = [];
 
-    public readonly Dictionary<VertexDeclaration, VertexAttributeData[]> VertexAttributeDataByDeclaration = new();
+    private readonly Dictionary<(VertexDeclaration Geometry, VertexDeclaration? Additional), VertexAttributeData[]>
+        _vertexAttributes = new();
 
     public int VertexShader;
 
@@ -71,9 +72,13 @@ public class Shader : GraphicsResource
         PrepareForDrawingOverride();
     }
 
-    public VertexAttributeData[] GetVertexAttribData(VertexDeclaration vertexDeclaration)
+    internal VertexAttributeData[] GetVertexAttribData(
+        VertexDeclaration vertexDeclaration,
+        VertexDeclaration? additionalDeclaration
+    )
     {
-        if (VertexAttributeDataByDeclaration.TryGetValue(vertexDeclaration, out var value))
+        var key = (vertexDeclaration, additionalDeclaration);
+        if (_vertexAttributes.TryGetValue(key, out var value))
         {
             return value;
         }
@@ -81,17 +86,9 @@ public class Shader : GraphicsResource
         value = new VertexAttributeData[8];
         foreach (var shaderAttributeDatum in ShaderAttributeDataList)
         {
-            VertexElement? vertexElement = null;
-            foreach (var element in vertexDeclaration.VertexElements)
-            {
-                if (element.Semantic != shaderAttributeDatum.Semantic)
-                {
-                    continue;
-                }
-
-                vertexElement = element;
-                break;
-            }
+            var vertexElement = FindVertexElement(vertexDeclaration, shaderAttributeDatum.Semantic);
+            var additional = vertexElement == null;
+            vertexElement ??= FindVertexElement(additionalDeclaration, shaderAttributeDatum.Semantic);
 
             if (vertexElement is null)
             {
@@ -103,7 +100,8 @@ public class Shader : GraphicsResource
             value[shaderAttributeDatum.Location] = new VertexAttributeData
             {
                 Size = vertexElement.Format.GetElementsCount(),
-                Offset = vertexElement.Offset
+                Offset = vertexElement.Offset,
+                AdditionalStream = additional
             };
             GLWrapper.TranslateVertexElementFormat(
                 vertexElement.Format,
@@ -113,9 +111,21 @@ public class Shader : GraphicsResource
             value[shaderAttributeDatum.Location].Type = (VertexAttribPointerType)type;
         }
 
-        VertexAttributeDataByDeclaration.Add(vertexDeclaration, value);
+        _vertexAttributes.Add(key, value);
 
         return value;
+    }
+
+    private static VertexElement? FindVertexElement(VertexDeclaration? declaration, string semantic)
+    {
+        if (declaration == null) { return null; }
+
+        foreach (var element in declaration.VertexElements)
+        {
+            if (element.Semantic == semantic) { return element; }
+        }
+
+        return null;
     }
 
     public static void ParseShaderMetadata(
@@ -245,6 +255,8 @@ public class Shader : GraphicsResource
     public void CompileShaders()
     {
         DeleteShaders();
+        ShaderAttributeDataList.Clear();
+        _vertexAttributes.Clear();
         var dictionary = new Dictionary<string, string>();
         var dictionary2 = new Dictionary<string, string>();
         ParseShaderMetadata(VertexShaderCode, dictionary, dictionary2);
@@ -468,5 +480,7 @@ public class Shader : GraphicsResource
         public bool Normalize;
 
         public int Offset;
+
+        public bool AdditionalStream;
     }
 }

@@ -46,7 +46,9 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
             }
 
             // Retain the due entry until the worker consumes it: an early signal cannot lose a wakeup.
-            if (Time.RealTime >= item.Value || item.Key.Chunk.HasPendingLightingPresentation)
+            if (Time.RealTime >= item.Value ||
+                _presentation.ChunkPresentations.TryGet(item.Key.Chunk, out var mesh) &&
+                mesh.NeedsGroupedLighting(item.Key.Chunk))
             {
                 _subsystemTerrain.Computations.ResumeDerived(item.Key.Chunk, item.Key.Generation);
             }
@@ -62,6 +64,11 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
     bool ITerrainDerivedWork.HasUploadedGeometry(TerrainChunk chunk) =>
         _presentation.ChunkPresentations.Get(chunk).GeometryUploaded;
 
+    bool ITerrainDerivedWork.HasPendingLightingPresentation(TerrainChunk chunk)
+    {
+        return _presentation.ChunkPresentations.TryGet(chunk, out var mesh) && mesh.NeedsGroupedLighting(chunk);
+    }
+
     bool ITerrainDerivedWork.CanUpdateBeforeLighting(TerrainChunk chunk) =>
         NeedsInteractiveMesh(chunk) && _presentation.ChunkPresentations.Get(chunk).CanUsePublishedLighting(chunk);
 
@@ -70,7 +77,7 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
         var key = new TerrainWorkKey(chunk, TerrainWorkStage.Derived);
         _deferred.TryRemove(key, out _);
         var presentation = _presentation.ChunkPresentations.Get(chunk);
-        if (!chunk.HasPendingLightingPresentation &&
+        if (!presentation.NeedsGroupedLighting(chunk) &&
             !_subsystemTerrain.Computations.IsInteractive(chunk) &&
             presentation.ShouldDeferMaintenance(chunk, Time.RealTime, out var due))
         {
@@ -311,12 +318,6 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
         return 1f;
     }
 
-    private TerrainMeshBuilder SerialBuilder => new(
-        _terrain,
-        _presentation.BlockGeometryGenerator,
-        _subsystemAnimatedTextures.AnimatedBlocksTexture
-    );
-
     private void UpdateChunkMesh(
         TerrainChunk chunk,
         bool allowPendingLighting,
@@ -325,7 +326,7 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
     )
     {
         var presentation = _presentation.ChunkPresentations.Get(chunk);
-        if (chunk.HasPendingLightingPresentation)
+        if (presentation.NeedsGroupedLighting(chunk))
         {
             allowPendingLighting = false;
             interactive = false;
@@ -340,6 +341,11 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
 
             presentation.NewGeometryData = false;
             var started = Stopwatch.GetTimestamp();
+            var builder = new TerrainMeshBuilder(
+                _terrain,
+                _presentation.BlockGeometryGenerator,
+                _subsystemAnimatedTextures.AnimatedBlocksTexture
+            );
             while (presentation.CompletedMeshSlices < TerrainChunk.SlicesCount)
             {
                 if (interactive &&
@@ -352,7 +358,7 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
 
                 var remaining = maximumTime - Stopwatch.GetElapsedTime(started);
                 if (remaining <= TimeSpan.Zero ||
-                    !SerialBuilder.GenerateSlice(chunk, presentation, presentation.NextMeshSlice, remaining))
+                    !builder.GenerateSlice(chunk, presentation, presentation.NextMeshSlice, remaining))
                 {
                     return;
                 }

@@ -71,6 +71,13 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
         return GetLightIntensity(Terrain.ExtractData(value));
     }
 
+    public override bool IsLightAppearanceEdit(int previous, int current)
+    {
+        return Terrain.ExtractContents(previous) == Terrain.ExtractContents(current) &&
+               SetLightIntensity(Terrain.ExtractData(previous), 0) ==
+               SetLightIntensity(Terrain.ExtractData(current), 0);
+    }
+
 
     public override BlockPlacementData GetPlacementValue(
         SubsystemTerrain subsystemTerrain,
