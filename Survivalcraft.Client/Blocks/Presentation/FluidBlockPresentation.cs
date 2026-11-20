@@ -55,21 +55,22 @@ public abstract class FluidBlockPresentation(FluidBlock block, BlockPresentation
         int z,
         Color sideColor,
         Color topColor,
-        TerrainGeometrySubset[] subset
+        TerrainGeometrySubset[] subset,
+        bool extendUnknownSurface = false,
+        bool topOnly = false
     )
     {
         var data = Terrain.ExtractData(value);
         if (FluidBlock.GetIsTop(data))
         {
-            var terrain = generator.Terrain;
-            var cellValueFast = terrain.GetCellValueFast(x - 1, y, z - 1);
-            var cellValueFast2 = terrain.GetCellValueFast(x, y, z - 1);
-            var cellValueFast3 = terrain.GetCellValueFast(x + 1, y, z - 1);
-            var cellValueFast4 = terrain.GetCellValueFast(x - 1, y, z);
-            var cellValueFast5 = terrain.GetCellValueFast(x + 1, y, z);
-            var cellValueFast6 = terrain.GetCellValueFast(x - 1, y, z + 1);
-            var cellValueFast7 = terrain.GetCellValueFast(x, y, z + 1);
-            var cellValueFast8 = terrain.GetCellValueFast(x + 1, y, z + 1);
+            var cellValueFast = ReadNeighbor(x - 1, z - 1);
+            var cellValueFast2 = ReadNeighbor(x, z - 1);
+            var cellValueFast3 = ReadNeighbor(x + 1, z - 1);
+            var cellValueFast4 = ReadNeighbor(x - 1, z);
+            var cellValueFast5 = ReadNeighbor(x + 1, z);
+            var cellValueFast6 = ReadNeighbor(x - 1, z + 1);
+            var cellValueFast7 = ReadNeighbor(x, z + 1);
+            var cellValueFast8 = ReadNeighbor(x + 1, z + 1);
             var h = Block.CalculateNeighborHeight(cellValueFast);
             var num = Block.CalculateNeighborHeight(cellValueFast2);
             var h2 = Block.CalculateNeighborHeight(cellValueFast3);
@@ -102,12 +103,21 @@ public abstract class FluidBlockPresentation(FluidBlock block, BlockPresentation
                 topColor,
                 topColor,
                 overrideTopTextureSlot,
-                subset
+                subset,
+                extendUnknownSurface ? value : null,
+                topOnly
             );
         }
-        else
+        else if (!topOnly)
         {
             generator.GenerateCubeVertices(this, value, x, y, z, sideColor, subset);
+        }
+
+        int ReadNeighbor(int neighborX, int neighborZ)
+        {
+            return extendUnknownSurface
+                ? generator.ReadFluidNeighbor(neighborX, y, neighborZ, value)
+                : generator.Terrain.GetCellValueFast(neighborX, y, neighborZ);
         }
     }
 }

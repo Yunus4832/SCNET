@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 
 using Engine.Graphics;
 
+using Game.Blocks.Presentation;
 using Game.Blocks.Presentation.Geometry;
 
 namespace Game.Terrains.Rendering;
@@ -112,6 +113,10 @@ internal sealed class TerrainMeshBuilder(
                 if (ColumnInputsAvailable(x, z))
                 {
                     GenerateColumn(chunk, terrainGeometry[sliceIndex], x, z, work);
+                }
+                else
+                {
+                    GenerateUnresolvedWaterSurface(chunk, terrainGeometry[sliceIndex], x, z, work);
                 }
 
                 work.Column++;
@@ -252,6 +257,37 @@ internal sealed class TerrainMeshBuilder(
                (dx == 0 || dz == 0 || _neighbors[(dx + 1) * 3 + dz + 1] != null);
     }
 
+    // Keep the exposed water surface while a neighbor needed by the full column is still missing.
+    private void GenerateUnresolvedWaterSurface(
+        TerrainChunk chunk,
+        TerrainGeometry geometry,
+        int x,
+        int z,
+        TerrainChunkPresentation.SliceWork work
+    )
+    {
+        var y = chunk.GetTopHeightFast(x, z);
+        if (y < 1 || y >> 4 != work.Slice) { return; }
+
+        var value = chunk.GetCellValueForGeometry(x, y, z);
+        if (Terrain.ExtractContents(value) is var contents &&
+            contents != 0 &&
+            _generator.Presentations.Get(contents) is WaterBlockPresentation water &&
+            FluidBlock.GetIsTop(Terrain.ExtractData(value)))
+        {
+            work.CanReplayLighting &= water.SupportsTerrainLightingReplay;
+            water.GenerateSurface(
+                _generator,
+                geometry,
+                value,
+                chunk.Origin.X + x,
+                y,
+                chunk.Origin.Y + z,
+                topOnly: true
+            );
+        }
+    }
+
     private void GenerateColumn(
         TerrainChunk chunk,
         TerrainGeometry geometry,
@@ -305,7 +341,7 @@ internal sealed class TerrainMeshBuilder(
             for (var dz = -1; dz <= 1; dz++)
             {
                 var neighbor = _terrain.GetChunkAtCoords(chunk.Coords.X + dx, chunk.Coords.Y + dz);
-                _neighbors[(dx + 1) * 3 + dz + 1] = neighbor;
+                _neighbors[(dx + 1) * 3 + dz + 1] = neighbor is { HasContents: true } ? neighbor : null;
                 Game.Terrains.Lighting.TerrainLightSnapshot? snapshot = null;
                 if (lights != null) { snapshot = lights[(dx + 1) * 3 + dz + 1]; }
                 else if (neighbor != null) { _terrain.Lighting.TryGetPublishedSnapshot(neighbor, out snapshot); }

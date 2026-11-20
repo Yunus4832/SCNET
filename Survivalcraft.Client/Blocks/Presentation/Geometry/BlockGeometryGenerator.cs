@@ -110,6 +110,14 @@ public partial class BlockGeometryGenerator
 
     private TerrainChunk GetGeometryChunk(int x, int z) => FindGeometryChunk(x, z) ?? Terrain.GetChunkAtCell(x, z)!;
 
+    internal int ReadFluidNeighbor(int x, int y, int z, int fallback)
+    {
+        var chunk = FindGeometryChunk(x, z);
+        return chunk is { HasContents: true }
+            ? chunk.GetCellValueForGeometry(x & 15, y, z & 15)
+            : fallback;
+    }
+
     private int ReadGeometryCell(int x, int y, int z)
     {
         return Terrain.IsCellValid(x, y, z)
@@ -760,13 +768,15 @@ public partial class BlockGeometryGenerator
         Color topColor22,
         Color topColor12,
         int overrideTopTextureSlot,
-        TerrainGeometrySubset[] subsetsByFace
+        TerrainGeometrySubset[] subsetsByFace,
+        int? unknownSide = null,
+        bool topOnly = false
     )
     {
-        var cellValueFast = ReadGeometryCell(x, y, z + 1);
+        var cellValueFast = topOnly ? value : ReadSide(x, z + 1);
         var textureSlotCount = block.GetTextureSlotCount(value);
         var fullHeight = height11 == 1f && height21 == 1f && height22 == 1f && height12 == 1f;
-        if (block.ShouldGenerateFace(_subsystemTerrain, 0, value, cellValueFast))
+        if (!topOnly && block.ShouldGenerateFace(_subsystemTerrain, 0, value, cellValueFast))
         {
             var vertices = subsetsByFace[0].Vertices;
             var indices = subsetsByFace[0].Indices;
@@ -829,8 +839,8 @@ public partial class BlockGeometryGenerator
             indices.Array[count2 + 5] = count + 3;
         }
 
-        cellValueFast = ReadGeometryCell(x + 1, y, z);
-        if (block.ShouldGenerateFace(_subsystemTerrain, 1, value, cellValueFast))
+        cellValueFast = topOnly ? value : ReadSide(x + 1, z);
+        if (!topOnly && block.ShouldGenerateFace(_subsystemTerrain, 1, value, cellValueFast))
         {
             var vertices2 = subsetsByFace[1].Vertices;
             var indices2 = subsetsByFace[1].Indices;
@@ -893,8 +903,8 @@ public partial class BlockGeometryGenerator
             indices2.Array[count4 + 5] = count3 + 3;
         }
 
-        cellValueFast = ReadGeometryCell(x, y, z - 1);
-        if (block.ShouldGenerateFace(_subsystemTerrain, 2, value, cellValueFast))
+        cellValueFast = topOnly ? value : ReadSide(x, z - 1);
+        if (!topOnly && block.ShouldGenerateFace(_subsystemTerrain, 2, value, cellValueFast))
         {
             var vertices3 = subsetsByFace[2].Vertices;
             var indices3 = subsetsByFace[2].Indices;
@@ -957,8 +967,8 @@ public partial class BlockGeometryGenerator
             indices3.Array[count6 + 5] = count5;
         }
 
-        cellValueFast = ReadGeometryCell(x - 1, y, z);
-        if (block.ShouldGenerateFace(_subsystemTerrain, 3, value, cellValueFast))
+        cellValueFast = topOnly ? value : ReadSide(x - 1, z);
+        if (!topOnly && block.ShouldGenerateFace(_subsystemTerrain, 3, value, cellValueFast))
         {
             var vertices4 = subsetsByFace[3].Vertices;
             var indices4 = subsetsByFace[3].Indices;
@@ -1089,8 +1099,8 @@ public partial class BlockGeometryGenerator
             indices5.Array[count10 + 5] = count9;
         }
 
-        cellValueFast = ReadGeometryCell(x, y - 1, z);
-        if (block.ShouldGenerateFace(_subsystemTerrain, 5, value, cellValueFast))
+        cellValueFast = topOnly ? value : ReadGeometryCell(x, y - 1, z);
+        if (!topOnly && block.ShouldGenerateFace(_subsystemTerrain, 5, value, cellValueFast))
         {
             var vertices6 = subsetsByFace[5].Vertices;
             var indices6 = subsetsByFace[5].Indices;
@@ -1151,6 +1161,13 @@ public partial class BlockGeometryGenerator
             indices6.Array[count12 + 3] = count11 + 2;
             indices6.Array[count12 + 4] = count11;
             indices6.Array[count12 + 5] = count11 + 3;
+        }
+
+        int ReadSide(int neighborX, int neighborZ)
+        {
+            return unknownSide is { } fallback
+                ? ReadFluidNeighbor(neighborX, y, neighborZ, fallback)
+                : ReadGeometryCell(neighborX, y, neighborZ);
         }
     }
 

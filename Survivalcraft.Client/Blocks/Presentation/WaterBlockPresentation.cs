@@ -16,6 +16,19 @@ public class WaterBlockPresentation(WaterBlock block, BlockPresentationCatalog c
         int z
     )
     {
+        GenerateSurface(generator, geometry, value, x, y, z, topOnly: false);
+    }
+
+    internal void GenerateSurface(
+        BlockGeometryGenerator generator,
+        TerrainGeometry geometry,
+        int value,
+        int x,
+        int y,
+        int z,
+        bool topOnly
+    )
+    {
         Color sideColor;
         var color = sideColor = BlockColorsMap.WaterColorsMap.Lookup(generator.Terrain, x, y, z);
         sideColor.A = byte.MaxValue;
@@ -29,7 +42,9 @@ public class WaterBlockPresentation(WaterBlock block, BlockPresentationCatalog c
             z,
             sideColor,
             topColor,
-            geometry.TransparentSubsetsByFace
+            geometry.TransparentSubsetsByFace,
+            extendUnknownSurface: true,
+            topOnly: topOnly
         );
     }
 }

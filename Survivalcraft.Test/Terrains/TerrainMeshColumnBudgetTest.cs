@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Engine.Core.Mathematics;
 using Engine.Graphics;
 
+using Game.Blocks;
 using Game.Blocks.Presentation.Geometry;
 using Game.ClientContent;
 using Game.Modding.Blocks;
@@ -19,6 +20,76 @@ namespace Survivalcraft.Test.Terrains;
 [Collection(ConfigFileCollection.Name)]
 public sealed class TerrainMeshColumnBudgetTest
 {
+    [Fact]
+    public void WaterEdgeKeepsItsSurfaceThroughNeighborAllocationAndRebuildsForRealShore()
+    {
+        using var fixture = new Fixture();
+        using var mesh = new TerrainChunkPresentation();
+        using var neighborMesh = new TerrainChunkPresentation();
+        var terrain = fixture.Terrain;
+        var chunk = fixture.Chunk;
+        var water = (WaterBlock)fixture.World.Catalog.GetBlock(ResourceId.Parse("game:water"));
+        var waterValue = Terrain.MakeBlockValue(water.BlockIndex, data: FluidBlock.SetIsTop(0, true));
+        const int y = 2;
+        var surface = y + water.GetLevelHeight(0);
+        var builder = new TerrainMeshBuilder(terrain, fixture.Generator, fixture.Texture);
+        for (var x = 14; x <= 15; x++)
+        {
+            for (var z = 7; z <= 9; z++) { PlaceWater(chunk, x, z); }
+        }
+
+        var initial = BuildEdge(chunk, mesh);
+        Assert.Equal(new[] { surface, surface }, EdgeHeights(initial));
+        Assert.False(HasEastFace(initial));
+
+        var east = terrain.AllocateChunk(1, 0);
+        Assert.Equal(initial.SelectMany(quad => quad), BuildEdge(chunk, mesh).SelectMany(quad => quad));
+
+        for (var x = 0; x <= 1; x++)
+        {
+            for (var z = 7; z <= 9; z++) { PlaceWater(east, x, z); }
+        }
+
+        TerrainMeshTestData.PrepareLighting(east);
+        var ocean = BuildEdge(chunk, mesh);
+        Assert.Equal(EdgeHeights(initial), EdgeHeights(ocean));
+        Assert.Equal(EdgeHeights(ocean), EdgeHeights(BuildEdge(east, neighborMesh)));
+        Assert.False(HasEastFace(ocean));
+
+        // A loaded air column takes part in height and face generation at the real water edge.
+        east.SetCellValueFast(0, y, 8, 0);
+        east.SetTopHeightFast(0, 8, 0);
+        var shore = BuildEdge(chunk, mesh);
+        Assert.Equal(new[] { (float)y, (float)y }, EdgeHeights(shore));
+        Assert.True(HasEastFace(shore));
+
+        void PlaceWater(TerrainChunk target, int x, int z)
+        {
+            target.SetCellValueFast(x, y, z, waterValue);
+            target.SetTopHeightFast(x, z, y);
+        }
+
+        TerrainVertex[][] BuildEdge(TerrainChunk target, TerrainChunkPresentation presentation)
+        {
+            Assert.True(builder.GenerateSlice(target, presentation, 0, TimeSpan.MaxValue));
+            return presentation.Draws[fixture.Texture][0].TransparentSubsetsByFace[4].Vertices.ToArray()
+                .Chunk(4)
+                .Where(quad => quad.Min(v => v.Z) == 8 && quad.Max(v => v.Z) == 9 && quad.Any(v => v.X == 16))
+                .ToArray();
+        }
+
+        static float[] EdgeHeights(TerrainVertex[][] quads)
+        {
+            return quads.Single(quad => quad.Select(v => v.X).Distinct().Count() == 2 && quad.All(v => v.Color.A == 0))
+                .Where(v => v.X == 16)
+                .OrderBy(v => v.Z)
+                .Select(v => v.Y)
+                .ToArray();
+        }
+
+        static bool HasEastFace(TerrainVertex[][] quads) => quads.Any(quad => quad.All(v => v.X == 16));
+    }
+
     [Fact]
     public void NewLightPublicationDoesNotMixLightingAcrossResumedInteractiveColumns()
     {
