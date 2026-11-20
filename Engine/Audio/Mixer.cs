@@ -1,7 +1,5 @@
 using Engine.Core.Mathematics;
 
-using Silk.NET.OpenAL;
-
 namespace Engine.Audio;
 
 /// <summary>Application audio lifetime and the entry point to its dedicated device owner.</summary>
@@ -14,8 +12,6 @@ public static class Mixer
     private static float _volume = 1f;
 
     internal static AudioService? Service => Volatile.Read(ref _service);
-
-    internal static AL? AL => Service?.Api;
 
     public static bool IsAudioInitialized => Service?.IsReady == true;
 

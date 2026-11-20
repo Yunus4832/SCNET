@@ -387,8 +387,10 @@ public abstract class BaseSound : IDisposable, IAsyncDisposable
         }
     }
 
-    private protected void Preparing(AudioPlaybackRequest request) =>
+    private protected void Preparing(AudioPlaybackRequest request)
+    {
         Publish(request.State == SoundState.Playing ? SoundState.Preparing : request.State, request);
+    }
 
     private protected void Publish(SoundState state, AudioPlaybackRequest request)
     {

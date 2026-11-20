@@ -110,7 +110,9 @@ internal sealed class AudioPreparation
             catch (Exception error) { _completion.TrySetException(error); }
         }
 
-        public void Reject() =>
+        public void Reject()
+        {
             _completion.TrySetException(new InvalidOperationException("Audio preparation is unavailable or full."));
+        }
     }
 }

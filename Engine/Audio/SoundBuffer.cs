@@ -173,8 +173,10 @@ public sealed class SoundBuffer : IDisposable
         Mixer.Service?.Wake();
     }
 
-    public static SoundBuffer Load(SoundData data) =>
-        new(data.Data, 0, data.Data.Length, data.ChannelsCount, data.SamplingFrequency);
+    public static SoundBuffer Load(SoundData data)
+    {
+        return new SoundBuffer(data.Data, 0, data.Data.Length, data.ChannelsCount, data.SamplingFrequency);
+    }
 
     public static SoundBuffer Load(Stream stream, SoundFileFormat format) => new(SoundData.Load(stream, format));
 
