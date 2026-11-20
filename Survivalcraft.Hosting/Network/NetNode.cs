@@ -1824,7 +1824,7 @@ public class NetNode
     ///     发送回调事件
     /// </summary>
     /// <param name="client"></param>
-    public void DeliveryEvent(Client? client)
+    internal void DeliveryEvent(Client? client, bool propagateBootstrapFailure = false)
     {
         if (client is not null)
         {
@@ -1841,7 +1841,14 @@ public class NetNode
         _pendingClient = null;
         AddClient(admitted);
         admitted.ConnectionPhase = ConnectionPhase.TransportConnected;
-        OnClientTransportConnected?.Invoke(admitted);
+        try { OnClientTransportConnected?.Invoke(admitted); }
+        catch (Exception error) when (!propagateBootstrapFailure && admitted.Connection is { IsInProcess: true })
+        {
+            Log.Error(error);
+            AbortClientBootstrap(admitted, LocalizedText.Literal(error.Message));
+            return;
+        }
+
         Log.Debug($"Client[{admitted.ID}]传输连接完成，开始Bootstrap");
     }
 
@@ -1870,7 +1877,20 @@ public class NetNode
             }
         }
 
-        DeliveryEvent(null);
+        DeliveryEvent(null, propagateBootstrapFailure: true);
+    }
+
+    internal void AbortClientBootstrap(Client client, LocalizedText? reason = null)
+    {
+        if (ReferenceEquals(_pendingClient, client))
+        {
+            _pendingClient = null;
+            AgreeOnPendingPeer.Clear();
+        }
+
+        try { RemoveClientImmediate(client, reason ?? LocalizedText.Empty); }
+        catch (Exception error) { Log.Error(error); }
+        finally { UnregisterClient(client); }
     }
 
     public Client AdmitInProcessPlayer(PlayerAddress address, Guid token)

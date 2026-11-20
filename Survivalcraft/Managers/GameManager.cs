@@ -350,6 +350,13 @@ public static class GameManager
 
     internal static void WaitForPendingSave() => WorldProjectPersistence.WaitForPendingSaves();
 
+    internal static Task CancelWorldLoadingAsync()
+    {
+        return Runtime?.AuthorityExecution?.Status.State == AuthorityExecutionState.Running
+            ? CloseWorldAsync()
+            : DisposeProjectAsync();
+    }
+
     public static async Task DisposeProjectAsync()
     {
         var presentation = ClientApplication.World;

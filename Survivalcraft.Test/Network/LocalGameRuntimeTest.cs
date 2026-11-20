@@ -76,6 +76,67 @@ public sealed class LocalGameRuntimeTest
         Assert.Null(client.LocalPort);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BootstrapFailureRollsBackLocalConnectionSoTheSamePlayerCanRetry(bool waitsForPeer)
+    {
+        await using var game = new GameRuntime(false, Inline);
+        Client? failedClient = null;
+        var peer = new Client(null, 2, Guid.NewGuid(), Guid.Empty);
+        await game.StartAuthorityAsync(_ =>
+            {
+                var node = WorldNetworkBinding.For(CreateProject()).RequireNode();
+                if (waitsForPeer) { node.AgreeOnPendingPeer.Add(peer.ID); }
+
+                node.OnClientTransportConnected += player =>
+                {
+                    if (failedClient != null) { return; }
+
+                    failedClient = player;
+                    throw new InvalidOperationException("Injected bootstrap failure.");
+                };
+                return node.Runtime;
+            }
+        );
+        var execution = game.AuthorityExecution!;
+        var subject = new PlayerAddress(IdentityAddress.Encode(new byte[32]));
+        var handlers = ApplicationMessageHandlers.CreatePreWorld(NodeRole.Client, true);
+        Task<NetNode> Connect() => game.ConnectLocalClientAsync(subject, Guid.NewGuid(), handlers, _ => { });
+        if (waitsForPeer)
+        {
+            var pendingClient = await Connect();
+            Assert.True(pendingClient.Server!.Connection!.IsConnected);
+            await execution.InvokeAsync(world =>
+                {
+                    WorldNetworkBinding.For(world).RequireNode().DeliveryEvent(peer);
+                    return true;
+                }
+            );
+            Assert.False(pendingClient.Server.Connection.IsConnected);
+            await game.ReleaseClientAsync();
+        }
+        else
+        {
+            var failure = await Assert.ThrowsAsync<InvalidOperationException>(Connect);
+            Assert.Equal("Injected bootstrap failure.", failure.Message);
+        }
+
+        Assert.Null(game.Client);
+        await execution.InvokeAsync(world =>
+            {
+                var node = WorldNetworkBinding.For(world).RequireNode();
+                Assert.DoesNotContain(node.Clients.Values, player => player.PlayerAddress == subject);
+                Assert.False(failedClient!.Connection!.IsConnected);
+                return true;
+            }
+        );
+
+        var client = await Connect();
+        Assert.Equal(subject, client.Self!.PlayerAddress);
+        Assert.Same(client.Runtime, game.Client);
+    }
+
     [Fact]
     public async Task LocalAdmissionStillEnforcesWorldCapacity()
     {

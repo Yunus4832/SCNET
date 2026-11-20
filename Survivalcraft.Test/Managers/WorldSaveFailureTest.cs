@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
+using Engine.Core.FileStorage;
 using Engine.Core.Logging;
 using Engine.Core.Runtime;
 
@@ -9,8 +11,11 @@ using EntitySystem.TemplatesDatabase;
 
 using Game.Managers;
 using Game.Network;
+using Game.Network.Handling;
+using Game.Screens;
 using Game.Startup;
 using Game.Subsystems;
+using Game.Widgets;
 using Game.World;
 
 using Survivalcraft.Test.Fixtures;
@@ -21,6 +26,111 @@ namespace Survivalcraft.Test.Managers;
 [Collection(ConfigFileCollection.Name)]
 public sealed class WorldSaveFailureTest
 {
+    [Fact]
+    public void LoadingCancellationSavesARunningWorldAndCanRetryAfterFailure()
+    {
+        var controller = (GameWorldController)typeof(GameManager)
+            .GetField("_worlds", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        var runtimeProperty = typeof(GameWorldController).GetProperty(nameof(GameWorldController.Runtime))!;
+        var nodeField = typeof(CommonLib).GetField("_net", BindingFlags.Static | BindingFlags.NonPublic)!;
+        var rootField = typeof(ScreensManager).GetField(
+            "<RootWidget>k__BackingField",
+            BindingFlags.Static | BindingFlags.NonPublic
+        )!;
+        var animationField = typeof(ScreensManager).GetField(
+            "_animationData",
+            BindingFlags.Static | BindingFlags.NonPublic
+        )!;
+        var previousRuntime = controller.Runtime;
+        var previousTarget = controller.LocalPlayerReturnTarget;
+        var previousNode = nodeField.GetValue(null);
+        var previousRoot = rootField.GetValue(null);
+        var previousAnimation = animationField.GetValue(null);
+        var previousScreen = ScreensManager.CurrentScreen;
+        var previousReturnScreen = ScreensManager.PreviousScreen;
+
+        var directory = Directory.CreateTempSubdirectory("scnet-cancel-loading-");
+        var root = "cancel-loading-" + Guid.NewGuid().ToString("N");
+        Storage.RegisterFileSystemRoot(root, directory.FullName);
+        var temporaryFile = Path.Combine(directory.FullName, "Project.xml.tmp");
+        Directory.CreateDirectory(temporaryFile);
+        using var frame = new FrameTestLoop();
+        using var cancellation = new CancellationTokenSource();
+        var game = new GameRuntime(false, Dispatcher.InvokeAsync);
+        var node = new NetNode(NetNodeOptions.Default, false, PackageHandlerCatalog.Empty, NodeRole.Authority);
+        var localEndpoint = new NetNode(NetNodeOptions.Default, false, PackageHandlerCatalog.Empty, NodeRole.Client);
+        WorldCatalogScope? scope = null;
+        try
+        {
+            frame.Complete(
+                game.StartAuthorityAsync(_ =>
+                    {
+                        scope = new WorldCatalogScope(node);
+                        scope.Project.AddSubsystem(
+                            new SubsystemGameInfo
+                            {
+                                WorldSettings = new WorldSettings { Name = "Loading cancellation" },
+                                DirectoryName = root + ":/"
+                            }
+                        );
+                        var lifecycle = new SubsystemWorldLifecycle();
+                        scope.Project.AddSubsystem(lifecycle);
+                        lifecycle.Load(new ValuesDictionary());
+                        return node.Runtime;
+                    }
+                )
+            );
+
+            runtimeProperty.SetValue(controller, game);
+            controller.LocalPlayerReturnTarget = LocalGameReturnTarget.WorldList;
+            nodeField.SetValue(null, localEndpoint);
+            var returnScreen = new Screen();
+            ScreensManager.CurrentScreen = null;
+            ScreensManager.PreviousScreen = returnScreen;
+            ScreensManager.RootWidget = new CanvasWidget();
+            animationField.SetValue(null, null);
+
+            // A resumed loading screen has no authority-load task of its own.
+            var screen = (GameLoadingScreen)RuntimeHelpers.GetUninitializedObject(typeof(GameLoadingScreen));
+            var fields = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(GameLoadingScreen).GetField("_loadingCancellation", fields)!.SetValue(screen, cancellation);
+            var abort = typeof(GameLoadingScreen).GetMethod("AbortLoading", fields)!;
+            var operation = typeof(GameLoadingScreen).GetField("_abortOperation", fields)!;
+
+            Task Back()
+            {
+                abort.Invoke(screen, null);
+                return (Task)operation.GetValue(screen)!;
+            }
+
+            Assert.Throws<WorldSaveException>(() => frame.Complete(Back()));
+            Assert.True(cancellation.IsCancellationRequested);
+            Assert.Same(game, controller.Runtime);
+            Assert.False(game.IsDisposed);
+            Assert.Null(ScreensManager.CurrentScreen);
+
+            Directory.Delete(temporaryFile);
+            frame.Complete(Back());
+            Assert.Null(controller.Runtime);
+            Assert.Same(returnScreen, ScreensManager.CurrentScreen);
+            Assert.True(WorldProjectPersistence.IsProjectFileValid(root + ":/Project.xml"));
+        }
+        finally
+        {
+            frame.Complete(game.DisposeAsync().AsTask());
+            localEndpoint.StopImmediate();
+            scope?.Dispose();
+            directory.Delete(true);
+            runtimeProperty.SetValue(controller, previousRuntime);
+            controller.LocalPlayerReturnTarget = previousTarget;
+            nodeField.SetValue(null, previousNode);
+            rootField.SetValue(null, previousRoot);
+            animationField.SetValue(null, previousAnimation);
+            ScreensManager.CurrentScreen = previousScreen;
+            ScreensManager.PreviousScreen = previousReturnScreen;
+        }
+    }
+
     [Theory]
     [InlineData(true, false, false, SaveTransition.Save, false)]
     [InlineData(false, true, false, SaveTransition.Save, false)]

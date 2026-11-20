@@ -147,16 +147,27 @@ public sealed class GameRuntime(
             {
                 var server = WorldNetworkBinding.For(world).RequireNode();
                 var admitted = server.AdmitInProcessPlayer(subject, admissionToken);
-                var endpoint = new NetNode(server.Options, server.ClientPresentation, handlers, NodeRole.Client);
-                var serverRecord = new Client(null, 0, Guid.NewGuid(), Guid.Empty);
-                var self = new Client(null, admitted.ID, admitted.TokenId, admitted.CharacterId)
+                NetNode? endpoint = null;
+                try
                 {
-                    PlayerAddress = subject, State = ClientState.Connected
-                };
-                endpoint.PrepareInProcessClient(serverRecord, self);
-                InProcessMessageConnection.CreatePair(server, admitted, endpoint, serverRecord);
-                server.BeginClientBootstrap(admitted);
-                return endpoint;
+                    endpoint = new NetNode(server.Options, server.ClientPresentation, handlers, NodeRole.Client);
+                    var serverRecord = new Client(null, 0, Guid.NewGuid(), Guid.Empty);
+                    var self = new Client(null, admitted.ID, admitted.TokenId, admitted.CharacterId)
+                    {
+                        PlayerAddress = subject, State = ClientState.Connected
+                    };
+                    endpoint.PrepareInProcessClient(serverRecord, self);
+                    InProcessMessageConnection.CreatePair(server, admitted, endpoint, serverRecord);
+                    server.BeginClientBootstrap(admitted);
+                    return endpoint;
+                }
+                catch
+                {
+                    try { server.AbortClientBootstrap(admitted); }
+                    finally { endpoint?.StopImmediate(); }
+
+                    throw;
+                }
             }
         ).ConfigureAwait(false);
         try

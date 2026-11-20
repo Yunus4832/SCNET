@@ -26,7 +26,7 @@ public class GameLoadingScreen : Screen
 
     private CancellationTokenSource _loadingCancellation = new();
 
-    private bool _aborting;
+    private Task? _abortOperation;
 
     private const string _typeName = nameof(GameLoadingScreen);
 
@@ -584,7 +584,7 @@ public class GameLoadingScreen : Screen
 
         try
         {
-            if (_aborting) { return; }
+            if (_loadingCancellation.IsCancellationRequested) { return; }
 
             if (_localConnection is { IsFaulted: true } failedConnection) { failedConnection.GetAwaiter().GetResult(); }
 
@@ -625,11 +625,11 @@ public class GameLoadingScreen : Screen
 
     private void AbortLoading()
     {
-        if (_aborting) { return; }
+        if (_abortOperation is { IsFaulted: false, IsCanceled: false }) { return; }
 
-        _aborting = true;
         _loadingCancellation.Cancel();
-        GameManager.ObserveApplicationTask(AbortLoadingAsync());
+        _abortOperation = AbortLoadingAsync();
+        GameManager.ObserveApplicationTask(_abortOperation);
     }
 
     private async Task AbortLoadingAsync()
@@ -638,11 +638,7 @@ public class GameLoadingScreen : Screen
         var hosted = GameManager.LocalPlayerReturnTarget == LocalGameReturnTarget.HostedWorld &&
                      GameManager.Runtime?.AuthorityExecution?.Status.Listening == true;
         if (hosted) { await GameManager.LeaveLocalPlayerAsync().ConfigureAwait(false); }
-        else if (_authorityLoad is { IsCompletedSuccessfully: true })
-        {
-            await GameManager.CloseWorldAsync().ConfigureAwait(false);
-        }
-        else { await GameManager.DisposeProjectAsync().ConfigureAwait(false); }
+        else { await GameManager.CancelWorldLoadingAsync().ConfigureAwait(false); }
 
         await Dispatcher.InvokeAsync(() =>
             {
@@ -742,7 +738,7 @@ public class GameLoadingScreen : Screen
     {
         _loadingCancellation.Dispose();
         _loadingCancellation = new CancellationTokenSource();
-        _aborting = false;
+        _abortOperation = null;
         _authorityLoad = null;
         _listenerStart = null;
         _localConnection = null;
