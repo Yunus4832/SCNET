@@ -1,7 +1,11 @@
+using Engine.Core.FileStorage;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Blocks;
+using Game.Content;
+using Game.Hosting;
 using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Handling;
@@ -224,6 +228,73 @@ public sealed class WorldProjectPersistenceTest
             await owner.DisposeAsync();
             Directory.Delete(directory, true);
         }
+    }
+
+    [Fact]
+    public async Task AssetReplacementRetryCommitsTheActiveWorldBeforeReturning()
+    {
+        var directory = Directory.CreateTempSubdirectory("scnet-replace-asset-");
+        var target = Path.Combine(directory.FullName, "world");
+        var projectFile = Path.Combine(target, "Project.xml");
+        var temporaryFile = projectFile + ".tmp";
+        try
+        {
+            await using var owner = new AuthorityWorldExecutor(
+                _ =>
+                {
+                    var project = new PersistenceProject(target);
+                    project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.BlocksTextureName = "old-key";
+                    var lifecycle = new SubsystemWorldLifecycle();
+                    project.Add(lifecycle);
+                    lifecycle.Load(new ValuesDictionary());
+                    return project.Node.Runtime;
+                },
+                false
+            );
+            await owner.Ready.WaitAsync(TimeSpan.FromSeconds(5));
+            var activity = new WorldProjectActivity();
+            var worldDirectory = await owner.InvokeAsync(world =>
+                {
+                    var path = world.Project!.FindSubsystem<SubsystemGameInfo>(true)!.DirectoryName;
+                    activity.Track(
+                        world,
+                        path,
+                        action => owner.InvokeAsync(_ =>
+                            {
+                                action();
+                                return true;
+                            }
+                        )
+                    );
+                    return path;
+                }
+            );
+            var initialSave = await owner.InvokeAsync(world => WorldProjectPersistence.For(world.Project!).SaveAsync());
+            Assert.Null((await initialSave.WaitAsync(TimeSpan.FromSeconds(5))).Failure);
+            var repository = new WorldRepository(
+                Storage.GetDirectoryName(worldDirectory),
+                [],
+                activity,
+                WorldProjectPersistence.WaitForPendingSaves
+            );
+
+            Directory.CreateDirectory(temporaryFile);
+
+            Task ReplaceAsync()
+            {
+                return repository.ReplaceAssetReferencesAsync(ContentType.BlocksTexture, "old-key", "new-key");
+            }
+
+            await Assert.ThrowsAsync<WorldSaveException>(() => ReplaceAsync().WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Contains("old-key", await File.ReadAllTextAsync(projectFile));
+
+            Directory.Delete(temporaryFile);
+            await ReplaceAsync().WaitAsync(TimeSpan.FromSeconds(5));
+            var committed = await File.ReadAllTextAsync(projectFile);
+            Assert.Contains("new-key", committed);
+            Assert.DoesNotContain("old-key", committed);
+        }
+        finally { directory.Delete(true); }
     }
 
     private sealed class ReleaseProbe(Action release) : Subsystem

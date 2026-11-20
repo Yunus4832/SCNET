@@ -251,68 +251,67 @@ public sealed class WorldRepository
             throw new ArgumentOutOfRangeException(nameof(type));
         }
 
-        var saves = new List<Task<WorldSaveOutcome>>();
+        var saves = new List<(string Directory, Task<WorldSaveOutcome> Completion)>();
         await _activity.ApplyToProjectsAsync(activeProject =>
             {
-                var changed = false;
+                var gameInfo = activeProject.FindSubsystem<SubsystemGameInfo>();
                 if (type == ContentType.BlocksTexture)
                 {
-                    var settings = activeProject.FindSubsystem<SubsystemGameInfo>()?.WorldSettings;
+                    var settings = gameInfo?.WorldSettings;
                     if (settings?.BlocksTextureName == oldAssetKey)
                     {
                         settings.BlocksTextureName = newAssetKey;
-                        changed = true;
                     }
                 }
                 else
                 {
-                    var players = activeProject.FindSubsystem<SubsystemCharacters>()?.Characters;
-                    if (players is not null)
-                    {
-                        foreach (var player in players)
-                        {
-                            if (player.CharacterSkinName == oldAssetKey)
-                            {
-                                player.CharacterSkinName = newAssetKey;
-                                changed = true;
-                            }
-                        }
-                    }
+                    activeProject.FindSubsystem<SubsystemCharacters>()?.ReplaceSkinReferences(oldAssetKey, newAssetKey);
                 }
 
-                if (changed && WorldProjectPersistence.TryGet(activeProject, out var persistence))
+                // An earlier replacement may have changed the live references without committing its save.
+                if (!string.IsNullOrEmpty(gameInfo?.DirectoryName) &&
+                    WorldProjectPersistence.TryGet(activeProject, out var persistence))
                 {
-                    saves.Add(persistence!.SaveAsync());
+                    saves.Add((Storage.GetSystemPath(gameInfo.DirectoryName), persistence!.SaveAsync()));
                 }
             }
         ).ConfigureAwait(false);
 
-        foreach (var save in saves)
+        var outcomes = await Task.WhenAll(saves.Select(save => save.Completion)).ConfigureAwait(false);
+        foreach (var outcome in outcomes)
         {
-            var outcome = await save.ConfigureAwait(false);
             if (outcome.Failure != null) { throw new WorldSaveException(outcome.WorldName, outcome.Failure); }
         }
 
-        return await Task.Run(() => ReplaceStoredAssetReferences(type, oldAssetKey, newAssetKey)).ConfigureAwait(false);
+        var savedDirectories = saves.Select(save => save.Directory).ToHashSet(
+            OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal
+        );
+        return await Task.Run(() => ReplaceStoredAssetReferences(type, oldAssetKey, newAssetKey, savedDirectories))
+            .ConfigureAwait(false);
     }
 
-    private int ReplaceStoredAssetReferences(ContentType type, string oldAssetKey, string newAssetKey)
+    private int ReplaceStoredAssetReferences(
+        ContentType type,
+        string oldAssetKey,
+        string newAssetKey,
+        HashSet<string> savedDirectories
+    )
     {
-        if (type is not (ContentType.BlocksTexture or ContentType.CharacterSkin))
-        {
-            throw new ArgumentOutOfRangeException(nameof(type));
-        }
-
         var leases = new List<IDisposable>();
+        var changes = new List<(string Project, string Temporary, string Backup)>();
         try
         {
             _waitForPendingSaves();
             var valueName = type == ContentType.BlocksTexture ? "BlockTextureName" : "CharacterSkinName";
-            var changes = new List<(string Project, string Temporary, string Backup)>();
             foreach (var worldName in Storage.ListDirectoryNames(_worldsDirectoryName))
             {
                 var directory = Storage.CombinePaths(_worldsDirectoryName, worldName);
-                if (_activity.IsDirectoryInUse(directory)) { continue; }
+                if (_activity.IsDirectoryInUse(directory))
+                {
+                    if (savedDirectories.Contains(Storage.GetSystemPath(directory))) { continue; }
+
+                    throw new InvalidOperationException("An active world has not saved its asset references.");
+                }
 
                 leases.Add(_activity.BeginFileOperation(directory));
                 var project = Storage.CombinePaths(directory, "Project.xml");
@@ -339,22 +338,19 @@ public sealed class WorldRepository
 
                 var temporary = project + $".{Guid.NewGuid():N}.temp";
                 var backup = project + $".{Guid.NewGuid():N}.backup";
+                changes.Add((project, temporary, backup));
                 using (var output = Storage.OpenFile(temporary, OpenFileMode.Create))
                 {
                     document.Save(output);
                 }
-
-                changes.Add((project, temporary, backup));
             }
 
-            var committed = new List<(string Project, string Backup)>();
             try
             {
                 foreach (var change in changes)
                 {
                     Storage.MoveFile(change.Project, change.Backup);
                     Storage.MoveFile(change.Temporary, change.Project);
-                    committed.Add((change.Project, change.Backup));
                 }
             }
             catch
@@ -367,18 +363,10 @@ public sealed class WorldRepository
                     }
                 }
 
-                foreach (var change in changes)
-                {
-                    if (Storage.FileExists(change.Temporary))
-                    {
-                        Storage.DeleteFile(change.Temporary);
-                    }
-                }
-
                 throw;
             }
 
-            foreach (var change in committed)
+            foreach (var change in changes)
             {
                 if (Storage.FileExists(change.Backup))
                 {
@@ -390,7 +378,17 @@ public sealed class WorldRepository
         }
         finally
         {
-            foreach (var lease in leases) { lease.Dispose(); }
+            try
+            {
+                foreach (var change in changes)
+                {
+                    if (Storage.FileExists(change.Temporary)) { Storage.DeleteFile(change.Temporary); }
+                }
+            }
+            finally
+            {
+                foreach (var lease in leases) { lease.Dispose(); }
+            }
         }
     }
 
@@ -462,6 +460,17 @@ public sealed class WorldRepository
                         characterInfo.CharacterSkinName =
                             XmlUtils.GetAttributeValue(xElement2, "Value", string.Empty);
                     }
+                }
+            }
+
+            var offlineCharacters = playersNode?.Elements("Values")
+                .FirstOrDefault(element => (string?)element.Attribute("Name") == "OfflineCharacters");
+            foreach (var value in offlineCharacters?.Descendants("Value") ?? [])
+            {
+                if ((string?)value.Attribute("Name") == "CharacterSkinName" &&
+                    (string?)value.Attribute("Value") is { } name)
+                {
+                    worldInfo.OfflineCharacterSkinNames.Add(name);
                 }
             }
 

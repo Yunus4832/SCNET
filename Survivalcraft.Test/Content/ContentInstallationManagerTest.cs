@@ -395,6 +395,43 @@ public sealed class ContentInstallationManagerTest : IDisposable
         Assert.Contains("Value=\"new-key\"", reader.ReadToEnd());
     }
 
+    [Fact]
+    public void WorldInfoFindsSkinReferencesInOfflineCharacters()
+    {
+        var directory = Storage.CombinePaths(GamePaths.Worlds, $"OfflineSkinTest{Guid.NewGuid():N}");
+        Storage.CreateDirectory(directory);
+        _installedWorlds.Add(directory);
+        using (var output = Storage.OpenFile(Storage.CombinePaths(directory, "Project.xml"), OpenFileMode.Create))
+        using (var writer = new StreamWriter(output))
+        {
+            writer.Write(
+                """
+                <Project>
+                  <Subsystems>
+                    <Values Name="GameInfo">
+                      <Value Name="WorldName" Type="System.String" Value="Offline skin test" />
+                    </Values>
+                    <Values Name="Characters">
+                      <Values Name="OfflineCharacters">
+                        <Values Name="Character">
+                          <Values Name="Data">
+                            <Value Name="CharacterSkinName" Type="System.String" Value="offline-skin" />
+                          </Values>
+                        </Values>
+                      </Values>
+                    </Values>
+                  </Subsystems>
+                </Project>
+                """
+            );
+        }
+
+        var world = Game.Application.ClientApplication.Worlds.GetWorldInfo(directory);
+        Assert.NotNull(world);
+        Assert.True(world.UsesCharacterSkin("offline-skin"));
+        Assert.False(world.UsesCharacterSkin("unused-skin"));
+    }
+
     [Theory]
     [InlineData(ImageFormat.Png)]
     [InlineData(ImageFormat.WebP)]

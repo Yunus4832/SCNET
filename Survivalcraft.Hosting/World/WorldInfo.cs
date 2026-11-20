@@ -10,6 +10,8 @@ public class WorldInfo
 
     public readonly List<CharacterInfo> CharacterInfos = [];
 
+    internal HashSet<string> OfflineCharacterSkinNames { get; } = new(StringComparer.Ordinal);
+
     public string ProjectFormatVersion = string.Empty;
 
     public long Size;
@@ -19,4 +21,10 @@ public class WorldInfo
     public readonly WorldHostingSettings Hosting = new();
 
     public GameMode? GameModeOverride;
+
+    public bool UsesCharacterSkin(string name)
+    {
+        return OfflineCharacterSkinNames.Contains(name) ||
+               CharacterInfos.Any(character => character.CharacterSkinName == name);
+    }
 }

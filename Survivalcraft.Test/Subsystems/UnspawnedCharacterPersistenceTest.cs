@@ -51,6 +51,7 @@ public sealed class UnspawnedCharacterPersistenceTest
             Assert.False(project.Characters.CharacterList[characterId].IsOnline);
             Assert.False(project.Characters.IsCharacterNameAvailable("BEFORESPAWN"));
             Assert.Empty(project.Characters.GetOfflineInventoryValues());
+            project.Characters.ReplaceSkinReferences("$Male1", "$Male2");
 
             using var restarted = new CharacterProject();
             var target = project;
@@ -78,6 +79,7 @@ public sealed class UnspawnedCharacterPersistenceTest
                 Assert.Equal(characterId, restored.CharacterId);
                 Assert.Equal(owner, restored.OwnerAddress);
                 Assert.Equal("BeforeSpawn", restored.Name);
+                Assert.Equal("$Male2", restored.CharacterSkinName);
                 Assert.Equal(3.5f, restored.Level);
                 Assert.Equal(-1.0, restored.FirstSpawnTime);
                 Assert.Equal("FirstUpdate", restored.CurrentState);

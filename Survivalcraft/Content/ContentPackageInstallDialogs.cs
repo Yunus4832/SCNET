@@ -210,9 +210,7 @@ public static class ContentPackageInstallDialogs
                 .Select(name => new ReplacementTarget(
                         name,
                         CharacterSkinsManager.GetDisplayName(name),
-                        ClientApplication.Worlds.WorldInfos.Count(world =>
-                            world.CharacterInfos.Any(player => player.CharacterSkinName == name)
-                        )
+                        ClientApplication.Worlds.WorldInfos.Count(world => world.UsesCharacterSkin(name))
                     )
                 )
                 .ToArray();

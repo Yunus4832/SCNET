@@ -48,7 +48,11 @@
 
 ## 内容缓存、制造与安装
 
-材质、皮肤和家具替换先写入并验证临时数据，再保留原 AssetKey 交换数据与元数据；旧 `.scbtex`、`.scskin`、`.scfurniture` 不再作为导入协议或内部资产后缀。World 覆盖使用同一 Worlds 根目录下的 staging/backup 目录完成可恢复替换；旧 World ZIP 导入/导出及嵌入内容分派已删除，`.snapshot` 只作为同一世界目录内的内部恢复制品。材质或皮肤删除前，管理界面要求为所有 World 与当前会话引用选择同类型替代资产，并以暂存 `Project.xml` 批量提交。
+材质、皮肤和家具替换先写入并验证临时数据，再保留原 AssetKey 交换数据与元数据；旧 `.scbtex`、`.scskin`、`.scfurniture` 不再作为导入协议或内部资产后缀。World 覆盖使用同一 Worlds 根目录下的 staging/backup 目录完成可恢复替换；旧 World ZIP 导入/导出及嵌入内容分派已删除，`.snapshot` 只作为同一世界目录内的内部恢复制品。
+
+删除仍被存档引用的材质或皮肤前，管理界面要求选择同类型替代资产。皮肤引用包含离线角色。
+活动世界在所属线程更新引用并等待权威保存，其余世界以暂存 `Project.xml` 批量提交。
+保存失败时保留原资产，重试仍须确认活动存档写入成功。
 
 游戏内容制造先在 `GamePaths.ContentPackageCreationTemp` 生成并通过共享 Reader 复验临时 `.scpkg`，调用方只获得可读取且可释放的临时制品。GUI 制造向导按“类型、素材、名称、语义版本、清单预览、FilePicker 保存”推进：World/FurniturePack 选择本地资产，BlocksTexture/CharacterSkin 选择并验证 PNG 流，运行中的世界不作为快照源。取消预览、取消保存或保存失败都会释放临时制品。保存制品不写入 ContentPackageCache，也不自动安装。游戏底层制造 API 支持从同类型基线包继承 Identifier，
 当前 GUI 尚未提供基线选择入口，见 [内容制造契约](Protocol/ContentCreationProtocol.md)。

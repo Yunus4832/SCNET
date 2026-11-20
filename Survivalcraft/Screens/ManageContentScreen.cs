@@ -328,9 +328,7 @@ public class ManageContentScreen : Screen
                         Type = ContentType.CharacterSkin,
                         DisplayName = CharacterSkinsManager.GetDisplayName(name),
                         CreationTime = CharacterSkinsManager.GetCreationDate(name),
-                        UseCount = ClientApplication.Worlds.WorldInfos.Count(wi =>
-                            wi.CharacterInfos.Any(pi => pi.CharacterSkinName == name)
-                        )
+                        UseCount = ClientApplication.Worlds.WorldInfos.Count(world => world.UsesCharacterSkin(name))
                     }
                 )
             );

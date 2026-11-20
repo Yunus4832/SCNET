@@ -715,6 +715,23 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         CharacterListChanged?.Invoke();
     }
 
+    public void ReplaceSkinReferences(string oldAssetKey, string newAssetKey)
+    {
+        WorldRuntimeContext.For(Project).VerifyExecutionAccess();
+        foreach (var character in _characters)
+        {
+            if (character.CharacterSkinName == oldAssetKey) { character.CharacterSkinName = newAssetKey; }
+        }
+
+        foreach (var record in _offlineCharacters.Values)
+        {
+            if (record.CharacterData.GetValue("CharacterSkinName", string.Empty) == oldAssetKey)
+            {
+                record.CharacterData.SetValue("CharacterSkinName", newAssetKey);
+            }
+        }
+    }
+
     public void RefreshCharacterList()
     {
         var entries = new Dictionary<Guid, CharacterListEntry>();
