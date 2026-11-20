@@ -22,7 +22,7 @@
         <AuthenticationProtocolPackageVersion>0.1.1</AuthenticationProtocolPackageVersion>
         <GameProtocolPackageVersion>0.1.4</GameProtocolPackageVersion>
         <GameProtocolVersion>1</GameProtocolVersion>
-        <AndroidReleaseCode>8</AndroidReleaseCode>
+        <AndroidReleaseCode>9</AndroidReleaseCode>
     </PropertyGroup>
 
 </Project>
