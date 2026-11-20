@@ -193,6 +193,26 @@ public class NetNode
         }
     }
 
+    internal bool TryQueueOwnedTerrainLighting(
+        WorldRuntimeContext source,
+        WorldConnection recipient,
+        IProtocolMessage message
+    )
+    {
+        ProtocolMessageValidation.Validate(message);
+        lock (_pendingPackages)
+        {
+            if (_isStopping ||
+                !ReferenceEquals(source, Runtime) ||
+                source.IsClosed ||
+                !recipient.IsConnected ||
+                ReferenceEquals(_logicalOverloadRuntime, source) ||
+                _logicalOverloadedRecipients.ContainsKey(recipient)) { return false; }
+
+            return _pendingPackages.TryEnqueue(new OutboundPackage(message, PackageAudience.To(recipient), source));
+        }
+    }
+
     internal void QueueTerrainFragment(
         Client client,
         WorldRuntimeContext runtime,

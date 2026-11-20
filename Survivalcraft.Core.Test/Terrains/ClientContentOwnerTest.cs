@@ -136,6 +136,11 @@ public sealed class ClientContentOwnerTest
 
         public bool CanQueueTerrainSnapshot(WorldConnection recipient) => throw new NotSupportedException();
 
+        public bool TryQueueOwnedTerrainLighting(WorldConnection recipient, IProtocolMessage message)
+        {
+            throw new NotSupportedException();
+        }
+
         public bool TryQueueOwnedTerrainSnapshot(WorldConnection recipient, TerrainSnapshotMessage message) =>
             throw new NotSupportedException();
 

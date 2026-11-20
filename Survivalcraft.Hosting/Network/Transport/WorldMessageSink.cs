@@ -90,6 +90,11 @@ internal sealed class WorldMessageSink(WorldNetworkBinding binding) : IWorldMess
     public bool TryQueueOwnedTerrainSnapshot(WorldConnection recipient, TerrainSnapshotMessage message) =>
         !binding.World.IsClosed && ChunkNode?.TryQueueOwnedTerrainSnapshot(recipient, message) == true;
 
+    public bool TryQueueOwnedTerrainLighting(WorldConnection recipient, IProtocolMessage message)
+    {
+        return ChunkNode?.TryQueueOwnedTerrainLighting(binding.World, recipient, message) == true;
+    }
+
     public void DiscardOlderChunkAllocations(WorldConnection recipient, ChunkAllocationId allocation)
     {
         ChunkNode?.DiscardOlderChunkAllocations(recipient, allocation);

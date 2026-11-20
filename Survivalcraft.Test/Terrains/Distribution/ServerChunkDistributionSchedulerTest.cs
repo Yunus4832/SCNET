@@ -41,8 +41,8 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
         var second = terrain.AllocateChunk(1, 0);
         first.HasContents = second.HasContents = true;
         var dark = new TerrainLightSnapshot(default);
-        Publish(first, dark);
-        Publish(second, dark);
+        PublishLight(terrain, first, dark);
+        PublishLight(terrain, second, dark);
         var authority = new SnapshotAuthority();
         using var scheduler = new ServerChunkDistributionScheduler(_project, authority);
         using var lighting = new ServerTerrainLightingReplication(
@@ -72,13 +72,13 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
         var source = new Point3(15, 64, 7);
         terrain.Lighting.RecordLocalBatch(source, [first, second]);
         second.DerivedRevisions.InvalidatePropagation();
-        Publish(first, lit);
+        PublishLight(terrain, first, lit);
         lighting.Update();
         Assert.Empty(outgoing);
 
-        Publish(first, dimmer);
+        PublishLight(terrain, first, dimmer);
         terrain.Lighting.RecordLocalBatch(source, [first]);
-        Publish(second, lit);
+        PublishLight(terrain, second, lit);
         terrain.Lighting.BeginRegionalPublication();
         try
         {
@@ -101,15 +101,90 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
                 dark
             ).Get(0, 64, 0).Block;
         }
+    }
 
-        void Publish(TerrainChunk chunk, TerrainLightSnapshot snapshot)
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LightBatchRetainsItsBaselinesWhenTheRecipientQueueIsFull(bool inProcess)
+    {
+        using var terrain = new Terrain();
+        var coords = new Point2[] { new(0, 0), new(1, 0), new(-1, 0), new(0, 1), new(0, -1), new(1, 1), new(1, -1) };
+        var chunks = coords.Select(point => terrain.AllocateChunk(point.X, point.Y)).ToList();
+        var dark = new TerrainLightSnapshot(default);
+        foreach (var chunk in chunks)
         {
-            var request = chunk.DerivedRevisions.Capture();
-            Assert.True(chunk.DerivedRevisions.PublishHeights(request));
-            Assert.True(chunk.DerivedRevisions.PublishLightSeed(request));
-            Assert.True(terrain.Lighting.TryPublish(chunk, terrain.Lighting.CaptureInput(chunk), snapshot));
-            Assert.True(chunk.DerivedRevisions.PublishLight(request));
+            chunk.HasContents = true;
+            PublishLight(terrain, chunk, dark);
         }
+
+        var authority = new SnapshotAuthority();
+        using var scheduler = new ServerChunkDistributionScheduler(_project, authority);
+        using var lighting = new ServerTerrainLightingReplication(
+            terrain,
+            authority,
+            scheduler,
+            WorldMessageEndpoint.For(_node.Runtime)
+        );
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.Empty);
+        _node.AddClient(client);
+        client.Connection = new ConnectedStub(inProcess);
+        scheduler.UpdateClientLocation(client, Vector2.Zero, 64);
+        var allocations = coords.Select(point => new ChunkAllocationId(point, 1)).ToArray();
+        scheduler.Enqueue(client, allocations.Select(allocation => new ChunkContentRequest(allocation)));
+        var outgoing = (PendingLogicalMessages)typeof(NetNode)
+            .GetField("_pendingPackages", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(_node)!;
+        lighting.Update();
+        lighting.Update();
+        var baselines = outgoing.Select(item => Assert.IsType<TerrainLightSectionsPackage>(item.Package))
+            .ToDictionary(baseline => baseline.Allocation, baseline => baseline.Sequence);
+        Assert.Equal(chunks.Count, baselines.Count);
+        outgoing.Clear();
+
+        var cells = new byte[TerrainLightSection.CellCount];
+        cells[0] = 15;
+        var section = TerrainLightSection.Capture(cells);
+        var lit = dark;
+        for (var index = 0; index < TerrainChunk.SlicesCount; index++) { lit = lit.WithSection(index, section); }
+
+        terrain.Lighting.RecordLocalBatch(new Point3(15, 64, 7), chunks);
+        foreach (var chunk in chunks) { PublishLight(terrain, chunk, lit); }
+
+        var filler = TerrainLightSectionsCodec.Capture(allocations[0], 1, 2, 1, lit, dark);
+        var fillerBytes = ProtocolMessageOwnership.EstimateQueueBytes(filler);
+        const long snapshotBytes =
+            128L + AuthorityChunkSnapshot.CellCount * 4L + AuthorityChunkSnapshot.ShaftCount * 8L;
+        var audience = PackageAudience.To(client);
+        while (outgoing.CanReserve(client, snapshotBytes + fillerBytes))
+        {
+            Assert.True(outgoing.TryEnqueue(new OutboundPackage(filler, audience, _node.Runtime)));
+        }
+
+        var queued = outgoing.Count;
+        Assert.True(queued > 0);
+        Assert.True(_node.CanQueueTerrainSnapshot(client));
+        lighting.Update();
+        Assert.True(client.IsConnected);
+        Assert.True(_node.CanQueueTerrainSnapshot(client));
+        Assert.Equal(queued, outgoing.Count);
+
+        outgoing.Clear();
+        lighting.Update();
+        var batch = Assert.IsType<TerrainLightBatchPackage>(Assert.Single(outgoing).Package);
+        Assert.Equal(chunks.Count, batch.Updates.Length);
+        Assert.All(batch.Updates, update => Assert.Equal(baselines[update.Allocation], update.BaseSequence));
+        outgoing.Clear();
+        lighting.Update();
+        Assert.Empty(outgoing);
+    }
+
+    private static void PublishLight(Terrain terrain, TerrainChunk chunk, TerrainLightSnapshot snapshot)
+    {
+        var request = chunk.DerivedRevisions.Capture();
+        Assert.True(chunk.DerivedRevisions.PublishHeights(request));
+        Assert.True(chunk.DerivedRevisions.PublishLightSeed(request));
+        Assert.True(terrain.Lighting.TryPublish(chunk, terrain.Lighting.CaptureInput(chunk), snapshot));
+        Assert.True(chunk.DerivedRevisions.PublishLight(request));
     }
 
     [Theory]

@@ -87,7 +87,7 @@ internal sealed class ServerTerrainLightingReplication : IDisposable
                          )
                      ))
             {
-                if (sent >= _updatesPerClientTick || !_messages.CanQueueTerrainSnapshot(client)) { break; }
+                if (sent >= _updatesPerClientTick) { break; }
 
                 var epoch = _terrain.Lighting.RegionalPublicationEpoch;
                 if ((epoch & 1) != 0) { break; }
@@ -109,12 +109,13 @@ internal sealed class ServerTerrainLightingReplication : IDisposable
                         continue;
                     }
 
+                    if (updates.Length == 0) { continue; }
+
                     // A whole batch may use the remaining budget and end this client's send pass.
-                    if (updates.Length > 1)
-                    {
-                        _messages.Send(new TerrainLightBatchPackage { Updates = updates }, PackageAudience.To(client));
-                    }
-                    else if (updates.Length == 1) { _messages.Send(updates[0], PackageAudience.To(client)); }
+                    var message = updates.Length == 1
+                        ? (IProtocolMessage)updates[0]
+                        : new TerrainLightBatchPackage { Updates = updates };
+                    if (!_messages.TryQueueOwnedTerrainLighting(client, message)) { break; }
 
                     foreach (var next in nextCursors) { cursors[next.Allocation.Coords] = next; }
 
@@ -124,7 +125,8 @@ internal sealed class ServerTerrainLightingReplication : IDisposable
 
                 if (_terrain.Lighting.RegionalPublicationEpoch != epoch) { continue; }
 
-                _messages.Send(update, PackageAudience.To(client));
+                if (!_messages.TryQueueOwnedTerrainLighting(client, update)) { break; }
+
                 cursors[allocation.Coords] = cursor;
                 sent++;
             }

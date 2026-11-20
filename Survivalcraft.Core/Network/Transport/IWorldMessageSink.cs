@@ -17,6 +17,9 @@ public interface IWorldMessageSink
     /// <summary>True transfers the owned snapshot; false leaves its ownership with the caller.</summary>
     bool TryQueueOwnedTerrainSnapshot(WorldConnection recipient, TerrainSnapshotMessage message);
 
+    /// <summary>Transfers an owned light update or batch when the recipient queue has capacity.</summary>
+    bool TryQueueOwnedTerrainLighting(WorldConnection recipient, IProtocolMessage message);
+
     void DiscardOlderChunkAllocations(WorldConnection recipient, ChunkAllocationId allocation);
 
     void TrimChunkDelivery(WorldConnection recipient, Vector2 center, float distance);
