@@ -45,10 +45,10 @@
 - [服务器源协议](Protocol/ServerSourceProtocol.md)：只读目录契约，与临时 P2P 房间发现分离。
 
 内容工具和示例入口见 [Content.Packaging](../Content.Packaging/README.md)、
-[ContentTool](../ContentTool/README.md)、[模组模板包](../Survivalcraft.ModTemplate/README.md)、
+[ContentTool](../Tools/ContentTool/README.md)、[模组模板包](../Survivalcraft.ModTemplate/README.md)、
 [生成的模组模板](../Survivalcraft.ModTemplate/Survivalcraft.Mod/README.md)及
 [BeaconMod 示例](../Mods/Beacon/README.md)。模型测试样本来源见
-[模型测试资产](../Engine.Test/TestAssets/Models/README.md)。
+[模型测试资产](../Tests/Engine.Test/TestAssets/Models/README.md)。
 
 ## 服务与部署
 
@@ -56,17 +56,17 @@
 - [ContentServer HTTP API](ContentServerApi.md)：端点、认证、初始化及投稿格式。
 - [ContentServer 部署](ContentServerDeployment.md)：配置、持久化、反向代理和容器。
 - [信令服务部署](RendezvousDeployment.md)：HTTPS、UDP、中继端口与部署配置。
-- [参考认证服务](../Authentication.Server/README.md)：账号哈希、持久化、反向代理、便携及容器部署。
-- [Web 工作台](../ContentWebUI/README.md)：前端开发、后端地址及跨域设置。
+- [参考认证服务](../Services/Authentication/Authentication.Server/README.md)：账号哈希、持久化、反向代理、便携及容器部署。
+- [Web 工作台](../Services/Content/ContentWebUI/README.md)：前端开发、后端地址及跨域设置。
 
 ## 测试与工具
 
 - [自动化接口](Automation.md)：游戏调试、界面查询和控制接口。
 - [网络测试](NetworkTesting.md)：传输验证、弱网与容量测试的范围划分。
 - [容量测试](ServerLoadTesting.md)：协议客户端、负载场景和结果解释。
-- [NetworkProbe](../NetworkProbe/README.md)：传输层探针命令与参数。
-- [UI 预览工具](../UiPreviewTool/README.md)：独立组件渲染、语言与尺寸预览、布局报告及最小运行环境验证。
-- [GUI 图集工具](../GuiAtlasTool/README.md)：源资源、生成及 Alpha 处理。
+- [NetworkProbe](../Tools/NetworkProbe/README.md)：传输层探针命令与参数。
+- [UI 预览工具](../Tools/UiPreviewTool/README.md)：独立组件渲染、语言与尺寸预览、布局报告及最小运行环境验证。
+- [GUI 图集工具](../Tools/GuiAtlasTool/README.md)：源资源、生成及 Alpha 处理。
 
 ## 文档维护
 
@@ -74,7 +74,7 @@
 部署文档使用示例地址和占位值，实际机器信息与凭据不进入仓库。修改行为时同步维护其所属文档，
 其他页面通过链接引用，避免复制多份完整操作说明。
 
-游戏内帮助位于 `Content/Assets/Lang/*.json` 的 `Help` 节点，使用 LanguageTool 同步维护四种语言。
+游戏内帮助位于 `Assets/Lang/*.json` 的 `Help` 节点，使用 LanguageTool 同步维护四种语言。
 `Name` 是运行时主题标识，不能翻译；`Title` 和 `value` 是显示文字。键盘、手柄主题打开对应的帮助对话框，
 `About` 主题正文由运行程序集动态生成。帮助列表自动读取主题，免责声明排在最后，数字键无需连续。
 用户操作变化时应同时核对这些帮助内容；Markdown 检查不覆盖语言资源。

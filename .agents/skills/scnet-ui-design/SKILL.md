@@ -24,7 +24,7 @@ Preserve a coherent game UI across desktop, Android, window resizing, and locali
 
 ## Visual validation
 
-Use the maintained `UiPreviewTool` rather than recreating window, graphics, font, atlas, and screenshot bootstrap code. The tool provides rendering and basic layout checks; this skill provides scenario selection and visual judgment. Its CLI and factory contract are documented in [UiPreviewTool](../../../UiPreviewTool/README.md).
+Use the maintained `UiPreviewTool` rather than recreating window, graphics, font, atlas, and screenshot bootstrap code. The tool provides rendering and basic layout checks; this skill provides scenario selection and visual judgment. Its CLI and factory contract are documented in [UiPreviewTool](../../../Tools/UiPreviewTool/README.md).
 
 Choose checks proportional to the change. A successful screenshot or exit code does not prove interaction correctness. State which data was fixture-built and which behavior was actually exercised.
 

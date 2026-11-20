@@ -50,7 +50,7 @@ payload/assets/<mod-id>/**
 
 图像资产使用普通直通 Alpha，默认采用无损 WebP，也支持 PNG。默认内容查找优先选择 WebP。
 `Image` 保留原始像素；`Texture2D.Load` 在上传 GPU 前由 CPU 预乘，不修改输入图片，资源作者无需预乘。
-GUI 图集也输出直通 Alpha 的 WebP，约定见 [图集工具](../GuiAtlasTool/README.md)。
+GUI 图集也输出直通 Alpha 的 WebP，约定见 [图集工具](../Tools/GuiAtlasTool/README.md)。
 自定义着色器应使用预乘纹理的混合约定；对纹理数据的底层指针或数组上传仍由图形调用方保证 GPU 像素表示。
 
 模板的规则项目引用 `SCNET.Survivalcraft.Core` 和 `SCNET.Survivalcraft.Hosting`。客户端项目引用规则项目、`SCNET.Survivalcraft.Client`，并私有引用 `SCNET.ContentTool`。
@@ -66,6 +66,8 @@ dotnet build Mods/TerritoryStone/TerritoryStone.slnx
 ```
 
 产物分别位于对应 `.Client/bin/<Configuration>/<TargetFramework>/packages/`。
+通过仓库发布脚本选择 `BeaconMod.Client` 或 `TerritoryStoneMod.Client`，可将 `.scpkg` 输出到 `Publish/Mods/`。
+
 只构建 `BeaconMod` 或 `TerritoryStoneMod` 规则项目不再产包。本地开发前仍需准备
 `Publish/NuGet` 中的当前 SDK 与工具包；没有改成相对路径导入构建 Target。
 模板默认生成同样的双项目结构及客户端内容入口。

@@ -13,7 +13,7 @@ for retained outputs. Use `scnet-network-stability` for capacity criteria or imp
 
 1. Confirm that the target is an authorized, disposable test server. This tool creates players and
    generates terrain; a request to benchmark does not authorize stressing an unrelated deployment.
-2. Build `ServerLoadTool` and run `dotnet test ServerLoadTool.Test`. Reuse evidence while code is unchanged.
+2. Build `ServerLoadTool` and run `dotnet test Tests/ServerLoadTool.Test/`. Reuse evidence while code is unchanged.
 3. Start an isolated unmodded Creative server with fixed terrain/seed and explicit ports. Record build,
    world, hardware and whether terrain was already generated. Do not change the game runtime modes.
 4. Keep a real GUI canary for user-visible behavior. Begin with one load client and confirm Playing
@@ -21,7 +21,7 @@ for retained outputs. Use `scnet-network-stability` for capacity criteria or imp
 5. Run a bounded workload, for example:
 
 ```bash
-dotnet run --project ServerLoadTool --no-build -- \
+dotnet run --project Tools/ServerLoadTool --no-build -- \
   --host 127.0.0.1 --port 31987 --clients 4 --workload shared \
   --ramp 1 --warmup 10 --duration 30 --visibility 32 --seed 1 \
   --output .agent-work/load-test/artifacts/shared-4

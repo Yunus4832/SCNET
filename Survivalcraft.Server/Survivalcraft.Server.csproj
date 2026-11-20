@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="Content.zip" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
+        <None Include="Assets.zip" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
               ExcludeFromSingleFile="true"/>
         <None Include="../ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt" CopyToPublishDirectory="PreserveNewest"
               ExcludeFromSingleFile="true"/>

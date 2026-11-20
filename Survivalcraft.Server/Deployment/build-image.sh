@@ -36,7 +36,7 @@ container_command=("$engine")
 if [[ "$engine" == podman ]] && command -v fuse-overlayfs >/dev/null 2>&1; then
     container_command+=(--storage-opt "overlay.mount_program=$(command -v fuse-overlayfs)")
 fi
-for file in Survivalcraft.Server Content.zip; do
+for file in Survivalcraft.Server Assets.zip; do
     [[ -f "$publish_dir/$file" ]] || { echo "Missing publish output: $file" >&2; exit 1; }
 done
 

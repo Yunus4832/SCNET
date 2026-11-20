@@ -109,7 +109,7 @@ Writer 必须用 UTF-8 无 BOM、两空格缩进、LF 换行和上表字段顺�
 
 公开的逐字节测试向量位于 [PackageHashVectors.json](./PackageHashVectors.json)，其他语言实现必须得到其中记录的
 `packageHash`，不能仅以同一实现内 Writer/Reader 结果相等作为互操作证据。
-可由 Writer 直接打包的最小 Mod 黄金源位于 `Content.Packaging.Test/Assets/GoldenMod/`，其固定 PackageHash 为
+可由 Writer 直接打包的最小 Mod 黄金源位于 `Tests/Content.Packaging.Test/Assets/GoldenMod/`，其固定 PackageHash 为
 `31e5363e2ad6ec1e3e934fae5995be26066d286d2cc8fe041db90759803ca831`。测试程序集还固定了五类最小逻辑包的 manifest、payload
 字节和预期 PackageHash，任何协议实现变更都必须显式更新并审查这些值，不能由测试在运行时自行接受新 hash。
 
@@ -285,13 +285,13 @@ World 安装默认创建新世界。高级替换必须确认目标未运行、�
 
 ## 9. ContentTool
 
-`ContentTool` 位于 `ContentTool/`，只引用 `Content.Packaging`，不依赖游戏运行时或 ContentServer。它是开发、CI 和
+`ContentTool` 位于 `Tools/ContentTool/`，只引用 `Content.Packaging`，不依赖游戏运行时或 ContentServer。它是开发、CI 和
 仓库诊断调用统一 Reader 的最小入口：
 
 ```bash
-dotnet run --project ContentTool/ContentTool.csproj -- inspect path/to/package.scpkg
-dotnet run --project ContentTool/ContentTool.csproj -- verify path/to/package.scpkg
-dotnet run --project ContentTool/ContentTool.csproj -- pack manifest.json path/to/payload output.scpkg
+dotnet run --project Tools/ContentTool/ContentTool.csproj -- inspect path/to/package.scpkg
+dotnet run --project Tools/ContentTool/ContentTool.csproj -- verify path/to/package.scpkg
+dotnet run --project Tools/ContentTool/ContentTool.csproj -- pack manifest.json path/to/payload output.scpkg
 ```
 
 `inspect` 输出公共 manifest 和 `PackageHash`；`verify` 只在完整 ZIP、manifest、payload 布局和逻辑 hash 验证通过时返回

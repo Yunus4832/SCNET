@@ -11,7 +11,7 @@ Agent maintenance tools under this skill, not user-facing commands or probe rele
 Do not port the helpers to Windows merely to complete a routine probe investigation; use an
 authorized Linux host, or report that the requested experiment cannot run in the available environment.
 
-Read [NetworkProbe/README.md](../../../NetworkProbe/README.md) for the native .NET probe contract.
+Read [Tools/NetworkProbe/README.md](../../../Tools/NetworkProbe/README.md) for the native .NET probe contract.
 Read [references/experiments.md](references/experiments.md) only for the selected local, NAT,
 address-family, MTU or loss experiment. Use `scnet-agent-workspace` for retained evidence under
 `.agent-work/<task-id>/artifacts/<run-id>/`.

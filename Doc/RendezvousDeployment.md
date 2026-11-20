@@ -9,7 +9,7 @@ IP/DNS 直连和 LAN 发现继续使用现有游戏监听端口。
 通过仓库脚本创建发行物：
 
 ```bash
-./Scripts/publish.sh --project RendezvousServer --project NetworkProbe
+./Scripts/publish.sh --project Services/Signaling/RendezvousServer --project NetworkProbe
 ```
 
 PowerShell 对应命令：
@@ -35,7 +35,7 @@ Windows 同样在解压目录执行 `dotnet RendezvousServer.dll`。不需要数
 开发阶段直接运行源码：
 
 ```bash
-dotnet run --project RendezvousServer -- --urls http://127.0.0.1:31991
+dotnet run --project Services/Signaling/RendezvousServer -- --urls http://127.0.0.1:31991
 ```
 
 loopback 控制地址允许 HTTP。公网控制地址必须使用 HTTPS，客户端拒绝带凭据、查询或片段的控制 URI。
@@ -171,7 +171,7 @@ UDP 请求未收到应答报告 `UdpUnavailable`；中继探测未收到应答�
 验证应区分传输探针、隔离拓扑、实际游戏与真实跨网环境。loopback、模拟 NAT 或某个运营商的
 一次成功均不能证明任意网络可达。实际验证记录需保留构建、拓扑、连接 Path 和 AddressFamily；
 网络切换后应按断开与重新协商验证，不承诺无缝迁移。测试范围与方法见
-[网络测试](NetworkTesting.md)及 [NetworkProbe](../NetworkProbe/README.md)。
+[网络测试](NetworkTesting.md)及 [NetworkProbe](../Tools/NetworkProbe/README.md)。
 
 IPv4 信令服务可以交换两端的 IPv6 候选，信令服务器本身无需具备 IPv6 地址；两端仍需具有
 可达的 IPv6 和允许 UDP 的网络。严格 IPv4 NAT 下可尝试支持 IPv6 的蜂窝网络，但不能保证成功。

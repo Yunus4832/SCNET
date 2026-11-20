@@ -38,11 +38,11 @@ API 接受 `Stream`，调用方负责打开文件和解析游戏存储路径。�
 NAudio、NLayer、NVorbis 和 SharpGLTF.Core；图像原生库由独立的原生资产包提供。
 
 原生图像库的版本、来源及重编译步骤见
-[Native.ImageCodecs](https://gitee.com/Yunus0712/scnet/blob/main/Native.ImageCodecs/README.md)。
+[Native.ImageCodecs](https://gitee.com/Yunus0712/scnet/blob/main/Native/ImageCodecs/README.md)。
 
 ## 分发
 
-原生库集中位于 `../Native.ImageCodecs/runtimes/<rid>/native`，由 `SCNET.Native.ImageCodecs`
+原生库集中位于 `../Native/ImageCodecs/runtimes/<rid>/native`，由 `SCNET.Native.ImageCodecs`
 按标准 RID 资产打包。Media 通过 PackageReference 依赖该包；源码项目引用和 NuGet 消费
 都能传递原生依赖，应用无需导入复制 props。
 

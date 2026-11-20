@@ -52,9 +52,9 @@ if not original or os.readlink("/proc/self/ns/net") == original:
     raise SystemExit("Refusing to modify host networking; use nat-lab.sh")
 root = Path(__file__).resolve().parents[4]
 binaries = {
-    "probe": (args.probe_dir or root / "NetworkProbe/bin/Debug/net10.0").resolve(),
+    "probe": (args.probe_dir or root / "Tools/NetworkProbe/bin/Debug/net10.0").resolve(),
     "signal": (
-        args.server_dir or root / "RendezvousServer/bin/Debug/net10.0"
+        args.server_dir or root / "Services/Signaling/RendezvousServer/bin/Debug/net10.0"
     ).resolve(),
 }
 for role, dll in [("probe", "NetworkProbe.dll"), ("signal", "RendezvousServer.dll")]:

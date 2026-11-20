@@ -65,12 +65,12 @@ def main():
     parser.add_argument(
         "--probe",
         type=Path,
-        default=root / "NetworkProbe/bin/Debug/net10.0/NetworkProbe.dll",
+        default=root / "Tools/NetworkProbe/bin/Debug/net10.0/NetworkProbe.dll",
     )
     parser.add_argument(
         "--server",
         type=Path,
-        default=root / "RendezvousServer/bin/Debug/net10.0/RendezvousServer.dll",
+        default=root / "Services/Signaling/RendezvousServer/bin/Debug/net10.0/RendezvousServer.dll",
     )
     options = parser.parse_args()
     if options.blocked_beacon_family and (not options.isolated or options.family != "dual"):

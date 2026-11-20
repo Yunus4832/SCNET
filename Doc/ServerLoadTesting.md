@@ -32,8 +32,8 @@ Survivalcraft.Server/bin/Debug/net10.0/linux-x64/Survivalcraft.Server \
 普通构建与运行：
 
 ```bash
-dotnet build ServerLoadTool
-dotnet run --project ServerLoadTool --no-build -- \
+dotnet build Tools/ServerLoadTool
+dotnet run --project Tools/ServerLoadTool --no-build -- \
   --host 127.0.0.1 --port 31987 --clients 4 \
   --workload shared --ramp 1 --warmup 10 --duration 30 \
   --visibility 32 --seed 1 --output artifacts/load-test/shared-4

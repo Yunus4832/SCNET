@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(ContentToolVersion)</Version>
+        <OutputType>Exe</OutputType>
+        <UseAppHost>false</UseAppHost>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>SCNET.ContentTool</AssemblyName>
+        <RootNamespace>Scnet.ContentTool</RootNamespace>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.ContentTool</PackageId>
+        <Description>SCNET content package command-line and Mod build tooling.</Description>
+        <PackageTags>scnet;content;modding;build</PackageTags>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../Content.Packaging/Content.Packaging.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="SCNET.ContentTool.targets" Pack="true" PackagePath="build/SCNET.ContentTool.targets"/>
+        <None Update="README.md" Pack="true" PackagePath="/"/>
+        <None Include="../../ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt"
+              Pack="false"
+              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
+    </ItemGroup>
+
+    <PropertyGroup>
+        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeContentToolRuntimeFiles</TargetsForTfmSpecificContentInPackage>
+    </PropertyGroup>
+
+    <Target Name="IncludeContentToolRuntimeFiles">
+        <ItemGroup>
+            <TfmSpecificPackageFile Include="$(TargetDir)**/*" Exclude="$(TargetDir)**/*.pdb"
+                                    PackagePath="tools/$(TargetFramework)/any/%(RecursiveDir)%(Filename)%(Extension)"/>
+        </ItemGroup>
+    </Target>
+
+</Project>

@@ -2,7 +2,7 @@
 
 ## Screen structure
 
-Start from the shared styles in `Content/Assets/Styles`:
+Start from the shared styles in `Assets/Styles`:
 
 - `ScreenContentArea` for the primary content container.
 - `ScreenDescriptionArea` for compact explanatory text near the bottom.

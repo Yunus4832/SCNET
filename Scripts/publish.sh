@@ -14,6 +14,8 @@ publish_content_server=false
 publish_rendezvous_server=false
 publish_authentication_server=false
 publish_network_probe=false
+publish_beacon=false
+publish_territory_stone=false
 additional_arguments=()
 
 select_project() {
@@ -28,6 +30,8 @@ select_project() {
         RendezvousServer) publish_rendezvous_server=true ;;
         Authentication.Server) publish_authentication_server=true ;;
         NetworkProbe) publish_network_probe=true ;;
+        BeaconMod.Client) publish_beacon=true ;;
+        TerritoryStoneMod.Client) publish_territory_stone=true ;;
         *) echo "Unknown project: $1" >&2; exit 2 ;;
     esac
 }
@@ -81,22 +85,34 @@ fi
 
 if ! $selected || $publish_content_server; then
     echo "[SCNET Publish] Publishing ContentServer"
-    dotnet publish "ContentServer/ContentServer.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+    dotnet publish "Services/Content/ContentServer/ContentServer.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $publish_rendezvous_server; then
     echo "[SCNET Publish] Publishing RendezvousServer (portable ZIP and container bundle on Linux)"
-    dotnet publish "RendezvousServer/RendezvousServer.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+    dotnet publish "Services/Signaling/RendezvousServer/RendezvousServer.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $publish_authentication_server; then
     echo "[SCNET Publish] Publishing Authentication.Server (portable ZIP and container bundle on Linux)"
-    dotnet publish "Authentication.Server/Authentication.Server.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+    dotnet publish "Services/Authentication/Authentication.Server/Authentication.Server.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $publish_network_probe; then
     echo "[SCNET Publish] Publishing NetworkProbe"
-    dotnet publish "NetworkProbe/NetworkProbe.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+    dotnet publish "Tools/NetworkProbe/NetworkProbe.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+fi
+
+if ! $selected || $publish_beacon; then
+    echo "[SCNET Publish] Packaging BeaconMod.Client"
+    dotnet build "Mods/Beacon/BeaconMod.Client/BeaconMod.Client.csproj" --configuration "$configuration" "${additional_arguments[@]}" \
+        -p:SurvivalcraftModPackageDirectory="$repository_root/Publish/Mods"
+fi
+
+if ! $selected || $publish_territory_stone; then
+    echo "[SCNET Publish] Packaging TerritoryStoneMod.Client"
+    dotnet build "Mods/TerritoryStone/TerritoryStoneMod.Client/TerritoryStoneMod.Client.csproj" --configuration "$configuration" "${additional_arguments[@]}" \
+        -p:SurvivalcraftModPackageDirectory="$repository_root/Publish/Mods"
 fi
 
 echo "[SCNET Publish] Requested projects published successfully."

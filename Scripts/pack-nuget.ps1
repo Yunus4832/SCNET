@@ -14,19 +14,19 @@ try {
     New-Item -ItemType Directory -Path "Publish/NuGet" -Force | Out-Null
     if ($Project.Count -eq 0 -or $Project -contains "Native.ImageCodecs") {
         Write-Host "[SCNET Pack] Packing SCNET.Native.ImageCodecs"
-        & dotnet pack "Native.ImageCodecs/Native.ImageCodecs.csproj" --configuration $Configuration @AdditionalArguments
+        & dotnet pack "Native/ImageCodecs/Native.ImageCodecs.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Native.ImageCodecs failed with exit code $LASTEXITCODE." }
     }
 
     if ($Project.Count -eq 0 -or $Project -contains "Native.OpenAL") {
         Write-Host "[SCNET Pack] Packing SCNET.Native.OpenAL"
-        & dotnet pack "Native.OpenAL/Native.OpenAL.csproj" --configuration $Configuration @AdditionalArguments
+        & dotnet pack "Native/OpenAL/Native.OpenAL.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Native.OpenAL failed with exit code $LASTEXITCODE." }
     }
 
     if ($Project.Count -eq 0 -or $Project -contains "Native.SDL") {
         Write-Host "[SCNET Pack] Packing SCNET.Native.SDL"
-        & dotnet pack "Native.SDL/Native.SDL.csproj" --configuration $Configuration @AdditionalArguments
+        & dotnet pack "Native/SDL/Native.SDL.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Native.SDL failed with exit code $LASTEXITCODE." }
     }
 
@@ -80,7 +80,7 @@ try {
 
     if ($Project.Count -eq 0 -or $Project -contains "ContentTool") {
         Write-Host "[SCNET Pack] Packing SCNET.ContentTool"
-        & dotnet pack "ContentTool/ContentTool.csproj" --configuration $Configuration @AdditionalArguments
+        & dotnet pack "Tools/ContentTool/ContentTool.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.ContentTool failed with exit code $LASTEXITCODE." }
     }
 

@@ -11,7 +11,7 @@ GUI Client -> NetworkDamageTool -> 独立服务器 Server
 基本用法：
 
 ```bash
-dotnet run --project NetworkDamageTool -- run \
+dotnet run --project Tools/NetworkDamageTool -- run \
   --listen 127.0.0.1:28989 \
   --target 127.0.0.1:28987 \
   --seed 12345 \

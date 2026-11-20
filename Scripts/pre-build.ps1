@@ -9,9 +9,9 @@ Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
     New-Item -ItemType Directory -Path "Publish/NuGet" -Force | Out-Null
     $packages = @(
-        @{ Id = "SCNET.Native.ImageCodecs"; Project = "Native.ImageCodecs/Native.ImageCodecs.csproj" },
-        @{ Id = "SCNET.Native.OpenAL"; Project = "Native.OpenAL/Native.OpenAL.csproj" },
-        @{ Id = "SCNET.Native.SDL"; Project = "Native.SDL/Native.SDL.csproj" },
+        @{ Id = "SCNET.Native.ImageCodecs"; Project = "Native/ImageCodecs/Native.ImageCodecs.csproj" },
+        @{ Id = "SCNET.Native.OpenAL"; Project = "Native/OpenAL/Native.OpenAL.csproj" },
+        @{ Id = "SCNET.Native.SDL"; Project = "Native/SDL/Native.SDL.csproj" },
         @{ Id = "SCNET.Engine.Core"; Project = "Engine.Core/Engine.Core.csproj" },
         @{ Id = "SCNET.Engine.Media"; Project = "Engine.Media/Engine.Media.csproj" },
         @{ Id = "SCNET.Rendezvous.Protocol"; Project = "Rendezvous.Protocol/Rendezvous.Protocol.csproj" },
@@ -20,7 +20,7 @@ try {
         @{ Id = "SCNET.EntitySystem"; Project = "EntitySystem/EntitySystem.csproj" },
         @{ Id = "SCNET.Content.Packaging"; Project = "Content.Packaging/Content.Packaging.csproj" },
         @{ Id = "SCNET.ServerSource.Protocol"; Project = "ServerSource.Protocol/ServerSource.Protocol.csproj" },
-        @{ Id = "SCNET.ContentTool"; Project = "ContentTool/ContentTool.csproj" },
+        @{ Id = "SCNET.ContentTool"; Project = "Tools/ContentTool/ContentTool.csproj" },
         @{ Id = "SCNET.Authentication.Protocol"; Project = "Authentication.Protocol/Authentication.Protocol.csproj" },
         @{ Id = "SCNET.Game.Protocol"; Project = "Game.Protocol/Game.Protocol.csproj" },
         @{ Id = "SCNET.Survivalcraft.Core"; Project = "Survivalcraft.Core/Survivalcraft.Core.csproj" },
@@ -57,6 +57,10 @@ try {
     }
     & dotnet restore SCNET.slnx --force
     if ($LASTEXITCODE -ne 0) { throw "Solution restore failed with exit code $LASTEXITCODE." }
+    foreach ($solution in @("Services/Signaling/Signaling.slnx", "Services/Content/Content.slnx", "Services/Authentication/Authentication.slnx")) {
+        & dotnet restore $solution --force
+        if ($LASTEXITCODE -ne 0) { throw "Service solution restore failed for $solution with exit code $LASTEXITCODE." }
+    }
     Write-Host "[SCNET Pre-build] Dependencies are ready. Run dotnet build or build in your IDE."
 }
 finally {

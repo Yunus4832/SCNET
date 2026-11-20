@@ -13,9 +13,9 @@ done
 cd "$repository_root"
 mkdir -p Publish/NuGet
 packages=(
-    "SCNET.Native.ImageCodecs|Native.ImageCodecs/Native.ImageCodecs.csproj"
-    "SCNET.Native.OpenAL|Native.OpenAL/Native.OpenAL.csproj"
-    "SCNET.Native.SDL|Native.SDL/Native.SDL.csproj"
+    "SCNET.Native.ImageCodecs|Native/ImageCodecs/Native.ImageCodecs.csproj"
+    "SCNET.Native.OpenAL|Native/OpenAL/Native.OpenAL.csproj"
+    "SCNET.Native.SDL|Native/SDL/Native.SDL.csproj"
     "SCNET.Engine.Core|Engine.Core/Engine.Core.csproj"
     "SCNET.Engine.Media|Engine.Media/Engine.Media.csproj"
     "SCNET.Rendezvous.Protocol|Rendezvous.Protocol/Rendezvous.Protocol.csproj"
@@ -24,7 +24,7 @@ packages=(
     "SCNET.EntitySystem|EntitySystem/EntitySystem.csproj"
     "SCNET.Content.Packaging|Content.Packaging/Content.Packaging.csproj"
     "SCNET.ServerSource.Protocol|ServerSource.Protocol/ServerSource.Protocol.csproj"
-    "SCNET.ContentTool|ContentTool/ContentTool.csproj"
+    "SCNET.ContentTool|Tools/ContentTool/ContentTool.csproj"
     "SCNET.Authentication.Protocol|Authentication.Protocol/Authentication.Protocol.csproj"
     "SCNET.Game.Protocol|Game.Protocol/Game.Protocol.csproj"
     "SCNET.Survivalcraft.Core|Survivalcraft.Core/Survivalcraft.Core.csproj"
@@ -61,4 +61,7 @@ if [[ "$needs_pack" == true ]]; then
     clear_prepared_package_cache
 fi
 dotnet restore SCNET.slnx --force
+dotnet restore Services/Signaling/Signaling.slnx --force
+dotnet restore Services/Content/Content.slnx --force
+dotnet restore Services/Authentication/Authentication.slnx --force
 echo "[SCNET Pre-build] Dependencies are ready. Run dotnet build or build in your IDE."

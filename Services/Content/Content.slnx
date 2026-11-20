@@ -1,0 +1,7 @@
+<Solution>
+    <Project Path="ContentServer/ContentServer.csproj"/>
+    <Project Path="ContentWebUI/ContentWebUI.esproj"/>
+    <Project Path="ContentServer.Test/ContentServer.Test.csproj">
+        <Build Solution="Release|*" Project="false"/>
+    </Project>
+</Solution>

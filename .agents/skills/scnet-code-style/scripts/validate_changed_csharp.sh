@@ -27,7 +27,7 @@ fi
 echo "Validating ${#existing_files[@]} changed C# file(s)."
 dotnet run --file .agents/skills/scnet-code-style/scripts/check_explicit_enum_values.cs -- "${existing_files[@]}"
 bash .agents/skills/scnet-code-style/scripts/validate_jetbrains_format.sh "${existing_files[@]}"
-for solution in SCNET.slnx Mods/Beacon/Beacon.slnx Mods/TerritoryStone/TerritoryStone.slnx; do
+for solution in SCNET.slnx Services/Signaling/Signaling.slnx Services/Content/Content.slnx Services/Authentication/Authentication.slnx Mods/Beacon/Beacon.slnx Mods/TerritoryStone/TerritoryStone.slnx; do
     echo "Verifying C# style in $solution"
     dotnet format "$solution" style --verify-no-changes --no-restore --include "${existing_files[@]}"
 done

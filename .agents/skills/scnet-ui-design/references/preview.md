@@ -6,7 +6,7 @@ Use `UiPreviewTool` for layout, localization, clipping, visual state, and scalin
 
 The shared engineering method is: use production rendering, construct explicit repeatable inputs, inspect observable output, assert the relevant invariants, and state the evidence boundary. Shader tests follow the same method but require geometry, camera, depth, and pixel assertions; do not expand this UI workflow into a general shader test framework.
 
-Read [the tool README](../../../../UiPreviewTool/README.md) for the canonical CLI, scenario interface, output schema, and platform requirements. The tool briefly opens a real graphics window; PNG output is offscreen, but a usable desktop graphics environment is still required.
+Read [the tool README](../../../../Tools/UiPreviewTool/README.md) for the canonical CLI, scenario interface, output schema, and platform requirements. The tool briefly opens a real graphics window; PNG output is offscreen, but a usable desktop graphics environment is still required.
 
 ## Prepare a scenario
 
@@ -23,8 +23,8 @@ No game instance is needed. Do not launch a full server/client lab for a layout-
 From the repository root, an example starting point is:
 
 ```bash
-dotnet run --project UiPreviewTool -- \
-  --xml UiPreviewTool/Samples/Form.xml \
+dotnet run --project Tools/UiPreviewTool -- \
+  --xml Tools/UiPreviewTool/Samples/Form.xml \
   --culture zh-CN,en-US,pt-PT,ru-RU \
   --size 960x640 --scale 1 \
   --output .agent-work/ui-layout/artifacts/preview-01 --strict

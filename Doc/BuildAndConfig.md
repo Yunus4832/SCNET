@@ -49,7 +49,7 @@ Android、Linux 和 Windows Starter 共用 `SharedResources/AppIcon/icon.png`，
 
 桌面 PNG 保留标准格式：[Linux 图标主题规范](https://specifications.freedesktop.org/icon-theme/latest/)
 推荐 PNG，没有将 WebP 列为桌面图标格式。游戏纹理默认 WebP 的约定不适用于这类系统集成资源。
-桌面图标由 Starter 加载，不经过游戏 `Content/Assets` 资源系统。
+桌面图标由 Starter 加载，不经过游戏 `Assets` 资源系统。
 
 Android 专属的 `AndroidManifest.xml`、`values/colors.xml`、`values/styles.xml` 和 `xml/update_paths.xml`
 集中在 `SharedResources/Android`。四个 Android 架构项目都由 `AndroidApplication.props`
@@ -63,7 +63,7 @@ Android 专属的 `AndroidManifest.xml`、`values/colors.xml`、`values/styles.x
 `Version` 用于程序集和 NuGet 默认包版本，消费方通过对应生产者属性引用精确依赖。
 游戏及 Starter 共用 `GameVersion`，`Engine.*` 与 `EntitySystem` 共用 `EngineVersion`；
 其他发行单元使用同名版本属性，开发工具与测试默认使用 `ToolsVersion`。
-[UI 预览工具](../UiPreviewTool/README.md) 使用独立的 `UiPreviewToolVersion`，从 `0.1.0` 开始。
+[UI 预览工具](../Tools/UiPreviewTool/README.md) 使用独立的 `UiPreviewToolVersion`，从 `0.1.0` 开始。
 ContentWebUI 随 ContentServer 发布，私有 npm 清单不重复定义产品版本。
 开发、构建、测试、提交和推送均保持现有版本号，不重置现有版本。
 由用户明确新发行版的发布时机，Agent 再按该批次累积变更评估受影响的发行单元及依赖，统一提升一次。
@@ -108,7 +108,7 @@ Versions:
 这是全局构建目标入口，主要负责：
 
 - 在资源打包前根据独立 SVG 源文件增量生成 GUI 图集
-- 把 `Content/` 打成 `Content.zip`
+- 把 `Assets/` 打成 `Assets.zip`
 - 在 `Publish` 后打包桌面发布输出
 - 在 Android 发布后复制并重命名 APK
 
@@ -158,7 +158,7 @@ Mono 并发 GC 采用 Android SDK 的默认设置。调整 GC 选项时，应同
 ### `SharedProperties/AndroidApplication.props`
 
 这是 Android 可运行启动器的公共项目配置，集中定义目标框架、程序集名称、最低系统版本、
-`Content.zip` 资产声明、共享图标与 Android 资源、共享 Manifest；全局 `using` 随共享启动器源码维护。每个架构项目仍显式声明自己的
+`Assets.zip` 资产声明、共享图标与 Android 资源、共享 Manifest；全局 `using` 随共享启动器源码维护。每个架构项目仍显式声明自己的
 `RuntimeIdentifier` 和 APK 名称。共享托管项目采用前述 `IsRidAgnostic` 配置，
 主构建输出位于 `bin/<配置>/<目标框架>/`；启动器按自己的 RID 选择原生资产。
 
@@ -171,7 +171,7 @@ Mono 并发 GC 采用 Android SDK 的默认设置。调整 GC 选项时，应同
 
 Arm32、x64 和 x86 变体通过这份配置链接 `Survivalcraft.Android/` 中的公共启动器源码。
 平台资源由四个架构共同导入的 `AndroidApplication.props` 引用，不再从主架构项目转引。
-各变体继续保留独立的项目、`bin/obj`、`Content.zip` 和对应 ABI 的 OpenAL 库，使 Rider
+各变体继续保留独立的项目、`bin/obj`、`Assets.zip` 和对应 ABI 的 OpenAL 库，使 Rider
 可以直接选择匹配设备架构的项目运行，同时避免不同 RID 的中间产物互相污染。
 
 ### Android 调试部署出现旧程序集
@@ -191,7 +191,7 @@ dotnet build Survivalcraft.Android/Survivalcraft.Android.csproj -t:Install -c De
 
 ```bash
 # 首次构建：安装 ContentServer 的前端依赖（需要 Node.js 与 npm）
-npm --prefix ContentWebUI ci
+npm --prefix Services/Content/ContentWebUI ci
 
 # 准备本地 NuGet 包并还原依赖
 ./Scripts/pre-build.sh
@@ -247,24 +247,28 @@ dotnet build Survivalcraft.Android/Survivalcraft.Android.csproj
 - 测试工程在 `Release` 下会被排除，部分 Android 变体也会在 `Release` 下被排除
 - 当前代码库大量使用反射，因此不启用 `trim`，也不支持通过裁剪方式进行发布优化
 
-`Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口启动独立、串行的 `dotnet publish`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、独立游戏服务端 Survivalcraft.Server、Windows、Android Arm64、Android Arm32、ContentServer、RendezvousServer、Authentication.Server 和 NetworkProbe。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
+`Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口顺序执行独立的 `dotnet publish` 或模组 `dotnet build`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、独立游戏服务端 Survivalcraft.Server、Windows、Android Arm64、Android Arm32、ContentServer、RendezvousServer、Authentication.Server、NetworkProbe、BeaconMod.Client 和 TerritoryStoneMod.Client。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
 
-不指定项目时发布全部。指定项目时只发布选中的入口；多个项目仍按脚本中的固定顺序发布。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Server`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32`、`ContentServer`、`RendezvousServer`、`Authentication.Server` 和 `NetworkProbe`。例如：
+不指定项目时发布全部。指定项目时只发布选中的入口；多个项目仍按脚本中的固定顺序发布。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Server`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32`、`ContentServer`、`RendezvousServer`、`Authentication.Server` 、`NetworkProbe`、`BeaconMod.Client` 和 `TerritoryStoneMod.Client`。例如：
 
 ```bash
 ./Scripts/publish.sh --project ContentServer
 ./Scripts/publish.sh --project Survivalcraft.Server
 ./Scripts/publish.sh --project Survivalcraft.Linux --project ContentServer
 ./Scripts/publish.sh --project ContentServer -- --no-restore
-./Scripts/publish.sh --project RendezvousServer --project NetworkProbe
+./Scripts/publish.sh --project Services/Signaling/RendezvousServer --project NetworkProbe
+./Scripts/publish.sh --project BeaconMod.Client --project TerritoryStoneMod.Client
 ```
 
 ```powershell
 ./Scripts/publish.ps1 -Project ContentServer
 ./Scripts/publish.ps1 -Project Survivalcraft.Linux,ContentServer
+./Scripts/publish.ps1 -Project BeaconMod.Client,TerritoryStoneMod.Client
 ```
 
-Bash 脚本接受重复的 `--project` 或 `--project=名称`；`--` 后面的参数会传给所选项目的 `dotnet publish`。PowerShell 脚本使用 `-Project` 指定一个或多个项目，其他参数仍通过剩余参数传给 `dotnet publish`。
+Bash 脚本接受重复的 `--project` 或 `--project=名称`；`--` 后面的参数会传给所选项目的 `dotnet publish` 或模组 `dotnet build`。PowerShell 脚本使用 `-Project` 指定一个或多个项目，其他参数仍通过剩余参数传给对应的 .NET 命令。
+
+发布模组前先运行依赖准备脚本。两个模组入口构建客户端项目，并将 `scnet.beacon.scpkg` 和 `scnet.territory.scpkg` 写入 `Publish/Mods/`。
 
 NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scripts/pack-nuget.sh` 或 `Scripts/pack-nuget.ps1`，具体包边界和使用方式见 [NuGet 包](./NuGet.md)。共享游戏规则包 `SCNET.Survivalcraft.Core` 、宿主包 `SCNET.Survivalcraft.Hosting` 和客户端包 `SCNET.Survivalcraft.Client` 在游戏 SDK 之前打包，普通构建直接使用项目引用；内置模组通过游戏 SDK 的传递依赖获得它们。不要使用解决方案级 `dotnet publish` 或 `dotnet pack` 代替这些脚本；多目标共享项目应由下游入口按顺序独立处理。
 
@@ -274,8 +278,8 @@ NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scr
 
 仓库使用 `Directory.Build.targets` 统一处理资源和发布结果：
 
-- `GuiAtlasTool/Assets/` 中任一 SVG、PNG 或 WebP 发生变化时，会先重新生成 GUI 图集
-- 构建前会把 `Content/` 打成 `Content.zip`
+- `Tools/GuiAtlasTool/Assets/` 中任一 SVG、PNG 或 WebP 发生变化时，会先重新生成 GUI 图集
+- 构建前会把 `Assets/` 打成 `Assets.zip`，ZIP 条目直接使用逻辑资源路径，例如 `Database.xml`
 - 桌面发布会将 `$(PublishDir)` 生成的发布输出压缩到仓库根目录下的 `Publish/` 目录
 - Android 发布会生成并重命名 APK 到 `Publish/`
 
@@ -283,24 +287,24 @@ NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scr
 
 ### GUI 图集
 
-`GuiAtlasTool/Assets/` 保存独立的 PNG、WebP 和 SVG，文件名就是图集条目名。
+`Tools/GuiAtlasTool/Assets/` 保存独立的 PNG、WebP 和 SVG，文件名就是图集条目名。
 位图默认使用无损 WebP，也接受普通 PNG；两者都应使用直通 Alpha，不需要作者预乘。
 SVG 使用整数像素 `width`、`height` 和对应 `viewBox`。同一条目只能提供一种格式。
 
 工具按尺寸和名称稳定排序，将 SVG 和位图排版合成为无损 WebP 图集，生成以下忽略的构建产物：
 
-- `Content/Assets/Atlases/AtlasTexture.webp`
-- `Content/Assets/Atlases/Atlas.txt`
+- `Assets/Atlases/AtlasTexture.webp`
+- `Assets/Atlases/Atlas.txt`
 
 ```bash
-dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- generate \
-  GuiAtlasTool/Assets \
-  Content/Assets/Atlases/AtlasTexture.webp \
-  Content/Assets/Atlases/Atlas.txt
+dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- generate \
+  Tools/GuiAtlasTool/Assets \
+  Assets/Atlases/AtlasTexture.webp \
+  Assets/Atlases/Atlas.txt
 ```
 
 `prepare-image` 将 PNG/WebP 转为普通无损 WebP，`extract` 从当前图集中直接提取 WebP 条目；
-仅历史预乘输入的一次性导入需要显式指定 `--premultiplied`。详见 [图集工具](../GuiAtlasTool/README.md)。
+仅历史预乘输入的一次性导入需要显式指定 `--premultiplied`。详见 [图集工具](../Tools/GuiAtlasTool/README.md)。
 
 启用 `UsePackResourceTarget` 的项目在 `PackResource` 前生成图集。
 MSBuild 将 SVG、PNG、WebP 和工具源码作为增量输入；没有变化时不会重复生成。
@@ -329,7 +333,7 @@ Agent 使用的本机、地址族隔离与 NAT 实验脚本集中在 `scnet-netw
 便携服务依赖 ASP.NET Core 10 运行时。包内含运行脚本、配置示例及第三方许可；数据目录由运行时按配置创建，
 不包含本机 appsettings、身份私钥、授权状态或账号运行配置；已有发布目录夹带这些文件时拒绝打包。
 普通 `dotnet build` 不执行打包或容器组装。容器基础镜像默认只用本地缓存，和信令服务相同的
-`CONTAINER_ENGINE`、`IMAGE_PULL_POLICY` 覆盖适用。配置与备份见 [认证服务部署](../Authentication.Server/README.md#linux-容器部署)。
+`CONTAINER_ENGINE`、`IMAGE_PULL_POLICY` 覆盖适用。配置与备份见 [认证服务部署](../Services/Authentication/Authentication.Server/README.md#linux-容器部署)。
 
 ### 桌面更新包
 
@@ -338,8 +342,8 @@ Windows/Linux 的便携 ZIP 包携带 `DesktopRelease.xml`，声明平台和由�
 `Desktop.UpdateTransactions.Test`。共享库使用命名空间 `Scnet.Desktop.Updates`，负责清单验证、暂存、进程交接、
 文件更新事务、回滚和中断恢复，不依赖游戏或 Engine。Windows/Linux Starter 通过项目引用调用共享库，
 平台文件替换和通知保留在各自项目中。游戏通过退出动作提交更新请求，由 Starter 在游戏运行结束后接管。类库随单文件发布合并，不额外发布更新器或依赖 shell/PowerShell。
-当前 Linux 集合为 `SurvivalcraftStarter`、`Content.zip`、`libSDL2-2.0.so`、`libopenal.so`；Windows 集合为
-`SurvivalcraftStarter.exe`、`Content.zip`、`SDL2.dll`、`soft_oal.dll`。两平台还包含各自的三个图像原生库和
+当前 Linux 集合为 `SurvivalcraftStarter`、`Assets.zip`、`libSDL2-2.0.so`、`libopenal.so`；Windows 集合为
+`SurvivalcraftStarter.exe`、`Assets.zip`、`SDL2.dll`、`soft_oal.dll`。两平台还包含各自的三个图像原生库和
 `ThirdPartyNotices.txt`，具体文件见对应 `DesktopRelease.xml`。修改发行文件集合时须同步对应清单。
 
 ContentServer 的 `linux-x64`/`windows-x64` 版本下载地址应指向完整便携 ZIP。客户端验证 SHA-256 后检查清单、平台与
@@ -352,7 +356,7 @@ ZIP 文件集合，拒绝目录穿越、符号链接、实例/配置覆盖及清
     <Platform>linux-x64</Platform>
     <Files>
         <string>SurvivalcraftStarter</string>
-        <string>Content.zip</string>
+        <string>Assets.zip</string>
         <string>libSDL2-2.0.so</string>
         <string>libopenal.so</string>
         <string>libpng.so</string>
@@ -366,7 +370,7 @@ ZIP 文件集合，拒绝目录穿越、符号链接、实例/配置覆盖及清
 更新事务的聚焦测试：
 
 ```bash
-dotnet test Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.csproj
+dotnet test Tests/Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.csproj
 ```
 
 测试覆盖清单校验、文件替换、回滚、恢复、其他实例运行时的阻止行为和清理。
@@ -376,8 +380,8 @@ dotnet test Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.cspr
 
 `Engine.Media` 提供图像、音频和模型数据的读取与编解码，供游戏、模组与内容工具共同使用。
 媒体 API 使用流，文件路径和游戏存储由调用方处理；字体纹理、GPU 缓冲和音频播放仍由 Engine 负责。
-图像原生库位于 `Native.ImageCodecs/runtimes/<rid>/native`，OpenAL 位于
-`Native.OpenAL/runtimes/<rid>/native`。`Native.ImageCodecs.csproj` 将图像库打包为
+图像原生库位于 `Native/ImageCodecs/runtimes/<rid>/native`，OpenAL 位于
+`Native/OpenAL/runtimes/<rid>/native`。`Native.ImageCodecs.csproj` 将图像库打包为
 `SCNET.Native.ImageCodecs`，Media 引用该包，由 SDK 按 RID 选择并复制或打包原生资产。
 应用、服务和测试无需导入图像原生库 props；首次构建需先准备本地原生包，见 [NuGet](NuGet.md#本地打包)。
 各平台 OpenAL 由 Engine 统一引用 `SCNET.Native.OpenAL`，
@@ -385,14 +389,14 @@ dotnet test Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.cspr
 ContentTool 将完整运行输出打入工具目录，独立运行时不依赖模组项目的资产。
 许可声明统一维护在根目录的 `ThirdPartyNotices.txt`；桌面应用发布时携带，Android 加入 APK assets。
 
-原生库版本、许可证和重编译方法见 [Native.ImageCodecs](../Native.ImageCodecs/README.md)、
-[Native.OpenAL](../Native.OpenAL/README.md) 和 [Native.SDL](../Native.SDL/README.md)。
-SDL 由 Engine 统一引用 `SCNET.Native.SDL`，资产位于 `Native.SDL/runtimes/<rid>/native`；
+原生库版本、许可证和重编译方法见 [Native.ImageCodecs](../Native/ImageCodecs/README.md)、
+[Native.OpenAL](../Native/OpenAL/README.md) 和 [Native.SDL](../Native/SDL/README.md)。
+SDL 由 Engine 统一引用 `SCNET.Native.SDL`，资产位于 `Native/SDL/runtimes/<rid>/native`；
 包内的传递构建 target 排除 `Ultz.Native.SDL` 的资产，Android 同时替换 Silk AAR 的 Java 类和原生库，统一使用 SDL 2.32.10。
 仓库已包含稳定、验证可用的预编译原生库，日常开发、首次构建和发布均直接复用；
 准备本地 NuGet 包只是打包这些现有文件，不需要重新编译。只有升级版本或明确需要修复、
 补充原生产物时，才执行原生库构建脚本，并在替换前验证对应平台或 ABI。
-`Native.ImageCodecs/Scripts/` 包含 Android 图像库及桌面 PNG/zlib 构建脚本：在临时目录中编译，
+`Native/ImageCodecs/Scripts/` 包含 Android 图像库及桌面 PNG/zlib 构建脚本：在临时目录中编译，
 全部成功后复制到项目的 `runtimes` 并更新校验值。成功后清理临时目录，失败时保留日志和中间文件。
 这些项目专用脚本不发布应用，也不注册到解决方案级脚本分组。
 
@@ -435,7 +439,9 @@ dotnet run --file .agents/skills/scnet-code-style/scripts/check_explicit_enum_va
 
 ## 独立示例模组
 
-主解决方案负责游戏、SDK、工具和通用测试。两个示例模组各自在独立解决方案中开发，
+主解决方案负责游戏、SDK、工具和通用测试。认证、信令和内容服务在 `Services/` 下各有独立解决方案，服务测试与其同目录。内容服务解决方案同时包含 Web 前端。共享协议库位于仓库根目录。
+
+两个示例模组各自在独立解决方案中开发，
 通过 NuGet 使用已准备的 SDK。完成依赖准备后可运行：
 
 ```bash

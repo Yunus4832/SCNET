@@ -4,9 +4,9 @@ namespace Game.Modding.Content;
 
 internal static class BuiltInContentAssets
 {
-    private const string _assetRoot = "Content/Assets";
+    private const string _assetRoot = "Assets";
 
-    private const string _appArchivePath = "app:Content.zip";
+    private const string _appArchivePath = "app:Assets.zip";
 
     public static IReadOnlyList<ContentRegistration> Load()
     {
@@ -30,15 +30,12 @@ internal static class BuiltInContentAssets
             leaveOpen: false
         );
         var assets = new List<ContentRegistration>();
-        foreach (var entry in archive.Entries
-                     .Where(entry => !string.IsNullOrEmpty(entry.Name) &&
-                                     entry.FullName.StartsWith("Assets/", StringComparison.Ordinal)
-                     ))
+        foreach (var entry in archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)))
         {
             using var entryStream = entry.Open();
             using var memory = new MemoryStream((int)entry.Length);
             entryStream.CopyTo(memory);
-            assets.Add(new ContentRegistration(entry.FullName["Assets/".Length..], memory.ToArray()));
+            assets.Add(new ContentRegistration(entry.FullName, memory.ToArray()));
         }
 
         return assets;

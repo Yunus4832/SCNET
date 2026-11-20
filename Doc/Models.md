@@ -96,5 +96,5 @@ Model 读取蒙皮实例时明确抛出不支持异常；动画数据保留于 S
 现有弓/弩通过顶点对应关系混合不同形态，重新建模或优化时必须验证顶点对应；标准 shape key
 会导出为 morph target，其数据可读取和保留，但动态权重驱动仍待渲染系统实现。
 
-`Engine.Test/TestAssets/Models` 包含独立 Blender 导出的回归资源和生成脚本。媒体测试还覆盖
+`Tests/Engine.Test/TestAssets/Models` 包含独立 Blender 导出的回归资源和生成脚本。媒体测试还覆盖
 无 UV/法线、无索引、稀疏访问器、交错归一化属性、矩阵填充、32 位索引、重复名称及外部资源。

@@ -11,7 +11,7 @@ GUI client -> 127.0.0.1:28989 NetworkDamageTool -> 127.0.0.1:28987 server
 Build and verify the proxy first when current-build evidence is absent or invalidated:
 
 ```bash
-dotnet test NetworkDamageTool.Test/NetworkDamageTool.Test.csproj
+dotnet test Tests/NetworkDamageTool.Test/NetworkDamageTool.Test.csproj
 dotnet build Survivalcraft.Linux/Survivalcraft.Linux.csproj
 ```
 
@@ -19,7 +19,7 @@ Start the server and client with the isolated-instance commands in the `scnet-de
 reference. Start the proxy before the client:
 
 ```bash
-dotnet run --no-build --project NetworkDamageTool -- run \
+dotnet run --no-build --project Tools/NetworkDamageTool -- run \
   --listen 127.0.0.1:28989 \
   --target 127.0.0.1:28987 \
   --seed 12345 \

@@ -8,7 +8,7 @@ SCNET 仍未发布：现有线格式整数保持 `1`，不为开发迭代保留�
 | 契约 | 实现归属 | 解决的问题 |
 |---|---|---|
 | [内容包](ContentPackageProtocol.md) | `Content.Packaging` | `.scpkg`、载荷、逻辑哈希与安装边界 |
-| [内容制造](ContentCreationProtocol.md) | 游戏制造入口、ContentTool、ContentServer/WebUI | 如何创建、保存草稿和提交不可变内容包 |
+| [内容制造](ContentCreationProtocol.md) | 游戏制造入口、ContentTool、Services/Content/ContentServer/WebUI | 如何创建、保存草稿和提交不可变内容包 |
 | [服务器源](ServerSourceProtocol.md) | `ServerSource.Protocol` | HTTP 只读游戏服务器目录 |
 | [信令与中继](RendezvousProtocol.md) | `Rendezvous.Protocol`、RendezvousServer | 临时房间、地址交换、打洞与中继能力 |
 | [安全传输](TransportProtocol.md) | `Engine.Network` | DTLS、对端持钥证明、通道绑定与路径保护 |
@@ -43,7 +43,7 @@ SCNET 仍未发布：现有线格式整数保持 `1`，不为开发迭代保留�
 ## 实现与验证入口
 
 - .NET 协议项目 README： [游戏](../../Game.Protocol/README.md)、[服务器源](../../ServerSource.Protocol/README.md)、[信令](../../Rendezvous.Protocol/README.md)、[认证](../../Authentication.Protocol/README.md)。
-- [内容哈希向量](PackageHashVectors.json)与[外部认证独立签名向量](../../Authentication.Protocol.Test/Fixtures/README.md)。
-- 接入工具：[NetworkProbe](../../NetworkProbe/README.md) 验证传输路径，[ServerLoadTool](../ServerLoadTesting.md) 消费游戏协议。
+- [内容哈希向量](PackageHashVectors.json)与[外部认证独立签名向量](../../Tests/Authentication.Protocol.Test/Fixtures/README.md)。
+- 接入工具：[NetworkProbe](../../Tools/NetworkProbe/README.md) 验证传输路径，[ServerLoadTool](../ServerLoadTesting.md) 消费游戏协议。
 
 参考实现限制须与协议要求区分。例如认证参考服务只有管理员预置账号密码，不要求第三方采用同一账号方式。

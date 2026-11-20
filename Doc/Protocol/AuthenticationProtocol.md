@@ -2,7 +2,7 @@
 
 本文描述当前 `SCNET.Authentication.Protocol` 版本 **1** 的协议和游戏接入边界。
 产品及 NuGet SemVer 与协议整数独立；当前仍未发布，不维护旧开发线格式。
-参考服务运行方式见 [Authentication.Server](../../Authentication.Server/README.md)，
+参考服务运行方式见 [Authentication.Server](../../Services/Authentication/Authentication.Server/README.md)，
 客户端配置与重启见 [启动会话](../StartupSessions.md#客户端认证服务与授权)，
 服务收录和审核见 [ContentServer](../ContentServer.md#认证服务目录)。
 
@@ -212,7 +212,7 @@ ContentServer 公开目录探测还有独立的公共 IP/DNS 固定、十秒和�
 请求签名、replay cache、事务主体隔离、固定公开 URL、grant 主体绑定、取消/过期与领取结果的持久化边界仍须遵守。
 参考实现只适用于一个进程拥有一个私有数据目录，不包含多副本一致性、自动密钥轮换或游戏角色管理。
 
-公开的 [互操作测试向量](../../Authentication.Protocol.Test/Fixtures/README.md) 包含由 OpenSSL 独立签署的
+公开的 [互操作测试向量](../../Tests/Authentication.Protocol.Test/Fixtures/README.md) 包含由 OpenSSL 独立签署的
 固定批准，以及由 Python 标准库计算的 JWK 指纹和 Bech32m 地址。向量不含私钥或真实授权；
 验证时使用记录的固定时间，不应将其作为当前登录凭证。测试向量补充边界测试，不替代安全审查。
 

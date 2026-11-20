@@ -520,7 +520,7 @@ OpenAL Soft 1.25.2
 Source: https://github.com/kcat/openal-soft/tree/1.25.2
 License: COPYING from the source release
 Desktop build modification: equivalent unique_ptr transform,
-maintained in Native.OpenAL/Scripts/*.patch in the SCNET source repository.
+maintained in Native/OpenAL/Scripts/*.patch in the SCNET source repository.
 
                   GNU LIBRARY GENERAL PUBLIC LICENSE
                        Version 2, June 1991

@@ -12,7 +12,7 @@ python3 .agents/skills/scnet-network-probe/scripts/local-lab.py --output .agent-
 python3 .agents/skills/scnet-network-probe/scripts/local-lab.py --mode scenario-relay --output .agent-work/network-probe/artifacts/relay-test
 ```
 
-先按 [探针说明](../../../../NetworkProbe/README.md#测试与探针入口) 构建 NetworkProbe 和 RendezvousServer。脚本不构建、不下载运行时；需要 Python 3 和 .NET 10。
+先按 [探针说明](../../../../Tools/NetworkProbe/README.md#测试与探针入口) 构建 NetworkProbe 和 RendezvousServer。脚本不构建、不下载运行时；需要 Python 3 和 .NET 10。
 默认 TCP 控制端口 31991、UDP 信令端口 31990、中继 UDP 32000–32003，可用
 `--http-port`、`--udp-port`、`--relay-port` 修改。控制入口绑定 loopback，UDP 广告地址使用 loopback；UDP socket 沿用信令服务的所有接口绑定。
 `--probe` 和 `--server` 可指定已有程序集。输出目录必须尚不存在。

@@ -6,20 +6,20 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <_GuiAtlasSourceDirectory>$(SolutionRoot)GuiAtlasTool/Assets</_GuiAtlasSourceDirectory>
-        <_GuiAtlasTexture>$(SolutionRoot)Content/Assets/Atlases/AtlasTexture.webp</_GuiAtlasTexture>
-        <_GuiAtlasDefinition>$(SolutionRoot)Content/Assets/Atlases/Atlas.txt</_GuiAtlasDefinition>
-        <_GuiAtlasToolProject>$(SolutionRoot)GuiAtlasTool/GuiAtlasTool.csproj</_GuiAtlasToolProject>
-        <_GuiAtlasToolAssembly>$(SolutionRoot)GuiAtlasTool/bin/$(Configuration)/$(GlobalTargetFramework)/SCNET.GuiAtlasTool.dll</_GuiAtlasToolAssembly>
+        <_GuiAtlasSourceDirectory>$(SolutionRoot)Tools/GuiAtlasTool/Assets</_GuiAtlasSourceDirectory>
+        <_GuiAtlasTexture>$(SolutionRoot)Assets/Atlases/AtlasTexture.webp</_GuiAtlasTexture>
+        <_GuiAtlasDefinition>$(SolutionRoot)Assets/Atlases/Atlas.txt</_GuiAtlasDefinition>
+        <_GuiAtlasToolProject>$(SolutionRoot)Tools/GuiAtlasTool/GuiAtlasTool.csproj</_GuiAtlasToolProject>
+        <_GuiAtlasToolAssembly>$(SolutionRoot)Tools/GuiAtlasTool/bin/$(Configuration)/$(GlobalTargetFramework)/SCNET.GuiAtlasTool.dll</_GuiAtlasToolAssembly>
     </PropertyGroup>
 
     <ItemGroup>
-        <MyContentFiles Include="$(SolutionRoot)Content/**/*.*"
+        <MyContentFiles Include="$(SolutionRoot)Assets/**/*.*"
                         Exclude="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
         <MyContentFiles Include="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
         <_GuiAtlasSources Include="$(_GuiAtlasSourceDirectory)/**/*.svg;$(_GuiAtlasSourceDirectory)/**/*.png;$(_GuiAtlasSourceDirectory)/**/*.webp"/>
-        <_GuiAtlasToolSources Include="$(SolutionRoot)GuiAtlasTool/**/*.cs;$(SolutionRoot)GuiAtlasTool/GuiAtlasTool.csproj"
-                              Exclude="$(SolutionRoot)GuiAtlasTool/bin/**/*;$(SolutionRoot)GuiAtlasTool/obj/**/*"/>
+        <_GuiAtlasToolSources Include="$(SolutionRoot)Tools/GuiAtlasTool/**/*.cs;$(SolutionRoot)Tools/GuiAtlasTool/GuiAtlasTool.csproj"
+                              Exclude="$(SolutionRoot)Tools/GuiAtlasTool/bin/**/*;$(SolutionRoot)Tools/GuiAtlasTool/obj/**/*"/>
     </ItemGroup>
 
     <!-- 图集工具作为主机工具参与构建依赖排序。 -->
@@ -60,9 +60,9 @@
             DependsOnTargets="ResolveProjectReferences"
             Condition="'$(UsePackResourceTarget)' == 'true'"
             Inputs="@(MyContentFiles);$(_ContentManifest)"
-            Outputs="$(MSBuildProjectDirectory)/Content.zip">
+            Outputs="$(MSBuildProjectDirectory)/Assets.zip">
         <Message Text="[PackResource] 正在执行增量打包..." Importance="high"/>
-        <ZipDirectory SourceDirectory="$(SolutionRoot)Content" DestinationFile="$(MSBuildProjectDirectory)/Content.zip" Overwrite="true"/>
+        <ZipDirectory SourceDirectory="$(SolutionRoot)Assets" DestinationFile="$(MSBuildProjectDirectory)/Assets.zip" Overwrite="true"/>
     </Target>
 
     <!-- 检查是否定义了 OutputFileName 属性 -->

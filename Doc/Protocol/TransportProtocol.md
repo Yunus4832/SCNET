@@ -52,5 +52,5 @@ DTLS、Engine 前缀和中继头都会占用数据报预算。调用方必须读
 
 协议使用库实现的 DTLS 1.2，不宣称 DTLS 1.3；接入方还须匹配当前的 LiteNetLib 外层与 SCNET 封装。
 跨语言实现不能仅凭实现了同名 TLS 套件就假定可互通。
-安全连接、损坏报文和重放等验证见 [SecureNetworkTest](../../Engine.Network.Test/Security/SecureNetworkTest.cs)，
-可运行路径探针见 [NetworkProbe](../../NetworkProbe/README.md)。
+安全连接、损坏报文和重放等验证见 [SecureNetworkTest](../../Tests/Engine.Network.Test/Security/SecureNetworkTest.cs)，
+可运行路径探针见 [NetworkProbe](../../Tools/NetworkProbe/README.md)。

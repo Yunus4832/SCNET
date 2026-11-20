@@ -5,7 +5,7 @@
 - [.NET 10 SDK](https://dotnet.microsoft.com/zh-cn/download/dotnet/10.0)
 - 支持 .NET 10 SDK 和所用 Android 工作负载的 IDE（例如 Rider）；以 IDE 对目标 SDK 的支持为准
 - Android SDK
-- Node.js 与 npm：构建 ContentServer/Web 工作台前，在仓库根目录执行 `npm --prefix ContentWebUI ci` 安装前端依赖；完整解决方案构建会调用 `npm run build`，详见 [Web 工作台](../ContentWebUI/README.md)
+- Node.js 与 npm：构建 Services/Content/ContentServer/Web 工作台前，在仓库根目录执行 `npm --prefix Services/Content/ContentWebUI ci` 安装前端依赖；完整解决方案构建会调用 `npm run build`，详见 [Web 工作台](../Services/Content/ContentWebUI/README.md)
 - Linux 桌面运行时需要可用的图形桌面环境
 - Windows WebP 编解码需要 Microsoft Visual C++ 2015–2022 x64 Redistributable
 
@@ -22,7 +22,7 @@
 - `SCNET.Native.OpenAL`：Windows、Linux 和 Android 四种 ABI 的 OpenAL Soft 原生资产，由 Engine 统一引用
 - `Silk.NET.SDL`：桌面与 Android 的 SDL 平台适配
 - 图像公共 API 位于 `Engine.Media.Images`，通过 `ImageCodec` 和单一 `ImageFormat` 统一处理 PNG、WebP、BMP；`Images.Formats` 只保存内部格式实现。PNG 与 WebP 使用 libpng、libwebp 的 P/Invoke 薄绑定，BMP 为托管实现。内容包及服务器图片上传支持静态 PNG/WebP，先识别格式并校验大小、尺寸和实际编码；不提供 TIFF 入口。详见 [媒体库](../Engine.Media/README.md#图像-api)。
-- 原生图像库的版本、来源和构建说明见 [Native.ImageCodecs](../Native.ImageCodecs/README.md)。
+- 原生图像库的版本、来源和构建说明见 [Native.ImageCodecs](../Native/ImageCodecs/README.md)。
 - `Svg.Skia`、`SkiaSharp`：构建期 SVG 栅格化、PNG 处理与 GUI 图集生成
 - `Xamarin.AndroidX.Core`：Android 兼容支持
 

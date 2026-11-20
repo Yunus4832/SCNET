@@ -67,7 +67,7 @@ UDP codec 使用 `JsonSerializer` 的默认名称，字段为 PascalCase，**不
 5. 双方通过候选地址准备直连/打洞路径；无法直连时按控制面分配中继。
 
 主机参与者使用空 GUID，普通参与者使用分配的非空 GUID。票据、端点和交换挑战必须属于同一邀请及准备轮次；
-失败的信令响应为 `Operation="error"`。具体的确认和候选行为见 [UdpSignalHost](../../RendezvousServer/UdpSignalHost.cs)。
+失败的信令响应为 `Operation="error"`。具体的确认和候选行为见 [UdpSignalHost](../../Services/Signaling/RendezvousServer/UdpSignalHost.cs)。
 
 信令 UDP JSON 本身不加密；不得把它视为保密信道，也不能在其中传游戏服务器密码、外部 grant 或玩家私钥。
 其端点注册和挑战只负责传输准备，游戏连接仍须执行 DTLS 和游戏准入。
@@ -98,8 +98,8 @@ UDP codec 使用 `JsonSerializer` 的默认名称，字段为 PascalCase，**不
 
 线格式以 [SignalCodec](../../Rendezvous.Protocol/SignalCodec.cs)、
 [RelayDatagramCodec](../../Rendezvous.Protocol/RelayDatagramCodec.cs) 及对应模型为依据，
-控制入口以 [RendezvousServer/Program.cs](../../RendezvousServer/Program.cs) 为依据。
+控制入口以 [Services/Signaling/RendezvousServer/Program.cs](../../Services/Signaling/RendezvousServer/Program.cs) 为依据。
 NuGet SemVer 不等于两个 UDP codec 的版本 byte；未发布阶段不保留旧封装解析。
 
-[NetworkProbe](../../NetworkProbe/README.md) 可检查控制面、准备租约和直连/中继路径；
+[NetworkProbe](../../Tools/NetworkProbe/README.md) 可检查控制面、准备租约和直连/中继路径；
 测试通过不表示某玩家已经获得游戏业务权限。

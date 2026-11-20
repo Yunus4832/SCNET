@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [ValidateSet("Survivalcraft.Linux", "Survivalcraft.Server", "Survivalcraft.Windows", "Survivalcraft.Android", "Survivalcraft.Android.Arm32", "ContentServer", "RendezvousServer", "Authentication.Server", "NetworkProbe")]
+    [ValidateSet("Survivalcraft.Linux", "Survivalcraft.Server", "Survivalcraft.Windows", "Survivalcraft.Android", "Survivalcraft.Android.Arm32", "ContentServer", "RendezvousServer", "Authentication.Server", "NetworkProbe", "BeaconMod.Client", "TerritoryStoneMod.Client")]
     [string[]]$Project = @(),
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$AdditionalArguments
@@ -53,14 +53,14 @@ try {
 
     if ($Project.Count -eq 0 -or $Project -contains "ContentServer") {
         Write-Host "[SCNET Publish] Publishing ContentServer"
-        & dotnet publish "ContentServer/ContentServer.csproj" --configuration $Configuration @AdditionalArguments
+        & dotnet publish "Services/Content/ContentServer/ContentServer.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) {
             throw "Publishing ContentServer failed with exit code $LASTEXITCODE."
         }
     }
     if ($Project.Count -eq 0 -or $Project -contains "RendezvousServer") {
         Write-Host "[SCNET Publish] Publishing RendezvousServer (portable ZIP and container bundle on Linux)"
-        & dotnet publish "RendezvousServer/RendezvousServer.csproj" --configuration $Configuration @AdditionalArguments
+        & dotnet publish "Services/Signaling/RendezvousServer/RendezvousServer.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) {
             throw "Publishing RendezvousServer failed with exit code $LASTEXITCODE."
         }
@@ -68,16 +68,34 @@ try {
 
     if ($Project.Count -eq 0 -or $Project -contains "Authentication.Server") {
         Write-Host "[SCNET Publish] Publishing Authentication.Server (portable ZIP and container bundle on Linux)"
-        & dotnet publish "Authentication.Server/Authentication.Server.csproj" --configuration $Configuration @AdditionalArguments
+        & dotnet publish "Services/Authentication/Authentication.Server/Authentication.Server.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) {
             throw "Publishing Authentication.Server failed with exit code $LASTEXITCODE."
         }
     }
     if ($Project.Count -eq 0 -or $Project -contains "NetworkProbe") {
         Write-Host "[SCNET Publish] Publishing NetworkProbe"
-        & dotnet publish "NetworkProbe/NetworkProbe.csproj" --configuration $Configuration @AdditionalArguments
+        & dotnet publish "Tools/NetworkProbe/NetworkProbe.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) {
             throw "Publishing NetworkProbe failed with exit code $LASTEXITCODE."
+        }
+    }
+
+    $modPackageDirectory = Join-Path (Get-Location).Path "Publish/Mods"
+
+    if ($Project.Count -eq 0 -or $Project -contains "BeaconMod.Client") {
+        Write-Host "[SCNET Publish] Packaging BeaconMod.Client"
+        & dotnet build "Mods/Beacon/BeaconMod.Client/BeaconMod.Client.csproj" --configuration $Configuration @AdditionalArguments "-p:SurvivalcraftModPackageDirectory=$modPackageDirectory"
+        if ($LASTEXITCODE -ne 0) {
+            throw "Packaging BeaconMod.Client failed with exit code $LASTEXITCODE."
+        }
+    }
+
+    if ($Project.Count -eq 0 -or $Project -contains "TerritoryStoneMod.Client") {
+        Write-Host "[SCNET Publish] Packaging TerritoryStoneMod.Client"
+        & dotnet build "Mods/TerritoryStone/TerritoryStoneMod.Client/TerritoryStoneMod.Client.csproj" --configuration $Configuration @AdditionalArguments "-p:SurvivalcraftModPackageDirectory=$modPackageDirectory"
+        if ($LASTEXITCODE -ne 0) {
+            throw "Packaging TerritoryStoneMod.Client failed with exit code $LASTEXITCODE."
         }
     }
 }

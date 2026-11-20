@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <UseAppHost>false</UseAppHost>
+        <SelfContained>false</SelfContained>
+        <UsePackOutputTarget Condition="'$(Configuration)' == 'Release'">true</UsePackOutputTarget>
+        <OutputFileName>network-probe-$(ToolsVersion)-portable.zip</OutputFileName>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../Engine.Network/Engine.Network.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="README.md" CopyToPublishDirectory="PreserveNewest"/>
+    </ItemGroup>
+
+</Project>

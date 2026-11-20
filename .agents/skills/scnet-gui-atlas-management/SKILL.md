@@ -1,11 +1,11 @@
 ---
 name: scnet-gui-atlas-management
-description: Compose SCNET gameplay HUD button textures, manage GUI atlas SVG, PNG and WebP sources, import historical premultiplied images, generate the atlas, and validate visual or alpha-sensitive replacements. Use when adding, replacing, extracting, reorganizing, or diagnosing resources under GuiAtlasTool/Assets or the generated GUI atlas; do not use gameplay button composition for general Widget, Screen, Dialog, or ActionPanel buttons.
+description: Compose SCNET gameplay HUD button textures, manage GUI atlas SVG, PNG and WebP sources, import historical premultiplied images, generate the atlas, and validate visual or alpha-sensitive replacements. Use when adding, replacing, extracting, reorganizing, or diagnosing resources under Tools/GuiAtlasTool/Assets or the generated GUI atlas; do not use gameplay button composition for general Widget, Screen, Dialog, or ActionPanel buttons.
 ---
 
 # SCNET GUI Atlas Management
 
-Treat `GuiAtlasTool/Assets/` as the source of truth. `Content/Assets/Atlases/AtlasTexture.webp` and
+Treat `Tools/GuiAtlasTool/Assets/` as the source of truth. `Assets/Atlases/AtlasTexture.webp` and
 `Atlas.txt` are ignored build products; never edit or commit them as source assets.
 
 ## Choose the source format
@@ -35,14 +35,14 @@ and are composed with the raster entries into one atlas.
   It does not unpremultiply. Historical premultiplied atlases must first be explicitly normalized.
 
 ```bash
-dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
-  input.png GuiAtlasTool/Assets/EntryName.webp
+dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
+  input.png Tools/GuiAtlasTool/Assets/EntryName.webp
 
-dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
-  historical.png GuiAtlasTool/Assets/EntryName.webp --premultiplied
+dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
+  historical.png Tools/GuiAtlasTool/Assets/EntryName.webp --premultiplied
 
-dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- extract \
-  AtlasTexture.webp Atlas.txt GuiAtlasTool/Assets EntryName AnotherEntry
+dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- extract \
+  AtlasTexture.webp Atlas.txt Tools/GuiAtlasTool/Assets EntryName AnotherEntry
 ```
 
 Conversion/extraction refuse replacements without `--overwrite`. Inspect a same-name replacement
@@ -60,17 +60,17 @@ a maintained frame template, preserves the icon aspect ratio, fits its `viewBox`
 safe area, and creates normal and pressed assets as one pair:
 
 ```bash
-dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- compose-game-button \
+dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- compose-game-button \
   floating path/to/Icon.svg NewButton
 ```
 
 The button type is `floating`, `left-attached`, or `right-attached`. Use `--scale`, `--offset-x`,
 and `--offset-y` only for optical-size or optical-centering corrections after inspecting the
 default result. The offsets use SVG design units. Use `--asset-directory` for an isolated trial;
-the default output is `GuiAtlasTool/Assets/`. The command refuses to replace either state unless
+the default output is `Tools/GuiAtlasTool/Assets/`. The command refuses to replace either state unless
 `--overwrite` is present.
 
-Button frame templates under `GuiAtlasTool/Templates/Buttons/` are tool-owned exports. Keep the
+Button frame templates under `Tools/GuiAtlasTool/Templates/Buttons/` are tool-owned exports. Keep the
 Inkscape project independent: redraw or approve a frame there, export it once into the matching
 normal and pressed templates, then validate generated buttons. Do not make the command read an
 external Inkscape project at runtime.
@@ -85,10 +85,10 @@ target-size, resampling, straight-Alpha input, and normal/pressed output rules.
 Generate the atlas directly when focused inspection is useful:
 
 ```bash
-dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- generate \
-  GuiAtlasTool/Assets \
-  Content/Assets/Atlases/AtlasTexture.webp \
-  Content/Assets/Atlases/Atlas.txt
+dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- generate \
+  Tools/GuiAtlasTool/Assets \
+  Assets/Atlases/AtlasTexture.webp \
+  Assets/Atlases/Atlas.txt
 ```
 
 After changing sources or the tool:
@@ -103,7 +103,7 @@ After changing sources or the tool:
 5. Run `git diff --check`. When C# changed, also use `scnet-code-style` and proportional build
    validation.
 
-Update `GuiAtlasTool/README.md`, `Doc/BuildAndConfig.md`, and `Directory.Build.targets` together when
+Update `Tools/GuiAtlasTool/README.md`, `Doc/BuildAndConfig.md`, and `Directory.Build.targets` together when
 the source contract, commands, paths, or build integration changes. Use `scnet-ui-design` as well
 when the work changes layout, interaction semantics, or shared UI component behavior rather than
 only atlas resource management.

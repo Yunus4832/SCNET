@@ -1,6 +1,6 @@
 # ContentServer
 
-ContentServer 是 SCNET 的独立 ASP.NET Core 内容服务，项目位于 `ContentServer/`，并注册在
+ContentServer 是 SCNET 的独立 ASP.NET Core 内容服务，项目位于 `Services/Content/ContentServer/`，并注册在
 `SCNET.slnx` 的 `09 ContentServer` 逻辑文件夹中。它负责发布者申请、内容版本审核、匿名目录查询、包下载，
 以及服务器源地址的登记与审核、管理员维护的游戏公告和版本目录；
 玩家身份、联机身份和平台 FilePicker 不属于该服务。
@@ -123,7 +123,7 @@ HTTP API 在边界处把强类型 ID 显式输出为字符串，协议不暴露�
 服务使用单个 SQLite 数据库文件。默认路径为：
 
 ```text
-ContentServer/Data/content-server.db
+Services/Content/ContentServer/Data/content-server.db
 ```
 
 发布者、Key hash、内容元数据、审核记录和包索引保存在数据库中。原始 `.scpkg` 文件存放于
@@ -151,8 +151,8 @@ ContentServer/Data/content-server.db
 
 ```bash
 dotnet ef migrations add InitialContentServer \
-  --project ContentServer/ContentServer.csproj \
-  --startup-project ContentServer/ContentServer.csproj \
+  --project Services/Content/ContentServer/ContentServer.csproj \
+  --startup-project Services/Content/ContentServer/ContentServer.csproj \
   --output-dir Infrastructure/Migrations
 ```
 
@@ -191,7 +191,7 @@ ContentServer__DatabasePath
 
 ## 独立 WebUI
 
-`ContentWebUI/` 是注册在 `SCNET.slnx` 的 `09 ContentServer` 逻辑文件夹中的 Vue 3 单页应用。它可以与
+`Services/Content/ContentWebUI/` 是注册在 `SCNET.slnx` 的 `09 ContentServer` 逻辑文件夹中的 Vue 3 单页应用。它可以与
 ContentServer 分别部署，生产构建后的 `runtime-config.json` 配置 API 地址，静态服务器需将未知路由回退到
 `index.html`。WebUI 负责 API Key 的本地保存和角色导航，不改变 ContentServer 的无账户、无 Cookie 会话模型。
 
@@ -222,17 +222,17 @@ Key 的 SHA-256 hash。数据库中一旦存在管理员，该端点固定返回
 ## HTTP API
 
 接口清单、认证、初始化、分页和投稿格式见 [ContentServer HTTP API](ContentServerApi.md)。
-每个端点的请求与响应定义位于对应的 `ContentServer/Endpoints/` 源文件，管理操作与公开查询分开。
+每个端点的请求与响应定义位于对应的 `Services/Content/ContentServer/Endpoints/` 源文件，管理操作与公开查询分开。
 
 ## 启动
 
 ```bash
-dotnet run --project ContentServer/ContentServer.csproj
+dotnet run --project Services/Content/ContentServer/ContentServer.csproj
 ```
 
 开发环境前端使用 Vite（`ContentWebUI`）单独运行，端口由 Vite 选择（通常为 `5173`，占用时可能顺延），并将 `/api` 代理到 ContentServer
 （默认 `http://localhost:5000`），改前端代码即时热更新。ContentServer 构建或发布时会通过
-`ContentServer/Directory.Build.targets` 中的构建目标 自动执行前端构建，并把 `ContentWebUI/dist` 复制到 `wwwroot`，
+`Services/Content/ContentServer/Directory.Build.targets` 中的构建目标 自动执行前端构建，并把 `Services/Content/ContentWebUI/dist` 复制到 `wwwroot`，
 因此调试时用 `npm run dev`，部署时只需发布 ContentServer。
 
 ## 发布与部署

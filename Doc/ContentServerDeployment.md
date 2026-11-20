@@ -40,7 +40,7 @@ IMAGE_PULL_POLICY=missing ./Scripts/publish.sh --project ContentServer
 `linux-x64` 应用和 `linux/amd64` 镜像；内部镜像脚本的 `PLATFORM` 参数不会改变应用发布 RID。Git revision
 记录在 OCI Label 中；工作区不干净时 revision 带 `-dirty`，不会改变发行版本标签。
 
-`ContentServer/Deployment/build-image.sh` 只组装项目发布流程提供的 Linux 输出，不是独立发行入口。
+`Services/Content/ContentServer/Deployment/build-image.sh` 只组装项目发布流程提供的 Linux 输出，不是独立发行入口。
 
 ## 部署 bundle
 

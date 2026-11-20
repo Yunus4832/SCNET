@@ -2,7 +2,7 @@
 
 服务职责和状态模型见 [ContentServer](ContentServer.md)，部署见
 [ContentServer 部署](ContentServerDeployment.md)。本页列出当前端点；请求与响应类型定义在
-[`ContentServer/Endpoints/`](../ContentServer/Endpoints/) 的各端点文件中。
+[`Services/Content/ContentServer/Endpoints/`](../Services/Content/ContentServer/Endpoints/) 的各端点文件中。
 下列 `{id}`、`{contentId}` 等为占位参数，带 GUID 路由约束的参数需提供合法 GUID。
 
 ## 认证与响应

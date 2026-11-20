@@ -20,16 +20,16 @@ These values describe the current implementation; the linked widget/style remain
 
 | Role | Current baseline | Owner/reference |
 | --- | --- | --- |
-| Ordinary form/dialog button | Outer height 60 | [ButtonStyle_160x60](../../../../Content/Assets/Styles/ButtonStyle_160x60.xml), [ButtonStyle_310x60](../../../../Content/Assets/Styles/ButtonStyle_310x60.xml) |
-| Top tab | Outer height 56, shared horizontal margins | [ScreenTopTabButton](../../../../Content/Assets/Styles/ScreenTopTabButton.xml), [ScreenTopTabs](../../../../Content/Assets/Styles/ScreenTopTabs.xml) |
-| Bottom action bar | Outer height 56 | [ActionPanelWidget](../../../../Content/Assets/Widgets/ActionPanelWidget.xml) |
-| Positive action | RGB 50, 150, 35 for both center and bevel | [PlayScreen action colors](../../../../Survivalcraft/Screens/PlayScreen.cs), [HostedWorldScreen](../../../../Content/Assets/Screens/HostedWorldScreen.xml) |
-| Destructive action | RGB 150, 50, 35 for both center and bevel | [ManageIdentitiesScreen action colors](../../../../Survivalcraft/Screens/ManageIdentitiesScreen.cs), [HostedWorldScreen](../../../../Content/Assets/Screens/HostedWorldScreen.xml) |
+| Ordinary form/dialog button | Outer height 60 | [ButtonStyle_160x60](../../../../Assets/Styles/ButtonStyle_160x60.xml), [ButtonStyle_310x60](../../../../Assets/Styles/ButtonStyle_310x60.xml) |
+| Top tab | Outer height 56, shared horizontal margins | [ScreenTopTabButton](../../../../Assets/Styles/ScreenTopTabButton.xml), [ScreenTopTabs](../../../../Assets/Styles/ScreenTopTabs.xml) |
+| Bottom action bar | Outer height 56 | [ActionPanelWidget](../../../../Assets/Widgets/ActionPanelWidget.xml) |
+| Positive action | RGB 50, 150, 35 for both center and bevel | [PlayScreen action colors](../../../../Survivalcraft/Screens/PlayScreen.cs), [HostedWorldScreen](../../../../Assets/Screens/HostedWorldScreen.xml) |
+| Destructive action | RGB 150, 50, 35 for both center and bevel | [ManageIdentitiesScreen action colors](../../../../Survivalcraft/Screens/ManageIdentitiesScreen.cs), [HostedWorldScreen](../../../../Assets/Screens/HostedWorldScreen.xml) |
 
 - Use green for forward actions such as start/run, join, install, login, and making an identity the default. Use red for delete, stop, or forgetting saved credentials. Ordinary selectors, cancel/back, and routine dialog confirmation can retain the standard neutral treatment; do not make every affirmative dialog button green.
 - Set both `CenterColor` and `BevelColor` when applying a semantic color. Do not introduce a near-matching green/red or recolor label text as a substitute. Enabled active tabs retain legible light text; checking/pressing a tab should not turn its text black.
 - Use `ScreenTopTabButton`/`ScreenTopTabs` for peer top tabs. Do not give management pages taller tabs than neighboring Screens. Match button heights within a row; use an existing compact dialog/grid pattern when that role needs it, rather than treating every button as height 60.
-- Dimensions above are logical outer layout units, not physical display pixels. [BevelledButtonContents](../../../../Content/Assets/Widgets/BevelledButtonContents.xml) currently adds a 6-unit inset on each side, so outer heights 60/56 have visible heights 48/44. Compare actual visible borders against fields and selectors before adding offsets; equal outer sizes alone do not prove alignment.
+- Dimensions above are logical outer layout units, not physical display pixels. [BevelledButtonContents](../../../../Assets/Widgets/BevelledButtonContents.xml) currently adds a 6-unit inset on each side, so outer heights 60/56 have visible heights 48/44. Compare actual visible borders against fields and selectors before adding offsets; equal outer sizes alone do not prove alignment.
 - Keep disabled actions visibly disabled. Recover space by reducing unnecessary panel height and gaps before shrinking touch targets or text.
 
 ## Selection controls

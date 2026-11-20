@@ -32,16 +32,14 @@
 | `Survivalcraft/` | 图形应用装配与界面流程 |
 | `Content.Packaging/` | 位于 Protocol 层的统一 `.scpkg` 协议、校验和 payload codec |
 | `ServerSource.Protocol/` | 位于 Protocol 层的服务器源 HTTP 契约、校验器和参考客户端 |
-| `ContentServer/` | 统一 `.scpkg` 内容发布服务及内置服务器源参考实现 |
-| `ContentWebUI/` | ContentServer 的发布者和管理员 Web 工作台 |
+| `Services/Content/ContentServer/` | 统一 `.scpkg` 内容发布服务及内置服务器源参考实现 |
+| `Services/Content/ContentWebUI/` | ContentServer 的发布者和管理员 Web 工作台 |
 | `Mods/Beacon/`、`Mods/TerritoryStone/` | 独立开发和测试的示例模组 |
 | `Survivalcraft.ModTemplate/` | `dotnet new` 模组模板 |
 | `Engine/` | 平台能力层，负责窗口、渲染、音频和输入 |
 | `Engine.Core/` | 基础类型和运行模式，给各项目共用 |
 | `Engine.Media/` | 独立的图像、音频、模型数据与编解码，使用流接口，无窗口和设备依赖 |
-| `Native.ImageCodecs/` | 图像原生资产 NuGet 包，按 RID 提供依赖 |
-| `Native.OpenAL/` | Windows、Linux 和 Android 的 OpenAL 原生资产 NuGet 包 |
-| `Native.SDL/` | Windows、Linux 和 Android 的 SDL 原生资产包及 Android Java 资源 |
+| `Native/` | ImageCodecs、OpenAL 和 SDL 原生资产 NuGet 项目，按 RID 提供依赖 |
 | `EntitySystem/` | 实体、组件和模板数据库 |
 | `Survivalcraft.Windows/` | Windows 图形程序启动器 |
 | `Survivalcraft.Linux/` | Linux 图形程序启动器 |
@@ -50,15 +48,14 @@
 | `Survivalcraft.Android.Arm32/` | Android ARM32 变体 |
 | `Survivalcraft.Android.X64/` | Android x64 变体 |
 | `Survivalcraft.Android.X86/` | Android x86 变体 |
-| `Engine.Test/`、`EntitySystem.Test/`、`Survivalcraft.Test/` | 单元测试工程 |
+| `Tests/` | 主解决方案测试项目，按被测组件命名 |
 | `Engine.Network/` | 独立网络宿主、连接生命周期、邀请与中继路径 |
 | `Game.Protocol/` | 游戏消息契约、帧格式和显式编解码 |
 | `Authentication.Protocol/` | 外部认证的签名事务、授权和准入契约 |
-| `Authentication.Server/` | 可独立部署的外部认证参考服务 |
+| `Services/Authentication/Authentication.Server/` | 可独立部署的外部认证参考服务 |
 | `Rendezvous.Protocol/` | 邀请信令及认证中继报文契约 |
-| `RendezvousServer/` | 独立信令与中继服务 |
-| `NetworkProbe/` | 基于 Engine API 的网络验证驱动器 |
-| `NetworkDamageTool/` | 本机 UDP 网络损伤代理，用于弱网集成实验 |
+| `Services/Signaling/RendezvousServer/` | 独立信令与中继服务 |
+| `Tools/` | GUI 图集、UI 预览、语言、内容和网络调试工具 |
 
 ## 快速开始
 
@@ -103,7 +100,7 @@ dotnet build Mods/TerritoryStone/TerritoryStone.slnx -c Debug
 
 ```bash
 # 首次构建：准备本地包并还原依赖
-npm --prefix ContentWebUI ci
+npm --prefix Services/Content/ContentWebUI ci
 ./Scripts/pre-build.sh
 
 # Debug 构建
@@ -131,11 +128,12 @@ PowerShell 发行脚本分别为 `./Scripts/publish.ps1` 和 `./Scripts/pack-nug
 ### 测试
 
 ```bash
-dotnet test Engine.Test/
-dotnet test EntitySystem.Test/
-dotnet test Survivalcraft.Test/
+dotnet test Tests/Engine.Test/
+dotnet test Tests/EntitySystem.Test/
+dotnet test Tests/Survivalcraft.Test/
 ```
 
+主解决方案的测试项目集中在 `Tests/`，各项目维护自己的测试夹具。示例模组的测试与各自的独立解决方案同目录。
 测试框架为 xUnit + coverlet。解决方案的 `Release` 构建排除测试项目；
 协议、服务、桌面更新事务和工具各有对应的测试项目，可按改动范围选择运行。
 

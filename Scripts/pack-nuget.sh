@@ -78,17 +78,17 @@ mkdir -p Publish/NuGet
 
 if ! $selected || $pack_native_imagecodecs; then
     echo "[SCNET Pack] Packing SCNET.Native.ImageCodecs"
-    dotnet pack "Native.ImageCodecs/Native.ImageCodecs.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+    dotnet pack "Native/ImageCodecs/Native.ImageCodecs.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $pack_native_openal; then
     echo "[SCNET Pack] Packing SCNET.Native.OpenAL"
-    dotnet pack "Native.OpenAL/Native.OpenAL.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+    dotnet pack "Native/OpenAL/Native.OpenAL.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $pack_native_sdl; then
     echo "[SCNET Pack] Packing SCNET.Native.SDL"
-    dotnet pack "Native.SDL/Native.SDL.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+    dotnet pack "Native/SDL/Native.SDL.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $pack_engine_core; then
@@ -133,7 +133,7 @@ fi
 
 if ! $selected || $pack_contenttool; then
     echo "[SCNET Pack] Packing SCNET.ContentTool"
-    dotnet pack "ContentTool/ContentTool.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+    dotnet pack "Tools/ContentTool/ContentTool.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 if ! $selected || $pack_authentication_protocol; then

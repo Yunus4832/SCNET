@@ -1,22 +1,22 @@
 ---
 name: scnet-language-management
-description: Manage SCNET localization files through the repository C# LanguageTool. Use when adding, updating, removing, renaming, listing, reading, or validating keys in Content/Assets/Lang/*.json, and avoid direct JSON text edits for localization changes.
+description: Manage SCNET localization files through the repository C# LanguageTool. Use when adding, updating, removing, renaming, listing, reading, or validating keys in Assets/Lang/*.json, and avoid direct JSON text edits for localization changes.
 ---
 
 # SCNET Language Management
 
-Use the repository tool instead of manually editing `Content/Assets/Lang/*.json`.
+Use the repository tool instead of manually editing `Assets/Lang/*.json`.
 
 Run commands from the repository root. Prefer these navigation commands before reading any language JSON file:
 
 ```bash
-dotnet run --project LanguageTool -- check
-dotnet run --project LanguageTool -- rules
-dotnet run --project LanguageTool -- overview . --depth 1
-dotnet run --project LanguageTool -- overview Help --culture all --depth 2 --limit 80
-dotnet run --project LanguageTool -- children ContentWidgets
-dotnet run --project LanguageTool -- search Restart --culture en-US --prefix ContentWidgets --limit 20
-dotnet run --project LanguageTool -- table Help --fields Title,Name --limit 12
+dotnet run --project Tools/LanguageTool -- check
+dotnet run --project Tools/LanguageTool -- rules
+dotnet run --project Tools/LanguageTool -- overview . --depth 1
+dotnet run --project Tools/LanguageTool -- overview Help --culture all --depth 2 --limit 80
+dotnet run --project Tools/LanguageTool -- children ContentWidgets
+dotnet run --project Tools/LanguageTool -- search Restart --culture en-US --prefix ContentWidgets --limit 20
+dotnet run --project Tools/LanguageTool -- table Help --fields Title,Name --limit 12
 ```
 
 ## Workflow
@@ -24,29 +24,29 @@ dotnet run --project LanguageTool -- table Help --fields Title,Name --limit 12
 1. Inspect the key rules and nearby key structure before adding new ones:
 
 ```bash
-dotnet run --project LanguageTool -- rules
-dotnet run --project LanguageTool -- overview . --depth 1
-dotnet run --project LanguageTool -- overview ContentWidgets --depth 2 --limit 120
-dotnet run --project LanguageTool -- overview Help --culture all --depth 2 --limit 80
-dotnet run --project LanguageTool -- children ContentWidgets.ModManagementScreen
-dotnet run --project LanguageTool -- show ContentWidgets.ModManagementScreen --culture zh-CN --depth 1 --limit 80
-dotnet run --project LanguageTool -- list --culture zh-CN --prefix ContentWidgets.ModManagementScreen
-dotnet run --project LanguageTool -- get ContentWidgets.ModManagementScreen.Title --culture en-US
+dotnet run --project Tools/LanguageTool -- rules
+dotnet run --project Tools/LanguageTool -- overview . --depth 1
+dotnet run --project Tools/LanguageTool -- overview ContentWidgets --depth 2 --limit 120
+dotnet run --project Tools/LanguageTool -- overview Help --culture all --depth 2 --limit 80
+dotnet run --project Tools/LanguageTool -- children ContentWidgets.ModManagementScreen
+dotnet run --project Tools/LanguageTool -- show ContentWidgets.ModManagementScreen --culture zh-CN --depth 1 --limit 80
+dotnet run --project Tools/LanguageTool -- list --culture zh-CN --prefix ContentWidgets.ModManagementScreen
+dotnet run --project Tools/LanguageTool -- get ContentWidgets.ModManagementScreen.Title --culture en-US
 ```
 
 2. Search without opening large JSON files:
 
 ```bash
-dotnet run --project LanguageTool -- search server --culture all --prefix ContentWidgets --limit 50
-dotnet run --project LanguageTool -- search WorldServerSettings --culture en-US --in path
+dotnet run --project Tools/LanguageTool -- search server --culture all --prefix ContentWidgets --limit 50
+dotnet run --project Tools/LanguageTool -- search WorldServerSettings --culture en-US --in path
 ```
 
 3. Audit structured sections across cultures without opening large JSON files:
 
 ```bash
-dotnet run --project LanguageTool -- overview Help --culture all --depth 2 --limit 80
-dotnet run --project LanguageTool -- table Help --fields Title,Name --limit 20
-dotnet run --project LanguageTool -- table ContentWidgets.ModManagementScreen --fields value --cultures zh-CN,en-US
+dotnet run --project Tools/LanguageTool -- overview Help --culture all --depth 2 --limit 80
+dotnet run --project Tools/LanguageTool -- table Help --fields Title,Name --limit 20
+dotnet run --project Tools/LanguageTool -- table ContentWidgets.ModManagementScreen --fields value --cultures zh-CN,en-US
 ```
 
 Use `overview` first when you need a level/depth map of a language subtree. It reports node kind, scalar fields, child keys, previews and structural issues. Use `.` or `/` for the root path.
@@ -55,8 +55,8 @@ Use `table` when a section contains numbered child objects or metadata fields an
 4. Synchronize invariant metadata fields from the canonical language:
 
 ```bash
-dotnet run --project LanguageTool -- sync-field Help Name --from zh-CN --remove-extra --dry-run
-dotnet run --project LanguageTool -- sync-field Help Name --from zh-CN --remove-extra
+dotnet run --project Tools/LanguageTool -- sync-field Help Name --from zh-CN --remove-extra --dry-run
+dotnet run --project Tools/LanguageTool -- sync-field Help Name --from zh-CN --remove-extra
 ```
 
 Use `sync-field` for runtime IDs or non-translatable metadata such as `Help.*.Name`. Do not use it for localized display text such as `Title` or `value`.
@@ -64,7 +64,7 @@ Use `sync-field` for runtime IDs or non-translatable metadata such as `Help.*.Na
 5. Add or update one string key in all supported languages:
 
 ```bash
-dotnet run --project LanguageTool -- set ContentWidgets.SomeScreen.SomeKey \
+dotnet run --project Tools/LanguageTool -- set ContentWidgets.SomeScreen.SomeKey \
   --zh-CN 中文 \
   --en-US English \
   --pt-PT Português \
@@ -74,19 +74,19 @@ dotnet run --project LanguageTool -- set ContentWidgets.SomeScreen.SomeKey \
 6. Rename a key in all language files:
 
 ```bash
-dotnet run --project LanguageTool -- rename OldScreen.OldKey NewScreen.NewKey
+dotnet run --project Tools/LanguageTool -- rename OldScreen.OldKey NewScreen.NewKey
 ```
 
 7. Remove a key from all language files:
 
 ```bash
-dotnet run --project LanguageTool -- remove SomeScreen.ObsoleteKey
+dotnet run --project Tools/LanguageTool -- remove SomeScreen.ObsoleteKey
 ```
 
 8. Always validate after a localization change:
 
 ```bash
-dotnet run --project LanguageTool -- check
+dotnet run --project Tools/LanguageTool -- check
 ```
 
 ## Rules
