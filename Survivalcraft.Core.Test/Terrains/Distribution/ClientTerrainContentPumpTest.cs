@@ -4,6 +4,7 @@ using Game.Protocol.Terrain;
 using Game.Subsystems;
 using Game.Terrains;
 using Game.Terrains.Distribution;
+using Game.Terrains.Lighting;
 
 namespace Survivalcraft.Core.Test.Terrains.Distribution;
 
@@ -163,6 +164,46 @@ public sealed class ClientTerrainContentPumpTest
         Assert.True(chunk.HasContents);
         Assert.True(chunk.HasCurrentHeightData);
         Assert.True(chunk.HasCurrentLight);
+    }
+
+    [Fact]
+    public void InstalledContentWithoutMatchingLightRequestsOnlyABaselineAfterTheRetryWindow()
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.HasContents = true;
+        chunk.NetworkContentVersion = 2;
+        Assert.True(chunk.DerivedRevisions.PublishHeights(chunk.DerivedRevisions.Capture()));
+        var allocation = new ChunkAllocationId(chunk.Coords, chunk.AllocationGeneration);
+        var lighting = new TerrainReplicaLighting(terrain, candidate => candidate == allocation);
+        var snapshot = new TerrainLightSnapshot(default);
+        Assert.True(lighting.Receive(TerrainLightSectionsCodec.Capture(allocation, 1, 1, 0, snapshot, null)));
+        var locations = new[] { new TerrainUpdateLocation { Center = chunk.Center, ContentDistance = 32 } };
+        var transport = new RecordingTransport();
+
+        Assert.Equal(0, RequestAt(1));
+        Assert.Equal(0, RequestAt(5.999));
+        Assert.Equal(1, RequestAt(6));
+        Assert.Equal(
+            new ChunkContentRequest(allocation, 2, RequestLightBaseline: true),
+            Assert.Single(transport.Requests)
+        );
+        Assert.False(chunk.IsRequested);
+        Assert.Equal(0, RequestAt(10.999));
+
+        Assert.True(lighting.Receive(TerrainLightSectionsCodec.Capture(allocation, 2, 2, 0, snapshot, null)));
+        Assert.Equal(0, RequestAt(11));
+        Assert.Single(lighting.Drain());
+        Assert.True(chunk.HasCurrentLight);
+
+        int RequestAt(double time) =>
+            ClientTerrainContentPump.RequestChunkContents(
+                terrain.AllocatedChunks,
+                locations,
+                transport,
+                time,
+                lighting
+            );
     }
 
     [Fact]

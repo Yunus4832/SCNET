@@ -420,7 +420,9 @@ public static partial class ProtocolMessageValidation
                 );
                 Require(
                     chunks.ChunkRequests.All(request =>
-                        request.Allocation.Generation > 0 && request.KnownContentVersion >= 0
+                        request.Allocation.Generation > 0 &&
+                        request.KnownContentVersion >= 0 &&
+                        (!request.RequestLightBaseline || request.KnownContentVersion > 0)
                     ),
                     "Invalid terrain chunk request metadata."
                 );

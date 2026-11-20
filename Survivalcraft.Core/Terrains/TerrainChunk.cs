@@ -101,6 +101,10 @@ public class TerrainChunk : IDisposable
 
     public double NetworkRequestTime;
 
+    internal long lightRequestContentVersion;
+
+    internal double lightRequestTime;
+
     public long NetworkContentVersion;
 
     public int ModificationCounter;

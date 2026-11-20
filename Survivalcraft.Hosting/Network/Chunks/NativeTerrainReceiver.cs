@@ -75,7 +75,8 @@ internal sealed class NativeTerrainReceiver : IDisposable
             {
                 if (!_content.IsRequested(chunk.Allocation)) { continue; }
 
-                if (_reassembler.TryCreateMissingFragmentRequest(chunk.Allocation, out var missing))
+                if (!chunk.RequestLightBaseline &&
+                    _reassembler.TryCreateMissingFragmentRequest(chunk.Allocation, out var missing))
                 {
                     repairs.Add(missing);
                 }

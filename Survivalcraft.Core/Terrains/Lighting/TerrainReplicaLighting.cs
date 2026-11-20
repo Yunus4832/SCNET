@@ -48,6 +48,16 @@ public sealed class TerrainReplicaLighting(
 
     private readonly Queue<ChunkAllocationId> _pending = [];
 
+    internal bool HasReceivedLight(TerrainChunk chunk)
+    {
+        lock (_gate)
+        {
+            return _entries.TryGetValue(chunk.Coords, out var entry) &&
+                   entry.allocation.Generation == chunk.AllocationGeneration &&
+                   entry.contentVersion == chunk.NetworkContentVersion;
+        }
+    }
+
     public bool Receive(TerrainLightSectionsPackage package)
     {
         ProtocolMessageValidation.Validate(package);

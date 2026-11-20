@@ -63,6 +63,8 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
             .GetField("_pendingPackages", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(_node)!;
         lighting.Update();
         Assert.Equal(2, outgoing.Count);
+        var baselineSequences = outgoing.Select(item => Assert.IsType<TerrainLightSectionsPackage>(item.Package))
+            .ToDictionary(baseline => baseline.Allocation, baseline => baseline.Sequence);
         outgoing.Clear();
 
         var lit = dark.WithSection(4, new TerrainLightSection(new TerrainLightChannels(0, 15)));
@@ -88,7 +90,7 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
         lighting.Update();
         var batch = Assert.IsType<TerrainLightBatchPackage>(Assert.Single(outgoing).Package);
         Assert.Equal(2, batch.Updates.Length);
-        Assert.All(batch.Updates, update => Assert.Equal(1, update.BaseSequence));
+        Assert.All(batch.Updates, update => Assert.Equal(baselineSequences[update.Allocation], update.BaseSequence));
         Assert.Equal(8, ReadLight(first));
         Assert.Equal(15, ReadLight(second));
 
@@ -108,6 +110,85 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
             Assert.True(terrain.Lighting.TryPublish(chunk, terrain.Lighting.CaptureInput(chunk), snapshot));
             Assert.True(chunk.DerivedRevisions.PublishLight(request));
         }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LightOnlyRequestRepublishesBaselineWithANewerSequence(bool interestWasRemoved)
+    {
+        using var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(0, 0);
+        chunk.HasContents = true;
+        var request = chunk.DerivedRevisions.Capture();
+        Assert.True(chunk.DerivedRevisions.PublishHeights(request));
+        Assert.True(chunk.DerivedRevisions.PublishLightSeed(request));
+        var snapshot = new TerrainLightSnapshot(new TerrainLightChannels(15, 0));
+        Assert.True(terrain.Lighting.TryPublish(chunk, terrain.Lighting.CaptureInput(chunk), snapshot));
+        Assert.True(chunk.DerivedRevisions.PublishLight(request));
+
+        var authority = new SnapshotAuthority();
+        using var scheduler = new ServerChunkDistributionScheduler(_project, authority);
+        using var lighting = new ServerTerrainLightingReplication(
+            terrain,
+            authority,
+            scheduler,
+            WorldMessageEndpoint.For(_node.Runtime)
+        );
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.Empty);
+        _node.AddClient(client);
+        client.Connection = new ConnectedStub(true);
+        scheduler.UpdateClientLocation(client, Vector2.Zero, 64);
+        var allocation = new ChunkAllocationId(chunk.Coords, 2);
+        scheduler.Enqueue(client, [new ChunkContentRequest(allocation)]);
+        var outgoing = (PendingLogicalMessages)typeof(NetNode)
+            .GetField("_pendingPackages", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(_node)!;
+        lighting.Update();
+        var original = Assert.IsType<TerrainLightSectionsPackage>(Assert.Single(outgoing).Package);
+        outgoing.Clear();
+        if (interestWasRemoved)
+        {
+            scheduler.UpdateClientLocation(client, new Vector2(512, 8), 64);
+            lighting.Update();
+            Assert.False(scheduler.IsCurrentAllocation(client, allocation));
+            scheduler.UpdateClientLocation(client, Vector2.Zero, 64);
+        }
+
+        scheduler.Enqueue(client, [new ChunkContentRequest(allocation, 1, RequestLightBaseline: true)]);
+        scheduler.Update();
+        Assert.Empty(outgoing);
+        Assert.Equal(0, scheduler.GetPendingCount(client));
+        Assert.True(scheduler.IsCurrentAllocation(client, allocation));
+        lighting.Update();
+
+        var recovery = Assert.IsType<TerrainLightSectionsPackage>(Assert.Single(outgoing).Package);
+        Assert.Equal(allocation, recovery.Allocation);
+        Assert.Equal(1, recovery.ContentVersion);
+        Assert.True(recovery.IsBaseline);
+        Assert.True(recovery.Sequence > original.Sequence);
+    }
+
+    [Fact]
+    public void LightRecoveryQueuesContentWhenTheReplicaVersionIsStale()
+    {
+        using var scheduler = new ServerChunkDistributionScheduler(_project, new SnapshotAuthority(2));
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.Empty);
+        _node.AddClient(client);
+        client.Connection = new ConnectedStub(true);
+        scheduler.UpdateClientLocation(client, Vector2.Zero, 64);
+        var allocation = new ChunkAllocationId(new Point2(0, 0), 2);
+
+        Assert.Equal(
+            1,
+            scheduler.Enqueue(client, [new ChunkContentRequest(allocation, 1, RequestLightBaseline: true)])
+        );
+        scheduler.Update();
+
+        var outgoing = (PendingLogicalMessages)typeof(NetNode)
+            .GetField("_pendingPackages", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(_node)!;
+        var snapshot = Assert.IsType<TerrainSnapshotMessage>(Assert.Single(outgoing).Package).Snapshot;
+        Assert.Equal(allocation, snapshot.Allocation);
+        Assert.Equal(2, snapshot.ContentVersion);
     }
 
     [Fact]
@@ -195,7 +276,7 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
         }
     }
 
-    private sealed class SnapshotAuthority : IChunkContentAuthority
+    private sealed class SnapshotAuthority(long contentVersion = 1) : IChunkContentAuthority
     {
         public int[] Cells { get; } = new int[AuthorityChunkSnapshot.CellCount];
 
@@ -203,13 +284,13 @@ public sealed class ServerChunkDistributionSchedulerTest : IDisposable
 
         public bool TryGetDescriptor(Point2 coords, out AuthorityChunkDescriptor descriptor)
         {
-            descriptor = new AuthorityChunkDescriptor(coords, 1);
+            descriptor = new AuthorityChunkDescriptor(coords, contentVersion);
             return true;
         }
 
         public bool TryGetSnapshot(Point2 coords, out AuthorityChunkSnapshot snapshot)
         {
-            snapshot = new AuthorityChunkSnapshot(coords, 1, Cells, Shafts);
+            snapshot = new AuthorityChunkSnapshot(coords, contentVersion, Cells, Shafts);
             return true;
         }
     }

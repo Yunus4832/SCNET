@@ -7,12 +7,15 @@ namespace Survivalcraft.Test.Network;
 
 public sealed class TerrainChunkProtocolTest
 {
-    [Fact]
-    public void RequestRoundTripPreservesAllocationGenerationAndKnownVersion()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RequestRoundTripPreservesAllocationGenerationAndKnownVersion(bool requestLightBaseline)
     {
         var expected = new ChunkContentRequest(
             new ChunkAllocationId(new Point2(3, 4), 17),
-            23
+            23,
+            requestLightBaseline
         );
         var clone = RoundTrip(new TerrainChunksRequestPackage { ChunkRequests = [expected] });
 

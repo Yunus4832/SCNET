@@ -5,22 +5,20 @@ using Game.Terrains.Lighting;
 namespace Game.Terrains.Distribution;
 
 /// <summary>Publishes authority light baselines and changed sections for the existing content allocation lifetimes.</summary>
-internal sealed class ServerTerrainLightingReplication(
-    Terrain terrain,
-    IChunkContentAuthority authority,
-    ServerChunkDistributionScheduler distribution,
-    IWorldMessageSink messages
-) : IDisposable
+internal sealed class ServerTerrainLightingReplication : IDisposable
 {
     private const int _updatesPerClientTick = 4;
 
-    private readonly Terrain _terrain = terrain;
+    private readonly Terrain _terrain;
 
-    private readonly IChunkContentAuthority _authority = authority;
+    private readonly IChunkContentAuthority _authority;
 
-    private readonly ServerChunkDistributionScheduler _distribution = distribution;
+    private readonly ServerChunkDistributionScheduler _distribution;
 
-    private readonly IWorldMessageSink _messages = messages;
+    private readonly IWorldMessageSink _messages;
+
+    // A client's previous sequence can outlive its server-side interest entry.
+    private long _nextSequence;
 
     private bool _disposed;
 
@@ -35,6 +33,25 @@ internal sealed class ServerTerrainLightingReplication(
 
     private readonly Dictionary<WorldConnection, Dictionary<Point2, LightCursor>> _lightCursors =
         new(ReferenceEqualityComparer.Instance);
+
+    public ServerTerrainLightingReplication(
+        Terrain terrain,
+        IChunkContentAuthority authority,
+        ServerChunkDistributionScheduler distribution,
+        IWorldMessageSink messages
+    )
+    {
+        _terrain = terrain;
+        _authority = authority;
+        _distribution = distribution;
+        _messages = messages;
+        _distribution.LightBaselineRequested += OnLightBaselineRequested;
+    }
+
+    private void OnLightBaselineRequested(WorldConnection client, ChunkAllocationId allocation)
+    {
+        if (_lightCursors.TryGetValue(client, out var cursors)) { cursors.Remove(allocation.Coords); }
+    }
 
     public void Update()
     {
@@ -181,7 +198,7 @@ internal sealed class ServerTerrainLightingReplication(
             return true;
         }
 
-        var sequence = (previous?.Sequence ?? 0) + 1;
+        var sequence = ++_nextSequence;
         update = TerrainLightSectionsCodec.Capture(
             allocation,
             descriptor.ContentVersion,
@@ -204,6 +221,7 @@ internal sealed class ServerTerrainLightingReplication(
     public void Dispose()
     {
         _disposed = true;
+        _distribution.LightBaselineRequested -= OnLightBaselineRequested;
         _lightCursors.Clear();
     }
 }

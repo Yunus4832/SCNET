@@ -50,6 +50,7 @@ public sealed class ServerChunkDistributionScheduler : IDisposable
 
     internal IReadOnlyDictionary<WorldConnection, Dictionary<Point2, ChunkAllocationId>> Allocations => _allocations;
 
+    internal event Action<WorldConnection, ChunkAllocationId>? LightBaselineRequested;
 
     public (int Pending, int AwaitingContent) GetBacklog()
     {
@@ -100,6 +101,17 @@ public sealed class ServerChunkDistributionScheduler : IDisposable
 
             allocations[allocation.Coords] = allocation;
             _messages.DiscardOlderChunkAllocations(client, allocation);
+            if (request.RequestLightBaseline)
+            {
+                LightBaselineRequested?.Invoke(client, allocation);
+                if (_authority.TryGetDescriptor(allocation.Coords, out var descriptor) &&
+                    descriptor.ContentVersion == request.KnownContentVersion)
+                {
+                    queue.Remove(allocation.Coords);
+                    continue;
+                }
+            }
+
             if (queue.Enqueue(request)) { count++; }
         }
 
@@ -173,8 +185,15 @@ public sealed class ServerChunkDistributionScheduler : IDisposable
                     break;
                 }
 
-                if (!_authority.TryGetDescriptor(request.Allocation.Coords, out _) ||
-                    !_authority.TryGetSnapshot(request.Allocation.Coords, out var snapshot)) { continue; }
+                if (!_authority.TryGetDescriptor(request.Allocation.Coords, out var descriptor)) { continue; }
+
+                if (request.RequestLightBaseline && request.KnownContentVersion == descriptor.ContentVersion)
+                {
+                    queue.Remove(request.Allocation.Coords);
+                    continue;
+                }
+
+                if (!_authority.TryGetSnapshot(request.Allocation.Coords, out var snapshot)) { continue; }
 
                 var message = new TerrainSnapshotMessage(
                     ClientChunkSnapshot.Capture(request.Allocation, snapshot),
