@@ -13,6 +13,12 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
     public const int StarsCount = 250;
 
+    private static readonly float _sunFadeStartHeight = MathUtils.Sin(MathUtils.DegToRad(-5f));
+
+    private static readonly float _sunDiscFadeEndHeight = MathUtils.Sin(MathUtils.DegToRad(-22f));
+
+    private static readonly float _sunGlowFadeEndHeight = MathUtils.Sin(MathUtils.DegToRad(-18f));
+
     private UnlitShader _shaderFlat = null!;
 
     private UnlitShader _shaderTextured = null!;
@@ -693,6 +699,11 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         white *= MathUtils.Lerp(1f, 0f, precipitationIntensity);
         var color2 = color * 0.6f * MathUtils.Lerp(1f, 0f, precipitationIntensity);
         var color3 = color * 0.2f * MathUtils.Lerp(1f, 0f, precipitationIntensity);
+
+        // Vertical component of the unit direction used by QueueCelestialBody.
+        var sunHeight = MathUtils.Cos(num) * MathUtils.Cos(CalculateSeasonAngle());
+        color *= MathUtils.SmoothStep(_sunDiscFadeEndHeight, _sunFadeStartHeight, sunHeight);
+        color2 *= MathUtils.SmoothStep(_sunGlowFadeEndHeight, _sunFadeStartHeight, sunHeight);
         var batch = PrimitivesRenderer3D.TexturedBatch(
             _glowTexture,
             false,
