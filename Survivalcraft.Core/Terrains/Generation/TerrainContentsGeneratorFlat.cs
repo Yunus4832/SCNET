@@ -26,15 +26,15 @@ public class TerrainContentsGeneratorFlat : TerrainEnvironmentFlat, ITerrainCont
 
     public Vector3 FindCoarseSpawnPosition()
     {
-        for (var i = -400; i <= 400; i += 10)
+        for (var offsetX = -400; offsetX <= 400; offsetX += 10)
         {
-            for (var j = -400; j <= 400; j += 10)
+            for (var offsetZ = -400; offsetZ <= 400; offsetZ += 10)
             {
-                var vector = oceanCorner + new Vector2(i, j);
-                var num = CalculateOceanShoreDistance(vector.X, vector.Y);
-                if (num is >= 1f and <= 20f)
+                var candidate = oceanCorner + new Vector2(offsetX, offsetZ);
+                var shoreDistance = CalculateOceanShoreDistance(candidate.X, candidate.Y);
+                if (shoreDistance is >= 1f and <= 20f)
                 {
-                    return new Vector3(vector.X, CalculateHeight(vector.X, vector.Y), vector.Y);
+                    return new Vector3(candidate.X, CalculateHeight(candidate.X, candidate.Y), candidate.Y);
                 }
             }
         }
@@ -44,26 +44,26 @@ public class TerrainContentsGeneratorFlat : TerrainEnvironmentFlat, ITerrainCont
 
     public void GenerateChunkContentsPass1(TerrainChunk chunk)
     {
-        for (var i = 0; i < 16; i++)
+        for (var localX = 0; localX < 16; localX++)
         {
-            for (var j = 0; j < 16; j++)
+            for (var localZ = 0; localZ < 16; localZ++)
             {
-                var num = i + chunk.Origin.X;
-                var num2 = j + chunk.Origin.Y;
-                chunk.SetTemperatureFast(i, j, CalculateTemperature(num, num2));
-                chunk.SetHumidityFast(i, j, CalculateHumidity(num, num2));
-                var flag = CalculateOceanShoreDistance(num, num2) >= 0f;
-                var num3 = TerrainChunk.CalculateCellIndex(i, 0, j);
-                for (var k = 0; k < 256; k++)
+                var worldX = localX + chunk.Origin.X;
+                var worldZ = localZ + chunk.Origin.Y;
+                chunk.SetTemperatureFast(localX, localZ, CalculateTemperature(worldX, worldZ));
+                chunk.SetHumidityFast(localX, localZ, CalculateHumidity(worldX, worldZ));
+                var isLand = CalculateOceanShoreDistance(worldX, worldZ) >= 0f;
+                var columnIndex = TerrainChunk.CalculateCellIndex(localX, 0, localZ);
+                for (var y = 0; y < 256; y++)
                 {
                     var value = Terrain.MakeBlockValue(0);
-                    if (flag)
+                    if (isLand)
                     {
-                        if (k < 2)
+                        if (y < 2)
                         {
                             value = Terrain.MakeBlockValue(1);
                         }
-                        else if (k < terrainHeight)
+                        else if (y < terrainHeight)
                         {
                             value = Terrain.MakeBlockValue(
                                 _surfaceBlock == 8
@@ -71,25 +71,25 @@ public class TerrainContentsGeneratorFlat : TerrainEnvironmentFlat, ITerrainCont
                                     : _surfaceBlock
                             );
                         }
-                        else if (k == terrainHeight)
+                        else if (y == terrainHeight)
                         {
                             value = Terrain.MakeBlockValue(_surfaceBlock);
                         }
-                        else if (k <= OceanLevel)
+                        else if (y <= OceanLevel)
                         {
                             value = Terrain.MakeBlockValue(_oceanBlock);
                         }
                     }
-                    else if (k < 2)
+                    else if (y < 2)
                     {
                         value = Terrain.MakeBlockValue(1);
                     }
-                    else if (k <= OceanLevel)
+                    else if (y <= OceanLevel)
                     {
                         value = Terrain.MakeBlockValue(_oceanBlock);
                     }
 
-                    chunk.SetCellValueFast(num3 + k, value);
+                    chunk.SetCellValueFast(columnIndex + y, value);
                 }
             }
         }
@@ -110,28 +110,31 @@ public class TerrainContentsGeneratorFlat : TerrainEnvironmentFlat, ITerrainCont
 
     public void UpdateFluidIsTop(TerrainChunk chunk)
     {
-        for (var i = 0; i < 16; i++)
+        for (var localX = 0; localX < 16; localX++)
         {
-            for (var j = 0; j < 16; j++)
+            for (var localZ = 0; localZ < 16; localZ++)
             {
-                var num = TerrainChunk.CalculateCellIndex(i, 255, j);
-                var num2 = 0;
-                var num3 = 255;
-                while (num3 >= 0)
+                var cellIndex = TerrainChunk.CalculateCellIndex(localX, 255, localZ);
+                var contentsAbove = 0;
+                var y = 255;
+                while (y >= 0)
                 {
-                    var cellValueFast = chunk.GetCellValueFast(num);
-                    var num4 = Terrain.ExtractContents(cellValueFast);
-                    if (num4 != 0 &&
-                        num4 != num2 &&
-                        _subsystemTerrain.Catalog.Blocks[num4] is FluidBlock)
+                    var cellValue = chunk.GetCellValueFast(cellIndex);
+                    var contents = Terrain.ExtractContents(cellValue);
+                    if (contents != 0 &&
+                        contents != contentsAbove &&
+                        _subsystemTerrain.Catalog.Blocks[contents] is FluidBlock)
                     {
-                        var data = Terrain.ExtractData(cellValueFast);
-                        chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, FluidBlock.SetIsTop(data, true)));
+                        var data = Terrain.ExtractData(cellValue);
+                        chunk.SetCellValueFast(
+                            cellIndex,
+                            Terrain.MakeBlockValue(contents, FluidBlock.SetIsTop(data, true))
+                        );
                     }
 
-                    num2 = num4;
-                    num3--;
-                    num--;
+                    contentsAbove = contents;
+                    y--;
+                    cellIndex--;
                 }
             }
         }
