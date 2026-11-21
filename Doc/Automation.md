@@ -74,7 +74,7 @@ UI 拖放使用真实鼠标输入，`durationSeconds` 可选，默认为 0.5，�
 ## 可重复的世界
 
 创建测试世界可指定 `--session NAME --world NAME --seed SEED --game-mode Creative
---terrain FlatContinent --terrain-level 64 --player PLAYER_NAME`。
+--generator game:flat --generator-param terrainHeight=64 --player PLAYER_NAME`。
 平坦地形仍有海岸和水域：固定种子不保证出生点周围都是可步行陆地，操作前检查着地、浸水与截图。
 地形参数只用于创建，不改变已有世界；命名会话保存规则见 [启动会话](StartupSessions.md)。
 

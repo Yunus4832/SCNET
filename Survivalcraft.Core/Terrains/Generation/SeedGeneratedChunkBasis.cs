@@ -1,4 +1,4 @@
-namespace Game.TerrainSerializers;
+namespace Game.Terrains.Generation;
 
 internal static class SeedTerrainGenerationPolicy
 {

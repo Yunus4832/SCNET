@@ -39,7 +39,17 @@
             <Value Name="TotalElapsedGameTime" Type="System.Double" Value="0"/>
             <Value Name="GameMode" Type="Game.World.GameMode" Value="Creative"/>
             <Value Name="EnvironmentBehaviorMode" Type="Game.World.EnvironmentBehaviorMode" Value="Living"/>
-            <Value Name="TerrainGenerationMode" Type="Game.Terrains.TerrainGenerationMode" Value="Continent"/>
+            <Value Name="TerrainGeneratorId" Type="System.String" Value="game:standard"/>
+            <Value Name="TerrainGeneratorVersion" Type="System.Int32" Value="1"/>
+            <Values Name="TerrainGeneratorParameters">
+                <Value Name="shape" Type="System.String" Value="continent"/>
+                <Value Name="islandWidth" Type="System.Double" Value="400"/>
+                <Value Name="islandLength" Type="System.Double" Value="400"/>
+                <Value Name="seaLevelOffset" Type="System.Double" Value="0"/>
+                <Value Name="temperatureOffset" Type="System.Double" Value="0"/>
+                <Value Name="humidityOffset" Type="System.Double" Value="0"/>
+                <Value Name="biomeSize" Type="System.Double" Value="1"/>
+            </Values>
         </Values>
         <Values Name="Intro">
             <Value Name="PlayIntro" Type="System.Boolean" Value="False"/>

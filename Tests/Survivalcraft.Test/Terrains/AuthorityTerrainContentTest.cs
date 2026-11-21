@@ -8,7 +8,7 @@ using Game.Subsystems;
 using Game.Terrains;
 using Game.Terrains.Distribution;
 using Game.Terrains.Execution;
-using Game.TerrainSerializers;
+using Game.Terrains.Generation;
 
 using Survivalcraft.Test.Modding;
 

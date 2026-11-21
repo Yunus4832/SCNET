@@ -1,4 +1,4 @@
-namespace Game.TerrainSerializers;
+namespace Game.Terrains.Generation;
 
 /// <summary>Deterministic read-only world environment queries, without chunk generation capabilities.</summary>
 public interface ITerrainEnvironment

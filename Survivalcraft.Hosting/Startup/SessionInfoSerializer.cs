@@ -100,14 +100,16 @@ public static class SessionInfoSerializer
             element.Add(new XAttribute(nameof(SessionInfo.GameMode), gameMode));
         }
 
-        if (sessionInfo.TerrainGenerationMode is { } terrain)
+        if (sessionInfo.TerrainCreation.IsSpecified)
         {
-            element.Add(new XAttribute(nameof(SessionInfo.TerrainGenerationMode), terrain));
-        }
+            var creation = new XElement("TerrainCreation");
+            creation.SetAttributeValue("Generator", sessionInfo.TerrainCreation.GeneratorId);
+            foreach (var (key, value) in sessionInfo.TerrainCreation.Parameters)
+            {
+                creation.Add(new XElement("Parameter", new XAttribute("Key", key), new XAttribute("Value", value)));
+            }
 
-        if (sessionInfo.TerrainLevel is { } level)
-        {
-            element.Add(new XAttribute(nameof(SessionInfo.TerrainLevel), level));
+            element.Add(creation);
         }
 
         var p2p = new XElement(nameof(SessionInfo.P2POverrides));
@@ -203,12 +205,25 @@ public static class SessionInfoSerializer
         sessionInfo.ForceWorldRunServer = (bool?)element.Attribute(nameof(SessionInfo.ForceWorldRunServer)) ?? false;
         sessionInfo.Seed = element.Attribute(nameof(SessionInfo.Seed))?.Value ?? string.Empty;
         sessionInfo.GameMode = ParseGameMode(element.Attribute(nameof(SessionInfo.GameMode))?.Value);
-        sessionInfo.TerrainGenerationMode = element.Attribute(nameof(SessionInfo.TerrainGenerationMode)) is { } terrain
-            ? Enum.Parse<TerrainGenerationMode>(terrain.Value, true)
-            : null;
-        sessionInfo.TerrainLevel = element.Attribute(nameof(SessionInfo.TerrainLevel)) is { } level
-            ? int.Parse(level.Value)
-            : null;
+        sessionInfo.TerrainCreation = new TerrainCreationOptions();
+        if (element.Element("TerrainCreation") is { } creation)
+        {
+            sessionInfo.TerrainCreation.GeneratorId = (string?)creation.Attribute("Generator");
+            foreach (var parameter in creation.Elements("Parameter"))
+            {
+                var key = (string?)parameter.Attribute("Key");
+                var value = (string?)parameter.Attribute("Value");
+                if (string.IsNullOrEmpty(key) ||
+                    value == null ||
+                    !sessionInfo.TerrainCreation.Parameters.TryAdd(key, value))
+                {
+                    throw new InvalidDataException("Invalid or duplicate session generator parameter.");
+                }
+            }
+
+            sessionInfo.TerrainCreation.Resolve();
+        }
+
         var p2p = element.Element(nameof(SessionInfo.P2POverrides));
         sessionInfo.P2POverrides = new P2PRoomOverrides
         {
@@ -259,16 +274,7 @@ public static class SessionInfoSerializer
             sessionInfo.RemoteTarget = null;
         }
 
-        if (sessionInfo.TerrainGenerationMode is { } terrain &&
-            (!Enum.IsDefined(terrain) || TerrainGenerationModes.IsLegacy(terrain)))
-        {
-            throw new ArgumentException("Session terrain must use a current generation mode.");
-        }
-
-        if (sessionInfo.TerrainLevel is < 2 or > 252)
-        {
-            throw new ArgumentException("Session terrain level must be between 2 and 252.");
-        }
+        if (sessionInfo.TerrainCreation.IsSpecified) { sessionInfo.TerrainCreation.Resolve(); }
 
         sessionInfo.SessionId = !IsValidSessionId(sessionInfo.SessionId)
             ? Guid.NewGuid().ToString("N")
@@ -391,8 +397,7 @@ public static class SessionInfoSerializer
             ForceWorldRunServer = source.ForceWorldRunServer,
             Seed = source.Seed,
             GameMode = source.GameMode,
-            TerrainGenerationMode = source.TerrainGenerationMode,
-            TerrainLevel = source.TerrainLevel,
+            TerrainCreation = source.TerrainCreation.Copy(),
             RemoteTarget = source.RemoteTarget,
             P2POverrides = source.P2POverrides,
             AdmissionOverrides = source.AdmissionOverrides,

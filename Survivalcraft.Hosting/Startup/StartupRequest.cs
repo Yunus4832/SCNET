@@ -14,9 +14,8 @@ public sealed class StartupRequest
 
     public GameMode? GameMode { get; set; }
 
-    public TerrainGenerationMode? TerrainGenerationMode { get; set; }
+    public TerrainCreationOptions TerrainCreation { get; set; } = new();
 
-    public int? TerrainLevel { get; set; }
 
     public string? ConnectHost { get; set; }
 

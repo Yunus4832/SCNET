@@ -26,6 +26,7 @@ public class CreativeWorldRulesTest
     {
         var authority = new WorldSettings { Name = "World", CreativeDigTime = 0.275f, CreativeReach = 9f };
         var saved = new ValuesDictionary();
+        authority.Generator.Save(saved);
         authority.Save(saved, liveOnly);
         var reloaded = new WorldSettings();
         reloaded.Load(saved);
@@ -54,7 +55,9 @@ public class CreativeWorldRulesTest
     {
         var defaults = new WorldSettings();
         var saved = new WorldSettings();
-        saved.Load(new ValuesDictionary { { "WorldName", "World" } });
+        var values = new ValuesDictionary { { "WorldName", "World" } };
+        defaults.Generator.Save(values);
+        saved.Load(values);
         Assert.Equal(0.2f, defaults.CreativeDigTime);
         Assert.Equal(7.5f, defaults.CreativeReach);
         Assert.Equal(defaults.CreativeDigTime, saved.CreativeDigTime);

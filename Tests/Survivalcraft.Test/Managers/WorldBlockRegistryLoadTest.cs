@@ -1,5 +1,9 @@
+using System.Xml.Linq;
+
 using Engine.Core.FileStorage;
 using Engine.Core.Runtime;
+
+using EntitySystem.TemplatesDatabase;
 
 using Game.Blocks;
 using Game.Configuration;
@@ -24,7 +28,16 @@ public sealed class WorldBlockRegistryLoadTest
     {
         var directory = Path.Combine(Path.GetTempPath(), $"scnet-block-registry-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
-        var original = $"<Project Version=\"{WorldVersions.ProjectFormatVersion}\"><BlockRegistry /></Project>";
+        var gameInfo = new XElement("Values", new XAttribute("Name", "GameInfo"));
+        var values = new ValuesDictionary();
+        new WorldSettings().Generator.Save(values);
+        values.Save(gameInfo);
+        var original = new XElement(
+            "Project",
+            new XAttribute("Version", WorldVersions.ProjectFormatVersion),
+            new XElement("BlockRegistry"),
+            new XElement("Subsystems", gameInfo)
+        ).ToString();
         File.WriteAllText(Path.Combine(directory, "Project.xml"), original);
         const string rootName = "block-registry-write-test";
         Storage.RegisterFileSystemRoot(rootName, directory, readOnly: true);

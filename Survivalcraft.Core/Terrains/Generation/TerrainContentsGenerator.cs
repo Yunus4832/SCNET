@@ -3,9 +3,9 @@ using System.Runtime.CompilerServices;
 
 using EntitySystem.TemplatesDatabase;
 
-namespace Game.TerrainSerializers;
+namespace Game.Terrains.Generation;
 
-public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContentsGenerator
+public class TerrainContentsGenerator : GeneratedTerrainEnvironment, ITerrainContentsGenerator
 {
     private static readonly List<TerrainBrush> _coalBrushes = [];
 
@@ -72,12 +72,12 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
 
     private const long _cleanTreeBrushCacheMaxAgeMs = 10 * 60 * 1000;
 
-    static TerrainContentsGenerator24()
+    static TerrainContentsGenerator()
     {
         CreateBrushes();
     }
 
-    public TerrainContentsGenerator24(SubsystemTerrain subsystemTerrain, Terrain? terrain = null)
+    public TerrainContentsGenerator(SubsystemTerrain subsystemTerrain, Terrain? terrain = null)
         : base(subsystemTerrain.SubsystemGameInfo.WorldSettings, subsystemTerrain.SubsystemGameInfo.WorldSeed)
     {
         _subsystemTerrain = subsystemTerrain;
@@ -87,7 +87,7 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
             subsystemTerrain.Project.FindSubsystem<SubsystemBottomSuckerBlockBehavior>(true)!;
     }
 
-    private TerrainContentsGenerator24(TerrainContentsGenerator24 owner, Terrain terrain, WorldSettings settings)
+    private TerrainContentsGenerator(TerrainContentsGenerator owner, Terrain terrain, WorldSettings settings)
         : base(settings, owner.seed)
     {
         _subsystemTerrain = owner._subsystemTerrain;
@@ -1249,7 +1249,7 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
         return Task.Run(() =>
             {
                 using var terrain = new Terrain();
-                var source = new TerrainContentsGenerator24(this, terrain, settings);
+                var source = new TerrainContentsGenerator(this, terrain, settings);
                 Parallel.ForEach(
                     missing,
                     new ParallelOptions
@@ -1264,7 +1264,7 @@ public class TerrainContentsGenerator24 : TerrainEnvironment24, ITerrainContents
         );
     }
 
-    private BrushPaint[] GetCleanTreeBrush(Point2 coords, TerrainContentsGenerator24 source)
+    private BrushPaint[] GetCleanTreeBrush(Point2 coords, TerrainContentsGenerator source)
     {
         var entry = _cleanTreeBrushCache.GetOrAdd(
             (seed, coords),

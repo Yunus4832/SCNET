@@ -1,8 +1,14 @@
-namespace Game.TerrainSerializers;
+namespace Game.Terrains.Generation;
 
 /// <summary>Read-only terrain environment calculations without world mutation services.</summary>
 public class TerrainEnvironmentFlat : ITerrainEnvironment
 {
+    private readonly int _seaOffset;
+
+    private readonly float _temperatureOffset;
+
+    private readonly float _humidityOffset;
+
     protected readonly Vector2? islandSize;
 
     protected readonly Vector2 oceanCorner;
@@ -15,22 +21,28 @@ public class TerrainEnvironmentFlat : ITerrainEnvironment
 
     protected readonly float[] shoreRoughnessOffset = new float[4];
 
-    protected readonly WorldSettings worldSettings;
+    protected readonly int terrainHeight;
 
     public TerrainEnvironmentFlat(WorldSettings worldSettings, int seed)
     {
-        this.worldSettings = worldSettings;
-        oceanCorner = TerrainGenerationModes.IsPre21(worldSettings.TerrainGenerationMode)
-            ? oceanCorner = new Vector2(2001f, 2001f)
-            : oceanCorner = new Vector2(-199f, -199f);
-        islandSize = TerrainGenerationModes.IsIsland(worldSettings.TerrainGenerationMode)
-            ? new Vector2?(worldSettings.IslandSize)
+        var parameters = worldSettings.Generator;
+        var isIsland = parameters.Get<string>("shape") == "island";
+        terrainHeight = (int)parameters.Get<double>("terrainHeight");
+        var roughness = (float)parameters.Get<double>("shoreRoughness");
+        _seaOffset = (int)parameters.Get<double>("seaLevelOffset");
+        _temperatureOffset = (float)parameters.Get<double>("temperatureOffset");
+        _humidityOffset = (float)parameters.Get<double>("humidityOffset");
+        oceanCorner = new Vector2(-199f, -199f);
+        islandSize = isIsland
+            ? new Vector2?(
+                new Vector2((float)parameters.Get<double>("islandWidth"), (float)parameters.Get<double>("islandLength"))
+            )
             : null;
-        shoreRoughnessAmplitude.X = MathUtils.Pow(worldSettings.ShoreRoughness, 2f) *
+        shoreRoughnessAmplitude.X = MathUtils.Pow(roughness, 2f) *
                                     (islandSize.HasValue ? MathUtils.Min(4f * islandSize.Value.X, 400f) : 400f);
-        shoreRoughnessAmplitude.Y = MathUtils.Pow(worldSettings.ShoreRoughness, 2f) *
+        shoreRoughnessAmplitude.Y = MathUtils.Pow(roughness, 2f) *
                                     (islandSize.HasValue ? MathUtils.Min(4f * islandSize.Value.Y, 400f) : 400f);
-        shoreRoughnessFrequency = MathUtils.Lerp(0.5f, 1f, worldSettings.ShoreRoughness) *
+        shoreRoughnessFrequency = MathUtils.Lerp(0.5f, 1f, roughness) *
                                   new Vector2(1f) /
                                   shoreRoughnessAmplitude;
         shoreRoughnessOctaves.X =
@@ -44,7 +56,7 @@ public class TerrainEnvironmentFlat : ITerrainEnvironment
         shoreRoughnessOffset[3] = random.Float(-2000f, 2000f);
     }
 
-    public int OceanLevel => worldSettings.TerrainLevel + worldSettings.SeaLevelOffset;
+    public int OceanLevel => terrainHeight + _seaOffset;
 
     public float CalculateOceanShoreDistance(float x, float z)
     {
@@ -106,16 +118,16 @@ public class TerrainEnvironmentFlat : ITerrainEnvironment
 
     public float CalculateHeight(float x, float z)
     {
-        return worldSettings.TerrainLevel;
+        return terrainHeight;
     }
 
     public int CalculateTemperature(float x, float z)
     {
-        return MathUtils.Clamp(12 + (int)worldSettings.TemperatureOffset, 0, 15);
+        return MathUtils.Clamp(12 + (int)_temperatureOffset, 0, 15);
     }
 
     public int CalculateHumidity(float x, float z)
     {
-        return MathUtils.Clamp(12 + (int)worldSettings.HumidityOffset, 0, 15);
+        return MathUtils.Clamp(12 + (int)_humidityOffset, 0, 15);
     }
 }

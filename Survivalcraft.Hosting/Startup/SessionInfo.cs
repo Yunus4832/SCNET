@@ -24,9 +24,8 @@ public sealed class SessionInfo
 
     public GameMode? GameMode { get; set; }
 
-    public TerrainGenerationMode? TerrainGenerationMode { get; set; }
+    public TerrainCreationOptions TerrainCreation { get; set; } = new();
 
-    public int? TerrainLevel { get; set; }
 
     public NetworkTarget? RemoteTarget { get; set; }
 

@@ -377,26 +377,24 @@ public sealed class StartupManagerTest : IDisposable
         var session = SaveSession("flat-automation");
         var args = new[]
         {
-            "--session", "flat-automation", "--terrain", "FlatContinent", "--terrain-level", "72"
+            "--session", "flat-automation", "--generator", "game:flat", "--generator-param", "terrainHeight=72"
         };
         var transient = StartupManager.Load(args);
-        Assert.Equal(TerrainGenerationMode.FlatContinent, transient.Session.TerrainGenerationMode);
-        Assert.Equal(72, transient.Session.TerrainLevel);
-        Assert.Null(StartupManager.Profiles.LoadSession(session.SessionId).TerrainGenerationMode);
+        Assert.Equal("game:flat", transient.Session.TerrainCreation.GeneratorId);
+        Assert.Equal(72d, transient.Session.TerrainCreation.Resolve().Get<double>("terrainHeight"));
+        Assert.False(StartupManager.Profiles.LoadSession(session.SessionId).TerrainCreation.IsSpecified);
         StartupManager.Load([.. args, "--save"]);
         var restored = StartupManager.Load(["--session", "flat-automation"]);
-        Assert.Equal(TerrainGenerationMode.FlatContinent, restored.Session.TerrainGenerationMode);
-        Assert.Equal(72, restored.Session.TerrainLevel);
+        Assert.Equal("game:flat", restored.Session.TerrainCreation.GeneratorId);
+        Assert.Equal(72d, restored.Session.TerrainCreation.Resolve().Get<double>("terrainHeight"));
     }
 
     [Theory]
-    [InlineData("--terrain", "LegacyContinent23")]
-    [InlineData("--terrain", "unknown")]
-    [InlineData("--terrain-level", "1")]
-    [InlineData("--terrain-level", "253")]
+    [InlineData("--generator", "unknown")]
+    [InlineData("--generator-param", "unregistered=1")]
     public void InvalidTerrainCreationParametersAreRejected(string option, string value)
     {
-        Assert.Throws<ArgumentException>(() => StartupManager.Load(["--session", "flat", option, value]));
+        Assert.Throws<InvalidDataException>(() => StartupManager.Load(["--session", "flat", option, value]));
     }
 
     [Fact]

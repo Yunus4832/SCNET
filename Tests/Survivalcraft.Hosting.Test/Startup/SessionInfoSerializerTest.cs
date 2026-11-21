@@ -24,8 +24,8 @@ public class SessionInfoSerializerTest
             World = "World",
             Seed = "seed",
             GameMode = GameMode.Creative,
-            TerrainGenerationMode = TerrainGenerationMode.FlatIsland,
-            TerrainLevel = 90,
+            TerrainCreation = new TerrainCreationOptions
+                { GeneratorId = "game:flat", Parameters = { ["shape"] = "island", ["terrainHeight"] = "90" } },
             RemoteTarget = new AddressNetworkTarget("example.test", 30001),
             ServerPort = 30002,
             BroadcastPort = -1,
@@ -53,8 +53,8 @@ public class SessionInfoSerializerTest
         Assert.Equal(original.World, restored.World);
         Assert.Equal(original.Seed, restored.Seed);
         Assert.Equal(original.GameMode, restored.GameMode);
-        Assert.Equal(original.TerrainGenerationMode, restored.TerrainGenerationMode);
-        Assert.Equal(original.TerrainLevel, restored.TerrainLevel);
+        Assert.Equal(original.TerrainCreation.GeneratorId, restored.TerrainCreation.GeneratorId);
+        Assert.Equal(original.TerrainCreation.Parameters, restored.TerrainCreation.Parameters);
         Assert.Equal(original.RemoteTarget, restored.RemoteTarget);
         Assert.Equal(original.ServerPort, restored.ServerPort);
         Assert.Equal(original.BroadcastPort, restored.BroadcastPort);
@@ -126,9 +126,11 @@ public class SessionInfoSerializerTest
     public void InvalidTerrainKeepsPartialPopulationAndOriginalParseException()
     {
         var session = new SessionInfo();
-        Assert.Throws<ArgumentException>(() => SessionInfoSerializer.Populate(
+        Assert.Throws<InvalidDataException>(() => SessionInfoSerializer.Populate(
                 session,
-                XElement.Parse("<SessionInfo World='Already populated' TerrainGenerationMode='bad' />")
+                XElement.Parse(
+                    "<SessionInfo World='Already populated'><TerrainCreation Generator='bad'/></SessionInfo>"
+                )
             )
         );
         Assert.Equal("Already populated", session.World);

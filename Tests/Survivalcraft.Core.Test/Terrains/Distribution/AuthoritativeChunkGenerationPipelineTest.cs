@@ -5,6 +5,7 @@ using Engine.Core.Mathematics;
 
 using Game.Terrains;
 using Game.Terrains.Distribution;
+using Game.Terrains.Generation;
 using Game.TerrainSerializers;
 
 namespace Survivalcraft.Core.Test.Terrains.Distribution;

@@ -117,10 +117,9 @@ public class GameMenuDialog : Dialog
         AddStat(
             stackPanelWidget,
             Localization.ClientLanguage.Catalog.Get(_typeName, 7),
-            StringsManager.GetString(
-                "TerrainGenerationMode",
-                TerrainGenerationModes.ToDisplayMode(subsystemGameInfo.WorldSettings.TerrainGenerationMode),
-                "Name"
+            Localization.ClientLanguage.Catalog.Get(
+                "TerrainGenerators",
+                subsystemGameInfo.WorldSettings.Generator.Definition.NameKey
             )
         );
         var seed = subsystemGameInfo.WorldSettings.Seed;
@@ -129,26 +128,16 @@ public class GameMenuDialog : Dialog
             Localization.ClientLanguage.Catalog.Get(_typeName, 8),
             !string.IsNullOrEmpty(seed) ? seed : Localization.ClientLanguage.Catalog.Get(_typeName, 9)
         );
-        AddStat(
-            stackPanelWidget,
-            Localization.ClientLanguage.Catalog.Get(_typeName, 10),
-            World.Presentation.WorldSettingsText.FormatOffset(subsystemGameInfo.WorldSettings.SeaLevelOffset)
-        );
-        AddStat(
-            stackPanelWidget,
-            Localization.ClientLanguage.Catalog.Get(_typeName, 11),
-            World.Presentation.WorldSettingsText.FormatOffset(subsystemGameInfo.WorldSettings.TemperatureOffset)
-        );
-        AddStat(
-            stackPanelWidget,
-            Localization.ClientLanguage.Catalog.Get(_typeName, 12),
-            World.Presentation.WorldSettingsText.FormatOffset(subsystemGameInfo.WorldSettings.HumidityOffset)
-        );
-        AddStat(
-            stackPanelWidget,
-            Localization.ClientLanguage.Catalog.Get(_typeName, 13),
-            subsystemGameInfo.WorldSettings.BiomeSize + "x"
-        );
+        var generator = subsystemGameInfo.WorldSettings.Generator;
+        foreach (var parameter in generator.Definition.Parameters)
+        {
+            AddStat(
+                stackPanelWidget,
+                Localization.ClientLanguage.Catalog.Get("TerrainGeneratorParameters", parameter.NameKey),
+                World.Presentation.TerrainParameterText.Format(parameter, generator.Get<object>(parameter.Key))
+            );
+        }
+
         if (subsystemGameInfo.WorldSettings.AreSeasonsChanging)
         {
             AddStat(
@@ -251,262 +240,259 @@ public class GameMenuDialog : Dialog
             );
         }
 
-        if (!TerrainGenerationModes.IsPre21(subsystemGameInfo.WorldSettings.TerrainGenerationMode))
+        stackPanelWidget.Children.Add(
+            new LabelWidget
+            {
+                Text = Localization.ClientLanguage.Catalog.Get(_typeName, 33),
+                Font = font,
+                HorizontalAlignment = WidgetAlignment.Center,
+                Margin = new Vector2(0f, 10f),
+                Color = white
+            }
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 34),
+            characterStats.PlayerKills.ToString("N0")
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 35),
+            characterStats.LandCreatureKills.ToString("N0")
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 36),
+            characterStats.WaterCreatureKills.ToString("N0")
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 37),
+            characterStats.AirCreatureKills.ToString("N0")
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 38),
+            characterStats.MeleeAttacks.ToString("N0")
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 39),
+            characterStats.MeleeHits.ToString("N0"),
+            $"({(characterStats.MeleeHits == 0L ? 0.0 : characterStats.MeleeHits / (double)characterStats.MeleeAttacks * 100.0):0}%)"
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 40),
+            characterStats.RangedAttacks.ToString("N0")
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 41),
+            characterStats.RangedHits.ToString("N0"),
+            $"({(characterStats.RangedHits == 0L ? 0.0 : characterStats.RangedHits / (double)characterStats.RangedAttacks * 100.0):0}%)"
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 42),
+            characterStats.HitsReceived.ToString("N0")
+        );
+        stackPanelWidget.Children.Add(
+            new LabelWidget
+            {
+                Text = Localization.ClientLanguage.Catalog.Get(_typeName, 43),
+                Font = font,
+                HorizontalAlignment = WidgetAlignment.Center,
+                Margin = new Vector2(0f, 10f),
+                Color = white
+            }
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 44),
+            characterStats.BlocksDug.ToString("N0")
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 45),
+            characterStats.BlocksPlaced.ToString("N0")
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 46),
+            characterStats.BlocksInteracted.ToString("N0")
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 47),
+            characterStats.ItemsCrafted.ToString("N0")
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 48),
+            characterStats.FurnitureItemsMade.ToString("N0")
+        );
+        stackPanelWidget.Children.Add(
+            new LabelWidget
+            {
+                Text = Localization.ClientLanguage.Catalog.Get(_typeName, 49),
+                Font = font,
+                HorizontalAlignment = WidgetAlignment.Center,
+                Margin = new Vector2(0f, 10f),
+                Color = white
+            }
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 50),
+            FormatDistance(characterStats.DistanceTravelled)
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 51),
+            FormatDistance(characterStats.DistanceWalked),
+            $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceWalked / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 52),
+            FormatDistance(characterStats.DistanceFallen),
+            $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceFallen / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 53),
+            FormatDistance(characterStats.DistanceClimbed),
+            $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceClimbed / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 54),
+            FormatDistance(characterStats.DistanceFlown),
+            $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceFlown / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 55),
+            FormatDistance(characterStats.DistanceSwam),
+            $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceSwam / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 56),
+            FormatDistance(characterStats.DistanceRidden),
+            $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceRidden / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 57),
+            FormatDistance(characterStats.LowestAltitude)
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 58),
+            FormatDistance(characterStats.HighestAltitude)
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 59),
+            characterStats.DeepestDive.ToString("N1") + "m"
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 60),
+            characterStats.Jumps.ToString("N0")
+        );
+        stackPanelWidget.Children.Add(
+            new LabelWidget
+            {
+                Text = Localization.ClientLanguage.Catalog.Get(_typeName, 61),
+                Font = font,
+                HorizontalAlignment = WidgetAlignment.Center,
+                Margin = new Vector2(0f, 10f),
+                Color = white
+            }
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 62),
+            (characterStats.TotalHealthLost * 100.0).ToString("N0") + "%"
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 63),
+            characterStats.FoodItemsEaten.ToString("N0") +
+            Localization.ClientLanguage.Catalog.Get(_typeName, 64)
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 65),
+            characterStats.TimesWentToSleep.ToString("N0") +
+            Localization.ClientLanguage.Catalog.Get(_typeName, 66)
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 67),
+            (characterStats.TimeSlept / 1200.0).ToString("N1") +
+            Localization.ClientLanguage.Catalog.Get(_typeName, 68)
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 69),
+            characterStats.TimesWasSick.ToString("N0") + Localization.ClientLanguage.Catalog.Get(_typeName, 66)
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 70),
+            characterStats.TimesPuked.ToString("N0") + Localization.ClientLanguage.Catalog.Get(_typeName, 66)
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 71),
+            characterStats.TimesHadFlu.ToString("N0") + Localization.ClientLanguage.Catalog.Get(_typeName, 66)
+        );
+        stackPanelWidget.Children.Add(
+            new LabelWidget
+            {
+                Text = Localization.ClientLanguage.Catalog.Get(_typeName, 72),
+                Font = font,
+                HorizontalAlignment = WidgetAlignment.Center,
+                Margin = new Vector2(0f, 10f),
+                Color = white
+            }
+        );
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 73),
+            characterStats.StruckByLightning.ToString("N0") +
+            Localization.ClientLanguage.Catalog.Get(_typeName, 66)
+        );
+        var easiestModeUsed = characterStats.EasiestModeUsed;
+        AddStat(
+            stackPanelWidget,
+            Localization.ClientLanguage.Catalog.Get(_typeName, 74),
+            Localization.ClientLanguage.Catalog.Get("GameMode", easiestModeUsed.ToString())
+        );
+        if (characterStats.DeathRecords.Count > 0)
         {
             stackPanelWidget.Children.Add(
                 new LabelWidget
                 {
-                    Text = Localization.ClientLanguage.Catalog.Get(_typeName, 33),
+                    Text = Localization.ClientLanguage.Catalog.Get(_typeName, 75),
                     Font = font,
                     HorizontalAlignment = WidgetAlignment.Center,
                     Margin = new Vector2(0f, 10f),
                     Color = white
                 }
             );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 34),
-                characterStats.PlayerKills.ToString("N0")
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 35),
-                characterStats.LandCreatureKills.ToString("N0")
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 36),
-                characterStats.WaterCreatureKills.ToString("N0")
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 37),
-                characterStats.AirCreatureKills.ToString("N0")
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 38),
-                characterStats.MeleeAttacks.ToString("N0")
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 39),
-                characterStats.MeleeHits.ToString("N0"),
-                $"({(characterStats.MeleeHits == 0L ? 0.0 : characterStats.MeleeHits / (double)characterStats.MeleeAttacks * 100.0):0}%)"
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 40),
-                characterStats.RangedAttacks.ToString("N0")
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 41),
-                characterStats.RangedHits.ToString("N0"),
-                $"({(characterStats.RangedHits == 0L ? 0.0 : characterStats.RangedHits / (double)characterStats.RangedAttacks * 100.0):0}%)"
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 42),
-                characterStats.HitsReceived.ToString("N0")
-            );
-            stackPanelWidget.Children.Add(
-                new LabelWidget
-                {
-                    Text = Localization.ClientLanguage.Catalog.Get(_typeName, 43),
-                    Font = font,
-                    HorizontalAlignment = WidgetAlignment.Center,
-                    Margin = new Vector2(0f, 10f),
-                    Color = white
-                }
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 44),
-                characterStats.BlocksDug.ToString("N0")
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 45),
-                characterStats.BlocksPlaced.ToString("N0")
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 46),
-                characterStats.BlocksInteracted.ToString("N0")
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 47),
-                characterStats.ItemsCrafted.ToString("N0")
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 48),
-                characterStats.FurnitureItemsMade.ToString("N0")
-            );
-            stackPanelWidget.Children.Add(
-                new LabelWidget
-                {
-                    Text = Localization.ClientLanguage.Catalog.Get(_typeName, 49),
-                    Font = font,
-                    HorizontalAlignment = WidgetAlignment.Center,
-                    Margin = new Vector2(0f, 10f),
-                    Color = white
-                }
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 50),
-                FormatDistance(characterStats.DistanceTravelled)
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 51),
-                FormatDistance(characterStats.DistanceWalked),
-                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceWalked / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 52),
-                FormatDistance(characterStats.DistanceFallen),
-                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceFallen / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 53),
-                FormatDistance(characterStats.DistanceClimbed),
-                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceClimbed / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 54),
-                FormatDistance(characterStats.DistanceFlown),
-                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceFlown / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 55),
-                FormatDistance(characterStats.DistanceSwam),
-                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceSwam / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 56),
-                FormatDistance(characterStats.DistanceRidden),
-                $"({(characterStats.DistanceTravelled > 0.0 ? characterStats.DistanceRidden / characterStats.DistanceTravelled * 100.0 : 0.0):0.0}%)"
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 57),
-                FormatDistance(characterStats.LowestAltitude)
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 58),
-                FormatDistance(characterStats.HighestAltitude)
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 59),
-                characterStats.DeepestDive.ToString("N1") + "m"
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 60),
-                characterStats.Jumps.ToString("N0")
-            );
-            stackPanelWidget.Children.Add(
-                new LabelWidget
-                {
-                    Text = Localization.ClientLanguage.Catalog.Get(_typeName, 61),
-                    Font = font,
-                    HorizontalAlignment = WidgetAlignment.Center,
-                    Margin = new Vector2(0f, 10f),
-                    Color = white
-                }
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 62),
-                (characterStats.TotalHealthLost * 100.0).ToString("N0") + "%"
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 63),
-                characterStats.FoodItemsEaten.ToString("N0") +
-                Localization.ClientLanguage.Catalog.Get(_typeName, 64)
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 65),
-                characterStats.TimesWentToSleep.ToString("N0") +
-                Localization.ClientLanguage.Catalog.Get(_typeName, 66)
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 67),
-                (characterStats.TimeSlept / 1200.0).ToString("N1") +
-                Localization.ClientLanguage.Catalog.Get(_typeName, 68)
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 69),
-                characterStats.TimesWasSick.ToString("N0") + Localization.ClientLanguage.Catalog.Get(_typeName, 66)
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 70),
-                characterStats.TimesPuked.ToString("N0") + Localization.ClientLanguage.Catalog.Get(_typeName, 66)
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 71),
-                characterStats.TimesHadFlu.ToString("N0") + Localization.ClientLanguage.Catalog.Get(_typeName, 66)
-            );
-            stackPanelWidget.Children.Add(
-                new LabelWidget
-                {
-                    Text = Localization.ClientLanguage.Catalog.Get(_typeName, 72),
-                    Font = font,
-                    HorizontalAlignment = WidgetAlignment.Center,
-                    Margin = new Vector2(0f, 10f),
-                    Color = white
-                }
-            );
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 73),
-                characterStats.StruckByLightning.ToString("N0") +
-                Localization.ClientLanguage.Catalog.Get(_typeName, 66)
-            );
-            var easiestModeUsed = characterStats.EasiestModeUsed;
-            AddStat(
-                stackPanelWidget,
-                Localization.ClientLanguage.Catalog.Get(_typeName, 74),
-                Localization.ClientLanguage.Catalog.Get("GameMode", easiestModeUsed.ToString())
-            );
-            if (characterStats.DeathRecords.Count > 0)
+            foreach (var deathRecord in characterStats.DeathRecords)
             {
-                stackPanelWidget.Children.Add(
-                    new LabelWidget
-                    {
-                        Text = Localization.ClientLanguage.Catalog.Get(_typeName, 75),
-                        Font = font,
-                        HorizontalAlignment = WidgetAlignment.Center,
-                        Margin = new Vector2(0f, 10f),
-                        Color = white
-                    }
+                AddStat(
+                    stackPanelWidget,
+                    $"Day {Math.Floor(deathRecord.Day) + 1.0:0}",
+                    "",
+                    Localization.ClientLanguage.Resolver.Resolve(deathRecord.Cause)
                 );
-                foreach (var deathRecord in characterStats.DeathRecords)
-                {
-                    AddStat(
-                        stackPanelWidget,
-                        $"Day {Math.Floor(deathRecord.Day) + 1.0:0}",
-                        "",
-                        Localization.ClientLanguage.Resolver.Resolve(deathRecord.Cause)
-                    );
-                }
             }
         }
         else

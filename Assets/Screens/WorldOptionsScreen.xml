@@ -16,8 +16,7 @@
                                    Margin="3, 3">
                     <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
 
-                        <!--New world only panel-->
-                        <StackPanelWidget Name="NewWorldOnlyPanel" Direction="Vertical" HorizontalAlignment="Center">
+                        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
 
                             <!--Terrain generation-->
                             <StackPanelWidget Name="TerrainGenerationPanel" Direction="Vertical">
@@ -32,125 +31,8 @@
                                                            MaxVisibleItems="5"/>
                                 </UniformSpacingPanelWidget>
 
-                                <StackPanelWidget Name="ContinentTerrainPanel" Direction="Vertical"/>
-
-                                <StackPanelWidget Name="IslandTerrainPanel" Direction="Vertical">
-                                    <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                                        <ClickableTextRowWidget Name="IslandSizeEWLabel"
-                                                                Text="[WorldOptionsScreen:4]" Color="255, 255, 255"
-                                                                HorizontalAlignment="Far" VerticalAlignment="Center"
-                                                                TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                        <SliderWidget Name="IslandSizeEW" Size="410, 60" VerticalAlignment="Center"
-                                                      Margin="20, 0"/>
-                                    </UniformSpacingPanelWidget>
-                                    <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                                        <ClickableTextRowWidget Name="IslandSizeNSLabel"
-                                                                Text="[WorldOptionsScreen:5]" Color="255, 255, 255"
-                                                                HorizontalAlignment="Far" VerticalAlignment="Center"
-                                                                TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                        <SliderWidget Name="IslandSizeNS" Size="410, 60" VerticalAlignment="Center"
-                                                      Margin="20, 0"/>
-                                    </UniformSpacingPanelWidget>
-                                </StackPanelWidget>
-
-                                <StackPanelWidget Name="FlatTerrainPanel" Direction="Vertical">
-
-                                    <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                                        <ClickableTextRowWidget Name="FlatTerrainLevelLabel"
-                                                                Text="[WorldOptionsScreen:6]" Color="255, 255, 255"
-                                                                HorizontalAlignment="Far" VerticalAlignment="Center"
-                                                                TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                        <SliderWidget Name="FlatTerrainLevel" Size="410, 60"
-                                                      VerticalAlignment="Center" Margin="20, 0" Granularity="16"
-                                                      MinValue="0" MaxValue="504"/>
-                                    </UniformSpacingPanelWidget>
-
-                                    <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                                        <ClickableTextRowWidget Name="FlatTerrainShoreRoughnessLabel"
-                                                                Text="[WorldOptionsScreen:7]" Color="255, 255, 255"
-                                                                HorizontalAlignment="Far" VerticalAlignment="Center"
-                                                                TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                        <SliderWidget Name="FlatTerrainShoreRoughness" Size="410, 60"
-                                                      VerticalAlignment="Center" Margin="20, 0" Granularity="0.1"
-                                                      MinValue="0" MaxValue="1"/>
-                                    </UniformSpacingPanelWidget>
-
-                                    <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                                        <ClickableTextRowWidget Name="FlatTerrainBlockSettingLabel"
-                                                                Text="[WorldOptionsScreen:8]" Color="255, 255, 255"
-                                                                HorizontalAlignment="Far" VerticalAlignment="Center"
-                                                                TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                        <CanvasWidget Size="310, 60" VerticalAlignment="Center" Margin="20, 0">
-                                            <CanvasWidget Margin="0, 6" IsHitTestVisible="false">
-                                                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                                <StackPanelWidget Direction="Horizontal" Margin="12, 0">
-                                                    <BlockIconWidget Name="FlatTerrainBlock" Size="48, 48"
-                                                                     VerticalAlignment="Center" Contents="1"/>
-                                                    <CanvasWidget Size="10, 0" IsHitTestVisible="false"/>
-                                                    <LabelWidget Name="FlatTerrainBlockLabel"
-                                                                 VerticalAlignment="Center"/>
-                                                    <CanvasWidget Size="Infinity, 0" IsHitTestVisible="false"/>
-                                                    <LabelWidget Text="..." Size="32, 48" Color="160, 160, 160"
-                                                                 HorizontalAlignment="Center"
-                                                                 VerticalAlignment="Center"
-                                                                 TextAnchor="HorizontalCenter, VerticalCenter"/>
-                                                </StackPanelWidget>
-                                            </CanvasWidget>
-                                            <ClickableWidget Name="FlatTerrainBlockSelector"
-                                                             SoundName="Audio/UI/ButtonClick"/>
-                                        </CanvasWidget>
-                                    </UniformSpacingPanelWidget>
-
-                                    <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                                        <ClickableTextRowWidget Name="MagmaOceanLabel"
-                                                                Text="[WorldOptionsScreen:10]" Color="255, 255, 255"
-                                                                HorizontalAlignment="Far" VerticalAlignment="Center"
-                                                                TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                        <CheckboxWidget Name="MagmaOcean" VerticalAlignment="Center"
-                                                        IsAutoCheckingEnabled="false" Margin="20, 14"/>
-                                    </UniformSpacingPanelWidget>
-
-                                </StackPanelWidget>
-
+                                <StackPanelWidget Name="GeneratorParameters" Direction="Vertical"/>
                             </StackPanelWidget>
-
-                            <!-- Terrain options -->
-                            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                                <ClickableTextRowWidget Name="SeaLevelOffsetLabel" Text="[WorldOptionsScreen:11]"
-                                                        Color="255, 255, 255" HorizontalAlignment="Far"
-                                                        VerticalAlignment="Center" TextHorizontalAlignment="Far"
-                                                        Margin="20, 0"/>
-                                <SliderWidget Name="SeaLevelOffset" Size="410, 60" VerticalAlignment="Center"
-                                              Margin="20, 0" Granularity="1" MinValue="0" MaxValue="16"/>
-                            </UniformSpacingPanelWidget>
-
-                            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                                <ClickableTextRowWidget Name="TemperatureOffsetLabel" Text="[WorldOptionsScreen:12]"
-                                                        Color="255, 255, 255" HorizontalAlignment="Far"
-                                                        VerticalAlignment="Center" TextHorizontalAlignment="Far"
-                                                        Margin="20, 0"/>
-                                <SliderWidget Name="TemperatureOffset" Size="410, 60" VerticalAlignment="Center"
-                                              Margin="20, 0" Granularity="2" MinValue="-16" MaxValue="16"/>
-                            </UniformSpacingPanelWidget>
-
-                            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                                <ClickableTextRowWidget Name="HumidityOffsetLabel" Text="[WorldOptionsScreen:13]"
-                                                        Color="255, 255, 255" HorizontalAlignment="Far"
-                                                        VerticalAlignment="Center" TextHorizontalAlignment="Far"
-                                                        Margin="20, 0"/>
-                                <SliderWidget Name="HumidityOffset" Size="410, 60" VerticalAlignment="Center"
-                                              Margin="20, 0" Granularity="2" MinValue="-16" MaxValue="16"/>
-                            </UniformSpacingPanelWidget>
-
-                            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                                <ClickableTextRowWidget Name="BiomeSizeLabel" Text="[WorldOptionsScreen:14]"
-                                                        Color="255, 255, 255" HorizontalAlignment="Far"
-                                                        VerticalAlignment="Center" TextHorizontalAlignment="Far"
-                                                        Margin="20, 0"/>
-                                <SliderWidget Name="BiomeSize" Size="410, 60" VerticalAlignment="Center"
-                                              Margin="20, 0" Granularity="2" MinValue="-16" MaxValue="16"/>
-                            </UniformSpacingPanelWidget>
-
                         </StackPanelWidget>
 
                         <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">

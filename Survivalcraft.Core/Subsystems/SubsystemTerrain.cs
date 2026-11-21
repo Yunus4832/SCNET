@@ -4,6 +4,7 @@ using EntitySystem.TemplatesDatabase;
 using Game.Network.Chunks;
 using Game.Terrains.Distribution;
 using Game.Terrains.Execution;
+using Game.Terrains.Generation;
 using Game.Terrains.Lighting;
 using Game.TerrainSerializers;
 
@@ -984,30 +985,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
     internal ITerrainContentsGenerator CreateTerrainContentsGenerator(Terrain terrain)
     {
         ArgumentNullException.ThrowIfNull(terrain);
-        var terrainGenerationMode = SubsystemGameInfo.WorldSettings.TerrainGenerationMode;
-        if (TerrainGenerationModes.IsFlat(terrainGenerationMode))
-        {
-            return new TerrainContentsGeneratorFlat(this, terrain);
-        }
-
-        if (terrainGenerationMode is TerrainGenerationMode.LegacyContinent22 or TerrainGenerationMode.LegacyIsland22)
-        {
-            return new TerrainContentsGenerator22(this, terrain);
-        }
-
-        if (terrainGenerationMode is TerrainGenerationMode.LegacyContinent23 or TerrainGenerationMode.LegacyIsland23)
-        {
-            return new TerrainContentsGenerator23(this, terrain);
-        }
-
-        if (terrainGenerationMode is TerrainGenerationMode.LegacyContinentPre21
-            or TerrainGenerationMode.LegacyIslandPre21
-            or TerrainGenerationMode.LegacyContinent21 or TerrainGenerationMode.LegacyIsland21)
-        {
-            return new TerrainContentsGenerator21(this, terrain);
-        }
-
-        return new TerrainContentsGenerator24(this, terrain);
+        return SubsystemGameInfo.WorldSettings.Generator.Definition.CreateGenerator(this, terrain);
     }
 
     public TerrainChunk? PendingChunkInitialization => _notifications?.PendingChunk;

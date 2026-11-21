@@ -612,9 +612,11 @@ public sealed class WorldRepository
         using (var stream = Storage.OpenFile(xmlFile, OpenFileMode.Read))
         {
             projectNode = XmlUtils.LoadXmlFromStream(stream, null, true);
+            ValidateSavedGenerator(projectNode);
             var gameInfoNode = GetGameInfoNode(projectNode);
             var valuesDictionary = new ValuesDictionary();
             valuesDictionary.ApplyOverrides(gameInfoNode);
+
             value = valuesDictionary.GetValue<GameMode>("GameMode");
             worldSettings.Save(valuesDictionary, true);
             hosting.Save(valuesDictionary, worldSettings.Name);
@@ -735,12 +737,23 @@ public sealed class WorldRepository
         }
     }
 
-    private XElement GetGameInfoNode(XElement projectNode)
+    internal static void ValidateSavedGenerator(XElement projectNode)
     {
-        var xElement = (from n in projectNode.Element("Subsystems")?.Elements("Values")
-            where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "GameInfo"
-            select n).FirstOrDefault();
-        return xElement ?? throw new InvalidOperationException("GameInfo node not found in project.");
+        var gameInfo = GetGameInfoNode(projectNode);
+        var fields = gameInfo.Elements().Where(element =>
+            (string?)element.Attribute("Name") is "TerrainGeneratorId" or "TerrainGeneratorVersion"
+            or "TerrainGeneratorParameters"
+        );
+        var saved = new ValuesDictionary();
+        saved.ApplyOverrides(new XElement("Values", fields));
+        Game.Terrains.Generation.TerrainGeneratorSettings.Load(saved);
+    }
+
+    private static XElement GetGameInfoNode(XElement projectNode)
+    {
+        return projectNode.Element("Subsystems")?.Elements("Values")
+                   .FirstOrDefault(element => (string?)element.Attribute("Name") == "GameInfo") ??
+               throw new InvalidDataException("Missing GameInfo in world metadata.");
     }
 
     private XElement? GetCharactersNode(XElement projectNode)

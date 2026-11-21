@@ -404,7 +404,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
         using (var output = Storage.OpenFile(Storage.CombinePaths(directory, "Project.xml"), OpenFileMode.Create))
         using (var writer = new StreamWriter(output))
         {
-            writer.Write(
+            var document = System.Xml.Linq.XElement.Parse(
                 """
                 <Project>
                   <Subsystems>
@@ -424,6 +424,10 @@ public sealed class ContentInstallationManagerTest : IDisposable
                 </Project>
                 """
             );
+            var values = new EntitySystem.TemplatesDatabase.ValuesDictionary();
+            new WorldSettings().Generator.Save(values);
+            values.Save(document.Element("Subsystems")!.Elements("Values").First());
+            document.Save(writer);
         }
 
         var world = Game.Application.ClientApplication.Worlds.GetWorldInfo(directory);

@@ -46,8 +46,7 @@ internal static class ServerWorldSelection
                 Name = worldArg,
                 Seed = string.IsNullOrWhiteSpace(seedArg) ? WorldSeedConverter.CreateRandomTextSeed() : seedArg,
                 GameMode = sessionInfo.GameMode ?? GameMode.Survival,
-                TerrainGenerationMode = sessionInfo.TerrainGenerationMode ?? TerrainGenerationMode.Continent,
-                TerrainLevel = sessionInfo.TerrainLevel ?? 64
+                Generator = sessionInfo.TerrainCreation.Resolve()
             };
             var customWorldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, worldArg);
             Log.Information($"Creating new world with seed: {worldSettings.Seed}");
@@ -60,7 +59,7 @@ internal static class ServerWorldSelection
         }
         else
         {
-            if (sessionInfo.TerrainGenerationMode is not null || sessionInfo.TerrainLevel is not null)
+            if (sessionInfo.TerrainCreation.IsSpecified)
             {
                 Log.Warning("World already exists; ignoring session terrain overrides.");
             }

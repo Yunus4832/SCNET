@@ -20,6 +20,7 @@ public sealed class WorldSettingsTest
         var values = new ValuesDictionary();
         values.SetValue("WorldName", "LimitTest");
         values.SetValue("MaxOnlinePlayerCount", (ushort)requested);
+        settings.Generator.Save(values);
         settings.Load(values);
         Assert.Equal(expected, settings.MaxOnlinePlayerCount);
 

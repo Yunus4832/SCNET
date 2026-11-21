@@ -1,39 +1,41 @@
 using Engine.Core.Mathematics;
 
 using Game.Terrains;
-using Game.TerrainSerializers;
+using Game.Terrains.Generation;
 using Game.World;
 
-namespace Survivalcraft.Core.Test.TerrainSerializers;
+namespace Survivalcraft.Core.Test.Terrains.Generation;
 
 public sealed class TerrainEnvironmentTest
 {
     public static IEnumerable<object[]> Modes()
     {
-        return Enum.GetValues<TerrainGenerationMode>().Select(mode => new object[] { mode });
+        return TerrainGeneratorDefinition.All.SelectMany(generator =>
+            new[] { "continent", "island" }.Select(shape => new object[] { generator.Id, shape })
+        );
     }
 
     [Theory]
     [MemberData(nameof(Modes))]
-    public void EnvironmentQueriesNeedNoWorldAndRemainStableAcrossOtherWorlds(TerrainGenerationMode mode)
+    public void EnvironmentQueriesNeedNoWorldAndRemainStableAcrossOtherWorlds(string generatorId, string shape)
     {
         var settings = new WorldSettings
-        {
-            TerrainGenerationMode = mode,
-            IslandSize = new Vector2(400, 600),
-            TemperatureOffset = 2,
-            HumidityOffset = -3,
-            BiomeSize = 1.25f,
-            ShoreRoughness = 0.5f
-        };
+            { Generator = new TerrainGeneratorSettings(TerrainGeneratorDefinition.Find(generatorId)) };
+        settings.Generator.Set("shape", shape);
+        settings.Generator.Set("islandLength", 600d);
+        settings.Generator.Set("temperatureOffset", 2d);
+        settings.Generator.Set("humidityOffset", -3d);
         var environment = TerrainEnvironment.Create(settings, 719);
         Assert.False(environment is ITerrainContentsGenerator);
         var before = Sample(environment);
         Assert.All(before, value => Assert.True(float.IsFinite(value)));
 
-        foreach (var other in Enum.GetValues<TerrainGenerationMode>())
+        foreach (var other in TerrainGeneratorDefinition.All)
         {
-            var independent = TerrainEnvironment.Create(new WorldSettings { TerrainGenerationMode = other }, -843);
+            var independent = TerrainEnvironment.Create(
+                new WorldSettings { Generator = new TerrainGeneratorSettings(other) },
+                -843
+            );
             Sample(independent);
         }
 
@@ -42,30 +44,23 @@ public sealed class TerrainEnvironmentTest
     }
 
     [Theory]
-    [InlineData(TerrainGenerationMode.FlatContinent, 0, 0, 199)]
-    [InlineData(TerrainGenerationMode.FlatIsland, 202, 0, -1)]
-    [InlineData(TerrainGenerationMode.LegacyFlatContinentPre21, 0, 0, -2001)]
-    [InlineData(TerrainGenerationMode.LegacyFlatIslandPre21, 2402, 2200, -1)]
+    [InlineData("continent", 0, 0, 199)]
+    [InlineData("island", 202, 0, -1)]
     public void FlatWorldQueriesPreserveShoreAndClimateSemantics(
-        TerrainGenerationMode mode,
+        string shape,
         float x,
         float z,
         float shoreDistance
     )
     {
-        var environment = TerrainEnvironment.Create(
-            new WorldSettings
-            {
-                TerrainGenerationMode = mode,
-                IslandSize = new Vector2(400, 400),
-                ShoreRoughness = 0,
-                TerrainLevel = 81,
-                SeaLevelOffset = -4,
-                TemperatureOffset = 9,
-                HumidityOffset = -20
-            },
-            17
-        );
+        var settings = new WorldSettings { Generator = new TerrainGeneratorSettings(TerrainGeneratorDefinition.Flat) };
+        settings.Generator.Set("shape", shape);
+        settings.Generator.Set("shoreRoughness", 0d);
+        settings.Generator.Set("terrainHeight", 81d);
+        settings.Generator.Set("seaLevelOffset", -4d);
+        settings.Generator.Set("temperatureOffset", 9d);
+        settings.Generator.Set("humidityOffset", -16d);
+        var environment = TerrainEnvironment.Create(settings, 17);
 
         Assert.Equal(shoreDistance, environment.CalculateOceanShoreDistance(x, z));
         Assert.Equal(81, environment.CalculateHeight(x, z));

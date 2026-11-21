@@ -142,7 +142,7 @@ public class ModifyWorldScreen : Screen
         {
             if (WorldSettings.GameMode != 0 && WorldSettings.GameMode != GameMode.Adventure)
             {
-                WorldSettings.ResetOptionsForNonCreativeMode();
+                WorldSettings.ResetOptionsForNonCreativeMode(creatingWorld: false);
             }
 
             ClientApplication.Worlds.ChangeWorld(_directoryName, WorldSettings, _hosting, _admission.Configuration);

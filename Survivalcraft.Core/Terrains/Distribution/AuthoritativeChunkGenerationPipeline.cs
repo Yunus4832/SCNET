@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-using Game.TerrainSerializers;
+using Game.Terrains.Generation;
 
 namespace Game.Terrains.Distribution;
 

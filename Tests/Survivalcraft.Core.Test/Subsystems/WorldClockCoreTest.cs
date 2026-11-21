@@ -54,6 +54,7 @@ public sealed class WorldClockCoreTest
             { "WorldName", "Core" }, { "WorldDirectoryName", "memory" },
             { "WorldSeed", 1 }, { "TotalElapsedGameTime", 100d }
         };
+        new WorldSettings().Generator.Save(data);
         info.Load(data);
         solar.Load(new ValuesDictionary { { "TimeOfDayOffset", .4d } });
         var facts = new List<WorldTimeSnapshot>();

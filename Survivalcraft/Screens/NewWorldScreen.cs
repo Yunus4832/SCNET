@@ -137,7 +137,7 @@ public class NewWorldScreen : Screen
             );
             if (_worldSettings.GameMode != GameMode.Creative)
             {
-                _worldSettings.ResetOptionsForNonCreativeMode();
+                _worldSettings.ResetOptionsForNonCreativeMode(creatingWorld: true);
             }
 
             PrepareWorldModsAndPlay(worldInfo);

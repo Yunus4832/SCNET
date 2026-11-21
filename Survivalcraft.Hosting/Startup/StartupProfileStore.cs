@@ -430,15 +430,7 @@ public sealed class StartupProfileStore
             sessionInfo.GameMode = gameMode;
         }
 
-        if (request.TerrainGenerationMode is { } terrain)
-        {
-            sessionInfo.TerrainGenerationMode = terrain;
-        }
-
-        if (request.TerrainLevel is { } level)
-        {
-            sessionInfo.TerrainLevel = level;
-        }
+        sessionInfo.TerrainCreation.Apply(request.TerrainCreation);
 
         if (request.ServerPort is { } serverPort)
         {

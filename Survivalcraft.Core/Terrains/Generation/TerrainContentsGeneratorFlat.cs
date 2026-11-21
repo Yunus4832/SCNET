@@ -1,16 +1,27 @@
-namespace Game.TerrainSerializers;
+namespace Game.Terrains.Generation;
 
 public class TerrainContentsGeneratorFlat : TerrainEnvironmentFlat, ITerrainContentsGenerator
 {
     private readonly SubsystemTerrain _subsystemTerrain;
 
-    private readonly Terrain _terrain;
+    private readonly int _surfaceBlock;
+
+    private readonly int _oceanBlock;
 
     public TerrainContentsGeneratorFlat(SubsystemTerrain subsystemTerrain, Terrain? terrain = null)
         : base(subsystemTerrain.SubsystemGameInfo.WorldSettings, subsystemTerrain.SubsystemGameInfo.WorldSeed)
     {
         _subsystemTerrain = subsystemTerrain;
-        _terrain = terrain ?? subsystemTerrain.Terrain;
+        var parameters = subsystemTerrain.SubsystemGameInfo.WorldSettings.Generator;
+        _surfaceBlock = ResolveBlock(parameters.Get<string>("surfaceBlock"));
+        _oceanBlock = ResolveBlock(parameters.Get<string>("oceanBlock"));
+
+        int ResolveBlock(string id)
+        {
+            return subsystemTerrain.Catalog.Registry.TryGet(ResourceId.Parse(id), out var entry)
+                ? entry!.RuntimeIndex
+                : throw new InvalidDataException($"Unregistered terrain block '{id}'.");
+        }
     }
 
     public Vector3 FindCoarseSpawnPosition()
@@ -52,21 +63,21 @@ public class TerrainContentsGeneratorFlat : TerrainEnvironmentFlat, ITerrainCont
                         {
                             value = Terrain.MakeBlockValue(1);
                         }
-                        else if (k < worldSettings.TerrainLevel)
+                        else if (k < terrainHeight)
                         {
                             value = Terrain.MakeBlockValue(
-                                worldSettings.TerrainBlockIndex == 8
+                                _surfaceBlock == 8
                                     ? 2
-                                    : worldSettings.TerrainBlockIndex
+                                    : _surfaceBlock
                             );
                         }
-                        else if (k == worldSettings.TerrainLevel)
+                        else if (k == terrainHeight)
                         {
-                            value = Terrain.MakeBlockValue(worldSettings.TerrainBlockIndex);
+                            value = Terrain.MakeBlockValue(_surfaceBlock);
                         }
                         else if (k <= OceanLevel)
                         {
-                            value = Terrain.MakeBlockValue(worldSettings.TerrainOceanBlockIndex);
+                            value = Terrain.MakeBlockValue(_oceanBlock);
                         }
                     }
                     else if (k < 2)
@@ -75,7 +86,7 @@ public class TerrainContentsGeneratorFlat : TerrainEnvironmentFlat, ITerrainCont
                     }
                     else if (k <= OceanLevel)
                     {
-                        value = Terrain.MakeBlockValue(worldSettings.TerrainOceanBlockIndex);
+                        value = Terrain.MakeBlockValue(_oceanBlock);
                     }
 
                     chunk.SetCellValueFast(num3 + k, value);
@@ -99,7 +110,6 @@ public class TerrainContentsGeneratorFlat : TerrainEnvironmentFlat, ITerrainCont
 
     public void UpdateFluidIsTop(TerrainChunk chunk)
     {
-        _ = _terrain;
         for (var i = 0; i < 16; i++)
         {
             for (var j = 0; j < 16; j++)

@@ -1,7 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.TerrainSerializers;
+using Game.Terrains.Generation;
 
 namespace Game.Components;
 

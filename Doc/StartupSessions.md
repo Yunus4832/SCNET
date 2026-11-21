@@ -65,15 +65,15 @@ Hosting 中的实例 `StartupProfileStore` 负责启动配置和会话文件的�
 - `--session <名称>`: 按名称选择或创建 session
 - `--world <名称>`: 和 `--session` 一起使用，设置 session 的目标世界
 - `--seed <种子>`: 和 `--session` 一起使用，设置新世界种子
-- `--terrain <类型>`: 和 `--session` 一起使用，设置新世界地形，可取 `Continent`、`Island`、`FlatContinent`、`FlatIsland`
-- `--terrain-level <高度>`: 和 `--session` 一起使用，设置新世界平坦地形高度，范围 2–252，默认 64
+- `--generator <id>` 与 `--session` 一起选择新世界的生成器，例如 `game:standard` 或 `game:flat`。
+- `--generator-param key=value` 可重复使用，设置该生成器声明的参数。例如 `--generator game:flat --generator-param shape=island --generator-param terrainHeight=72`。
 - `--game-mode <模式>`: 和 `--session` 一起使用，覆盖 session 游戏模式
 - `--log-level <级别>`: 设置日志级别
 - `--window-mode <模式>`: GUI 窗口模式，可取 `Fixed`、`Resizable`、`Borderless` 或 `Fullscreen`
 - `--window-size <宽x高>`: GUI 窗口尺寸，例如 `1280x720`
 - `--save`: 保存合并后的启动设置
 
-`--world`、`--seed`、`--terrain`、`--terrain-level` 和 `--game-mode` 没有 `--session` 时会被忽略。
+`--world`、`--seed`、`--generator`、`--generator-param` 和 `--game-mode` 没有 `--session` 时会被忽略。
 地形类型和高度随命名会话通过 `--save` 保存；只作用于新世界，已有世界会报告忽略，不修改存档地形。
 
 `--window-mode` 和 `--window-size` 由图形入口消费；独立服务器不创建窗口。入口由所运行的程序决定，不写入实例配置。
@@ -259,7 +259,7 @@ GUI 与 独立服务器共用命令行覆盖。优先级为命令行、环境变
 - `World`
 - `Seed`
 - `GameMode`（可选的运行期覆盖）
-- `TerrainGenerationMode` / `TerrainLevel`（可选的新世界地形覆盖）
+- `TerrainCreation`（可选的新世界生成器 ID 和显式参数，已有世界使用存档配置）
 - `ServerIdentityAddress`（可选的服务器身份选择）
 - `AdmissionOverrides` / `P2POverrides`（可选的开服覆盖）
 - `RemoteTarget`（远程地址或邀请会话的逻辑目标）

@@ -2,6 +2,7 @@ using Engine.Core.Mathematics;
 
 using EntitySystem.TemplatesDatabase;
 
+using Game.Terrains.Generation;
 using Game.World;
 
 namespace Survivalcraft.Core.Test.World;
@@ -9,17 +10,29 @@ namespace Survivalcraft.Core.Test.World;
 public class WorldSettingsTest
 {
     [Fact]
+    public void SavedLegacyTerrainModeIsRejected()
+    {
+        var values = new ValuesDictionary
+        {
+            { "WorldName", "Legacy" },
+            { "TerrainGenerationMode", "LegacyContinent23" }
+        };
+
+        var error = Assert.Throws<InvalidDataException>(() => new WorldSettings().Load(values));
+        Assert.Contains("TerrainGeneratorId", error.Message);
+    }
+
+    [Fact]
     public void NewWorldAndMissingSavedFieldsKeepTheirDistinctDefaults()
     {
         var created = new WorldSettings();
         var loaded = new WorldSettings();
-        loaded.Load(new ValuesDictionary { { "WorldName", "Saved" } });
+        var values = new ValuesDictionary { { "WorldName", "Saved" } };
+        created.Generator.Save(values);
+        loaded.Load(values);
         Assert.Equal(GameMode.Survival, created.GameMode);
         Assert.Equal(GameMode.Challenging, loaded.GameMode);
-        Assert.Equal(new Vector2(400f, 400f), created.IslandSize);
-        Assert.Equal(new Vector2(200f, 200f), loaded.IslandSize);
-        Assert.Equal(0.5f, created.ShoreRoughness);
-        Assert.Equal(0f, loaded.ShoreRoughness);
+        Assert.Equal(400d, loaded.Generator.Get<double>("islandWidth"));
         Assert.Equal(0.125f, created.TimeOfYear);
         Assert.Equal(created.TimeOfYear, loaded.TimeOfYear);
     }
@@ -45,10 +58,13 @@ public class WorldSettingsTest
     [Fact]
     public void LiveUpdateDoesNotOverwriteGenerationInputs()
     {
-        var values = new ValuesDictionary { { "WorldSeedString", "original" }, { "TerrainLevel", 80 } };
-        new WorldSettings { Name = "Updated", Seed = "replacement", TerrainLevel = 100 }.Save(values, true);
+        var values = new ValuesDictionary { { "WorldSeedString", "original" } };
+        var original = new TerrainGeneratorSettings(TerrainGeneratorDefinition.Flat);
+        original.Set("terrainHeight", 80d);
+        original.Save(values);
+        new WorldSettings { Name = "Updated", Seed = "replacement" }.Save(values, true);
         Assert.Equal("original", values.GetValue<string>("WorldSeedString"));
-        Assert.Equal(80, values.GetValue<int>("TerrainLevel"));
+        Assert.Equal(80d, TerrainGeneratorSettings.Load(values).Get<double>("terrainHeight"));
         Assert.Equal("Updated", values.GetValue<string>("WorldName"));
     }
 

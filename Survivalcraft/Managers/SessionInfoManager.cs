@@ -185,8 +185,7 @@ public static class SessionInfoManager
                 sessionInfo.World,
                 sessionInfo.Seed,
                 sessionInfo.GameMode,
-                sessionInfo.TerrainGenerationMode,
-                sessionInfo.TerrainLevel,
+                sessionInfo.TerrainCreation,
                 runServer: forceWorldRunServer
             );
         }
@@ -265,8 +264,7 @@ public static class SessionInfoManager
         string worldName,
         string? seed,
         GameMode? gameMode,
-        TerrainGenerationMode? terrainGenerationMode,
-        int? terrainLevel,
+        TerrainCreationOptions terrainCreation,
         bool runServer
     )
     {
@@ -275,8 +273,7 @@ public static class SessionInfoManager
             Name = NormalizeWorld(worldName),
             Seed = string.IsNullOrWhiteSpace(seed) ? GenerateRandomSeed() : seed,
             GameMode = gameMode ?? GameMode.Survival,
-            TerrainGenerationMode = terrainGenerationMode ?? TerrainGenerationMode.Continent,
-            TerrainLevel = terrainLevel ?? 64
+            Generator = terrainCreation.Resolve()
         };
         var customWorldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, worldSettings.Name);
         Log.Information($"Creating new world with seed: {worldSettings.Seed}");
@@ -290,7 +287,7 @@ public static class SessionInfoManager
 
     private static void WarnIgnoredTerrainOptions(SessionInfo sessionInfo)
     {
-        if (sessionInfo.TerrainGenerationMode != null || sessionInfo.TerrainLevel != null)
+        if (sessionInfo.TerrainCreation.IsSpecified)
         {
             Log.Warning(
                 "World already exists; ignoring terrain creation options without changing saved terrain settings."

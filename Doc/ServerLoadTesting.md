@@ -25,7 +25,7 @@
 ```bash
 Survivalcraft.Server/bin/Debug/net10.0/linux-x64/Survivalcraft.Server \
   --instance load-server --session load --world LoadWorld \
-  --game-mode Creative --terrain FlatContinent --terrain-level 64 --seed 1234 \
+  --game-mode Creative --generator game:flat --generator-param terrainHeight=64 --seed 1234 \
   --server-port 31987 --broadcast-port 31988 --http-command --http-command-port 31989
 ```
 

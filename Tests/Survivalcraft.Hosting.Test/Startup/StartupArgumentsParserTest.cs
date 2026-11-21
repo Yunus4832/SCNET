@@ -16,7 +16,8 @@ public class StartupArgumentsParserTest
             settings,
             [
                 "--session", " test ", "--world", "World A", "--seed", "seed", "--game-mode", "Creative",
-                "--terrain", "FlatIsland", "--terrain-level", "100", "--host", "--save", "custom"
+                "--generator", "game:flat", "--generator-param", "shape=island", "--generator-param",
+                "terrainHeight=100", "--host", "--save", "custom"
             ],
             () => new ServerAdmissionOverrides()
         );
@@ -25,8 +26,8 @@ public class StartupArgumentsParserTest
         Assert.Equal("World A", request.World);
         Assert.Equal("seed", request.Seed);
         Assert.Equal(GameMode.Creative, request.GameMode);
-        Assert.Equal(TerrainGenerationMode.FlatIsland, request.TerrainGenerationMode);
-        Assert.Equal(100, request.TerrainLevel);
+        Assert.Equal("island", request.TerrainCreation.Resolve().Get<string>("shape"));
+        Assert.Equal(100d, request.TerrainCreation.Resolve().Get<double>("terrainHeight"));
         Assert.True(request.ForceWorldRunServer);
         Assert.True(request.Save);
         Assert.Equal(new[] { "existing", "custom" }, settings.RemainingArgs);
@@ -58,16 +59,15 @@ public class StartupArgumentsParserTest
         var request = StartupArgumentsParser.Parse(
             new RunningSetting(),
             [
-                "--world", "Ignored", "--seed", "Ignored", "--game-mode", "Creative", "--terrain", "Island",
-                "--terrain-level", "100"
+                "--world", "Ignored", "--seed", "Ignored", "--game-mode", "Creative", "--generator", "game:flat",
+                "--generator-param", "terrainHeight=100"
             ],
             () => new ServerAdmissionOverrides()
         );
         Assert.Null(request.World);
         Assert.Null(request.Seed);
         Assert.Null(request.GameMode);
-        Assert.Null(request.TerrainGenerationMode);
-        Assert.Null(request.TerrainLevel);
+        Assert.False(request.TerrainCreation.IsSpecified);
     }
 
     [Fact]

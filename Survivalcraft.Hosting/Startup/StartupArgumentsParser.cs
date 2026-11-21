@@ -55,29 +55,25 @@ public static class StartupArgumentsParser
                 continue;
             }
 
-            if (string.Equals(arg, "--terrain", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(arg, "--generator", StringComparison.OrdinalIgnoreCase))
             {
-                var value = ReadOptionValue(args, ref i, "--terrain");
-                if (!Enum.TryParse<TerrainGenerationMode>(value, true, out var terrain) ||
-                    !Enum.IsDefined(terrain) ||
-                    TerrainGenerationModes.IsLegacy(terrain))
-                {
-                    throw new ArgumentException("--terrain requires Continent, Island, FlatContinent or FlatIsland.");
-                }
-
-                request.TerrainGenerationMode = terrain;
+                var id = ReadOptionValue(args, ref i, "--generator") ??
+                         throw new ArgumentException("--generator requires a value.");
+                request.TerrainCreation.GeneratorId = Game.Terrains.Generation.TerrainGeneratorDefinition.Find(id).Id;
                 continue;
             }
 
-            if (string.Equals(arg, "--terrain-level", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(arg, "--generator-param", StringComparison.OrdinalIgnoreCase))
             {
-                if (!int.TryParse(ReadOptionValue(args, ref i, "--terrain-level"), out var level) ||
-                    level is < 2 or > 252)
+                var argument = ReadOptionValue(args, ref i, "--generator-param") ??
+                               throw new ArgumentException("--generator-param requires a value.");
+                var separator = argument.IndexOf('=');
+                if (separator < 1 ||
+                    !request.TerrainCreation.Parameters.TryAdd(argument[..separator], argument[(separator + 1)..]))
                 {
-                    throw new ArgumentException("--terrain-level must be between 2 and 252.");
+                    throw new ArgumentException("--generator-param requires a unique key=value.");
                 }
 
-                request.TerrainLevel = level;
                 continue;
             }
 
@@ -342,8 +338,7 @@ public static class StartupArgumentsParser
         if (!string.IsNullOrWhiteSpace(request.World) ||
             request.Seed != null ||
             request.GameMode != null ||
-            request.TerrainGenerationMode != null ||
-            request.TerrainLevel != null)
+            request.TerrainCreation.IsSpecified)
         {
             Log.Warning("Ignoring world creation overrides because --session was not specified.");
         }
@@ -351,8 +346,7 @@ public static class StartupArgumentsParser
         request.World = null;
         request.Seed = null;
         request.GameMode = null;
-        request.TerrainGenerationMode = null;
-        request.TerrainLevel = null;
+        request.TerrainCreation = new TerrainCreationOptions();
     }
 
     private static string? ReadOptionValue(string[] args, ref int index, string option)

@@ -1,7 +1,10 @@
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+
 using Game.Subsystems;
 using Game.Subsystems.Behavior;
 using Game.Terrains;
-using Game.TerrainSerializers;
+using Game.Terrains.Generation;
 using Game.World;
 
 using Survivalcraft.Test.Modding;
@@ -29,7 +32,7 @@ public sealed class TreePreparationTest
         var actual = prepared.Allocate(x, z);
         Assert.True(prepared.Generator.TryTakeSeedGeneratedChunkBasis(actual));
         await prepared.Generator.PrepareChunkContentsPass4Async(actual, CancellationToken.None);
-        var cache = (System.Collections.IDictionary)typeof(TerrainContentsGenerator24)
+        var cache = (System.Collections.IDictionary)typeof(TerrainContentsGenerator)
             .GetField(
                 "_cleanTreeBrushCache",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic
@@ -87,6 +90,59 @@ public sealed class TreePreparationTest
         Assert.Equal(expectedSecond.Shafts, second.Shafts);
     }
 
+    [Theory]
+    [InlineData(
+        "game:standard",
+        "continent",
+        12345,
+        13,
+        9,
+        "28CA8E0B4CB892E79CB620299FC0FC729F7490ED77A39E9A255F932990D1A4FF"
+    )]
+    [InlineData(
+        "game:standard",
+        "island",
+        54321,
+        -2,
+        3,
+        "E8ECE507D80ABD6953444E5D91B718D9A96CA3BA05962867CBF3B68528C2DF2D"
+    )]
+    [InlineData(
+        "game:flat",
+        "continent",
+        12345,
+        -13,
+        -13,
+        "84655D60CDBC041E9A09F8B0731B0ABEF21684ADF8595425151D045BB0CF05EE"
+    )]
+    [InlineData(
+        "game:flat",
+        "island",
+        12345,
+        12,
+        12,
+        "F3BF7830C0CA77C14F473E9EC96C625269E7DBC7AAA484F53B0CB8B0B4C1FF95"
+    )]
+    public async Task GeneratedChunksPreserveCurrentSeedOutput(
+        string generatorId,
+        string shape,
+        int seed,
+        int x,
+        int z,
+        string expected
+    )
+    {
+        using var world = new GenerationWorld(seed, generatorId, shape);
+        var chunk = world.GenerateBasis(x, z);
+        await world.Generator.PrepareChunkContentsPass4Async(chunk, CancellationToken.None);
+        world.Generator.GenerateChunkContentsPass4(chunk);
+
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        hash.AppendData(MemoryMarshal.AsBytes(chunk.Cells.AsSpan()));
+        hash.AppendData(MemoryMarshal.AsBytes(chunk.Shafts.AsSpan()));
+        Assert.Equal(expected, Convert.ToHexString(hash.GetHashAndReset()));
+    }
+
     private sealed class GenerationWorld : IDisposable
     {
         private readonly WorldCatalogScope _scope = new();
@@ -95,21 +151,27 @@ public sealed class TreePreparationTest
 
         private readonly SubsystemTerrain _world;
 
-        public TerrainContentsGenerator24 Generator { get; }
+        public ITerrainContentsGenerator Generator { get; }
 
-        public GenerationWorld(int seed)
+        public GenerationWorld(int seed, string generatorId = "game:standard", string shape = "continent")
         {
             _scope.Catalog.Blocks[0].Collidable = false;
             _scope.Catalog.Blocks[0].Transparent = true;
             _world = new SubsystemTerrain
             {
                 Terrain = _terrain,
-                SubsystemGameInfo = new SubsystemGameInfo { WorldSeed = seed, WorldSettings = new WorldSettings() }
+                SubsystemGameInfo = new SubsystemGameInfo
+                {
+                    WorldSeed = seed,
+                    WorldSettings = new WorldSettings
+                        { Generator = new TerrainGeneratorSettings(TerrainGeneratorDefinition.Find(generatorId)) }
+                }
             };
+            _world.SubsystemGameInfo.WorldSettings.Generator.Set("shape", shape);
             _scope.Project.InitializeSubsystem(_world);
             var support = new SubsystemBottomSuckerBlockBehavior();
             _scope.Project.AddSubsystem(support);
-            Generator = new TerrainContentsGenerator24(_world);
+            Generator = _world.CreateTerrainContentsGenerator(_terrain);
         }
 
         public TerrainChunk Allocate(int x, int z) => _terrain.AllocateChunk(x, z);

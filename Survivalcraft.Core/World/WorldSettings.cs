@@ -2,10 +2,14 @@ using System.Xml;
 
 using EntitySystem.TemplatesDatabase;
 
+using Game.Terrains.Generation;
+
 namespace Game.World;
 
 public class WorldSettings
 {
+    public TerrainGeneratorSettings Generator { get; set; } = new(TerrainGeneratorDefinition.Standard);
+
     public const ushort MaximumOnlinePlayerCount = 32;
 
     public bool AreAdventureSurvivalMechanicsEnabled = true;
@@ -15,8 +19,6 @@ public class WorldSettings
     public bool AreSupernaturalCreaturesEnabled = true;
 
     public bool AreWeatherEffectsEnabled = true;
-
-    public float BiomeSize = 1f;
 
     public string BlocksTextureName = string.Empty;
 
@@ -31,8 +33,6 @@ public class WorldSettings
     public EnvironmentBehaviorMode EnvironmentBehaviorMode;
 
     public GameMode GameMode = GameMode.Survival;
-
-    public float HumidityOffset;
 
     public int CreativeHotbarSlotsCount = PlayerInventoryLayout.MaxHotbarSlotsCount;
 
@@ -58,8 +58,6 @@ public class WorldSettings
 
     public bool IsFriendlyFireEnabled = true;
 
-    public Vector2 IslandSize = new(400f, 400f);
-
     public string KeywordBlocking = string.Empty;
 
     public ushort MaxOnlinePlayerCount { get; set => field = Math.Min(value, MaximumOnlinePlayerCount); } = 20;
@@ -72,23 +70,9 @@ public class WorldSettings
 
     public float RecoverFactor = 1f;
 
-    public int SeaLevelOffset;
-
     public string Seed = string.Empty;
 
-    public float ShoreRoughness = 0.5f;
-
     public StartingPositionMode StartingPositionMode;
-
-    public float TemperatureOffset;
-
-    public int TerrainBlockIndex = 8;
-
-    public TerrainGenerationMode TerrainGenerationMode;
-
-    public int TerrainLevel = 64;
-
-    public int TerrainOceanBlockIndex = 18;
 
     public TimeOfDayMode TimeOfDayMode;
 
@@ -96,11 +80,20 @@ public class WorldSettings
 
     public float YearDays = 24f;
 
-    public void ResetOptionsForNonCreativeMode()
+    public void ResetOptionsForNonCreativeMode(bool creatingWorld)
     {
-        if (TerrainGenerationModes.IsFlat(TerrainGenerationMode))
+        if (creatingWorld && Generator.Definition.CreativeOnly)
         {
-            TerrainGenerationMode = TerrainGenerationModes.ToNonFlatMode(TerrainGenerationMode);
+            var standard = new TerrainGeneratorSettings(TerrainGeneratorDefinition.Standard);
+            foreach (var parameter in standard.Definition.Parameters)
+            {
+                if (Generator.Definition.Parameters.Any(p => p.Key == parameter.Key))
+                {
+                    standard.Set(parameter.Key, Generator.Get<object>(parameter.Key));
+                }
+            }
+
+            Generator = standard;
         }
 
         EnvironmentBehaviorMode = EnvironmentBehaviorMode.Living;
@@ -108,34 +101,6 @@ public class WorldSettings
         AreWeatherEffectsEnabled = true;
         IsAdventureRespawnAllowed = true;
         AreAdventureSurvivalMechanicsEnabled = true;
-        TerrainLevel = 64;
-        ShoreRoughness = 0.5f;
-        TerrainBlockIndex = 8;
-    }
-
-    public void ResetOptionsForNonCreativeMode(WorldSettings? originalWorldSettings)
-    {
-        if (TerrainGenerationModes.IsFlat(TerrainGenerationMode))
-        {
-            TerrainGenerationMode = TerrainGenerationModes.ToNonFlatMode(TerrainGenerationMode);
-        }
-
-        EnvironmentBehaviorMode = EnvironmentBehaviorMode.Living;
-        TimeOfDayMode = TimeOfDayMode.Changing;
-        AreWeatherEffectsEnabled = true;
-        IsAdventureRespawnAllowed = true;
-        AreAdventureSurvivalMechanicsEnabled = true;
-        TerrainLevel = 64;
-        ShoreRoughness = 0.5f;
-        TerrainBlockIndex = 8;
-        if (originalWorldSettings == null)
-        {
-            return;
-        }
-
-        AreSeasonsChanging = originalWorldSettings.AreSeasonsChanging;
-        YearDays = originalWorldSettings.YearDays;
-        TimeOfYear = originalWorldSettings.TimeOfYear;
     }
 
     public void Load(ValuesDictionary valuesDictionary)
@@ -172,20 +137,11 @@ public class WorldSettings
         AreAdventureSurvivalMechanicsEnabled = valuesDictionary.GetValue("AreAdventureSurvivalMechanicsEnabled", true);
         AreSupernaturalCreaturesEnabled = valuesDictionary.GetValue("AreSupernaturalCreaturesEnabled", true);
         IsFriendlyFireEnabled = valuesDictionary.GetValue("IsFriendlyFireEnabled", true);
-        TerrainGenerationMode = valuesDictionary.GetValue("TerrainGenerationMode", TerrainGenerationMode.Continent);
-        IslandSize = valuesDictionary.GetValue("IslandSize", new Vector2(200f, 200f));
-        TerrainLevel = valuesDictionary.GetValue("TerrainLevel", 64);
-        ShoreRoughness = valuesDictionary.GetValue("ShoreRoughness", 0f);
+        Generator = TerrainGeneratorSettings.Load(valuesDictionary);
         KeywordBlocking = valuesDictionary.GetValue("KeywordBlocking", string.Empty);
         KeywordBlocking = XmlConvert.DecodeName(KeywordBlocking);
         DaySpeed = valuesDictionary.GetValue("DaySpeed", 1f);
         RecoverFactor = valuesDictionary.GetValue("RecoverFactor", 1f);
-        TerrainBlockIndex = valuesDictionary.GetValue("TerrainBlockIndex", 8);
-        TerrainOceanBlockIndex = valuesDictionary.GetValue("TerrainOceanBlockIndex", 18);
-        TemperatureOffset = valuesDictionary.GetValue("TemperatureOffset", 0f);
-        HumidityOffset = valuesDictionary.GetValue("HumidityOffset", 0f);
-        SeaLevelOffset = valuesDictionary.GetValue("SeaLevelOffset", 0);
-        BiomeSize = valuesDictionary.GetValue("BiomeSize", 1f);
         MaxOnlinePlayerCount = valuesDictionary.GetValue("MaxOnlinePlayerCount", MaxOnlinePlayerCount);
         BlocksTextureName = valuesDictionary.GetValue("BlockTextureName", string.Empty);
         DisableBlocks = valuesDictionary.GetValue("DisableBlocks", DisableBlocks);
@@ -217,16 +173,7 @@ public class WorldSettings
         if (!liveModifiableParametersOnly)
         {
             valuesDictionary.SetValue("WorldSeedString", Seed);
-            valuesDictionary.SetValue("TerrainGenerationMode", TerrainGenerationMode);
-            valuesDictionary.SetValue("IslandSize", IslandSize);
-            valuesDictionary.SetValue("TerrainLevel", TerrainLevel);
-            valuesDictionary.SetValue("ShoreRoughness", ShoreRoughness);
-            valuesDictionary.SetValue("TerrainBlockIndex", TerrainBlockIndex);
-            valuesDictionary.SetValue("TerrainOceanBlockIndex", TerrainOceanBlockIndex);
-            valuesDictionary.SetValue("TemperatureOffset", TemperatureOffset);
-            valuesDictionary.SetValue("HumidityOffset", HumidityOffset);
-            valuesDictionary.SetValue("SeaLevelOffset", SeaLevelOffset);
-            valuesDictionary.SetValue("BiomeSize", BiomeSize);
+            Generator.Save(valuesDictionary);
             valuesDictionary.SetValue("StartingPositionMode", StartingPositionMode);
         }
 

@@ -944,8 +944,7 @@ public class ComponentMiner : Component, IUpdateable
 
         AttackPower = valuesDictionary.GetValue<float>("AttackPower");
         AutoInteractRate = valuesDictionary.GetValue<float>("AutoInteractRate");
-        if (TerrainGenerationModes.IsLegacy(_subsystemGameInfo.WorldSettings.TerrainGenerationMode) ||
-            _subsystemGameInfo.WorldSettings.GameMode == GameMode.Harmless ||
+        if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Harmless ||
             _subsystemGameInfo.WorldSettings.GameMode == GameMode.Survival)
         {
             AutoInteractRate = 0f;

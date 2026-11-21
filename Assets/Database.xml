@@ -6487,9 +6487,6 @@
                                    Description="Holds game information, such as total elapsed time, seed and world name"
                                    Guid="af753bf7-a952-4222-8507-4289c3b7670b"
                                    InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
-                    <Parameter Name="TerrainGenerationMode" Description="Game mode of the world"
-                               Guid="1f272122-3918-49ab-96ed-6cb7df1588df" Value="Continent"
-                               Type="Game.Terrains.TerrainGenerationMode"/>
                     <Parameter Name="EnvironmentBehaviorMode" Description="Environment behavior mode of the world"
                                Guid="3369f738-e249-4159-ac72-fd1bcf3b81ce" Value="Living"
                                Type="Game.World.EnvironmentBehaviorMode"/>
@@ -6497,8 +6494,6 @@
                                Guid="4f952456-98f7-4a81-9848-2d39f37081dd" Value="Changing" Type="Game.World.TimeOfDayMode"/>
                     <Parameter Name="Class" Guid="5d358a77-f64b-4972-81ee-6baa2d348109" Value="Game.Subsystems.SubsystemGameInfo"
                                Type="string"/>
-                    <Parameter Name="TerrainLevel" Description="Terrain generation level, in blocks"
-                               Guid="8973da65-a5ad-4703-8de7-d5395ac00201" Value="64" Type="int"/>
                     <Parameter Name="TotalElapsedGameTime" Description="Total time spent in game, in seconds"
                                Guid="b037487c-c521-4da4-b4a6-95c4dbd34e2c" Value="0" Type="double"/>
                     <Parameter Name="WorldSeed" Description="Seed of the world"

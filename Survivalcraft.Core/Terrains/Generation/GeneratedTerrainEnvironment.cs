@@ -1,8 +1,14 @@
-namespace Game.TerrainSerializers;
+namespace Game.Terrains.Generation;
 
 /// <summary>Read-only terrain environment calculations without world mutation services.</summary>
-public class TerrainEnvironment23 : ITerrainEnvironment
+public class GeneratedTerrainEnvironment : ITerrainEnvironment
 {
+    private readonly int _seaOffset;
+
+    private readonly float _temperatureOffset;
+
+    private readonly float _humidityOffset;
+
     protected readonly float tgMountainsDetailFreq;
 
     protected readonly int tgMountainsDetailOctaves;
@@ -77,12 +83,19 @@ public class TerrainEnvironment23 : ITerrainEnvironment
 
     protected readonly float tgTurbulenceZero;
 
-    public TerrainEnvironment23(WorldSettings worldSettings, int seed)
+    public GeneratedTerrainEnvironment(WorldSettings worldSettings, int seed)
     {
+        var parameters = worldSettings.Generator;
+        var isIsland = parameters.Get<string>("shape") == "island";
         this.worldSettings = worldSettings;
+        _seaOffset = (int)parameters.Get<double>("seaLevelOffset");
+        _temperatureOffset = (float)parameters.Get<double>("temperatureOffset");
+        _humidityOffset = (float)parameters.Get<double>("humidityOffset");
         this.seed = seed;
-        islandSize = TerrainGenerationModes.IsIsland(worldSettings.TerrainGenerationMode)
-            ? new Vector2?(worldSettings.IslandSize)
+        islandSize = isIsland
+            ? new Vector2?(
+                new Vector2((float)parameters.Get<double>("islandWidth"), (float)parameters.Get<double>("islandLength"))
+            )
             : null;
         var random = new Random(seed);
         var num = islandSize.HasValue ? MathUtils.Min(islandSize.Value.X, islandSize.Value.Y) : float.MaxValue;
@@ -91,8 +104,8 @@ public class TerrainEnvironment23 : ITerrainEnvironment
         humidityOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
         mountainsOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
         riversOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
-        tgBiomeScaling = (TerrainGenerationModes.IsIsland(worldSettings.TerrainGenerationMode) ? 1f : 1.75f) *
-                         worldSettings.BiomeSize;
+        tgBiomeScaling = (isIsland ? 1f : 1.75f) *
+                         (float)parameters.Get<double>("biomeSize");
         tgShoreFluctuations = MathUtils.Clamp(2f * num, 0f, 150f);
         tgShoreFluctuationsScaling = MathUtils.Clamp(0.04f * num, 0.5f, 3f);
         tgOceanSlope = 0.006f;
@@ -101,13 +114,13 @@ public class TerrainEnvironment23 : ITerrainEnvironment
         tgDensityBias = 55f;
         tgHeightBias = 1f;
         tgRiversStrength = 1f;
-        tgMountainsStrength = 220f;
+        tgMountainsStrength = 250f;
         tgMountainRangeFreq = 0.0006f;
         tgMountainsPercentage = 0.13f;
         tgMountainsDetailFreq = 0.003f;
-        tgMountainsDetailOctaves = 3;
+        tgMountainsDetailOctaves = 4;
         tgMountainsDetailPersistence = 0.53f;
-        tgHillsPercentage = 0.3f;
+        tgHillsPercentage = 0.32f;
         tgHillsStrength = 32f;
         tgHillsOctaves = 1;
         tgHillsFrequency = 0.014f;
@@ -123,7 +136,7 @@ public class TerrainEnvironment23 : ITerrainEnvironment
         tgCavesAndPockets = true;
     }
 
-    public int OceanLevel => 64 + worldSettings.SeaLevelOffset;
+    public int OceanLevel => 64 + _seaOffset;
 
     public float CalculateOceanShoreDistance(float x, float z)
     {
@@ -188,8 +201,8 @@ public class TerrainEnvironment23 : ITerrainEnvironment
                     ) -
                     0.5f;
         var num11 = MathUtils.Lerp(
-            60f,
-            30f,
+            80f,
+            35f,
             MathUtils.Saturate(1f * num8 + 0.5f * num7 + MathUtils.Saturate(1f - num2 / 30f))
         );
         var x2 = MathUtils.Lerp(-2f, -4f, MathUtils.Saturate(num8 + 0.5f * num7));
@@ -227,7 +240,7 @@ public class TerrainEnvironment23 : ITerrainEnvironment
                           0.6f
                       ) -
                       1.1f +
-                      worldSettings.TemperatureOffset / 16f
+                      _temperatureOffset / 16f
                   ) *
                   16f),
             0,
@@ -249,7 +262,7 @@ public class TerrainEnvironment23 : ITerrainEnvironment
                           0.6f
                       ) -
                       0.9f +
-                      worldSettings.HumidityOffset / 16f
+                      _humidityOffset / 16f
                   ) *
                   16f),
             0,

@@ -160,6 +160,7 @@ public sealed class GameWorldController(
                 node = XmlUtils.LoadXmlFromStream(stream, null, true);
             }
 
+            WorldRepository.ValidateSavedGenerator(node);
             var overrides = new ValuesDictionary
             {
                 { "GameInfo", new ValuesDictionary { { "WorldDirectoryName", request.World.DirectoryName } } }

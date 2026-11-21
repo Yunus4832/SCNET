@@ -1,5 +1,5 @@
 using Game.Terrains;
-using Game.TerrainSerializers;
+using Game.Terrains.Generation;
 
 namespace Survivalcraft.Core.Test.Terrains;
 
