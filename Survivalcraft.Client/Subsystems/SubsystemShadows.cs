@@ -13,6 +13,8 @@ public class SubsystemShadows : Subsystem, IDrawable
 
     private SubsystemSkyPresentation _subsystemSky = null!;
 
+    private SubsystemBlockPresentation _blockPresentation = null!;
+
     private PrimitivesRenderer3D PrimitivesRenderer3D => field ??= new();
 
     public SubsystemTerrain SubsystemTerrain = null!;
@@ -50,27 +52,31 @@ public class SubsystemShadows : Subsystem, IDrawable
         var num2 = MathUtils.Sqrt(num);
         var num3 = MathUtils.Saturate(4f * (1f - num2 / 32f));
         num3 *= 1f - _subsystemSky.CalculateFog(camera.ViewPosition, shadowPosition);
+        if (num3 == 0f) { return; }
+
+        var blocks = Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks;
+        var presentation = _blockPresentation.Catalog;
+        var terrain = SubsystemTerrain.Terrain;
         var num4 = shadowDiameter / 2f;
         var num5 = Terrain.ToCell(shadowPosition.X - num4);
         var num6 = Terrain.ToCell(shadowPosition.Z - num4);
         var num7 = Terrain.ToCell(shadowPosition.X + num4);
         var num8 = Terrain.ToCell(shadowPosition.Z + num4);
+        var num9 = MathUtils.Min(Terrain.ToCell(shadowPosition.Y), 255);
+        var num10 = MathUtils.Max(num9 - 2, 0);
         for (var i = num5; i <= num7; i++)
         {
             for (var j = num6; j <= num8; j++)
             {
-                var num9 = MathUtils.Min(Terrain.ToCell(shadowPosition.Y), 255);
-                var num10 = MathUtils.Max(num9 - 2, 0);
                 for (var num11 = num9; num11 >= num10; num11--)
                 {
-                    var cellValueFast = SubsystemTerrain.Terrain.GetCellValueFast(i, num11, j);
+                    var cellValueFast = terrain.GetCellValueFast(i, num11, j);
                     var num12 = Terrain.ExtractContents(cellValueFast);
-                    var block = Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks[num12];
-                    var shadowStrength = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(num12)
-                        .ObjectShadowStrength;
+                    var shadowStrength = presentation.Get(num12).ObjectShadowStrength;
                     if (shadowStrength > 0f)
                     {
-                        var customCollisionBoxes = block.GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
+                        var customCollisionBoxes =
+                            blocks[num12].GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
                         foreach (var boundingBox in customCollisionBoxes)
                         {
                             var num13 = boundingBox.Max.Y + num11;
@@ -123,6 +129,7 @@ public class SubsystemShadows : Subsystem, IDrawable
         }
 
         _subsystemSky = Project.FindSubsystem<SubsystemSkyPresentation>(true)!;
+        _blockPresentation = Project.FindSubsystem<SubsystemBlockPresentation>(true)!;
         _batch = PrimitivesRenderer3D.TexturedBatch(
             ContentManager.Get<Texture2D>("Textures/Shadow"),
             false,
