@@ -8,6 +8,26 @@ namespace Survivalcraft.Core.Test.TerrainSerializers;
 
 public sealed class TerrainDiskPersistenceTest
 {
+    [Fact]
+    public void InaccessibleRegionPathDoesNotLookLikeAnAbsentChunk()
+    {
+        var directory = Directory.CreateTempSubdirectory("scnet-inaccessible-region-");
+        var root = "inaccessible-region-" + Guid.NewGuid().ToString("N");
+        Storage.RegisterFileSystemRoot(root, directory.FullName);
+        try
+        {
+            using var serializer = new TerrainChunkSerializer(root + ":/");
+            var region = Directory.CreateDirectory(Path.Combine(directory.FullName, "Regions", "Region 0,0.dat"));
+            using var terrain = new Terrain();
+            var chunk = terrain.AllocateChunk(0, 0);
+            var error = Assert.Throws<InvalidDataException>(() => serializer.LoadChunk(chunk));
+            Assert.Contains(region.Name, error.Message);
+            Assert.False(chunk.HasContents);
+            Assert.Empty(region.EnumerateFileSystemInfos());
+        }
+        finally { directory.Delete(true); }
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -22,7 +42,7 @@ public sealed class TerrainDiskPersistenceTest
             var value = Terrain.MakeBlockValue(3, 17);
             var shaft = Terrain.ReplaceHumidity(Terrain.ReplaceTemperature(0, 9), 6);
             using (var terrain = new Terrain())
-            using (var serializer = new TerrainSerializer24(worldPath))
+            using (var serializer = new TerrainChunkSerializer(worldPath))
             using (var saves = new TerrainSaveCoordinator(serializer.SaveSnapshot))
             {
                 var chunk = terrain.AllocateChunk(-2, 3);
@@ -39,7 +59,7 @@ public sealed class TerrainDiskPersistenceTest
 
             Assert.NotEmpty(Directory.EnumerateFiles(directory.FullName, "*", SearchOption.AllDirectories));
             using var restoredTerrain = new Terrain();
-            using var reader = new TerrainSerializer24(worldPath);
+            using var reader = new TerrainChunkSerializer(worldPath);
             var restored = restoredTerrain.AllocateChunk(-2, 3);
             Assert.True(reader.LoadChunk(restored));
             Assert.Equal(value, restored.GetCellValueFast(1, 77, 2));

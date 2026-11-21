@@ -6,9 +6,9 @@ using System.Text;
 namespace Game.TerrainSerializers;
 
 /// <summary>
-///     版本 2.4 地形序列化工具，版本 2.4 的区块高度是 256
+///     Reads and writes terrain chunks in region files.
 /// </summary>
-public class TerrainSerializer24 : IDisposable
+public class TerrainChunkSerializer : IDisposable
 {
     private const int _rleCountShift = 10;
 
@@ -34,31 +34,21 @@ public class TerrainSerializer24 : IDisposable
 
     protected IStorage storage;
 
-    public TerrainSerializer24(string directoryName, string suffix = "")
+    public TerrainChunkSerializer(string directoryName, string suffix = "")
     {
-        storage = new RegionFileStorage(this);
+        storage = new RegionFileStorage();
         storage.Open(directoryName, suffix);
     }
 
-    public TerrainSerializer24()
+    public TerrainChunkSerializer()
     {
-        storage = new RegionFileStorage(this);
+        storage = new RegionFileStorage();
     }
 
     public virtual void Dispose()
     {
         storage?.Dispose();
         storage = null!;
-    }
-
-    /// <summary>
-    ///     同 LoadChunkData, 保存 Chunk 数据块
-    /// </summary>
-    /// <param name="chunk"> 需要保存的 Chunk 数据块对象 </param>
-    /// <returns> 是否加载成功 </returns>
-    public bool LoadChunk(TerrainChunk chunk)
-    {
-        return LoadChunkData(chunk);
     }
 
     /// <summary>
@@ -76,36 +66,35 @@ public class TerrainSerializer24 : IDisposable
         chunk.ModificationCounter = 0;
     }
 
-    /// <summary>
-    ///     加载 Chunk 数据块
-    /// </summary>
-    /// <param name="chunk"> 加载结果 </param>
-    /// <returns> 是否加载成功 </returns>
-    private bool LoadChunkData(TerrainChunk chunk)
+    /// <summary>Returns false only when the region or its chunk record is absent.</summary>
+    public bool LoadChunk(TerrainChunk chunk)
     {
         lock (_loadLock)
         {
             try
             {
-                var readDataByteCount = storage.Load(chunk.Coords, _loadStorageBuffer);
-                // 读取字节数小于 0，说明加载数据块失败，返回 false
-                if (readDataByteCount < 0)
+                var size = storage.Load(chunk.Coords, _loadStorageBuffer);
+                if (size == -1) { return false; }
+
+                if (size <= 0 || size > _loadStorageBuffer.Length)
                 {
-                    return false;
+                    throw new InvalidDataException("Invalid stored chunk size.");
                 }
 
-                // 解压数据块
-                DecompressChunkData(chunk, _loadStorageBuffer, readDataByteCount);
+                DecompressChunkData(chunk, _loadStorageBuffer, size);
+                return true;
             }
-            catch (Exception e)
+            catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException
+                                              or UnauthorizedAccessException)
             {
-                Log.Error(
-                    $"Error loading chunk ({chunk.Coords.X},{chunk.Coords.Y},{chunk.Origin.X},{chunk.Origin.Y}).{Environment.NewLine}{e}"
+                var source = storage is RegionFileStorage region
+                    ? region.GetChunkPath(chunk.Coords)
+                    : storage.GetType().Name;
+                throw new InvalidDataException(
+                    $"Could not load chunk ({chunk.Coords.X},{chunk.Coords.Y}) from '{source}'.",
+                    error
                 );
-                return false;
             }
-
-            return true;
         }
     }
 
@@ -140,7 +129,7 @@ public class TerrainSerializer24 : IDisposable
             throw new InvalidOperationException("Compression buffer overflow.");
         }
 
-        // 首先使用 RLE 算法压缩重复的数据, 版本 2.4 层高 256
+        // 首先使用 RLE 算法压缩重复的数据, 区块高度为 256
         var value = -1; // 值
         var count = 0; // 值重复的次数
         for (var k = 0; k < 256; k++)
@@ -466,7 +455,7 @@ public class TerrainSerializer24 : IDisposable
         /// </summary>
         /// <param name="coords"> 坐标 </param>
         /// <param name="buffer"> Chunk 数据块缓冲区 </param>
-        /// <returns> 读取到的字节数, -1 代表加载错误 </returns>
+        /// <returns> 读取到的字节数, -1 代表区块没有存档记录 </returns>
         int Load(Point2 coords, byte[] buffer);
 
         /// <summary>
@@ -485,7 +474,7 @@ public class TerrainSerializer24 : IDisposable
         bool Exists(Point2 coords);
     }
 
-    public class RegionFileStorage(TerrainSerializer24 terrainSerializer24) : IStorage
+    public class RegionFileStorage : IStorage
     {
         private const int _maxOpenedStreams = 100;
 
@@ -504,8 +493,6 @@ public class TerrainSerializer24 : IDisposable
         private readonly Dictionary<Point2, Stream?> _streamsByRegion = new();
 
         private string _regionsDirectoryName = string.Empty;
-
-        private TerrainSerializer24 _terrainSerializer = terrainSerializer24;
 
         private string _tmpFilePath = string.Empty;
 
@@ -553,7 +540,7 @@ public class TerrainSerializer24 : IDisposable
         /// </summary>
         /// <param name="coords"> 坐标 </param>
         /// <param name="buffer"> Chunk 数据块缓冲区 </param>
-        /// <returns> 读取到的字节数, -1 代表加载错误 </returns>
+        /// <returns> 读取到的字节数, -1 代表区块没有存档记录 </returns>
         public int Load(Point2 coords, byte[] buffer)
         {
             lock (_lock)
@@ -766,6 +753,8 @@ public class TerrainSerializer24 : IDisposable
             }
         }
 
+        internal string GetChunkPath(Point2 coords) => GetRegionPath(new Point2(coords.X >> 4, coords.Y >> 4));
+
         private string GetRegionPath(Point2 region)
         {
             return string.Format("{0}/Region {1},{2}.dat", new object[3] { _regionsDirectoryName, region.X, region.Y });
@@ -779,32 +768,41 @@ public class TerrainSerializer24 : IDisposable
             }
 
             var regionPath = GetRegionPath(region);
-            if (Storage.FileExists(regionPath))
+            try { value = Storage.OpenFile(regionPath, OpenFileMode.ReadWrite); }
+            catch (FileNotFoundException)
             {
-                value = Storage.OpenFile(regionPath, OpenFileMode.ReadWrite);
-                using (var binaryReader = new BinaryReader(value, Encoding.UTF8, true))
-                {
-                    if (binaryReader.ReadUInt32() != _regionMagic)
-                    {
-                        throw new InvalidOperationException($"Invalid region file {region} magic.");
-                    }
-                }
+                if (!createNew) { return null; }
 
-                _openedStreams.Enqueue(value);
-            }
-            else if (createNew)
-            {
                 value = Storage.OpenFile(regionPath, OpenFileMode.Create);
-                _openedStreams.Enqueue(value);
-                using var binaryWriter = new BinaryWriter(value, Encoding.UTF8, true);
-                binaryWriter.Write(_regionMagic);
-                WriteDirectoryEntries(binaryWriter, new DirectoryEntry[256]);
-            }
-            else
-            {
-                value = null;
+                try
+                {
+                    using var writer = new BinaryWriter(value, Encoding.UTF8, true);
+                    writer.Write(_regionMagic);
+                    WriteDirectoryEntries(writer, new DirectoryEntry[256]);
+                }
+                catch
+                {
+                    value.Dispose();
+                    throw;
+                }
             }
 
+            try
+            {
+                value.Position = 0;
+                using var reader = new BinaryReader(value, Encoding.UTF8, true);
+                if (value.Length < _regionDataOffset || reader.ReadUInt32() != _regionMagic)
+                {
+                    throw new InvalidDataException($"Invalid region header in '{regionPath}'.");
+                }
+            }
+            catch
+            {
+                value.Dispose();
+                throw;
+            }
+
+            _openedStreams.Enqueue(value);
             _streamsByRegion[region] = value;
             while (_openedStreams.Count > _maxOpenedStreams)
             {
@@ -842,7 +840,12 @@ public class TerrainSerializer24 : IDisposable
             var result = default(DirectoryEntry);
             result.Offset = reader.ReadInt32();
             result.Size = reader.ReadInt32();
-            if (result.Size < 0 || result.Size > 2097152)
+            if (result.Offset == 0 && result.Size == 0) { return result; }
+
+            if (result.Offset < _regionDataOffset ||
+                result.Size <= 0 ||
+                result.Size > 2097152 ||
+                (long)result.Offset + sizeof(uint) + result.Size > reader.BaseStream.Length)
             {
                 throw new InvalidOperationException(
                     "Region file entry size out of bounds, likely corrupt region file."

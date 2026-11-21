@@ -45,7 +45,7 @@ public sealed class TerrainChunkContentAuthorityTest
 
         server.FreeChunk(original);
         var reloaded = server.AllocateChunk(0, 0);
-        // Restore through the same per-cell writes as TerrainSerializer24, with no generation history.
+        // Restore through the same per-cell writes as TerrainChunkSerializer, with no generation history.
         for (var index = 0; index < initial.Cells.Length; index++)
         {
             reloaded.SetCellValueFast(index, initial.Cells.Span[index]);

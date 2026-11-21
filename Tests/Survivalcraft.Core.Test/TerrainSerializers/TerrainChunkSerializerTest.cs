@@ -7,7 +7,7 @@ using Game.TerrainSerializers;
 
 namespace Survivalcraft.Core.Test.TerrainSerializers;
 
-public sealed class TerrainSerializer24Test
+public sealed class TerrainChunkSerializerTest
 {
     [Fact]
     public void ReadToEndHandlesStreamsThatReturnPartialReads()
@@ -16,7 +16,7 @@ public sealed class TerrainSerializer24Test
         using var stream = new PartialReadStream(source, 17);
         var destination = new byte[source.Length];
 
-        var count = TerrainSerializer24.ReadToEnd(stream, destination);
+        var count = TerrainChunkSerializer.ReadToEnd(stream, destination);
 
         Assert.Equal(source.Length, count);
         Assert.Equal(source, destination);
@@ -26,7 +26,7 @@ public sealed class TerrainSerializer24Test
     public void SaveAndLoadRoundTripPreservesCompleteChunk()
     {
         var storage = new MemoryStorage();
-        using var serializer = new TestTerrainSerializer24(storage);
+        using var serializer = new TestTerrainChunkSerializer(storage);
         using var terrain = new Terrain();
         using var source = new TerrainChunk(terrain, 2, 3);
         source.HasContents = true;
@@ -76,7 +76,7 @@ public sealed class TerrainSerializer24Test
     }
 
     [Fact]
-    public void LoadReturnsFalseWithoutApplyingMalformedChunk()
+    public void LoadRejectsMalformedDataWithoutChangingChunk()
     {
         var malformedData = new byte[256];
         using var compressedStream = new MemoryStream();
@@ -86,14 +86,14 @@ public sealed class TerrainSerializer24Test
         }
 
         var storage = new MemoryStorage(compressedStream.ToArray());
-        using var serializer = new TestTerrainSerializer24(storage);
+        using var serializer = new TestTerrainChunkSerializer(storage);
         using var terrain = new Terrain();
         using var chunk = new TerrainChunk(terrain, 0, 0);
         var originalValue = Terrain.MakeBlockValue(234, 1);
         chunk.SetCellValueFast(0, 0, 0, originalValue);
         chunk.SetShaftValueFast(0, 0, 5678);
 
-        Assert.False(serializer.LoadChunk(chunk));
+        Assert.Throws<InvalidDataException>(() => serializer.LoadChunk(chunk));
         Assert.Equal(originalValue, chunk.GetCellValueFast(0, 0, 0));
         Assert.Equal(5678, chunk.GetShaftValueFast(0, 0));
     }
@@ -102,7 +102,7 @@ public sealed class TerrainSerializer24Test
     public void FailedSaveKeepsChunkDirtyForRetry()
     {
         var storage = new MemoryStorage { FailSaves = true };
-        using var serializer = new TestTerrainSerializer24(storage);
+        using var serializer = new TestTerrainChunkSerializer(storage);
         using var terrain = new Terrain();
         using var chunk = new TerrainChunk(terrain, 0, 0)
         {
@@ -127,7 +127,7 @@ public sealed class TerrainSerializer24Test
     public void BackgroundSnapshotCanBeLoadedThroughSerializer()
     {
         var storage = new MemoryStorage();
-        using var serializer = new TestTerrainSerializer24(storage);
+        using var serializer = new TestTerrainChunkSerializer(storage);
         using var coordinator = new TerrainSaveCoordinator(serializer.SaveSnapshot);
         using var terrain = new Terrain();
         using var source = new TerrainChunk(terrain, 3, 4)
@@ -155,7 +155,7 @@ public sealed class TerrainSerializer24Test
     public async Task BackgroundSaveDoesNotBlockChunkDecompression()
     {
         var storage = new MemoryStorage();
-        using var serializer = new TestTerrainSerializer24(storage);
+        using var serializer = new TestTerrainChunkSerializer(storage);
         using var terrain = new Terrain();
         using var source = new TerrainChunk(terrain, 1, 2)
         {
@@ -191,16 +191,16 @@ public sealed class TerrainSerializer24Test
         }
     }
 
-    private sealed class TestTerrainSerializer24 : TerrainSerializer24
+    private sealed class TestTerrainChunkSerializer : TerrainChunkSerializer
     {
-        public TestTerrainSerializer24(IStorage replacementStorage)
+        public TestTerrainChunkSerializer(IStorage replacementStorage)
         {
             storage.Dispose();
             storage = replacementStorage;
         }
     }
 
-    private sealed class MemoryStorage(byte[]? initialData = null) : TerrainSerializer24.IStorage
+    private sealed class MemoryStorage(byte[]? initialData = null) : TerrainChunkSerializer.IStorage
     {
         private byte[]? _data = initialData;
 

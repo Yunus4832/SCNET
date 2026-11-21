@@ -229,7 +229,7 @@ Core、Hosting、Client 在各自 `.csproj` 中声明禁止引用的程序集，
 
 启动会话、实例路径、配置 XML 和世界加载由 `Survivalcraft.Hosting` 所有。`GameWorldController` 加载权威世界并绑定网络与时间发布，`WorldProjectPersistence` 保存权威快照；应用入口选择有效输入并处理界面导航。共享库存契约和分页规则属于 Core；楼梯的24组碰撞定义由 Core 初始化，不依赖视觉模型加载。
 
-地形数据与保存实现（`Terrain`、`TerrainChunk`、`TerrainSerializer24`、保存队列）属于 Core。权威区块的待保存数据恢复、磁盘读取和四阶段内容生成状态机也属于 Core，具体生成器、存储访问与模组生成回调由地形子系统显式装配；光照和网格不由该状态机推进。`HasContents`、`HasCurrentHeightData` 和 `HasCurrentLight` 分别表达内容、高度与光照能力，不等待客户端网格；`IsContentInitialized` 单独控制权威内容对外发布。客户端通过 `SubsystemTerrain.Environment` 查询环境，不装配区块写入生成器。`SubsystemTerrain` 以短世界更新顺序装配需求、驻留、内容接收、环境观察和阶段计算服务；渲染缓冲、网格及上传调度属于每个客户端世界的独立表现存储。详细的[地形生命周期与线程合同](TerrainDistribution.md#线程所有权)由地形分发文档维护。基础文件根与同步存储位于 `Engine.Core`，文件选择器仍属于平台引擎。世界规则与宿主设置分别由 `WorldSettings` 和 `WorldHostingSettings` 所有；磁盘由各自写入所属字段，网络不广播宿主配置。
+地形数据与保存实现（`Terrain`、`TerrainChunk`、`TerrainChunkSerializer`、保存队列）属于 Core。权威区块的待保存数据恢复、磁盘读取和四阶段内容生成状态机也属于 Core，具体生成器、存储访问与模组生成回调由地形子系统显式装配；光照和网格不由该状态机推进。`HasContents`、`HasCurrentHeightData` 和 `HasCurrentLight` 分别表达内容、高度与光照能力，不等待客户端网格；`IsContentInitialized` 单独控制权威内容对外发布。客户端通过 `SubsystemTerrain.Environment` 查询环境，不装配区块写入生成器。`SubsystemTerrain` 以短世界更新顺序装配需求、驻留、内容接收、环境观察和阶段计算服务；渲染缓冲、网格及上传调度属于每个客户端世界的独立表现存储。详细的[地形生命周期与线程合同](TerrainDistribution.md#线程所有权)由地形分发文档维护。基础文件根与同步存储位于 `Engine.Core`，文件选择器仍属于平台引擎。世界规则与宿主设置分别由 `WorldSettings` 和 `WorldHostingSettings` 所有；磁盘由各自写入所属字段，网络不广播宿主配置。
 
 游戏信息、时间、昼夜和季节子系统属于 Core。时钟在延迟动作执行后读取实际角色列表的睡眠人口事实，宿主更新器在同一更新相位采用返回的更新次数；客户端不根据兴趣范围内的角色推断全服睡眠。Core 发布时间与季节事实，由每个世界的网络装配对象发送同步消息。`SubsystemWorldHosting` 只在权威世界构造，拥有服务器设置及启动临时覆写账本，通过 ECS 的保存快照事件贡献持久化字段，不回写运行状态或共享模板，也不将宿主配置放入客户端快照。
 

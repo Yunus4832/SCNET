@@ -1,3 +1,6 @@
+using System.Buffers.Binary;
+
+using Engine.Core.FileStorage;
 using Engine.Core.Mathematics;
 
 using Game.Terrains;
@@ -8,6 +11,61 @@ namespace Survivalcraft.Core.Test.Terrains.Distribution;
 
 public sealed class AuthoritativeChunkGenerationPipelineTest
 {
+    [Theory]
+    [InlineData("region-magic")]
+    [InlineData("short-header")]
+    [InlineData("negative-offset")]
+    [InlineData("missing-offset")]
+    [InlineData("chunk-magic")]
+    [InlineData("truncated-payload")]
+    public void CorruptRegionCannotStartGenerationOrChangeTheSave(string damage)
+    {
+        var directory = Directory.CreateTempSubdirectory("scnet-region-read-");
+        var root = "region-read-" + Guid.NewGuid().ToString("N");
+        Storage.RegisterFileSystemRoot(root, directory.FullName);
+        try
+        {
+            using var terrain = new Terrain();
+            var chunk = terrain.AllocateChunk(0, 0);
+            using (var writer = new TerrainChunkSerializer(root + ":/"))
+            {
+                Assert.False(writer.LoadChunk(chunk));
+                writer.SaveSnapshot(chunk.Coords, chunk.Cells, chunk.Shafts);
+                Assert.False(writer.LoadChunk(terrain.AllocateChunk(1, 0)));
+            }
+
+            var file = Path.Combine(directory.FullName, "Regions", "Region 0,0.dat");
+            var bytes = File.ReadAllBytes(file);
+            var offset = BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(4));
+            switch (damage)
+            {
+                case "region-magic": bytes[0] ^= 1; break;
+                case "short-header": Array.Resize(ref bytes, 12); break;
+                case "negative-offset": BinaryPrimitives.WriteInt32LittleEndian(bytes.AsSpan(4), -1); break;
+                case "missing-offset": Array.Clear(bytes, 4, 4); break;
+                case "chunk-magic": bytes[offset] ^= 1; break;
+                case "truncated-payload": Array.Resize(ref bytes, offset + 5); break;
+            }
+
+            File.WriteAllBytes(file, bytes);
+            using var reader = new TerrainChunkSerializer(root + ":/");
+            var generator = new FakeGenerator();
+            using var pipeline = new AuthoritativeChunkGenerationPipeline(generator, _ => false, reader.LoadChunk);
+            for (var attempt = 0; attempt < 2; attempt++)
+            {
+                var failure = Assert.Throws<InvalidDataException>(() => pipeline.TryAdvance(chunk));
+                Assert.Contains("Region 0,0.dat", failure.Message);
+                Assert.Contains("(0,0)", failure.Message);
+                Assert.Equal(TerrainGenerationStage.Restore, pipeline.GetStage(chunk));
+            }
+
+            Assert.False(chunk.HasContents);
+            Assert.Equal(0, generator.PassCount);
+            Assert.Equal(bytes, File.ReadAllBytes(file));
+        }
+        finally { directory.Delete(true); }
+    }
+
     [Fact]
     public void StalePublicationCleanupIsBoundedAndLeavesLaterValidWorkAvailable()
     {

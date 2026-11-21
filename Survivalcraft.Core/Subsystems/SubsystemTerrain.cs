@@ -127,7 +127,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
     public bool UsesChunkContentTransport => ChunkContentTransport != null;
 
-    public TerrainSerializer24? TerrainSerializer { get; set; }
+    public TerrainChunkSerializer? TerrainSerializer { get; set; }
 
     public TerrainSaveCoordinator? TerrainSaveCoordinator { get; private set; }
 
@@ -875,7 +875,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
         if (Runtime.IsAuthority)
         {
-            var serializer = new TerrainSerializer24(SubsystemGameInfo.DirectoryName);
+            var serializer = new TerrainChunkSerializer(SubsystemGameInfo.DirectoryName);
             TerrainSerializer = serializer;
             TerrainSaveCoordinator = new TerrainSaveCoordinator(serializer.SaveSnapshot);
         }
