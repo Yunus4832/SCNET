@@ -1,6 +1,6 @@
 # 结构与分层
 
-> Core、Client、Hosting 与独立服务端入口已完成源码分离。实现边界、验证范围与持续验收要求见[逻辑核心分离方案](LogicCoreSeparation.md)。
+> Core、Client、Hosting 与独立服务端入口已完成源码分离。实现边界、验证范围与持续验收要求见[逻辑核心分离与验收](LogicCoreSeparation.md)。
 
 ## 设计重心
 
@@ -131,7 +131,7 @@ GUI 返回目标由 `GameManager.LocalPlayerReturnTarget` 持有：直接游戏�
 目录保护使用存储层解析后的系统路径，拒绝对所属目录及其上下级目录的破坏式操作；其他未被使用的相邻世界仍可正常管理。
 材质和皮肤引用替换先等待已有存档写入结束，再同步持久化引用与两侧内存状态，避免后续权威保存写回旧引用。
 
-Windows GUI Starter 在 Windows 项目内直接使用 WinForms `OpenFileDialog`/`SaveFileDialog`，对话框在专用 STA 线程运行，不启动 PowerShell 子进程；Linux GUI Starter 通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，具体对话框由桌面 portal backend 提供；Android GameActivity 使用 Storage Access Framework 的 `ACTION_OPEN_DOCUMENT` 与 `ACTION_CREATE_DOCUMENT`，并持久化授权后的 URI 访问。独立服务器分支均在注册之前返回或进入独立 Activity，因此不会暴露交互式 picker。Linux GUI 不依赖 `zenity` 可执行文件；会话总线、portal 服务或桌面 backend 不可用时，实际选择请求失败并返回明确错误。
+Windows GUI Starter 在 Windows 项目内直接使用 WinForms `OpenFileDialog`/`SaveFileDialog`，对话框在专用 STA 线程运行，不启动 PowerShell 子进程；Linux GUI Starter 通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，具体对话框由桌面 portal backend 提供；Android GameActivity 使用 Storage Access Framework 的 `ACTION_OPEN_DOCUMENT` 与 `ACTION_CREATE_DOCUMENT`，并持久化授权后的 URI 访问。文件选择器由图形入口注册。Linux GUI 不依赖 `zenity` 可执行文件；会话总线、portal 服务或桌面 backend 不可用时，实际选择请求失败并返回明确错误。
 
 Starter 统一通过 `PlatformManager` 注册平台能力，避免直接操作各子系统的全局入口。GUI 的文本输入和文本剪贴板均由 SDL2 backend 提供，FilePicker 仍使用上述平台原生实现；独立服务器不注册这些交互能力。
 

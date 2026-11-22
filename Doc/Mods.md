@@ -1,37 +1,14 @@
 # 模组使用说明
 
-SCNET 的模组系统以统一内容包 `.scpkg` 和 `ModProfile` 为核心。
-
-包是否存在不代表会被加载。只有当前有效 profile 中列出的模组才会进入运行时。
+1. 在「内容 → 在线内容」下载模组，或在「内容 → 模组」导入 `.scpkg` 文件。
+2. 在模组管理中把该包加入全局配置或目标存档的配置。下载或导入时，包先进入本地缓存。
+3. 进入存档。如果目标组合和当前运行的模组不同，按提示重启。加入服务器时，游戏按服务器要求准备模组包。
 
 ## 核心概念
 
 ### `.scpkg`
 
-`.scpkg` 是统一内容包协议定义的 ZIP 容器。Mod payload 包含：
-
-```text
-manifest.json
-payload/mod.json
-payload/assemblies/*.dll
-payload/data/**
-payload/assets/<mod-id>/**
-```
-
-`manifest.json` 的公共字段及 Mod metadata 至少描述：
-
-- `formatVersion` 与 `type`
-- `identifier`（即 ModId）
-- `name`
-- `version`
-- `payload`
-- `metadata.entrypoint`
-- `metadata.dependencies`
-
-每个代码模组只有一个程序集限定类型名入口；纯数据或资源包的 `entrypoint` 为 `null`。
-单机、GUI 开服、远程客户端和 独立服务器加载同一套定义，不按进程选择另一套入口。
-入口的注册每个模组环境只执行一次，世界业务与表现分别由所属世界的职责决定，见
-[模组开发](./Modding.md#模组定义与世界状态)。
+`.scpkg` 是统一内容包。模组包可包含程序集、规则数据和资源。包清单及入口字段见[内容包协议](Protocol/ContentPackageProtocol.md)与[模组开发](Modding.md)。图形程序和独立服务器共用规则入口，客户端另行装配表现资源。
 
 ### 本地缓存
 
@@ -97,15 +74,15 @@ GUI 启动时：
 3. 如果 profile 中的精确包本地缺失，按持久仓库集合下载到统一缓存
 4. 使用解析到的包启动模组 runtime
 
-之后玩家进入本地 world 时：
+之后玩家进入本地世界时：
 
 1. 按目标 world 解析有效 `ModProfile`
 2. 按完整 requirement 从缓存或持久仓库补全缺失 Mod
 3. 比较目标 profile 和 `CurrentModRuntime.Value.EffectiveProfile`
-4. 如果相同，直接进入 world
+4. 如果相同，直接进入世界
 5. 如果不同，创建临时 session profile 并请求重启
 
-如果 profile 为空或缺失，则只加载内置内容。空 profile 也会参与比较；例如当前 runtime 已加载模组，而目标 world 不启用模组时，也需要重启来卸载模组。
+如果 profile 为空或缺失，则只加载内置内容。空 profile 也会参与比较；例如当前 runtime 已加载模组，而目标世界不启用模组时，也需要重启来卸载模组。
 
 独立服务器启动时没有 GUI 中途切换流程。它会直接解析启动 session 对应的有效 profile，下载缺失包，并以服务端侧 runtime 启动。
 

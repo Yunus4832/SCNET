@@ -53,9 +53,7 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 
 ## 不作为 NuGet 包的项目
 
-- 平台启动项目（`Survivalcraft.Windows`、`Survivalcraft.Linux` 和 Android 项目）
-  属于应用程序，应以对应平台的产物形式分发。
-- `RendezvousServer` 是独立信令服务，`NetworkProbe` 是网络测试驱动器，两者通过应用发布脚本分发。
+- 平台启动器、独立游戏服务器、内容服务、信令服务、认证服务和 NetworkProbe 通过[应用发布脚本](BuildAndConfig.md#发布目标)分发。
 - 测试项目仅用于验证实现。
 - `BeaconMod` 和 `TerritoryStoneMod` 是模组规则项目，不产 NuGet 包，也不单独生成完整内容包。
   各自的 `.Client` 项目引用规则项目，由 `SCNET.ContentTool` 把规则与客户端 DLL 装入同一 `.scpkg`；
@@ -75,17 +73,8 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 
 ## 本地打包
 
-仅需准备或更新原生包时，可选择三个原生资产项目：
-
-```bash
-./Scripts/pack-nuget.sh --project Native.ImageCodecs --project Native.OpenAL --project Native.SDL
-```
-
-这三个项目只将现有原生文件打包，不编译 C/C++，位于解决方案的 `01 NativeLibraries` 逻辑文件夹。
-
-首次开发构建使用 `./Scripts/pre-build.sh`（PowerShell 为 `./Scripts/pre-build.ps1`），自动准备缺失的
-本地包并还原解决方案。SDK 源码或原生资产改变后使用 `--refresh`（PowerShell 为 `-Refresh`），
-清除这些包当前版本的缓存并重新打包。它只负责依赖准备，完成后照常使用 `dotnet build`。
+首次构建或更新本地 SDK 时，按[构建步骤](BuildAndConfig.md#构建)运行依赖准备脚本。
+只需打包指定项目时，使用下方的项目选择参数。三个原生包从已准备的 RID 文件打包。
 
 从仓库根目录运行统一打包脚本。脚本先生成图像、OpenAL 和 SDL 原生资产包，再按依赖顺序逐个执行可打包项目，任一项目失败时立即停止：
 
@@ -112,7 +101,7 @@ PowerShell：
 
 选择参数使用项目名称（例如 `Survivalcraft.ModTemplate`），不是 NuGet 包名。
 额外参数传给每个选中项目的 `dotnet pack`。仅打包所选项目，不自动补打包依赖；
-依赖包的新版本需事先准备好。省略项目选择时保留原有全量行为。
+依赖包的新版本需事先准备好。省略项目选择时按白名单打包全部项目。
 
 包会输出到 `Publish/NuGet`。仓库根目录的 `NuGet.Config` 已将该目录注册为
 `SCNET Local` 文件源，因此 `TerritoryStoneMod` 和仓库内生成的 Mod 项目与外部

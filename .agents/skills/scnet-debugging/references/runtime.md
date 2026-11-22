@@ -67,7 +67,7 @@ time get
 stop
 ```
 
-Subject command permissions are explicit; the old `ServerMaster` and `ServerManager` fields have been removed. An unclaimed server prints a process-local claim code. A player must connect and run:
+An unclaimed server prints a process-local claim code. Connect as a player and run:
 
 ```text
 /auth claim <claim-code>
@@ -78,7 +78,7 @@ standard command permissions without automatically receiving those command permi
 server use the same online-player claim path; GUI presents a local claim dialog, while server
 prints the code to stdout. Until a player claims it, the server remains unclaimed.
 
-server console recovery and inspection commands:
+Use the server console to inspect or regenerate the claim code:
 
 ```text
 auth status
@@ -118,14 +118,9 @@ COMMAND OK
 
 ## P2P runtime commands
 
-Use `p2p start`, `p2p status`, and `p2p stop`. Start requires a valid room configuration
-prepared in the world/server settings or startup arguments; commands cannot edit it.
-The standard permission is `game:server.p2p.manage`; a claimed player must still obtain its use grant.
-HTTP identities are `game:server/p2p/{start,status,stop}`. Use the local or player endpoint
-for the intended identity. Poll status `data.state` for Active/Disabled after Pending; do not infer
-registration success from request acceptance. Runtime changes do not persist and stop preserves
-existing direct/relay connections and the game port. Use separate instances and a loopback signaling
-server to verify these boundaries; screenshots are unnecessary for command-only assertions.
+Prepare a room in the world settings or startup arguments. Run `p2p start`, poll `p2p status`
+until the room is active, then run `p2p stop` and check that existing connections still work.
+Use separate instances and a loopback signaling service for this test. The [server reference](../../../../Doc/Server.md#p2p-房间运行时管理) defines the permissions, HTTP identities and stop behavior.
 
 ## GUI player HTTP commands
 
@@ -133,7 +128,7 @@ Use `GET /player/commands` to discover World/Server bindings available to the cu
 then `POST /player/commands` with the same identity/arguments envelope as `/commands`.
 Remote discovery and execution use the server's real player permissions. Use `/commands` for
 local process control and UI automation; it does not forward commands to the remote world.
-server exposes only the local endpoint. No active player returns `command.no_player`;
+The standalone server exposes the local endpoint. No active player returns `command.no_player`;
 player/world/server changes invalidate outstanding requests. A 504 timeout does not prove the
 server did not execute the request. Keep `Pending` distinct from final business completion.
 

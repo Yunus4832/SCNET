@@ -2,25 +2,7 @@
 
 这是一个基于 Survivalcraft 的联机版代码库。项目以联机服务器的稳定运行和跨平台共享游戏逻辑为重点，减少客户端与服务端之间的代码分叉。
 
-## 概述
-
-仓库的核心思路是将"游戏逻辑"与"平台层"分离：
-
-- `Survivalcraft.Core/` 负责游戏规则、实体、权威世界与客户端副本算法
-- `Survivalcraft.Hosting/` 负责非图形宿主服务，包括网络、存档、内容及模组装配，由图形程序和独立服务器共享
-- `Survivalcraft.Client/` 负责渲染、输入与客户端表现
-- `Survivalcraft/` 负责图形应用装配、界面流程及本机世界运行
-- `Survivalcraft.Server/` 负责独立服务器的启动、更新循环和进程生命周期
-- `Engine/` 负责渲染、音频、窗口、输入等运行时能力
-- `Engine.Core/` 负责基础类型、文本值转换和通用运行时类型查找
-- `EntitySystem/` 提供实体与组件系统
-- 平台项目只负责启动方式、资源打包和宿主差异
-
-这种拆分方式的好处在于：
-
-- 服务器启动时，只需加载真正需要的部分
-- 客户端更新游戏规则时，服务端无需单独维护另一份逻辑
-- 平台差异不会过多地侵入核心代码
+独立服务器与图形程序共用游戏规则和权威世界装配，客户端负责输入、界面和渲染。单机也分别运行权威世界和客户端世界。依赖边界见[结构与分层](Doc/Architecture.md)。
 
 ## 项目结构
 
@@ -59,9 +41,7 @@
 
 ## 快速开始
 
-完整解决方案构建需要 Node.js 与 npm；首次构建先安装 ContentWebUI 的前端依赖，见[外部依赖](Doc/Dependencies.md)。
-
-首次从源码运行前，先按下方构建步骤生成本地原生资产和 Mod SDK 包。
+构建主解决方案前先准备本地 NuGet 包。构建内容服务的 Web 工作台或执行全量发行前，另需安装前端依赖，见[外部依赖](Doc/Dependencies.md)。
 
 ### 独立服务器启动
 
@@ -100,7 +80,6 @@ dotnet build Mods/TerritoryStone/TerritoryStone.slnx -c Debug
 
 ```bash
 # 首次构建：准备本地包并还原依赖
-npm --prefix Services/Content/ContentWebUI ci
 ./Scripts/pre-build.sh
 
 # Debug 构建
@@ -109,7 +88,8 @@ dotnet build SCNET.slnx
 # Release 构建
 dotnet build SCNET.slnx --configuration Release
 
-# 顺序生成应用和服务发行产物
+# 全量发行：先安装 Web 工作台依赖，再发布应用和服务
+npm --prefix Services/Content/ContentWebUI ci
 ./Scripts/publish.sh
 
 # 生成 Mod SDK 和模板 NuGet 包

@@ -33,18 +33,13 @@ Do not overwrite an output directory or repeat a failed scenario without inspect
 
 ## Interpret results
 
-- Compare workloads separately: idle, bounded shared-area movement, and explore.
-- Inspect the process exit code, `summary.json` and per-client errors. A connection is not Playing;
-  a terrain frame or fragment is not a completed chunk.
-- Use measurement samples for bandwidth and tick-counter deltas. Maximum tick values cover the
-  server process lifetime; transport ping is not hit-response latency or application command latency.
-- Track driver CPU and loop time as well as server CPU. Driver saturation invalidates a server limit.
-- Step client counts conservatively. Stop increasing when tick objectives, convergence, memory bounds,
-  disconnect rate or canary experience fails. Distinguish world capacity rejection from saturation.
-- Do not describe synthetic flight snapshots as full physics, combat, collision or Agent gameplay.
-  Report tested workload capacity only; leave unmeasured limits unknown.
-- Compare fresh instances for cold runs, or explicitly preserve equal cache/creation history for warm
-  runs. Repeated populations leave offline players and terrain in reused worlds.
+Inspect the exit code, summary and client errors. Compare measurements for the same workload.
+Use the [output reference](../../../Doc/ServerLoadTesting.md#输出与解读) for counter and latency
+definitions. Keep driver saturation, admission rejection and server saturation distinct.
+
+Increase population only while tick, convergence, memory, disconnect and GUI observation criteria
+hold. Use fresh instances for cold runs and record existing terrain and players for warm runs.
+Report capacity for the measured workload.
 
 Stop load clients normally, then stop the server/canary, preserve relevant logs, and remove only
 instances created for the experiment. The tool itself disconnects clients but never deletes server data.

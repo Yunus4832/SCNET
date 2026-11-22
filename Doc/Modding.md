@@ -1,8 +1,6 @@
 # 模组开发
 
-本文档面向模组开发者，说明如何创建项目并打包统一内容包 `.scpkg`。
-
-如果只是配置、下载或启用模组，见 [Mods.md](./Mods.md)。
+从模板创建模组、打包 `.scpkg`，并了解规则与客户端表现各自的接入方式。下载、配置和启用模组见[模组使用](Mods.md)。
 
 ## 创建项目
 
@@ -53,57 +51,35 @@ payload/assets/<mod-id>/**
 GUI 图集也输出直通 Alpha 的 WebP，约定见 [图集工具](../Tools/GuiAtlasTool/README.md)。
 自定义着色器应使用预乘纹理的混合约定；对纹理数据的底层指针或数组上传仍由图形调用方保证 GPU 像素表示。
 
-模板的规则项目引用 `SCNET.Survivalcraft.Core` 和 `SCNET.Survivalcraft.Hosting`。客户端项目引用规则项目、`SCNET.Survivalcraft.Client`，并私有引用 `SCNET.ContentTool`。
-工具包携带的构建目标会在构建后创建和验证 `.scpkg`，宿主运行时程序集不会复制进包。
+### 构建产物
 
-仓库内的信标和领地石模组已将方块规则与客户端表现分到两个项目。规则项目引用
-`SCNET.Survivalcraft.Core` 与 `SCNET.Survivalcraft.Hosting` 编译契约；`.Client` 项目引用 `SCNET.Survivalcraft.Client`，通过项目引用带入规则程序集，并私有引用
-`SCNET.ContentTool`，由它生成包含两个程序集的同一个 `.scpkg`：
+模板生成规则项目和客户端项目。规则使用 Core 与 Hosting SDK，客户端引用规则项目和 Client SDK，
+通过 `SCNET.ContentTool` 的私有构建依赖创建并验证完整包，宿主运行时程序集不会打入包中。
+只构建规则项目时可以检查共享规则。构建客户端项目或整个解决方案才会生成 `.scpkg`。
+
+仓库内可构建 [信标](../Mods/Beacon/README.md) 与 [领地石](../Mods/TerritoryStone/README.md) 的独立解决方案。
+开发包在其客户端项目的 `bin/<Configuration>/<TargetFramework>/packages/` 下。
+如需把模组发行物收集到 `Publish/Mods/`，可从仓库根运行：
 
 ```bash
-dotnet build Mods/Beacon/Beacon.slnx
-dotnet build Mods/TerritoryStone/TerritoryStone.slnx
+./Scripts/publish.sh --project BeaconMod.Client
+./Scripts/publish.sh --project TerritoryStoneMod.Client
 ```
-
-产物分别位于对应 `.Client/bin/<Configuration>/<TargetFramework>/packages/`。
-通过仓库发布脚本选择 `BeaconMod.Client` 或 `TerritoryStoneMod.Client`，可将 `.scpkg` 输出到 `Publish/Mods/`。
-
-只构建 `BeaconMod` 或 `TerritoryStoneMod` 规则项目不再产包。本地开发前仍需准备
-`Publish/NuGet` 中的当前 SDK 与工具包；没有改成相对路径导入构建 Target。
-模板默认生成同样的双项目结构及客户端内容入口。
-
-模板资源位于 `Survivalcraft.ModTemplate/Survivalcraft.Mod/`。解决方案里唯一与模板打包直接相关的项目是 `Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj`，它会把这些资源打包成可发布的 `dotnet new` 模板包。
 
 ## 模组定义与世界状态
 
-代码包通过 `metadata.entrypoint` 指定共享规则入口，纯数据包填写 `null`；不提供按 GUI 与独立服务器
-选择的分侧入口。`Configure` / `Start` 只注册共享定义，不在其中启动世界计时器、修改地形或创建表现资源。
-同进程中的模组包、程序集以及 `Configure` / `Start` 注册只加载一次；单机和 GUI 开服仍有
-独立的 Authority 与 Client 世界。注册回调不能把当前世界、计时器、玩家缓存或待同步数据保存到
-模组入口字段、共享闭包或静态变量中。世界业务通过回调的 Project 取得 `WorldRuntimeContext`，
-以 `IsAuthority` 判断模拟职责，以 `HasPresentation` 判断能否创建 UI、声音与渲染资源。
-`Gameplay` 与 `BlockBehaviors` 上下文统一实现 `IWorldHookContext`，其 `Project` 明确指向所属世界；构造上下文时组件和子系统必须已经绑定世界。分发器在每次调用处理器前检查该世界，关闭或释放后不再开始后续处理器。更新调度器同样在延时回调、世界钩子与组件之间检查运行时状态；关闭会中断本轮剩余工作，游戏时间不再推进，也不接收新的游戏时间回调。同步业务调用者在钩子返回后同样检查世界是否仍可用；世界关闭与业务 `Cancel` 相互独立，关闭后不再开始地形写入、扣物、伤害等后续操作。
-附近交互动作的查询和执行上下文也提供所属 `Project`。查询期间关闭世界会停止后续 provider；解析得到的动作仅能在原世界仍活跃、提供它的注册仍存在时执行，不能跨世界复用或在模组卸载后执行。
-
-地形环境查询使用所属世界的 `SubsystemTerrain.Environment`，不为客户端构造区块生成器。内容可用、高度与光照完成、业务初始化完成和 GPU 可绘制是独立能力，不以一个综合就绪值替代；权威初始规范化产生的改块并入首份内容基线。
-
-生成完成钩子、区块初始化及卸载业务回调在所属世界的更新线程、地形访问门外执行；回调中改块仍通过正常地形写入入口获取短访问租约，不直接接管后台线程。卸载会先预留保存容量，回调后重新验证分配身份并捕获最终脏数据。未被既有钩子框架隔离的初始化或卸载异常会关闭世界，不重试已经产生副作用的通知；这不改变模组分发器原有的异常隔离规则。详细边界见[地形线程所有权](TerrainDistribution.md#线程所有权)。
-
-`metadata.clientContentEntrypoint` 可选，指向实现 `IClientContentModule` 的客户端内容入口，
-与 `metadata.entrypoint` 一样使用带程序集名的类型名称。客户端应用通过该包的
-`IModEntrypointLoader` 创建模块，以其 `BlockPresentations` 显式注册方块表现工厂；
-预览和各客户端世界分别持有表现目录，规则目录不反查客户端资源。
-共享规则入口的创建不会解析客户端入口类型或加载其程序集，独立服务器不装配该内容入口。
-业务仍只有一个共享 `IMod` 入口，不因 GUI、独立服务器、本地或远程客户端另建业务实现。
-
-模板生成一个 `.slnx`、共享规则项目、客户端项目和同一份包清单。客户端项目引用规则项目并负责将两份程序集打入一个 `.scpkg`。
-内置示例各自拥有独立解决方案，见[信标](../Mods/Beacon/README.md)与[领地石](../Mods/TerritoryStone/README.md)。
-领地石模组的边界绘制、着色器、设置面板和审批弹窗由 `TerritoryStoneMod.Client` 所有，
-按 `Presentation` 子系统模板装配。共享规则子系统保存领地与请求数据，处理权威权限和同步，
-通过事件交付本地交互与效果；客户端订阅这些事件并在世界释放时解绑。独立服务器不解析或实例化该表现子系统。
-
-这是当前方块表现的装配契约，不代表其余模组 UI、声音与世界回调已经全部分离，
-也不代表独立服务端产物已完成。
+- **共享规则**：`metadata.entrypoint` 使用带程序集名的 `IMod` 类型名，纯数据包填写 `null`。
+  同一模组环境只加载一次共享程序集并执行 `Configure` 和 `Start` 注册。权威世界与客户端世界分别持有运行状态。
+- **客户端表现**：可通过 `metadata.clientContentEntrypoint` 声明带程序集名的 `IClientContentModule`。
+  客户端的预览和各世界分别持有表现目录，规则目录独立装配。领地石的边界绘制、设置和审批由客户端入口注册，
+  共享规则处理权限和同步。详见[领地石示例](../Mods/TerritoryStone/README.md)。
+- **世界所属权**：从 `IWorldHookContext.Project` 取得 `WorldRuntimeContext`，用 `IsAuthority` 判断规则执行侧，
+  用 `HasPresentation` 判断表现能力。将计时器、玩家缓存和待同步数据保存在所属世界。
+  世界关闭时停止后续处理器和游戏时间回调，业务调用继续写入前也须检查世界状态。
+- **交互生命周期**：附近交互动作绑定到提供它的注册和世界。执行时须确认世界仍活动、注册仍存在。
+- **地形**：通过 `SubsystemTerrain.Environment` 查询环境。区块内容、高度、光照、业务初始化与 GPU 绘制
+  分别就绪。生成、初始化和卸载的业务回调在世界所属更新线程执行，写入走正常的地形入口。
+  保存预留、分配身份校验与异常处理见[地形线程所有权](TerrainDistribution.md#线程所有权)。
 
 子系统的可变状态直接放在子系统实例中；需要在多个回调间共享，或在 Bootstrap 尚未创建 Project
 时保存的临时状态，可在 `Configure` 中注册世界状态工厂：
@@ -257,7 +233,7 @@ context.Extensions.RegisterBlock<MyBlock>(
 规则目录统一初始化碰撞盒、配方、发光强度等模拟数据，不通过表现能力分支加载图形资源。
 GUI 预览和客户端世界分别创建 `BlockPresentationCatalog`，由其中的表现对象初始化模型和纹理；
 Authority 不创建表现目录，即使它与 GUI 客户端位于同一进程。
-方块表现统一在客户端地形协调线程生成网格，GPU 上传仍由图形线程处理。
+网格生成与 GPU 上传的线程边界见[地形线程所有权](TerrainDistribution.md#线程所有权)。
 内置方块的固定编号集中维护在游戏的静态注册表中。
 
 GUI 的 `PreviewCatalog` 服务帮助、图鉴和创建世界预览，游戏内打开帮助仍使用预览目录。
@@ -472,7 +448,7 @@ commands.Adapters.Register(
 
 完整的身份、路由和授权规则见 [命令权限模型](CommandPermissions.md)。
 
-`GET /commands` 只返回当前 HTTP 主体在当前运行模式下可能执行的 binding，并提供 identity、本地化说明及参数的 `name`、`valueType`、`required`。只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。HTTP 宿主通过 Bearer Token 认证，GUI 与 独立服务器都使用可信的 `LocalOperator` 身份；调用入口记录为 `CommandInvocationChannel.HttpApi`，命令仍会执行正常的命令域、权限和宿主环境校验。宿主只监听 loopback，且仅在有效 session 或实例 `Settings.xml` 启用时启动；实例默认配置、启动参数和可保存的 session 覆盖见 [Server.md](./Server.md)。
+`GET /commands` 只返回当前 HTTP 主体在当前运行模式下可能执行的 binding，并提供 identity、本地化说明及参数的 `name`、`valueType`、`required`。只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。HTTP 宿主通过 Bearer Token 认证，GUI 与独立服务器都使用可信的 `LocalOperator` 身份；调用入口记录为 `CommandInvocationChannel.HttpApi`，命令仍会执行正常的命令域、权限和宿主环境校验。宿主只监听 loopback，且仅在有效 session 或实例 `Settings.xml` 启用时启动；实例默认配置、启动参数和可保存的 session 覆盖见 [Server.md](./Server.md)。
 
 GUI 的 `GET/POST /player/commands` 使用当前真实玩家，而不是 LocalOperator。它只开放 World/Server binding；联机客户端的查询与调用发送给权威服务器，按服务器保存的玩家权限处理。命令由模组注册不改变此规则，玩家不能通过 HTTP 自行声明主体或权限。独立服务器不提供玩家入口。两组入口的请求格式相同，入口之间不自动回退。
 

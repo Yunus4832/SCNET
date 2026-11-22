@@ -1,14 +1,10 @@
 # 游戏自动化
 
-自动化用于通过正常输入和游戏规则执行可观察的交互验证，不直接修改角色位置、方块或库存。
-通过 loopback HTTP 命令宿主访问；启动、认证和命令发现见 [独立服务器](Server.md)。
-GUI 命令不会在 独立服务器宿主上发现或执行。
+自动化通过正常输入和游戏规则验证界面与玩法。启动图形程序并启用回环 HTTP 命令宿主，再通过本机接口控制。启用与认证方法见 [HTTP 命令宿主](Server.md#http-命令宿主)。
 
 ## 观察与行动
 
-先使用 `GET /commands` 读取当前命令与参数合同，再向 `POST /commands` 发送
-`{"identity":"game:…","arguments":{…}}`。命令返回 `Completed` 表示请求已处理，
-不表示所启动的持续操作已经结束。
+先用 `GET /commands` 获取当前可用命令和参数，再向 `POST /commands` 提交命令与参数。`Completed` 表示本次请求处理完成。持续操作应继续查询对应的状态接口。
 
 | 命令（`game:` 前缀） | 用途 |
 | --- | --- |
@@ -80,7 +76,7 @@ UI 拖放使用真实鼠标输入，`durationSeconds` 可选，默认为 0.5，�
 
 ## 视角控制
 
-普通第一人称瞄准优先使用 `view/look_at`，而不是反复猜测鼠标位移：
+使用 `view/look_at` 可让第一人称相机朝向指定的世界坐标：
 
 ```json
 {"identity":"game:automation/view/look_at","arguments":{"x":10.5,"y":65.5,"z":20.5}}
@@ -104,4 +100,4 @@ Status 为 turning、aligned、failed 或 cancelled，ErrorDegrees 给出最新�
 控制仅用于准备就绪的 FppCamera，不直接修改相机矩阵或角色角度，仍通过正常 Look 输入逐步转向。
 gameplay/context/get 返回 CameraType、YawDegrees、PitchDegrees；出生过场还未结束时应等待 FppCamera。
 视角控制、导航和组合输入互斥；新的键鼠动作、手动移动/转向/交互、相机变化、面板、死亡或睡眠
-会取消视角控制。其他相机仍可使用原始鼠标输入，切换相机仍可使用 V；天气键盘操作不变。
+会取消视角控制。其他相机可用原始鼠标输入转向，按 V 切换相机。

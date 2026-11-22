@@ -1,14 +1,13 @@
 # 协议索引
 
-本目录保存当前源码对应的协议契约。实现细节、游戏业务、部署配置和临时设计记录不互相替代。
-SCNET 仍未发布：现有线格式整数保持 `1`，不为开发迭代保留旧解析分支；产品及 NuGet SemVer 独立管理。
+本文导航各协议的实现、接入流程和验证入口。开发阶段线格式版本整数保持 `1`，产品与 NuGet 版本使用各自的 SemVer。
 
 ## 协议与职责
 
 | 契约 | 实现归属 | 解决的问题 |
 |---|---|---|
 | [内容包](ContentPackageProtocol.md) | `Content.Packaging` | `.scpkg`、载荷、逻辑哈希与安装边界 |
-| [内容制造](ContentCreationProtocol.md) | 游戏制造入口、ContentTool、Services/Content/ContentServer/WebUI | 如何创建、保存草稿和提交不可变内容包 |
+| [内容制造](ContentCreationProtocol.md) | 游戏制造入口、ContentTool、Services/Content/ContentWebUI | 如何创建、保存草稿和提交不可变内容包 |
 | [服务器源](ServerSourceProtocol.md) | `ServerSource.Protocol` | HTTP 只读游戏服务器目录 |
 | [信令与中继](RendezvousProtocol.md) | `Rendezvous.Protocol`、RendezvousServer | 临时房间、地址交换、打洞与中继能力 |
 | [安全传输](TransportProtocol.md) | `Engine.Network` | DTLS、对端持钥证明、通道绑定与路径保护 |

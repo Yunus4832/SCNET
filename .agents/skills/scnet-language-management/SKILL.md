@@ -7,17 +7,8 @@ description: Manage SCNET localization files through the repository C# LanguageT
 
 Use the repository tool instead of manually editing `Assets/Lang/*.json`.
 
-Run commands from the repository root. Prefer these navigation commands before reading any language JSON file:
-
-```bash
-dotnet run --project Tools/LanguageTool -- check
-dotnet run --project Tools/LanguageTool -- rules
-dotnet run --project Tools/LanguageTool -- overview . --depth 1
-dotnet run --project Tools/LanguageTool -- overview Help --culture all --depth 2 --limit 80
-dotnet run --project Tools/LanguageTool -- children ContentWidgets
-dotnet run --project Tools/LanguageTool -- search Restart --culture en-US --prefix ContentWidgets --limit 20
-dotnet run --project Tools/LanguageTool -- table Help --fields Title,Name --limit 12
-```
+Run commands from the repository root. Use `rules` for key conventions and `overview . --depth 1`
+to locate the section before inspecting individual keys.
 
 ## Workflow
 
@@ -50,7 +41,9 @@ dotnet run --project Tools/LanguageTool -- table ContentWidgets.ModManagementScr
 ```
 
 Use `overview` first when you need a level/depth map of a language subtree. It reports node kind, scalar fields, child keys, previews and structural issues. Use `.` or `/` for the root path.
-Use `table` when a section contains numbered child objects or metadata fields and you need to compare mapping/order across languages.
+Use `table` to compare numbered topics and metadata across languages. Table values are previews.
+Use `get Help.<topic>.value --culture <locale>` to read the full help text before revising it.
+For control instructions, check the input binding and help dialog for the relevant device.
 
 4. Synchronize invariant metadata fields from the canonical language:
 

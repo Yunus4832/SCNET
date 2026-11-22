@@ -1,7 +1,6 @@
 # 领地石模组
 
-领地石是独立的 common 模组，标识为 `scnet.territory`。需要服务器和客户端在各自的
-profile 中安装同一模组；游戏不会自动启用它。
+领地石模组的标识为 `scnet.territory`。房主将包加入目标存档的模组配置。客户端加入时按服务器要求准备同一份内容包，缺包时从可用仓库下载。详见[联机加载流程](../../Doc/Mods.md#联机加载流程)。
 
 ## 开发构建
 
@@ -17,10 +16,9 @@ dotnet build Mods/TerritoryStone/TerritoryStone.slnx
 `Mods/TerritoryStone/TerritoryStoneMod.Client/bin/Debug/net10.0/packages/scnet.territory.scpkg`。这是开发构建产物，
 不会写入仓库的 `Publish/` 目录。通过游戏的模组管理安装该包，再选择包含它的 profile。
 
-`metadata.entrypoint` 为 `TerritoryStoneMod.ModEntry, TerritoryStoneMod`，是 GUI 与 独立服务器 共用的业务入口；
+`metadata.entrypoint` 为 `TerritoryStoneMod.ModEntry, TerritoryStoneMod`，是 GUI 与独立服务器共用的业务入口；
 `metadata.clientContentEntrypoint` 为 `TerritoryStoneMod.Client.Presentation.TerritoryClientContentModule, TerritoryStoneMod.Client`，
 只在客户端装配方块表现。单独构建规则项目不会生成完整模组包。
-独立服务器装配共享规则入口，图形程序额外装配客户端内容入口。
 
 ## 范围与权限
 

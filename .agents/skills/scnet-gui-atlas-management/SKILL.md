@@ -25,8 +25,6 @@ All source PNG/WebP files and the generated lossless WebP atlas contain straight
 Do not premultiply authoring assets or the atlas output. SVG entries use their declared dimensions
 and are composed with the raster entries into one atlas.
 
-- Prefer lossless WebP for new raster assets; PNG remains supported. Keep editable geometry in SVG.
-- Never keep PNG, WebP or SVG files with the same stem: the stem is the entry name.
 - Ordinary straight-alpha files can be placed directly into `Assets/`; no preparation is required.
 - `prepare-image input.png output.webp` optionally converts a raster file to default lossless WebP.
 - Only when importing an explicitly known historical premultiplied file, use `prepare-image` with
@@ -42,7 +40,7 @@ dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
   historical.png Tools/GuiAtlasTool/Assets/EntryName.webp --premultiplied
 
 dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- extract \
-  AtlasTexture.webp Atlas.txt Tools/GuiAtlasTool/Assets EntryName AnotherEntry
+  Assets/Atlases/AtlasTexture.webp Assets/Atlases/Atlas.txt Tools/GuiAtlasTool/Assets EntryName AnotherEntry
 ```
 
 Conversion/extraction refuse replacements without `--overwrite`. Inspect a same-name replacement

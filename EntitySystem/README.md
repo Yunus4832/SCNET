@@ -7,7 +7,7 @@ SCNET 的实体、组件、子系统及模板数据库运行时，面向 .NET 10
 - `EntitySystem.TemplatesDatabase`：模板数据库、`ValuesDictionary`、格式类型短名 `TemplateTypeNames` 及项目数据。
 - 依赖 `SCNET.Engine.Core` 和 MessagePack，不依赖游戏或窗口运行时。
 
-MessagePack 用于项目数据和网络数据序列化。
+`ValuesDictionary` 支持 XML 值和 MessagePack 数据。网络包的结构与编解码由游戏协议层定义。
 使用游戏 SDK 编写模组时会自动获得本包，无需重复引用。
 
 XML 的结构和类型短名由实体系统定义；值的文本转换复用 `Engine.Core.Serialization`。

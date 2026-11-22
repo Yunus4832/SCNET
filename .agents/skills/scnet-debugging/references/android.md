@@ -14,11 +14,8 @@ adb devices -l
 adb -s <serial> get-state
 ```
 
-Always include `-s <serial>` when more than one device or emulator is attached. Build only the
-Android project when validating Android startup behavior:
-
-Choose the project that matches the device ABI (`Survivalcraft.Android`,
-`Survivalcraft.Android.X86`, or another repository Android variant). For Debug builds use the .NET
+Use `-s <serial>` to select the device. In a fresh checkout, [prepare local dependencies](../../../../Doc/BuildAndConfig.md#构建).
+Query the ABI with `adb -s <serial> shell getprop ro.product.cpu.abi` and build the matching Android project. For Debug builds use the .NET
 Android `Install` target so the current managed assemblies are deployed along with the APK:
 
 ```bash
@@ -89,7 +86,6 @@ authoritative application record:
 
 ```bash
 mkdir -p .agent-work/android-debug/artifacts
-adb -s <serial> logcat -c
 adb -s <serial> logcat --pid="$(adb -s <serial> shell pidof com.candy.scnet | tr -d '\r')"
 adb -s <serial> pull \
   /storage/emulated/0/scnet/Instances/android-client/Logs \

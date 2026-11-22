@@ -53,9 +53,8 @@ Engine 不查询认证服务、不认领账号、不自动覆盖公钥；已验�
 `BroadcastDatagram` 通过宿主原 socket 发送 IPv4 局域网广播，回复仍由该宿主接收；
 广播不建立 DTLS 会话，接收端须启用 `ReceiveBroadcasts`。
 
-DTLS 与封装预留 42 字节，加上中继预留 46 字节；原默认不可靠载荷上限 461 降到 419 字节。
-实际可发送大小必须读取 `GetMaxPayloadSize`，不能把此示例常量当所有路径永远不变的保证。
-超出不可靠预算返回 TooLarge，可靠包仍由 LiteNetLib 分片，但加密开销同样计入预算。
+DTLS、Engine 封装和中继头占用数据报预算。发送前用连接的 `GetMaxPayloadSize` 查询指定投递方式
+的单包上限。不可靠数据超过上限返回 `TooLarge`，可靠数据由传输层分片。保护范围见[安全传输协议](../Doc/Protocol/TransportProtocol.md)。
 
 ## 日志
 

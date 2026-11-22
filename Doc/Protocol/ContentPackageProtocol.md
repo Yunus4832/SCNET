@@ -1,7 +1,10 @@
 # SCNET 统一内容包协议（`.scpkg` v1）
 
-> 状态：**当前未发布实现契约。** 本文是 `Content.Packaging`、ContentServer 和游戏端共同遵循的
-> `.scpkg` v1 契约。Mod 构建、运行时、内容缓存、安装和远程分发统一使用该格式；旧交换格式不属于本协议。
+Content.Packaging、ContentServer 和游戏端共用 `.scpkg` v1 契约。
+
+- 生成内容包时查阅 [ZIP 规则](#2-zip-容器和通用安全规则)、[清单](#3-manifestjson)和[类型规范](#6-类型规范)。
+- 实现缓存、分发或安装时查阅 [PackageHash](#4-packagehash) 与[安装规则](#7-一致性缓存与安装规则)。
+- 验证现有包时使用 [ContentTool](#9-contenttool) 或运行[协议测试](#8-协议测试与向量)。
 
 ## 1. 范围和术语
 
@@ -272,9 +275,9 @@ World 安装默认创建新世界。高级替换必须确认目标未运行、�
 协议字段、创作入口和服务端元数据的写入权限，以及浏览器草稿与无代码制造契约见
 [ContentCreationProtocol.md](./ContentCreationProtocol.md)。
 
-## 8. 必须随 SDK 固化的测试向量
+## 8. 协议测试与向量
 
-`Content.Packaging.Test` 应在协议实现同一提交中提供五类最小黄金包，及以下反例：
+[Content.Packaging.Test](../../Tests/Content.Packaging.Test/) 包含五类最小内容包的读写回归，公开哈希向量见 [PackageHashVectors.json](PackageHashVectors.json)。维护或扩展协议时同步覆盖以下约束：
 
 - 同一逻辑条目的 ZIP 顺序、时间戳、Store/Deflate 改变，PackageHash 不变。
 - manifest 字节、任一 payload 字节、路径、文件长度改变，PackageHash 改变。
@@ -299,6 +302,4 @@ dotnet run --project Tools/ContentTool/ContentTool.csproj -- pack manifest.json 
 
 ## 10. 当前实现
 
-五类黄金包、公开 hash 向量、`Content.Packaging`、ContentTool、Mod MSBuild 目标、游戏安装器和
-Mod Runtime 均使用本协议。ContentServer 复用同一 Reader、codec 和 PackageHash，并按内容哈希保存
-原始 `.scpkg` 制品。包的制造、缓存、提交、下载、安装和运行时读取不再维护并行格式或独立身份算法。
+`Content.Packaging` 提供共享 Reader、Writer、载荷编解码器与 PackageHash。ContentTool 和游戏安装器直接使用这些实现。ContentServer 按逻辑哈希保存原始 `.scpkg` 文件。

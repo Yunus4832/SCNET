@@ -15,6 +15,20 @@ Use this workflow only for an explicit request to create distributable artifacts
 
 Treat the repository scripts as the canonical inventory and ordering. Read the relevant script before publishing. Do not replace it with solution-level `dotnet publish` or `dotnet pack`, parallelize its entries, or introduce a loop: shared projects are multi-targeted and individual release entries may require different parameters.
 
+## Prepare selected targets
+
+Follow the [build prerequisites](../../../Doc/BuildAndConfig.md#构建) that apply to the selected targets.
+A full publish or a ContentServer publish needs the Web workspace dependencies. Install them from
+the repository root:
+
+```bash
+npm --prefix Services/Content/ContentWebUI ci
+```
+
+Prepare the local SDK and ContentTool packages before publishing mods. Select `BeaconMod.Client` or
+`TerritoryStoneMod.Client` to build the corresponding `.scpkg` into `Publish/Mods/`. A full publish
+includes both. See the [publish target list](../../../Doc/BuildAndConfig.md#发布目标) for both shells.
+
 ## Critical platform constraints
 
 - Publish `Survivalcraft.Windows/Survivalcraft.Windows.csproj` without adding `-r win-x64`. The project already owns its runtime identifier. Passing the RID globally propagates it into Android target frameworks of shared projects and can request the nonexistent `Microsoft.NETCore.App.Runtime.Mono.win-x64` package.

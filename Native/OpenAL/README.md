@@ -8,8 +8,7 @@ Engine 沿用 Silk.NET 默认原生库加载方式，不强制选择随包版本
 
 仓库中的库是预编译产物，日常构建和发布直接复用。只有升级版本或明确修复、补充产物时
 才重新编译；替换前验证相应平台，并更新 `SHA256SUMS` 和根目录 `ThirdPartyNotices.txt`。
-上游源码：https://github.com/kcat/openal-soft/tree/1.25.2
-打包入口见 [NuGet 文档](../../Doc/NuGet.md#本地打包)。
+上游源码见 [OpenAL Soft 1.25.2](https://github.com/kcat/openal-soft/tree/1.25.2)。更新库后按 [NuGet 本地打包](../../Doc/NuGet.md#本地打包)刷新依赖。
 
 ## 桌面库重编译
 

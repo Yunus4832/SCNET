@@ -4,19 +4,19 @@ SCNET 游戏运行时及模组开发契约，支持 .NET 10 和 .NET 10 for Andr
 综合应用装配 Core、Hosting 与 Client，处理平台生命周期、应用服务和启动导航。
 共享规则、无图形宿主和客户端表现的实际 API 分别由对应程序集提供。
 
-## 模组引用
+## SDK 引用
 
-```xml
-<PackageReference Include="SCNET.Survivalcraft" Version="0.2.2" ExcludeAssets="runtime" />
-<PackageReference Include="SCNET.ContentTool" Version="0.1.6" PrivateAssets="all" />
-```
+按项目职责选择包。用[模组模板](https://gitee.com/Yunus0712/scnet/blob/main/Doc/Modding.md#创建项目)生成解决方案时，项目文件已包含所需引用和版本。
 
-游戏 SDK 及引擎用于编译；实际运行时由游戏宿主提供，不应复制进 `.scpkg`。
-示例版本对应当前仓库；更新依赖时以 `SharedProperties/Versions.props` 和模组模板为准。
-ContentTool 是独立的构建工具，负责生成内容包，不会成为游戏 SDK 的运行时依赖。
-依赖通过 NuGet 传递，模组项目无需逐一引用 Engine、EntitySystem 或原生资产包。
+| 项目职责 | NuGet 包 |
+|---|---|
+| 模组共享规则 | `SCNET.Survivalcraft.Core`、`SCNET.Survivalcraft.Hosting` |
+| 模组客户端表现 | `SCNET.Survivalcraft.Client`，并引用该模组的规则项目 |
+| 综合应用装配 | `SCNET.Survivalcraft` |
+| 生成 `.scpkg` | 私有构建依赖 `SCNET.ContentTool`，由模组客户端项目引用 |
 
-[模组开发](https://gitee.com/Yunus0712/scnet/blob/main/Doc/Modding.md) · [NuGet 包说明](https://gitee.com/Yunus0712/scnet/blob/main/Doc/NuGet.md)
+模组编译引用 SDK 时设置 `ExcludeAssets="runtime"`，实际运行时由游戏宿主提供。ContentTool 使用 `PrivateAssets="all"`。
+NuGet 传递引擎、实体系统和原生资产等依赖。可用版本和本地包源见 [NuGet 包](https://gitee.com/Yunus0712/scnet/blob/main/Doc/NuGet.md)。
 
 ## 玩家、角色与会话
 
@@ -27,7 +27,7 @@ ContentTool 是独立的构建工具，负责生成内容包，不会成为游�
 - `SubsystemPlayers.Store` 管理存档玩家；`SubsystemCharacters` 管理角色集合、实体、生成、重生和在线／离线状态；`SubsystemTeams` 管理玩家队籍。
 - `SubsystemPositionMarks` 独立管理世界公共标记和按玩家地址划分的私有标记，不依赖角色是否存在。
 - `CommandPrincipal.Subject` 是执行操作的存档玩家；`Character` 是可为空的当前角色。权限来自玩家，不来自角色。
-- 角色界面与展示使用 `CharacterScreen`、`CharacterModelWidget`；`PlayerInput` 仍表示玩家输入，独立服务器 或未控制角色的玩家不因此获得角色实体。
+- 角色界面与展示使用 `CharacterScreen`、`CharacterModelWidget`；`PlayerInput` 仍表示玩家输入，独立服务器或未控制角色的玩家不因此获得角色实体。
 
 开发阶段不保留旧类型别名或旧存档字段解析；修改 API、资源注册和序列化字段时同步更新游戏、模组和工具。
 

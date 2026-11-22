@@ -1,22 +1,23 @@
 # ContentServer
 
-ContentServer 是 SCNET 的独立 ASP.NET Core 内容服务，项目位于 `Services/Content/ContentServer/`，并注册在
-`SCNET.slnx` 的 `09 ContentServer` 逻辑文件夹中。它负责发布者申请、内容版本审核、匿名目录查询、包下载，
-以及服务器源地址的登记与审核、管理员维护的游戏公告和版本目录；
-玩家身份、联机身份和平台 FilePicker 不属于该服务。
+ContentServer 提供内容投稿与审核、匿名目录与包下载、服务地址登记，以及游戏公告和版本目录。
+后端与 Web 工作台在 [Content.slnx](../Services/Content/Content.slnx) 中维护。
 
-ContentServer 是统一的远程内容协议和部署单元，但一个客户端可以配置多个独立部署作为内容仓库。持久仓库集合保存在实例的
-`ContentRepositories.xml` 中；ModProfile 不保存来源。联机服务器还可以在握手中声明只对本次连接有效的匿名临时候选仓库。所有部署使用相同的
-公共目录、版本历史、精确 Mod 查询和 `/api/v1/packages/{sha256}` 流式下载协议，下载结果进入统一
-ContentPackageCache。仓库中不再包含独立的模组服务或另一套模组存储协议。
-
-客户端每个实例可以从已启用的持久内容仓库中选择一个公告与版本来源。该选择属于实例配置，不是内容仓库自身的属性。新实例不预设来源；临时联机仓库不能成为公告与版本来源。禁用或删除当前来源会清除选择，不自动切换到其他仓库。
+- 部署、备份和升级见[部署手册](ContentServerDeployment.md)。
+- 请求格式、身份和端点见 [HTTP API](ContentServerApi.md)。
+- 游戏中添加和使用仓库见[游戏客户端](#游戏客户端)，模组启动与联机见[模组使用](Mods.md)。
 
 ## 游戏公告与版本目录
 
-管理员工作台的“公告与游戏版本”页面管理两类独立于 `.scpkg` 内容包的数据。公告草稿可编辑，发布后通过 `GET /api/v1/announcements` 匿名读取，撤回后不再出现在公开列表。每个版本草稿保存统一版本号和更新说明，并包含多个平台安装包的外部下载地址及 SHA-256；发布后通过 `GET /api/v1/game-releases?platform=...` 查询列表，通过 `GET /api/v1/game-releases/latest/{platform}` 查询最新版本，撤回后不再公开。平台标识为 `windows-x64`、`linux-x64`、`android-arm64`、`android-arm32`。ContentServer 不托管游戏安装包，也不会在记录版本时访问下载地址。
+在管理员工作台的「公告与游戏版本」页面编辑草稿、发布或撤回。一个版本可登记多个平台的安装包，
+每个包记录外部下载地址和 SHA-256。具体端点与平台标识见 [HTTP API](ContentServerApi.md#匿名浏览)。
 
-游戏 GUI 启动后异步从选定来源获取公告与适用平台的最新版本。未选择来源、请求超时或服务不可用均不阻止进入游戏；失败只写日志。主菜单滚动展示公告标题，点击后展开公告列表；点击版本号手动检查更新。桌面端下载完整便携 ZIP 并校验 SHA-256，经用户确认后由平台 Starter 准备、退出并更新，完成后由用户重新启动；无法自动安装时可打开原下载链接手动替换。桌面安装包格式见 [桌面更新包](./BuildAndConfig.md#桌面更新包)，进程交接与恢复见 [桌面程序更新](./StartupSessions.md#桌面程序更新)。Android 下载 APK 后校验 SHA-256，再交给系统安装器，由用户在系统界面确认。该哈希只验证文件与所选内容服务器记录一致，不证明服务器身份。
+在游戏的「内容仓库」页为实例选择一个已启用的仓库，作为公告和更新来源。停用或删除该仓库会清除选择。
+GUI 启动后异步查询，主菜单点击公告可看详情，点击版本号可手动检查。查询失败时记录日志，游戏照常启动。
+
+桌面端校验并安装便携 ZIP，更新完成后由玩家重新启动。Android 校验 APK 后交给系统安装。
+SHA-256 校验确认下载文件与该仓库记录一致。包结构见[桌面更新包](BuildAndConfig.md#桌面更新包)，
+版本替换和恢复见[桌面程序更新](StartupSessions.md#桌面程序更新)。
 
 公告和版本查询有覆盖响应正文的 30 秒总时限；更新包下载、正文读取和校验共用 10 分钟总时限，用户可取消。
 同一时间只保留一个更新流程，范围包含检查、提示、下载和安装确认；重复手动检查并入正在运行的检查。
@@ -156,8 +157,7 @@ dotnet ef migrations add InitialContentServer \
   --output-dir Infrastructure/Migrations
 ```
 
-重新生成前删除旧迁移文件和快照。提交模型修改时必须同时提交新迁移和
-`ContentServerDbContextModelSnapshot.cs`。旧开发数据库的迁移历史不再适用，需删除数据库文件后重新初始化。
+提交模型修改时同步提交初始迁移和 `ContentServerDbContextModelSnapshot.cs`。用空的开发数据目录验证重生成的初始迁移。旧开发库可能与更新后的初始迁移不兼容，持久数据的备份与恢复见[部署手册](ContentServerDeployment.md#数据与运行边界)。
 
 ## 配置
 
@@ -191,13 +191,10 @@ ContentServer__DatabasePath
 
 ## 独立 WebUI
 
-`Services/Content/ContentWebUI/` 是注册在 `SCNET.slnx` 的 `09 ContentServer` 逻辑文件夹中的 Vue 3 单页应用。它可以与
-ContentServer 分别部署，生产构建后的 `runtime-config.json` 配置 API 地址，静态服务器需将未知路由回退到
-`index.html`。WebUI 负责 API Key 的本地保存和角色导航，不改变 ContentServer 的无账户、无 Cookie 会话模型。
+默认构建将工作台打包到服务端的 `wwwroot`。也可以独立托管前端，通过 `runtime-config.json`
+配置 API 地址。开发代理、静态托管和跨域设置见[工作台 README](../Services/Content/ContentWebUI/README.md)。
 
-服务器启动只执行数据库迁移，不隐式创建或修改管理员。空数据库通过
-`POST /api/v1/administrators/initialize` 创建唯一的初始管理员；请求提交管理员名称和 API Key，服务只保存
-Key 的 SHA-256 hash。数据库中一旦存在管理员，该端点固定返回 HTTP 409，不允许覆盖已有管理员或轮换其 Key。
+空数据库启动后可从工作台创建初始管理员。API 请求格式和凭据约束见[首次初始化](ContentServerApi.md#首次初始化)。
 
 ## 状态模型
 
@@ -226,14 +223,14 @@ Key 的 SHA-256 hash。数据库中一旦存在管理员，该端点固定返回
 
 ## 启动
 
+在仓库根目录安装前端依赖，然后启动后端。服务默认构建工作台并把静态文件复制到 `wwwroot`。
+
 ```bash
+npm --prefix Services/Content/ContentWebUI ci
 dotnet run --project Services/Content/ContentServer/ContentServer.csproj
 ```
 
-开发环境前端使用 Vite（`ContentWebUI`）单独运行，端口由 Vite 选择（通常为 `5173`，占用时可能顺延），并将 `/api` 代理到 ContentServer
-（默认 `http://localhost:5000`），改前端代码即时热更新。ContentServer 构建或发布时会通过
-`Services/Content/ContentServer/Directory.Build.targets` 中的构建目标 自动执行前端构建，并把 `Services/Content/ContentWebUI/dist` 复制到 `wwwroot`，
-因此调试时用 `npm run dev`，部署时只需发布 ContentServer。
+修改前端时可启动 [Vite 开发服务器](../Services/Content/ContentWebUI/README.md#本地开发)。
 
 ## 发布与部署
 
@@ -289,12 +286,7 @@ Mod 管理页不访问 ContentServer。它只合并缓存和 Profile/Runtime req
 不保存该服务的临时房间或联机码。社区页面的“信令服务器”板块展示已批准记录；发布者可以在弹窗中投稿或修改，
 管理员可以审核、停用和删除。修改后重新进入待审核状态并从公开目录隐藏，批准后重新公开。
 
-- 公开目录：`GET /api/v1/rendezvous-services`。
-- 发布者列表及投稿：`GET/POST /api/v1/publisher/rendezvous-services`。
-- 发布者修改：`POST /api/v1/publisher/rendezvous-services/{id}/edit`；删除：`DELETE /api/v1/publisher/rendezvous-services/{id}`。
-- 管理员列表：`GET /api/v1/admin/rendezvous-services`，可使用 `status=Pending`。
-- 管理员审核：`POST /api/v1/admin/rendezvous-services/{id}/approve` 或 `/reject`；拒绝请求提供 `message`。
-- 管理员停用：`POST /api/v1/admin/rendezvous-services/{id}/disable`；删除：`DELETE /api/v1/admin/rendezvous-services/{id}`。
+接口路径见 HTTP API 的[匿名浏览](ContentServerApi.md#匿名浏览)、[发布者](ContentServerApi.md#发布者)和[管理员](ContentServerApi.md#管理员及初始化)章节。
 
 投稿和修改包含 `name`、`controlUrl`、可选 `description`。公开控制地址必须使用 HTTPS；服务描述须支持 SCNET
 公开房间发现。HTTP 探测有时间和响应大小限制，禁止自动重定向和连接非公共地址。审核事件在事务中记录审核结果，

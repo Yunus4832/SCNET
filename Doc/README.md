@@ -15,7 +15,7 @@
 ## 架构与游戏系统
 
 - [结构与分层](Architecture.md)：项目职责和依赖边界。
-- [逻辑核心分离方案](LogicCoreSeparation.md)：待评审的核心、客户端、宿主、配置与内容迁移设计。
+- [逻辑核心分离与验收](LogicCoreSeparation.md)：现行依赖边界与回归验收清单。
 - [启动会话](StartupSessions.md)：启动请求、实例、会话、重启和桌面更新。
 - [文件定位](FileStorage.md)：逻辑路径及平台文件访问。
 - [命令与权限](CommandPermissions.md)：执行身份、权限和 HTTP 适配。
@@ -23,9 +23,11 @@
 - [网络复制](NetworkReplication.md)：游戏状态同步与复制职责。
 - [地形分发](TerrainDistribution.md)：区块权威内容、版本和线程所有权。
 
-基础组件的消费与 API 边界见 [Engine.Core](../Engine.Core/README.md)、
+基础组件和游戏模块的使用与依赖边界见 [Engine.Core](../Engine.Core/README.md)、
 [Engine.Media](../Engine.Media/README.md)、[Engine](../Engine/README.md)、
-[EntitySystem](../EntitySystem/README.md) 和[游戏 SDK](../Survivalcraft/README.md)。
+[EntitySystem](../EntitySystem/README.md)、[游戏 SDK](../Survivalcraft/README.md)、
+[Core](../Survivalcraft.Core/README.md)、[Client](../Survivalcraft.Client/README.md) 和
+[Hosting](../Survivalcraft.Hosting/README.md)。
 
 ## 协议
 

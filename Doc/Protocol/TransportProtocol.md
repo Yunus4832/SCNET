@@ -1,6 +1,6 @@
 # UDP 安全传输边界
 
-本文说明当前 `Engine.Network` 的保护范围及其与上层协议的交界，不定义新的 TLS 变体。
+本文说明 `Engine.Network` 如何保护连接、证明对端身份并约束数据报大小。
 可用 API、宿主事件和容量选项见 [Engine.Network](../../Engine.Network/README.md)。
 
 ## 连接与公开数据报
@@ -51,6 +51,6 @@ DTLS、Engine 前缀和中继头都会占用数据报预算。调用方必须读
 其业务事件由调用方调度，不能将网络工作线程回调直接作为修改游戏世界的入口。
 
 协议使用库实现的 DTLS 1.2，不宣称 DTLS 1.3；接入方还须匹配当前的 LiteNetLib 外层与 SCNET 封装。
-跨语言实现不能仅凭实现了同名 TLS 套件就假定可互通。
+跨语言实现须同时验证 DTLS、外层数据报封装和应用握手。
 安全连接、损坏报文和重放等验证见 [SecureNetworkTest](../../Tests/Engine.Network.Test/Security/SecureNetworkTest.cs)，
 可运行路径探针见 [NetworkProbe](../../Tools/NetworkProbe/README.md)。

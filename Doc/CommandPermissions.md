@@ -16,7 +16,11 @@
 | World | 单机世界或本机权威服务端世界 | LocalOperator、Player、System |
 | Server | 本机正在运行的服务器 | LocalOperator、Player、System |
 
-调用者的 `CommandPrincipalKind` 是单一身份；命令的 `AllowedPrincipals` 使用独立的 `CommandPrincipalKinds` 集合，可进一步声明需要具体玩家数据等身份约束。`HostRequirement` 限定 GUI 或 独立服务器环境；`CanExecuteHere` 根据传入 Project 的运行时判断实际执行范围，不读取进程全局角色：世界和服务器命令只能在尚未关闭的 Authority 世界执行；应用命令允许没有世界。客户端可构造并提交远程请求，不代表能在本地执行该命令。具备权限不代表世界已加载或服务器已经监听，业务处理器仍检查动态条件。
+判断命令能否执行时，分别核对三项：
+
+- **身份**：调用者只有一个 `CommandPrincipalKind`。命令用 `AllowedPrincipals` 声明允许哪些身份。
+- **运行环境**：`HostRequirement` 可限定 GUI 或独立服务器。`CanExecuteHere` 检查传入的 Project，世界与服务器命令在仍活动的权威世界中执行，应用命令可在没有世界时执行。
+- **授权与业务条件**：检查命令声明的权限，以及世界加载、监听状态等动态条件。
 
 玩家请求通过 CommandGateway：Application 在玩家所在进程执行，World／Server 在本机权威世界执行或通过 CommandPackage 发往服务器。服务器使用连接绑定的真实 Player 身份与服务器保存的权限。不能由客户端提供操作者身份或授权集合。
 
@@ -24,7 +28,7 @@
 
 HTTP 宿主提供两组独立入口，沿用 Bearer、显式启用及 loopback 监听：
 
-- `GET/POST /commands`：GUI 与 独立服务器的本进程控制入口，使用 LocalOperator。客户端不转发此入口的世界／服务器命令。
+- `GET/POST /commands`：GUI 与独立服务器的本进程控制入口，使用 LocalOperator。客户端不转发此入口的世界／服务器命令。
 - `GET/POST /player/commands`：仅 GUI 提供，要求当前有活动玩家，使用真实 Player。单机／GUI 服务端在本地执行，客户端经 CommandGateway 和 CommandPackage 请求远程服务器。独立服务器返回 404，不代表在线的远程玩家调用。
 
 两组入口只暴露显式 HTTP binding。玩家入口只查询及调用 World／Server 命令；远程目录查询通过普通命令取得服务器按该玩家权限过滤的命令标识，再由本地 HTTP 适配器补充参数定义。HTTP 和文本适配器均先构造命令，再通过统一二进制请求发送，服务端按实际连接玩家重新校验。请求体不接受身份、权限或玩家 GUID 来替换当前调用者。客户端文本解析与补全使用不含存档主体记录或授权的输入上下文；它不能作为服务端执行身份，远程补全仍由服务端按实际会话过滤。玩家切换、退出世界或连接断开时尚未完成的请求失效。

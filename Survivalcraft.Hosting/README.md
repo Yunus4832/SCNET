@@ -1,11 +1,10 @@
 # SCNET.Survivalcraft.Hosting
 
-游戏宿主的启动配置、启动会话、命令行解析和 XML 序列化，不依赖窗口或游戏表现程序集。窗口请求使用独立数据类型，由图形入口映射至窗口后端。实例路径、启动会话选择与配置持久化由无图形宿主服务管理。`GameWorldController` 负责权威世界加载与关闭，调用 `AuthorityWorldProjectFactory` 绑定内容目录、模板数据库和有效策略；客户端工厂由客户端应用装配。
+图形应用和独立服务器共用的无图形宿主服务。入口项目负责平台生命周期与应用装配，Hosting 负责启动会话、权威世界、连接和持久化。
 
-同时提供无图形的地形 CPU 编解码、异步编码与缓存、分片续传和修复、发送预算及协议通道选择。
-这些服务消费 Core 的稳定世界快照与协议数据，不访问客户端窗口、渲染器或界面。
-权威世界的项目构造、刷怪与兴趣策略绑定、庆典策略和内存回收生命周期已由宿主负责。物理连接节点、消息处理目录、世界命令、保存与停止协调、CPU 模组运行时和内容目录也由宿主负责。
-客户端可以使用其中的连接、命令和内容服务；宿主不得反向引用客户端或综合应用程序集。
-`AuthorityWorldExecutor` 在独立所有者线程推进权威世界，GUI 和独立服务器共用模拟与消息服务节奏；宿主不直接调用权威更新。
-`WorldRepository` 管理世界文件，`WorldProjectActivity` 将活动项目操作投递到各自所有者。`WorldProjectPersistence` 在权威线程捕获快照并异步写入，正常关闭等待保存成功后再退休世界，失败时保持运行以便重试。
-综合入口和独立服务端入口消费同一套宿主服务；入口、资源与发行依赖的使用方式见[构建与配置](../Doc/BuildAndConfig.md)。
+- `GameWorldController` 负责权威世界加载和关闭，`AuthorityWorldProjectFactory` 装配内容目录、模板和生效策略。
+- `AuthorityWorldExecutor` 在所属线程推进权威世界，处理模拟、世界命令和消息；客户端可以复用 Hosting 的连接与命令服务。
+- 网络层消费 Core 的世界快照，负责地形编码、分片、修复和发送预算。
+- `WorldRepository` 管理世界文件，`WorldProjectActivity` 将活动项目的操作投递到所属线程。正常关闭时，`WorldProjectPersistence` 捕获并异步写入快照，写入失败时保留世界以便重试。
+
+[启动会话与配置](../Doc/StartupSessions.md) · [地形分发](../Doc/TerrainDistribution.md) · [构建与发行](../Doc/BuildAndConfig.md)

@@ -1,15 +1,16 @@
 # 信令服务与网络探针部署
 
-RendezvousServer 是独立于游戏和 ContentServer 的临时会话服务。它管理邀请、UDP 端点登记及
-认证中继路由，不加载游戏、世界或模组，也不提供虚拟局域网。游戏不预设信令地址，邀请默认关闭；
-IP/DNS 直连和 LAN 发现继续使用现有游戏监听端口。
+RendezvousServer 为邀请联机提供房间、UDP 地址交换和中继。游戏继续使用自己的监听端口处理地址直连与局域网发现。
+
+本机验证使用 [portable ZIP 或源码](#发行物与本机运行)。Linux 部署可使用[容器发行物](#linux-容器发行物)，
+对公网开放前核对 [HTTPS 与 UDP 端口](#配置和端口)。控制消息和中继报文见[信令与中继协议](Protocol/RendezvousProtocol.md)。
 
 ## 发行物与本机运行
 
 通过仓库脚本创建发行物：
 
 ```bash
-./Scripts/publish.sh --project Services/Signaling/RendezvousServer --project NetworkProbe
+./Scripts/publish.sh --project RendezvousServer --project NetworkProbe
 ```
 
 PowerShell 对应命令：

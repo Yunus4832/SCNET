@@ -1,28 +1,16 @@
 # Multiplayer Debug Lab
 
-## Available foundation
+## Isolate the lab
 
-Every process must use a separate data instance:
-
-```text
---instance debug-server
---instance debug-client
-```
-
-The Starter creates missing instances under `Instances/<name>`. Settings, identity, worlds, Mods,
-caches, and logs are isolated. `--instance` is consumed by the Starter and is not persisted in
-`RunningSetting.RemainingArgs`.
-
-Before launching the lab, record which instance directories already exist. During teardown, stop
-all server and client processes before deleting only the directories created for that lab. Preserve
-logs outside those directories first. Do not keep successful lab instances by default.
-
-Normal restart preserves the process instance. Instance switching is a separate exit action.
-GUI restart uses a desktop entry on Linux, process arguments on Windows, and an Intent extra on Android. The standalone server restarts its own executable; it never switches to a GUI entry.
+Give each server and client a distinct `--instance`. Record which instance directories already
+exist. At teardown, stop the processes and preserve logs before removing any disposable instance
+created for the run. See [startup sessions](../../../../Doc/StartupSessions.md#数据实例) for paths
+and restart behavior.
 
 ## Automated startup contract
 
-From the repository root after building the Linux GUI launcher and standalone server, start the server with transient ports.
+From the repository root, [prepare local dependencies](../../../../Doc/BuildAndConfig.md#构建), then
+build the Linux GUI launcher and standalone server. Start the server with transient ports.
 For Windows use the resolved executable in [windows.md](windows.md).
 
 ```bash
@@ -45,19 +33,10 @@ Start the GUI client with a transient remote session and explicit player automat
   --player DebugPlayer
 ```
 
-`--connect` modifies only the in-memory effective session. `--save` persists that session when
-explicitly requested. Port overrides are also Session fields, take priority over Settings, and
-follow the same transient-by-default rule.
-
-`--game-mode MODE` follows the same session precedence. New worlds are created in that mode.
-Existing worlds run in the session mode, while automatic and shutdown saves preserve the mode
-stored in the world. Use one of `Creative`, `Harmless`, `Survival`, `Challenging`, `Cruel`, or
-`Adventure`.
-
-`--player` activates automation only when explicitly present. The client first accepts an existing
-player matching its stable client identity. If none arrives, it sends the existing player-create
-protocol once using the requested display name. It never takes over another identity merely because
-the display name matches. Without `--player`, the normal CharacterScreen flow remains unchanged.
+The connection target, ports and game-mode overrides apply to the effective session. For the
+persistence rules and supported options, see [startup arguments](../../../../Doc/StartupSessions.md#实例会话和世界).
+`--player` selects or creates a character for the current identity. Match the identity when validating
+rejoins, since character names can be shared across worlds.
 
 ## GUI server
 

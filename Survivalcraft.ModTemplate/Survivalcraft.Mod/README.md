@@ -1,6 +1,6 @@
 # SCNET Mod Template
 
-Create and build a complete mod solution after configuring the NuGet feed containing the SCNET SDK.
+Install the `SCNET.ModTemplates` NuGet package and configure a feed containing the SCNET SDK and ContentTool. Then create and build the solution:
 
 ```bash
 dotnet new scpkgmod -n ExampleMod --modId example.mod
@@ -21,7 +21,7 @@ The client project packages both assemblies into
 - Build the solution or its client project to create the complete package.
 
 The shared entrypoint runs in game hosts. The client content entrypoint is loaded by the graphical
-application. Both entrypoints belong to the same mod ID and package.
+application. Both entrypoints belong to the same package. Import the finished `.scpkg` in the game’s Mods screen and add it to the desired profile.
 
 Generated project files contain explicit SDK, packaging-tool and initial mod versions selected when
 the template package was built. Configure the local or remote SDK feed as described in the

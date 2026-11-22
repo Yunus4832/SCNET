@@ -5,7 +5,7 @@ Survivalcraft mod template.
 
 - `Survivalcraft.Mod/` is the template content that `dotnet new` copies into a new mod project.
 - `Survivalcraft.ModTemplate.csproj` is the packable project that produces
-  `SCNET.ModTemplates.nupkg`.
+  `SCNET.ModTemplates.<version>.nupkg`.
 
 Build the package with:
 
@@ -18,7 +18,6 @@ substitutes the independently managed SDK, ContentTool and initial mod versions 
 `SharedProperties/Versions.props`; generated projects contain literal package versions.
 See [NuGet workflow](https://gitee.com/Yunus0712/scnet/blob/main/Doc/NuGet.md) for local-feed setup.
 
-The generated solution contains a rule project referencing Core and Hosting and a client project
-referencing the rules and the Client SDK. The client project uses ContentTool to create one `.scpkg`
-containing both assemblies. The root manifest declares both entrypoints, while `Assets/` and `Data/`
-provide shared package inputs. See the [generated README](Survivalcraft.Mod/README.md).
+Install the generated template package using the [creation steps](https://gitee.com/Yunus0712/scnet/blob/main/Doc/Modding.md#创建项目).
+The [generated README](Survivalcraft.Mod/README.md) explains where rule code, client content and
+package inputs belong.

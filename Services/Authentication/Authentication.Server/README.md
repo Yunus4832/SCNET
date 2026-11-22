@@ -1,8 +1,9 @@
 # SCNET Authentication Server
 
-外部认证协议的独立参考实现。提供签名事务、浏览器账号登录、轮询、取消、长期 grant、撤销及认证级账号封禁。它不管理游戏角色、服务器密码、游戏在线状态，也不要求游戏服务器注册。
+外部认证协议的单进程参考实现。它使用部署者预先配置的账号，处理浏览器登录、签名批准、可复用授权和认证级封禁。
+游戏服务器根据批准继续处理准入，角色与存档权限由游戏服务器管理。见[外部准入协议](../../../Doc/Protocol/AuthenticationProtocol.md)。
 
-当前为单进程文件存储实现，公开部署应使用 HTTPS 反向代理。账号由部署者预先配置，不开放匿名注册；其他认证服务可以保留相同协议，自行实现 Google、邮箱等网页流程。游戏已提供三种准入、认证服务管理及 ContentServer 目录安装；协议与部署约定见 [认证协议](../../../Doc/Protocol/AuthenticationProtocol.md)。
+选择[便携部署](#便携部署)或 [Linux 容器部署](#linux-容器部署)。公开入口通过可信 HTTPS 反向代理提供。
 
 ## 配置
 
@@ -27,16 +28,13 @@ dotnet run --project Services/Authentication/Authentication.Server -- --ban-acco
 dotnet run --project Services/Authentication/Authentication.Server -- --unban-account 账号名
 ```
 
-再启动服务。封禁阻止该账号的后续网页批准和缓存 grant 使用，不推送踢出已经进入的游戏会话；存档级封禁仍由各游戏服务器独立管理。
+再启动服务。封禁阻止后续网页批准和已有授权的使用，当前游戏会话由对应服务器管理。修改或移除密码哈希无法撤销已签发的授权。解封后，仍有效且未被撤销的授权可继续使用。
 
 浏览器事务秘密放在 URL fragment，页面读入后清除；它不会进入 HTTP 访问路径。网页要求再次确认被授权的完整用户地址。请求、轮询及网页登录均有限流；响应禁止缓存，页面限制脚本、表单来源和引用传播。不要额外开启请求正文记录，以免记录密码或 grant。
 
-本实现没有自动扩展、跨进程事务或独立密钥轮换。游戏身份私钥仍只由用户设备保管。
-
-
 ## 便携部署
 
-新服务发行单元初始版本为 `0.1.0`，依赖 ASP.NET Core 10 运行时，无平台 apphost。
+便携包需要 ASP.NET Core 10 Runtime，通过 `dotnet Authentication.Server.dll` 启动。发行版本取自 `SharedProperties/Versions.props` 的 `AuthenticationServerVersion`。
 开发使用 `dotnet build`；需要生成发行物时，统一使用 `bash Scripts/publish.sh --project Authentication.Server`
 或 `pwsh Scripts/publish.ps1 -Project Authentication.Server`。输出为 `Publish/authentication-server-<版本>-portable.zip`；
 Linux 同时生成容器 bundle。普通构建不生成 `Publish` 发行物。
@@ -48,10 +46,7 @@ Linux 同时生成容器 bundle。普通构建不生成 `Publish` 发行物。
 标准 `ASPNETCORE_URLS` 控制内部监听；反向代理保持公开 URL 对应的路径，并在子路径部署时剥离前缀。
 程序使用配置中的公开 URL 构造和验证协议目标，不信任客户端 Host 头来选择签名目标。
 
-生成哈希和离线封禁也可通过上述 launcher 传入 `--hash-password`、`--ban-account NAME`、`--unban-account NAME`。
-前者从标准输入读取一行密码；不要在 shell 参数或操作日志中写明文。封禁命令须在服务停止后运行，以相同用户、
-工作目录和配置读取同一数据目录。改变账号密码哈希或移除账号配置不会自动撤销已经签发的 grant；需要阻止已有授权时先封禁账号。
-封禁是准入状态限制，解封后未撤销且未到期的旧 grant 可再次使用。
+上述启动脚本也可转发密码哈希与离线封禁参数。离线操作须使用服务运行账号及相同工作目录、配置和数据目录。
 
 ## Linux 容器部署
 

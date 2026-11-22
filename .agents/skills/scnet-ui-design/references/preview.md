@@ -4,9 +4,8 @@
 
 Use `UiPreviewTool` for layout, localization, clipping, visual state, and scaling checks that do not need a live world. Use `scnet-debugging` for actual clicks, keyboard focus, touch, gameplay, networking, or lifecycle behavior. A tiny wording change does not automatically require rendering every language and viewport.
 
-The shared engineering method is: use production rendering, construct explicit repeatable inputs, inspect observable output, assert the relevant invariants, and state the evidence boundary. Shader tests follow the same method but require geometry, camera, depth, and pixel assertions; do not expand this UI workflow into a general shader test framework.
-
-Read [the tool README](../../../../Tools/UiPreviewTool/README.md) for the canonical CLI, scenario interface, output schema, and platform requirements. The tool briefly opens a real graphics window; PNG output is offscreen, but a usable desktop graphics environment is still required.
+Use [the tool README](../../../../Tools/UiPreviewTool/README.md) for setup, CLI options and output
+formats. Choose only the languages, viewports and visual states affected by the change.
 
 ## Prepare a scenario
 
@@ -32,9 +31,8 @@ dotnet run --project Tools/UiPreviewTool -- \
 
 Replace the sample with the actual XML or external factory. Use a new output directory for each meaningful run; the tool refuses to overwrite existing evidence. PowerShell accepts the same CLI parameters; use one line or its native continuation syntax.
 
-- Confirm command exit and report contents. Exit 3 is a layout-check failure, not a successful preview; exit 1 is a runtime/resource failure.
+- Check the exit code and read `preview.xml` plus the affected language reports. Use the [exit-code and layout reference](../../../../Tools/UiPreviewTool/README.md#输出与判定) to interpret failures.
 - Inspect PNGs with the image-viewing tool. Use the XML tree to correlate visible problems with actual bounds, text, enabled state, and clipping. A PNG's existence is insufficient evidence.
-- Check the relevant language and viewport cases. Long translations, compact viewports, or a non-default scale deserve additional runs when they are implicated by the change.
 - Treat `Clipped` as information: scrolling and ellipsis can be intentional. Automatic checks cover non-finite bounds and root overflow/compression, not every overlap, truncation, or aesthetic issue.
 - Remember that the tool centers the root, uses a logical viewport derived from scale, and performs layout without `Update()` or input. It does not simulate the full game host's transitions or animation.
 - Resolve fixture/bootstrap failures before repeating the scenario. Virtualized lists may need repeated layout passes; the tool already owns those passes, so do not invent per-preview startup delays.

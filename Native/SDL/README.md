@@ -1,26 +1,24 @@
 # SCNET.Native.SDL
 
-SDL2 预编译原生资产，由 Engine 通过 NuGet 引用。普通 `dotnet build` 不编译 C/C++。
+SDL 2.32.10 预编译资产。Engine 通过 NuGet 引用，应用按 RID 取得对应库。重编译仅在升级或替换原生资产时需要。
 
-| RID | SDL 版本 | 文件 |
-| --- | --- | --- |
-| `linux-x64` | 2.32.10 | `libSDL2-2.0.so` |
-| `win-x64` | 2.32.10 | `SDL2.dll` |
-| `android-arm`、`android-arm64`、`android-x86`、`android-x64` | 2.32.10 | `libSDL2.so`、`libmain.so` |
+| RID | 文件 |
+| --- | --- |
+| `linux-x64` | `libSDL2-2.0.so` |
+| `win-x64` | `SDL2.dll` |
+| `android-arm`、`android-arm64`、`android-x86`、`android-x64` | `libSDL2.so`、`libmain.so` |
 
-所有平台统一使用 SDL 2.32.10。Android 的 Java 类也从同一份上游源码编译为
+Android 的 Java 类从同一份上游源码编译为
 `buildTransitive/java/SDL2.jar`，以 `AndroidLibrary Bind="false"` 引入；托管绑定继续由
 Silk.NET.Windowing.Sdl 2.23.0 提供。`bridge/main.c` 实现 SilkActivity 使用的
 `sdSetMain` 和 `SDL_main` 两个入口，保留 Silk 原有的 Android 启动流程。
 
-`buildTransitive/SCNET.Native.SDL.targets` 在 Android SDK 提取 AAR 后，识别带有 SDL2
-原生库的原 AAR，移除其 `ExtractedJarImports` 中的 Java JAR 和 `AndroidNativeLibrary`
-中的原 SDL2 和 main 库，由新的 Java JAR 和标准 RID 原生资产替换。该 hook 依赖 .NET Android
-SDK 的 `_GetLibraryImports`、`ExtractedJarImports` 和 `ExtractedNativeLibraryImports`；
-升级 SDK/Silk/SDL 时须检查 Java 绑定签名、最终 APK 没有重复或旧版本，并完成启动、输入与渲染验证。
-桌面端在 `ResolvePackageAssets` 后按 `NuGetPackageId` 移除 `Ultz.Native.SDL` 的原生复制项，
-同时覆盖有 RID 和无 RID 的消费项目。仅在 Engine 的 PackageReference 设置 ExcludeAssets
-不会排除上层应用重新解析出的传递原生资产，因此替换逻辑统一放在 buildTransitive target。
+## 打包与加载
+
+- Android 在 AAR 提取后替换原有 SDL JAR、SDL2 和 main 库，改用包内 JAR 与 RID 资产。此过程使用 Android SDK 的 `_GetLibraryImports` 和提取后的资源项。
+- 桌面在 `ResolvePackageAssets` 后移除 `Ultz.Native.SDL` 的原生复制项，覆盖指定 RID 和未指定 RID 的应用。由 `buildTransitive/SCNET.Native.SDL.targets` 统一处理传递引用。
+
+更新 SDK、Silk 或 SDL 后核对 Java 绑定签名、最终 APK 中的库，以及启动、输入和渲染。
 
 ## 重编译
 

@@ -12,7 +12,7 @@ SCNET 的跨平台引擎运行时，提供图形、窗口、输入、音频、�
 - OpenAL、SDL 等托管绑定由对应 Silk.NET 包提供。
 - 消费应用无需声明这些原生文件的复制路径或 ABI 映射。
 
-本包不包含游戏规则或模组构建工具。编写游戏模组通常引用 `SCNET.Survivalcraft` 即可。
+编写模组时按规则或客户端表现选择对应 SDK。详见[模组 SDK 引用](https://gitee.com/Yunus0712/scnet/blob/main/Survivalcraft/README.md#sdk-引用)。
 
 [依赖说明](https://gitee.com/Yunus0712/scnet/blob/main/Doc/Dependencies.md)
 
@@ -21,12 +21,11 @@ SCNET 的跨平台引擎运行时，提供图形、窗口、输入、音频、�
 引擎不内置默认字体。使用者加载 `BitmapFont`，并在调用 `FontBatch` 或构造
 `FontBatch2D` / `FontBatch3D` 时显式传入。字体及其纹理由使用者管理生命周期。
 
+## 几何与模型
+
 顶点布局类型（`VertexDeclaration`、`VertexElement` 及其格式、语义和扩展方法）位于
 `Engine.Graphics`，由缓冲上传和着色器绑定使用。媒体模型数据通过独立访问器描述文件属性，
 不依赖这些渲染布局类型。
-
-窗口异常事件数据 `UnhandledExceptionInfo` 与垂直同步枚举 `PresentationIntervalEnum` 由
-`Engine.Windowing` 管理；基础数学、集合、日志和运行模式由 Core 的对应子命名空间提供。
 
 模型运行时由共享的 `Model`、只读 `ModelNode`、共享几何 `ModelMesh`/`ModelPrimitive` 和
 每实例的 `ModelPose` 构成。场景节点与网格资源名称分开，节点可共享几何；不同默认形变权重

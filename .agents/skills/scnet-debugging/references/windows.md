@@ -5,6 +5,8 @@ debug against the default instance.
 
 ## Build and paths
 
+For a fresh checkout, [prepare local dependencies](../../../../Doc/BuildAndConfig.md#构建) before building.
+
 ```powershell
 dotnet build .\Survivalcraft.Windows\Survivalcraft.Windows.csproj --no-restore
 $Starter = (Resolve-Path .\Survivalcraft.Windows\bin\Debug\net10.0-windows\win-x64\SurvivalcraftStarter.exe).Path
@@ -12,6 +14,21 @@ dotnet build .\Survivalcraft.Server\Survivalcraft.Server.csproj -r win-x64
 $ServerExecutable = (Resolve-Path .\Survivalcraft.Server\bin\Debug\net10.0\win-x64\Survivalcraft.Server.exe).Path
 $Output = Split-Path $ServerExecutable
 ```
+
+## Standalone server
+
+```powershell
+$Server = Start-Process -FilePath $ServerExecutable -PassThru -ArgumentList @(
+    '--instance', 'debug-server',
+    '--session', 'debug-server',
+    '--world', 'DebugWorld',
+    '--server-port', '28987',
+    '--broadcast-port', '28988',
+    '--log-level', 'Debug'
+)
+```
+
+The standalone server is a console executable. Observe its runtime log and require `Server started. Press Ctrl+C to stop.` before claiming readiness. Use its console for normal commands such as `permission players` or `stop`; redirected stdin/stdout is available when the process is explicitly started with redirection.
 
 Instance data is stored below `$Output\Instances\<instance>`. Use the instance log as the authoritative
 source for startup, networking, commands, exceptions, saving, and shutdown. GUI logs are under the GUI executable directory; standalone-server logs are under the server executable directory.
@@ -47,21 +64,6 @@ while ((Get-Date) -lt $Deadline) {
 }
 if (-not $Ready) { throw 'server readiness marker was not observed before timeout.' }
 ```
-
-## server
-
-```powershell
-$Server = Start-Process -FilePath $ServerExecutable -PassThru -ArgumentList @(
-    '--instance', 'debug-server',
-    '--session', 'debug-server',
-    '--world', 'DebugWorld',
-    '--server-port', '28987',
-    '--broadcast-port', '28988',
-    '--log-level', 'Debug'
-)
-```
-
-The standalone server is a console executable. Observe its runtime log and require `Server started. Press Ctrl+C to stop.` before claiming readiness. Use its console for normal commands such as `permission players` or `stop`; redirected stdin/stdout is available when the process is explicitly started with redirection.
 
 ## GUI server and clients
 

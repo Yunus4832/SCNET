@@ -1,20 +1,11 @@
 # SCNET.Native.ImageCodecs
 
-图像原生资产打包项目，包含 PNG、WebP 及桌面 WebP 所需的 SharpYUV。
-按 `runtimes/<rid>/native` 存放，支持 Linux x64、Windows x64 和 Android 四种 ABI。
-Engine.Media 引用此包，应用通过 NuGet 标准 RID 机制自动选择和部署原生资产。
-本项目不包含 OpenAL，不分发托管程序集。`dotnet build/pack` 不触发 C/C++ 编译。
+提供 PNG、WebP 及桌面 WebP 所需的 SharpYUV。Engine.Media 通过 NuGet 引用，应用按 RID 使用
+`runtimes/<rid>/native` 中的 Linux x64、Windows x64 或 Android 资产。日常构建直接使用预编译库。
 
-仓库中的原生库是已经验证可用的稳定预编译产物。日常开发、首次构建、打包和发布直接使用
-这些文件，无需安装 NDK 或重新编译原生库。只有升级原生库版本，或明确需要修复、补充
-原生产物时，才运行以下构建脚本并更新 `runtimes`。重新编译本身不代表需要替换现有稳定产物；
-替换前应完成对应平台的验证，并同步校验值和许可声明。
-
-项目专用的构建脚本位于本项目的 `Scripts/`，以下命令从仓库根目录执行。它们使用
-`mktemp` 在系统临时目录构建，可通过标准 `TMPDIR` 选择临时目录位置。构建成功后自动将
-选定 RID 的产物放入本项目 `runtimes`、更新整个项目的 `SHA256SUMS`，并清理临时目录。
-构建失败时保留临时目录并输出路径，供检查日志；构建失败不会复制未完成的产物。
-源码仓库由 `IMAGE_CODEC_SOURCES` 指定，默认 `~/Desktop/code`；脚本不克隆源码。
+重编译命令从仓库根目录执行。脚本在临时目录构建，可通过 `TMPDIR` 指定位置。成功后更新选定 RID 的
+资产和 `SHA256SUMS`，失败时保留日志。用 `IMAGE_CODEC_SOURCES` 指定已准备的源码目录，默认是
+`~/Desktop/code`。更新资产后按[本地打包](../../Doc/NuGet.md#本地打包)刷新 NuGet 并验证目标平台。
 
 ## 原生库来源
 
@@ -28,8 +19,6 @@ SharpYUV 静态链接进对应共享库，应用不需要额外部署这些 Andr
 桌面 WebP 的 SharpYUV 单独部署并预加载。Windows WebP 产物还依赖
 Microsoft Visual C++ 2015–2022 x64 Redistributable（VCRUNTIME140.dll）；该系统运行库
 不是本项目携带的文件，Windows 部署时需确保已安装。项目支持的桌面 RID 为 linux-x64 和 win-x64。
-
-PNG、WebP 均使用项目内的薄 P/Invoke 绑定；PNG 的所有原生库统一为 1.6.59。
 
 ## 重编译 Android
 

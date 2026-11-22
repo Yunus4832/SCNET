@@ -6,7 +6,7 @@ API Key 与当前选择的身份保存在浏览器 `localStorage`；服务器不
 
 ## 本地开发
 
-在 `Services/Content/ContentWebUI/` 目录执行（首次运行先安装依赖）：
+先[启动 ContentServer](../../../Doc/ContentServer.md#启动)。在 `Services/Content/ContentWebUI/` 目录执行（首次运行先安装依赖）：
 
 ```bash
 npm ci
@@ -19,7 +19,7 @@ npm run dev
 CONTENT_SERVER_URL=http://localhost:5088 npm run dev
 ```
 
-生产构建使用 `npm run build`，静态文件输出到 `dist/`，可以部署到任意静态文件服务器。服务器需要把 SPA 的未知路径回退到 `index.html`。
+生产构建使用 `npm run build`，静态文件输出到 `dist/`，ContentServer 默认将其收录到 `wwwroot`。独立托管时，从站点根路径提供静态文件，并将 SPA 的未知路径回退到 `index.html`。
 
 ## 运行时配置
 
@@ -36,10 +36,9 @@ CONTENT_SERVER_URL=http://localhost:5088 npm run dev
 
 若 WebUI 与 ContentServer 不同源，需要在 ContentServer 的 `AllowedOrigins` 中精确列出 WebUI 来源。
 
-
 ## 认证服务目录
 
-社区首页、发布者工作台、管理员审核及管理页均提供独立的认证服务板块。公开列表只展示服务来源地址和目录资料；
-投稿只填写 HTTPS 基址和说明，身份由游戏客户端直接发现并确认。修改会下架重审，审核、撤回、停用、删除均携带所见修订号，
-冲突后需要刷新核对，不自动覆盖或重试批准。管理员可在操作历史中核对历史来源地址与操作人，按记录 ID 查询已删除条目。
-页面不保存玩家私钥、认证授权或游戏服务器密码。详细 API 约定见 [ContentServer](../../../Doc/ContentServer.md#认证服务目录)。
+社区首页可复制公开服务地址。发布者维护投稿，管理员处理审核、停用和删除。遇到修订冲突时刷新后再提交；
+已删除的条目仍可按记录 ID 查阅操作历史。
+
+游戏客户端直接访问认证服务并确认身份。工作台中的 API Key 用于内容目录管理。详见[认证服务目录](../../../Doc/ContentServer.md#认证服务目录)。

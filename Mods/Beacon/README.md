@@ -35,7 +35,7 @@ dotnet build Mods/Beacon/Beacon.slnx
 
 `metadata.entrypoint` 指向统一业务入口 `BeaconMod.ModEntry, BeaconMod`；
 `metadata.clientContentEntrypoint` 指向 `BeaconMod.Client.Presentation.BeaconClientContentModule, BeaconMod.Client`，
-只由客户端装配方块表现。GUI 与 独立服务器 使用同一个业务入口，不以运行模式选择另一套规则。
+只由客户端装配方块表现。GUI 与独立服务器使用同一个业务入口，不以运行模式选择另一套规则。
 
 `Resources/Models/Beacon.scad` 为建模源文件，GLB 为游戏模型。
 模型由薄底座、玻璃罩和半球光源组成；修改后使用标准 glTF 2.0 导出器重新导出 GLB，保留部件名称 `base`、`glass`、`core` 和纹理坐标。

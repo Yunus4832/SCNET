@@ -190,9 +190,6 @@ dotnet build Survivalcraft.Android/Survivalcraft.Android.csproj -t:Install -c De
 ## 构建
 
 ```bash
-# 首次构建：安装 ContentServer 的前端依赖（需要 Node.js 与 npm）
-npm --prefix Services/Content/ContentWebUI ci
-
 # 准备本地 NuGet 包并还原依赖
 ./Scripts/pre-build.sh
 
@@ -201,6 +198,9 @@ dotnet build SCNET.slnx
 
 # Release 构建
 dotnet build SCNET.slnx --configuration Release
+
+# 全量发行前准备 Web 工作台（需要 Node.js 与 npm）
+npm --prefix Services/Content/ContentWebUI ci
 
 # Bash 主机：顺序生成应用和服务发行产物
 ./Scripts/publish.sh
@@ -212,19 +212,14 @@ dotnet build SCNET.slnx --configuration Release
 当前尚未配置第一方远程 NuGet 源，本地包准备是过渡流程。配置远程源并上传所需版本后，
 普通开发可恢复 IDE / `dotnet build` 自动还原，本地准备仅用于开发未发布的包。
 
-`pre-build.sh` 检查当前版本的完整本地包集合。缺包时调用 `pack-nuget.sh` 按依赖顺序生成到
-`Publish/NuGet`。脚本先创建本地源目录，准备包后还原解决方案。
-包齐全时跳过打包，并继续解决方案还原。PowerShell 使用 `./Scripts/pre-build.ps1`。
-图集工具随应用的构建依赖一起还原；资源生成在构建阶段执行。
-独立调用 `pack-nuget` 也会创建本地源目录。
-脚本完成后再执行 `dotnet build`，或从 IDE 构建、调试。普通构建不会自动打包。
+首次构建运行 `./Scripts/pre-build.sh`，PowerShell 使用 `./Scripts/pre-build.ps1`。脚本检查
+`Publish/NuGet` 中当前版本的第一方包，缺包时按依赖顺序打包，然后还原主解决方案及信令、内容和认证服务的解决方案。
+完成后可用 IDE 或 `dotnet build` 构建，图集和游戏资源由构建过程生成。
 
-修改原生资产、Mod SDK 或 ContentTool 后，即使版本号未变，也应执行
-`./Scripts/pre-build.sh --refresh` 或 `./Scripts/pre-build.ps1 -Refresh`。重新打包前仅清除
-本次 SCNET 包集合当前版本的 NuGet 缓存，避免旧 SDK 被再次使用；其他依赖缓存保留。
-打包默认使用 Release，Bash 可通过 `CONFIGURATION` 环境变量调整，PowerShell 使用 `-Configuration`。
-准备工作仍需要安装解决方案使用的 .NET SDK、Android 工作负载及相应构建依赖。
-打包前与打包完成后都会清理本次第一方包版本的缓存，最终还原从准备好的本地包读取，避免打包过程中的还原提前填回旧版本内容。
+已打包的原生资产、Mod SDK 或 ContentTool 内容有变化时，即使版本号相同，也用
+`./Scripts/pre-build.sh --refresh` 或 `./Scripts/pre-build.ps1 -Refresh` 刷新。本地第一方包的当前版本缓存
+会在打包前后清理，以便最终还原读取新包。打包默认为 Release，可通过 Bash 的 `CONFIGURATION`
+或 PowerShell 的 `-Configuration` 调整。依赖源和包清单见 [NuGet 包](NuGet.md)。
 
 ### 可选构建配置
 
@@ -247,16 +242,19 @@ dotnet build Survivalcraft.Android/Survivalcraft.Android.csproj
 - 测试工程在 `Release` 下会被排除，部分 Android 变体也会在 `Release` 下被排除
 - 当前代码库大量使用反射，因此不启用 `trim`，也不支持通过裁剪方式进行发布优化
 
-`Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口顺序执行独立的 `dotnet publish` 或模组 `dotnet build`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、独立游戏服务端 Survivalcraft.Server、Windows、Android Arm64、Android Arm32、ContentServer、RendezvousServer、Authentication.Server、NetworkProbe、BeaconMod.Client 和 TerritoryStoneMod.Client。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
+### 发布目标
 
-不指定项目时发布全部。指定项目时只发布选中的入口；多个项目仍按脚本中的固定顺序发布。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Server`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32`、`ContentServer`、`RendezvousServer`、`Authentication.Server` 、`NetworkProbe`、`BeaconMod.Client` 和 `TerritoryStoneMod.Client`。例如：
+两个发布脚本按固定顺序执行每个入口。应用和服务使用 `dotnet publish`，模组客户端项目使用
+`dotnet build`。顺序执行可避免共享多目标项目争用中间文件，遇到失败便停止。
+
+省略项目选择时发布全部入口。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Server`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32`、`ContentServer`、`RendezvousServer`、`Authentication.Server` 、`NetworkProbe`、`BeaconMod.Client` 和 `TerritoryStoneMod.Client`。例如：
 
 ```bash
 ./Scripts/publish.sh --project ContentServer
 ./Scripts/publish.sh --project Survivalcraft.Server
 ./Scripts/publish.sh --project Survivalcraft.Linux --project ContentServer
 ./Scripts/publish.sh --project ContentServer -- --no-restore
-./Scripts/publish.sh --project Services/Signaling/RendezvousServer --project NetworkProbe
+./Scripts/publish.sh --project RendezvousServer --project NetworkProbe
 ./Scripts/publish.sh --project BeaconMod.Client --project TerritoryStoneMod.Client
 ```
 

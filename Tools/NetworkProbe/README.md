@@ -1,14 +1,11 @@
 # 网络探针
 
-该工具使用 Engine.Network 的实际 LiteNetLib socket，验证信令注册、候选挑战、正式握手和可靠回显。无 Game、Window 或世界数据依赖。该工具支持邀请直连及中继准备；游戏本体已有独立接入路径，探针不代替游戏验收。
+NetworkProbe 用 Engine.Network 验证信令注册、候选挑战、实际传输连接和可靠回显。
+可在 .NET 10 的 Windows 和 Linux 环境运行，覆盖邀请直连和中继路径。
 
-发布 ZIP 包含探针程序集和本说明。探针使用 .NET 10，可在 Windows、Linux 上运行；
-使用发行包时将下文的构建目录替换为解压目录。
-
-Agent 的实验选择、进程管理和结果判定由仓库技能
-[scnet-network-probe](https://gitee.com/Yunus0712/scnet/blob/main/.agents/skills/scnet-network-probe/SKILL.md) 维护。
-探针本身支持 Windows/Linux；技能中的 Python/Bash 实验辅助脚本建议在 Linux 使用，
-不随探针发行包分发。
+- 使用源码时，从仓库根目录执行下方命令。
+- 使用发行 ZIP 时，将探针程序集路径换成解压目录中的 `NetworkProbe.dll`。
+- 需要隔离 NAT 或网络故障实验时，见 [Linux 探针 Skill](https://gitee.com/Yunus0712/scnet/blob/main/.agents/skills/scnet-network-probe/SKILL.md)。实验辅助脚本随源码维护。
 
 ## 本机验证
 
@@ -45,8 +42,11 @@ dotnet Tools/NetworkProbe/bin/Debug/net10.0/NetworkProbe.dll \
   scenario http://127.0.0.1:31991 127.0.0.1:31990
 ```
 
-场景入口连接已运行的信令服务，不负责启动或停止该服务。普通场景预算为 45 秒；显式延长准备的场景预算另计；场景失败或取消后回收两端子进程。看到两端 PASS 且退出码为零，才表示本次场景完成。scenario 使用本机两端，不能作为 NAT 穿透证据。
-父场景通过当前用户专用的本地命名管道请求子进程取消，先等待正常关闭和最终资源样本；控制通道建立最多等待 2 秒，关闭预算为每端 8 秒，超时才强制回收。该通道不参与游戏协议，也不会写入会话恢复信息。
+场景连接先前启动的信令服务，并管理自己的房主与客户端进程。以两端的 `PASS` 和退出码 0 确认完成。
+本机两端的结果用于验证回环路径。普通场景预算为 45 秒，显式延长准备的场景使用相应预算。
+
+失败或取消后，父进程先通过当前用户专用的命名管道请求子进程正常退出并收集资源样本。
+控制通道最多等待 2 秒，单端关闭预算为 8 秒，超时后回收子进程。
 
 ## 逻辑目标与自动 UDP 配置
 

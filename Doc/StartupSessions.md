@@ -41,46 +41,51 @@ Hosting 中的实例 `StartupProfileStore` 负责启动配置和会话文件的�
 
 随后 `StartupManager` 按“显式 session、pending session、default session、临时新 session”的顺序选出 session id，将请求覆盖合并到 `SessionInfo`，最终生成 `StartupContext(Settings, Request, Session)`。GUI、独立服务器、玩家初始化和模组加载只消费这个已经解析好的上下文，不再各自重复合并启动参数。
 
-命令行参数：
+### 实例、会话和世界
 
-- `--instance <实例名>`: 在加载 `RunningSetting` 之前选择或创建数据实例
-- `--connect <主机:端口>`: 将本次有效 session 覆盖为远程服务器
-- `--player <名称>`: 显式请求自动使用当前身份角色；若服务器没有该身份角色则按名称创建
-- `--host`: GUI 模式下强制将目标世界设置为 `WorldHostingSettings.RunServer=true`
-- `--server-port <端口>` / `--broadcast-port <端口>`: 覆盖本次运行端口
-- `--no-broadcast`: 禁用本次有效 session 的局域网发现广播
-- `--server-identity <完整身份标识>`: 使用当前实例中已有的服务器身份；随命名 session 保存和恢复，不接受私钥参数
-- `--p2p true|false`: 覆盖本次会话的世界P2P开关
-- `--rendezvous <URL>`: 覆盖信令控制地址，单独指定不启用P2P
-- `--room-name <名称>` / `--room-description <简介>`: 覆盖房间资料，空简介表示清除
-- `--room-public true|false`: 覆盖房间公开状态
-- `--admission open|password|external`: 覆盖本次开服准入方式
-- `--server-password-file <路径>`: 密码模式的私有密码文件，不接受明文密码参数
-- `--authentication-url <HTTPS URL>` / `--authentication-key <SPKI base64url 公钥>`: 外部模式的公开服务地址与固定公钥
-- `--authentication-name <名称>`: 外部服务显示名称
-- `--http-command`: 为本次有效 session 启用 loopback HTTP 命令宿主
-- `--no-http-command`: 为本次有效 session 禁用 loopback HTTP 命令宿主
-- `--http-command-port <端口>`: 覆盖 loopback HTTP 命令宿主的默认端口 `28889`
-- `--http-command-access-token <Token>`: 覆盖本次运行使用的 HTTP Bearer Token
-- `--session <名称>`: 按名称选择或创建 session
-- `--world <名称>`: 和 `--session` 一起使用，设置 session 的目标世界
-- `--seed <种子>`: 和 `--session` 一起使用，设置新世界种子
-- `--generator <id>` 与 `--session` 一起选择新世界的生成器，例如 `game:standard` 或 `game:flat`。
-- `--generator-param key=value` 可重复使用，设置该生成器声明的参数。例如 `--generator game:flat --generator-param shape=island --generator-param terrainHeight=72`。
-- `--game-mode <模式>`: 和 `--session` 一起使用，覆盖 session 游戏模式
-- `--log-level <级别>`: 设置日志级别
-- `--window-mode <模式>`: GUI 窗口模式，可取 `Fixed`、`Resizable`、`Borderless` 或 `Fullscreen`
-- `--window-size <宽x高>`: GUI 窗口尺寸，例如 `1280x720`
-- `--save`: 保存合并后的启动设置
+| 参数 | 用途 |
+|---|---|
+| `--instance <实例名>` | 在加载 `RunningSetting` 前选择或创建实例。 |
+| `--session <名称>` | 按名称选择或创建会话。 |
+| `--world <名称>` / `--seed <种子>` | 选择目标世界或设置新世界的种子。 |
+| `--generator <ID>` / `--generator-param key=value` | 选择新世界的生成器并设置参数。例如 `--generator game:flat --generator-param shape=island --generator-param terrainHeight=72`。每个参数键只传一次。 |
+| `--game-mode <模式>` | 覆盖本次会话的游戏模式。 |
+| `--save` | 保存适用的入口设置和合并后的会话。 |
 
-`--world`、`--seed`、`--generator`、`--generator-param` 和 `--game-mode` 没有 `--session` 时会被忽略。
-地形类型和高度随命名会话通过 `--save` 保存；只作用于新世界，已有世界会报告忽略，不修改存档地形。
+世界、种子、生成器、生成器参数和游戏模式需要同时传入 `--session`。种子与生成器设置用于创建新世界，命名会话可通过
+`--save` 保留这些选项供下次使用。已有存档保留自己的种子和生成器配置。
 
-`--window-mode` 和 `--window-size` 由图形入口消费；独立服务器不创建窗口。入口由所运行的程序决定，不写入实例配置。
+### 连接和开服
 
-`--connect`、`--host`、`--player`、`--game-mode` 和端口覆盖不写入 `RunningSetting.xml`。玩家名和 HTTP 命令覆盖由 `StartupRequest` 解析后合并进本次有效 `SessionInfo`，以便模组准备触发进程重启时完整恢复；使用 `--save` 时也会随命名 session 写入 `SessionInfo.xml`。HTTP 命令宿主的实例默认开关、端口和 access token 保存在 `Settings.xml`，其中开关默认关闭；session 覆盖具有更高优先级。`.runtime` 目录只用于 Starter 的实例进程存活登记，不承载 HTTP 配置或凭证。`--host` 是强制调试参数：新世界直接创建为联机世界，已有非联机世界则更新并持久化其 `WorldHostingSettings.RunServer=true`，之后统一走正常联机世界启动流程。未传 `--player` 时保持现有角色界面流程。`--connect` 与 `--host` 同时出现时按远程连接处理并忽略 `--host`。
+| 参数 | 用途 |
+|---|---|
+| `--connect <主机:端口>` | 连接远端服务器。 |
+| `--player <名称>` | 自动使用当前身份对应的角色。没有对应角色时按给定名称创建，省略时走角色界面流程。 |
+| `--host` | 在 GUI 中强制开服。新世界直接创建为联机世界，已有非联机世界会持久化 `WorldHostingSettings.RunServer=true`。 |
+| `--server-port <端口>` / `--broadcast-port <端口>` / `--no-broadcast` | 覆盖游戏端口、广播端口或关闭局域网发现广播。 |
+| `--server-identity <完整身份标识>` | 选择实例已有的服务器身份，使用公开标识。 |
+| `--p2p true\|false` / `--rendezvous <URL>` | 覆盖 P2P 开关和信令地址。单独指定地址时沿用当前开关。 |
+| `--room-name <名称>` / `--room-description <简介>` / `--room-public true\|false` | 覆盖房间资料与公开状态。传入空简介可清除。 |
+| `--admission open\|password\|external` | 选择开放、密码或外部认证。 |
+| `--server-password-file <路径>` | 从文件读取私有密码。 |
+| `--authentication-url <HTTPS URL>` / `--authentication-key <SPKI base64url 公钥>` / `--authentication-name <名称>` | 指定外部认证服务的地址、固定公钥及显示名称。 |
 
-`--save` 会保存 `RunningSetting` 中适用的入口设置，并把 `StartupContext.Session` 保存到 `SessionInfo.xml`。因此 `--connect`、端口和 `--game-mode` 默认只存在于 `StartupRequest` 和本次有效 session 中，与 `--save` 同用时才成为具名 session 的后续默认值。
+同时传入 `--connect` 与 `--host` 时，启动目标是远端服务器。连接与端口覆盖进入本次有效
+`SessionInfo`，使用 `--save` 可将该会话保存到 `SessionInfo.xml`。
+
+### HTTP 命令、日志和窗口
+
+| 参数 | 用途 |
+|---|---|
+| `--http-command` / `--no-http-command` | 启用或关闭本次会话的回环 HTTP 命令宿主。 |
+| `--http-command-port <端口>` | 覆盖 HTTP 命令端口，默认端口为 `28889`。 |
+| `--http-command-access-token <令牌>` | 覆盖 HTTP Bearer Token。 |
+| `--log-level <级别>` | 设置日志级别。 |
+| `--window-mode <模式>` | GUI 可选 `Fixed`、`Resizable`、`Borderless`、`Fullscreen`。 |
+| `--window-size <宽x高>` | GUI 窗口尺寸，例如 `1280x720`。 |
+
+HTTP 命令宿主的实例默认值在 `Settings.xml`，默认关闭。会话覆盖优先，并在模组准备触发进程重启时恢复。
+`.runtime` 记录实例进程存活状态。窗口选项由图形入口读取。
 
 ## 数据实例
 

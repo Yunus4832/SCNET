@@ -31,7 +31,7 @@ dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
 
 ```bash
 dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- extract \
-  AtlasTexture.webp Atlas.txt Tools/GuiAtlasTool/Assets Entry1 Entry2
+  Assets/Atlases/AtlasTexture.webp Assets/Atlases/Atlas.txt Tools/GuiAtlasTool/Assets Entry1 Entry2
 ```
 
 提取默认输出 `.webp`。转换和提取命令拒绝覆盖已有文件；需要替换时增加 `--overwrite`。

@@ -5,7 +5,13 @@
 
 ## 创建发行物
 
-日常开发和验证使用 `dotnet build`，不会更新 `Publish/`。需要发行物时，从仓库根目录运行统一发布脚本：
+日常开发和验证使用 `dotnet build`，不会更新 `Publish/`。发行包包含 Web 工作台。先安装 Node.js 和 npm，再从仓库根目录准备前端依赖：
+
+```bash
+npm --prefix Services/Content/ContentWebUI ci
+```
+
+选择对应平台的发布脚本：
 
 ```bash
 ./Scripts/publish.sh --project ContentServer

@@ -90,6 +90,9 @@ GET    /api/v1/server-sources
 GET    /api/v1/server-directory
 ```
 
+`GET /api/v1/game-releases` 可通过 `?platform=<平台>` 筛选版本。该筛选项、最新版本路径和产物登记
+使用相同的平台标识：`windows-x64`、`linux-x64`、`android-arm64`、`android-arm32`。
+
 ### 发布者
 
 ```text

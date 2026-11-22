@@ -1,16 +1,7 @@
 # 文件定位
 
-`Engine.Core.FileStorage.Storage` 负责统一处理文件路径。项目中的大部分文件读写并不是直接使用系统路径，而是先使用带前缀的逻辑路径，再由 `Storage` 映射到当前平台上的实际位置。
-
-游戏层的目录与配置文件路径集中由 `Game.FileStorage.GamePaths` 定义。
-
-## 解析方式
-
-- 先识别路径前缀
-- 再根据平台将路径转换为实际文件系统路径
-- 最后执行读写、枚举、创建或删除操作
-
-这样做的原因是：同一份代码需要同时运行在桌面端和 Android 端，直接使用绝对路径会使跨平台逻辑变得难以维护。
+游戏通过 `Engine.Core.FileStorage.Storage` 访问带前缀的逻辑路径。启动器为当前平台和实例注册实际目录，
+游戏目录与配置文件名集中在 `Game.FileStorage.GamePaths` 中。
 
 ## 桌面端支持的预定义路径
 
@@ -44,18 +35,22 @@
 - `<world>/Project.xml`
 - `<world>/WorldModProfile.xml`
 - `GamePaths.ContentPackageCache`: 按 PackageHash 保存所有类型原始 `.scpkg` 的统一缓存
-- `GamePaths.BlockTextures`、`GamePaths.CharacterSkins`、`GamePaths.FurniturePacks`: 已安装资产目录；用户资产以稳定 GUID `AssetKey` 保存，材质和皮肤数据使用 `.png`，家具数据使用 `.xml`，显示名称位于伴随 `.json` 元数据中，与缓存包独立删除
+- `GamePaths.BlockTextures`、`GamePaths.CharacterSkins`、`GamePaths.FurniturePacks`: 已安装资产目录；用户资产以稳定 GUID `AssetKey` 保存，材质和皮肤保留原始静态 PNG 或 WebP 编码，家具使用 `.xml`，显示名称位于伴随 `.json` 元数据中，与缓存包独立删除
 
 ## 内容缓存、制造与安装
 
-材质、皮肤和家具替换先写入并验证临时数据，再保留原 AssetKey 交换数据与元数据；旧 `.scbtex`、`.scskin`、`.scfurniture` 不再作为导入协议或内部资产后缀。World 覆盖使用同一 Worlds 根目录下的 staging/backup 目录完成可恢复替换；旧 World ZIP 导入/导出及嵌入内容分派已删除，`.snapshot` 只作为同一世界目录内的内部恢复制品。
+材质、皮肤和家具替换先验证暂存数据，再保留原 AssetKey 交换数据与元数据。世界覆盖使用同一 Worlds 根目录下的暂存目录与备份目录完成可恢复替换。世界导入、导出使用 `.scpkg`，`.snapshot` 用于世界目录内部恢复。
 
 删除仍被存档引用的材质或皮肤前，管理界面要求选择同类型替代资产。皮肤引用包含离线角色。
 活动世界在所属线程更新引用并等待权威保存，其余世界以暂存 `Project.xml` 批量提交。
 保存失败时保留原资产，重试仍须确认活动存档写入成功。
 
-游戏内容制造先在 `GamePaths.ContentPackageCreationTemp` 生成并通过共享 Reader 复验临时 `.scpkg`，调用方只获得可读取且可释放的临时制品。GUI 制造向导按“类型、素材、名称、语义版本、清单预览、FilePicker 保存”推进：World/FurniturePack 选择本地资产，BlocksTexture/CharacterSkin 选择并验证 PNG 流，运行中的世界不作为快照源。取消预览、取消保存或保存失败都会释放临时制品。保存制品不写入 ContentPackageCache，也不自动安装。游戏底层制造 API 支持从同类型基线包继承 Identifier，
-当前 GUI 尚未提供基线选择入口，见 [内容制造契约](Protocol/ContentCreationProtocol.md)。
+GUI 内容制作选择类型和素材，填写名称与语义版本，预览清单后通过文件选择器保存 `.scpkg`。
+世界与家具使用本地资产，材质与皮肤接受静态 PNG 或 WebP。运行中的世界不能作为快照源。
+
+临时包在 `GamePaths.ContentPackageCreationTemp` 生成，并通过共享 Reader 复验。取消或结束保存时释放临时包。
+导出的文件和本地缓存是独立的，若要安装可从内容包页导入。底层制作 API 可以继承同类型基线包的 Identifier，
+当前界面尚无基线选择入口。详见[内容创建协议](Protocol/ContentCreationProtocol.md)。
 
 本地输入流与 ContentServer 下载统一进入 `ContentPackageWorkflow`：先由 ContentPackageCache 原子提交和复验，再从缓存打开实际文件交给安装器。来源只影响 UI 的信任提示，不改变缓存或安装结果。
 
