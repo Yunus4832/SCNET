@@ -2,7 +2,7 @@ namespace Engine.Media.Models;
 
 public sealed class ModelSamplerData : ModelElementData
 {
-    /// <summary>glTF/OpenGL filter values; null leaves the filter unspecified.</summary>
+    /// <summary>采用 glTF/OpenGL 的过滤参数值；为空表示未指定。</summary>
     public int? MinFilter;
 
     public int? MagFilter;

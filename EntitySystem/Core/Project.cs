@@ -338,6 +338,7 @@ public class Project : IDisposable
         }
     }
 
+    /// <summary>将保存的组件数据载入已有实体，两个列表按位置一一对应。</summary>
     public virtual void LoadEntityData(EntityDataList entityDataList, List<Entity> entityList)
     {
         var entityIndex = 0;
@@ -380,7 +381,7 @@ public class Project : IDisposable
         return SerializeEntities(entities);
     }
 
-    /// <summary>Contributes to the fresh subsystem snapshot; failures abort snapshot creation.</summary>
+    /// <summary>向新建的子系统快照写入数据；任何失败都会中止本次快照创建。</summary>
     public event Action<ProjectData>? AfterSubsystemsSaved;
 
     public ProjectData Save()

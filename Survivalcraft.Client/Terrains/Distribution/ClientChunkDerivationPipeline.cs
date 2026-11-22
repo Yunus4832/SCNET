@@ -2,9 +2,7 @@ using Game.Terrains.Rendering;
 
 namespace Game.Terrains.Distribution;
 
-/// <summary>
-///     Owns the client-only lifecycle from installed authoritative contents to derived geometry.
-/// </summary>
+/// <summary>由客户端管理从安装权威内容到生成派生几何数据的过程。</summary>
 public sealed class ClientChunkDerivationPipeline(TerrainChunkPresentationStore presentations)
 {
     public void Begin(TerrainChunk target)

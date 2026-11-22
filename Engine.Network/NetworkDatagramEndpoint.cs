@@ -2,7 +2,7 @@ using System.Net;
 
 namespace Engine.Network;
 
-/// <summary>A reply route owned by a host, including the socket used to receive the datagram.</summary>
+/// <summary>宿主持有的回复路径，包含接收该数据报的套接字。</summary>
 public sealed class NetworkDatagramEndpoint
 {
     private readonly NetworkHost _host;

@@ -6,7 +6,7 @@ using Rendezvous.Protocol;
 
 namespace Engine.Network.Rendezvous;
 
-/// <summary>Exchanges invitation credentials over the configured control endpoint.</summary>
+/// <summary>通过配置的控制端点交换邀请凭据。</summary>
 public sealed class RendezvousClient
 {
     private readonly HttpClient _http;

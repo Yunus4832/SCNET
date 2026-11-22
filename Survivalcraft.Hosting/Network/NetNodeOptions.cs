@@ -2,7 +2,7 @@ using Game.Network.Chunks;
 
 namespace Game.Network;
 
-/// <summary>Immutable delivery policy captured by the owner for one node lifetime.</summary>
+/// <summary>在节点创建时确定其整个生命周期内使用的不可变投递策略。</summary>
 public sealed class NetNodeOptions
 {
     public static NetNodeOptions Default { get; } = new(

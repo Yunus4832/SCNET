@@ -8,7 +8,7 @@ using static Game.Startup.SessionInfoSerializer;
 
 namespace Game.Startup;
 
-/// <summary>Instance-scoped startup profiles and session selection with explicit storage paths.</summary>
+/// <summary>使用显式存储路径管理实例的启动配置及会话选择。</summary>
 public sealed class StartupProfileStore
 {
     public StartupProfileStore(string runningSettingsPath, string sessionsPath)

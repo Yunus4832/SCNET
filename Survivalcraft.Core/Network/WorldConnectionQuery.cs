@@ -4,7 +4,7 @@ using Game.Protocol.Identity;
 
 namespace Game.Network;
 
-/// <summary>Joins runtime sessions with world players and roles without owning persistent state.</summary>
+/// <summary>将运行时会话与世界玩家和角色关联，持久状态另行管理。</summary>
 public static class WorldConnectionQuery
 {
     public static WorldConnection? Find(Project project, PlayerAddress player)

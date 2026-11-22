@@ -1,6 +1,6 @@
 namespace Game.Network.Transport;
 
-/// <summary>Cooperative budget for one logical-routing or native-dispatch phase.</summary>
+/// <summary>供逻辑路由或原生分发的单个阶段协作使用的预算。</summary>
 public sealed class OutboundWorkBudget(TimeProvider time)
 {
     public const int MaximumMessages = 1024;

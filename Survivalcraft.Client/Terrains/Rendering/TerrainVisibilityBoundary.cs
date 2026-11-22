@@ -2,7 +2,7 @@ using Game.Network.Chunks;
 
 namespace Game.Terrains.Rendering;
 
-/// <summary>Per-view visibility constrained by the continuous coverage of drawable terrain.</summary>
+/// <summary>按可绘制地形的连续覆盖范围限制单个视图的可见区域。</summary>
 internal sealed class TerrainVisibilityBoundary
 {
     internal const float coveragePadding = 0.05f;

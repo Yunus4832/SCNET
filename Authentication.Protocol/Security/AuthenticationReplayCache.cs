@@ -1,6 +1,6 @@
 namespace SCNET.Authentication.Protocol.Security;
 
-/// <summary>Bounded provider-side proof replay protection. Never evicts an unexpired accepted proof.</summary>
+/// <summary>在提供方以有界容量防止证明重放，已接受且尚未过期的证明始终保留。</summary>
 public sealed class AuthenticationReplayCache(int capacity = 10000)
 {
     private readonly Lock _gate = new();

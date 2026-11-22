@@ -6,6 +6,6 @@ public sealed class ModelTextureBindingData : ModelElementData
 
     public int TextureCoordinate;
 
-    /// <summary>Normal scale or occlusion strength, depending on the material channel.</summary>
+    /// <summary>按材质通道表示法线缩放系数或遮蔽强度。</summary>
     public float Scale = 1;
 }

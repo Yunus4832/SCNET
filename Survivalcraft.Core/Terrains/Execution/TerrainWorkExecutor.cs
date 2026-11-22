@@ -1,6 +1,6 @@
 namespace Game.Terrains.Execution;
 
-/// <summary>One world's serial terrain worker, wakeups and durable foreground handoffs.</summary>
+/// <summary>管理单个世界的串行地形工作线程、唤醒和持续有效的前台交接请求。</summary>
 public sealed class TerrainWorkExecutor(Func<bool> step, TerrainAccessGate? access = null) : IDisposable
 {
     private readonly object _signal = new();
@@ -250,7 +250,7 @@ public sealed class TerrainWorkExecutor(Func<bool> step, TerrainAccessGate? acce
         }
     }
 
-    /// <summary>Stops private work without closing access needed by final owner-thread resource callbacks.</summary>
+    /// <summary>停止后台任务，同时为所属线程最后的资源回调保留地形访问权。</summary>
     public Task QuiesceAsync()
     {
         lock (_signal)

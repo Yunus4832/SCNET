@@ -11,7 +11,7 @@ using SCNET.Authentication.Server.Domain;
 
 namespace SCNET.Authentication.Server.Infrastructure;
 
-/// <summary>Serializes aggregate access and commits durable provider grants with private atomic files.</summary>
+/// <summary>串行访问授权聚合，并通过私有文件原子提交持久化授权数据。</summary>
 public sealed class ProviderRuntime : IDisposable
 {
     private readonly Lock _gate = new();

@@ -6,7 +6,7 @@ using SCNET.Authentication.Protocol.Http;
 
 namespace Game.Authentication;
 
-/// <summary>Dedicated private grant file. Credentials are bound to both the player key and a confirmed provider endpoint.</summary>
+/// <summary>专用的私有授权文件，将凭据同时绑定到玩家密钥和已确认的提供方端点。</summary>
 public sealed class AuthenticationGrantStore
 {
     private readonly Lock _gate = new();

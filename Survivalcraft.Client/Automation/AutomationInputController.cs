@@ -4,7 +4,7 @@ using Game.Application;
 
 namespace Game.Automation;
 
-/// <summary>Schedules synthetic UI input across engine frames.</summary>
+/// <summary>跨引擎帧调度模拟 UI 输入。</summary>
 public static class AutomationInputController
 {
     private sealed record PendingTap(int TouchId, Vector2 Position, int ReleaseFrame);

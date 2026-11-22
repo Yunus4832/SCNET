@@ -2,7 +2,7 @@ using Game.Terrains.Lighting;
 
 namespace Game.Terrains.Rendering;
 
-/// <summary>Published mesh resources that depend on one or more overlapping light transactions.</summary>
+/// <summary>依赖一个或多个重叠光照事务的已发布网格资源。</summary>
 internal sealed class TerrainLightUploadGroup
 {
     internal HashSet<TerrainChunk> Members { get; } = [];

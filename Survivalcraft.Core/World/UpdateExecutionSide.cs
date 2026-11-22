@@ -1,6 +1,6 @@
 namespace Game.World;
 
-/// <summary>Declares which world owns an updateable's frame work.</summary>
+/// <summary>指定由哪个世界执行可更新对象的逐帧任务。</summary>
 public enum UpdateExecutionSide
 {
     Disabled = 0,

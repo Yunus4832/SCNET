@@ -3,7 +3,7 @@ using Game.Pathfinding;
 
 namespace Game.Automation;
 
-/// <summary>Reuses terrain path search but drives the local player through its normal input stage.</summary>
+/// <summary>复用地形寻路搜索，通过正常输入阶段驱动本地玩家。</summary>
 public sealed class AutomationNavigationController
 {
     private ComponentCharacter? _player;

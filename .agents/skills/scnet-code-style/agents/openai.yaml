@@ -1,4 +1,4 @@
 interface:
   display_name: "SCNET Code Style"
-  short_description: "Apply SCNET C# style and MSBuild project-file conventions."
-  default_prompt: "Use $scnet-code-style to review C# and project-file changes, apply the relevant layout and ownership conventions, and run focused validation."
+  short_description: "应用 SCNET 的 C# 代码风格、中文 XML 文档注释与 MSBuild 项目文件规范。"
+  default_prompt: "使用 $scnet-code-style 评审 C# 与项目文件改动，核对受影响的中文文档注释、布局与代码归属，并执行对应的检查。"

@@ -1,6 +1,6 @@
 namespace Game.Terrains.Lighting;
 
-/// <summary>World environment applied to spatial light without changing its propagation inputs.</summary>
+/// <summary>将世界环境作用于空间光照，保留原有传播输入。</summary>
 public readonly record struct TerrainLightEnvironment
 {
     private static readonly int[] _moonlessValues = [0, 3, 6, 9, 12, 15];
@@ -26,7 +26,7 @@ public readonly record struct TerrainLightEnvironment
         return new TerrainLightEnvironment(values[(int)MathUtils.Round(MathUtils.Lerp(0f, 5f, intensity))]);
     }
 
-    /// <summary>The continuous daylight curve for presentation; rule light retains its discrete levels.</summary>
+    /// <summary>表现层使用的连续日光曲线，游戏规则仍使用离散光照等级。</summary>
     public static float InterpolateSkyLightValue(float intensity, int moonPhase)
     {
         var values = GetIntensityValues(intensity, moonPhase);

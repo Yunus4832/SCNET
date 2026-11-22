@@ -2,8 +2,8 @@ using EntitySystem.TemplatesDatabase;
 
 namespace EntitySystem.Core;
 
-/// <summary>Selects project members before runtime type resolution and construction.</summary>
-/// <remarks>Implementations must keep decisions stable for the project lifetime and leave definitions unchanged.</remarks>
+/// <summary>在解析运行时类型和构造对象之前选择项目成员。</summary>
+/// <remarks>项目生命周期内须保持选择结果一致，并保留原始定义。</remarks>
 public interface IProjectComposition
 {
     bool ShouldCreateSubsystem(ValuesDictionary definition);

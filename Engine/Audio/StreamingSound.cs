@@ -5,7 +5,7 @@ using Silk.NET.OpenAL;
 
 namespace Engine.Audio;
 
-/// <summary>A streaming voice with bounded CPU supply and audio-owner-only native playback.</summary>
+/// <summary>流式声部使用有界的 CPU 数据供应，仅音频设备管理者执行原生播放操作。</summary>
 public sealed class StreamingSound : BaseSound
 {
     private readonly Func<StreamingSource> _open;
@@ -50,7 +50,7 @@ public sealed class StreamingSound : BaseSound
         Register();
     }
 
-    /// <summary>Samples actually consumed by the native source since this playback began.</summary>
+    /// <summary>本次播放开始以来原生音源实际消耗的采样数。</summary>
     public long PlayedSamples => Volatile.Read(ref _playedSamples);
 
     private protected override void UpdatePlayback(AudioService service, AudioPlaybackRequest request)

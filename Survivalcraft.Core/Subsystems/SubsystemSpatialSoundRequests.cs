@@ -2,7 +2,7 @@ using EntitySystem.Core;
 
 namespace Game.Subsystems;
 
-/// <summary>Produces acoustic facts for this world without playing or broadcasting them.</summary>
+/// <summary>生成本世界的声音事件，播放和广播由调用方负责。</summary>
 public sealed class SubsystemSpatialSoundRequests : Subsystem
 {
     private bool _disposed;

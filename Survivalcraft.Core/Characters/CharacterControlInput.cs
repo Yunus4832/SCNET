@@ -1,6 +1,6 @@
 namespace Game.Characters;
 
-/// <summary>World control intent after client device, camera and UI filtering.</summary>
+/// <summary>客户端设备、摄像机和界面过滤后提交给世界的控制意图。</summary>
 public struct CharacterControlInput
 {
     public Vector2 Look;

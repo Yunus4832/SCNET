@@ -7,7 +7,7 @@ using Game.Protocol.Identity;
 
 namespace Game.Network;
 
-/// <summary>World-owned logical roster and authority link. Physical registration must commit through this registry.</summary>
+/// <summary>管理世界的逻辑成员列表和权威端连接；底层连接注册须经此目录提交。</summary>
 public sealed class WorldConnections : IDisposable
 {
     private static readonly ConditionalWeakTable<WorldRuntimeContext, WorldConnections> _bindings = new();

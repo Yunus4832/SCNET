@@ -1,9 +1,6 @@
 namespace Game.Terrains.Distribution;
 
-/// <summary>
-///     Orders authoritative cell deltas against installed chunk snapshot versions.
-///     A version gap requests a new baseline while retaining the installed replica until replacement.
-/// </summary>
+/// <summary>按已安装快照的版本应用权威单元格增量。遇到版本缺口时请求新基线，并在替换前保留当前副本。</summary>
 public sealed class ClientTerrainDeltaCoordinator(
     Terrain terrain,
     Action<TerrainCellDelta> apply,

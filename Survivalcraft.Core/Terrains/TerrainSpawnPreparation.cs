@@ -1,6 +1,6 @@
 namespace Game.Terrains;
 
-/// <summary>Authority-owned spawn preparation, separate from approved peer interest.</summary>
+/// <summary>由权威端持有的出生准备范围，独立于已批准的对端关注范围。</summary>
 public sealed class TerrainSpawnPreparation : IDisposable
 {
     private TerrainDemandManager? _owner;

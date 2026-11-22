@@ -1,6 +1,6 @@
 namespace Game.Terrains.Generation;
 
-/// <summary>Deterministic read-only world environment queries, without chunk generation capabilities.</summary>
+/// <summary>提供确定性的只读世界环境查询，不生成区块。</summary>
 public interface ITerrainEnvironment
 {
     int OceanLevel { get; }

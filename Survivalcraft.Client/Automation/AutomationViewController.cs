@@ -2,7 +2,7 @@ using Game.Application;
 
 namespace Game.Automation;
 
-/// <summary>Converges the normal first-person view through player look input.</summary>
+/// <summary>通过玩家视角输入逐步将第一人称视图转向目标方向。</summary>
 public sealed class AutomationViewController
 {
     private ComponentCharacter? _player;

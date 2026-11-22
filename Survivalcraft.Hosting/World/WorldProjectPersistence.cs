@@ -61,7 +61,7 @@ public sealed class WorldProjectPersistence : IDisposable
         _saveGate.Release();
     }
 
-    /// <summary>Queues an owner-thread capture; an existing write never blocks the world update loop.</summary>
+    /// <summary>将快照捕获排入所属线程，已有写入任务不会阻塞世界更新循环。</summary>
     public Task<WorldSaveOutcome> SaveAsync(Guid operationId = default, bool final = false)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

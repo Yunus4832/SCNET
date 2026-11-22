@@ -1,7 +1,7 @@
 namespace Game.Terrains.Execution;
 
-/// <summary>Thread-affine, reentrant access to a world's mutable terrain.</summary>
-/// <remarks>Closing cancels waiters; an existing owner can still unwind and release its lease.</remarks>
+/// <summary>提供绑定线程且可重入的世界地形访问权。</summary>
+/// <remarks>关闭时取消等待者；当前持有者仍可完成清理并释放访问权。</remarks>
 public sealed class TerrainAccessGate : IDisposable
 {
     private readonly object _sync = new();

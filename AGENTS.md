@@ -47,6 +47,8 @@ exact property names and staged before/after values; omit it when no version pro
 
 ## C# code quality
 
+For new C# files and declarations, follow the [XML documentation rules](.agents/skills/scnet-code-style/SKILL.md#c-文档注释).
+
 Treat `.editorconfig` as authoritative for C# style. Before completing any change that modifies C#,
 use the repository `scnet-code-style` Skill and run
 `.agents/skills/scnet-code-style/scripts/validate_changed_csharp.sh`. A successful build does not

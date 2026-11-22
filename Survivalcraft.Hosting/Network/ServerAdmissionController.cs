@@ -7,7 +7,7 @@ using Game.Network.Handling;
 
 namespace Game.Network;
 
-/// <summary>Owns provisional transports; world sessions are created only after policy and business checks.</summary>
+/// <summary>管理临时传输连接，通过策略和业务校验后才创建世界会话。</summary>
 internal sealed class ServerAdmissionController(
     NetNode node,
     Project project,

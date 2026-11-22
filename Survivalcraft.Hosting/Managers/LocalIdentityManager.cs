@@ -7,7 +7,7 @@ using Game.Identity;
 
 namespace Game.Managers;
 
-/// <summary>Owns instance identities, default selection, backup operations and transactional persistence.</summary>
+/// <summary>管理实例身份、默认身份选择、备份及事务性持久化。</summary>
 public sealed class LocalIdentityManager
 {
     public const int MaximumIdentityCount = 128;

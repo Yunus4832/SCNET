@@ -2,7 +2,7 @@ using Engine.Core.Mathematics;
 
 namespace Engine.Audio;
 
-/// <summary>Application audio lifetime and the entry point to its dedicated device owner.</summary>
+/// <summary>管理应用的音频生命周期，并提供访问专用设备管理者的入口。</summary>
 public static class Mixer
 {
     private static readonly Lock _lifetime = new();

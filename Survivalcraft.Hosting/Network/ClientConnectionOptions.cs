@@ -1,6 +1,6 @@
 namespace Game.Network;
 
-/// <summary>Explicit immutable application facts for a client admission attempt.</summary>
+/// <summary>客户端尝试准入时使用的不可变应用信息。</summary>
 public sealed class ClientConnectionOptions
 {
     public string ModDataHash { get; }

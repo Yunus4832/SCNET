@@ -2,7 +2,7 @@ using System.Diagnostics.Tracing;
 
 namespace Engine.Network.Diagnostics;
 
-/// <summary>Optional transport diagnostics; never emits credentials or packet contents.</summary>
+/// <summary>可选的传输诊断，不输出凭据或数据包内容。</summary>
 [EventSource(Name = "SCNET-Engine-Network")]
 internal sealed class NetworkDiagnostics : EventSource
 {

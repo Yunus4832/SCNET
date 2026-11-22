@@ -30,13 +30,13 @@ public class TerrainChunk : IDisposable
 
     private long _geometryHaloRevision;
 
-    /// <summary>Replica geometry edits within the border read by nearby terrain meshes.</summary>
+    /// <summary>记录相邻地形网格采样边界内的副本几何编辑。</summary>
     public long GeometryHaloRevision => Volatile.Read(ref _geometryHaloRevision);
 
     public static bool IsInsideGeometryHalo(int x, int z) =>
         (x & SizeMinusOne) is < 2 or > 13 || (z & SizeMinusOne) is < 2 or > 13;
 
-    /// <summary>Mutable cell storage, acquired under this terrain's access ownership.</summary>
+    /// <summary>可变单元格存储，访问时须持有所属地形的访问权。</summary>
     public int[] Cells
     {
         get => _cells ??= new int[_size * _size * _height];
@@ -55,7 +55,7 @@ public class TerrainChunk : IDisposable
 
     private bool _hasContents;
 
-    /// <summary>Published cells are available independently of derived height and lighting.</summary>
+    /// <summary>已发布的单元格可供使用，派生高度和光照有独立的就绪状态。</summary>
     public bool HasContents
     {
         get => Volatile.Read(ref _hasContents);
@@ -68,7 +68,7 @@ public class TerrainChunk : IDisposable
 
     private bool _contentInitialized;
 
-    /// <summary>Initial business normalization finished; contents can be used as a network baseline.</summary>
+    /// <summary>初始业务归一化已完成，区块内容可作为网络基线。</summary>
     public bool IsContentInitialized
     {
         get => Volatile.Read(ref _contentInitialized);

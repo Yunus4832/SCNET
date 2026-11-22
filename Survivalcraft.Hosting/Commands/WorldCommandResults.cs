@@ -6,7 +6,7 @@ namespace Game.Commands;
 
 public readonly record struct CommandResultDelivery(CommandResult Result, string CorrelationId);
 
-/// <summary>Typed local command completion publication for one actual world's lifetime.</summary>
+/// <summary>在本次世界生命周期内发布强类型的本地命令补全结果。</summary>
 public sealed class WorldCommandResults : IDisposable
 {
     private static readonly ConditionalWeakTable<WorldRuntimeContext, WorldCommandResults> _bindings = new();

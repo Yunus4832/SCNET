@@ -4,7 +4,7 @@ using Engine.Core.Runtime;
 
 namespace Survivalcraft.Test.Fixtures;
 
-/// <summary>Pumps the existing frame dispatcher while an isolated test waits for an asynchronous host operation.</summary>
+/// <summary>独立测试等待异步宿主操作期间，继续驱动已有的帧分发器。</summary>
 internal sealed class FrameTestLoop : IDisposable
 {
     private static readonly FieldInfo _thread = typeof(Dispatcher).GetField(

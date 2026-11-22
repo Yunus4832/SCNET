@@ -1,6 +1,6 @@
 namespace Game.Automation;
 
-/// <summary>Read-only observation of the actual locally controlled character.</summary>
+/// <summary>只读观察本地实际控制的角色。</summary>
 public static class AutomationGameplayContext
 {
     public static object Capture()

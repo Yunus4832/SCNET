@@ -1,6 +1,6 @@
 namespace Game.Terrains.Lighting;
 
-/// <summary>Independent sky exposure and emitted light, each in the range zero through fifteen.</summary>
+/// <summary>分别表示天空曝光和自发光，两个通道的取值均为 0 至 15。</summary>
 public readonly record struct TerrainLightChannels
 {
     public byte Packed { get; }

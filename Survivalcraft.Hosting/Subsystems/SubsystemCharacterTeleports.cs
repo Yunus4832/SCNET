@@ -5,7 +5,7 @@ using Game.Commands.BuiltIn;
 
 namespace Game.Subsystems;
 
-/// <summary>Host-owned command operations advanced at the world roster's completed-character phase.</summary>
+/// <summary>由帧循环管理的宿主命令操作，在世界角色名册完成角色处理的阶段推进。</summary>
 public sealed class SubsystemCharacterTeleports : Subsystem
 {
     private readonly Dictionary<CharacterData, PlayerTeleportRequest> _requests = new(

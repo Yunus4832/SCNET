@@ -7,7 +7,7 @@ using Game.Celebrations;
 
 namespace Game.World;
 
-/// <summary>Constructs an authority project using explicitly prepared content and host policies.</summary>
+/// <summary>使用显式准备的内容和宿主策略构造权威端项目。</summary>
 public static class AuthorityWorldProjectFactory
 {
     public static Project Create(

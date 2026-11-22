@@ -1,5 +1,6 @@
 namespace Game.Modding.Blocks;
 
+/// <summary>将稳定方块标识与本世界的方块实例及运行时索引关联。</summary>
 public sealed class BlockRuntimeCatalog
 {
     public const int Capacity = BuiltInBlockIdentities.Capacity;
@@ -23,6 +24,7 @@ public sealed class BlockRuntimeCatalog
 
     public BlockIndexMapping Mapping { get; private init; } = BlockIndexMapping.Empty;
 
+    /// <summary>内置方块使用固定索引，模组方块按已保存的映射分配索引。工厂须返回未经注册的新实例。若 <paramref name="requireExactMapping"/> 为 true，映射需要新增条目时编译失败。</summary>
     public static BlockRuntimeCatalog Compile(
         IReadOnlyList<KeyValuePair<ResourceId, BlockRegistration>> registrations,
         IReadOnlyList<BlockDataEntry>? blockData = null,

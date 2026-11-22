@@ -6,7 +6,7 @@ using Game.Protocol.Identity;
 
 namespace Game.Teams;
 
-/// <summary>Player membership and consent transactions. No character, session, packet or UI dependencies.</summary>
+/// <summary>处理玩家入队及同意请求，独立于角色、会话、数据包和界面。</summary>
 public sealed class TeamStore
 {
     private readonly WorldPlayerStore _players;

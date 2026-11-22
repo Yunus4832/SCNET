@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Game.Network.Transport;
 
-/// <summary>Explicit binding to the sole outbound message path of one world.</summary>
+/// <summary>将世界显式绑定到唯一的出站消息路径。</summary>
 public sealed class WorldMessageEndpoint : IDisposable
 {
     private static readonly ConditionalWeakTable<WorldRuntimeContext, WorldMessageEndpoint> _bindings = new();

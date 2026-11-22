@@ -1,6 +1,6 @@
 namespace Engine.Network;
 
-/// <summary>Confirms transport delivery, not application processing of the payload.</summary>
+/// <summary>确认传输层已投递数据，应用层可能尚未处理载荷。</summary>
 public sealed class DeliveryReceipt
 {
     private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);

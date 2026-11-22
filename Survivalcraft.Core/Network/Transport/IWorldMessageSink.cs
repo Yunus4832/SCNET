@@ -2,7 +2,7 @@ using EntitySystem.Core;
 
 namespace Game.Network.Transport;
 
-/// <summary>Outbound delivery from a logical world into its existing message owner.</summary>
+/// <summary>将逻辑世界的出站消息交给已有的消息管理者。</summary>
 public interface IWorldMessageSink
 {
     void Send(IProtocolMessage message, PackageAudience audience);
@@ -14,10 +14,10 @@ public interface IWorldMessageSink
     void SendToObservers(Entity entity, IProtocolMessage message, WorldConnection? except);
     bool CanQueueTerrainSnapshot(WorldConnection recipient);
 
-    /// <summary>True transfers the owned snapshot; false leaves its ownership with the caller.</summary>
+    /// <summary>返回 true 时移交快照所有权；返回 false 时仍由调用方持有。</summary>
     bool TryQueueOwnedTerrainSnapshot(WorldConnection recipient, TerrainSnapshotMessage message);
 
-    /// <summary>Transfers an owned light update or batch when the recipient queue has capacity.</summary>
+    /// <summary>接收方队列有余量时移交光照更新或整批更新的所有权。</summary>
     bool TryQueueOwnedTerrainLighting(WorldConnection recipient, IProtocolMessage message);
 
     void DiscardOlderChunkAllocations(WorldConnection recipient, ChunkAllocationId allocation);

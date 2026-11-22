@@ -6,7 +6,7 @@ using Game.Terrains.Lighting;
 
 namespace Game.Terrains.Execution;
 
-/// <summary>Schedules only runnable terrain stages; prerequisites are resumed by explicit publications.</summary>
+/// <summary>仅调度可执行的地形阶段，等待依赖的阶段在收到显式发布通知后恢复。</summary>
 public sealed class TerrainComputationScheduler : IDisposable
 {
     private readonly TerrainWorkQueue _queue = new();
@@ -135,7 +135,7 @@ public sealed class TerrainComputationScheduler : IDisposable
     public bool IsDerivedRequested(TerrainChunk chunk) =>
         !_disposed && !chunk.IsDisposed && _derived != null && (IsVisible(chunk) || IsInteractive(chunk));
 
-    /// <summary>Resumes an externally deferred client job only for the same live allocation.</summary>
+    /// <summary>仅在同一区块分配周期仍有效时，恢复客户端延后的派生任务。</summary>
     public void ResumeDerived(TerrainChunk chunk, ulong allocationGeneration)
     {
         if (_disposed || chunk.IsDisposed || chunk.AllocationGeneration != allocationGeneration) { return; }
@@ -403,6 +403,7 @@ public sealed class TerrainComputationScheduler : IDisposable
         }
     }
 
+    /// <summary>处理符合条件的区块，直到时间预算用尽或地形失活。预算在区块之间检查，最后一个区块可能超时。</summary>
     public void PrepareHeightsSynchronously(IReadOnlyList<TerrainChunk> chunks, TimeSpan maximumTime)
     {
         var started = Stopwatch.GetTimestamp();

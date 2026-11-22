@@ -5,19 +5,14 @@ using System.Text;
 
 namespace Game.TerrainSerializers;
 
-/// <summary>
-///     Reads and writes terrain chunks in region files.
-/// </summary>
+/// <summary>在区域文件中读写地形区块。</summary>
 public class TerrainChunkSerializer : IDisposable
 {
     private const int _rleCountShift = 10;
 
     private const int _rleCountMask = 15 << _rleCountShift;
 
-    /// <summary>
-    ///     最大数据块大小: 一个 Cell 占 8 Byte, 一个 Chunk 数据块有 16 x 16 x 256 = 65_536 Cell
-    ///     因此，最糟糕的情况下，一个未经压缩的 Chunk 数据块的大小为 65_536 x 8 = 524_800
-    /// </summary>
+    /// <summary>区块压缩、解压和区域存储共用的单块缓冲区容量，单位为字节。</summary>
     private const int _worstCaseChunkDataSize = 524_800;
 
     private readonly byte[] _loadCompressBuffer = new byte[_worstCaseChunkDataSize];
@@ -54,7 +49,6 @@ public class TerrainChunkSerializer : IDisposable
     /// <summary>
     ///     保存内容就绪的已修改区块，成功后清除脏标记；失败向调用方传播并保留重试状态。
     /// </summary>
-    /// <param name="chunk">需要保存的区块。</param>
     public void SaveChunk(TerrainChunk chunk)
     {
         if (!TerrainSaveCoordinator.RequiresSave(chunk))
@@ -66,7 +60,7 @@ public class TerrainChunkSerializer : IDisposable
         chunk.ModificationCounter = 0;
     }
 
-    /// <summary>Returns false only when the region or its chunk record is absent.</summary>
+    /// <summary>仅在区域文件或其中的区块记录缺失时返回 false。</summary>
     public bool LoadChunk(TerrainChunk chunk)
     {
         lock (_loadLock)
@@ -110,7 +104,6 @@ public class TerrainChunkSerializer : IDisposable
 
     private int CompressChunkData(int[] cells, long[] shafts, byte[] buffer)
     {
-        // 当前缓冲区大小
         var bufferSize = 0;
         for (var i = 0; i < 16; i++)
         {
@@ -130,8 +123,8 @@ public class TerrainChunkSerializer : IDisposable
         }
 
         // 首先使用 RLE 算法压缩重复的数据, 区块高度为 256
-        var value = -1; // 值
-        var count = 0; // 值重复的次数
+        var value = -1;
+        var count = 0;
         for (var k = 0; k < 256; k++)
         {
             for (var l = 0; l < 16; l++)
@@ -147,7 +140,6 @@ public class TerrainChunkSerializer : IDisposable
                         continue;
                     }
 
-                    // 如果下一个值和当前值不等，说明不再重复，即找到了一个 ValueCountPair，则写入 buffer 并退出本次循环
                     if (nextValue != value)
                     {
                         bufferSize = WriteRleValueToBuffer(_saveCompressBuffer, bufferSize, value, count);
@@ -157,7 +149,6 @@ public class TerrainChunkSerializer : IDisposable
                     }
 
                     count++;
-                    // 重复的最大次数是 271， 到达最大值时，强制创建 ValueCountPair, 写入 buffer 并退出本次循环
                     if (count != 271)
                     {
                         continue;
@@ -169,34 +160,24 @@ public class TerrainChunkSerializer : IDisposable
             }
         }
 
-        // 可能存在最后一个 Cell 和前一个 Cell 不同的情况，此时循环已经结束，该 cell 不会写入到 buffer
-        // 并且此时 count = 1, 即 > 0 这里将其也写入到 buffer 中
+        // 刷出尚未写入的最后一个游程。
         if (count > 0)
         {
             bufferSize = WriteRleValueToBuffer(_saveCompressBuffer, bufferSize, value, count);
         }
 
-        // 压缩数据
         using var memoryStream = new MemoryStream(buffer);
         using (var deflateStream = new DeflateStream(memoryStream, CompressionLevel.Fastest, true))
         {
             deflateStream.Write(_saveCompressBuffer, 0, bufferSize);
         }
 
-        // 返回压缩之后的大小
         return (int)memoryStream.Position;
     }
 
-    /// <summary>
-    ///     解压数据块
-    /// </summary>
-    /// <param name="chunk"> 解压结果 </param>
-    /// <param name="buffer"> 原始数据缓冲区 </param>
-    /// <param name="size"> 缓冲区大小 </param>
-    /// <exception cref="InvalidOperationException"> 缓冲区大小超出最大限制会抛出该异常 </exception>
+    /// <summary>解压并校验完整区块数据，再将温湿度和单元格写入目标区块。</summary>
     private void DecompressChunkData(TerrainChunk chunk, byte[] buffer, int size)
     {
-        // 解压 Chunk 数据块中的数据
         using var deflateStream = new DeflateStream(new MemoryStream(buffer, 0, size), CompressionMode.Decompress);
 
         // Stream.Read 不保证一次填满目标缓冲区，必须持续读取到流末尾。
@@ -219,32 +200,12 @@ public class TerrainChunkSerializer : IDisposable
             }
         }
 
-        // Chunk 数据块的坐标系
-        //       Y
-        //       |
-        //       |-256 区块高度
-        //       |
-        //       |
-        //       |
-        //       |
-        //       |
-        //       |
-        //       |
-        //       |          16 Shaft 轴的 x 索引
-        //       |          |
-        //       +------------------> X
-        //      /
-        //     /
-        //    /
-        //   /-16  Shaft 的 y 索引
-        //  /
-        // Z
+        // 存档中 X 变化最快，其次是 Z，最后是 Y。
         var cellX = 0;
         var cellY = 0;
         var cellZ = 0;
         while (bufferIndex < decompressSize)
         {
-            // 读取经过 RLE 压缩的 Cell 数据
             bufferIndex = ReadRleValueFromBuffer(
                 _loadCompressBuffer,
                 bufferIndex,
@@ -322,37 +283,15 @@ public class TerrainChunkSerializer : IDisposable
         }
     }
 
-    /// <summary>
-    ///     从缓冲区读取一个 int 值 4 Byte
-    /// </summary>
-    /// <param name="buffer"> 读取的缓冲区 </param>
-    /// <param name="i"> 缓冲区索引 </param>
-    /// <returns></returns>
+    /// <summary>从指定字节偏移读取小端 32 位整数。</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int ReadIntFromBuffer(byte[] buffer, int i)
     {
         return buffer[i] + (buffer[i + 1] << 8) + (buffer[i + 2] << 16) + (buffer[i + 3] << 24);
     }
 
-    /// <summary>
-    ///     从 buffer 中读取经过 Run-Length Encoding (RLE) 游程编码压缩的数据
-    /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         RLE: 游程编码压缩是一种对于有大量重复数据的场景而行之有效的压缩算法，核心思想是将连续重复的值（称为游程）替换为一个值和重复次数。
-    ///         简单的示例: AAAABBBCCCCCDD -> A4B3C5D2
-    ///     </para>
-    ///     <para>
-    ///         ValueCountPair 结构: 前 2 个 Byte [ Count (6 bits) | Value (10 bits) ]，后 2 个 Byte 空闲，如果 Count = 15, 则在该
-    ///         ValueCountPair 4 Byte 之后的 1 个 Byte 和 Count 的加和表示该值重复的次数。
-    ///     </para>
-    /// </remarks>
-    /// <param name="buffer"> 数据源 </param>
-    /// <param name="i"> 开始读取 buffer 的索引 </param>
-    /// <param name="size"> buffer 中有效数据的长度 </param>
-    /// <param name="value"> 读取到的值 </param>
-    /// <param name="count"> 该值重复的次数 </param>
-    /// <returns> 下一个读取点的索引位置 </returns>
+    /// <summary>读取一个游程并返回下一条记录的字节偏移。</summary>
+    /// <remarks>四字节小端格值的第 10 至 13 位保存计数码。码值 0 至 14 表示重复 1 至 15 次；码值 15 时再读一个字节，重复次数为该字节加 16。</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int ReadRleValueFromBuffer(byte[] buffer, int i, int size, out int value, out int count)
     {
@@ -381,12 +320,7 @@ public class TerrainChunkSerializer : IDisposable
         return i + 5;
     }
 
-    /// <summary>
-    ///     写入一个 int 值 4 Byte 到缓冲区
-    /// </summary>
-    /// <param name="buffer"> 写入的目标缓冲区 </param>
-    /// <param name="i"> 缓冲区索引 </param>
-    /// <param name="data"> 写入的数据 </param>
+    /// <summary>在指定字节偏移写入小端 32 位整数。</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void WriteIntToBuffer(byte[] buffer, int i, int data)
     {
@@ -396,25 +330,8 @@ public class TerrainChunkSerializer : IDisposable
         buffer[i + 3] = (byte)(data >> 24);
     }
 
-    /// <summary>
-    ///     使用 RLE 算法将数据写入到缓冲区
-    /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         RLE: 游程编码压缩是一种对于有大量重复数据的场景而行之有效的压缩算法，核心思想是将连续重复的值（称为游程）替换为一个值和重复次数。
-    ///         简单的示例: AAAABBBCCCCCDD -> A4B3C5D2
-    ///     </para>
-    ///     <para>
-    ///         ValueCountPair 结构: 前 2 个 Byte [ Count (6 bits) | Value (10 bits) ]，后 2 个 Byte 空闲，如果 Count > 15, 则在该
-    ///         ValueCountPair 4 Byte 之后的 1 个 Byte 和 Count 的加和表示该值重复的次数。
-    ///     </para>
-    /// </remarks>
-    /// <param name="buffer"> 写入的 buffer </param>
-    /// <param name="i"> 写入 buffer 索引 </param>
-    /// <param name="value"> 写入的值 </param>
-    /// <param name="count"> 重复的次数 </param>
-    /// <returns> 返回下一次写入的索引 </returns>
-    /// <exception cref="InvalidOperationException"> 重复次数超出最大次数或者 Value 值超出最大值会报告该错误 </exception>
+    /// <summary>将 1 至 271 个相同格值编码为一个游程，返回下一条记录的字节偏移。</summary>
+    /// <remarks>前 15 种长度占四字节，长度达到 16 时使用第五个字节保存超出 16 的次数。</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteRleValueToBuffer(byte[] buffer, int i, int value, int count)
     {
@@ -428,7 +345,6 @@ public class TerrainChunkSerializer : IDisposable
             return i + 4;
         }
 
-        // 如果重复次数 > 16 而 <= 271 则在 ValueCountPair(4Byte) 之后加一个字节存储减去 16 之后的重复次数
         if (count <= 271)
         {
             // 注意: 重复计数字段使用格值的保留位10至13，内容与数据位保持原编码
@@ -443,34 +359,16 @@ public class TerrainChunkSerializer : IDisposable
 
     public interface IStorage : IDisposable
     {
-        /// <summary>
-        ///     打开 Region 文件夹，并将需要替换或更新的 Region 文件进行处理
-        /// </summary>
-        /// <param name="directoryName"> Region 文件目录 </param>
-        /// <param name="suffix"> Region 目录的后缀，默认为空字符串 </param>
+        /// <summary>打开用于存放区域文件的目录。</summary>
         void Open(string directoryName, string suffix = "");
 
-        /// <summary>
-        ///     从 Region 文件中加载一个 Chunk 数据块
-        /// </summary>
-        /// <param name="coords"> 坐标 </param>
-        /// <param name="buffer"> Chunk 数据块缓冲区 </param>
-        /// <returns> 读取到的字节数, -1 代表区块没有存档记录 </returns>
+        /// <summary>将区块记录读入缓冲区，返回读取的字节数；记录缺失时返回 -1。</summary>
         int Load(Point2 coords, byte[] buffer);
 
-        /// <summary>
-        ///     保存一个 Chunk 数据块到 Region 文件，如果文件不存在，则创建，存在则更新
-        /// </summary>
-        /// <param name="coords"> 坐标 </param>
-        /// <param name="buffer"> Chunk 数据块缓冲区 </param>
-        /// <param name="size"> 缓冲区大小 </param>
+        /// <summary>将缓冲区的前 <paramref name="size"/> 个字节保存为指定区块的记录。</summary>
         void Save(Point2 coords, byte[] buffer, int size);
 
-        /// <summary>
-        ///     判断数据块或 Region 文件是否存在
-        /// </summary>
-        /// <param name="coords"> 坐标 </param>
-        /// <returns> 是否存在 </returns>
+        /// <summary>判断区域文件中是否有指定区块的记录。</summary>
         bool Exists(Point2 coords);
     }
 
@@ -504,11 +402,7 @@ public class TerrainChunkSerializer : IDisposable
             }
         }
 
-        /// <summary>
-        ///     打开 Region 文件夹，并将需要替换或更新的 Region 文件进行处理
-        /// </summary>
-        /// <param name="directoryName"> Region 文件目录 </param>
-        /// <param name="suffix"> Region 目录的后缀，默认为空字符串 </param>
+        /// <summary>打开区域目录并处理未完成的文件替换；原文件缺失时恢复 .new 文件。</summary>
         public void Open(string directoryName, string suffix = "")
         {
             _regionsDirectoryName = Storage.CombinePaths(directoryName, "Regions" + suffix);
@@ -535,12 +429,7 @@ public class TerrainChunkSerializer : IDisposable
             }
         }
 
-        /// <summary>
-        ///     从 Region 文件中加载一个 Chunk 数据块
-        /// </summary>
-        /// <param name="coords"> 坐标 </param>
-        /// <param name="buffer"> Chunk 数据块缓冲区 </param>
-        /// <returns> 读取到的字节数, -1 代表区块没有存档记录 </returns>
+        /// <inheritdoc />
         public int Load(Point2 coords, byte[] buffer)
         {
             lock (_lock)
@@ -566,12 +455,7 @@ public class TerrainChunkSerializer : IDisposable
             }
         }
 
-        /// <summary>
-        ///     保存一个 Chunk 数据块到 Region 文件，如果文件不存在，则创建，存在则更新
-        /// </summary>
-        /// <param name="coords"> 坐标 </param>
-        /// <param name="buffer"> Chunk 数据块缓冲区 </param>
-        /// <param name="size"> 缓冲区大小 </param>
+        /// <inheritdoc />
         public void Save(Point2 coords, byte[] buffer, int size)
         {
             lock (_lock)
@@ -724,11 +608,7 @@ public class TerrainChunkSerializer : IDisposable
             Storage.MoveFile(text2, newRegionFileName);
         }
 
-        /// <summary>
-        ///     判断数据块或 Region 文件是否存在
-        /// </summary>
-        /// <param name="coords"> 坐标 </param>
-        /// <returns> 是否存在 </returns>
+        /// <inheritdoc />
         public bool Exists(Point2 coords)
         {
             lock (_lock)
@@ -932,21 +812,13 @@ public class TerrainChunkSerializer : IDisposable
             return result;
         }
 
-        /// <summary>
-        ///     计算合适的 Chunk 空闲空间以避免频繁的重建 Region 文件
-        /// </summary>
-        /// <param name="size"> 占用的大小 </param>
-        /// <returns> 调整后的大小 </returns>
+        /// <summary>为区块数据预留增长空间，减少区域文件的重建次数。</summary>
         private static int CalculateIdealEntrySpace(int size)
         {
             return size + _extraSpaceBytes + 4;
         }
 
-        /// <summary>
-        ///     将长度为 4 的字符串转换成无符号整形数 unit
-        /// </summary>
-        /// <param name="s"> 需要转换的字符串 </param>
-        /// <returns> 转换结果 </returns>
+        /// <summary>将四字符标识按小端顺序打包为 32 位文件签名。</summary>
         private static uint MakeFourCc(string s)
         {
             if (s.Length != 4)

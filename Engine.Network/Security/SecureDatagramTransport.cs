@@ -4,7 +4,7 @@ using Org.BouncyCastle.Tls;
 
 namespace Engine.Network.Security;
 
-/// <summary>Bounded handshake mailbox and synchronous DTLS record output capture.</summary>
+/// <summary>限制待处理握手消息的数量，并同步捕获 DTLS 记录输出。</summary>
 internal sealed class SecureDatagramTransport(Action<byte[]> send, int maximumDatagram) : DatagramTransport
 {
     private readonly BlockingCollection<byte[]> _incoming = new(64);

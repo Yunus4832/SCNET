@@ -1,6 +1,6 @@
 namespace Game.Terrains.Execution;
 
-/// <summary>Bounded per-allocation terrain work with explicit waits and elapsed-time service fairness.</summary>
+/// <summary>按区块分配周期限制地形工作量，显式跟踪等待条件，并按已用服务时间公平调度。</summary>
 public sealed class TerrainWorkQueue(TimeProvider? timeProvider = null)
 {
     private readonly Lock _sync = new();

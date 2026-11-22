@@ -4,7 +4,7 @@ using Game.Network.Chunks;
 
 namespace Game.Terrains.Distribution;
 
-/// <summary>Prioritizes authority content requests and publishes owned logical snapshots for every connection.</summary>
+/// <summary>为权威内容请求排序，并向各连接发布独立持有的逻辑快照。</summary>
 public sealed class ServerChunkDistributionScheduler : IDisposable
 {
     private readonly Project _project;

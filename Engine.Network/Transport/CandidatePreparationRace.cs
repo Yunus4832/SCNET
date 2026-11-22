@@ -4,7 +4,7 @@ using Engine.Network.Rendezvous;
 
 namespace Engine.Network.Transport;
 
-/// <summary>Selects a confirmed candidate only after all losing preparations have ended.</summary>
+/// <summary>其余候选路径的准备工作结束后才选用已确认的路径。</summary>
 internal static class CandidatePreparationRace
 {
     internal static async Task<ConnectionPreparation> SelectAsync(

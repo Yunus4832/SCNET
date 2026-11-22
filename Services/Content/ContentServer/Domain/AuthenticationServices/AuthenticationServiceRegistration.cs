@@ -9,7 +9,7 @@ namespace ContentServer.Domain.AuthenticationServices;
 
 public partial record AuthenticationServiceRegistrationId : IGuidStronglyTypedId;
 
-/// <summary>A reviewed source address. Authentication identities and grants are owned by the service and its clients.</summary>
+/// <summary>已审核的来源地址，认证身份和授权凭据由服务及其客户端管理。</summary>
 public sealed class AuthenticationServiceRegistration : Entity<AuthenticationServiceRegistrationId>, IAggregateRoot
 {
     private AuthenticationServiceRegistration()

@@ -34,7 +34,7 @@ public abstract class ElectricElement(
         return false;
     }
 
-    /// <summary>Restores replicated persistent state and reports whether an output changed.</summary>
+    /// <summary>恢复同步的持久状态，并返回输出是否发生变化。</summary>
     public virtual bool RestorePersistentVoltage(float voltage)
     {
         return false;

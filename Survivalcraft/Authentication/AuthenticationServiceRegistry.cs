@@ -6,7 +6,7 @@ using SCNET.Authentication.Protocol.Http;
 
 namespace Game.Authentication;
 
-/// <summary>Instance-installed trust configuration, independent of Settings, grants, and world roles.</summary>
+/// <summary>实例已安装的信任配置，独立于 Settings、授权凭据和世界角色。</summary>
 public sealed class AuthenticationServiceRegistry
 {
     private readonly Lock _gate = new();

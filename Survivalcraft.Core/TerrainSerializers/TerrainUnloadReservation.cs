@@ -1,6 +1,6 @@
 namespace Game.TerrainSerializers;
 
-/// <summary>A single-use save-capacity lease for one unload callback and chunk allocation.</summary>
+/// <summary>为一次区块分配的卸载回调预留的单次保存容量。</summary>
 public sealed class TerrainUnloadReservation : IDisposable
 {
     private TerrainSaveCoordinator? _owner;
@@ -19,7 +19,7 @@ public sealed class TerrainUnloadReservation : IDisposable
         Coords = chunk.Coords;
     }
 
-    /// <summary>Captures the final dirty data after callbacks and consumes this lease even on failure.</summary>
+    /// <summary>回调完成后捕获最终的脏数据，即使失败也会消耗本次预留。</summary>
     public bool Commit(TerrainChunk chunk)
     {
         var owner = Interlocked.Exchange(ref _owner, null);

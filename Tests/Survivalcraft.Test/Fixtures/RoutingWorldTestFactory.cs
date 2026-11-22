@@ -4,7 +4,7 @@ using Game.World;
 
 namespace Survivalcraft.Test.Fixtures;
 
-/// <summary>Creates a logical routing world with an explicitly empty or supplied test catalog.</summary>
+/// <summary>使用显式提供的测试目录或空目录构造逻辑路由世界。</summary>
 internal static class RoutingWorldTestFactory
 {
     public static WorldRuntimeContext Create(RuntimeSide side) => Create(side, PackageHandlerCatalog.Empty);

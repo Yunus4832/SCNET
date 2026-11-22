@@ -4,7 +4,7 @@ using EntitySystem.Core;
 
 namespace Game.Modding.Blocks;
 
-/// <summary>Owns one actual catalog until the world's final resource-release phase.</summary>
+/// <summary>持有实际使用的目录，直到世界进入最后一组资源的释放阶段。</summary>
 public sealed class WorldContentBinding : IDisposable
 {
     private static readonly ConditionalWeakTable<WorldRuntimeContext, WorldContentBinding> _bindings = new();

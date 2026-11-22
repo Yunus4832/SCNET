@@ -1,6 +1,6 @@
 namespace Game.Terrains.Lighting;
 
-/// <summary>Section-sized wire data; unchanged immutable sections are retained by both ends.</summary>
+/// <summary>按分段传输光照数据，两端均保留未变更的不可变分段。</summary>
 public static class TerrainLightSectionsCodec
 {
     public static TerrainLightSectionsPackage Capture(

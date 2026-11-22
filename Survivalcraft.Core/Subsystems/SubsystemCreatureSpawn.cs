@@ -1720,11 +1720,8 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
         return null;
     }
 
-    /// <summary>
-    /// </summary>
-    /// <param name="chunk">区块</param>
-    /// <param name="maxAttempts">最大尝试次数</param>
-    /// <param name="constantSpawn">true 是新生成 false 是旧生成(上次生成由于数量限制等原因导致没有生成)</param>
+    /// <summary>在生物总量和区域数量限制内，尝试为指定区块生成生物。</summary>
+    /// <param name="constantSpawn">为 true 时使用持续生成的生物类别和配额，为 false 时使用新区块生成的类别和配额。</param>
     private void SpawnChunkCreatures(SpawnChunk chunk, int maxAttempts, bool constantSpawn)
     {
         if (GetSpawnFactorByPlayerCount() == 0)

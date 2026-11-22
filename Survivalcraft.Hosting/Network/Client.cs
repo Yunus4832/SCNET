@@ -15,10 +15,7 @@ public class Client : WorldConnection
         TokenId = Guid.NewGuid();
     }
 
-    /// <summary>
-    ///     服务端创建新的Client
-    /// </summary>
-    /// <param name="netPeer">peer</param>
+    /// <summary> 服务端创建新的Client </summary>
     /// <param name="id">客户端ID</param>
     /// <param name="tokenId">客户端tokenId</param>
     /// <param name="characterId">当前控制的角色 ID；尚无角色时为 Guid.Empty。</param>

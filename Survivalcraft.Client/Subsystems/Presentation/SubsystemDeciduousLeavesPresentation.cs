@@ -3,7 +3,7 @@ using EntitySystem.TemplatesDatabase;
 
 namespace Game.Subsystems;
 
-/// <summary>Client-owned ambient leaf scheduling. Shaking particles remain in the block dig presentation.</summary>
+/// <summary>由客户端调度环境落叶；摇动树叶产生的粒子由方块挖掘表现处理。</summary>
 public sealed class SubsystemDeciduousLeavesPresentation : Subsystem, IUpdateable
 {
     public UpdateExecutionSide UpdateSide => UpdateExecutionSide.Presentation;

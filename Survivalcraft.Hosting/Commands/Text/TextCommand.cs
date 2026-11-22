@@ -1,9 +1,6 @@
 namespace Game.Commands.Text;
 
-/// <summary>
-///     Declares textual names and routes for the text frontend. This is a binding,
-///     not an executable command definition.
-/// </summary>
+/// <summary>为文本前端声明命令名称和路由，可执行操作由对应的命令定义提供。</summary>
 public sealed class TextCommand : ICommandAdapterBinding
 {
     public string Name { get; }

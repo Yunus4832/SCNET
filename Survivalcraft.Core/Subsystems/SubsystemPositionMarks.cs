@@ -5,7 +5,7 @@ using Game.Protocol.Identity;
 
 namespace Game.Subsystems;
 
-/// <summary>World-owned public marks and player-addressed private marks, independent of role lifetimes.</summary>
+/// <summary>管理世界公共标记和按玩家寻址的私有标记，其生命周期独立于角色。</summary>
 public sealed class SubsystemPositionMarks : Subsystem
 {
     private readonly PositionMarkStore _store = new();

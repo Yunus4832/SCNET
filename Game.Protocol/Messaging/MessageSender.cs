@@ -5,7 +5,7 @@ using MessagePack;
 namespace Game.Protocol.Messaging;
 
 [MessagePackObject]
-/// <summary>Server-authored subject identity and immutable character/name context at send time.</summary>
+/// <summary>服务器在发送时确定的主体身份、角色和名称上下文，发送后保持固定。</summary>
 public sealed record MessageSender(
     [property: Key(0)] PlayerAddress SubjectAddress,
     [property: Key(1)] string SubjectName,

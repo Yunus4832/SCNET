@@ -7,7 +7,7 @@ using Silk.NET.OpenAL;
 
 namespace Engine.Audio;
 
-/// <summary>A coalesced playback intent; native state belongs exclusively to the audio service.</summary>
+/// <summary>合并后的播放请求，原生播放状态由音频服务独占。</summary>
 public abstract class BaseSound : IDisposable, IAsyncDisposable
 {
     private readonly Lock _sync = new();

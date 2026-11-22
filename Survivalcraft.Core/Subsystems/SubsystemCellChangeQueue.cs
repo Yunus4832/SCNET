@@ -5,7 +5,7 @@ using Game.Terrains.Execution;
 
 namespace Game.Subsystems;
 
-/// <summary>Deferred natural changes run on the authority update thread in bounded batches.</summary>
+/// <summary>在权威端更新线程上分批执行延后的自然变化，每批有数量上限。</summary>
 public class SubsystemCellChangeQueue : Subsystem, IUpdateable
 {
     public UpdateExecutionSide UpdateSide => UpdateExecutionSide.Authority;
@@ -64,7 +64,7 @@ public class SubsystemCellChangeQueue : Subsystem, IUpdateable
         );
     }
 
-    /// <summary>False leaves natural state unchanged; the next ordinary poll can retry.</summary>
+    /// <summary>返回 false 时保留自然状态，可在下一次常规轮询时重试。</summary>
     public bool TryQueueCellChange(int x, int y, int z, int value, bool applyImmediately = false)
     {
         if (_disposed ||
@@ -80,7 +80,7 @@ public class SubsystemCellChangeQueue : Subsystem, IUpdateable
         return _changes!.TryEnqueue(new Point3(x, y, z), value);
     }
 
-    /// <summary>Queues a related set only when every intent fits; application retains per-cell conditions.</summary>
+    /// <summary>仅在整组变更都能入队时接纳请求，应用时仍逐格检查条件。</summary>
     public bool TryQueueCellChanges(ReadOnlySpan<(Point3 Point, int Value)> changes)
     {
         return !_disposed &&

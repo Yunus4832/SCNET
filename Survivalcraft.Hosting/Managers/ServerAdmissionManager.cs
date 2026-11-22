@@ -6,7 +6,7 @@ using SCNET.Authentication.Protocol.Http;
 
 namespace Game.Managers;
 
-/// <summary>Validates admission settings and resolves effective policies at server startup.</summary>
+/// <summary>服务器启动时校验准入设置并确定生效策略。</summary>
 public static class ServerAdmissionManager
 {
     public static ServerAdmissionPolicy Resolve(ServerAdmissionOverrides overrides, ServerAdmissionPolicy saved)

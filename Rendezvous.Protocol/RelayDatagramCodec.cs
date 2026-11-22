@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 
 namespace Rendezvous.Protocol;
 
-/// <summary>Authenticates a bounded raw transport datagram without exposing its route key.</summary>
+/// <summary>验证有长度限制的原始传输数据报，并保护路由密钥。</summary>
 public static class RelayDatagramCodec
 {
     public const byte CurrentVersion = 1;

@@ -1,6 +1,6 @@
 namespace Engine.Network.Transport;
 
-/// <summary>Preserves notification order while reserving independent capacity for lifecycle events.</summary>
+/// <summary>维持通知顺序，同时为生命周期事件单独预留容量。</summary>
 internal sealed class NetworkNotificationQueue(int dataCapacity, int byteCapacity, int controlCapacity)
 {
     private readonly Lock _gate = new();

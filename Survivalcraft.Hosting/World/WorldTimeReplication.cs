@@ -2,7 +2,7 @@ using EntitySystem.Core;
 
 namespace Game.World;
 
-/// <summary>Owns transport publication for one authority project's core clock facts.</summary>
+/// <summary>管理单个权威项目核心时钟信息的传输发布。</summary>
 public sealed class WorldTimeReplication : IDisposable
 {
     private readonly Project _project;

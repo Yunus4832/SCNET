@@ -12,7 +12,7 @@ public sealed class ModelNodeData : ModelElementData
 
     public Vector3 Scale = Vector3.One;
 
-    /// <summary>Authored TRS is retained separately: decomposing a matrix can change animated negative-scale semantics.</summary>
+    /// <summary>单独保留创作时的平移、旋转和缩放，避免矩阵分解改变负缩放动画的语义。</summary>
     public Matrix Transform => MatrixTransform ??
                                Matrix.CreateScale(Scale) *
                                Matrix.CreateFromQuaternion(Rotation) *
@@ -26,6 +26,6 @@ public sealed class ModelNodeData : ModelElementData
 
     public int CameraIndex = -1;
 
-    /// <summary>Null inherits the mesh's default morph weights.</summary>
+    /// <summary>为空时继承网格的默认形变权重。</summary>
     public float[]? MorphWeights;
 }

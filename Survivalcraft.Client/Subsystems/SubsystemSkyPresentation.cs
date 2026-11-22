@@ -310,7 +310,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                     _subsystemTimeOfDay.TimeOfDay,
                     _subsystemWeather.PrecipitationIntensity,
                     seasonalTemperature
-                ); //与2.4相比保留了降水效果，但是降水因素不再参与天空颜色计算，此处保留是为了和modmanager兼容
+                );
                 var color2 = CalculateSkyColor(
                     new Vector3(0f, 0f, 1f),
                     _subsystemTimeOfDay.TimeOfDay,
@@ -688,7 +688,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         var precipitationIntensity = _subsystemWeather.PrecipitationIntensity;
         var timeOfDay = _subsystemTimeOfDay.TimeOfDay;
         var f = MathUtils.Max(CalculateDawnGlowIntensity(timeOfDay), CalculateDuskGlowIntensity(timeOfDay));
-        //float num = 2f * timeOfDay * (float)Math.PI;
+
         var sunAngle = (float)Math.PI * 2f * (timeOfDay - _subsystemTimeOfDay.Midday);
         var moonAngle = sunAngle + (float)Math.PI;
         var sunRadius = MathUtils.Lerp(90f, 160f, f);
@@ -954,18 +954,6 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
         if (color.A > 0)
         {
-            //Vector3 vector = default(Vector3);
-            //vector.X = 0f - MathUtils.Sin(angle);
-            //vector.Y = 0f - MathUtils.Cos(angle);
-            //vector.Z = 0f;
-            //Vector3 vector2 = vector;
-            //Vector3 unitZ = Vector3.UnitZ;
-            //Vector3 v = Vector3.Cross(unitZ, vector2);
-            //Vector3 p = viewPosition + vector2 * distance - radius * unitZ - radius * v;
-            //Vector3 p2 = viewPosition + vector2 * distance + radius * unitZ - radius * v;
-            //Vector3 p3 = viewPosition + vector2 * distance + radius * unitZ + radius * v;
-            //Vector3 p4 = viewPosition + vector2 * distance - radius * unitZ + radius * v;
-            //batch.QueueQuad(p, p2, p3, p4, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f), color);
             var m = Matrix.Identity;
             m *= Matrix.CreateTranslation(0f, distance, 0f);
             m *= Matrix.CreateRotationZ(0f - angle);
@@ -1013,7 +1001,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         direction = Vector3.Normalize(direction);
         var vector = Vector2.Normalize(new Vector2(direction.X, direction.Z));
         var s = _sky.CalculateLightIntensity(timeOfDay);
-        var f = MathUtils.Saturate(temperature / 15f); //new
+        var f = MathUtils.Saturate(temperature / 15f);
         var v = new Vector3(0.65f, 0.68f, 0.7f) * s;
         var v2 = Vector3.Lerp(new Vector3(0.28f, 0.38f, 0.52f), new Vector3(0.15f, 0.3f, 0.56f), f);
         var v3 = Vector3.Lerp(new Vector3(0.7f, 0.79f, 0.88f), new Vector3(0.64f, 0.77f, 0.91f), f);
@@ -1206,7 +1194,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
         public readonly ushort[] Indices = new ushort[714];
 
-        public float? LastUpdateFogDensity; //new
+        public float? LastUpdateFogDensity;
 
         public float LastUpdateLightningStrikeBrightness;
 

@@ -5,7 +5,7 @@ using Engine.Core.Security;
 
 namespace Engine.Network.Security;
 
-/// <summary>A peer's proven P-256 public key. Trust must be decided independently of proof of possession.</summary>
+/// <summary>对端已证明持有对应私钥的 P-256 公钥；是否信任该身份须另行判断。</summary>
 public sealed class NetworkPeerIdentity
 {
     private readonly byte[] _publicKey;

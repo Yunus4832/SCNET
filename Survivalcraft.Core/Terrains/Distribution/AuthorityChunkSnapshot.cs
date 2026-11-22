@@ -1,8 +1,6 @@
 namespace Game.Terrains.Distribution;
 
-/// <summary>
-///     Immutable-by-contract view of authoritative chunk contents.
-/// </summary>
+/// <summary>按契约只读的权威区块内容视图。</summary>
 public sealed class AuthorityChunkSnapshot
 {
     public const int CellCount = 16 * 16 * 256;

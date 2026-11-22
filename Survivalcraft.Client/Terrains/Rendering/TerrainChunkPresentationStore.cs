@@ -2,8 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Game.Terrains.Rendering;
 
-/// <summary>Per-client-world ownership of chunk presentation resources.</summary>
-/// <remarks>Release, renewal and disposal require the terrain worker to be synchronized or stopped.</remarks>
+/// <summary>每个客户端世界独立管理其区块表现资源。</summary>
+/// <remarks>释放、续用和销毁前须同步或停止地形工作线程。</remarks>
 public sealed class TerrainChunkPresentationStore : IDisposable
 {
     private readonly Dictionary<TerrainChunk, (ulong Generation, TerrainChunkPresentation Presentation)> _entries =
@@ -33,7 +33,7 @@ public sealed class TerrainChunkPresentationStore : IDisposable
 
     public TerrainChunkPresentation Get(TerrainChunk chunk) => Get(chunk, chunk.AllocationGeneration);
 
-    /// <summary>Rejects work that still addresses an older allocation of a retained chunk.</summary>
+    /// <summary>拒绝仍引用保留区块旧分配周期的工作。</summary>
     public TerrainChunkPresentation Get(TerrainChunk chunk, ulong allocationGeneration)
     {
         lock (_sync)

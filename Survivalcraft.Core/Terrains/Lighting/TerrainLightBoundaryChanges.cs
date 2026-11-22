@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Game.Terrains.Lighting;
 
-/// <summary>Changed sections on each horizontal edge or corner of an authority light snapshot.</summary>
+/// <summary>权威光照快照各水平边缘及角落发生变化的分段。</summary>
 public struct TerrainLightBoundaryChanges : IEquatable<TerrainLightBoundaryChanges>
 {
     [InlineArray(9)]
@@ -13,7 +13,7 @@ public struct TerrainLightBoundaryChanges : IEquatable<TerrainLightBoundaryChang
 
     private SectionMasks _masks;
 
-    /// <summary>Offset from the mesh to the sampled light chunk. A chunk to the east exposes its west edge.</summary>
+    /// <summary>从网格到被采样光照区块的偏移；东侧区块向该网格提供西侧边缘。</summary>
     public readonly ushort ForSampledNeighbor(Point2 offset) => _masks[(offset.X + 1) * 3 + offset.Y + 1];
 
     public readonly bool Equals(TerrainLightBoundaryChanges other)

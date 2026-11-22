@@ -16,7 +16,7 @@ using MaxLengthAttribute = System.ComponentModel.DataAnnotations.MaxLengthAttrib
 
 namespace Game.Protocol.Serialization;
 
-/// <summary>Validates declared MessagePack shapes before generated formatters allocate their object graph.</summary>
+/// <summary>在生成的格式化器分配对象前验证声明的 MessagePack 结构。</summary>
 internal static class ProtocolShapeGuard
 {
     private const int _maximumCollectionLength = ushort.MaxValue;

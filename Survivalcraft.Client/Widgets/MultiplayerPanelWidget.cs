@@ -5,10 +5,7 @@ using Game.Commands.BuiltIn;
 
 namespace Game.Widgets;
 
-/// <summary>
-///     Full player operations panel. It is hosted by ComponentGui.ModalPanelWidget
-///     and is therefore mutually exclusive with inventory, clothing and messages.
-/// </summary>
+/// <summary>完整的玩家操作面板，由 ComponentGui.ModalPanelWidget 承载，与物品栏、衣物和消息面板互斥。</summary>
 public sealed class MultiplayerPanelWidget : CanvasWidget
 {
     private enum Tab

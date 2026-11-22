@@ -1,6 +1,6 @@
 namespace Game.Managers;
 
-/// <summary>Owned immutable content bytes with independent read cursors for background preparation.</summary>
+/// <summary>持有不可变资源字节，后台预处理可使用独立的读取游标。</summary>
 public class ContentInfo : IDisposable
 {
     private sealed record ContentBytes(byte[] Data, int Offset, int Count);
@@ -23,7 +23,7 @@ public class ContentInfo : IDisposable
         Filename = Path.GetFileName(absolutePath);
     }
 
-    /// <summary>Takes ownership of the stream and freezes its complete content.</summary>
+    /// <summary>接管输入流并固定其完整内容。</summary>
     public void SetContentStream(Stream stream)
     {
         using (stream)

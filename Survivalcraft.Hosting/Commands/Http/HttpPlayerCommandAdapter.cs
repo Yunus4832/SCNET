@@ -7,7 +7,7 @@ using Game.Localization;
 
 namespace Game.Commands.Http;
 
-/// <summary>GUI HTTP requests bound to the current player, never to a supplied identity.</summary>
+/// <summary>将 GUI 的 HTTP 请求绑定到当前玩家，忽略请求方提供的身份。</summary>
 public sealed class HttpPlayerCommandAdapter(
     Func<CharacterData?> getPlayer,
     Func<CommandRegistry?> getRegistry,

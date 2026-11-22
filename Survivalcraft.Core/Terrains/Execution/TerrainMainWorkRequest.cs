@@ -1,6 +1,6 @@
 namespace Game.Terrains.Execution;
 
-/// <summary>A durable foreground request that other foreground operations cannot consume.</summary>
+/// <summary>持续有效的前台请求，其他前台操作不能消耗它。</summary>
 public sealed class TerrainMainWorkRequest : IDisposable
 {
     internal readonly TerrainWorkExecutor executor;
@@ -26,7 +26,7 @@ public sealed class TerrainMainWorkRequest : IDisposable
 
     public void Leave() => executor.Leave(this);
 
-    /// <summary>Releases this request's single access lease while keeping its worker pause pending.</summary>
+    /// <summary>释放该请求唯一的访问租约，同时保留暂停工作线程的请求。</summary>
     public void YieldAccess() => executor.YieldAccess(this);
 
     public void Dispose() => executor.Cancel(this);

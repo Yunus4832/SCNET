@@ -1,6 +1,6 @@
 namespace Game.World.Timing;
 
-/// <summary>Host-supplied real update timing for one world, independent of rendering and game-time acceleration.</summary>
+/// <summary>宿主提供的单个世界的实际更新时间，独立于渲染及游戏时间加速。</summary>
 public sealed class WorldUpdateClock
 {
     public long TickIndex { get; private set; }

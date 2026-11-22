@@ -894,10 +894,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         return false;
     }
 
-    /**
-     * 骑乘位置控制
-     * 下落位置控制
-     */
+    /// <summary>应用平滑抬升，再依次沿 Y、X、Z 轴处理移动碰撞。</summary>
     public void MoveWithCollision(float dt, Vector3 move)
     {
         var position = base.Position;

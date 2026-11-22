@@ -4,7 +4,7 @@ using SCNET.Authentication.Protocol.Security;
 
 namespace SCNET.Authentication.Protocol.Contracts;
 
-/// <summary>One connection's random challenge; all fields are covered by the provider approval.</summary>
+/// <summary>单次连接的随机质询，提供方的批准覆盖其全部字段。</summary>
 public sealed record AdmissionChallenge(
     string Subject,
     string Server,

@@ -1,6 +1,6 @@
 namespace Game.Terrains.Lighting;
 
-/// <summary>Keeps related replica light updates together until presentation or invalidation.</summary>
+/// <summary>让副本的关联光照更新保持成组，直到呈现或失效。</summary>
 public sealed class TerrainLightPresentationBatch(IReadOnlyList<ChunkAllocationId> allocations)
 {
     public readonly record struct Source(

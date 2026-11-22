@@ -3,7 +3,7 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Engine.Network.Security;
 
-/// <summary>Caller-owned persistent transport identity. Exported private keys must be protected by the caller.</summary>
+/// <summary>由调用方持有的持久传输身份，导出的私钥须由调用方保护。</summary>
 public sealed class NetworkIdentity : IDisposable
 {
     private readonly Lock _gate = new();

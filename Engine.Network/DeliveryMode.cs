@@ -1,6 +1,6 @@
 namespace Engine.Network;
 
-/// <summary>Delivery semantics independent of the transport implementation.</summary>
+/// <summary>定义独立于具体传输实现的投递语义。</summary>
 public enum DeliveryMode
 {
     ReliableOrdered = 0,

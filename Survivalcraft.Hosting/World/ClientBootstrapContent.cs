@@ -4,7 +4,7 @@ using EntitySystem.Core;
 
 namespace Game.World;
 
-/// <summary>Client installation queues and pending content bytes for one actual client world.</summary>
+/// <summary>管理客户端世界的安装队列及待安装的内容字节。</summary>
 public sealed class ClientBootstrapContent : IDisposable
 {
     private static readonly ConditionalWeakTable<WorldRuntimeContext, ClientBootstrapContent> _bindings = new();

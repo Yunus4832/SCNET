@@ -2,7 +2,7 @@ using Game.Terrains.Distribution;
 
 namespace Game.Network.Chunks;
 
-/// <summary>Adapts owned logical snapshots into bounded native transfers, sharing one encoder and cache per node.</summary>
+/// <summary>将独立持有的逻辑快照转换为有界的原生传输，每个节点共享一个编码器和缓存。</summary>
 internal sealed class NativeTerrainDelivery : IDisposable
 {
     internal const int maximumActiveTransfersPerClient = 4;

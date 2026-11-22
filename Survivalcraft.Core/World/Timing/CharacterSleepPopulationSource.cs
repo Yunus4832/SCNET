@@ -1,6 +1,6 @@
 namespace Game.World.Timing;
 
-/// <summary>Reads the actual current playable-character population after game-time callbacks have run.</summary>
+/// <summary>游戏时间回调执行后读取当前实际可玩的角色数量。</summary>
 public sealed class CharacterSleepPopulationSource(SubsystemCharacters characters)
 {
     public CharacterSleepPopulation ReadPopulation()

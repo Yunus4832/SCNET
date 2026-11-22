@@ -3,7 +3,7 @@ using Game.Terrains.Lighting;
 
 namespace Game.Terrains.Distribution;
 
-/// <summary>Owns client content delivery handoff, application, and demand-driven retry scheduling.</summary>
+/// <summary>管理客户端内容的交接、应用及按需重试调度。</summary>
 public sealed class ClientTerrainContentPump : IDisposable
 {
     public const double NetworkChunkRequestRetrySeconds = 5.0;

@@ -2,7 +2,7 @@ using Game.Terrains.Distribution;
 
 namespace Game.Network.Chunks;
 
-/// <summary>Native-only fragment recovery and decoding; complete messages reserve capacity before entering the inbox.</summary>
+/// <summary>在原生传输层恢复并解码分片，完整消息进入收件队列前须预留容量。</summary>
 internal sealed class NativeTerrainReceiver : IDisposable
 {
     private readonly WorldRuntimeContext _runtime;

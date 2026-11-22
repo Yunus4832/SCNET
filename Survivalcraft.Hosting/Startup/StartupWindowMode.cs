@@ -1,6 +1,6 @@
 namespace Game.Startup;
 
-/// <summary>Window presentation requested by the host, independent of a window backend.</summary>
+/// <summary>描述宿主请求的窗口呈现方式，独立于具体窗口后端。</summary>
 public enum StartupWindowMode
 {
     Resizable = 0,

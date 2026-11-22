@@ -7,7 +7,7 @@ using EntitySystem.XmlUtilities;
 
 namespace Game.Configuration;
 
-/// <summary>Persists the preference owners composed by the application using one atomic XML store.</summary>
+/// <summary>将应用组合的各组偏好设置原子写入同一份 XML 存储。</summary>
 public sealed class PreferenceStore
 {
     private readonly string _path;

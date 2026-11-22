@@ -6,7 +6,7 @@ using LiteNetLib;
 
 namespace Engine.Network;
 
-/// <summary>A bounded pending handshake that the application explicitly accepts or rejects.</summary>
+/// <summary>等待应用显式接受或拒绝的握手请求，待处理请求数有上限。</summary>
 public sealed class NetworkConnectionRequest
 {
     private readonly ConnectionRequest _request;

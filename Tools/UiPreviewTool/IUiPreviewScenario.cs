@@ -3,7 +3,7 @@ using Game.Widgets;
 
 namespace Scnet.UiPreviewTool;
 
-/// <summary>Explicit fixture construction for widgets that cannot be created from XML alone.</summary>
+/// <summary>为无法仅靠 XML 创建的控件显式构造测试夹具。</summary>
 public interface IUiPreviewScenario
 {
     IEnumerable<ModDescriptor> CreateMods() => [];

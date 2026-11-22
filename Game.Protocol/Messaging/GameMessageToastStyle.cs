@@ -2,7 +2,7 @@ using MessagePack;
 
 namespace Game.Protocol.Messaging;
 
-/// <summary>Explicit toast-only presentation. Message tone and history retain their independent meaning.</summary>
+/// <summary>指定仅通过浮动提示展示，消息语气和历史记录仍按各自规则处理。</summary>
 [MessagePackObject]
 public sealed record GameMessageToastStyle(
     [property: Key(0)] GameMessageTone Tone,

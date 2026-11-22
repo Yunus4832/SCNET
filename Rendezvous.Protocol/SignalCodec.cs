@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace Rendezvous.Protocol;
 
-/// <summary>Separates versioned rendezvous control messages from application datagrams.</summary>
+/// <summary>将带版本的会合服务控制消息与应用数据报区分开。</summary>
 public static class SignalCodec
 {
     public const byte CurrentVersion = 1;

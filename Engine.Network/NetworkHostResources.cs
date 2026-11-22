@@ -1,6 +1,6 @@
 namespace Engine.Network;
 
-/// <summary>Approximate live resource counts; stopped hosts converge to zero.</summary>
+/// <summary>当前活动资源数的近似值；宿主停止后逐步归零。</summary>
 public readonly record struct NetworkHostResources(
     int Connections,
     int PendingConnections,

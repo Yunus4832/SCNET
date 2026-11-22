@@ -2,7 +2,7 @@ using System.Net;
 
 namespace RendezvousServer;
 
-/// <summary>Bounds control traffic and source tracking within a one-second window.</summary>
+/// <summary>按一秒窗口限制控制流量及所跟踪的来源数量。</summary>
 public sealed class UdpRequestBudget(TimeProvider clock, int perAddressLimit = 120, int totalLimit = 4096)
 {
     private readonly Dictionary<IPAddress, int> _counts = new();

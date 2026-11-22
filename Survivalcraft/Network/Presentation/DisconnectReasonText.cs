@@ -1,6 +1,6 @@
 namespace Game.Network.Presentation;
 
-/// <summary>Formats disconnect facts at the client display boundary.</summary>
+/// <summary>在客户端展示时格式化断开连接的原因和上下文。</summary>
 public static class DisconnectReasonText
 {
     public static string Format(NodeStopReason reason)

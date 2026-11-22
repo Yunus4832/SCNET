@@ -29,8 +29,6 @@ public static class CharacterSkinsManager
     /// <summary>
     ///     是否为Pak资源
     /// </summary>
-    /// <param name="name"></param>
-    /// <returns></returns>
     public static bool IsBuiltIn(string name)
     {
         return name.StartsWith('$');

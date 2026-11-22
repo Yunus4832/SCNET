@@ -4,7 +4,7 @@ using Engine.Media.Models;
 
 namespace Engine.Graphics;
 
-/// <summary>Shared CPU geometry for a source mesh and one immutable set of default morph weights.</summary>
+/// <summary>源网格在一组固定默认形变权重下共享的 CPU 几何数据。</summary>
 public sealed class ModelMesh
 {
     private readonly List<ModelPrimitive> _primitives = [];

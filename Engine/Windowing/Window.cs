@@ -57,9 +57,7 @@ public static partial class Window
 
     public static bool HasWideNotch { get; private set; }
 
-    /// <summary>
-    ///     Display cutout insets in framebuffer pixels. X: left, Y: top, Z: right, W: bottom.
-    /// </summary>
+    /// <summary>以帧缓冲区像素表示的屏幕缺口边距，X、Y、Z、W 依次对应左、上、右、下。</summary>
     public static Vector4 DisplayCutoutInsets { get; private set; } = Vector4.Zero;
 
     public static float Scale { get; set; } = 1.0f;

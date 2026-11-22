@@ -6,6 +6,6 @@ public sealed class ModelCameraData : ModelElementData
 {
     public string Type = string.Empty;
 
-    /// <summary>Standard perspective or orthographic projection parameters.</summary>
+    /// <summary>标准透视或正交投影参数。</summary>
     public JsonObject Projection = [];
 }

@@ -1,6 +1,6 @@
 namespace Game.Terrains.Generation;
 
-/// <summary>Creates environment queries for every supported terrain generation mode.</summary>
+/// <summary>为支持的地形生成配置创建环境查询对象。</summary>
 public static class TerrainEnvironment
 {
     public static ITerrainEnvironment Create(WorldSettings settings, int seed)

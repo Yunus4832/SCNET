@@ -6,8 +6,8 @@ using Game.Terrains.Generation;
 
 namespace Game.Terrains.Distribution;
 
-/// <summary>Acquires authoritative contents and hands generated results to the world's publication owner.</summary>
-/// <remarks>Generation and publication operations are serialized by the owning terrain executor.</remarks>
+/// <summary>获取权威区块内容，并将生成结果交给世界的发布管理者。</summary>
+/// <remarks>所属地形执行器串行执行生成和发布操作。</remarks>
 public sealed class AuthoritativeChunkGenerationPipeline(
     ITerrainContentsGenerator generator,
     Func<TerrainChunk, bool> restorePendingSave,
@@ -36,7 +36,7 @@ public sealed class AuthoritativeChunkGenerationPipeline(
 
     private int _disposed;
 
-    /// <summary>Thread-safe availability hint; the owner still takes and validates tickets under terrain access.</summary>
+    /// <summary>线程安全的可用性提示；管理者仍须在持有地形访问权时取出并校验票据。</summary>
     public bool HasPendingPublications => Volatile.Read(ref _disposed) == 0 && !_publications.IsEmpty;
 
     public TerrainGenerationStage GetStage(TerrainChunk chunk)
@@ -132,6 +132,7 @@ public sealed class AuthoritativeChunkGenerationPipeline(
         }
     }
 
+    /// <summary>取出有效票据，调用方须用 <see cref="CompletePublication"/> 完成处理。失效票据也占用 <paramref name="maximumCandidates"/> 额度，返回 false 时队列仍可能有待处理票据。</summary>
     public bool TryTakePublication([NotNullWhen(true)] out Publication? publication, int maximumCandidates = 64)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumCandidates);
@@ -161,7 +162,7 @@ public sealed class AuthoritativeChunkGenerationPipeline(
         return false;
     }
 
-    /// <summary>Consumes one taken publication; stale tickets never reset a newer allocation's progress.</summary>
+    /// <summary>消耗一张已取出的发布票据；过期票据不会重置新分配周期的进度。</summary>
     public bool CompletePublication(Publication publication, bool accepted)
     {
         ArgumentNullException.ThrowIfNull(publication);
@@ -223,7 +224,7 @@ public sealed class AuthoritativeChunkGenerationPipeline(
         return progress;
     }
 
-    /// <summary>One generated allocation awaiting a business publication decision.</summary>
+    /// <summary>已完成生成并等待业务层决定是否发布的一次区块分配。</summary>
     public sealed class Publication
     {
         private readonly AuthoritativeChunkGenerationPipeline _owner;

@@ -1,4 +1,4 @@
 namespace Game.Terrains.Rendering;
 
-/// <summary>A range of vertices emitted by the same light sampling operation.</summary>
+/// <summary>由同一次光照采样操作生成的顶点范围。</summary>
 internal readonly record struct TerrainVertexLightRun(int End, int Sample);

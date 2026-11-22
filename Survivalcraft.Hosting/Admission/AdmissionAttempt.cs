@@ -6,7 +6,7 @@ using SCNET.Authentication.Protocol.Security;
 
 namespace Game.Admission;
 
-/// <summary>One-use connection authorization; never creates world players or changes role ownership.</summary>
+/// <summary>一次性连接授权，不创建世界玩家，也不修改角色归属。</summary>
 public sealed class AdmissionAttempt
 {
     private readonly SemaphoreSlim _gate = new(1, 1);

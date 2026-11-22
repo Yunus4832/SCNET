@@ -8,7 +8,7 @@ using Rendezvous.Protocol;
 
 namespace RendezvousServer.Relay;
 
-/// <summary>Forwards raw datagrams between two authenticated sides using one dedicated UDP endpoint.</summary>
+/// <summary>通过一个专用 UDP 端点在两个已认证的参与方之间转发原始数据报。</summary>
 public sealed class UdpRelayRoute : IAsyncDisposable
 {
     private readonly UdpClient _socket;

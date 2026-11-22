@@ -1,6 +1,6 @@
 namespace Game.Terrains.Lighting;
 
-/// <summary>Solves an emission edit against current light, with all decreases applied before refill.</summary>
+/// <summary>基于当前光照处理发光变化，先完成全部减光，再补光。</summary>
 internal static class TerrainEmissionUpdate
 {
     private static readonly Point3[] _directions = Enumerable.Range(0, 6).Select(CellFace.FaceToPoint3).ToArray();

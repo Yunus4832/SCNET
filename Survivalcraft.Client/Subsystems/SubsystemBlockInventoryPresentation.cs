@@ -2,7 +2,7 @@ using EntitySystem.Core;
 
 namespace Game.Subsystems;
 
-/// <summary>WorldConnection world consumer of the authority-approved inventory-open reply.</summary>
+/// <summary>在 WorldConnection 世界中接收权威端批准的打开物品栏响应。</summary>
 public sealed class SubsystemBlockInventoryPresentation : Subsystem
 {
     private bool _disposed;

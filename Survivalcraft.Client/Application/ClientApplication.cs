@@ -3,7 +3,7 @@ using Game.World.Presentation;
 
 namespace Game.Application;
 
-/// <summary>Owns client application content, frame telemetry and pending platform URI delivery.</summary>
+/// <summary>管理客户端应用内容、帧遥测和待分发的平台 URI。</summary>
 public static class ClientApplication
 {
     public static Commands.Http.HttpPlayerCommandAdapter? PlayerCommands { get; set; }

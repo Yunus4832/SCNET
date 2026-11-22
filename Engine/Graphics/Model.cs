@@ -5,7 +5,7 @@ using Engine.Media.Models;
 
 namespace Engine.Graphics;
 
-/// <summary>A shared, static scene resource. Nodes reference mesh resources; poses own instance state.</summary>
+/// <summary>共享的静态场景资源。节点引用网格，实例状态由姿态对象持有。</summary>
 public sealed class Model : IDisposable
 {
     private readonly List<ModelNode> _nodes = [];
@@ -56,10 +56,10 @@ public sealed class Model : IDisposable
 
     public ReadOnlyList<ModelNode> RootNodes => new(_roots);
 
-    /// <summary>Renderable nodes in default draw order; a mesh may occur on more than one node.</summary>
+    /// <summary>按默认绘制顺序排列的可渲染节点，多个节点可以引用同一网格。</summary>
     public ReadOnlyList<ModelNode> MeshNodes => new(_meshNodes);
 
-    /// <summary>Unique prepared mesh resources, including distinct default morph-weight variants.</summary>
+    /// <summary>去重的预处理网格资源，不同默认形变权重分别保留。</summary>
     public ReadOnlyList<ModelMesh> Meshes => new(_meshes);
 
     public event Action<Model>? Disposed;

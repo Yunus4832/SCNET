@@ -3,11 +3,7 @@ using Game.Commands.Text;
 
 namespace Game.Commands;
 
-/// <summary>
-///     Declarative contribution consumed by a command frontend adapter.
-///     Bindings describe how a frontend creates commands; they never provide
-///     principals or bypass command authorization.
-/// </summary>
+/// <summary>供命令前端适配器使用的声明式绑定。绑定规定如何创建命令，执行身份和权限仍由命令授权流程确定。</summary>
 public interface ICommandAdapterBinding;
 
 public interface ICommandFrontendAdapter<in TRequest>

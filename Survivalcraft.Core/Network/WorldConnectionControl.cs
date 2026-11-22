@@ -4,7 +4,7 @@ using Game.Protocol.Identity;
 
 namespace Game.Network;
 
-/// <summary>Initial session admission and one-role control binding; never a persistent player store.</summary>
+/// <summary>处理会话初次准入和单个角色的控制绑定，不持久化玩家记录。</summary>
 public static class WorldConnectionControl
 {
     // First-stage one-player/one-role initialization from trusted server metadata.

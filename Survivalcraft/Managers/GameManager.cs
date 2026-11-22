@@ -33,7 +33,7 @@ public static class GameManager
 
     public static WorldInfo? WorldInfo => _worlds.WorldInfo;
 
-    /// <summary>The startup session selecting this world, independent of runtime world ownership.</summary>
+    /// <summary>选择当前世界的启动会话，世界运行时另行管理。</summary>
     public static SessionInfo? WorldSession => _worlds.WorldSession;
 
     public static LocalGameReturnTarget? LocalPlayerReturnTarget
@@ -277,7 +277,7 @@ public static class GameManager
         else { CommonLib.Net.Update(); }
     }
 
-    /// <summary>Ends GUI gameplay and returns according to the current player's runtime entry flow.</summary>
+    /// <summary>结束 GUI 游戏过程，并按当前玩家进入游戏的途径返回。</summary>
     public static void LeaveGameplay(string? reason = null) => LeaveGameplay(CommonLib.Net.Role, reason);
 
     private static void LeaveGameplay(NodeRole previousRole, string? reason)

@@ -9,7 +9,7 @@ using RendezvousServer.Sessions;
 
 namespace RendezvousServer.Relay;
 
-/// <summary>Allocates bounded dedicated relay ports and retains established paths independently of invitations.</summary>
+/// <summary>分配数量有上限的专用中继端口，已建立的路径可独立于邀请继续保留。</summary>
 public sealed class RelayRouteRegistry(
     InvitationRegistry invitations,
     TimeProvider clock,

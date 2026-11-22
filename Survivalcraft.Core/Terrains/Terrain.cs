@@ -569,7 +569,7 @@ public class Terrain : IDisposable
         return (contents & _contentsMask) | ((data << _dataShift) & _dataMask);
     }
 
-    /// <summary>Returns the content/data payload with reserved cell bits cleared.</summary>
+    /// <summary>返回方块内容和数据载荷，并清除单元格的保留位。</summary>
     public static int NormalizeCellValue(int value) => value & (_contentsMask | _dataMask);
 
     /// <summary>

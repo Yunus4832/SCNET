@@ -2,7 +2,7 @@ using Game.Terrains.Distribution;
 
 namespace Game.Terrains;
 
-/// <summary>Delivers chunk business notifications on the owning world's update thread.</summary>
+/// <summary>在所属世界的更新线程上投递区块业务通知。</summary>
 public sealed class TerrainChunkBehaviorNotifier(
     SubsystemTerrain terrain,
     SubsystemBlockBehaviors behaviors,
@@ -62,7 +62,7 @@ public sealed class TerrainChunkBehaviorNotifier(
         }
     }
 
-    /// <summary>Resumes one chunk's ordered callbacks within the caller's foreground budget.</summary>
+    /// <summary>在调用方的前台预算内继续执行单个区块的有序回调。</summary>
     public bool TryInitialize(
         TerrainChunk chunk,
         TimeSpan maximumTime,
@@ -162,7 +162,7 @@ public sealed class TerrainChunkBehaviorNotifier(
         finally { progress.Running = false; }
     }
 
-    /// <summary>Finishes the active normalization before a consistent world snapshot is captured.</summary>
+    /// <summary>在捕获一致的世界快照前完成当前正在执行的归一化。</summary>
     public void CompletePendingInitialization()
     {
         if (_initialization is not { } progress) { return; }
@@ -238,7 +238,7 @@ public sealed class TerrainChunkBehaviorNotifier(
         return true;
     }
 
-    /// <summary>Only delivers notifications; the residency owner handles reservation and retry deduplication.</summary>
+    /// <summary>仅投递通知，容量预留和重试去重由区块驻留管理者处理。</summary>
     public bool NotifyDiscarding(TerrainChunk chunk, Action<TerrainChunk>? onDiscarding = null)
     {
         ArgumentNullException.ThrowIfNull(chunk);

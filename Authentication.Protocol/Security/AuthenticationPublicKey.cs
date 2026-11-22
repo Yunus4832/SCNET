@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace SCNET.Authentication.Protocol.Security;
 
-/// <summary>A P-256 public key identified by its complete RFC 7638 thumbprint.</summary>
+/// <summary>以完整 RFC 7638 指纹标识的 P-256 公钥。</summary>
 public sealed class AuthenticationPublicKey
 {
     private readonly byte[] _subjectPublicKeyInfo;

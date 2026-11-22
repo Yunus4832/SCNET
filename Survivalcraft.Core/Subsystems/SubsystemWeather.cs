@@ -81,7 +81,6 @@ public class SubsystemWeather : Subsystem, IUpdateable
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-    //↑new
     public void Update(float dt)
     {
         if (_subsystemGameInfo.TotalElapsedGameTime > PrecipitationEndTime)
@@ -180,7 +179,7 @@ public class SubsystemWeather : Subsystem, IUpdateable
         PrecipitationShaftInfo result;
         if (IsPlaceFrozen(seasonalTemperature, surfaceHeight))
         {
-            result = default; //new 下方同理，2.4去掉了全球全局降水因素。
+            result = default;
             result.Intensity = PrecipitationIntensity;
             result.Type = PrecipitationType.Snow;
             result.YLimit = surfaceHeight + 1;
@@ -228,7 +227,6 @@ public class SubsystemWeather : Subsystem, IUpdateable
         }
     }
 
-    //new↓
     public void ManualPrecipitationStart()
     {
         PrecipitationStartTime = _subsystemGameInfo.TotalElapsedGameTime;
@@ -330,7 +328,6 @@ public class SubsystemWeather : Subsystem, IUpdateable
         {
             FogIntensity = 0f;
         }
-        //NetWork.NetworkSender.Send(Project, new NetWork.Packages.SubsystemWeatherPackage(FogIntensity,FogProgress));
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
@@ -344,14 +341,14 @@ public class SubsystemWeather : Subsystem, IUpdateable
         PrecipitationEndTime = valuesDictionary.GetValue<double>("WeatherEndTime");
         LightningIntensity = valuesDictionary.GetValue<float>("LightningIntensity");
         _subsystemSeasons = Project.FindSubsystem<SubsystemSeasons>(true)!;
-        _precipitationRampTime = valuesDictionary.GetValue("WeatherRampTime", 25f); //new2.4
+        _precipitationRampTime = valuesDictionary.GetValue("WeatherRampTime", 25f);
         FogStartTime = valuesDictionary.GetValue<double>("FogStartTime");
         FogEndTime = valuesDictionary.GetValue<double>("FogEndTime");
         FogRampTime = valuesDictionary.GetValue("FogRampTime", 25f);
         FogIntensity = valuesDictionary.GetValue("FogIntensity", 0f);
         FogProgress = valuesDictionary.GetValue("FogProgress", 0f);
 
-        PrecipitationIntensity = valuesDictionary.GetValue("PrecipitationIntensity", 0f); //new2.4
+        PrecipitationIntensity = valuesDictionary.GetValue("PrecipitationIntensity", 0f);
         if (WorldRuntimeContext.For(Project).IsAuthority)
         {
             _subsystemBlocksScanner.ScanningChunkCompleted += OnScanningChunkCompleted;
@@ -363,7 +360,7 @@ public class SubsystemWeather : Subsystem, IUpdateable
         valuesDictionary.SetValue("WeatherStartTime", PrecipitationStartTime);
         valuesDictionary.SetValue("WeatherEndTime", PrecipitationEndTime);
         valuesDictionary.SetValue("LightningIntensity", LightningIntensity);
-        valuesDictionary.SetValue("WeatherIntensity", PrecipitationIntensity); //new
+        valuesDictionary.SetValue("WeatherIntensity", PrecipitationIntensity);
         valuesDictionary.SetValue("WeatherRampTime", _precipitationRampTime);
         valuesDictionary.SetValue("FogStartTime", FogStartTime);
         valuesDictionary.SetValue("FogEndTime", FogEndTime);

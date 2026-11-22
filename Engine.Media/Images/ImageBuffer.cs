@@ -4,7 +4,7 @@ using Engine.Core.Mathematics;
 
 namespace Engine.Media.Images;
 
-/// <summary>Owns top-down RGBA8 pixels with straight alpha.</summary>
+/// <summary>持有从上到下排列、使用非预乘透明度的 RGBA8 像素。</summary>
 public sealed class ImageBuffer : IDisposable
 {
     private Color[]? _pixels;

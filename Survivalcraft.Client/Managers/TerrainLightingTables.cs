@@ -1,6 +1,6 @@
 namespace Game.Managers;
 
-/// <summary>One immutable publication of render brightness lookup tables.</summary>
+/// <summary>一次发布的不可变渲染亮度查找表。</summary>
 public sealed class TerrainLightingTables
 {
     private readonly float[] _values;

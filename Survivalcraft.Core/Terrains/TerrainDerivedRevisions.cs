@@ -1,6 +1,6 @@
 namespace Game.Terrains;
 
-/// <summary>Independent completion revisions for one world's height and lighting inputs.</summary>
+/// <summary>分别记录世界高度和光照输入的完成版本。</summary>
 public sealed class TerrainDerivedRevisions
 {
     private long _heightRequest = 1;

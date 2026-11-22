@@ -6,7 +6,7 @@ using Rendezvous.Protocol;
 
 namespace RendezvousServer.Sessions;
 
-/// <summary>Verifies return reachability before publishing a transport endpoint.</summary>
+/// <summary>公布传输端点之前验证其返回路径可达。</summary>
 public sealed class EndpointRegistrations(InvitationRegistry registry, TimeProvider clock, int lifetimeSeconds = 60)
 {
     private readonly Dictionary<(string Ticket, AddressFamily Family), Registration> _registrations = new();

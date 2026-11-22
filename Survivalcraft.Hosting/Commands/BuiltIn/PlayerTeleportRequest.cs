@@ -1,6 +1,6 @@
 namespace Game.Commands.BuiltIn;
 
-/// <summary>A world-local teleport preparation owned by the target player's lifetime.</summary>
+/// <summary>本世界内的传送准备，其生命周期随目标玩家结束。</summary>
 internal sealed class PlayerTeleportRequest : IDisposable
 {
     private readonly SubsystemCharacterTeleports _owner;

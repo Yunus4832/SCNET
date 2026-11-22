@@ -2,7 +2,7 @@ using Engine.Core.Mathematics;
 
 namespace Engine.Graphics;
 
-/// <summary>Placement and procedural animation state for one instance of a shared model.</summary>
+/// <summary>管理共享模型单个实例的放置和程序化动画状态。</summary>
 public sealed class ModelPose
 {
     private readonly Matrix?[] _animationTransforms;
@@ -27,7 +27,7 @@ public sealed class ModelPose
         return _animationTransforms[nodeIndex];
     }
 
-    /// <summary>Applies the game's rigid animation convention: append to rest rotation/scale while retaining the pivot translation.</summary>
+    /// <summary>按游戏的刚性动画约定叠加静止姿态的旋转与缩放，保留枢轴平移。</summary>
     public void SetAnimationTransform(int nodeIndex, Matrix? transform)
     {
         _animationTransforms[nodeIndex] = transform;

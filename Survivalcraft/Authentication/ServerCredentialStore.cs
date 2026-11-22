@@ -4,7 +4,7 @@ using Engine.Core.Security;
 
 namespace Game.Authentication;
 
-/// <summary>Instance-private shared joining passwords, scoped to the server's proven public identity.</summary>
+/// <summary>实例私有的加入密码，按服务器已证明的公开身份隔离。</summary>
 public sealed class ServerCredentialStore
 {
     private readonly string _path;

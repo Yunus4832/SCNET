@@ -2,7 +2,7 @@ using Game.Protocol.Identity;
 
 namespace Game.Players;
 
-/// <summary>Persistent world subject. Character assets and runtime connections belong to other objects.</summary>
+/// <summary>持久化的世界玩家主体，角色资源和运行时连接由其他对象管理。</summary>
 public sealed class WorldPlayer
 {
     internal WorldPlayer(PlayerAddress address)

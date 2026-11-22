@@ -5,7 +5,7 @@ using Rendezvous.Protocol;
 
 namespace RendezvousServer.Sessions;
 
-/// <summary>Owns short-lived invitations; all operations are atomic within this process.</summary>
+/// <summary>管理短期邀请，所有操作在本进程内原子执行。</summary>
 public sealed class InvitationRegistry(
     TimeProvider clock,
     TimeSpan lifetime,
@@ -306,6 +306,7 @@ public sealed class InvitationRegistry(
         }
     }
 
+    /// <summary>为会话参与者签发票据并替换其旧票，有效期取票据和参与者注册期限中的较早值。宿主使用 <see cref="Guid.Empty"/>，其注册期限取自会话。</summary>
     public RegistrationTicket IssueTicket(Guid sessionId, Guid participantId, string credential)
     {
         lock (_gate)
@@ -336,6 +337,7 @@ public sealed class InvitationRegistry(
         }
     }
 
+    /// <summary>检查票据是否仍对该会话和参与者有效，验证成功不会消耗票据。</summary>
     public bool AuthenticateTicket(Guid sessionId, Guid participantId, string token)
     {
         lock (_gate)

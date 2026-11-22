@@ -2,9 +2,7 @@ using EntitySystem.Core;
 
 namespace Game.Commands;
 
-/// <summary>
-///     A concrete operation. Frontends create commands; domains determine routing.
-/// </summary>
+/// <summary>描述一个具体操作。前端创建命令，所属域决定路由。</summary>
 public interface IGameCommand;
 
 public interface ICommandDefinition

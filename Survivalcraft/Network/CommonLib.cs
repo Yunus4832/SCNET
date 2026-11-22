@@ -126,7 +126,6 @@ public static class CommonLib
     /// <summary>
     ///     获取时间戳，单位0.1ms
     /// </summary>
-    /// <returns></returns>
     public static long GetMicroSeconds()
     {
         return DateTime.Now.Ticks / 10000;

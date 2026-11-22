@@ -2,9 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Game.Terrains.Distribution;
 
-/// <summary>
-///     Single installation boundary for authoritative contents entering a client terrain.
-/// </summary>
+/// <summary>权威内容安装到客户端地形的统一入口。</summary>
 public sealed class ClientChunkContentCoordinator(Terrain terrain)
 {
     private readonly Terrain _terrain = terrain ?? throw new ArgumentNullException(nameof(terrain));

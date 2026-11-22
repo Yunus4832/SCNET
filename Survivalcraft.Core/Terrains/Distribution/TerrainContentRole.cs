@@ -1,9 +1,6 @@
 namespace Game.Terrains.Distribution;
 
-/// <summary>
-///     Describes whether a terrain instance produces authoritative contents or derives client data
-///     from installed snapshots. This is intentionally independent from process/network mode.
-/// </summary>
+/// <summary>描述地形实例负责生成权威内容，还是从已安装快照推导客户端数据；该职责独立于进程和网络模式。</summary>
 public enum TerrainContentRole
 {
     Authority = 0,

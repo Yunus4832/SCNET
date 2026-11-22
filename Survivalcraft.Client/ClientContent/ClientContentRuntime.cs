@@ -5,7 +5,7 @@ using Game.World.Presentation;
 
 namespace Game.ClientContent;
 
-/// <summary>Application-owned presentation factories and preview resources; world catalogs have their own owners.</summary>
+/// <summary>应用持有的表现层工厂和预览资源；世界目录由各世界独立管理。</summary>
 public sealed class ClientContentRuntime : IDisposable
 {
     private readonly BlockPresentationRegistration[] _registrations;

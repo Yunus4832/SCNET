@@ -2,7 +2,7 @@ using EntitySystem.Core;
 
 namespace Game.Characters;
 
-/// <summary>Shared authoritative creation rules for admitted local and remote players.</summary>
+/// <summary>本地与远端玩家通过准入后共用的权威角色创建规则。</summary>
 public static class CharacterCreation
 {
     internal static bool CanCreate(WorldConnection? sender, IEnumerable<Guid> existingPlayers) =>

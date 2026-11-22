@@ -2,9 +2,7 @@ using Engine.Graphics;
 
 namespace Game.Widgets;
 
-/// <summary>
-///     Compact read-only player row used by the persistent HUD player list.
-/// </summary>
+/// <summary>常驻 HUD 玩家列表中的紧凑只读行。</summary>
 public sealed class CharacterObservationItemWidget : CanvasWidget
 {
     private static readonly Subtexture _arrow =

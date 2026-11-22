@@ -1,6 +1,6 @@
 namespace Game.Terrains;
 
-/// <summary>Limits horizontal body sweeps to collision contents, independently of lighting and meshes.</summary>
+/// <summary>根据碰撞内容限制物体的水平扫掠范围，无需等待光照或网格就绪。</summary>
 internal static class TerrainMovementBoundary
 {
     internal static bool HasCollisionContents(TerrainChunk? chunk)

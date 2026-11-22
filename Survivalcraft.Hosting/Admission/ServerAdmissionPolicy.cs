@@ -5,7 +5,7 @@ using SCNET.Authentication.Protocol.Http;
 
 namespace Game.Admission;
 
-/// <summary>Private world admission policy; only its public challenge is sent to clients.</summary>
+/// <summary>世界的私有准入策略，只向客户端发送公开质询。</summary>
 public sealed class ServerAdmissionPolicy
 {
     private readonly ServerPasswordVerifier? _password;

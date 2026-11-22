@@ -96,7 +96,7 @@ public sealed class TerrainSaveCoordinator : IDisposable
         return chunk is { HasContents: true, ModificationCounter: > 0 };
     }
 
-    /// <summary>Reserves an unload slot before callbacks can dirty the chunk or reenter saving.</summary>
+    /// <summary>在回调可能修改区块或重入保存操作之前，为卸载预留保存容量。</summary>
     public TerrainUnloadReservation? TryReserveUnload(TerrainChunk chunk)
     {
         ArgumentNullException.ThrowIfNull(chunk);
@@ -184,7 +184,7 @@ public sealed class TerrainSaveCoordinator : IDisposable
         }
     }
 
-    /// <summary>Captures one save point under the caller's terrain lease; compression and writes remain on the ordered writer.</summary>
+    /// <summary>在调用方持有地形访问权期间捕获保存点，压缩与写入交给按序执行的写入器。</summary>
     public Task CaptureAndQueueSave(IEnumerable<TerrainChunk> chunks)
     {
         lock (_gate)

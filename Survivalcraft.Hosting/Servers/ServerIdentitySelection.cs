@@ -2,7 +2,7 @@ using Game.Startup;
 
 namespace Game.Servers;
 
-/// <summary>Resolves host identity selection after instance identities and world settings are available.</summary>
+/// <summary>实例身份与世界设置可用后确定宿主所用身份。</summary>
 public static class ServerIdentitySelection
 {
     public static string Resolve(

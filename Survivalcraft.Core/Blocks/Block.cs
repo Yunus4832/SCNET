@@ -509,7 +509,7 @@ public abstract class Block : IDisposable
 
     public virtual int GetEmittedLightAmount(int value) => EmittedLightAmount;
 
-    /// <summary>Whether the edit changes only the rendered state of an existing light source.</summary>
+    /// <summary>此次编辑是否只改变已有光源的渲染状态。</summary>
     public virtual bool IsLightAppearanceEdit(int previous, int current) => false;
 
     public virtual float GetNutritionalValue(int value) => NutritionalValue;

@@ -1,6 +1,6 @@
 namespace Game.Characters;
 
-/// <summary>Built-in character identity defaults, independent of asset storage and presentation.</summary>
+/// <summary>内置角色的默认身份信息，独立于资源存储和表现层。</summary>
 public static class BuiltInCharacterSkins
 {
     public sealed record Definition(string Name, CharacterSex Sex, string DefaultCharacterName);

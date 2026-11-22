@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Game.Terrains.Distribution;
 
-/// <summary>Owns requested allocation lifetimes and bounded complete-snapshot staging for either client connection.</summary>
+/// <summary>管理客户端连接请求的区块分配周期，并为完整快照提供有界暂存空间。</summary>
 public sealed class ClientChunkContentTransport : IChunkContentTransport, IDisposable
 {
     public const long MaximumQueuedSnapshotBytes = 16L * 1024 * 1024;

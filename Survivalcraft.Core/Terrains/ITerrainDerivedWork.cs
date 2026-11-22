@@ -1,6 +1,6 @@
 namespace Game.Terrains;
 
-/// <summary>Optional client-owned derived work, without owning CPU terrain selection or dependencies.</summary>
+/// <summary>可选的客户端派生任务；CPU 地形选择和依赖调度由外部管理。</summary>
 public interface ITerrainDerivedWork
 {
     bool HasCurrentGeometry(TerrainChunk chunk);

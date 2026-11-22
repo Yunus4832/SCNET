@@ -2,7 +2,7 @@ using MessagePack;
 
 namespace Game.Protocol.Serialization;
 
-/// <summary>Typed payloads owned by commands and mod contracts; no runtime type names are accepted.</summary>
+/// <summary>按命令和模组契约处理强类型载荷，不接受运行时类型名。</summary>
 public static class ProtocolPayloadCodec
 {
     public static byte[] Encode<T>(T value)

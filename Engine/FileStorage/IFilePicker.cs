@@ -1,8 +1,6 @@
 namespace Engine.FileStorage;
 
-/// <summary>
-///     Provides access to the platform file picker. Implementations are registered by the platform starter.
-/// </summary>
+/// <summary>提供平台文件选择器接口，由平台启动器注册实现。</summary>
 public interface IFilePicker
 {
     Task<IReadOnlyList<PickedFile>> PickFilesAsync(

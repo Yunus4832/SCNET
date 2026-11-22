@@ -4,7 +4,7 @@ using Game.Admission;
 
 namespace Game.Network;
 
-/// <summary>A pending in-process player join, bound to one loaded world and the common admission attempt.</summary>
+/// <summary>等待完成的进程内玩家加入请求，绑定到已加载的世界和共用的准入流程。</summary>
 internal sealed class LocalPlayerAdmission(Project world, AdmissionAttempt attempt)
 {
     internal Project World { get; } = world;

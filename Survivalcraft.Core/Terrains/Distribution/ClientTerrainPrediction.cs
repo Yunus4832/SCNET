@@ -1,6 +1,6 @@
 namespace Game.Terrains.Distribution;
 
-/// <summary>Temporary mesh overrides. Never writes authoritative cells or runs block behaviors.</summary>
+/// <summary>临时覆盖网格表现，不写入权威单元格，也不触发方块行为。</summary>
 public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> predictionChanged)
 {
     public const double TimeoutSeconds = 3;

@@ -2,7 +2,7 @@ using EntitySystem.Core;
 
 namespace Game.Subsystems;
 
-/// <summary>Mutable CPU glow facts shared by electric simulation and client-only producers.</summary>
+/// <summary>电路模拟和客户端生产者共享的可变 CPU 辉光数据。</summary>
 public sealed class SubsystemGlow : Subsystem
 {
     private readonly Dictionary<GlowPoint, bool> _glowPoints = new(ReferenceEqualityComparer.Instance);

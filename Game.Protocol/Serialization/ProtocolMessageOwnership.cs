@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 
 namespace Game.Protocol.Serialization;
 
-/// <summary>Captures a message's mutable contract graph without serialization or runtime reflection.</summary>
+/// <summary>捕获消息中可变的契约对象，无需序列化或运行时反射。</summary>
 public static partial class ProtocolMessageOwnership
 {
     public static IProtocolMessage Capture(IProtocolMessage message)
@@ -15,7 +15,7 @@ public static partial class ProtocolMessageOwnership
         return captured;
     }
 
-    /// <summary>Conservative payload accounting for an already captured or decoded message, not managed heap measurement.</summary>
+    /// <summary>保守估算已捕获或解码的消息载荷大小，不代表托管堆占用量。</summary>
     public static long EstimateQueueBytes(IProtocolMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);

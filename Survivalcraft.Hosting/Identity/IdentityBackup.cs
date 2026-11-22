@@ -4,7 +4,7 @@ using Engine.Network.Security;
 
 namespace Game.Identity;
 
-/// <summary>Password-protected PKCS#8 identity backups.</summary>
+/// <summary>使用密码保护的 PKCS#8 身份备份。</summary>
 public static class IdentityBackup
 {
     public static byte[] Export(NetworkIdentity identity, ReadOnlySpan<char> password)

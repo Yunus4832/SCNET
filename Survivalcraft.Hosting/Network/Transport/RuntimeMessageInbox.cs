@@ -1,6 +1,6 @@
 namespace Game.Network.Transport;
 
-/// <summary>Validates and accounts for game protocol messages before owned world delivery.</summary>
+/// <summary>在向世界移交消息前验证游戏协议消息并统计其资源用量。</summary>
 public sealed class RuntimeMessageInbox
 {
     public const long DefaultCapacityBytes = OwnedMessageInbox<ReceivedPackage>.DefaultCapacityBytes;

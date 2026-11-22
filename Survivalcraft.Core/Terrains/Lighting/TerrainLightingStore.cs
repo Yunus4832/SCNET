@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Game.Terrains.Lighting;
 
-/// <summary>Owns immutable light publications for one world's terrain allocations.</summary>
+/// <summary>管理单个世界各地形区块分配周期内的不可变光照发布数据。</summary>
 public sealed class TerrainLightingStore(Terrain terrain) : IDisposable
 {
     private readonly ConcurrentDictionary<TerrainChunk, Publication> _publications = new();

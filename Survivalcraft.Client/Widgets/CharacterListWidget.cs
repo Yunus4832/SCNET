@@ -51,8 +51,6 @@ public class CharacterListWidget : CanvasWidget
     /// </summary>
     /// <param name="main">主玩家</param>
     /// <param name="kind">列表数据范围</param>
-    /// <param name="isReadOnly"></param>
-    /// <param name="size"></param>
     public CharacterListWidget(
         CharacterData main,
         ListKind kind,

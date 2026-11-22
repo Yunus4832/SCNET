@@ -3,7 +3,7 @@ using Game.World.Presentation;
 
 namespace Game.Furniture;
 
-/// <summary>Client-owned furniture meshes scoped to one presentation catalog and palette world.</summary>
+/// <summary>客户端家具网格的使用范围限定在一个表现目录和配色世界内。</summary>
 public sealed class FurnitureDesignPresentation(BlockPresentationCatalog catalog) : IDisposable
 {
     private readonly BlockPresentationCatalog _catalog = catalog;

@@ -4,7 +4,7 @@ using Game.Diagnostics;
 
 namespace Game.World;
 
-/// <summary>Single authority owner for loading, commands, simulation, world services and retirement.</summary>
+/// <summary>统一管理权威世界的加载、命令、模拟、服务和退出。</summary>
 public sealed class AuthorityWorldExecutor : IAsyncDisposable
 {
     private const double _simulationPeriod = 1d / 20;
@@ -81,7 +81,7 @@ public sealed class AuthorityWorldExecutor : IAsyncDisposable
 
     public bool IsOwnerThread => Environment.CurrentManagedThreadId == _thread.ManagedThreadId;
 
-    /// <summary>The synchronous operation runs on the owner; only immutable results should leave it.</summary>
+    /// <summary>在所属执行线程上同步执行操作，仅可向外传递不可变结果。</summary>
     public Task<T> InvokeAsync<T>(Func<WorldRuntimeContext, T> operation, CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(operation);
@@ -125,7 +125,7 @@ public sealed class AuthorityWorldExecutor : IAsyncDisposable
         }
     }
 
-    /// <summary>Save failure keeps the owner alive and allows a later stop request to retry.</summary>
+    /// <summary>保存失败时保持执行器存活，后续停止请求可再次尝试。</summary>
     public Task StopAsync(bool save)
     {
         lock (_gate)

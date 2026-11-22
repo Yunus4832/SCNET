@@ -256,10 +256,7 @@ public static class ServerStarter
         _running = false;
     }
 
-    /// <summary>
-    ///     Enqueues a trusted LocalOperator command. The host routes application work locally
-    ///     and world/server work to the authority owner.
-    /// </summary>
+    /// <summary>将受信任的 LocalOperator 命令入队。应用命令由宿主本地处理，世界和服务器命令交给权威端。</summary>
     public static Task<CommandResult> SubmitConsoleCommandAsync(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -289,9 +286,7 @@ public static class ServerStarter
         return completion.Task;
     }
 
-    /// <summary>
-    ///     Enqueues a trusted completion request for evaluation by the corresponding command owner.
-    /// </summary>
+    /// <summary>将受信任的补全请求入队，由对应的命令管理者计算结果。</summary>
     public static Task<ServerCommandSuggestions> SubmitConsoleSuggestionsAsync(string input)
     {
         if (!_commandConsoleReady)

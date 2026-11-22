@@ -14,10 +14,10 @@ public sealed class SessionInfo
 
     public string World { get; set; } = "World";
 
-    /// <summary>One-shot permission to complete requested world creation after startup preparation restarts.</summary>
+    /// <summary>启动准备触发重启后，允许完成原世界创建请求的一次性授权。</summary>
     public bool CreateWorldIfMissing { get; set; }
 
-    /// <summary>One-shot request to finish enabling world hosting after startup preparation restarts.</summary>
+    /// <summary>启动准备触发重启后，继续完成世界托管启用操作的一次性请求。</summary>
     public bool ForceWorldRunServer { get; set; }
 
     public string Seed { get; set; } = string.Empty;
@@ -35,19 +35,19 @@ public sealed class SessionInfo
 
     public int BroadcastPort { get; set; }
 
-    /// <summary>Optional player name used to automatically enter a world after startup.</summary>
+    /// <summary>可选的玩家名称，用于启动后自动进入世界。</summary>
     public string? AutoJoinCharacterName { get; set; }
 
     public Admission.ServerAdmissionOverrides AdmissionOverrides { get; set; } = new();
 
     public P2PRoomOverrides P2POverrides { get; set; } = new();
 
-    /// <summary>Optional HTTP command host enablement override restored with this startup session.</summary>
+    /// <summary>随启动会话恢复的可选 HTTP 命令宿主启用设置。</summary>
     public bool? HttpCommandEnabled { get; set; }
 
-    /// <summary>Optional HTTP command port override restored with this startup session.</summary>
+    /// <summary>随启动会话恢复的可选 HTTP 命令端口设置。</summary>
     public int? HttpCommandPort { get; set; }
 
-    /// <summary>Optional HTTP command access token restored with this startup session.</summary>
+    /// <summary>随启动会话恢复的可选 HTTP 命令访问令牌。</summary>
     public string? HttpCommandAccessToken { get; set; }
 }

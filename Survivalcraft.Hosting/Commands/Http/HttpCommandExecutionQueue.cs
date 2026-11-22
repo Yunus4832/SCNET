@@ -4,10 +4,7 @@ using Game.Localization;
 
 namespace Game.Commands.Http;
 
-/// <summary>
-///     Receives HTTP requests on the host loop and routes world/server commands to their authority owner.
-///     Application commands stay on the host; other frontends use their own dispatch paths.
-/// </summary>
+/// <summary>在宿主循环上接收 HTTP 请求，将世界和服务器命令路由到对应权威端。应用命令在宿主本地处理，其他前端使用各自的分发路径。</summary>
 public sealed class HttpCommandExecutionQueue(
     Func<CommandExecutionScope?> getScope,
     Func<LocalizedTextResolver> getResolver

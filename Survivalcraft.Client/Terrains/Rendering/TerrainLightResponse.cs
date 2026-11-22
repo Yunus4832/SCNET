@@ -4,7 +4,7 @@ using Game.Terrains.Lighting;
 
 namespace Game.Terrains.Rendering;
 
-/// <summary>Quantized vertex brightness for each possible environment skylight strength.</summary>
+/// <summary>为每个可能的环境天光强度记录量化的顶点亮度。</summary>
 public readonly record struct TerrainLightResponse(
     Color Levels0To3,
     Color Levels4To7,

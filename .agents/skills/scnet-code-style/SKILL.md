@@ -1,11 +1,23 @@
 ---
 name: scnet-code-style
-description: "Apply SCNET C# style and MSBuild project-file layout when editing or reviewing C#, csproj, props, targets, esproj or slnx files. Covers global imports, project ownership, XML grouping, paths and focused style validation."
+description: "Apply SCNET C# style and MSBuild project-file layout when editing or reviewing C#, csproj, props, targets, esproj or slnx files. Covers XML documentation comments, global imports, project ownership, XML grouping, paths and focused style validation."
 ---
 
 # SCNET Code Style
 
 Treat the repository `.editorconfig` as the source of truth for mechanically expressible style. A successful build does not prove code-style compliance because SCNET does not yet enforce every IDE diagnostic during compilation.
+
+## C# 文档注释
+
+XML 文档注释用中文。保留代码标识符、协议和格式名称、字面量及 XML 引用的原写法。新增 C# 文件时，用一句 `/// <summary>` 说明主要类型的职责。分文件类型的总说明放在主声明处；只有程序集属性或全局导入的文件无需添加文件头注释。
+
+类和方法通常只需一句简短说明。当名称、签名和惯例已充分表达用途时，可以省略，例如直接转发的字典查询或常规相等性比较。接口或基类统一说明共有契约，实现需要显式引用时用 `<inheritdoc/>`。私有方法也按阅读价值取舍。
+
+**只记录调用方需要依赖的信息。** 优先说明所有权、线程约束、单位、调用顺序、失败后的状态，以及容易被误解的返回值。方法、构造函数和主构造函数的形参见名知意时省略 `<param>`；主构造函数确有特殊参数约束时，把标签写在类型声明上。`<returns>`、`<exception>` 和 `<remarks>` 按需使用。例如，“时间预算在区块之间检查”值得写；把 `chunk` 解释成“区块”可以省略。
+
+**按契约变化维护注释。** 修改签名、行为或资源生命周期时，在同一改动中核对相邻文档和继承的接口说明。易变的阈值、当前算法步骤和版本沿革通常留在实现、测试或变更记录中。只有数值本身属于协议、文件格式或调用约定时才写入文档。发现过时说明应按现行实现修正；行为已经移除或名称已经足够清楚时直接删除。评审以误用风险和维护价值为准，无需追求注释覆盖率。
+
+普通单行和行末注释用于解释实现理由、单位或必须维持的条件。删除已弃用的注释代码、失效的版本标记和逐行复述，保留仍有依据的设计原因。
 
 ## Formatter responsibilities
 

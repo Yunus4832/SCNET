@@ -4,7 +4,7 @@ using Game.Terrains.Lighting;
 
 namespace Game.Terrains.Rendering;
 
-/// <summary>Section masks for the light samples read by a mesh, indexed by neighboring chunk offset.</summary>
+/// <summary>按相邻区块偏移索引网格采样光照使用的分段掩码。</summary>
 internal struct TerrainMeshLightReads
 {
     [InlineArray(9)]

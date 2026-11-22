@@ -2,7 +2,7 @@ using Game.Protocol.Identity;
 
 namespace Game.Network;
 
-/// <summary>One logical world connection; identity and phase are shared with its physical owner.</summary>
+/// <summary>单个逻辑世界连接，与底层连接管理者共享身份和阶段。</summary>
 public class WorldConnection
 {
     private IConnectionLiveness? _liveness;

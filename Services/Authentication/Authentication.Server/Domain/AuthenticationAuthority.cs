@@ -7,7 +7,7 @@ using SCNET.Authentication.Protocol.Security;
 
 namespace SCNET.Authentication.Server.Domain;
 
-/// <summary>Provider authorization aggregate: transaction completion, grants, and provider account bans.</summary>
+/// <summary>提供方的授权聚合，管理事务完成、授权凭据和账户封禁。</summary>
 public sealed class AuthenticationAuthority
 {
     private const int _maximumTransactions = 1000;
@@ -109,6 +109,7 @@ public sealed class AuthenticationAuthority
         return transaction.Capture();
     }
 
+    /// <summary>取消事务；若事务已签发授权且记录仍存在，同时撤销该授权。</summary>
     public AuthenticationTransactionResult Cancel(string subject, string transactionId, DateTimeOffset now)
     {
         var transaction = Find(subject, transactionId, now);

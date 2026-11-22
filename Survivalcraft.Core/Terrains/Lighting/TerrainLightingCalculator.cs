@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Game.Terrains.Lighting;
 
-/// <summary>Captures independent sky/emission inputs and publishes private chunk propagation results.</summary>
+/// <summary>分别捕获天光与自发光输入，并发布后台计算的区块传播结果。</summary>
 public sealed class TerrainLightingCalculator(
     Terrain terrain,
     BlockContentCatalog catalog,
@@ -11,7 +11,7 @@ public sealed class TerrainLightingCalculator(
     Func<TerrainChunk, bool> canReadNeighbor
 )
 {
-    /// <summary>Applies an emission-only edit under terrain access, with no intermediate light publications.</summary>
+    /// <summary>持有地形访问权时应用仅涉及自发光的编辑，期间不发布中间光照。</summary>
     internal bool TryApplyEmissionEdit(Point3 source, int before, int after)
     {
         if (includePredictions || source.Y is < 0 or >= 256) { return false; }

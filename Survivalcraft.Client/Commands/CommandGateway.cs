@@ -5,10 +5,7 @@ using Game.Network.Transport;
 
 namespace Game.Commands;
 
-/// <summary>
-///     Routes a player command to the local authoritative server or to the remote
-///     server without exposing transport details to UI adapters.
-/// </summary>
+/// <summary>将玩家命令路由至本地权威服务器或远端服务器，UI 适配器无需处理传输细节。</summary>
 public static class CommandGateway
 {
     public static string SubmitLocal(

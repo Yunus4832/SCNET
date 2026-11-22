@@ -10,7 +10,7 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
-    /// <summary>A leaf cell encountered by normal generation or polling; consumers own any presentation scheduling.</summary>
+    /// <summary>常规生成或轮询遇到的树叶单元格，表现调度由使用方负责。</summary>
     public event Action<int, Point3>? LeafCellVisited;
 
     public override ResourceId[] HandledBlocks => [];

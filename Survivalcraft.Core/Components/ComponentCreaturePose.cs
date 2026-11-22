@@ -3,7 +3,7 @@ using EntitySystem.TemplatesDatabase;
 
 namespace Game.Components;
 
-/// <summary>Gameplay pose and action timing; independent of model, camera and graphics resources.</summary>
+/// <summary>记录游戏姿态和动作时序，独立于模型、摄像机及图形资源。</summary>
 public class ComponentCreaturePose : Component, IUpdateable
 {
     private ComponentCreature _creature = null!;

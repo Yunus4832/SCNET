@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Game.Terrains.Lighting;
 
-/// <summary>Admits a bounded number of immutable jobs and returns terminal owner messages.</summary>
+/// <summary>有界接纳使用不可变输入的任务，并向管理者返回终态消息。</summary>
 internal sealed class TerrainLightWorkerPool : IDisposable
 {
     private readonly int _workerCount;
@@ -42,6 +42,7 @@ internal sealed class TerrainLightWorkerPool : IDisposable
         }
     }
 
+    /// <summary>有空闲工作槽时启动任务，槽位已满或已经开始关闭时返回 false。</summary>
     public bool TrySchedule(TerrainLightJob job, [NotNullWhen(true)] out TerrainLightTask? task)
     {
         ArgumentNullException.ThrowIfNull(job);
@@ -85,6 +86,7 @@ internal sealed class TerrainLightWorkerPool : IDisposable
 
     private Task? _stopping;
 
+    /// <summary>停止接纳任务，请求取消活动任务并返回等待工作线程结束的任务。重复调用返回同一个任务。</summary>
     public Task StopAsync()
     {
         TerrainLightTask[] tasks;

@@ -1,6 +1,6 @@
 namespace Game.Blocks.Collision;
 
-/// <summary>Local working vertices used while deriving one rule definition's collision shapes.</summary>
+/// <summary>推导单个规则定义的碰撞形状时使用的局部顶点。</summary>
 public sealed class CollisionGeometryBuilder
 {
     private readonly List<Vector3> _positions = [];

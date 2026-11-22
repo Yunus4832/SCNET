@@ -15,6 +15,7 @@ public sealed record StagedContentPackage(
     string MediaType
 );
 
+/// <summary>先将包暂存到临时文件，提交后按包哈希存储。调用方负责提交或清理每个成功暂存的包。</summary>
 public sealed class ContentPackageStore
 {
     private readonly string _packagesPath;
@@ -30,6 +31,7 @@ public sealed class ContentPackageStore
         Directory.CreateDirectory(_temporaryPath);
     }
 
+    /// <summary>从输入流的当前位置读取并检查上传内容；失败时删除临时文件。输入流仍由调用方持有。</summary>
     public async Task<StagedContentPackage> StageAsync(
         Stream source,
         string fileName,
@@ -92,6 +94,7 @@ public sealed class ContentPackageStore
         }
     }
 
+    /// <summary>将暂存文件移入正式存储。本次创建目标文件时返回 true；目标已存在（包括并发提交抢先完成）时，删除本次暂存文件并返回 false。</summary>
     public bool Commit(StagedContentPackage package)
     {
         var destination = GetPath(package.Inspection.PackageHash);

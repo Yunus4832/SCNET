@@ -2,7 +2,7 @@ using System.Xml.Linq;
 
 namespace Game.Startup;
 
-/// <summary>Serializes host startup settings without accessing a window, instance paths or sessions.</summary>
+/// <summary>序列化宿主启动设置，无需访问窗口、实例路径或会话。</summary>
 public static class RunningSettingSerializer
 {
     public static RunningSetting Load(Stream stream)

@@ -6,7 +6,7 @@ using Engine.Network;
 
 namespace Game.Authentication;
 
-/// <summary>Logical join target only; never includes negotiated endpoints or transport tickets.</summary>
+/// <summary>仅描述逻辑加入目标，不含协商出的端点或传输票据。</summary>
 public static class AuthenticationJoinScope
 {
     public static string ForRemote(NetworkTarget target)

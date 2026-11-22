@@ -1,6 +1,6 @@
 namespace Game.Terrains.Lighting;
 
-/// <summary>Retains ordered authority data until the matching client contents and heights are available.</summary>
+/// <summary>按序保留权威数据，直到匹配的客户端区块内容和高度就绪。</summary>
 public sealed class TerrainReplicaLighting(
     Terrain terrain,
     Func<ChunkAllocationId, bool> isCurrent,
@@ -339,7 +339,7 @@ public sealed class TerrainReplicaLighting(
         }
     }
 
-    /// <summary>Called by the terrain worker under the terrain access gate; packet callbacks never wait for it.</summary>
+    /// <summary>地形工作线程在持有地形访问锁时调用；数据包回调无需等待此操作。</summary>
     public IReadOnlyList<TerrainChunk> Drain()
     {
         var applied = new List<TerrainChunk>();

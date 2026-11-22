@@ -2,7 +2,7 @@ using Engine.Input;
 
 namespace Game.Automation;
 
-/// <summary>A bounded simultaneous input gesture, delivered through normal engine input.</summary>
+/// <summary>通过正常引擎输入流程投递的一组有界并发手势输入。</summary>
 public sealed record AutomationInputAction(
     Key[] Keys,
     MouseButton[] MouseButtons,

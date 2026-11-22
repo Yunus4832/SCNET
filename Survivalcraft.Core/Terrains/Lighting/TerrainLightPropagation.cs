@@ -2,7 +2,7 @@ using System.Buffers;
 
 namespace Game.Terrains.Lighting;
 
-/// <summary>Private, bounded flood fill which writes only the owning chunk's result.</summary>
+/// <summary>在后台执行有界洪泛填充，仅写入所属区块的结果。</summary>
 internal sealed class TerrainLightPropagation : IDisposable
 {
     private const int _cellCount = 65536;

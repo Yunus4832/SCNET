@@ -1,6 +1,6 @@
 namespace Rendezvous.Protocol;
 
-/// <summary>Bounded control datagrams; tickets must never be logged.</summary>
+/// <summary>有大小限制的控制数据报，票据不得写入日志。</summary>
 public sealed record SignalMessage(
     string Operation,
     Guid RequestId,

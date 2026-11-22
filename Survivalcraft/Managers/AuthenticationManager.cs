@@ -9,7 +9,7 @@ using SCNET.Authentication.Protocol.Security;
 
 namespace Game.Managers;
 
-/// <summary>Owns instance authentication files; initialization performs no network requests or login.</summary>
+/// <summary>管理实例认证文件，初始化时无需网络请求或登录。</summary>
 public sealed class AuthenticationManager(
     AuthenticationServiceRegistry services,
     AuthenticationGrantStore grants,
@@ -52,7 +52,7 @@ public sealed class AuthenticationManager(
             : AuthenticationServiceInstallationStatus.Disabled;
     }
 
-    /// <summary>Call only after confirming the displayed endpoint and public identity. Never enables an existing service.</summary>
+    /// <summary>确认显示的端点和公开身份后方可调用；已有服务的启用状态保持不变。</summary>
     public void InstallConfirmedService(AuthenticationServiceEndpoint endpoint, string source)
     {
         switch (GetInstallationStatus(endpoint))

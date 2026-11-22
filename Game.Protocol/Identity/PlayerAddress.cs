@@ -2,7 +2,7 @@ using Engine.Core.Security;
 
 namespace Game.Protocol.Identity;
 
-/// <summary>A canonical SCNET Bech32m public-key thumbprint, independent of character and connection identifiers.</summary>
+/// <summary>规范的 SCNET Bech32m 公钥指纹，独立于角色和连接标识。</summary>
 [MessagePack.MessagePackFormatter(typeof(Serialization.Formatters.ProtocolValueFormatter))]
 public readonly record struct PlayerAddress
 {

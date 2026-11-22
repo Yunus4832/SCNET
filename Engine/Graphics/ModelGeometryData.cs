@@ -5,7 +5,7 @@ using Engine.Media.Models;
 
 namespace Engine.Graphics;
 
-/// <summary>CPU preparation for the rigid model renderer; asset accessors remain graphics-independent.</summary>
+/// <summary>为刚性模型渲染器执行 CPU 预处理，资源访问器独立于图形设备。</summary>
 public sealed class ModelGeometryData
 {
     public static readonly VertexDeclaration VertexDeclaration = new(

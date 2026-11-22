@@ -2,7 +2,7 @@ using System.Threading.Channels;
 
 namespace Engine.Audio;
 
-/// <summary>Bounded CPU preparation, shared by buffered assets and streaming reads.</summary>
+/// <summary>缓存资源和流式读取共用的有界 CPU 预处理。</summary>
 internal sealed class AudioPreparation
 {
     private readonly Channel<IWork> _queue = Channel.CreateBounded<IWork>(

@@ -7,7 +7,7 @@ using LiteNetLib;
 
 namespace Engine.Network;
 
-/// <summary>A transport connection whose identity is independent of its remote address.</summary>
+/// <summary>传输连接的身份独立于其远端地址。</summary>
 public sealed class NetworkConnection
 {
     private readonly NetPeer _peer;

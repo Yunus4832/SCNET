@@ -1,4 +1,4 @@
 namespace Rendezvous.Protocol;
 
-/// <summary>Private control-channel credentials; never log or send the key in a data-plane header.</summary>
+/// <summary>控制通道私有凭据，密钥不得写入日志或数据通道包头。</summary>
 public sealed record RelayRouteCredentials(Guid RouteId, byte Side, byte[] Key);

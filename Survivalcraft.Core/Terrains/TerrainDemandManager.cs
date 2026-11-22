@@ -4,7 +4,7 @@ using Game.Terrains.Distribution;
 
 namespace Game.Terrains;
 
-/// <summary>Owns world-local locations and temporary spawn demand, independently of execution.</summary>
+/// <summary>管理本世界的关注位置和临时出生需求，执行调度另行处理。</summary>
 public sealed class TerrainDemandManager(Terrain terrain, TerrainContentRole role) : IDisposable
 {
     private readonly Terrain _terrain = terrain ?? throw new ArgumentNullException(nameof(terrain));

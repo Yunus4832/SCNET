@@ -4,7 +4,7 @@ using Game.Network.Handling;
 
 namespace Game.World;
 
-/// <summary>Composes an independently executing authority and a caller-scheduled presentation client.</summary>
+/// <summary>组合独立执行的权威端与由调用方调度的表现客户端。</summary>
 public sealed class GameRuntime(
     bool allowsLocalPause,
     Func<Action, Task>? dispatchClient = null
@@ -24,7 +24,7 @@ public sealed class GameRuntime(
 
     public AuthorityWorldExecutor? AuthorityExecution { get; private set; }
 
-    /// <summary>World identity only; live authority state is accessed through AuthorityExecution.</summary>
+    /// <summary>仅表示世界身份，通过 AuthorityExecution 访问活动的权威端状态。</summary>
     public WorldRuntimeContext? Authority => Volatile.Read(ref _authority);
 
     public WorldRuntimeContext? Client => Volatile.Read(ref _client);
@@ -305,7 +305,7 @@ public sealed class GameRuntime(
         }
     }
 
-    /// <summary>Only for a non-cancellable host teardown after its frame loop is ending.</summary>
+    /// <summary>仅用于宿主帧循环即将结束时不可取消的清理操作。</summary>
     public void ReleaseClientForHostShutdown()
     {
         _client?.VerifyExecutionAccess();

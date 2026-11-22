@@ -5,7 +5,7 @@ using EntitySystem.Core;
 
 namespace Game.Modding;
 
-/// <summary>World-scoped dispatch through the existing mod host registrations.</summary>
+/// <summary>通过模组宿主已有的注册项在世界范围内分发调用。</summary>
 public sealed class WorldRuleHooks : IDisposable
 {
     private static readonly ConditionalWeakTable<WorldRuntimeContext, WorldRuleHooks> _bindings = new();

@@ -94,14 +94,14 @@ public class SkyPrimitiveRender
                     ShaderAlphaTest.SamplerState = baseTexturedBatch.SamplerState;
                     ShaderAlphaTest.Transforms.World[0] = matrix;
                     ShaderAlphaTest.AlphaThreshold = 0f;
-                    baseTexturedBatch.FlushWithDeviceState(ShaderAlphaTest, clearAfterFlush); //new
+                    baseTexturedBatch.FlushWithDeviceState(ShaderAlphaTest, clearAfterFlush);
                 }
                 else
                 {
                     Shader.Texture = baseTexturedBatch.Texture;
                     Shader.SamplerState = baseTexturedBatch.SamplerState;
                     Shader.Transforms.World[0] = matrix;
-                    baseTexturedBatch.FlushWithDeviceState(Shader, clearAfterFlush); //new
+                    baseTexturedBatch.FlushWithDeviceState(Shader, clearAfterFlush);
                 }
             }
             else

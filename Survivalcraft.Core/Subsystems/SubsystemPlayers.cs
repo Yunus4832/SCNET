@@ -3,7 +3,7 @@ using EntitySystem.TemplatesDatabase;
 
 namespace Game.Subsystems;
 
-/// <summary>Persistent player identity, permissions, restrictions and character ownership.</summary>
+/// <summary>记录玩家的持久身份、权限、限制及角色归属。</summary>
 public sealed class SubsystemPlayers : Subsystem
 {
     public WorldPlayerStore Store { get; } = new();

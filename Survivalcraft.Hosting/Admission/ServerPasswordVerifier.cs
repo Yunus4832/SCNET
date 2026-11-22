@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 
 namespace Game.Admission;
 
-/// <summary>Server-local shared password verifier. It never stores or advertises the password.</summary>
+/// <summary>保存在服务端的共享密码验证信息，不存储或公布密码本身。</summary>
 internal sealed class ServerPasswordVerifier
 {
     private const int _iterations = 600000;

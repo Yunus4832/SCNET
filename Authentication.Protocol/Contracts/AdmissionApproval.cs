@@ -1,6 +1,6 @@
 namespace SCNET.Authentication.Protocol.Contracts;
 
-/// <summary>Validated short-lived approval, never a reusable user grant.</summary>
+/// <summary>已验证的短期批准凭证，不能作为可复用的用户授权。</summary>
 public sealed record AdmissionApproval(
     string Authority,
     string Subject,

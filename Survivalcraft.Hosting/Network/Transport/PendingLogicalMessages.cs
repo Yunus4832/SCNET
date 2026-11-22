@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace Game.Network.Transport;
 
-/// <summary>Publication capacity remains reserved while a routing batch borrows its messages.</summary>
+/// <summary>路由批次借用消息期间继续占用原先预留的发布容量。</summary>
 internal sealed class PendingLogicalMessages(
     int capacity = 8192,
     long capacityBytes = 64L * 1024 * 1024,

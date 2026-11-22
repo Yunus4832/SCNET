@@ -5,7 +5,7 @@ using Game.Terrains.Rendering;
 
 namespace Game.Subsystems;
 
-/// <summary>WorldConnection-only ownership of terrain meshes, textures and rendering.</summary>
+/// <summary>仅在 WorldConnection 中持有地形网格、纹理和渲染资源。</summary>
 public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdateable
 {
     public static bool TerrainRenderingEnabled = true;

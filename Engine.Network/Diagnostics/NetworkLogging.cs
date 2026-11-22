@@ -2,7 +2,7 @@ using LiteNetLib;
 
 namespace Engine.Network.Diagnostics;
 
-/// <summary>Configures the process-wide transport log output independently of host lifetimes.</summary>
+/// <summary>配置进程级传输日志输出，其生命周期独立于传输宿主。</summary>
 public static class NetworkLogging
 {
     private static Action<NetworkLogLevel, string>? _write;

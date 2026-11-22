@@ -2,6 +2,7 @@ using System.IO.Compression;
 
 namespace Game.Protocol.Serialization;
 
+/// <summary>在协议载荷前写入压缩标志和未压缩字节数。</summary>
 public static class ProtocolFrameCodec
 {
     private enum WireCompression : byte
@@ -15,6 +16,7 @@ public static class ProtocolFrameCodec
 
     public const int MaximumPayloadLength = 64 * 1024 * 1024;
 
+    /// <summary>从可定位流的起点读取全部内容，返回时流位于末尾。</summary>
     public static byte[] EncodeFrame(Stream stream, CompressionPolicy compressionPolicy)
     {
         stream.Position = 0L;
@@ -59,6 +61,7 @@ public static class ProtocolFrameCodec
         return streamArray;
     }
 
+    /// <summary>按 <see cref="MaximumPayloadLength"/> 检查帧声明的长度，并核对解压后的实际大小后返回载荷。</summary>
     public static byte[] DecodeFrame(byte[] frame)
     {
         using var frameStream = new MemoryStream(frame, false);

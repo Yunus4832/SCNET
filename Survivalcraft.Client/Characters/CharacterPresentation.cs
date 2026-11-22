@@ -3,7 +3,7 @@ using Game.Network.Transport;
 
 namespace Game.Characters;
 
-/// <summary>Local view preparation and interaction for an installed authoritative character.</summary>
+/// <summary>为已安装的权威角色准备本地视图并处理交互。</summary>
 public sealed class CharacterPresentation : IDisposable
 {
     private readonly SubsystemCharacterPresentation _owner;

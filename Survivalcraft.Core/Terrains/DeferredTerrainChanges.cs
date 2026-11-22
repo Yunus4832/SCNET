@@ -1,6 +1,6 @@
 namespace Game.Terrains;
 
-/// <summary>Bounded, coalesced natural-change intents; committed terrain remains owned by the caller.</summary>
+/// <summary>合并并限制待处理的自然变化请求，已提交的地形仍由调用方持有。</summary>
 internal sealed class DeferredTerrainChanges(
     Func<Point3, DeferredTerrainChanges.Cell?> read,
     Action<Point3, int> apply,
@@ -43,7 +43,7 @@ internal sealed class DeferredTerrainChanges(
         return true;
     }
 
-    /// <summary>Capacity pressure cannot accept only the crop half of a crop/soil intent.</summary>
+    /// <summary>作物和土壤的关联变更必须同时获得容量，避免只接纳作物一侧。</summary>
     internal bool TryEnqueue(ReadOnlySpan<(Point3 Point, int Value)> changes)
     {
         if (changes.Length > _capacity) { return false; }

@@ -2,7 +2,7 @@ using Content.Packaging;
 
 namespace Game.Modding;
 
-/// <summary>Resolves exactly the verified local packages required by one effective profile.</summary>
+/// <summary>仅解析当前生效配置所需且已验证的本地包。</summary>
 public static class LocalModLoadPlan
 {
     public static IReadOnlyList<ModPackageSource> Resolve(

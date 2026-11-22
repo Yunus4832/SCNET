@@ -1,6 +1,6 @@
 namespace Game.Modding.Content;
 
-/// <summary>One frozen resource registration consumed by actual CPU or client resource owners.</summary>
+/// <summary>供 CPU 侧或客户端资源管理者使用的已冻结注册项。</summary>
 public sealed record RegisteredContentResource(
     ResourceId Id,
     string RelativePath,

@@ -31,7 +31,7 @@ public static class NetworkTerrainPolicy
         return Vector2.DistanceSquared(center, closest) <= MathUtils.Sqr(distance);
     }
 
-    /// <summary>Covers chunk surfaces and the client camera movement between demand updates.</summary>
+    /// <summary>涵盖区块表面，以及两次需求更新之间客户端摄像机的移动范围。</summary>
     public static bool IsTerrainChunkRelevant(Point2 chunk, Vector2 center, float distance)
     {
         var chunkCenter = new Vector2((chunk.X + 0.5f) * 16f, (chunk.Y + 0.5f) * 16f);

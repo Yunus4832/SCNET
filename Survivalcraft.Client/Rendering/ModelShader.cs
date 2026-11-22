@@ -90,7 +90,6 @@ public class ModelShader : Shader
 
     public Vector3 LightDirection2 { set => _directionToLight2Parameter.SetValue(-value); }
 
-    //new
     public Vector3 WorldUp { set => _worldUpParameter.SetValue(value); }
 
     public int InstancesCount

@@ -2,7 +2,7 @@ using Game.Terrains.Distribution;
 
 namespace Game.Network.Transport;
 
-/// <summary>One direction of a trusted in-process link; payloads enter the same inbox as decoded network messages.</summary>
+/// <summary>受信任的进程内链路的一个方向；载荷与已解码的网络消息进入同一收件队列。</summary>
 public sealed class InProcessMessageConnection : IMessageConnection
 {
     private readonly WorldRuntimeContext _source;

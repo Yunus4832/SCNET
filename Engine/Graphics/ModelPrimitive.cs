@@ -4,7 +4,7 @@ using Engine.Core.Mathematics;
 
 namespace Engine.Graphics;
 
-/// <summary>CPU geometry shared by scene nodes; graphics buffers are created only on drawing access.</summary>
+/// <summary>场景节点共享的 CPU 几何数据，首次绘制访问时才创建图形缓冲区。</summary>
 public sealed class ModelPrimitive
 {
     private readonly ModelGeometryData _geometry;

@@ -1,6 +1,6 @@
 namespace Game.Admission;
 
-/// <summary>Recoverable startup overrides contain public provider data and a password FILE reference only.</summary>
+/// <summary>可恢复的启动覆盖项仅保存提供方的公开数据和密码文件引用。</summary>
 public sealed record ServerAdmissionOverrides
 {
     public ServerAdmissionMode? Mode { get; init; }

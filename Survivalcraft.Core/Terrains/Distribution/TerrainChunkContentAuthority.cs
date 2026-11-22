@@ -2,9 +2,7 @@ using Game.Network.Chunks;
 
 namespace Game.Terrains.Distribution;
 
-/// <summary>
-///     Authoritative snapshot source backed by generated or loaded server terrain.
-/// </summary>
+/// <summary>从服务端生成或加载的地形提供权威快照。</summary>
 public sealed class TerrainChunkContentAuthority(Terrain terrain) : IChunkContentAuthority
 {
     private readonly Terrain _terrain = terrain ?? throw new ArgumentNullException(nameof(terrain));

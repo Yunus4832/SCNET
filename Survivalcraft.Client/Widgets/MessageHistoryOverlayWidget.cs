@@ -2,10 +2,7 @@ using Game.Messaging;
 
 namespace Game.Widgets;
 
-/// <summary>
-///     Read-only recent message history shown in the HUD.
-///     Sending messages and commands belongs to <see cref="MessagePanelWidget" />.
-/// </summary>
+/// <summary>在 HUD 中显示最近的消息记录；通过 <see cref="MessagePanelWidget" /> 发送消息和命令。</summary>
 public sealed class MessageHistoryOverlayWidget : CanvasWidget
 {
     private readonly GameMessageService _messageService;

@@ -1,6 +1,6 @@
 namespace Game.Terrains.Lighting;
 
-/// <summary>Immutable spatial light data whose sections can be shared across publications.</summary>
+/// <summary>不可变的空间光照数据，不同发布可以共享分段。</summary>
 public sealed class TerrainLightSnapshot
 {
     private readonly TerrainLightSection[] _sections;

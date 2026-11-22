@@ -1,8 +1,6 @@
 namespace Game.Commands;
 
-/// <summary>
-///     Describes one textual route and converts parsed arguments into a typed command.
-/// </summary>
+/// <summary>描述一条文本命令路由，并将解析后的参数转换为强类型命令。</summary>
 public sealed class CommandRoute(
     IEnumerable<CommandSegment> segments,
     Type commandType,

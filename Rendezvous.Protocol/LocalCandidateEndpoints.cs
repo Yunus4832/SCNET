@@ -3,7 +3,7 @@ using System.Net.Sockets;
 
 namespace Rendezvous.Protocol;
 
-/// <summary>Bounds advertised interface endpoints; reachability still requires a peer challenge.</summary>
+/// <summary>限制对外公布的网络接口端点，可达性仍须通过对端质询验证。</summary>
 public static class LocalCandidateEndpoints
 {
     public const int MaxCount = 4;

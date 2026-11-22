@@ -4,7 +4,7 @@ using Game.Terrains.Lighting;
 
 namespace Game.Terrains.Rendering;
 
-/// <summary>Client-owned meshes and GPU resources for one chunk allocation.</summary>
+/// <summary>客户端为一次区块分配持有的网格和 GPU 资源。</summary>
 public sealed class TerrainChunkPresentation : IDisposable
 {
     private DynamicArray<TerrainChunkGeometry.Buffer>? _buffers;
@@ -100,7 +100,7 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     public long UploadedContentVersion => Volatile.Read(ref _uploadedMesh)?.ContentVersion ?? 0;
 
-    /// <summary>Opaque identity of the completed CPU mesh being staged for upload.</summary>
+    /// <summary>标识已完成并等待上传的 CPU 网格，调用方按不透明标识使用。</summary>
     internal object? GeometryUploadToken => Volatile.Read(ref _completedMesh);
 
     internal bool CanReuseUploadedTopology => GeometryUploaded && _topologyRevision == _uploadedTopologyRevision;
@@ -136,7 +136,7 @@ public sealed class TerrainChunkPresentation : IDisposable
         return uploaded != null && Matches(chunk, uploaded);
     }
 
-    /// <summary>Called under the geometry lock only after the actual GPU upload succeeded.</summary>
+    /// <summary>实际 GPU 上传成功后，在持有几何锁时调用。</summary>
     public void MarkUploaded()
     {
         var completed = Volatile.Read(ref _completedMesh);
@@ -360,7 +360,7 @@ public sealed class TerrainChunkPresentation : IDisposable
         return true;
     }
 
-    /// <summary>Coalesces already-visible maintenance without delaying initial geometry or valid in-progress slices.</summary>
+    /// <summary>合并已可见区块的维护任务，同时允许首次几何生成和有效的分片构建继续推进。</summary>
     internal bool ShouldDeferMaintenance(TerrainChunk chunk, double now, out double due)
     {
         due = now;
@@ -420,7 +420,7 @@ public sealed class TerrainChunkPresentation : IDisposable
         return snapshots;
     }
 
-    /// <summary>Called while holding the owning terrain's access gate.</summary>
+    /// <summary>调用时须持有所属地形的访问锁。</summary>
     public TerrainMeshState PrepareMeshUpdate(TerrainChunk chunk, bool allowPendingLighting = false)
     {
         if (_activeMesh is null || !Matches(chunk, _activeMesh))
@@ -491,7 +491,7 @@ public sealed class TerrainChunkPresentation : IDisposable
         CompletedMeshSlices++;
     }
 
-    /// <summary>Publishes only a build for the same allocation, content and rebuild request.</summary>
+    /// <summary>仅发布仍与当前分配、内容和重建请求相符的构建结果。</summary>
     public bool CompleteMeshBuild(TerrainChunk chunk)
     {
         if (_activeMesh is null ||

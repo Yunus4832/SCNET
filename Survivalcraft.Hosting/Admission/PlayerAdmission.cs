@@ -2,7 +2,7 @@ using EntitySystem.Core;
 
 namespace Game.Admission;
 
-/// <summary>World admission rules shared by trusted local access and remote transports.</summary>
+/// <summary>受信任的本地访问与远端传输共用的世界准入规则。</summary>
 internal static class PlayerAdmission
 {
     internal static LocalizedText? Rejection(Project project, NetNode node, PlayerAddress address, Guid token)

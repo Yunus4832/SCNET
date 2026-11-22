@@ -1,6 +1,6 @@
 namespace Game.Network.Transport;
 
-/// <summary>Owned, bounded, non-reentrant delivery with FIFO per sender and round-robin between senders.</summary>
+/// <summary>有界且不可重入的消息投递，同一发送方按先入先出顺序处理，不同发送方轮流处理。</summary>
 public sealed class OwnedMessageInbox<TMessage>
 {
     public const long DefaultCapacityBytes = 128L * 1024 * 1024;

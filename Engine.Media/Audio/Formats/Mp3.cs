@@ -86,7 +86,6 @@ public static class Mp3
         /// <summary>
         ///     复制出一个新的流
         /// </summary>
-        /// <returns></returns>
         public override StreamingSource Duplicate()
         {
             MemoryStream memoryStream = new();

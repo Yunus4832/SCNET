@@ -10,7 +10,7 @@ using Rendezvous.Protocol;
 
 namespace Engine.Network.Transport;
 
-/// <summary>Wraps only assigned relay endpoints; ordinary transport packets remain unchanged.</summary>
+/// <summary>仅封装发往已分配中继端点的数据，普通传输包按原样传递。</summary>
 internal sealed class RelayPacketLayer() : PacketLayerBase(RelayDatagramCodec.Overhead)
 {
     private readonly ConcurrentDictionary<IPEndPoint, Route> _routes = new();

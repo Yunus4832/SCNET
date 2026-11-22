@@ -1,8 +1,6 @@
 namespace Game.Widgets;
 
-/// <summary>
-///     Selectable player row used by the full player management panel.
-/// </summary>
+/// <summary>完整玩家管理面板中可选择的玩家行。</summary>
 public sealed class CharacterManagementItemWidget : CanvasWidget
 {
     private readonly LabelWidget _name = new()

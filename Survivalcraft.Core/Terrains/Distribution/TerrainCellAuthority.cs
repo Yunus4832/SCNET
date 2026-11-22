@@ -1,8 +1,6 @@
 namespace Game.Terrains.Distribution;
 
-/// <summary>
-///     Owns authoritative single-cell reads and writes independently from any render replica.
-/// </summary>
+/// <summary>管理单格权威数据的读写，独立于渲染副本。</summary>
 public sealed class TerrainCellAuthority(Terrain terrain)
 {
     public Terrain Terrain { get; } = terrain ?? throw new ArgumentNullException(nameof(terrain));

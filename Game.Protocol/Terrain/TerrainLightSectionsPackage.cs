@@ -2,7 +2,7 @@ using MessagePack;
 
 namespace Game.Protocol.Terrain;
 
-/// <summary>Authority light sections for one content allocation, independent of block payloads.</summary>
+/// <summary>一次内容分配对应的权威光照分段，可独立于方块载荷传输。</summary>
 [MessagePackObject]
 public sealed record TerrainLightSectionsPackage : IProtocolMessage
 {

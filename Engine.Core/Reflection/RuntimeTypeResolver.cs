@@ -1,6 +1,6 @@
 namespace Engine.Core.Reflection;
 
-/// <summary>Resolves runtime type names without owning persistence aliases or retaining collectible assemblies.</summary>
+/// <summary>解析运行时类型名，不管理持久化别名，也不持有可卸载程序集的引用。</summary>
 public static class RuntimeTypeResolver
 {
     private static readonly Dictionary<string, Type> _typesByName = new(StringComparer.Ordinal);

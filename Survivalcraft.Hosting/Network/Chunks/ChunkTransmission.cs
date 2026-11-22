@@ -1,6 +1,6 @@
 namespace Game.Network.Chunks;
 
-/// <summary>A bounded, resumable fragment plan; repeated requests merge without restarting the stream.</summary>
+/// <summary>有界且可恢复的分片计划；重复请求可合并并接续当前流。</summary>
 public sealed class ChunkTransmission
 {
     private readonly SortedSet<ushort> _remaining = [];

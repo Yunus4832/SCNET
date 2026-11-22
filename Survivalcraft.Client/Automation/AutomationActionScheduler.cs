@@ -1,6 +1,6 @@
 namespace Game.Automation;
 
-/// <summary>Tracks one bounded gesture and its terminal state without owning engine input.</summary>
+/// <summary>跟踪一次有界输入手势及其结束状态，引擎负责输入设备。</summary>
 public sealed class AutomationActionScheduler
 {
     private long _nextId;

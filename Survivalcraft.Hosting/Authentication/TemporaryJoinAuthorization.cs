@@ -3,7 +3,7 @@ using SCNET.Authentication.Protocol.Http;
 
 namespace Game.Authentication;
 
-/// <summary>A login-once decision belongs to one live join, not to the installed registry or grant vault.</summary>
+/// <summary>仅登录一次的决定只在本次加入期间有效，不写入已安装服务目录或授权凭据库。</summary>
 public sealed record TemporaryJoinAuthorization(
     string Subject,
     string Server,

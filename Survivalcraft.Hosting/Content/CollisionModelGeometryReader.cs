@@ -4,7 +4,7 @@ using Game.Blocks.Collision;
 
 namespace Game.Content;
 
-/// <summary>Projects the CPU model format into the immutable geometry needed by block collision rules.</summary>
+/// <summary>从 CPU 模型数据提取方块碰撞规则所需的不可变几何数据。</summary>
 public static class CollisionModelGeometryReader
 {
     public static CollisionModelGeometry Read(ResourceId id, Stream stream)

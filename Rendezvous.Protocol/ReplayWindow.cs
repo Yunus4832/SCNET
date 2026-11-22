@@ -1,6 +1,6 @@
 namespace Rendezvous.Protocol;
 
-/// <summary>Accepts reordered authenticated packets within a 64-sequence replay window.</summary>
+/// <summary>在包含 64 个序号的防重放窗口内接受已认证的乱序包。</summary>
 public sealed class ReplayWindow
 {
     private ulong _highest;

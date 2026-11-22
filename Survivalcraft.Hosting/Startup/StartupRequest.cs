@@ -35,15 +35,13 @@ public sealed class StartupRequest
 
     public P2PRoomOverrides P2POverrides { get; set; } = new();
 
-    /// <summary>Optional HTTP command host enablement override for this startup session.</summary>
+    /// <summary>仅对本次启动会话生效的可选 HTTP 命令宿主启用设置。</summary>
     public bool? HttpCommandEnabled { get; set; }
 
-    /// <summary>
-    ///     Optional HTTP command listener port override for this process.
-    /// </summary>
+    /// <summary>仅对本进程生效的可选 HTTP 命令监听端口。</summary>
     public int? HttpCommandPort { get; set; }
 
-    /// <summary>Optional HTTP command access token override for this process.</summary>
+    /// <summary>仅对本进程生效的可选 HTTP 命令访问令牌。</summary>
     public string? HttpCommandAccessToken { get; set; }
 
     public bool Save { get; set; }

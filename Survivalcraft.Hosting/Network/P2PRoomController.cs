@@ -7,7 +7,7 @@ using Rendezvous.Protocol;
 
 namespace Game.Network;
 
-/// <summary>Owns a room registration; the listener and established connections belong to NetNode.</summary>
+/// <summary>管理房间注册；监听器和已建立的连接由 NetNode 持有。</summary>
 internal sealed class P2PRoomController(
     Func<NetworkHost, P2PRoomSettings, int, HttpClient, CancellationToken, Task<NetworkRoomRegistration>>? register =
         null,

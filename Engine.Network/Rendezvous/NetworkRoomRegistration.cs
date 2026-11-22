@@ -2,7 +2,7 @@ using Rendezvous.Protocol;
 
 namespace Engine.Network.Rendezvous;
 
-/// <summary>Maintains an optional room registration without owning the game listener or its connections.</summary>
+/// <summary>维护可选的房间注册，游戏监听器及其连接由调用方管理。</summary>
 public sealed class NetworkRoomRegistration : IAsyncDisposable
 {
     private readonly Func<CancellationToken, Task<DateTimeOffset>> _renew;

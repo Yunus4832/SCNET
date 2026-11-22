@@ -25,17 +25,11 @@ public interface IInventory
     /// <summary>
     ///     获取某个物品的容量
     /// </summary>
-    /// <param name="slotIndex"></param>
-    /// <param name="value"></param>
-    /// <returns></returns>
     int GetSlotCapacity(int slotIndex, int value);
 
     /// <summary>
     ///     获取当某个物品拖向另一个物品的容量
     /// </summary>
-    /// <param name="slotIndex"></param>
-    /// <param name="value"></param>
-    /// <returns></returns>
     int GetSlotProcessCapacity(int slotIndex, int value);
 
     void AddSlotItems(int slotIndex, int value, int count);
@@ -50,9 +44,6 @@ public interface IInventory
     /// <param name="slotIndex">目标slotIndex</param>
     /// <param name="value">源方块值</param>
     /// <param name="count">源方块数量</param>
-    /// <param name="processCount"></param>
-    /// <param name="processedValue"></param>
-    /// <param name="processedCount"></param>
     void ProcessSlotItems(
         IInventory sourceInventory,
         int sourceSlotIndex,

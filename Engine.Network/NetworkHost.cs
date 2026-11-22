@@ -13,7 +13,7 @@ using Rendezvous.Protocol;
 
 namespace Engine.Network;
 
-/// <summary>Owns a transport socket and advances signaling independently of a game window.</summary>
+/// <summary>持有传输套接字并推进信令，无需游戏窗口。</summary>
 public sealed class NetworkHost : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<Guid, NetworkConnectionRequest> _incoming = new();

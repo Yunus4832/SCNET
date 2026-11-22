@@ -4,7 +4,7 @@ using Game.Protocol.Identity;
 
 namespace Game.Characters;
 
-/// <summary>A live presentation query; teams never own or cache characters.</summary>
+/// <summary>实时查询当前可展示的角色，队伍不持有或缓存角色。</summary>
 public static class CharacterTeamQuery
 {
     public static Guid GetTeamId(Project project, Guid characterId)

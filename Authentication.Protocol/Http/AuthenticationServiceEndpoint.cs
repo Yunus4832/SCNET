@@ -3,7 +3,7 @@ using SCNET.Authentication.Protocol.Security;
 
 namespace SCNET.Authentication.Protocol.Http;
 
-/// <summary>Validated location and pinned identity; discovery alone does not establish trust.</summary>
+/// <summary>保存已验证的地址和已固定的身份；仅发现地址不足以建立信任。</summary>
 public sealed class AuthenticationServiceEndpoint
 {
     public AuthenticationServiceEndpoint(AuthenticationServiceDescription description)

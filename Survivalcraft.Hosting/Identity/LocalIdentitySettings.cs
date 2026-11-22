@@ -1,6 +1,6 @@
 namespace Game.Identity;
 
-/// <summary>Private instance data; use public identity summaries for UI and diagnostics.</summary>
+/// <summary>实例私有数据；界面和诊断应使用公开身份摘要。</summary>
 public sealed record LocalIdentitySettings
 {
     public IReadOnlyList<StoredLocalIdentity> Identities { get; init; } = [];

@@ -5,7 +5,7 @@ using Game.Terrains.Execution;
 
 namespace Game.Terrains.Rendering;
 
-/// <summary>Client-owned mesh tasks and upload prerequisites, scheduled with CPU terrain readiness.</summary>
+/// <summary>由客户端持有的网格任务及上传前置条件，与 CPU 地形就绪状态一同调度。</summary>
 public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
 {
     private readonly SubsystemTerrainPresentation _presentation;

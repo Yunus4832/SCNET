@@ -5,7 +5,7 @@ using SCNET.Authentication.Protocol.Http;
 
 namespace ContentServer.Application;
 
-/// <summary>Anonymous, bounded descriptor inspection with a DNS-pinned public connection.</summary>
+/// <summary>通过固定 DNS 解析结果的公网连接匿名检查描述信息，并限制资源用量。</summary>
 public sealed class AuthenticationInspectionClient
 {
     private readonly Func<HttpMessageHandler> _createHandler;

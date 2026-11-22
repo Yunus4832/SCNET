@@ -1,6 +1,6 @@
 namespace Game.Terrains.Generation;
 
-/// <summary>Read-only terrain environment calculations without world mutation services.</summary>
+/// <summary>仅提供地形环境计算，无权修改世界。</summary>
 public class GeneratedTerrainEnvironment : ITerrainEnvironment
 {
     private readonly int _seaOffset;

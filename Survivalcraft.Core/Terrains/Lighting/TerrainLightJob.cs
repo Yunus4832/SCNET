@@ -1,6 +1,6 @@
 namespace Game.Terrains.Lighting;
 
-/// <summary>Immutable inputs for a chunk calculation which can execute without world access.</summary>
+/// <summary>可脱离世界访问执行区块计算的不可变输入。</summary>
 public sealed class TerrainLightJob
 {
     private readonly TerrainLightSeed _seed;

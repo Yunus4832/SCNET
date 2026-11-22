@@ -7,7 +7,7 @@ using Game.Blocks.Presentation.Geometry;
 
 namespace Game.Terrains.Rendering;
 
-/// <summary>CPU-only slice-cache builder; uploads remain on the rendering thread.</summary>
+/// <summary>仅在 CPU 上构建分片缓存，上传由渲染线程执行。</summary>
 internal sealed class TerrainMeshBuilder(
     Terrain terrain,
     BlockGeometryGenerator generator,

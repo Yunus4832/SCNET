@@ -9,7 +9,7 @@ using SCNET.Authentication.Protocol.Http;
 
 namespace Game.Authentication;
 
-/// <summary>Loading-screen admission interaction. Network tasks never mutate widgets or publish trust.</summary>
+/// <summary>加载界面中的准入交互，网络任务不直接修改控件或发布信任决策。</summary>
 internal sealed class ClientAdmissionUi : IDisposable
 {
     private sealed class BrowserLaunchFailure : Exception;

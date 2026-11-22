@@ -3,7 +3,7 @@ using Engine.Core.Reflection;
 
 namespace EntitySystem.TemplatesDatabase;
 
-/// <summary>Type names owned by the template and values-dictionary XML format.</summary>
+/// <summary>模板和数值字典 XML 格式使用的类型名。</summary>
 public static class TemplateTypeNames
 {
     private static readonly Dictionary<string, Type> _typesByName = new(StringComparer.Ordinal)

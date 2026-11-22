@@ -5,7 +5,7 @@ using Engine.Media.Audio;
 
 namespace Engine.Audio;
 
-/// <summary>Pure CPU producer. It owns its stream and never accesses a native device.</summary>
+/// <summary>在 CPU 上生产音频数据，自行管理输入流，不访问原生设备。</summary>
 internal sealed class AudioStreamReader
 {
     private readonly CancellationTokenSource _cancellation = new();

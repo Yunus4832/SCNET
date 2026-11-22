@@ -4,7 +4,7 @@ using Engine.Core.Mathematics;
 
 namespace Engine.Media.Models;
 
-/// <summary>Dense, tightly packed little-endian components; sparse overrides and matrix padding are resolved on import.</summary>
+/// <summary>按小端紧密排列的稠密分量；导入时处理稀疏覆盖和矩阵填充。</summary>
 public sealed class ModelAccessorData : ModelElementData
 {
     public ModelComponentType ComponentType;

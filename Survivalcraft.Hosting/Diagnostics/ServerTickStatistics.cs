@@ -1,6 +1,6 @@
 namespace Game.Diagnostics;
 
-/// <summary>Cumulative main-loop counters; recorded and read on the server update thread.</summary>
+/// <summary>主循环累计计数器，在服务器更新线程上记录和读取。</summary>
 public sealed class ServerTickStatistics
 {
     private readonly Lock _gate = new();

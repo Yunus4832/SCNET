@@ -2,7 +2,7 @@ using System.Buffers;
 
 namespace Game.Terrains.Lighting;
 
-/// <summary>Solves an emission batch from direct light seeds, independently of intermediate neighbor publications.</summary>
+/// <summary>从直接光照种子计算一批发光变化，无需邻区先发布中间结果。</summary>
 internal sealed class TerrainLightRegion(
     TerrainLightingStore.LocalLightBatch batch,
     int seedX,

@@ -2,7 +2,7 @@ using MessagePack;
 
 namespace Game.Protocol.Terrain;
 
-/// <summary>Small related light updates with one presentation boundary.</summary>
+/// <summary>在同一次画面更新中生效的一组小范围关联光照变更。</summary>
 [MessagePackObject]
 public sealed record TerrainLightBatchPackage : IProtocolMessage
 {

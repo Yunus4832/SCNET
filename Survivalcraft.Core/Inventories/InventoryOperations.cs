@@ -1,6 +1,6 @@
 namespace Game.Inventories;
 
-/// <summary>Inventory transfer rules and authority-only execution, independent of widgets and transport.</summary>
+/// <summary>定义物品栏转移规则，由权威端执行，独立于控件和传输层。</summary>
 public static class InventoryOperations
 {
     public static bool IsItemDisabled(IInventory inventory, int value)

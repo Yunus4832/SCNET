@@ -1,6 +1,6 @@
 namespace Game.Terrains.Distribution;
 
-/// <summary>Applies owned client deliveries under one world-update budget while the terrain worker is paused.</summary>
+/// <summary>暂停地形工作线程后，在同一次世界更新预算内应用客户端已接收的数据。</summary>
 public sealed class ClientChunkContentApplication(
     IChunkContentTransport transport,
     ClientChunkContentCoordinator contents,

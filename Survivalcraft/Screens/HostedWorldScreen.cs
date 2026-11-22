@@ -5,7 +5,7 @@ using Game.Network;
 
 namespace Game.Screens;
 
-/// <summary>A running GUI server remains available while its local player is absent or joining.</summary>
+/// <summary>GUI 服务器运行期间，本地玩家离开或正在加入时仍可对外服务。</summary>
 public sealed class HostedWorldScreen : Screen
 {
     private readonly LabelWidget _status;

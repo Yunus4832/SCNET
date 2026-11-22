@@ -1,6 +1,6 @@
 namespace Game.Rendering;
 
-/// <summary>Immutable, camera-relative parameters for independent atmosphere and coverage layers.</summary>
+/// <summary>相对于摄像机的不可变大气参数，分别描述大气和覆盖层。</summary>
 internal readonly record struct ViewAtmosphere(
     Vector2 DistanceStartDensity,
     Vector3 WeatherBottomTopDensity,

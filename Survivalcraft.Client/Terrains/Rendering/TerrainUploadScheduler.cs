@@ -1,6 +1,6 @@
 namespace Game.Terrains.Rendering;
 
-/// <summary>Shares one soft upload budget across every camera in a client world's frame.</summary>
+/// <summary>同一客户端世界的一帧内，所有摄像机共享一个软性上传预算。</summary>
 internal sealed class TerrainUploadScheduler(TimeProvider? timeProvider = null)
 {
     public const double FrameBudgetMilliseconds = 4;

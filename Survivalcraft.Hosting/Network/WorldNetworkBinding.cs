@@ -7,7 +7,7 @@ using Game.Network.Handling;
 
 namespace Game.Network;
 
-/// <summary>Actual per-world routing state owned by networking, not the Core world lifetime.</summary>
+/// <summary>网络层持有的每世界路由状态，生命周期独立于 Core 世界对象。</summary>
 public sealed class WorldNetworkBinding : IDisposable
 {
     private static readonly ConditionalWeakTable<WorldRuntimeContext, WorldNetworkBinding> _bindings = new();

@@ -2,7 +2,7 @@ using System.Net;
 
 namespace Engine.Network;
 
-/// <summary>Holds a selected path on the host socket until it is connected or released.</summary>
+/// <summary>在宿主套接字上保留选中的路径，直到建立连接或释放路径。</summary>
 public sealed class ConnectionPreparation : IAsyncDisposable
 {
     private readonly NetworkHost _host;

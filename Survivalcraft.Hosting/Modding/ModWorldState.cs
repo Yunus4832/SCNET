@@ -1,6 +1,6 @@
 namespace Game.Modding;
 
-/// <summary>A registered factory whose mutable instances belong to individual world runtimes.</summary>
+/// <summary>已注册的工厂，其创建的可变实例归各自的世界运行时所有。</summary>
 public sealed class ModWorldState<T> where T : class, IDisposable
 {
     private readonly Dictionary<WorldRuntimeContext, T> _instances = [];

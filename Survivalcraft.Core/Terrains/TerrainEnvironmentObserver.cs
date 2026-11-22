@@ -2,7 +2,7 @@ using Game.World.Timing;
 
 namespace Game.Terrains;
 
-/// <summary>Observes season inputs without owning terrain work or residency.</summary>
+/// <summary>观察季节输入，地形任务和区块驻留由其他对象管理。</summary>
 public sealed class TerrainEnvironmentObserver(
     Terrain terrain,
     SubsystemGameInfo gameInfo,

@@ -1,6 +1,6 @@
 namespace Game.Terrains.Rendering;
 
-/// <summary>Visible chunk boundaries affected by a local geometry prediction switch together.</summary>
+/// <summary>受本地几何预测影响的可见区块边界同时切换。</summary>
 internal sealed class TerrainEditCohorts(Terrain terrain, Action<TerrainChunk, bool> interactive)
 {
     private readonly Dictionary<TerrainChunk, HashSet<TerrainChunk>> _membership = [];

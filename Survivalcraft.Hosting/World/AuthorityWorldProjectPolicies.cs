@@ -3,7 +3,7 @@ using Game.Spawning;
 
 namespace Game.World;
 
-/// <summary>Actual per-world host policies, bound before any authority subsystem is loaded.</summary>
+/// <summary>在加载任何权威端子系统之前绑定本世界实际使用的宿主策略。</summary>
 public sealed record AuthorityWorldProjectPolicies(
     CreatureSpawnPolicy Spawn,
     NetworkInterestPolicy Interest,

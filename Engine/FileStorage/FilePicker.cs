@@ -1,8 +1,6 @@
 namespace Engine.FileStorage;
 
-/// <summary>
-///     Process-wide entry point for the file picker registered by the active platform starter.
-/// </summary>
+/// <summary>访问当前平台启动器所注册文件选择器的进程级入口。</summary>
 public static class FilePicker
 {
     private static IFilePicker? _implementation;

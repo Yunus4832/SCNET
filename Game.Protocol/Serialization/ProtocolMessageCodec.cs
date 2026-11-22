@@ -7,7 +7,7 @@ using MessagePack.Resolvers;
 
 namespace Game.Protocol.Serialization;
 
-/// <summary>Strongly typed message encoding; message construction and business dispatch belong to callers.</summary>
+/// <summary>对强类型消息进行编码，消息的创建和业务分发由调用方负责。</summary>
 public static class ProtocolMessageCodec
 {
     internal static MessagePackSerializerOptions Options { get; } = MessagePackSerializerOptions.Standard

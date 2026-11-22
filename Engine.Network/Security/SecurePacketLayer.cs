@@ -14,7 +14,7 @@ using Rendezvous.Protocol;
 
 namespace Engine.Network.Security;
 
-/// <summary>DTLS below LiteNetLib, outside application handshakes, delivery headers and ACKs.</summary>
+/// <summary>在 LiteNetLib 下层提供 DTLS；应用握手、投递头和确认消息位于上层。</summary>
 internal sealed class SecurePacketLayer : PacketLayerBase, IDisposable
 {
     private const int _envelopeSize = 5;

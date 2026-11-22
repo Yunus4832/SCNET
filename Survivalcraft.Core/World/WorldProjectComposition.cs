@@ -3,7 +3,7 @@ using EntitySystem.TemplatesDatabase;
 
 namespace Game.World;
 
-/// <summary>Selects world composition before resolving or constructing template classes.</summary>
+/// <summary>解析或构造模板类之前确定世界的组成。</summary>
 public sealed class WorldProjectComposition(RuntimeSide side, bool hasPresentation) : IProjectComposition
 {
     public bool ShouldCreateSubsystem(ValuesDictionary definition) => Includes(definition);

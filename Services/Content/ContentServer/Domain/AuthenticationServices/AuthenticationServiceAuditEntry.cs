@@ -2,7 +2,7 @@ using ContentServer.Domain.Administration;
 
 namespace ContentServer.Domain.AuthenticationServices;
 
-/// <summary>Immutable public listing snapshot; null administrator denotes its owning publisher.</summary>
+/// <summary>不可变的公开列表快照，管理员为空时由所属发布者管理。</summary>
 public sealed class AuthenticationServiceAuditEntry
 {
     private AuthenticationServiceAuditEntry()

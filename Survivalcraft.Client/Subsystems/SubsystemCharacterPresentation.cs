@@ -5,7 +5,7 @@ using Game.Application;
 
 namespace Game.Subsystems;
 
-/// <summary>WorldConnection-owned character views and startup selection flow.</summary>
+/// <summary>由 WorldConnection 管理角色视图和启动时的选择流程。</summary>
 public sealed class SubsystemCharacterPresentation : Subsystem, IUpdateable
 {
     private readonly Dictionary<CharacterData, CharacterPresentation> _presentations = new();

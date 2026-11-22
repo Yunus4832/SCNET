@@ -3,7 +3,7 @@ using Game.Terrains.Execution;
 
 namespace Game.Terrains;
 
-/// <summary>Publishes generated contents through business hooks on the owning world's update thread.</summary>
+/// <summary>在所属世界的更新线程上通过业务钩子发布已生成的内容。</summary>
 public sealed class AuthorityTerrainContent(
     SubsystemTerrain terrain,
     AuthoritativeChunkGenerationPipeline generation

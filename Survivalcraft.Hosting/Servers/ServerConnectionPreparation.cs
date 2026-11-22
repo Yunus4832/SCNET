@@ -3,7 +3,7 @@ using Engine.Network.Security;
 
 namespace Game.Servers;
 
-/// <summary>Owns the socket and prepared path used for server inspection and the subsequent game handshake.</summary>
+/// <summary>持有服务器信息查询和后续游戏握手共用的套接字与已准备的路径。</summary>
 public sealed class ServerConnectionPreparation : IAsyncDisposable
 {
     private readonly NetworkHost _host;

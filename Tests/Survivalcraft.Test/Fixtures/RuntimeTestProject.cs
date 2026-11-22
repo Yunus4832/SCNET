@@ -8,7 +8,7 @@ using Game.World;
 
 namespace Survivalcraft.Test.Fixtures;
 
-/// <summary>A world binding for focused tests that intentionally omit the full subsystem graph.</summary>
+/// <summary>供聚焦测试使用的世界绑定，可省略完整的子系统图。</summary>
 internal sealed class RuntimeTestProject : Project
 {
     private int _nextEntityTemplate;

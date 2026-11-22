@@ -1,6 +1,6 @@
 namespace Game.Modding;
 
-/// <summary>Owns the installed CPU mod environment and serializes replacement transactions.</summary>
+/// <summary>管理已安装的 CPU 模组环境，并串行执行替换事务。</summary>
 public static class CurrentModRuntime
 {
     private static readonly Lock _gate = new();
@@ -19,11 +19,7 @@ public static class CurrentModRuntime
 
     public static event Action<GameModRuntime?>? Changed;
 
-    /// <summary>
-    /// Reserves replacement after all old worlds have been released. While reserved, the old
-    /// environment cannot acquire new worlds. The caller may now release its client resources.
-    /// The caller owns <paramref name="runtime"/> until Commit succeeds.
-    /// </summary>
+    /// <summary>所有旧世界释放后预留环境替换权。预留期间旧环境不能接纳新世界，调用方可释放旧环境的客户端资源。Commit 成功前，<paramref name="runtime"/> 仍由调用方持有。</summary>
     public static Replacement BeginReplacement(GameModRuntime? runtime)
     {
         lock (_gate)
@@ -60,7 +56,7 @@ public static class CurrentModRuntime
             _next = next;
         }
 
-        /// <summary>Releases the old CPU environment and transfers ownership of the replacement.</summary>
+        /// <summary>释放旧 CPU 环境并接管替换环境。</summary>
         public void Commit()
         {
             lock (_gate)

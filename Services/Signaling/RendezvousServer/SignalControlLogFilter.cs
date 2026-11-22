@@ -2,7 +2,7 @@ using Rendezvous.Protocol;
 
 namespace RendezvousServer;
 
-/// <summary>Logs control operation identity without serializing requests or credentials.</summary>
+/// <summary>记录控制操作的标识，避免将请求或凭据序列化到日志。</summary>
 internal sealed class SignalControlLogFilter(ILogger<SignalControlLogFilter> logger) : IEndpointFilter
 {
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)

@@ -6,9 +6,7 @@ using System.Text.Json.Nodes;
 
 namespace Game.Commands.Http;
 
-/// <summary>
-///     Loopback HTTP frontend for commands with an explicit HTTP binding.
-/// </summary>
+/// <summary>为显式声明 HTTP 绑定的命令提供回环 HTTP 前端。</summary>
 public sealed class HttpCommandHost : IDisposable
 {
     private const int _maxBodyBytes = 64 * 1024;

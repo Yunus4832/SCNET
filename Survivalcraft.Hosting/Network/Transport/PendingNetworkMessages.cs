@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace Game.Network.Transport;
 
-/// <summary>Owned native messages with bounded count and conservative payload accounting.</summary>
+/// <summary>持有待发送的原生消息，限制消息数量并保守估算载荷大小。</summary>
 internal sealed class PendingNetworkMessages(
     int capacity = 2048,
     long capacityBytes = 16L * 1024 * 1024,

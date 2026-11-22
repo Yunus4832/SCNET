@@ -1,6 +1,6 @@
 namespace Rendezvous.Protocol;
 
-/// <summary>A temporary invitation and its private host credential.</summary>
+/// <summary>临时邀请及宿主的私有凭据。</summary>
 public sealed record SessionRegistration(
     Guid SessionId,
     string JoinCode,

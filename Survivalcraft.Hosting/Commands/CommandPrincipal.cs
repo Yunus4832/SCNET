@@ -65,7 +65,7 @@ public sealed class CommandPrincipal
         );
     }
 
-    /// <summary>WorldConnection input uses public character metadata without server-owned permissions or subject records.</summary>
+    /// <summary>WorldConnection 输入仅使用公开角色元数据，权限和主体记录由服务端持有。</summary>
     public static CommandPrincipal ForInput(CharacterData player)
     {
         ArgumentNullException.ThrowIfNull(player);

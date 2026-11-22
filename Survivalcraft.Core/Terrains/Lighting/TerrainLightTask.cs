@@ -1,6 +1,6 @@
 namespace Game.Terrains.Lighting;
 
-/// <summary>Cancellation and lifetime of one admitted light calculation.</summary>
+/// <summary>管理已接纳的一次光照计算的取消和生命周期。</summary>
 internal sealed class TerrainLightTask(TerrainLightJob job)
 {
     private readonly CancellationTokenSource _cancellation = new();

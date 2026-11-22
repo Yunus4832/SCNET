@@ -37,7 +37,7 @@ public partial class CharacterData : IDisposable
 
     private SpawnMode _spawnMode;
 
-    /// <summary>Temporary authority preparation; it never replaces the approved peer interest.</summary>
+    /// <summary>权威端的临时准备范围，已批准的对端关注范围仍单独保留。</summary>
     private TerrainSpawnPreparation? _spawnPreparation;
 
     private double? _spawnPreparationHandoffDeadline;
@@ -160,7 +160,7 @@ public partial class CharacterData : IDisposable
         _stateMachine.TransitionTo(state);
     }
 
-    /// <summary>Creates an authority-owned character with its immutable player identity.</summary>
+    /// <summary>创建权威端持有的角色，并绑定其不可变玩家身份。</summary>
     public static CharacterData CreateAuthoritative(Project project, PlayerAddress owner)
     {
         ArgumentNullException.ThrowIfNull(project);

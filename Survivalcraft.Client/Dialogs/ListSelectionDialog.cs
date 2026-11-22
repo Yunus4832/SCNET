@@ -78,7 +78,7 @@ public class ListSelectionDialog : Dialog
 
     public object? CurrentItem { get; }
 
-    /// <summary>Preferred panel width and maximum list viewport height, constrained by the available space.</summary>
+    /// <summary>面板的首选宽度与列表视口的最大高度，实际尺寸受可用空间限制。</summary>
     public Vector2 ContentSize
     {
         get => _contentSize;

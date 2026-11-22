@@ -3,9 +3,7 @@ using System.Text.Json.Nodes;
 
 namespace Game.Commands.Http;
 
-/// <summary>
-///     HTTP command envelopes select commands by their stable identity.
-/// </summary>
+/// <summary>HTTP 命令信封通过稳定标识选择命令。</summary>
 public static class HttpCommandProtocol
 {
     public const int DefaultPort = 28889;
@@ -76,14 +74,14 @@ public sealed record HttpCommandRequest(
     JsonObject Arguments
 );
 
-/// <summary>One declared argument in the HTTP command envelope.</summary>
+/// <summary>HTTP 命令信封中的一个已声明参数。</summary>
 public sealed record HttpCommandArgumentDefinition(
     string Name,
     string ValueType,
     bool Required = true
 );
 
-/// <summary>One HTTP command available to the current authenticated principal.</summary>
+/// <summary>当前认证主体可使用的一个 HTTP 命令。</summary>
 public sealed record HttpDiscoveredCommand(
     string Identity,
     string Description,

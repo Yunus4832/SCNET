@@ -1,8 +1,6 @@
 namespace Game.Network.Handling;
 
-/// <summary>
-///     Receives server-authored messages. Client chat requests use commands.
-/// </summary>
+/// <summary>接收服务端生成的消息。客户端通过命令发起聊天请求。</summary>
 public sealed class MessagePackageHandler : PackageHandlerBase<MessagePackage>
 {
     public override void Handle(MessagePackage package, PackageReceiveContext context)

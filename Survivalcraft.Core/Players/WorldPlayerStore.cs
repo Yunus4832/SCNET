@@ -6,7 +6,7 @@ using Game.Protocol.Identity;
 
 namespace Game.Players;
 
-/// <summary>World persistence and single-character ownership. Callers must independently authenticate sessions.</summary>
+/// <summary>持久化世界玩家并维护单个角色的归属，调用方须另行认证会话。</summary>
 public sealed class WorldPlayerStore
 {
     private readonly Dictionary<PlayerAddress, WorldPlayer> _players = new();

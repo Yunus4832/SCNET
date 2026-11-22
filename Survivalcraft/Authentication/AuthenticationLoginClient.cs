@@ -7,7 +7,7 @@ using SCNET.Authentication.Protocol.Security;
 
 namespace Game.Authentication;
 
-/// <summary>One cancellable login operation. UI/trust decisions and persistent installation remain with the caller.</summary>
+/// <summary>可取消的一次登录操作，界面、信任决策与持久安装仍由调用方管理。</summary>
 public sealed class AuthenticationLoginClient(
     AuthenticationGrantStore grants,
     Func<AuthenticationServiceEndpoint, AuthenticationHttpClient>? createClient = null

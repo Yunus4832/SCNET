@@ -2,7 +2,7 @@ using Game.Terrains.Distribution;
 
 namespace Game.Network.Transport;
 
-/// <summary>A complete, owned logical snapshot; native connections carry encoded fragments instead.</summary>
+/// <summary>独立持有的完整逻辑快照；原生连接传输其编码分片。</summary>
 public sealed record TerrainSnapshotMessage : IProtocolMessage, IDisposable
 {
     private ClientSnapshotReservation? _reservation;

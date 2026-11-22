@@ -4,7 +4,7 @@ using Silk.NET.OpenGLES;
 
 namespace Engine.Graphics;
 
-/// <summary>Owns a sampleable copy of one view's opaque scene depth.</summary>
+/// <summary>持有单个视图可供采样的不透明场景深度副本。</summary>
 public sealed class DepthBufferSnapshot : GraphicsResource
 {
     private uint _framebuffer;

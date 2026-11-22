@@ -1,6 +1,6 @@
 namespace Game.Terrains.Distribution;
 
-/// <summary>Authority-only progress of acquiring chunk contents, independent of derived data.</summary>
+/// <summary>权威端获取区块内容的进度，独立于派生数据的准备过程。</summary>
 public enum TerrainGenerationStage
 {
     Restore = 0,

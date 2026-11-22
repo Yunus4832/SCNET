@@ -137,7 +137,6 @@ public static class Ogg
         /// <summary>
         ///     复制出一个新的流
         /// </summary>
-        /// <returns></returns>
         public override StreamingSource Duplicate()
         {
             var memoryStream = new MemoryStream();

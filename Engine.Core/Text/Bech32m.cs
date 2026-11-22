@@ -1,6 +1,6 @@
 namespace Engine.Core.Text;
 
-/// <summary>BIP 350 encoding of five-bit symbols, without Bitcoin-specific address rules.</summary>
+/// <summary>按 BIP 350 编码五位符号，不附加比特币地址规则。</summary>
 public static class Bech32m
 {
     private const string _alphabet = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";

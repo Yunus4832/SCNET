@@ -1,6 +1,6 @@
 namespace Game.Network.Handling;
 
-/// <summary>Immutable handler factories explicitly selected by one endpoint's composition owner.</summary>
+/// <summary>由端点的组合管理者显式选择的不可变处理器工厂。</summary>
 public sealed class PackageHandlerCatalog
 {
     public static PackageHandlerCatalog Empty { get; } = new(new Dictionary<Type, PackageHandlerRegistration>());

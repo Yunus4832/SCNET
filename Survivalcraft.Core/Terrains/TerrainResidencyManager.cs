@@ -6,7 +6,7 @@ using Game.Terrains.Execution;
 
 namespace Game.Terrains;
 
-/// <summary>One world's chunk residency, retained replica leases and save-safe release transactions.</summary>
+/// <summary>管理单个世界的区块驻留、副本保留租约及保证保存安全的释放操作。</summary>
 public sealed class TerrainResidencyManager(
     SubsystemTerrain world,
     TerrainChunkBehaviorNotifier behaviors
@@ -36,7 +36,7 @@ public sealed class TerrainResidencyManager(
 
     public event Action<TerrainChunk, ulong>? ChunkAllocationRenewed;
 
-    /// <summary>Uses the caller's single lease, yielding it around discard business notifications.</summary>
+    /// <summary>使用调用方持有的单个租约，投递区块丢弃业务通知时暂时让出访问权。</summary>
     public UpdateResult Update(
         TerrainUpdateLocation[] locations,
         TerrainMainWorkRequest locationLease,

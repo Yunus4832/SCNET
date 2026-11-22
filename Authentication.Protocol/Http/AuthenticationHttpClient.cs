@@ -7,7 +7,7 @@ using SCNET.Authentication.Protocol.Security;
 
 namespace SCNET.Authentication.Protocol.Http;
 
-/// <summary>Bounded HTTPS transport. Redirects never receive a signed request or reusable grant.</summary>
+/// <summary>限制 HTTPS 传输的资源用量。重定向目标不会收到已签名的请求或可复用的授权。</summary>
 public sealed class AuthenticationHttpClient : IDisposable
 {
     private const int _maximumResponseBytes = 32768;

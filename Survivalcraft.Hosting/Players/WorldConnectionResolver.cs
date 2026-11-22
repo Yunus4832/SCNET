@@ -1,6 +1,6 @@
 namespace Game.Players;
 
-/// <summary>Application joins from a logical connection to world player and character data.</summary>
+/// <summary>在应用层将逻辑连接关联到世界玩家和角色数据。</summary>
 public static class WorldConnectionResolver
 {
     public static WorldPlayer? FindPlayer(WorldConnection connection)

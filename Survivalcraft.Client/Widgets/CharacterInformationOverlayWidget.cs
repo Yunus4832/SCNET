@@ -1,9 +1,6 @@
 namespace Game.Widgets;
 
-/// <summary>
-///     Read-only filtered player list shown while playing.
-///     Player and team operations belong to <see cref="MultiplayerPanelWidget" />.
-/// </summary>
+/// <summary>游戏中显示的只读玩家筛选列表；玩家和队伍操作由 <see cref="MultiplayerPanelWidget" /> 提供。</summary>
 public sealed class CharacterInformationOverlayWidget : CanvasWidget
 {
     private readonly BevelledRectangleWidget _background = new()

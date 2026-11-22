@@ -2,7 +2,7 @@ using Game.Messaging;
 
 namespace Game.Localization;
 
-/// <summary>Owns actual client locale objects; Host callers supply their own catalog and resolver.</summary>
+/// <summary>管理客户端实际使用的语言对象，宿主调用方提供自己的语言目录和解析器。</summary>
 public static class ClientLanguage
 {
     private sealed record Locale(

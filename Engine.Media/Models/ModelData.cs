@@ -2,7 +2,7 @@ using Engine.Media.Models.Formats;
 
 namespace Engine.Media.Models;
 
-/// <summary>A graphics-independent scene asset. All references are collection indices, not names.</summary>
+/// <summary>与图形设备无关的场景资源；所有引用均使用集合索引。</summary>
 public sealed class ModelData : ModelElementData
 {
     public readonly List<ModelSceneData> Scenes = [];
@@ -31,7 +31,7 @@ public sealed class ModelData : ModelElementData
 
     public string[] ExtensionsRequired = [];
 
-    /// <summary>-1 means the asset did not designate a default scene.</summary>
+    /// <summary>值为 -1 表示资源未指定默认场景。</summary>
     public int DefaultSceneIndex = -1;
 
     public static ModelFileFormat DetermineFileFormat(string extension) => extension.ToLowerInvariant() switch
@@ -76,7 +76,7 @@ public sealed class ModelData : ModelElementData
         }
     }
 
-    /// <summary>The resolver opens asset-relative resources and transfers ownership of each returned stream to the loader.</summary>
+    /// <summary>解析器按资源相对路径打开流，并将返回的流交由加载器释放。</summary>
     public static ModelData Load(Stream stream, Func<string, Stream>? resourceResolver = null)
     {
         using var buffered = new MemoryStream();

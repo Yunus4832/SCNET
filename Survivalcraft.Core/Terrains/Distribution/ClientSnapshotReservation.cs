@@ -1,6 +1,6 @@
 namespace Game.Terrains.Distribution;
 
-/// <summary>Owns one decoded snapshot slot until it is committed or its queued message is released.</summary>
+/// <summary>为已解码快照持有一个槽位，直到快照提交或队列中的消息被释放。</summary>
 public sealed class ClientSnapshotReservation : IDisposable
 {
     internal ClientSnapshotReservation(

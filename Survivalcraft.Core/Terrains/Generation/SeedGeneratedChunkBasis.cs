@@ -8,9 +8,7 @@ internal static class SeedTerrainGenerationPolicy
     }
 }
 
-/// <summary>
-///     Owns seed-generated Pass1-Pass3 terrain data until the real chunk can adopt it.
-/// </summary>
+/// <summary>持有按种子生成的前三阶段数据，直到实际区块接管。</summary>
 internal sealed class SeedGeneratedChunkBasis(int[] cells, long[] shafts)
 {
     private readonly Lock _lock = new();

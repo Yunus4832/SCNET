@@ -6,13 +6,14 @@ using Game.World.Timing;
 
 namespace Game.World;
 
-/// <summary>Explicit world binding and lifetime for one side of a game session.</summary>
+/// <summary>管理游戏会话一侧的世界绑定及生命周期。</summary>
 public sealed class WorldRuntimeContext
 {
     public WorldUpdateClock Clock { get; } = new();
 
     private int _executionThreadId;
 
+    /// <summary>将世界绑定到当前线程；同一线程可重复调用。</summary>
     public void BindExecutionThread()
     {
         ObjectDisposedException.ThrowIf(IsClosed, this);
@@ -24,6 +25,7 @@ public sealed class WorldRuntimeContext
         }
     }
 
+    /// <summary>绑定执行线程前允许访问，绑定后从其他线程调用会抛出异常。</summary>
     public void VerifyExecutionAccess()
     {
         var owner = Volatile.Read(ref _executionThreadId);
@@ -50,6 +52,7 @@ public sealed class WorldRuntimeContext
 
     private readonly List<IDisposable> _finalWorldResources = [];
 
+    /// <summary>登记在普通世界资源之后释放的资源；每组均按登记顺序逆序释放。</summary>
     public void OwnFinalWorldResource(IDisposable resource)
     {
         ArgumentNullException.ThrowIfNull(resource);
@@ -197,6 +200,7 @@ public sealed class WorldRuntimeContext
         project.Disposed += OnProjectDisposed;
     }
 
+    /// <summary>取消世界生命周期并清除待执行的延时操作。已绑定项目时由项目销毁回调释放资源，尚未绑定时在此处释放。</summary>
     public void Close()
     {
         if (IsClosed)

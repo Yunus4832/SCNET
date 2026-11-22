@@ -4,7 +4,7 @@ using SCNET.Authentication.Protocol.Contracts;
 
 namespace Game.Authentication;
 
-/// <summary>Frame-owned admission interaction; local authority operations cross its execution boundary.</summary>
+/// <summary>由帧循环管理的准入交互，本地权威操作经其执行边界调用。</summary>
 internal sealed class AdmissionInteraction : IDisposable
 {
     private sealed record View(

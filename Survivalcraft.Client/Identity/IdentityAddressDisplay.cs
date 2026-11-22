@@ -1,6 +1,6 @@
 namespace Game.Identity;
 
-/// <summary>Display only. Never use an abbreviated value for identity comparisons or serialization.</summary>
+/// <summary>仅用于展示，身份比较和序列化必须使用完整值。</summary>
 public static class IdentityAddressDisplay
 {
     public static string Abbreviate(string address)

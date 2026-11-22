@@ -9,7 +9,7 @@ using Game.Startup;
 
 namespace Game.World;
 
-/// <summary>Owns the actual loaded authority/client world runtime and its host loading/closing operations.</summary>
+/// <summary>持有实际加载的权威端或客户端世界运行时，并管理宿主的加载和关闭操作。</summary>
 public sealed class GameWorldController(
     WorldProjectActivity activity,
     Func<Action, Task>? dispatchClient = null

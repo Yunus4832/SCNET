@@ -263,9 +263,6 @@ public class DatabaseObject
     /// <summary>
     ///     获取子节点(不包括子节点继承的节点)
     /// </summary>
-    /// <param name="type"></param>
-    /// <param name="directChildrenOnly"></param>
-    /// <returns></returns>
     public IEnumerable<DatabaseObject> GetExplicitNestingChildren(DatabaseObjectType? type, bool directChildrenOnly)
     {
         foreach (var databaseObject in InternalNestingChildren)
@@ -351,9 +348,6 @@ public class DatabaseObject
     /// <summary>
     ///     获取子节点包括子节点继承的节点
     /// </summary>
-    /// <param name="type"></param>
-    /// <param name="directChildrenOnly"></param>
-    /// <returns></returns>
     public IEnumerable<DatabaseObject> GetEffectiveNestingChildren(DatabaseObjectType? type, bool directChildrenOnly)
     {
         if (directChildrenOnly)

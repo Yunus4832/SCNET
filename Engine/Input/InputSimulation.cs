@@ -4,11 +4,7 @@ using Engine.Core.Mathematics;
 
 namespace Engine.Input;
 
-/// <summary>
-///     Queues synthetic input for delivery during the engine input phase.
-///     Synthetic and physical button/key states are merged, so releasing a
-///     simulated input never releases a still-held physical device input.
-/// </summary>
+/// <summary>将模拟输入加入引擎输入阶段的队列。按键状态与物理输入合并，释放模拟输入时仍保留设备上实际按住的状态。</summary>
 public static class InputSimulation
 {
     private interface IInputEvent

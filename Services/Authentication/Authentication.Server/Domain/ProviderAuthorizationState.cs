@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace SCNET.Authentication.Server.Domain;
 
-/// <summary>Durable provider grants are hashed; raw grant secrets are returned only to their proven subject.</summary>
+/// <summary>持久化时只保存提供方授权凭据的哈希，原始授权密钥只返回给已验证的主体。</summary>
 public sealed class ProviderAuthorizationState
 {
     [JsonRequired] public Dictionary<string, ProviderGrant> Grants { get; init; } = new(StringComparer.Ordinal);

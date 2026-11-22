@@ -3,7 +3,7 @@ using Engine.Media.Audio;
 
 namespace Engine.Audio;
 
-/// <summary>Owned decoded PCM; native buffers are created and retired by the audio service.</summary>
+/// <summary>持有解码后的 PCM 数据，原生缓冲区由音频服务创建和释放。</summary>
 public sealed class SoundBuffer : IDisposable
 {
     private readonly Lock _sync = new();

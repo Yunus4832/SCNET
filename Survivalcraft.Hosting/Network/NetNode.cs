@@ -1463,8 +1463,6 @@ public class NetNode
     /// <summary>
     ///     连接断开事件 客户端
     /// </summary>
-    /// <param name="remoteEndPoint"></param>
-    /// <param name="payload"></param>
     private void UnconnectedReceiveEvent(IPEndPoint remoteEndPoint, ReadOnlyMemory<byte> payload)
     {
         if (CurrentStage == Stage.NotConnected)
@@ -1510,8 +1508,6 @@ public class NetNode
     /// <summary>
     ///     数据接收事件
     /// </summary>
-    /// <param name="peer"></param>
-    /// <param name="message"></param>
     private void NetworkReceiveEvent(NetworkConnection peer, NetworkMessage message)
     {
         if (_isStopping || CurrentStage == Stage.NotConnected)
@@ -1632,7 +1628,6 @@ public class NetNode
     /// <summary>
     ///     新客户端连接事件
     /// </summary>
-    /// <param name="request"></param>
     private void ConnectionRequestEvent(NetworkConnectionRequest request)
     {
         Log.Information("接收到连接请求 " + request.TransportEndpoint);
@@ -1732,9 +1727,6 @@ public class NetNode
     /// <summary>
     ///     开启服务器
     /// </summary>
-    /// <param name="port"></param>
-    /// <param name="broadcastPort"></param>
-    /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
     public bool StartServer(
         int port,
@@ -1843,7 +1835,6 @@ public class NetNode
     /// <summary>
     ///     发送回调事件
     /// </summary>
-    /// <param name="client"></param>
     internal void DeliveryEvent(Client? client, bool propagateBootstrapFailure = false)
     {
         if (client is not null)
@@ -1995,7 +1986,7 @@ public class NetNode
 
     private Task? _transportStop;
 
-    /// <summary>Starts transport teardown on its owner without waiting on connection or host workers.</summary>
+    /// <summary>在所属线程上启动传输清理，调用方无需等待连接或宿主工作线程结束。</summary>
     public Task PrepareTransportStopAsync()
     {
         if (_transportStop != null) { return _transportStop; }
@@ -2215,10 +2206,6 @@ public class NetNode
     /// <summary>
     ///     发送多个数据包
     /// </summary>
-    /// <param name="packages"></param>
-    /// <param name="netPeer"></param>
-    /// <param name="request"></param>
-    /// <param name="iPEndPoint"></param>
     /// <param name="useDeliveryEvent">true 使用delivery事件回调 true 发送消息 false 发送连接消息</param>
     public void SendWriterFromPackages(
         IEnumerable<IProtocolMessage> packages,

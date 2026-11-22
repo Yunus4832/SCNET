@@ -4,7 +4,7 @@ using Game.Application;
 
 namespace Game.World.Presentation;
 
-/// <summary>Actual presentation-side world identity and explicit requests to its application lifecycle owner.</summary>
+/// <summary>表示表现端实际绑定的世界，并向管理应用生命周期的对象提交请求。</summary>
 public sealed class ClientWorldPresentation : IDisposable
 {
     private bool _disposed;

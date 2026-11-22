@@ -2,7 +2,7 @@ using Engine.Network;
 
 namespace Game.Network;
 
-/// <summary>Retains localized application text and the original transport fact until display.</summary>
+/// <summary>保留本地化应用文本及原始传输信息，直到显示时再处理。</summary>
 public sealed record NodeStopReason(LocalizedText Message, NetworkDisconnectReason? TransportReason = null)
 {
     public NodeStopReason(string message, NetworkDisconnectReason? transportReason = null)

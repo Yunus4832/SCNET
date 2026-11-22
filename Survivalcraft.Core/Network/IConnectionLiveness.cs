@@ -1,6 +1,6 @@
 namespace Game.Network;
 
-/// <summary>Live connectivity projected by the actual transport connection.</summary>
+/// <summary>反映实际传输连接的当前连通状态。</summary>
 public interface IConnectionLiveness
 {
     bool IsConnected { get; }

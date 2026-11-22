@@ -3,7 +3,7 @@ using Engine.Core.Mathematics;
 
 namespace Engine.Graphics;
 
-/// <summary>A node definition in a shared model resource. Per-instance animation belongs to ModelPose.</summary>
+/// <summary>共享模型资源中的节点定义，各实例的动画由 ModelPose 管理。</summary>
 public sealed class ModelNode
 {
     private readonly List<ModelNode> _children = [];

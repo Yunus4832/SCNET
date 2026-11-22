@@ -4,7 +4,7 @@ using Game.Terrains.Lighting;
 
 namespace Game.Terrains.Distribution;
 
-/// <summary>Publishes authority light baselines and changed sections for the existing content allocation lifetimes.</summary>
+/// <summary>针对已有的内容分配周期发布权威光照基线和已变更的分段。</summary>
 internal sealed class ServerTerrainLightingReplication : IDisposable
 {
     private const int _updatesPerClientTick = 4;

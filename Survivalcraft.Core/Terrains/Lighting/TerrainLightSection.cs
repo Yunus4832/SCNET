@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Game.Terrains.Lighting;
 
-/// <summary>Immutable light publication for one sixteen-cubed section.</summary>
+/// <summary>单个 16×16×16 分段的不可变光照发布数据。</summary>
 public sealed class TerrainLightSection
 {
     public const int CellCount = 4096;
@@ -13,7 +13,7 @@ public sealed class TerrainLightSection
 
     public int StoredBytes => _values?.Length ?? 0;
 
-    /// <summary>Compares equivalent light values across publications without retaining cell storage in consumers.</summary>
+    /// <summary>比较不同发布中的等效光照值，使用方无需保留单元格存储。</summary>
     public ulong Fingerprint { get; }
 
     public TerrainLightSection(TerrainLightChannels uniform)

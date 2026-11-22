@@ -1,6 +1,6 @@
 namespace Game.Terrains.Lighting;
 
-/// <summary>Immutable direct light and transmission inputs captured from one content revision.</summary>
+/// <summary>从同一内容修订版捕获的不可变直接光照与透光输入。</summary>
 public sealed class TerrainLightSeed
 {
     private readonly byte[]?[] _transmission = new byte[TerrainChunk.SlicesCount][];

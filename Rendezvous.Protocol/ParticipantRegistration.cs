@@ -1,6 +1,6 @@
 namespace Rendezvous.Protocol;
 
-/// <summary>A participant credential scoped to one invitation.</summary>
+/// <summary>仅对单个邀请有效的参与者凭据。</summary>
 public sealed record ParticipantRegistration(
     Guid SessionId,
     Guid ParticipantId,

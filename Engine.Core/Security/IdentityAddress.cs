@@ -2,7 +2,7 @@ using Engine.Core.Text;
 
 namespace Engine.Core.Security;
 
-/// <summary>SCNET identity addresses: a complete 32-byte key thumbprint encoded as lowercase Bech32m.</summary>
+/// <summary>SCNET 身份地址将完整的 32 字节密钥指纹编码为小写 Bech32m。</summary>
 public static class IdentityAddress
 {
     public const int FingerprintLength = 32;

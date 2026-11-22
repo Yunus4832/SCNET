@@ -1,8 +1,6 @@
 namespace Game.Terrains.Distribution;
 
-/// <summary>
-///     A snapshot addressed to one specific client allocation lifetime.
-/// </summary>
+/// <summary>针对客户端某一次特定区块分配的快照。</summary>
 public sealed class ClientChunkSnapshot
 {
     public static ClientChunkSnapshot Capture(ChunkAllocationId allocation, AuthorityChunkSnapshot snapshot)

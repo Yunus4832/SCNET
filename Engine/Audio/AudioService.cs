@@ -6,7 +6,7 @@ using Silk.NET.OpenAL;
 
 namespace Engine.Audio;
 
-/// <summary>Single owner of the device, native buffers and voices. Producers only publish intent.</summary>
+/// <summary>独占音频设备、原生缓冲区和声部；生产者只提交播放请求。</summary>
 internal sealed class AudioService : IDisposable
 {
     private readonly Lock _signal = new();
